@@ -38,6 +38,9 @@ def mark_default_supply_sources(state: CampaignState) -> None:
             values = set(province.metadata.get("supply_source_for", []))
             values.add(faction.value)
             province.metadata["supply_source_for"] = sorted(values)
+            static_values = set(province.metadata.get("static_supply_source_for", []))
+            static_values.add(faction.value)
+            province.metadata["static_supply_source_for"] = sorted(static_values)
 
 
 def reachable_supply_provinces(state: CampaignState, faction: Faction) -> set[str]:
@@ -115,12 +118,21 @@ def refresh_all_supply(state: CampaignState) -> list[SupplyReport]:
 
 def _eligible_sources(state: CampaignState, faction: Faction) -> list[str]:
     friendly = {value.value for value in allied_factions(state, faction)}
-    return sorted(
+    sources = {
         province.province_id
         for province in state.provinces.values()
-        if friendly.intersection(province.metadata.get("supply_source_for", []))
+        if friendly.intersection(
+            set(province.metadata.get("supply_source_for", []))
+            | set(province.metadata.get("static_supply_source_for", []))
+        )
         and is_friendly_owner(state, faction, province.owner)
-    )
+    }
+    for allied in allied_factions(state, faction):
+        for province_id in DEFAULT_SUPPLY_SOURCES.get(allied, ()):
+            province = state.provinces.get(province_id)
+            if province is not None and is_friendly_owner(state, faction, province.owner):
+                sources.add(province_id)
+    return sorted(sources)
 
 
 def _apply_encirclement_attrition(battalion: Battalion) -> None:
