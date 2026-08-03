@@ -152,6 +152,7 @@ def prepare_stack_handoff(
     stack_config: str | Path | None = None,
     profile_directory: str | Path | None = None,
     install_save_path: str | Path | None = None,
+    status_template_path: str | Path | None = None,
     backup_root: str | Path | None = None,
     launch: bool = False,
 ) -> HandoffResult:
@@ -174,7 +175,10 @@ def prepare_stack_handoff(
     campaign = Path(campaign_path).resolve()
     export_save = Path(save_path).resolve()
     installed = Path(install_save_path).resolve() if install_save_path else None
+    template = Path(status_template_path).resolve() if status_template_path else None
     service = GatesOfCodeXService()
+    if template is not None:
+        service.archive.validate(template)
     paths = [campaign, export_save, service.manifest_path(export_save)]
     if installed is not None:
         paths.extend([installed, service.manifest_path(installed)])
@@ -185,13 +189,16 @@ def prepare_stack_handoff(
         resource_stack=stack,
         save_path=export_save,
         map_name=map_name,
+        status_template_path=template,
         allow_overwrite=True,
     )
+    service.archive.validate(export_save)
 
     installed_path = ""
     if installed is not None:
         installed.parent.mkdir(parents=True, exist_ok=True)
         _atomic_copy(export_save, installed)
+        service.archive.validate(installed)
         installed_manifest = replace(manifest, save_path=str(installed))
         service.manifest_path(installed).write_text(
             json.dumps(asdict(installed_manifest), indent=2) + "\n",
