@@ -41,7 +41,7 @@ class MapAndProfileDiscoveryTests(unittest.TestCase):
         self.assertEqual(["multi/codex_map", "multi/test_map"], [value.identifier for value in maps])
         selected = next(value for value in maps if value.identifier == "multi/test_map")
         self.assertEqual(str(overhaul.resolve()), selected.source)
-        self.assertTrue(selected.path.endswith("multi/test_map/map"))
+        self.assertEqual((override / "map").resolve(), Path(selected.path).resolve())
 
     def test_discovers_nonstandard_profile_and_likely_save_directory(self) -> None:
         search = self.root / "Users/Tester/AppData/Roaming"
