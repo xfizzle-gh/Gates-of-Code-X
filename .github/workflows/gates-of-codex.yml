@@ -30,14 +30,28 @@ jobs:
         run: gates-of-codex --help
       - name: Live acceptance CLI smoke test
         run: gates-of-codex-live --help
-      - name: Windows PowerShell installer smoke test
+      - name: Windows PowerShell installer and Workshop deployment smoke test
         if: runner.os == 'Windows' && matrix.python-version == '3.11'
         shell: pwsh
         run: |
           Remove-Item -LiteralPath .venv -Recurse -Force -ErrorAction SilentlyContinue
-          .\tools\install_gates_of_codex.ps1 -Python (Get-Command python).Source -NoPythonInstall
+          $deploy = Join-Path $env:RUNNER_TEMP "gates-of-codex-workshop-test"
+          Remove-Item -LiteralPath $deploy -Recurse -Force -ErrorAction SilentlyContinue
+          .\tools\install_gates_of_codex.ps1 `
+            -Python (Get-Command python).Source `
+            -NoPythonInstall `
+            -WorkshopTestTarget $deploy
           .\.venv\Scripts\gates-of-codex.exe --help
           .\.venv\Scripts\gates-of-codex-live.exe --help
+          if (-not (Test-Path -LiteralPath (Join-Path $deploy "mod.info") -PathType Leaf)) {
+            throw "Workshop deployment did not copy mod.info"
+          }
+          if (-not (Test-Path -LiteralPath (Join-Path $deploy "resource") -PathType Container)) {
+            throw "Workshop deployment did not copy the resource directory"
+          }
+          if (-not (Test-Path -LiteralPath (Join-Path $deploy ".goc-deployment-manifest.json") -PathType Leaf)) {
+            throw "Workshop deployment did not write its manifest"
+          }
 
   windows-executable:
     needs: test
