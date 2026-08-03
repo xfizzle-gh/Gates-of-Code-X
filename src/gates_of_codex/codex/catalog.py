@@ -24,6 +24,28 @@ class UnitDefinition:
     manpower_estimate: int = 0
     source_files: list[str] = field(default_factory=list)
 
+    @property
+    def materializable(self) -> bool:
+        """Whether the tactical bridge can create at least one engine object."""
+
+        return bool(self.members or self.vehicles)
+
+
+class CatalogUnits(dict[str, UnitDefinition]):
+    """Raw catalog mapping with materializable iteration for campaign systems.
+
+    Code:X Lua tables can describe doctrine/shop entries without providing a
+    concrete squad definition. Those rows remain addressable through normal
+    mapping operations and are preserved by serialization, but campaign-facing
+    iteration excludes them so they cannot enter rosters or the economy.
+    """
+
+    def values(self):  # type: ignore[override]
+        return [unit for unit in super().values() if unit.materializable]
+
+    def raw_values(self):
+        return super().values()
+
 
 @dataclass(slots=True)
 class CodeXCatalog:
@@ -31,8 +53,16 @@ class CodeXCatalog:
     signature: str = ""
     resource_stack: list[str] = field(default_factory=list)
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.units, CatalogUnits):
+            self.units = CatalogUnits(self.units)
+
     def by_faction(self, faction: str) -> list[UnitDefinition]:
         return sorted((unit for unit in self.units.values() if unit.side == faction), key=lambda unit: unit.name)
+
+    def raw_by_faction(self, faction: str) -> list[UnitDefinition]:
+        values = self.units.raw_values() if isinstance(self.units, CatalogUnits) else self.units.values()
+        return sorted((unit for unit in values if unit.side == faction), key=lambda unit: unit.name)
 
     def to_dict(self) -> dict:
         return {
