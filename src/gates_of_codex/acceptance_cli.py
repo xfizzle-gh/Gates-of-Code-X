@@ -5,6 +5,7 @@ import json
 from dataclasses import asdict
 
 from .acceptance import backup_existing_files, restore_backup, write_acceptance_report
+from .first_engine_test import DEFAULT_INSTALL_NAME, DEFAULT_TEST_MAP, run_first_engine_test
 from .map_discovery import discover_maps
 from .modstack import resolve_stack
 from .profiles import discover_profile_locations
@@ -53,6 +54,25 @@ def build_parser() -> argparse.ArgumentParser:
     _add_stack_arguments(validate)
     validate.add_argument("--profile")
     validate.add_argument("--output")
+
+    first_test = sub.add_parser(
+        "first-test",
+        help="Create, install, and optionally launch a fresh NATO-versus-Russia engine test",
+    )
+    first_test.add_argument("--game", required=True)
+    _add_stack_arguments(first_test)
+    first_test.add_argument("--profile", required=True, help="Selected GoH profile directory")
+    first_test.add_argument(
+        "--install-directory",
+        required=True,
+        help="Campaign/save directory inside the selected profile",
+    )
+    first_test.add_argument("--map", default=DEFAULT_TEST_MAP)
+    first_test.add_argument("--install-name", default=DEFAULT_INSTALL_NAME)
+    first_test.add_argument("--work-root", default="live")
+    first_test.add_argument("--backup-root", default="backups")
+    first_test.add_argument("--output")
+    first_test.add_argument("--launch", action="store_true")
 
     backup = sub.add_parser("backup", help="Back up existing campaign and tactical files")
     backup.add_argument("paths", nargs="+")
@@ -116,6 +136,27 @@ def main(argv: list[str] | None = None) -> int:
                 destination.write("\n")
         print(json.dumps(payload, indent=2))
         return 0 if report.ok else 1
+    if args.command == "first-test":
+        result = run_first_engine_test(
+            game_directory=args.game,
+            code_x_directory=args.codex,
+            profile_directory=args.profile,
+            install_directory=args.install_directory,
+            resource_stack=args.stack,
+            stack_config=args.stack_config,
+            work_root=args.work_root,
+            map_name=args.map,
+            install_name=args.install_name,
+            backup_root=args.backup_root,
+            launch=args.launch,
+        )
+        payload = result.to_dict()
+        if args.output:
+            with open(args.output, "w", encoding="utf-8") as destination:
+                json.dump(payload, destination, indent=2)
+                destination.write("\n")
+        print(json.dumps(payload, indent=2))
+        return 0
     if args.command == "backup":
         record = backup_existing_files(args.paths, backup_root=args.backup_root, label=args.label)
         print(json.dumps(asdict(record), indent=2))

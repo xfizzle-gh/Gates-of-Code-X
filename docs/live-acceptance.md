@@ -26,7 +26,7 @@ The checked-in `config/mod-stack.windows.json` represents this order for the cur
 
 The command verifies the game executable, primary Code:X metadata, every required stack path, West81 to Code:X to AI Overhaul ordering, all four unit catalogs, a signature covering runtime scripts and sets from every mod layer, playable map roots, and optional profile write access.
 
-## 2. Find a valid tactical map identifier
+## 2. Discover maps and profiles
 
 ```powershell
 .\.venv\Scripts\gates-of-codex-live.exe maps `
@@ -34,74 +34,73 @@ The command verifies the game executable, primary Code:X metadata, every require
   --codex "E:\Steam\steamapps\workshop\content\400750\3261086933" `
   --stack-config ".\config\mod-stack.windows.json" `
   --contains dcg_
-```
 
-Only directories containing a literal `map` or `map.mi` file are returned. Support files such as `ammunition.mi`, `battle_zones.mi`, mode scripts, triggers, and weather helpers are not standalone map identifiers. When multiple layers provide the same map, the highest-priority layer wins. Use one returned `identifier` exactly as the handoff map.
-
-## 3. Discover the GoH profile and save location
-
-```powershell
 .\.venv\Scripts\gates-of-codex-live.exe profiles `
   --search-root "$HOME" `
   --max-depth 8 `
   --output ".\live\profiles.json"
 ```
 
-The command checks standard Documents and OneDrive locations, then performs a bounded search under any supplied roots. It reports profile roots and likely `save`, `saves`, `campaign`, `campaigns`, or `dynamic_conquest` directories. Do not use `--install-save` until the actual save location is identified.
+Only directories containing a literal `map` or `map.mi` file are returned. Support files such as `ammunition.mi`, `battle_zones.mi`, mode scripts, triggers, and weather helpers are not standalone map identifiers. Profile discovery reports profile roots and likely campaign/save directories.
 
-## 4. Create the campaign against the same stack
+## 3. Run the first engine test
 
-```powershell
-.\.venv\Scripts\gates-of-codex.exe new `
-  --codex "E:\Steam\steamapps\workshop\content\400750\3261086933" `
-  --stack-config ".\config\mod-stack.windows.json" `
-  --output ".\live\campaign.json" `
-  --faction nato
-```
-
-The campaign stores the ordered resource stack and the full stack signature. A later export is rejected if Code:X or the AI Overhaul changed.
-
-## 5. Create a guarded tactical handoff
-
-First create a pending strategic battle. Then run:
+The recommended first test is a fresh, isolated NATO-versus-Russia acceptance campaign. It does not modify an existing Gates of CodeX campaign.
 
 ```powershell
-.\.venv\Scripts\gates-of-codex-live.exe handoff ".\live\campaign.json" `
+.\.venv\Scripts\gates-of-codex-live.exe first-test `
   --game "E:\Steam\steamapps\common\Call to Arms - Gates of Hell" `
   --codex "E:\Steam\steamapps\workshop\content\400750\3261086933" `
   --stack-config ".\config\mod-stack.windows.json" `
-  --save ".\live\campaign.sav" `
+  --profile "C:\Users\paulf\AppData\Local\digitalmindsoft\gates of hell\profiles\46383268" `
+  --install-directory "C:\Users\paulf\AppData\Local\digitalmindsoft\gates of hell\profiles\46383268\campaign" `
   --map "multi/dcg_[cwa71]_fulda" `
-  --profile "<PROFILE_ROOT>" `
-  --install-save "<EXACT_GAME_SAVE_PATH>" `
+  --work-root ".\live" `
   --backup-root ".\backups" `
+  --output ".\live\first-test-latest.json" `
   --launch
 ```
 
-The handoff command validates the stack, backs up strategic and tactical files, rejects stack-signature mismatches, resolves breeds from highest to lowest layer, generates the tactical save and manifest, optionally installs the save, optionally launches GoH, and records a machine-readable session file.
+The command:
 
-## 6. Play and finish the battle
+- creates a fresh campaign against the full ordered stack
+- selects a deterministic NATO-owned province adjacent to Russian territory
+- stages the Polish mechanized and Russian motor-rifle formations there
+- creates the pending battle through the normal campaign engine
+- creates a unique timestamped session directory
+- exports the tactical save on Fulda
+- backs up any previous acceptance save
+- installs `gates_of_codex_acceptance.sav` into the selected profile
+- writes separate manifests for the local export and installed save
+- optionally launches Gates of Hell
+- prints exact verify and import commands
 
-Before loading the save, confirm the GoH mod selection uses the required order. Verify:
+Before loading the save, confirm the GoH mod selection uses the required five-layer order. Gates of Code:X may need to be enabled manually if the game does not automatically list the nonnumeric development folder.
 
-- the save loads with West81, Code:X, the AI Overhaul, and Gates of Code:X enabled
-- the selected map opens
-- NATO, Ukraine, Russia, or PRC units spawn as expected
-- infantry equipment and inventories initialize
+## 4. Play and finish the battle
+
+Verify:
+
+- the installed acceptance save appears and loads
+- the selected Fulda map opens
+- NATO and Russian units spawn with the expected inventories
+- infantry equipment initializes
 - vehicle crews initialize
 - attacker and defender stages are correct
 - the AI Overhaul remains active
-- the mission completes and writes the updated save
+- the mission completes and rewrites the installed save
 
 Do not import the battle until verification succeeds.
 
-## 7. Verify the updated tactical save
+## 5. Verify and import
+
+The `first-test` output includes exact commands. Their form is:
 
 ```powershell
-.\.venv\Scripts\gates-of-codex-live.exe verify ".\live\campaign.json" `
-  --save ".\live\campaign.sav" `
+.\.venv\Scripts\gates-of-codex-live.exe verify "<SESSION>\campaign.json" `
+  --save "C:\Users\paulf\AppData\Local\digitalmindsoft\gates of hell\profiles\46383268\campaign\gates_of_codex_acceptance.sav" `
   --stack-config ".\config\mod-stack.windows.json" `
-  --output ".\live\acceptance-report.json"
+  --output "<SESSION>\acceptance-report.json"
 ```
 
 Verification checks campaign, battle, save, and stack identity; archive readability; the `campaign.scn` object graph; surviving squads; `playedGames` advancement; and win-counter changes.
@@ -109,8 +108,13 @@ Verification checks campaign, battle, save, and stack identity; archive readabil
 After verification succeeds:
 
 ```powershell
-.\.venv\Scripts\gates-of-codex.exe import-battle ".\live\campaign.json" --save ".\live\campaign.sav"
+.\.venv\Scripts\gates-of-codex.exe import-battle "<SESSION>\campaign.json" `
+  --save "C:\Users\paulf\AppData\Local\digitalmindsoft\gates of hell\profiles\46383268\campaign\gates_of_codex_acceptance.sav"
 ```
+
+## Manual campaign handoff
+
+For an existing strategic campaign with a pending battle, use `gates-of-codex-live handoff` instead. Supply the exact campaign file, map identifier, profile directory, and installed save path.
 
 ## Recovery
 
@@ -124,4 +128,4 @@ The restore operation atomically replaces only files listed in that backup's `ba
 
 ## Acceptance evidence
 
-Retain the validation JSON, profile-discovery JSON, handoff session JSON, pre-battle backup, updated `campaign.sav`, manifest, acceptance report, GoH log, active-mod-order screenshot, initial-spawn screenshot, and post-battle result screenshot.
+Retain the validation JSON, profile-discovery JSON, first-test JSON, handoff session JSON, pre-battle backup, updated installed save, manifest, acceptance report, GoH log, active-mod-order screenshot, initial-spawn screenshot, and post-battle result screenshot.
