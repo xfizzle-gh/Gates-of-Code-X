@@ -16,7 +16,11 @@ The installed Code:X mod is the authoritative source for factions, conquest squa
 - Catalog-derived Code:X research progression with prerequisites and resource costs
 - Formation-specific recruitment pools, persistent reinforcement reserves, casualty replacement, and force expansion
 - Formation condition, supplied repairs, recurring maintenance, and end-of-round income accounting
-- Deterministic AI research, recruitment, reinforcement, and repair priorities
+- Province construction for fortifications, supply hubs, recruitment centers, and command posts
+- Infrastructure effects on defense, supply, recruitment prices, and province income
+- Operational objectives with persistent progress and coalition rewards
+- Coalition victory and defeat through elimination or sustained strategic-capital control
+- Deterministic AI research, recruitment, reinforcement, repair, and construction priorities
 - Province graph, battalion movement, capture, combat, retreat, casualties, resources, and turns
 - Persistent JSON campaigns with atomic writes and backward-compatible schema loading
 - Code:X Steam Workshop and local-mod discovery
@@ -24,8 +28,8 @@ The installed Code:X mod is the authoritative source for factions, conquest squa
 - Formation-aware starter rosters chosen from the installed Code:X catalog
 - GoH `status`, `campaign.scn`, and `campaign.sav` generation
 - Post-battle result and survivor import
-- Versioned Godot-facing campaign snapshot contract with supply, research, economy, and repair state
-- Initial Godot 4 map viewer with province control, graph edges, formation markers, pan, and zoom
+- Versioned Godot-facing campaign snapshot contract with supply, economy, infrastructure, objectives, and victory state
+- Godot 4 strategic map with province selection and campaign, formation, construction, economy, and objective panels
 - Command-line workflow and Tk developer campaign map
 - Gates of Hell launcher and Windows installation script
 - Linux and Windows automated test workflow
@@ -67,6 +71,15 @@ gates-of-codex list-recruits campaign.json --formation nato-us-armored
 gates-of-codex recruit campaign.json --formation nato-us-armored --unit "tank(nato)" --quantity 1
 gates-of-codex assign-reinforcements campaign.json --formation nato-us-armored --unit "tank(nato)" --quantity 1
 
+# Inspect and construct province infrastructure
+gates-of-codex construction-status campaign.json Warszawa --faction nato
+gates-of-codex construct campaign.json Warszawa fortification --faction nato
+gates-of-codex construct campaign.json Warszawa supply_hub --faction nato
+
+# Inspect operational progress and campaign victory state
+gates-of-codex objectives campaign.json
+gates-of-codex campaign-status campaign.json
+
 # Inspect resources, authorized strength, deficits, and formation condition
 gates-of-codex economy-status campaign.json --faction nato
 
@@ -77,17 +90,14 @@ gates-of-codex repair campaign.json --formation nato-us-armored --points 10
 gates-of-codex supply-status campaign.json
 gates-of-codex supply-status campaign.json --refresh
 
-# Run a deterministic non-player strategic and economy turn
+# Run a deterministic non-player strategic, economy, and construction turn
 gates-of-codex run-ai-turn campaign.json --faction rusa --seed 7 --advance-turn
 
 # Export the stable frontend snapshot used by Godot
 gates-of-codex export-frontend campaign.json --output .\godot\campaign_snapshot.json
-
-# Launch the older Tk developer map
-gates-of-codex ui campaign.json
 ```
 
-Open `godot/project.godot` in Godot 4 after generating `godot/campaign_snapshot.json`. The snapshot now includes research nodes, recruitment offers, reinforcement reserves, authorized strength, condition, repair needs, income, and maintenance in addition to the map and supply state.
+Open `godot/project.godot` in Godot 4 after generating `godot/campaign_snapshot.json`. Click provinces to inspect ownership, infrastructure, available construction, occupying formations, objectives, resources, and campaign status.
 
 ## Development
 
