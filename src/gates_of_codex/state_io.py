@@ -18,6 +18,9 @@ from .models import (
     FormationKind,
     PendingBattle,
     Province,
+    ReinforcementPoolEntry,
+    ResearchNode,
+    UnitEconomy,
 )
 
 
@@ -29,9 +32,21 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
     factions = {
         key: FactionState(
             faction=Faction(value["faction"]),
-            resources=value.get("resources", 1000),
+            resources=int(value.get("resources", 1000)),
             researched_keys=list(value.get("researched_keys", [])),
             recruited_pool=[_roster(item) for item in value.get("recruited_pool", [])],
+            reinforcement_pool=[
+                ReinforcementPoolEntry(
+                    unit_name=item["unit_name"],
+                    quantity=int(item.get("quantity", 1)),
+                    category=item.get("category", "unknown"),
+                    formation_id=item["formation_id"],
+                    unit_cost=int(item.get("unit_cost", 0)),
+                )
+                for item in value.get("reinforcement_pool", [])
+            ],
+            income_last_round=int(value.get("income_last_round", 0)),
+            maintenance_last_round=int(value.get("maintenance_last_round", 0)),
             is_human_controlled=value.get("is_human_controlled", False),
             is_eliminated=value.get("is_eliminated", False),
         )
@@ -61,6 +76,34 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
         )
         for key, value in data.get("formations", {}).items()
     }
+    research_nodes = {
+        key: ResearchNode(
+            key=value["key"],
+            faction=Faction(value["faction"]),
+            display_name=value["display_name"],
+            cost=int(value.get("cost", 0)),
+            prerequisites=list(value.get("prerequisites", [])),
+            unlock_categories=list(value.get("unlock_categories", [])),
+            unlock_doctrines=list(value.get("unlock_doctrines", [])),
+            unlock_units=list(value.get("unlock_units", [])),
+            source=value.get("source", "catalog-derived"),
+        )
+        for key, value in data.get("research_nodes", {}).items()
+    }
+    unit_economy = {
+        key: UnitEconomy(
+            unit_name=value["unit_name"],
+            faction=Faction(value["faction"]),
+            category=value.get("category", "unknown"),
+            purchase_cost=int(value.get("purchase_cost", 0)),
+            maintenance_cost=int(value.get("maintenance_cost", 0)),
+            repair_cost_per_point=int(value.get("repair_cost_per_point", 0)),
+            research_keys=list(value.get("research_keys", [])),
+            doctrine=value.get("doctrine", ""),
+            manpower_estimate=int(value.get("manpower_estimate", 0)),
+        )
+        for key, value in data.get("unit_economy", {}).items()
+    }
     provinces = {
         key: Province(
             province_id=value["province_id"],
@@ -77,23 +120,36 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
         )
         for key, value in data.get("provinces", {}).items()
     }
-    battalions = {
-        key: Battalion(
+    battalions: dict[str, Battalion] = {}
+    for key, value in data.get("battalions", {}).items():
+        roster = [_roster(item) for item in value.get("roster", [])]
+        authorized_data = value.get("authorized_roster")
+        authorized = [_roster(item) for item in authorized_data] if authorized_data is not None else [
+            BattalionRosterEntry(
+                entry.unit_name,
+                quantity=entry.quantity,
+                stage=entry.stage,
+                category=entry.category,
+                preserved_objects=list(entry.preserved_objects),
+            )
+            for entry in roster
+        ]
+        battalions[key] = Battalion(
             battalion_id=value["battalion_id"],
             faction=Faction(value["faction"]),
             province_id=value["province_id"],
             battalion_type=BattalionType(value.get("battalion_type", "combined_arms")),
-            roster=[_roster(item) for item in value.get("roster", [])],
+            roster=roster,
+            authorized_roster=authorized,
             formation_id=value.get("formation_id", ""),
             is_player_controlled=value.get("is_player_controlled", False),
             movement_remaining=int(value.get("movement_remaining", 1)),
             combat_actions_remaining=int(value.get("combat_actions_remaining", 1)),
             supply=int(value.get("supply", 100)),
+            condition=int(value.get("condition", 100)),
             experience=int(value.get("experience", 0)),
             encircled_turns=int(value.get("encircled_turns", 0)),
         )
-        for key, value in data.get("battalions", {}).items()
-    }
     pending_data = data.get("pending_battle")
     pending = None
     if pending_data:
@@ -136,11 +192,14 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
         game_directory=data.get("game_directory", ""),
         profile_directory=data.get("profile_directory", ""),
         code_x_directory=data.get("code_x_directory", ""),
+        catalog_signature=data.get("catalog_signature", ""),
         map_id=data.get("map_id", "custom"),
         map_metadata=dict(data.get("map_metadata", {})),
         factions=factions,
         alliances=alliances,
         formations=formations,
+        research_nodes=research_nodes,
+        unit_economy=unit_economy,
         provinces=provinces,
         battalions=battalions,
         pending_battle=pending,
