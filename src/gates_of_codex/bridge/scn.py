@@ -3,9 +3,11 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Iterable
 
 from ..codex.catalog import CodeXCatalog
 from ..models import BattalionRosterEntry, CampaignState, PendingBattle
+from ..modstack import normalize_stack, resource_root
 
 
 @dataclass(slots=True)
@@ -26,9 +28,18 @@ class ObjectIdAllocator:
 
 
 class CampaignScnBuilder:
-    def __init__(self, catalog: CodeXCatalog, code_x_directory: str | Path) -> None:
+    def __init__(
+        self,
+        catalog: CodeXCatalog,
+        code_x_directory: str | Path | None = None,
+        *,
+        resource_stack: Iterable[str | Path] | None = None,
+    ) -> None:
         self.catalog = catalog
-        self.root = Path(code_x_directory)
+        values = list(resource_stack or ([] if code_x_directory is None else [code_x_directory]))
+        self.roots = normalize_stack(values)
+        if not self.roots:
+            raise ValueError("CampaignScnBuilder requires at least one resource stack layer")
         self._breed_index: dict[str, str] | None = None
 
     def build(self, state: CampaignState, pending: PendingBattle) -> str:
@@ -81,23 +92,27 @@ class CampaignScnBuilder:
                     raise ValueError(f"Invalid object graph for {object_id}")
 
     def _resolve_breed(self, breed: str, side: str, period: str) -> str:
-        candidates = [
-            self.root / f"resource/set/breed/mp/{side}/{breed}.set",
-            self.root / f"resource/set/breed/mp/{period}/{side}/{breed}.set",
-            self.root / f"resource/set/breed/{breed}.set",
-        ]
-        for path in candidates:
-            if path.is_file():
-                return path.relative_to(self.root / "resource").as_posix()
+        for root in reversed(self.roots):
+            resources = resource_root(root)
+            candidates = [
+                resources / f"set/breed/mp/{side}/{breed}.set",
+                resources / f"set/breed/mp/{period}/{side}/{breed}.set",
+                resources / f"set/breed/{breed}.set",
+            ]
+            for path in candidates:
+                if path.is_file():
+                    return path.relative_to(resources).as_posix()
         if self._breed_index is None:
             self._breed_index = {}
-            breed_root = self.root / "resource/set/breed"
-            if breed_root.is_dir():
-                for path in breed_root.rglob("*.set"):
-                    self._breed_index.setdefault(path.stem.lower(), path.relative_to(self.root / "resource").as_posix())
+            for root in reversed(self.roots):
+                resources = resource_root(root)
+                breed_root = resources / "set/breed"
+                if breed_root.is_dir():
+                    for path in breed_root.rglob("*.set"):
+                        self._breed_index.setdefault(path.stem.lower(), path.relative_to(resources).as_posix())
         result = self._breed_index.get(breed.lower()) if self._breed_index else None
         if not result:
-            raise FileNotFoundError(f"Could not resolve Code:X breed {breed}")
+            raise FileNotFoundError(f"Could not resolve Code:X breed {breed} in the configured mod stack")
         return result
 
     def _human(self, breed: str, side: str, period: str, object_id: str) -> str:
