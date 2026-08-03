@@ -4,7 +4,7 @@ from .codex.catalog import CodeXCatalog, UnitDefinition
 from .models import BattalionRosterEntry, CampaignState, Faction
 
 
-PREFERRED_CATEGORIES = ("infantry", "tank", "ifv", "vehicle", "artillery", "recon")
+PREFERRED_CATEGORIES = ("infantry", "tank", "ifv", "vehicle", "artillery", "recon", "air_defense")
 
 
 def _pick(units: list[UnitDefinition], category: str) -> UnitDefinition | None:
@@ -17,11 +17,18 @@ def populate_starter_rosters(state: CampaignState, catalog: CodeXCatalog) -> Non
         units = catalog.by_faction(battalion.faction.value)
         if not units:
             raise ValueError(f"Code:X catalog contains no units for {battalion.faction.value}")
+        formation = state.formations.get(battalion.formation_id)
+        priorities = list(formation.preferred_categories) if formation else list(PREFERRED_CATEGORIES)
+        for category in PREFERRED_CATEGORIES:
+            if category not in priorities:
+                priorities.append(category)
         infantry = _pick(units, "infantry") or units[0]
         support = None
-        for category in PREFERRED_CATEGORIES[1:]:
+        for category in priorities:
+            if category == "infantry":
+                continue
             support = _pick(units, category)
-            if support:
+            if support is not None:
                 break
         roster = [BattalionRosterEntry(infantry.name, quantity=3, category=infantry.category)]
         if support and support.name != infantry.name:
