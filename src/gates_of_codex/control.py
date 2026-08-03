@@ -4,6 +4,7 @@ from collections import Counter, deque
 
 from .formations import FORMATION_DEPLOYMENTS
 from .models import Alliance, CampaignState, Faction
+from .supply import mark_default_supply_sources
 
 
 CONTROL_PROFILE_ID = "modern_europe_v1"
@@ -99,7 +100,6 @@ def apply_modern_control_profile(state: CampaignState) -> None:
             distances[neighbor_id] = distance + 1
             queue.append((neighbor_id, faction, root, distance + 1))
 
-    # Disconnected or isolated nodes use the nearest seed in development-layout space.
     for province_id, province in state.provinces.items():
         if province_id in claimed:
             continue
@@ -126,7 +126,6 @@ def apply_modern_control_profile(state: CampaignState) -> None:
         province.metadata["control_seed"] = roots[province_id]
         province.metadata["control_distance"] = distances[province_id]
 
-    # Formation locations are authoritative deployment anchors.
     for formation_id, province_id in FORMATION_DEPLOYMENTS.items():
         battalion = next(
             (value for value in state.battalions.values() if value.formation_id == formation_id),
@@ -137,6 +136,7 @@ def apply_modern_control_profile(state: CampaignState) -> None:
         state.provinces[province_id].owner = battalion.faction
         state.provinces[province_id].metadata["formation_anchor"] = formation_id
 
+    mark_default_supply_sources(state)
     counts = Counter(province.owner.value for province in state.provinces.values())
     state.map_metadata.update(
         {
@@ -145,6 +145,7 @@ def apply_modern_control_profile(state: CampaignState) -> None:
             "modern_control_counts": dict(sorted(counts.items())),
             "source_ownership_preserved_in_province_metadata": True,
             "central_asia_status": "provisional PRC and Russia-aligned North Korean deployments",
+            "supply_model": "coalition routes with faction sources",
         }
     )
     state.validate()
