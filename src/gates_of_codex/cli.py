@@ -8,6 +8,7 @@ from pathlib import Path
 from .campaign import CampaignEngine
 from .codex.catalog import CodeXCatalogScanner
 from .doctor import diagnose
+from .frontend import write_frontend_snapshot
 from .launcher import launch_game
 from .models import Faction
 from .scenario import load_bundled_scenario
@@ -46,6 +47,9 @@ def build_parser() -> argparse.ArgumentParser:
     import_battle = sub.add_parser("import-battle")
     import_battle.add_argument("campaign")
     import_battle.add_argument("--save", required=True)
+    frontend = sub.add_parser("export-frontend")
+    frontend.add_argument("campaign")
+    frontend.add_argument("--output", default="godot/campaign_snapshot.json")
     launch = sub.add_parser("launch")
     launch.add_argument("--game", required=True)
     ui = sub.add_parser("ui")
@@ -110,6 +114,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "import-battle":
         result = GatesOfCodeXService().import_battle(args.campaign, save_path=args.save)
         print(json.dumps({"winner": result.winner.value, "survivors": result.survivor_counts}, indent=2))
+        return 0
+    if args.command == "export-frontend":
+        output = write_frontend_snapshot(load_campaign(args.campaign), args.output)
+        print(output)
         return 0
     if args.command == "launch":
         launch_game(args.game)

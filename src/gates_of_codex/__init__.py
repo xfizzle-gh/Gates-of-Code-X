@@ -1,6 +1,7 @@
 """Gates of CodeX campaign application."""
 
 from .models import (
+    Alliance,
     Battalion,
     BattalionRosterEntry,
     CampaignState,
@@ -13,6 +14,7 @@ from .models import (
 )
 
 __all__ = [
+    "Alliance",
     "Battalion",
     "BattalionRosterEntry",
     "CampaignState",
@@ -24,4 +26,4 @@ __all__ = [
     "Province",
 ]
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"

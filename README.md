@@ -7,7 +7,8 @@ The installed Code:X mod is the authoritative source for factions, conquest squa
 ## Implemented
 
 - Gates of Europa Europe graph with 517 stable provinces and observed reciprocal adjacency
-- NATO, Ukraine, Russia, and PRC strategic factions
+- Deterministic modern control profile spanning NATO, Ukraine, Russia, and provisional PRC territory
+- Western and Eastern coalition metadata without merging faction resources or formations
 - National and specialized formation identities beneath each strategic faction
 - Provisional Central Asian deployment zone for PRC and a Russia-aligned North Korean contingent
 - Province graph, battalion movement, capture, combat, retreat, casualties, supply, resources, and turns
@@ -17,11 +18,13 @@ The installed Code:X mod is the authoritative source for factions, conquest squa
 - Formation-aware starter rosters chosen from the installed Code:X catalog
 - GoH `status`, `campaign.scn`, and `campaign.sav` generation
 - Post-battle result and survivor import
-- Command-line workflow and Tk desktop campaign map
+- Versioned Godot-facing campaign snapshot contract
+- Initial Godot 4 map viewer with province control, graph edges, formation markers, pan, and zoom
+- Command-line workflow and Tk developer campaign map
 - Gates of Hell launcher and Windows installation script
 - Linux and Windows automated test workflow
 
-The Europe graph is exact for the observed alpha adjacency contract. Only 63 source provinces exposed human-readable names, and the runtime did not expose complete marker coordinates. Remaining names, exact map markers, final modern ownership, and the Godot presentation layer are follow-up data and UI passes.
+The Europe graph is exact for the observed alpha adjacency contract. Only 63 source provinces exposed human-readable names, and the runtime did not expose complete marker coordinates. The current control profile and development layout are deterministic placeholders intended for iteration, not claims about the original alpha data.
 
 ## Install from source on Windows
 
@@ -36,7 +39,6 @@ py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install .
 gates-of-codex doctor
-gates-of-codex ui
 ```
 
 ## Command-line flow
@@ -48,9 +50,14 @@ gates-of-codex doctor
 # Create a Europe campaign with valid units from the installed Code:X mod
 gates-of-codex new --codex "E:\Steam\steamapps\workshop\content\400750\<CODEX_ID>" --output campaign.json
 
-# Launch the strategic map
+# Export the stable frontend snapshot used by Godot
+gates-of-codex export-frontend campaign.json --output .\godot\campaign_snapshot.json
+
+# Launch the older Tk developer map
 gates-of-codex ui campaign.json
 ```
+
+Open `godot/project.godot` in Godot 4 after generating `godot/campaign_snapshot.json`. The initial viewer draws all 517 provinces, deduplicated graph edges, faction control, and occupied formation markers.
 
 ## Development
 

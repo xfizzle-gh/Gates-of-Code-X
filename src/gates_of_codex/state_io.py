@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from .models import (
+    Alliance,
     Battalion,
     BattalionRosterEntry,
     BattalionType,
@@ -35,6 +36,15 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
             is_eliminated=value.get("is_eliminated", False),
         )
         for key, value in data.get("factions", {}).items()
+    }
+    alliances = {
+        key: Alliance(
+            alliance_id=value["alliance_id"],
+            display_name=value["display_name"],
+            factions=[Faction(item) for item in value.get("factions", [])],
+            notes=value.get("notes", ""),
+        )
+        for key, value in data.get("alliances", {}).items()
     }
     formations = {
         key: Formation(
@@ -129,6 +139,7 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
         map_id=data.get("map_id", "custom"),
         map_metadata=dict(data.get("map_metadata", {})),
         factions=factions,
+        alliances=alliances,
         formations=formations,
         provinces=provinces,
         battalions=battalions,

@@ -5,6 +5,7 @@ import gzip
 import json
 from importlib.resources import files
 
+from .control import apply_modern_control_profile, default_alliances
 from .formations import default_formations, seed_formation_battalions
 from .models import CampaignState, Faction, FactionState, Province
 
@@ -43,7 +44,6 @@ def build_goe_europe_campaign() -> CampaignState:
         map_id=graph["map_id"],
         map_metadata={
             **dict(graph.get("metadata", {})),
-            "modern_ownership_status": "provisional deployment anchors only",
             "central_asia_status": "provisional PRC and North Korean deployment zone",
         },
         factions={
@@ -52,10 +52,12 @@ def build_goe_europe_campaign() -> CampaignState:
             Faction.RUSSIA.value: FactionState(Faction.RUSSIA, resources=1200),
             Faction.PRC.value: FactionState(Faction.PRC, resources=1000),
         },
+        alliances=default_alliances(),
         formations=default_formations(),
         provinces=provinces,
-        schema_version=2,
+        schema_version=3,
     )
     seed_formation_battalions(state)
+    apply_modern_control_profile(state)
     state.validate()
     return state
