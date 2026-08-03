@@ -4,7 +4,7 @@ import json
 import os
 import shutil
 import tempfile
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Iterable
 
@@ -184,7 +184,11 @@ def prepare_stack_handoff(
     if installed is not None:
         installed.parent.mkdir(parents=True, exist_ok=True)
         _atomic_copy(export_save, installed)
-        _atomic_copy(service.manifest_path(export_save), service.manifest_path(installed))
+        installed_manifest = replace(manifest, save_path=str(installed))
+        service.manifest_path(installed).write_text(
+            json.dumps(asdict(installed_manifest), indent=2) + "\n",
+            encoding="utf-8",
+        )
         installed_path = str(installed)
 
     session_path = service.manifest_path(export_save).with_suffix(".session.json")
