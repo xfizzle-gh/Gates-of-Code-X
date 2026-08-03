@@ -7,13 +7,23 @@ from pathlib import Path
 
 from .economy import available_research, formation_recruitment_offers
 from .models import CampaignState, Faction
+from .strategic import (
+    construction_options,
+    ensure_strategic_layer,
+    evaluate_campaign_outcome,
+    infrastructure_levels,
+    update_operational_objectives,
+)
 from .supply import reachable_supply_provinces
 
 
-FRONTEND_SCHEMA_VERSION = 3
+FRONTEND_SCHEMA_VERSION = 4
 
 
 def build_frontend_snapshot(state: CampaignState) -> dict:
+    ensure_strategic_layer(state)
+    objectives = update_operational_objectives(state)
+    outcome = evaluate_campaign_outcome(state)
     state.validate()
     occupied = {battalion.province_id: battalion.battalion_id for battalion in state.battalions.values()}
     xs = [province.x for province in state.provinces.values()]
@@ -44,6 +54,7 @@ def build_frontend_snapshot(state: CampaignState) -> dict:
             "map_id": state.map_id,
             "map_metadata": state.map_metadata,
             "catalog_signature": state.catalog_signature,
+            "outcome": asdict(outcome),
         },
         "bounds": {
             "min_x": min(xs),
@@ -77,6 +88,7 @@ def build_frontend_snapshot(state: CampaignState) -> dict:
             }
             for alliance in sorted(state.alliances.values(), key=lambda value: value.alliance_id)
         ],
+        "objectives": objectives,
         "provinces": [
             {
                 "id": province.province_id,
@@ -88,8 +100,15 @@ def build_frontend_snapshot(state: CampaignState) -> dict:
                 "map_region": province.map_region,
                 "resource_yield": province.resource_yield,
                 "fortification": province.fortification,
+                "infrastructure": infrastructure_levels(province),
+                "construction_options": construction_options(
+                    state, state.selected_faction, province.province_id
+                ),
                 "occupied_by": occupied.get(province.province_id, ""),
-                "supply_source_for": list(province.metadata.get("supply_source_for", [])),
+                "supply_source_for": sorted(
+                    set(province.metadata.get("supply_source_for", []))
+                    | set(province.metadata.get("static_supply_source_for", []))
+                ),
                 "metadata": province.metadata,
             }
             for province in sorted(state.provinces.values(), key=lambda value: value.province_id)
