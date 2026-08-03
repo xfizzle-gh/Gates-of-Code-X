@@ -1,0 +1,59 @@
+name: Gates of CodeX Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  release-package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install and test
+        shell: pwsh
+        run: |
+          python -m pip install . pyinstaller
+          python -m unittest discover -s tests -v
+      - name: Build executables
+        shell: pwsh
+        run: |
+          python -m PyInstaller --noconfirm --clean --onefile --windowed --name GatesOfCodeX run_gates_of_codex.py
+          python -m PyInstaller --noconfirm --clean --onefile --console --name GatesOfCodeXLive run_gates_of_codex_live.py
+      - name: Assemble release directory
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force release/GatesOfCodeX | Out-Null
+          Copy-Item dist/GatesOfCodeX.exe release/GatesOfCodeX/
+          Copy-Item dist/GatesOfCodeXLive.exe release/GatesOfCodeX/
+          Copy-Item README.md, LICENSE release/GatesOfCodeX/
+          Copy-Item -Recurse docs release/GatesOfCodeX/docs
+          Copy-Item -Recurse godot release/GatesOfCodeX/godot
+          Copy-Item -Recurse tools release/GatesOfCodeX/tools
+          Compress-Archive -Path release/GatesOfCodeX -DestinationPath release/GatesOfCodeX-Windows.zip -Force
+          git archive --format=zip --output=release/GatesOfCodeX-Source.zip HEAD
+      - name: Generate SHA-256 checksums
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem release/*.zip
+          $lines = foreach ($file in $files) {
+            $hash = (Get-FileHash -Algorithm SHA256 $file.FullName).Hash.ToLower()
+            "$hash  $($file.Name)"
+          }
+          $lines | Set-Content -Encoding ascii release/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GatesOfCodeX-Release
+          path: |
+            release/GatesOfCodeX-Windows.zip
+            release/GatesOfCodeX-Source.zip
+            release/SHA256SUMS.txt
