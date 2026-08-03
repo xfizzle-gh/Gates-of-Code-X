@@ -24,6 +24,13 @@ from .scenario import load_bundled_scenario
 from .service import GatesOfCodeXService
 from .starter import populate_starter_rosters, set_player_faction
 from .state_io import load_campaign, save_campaign
+from .strategic import (
+    BUILDING_RULES,
+    build_infrastructure,
+    construction_options,
+    evaluate_campaign_outcome,
+    update_operational_objectives,
+)
 from .strategic_ai import StrategicAI
 from .supply import reachable_supply_provinces, refresh_supply_for_faction
 
@@ -89,6 +96,19 @@ def build_parser() -> argparse.ArgumentParser:
     repair.add_argument("campaign")
     repair.add_argument("--formation", required=True)
     repair.add_argument("--points", type=int)
+    construction_status = sub.add_parser("construction-status")
+    construction_status.add_argument("campaign")
+    construction_status.add_argument("province")
+    construction_status.add_argument("--faction", choices=FACTION_CHOICES)
+    construct = sub.add_parser("construct")
+    construct.add_argument("campaign")
+    construct.add_argument("province")
+    construct.add_argument("building", choices=sorted(BUILDING_RULES))
+    construct.add_argument("--faction", choices=FACTION_CHOICES)
+    objectives = sub.add_parser("objectives")
+    objectives.add_argument("campaign")
+    campaign_status = sub.add_parser("campaign-status")
+    campaign_status.add_argument("campaign")
     export = sub.add_parser("export-battle")
     export.add_argument("campaign")
     export.add_argument("--codex", required=True)
@@ -133,6 +153,7 @@ def main(argv: list[str] | None = None) -> int:
         catalog = CodeXCatalogScanner().scan(args.codex)
         populate_starter_rosters(state, catalog)
         initialize_economy(state, catalog)
+        evaluate_campaign_outcome(state)
         save_campaign(state, args.output)
         print(args.output)
         return 0
@@ -273,6 +294,43 @@ def main(argv: list[str] | None = None) -> int:
         save_campaign(state, args.campaign)
         print(json.dumps(asdict(result), indent=2))
         return 0
+    if args.command == "construction-status":
+        state = load_campaign(args.campaign)
+        faction = Faction(args.faction) if args.faction else state.current_faction
+        print(json.dumps({
+            "faction": faction.value,
+            "province": args.province,
+            "options": construction_options(state, faction, args.province),
+        }, indent=2))
+        return 0
+    if args.command == "construct":
+        state = load_campaign(args.campaign)
+        faction = Faction(args.faction) if args.faction else state.current_faction
+        result = build_infrastructure(state, faction, args.province, args.building)
+        save_campaign(state, args.campaign)
+        print(json.dumps(asdict(result), indent=2))
+        return 0
+    if args.command == "objectives":
+        state = load_campaign(args.campaign)
+        print(json.dumps(update_operational_objectives(state), indent=2))
+        save_campaign(state, args.campaign)
+        return 0
+    if args.command == "campaign-status":
+        state = load_campaign(args.campaign)
+        outcome = evaluate_campaign_outcome(state)
+        print(json.dumps({
+            "outcome": asdict(outcome),
+            "objectives": update_operational_objectives(state),
+            "factions": {
+                faction_id: {
+                    "eliminated": faction_state.is_eliminated,
+                    "resources": faction_state.resources,
+                }
+                for faction_id, faction_state in sorted(state.factions.items())
+            },
+        }, indent=2))
+        save_campaign(state, args.campaign)
+        return 0
     if args.command == "export-battle":
         manifest = GatesOfCodeXService().export_battle(
             args.campaign, code_x_directory=args.codex, save_path=args.save, map_name=args.map
@@ -284,7 +342,9 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps({"winner": result.winner.value, "survivors": result.survivor_counts}, indent=2))
         return 0
     if args.command == "export-frontend":
-        output = write_frontend_snapshot(load_campaign(args.campaign), args.output)
+        state = load_campaign(args.campaign)
+        output = write_frontend_snapshot(state, args.output)
+        save_campaign(state, args.campaign)
         print(output)
         return 0
     if args.command == "launch":
