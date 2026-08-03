@@ -8,6 +8,7 @@ from .campaign import CampaignEngine
 from .diplomacy import are_allied, is_friendly_owner
 from .economy import run_ai_economy
 from .models import Battalion, CampaignState, Faction
+from .strategic import run_ai_construction
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,6 +42,17 @@ class StrategicAI:
                         details=economy_action,
                     )
                 )
+        construction = run_ai_construction(self.state, faction)
+        if construction:
+            actions.append(
+                StrategicAction(
+                    battalion_id="",
+                    action="construct",
+                    origin_province_id=str(construction.get("province_id", "")),
+                    target_province_id=str(construction.get("building", "")),
+                    details=construction,
+                )
+            )
         battalion_ids = sorted(
             battalion.battalion_id
             for battalion in self.state.battalions.values()

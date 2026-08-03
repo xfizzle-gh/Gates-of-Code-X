@@ -60,6 +60,7 @@ class RecruitmentOffer:
     unlocked: bool
     preferred: bool
     doctrine: str = ""
+    infrastructure_discount: float = 0.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -250,21 +251,26 @@ def formation_recruitment_offers(state: CampaignState, formation_id: str) -> lis
     ]
     if not candidates:
         candidates = [economy for economy in state.unit_economy.values() if economy.faction == formation.faction]
+    from .strategic import recruitment_discount_for_formation
+
+    discount = recruitment_discount_for_formation(state, formation_id)
     offers = []
     for economy in candidates:
         missing = tuple(sorted(set(economy.research_keys) - researched))
+        discounted_cost = max(1, int(math.ceil(economy.purchase_cost * (1.0 - discount) / 5.0) * 5))
         offers.append(
             RecruitmentOffer(
                 formation_id=formation_id,
                 unit_name=economy.unit_name,
                 category=economy.category,
-                purchase_cost=economy.purchase_cost,
+                purchase_cost=discounted_cost,
                 maintenance_cost=economy.maintenance_cost,
                 research_keys=tuple(economy.research_keys),
                 missing_research=missing,
                 unlocked=not missing,
                 preferred=economy.category in formation.preferred_categories,
                 doctrine=economy.doctrine,
+                infrastructure_discount=discount,
             )
         )
     return sorted(offers, key=lambda offer: (not offer.unlocked, not offer.preferred, offer.purchase_cost, offer.unit_name))

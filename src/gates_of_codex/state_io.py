@@ -215,6 +215,9 @@ def load_campaign(path: str | Path) -> CampaignState:
 
 
 def save_campaign(state: CampaignState, path: str | Path) -> Path:
+    from .strategic import ensure_strategic_layer
+
+    ensure_strategic_layer(state)
     state.validate()
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
