@@ -55,7 +55,6 @@ class StrategicLayerTests(unittest.TestCase):
 
     def test_objective_completion_rewards_once(self) -> None:
         state = self._state()
-        ensure_strategic_layer(state)
         state.map_metadata["operational_objectives"] = [
             {
                 "id": "command",
@@ -81,7 +80,6 @@ class StrategicLayerTests(unittest.TestCase):
 
     def test_primary_objective_and_capital_hold_complete_campaign(self) -> None:
         state = self._state()
-        ensure_strategic_layer(state)
         state.map_metadata["operational_objectives"] = [
             {
                 "id": "advance",
@@ -143,11 +141,13 @@ class StrategicLayerTests(unittest.TestCase):
             current_faction=Faction.NATO,
             factions={
                 "nato": FactionState(Faction.NATO, resources=2000, researched_keys=["core-nato"]),
+                "ukr": FactionState(Faction.UKRAINE, resources=2000),
                 "rusa": FactionState(Faction.RUSSIA, resources=2000, researched_keys=["core-rusa"]),
+                "prc": FactionState(Faction.PRC, resources=2000),
             },
             alliances={
-                "western-coalition": Alliance("western-coalition", "Western", [Faction.NATO]),
-                "eastern-coalition": Alliance("eastern-coalition", "Eastern", [Faction.RUSSIA]),
+                "western-coalition": Alliance("western-coalition", "Western", [Faction.NATO, Faction.UKRAINE]),
+                "eastern-coalition": Alliance("eastern-coalition", "Eastern", [Faction.RUSSIA, Faction.PRC]),
             },
             formations={
                 "nato-formation": Formation("nato-formation", "NATO Formation", Faction.NATO, "US", preferred_categories=["infantry"]),
@@ -187,7 +187,6 @@ class StrategicLayerTests(unittest.TestCase):
             },
         )
         ensure_strategic_layer(state)
-        self = StrategicLayerTests
         for province in state.provinces.values():
             infrastructure_levels(province)
         state.validate()
