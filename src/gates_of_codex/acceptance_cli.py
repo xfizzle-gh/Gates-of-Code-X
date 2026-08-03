@@ -3,12 +3,14 @@ from __future__ import annotations
 import argparse
 import json
 from dataclasses import asdict
+from pathlib import Path
 
 from .acceptance import backup_existing_files, restore_backup, write_acceptance_report
 from .first_engine_test import DEFAULT_INSTALL_NAME, DEFAULT_TEST_MAP, run_first_engine_test
 from .map_discovery import discover_maps
 from .modstack import resolve_stack
 from .profiles import discover_profile_locations
+from .service import GatesOfCodeXService
 from .stack_acceptance import (
     prepare_stack_handoff,
     validate_mod_stack,
@@ -69,6 +71,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     first_test.add_argument("--map", default=DEFAULT_TEST_MAP)
     first_test.add_argument("--install-name", default=DEFAULT_INSTALL_NAME)
+    first_test.add_argument(
+        "--template-save",
+        help="Existing valid Conquest save used only as a saveinfo metadata template. Auto-detected when omitted.",
+    )
     first_test.add_argument("--work-root", default="live")
     first_test.add_argument("--backup-root", default="backups")
     first_test.add_argument("--output")
@@ -82,6 +88,9 @@ def build_parser() -> argparse.ArgumentParser:
     restore = sub.add_parser("restore", help="Restore files from a Gates of CodeX backup")
     restore.add_argument("backup")
 
+    cleanup = sub.add_parser("cleanup-save", help="Remove a generated acceptance save and its sidecar files")
+    cleanup.add_argument("--save", required=True)
+
     handoff = sub.add_parser("handoff", help="Validate, back up, export, optionally install, and launch")
     handoff.add_argument("campaign")
     handoff.add_argument("--game", required=True)
@@ -90,6 +99,7 @@ def build_parser() -> argparse.ArgumentParser:
     handoff.add_argument("--map", required=True)
     handoff.add_argument("--profile")
     handoff.add_argument("--install-save")
+    handoff.add_argument("--template-save")
     handoff.add_argument("--backup-root")
     handoff.add_argument("--launch", action="store_true")
 
@@ -147,6 +157,7 @@ def main(argv: list[str] | None = None) -> int:
             work_root=args.work_root,
             map_name=args.map,
             install_name=args.install_name,
+            template_save=args.template_save,
             backup_root=args.backup_root,
             launch=args.launch,
         )
@@ -165,6 +176,20 @@ def main(argv: list[str] | None = None) -> int:
         restored = restore_backup(args.backup)
         print(json.dumps([str(value) for value in restored], indent=2))
         return 0
+    if args.command == "cleanup-save":
+        save = Path(args.save).expanduser().resolve()
+        related = [
+            save,
+            GatesOfCodeXService.manifest_path(save),
+            GatesOfCodeXService.manifest_path(save).with_suffix(".session.json"),
+        ]
+        removed: list[str] = []
+        for path in related:
+            if path.is_file():
+                path.unlink()
+                removed.append(str(path))
+        print(json.dumps({"removed": removed, "save": str(save)}, indent=2))
+        return 0
     if args.command == "handoff":
         result = prepare_stack_handoff(
             args.campaign,
@@ -176,6 +201,7 @@ def main(argv: list[str] | None = None) -> int:
             map_name=args.map,
             profile_directory=args.profile,
             install_save_path=args.install_save,
+            status_template_path=args.template_save,
             backup_root=args.backup_root,
             launch=args.launch,
         )
