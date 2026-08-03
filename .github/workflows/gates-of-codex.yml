@@ -30,6 +30,14 @@ jobs:
         run: gates-of-codex --help
       - name: Live acceptance CLI smoke test
         run: gates-of-codex-live --help
+      - name: Windows PowerShell installer smoke test
+        if: runner.os == 'Windows' && matrix.python-version == '3.11'
+        shell: pwsh
+        run: |
+          Remove-Item -LiteralPath .venv -Recurse -Force -ErrorAction SilentlyContinue
+          .\tools\install_gates_of_codex.ps1 -Python (Get-Command python).Source -NoPythonInstall
+          .\.venv\Scripts\gates-of-codex.exe --help
+          .\.venv\Scripts\gates-of-codex-live.exe --help
 
   windows-executable:
     needs: test
