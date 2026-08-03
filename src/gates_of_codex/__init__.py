@@ -6,6 +6,8 @@ from .models import (
     CampaignState,
     Faction,
     FactionState,
+    Formation,
+    FormationKind,
     PendingBattle,
     Province,
 )
@@ -16,8 +18,10 @@ __all__ = [
     "CampaignState",
     "Faction",
     "FactionState",
+    "Formation",
+    "FormationKind",
     "PendingBattle",
     "Province",
 ]
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"

@@ -21,6 +21,19 @@ class BattalionType(StrEnum):
     COMBINED_ARMS = "combined_arms"
 
 
+class FormationKind(StrEnum):
+    ARMORED_BRIGADE = "armored_brigade"
+    MECHANIZED_BRIGADE = "mechanized_brigade"
+    AIRBORNE_BRIGADE = "airborne_brigade"
+    AIR_ASSAULT_BRIGADE = "air_assault_brigade"
+    PANZERGRENADIER_BRIGADE = "panzergrenadier_brigade"
+    NAVAL_INFANTRY_BRIGADE = "naval_infantry_brigade"
+    COMBINED_ARMS_BRIGADE = "combined_arms_brigade"
+    BATTLEGROUP = "battlegroup"
+    EXPEDITIONARY_BRIGADE = "expeditionary_brigade"
+    SUPPORT_GROUP = "support_group"
+
+
 @dataclass(slots=True)
 class BattalionRosterEntry:
     unit_name: str
@@ -37,12 +50,37 @@ class BattalionRosterEntry:
 
 
 @dataclass(slots=True)
+class Formation:
+    formation_id: str
+    display_name: str
+    faction: Faction
+    nation: str
+    kind: FormationKind = FormationKind.COMBINED_ARMS_BRIGADE
+    deployment_zone: str = ""
+    doctrine_tags: list[str] = field(default_factory=list)
+    preferred_categories: list[str] = field(default_factory=list)
+    is_foreign_contingent: bool = False
+    notes: str = ""
+
+    def validate(self) -> None:
+        if not self.formation_id.strip():
+            raise ValueError("Formation ID cannot be empty")
+        if not self.display_name.strip():
+            raise ValueError(f"Formation {self.formation_id} has no display name")
+        if not self.nation.strip():
+            raise ValueError(f"Formation {self.formation_id} has no nation tag")
+        if self.faction == Faction.NEUTRAL:
+            raise ValueError(f"Formation {self.formation_id} cannot belong to neutral")
+
+
+@dataclass(slots=True)
 class Battalion:
     battalion_id: str
     faction: Faction
     province_id: str
     battalion_type: BattalionType = BattalionType.COMBINED_ARMS
     roster: list[BattalionRosterEntry] = field(default_factory=list)
+    formation_id: str = ""
     is_player_controlled: bool = False
     movement_remaining: int = 1
     combat_actions_remaining: int = 1
@@ -81,6 +119,7 @@ class Province:
     y: float = 0.0
     resource_yield: int = 10
     fortification: int = 0
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def validate(self) -> None:
         if not self.province_id.strip():
@@ -135,17 +174,26 @@ class CampaignState:
     game_directory: str = ""
     profile_directory: str = ""
     code_x_directory: str = ""
+    map_id: str = "custom"
+    map_metadata: dict[str, Any] = field(default_factory=dict)
     factions: dict[str, FactionState] = field(default_factory=dict)
+    formations: dict[str, Formation] = field(default_factory=dict)
     provinces: dict[str, Province] = field(default_factory=dict)
     battalions: dict[str, Battalion] = field(default_factory=dict)
     pending_battle: PendingBattle | None = None
-    schema_version: int = 1
+    schema_version: int = 2
 
     def validate(self) -> None:
         if self.turn_number < 1:
             raise ValueError("Campaign turn_number must be at least 1")
         if not self.provinces:
             raise ValueError("Campaign must contain at least one province")
+        for key, formation in self.formations.items():
+            if key != formation.formation_id:
+                raise ValueError(f"Formation key mismatch: {key}")
+            formation.validate()
+            if formation.faction.value not in self.factions:
+                raise ValueError(f"Formation {key} references missing faction {formation.faction.value}")
         for key, province in self.provinces.items():
             if key != province.province_id:
                 raise ValueError(f"Province key mismatch: {key}")
@@ -164,6 +212,12 @@ class CampaignState:
             battalion.validate()
             if battalion.province_id not in self.provinces:
                 raise ValueError(f"Battalion {key} references missing province")
+            if battalion.formation_id:
+                formation = self.formations.get(battalion.formation_id)
+                if formation is None:
+                    raise ValueError(f"Battalion {key} references missing formation {battalion.formation_id}")
+                if formation.faction != battalion.faction:
+                    raise ValueError(f"Battalion {key} faction does not match formation {formation.formation_id}")
             previous = occupied.setdefault(battalion.province_id, key)
             if previous != key:
                 raise ValueError(f"Province {battalion.province_id} contains multiple battalions")

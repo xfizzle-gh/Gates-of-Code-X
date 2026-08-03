@@ -17,6 +17,10 @@ from gates_of_codex.starter import populate_starter_rosters
 from gates_of_codex.state_io import load_campaign, save_campaign
 
 
+NATO_BATTALION = "formation-01"
+RUSSIAN_BATTALION = "formation-08"
+
+
 class GatesOfCodeXTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
@@ -48,10 +52,21 @@ class GatesOfCodeXTests(unittest.TestCase):
         (self.codex / "resource/script/multiplayer/units/nato/2022s.nato.lua").write_text("".join(lua), encoding="utf-8")
         (self.codex / "mod.info").write_text('{name "Code:X"}\n', encoding="utf-8")
 
+    @staticmethod
+    def _prepare_nato_russia_battle(state) -> None:
+        engine = CampaignEngine(state)
+        engine.move_or_attack(NATO_BATTALION, "Westfalen")
+        state.battalions[NATO_BATTALION].movement_remaining = 1
+        state.battalions[RUSSIAN_BATTALION].province_id = "Hessen"
+        state.provinces["Hessen"].owner = Faction.RUSSIA
+        engine.move_or_attack(NATO_BATTALION, "Hessen")
+
     def test_bundled_scenario_validates(self) -> None:
         state = load_bundled_scenario()
         state.validate()
         self.assertEqual(set(state.factions), {"nato", "ukr", "rusa", "prc"})
+        self.assertEqual(517, len(state.provinces))
+        self.assertGreaterEqual(len(state.formations), 14)
 
     def test_campaign_round_trip(self) -> None:
         state = load_bundled_scenario()
@@ -60,12 +75,13 @@ class GatesOfCodeXTests(unittest.TestCase):
         loaded = load_campaign(path)
         self.assertEqual(loaded.campaign_name, state.campaign_name)
         self.assertEqual(len(loaded.provinces), len(state.provinces))
+        self.assertEqual(len(loaded.formations), len(state.formations))
 
     def test_neutral_capture(self) -> None:
         state = load_bundled_scenario()
-        result = CampaignEngine(state).move_or_attack("nato-1", "center")
+        result = CampaignEngine(state).move_or_attack(NATO_BATTALION, "Westfalen")
         self.assertTrue(result.moved)
-        self.assertEqual(state.provinces["center"].owner, Faction.NATO)
+        self.assertEqual(state.provinces["Westfalen"].owner, Faction.NATO)
 
     def test_catalog_scans_all_factions(self) -> None:
         catalog = CodeXCatalogScanner().scan(self.codex)
@@ -81,10 +97,7 @@ class GatesOfCodeXTests(unittest.TestCase):
 
     def test_status_round_trip(self) -> None:
         state = load_bundled_scenario()
-        engine = CampaignEngine(state)
-        engine.move_or_attack("nato-1", "center")
-        state.battalions["nato-1"].movement_remaining = 1
-        engine.move_or_attack("nato-1", "rusa_front")
+        self._prepare_nato_russia_battle(state)
         text = StatusBuilder().build(state.pending_battle, BattleStatusOptions("multi/4x4/test", played_games=4, won_games=2))
         result = StatusBuilder().parse_result(text)
         self.assertEqual(result, StatusResult(4, 2))
@@ -93,10 +106,7 @@ class GatesOfCodeXTests(unittest.TestCase):
         state = load_bundled_scenario()
         catalog = CodeXCatalogScanner().scan(self.codex)
         populate_starter_rosters(state, catalog)
-        state.battalions["nato-1"].province_id = "center"
-        state.battalions["nato-1"].movement_remaining = 1
-        state.provinces["center"].owner = Faction.NATO
-        CampaignEngine(state).move_or_attack("nato-1", "rusa_front")
+        self._prepare_nato_russia_battle(state)
         text = CampaignScnBuilder(catalog, self.codex).build(state, state.pending_battle)
         self.assertTrue(CampaignScnParser().parse_squads(text))
 
