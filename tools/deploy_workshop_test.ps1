@@ -58,11 +58,6 @@ if ($null -eq $git) {
     throw "Git is required to enumerate tracked deployment files."
 }
 
-$tracked = @(& $git.Source -C $Source ls-files --cached --others --exclude-standard 2>$null)
-if ($LASTEXITCODE -ne 0) {
-    throw "Unable to enumerate repository files with git ls-files."
-}
-
 # Only tracked files are deployed. Untracked runtime state such as .venv, live,
 # backups, dist, build, and local logs is never copied.
 $tracked = @(& $git.Source -C $Source ls-files 2>$null | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
