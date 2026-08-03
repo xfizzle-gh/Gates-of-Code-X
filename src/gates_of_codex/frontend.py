@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import json
 import tempfile
+from dataclasses import asdict
 from pathlib import Path
 
+from .economy import available_research, formation_recruitment_offers
 from .models import CampaignState, Faction
 from .supply import reachable_supply_provinces
 
 
-FRONTEND_SCHEMA_VERSION = 2
+FRONTEND_SCHEMA_VERSION = 3
 
 
 def build_frontend_snapshot(state: CampaignState) -> dict:
@@ -41,6 +43,7 @@ def build_frontend_snapshot(state: CampaignState) -> dict:
             "difficulty": state.difficulty,
             "map_id": state.map_id,
             "map_metadata": state.map_metadata,
+            "catalog_signature": state.catalog_signature,
         },
         "bounds": {
             "min_x": min(xs),
@@ -53,6 +56,12 @@ def build_frontend_snapshot(state: CampaignState) -> dict:
                 "id": faction_id,
                 "resources": faction.resources,
                 "researched_keys": list(faction.researched_keys),
+                "available_research": [
+                    node.key for node in available_research(state, Faction(faction_id))
+                ] if state.research_nodes else [],
+                "reinforcement_pool": [asdict(entry) for entry in faction.reinforcement_pool],
+                "income_last_round": faction.income_last_round,
+                "maintenance_last_round": faction.maintenance_last_round,
                 "is_human_controlled": faction.is_human_controlled,
                 "is_eliminated": faction.is_eliminated,
                 "supply_reachable_provinces": len(supply_reach.get(faction_id, set())),
@@ -86,6 +95,20 @@ def build_frontend_snapshot(state: CampaignState) -> dict:
             for province in sorted(state.provinces.values(), key=lambda value: value.province_id)
         ],
         "edges": [[left, right] for left, right in edges],
+        "research": [
+            {
+                "key": node.key,
+                "faction": node.faction.value,
+                "display_name": node.display_name,
+                "cost": node.cost,
+                "prerequisites": list(node.prerequisites),
+                "unlock_categories": list(node.unlock_categories),
+                "unlock_doctrines": list(node.unlock_doctrines),
+                "unlock_units": list(node.unlock_units),
+                "source": node.source,
+            }
+            for node in sorted(state.research_nodes.values(), key=lambda value: value.key)
+        ],
         "formations": [
             {
                 "id": formation.formation_id,
@@ -98,6 +121,9 @@ def build_frontend_snapshot(state: CampaignState) -> dict:
                 "preferred_categories": list(formation.preferred_categories),
                 "is_foreign_contingent": formation.is_foreign_contingent,
                 "notes": formation.notes,
+                "recruitment_offers": [
+                    asdict(offer) for offer in formation_recruitment_offers(state, formation.formation_id)
+                ] if state.unit_economy else [],
             }
             for formation in sorted(state.formations.values(), key=lambda value: value.formation_id)
         ],
@@ -109,6 +135,10 @@ def build_frontend_snapshot(state: CampaignState) -> dict:
                 "province_id": battalion.province_id,
                 "battalion_type": battalion.battalion_type.value,
                 "unit_count": battalion.unit_count,
+                "authorized_unit_count": battalion.authorized_unit_count,
+                "replacement_deficit": battalion.replacement_deficit,
+                "condition": battalion.condition,
+                "repair_points_needed": 100 - battalion.condition,
                 "supply": battalion.supply,
                 "is_in_supply": battalion.province_id in supply_reach.get(battalion.faction.value, set()),
                 "encircled_turns": battalion.encircled_turns,
@@ -116,6 +146,8 @@ def build_frontend_snapshot(state: CampaignState) -> dict:
                 "movement_remaining": battalion.movement_remaining,
                 "combat_actions_remaining": battalion.combat_actions_remaining,
                 "is_player_controlled": battalion.is_player_controlled,
+                "roster": [asdict(entry) for entry in battalion.roster],
+                "authorized_roster": [asdict(entry) for entry in battalion.authorized_roster],
             }
             for battalion in sorted(state.battalions.values(), key=lambda value: value.battalion_id)
         ],
