@@ -11,14 +11,13 @@ from typing import Iterable
 from .acceptance import (
     AcceptanceReport,
     HandoffResult,
-    MapCandidate,
     ValidationCheck,
     backup_existing_files,
-    discover_maps,
     verify_tactical_result,
 )
 from .codex.catalog import CodeXCatalogScanner
 from .launcher import find_game_executable, launch_game
+from .map_discovery import MapCandidate, discover_maps
 from .modstack import (
     resolve_stack,
     stack_to_strings,
@@ -125,7 +124,7 @@ def validate_mod_stack(
         ValidationCheck(
             "tactical_maps",
             bool(report.maps),
-            f"{len(report.maps)} candidate map identifiers discovered across the stack",
+            f"{len(report.maps)} playable map roots discovered across the stack",
         )
     )
     if profile is not None:
