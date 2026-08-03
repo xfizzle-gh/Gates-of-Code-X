@@ -24,7 +24,7 @@ The checked-in `config/mod-stack.windows.json` represents this order for the cur
   --output ".\live\validation.json"
 ```
 
-The command verifies the game executable, primary Code:X metadata, every required stack path, West81 to Code:X to AI Overhaul ordering, all four unit catalogs, a signature covering runtime scripts and sets from every mod layer, map discovery, and optional profile write access.
+The command verifies the game executable, primary Code:X metadata, every required stack path, West81 to Code:X to AI Overhaul ordering, all four unit catalogs, a signature covering runtime scripts and sets from every mod layer, playable map roots, and optional profile write access.
 
 ## 2. Find a valid tactical map identifier
 
@@ -33,12 +33,23 @@ The command verifies the game executable, primary Code:X metadata, every require
   --game "E:\Steam\steamapps\common\Call to Arms - Gates of Hell" `
   --codex "E:\Steam\steamapps\workshop\content\400750\3261086933" `
   --stack-config ".\config\mod-stack.windows.json" `
-  --contains 2x2
+  --contains dcg_
 ```
 
-Use one returned `identifier` exactly as the handoff map.
+Only directories containing a literal `map` or `map.mi` file are returned. Support files such as `ammunition.mi`, `battle_zones.mi`, mode scripts, triggers, and weather helpers are not standalone map identifiers. When multiple layers provide the same map, the highest-priority layer wins. Use one returned `identifier` exactly as the handoff map.
 
-## 3. Create the campaign against the same stack
+## 3. Discover the GoH profile and save location
+
+```powershell
+.\.venv\Scripts\gates-of-codex-live.exe profiles `
+  --search-root "$HOME" `
+  --max-depth 8 `
+  --output ".\live\profiles.json"
+```
+
+The command checks standard Documents and OneDrive locations, then performs a bounded search under any supplied roots. It reports profile roots and likely `save`, `saves`, `campaign`, `campaigns`, or `dynamic_conquest` directories. Do not use `--install-save` until the actual save location is identified.
+
+## 4. Create the campaign against the same stack
 
 ```powershell
 .\.venv\Scripts\gates-of-codex.exe new `
@@ -50,7 +61,7 @@ Use one returned `identifier` exactly as the handoff map.
 
 The campaign stores the ordered resource stack and the full stack signature. A later export is rejected if Code:X or the AI Overhaul changed.
 
-## 4. Create a guarded tactical handoff
+## 5. Create a guarded tactical handoff
 
 First create a pending strategic battle. Then run:
 
@@ -60,16 +71,16 @@ First create a pending strategic battle. Then run:
   --codex "E:\Steam\steamapps\workshop\content\400750\3261086933" `
   --stack-config ".\config\mod-stack.windows.json" `
   --save ".\live\campaign.sav" `
-  --map "multi/2x2/<MAP_IDENTIFIER>" `
+  --map "multi/dcg_[cwa71]_fulda" `
+  --profile "<PROFILE_ROOT>" `
+  --install-save "<EXACT_GAME_SAVE_PATH>" `
   --backup-root ".\backups" `
   --launch
 ```
 
 The handoff command validates the stack, backs up strategic and tactical files, rejects stack-signature mismatches, resolves breeds from highest to lowest layer, generates the tactical save and manifest, optionally installs the save, optionally launches GoH, and records a machine-readable session file.
 
-Use `--install-save <path>` only after identifying the exact profile save path used by the installed game.
-
-## 5. Play and finish the battle
+## 6. Play and finish the battle
 
 Before loading the save, confirm the GoH mod selection uses the required order. Verify:
 
@@ -84,7 +95,7 @@ Before loading the save, confirm the GoH mod selection uses the required order. 
 
 Do not import the battle until verification succeeds.
 
-## 6. Verify the updated tactical save
+## 7. Verify the updated tactical save
 
 ```powershell
 .\.venv\Scripts\gates-of-codex-live.exe verify ".\live\campaign.json" `
@@ -113,4 +124,4 @@ The restore operation atomically replaces only files listed in that backup's `ba
 
 ## Acceptance evidence
 
-Retain the validation JSON, handoff session JSON, pre-battle backup, updated `campaign.sav`, manifest, acceptance report, GoH log, active-mod-order screenshot, initial-spawn screenshot, and post-battle result screenshot.
+Retain the validation JSON, profile-discovery JSON, handoff session JSON, pre-battle backup, updated `campaign.sav`, manifest, acceptance report, GoH log, active-mod-order screenshot, initial-spawn screenshot, and post-battle result screenshot.
