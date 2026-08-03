@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from dataclasses import asdict
 from pathlib import Path
 
 from .campaign import CampaignEngine
@@ -104,7 +105,7 @@ def main(argv: list[str] | None = None) -> int:
         manifest = GatesOfCodeXService().export_battle(
             args.campaign, code_x_directory=args.codex, save_path=args.save, map_name=args.map
         )
-        print(json.dumps(manifest.__dict__, indent=2))
+        print(json.dumps(asdict(manifest), indent=2))
         return 0
     if args.command == "import-battle":
         result = GatesOfCodeXService().import_battle(args.campaign, save_path=args.save)
