@@ -223,9 +223,7 @@ class CodeXCatalogScanner:
         text = path.read_text(encoding="utf-8-sig", errors="replace")
         default_side = self._side_from_path(path)
         source = f"{layer_index}:{layer_name}/{path.relative_to(resources).as_posix()}"
-        for row in re.finditer(r'\{[^{}]*unit\s*=\s*"([^"]+)"[^{}]*\}', text, flags=re.S):
-            body = row.group(0)
-            name = row.group(1)
+        for name, body in self._lua_rows(text):
             side = self._side_from_name(name) or default_side
             if side not in self.FACTIONS:
                 continue
@@ -243,6 +241,25 @@ class CodeXCatalogScanner:
             if "Doctrine" in unit.type_tags:
                 unit.doctrine = path.stem
             unit.category = self._category(unit)
+
+    @staticmethod
+    def _lua_rows(text: str) -> Iterator[tuple[str, str]]:
+        for match in re.finditer(r'\bunit\s*=\s*"([^"]+)"', text):
+            start = text.rfind("{", 0, match.start())
+            if start < 0:
+                continue
+            depth = 0
+            end = None
+            for index in range(start, len(text)):
+                if text[index] == "{":
+                    depth += 1
+                elif text[index] == "}":
+                    depth -= 1
+                    if depth == 0:
+                        end = index + 1
+                        break
+            if end is not None:
+                yield match.group(1), text[start:end]
 
     @classmethod
     def _source_entries(cls, text: str) -> Iterator[_SourceEntry]:
