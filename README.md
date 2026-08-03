@@ -27,11 +27,11 @@ The installed Code:X mod is the authoritative source for factions, conquest squa
 - Code:X `.set` and Lua unit-catalog scanning
 - Formation-aware starter rosters chosen from the installed Code:X catalog
 - GoH `status`, `campaign.scn`, and `campaign.sav` generation
-- Post-battle result and survivor import
+- Guarded tactical handoff with installation validation, map discovery, backups, manifest binding, and optional launch
+- Post-battle engine acceptance verification and survivor import
 - Versioned Godot-facing campaign snapshot contract with supply, economy, infrastructure, objectives, and victory state
 - Godot 4 strategic map with province selection and campaign, formation, construction, economy, and objective panels
-- Command-line workflow and Tk developer campaign map
-- Gates of Hell launcher and Windows installation script
+- Reproducible Windows executable and source release packaging with SHA-256 checksums
 - Linux and Windows automated test workflow
 
 The Europe graph is exact for the observed alpha adjacency contract. Only 63 source provinces exposed human-readable names, and the runtime did not expose complete marker coordinates. The current control profile and development layout are deterministic placeholders intended for iteration, not claims about the original alpha data.
@@ -49,55 +49,56 @@ py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install .
 gates-of-codex doctor
+gates-of-codex-live --help
 ```
 
-## Command-line flow
+## Strategic campaign flow
 
 ```powershell
-# Check paths and scan Code:X
-gates-of-codex doctor
-
-# Create a Europe campaign with valid units and economy data from installed Code:X
+# Create a Europe campaign from the installed Code:X catalog
 gates-of-codex new --codex "E:\Steam\steamapps\workshop\content\400750\<CODEX_ID>" --output campaign.json
 
-# Inspect research and buy the next node
+# Research, recruit, reinforce, repair, and construct
 gates-of-codex research-status campaign.json --faction nato
-gates-of-codex research campaign.json --faction nato --key codex:nato:category:tank
-
-# Inspect a formation's allowed Code:X recruitment pool
 gates-of-codex list-recruits campaign.json --formation nato-us-armored
-
-# Purchase units into the persistent reinforcement pool, then assign them
-gates-of-codex recruit campaign.json --formation nato-us-armored --unit "tank(nato)" --quantity 1
-gates-of-codex assign-reinforcements campaign.json --formation nato-us-armored --unit "tank(nato)" --quantity 1
-
-# Inspect and construct province infrastructure
-gates-of-codex construction-status campaign.json Warszawa --faction nato
-gates-of-codex construct campaign.json Warszawa fortification --faction nato
+gates-of-codex recruit campaign.json --formation nato-us-armored --unit "tank(nato)"
+gates-of-codex assign-reinforcements campaign.json --formation nato-us-armored --unit "tank(nato)"
+gates-of-codex repair campaign.json --formation nato-us-armored --points 10
 gates-of-codex construct campaign.json Warszawa supply_hub --faction nato
 
-# Inspect operational progress and campaign victory state
+# Inspect objectives and campaign outcome
 gates-of-codex objectives campaign.json
 gates-of-codex campaign-status campaign.json
 
-# Inspect resources, authorized strength, deficits, and formation condition
-gates-of-codex economy-status campaign.json --faction nato
-
-# Repair a supplied formation
-gates-of-codex repair campaign.json --formation nato-us-armored --points 10
-
-# Inspect or apply supply for the current map state
-gates-of-codex supply-status campaign.json
-gates-of-codex supply-status campaign.json --refresh
-
-# Run a deterministic non-player strategic, economy, and construction turn
+# Run a non-player strategic, economy, and construction turn
 gates-of-codex run-ai-turn campaign.json --faction rusa --seed 7 --advance-turn
 
-# Export the stable frontend snapshot used by Godot
+# Export data for the Godot frontend
 gates-of-codex export-frontend campaign.json --output .\godot\campaign_snapshot.json
 ```
 
-Open `godot/project.godot` in Godot 4 after generating `godot/campaign_snapshot.json`. Click provinces to inspect ownership, infrastructure, available construction, occupying formations, objectives, resources, and campaign status.
+Open `godot/project.godot` after generating `godot/campaign_snapshot.json`. Click provinces to inspect ownership, infrastructure, available construction, occupying formations, objectives, resources, and campaign status.
+
+## Guarded live battle flow
+
+```powershell
+# Validate the game, Code:X, all four factions, maps, profile, and write access
+gates-of-codex-live validate --game "<GOH_DIRECTORY>" --codex "<CODEX_DIRECTORY>" --profile "<PROFILE_DIRECTORY>"
+
+# Discover a valid map identifier
+gates-of-codex-live maps --game "<GOH_DIRECTORY>" --codex "<CODEX_DIRECTORY>" --contains 2x2
+
+# Back up, export, optionally install, and launch
+gates-of-codex-live handoff campaign.json --game "<GOH_DIRECTORY>" --codex "<CODEX_DIRECTORY>" --profile "<PROFILE_DIRECTORY>" --save ".\live\campaign.sav" --map "multi/2x2/<MAP>" --backup-root ".\backups" --launch
+
+# After completing the battle, verify the engine-updated save
+gates-of-codex-live verify campaign.json --save ".\live\campaign.sav" --codex "<CODEX_DIRECTORY>" --output ".\live\acceptance-report.json"
+
+# Import only after verification succeeds
+gates-of-codex import-battle campaign.json --save ".\live\campaign.sav"
+```
+
+See `docs/live-acceptance.md` for the complete first-engine-test and recovery procedure.
 
 ## Development
 
@@ -107,4 +108,4 @@ py -3.11 -m unittest discover -s tests -v
 
 ## Runtime validation boundary
 
-The save structures and result flow are covered by automated synthetic round-trip tests and are based on the clean-room contract recovered from the supplied project. A live Gates of Hell and Code:X installation is still required to validate exact engine acceptance, default inventories, map identifiers, and any changes introduced by future Code:X or GoH releases.
+The application now provides the tooling needed to perform and document the live engine acceptance test. The repository cannot itself prove Gates of Hell engine acceptance without running one generated battle on a Windows installation with the current Code:X version. Final map artwork, unresolved source province names, and balance remain content and tuning work after that compatibility test.
