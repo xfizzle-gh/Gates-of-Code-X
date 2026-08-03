@@ -42,12 +42,13 @@ class StrategicAI:
             if target is None:
                 actions.append(StrategicAction(battalion_id, "hold", origin))
                 continue
+            target_owner_before = self.state.provinces[target].owner
             result = self.engine.move_or_attack(battalion_id, target)
             if result.pending_battle is not None:
                 winner = self.engine.auto_resolve_pending_battle()
                 actions.append(StrategicAction(battalion_id, "attack", origin, target, winner))
             else:
-                action = "capture" if self.state.provinces[target].owner == faction else "move"
+                action = "capture" if target_owner_before == Faction.NEUTRAL else "move"
                 actions.append(StrategicAction(battalion_id, action, origin, target))
         return actions
 
