@@ -6,11 +6,13 @@ import unittest
 from pathlib import Path
 
 from gates_of_codex.codex.catalog import CodeXCatalogScanner
+from gates_of_codex.first_engine_test import run_first_engine_test
 from gates_of_codex.modstack import (
     load_stack_config,
     normalize_stack,
     validate_known_order,
 )
+from gates_of_codex.service import BattleExportManifest, GatesOfCodeXService
 from gates_of_codex.stack_acceptance import validate_mod_stack
 
 
@@ -23,8 +25,9 @@ class OrderedModStackTests(unittest.TestCase):
         self.codex = self.root / "3261086933"
         self.ai = self.root / "3636883799"
         self.gates = self.root / "Gates-of-Code-X"
-        self.profile = self.root / "profiles"
-        for path in (self.game, self.west, self.codex, self.ai, self.gates, self.profile):
+        self.profile = self.root / "profiles/12345678"
+        self.install_directory = self.profile / "campaign"
+        for path in (self.game, self.west, self.codex, self.ai, self.gates, self.install_directory):
             path.mkdir(parents=True)
         for path, name in (
             (self.west, "West81"),
@@ -101,6 +104,31 @@ class OrderedModStackTests(unittest.TestCase):
         )
         roots = load_stack_config(config)
         self.assertEqual([self.game.resolve(), self.west.resolve(), self.codex.resolve(), self.ai.resolve(), self.gates.resolve()], roots)
+
+    def test_first_engine_test_stages_installs_and_rewrites_manifest(self) -> None:
+        result = run_first_engine_test(
+            game_directory=self.game,
+            code_x_directory=self.codex,
+            profile_directory=self.profile,
+            install_directory=self.install_directory,
+            resource_stack=self.stack,
+            work_root=self.root / "live",
+            map_name="multi/2x2/stack_test",
+            install_name="gates_of_codex_acceptance.sav",
+            backup_root=self.root / "backups",
+            launch=False,
+        )
+
+        installed = Path(result.installed_save_path)
+        self.assertTrue(installed.is_file())
+        self.assertEqual("nato-pol-mechanized", result.selection.attacker_formation)
+        self.assertEqual("rusa-motor-rifle", result.selection.defender_formation)
+        self.assertEqual("multi/2x2/stack_test", result.map_name)
+        manifest_path = GatesOfCodeXService.manifest_path(installed)
+        manifest = BattleExportManifest(**json.loads(manifest_path.read_text(encoding="utf-8")))
+        self.assertEqual(installed.resolve(), Path(manifest.save_path).resolve())
+        self.assertIn(str(installed), result.verify_command)
+        self.assertIn(str(installed), result.import_command)
 
 
 if __name__ == "__main__":
