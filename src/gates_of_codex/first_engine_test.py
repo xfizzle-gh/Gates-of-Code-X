@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Iterable
 
+from .bridge.archive import CampaignSaveArchive
 from .campaign import CampaignEngine
 from .codex.catalog import CodeXCatalogScanner
 from .economy import initialize_economy
@@ -40,6 +41,7 @@ class FirstEngineTestResult:
     campaign_path: str
     export_save_path: str
     installed_save_path: str
+    status_template_path: str
     map_name: str
     profile_directory: str
     install_directory: str
@@ -54,6 +56,7 @@ class FirstEngineTestResult:
             "campaign_path": self.campaign_path,
             "export_save_path": self.export_save_path,
             "installed_save_path": self.installed_save_path,
+            "status_template_path": self.status_template_path,
             "map_name": self.map_name,
             "profile_directory": self.profile_directory,
             "install_directory": self.install_directory,
@@ -65,12 +68,7 @@ class FirstEngineTestResult:
 
 
 def stage_nato_russia_acceptance_battle(state: CampaignState) -> AcceptanceBattleSelection:
-    """Stage a deterministic NATO attack on an adjacent Russian province.
-
-    This function is intended only for a fresh acceptance campaign. It relocates
-    one NATO and one Russian formation onto an existing ownership border, then
-    uses the normal strategic engine to create the pending battle.
-    """
+    """Stage a deterministic NATO attack on an adjacent Russian province."""
 
     if state.pending_battle is not None:
         raise RuntimeError("Acceptance campaign already has a pending battle")
@@ -123,6 +121,7 @@ def run_first_engine_test(
     work_root: str | Path = "live",
     map_name: str = DEFAULT_TEST_MAP,
     install_name: str = DEFAULT_INSTALL_NAME,
+    template_save: str | Path | None = None,
     backup_root: str | Path = "backups",
     launch: bool = False,
 ) -> FirstEngineTestResult:
@@ -137,6 +136,8 @@ def run_first_engine_test(
     if profile not in (install_root, *install_root.parents):
         raise ValueError(f"Install directory is not inside the selected profile: {install_root}")
 
+    installed_save_path = install_root / install_name
+    template_path = _resolve_status_template(install_root, installed_save_path, template_save)
     stack = resolve_stack(resource_stack, config=stack_config, fallback=codex)
     catalog = CodeXCatalogScanner().scan_stack(stack)
     timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S.%fZ")
@@ -144,7 +145,6 @@ def run_first_engine_test(
     session.mkdir(parents=True, exist_ok=False)
     campaign_path = session / "campaign.json"
     export_save_path = session / "campaign.sav"
-    installed_save_path = install_root / install_name
 
     state = load_bundled_scenario()
     state.code_x_directory = str(codex)
@@ -165,6 +165,7 @@ def run_first_engine_test(
         map_name=map_name,
         profile_directory=profile,
         install_save_path=installed_save_path,
+        status_template_path=template_path,
         backup_root=backup_root,
         launch=launch,
     )
@@ -183,6 +184,7 @@ def run_first_engine_test(
         campaign_path=str(campaign_path),
         export_save_path=str(export_save_path),
         installed_save_path=str(installed_save_path),
+        status_template_path=str(template_path),
         map_name=map_name,
         profile_directory=str(profile),
         install_directory=str(install_root),
@@ -190,6 +192,40 @@ def run_first_engine_test(
         handoff=handoff,
         verify_command=verify_command,
         import_command=import_command,
+    )
+
+
+def _resolve_status_template(
+    install_root: Path,
+    installed_save_path: Path,
+    explicit: str | Path | None,
+) -> Path:
+    archive = CampaignSaveArchive()
+    if explicit:
+        candidate = Path(explicit).expanduser().resolve()
+        archive.validate(candidate)
+        return candidate
+
+    candidates = sorted(
+        (
+            path
+            for path in install_root.glob("*.sav")
+            if path.resolve() != installed_save_path.resolve()
+        ),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+    errors: list[str] = []
+    for candidate in candidates:
+        try:
+            archive.validate(candidate)
+            return candidate.resolve()
+        except (OSError, ValueError) as exc:
+            errors.append(f"{candidate.name}: {exc}")
+    detail = "; ".join(errors[:5]) if errors else "no other .sav files were found"
+    raise RuntimeError(
+        "No valid Conquest saveinfo template was found. Create and save one normal Conquest with the intended mod stack, "
+        f"or pass --template-save explicitly. Details: {detail}"
     )
 
 
