@@ -4,13 +4,10 @@ import argparse
 import json
 from dataclasses import asdict
 
-from .acceptance import (
-    backup_existing_files,
-    discover_maps,
-    restore_backup,
-    write_acceptance_report,
-)
+from .acceptance import backup_existing_files, restore_backup, write_acceptance_report
+from .map_discovery import discover_maps
 from .modstack import resolve_stack
+from .profiles import discover_profile_locations
 from .stack_acceptance import (
     prepare_stack_handoff,
     validate_mod_stack,
@@ -36,10 +33,20 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
-    maps = sub.add_parser("maps", help="Discover valid tactical map identifiers")
+    maps = sub.add_parser("maps", help="Discover playable tactical map roots")
     maps.add_argument("--game", required=True)
     _add_stack_arguments(maps)
     maps.add_argument("--contains")
+
+    profiles = sub.add_parser("profiles", help="Discover GoH profile roots and likely save directories")
+    profiles.add_argument(
+        "--search-root",
+        action="append",
+        default=[],
+        help="Optional bounded directory to search. Repeat for additional roots.",
+    )
+    profiles.add_argument("--max-depth", type=int, default=6)
+    profiles.add_argument("--output")
 
     validate = sub.add_parser("validate", help="Validate the installed game and ordered Code:X stack")
     validate.add_argument("--game", required=True)
@@ -83,6 +90,16 @@ def main(argv: list[str] | None = None) -> int:
             needle = args.contains.lower()
             values = [value for value in values if needle in value.identifier.lower()]
         print(json.dumps([asdict(value) for value in values], indent=2))
+        return 0 if values else 1
+    if args.command == "profiles":
+        roots = args.search_root or None
+        values = discover_profile_locations(roots, max_depth=max(1, args.max_depth))
+        payload = [value.to_dict() for value in values]
+        if args.output:
+            with open(args.output, "w", encoding="utf-8") as destination:
+                json.dump(payload, destination, indent=2)
+                destination.write("\n")
+        print(json.dumps(payload, indent=2))
         return 0 if values else 1
     if args.command == "validate":
         report = validate_mod_stack(
