@@ -99,8 +99,45 @@ class GatesOfCodeXTests(unittest.TestCase):
         state = load_bundled_scenario()
         self._prepare_nato_russia_battle(state)
         text = StatusBuilder().build(state.pending_battle, BattleStatusOptions("multi/4x4/test", played_games=4, won_games=2))
+        self.assertTrue(text.startswith("{saveinfo"))
         result = StatusBuilder().parse_result(text)
         self.assertEqual(result, StatusResult(4, 2))
+
+    def test_status_template_is_patched_without_losing_saveinfo_metadata(self) -> None:
+        state = load_bundled_scenario()
+        self._prepare_nato_russia_battle(state)
+        template = (
+            "{saveinfo\n"
+            "\t{version 7}\n"
+            "\t{gameVersion \"1.065.0\"}\n"
+            "\t{timestamp 1}\n"
+            "\t{name \"Old Conquest\"}\n"
+            "\t{army ger}\n"
+            "\t{enemyArmy rus}\n"
+            "\t{difficulty heroic}\n"
+            "\t{playedGames 4}\n"
+            "\t{wonGames 2}\n"
+            "\t{mods\n\t\t\"mod_2897299509:0\"\n\t}\n"
+            "\t{unlockedResearch\n\t\t{\"old_key\"}\n\t}\n"
+            "}\n"
+        )
+        text = StatusBuilder().build(
+            state.pending_battle,
+            BattleStatusOptions(
+                "multi/4x4/test",
+                template_status=template,
+                research=["new_key"],
+                played_games=4,
+                won_games=2,
+            ),
+        )
+        self.assertIn('{gameVersion "1.065.0"}', text)
+        self.assertIn('{name "Gates of CodeX Acceptance"}', text)
+        self.assertIn('{army nato}', text)
+        self.assertIn('{enemyArmy rusa}', text)
+        self.assertIn('"mod_2897299509:0"', text)
+        self.assertIn('{"new_key"}', text)
+        self.assertNotIn('{"old_key"}', text)
 
     def test_campaign_scn_graph(self) -> None:
         state = load_bundled_scenario()
@@ -112,11 +149,17 @@ class GatesOfCodeXTests(unittest.TestCase):
 
     def test_archive_round_trip(self) -> None:
         save = self.root / "campaign.sav"
-        CampaignSaveArchive().write(save, status="{status}\n", campaign_scn="{campaign}\n")
+        CampaignSaveArchive().write(save, status="{saveinfo\n}\n", campaign_scn="{campaign}\n")
         with zipfile.ZipFile(save) as archive:
             self.assertEqual(set(archive.namelist()), {"status", "campaign.scn"})
         contents = CampaignSaveArchive().read(save)
-        self.assertIn("status", contents.status)
+        self.assertTrue(contents.status.startswith("{saveinfo"))
+
+    def test_archive_rejects_status_root_that_crashes_conquest_menu(self) -> None:
+        save = self.root / "bad.sav"
+        with self.assertRaisesRegex(ValueError, "expected '\\{saveinfo'"):
+            CampaignSaveArchive().write(save, status="{status\n}\n", campaign_scn="{campaign}\n")
+        self.assertFalse(save.exists())
 
     def test_cli_parser(self) -> None:
         args = build_parser().parse_args(["new", "--codex", str(self.codex), "--output", "test.json"])

@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from gates_of_codex.bridge.archive import CampaignSaveArchive
 from gates_of_codex.codex.catalog import CodeXCatalogScanner
 from gates_of_codex.first_engine_test import run_first_engine_test
 from gates_of_codex.modstack import (
@@ -44,6 +45,32 @@ class OrderedModStackTests(unittest.TestCase):
         self._write_codex_units()
         (self.ai / "resource/script").mkdir(parents=True)
         (self.ai / "resource/script/ai-overhaul.lua").write_text("return { recognizeTime = 0.05 }\n", encoding="utf-8")
+        self.template_save = self.install_directory / "conquest template.sav"
+        CampaignSaveArchive().write(
+            self.template_save,
+            status=(
+                "{saveinfo\n"
+                "\t{version 7}\n"
+                "\t{gameVersion \"1.065.0\"}\n"
+                "\t{timestamp 1}\n"
+                "\t{mp 1000}\n"
+                "\t{sp 100}\n"
+                "\t{ap 100}\n"
+                "\t{rp 100}\n"
+                "\t{seed 123}\n"
+                "\t{name \"Fixture Conquest\"}\n"
+                "\t{army nato}\n"
+                "\t{enemyArmy rusa}\n"
+                "\t{difficulty normal}\n"
+                "\t{duration 4}\n"
+                "\t{resources 0}\n"
+                "\t{playedGames 0}\n"
+                "\t{wonGames 0}\n"
+                "\t{unlockedResearch\n\t}\n"
+                "}\n"
+            ),
+            campaign_scn="{campaign}\n",
+        )
 
     def tearDown(self) -> None:
         self.temp.cleanup()
@@ -121,12 +148,15 @@ class OrderedModStackTests(unittest.TestCase):
 
         installed = Path(result.installed_save_path)
         self.assertTrue(installed.is_file())
+        self.assertEqual(self.template_save.resolve(), Path(result.status_template_path).resolve())
+        self.assertTrue(CampaignSaveArchive().read(installed).status.startswith("{saveinfo"))
         self.assertEqual("nato-pol-mechanized", result.selection.attacker_formation)
         self.assertEqual("rusa-motor-rifle", result.selection.defender_formation)
         self.assertEqual("multi/2x2/stack_test", result.map_name)
         manifest_path = GatesOfCodeXService.manifest_path(installed)
         manifest = BattleExportManifest(**json.loads(manifest_path.read_text(encoding="utf-8")))
         self.assertEqual(installed.resolve(), Path(manifest.save_path).resolve())
+        self.assertEqual(self.template_save.resolve(), Path(manifest.status_template_path).resolve())
         self.assertIn(str(installed), result.verify_command)
         self.assertIn(str(installed), result.import_command)
 
