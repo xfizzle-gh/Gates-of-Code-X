@@ -13,6 +13,8 @@ from .models import (
     CampaignState,
     Faction,
     FactionState,
+    Formation,
+    FormationKind,
     PendingBattle,
     Province,
 )
@@ -34,6 +36,21 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
         )
         for key, value in data.get("factions", {}).items()
     }
+    formations = {
+        key: Formation(
+            formation_id=value["formation_id"],
+            display_name=value["display_name"],
+            faction=Faction(value["faction"]),
+            nation=value["nation"],
+            kind=FormationKind(value.get("kind", "combined_arms_brigade")),
+            deployment_zone=value.get("deployment_zone", ""),
+            doctrine_tags=list(value.get("doctrine_tags", [])),
+            preferred_categories=list(value.get("preferred_categories", [])),
+            is_foreign_contingent=value.get("is_foreign_contingent", False),
+            notes=value.get("notes", ""),
+        )
+        for key, value in data.get("formations", {}).items()
+    }
     provinces = {
         key: Province(
             province_id=value["province_id"],
@@ -46,6 +63,7 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
             y=float(value.get("y", 0)),
             resource_yield=int(value.get("resource_yield", 10)),
             fortification=int(value.get("fortification", 0)),
+            metadata=dict(value.get("metadata", {})),
         )
         for key, value in data.get("provinces", {}).items()
     }
@@ -56,6 +74,7 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
             province_id=value["province_id"],
             battalion_type=BattalionType(value.get("battalion_type", "combined_arms")),
             roster=[_roster(item) for item in value.get("roster", [])],
+            formation_id=value.get("formation_id", ""),
             is_player_controlled=value.get("is_player_controlled", False),
             movement_remaining=int(value.get("movement_remaining", 1)),
             combat_actions_remaining=int(value.get("combat_actions_remaining", 1)),
@@ -107,11 +126,14 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
         game_directory=data.get("game_directory", ""),
         profile_directory=data.get("profile_directory", ""),
         code_x_directory=data.get("code_x_directory", ""),
+        map_id=data.get("map_id", "custom"),
+        map_metadata=dict(data.get("map_metadata", {})),
         factions=factions,
+        formations=formations,
         provinces=provinces,
         battalions=battalions,
         pending_battle=pending,
-        schema_version=int(data.get("schema_version", 1)),
+        schema_version=max(1, int(data.get("schema_version", 1))),
     )
     state.validate()
     return state
