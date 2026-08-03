@@ -8,17 +8,19 @@ The installed Code:X mod is the authoritative source for factions, conquest squa
 
 - Gates of Europa Europe graph with 517 stable provinces and observed reciprocal adjacency
 - Deterministic modern control profile spanning NATO, Ukraine, Russia, and provisional PRC territory
-- Western and Eastern coalition metadata without merging faction resources or formations
+- Western and Eastern coalitions with alliance-aware movement, retreat, and supply routes
 - National and specialized formation identities beneath each strategic faction
 - Provisional Central Asian deployment zone for PRC and a Russia-aligned North Korean contingent
-- Province graph, battalion movement, capture, combat, retreat, casualties, supply, resources, and turns
+- Coalition supply tracing, isolation, encirclement turns, low-supply movement penalties, and attrition
+- Deterministic strategic AI movement, neutral capture, hostile attacks, and battle auto-resolution
+- Province graph, battalion movement, capture, combat, retreat, casualties, resources, and turns
 - Persistent JSON campaigns with atomic writes and backward-compatible schema loading
 - Code:X Steam Workshop and local-mod discovery
 - Code:X `.set` and Lua unit-catalog scanning
 - Formation-aware starter rosters chosen from the installed Code:X catalog
 - GoH `status`, `campaign.scn`, and `campaign.sav` generation
 - Post-battle result and survivor import
-- Versioned Godot-facing campaign snapshot contract
+- Versioned Godot-facing campaign snapshot contract with supply and encirclement state
 - Initial Godot 4 map viewer with province control, graph edges, formation markers, pan, and zoom
 - Command-line workflow and Tk developer campaign map
 - Gates of Hell launcher and Windows installation script
@@ -49,6 +51,13 @@ gates-of-codex doctor
 
 # Create a Europe campaign with valid units from the installed Code:X mod
 gates-of-codex new --codex "E:\Steam\steamapps\workshop\content\400750\<CODEX_ID>" --output campaign.json
+
+# Inspect or apply supply for the current map state
+gates-of-codex supply-status campaign.json
+gates-of-codex supply-status campaign.json --refresh
+
+# Run a deterministic non-player strategic turn
+gates-of-codex run-ai-turn campaign.json --faction rusa --seed 7 --advance-turn
 
 # Export the stable frontend snapshot used by Godot
 gates-of-codex export-frontend campaign.json --output .\godot\campaign_snapshot.json
