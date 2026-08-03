@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Iterable
 
 from .bridge.archive import CampaignSaveArchive
 from .bridge.result import BattleImportResult, BattleResultImporter
@@ -12,6 +13,7 @@ from .bridge.scn import CampaignScnBuilder
 from .bridge.status import BattleStatusOptions, StatusBuilder, StatusResult
 from .campaign import CampaignEngine
 from .codex.catalog import CodeXCatalogScanner
+from .modstack import resolve_stack, stack_to_strings
 from .state_io import load_campaign, save_campaign
 
 
@@ -26,6 +28,7 @@ class BattleExportManifest:
     map_name: str = ""
     created_at_utc: str = ""
     campaign_sha256: str = ""
+    resource_stack: list[str] = field(default_factory=list)
 
     @property
     def baseline(self) -> StatusResult:
@@ -47,9 +50,10 @@ class GatesOfCodeXService:
         self,
         campaign_path: str | Path,
         *,
-        code_x_directory: str | Path,
+        code_x_directory: str | Path | None,
         save_path: str | Path,
         map_name: str,
+        resource_stack: Iterable[str | Path] | None = None,
         previous_status: StatusResult | None = None,
         allow_overwrite: bool = False,
     ) -> BattleExportManifest:
@@ -64,9 +68,13 @@ class GatesOfCodeXService:
         state = load_campaign(campaign_file)
         if state.pending_battle is None:
             raise RuntimeError("Campaign has no pending battle")
-        catalog = self.scanner.scan(code_x_directory)
+        saved_stack = state.map_metadata.get("resource_stack", [])
+        stack = resolve_stack(resource_stack or saved_stack, fallback=code_x_directory or state.code_x_directory)
+        if not stack:
+            raise ValueError("No Code:X resource stack was configured")
+        catalog = self.scanner.scan_stack(stack)
         if state.catalog_signature and state.catalog_signature != catalog.signature:
-            raise ValueError("Installed Code:X catalog differs from the campaign catalog")
+            raise ValueError("Installed Code:X mod stack differs from the campaign catalog")
         baseline = previous_status or StatusResult(0, 0)
         options = BattleStatusOptions(
             map_name=map_name,
@@ -76,10 +84,13 @@ class GatesOfCodeXService:
             won_games=baseline.won_games,
         )
         status_text = self.status.build(state.pending_battle, options)
-        scn_text = CampaignScnBuilder(catalog, code_x_directory).build(state, state.pending_battle)
+        scn_text = CampaignScnBuilder(catalog, resource_stack=stack).build(state, state.pending_battle)
         destination = self.archive.write(destination, status=status_text, campaign_scn=scn_text)
         state.pending_battle.exported_save_path = str(destination)
         state.pending_battle.started = True
+        state.map_metadata["resource_stack"] = stack_to_strings(stack)
+        if code_x_directory:
+            state.code_x_directory = str(Path(code_x_directory).resolve())
         save_campaign(state, campaign_file)
         manifest = BattleExportManifest(
             battle_id=state.pending_battle.battle_id,
@@ -91,6 +102,7 @@ class GatesOfCodeXService:
             map_name=map_name,
             created_at_utc=datetime.now(UTC).isoformat(),
             campaign_sha256=_sha256(campaign_file),
+            resource_stack=stack_to_strings(stack),
         )
         manifest_destination.write_text(json.dumps(asdict(manifest), indent=2) + "\n", encoding="utf-8")
         return manifest
@@ -109,10 +121,14 @@ class GatesOfCodeXService:
         state = load_campaign(campaign_file)
         if state.pending_battle is None or state.pending_battle.battle_id != manifest.battle_id:
             raise ValueError("Battle manifest does not match the pending campaign battle")
-        if state.code_x_directory and Path(state.code_x_directory).is_dir():
-            signature = self.scanner.scan(state.code_x_directory).signature
+        stack = resolve_stack(
+            state.map_metadata.get("resource_stack", []) or manifest.resource_stack,
+            fallback=state.code_x_directory,
+        )
+        if stack:
+            signature = self.scanner.scan_stack(stack).signature
             if signature != manifest.catalog_signature:
-                raise ValueError("Installed Code:X catalog changed after the battle export")
+                raise ValueError("Installed Code:X mod stack changed after the battle export")
         engine = CampaignEngine(state)
         result = BattleResultImporter().import_save(engine, save_file, previous_status=manifest.baseline)
         save_campaign(state, campaign_file)

@@ -7,29 +7,43 @@ from dataclasses import asdict
 from .acceptance import (
     backup_existing_files,
     discover_maps,
-    prepare_tactical_handoff,
     restore_backup,
-    validate_live_installation,
-    verify_tactical_result,
     write_acceptance_report,
 )
+from .modstack import resolve_stack
+from .stack_acceptance import (
+    prepare_stack_handoff,
+    validate_mod_stack,
+    verify_stack_result,
+)
+
+
+def _add_stack_arguments(parser: argparse.ArgumentParser, *, require_codex: bool = True) -> None:
+    parser.add_argument("--codex", required=require_codex, help="Primary Code:X mod directory")
+    parser.add_argument(
+        "--stack",
+        action="append",
+        default=[],
+        help="Ordered mod/resource layer, low to high priority. Repeat for every layer.",
+    )
+    parser.add_argument("--stack-config", help="JSON file containing an ordered layers array")
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="gates-of-codex-live",
-        description="Validate and safely hand Gates of CodeX battles to an installed GoH and Code:X setup.",
+        description="Validate and safely hand Gates of CodeX battles to an installed GoH mod stack.",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
     maps = sub.add_parser("maps", help="Discover valid tactical map identifiers")
     maps.add_argument("--game", required=True)
-    maps.add_argument("--codex", required=True)
+    _add_stack_arguments(maps)
     maps.add_argument("--contains")
 
-    validate = sub.add_parser("validate", help="Validate the installed game and Code:X data")
+    validate = sub.add_parser("validate", help="Validate the installed game and ordered Code:X stack")
     validate.add_argument("--game", required=True)
-    validate.add_argument("--codex", required=True)
+    _add_stack_arguments(validate)
     validate.add_argument("--profile")
     validate.add_argument("--output")
 
@@ -44,7 +58,7 @@ def build_parser() -> argparse.ArgumentParser:
     handoff = sub.add_parser("handoff", help="Validate, back up, export, optionally install, and launch")
     handoff.add_argument("campaign")
     handoff.add_argument("--game", required=True)
-    handoff.add_argument("--codex", required=True)
+    _add_stack_arguments(handoff)
     handoff.add_argument("--save", required=True)
     handoff.add_argument("--map", required=True)
     handoff.add_argument("--profile")
@@ -55,7 +69,7 @@ def build_parser() -> argparse.ArgumentParser:
     verify = sub.add_parser("verify", help="Verify that GoH completed and rewrote the tactical save")
     verify.add_argument("campaign")
     verify.add_argument("--save", required=True)
-    verify.add_argument("--codex")
+    _add_stack_arguments(verify, require_codex=False)
     verify.add_argument("--output")
     return parser
 
@@ -63,14 +77,21 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "maps":
-        values = discover_maps(args.game, args.codex)
+        stack = resolve_stack(args.stack, config=args.stack_config, fallback=args.codex)
+        values = discover_maps(*stack)
         if args.contains:
             needle = args.contains.lower()
             values = [value for value in values if needle in value.identifier.lower()]
         print(json.dumps([asdict(value) for value in values], indent=2))
         return 0 if values else 1
     if args.command == "validate":
-        report = validate_live_installation(args.game, args.codex, args.profile)
+        report = validate_mod_stack(
+            args.game,
+            args.codex,
+            resource_stack=args.stack,
+            stack_config=args.stack_config,
+            profile_directory=args.profile,
+        )
         payload = report.to_dict()
         if args.output:
             with open(args.output, "w", encoding="utf-8") as destination:
@@ -87,10 +108,12 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps([str(value) for value in restored], indent=2))
         return 0
     if args.command == "handoff":
-        result = prepare_tactical_handoff(
+        result = prepare_stack_handoff(
             args.campaign,
             game_directory=args.game,
             code_x_directory=args.codex,
+            resource_stack=args.stack,
+            stack_config=args.stack_config,
             save_path=args.save,
             map_name=args.map,
             profile_directory=args.profile,
@@ -101,10 +124,12 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(result.to_dict(), indent=2))
         return 0
     if args.command == "verify":
-        report = verify_tactical_result(
+        report = verify_stack_result(
             args.campaign,
             save_path=args.save,
             code_x_directory=args.codex,
+            resource_stack=args.stack,
+            stack_config=args.stack_config,
         )
         if args.output:
             write_acceptance_report(report, args.output)
