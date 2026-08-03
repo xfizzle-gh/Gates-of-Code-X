@@ -51,6 +51,7 @@ class CampaignScnBuilder:
             item.battalion_id: item.stage
             for item in (*pending.attacking_participants, *pending.defending_participants)
         }
+        self._preflight_rosters(state, participants)
         for battalion_id, stage in participants.items():
             battalion = state.battalions.get(battalion_id)
             if battalion is None:
@@ -78,6 +79,26 @@ class CampaignScnBuilder:
         text = "{campaign\n" + "\n".join(objects + inventories) + "\n\t{CampaignSquads\n" + "\n".join(squads) + "\n\t}\n}\n"
         self.validate(text)
         return text
+
+    def _preflight_rosters(self, state: CampaignState, participants: dict[str, str]) -> None:
+        invalid: list[str] = []
+        for battalion_id in participants:
+            battalion = state.battalions.get(battalion_id)
+            if battalion is None:
+                invalid.append(f"{battalion_id}: battalion is missing")
+                continue
+            for entry in battalion.roster:
+                definition = self.catalog.units.get(entry.unit_name)
+                if definition is None:
+                    invalid.append(f"{battalion_id}: {entry.unit_name} is absent from the Code:X catalog")
+                elif not definition.materializable:
+                    sources = ", ".join(definition.source_files) or "unknown source"
+                    invalid.append(
+                        f"{battalion_id}: {entry.unit_name} has no parsed members or vehicles ({sources})"
+                    )
+        if invalid:
+            details = "\n- ".join(sorted(set(invalid)))
+            raise ValueError(f"Tactical roster contains nonmaterializable Code:X entries:\n- {details}")
 
     @classmethod
     def validate(cls, text: str) -> None:
