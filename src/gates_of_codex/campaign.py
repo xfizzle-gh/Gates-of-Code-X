@@ -30,6 +30,8 @@ class CampaignEngine:
         origin = self._get_province(battalion.province_id)
         if battalion.movement_remaining <= 0:
             raise ValueError(f"Battalion {battalion_id} has no movement remaining")
+        if battalion.condition <= 20:
+            raise ValueError(f"Battalion {battalion_id} is too damaged to move")
         if target_province_id not in origin.neighbors:
             raise ValueError(f"Province {target_province_id} is not adjacent")
 
@@ -68,7 +70,10 @@ class CampaignEngine:
         for battalion_id, roster in survivors.items():
             battalion = self.state.battalions.get(battalion_id)
             if battalion is not None:
+                previous = max(1, battalion.unit_count)
                 battalion.roster = roster
+                casualty_ratio = max(0.0, 1.0 - battalion.unit_count / previous)
+                battalion.condition = max(10, battalion.condition - max(5, int(casualty_ratio * 35)))
         self._finalize_positions(winner)
 
     def apply_battle_result(self, winner: Faction) -> None:
@@ -78,11 +83,15 @@ class CampaignEngine:
         if winner == pending.attacker_faction:
             if defender:
                 self._apply_percentage_losses(defender, 0.65)
+                defender.condition = max(10, defender.condition - 28)
             self._apply_percentage_losses(attacker, 0.25)
+            attacker.condition = max(10, attacker.condition - 12)
         else:
             self._apply_percentage_losses(attacker, 0.55)
+            attacker.condition = max(10, attacker.condition - 24)
             if defender:
                 self._apply_percentage_losses(defender, 0.20)
+                defender.condition = max(10, defender.condition - 10)
         self._finalize_positions(winner)
 
     def end_turn(self) -> Faction:
@@ -98,15 +107,13 @@ class CampaignEngine:
         next_faction = active[(index + 1) % len(active)]
         if index == len(active) - 1 or index == -1:
             self.state.turn_number += 1
-            for faction in active:
-                self.state.factions[faction.value].resources += sum(
-                    province.resource_yield for province in self.state.provinces.values() if province.owner == faction
-                )
+            from .economy import settle_round_economy
+            from .supply import refresh_all_supply
+
+            settle_round_economy(self.state)
             for battalion in self.state.battalions.values():
                 battalion.movement_remaining = 1
                 battalion.combat_actions_remaining = 1
-            from .supply import refresh_all_supply
-
             refresh_all_supply(self.state)
         self.state.current_faction = next_faction
         return next_faction
@@ -170,7 +177,10 @@ class CampaignEngine:
             return 1.0
         weights = {"infantry": 1, "recon": 0.8, "vehicle": 1.7, "ifv": 2, "tank": 3, "artillery": 2.2, "air_defense": 1.8, "unknown": 1}
         base = sum(entry.quantity * weights.get(entry.category, 1) for entry in battalion.roster)
-        return max(base * (0.4 + battalion.supply / 100 * 0.6) * (1 + min(battalion.experience, 1000) / 5000), 0.1)
+        supply_factor = 0.4 + battalion.supply / 100 * 0.6
+        condition_factor = 0.35 + battalion.condition / 100 * 0.65
+        experience_factor = 1 + min(battalion.experience, 1000) / 5000
+        return max(base * supply_factor * condition_factor * experience_factor, 0.1)
 
     @staticmethod
     def _apply_percentage_losses(battalion: Battalion, fraction: float) -> None:
