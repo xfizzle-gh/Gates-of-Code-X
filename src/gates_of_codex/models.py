@@ -50,6 +50,69 @@ class BattalionRosterEntry:
 
 
 @dataclass(slots=True)
+class ReinforcementPoolEntry:
+    unit_name: str
+    quantity: int
+    category: str
+    formation_id: str
+    unit_cost: int
+
+    def validate(self) -> None:
+        if not self.unit_name.strip():
+            raise ValueError("Reinforcement unit_name cannot be empty")
+        if self.quantity < 1:
+            raise ValueError("Reinforcement quantity must be positive")
+        if not self.formation_id.strip():
+            raise ValueError("Reinforcement entry must target a formation")
+        if self.unit_cost < 0:
+            raise ValueError("Reinforcement unit_cost cannot be negative")
+
+
+@dataclass(slots=True)
+class ResearchNode:
+    key: str
+    faction: Faction
+    display_name: str
+    cost: int
+    prerequisites: list[str] = field(default_factory=list)
+    unlock_categories: list[str] = field(default_factory=list)
+    unlock_doctrines: list[str] = field(default_factory=list)
+    unlock_units: list[str] = field(default_factory=list)
+    source: str = "catalog-derived"
+
+    def validate(self) -> None:
+        if not self.key.strip():
+            raise ValueError("Research key cannot be empty")
+        if not self.display_name.strip():
+            raise ValueError(f"Research node {self.key} has no display name")
+        if self.faction == Faction.NEUTRAL:
+            raise ValueError(f"Research node {self.key} cannot belong to neutral")
+        if self.cost < 0:
+            raise ValueError(f"Research node {self.key} has negative cost")
+
+
+@dataclass(slots=True)
+class UnitEconomy:
+    unit_name: str
+    faction: Faction
+    category: str
+    purchase_cost: int
+    maintenance_cost: int
+    repair_cost_per_point: int
+    research_keys: list[str] = field(default_factory=list)
+    doctrine: str = ""
+    manpower_estimate: int = 0
+
+    def validate(self) -> None:
+        if not self.unit_name.strip():
+            raise ValueError("Unit economy unit_name cannot be empty")
+        if self.faction == Faction.NEUTRAL:
+            raise ValueError(f"Unit economy {self.unit_name} cannot belong to neutral")
+        if min(self.purchase_cost, self.maintenance_cost, self.repair_cost_per_point) < 0:
+            raise ValueError(f"Unit economy {self.unit_name} has a negative cost")
+
+
+@dataclass(slots=True)
 class Alliance:
     alliance_id: str
     display_name: str
@@ -100,11 +163,13 @@ class Battalion:
     province_id: str
     battalion_type: BattalionType = BattalionType.COMBINED_ARMS
     roster: list[BattalionRosterEntry] = field(default_factory=list)
+    authorized_roster: list[BattalionRosterEntry] = field(default_factory=list)
     formation_id: str = ""
     is_player_controlled: bool = False
     movement_remaining: int = 1
     combat_actions_remaining: int = 1
     supply: int = 100
+    condition: int = 100
     experience: int = 0
     encircled_turns: int = 0
 
@@ -115,12 +180,24 @@ class Battalion:
             raise ValueError(f"Battalion {self.battalion_id} has no province")
         if not 0 <= self.supply <= 100:
             raise ValueError(f"Battalion {self.battalion_id} supply must be 0..100")
+        if not 0 <= self.condition <= 100:
+            raise ValueError(f"Battalion {self.battalion_id} condition must be 0..100")
         for entry in self.roster:
+            entry.validate()
+        for entry in self.authorized_roster:
             entry.validate()
 
     @property
     def unit_count(self) -> int:
         return sum(entry.quantity for entry in self.roster)
+
+    @property
+    def authorized_unit_count(self) -> int:
+        return sum(entry.quantity for entry in self.authorized_roster)
+
+    @property
+    def replacement_deficit(self) -> int:
+        return max(0, self.authorized_unit_count - self.unit_count)
 
     @property
     def is_destroyed(self) -> bool:
@@ -156,6 +233,9 @@ class FactionState:
     resources: int = 1000
     researched_keys: list[str] = field(default_factory=list)
     recruited_pool: list[BattalionRosterEntry] = field(default_factory=list)
+    reinforcement_pool: list[ReinforcementPoolEntry] = field(default_factory=list)
+    income_last_round: int = 0
+    maintenance_last_round: int = 0
     is_human_controlled: bool = False
     is_eliminated: bool = False
 
@@ -194,15 +274,18 @@ class CampaignState:
     game_directory: str = ""
     profile_directory: str = ""
     code_x_directory: str = ""
+    catalog_signature: str = ""
     map_id: str = "custom"
     map_metadata: dict[str, Any] = field(default_factory=dict)
     factions: dict[str, FactionState] = field(default_factory=dict)
     alliances: dict[str, Alliance] = field(default_factory=dict)
     formations: dict[str, Formation] = field(default_factory=dict)
+    research_nodes: dict[str, ResearchNode] = field(default_factory=dict)
+    unit_economy: dict[str, UnitEconomy] = field(default_factory=dict)
     provinces: dict[str, Province] = field(default_factory=dict)
     battalions: dict[str, Battalion] = field(default_factory=dict)
     pending_battle: PendingBattle | None = None
-    schema_version: int = 3
+    schema_version: int = 4
 
     def validate(self) -> None:
         if self.turn_number < 1:
@@ -222,6 +305,22 @@ class CampaignState:
             formation.validate()
             if formation.faction.value not in self.factions:
                 raise ValueError(f"Formation {key} references missing faction {formation.faction.value}")
+        for key, node in self.research_nodes.items():
+            if key != node.key:
+                raise ValueError(f"Research key mismatch: {key}")
+            node.validate()
+            if node.faction.value not in self.factions:
+                raise ValueError(f"Research node {key} references missing faction")
+            for prerequisite in node.prerequisites:
+                if prerequisite not in self.research_nodes:
+                    raise ValueError(f"Research node {key} references missing prerequisite {prerequisite}")
+        for key, economy in self.unit_economy.items():
+            if key != economy.unit_name:
+                raise ValueError(f"Unit economy key mismatch: {key}")
+            economy.validate()
+            for research_key in economy.research_keys:
+                if research_key not in self.research_nodes:
+                    raise ValueError(f"Unit economy {key} references missing research {research_key}")
         for key, province in self.provinces.items():
             if key != province.province_id:
                 raise ValueError(f"Province key mismatch: {key}")
@@ -249,6 +348,14 @@ class CampaignState:
             previous = occupied.setdefault(battalion.province_id, key)
             if previous != key:
                 raise ValueError(f"Province {battalion.province_id} contains multiple battalions")
+        for faction_state in self.factions.values():
+            if faction_state.resources < 0:
+                raise ValueError(f"Faction {faction_state.faction.value} has negative resources")
+            for entry in faction_state.reinforcement_pool:
+                entry.validate()
+                formation = self.formations.get(entry.formation_id)
+                if formation is None or formation.faction != faction_state.faction:
+                    raise ValueError(f"Invalid reinforcement target {entry.formation_id}")
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

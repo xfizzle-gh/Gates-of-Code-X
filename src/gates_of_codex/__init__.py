@@ -11,6 +11,9 @@ from .models import (
     FormationKind,
     PendingBattle,
     Province,
+    ReinforcementPoolEntry,
+    ResearchNode,
+    UnitEconomy,
 )
 
 __all__ = [
@@ -24,6 +27,9 @@ __all__ = [
     "FormationKind",
     "PendingBattle",
     "Province",
+    "ReinforcementPoolEntry",
+    "ResearchNode",
+    "UnitEconomy",
 ]
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"

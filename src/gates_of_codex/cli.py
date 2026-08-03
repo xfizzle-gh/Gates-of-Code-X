@@ -8,6 +8,15 @@ from pathlib import Path
 from .campaign import CampaignEngine
 from .codex.catalog import CodeXCatalogScanner
 from .doctor import diagnose
+from .economy import (
+    assign_reinforcements,
+    available_research,
+    formation_recruitment_offers,
+    initialize_economy,
+    purchase_reinforcements,
+    purchase_research,
+    repair_formation,
+)
 from .frontend import write_frontend_snapshot
 from .launcher import launch_game
 from .models import Faction
@@ -53,6 +62,33 @@ def build_parser() -> argparse.ArgumentParser:
     ai.add_argument("--faction", choices=FACTION_CHOICES, required=True)
     ai.add_argument("--seed", type=int, default=0)
     ai.add_argument("--advance-turn", action="store_true")
+    economy = sub.add_parser("economy-status")
+    economy.add_argument("campaign")
+    economy.add_argument("--faction", choices=FACTION_CHOICES)
+    research_status = sub.add_parser("research-status")
+    research_status.add_argument("campaign")
+    research_status.add_argument("--faction", choices=FACTION_CHOICES, required=True)
+    research = sub.add_parser("research")
+    research.add_argument("campaign")
+    research.add_argument("--faction", choices=FACTION_CHOICES, required=True)
+    research.add_argument("--key", required=True)
+    recruits = sub.add_parser("list-recruits")
+    recruits.add_argument("campaign")
+    recruits.add_argument("--formation", required=True)
+    recruit = sub.add_parser("recruit")
+    recruit.add_argument("campaign")
+    recruit.add_argument("--formation", required=True)
+    recruit.add_argument("--unit", required=True)
+    recruit.add_argument("--quantity", type=int, default=1)
+    assign = sub.add_parser("assign-reinforcements")
+    assign.add_argument("campaign")
+    assign.add_argument("--formation", required=True)
+    assign.add_argument("--unit", required=True)
+    assign.add_argument("--quantity", type=int, default=1)
+    repair = sub.add_parser("repair")
+    repair.add_argument("campaign")
+    repair.add_argument("--formation", required=True)
+    repair.add_argument("--points", type=int)
     export = sub.add_parser("export-battle")
     export.add_argument("campaign")
     export.add_argument("--codex", required=True)
@@ -94,7 +130,9 @@ def main(argv: list[str] | None = None) -> int:
         state = load_bundled_scenario()
         state.code_x_directory = str(Path(args.codex).resolve())
         set_player_faction(state, Faction(args.faction))
-        populate_starter_rosters(state, CodeXCatalogScanner().scan(args.codex))
+        catalog = CodeXCatalogScanner().scan(args.codex)
+        populate_starter_rosters(state, catalog)
+        initialize_economy(state, catalog)
         save_campaign(state, args.output)
         print(args.output)
         return 0
@@ -168,6 +206,72 @@ def main(argv: list[str] | None = None) -> int:
             "actions": [asdict(action) for action in actions],
             "next_faction": next_faction,
         }, indent=2))
+        return 0
+    if args.command == "economy-status":
+        state = load_campaign(args.campaign)
+        selected = [args.faction] if args.faction else sorted(state.factions)
+        payload = []
+        for faction_id in selected:
+            faction_state = state.factions[faction_id]
+            battalions = [value for value in state.battalions.values() if value.faction.value == faction_id]
+            payload.append({
+                "faction": faction_id,
+                "resources": faction_state.resources,
+                "income_last_round": faction_state.income_last_round,
+                "maintenance_last_round": faction_state.maintenance_last_round,
+                "researched": len(faction_state.researched_keys),
+                "reinforcement_pool": [asdict(entry) for entry in faction_state.reinforcement_pool],
+                "formations": [
+                    {
+                        "formation_id": value.formation_id,
+                        "unit_count": value.unit_count,
+                        "authorized_unit_count": value.authorized_unit_count,
+                        "replacement_deficit": value.replacement_deficit,
+                        "condition": value.condition,
+                    }
+                    for value in sorted(battalions, key=lambda item: item.formation_id)
+                ],
+            })
+        print(json.dumps(payload, indent=2))
+        return 0
+    if args.command == "research-status":
+        state = load_campaign(args.campaign)
+        faction = Faction(args.faction)
+        faction_state = state.factions[faction.value]
+        print(json.dumps({
+            "faction": faction.value,
+            "resources": faction_state.resources,
+            "completed": sorted(faction_state.researched_keys),
+            "available": [asdict(node) for node in available_research(state, faction)],
+        }, indent=2))
+        return 0
+    if args.command == "research":
+        state = load_campaign(args.campaign)
+        result = purchase_research(state, Faction(args.faction), args.key)
+        save_campaign(state, args.campaign)
+        print(json.dumps(asdict(result), indent=2))
+        return 0
+    if args.command == "list-recruits":
+        state = load_campaign(args.campaign)
+        print(json.dumps([asdict(offer) for offer in formation_recruitment_offers(state, args.formation)], indent=2))
+        return 0
+    if args.command == "recruit":
+        state = load_campaign(args.campaign)
+        entry = purchase_reinforcements(state, args.formation, args.unit, args.quantity)
+        save_campaign(state, args.campaign)
+        print(json.dumps(asdict(entry), indent=2))
+        return 0
+    if args.command == "assign-reinforcements":
+        state = load_campaign(args.campaign)
+        result = assign_reinforcements(state, args.formation, args.unit, args.quantity)
+        save_campaign(state, args.campaign)
+        print(json.dumps(asdict(result), indent=2))
+        return 0
+    if args.command == "repair":
+        state = load_campaign(args.campaign)
+        result = repair_formation(state, args.formation, args.points)
+        save_campaign(state, args.campaign)
+        print(json.dumps(asdict(result), indent=2))
         return 0
     if args.command == "export-battle":
         manifest = GatesOfCodeXService().export_battle(

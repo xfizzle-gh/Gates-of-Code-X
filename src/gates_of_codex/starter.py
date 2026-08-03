@@ -34,6 +34,17 @@ def populate_starter_rosters(state: CampaignState, catalog: CodeXCatalog) -> Non
         if support and support.name != infantry.name:
             roster.append(BattalionRosterEntry(support.name, quantity=1, category=support.category))
         battalion.roster = roster
+        battalion.authorized_roster = [
+            BattalionRosterEntry(
+                entry.unit_name,
+                quantity=entry.quantity,
+                stage=entry.stage,
+                category=entry.category,
+                preserved_objects=list(entry.preserved_objects),
+            )
+            for entry in roster
+        ]
+        battalion.condition = 100
 
 
 def set_player_faction(state: CampaignState, faction: Faction) -> None:

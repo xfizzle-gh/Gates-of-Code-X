@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from collections import deque
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Any
 
 from .campaign import CampaignEngine
 from .diplomacy import are_allied, is_friendly_owner
+from .economy import run_ai_economy
 from .models import Battalion, CampaignState, Faction
 
 
@@ -12,9 +14,10 @@ from .models import Battalion, CampaignState, Faction
 class StrategicAction:
     battalion_id: str
     action: str
-    origin_province_id: str
+    origin_province_id: str = ""
     target_province_id: str = ""
     winner: Faction | None = None
+    details: dict[str, Any] = field(default_factory=dict)
 
 
 class StrategicAI:
@@ -26,6 +29,18 @@ class StrategicAI:
         if faction.value not in self.state.factions:
             raise ValueError(f"Unknown strategic faction: {faction.value}")
         actions: list[StrategicAction] = []
+        if self.state.unit_economy and self.state.research_nodes:
+            for economy_action in run_ai_economy(self.state, faction):
+                actions.append(
+                    StrategicAction(
+                        battalion_id=str(economy_action.get("formation_id", "")),
+                        action=str(economy_action.get("action", "economy")),
+                        target_province_id=str(
+                            economy_action.get("unit_name", economy_action.get("key", ""))
+                        ),
+                        details=economy_action,
+                    )
+                )
         battalion_ids = sorted(
             battalion.battalion_id
             for battalion in self.state.battalions.values()
@@ -33,7 +48,7 @@ class StrategicAI:
         )
         for battalion_id in battalion_ids:
             battalion = self.state.battalions.get(battalion_id)
-            if battalion is None or battalion.movement_remaining <= 0:
+            if battalion is None or battalion.movement_remaining <= 0 or battalion.condition <= 20:
                 continue
             origin = battalion.province_id
             target = self._choose_adjacent_target(battalion)
