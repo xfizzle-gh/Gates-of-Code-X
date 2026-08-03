@@ -92,13 +92,17 @@ def validate_known_order(values: Iterable[str | Path]) -> tuple[bool, str]:
             positions.setdefault("3261086933", index)
         if "3636883799" in text or "ai overhaul" in text or "conquest ai overhaul" in text:
             positions.setdefault("3636883799", index)
+        if "gates-of-code-x" in text or "gates of code:x" in text:
+            positions.setdefault("gates", index)
     missing = [value for value in KNOWN_WORKSHOP_ORDER if value not in positions]
+    if "gates" not in positions:
+        missing.append("Gates of Code:X")
     if missing:
         return False, "Missing required stack layers: " + ", ".join(missing)
-    ordered = [positions[value] for value in KNOWN_WORKSHOP_ORDER]
-    if ordered != sorted(ordered):
-        return False, "Expected West81 -> Code:X -> Code:X AI Overhaul load order"
-    return True, "West81 -> Code:X -> Code:X AI Overhaul order confirmed"
+    ordered = [positions[value] for value in KNOWN_WORKSHOP_ORDER] + [positions["gates"]]
+    if ordered != sorted(ordered) or positions["gates"] != len(roots) - 1:
+        return False, "Expected West81 -> Code:X -> Code:X AI Overhaul -> Gates of Code:X, with Gates last"
+    return True, "West81 -> Code:X -> Code:X AI Overhaul -> Gates of Code:X order confirmed"
 
 
 def stack_signature(values: Iterable[str | Path]) -> str:
