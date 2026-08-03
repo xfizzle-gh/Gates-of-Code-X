@@ -8,10 +8,9 @@ from gates_of_codex.bridge.scn import CampaignScnBuilder
 from gates_of_codex.codex.catalog import CodeXCatalog, UnitDefinition
 from gates_of_codex.economy import build_research_nodes, build_unit_economy, initialize_economy
 from gates_of_codex.first_engine_test import stage_nato_russia_acceptance_battle
-from gates_of_codex.models import BattalionRosterEntry
+from gates_of_codex.models import BattalionRosterEntry, Faction
 from gates_of_codex.scenario import load_bundled_scenario
 from gates_of_codex.starter import populate_starter_rosters, set_player_faction
-from gates_of_codex.models import Faction
 
 
 class MaterializableUnitTests(unittest.TestCase):
@@ -100,7 +99,7 @@ class MaterializableUnitTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as temporary:
             builder = CampaignScnBuilder(catalog, resource_stack=[Path(temporary)])
-            with self.assertRaisesRegex(ValueError, "m1097_avenger.*missing_unit"):
+            with self.assertRaisesRegex(ValueError, r"m1097_avenger[\s\S]*missing_unit"):
                 builder.build(state, pending)
 
 
