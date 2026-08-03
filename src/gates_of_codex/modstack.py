@@ -6,7 +6,8 @@ from pathlib import Path
 from typing import Iterable
 
 
-RUNTIME_SUFFIXES = {".set", ".lua", ".inc", ".ext", ".mi", ".xml", ".json"}
+RUNTIME_SUFFIXES = {".set", ".lua", ".inc", ".ext", ".xml", ".json"}
+RUNTIME_SUBTREES = ("set", "script")
 KNOWN_WORKSHOP_ORDER = ("2897299509", "3261086933", "3636883799")
 
 
@@ -110,19 +111,21 @@ def stack_signature(values: Iterable[str | Path]) -> str:
             digest.update(b"mod.info\0")
             digest.update(mod_info.read_bytes())
         resources = resource_root(root)
-        # The base game is represented by path identity. Hashing every vanilla asset would
-        # make validation unnecessarily expensive; all actual mod layers have mod.info.
-        if not mod_info.is_file():
+        # The base game is represented by path identity. Runtime compatibility hashes focus
+        # on mod scripts and sets, including the AI Overhaul, without reading all map media.
+        if not mod_info.is_file() or not resources.is_dir():
             continue
-        for path in sorted(resources.rglob("*")) if resources.is_dir() else []:
-            if not path.is_file():
+        for subtree_name in RUNTIME_SUBTREES:
+            subtree = resources / subtree_name
+            if not subtree.is_dir():
                 continue
-            if path.suffix.lower() not in RUNTIME_SUFFIXES and path.name.lower() not in {"map", "map.mi"}:
-                continue
-            relative = path.relative_to(resources).as_posix()
-            digest.update(relative.encode("utf-8"))
-            digest.update(b"\0")
-            digest.update(path.read_bytes())
+            for path in sorted(subtree.rglob("*")):
+                if not path.is_file() or path.suffix.lower() not in RUNTIME_SUFFIXES:
+                    continue
+                relative = path.relative_to(resources).as_posix()
+                digest.update(relative.encode("utf-8"))
+                digest.update(b"\0")
+                digest.update(path.read_bytes())
     return digest.hexdigest()
 
 
