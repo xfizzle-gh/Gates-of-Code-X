@@ -1,7 +1,9 @@
 param(
     [string]$Python = "",
     [switch]$BuildExecutable,
-    [switch]$NoPythonInstall
+    [switch]$NoPythonInstall,
+    [string]$WorkshopTestTarget = "E:\Steam\steamapps\workshop\content\400750\3700832981",
+    [switch]$NoWorkshopDeploy
 )
 
 Set-StrictMode -Version Latest
@@ -165,7 +167,19 @@ if ($BuildExecutable) {
     }
 }
 
+if (-not $NoWorkshopDeploy) {
+    $DeployScript = Join-Path $PSScriptRoot "deploy_workshop_test.ps1"
+    if (-not (Test-Path -LiteralPath $DeployScript -PathType Leaf)) {
+        throw "Workshop deployment script not found: $DeployScript"
+    }
+    Write-Host "Synchronizing Gates of CodeX test item to $WorkshopTestTarget"
+    & $DeployScript -SourceRoot $Root -TargetRoot $WorkshopTestTarget
+}
+
 Write-Host "Installed. Run:"
 Write-Host "  $Venv\Scripts\gates-of-codex.exe doctor"
 Write-Host "  $Venv\Scripts\gates-of-codex.exe ui"
 Write-Host "  $Venv\Scripts\gates-of-codex-live.exe validate --help"
+if (-not $NoWorkshopDeploy) {
+    Write-Host "Workshop test deployment: $WorkshopTestTarget"
+}
