@@ -35,7 +35,9 @@ jobs:
           New-Item -ItemType Directory -Force release/GatesOfCodeX | Out-Null
           Copy-Item dist/GatesOfCodeX.exe release/GatesOfCodeX/
           Copy-Item dist/GatesOfCodeXLive.exe release/GatesOfCodeX/
-          Copy-Item README.md, LICENSE release/GatesOfCodeX/
+          Copy-Item README.md, LICENSE, mod.info release/GatesOfCodeX/
+          Copy-Item -Recurse config release/GatesOfCodeX/config
+          Copy-Item -Recurse resource release/GatesOfCodeX/resource
           Copy-Item -Recurse docs release/GatesOfCodeX/docs
           Copy-Item -Recurse godot release/GatesOfCodeX/godot
           Copy-Item -Recurse tools release/GatesOfCodeX/tools
