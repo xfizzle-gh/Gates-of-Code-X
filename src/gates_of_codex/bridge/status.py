@@ -180,7 +180,14 @@ class StatusBuilder:
     @classmethod
     def _replace_block(cls, text: str, key: str, values: list[str]) -> str:
         lines = text.splitlines()
-        start = next((index for index, line in enumerate(lines) if re.match(rf"^\s*\{{{re.escape(key)}(?:\s|\}})", line)), None)
+        start = next(
+            (
+                index
+                for index, line in enumerate(lines)
+                if re.match(rf"^\s*\{{{re.escape(key)}(?:\s|\}}|$)", line)
+            ),
+            None,
+        )
         block = [f"\t{{{key}", *[f"\t\t{value}" for value in values], "\t}"]
         if start is None:
             return cls._insert_before_close(text, "\n".join(block))
