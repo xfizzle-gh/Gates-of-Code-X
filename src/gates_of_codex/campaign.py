@@ -18,6 +18,9 @@ class CampaignEngine:
     TURN_ORDER = (Faction.NATO, Faction.UKRAINE, Faction.RUSSIA, Faction.PRC)
 
     def __init__(self, state: CampaignState, *, random_seed: int | None = None) -> None:
+        from .strategic import ensure_strategic_layer
+
+        ensure_strategic_layer(state)
         state.validate()
         self.state = state
         self._random = random.Random(random_seed)
@@ -47,6 +50,10 @@ class CampaignEngine:
             battalion.movement_remaining -= 1
             if target.owner == Faction.NEUTRAL:
                 target.owner = battalion.faction
+                from .strategic import evaluate_campaign_outcome, sync_province_infrastructure_owner
+
+                sync_province_infrastructure_owner(target)
+                evaluate_campaign_outcome(self.state)
             return MoveResult(moved=True)
 
         if battalion.combat_actions_remaining <= 0:
@@ -97,6 +104,9 @@ class CampaignEngine:
     def end_turn(self) -> Faction:
         if self.state.pending_battle is not None:
             raise RuntimeError("Cannot end turn with a pending battle")
+        outcome = self.state.map_metadata.get("campaign_outcome", {})
+        if outcome.get("status") == "complete":
+            raise RuntimeError("Campaign is already complete")
         active = [f for f in self.TURN_ORDER if f.value in self.state.factions and not self.state.factions[f.value].is_eliminated]
         if not active:
             raise RuntimeError("No active factions")
@@ -108,6 +118,7 @@ class CampaignEngine:
         if index == len(active) - 1 or index == -1:
             self.state.turn_number += 1
             from .economy import settle_round_economy
+            from .strategic import evaluate_campaign_outcome
             from .supply import refresh_all_supply
 
             settle_round_economy(self.state)
@@ -115,6 +126,7 @@ class CampaignEngine:
                 battalion.movement_remaining = 1
                 battalion.combat_actions_remaining = 1
             refresh_all_supply(self.state)
+            evaluate_campaign_outcome(self.state, advance_hold=True)
         self.state.current_faction = next_faction
         return next_faction
 
@@ -131,6 +143,9 @@ class CampaignEngine:
             if not attacker.is_destroyed:
                 attacker.province_id = target.province_id
                 target.owner = attacker.faction
+                from .strategic import sync_province_infrastructure_owner
+
+                sync_province_infrastructure_owner(target)
         else:
             if attacker.is_destroyed:
                 self.state.battalions.pop(attacker.battalion_id, None)
@@ -138,6 +153,9 @@ class CampaignEngine:
                 self.state.battalions.pop(defender.battalion_id, None)
         pending.completed = True
         self.state.pending_battle = None
+        from .strategic import evaluate_campaign_outcome
+
+        evaluate_campaign_outcome(self.state)
         self.state.validate()
 
     def _retreat_or_remove(self, battalion: Battalion, *, excluding: str) -> None:
