@@ -50,6 +50,26 @@ class BattalionRosterEntry:
 
 
 @dataclass(slots=True)
+class Alliance:
+    alliance_id: str
+    display_name: str
+    factions: list[Faction]
+    notes: str = ""
+
+    def validate(self) -> None:
+        if not self.alliance_id.strip():
+            raise ValueError("Alliance ID cannot be empty")
+        if not self.display_name.strip():
+            raise ValueError(f"Alliance {self.alliance_id} has no display name")
+        if len(self.factions) < 2:
+            raise ValueError(f"Alliance {self.alliance_id} must contain at least two factions")
+        if len(set(self.factions)) != len(self.factions):
+            raise ValueError(f"Alliance {self.alliance_id} contains duplicate factions")
+        if Faction.NEUTRAL in self.factions:
+            raise ValueError(f"Alliance {self.alliance_id} cannot include neutral")
+
+
+@dataclass(slots=True)
 class Formation:
     formation_id: str
     display_name: str
@@ -177,17 +197,25 @@ class CampaignState:
     map_id: str = "custom"
     map_metadata: dict[str, Any] = field(default_factory=dict)
     factions: dict[str, FactionState] = field(default_factory=dict)
+    alliances: dict[str, Alliance] = field(default_factory=dict)
     formations: dict[str, Formation] = field(default_factory=dict)
     provinces: dict[str, Province] = field(default_factory=dict)
     battalions: dict[str, Battalion] = field(default_factory=dict)
     pending_battle: PendingBattle | None = None
-    schema_version: int = 2
+    schema_version: int = 3
 
     def validate(self) -> None:
         if self.turn_number < 1:
             raise ValueError("Campaign turn_number must be at least 1")
         if not self.provinces:
             raise ValueError("Campaign must contain at least one province")
+        for key, alliance in self.alliances.items():
+            if key != alliance.alliance_id:
+                raise ValueError(f"Alliance key mismatch: {key}")
+            alliance.validate()
+            for faction in alliance.factions:
+                if faction.value not in self.factions:
+                    raise ValueError(f"Alliance {key} references missing faction {faction.value}")
         for key, formation in self.formations.items():
             if key != formation.formation_id:
                 raise ValueError(f"Formation key mismatch: {key}")
