@@ -5,6 +5,8 @@ import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 
+from .status import StatusBuilder
+
 
 @dataclass(frozen=True, slots=True)
 class CampaignSaveContents:
@@ -17,6 +19,9 @@ class CampaignSaveArchive:
     SCN_NAME = "campaign.scn"
 
     def write(self, path: str | Path, *, status: str, campaign_scn: str) -> Path:
+        status = StatusBuilder.validate(status)
+        if not campaign_scn.strip():
+            raise ValueError("Campaign scenario is empty")
         destination = Path(path)
         destination.parent.mkdir(parents=True, exist_ok=True)
         with tempfile.NamedTemporaryFile(prefix=f".{destination.name}.", suffix=".tmp", dir=destination.parent, delete=False) as temporary:
@@ -25,6 +30,7 @@ class CampaignSaveArchive:
             with zipfile.ZipFile(temporary_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
                 archive.writestr(self.STATUS_NAME, status)
                 archive.writestr(self.SCN_NAME, campaign_scn)
+            self.validate(temporary_path)
             temporary_path.replace(destination)
         except Exception:
             temporary_path.unlink(missing_ok=True)
@@ -37,9 +43,15 @@ class CampaignSaveArchive:
             raise FileNotFoundError(source)
         try:
             with zipfile.ZipFile(source, "r") as archive:
-                return CampaignSaveContents(
-                    status=archive.read(self.STATUS_NAME).decode("utf-8-sig", errors="replace"),
-                    campaign_scn=archive.read(self.SCN_NAME).decode("utf-8-sig", errors="replace"),
-                )
+                status = archive.read(self.STATUS_NAME).decode("utf-8-sig", errors="replace")
+                campaign_scn = archive.read(self.SCN_NAME).decode("utf-8-sig", errors="replace")
         except (KeyError, zipfile.BadZipFile) as exc:
             raise ValueError(f"Invalid Dynamic Conquest save: {source}") from exc
+        StatusBuilder.validate(status)
+        if not campaign_scn.strip():
+            raise ValueError(f"Invalid Dynamic Conquest save with empty campaign.scn: {source}")
+        return CampaignSaveContents(status=status, campaign_scn=campaign_scn)
+
+    def validate(self, path: str | Path) -> Path:
+        self.read(path)
+        return Path(path)
