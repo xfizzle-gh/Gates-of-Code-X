@@ -1,0 +1,29 @@
+{
+  "campaign_name": "Gates of CodeX Test Theater",
+  "turn_number": 1,
+  "current_faction": "nato",
+  "selected_faction": "nato",
+  "difficulty": "normal",
+  "factions": {
+    "nato": {"faction": "nato", "resources": 1200, "is_human_controlled": true},
+    "ukr": {"faction": "ukr", "resources": 1000},
+    "rusa": {"faction": "rusa", "resources": 1200},
+    "prc": {"faction": "prc", "resources": 1000}
+  },
+  "provinces": {
+    "west_hq": {"province_id": "west_hq", "display_name": "Western Command", "owner": "nato", "neighbors": ["west_front"], "x": 120, "y": 250, "resource_yield": 40},
+    "west_front": {"province_id": "west_front", "display_name": "Rhine Front", "owner": "nato", "neighbors": ["west_hq", "center", "ukr_hq"], "x": 310, "y": 250, "resource_yield": 25},
+    "ukr_hq": {"province_id": "ukr_hq", "display_name": "Kyiv Command", "owner": "ukr", "neighbors": ["west_front", "center", "rusa_front"], "x": 500, "y": 410, "resource_yield": 40},
+    "center": {"province_id": "center", "display_name": "Central Crossing", "owner": "neutral", "neighbors": ["west_front", "ukr_hq", "rusa_front"], "x": 520, "y": 220, "resource_yield": 30},
+    "rusa_front": {"province_id": "rusa_front", "display_name": "Western Military District", "owner": "rusa", "neighbors": ["center", "ukr_hq", "rusa_hq"], "x": 740, "y": 250, "resource_yield": 25},
+    "rusa_hq": {"province_id": "rusa_hq", "display_name": "Russian Command", "owner": "rusa", "neighbors": ["rusa_front", "prc_link"], "x": 900, "y": 210, "resource_yield": 40},
+    "prc_link": {"province_id": "prc_link", "display_name": "Central Asian Corridor", "owner": "prc", "neighbors": ["rusa_hq", "prc_hq"], "x": 1030, "y": 340, "resource_yield": 20},
+    "prc_hq": {"province_id": "prc_hq", "display_name": "PLA Expeditionary Command", "owner": "prc", "neighbors": ["prc_link"], "x": 1180, "y": 390, "resource_yield": 40}
+  },
+  "battalions": {
+    "nato-1": {"battalion_id": "nato-1", "faction": "nato", "province_id": "west_front", "is_player_controlled": true, "roster": [{"unit_name": "placeholder(nato)", "quantity": 1}]},
+    "ukr-1": {"battalion_id": "ukr-1", "faction": "ukr", "province_id": "ukr_hq", "roster": [{"unit_name": "placeholder(ukr)", "quantity": 1}]},
+    "rusa-1": {"battalion_id": "rusa-1", "faction": "rusa", "province_id": "rusa_front", "roster": [{"unit_name": "placeholder(rusa)", "quantity": 1}]},
+    "prc-1": {"battalion_id": "prc-1", "faction": "prc", "province_id": "prc_link", "roster": [{"unit_name": "placeholder(prc)", "quantity": 1}]}
+  }
+}
