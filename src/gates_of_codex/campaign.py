@@ -4,6 +4,7 @@ import random
 import uuid
 from dataclasses import dataclass
 
+from .diplomacy import are_allied, is_friendly_owner
 from .models import Battalion, BattleParticipant, CampaignState, Faction, PendingBattle
 
 
@@ -31,13 +32,21 @@ class CampaignEngine:
             raise ValueError(f"Battalion {battalion_id} has no movement remaining")
         if target_province_id not in origin.neighbors:
             raise ValueError(f"Province {target_province_id} is not adjacent")
+
         defender = self._battalion_in(target_province_id)
-        if target.owner in (battalion.faction, Faction.NEUTRAL) and defender is None:
+        if defender is not None and are_allied(self.state, battalion.faction, defender.faction):
+            raise ValueError(f"Allied province {target_province_id} already contains battalion {defender.battalion_id}")
+
+        friendly_or_neutral = target.owner == Faction.NEUTRAL or is_friendly_owner(
+            self.state, battalion.faction, target.owner
+        )
+        if defender is None and friendly_or_neutral:
             battalion.province_id = target_province_id
             battalion.movement_remaining -= 1
             if target.owner == Faction.NEUTRAL:
                 target.owner = battalion.faction
             return MoveResult(moved=True)
+
         if battalion.combat_actions_remaining <= 0:
             raise ValueError(f"Battalion {battalion_id} has no combat actions remaining")
         pending = self._build_pending_battle(battalion, defender, target_province_id)
@@ -91,12 +100,14 @@ class CampaignEngine:
             self.state.turn_number += 1
             for faction in active:
                 self.state.factions[faction.value].resources += sum(
-                    p.resource_yield for p in self.state.provinces.values() if p.owner == faction
+                    province.resource_yield for province in self.state.provinces.values() if province.owner == faction
                 )
             for battalion in self.state.battalions.values():
                 battalion.movement_remaining = 1
                 battalion.combat_actions_remaining = 1
-                battalion.supply = min(100, battalion.supply + 20)
+            from .supply import refresh_all_supply
+
+            refresh_all_supply(self.state)
         self.state.current_faction = next_faction
         return next_faction
 
@@ -128,8 +139,11 @@ class CampaignEngine:
             return
         current = self._get_province(battalion.province_id)
         candidates = [
-            p for p in current.neighbors
-            if p != excluding and self.state.provinces[p].owner == battalion.faction and self._battalion_in(p) is None
+            province_id
+            for province_id in current.neighbors
+            if province_id != excluding
+            and is_friendly_owner(self.state, battalion.faction, self.state.provinces[province_id].owner)
+            and self._battalion_in(province_id) is None
         ]
         if candidates:
             battalion.province_id = sorted(candidates)[0]
@@ -175,7 +189,7 @@ class CampaignEngine:
         return self.state.provinces[province_id]
 
     def _battalion_in(self, province_id: str) -> Battalion | None:
-        return next((b for b in self.state.battalions.values() if b.province_id == province_id), None)
+        return next((battalion for battalion in self.state.battalions.values() if battalion.province_id == province_id), None)
 
     def _require_pending_battle(self) -> PendingBattle:
         if self.state.pending_battle is None:

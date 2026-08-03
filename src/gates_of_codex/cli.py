@@ -15,6 +15,11 @@ from .scenario import load_bundled_scenario
 from .service import GatesOfCodeXService
 from .starter import populate_starter_rosters, set_player_faction
 from .state_io import load_campaign, save_campaign
+from .strategic_ai import StrategicAI
+from .supply import reachable_supply_provinces, refresh_supply_for_faction
+
+
+FACTION_CHOICES = ["nato", "ukr", "rusa", "prc"]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -28,7 +33,7 @@ def build_parser() -> argparse.ArgumentParser:
     new = sub.add_parser("new")
     new.add_argument("--codex", required=True)
     new.add_argument("--output", default="campaign.json")
-    new.add_argument("--faction", choices=["nato", "ukr", "rusa", "prc"], default="nato")
+    new.add_argument("--faction", choices=FACTION_CHOICES, default="nato")
     show = sub.add_parser("show")
     show.add_argument("campaign")
     move = sub.add_parser("move")
@@ -39,6 +44,15 @@ def build_parser() -> argparse.ArgumentParser:
     auto.add_argument("campaign")
     end = sub.add_parser("end-turn")
     end.add_argument("campaign")
+    supply = sub.add_parser("supply-status")
+    supply.add_argument("campaign")
+    supply.add_argument("--faction", choices=FACTION_CHOICES)
+    supply.add_argument("--refresh", action="store_true")
+    ai = sub.add_parser("run-ai-turn")
+    ai.add_argument("campaign")
+    ai.add_argument("--faction", choices=FACTION_CHOICES, required=True)
+    ai.add_argument("--seed", type=int, default=0)
+    ai.add_argument("--advance-turn", action="store_true")
     export = sub.add_parser("export-battle")
     export.add_argument("campaign")
     export.add_argument("--codex", required=True)
@@ -74,7 +88,7 @@ def main(argv: list[str] | None = None) -> int:
         catalog = CodeXCatalogScanner().scan(args.codex)
         if args.output:
             catalog.save(args.output)
-        print(json.dumps({faction: len(catalog.by_faction(faction)) for faction in ("nato", "ukr", "rusa", "prc")}, indent=2))
+        print(json.dumps({faction: len(catalog.by_faction(faction)) for faction in FACTION_CHOICES}, indent=2))
         return 0
     if args.command == "new":
         state = load_bundled_scenario()
@@ -104,6 +118,56 @@ def main(argv: list[str] | None = None) -> int:
         next_faction = CampaignEngine(state).end_turn()
         save_campaign(state, args.campaign)
         print(next_faction.value)
+        return 0
+    if args.command == "supply-status":
+        state = load_campaign(args.campaign)
+        factions = [Faction(args.faction)] if args.faction else [
+            faction for faction in CampaignEngine.TURN_ORDER if faction.value in state.factions
+        ]
+        payload = []
+        for faction in factions:
+            if args.refresh:
+                report = refresh_supply_for_faction(state, faction)
+                payload.append(asdict(report))
+            else:
+                reachable = reachable_supply_provinces(state, faction)
+                battalions = sorted(
+                    (value for value in state.battalions.values() if value.faction == faction),
+                    key=lambda value: value.battalion_id,
+                )
+                payload.append({
+                    "faction": faction.value,
+                    "reachable_provinces": len(reachable),
+                    "supplied_battalions": [
+                        value.battalion_id for value in battalions if value.province_id in reachable
+                    ],
+                    "isolated_battalions": [
+                        value.battalion_id for value in battalions if value.province_id not in reachable
+                    ],
+                    "supply": {value.battalion_id: value.supply for value in battalions},
+                    "encircled_turns": {value.battalion_id: value.encircled_turns for value in battalions},
+                })
+        if args.refresh:
+            save_campaign(state, args.campaign)
+        print(json.dumps(payload, indent=2))
+        return 0
+    if args.command == "run-ai-turn":
+        state = load_campaign(args.campaign)
+        faction = Faction(args.faction)
+        actions = StrategicAI(state, random_seed=args.seed).take_turn(faction)
+        next_faction = None
+        if args.advance_turn:
+            if state.current_faction != faction:
+                raise ValueError(
+                    f"Cannot advance {faction.value}; current faction is {state.current_faction.value}"
+                )
+            next_faction = CampaignEngine(state).end_turn().value
+        save_campaign(state, args.campaign)
+        print(json.dumps({
+            "faction": faction.value,
+            "actions": [asdict(action) for action in actions],
+            "next_faction": next_faction,
+        }, indent=2))
         return 0
     if args.command == "export-battle":
         manifest = GatesOfCodeXService().export_battle(

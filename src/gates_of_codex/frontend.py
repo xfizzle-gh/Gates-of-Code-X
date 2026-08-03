@@ -4,10 +4,11 @@ import json
 import tempfile
 from pathlib import Path
 
-from .models import CampaignState
+from .models import CampaignState, Faction
+from .supply import reachable_supply_provinces
 
 
-FRONTEND_SCHEMA_VERSION = 1
+FRONTEND_SCHEMA_VERSION = 2
 
 
 def build_frontend_snapshot(state: CampaignState) -> dict:
@@ -23,6 +24,11 @@ def build_frontend_snapshot(state: CampaignState) -> dict:
             if province.province_id != neighbor_id
         }
     )
+    supply_reach = {
+        faction.value: reachable_supply_provinces(state, faction)
+        for faction in (Faction.NATO, Faction.UKRAINE, Faction.RUSSIA, Faction.PRC)
+        if faction.value in state.factions
+    }
 
     return {
         "schema": "gates-of-codex.frontend",
@@ -49,6 +55,7 @@ def build_frontend_snapshot(state: CampaignState) -> dict:
                 "researched_keys": list(faction.researched_keys),
                 "is_human_controlled": faction.is_human_controlled,
                 "is_eliminated": faction.is_eliminated,
+                "supply_reachable_provinces": len(supply_reach.get(faction_id, set())),
             }
             for faction_id, faction in sorted(state.factions.items())
         ],
@@ -73,6 +80,7 @@ def build_frontend_snapshot(state: CampaignState) -> dict:
                 "resource_yield": province.resource_yield,
                 "fortification": province.fortification,
                 "occupied_by": occupied.get(province.province_id, ""),
+                "supply_source_for": list(province.metadata.get("supply_source_for", [])),
                 "metadata": province.metadata,
             }
             for province in sorted(state.provinces.values(), key=lambda value: value.province_id)
@@ -102,6 +110,8 @@ def build_frontend_snapshot(state: CampaignState) -> dict:
                 "battalion_type": battalion.battalion_type.value,
                 "unit_count": battalion.unit_count,
                 "supply": battalion.supply,
+                "is_in_supply": battalion.province_id in supply_reach.get(battalion.faction.value, set()),
+                "encircled_turns": battalion.encircled_turns,
                 "experience": battalion.experience,
                 "movement_remaining": battalion.movement_remaining,
                 "combat_actions_remaining": battalion.combat_actions_remaining,

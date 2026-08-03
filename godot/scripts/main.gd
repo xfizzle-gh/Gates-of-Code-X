@@ -11,6 +11,7 @@ const FACTION_COLORS := {
 
 var snapshot: Dictionary = {}
 var provinces_by_id: Dictionary = {}
+var battalions_by_province: Dictionary = {}
 var load_error := ""
 var view_scale := 1.0
 var view_offset := Vector2.ZERO
@@ -44,6 +45,8 @@ func _load_snapshot(path: String) -> void:
         return
     for province: Dictionary in snapshot.get("provinces", []):
         provinces_by_id[province.get("id", "")] = province
+    for battalion: Dictionary in snapshot.get("battalions", []):
+        battalions_by_province[battalion.get("province_id", "")] = battalion
 
 
 func _draw() -> void:
@@ -74,15 +77,22 @@ func _draw() -> void:
         var position := _map_to_screen(province)
         var owner: String = province.get("owner", "neutral")
         var color: Color = FACTION_COLORS.get(owner, FACTION_COLORS["neutral"])
-        var occupied: bool = not String(province.get("occupied_by", "")).is_empty()
+        var province_id: String = province.get("id", "")
+        var battalion: Dictionary = battalions_by_province.get(province_id, {})
+        var occupied := not battalion.is_empty()
         draw_circle(position, 4.5 if occupied else 3.0, color)
         if occupied:
-            draw_arc(position, 8.0, 0.0, TAU, 24, Color.WHITE, 1.5)
+            var supplied: bool = battalion.get("is_in_supply", true)
+            var encircled_turns: int = int(battalion.get("encircled_turns", 0))
+            var ring_color := Color.WHITE if supplied else Color("ff6b5f")
+            draw_arc(position, 8.0, 0.0, TAU, 24, ring_color, 1.5)
+            if encircled_turns > 0:
+                draw_arc(position, 11.0, 0.0, TAU, 24, Color("ffb14e"), 1.5)
         if view_scale >= 1.7 or occupied:
             draw_string(
                 ThemeDB.fallback_font,
                 position + Vector2(7, -5),
-                String(province.get("display_name", province.get("id", ""))),
+                String(province.get("display_name", province_id)),
                 HORIZONTAL_ALIGNMENT_LEFT,
                 -1,
                 11,
@@ -107,7 +117,7 @@ func _draw() -> void:
     draw_string(
         ThemeDB.fallback_font,
         Vector2(24, get_viewport_rect().size.y - 22),
-        "Drag to pan. Mouse wheel to zoom. Export with: gates-of-codex export-frontend <campaign.json>",
+        "White: supplied. Red: isolated. Orange: encircled. Drag to pan; wheel to zoom.",
         HORIZONTAL_ALIGNMENT_LEFT,
         -1,
         14,
