@@ -3,21 +3,54 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import asdict
+from pathlib import Path
 
 from . import cli
+from .codex.catalog import CodeXCatalogScanner
 from .doctor import diagnose
+from .economy import initialize_economy
+from .models import Faction
+from .modstack import resolve_stack, stack_to_strings
+from .scenario import load_bundled_scenario
+from .service import GatesOfCodeXService
+from .stack_acceptance import validate_mod_stack
+from .starter import populate_starter_rosters, set_player_faction
+from .state_io import save_campaign
+from .strategic import evaluate_campaign_outcome
+
+
+FACTION_CHOICES = ["nato", "ukr", "rusa", "prc"]
+
+
+def _add_stack_arguments(parser: argparse.ArgumentParser, *, require_codex: bool = True) -> None:
+    parser.add_argument("--codex", required=require_codex)
+    parser.add_argument("--stack", action="append", default=[])
+    parser.add_argument("--stack-config")
 
 
 def _doctor_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="gates-of-codex doctor")
     parser.add_argument("--game")
-    parser.add_argument("--codex")
+    _add_stack_arguments(parser, require_codex=False)
     parser.add_argument("--profile")
     return parser
 
 
 def _run_doctor(arguments: list[str]) -> int:
     args = _doctor_parser().parse_args(arguments)
+    if args.stack or args.stack_config:
+        if not args.game or not args.codex:
+            raise SystemExit("doctor with --stack or --stack-config requires --game and --codex")
+        report = validate_mod_stack(
+            args.game,
+            args.codex,
+            resource_stack=args.stack,
+            stack_config=args.stack_config,
+            profile_directory=args.profile,
+        )
+        print(json.dumps(report.to_dict(), indent=2))
+        return 0 if report.ok else 1
     report = diagnose(
         code_x_directory=args.codex,
         game_directory=args.game,
@@ -34,10 +67,75 @@ def _run_doctor(arguments: list[str]) -> int:
     return 0 if report.ok else 1
 
 
+def _run_scan(arguments: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="gates-of-codex scan")
+    _add_stack_arguments(parser)
+    parser.add_argument("--output")
+    args = parser.parse_args(arguments)
+    stack = resolve_stack(args.stack, config=args.stack_config, fallback=args.codex)
+    catalog = CodeXCatalogScanner().scan_stack(stack)
+    if args.output:
+        catalog.save(args.output)
+    print(json.dumps({
+        "resource_stack": catalog.resource_stack,
+        "signature": catalog.signature,
+        "units": {faction: len(catalog.by_faction(faction)) for faction in FACTION_CHOICES},
+    }, indent=2))
+    return 0
+
+
+def _run_new(arguments: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="gates-of-codex new")
+    _add_stack_arguments(parser)
+    parser.add_argument("--output", default="campaign.json")
+    parser.add_argument("--faction", choices=FACTION_CHOICES, default="nato")
+    args = parser.parse_args(arguments)
+    stack = resolve_stack(args.stack, config=args.stack_config, fallback=args.codex)
+    catalog = CodeXCatalogScanner().scan_stack(stack)
+    state = load_bundled_scenario()
+    state.code_x_directory = str(Path(args.codex).resolve())
+    state.map_metadata["resource_stack"] = stack_to_strings(stack)
+    set_player_faction(state, Faction(args.faction))
+    populate_starter_rosters(state, catalog)
+    initialize_economy(state, catalog)
+    evaluate_campaign_outcome(state)
+    save_campaign(state, args.output)
+    print(args.output)
+    return 0
+
+
+def _run_export(arguments: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="gates-of-codex export-battle")
+    parser.add_argument("campaign")
+    _add_stack_arguments(parser)
+    parser.add_argument("--save", required=True)
+    parser.add_argument("--map", required=True)
+    args = parser.parse_args(arguments)
+    stack = resolve_stack(args.stack, config=args.stack_config, fallback=args.codex)
+    manifest = GatesOfCodeXService().export_battle(
+        args.campaign,
+        code_x_directory=args.codex,
+        resource_stack=stack,
+        save_path=args.save,
+        map_name=args.map,
+    )
+    print(json.dumps(asdict(manifest), indent=2))
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     arguments = list(sys.argv[1:] if argv is None else argv)
-    if arguments and arguments[0] == "doctor":
-        return _run_doctor(arguments[1:])
+    if not arguments:
+        return cli.main(arguments)
+    command, remainder = arguments[0], arguments[1:]
+    if command == "doctor":
+        return _run_doctor(remainder)
+    if command == "scan":
+        return _run_scan(remainder)
+    if command == "new":
+        return _run_new(remainder)
+    if command == "export-battle":
+        return _run_export(remainder)
     return cli.main(arguments)
 
 
