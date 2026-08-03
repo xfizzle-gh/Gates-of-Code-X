@@ -205,6 +205,9 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
         pending_battle=pending,
         schema_version=max(1, int(data.get("schema_version", 1))),
     )
+    from .strategic import ensure_strategic_layer
+
+    ensure_strategic_layer(state)
     state.validate()
     return state
 
@@ -215,6 +218,9 @@ def load_campaign(path: str | Path) -> CampaignState:
 
 
 def save_campaign(state: CampaignState, path: str | Path) -> Path:
+    from .strategic import ensure_strategic_layer
+
+    ensure_strategic_layer(state)
     state.validate()
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
