@@ -20,13 +20,41 @@ class DoctorReport:
         return bool(self.game_directories and self.code_x_directories) and not self.errors
 
 
-def diagnose(code_x_directory: str | Path | None = None) -> DoctorReport:
+def _explicit_directory(value: str | Path | None, label: str, errors: list[str]) -> list[Path] | None:
+    if value is None:
+        return None
+    path = Path(value).expanduser()
+    try:
+        path = path.resolve()
+    except OSError:
+        pass
+    if not path.is_dir():
+        errors.append(f"{label} directory does not exist: {path}")
+        return []
+    return [path]
+
+
+def diagnose(
+    code_x_directory: str | Path | None = None,
+    game_directory: str | Path | None = None,
+    profile_directory: str | Path | None = None,
+) -> DoctorReport:
     locator = CodeXLocator()
-    games = locator.find_game_directories()
-    codex = [Path(code_x_directory)] if code_x_directory else locator.find_codex_directories(games[0] if games else None)
-    profiles = locator.find_profiles()
-    counts: dict[str, int] = {}
     errors: list[str] = []
+
+    games = _explicit_directory(game_directory, "Gates of Hell", errors)
+    if games is None:
+        games = locator.find_game_directories()
+
+    codex = _explicit_directory(code_x_directory, "Code:X", errors)
+    if codex is None:
+        codex = locator.find_codex_directories(games[0] if games else None)
+
+    profiles = _explicit_directory(profile_directory, "Profile", errors)
+    if profiles is None:
+        profiles = locator.find_profiles()
+
+    counts: dict[str, int] = {}
     if codex:
         try:
             catalog = CodeXCatalogScanner().scan(codex[0])
@@ -36,8 +64,10 @@ def diagnose(code_x_directory: str | Path | None = None) -> DoctorReport:
                     errors.append(f"No {faction} units found")
         except Exception as exc:
             errors.append(str(exc))
-    else:
+    elif not any(message.startswith("Code:X directory") for message in errors):
         errors.append("Code:X installation not found")
-    if not games:
+
+    if not games and not any(message.startswith("Gates of Hell directory") for message in errors):
         errors.append("Gates of Hell installation not found")
+
     return DoctorReport(games, codex, profiles, counts, errors)
