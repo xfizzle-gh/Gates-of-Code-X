@@ -12,9 +12,20 @@ Load these layers from lowest to highest priority:
 2. West81, Workshop `2897299509`
 3. Code:X, Workshop `3261086933`
 4. Code:X AI Overhaul, Workshop `3636883799`
-5. Gates of Code:X
+5. Gates of Code:X, Workshop test item `3700832981`
 
-`config/mod-stack.windows.json` contains the current `E:\Steam` paths. Gates of Code:X now includes `mod.info` and a `resource` overlay root so it can be enabled as the final GoH mod layer.
+`config/mod-stack.windows.json` contains the current `E:\Steam` paths. Gates of Code:X includes `mod.info` and a `resource` overlay root so it can be enabled as the final GoH mod layer.
+
+The Git repository at `E:\Steam\steamapps\workshop\content\400750\Gates-of-Code-X` is the source of truth. The normal Windows installer synchronizes all tracked project files into `E:\Steam\steamapps\workshop\content\400750\3700832981`, which is the live GoH test item. It never copies `.git`, `.venv`, `live`, backups, build artifacts, logs, or any other untracked development state.
+
+A manual sync is also available:
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass `
+  -File .\tools\deploy_workshop_test.ps1
+```
+
+The deployment manifest at `3700832981\.goc-deployment-manifest.json` records the source commit and deployed files. Later syncs remove only stale files that were previously written by this deployment script; unrelated Workshop files are preserved.
 
 ## Implemented
 
@@ -53,6 +64,8 @@ The Europe graph is exact for the observed alpha adjacency contract. Only 63 sou
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\install_gates_of_codex.ps1
 ```
+
+The installer updates the Python environment and the Workshop test item. Use `-NoWorkshopDeploy` only when intentionally updating the Python environment without touching `3700832981`. An alternate deployment destination can be supplied with `-WorkshopTestTarget`.
 
 Alternatively:
 

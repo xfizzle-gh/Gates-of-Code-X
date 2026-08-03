@@ -2,28 +2,10 @@
   "name": "Code:X with AI Overhaul",
   "description": "Ordered from lowest to highest load priority.",
   "layers": [
-    {
-      "name": "Vanilla",
-      "path": "E:\\Steam\\steamapps\\common\\Call to Arms - Gates of Hell\\resource"
-    },
-    {
-      "name": "West81",
-      "workshop_id": "2897299509",
-      "path": "E:\\Steam\\steamapps\\workshop\\content\\400750\\2897299509\\resource"
-    },
-    {
-      "name": "Code:X",
-      "workshop_id": "3261086933",
-      "path": "E:\\Steam\\steamapps\\workshop\\content\\400750\\3261086933"
-    },
-    {
-      "name": "Code:X AI Overhaul",
-      "workshop_id": "3636883799",
-      "path": "E:\\Steam\\steamapps\\workshop\\content\\400750\\3636883799"
-    },
-    {
-      "name": "Gates of Code:X",
-      "path": ".."
-    }
+    {"name": "Vanilla", "path": "E:\\Steam\\steamapps\\common\\Call to Arms - Gates of Hell\\resource"},
+    {"name": "West81", "workshop_id": "2897299509", "path": "E:\\Steam\\steamapps\\workshop\\content\\400750\\2897299509\\resource"},
+    {"name": "Code:X", "workshop_id": "3261086933", "path": "E:\\Steam\\steamapps\\workshop\\content\\400750\\3261086933"},
+    {"name": "Code:X AI Overhaul", "workshop_id": "3636883799", "path": "E:\\Steam\\steamapps\\workshop\\content\\400750\\3636883799"},
+    {"name": "Gates of Code:X", "workshop_id": "3700832981", "path": "E:\\Steam\\steamapps\\workshop\\content\\400750\\3700832981"}
   ]
 }
