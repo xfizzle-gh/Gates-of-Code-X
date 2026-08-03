@@ -34,6 +34,7 @@ class StackValidationReport:
     profile_directory: str
     resource_stack: list[str] = field(default_factory=list)
     catalog_signature: str = ""
+    raw_unit_counts: dict[str, int] = field(default_factory=dict)
     unit_counts: dict[str, int] = field(default_factory=dict)
     maps: list[MapCandidate] = field(default_factory=list)
     checks: list[ValidationCheck] = field(default_factory=list)
@@ -50,6 +51,7 @@ class StackValidationReport:
             "profile_directory": self.profile_directory,
             "resource_stack": self.resource_stack,
             "catalog_signature": self.catalog_signature,
+            "raw_unit_counts": self.raw_unit_counts,
             "unit_counts": self.unit_counts,
             "maps": [asdict(value) for value in self.maps],
             "checks": [asdict(value) for value in self.checks],
@@ -106,14 +108,20 @@ def validate_mod_stack(
     try:
         catalog = CodeXCatalogScanner().scan_stack(stack)
         report.catalog_signature = catalog.signature
+        diagnostics = catalog.diagnostic_counts()
         for faction in ("nato", "ukr", "rusa", "prc"):
-            report.unit_counts[faction] = len(catalog.by_faction(faction))
+            report.raw_unit_counts[faction] = diagnostics[faction]["raw"]
+            report.unit_counts[faction] = diagnostics[faction]["materializable"]
         missing = [faction for faction, count in report.unit_counts.items() if count <= 0]
+        detail = "; ".join(
+            f"{faction}: {report.unit_counts[faction]} materializable / {report.raw_unit_counts[faction]} raw"
+            for faction in ("nato", "ukr", "rusa", "prc")
+        )
         report.checks.append(
             ValidationCheck(
                 "code_x_factions",
                 not missing,
-                "all four factions found" if not missing else f"missing unit catalogs: {', '.join(missing)}",
+                detail if not missing else f"missing materializable unit catalogs: {', '.join(missing)}; {detail}",
             )
         )
     except Exception as exc:

@@ -4,7 +4,7 @@ import json
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Iterator
 
 from ..modstack import normalize_stack, resource_root, stack_signature
 
@@ -64,6 +64,15 @@ class CodeXCatalog:
         values = self.units.raw_values() if isinstance(self.units, CatalogUnits) else self.units.values()
         return sorted((unit for unit in values if unit.side == faction), key=lambda unit: unit.name)
 
+    def diagnostic_counts(self) -> dict[str, dict[str, int]]:
+        return {
+            faction: {
+                "raw": len(self.raw_by_faction(faction)),
+                "materializable": len(self.by_faction(faction)),
+            }
+            for faction in CodeXCatalogScanner.FACTIONS
+        }
+
     def to_dict(self) -> dict:
         return {
             "signature": self.signature,
@@ -90,8 +99,29 @@ class CodeXCatalog:
         return cls.from_dict(json.loads(Path(path).read_text(encoding="utf-8-sig")))
 
 
+@dataclass(frozen=True, slots=True)
+class _SourceEntry:
+    name: str
+    raw: str
+    macro_kind: str = ""
+
+
 class CodeXCatalogScanner:
     FACTIONS = ("nato", "ukr", "rusa", "prc")
+    SOURCE_EXTENSIONS = {".set", ".goh"}
+    _MACRO_MEMBER_RE = re.compile(r"\b(?:c\d+|crew\d*|member\d*|breed\d*)\(([^:()\s]+):(\d+)\)", re.I)
+    _ENTITY_MACRO_HINTS = (
+        "vehicle",
+        "tank",
+        "cannon",
+        "gun",
+        "empl",
+        "artillery",
+        "mortar",
+        "howitzer",
+        "aa",
+        "spg",
+    )
 
     def scan(self, code_x_directory: str | Path) -> CodeXCatalog:
         return self.scan_stack([code_x_directory])
@@ -106,14 +136,24 @@ class CodeXCatalogScanner:
                 raise FileNotFoundError(f"Stack layer does not exist: {root}")
             layer_units: dict[str, UnitDefinition] = {}
             resources = resource_root(root)
-            conquest_root = resources / "set/multiplayer/units/conquest"
-            if conquest_root.is_dir():
-                for path in sorted(conquest_root.rglob("*.set")):
-                    self._scan_set(path, resources, layer_units, layer_index, root.name)
+
+            # Lua rows provide the exact campaign/shop template IDs, including
+            # faction suffixes. Scan them first so GoH source macros can merge
+            # composition into those rows instead of creating duplicate aliases.
             lua_root = resources / "script/multiplayer/units"
             if lua_root.is_dir():
                 for path in sorted(lua_root.rglob("*.lua")):
                     self._scan_lua(path, resources, layer_units, layer_index, root.name)
+
+            conquest_root = resources / "set/multiplayer/units/conquest"
+            if conquest_root.is_dir():
+                for path in sorted(
+                    candidate
+                    for candidate in conquest_root.rglob("*")
+                    if candidate.is_file() and candidate.suffix.lower() in self.SOURCE_EXTENSIONS
+                ):
+                    self._scan_source(path, resources, layer_units, layer_index, root.name)
+
             for name, overlay in layer_units.items():
                 existing = units.get(name)
                 units[name] = self._merge(existing, overlay) if existing else overlay
@@ -123,7 +163,7 @@ class CodeXCatalogScanner:
             resource_stack=[str(root) for root in roots],
         )
 
-    def _scan_set(
+    def _scan_source(
         self,
         path: Path,
         resources: Path,
@@ -132,22 +172,41 @@ class CodeXCatalogScanner:
         layer_name: str,
     ) -> None:
         text = path.read_text(encoding="utf-8-sig", errors="replace")
-        period = next((part for part in path.parts if re.fullmatch(r"20\d\ds|mid|late|early", part.lower())), "2022s")
-        default_side = next((part.lower() for part in path.parts if part.lower() in self.FACTIONS), "")
+        default_period = self._period_from_path(path)
+        default_side = self._side_from_path(path)
         source = f"{layer_index}:{layer_name}/{path.relative_to(resources).as_posix()}"
-        for name, body in self._named_blocks(text):
-            side = self._side_from_name(name) or default_side
+
+        for entry in self._source_entries(text):
+            side = self._side_from_name(entry.name) or self._word_attr(entry.raw, "side") or default_side
+            side = side.lower()
             if side not in self.FACTIONS:
                 continue
+            period = self._word_attr(entry.raw, "period") or default_period
+            name = self._canonical_name(entry.name, side, units)
             unit = units.setdefault(name, UnitDefinition(name=name, side=side, period=period))
+            unit.side = side
+            if period:
+                unit.period = period
             if source not in unit.source_files:
                 unit.source_files.append(source)
-            for breed, count in re.findall(r'\{(?:member|breed)\s+"?([^"\s{}]+)"?\s*(\d+)?', body, flags=re.I):
-                unit.members[breed] = unit.members.get(breed, 0) + int(count or 1)
-            for vehicle in re.findall(r'\{(?:vehicle|entity)\s+"?([^"\s{}]+)', body, flags=re.I):
+
+            members = self._members(entry.raw)
+            for breed, count in members.items():
+                unit.members[breed] = max(unit.members.get(breed, 0), count)
+
+            explicit_vehicles = self._vehicles(entry.raw)
+            for vehicle in explicit_vehicles:
                 if vehicle not in unit.vehicles:
                     unit.vehicles.append(vehicle)
-            for action in re.findall(r'\{action\s+"?([^"\s{}]+)', body, flags=re.I):
+
+            has_crew_slots = bool(re.search(r"\bcrew\d*\(", entry.raw, flags=re.I))
+            macro_is_entity = any(hint in entry.macro_kind.lower() for hint in self._ENTITY_MACRO_HINTS)
+            if not explicit_vehicles and (has_crew_slots or macro_is_entity):
+                inferred = self._base_name(entry.name)
+                if inferred and inferred not in unit.vehicles:
+                    unit.vehicles.append(inferred)
+
+            for action in self._actions(entry.raw):
                 if action not in unit.actions:
                     unit.actions.append(action)
             unit.manpower_estimate = max(unit.manpower_estimate, sum(unit.members.values()))
@@ -162,11 +221,9 @@ class CodeXCatalogScanner:
         layer_name: str,
     ) -> None:
         text = path.read_text(encoding="utf-8-sig", errors="replace")
-        default_side = next((part.lower() for part in path.parts if part.lower() in self.FACTIONS), "")
+        default_side = self._side_from_path(path)
         source = f"{layer_index}:{layer_name}/{path.relative_to(resources).as_posix()}"
-        for row in re.finditer(r'\{[^{}]*unit\s*=\s*"([^"]+)"[^{}]*\}', text, flags=re.S):
-            body = row.group(0)
-            name = row.group(1)
+        for name, body in self._lua_rows(text):
             side = self._side_from_name(name) or default_side
             if side not in self.FACTIONS:
                 continue
@@ -186,6 +243,119 @@ class CodeXCatalogScanner:
             unit.category = self._category(unit)
 
     @staticmethod
+    def _lua_rows(text: str) -> Iterator[tuple[str, str]]:
+        for match in re.finditer(r'\bunit\s*=\s*"([^"]+)"', text):
+            start = text.rfind("{", 0, match.start())
+            if start < 0:
+                continue
+            depth = 0
+            end = None
+            for index in range(start, len(text)):
+                if text[index] == "{":
+                    depth += 1
+                elif text[index] == "}":
+                    depth -= 1
+                    if depth == 0:
+                        end = index + 1
+                        break
+            if end is not None:
+                yield match.group(1), text[start:end]
+
+    @classmethod
+    def _source_entries(cls, text: str) -> Iterator[_SourceEntry]:
+        lines = text.splitlines()
+        index = 0
+        while index < len(lines):
+            line = lines[index]
+            stripped = line.lstrip()
+            if not stripped or stripped.startswith(";") or stripped.startswith("//"):
+                index += 1
+                continue
+
+            block_match = re.match(r'^\s*\{\s*"?([^"\s{}]+(?:\([^)]*\))?)"?', line)
+            if block_match:
+                raw_lines = [line]
+                depth = line.count("{") - line.count("}")
+                cursor = index + 1
+                while depth > 0 and cursor < len(lines):
+                    raw_lines.append(lines[cursor])
+                    depth += lines[cursor].count("{") - lines[cursor].count("}")
+                    cursor += 1
+                raw = "\n".join(raw_lines)
+                macro_name = cls._word_attr(raw, "name")
+                yield _SourceEntry(macro_name or block_match.group(1), raw)
+                index = cursor
+                continue
+
+            if "name(" in line and "(" in line:
+                raw_lines = [line]
+                depth = cls._paren_balance(line)
+                cursor = index + 1
+                while depth > 0 and cursor < len(lines):
+                    raw_lines.append(lines[cursor])
+                    depth += cls._paren_balance(lines[cursor])
+                    cursor += 1
+                raw = "\n".join(raw_lines)
+                name = cls._word_attr(raw, "name")
+                if name:
+                    kind_match = re.match(r'^\s*\(\s*"([^"]+)"', raw)
+                    yield _SourceEntry(name, raw, kind_match.group(1) if kind_match else "")
+                index = cursor
+                continue
+
+            index += 1
+
+    @staticmethod
+    def _paren_balance(value: str) -> int:
+        # GoH source macros are not arbitrary code. Ignoring parentheses inside
+        # quoted display strings is sufficient for bounded entry collection.
+        without_quotes = re.sub(r'"[^"]*"', "", value)
+        return without_quotes.count("(") - without_quotes.count(")")
+
+    @classmethod
+    def _members(cls, raw: str) -> dict[str, int]:
+        values: dict[str, int] = {}
+        for breed, count in re.findall(
+            r'\{(?:member|breed)\s+"?([^"\s{}]+)"?\s*(\d+)?',
+            raw,
+            flags=re.I,
+        ):
+            values[breed] = values.get(breed, 0) + int(count or 1)
+        for breed, count in cls._MACRO_MEMBER_RE.findall(raw):
+            values[breed] = values.get(breed, 0) + int(count)
+        return values
+
+    @staticmethod
+    def _vehicles(raw: str) -> list[str]:
+        values = re.findall(r'\{(?:vehicle|entity)\s+"?([^"\s{}]+)', raw, flags=re.I)
+        values.extend(
+            match.strip().strip('"')
+            for match in re.findall(r"\b(?:vehicle|entity)\(([^)]+)\)", raw, flags=re.I)
+        )
+        return list(dict.fromkeys(value for value in values if value))
+
+    @staticmethod
+    def _actions(raw: str) -> list[str]:
+        values = re.findall(r'\{action\s+"?([^"\s{}]+)', raw, flags=re.I)
+        values.extend(re.findall(r"\baction\(([^)\s]+)\)", raw, flags=re.I))
+        return list(dict.fromkeys(values))
+
+    @classmethod
+    def _canonical_name(cls, name: str, side: str, units: dict[str, UnitDefinition]) -> str:
+        if name in units:
+            return name
+        suffixed = f"{name}({side})"
+        if suffixed in units:
+            return suffixed
+        base = cls._base_name(name).lower()
+        matching = [
+            candidate
+            for candidate, definition in units.items()
+            if definition.side == side and cls._base_name(candidate).lower() == base
+        ]
+        return sorted(matching)[0] if matching else name
+
+    @staticmethod
     def _merge(base: UnitDefinition, overlay: UnitDefinition) -> UnitDefinition:
         return UnitDefinition(
             name=overlay.name,
@@ -202,27 +372,37 @@ class CodeXCatalogScanner:
             source_files=list(dict.fromkeys([*base.source_files, *overlay.source_files])),
         )
 
+    @classmethod
+    def _side_from_path(cls, path: Path) -> str:
+        for part in path.parts:
+            lowered = part.lower()
+            if lowered in cls.FACTIONS:
+                return lowered
+            match = re.search(r"(?:^|[_\-.])(nato|ukr|rusa|prc)(?:[_\-.]|$)", lowered)
+            if match:
+                return match.group(1)
+        return ""
+
     @staticmethod
-    def _named_blocks(text: str):
-        pattern = re.compile(r'\{\s*"?([^"\s{}]+(?:\([^)]*\))?)"?\s*', re.M)
-        for match in pattern.finditer(text):
-            depth = 0
-            end = None
-            for index in range(match.start(), len(text)):
-                if text[index] == "{":
-                    depth += 1
-                elif text[index] == "}":
-                    depth -= 1
-                    if depth == 0:
-                        end = index + 1
-                        break
-            if end:
-                yield match.group(1), text[match.end():end - 1]
+    def _period_from_path(path: Path) -> str:
+        return next(
+            (part.lower() for part in path.parts if re.fullmatch(r"20\d\ds|mid|late|early", part.lower())),
+            "2022s",
+        )
+
+    @staticmethod
+    def _word_attr(raw: str, name: str) -> str:
+        match = re.search(rf"\b{re.escape(name)}\(([^)\s]+)\)", raw, flags=re.I)
+        return match.group(1).strip('"') if match else ""
 
     @staticmethod
     def _side_from_name(name: str) -> str:
         match = re.search(r'\((nato|ukr|rusa|prc)\)', name, flags=re.I)
         return match.group(1).lower() if match else ""
+
+    @staticmethod
+    def _base_name(name: str) -> str:
+        return re.sub(r"\((nato|ukr|rusa|prc)\)$", "", name, flags=re.I)
 
     @staticmethod
     def _category(unit: UnitDefinition) -> str:
