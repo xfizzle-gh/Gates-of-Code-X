@@ -4,6 +4,7 @@ import json
 from importlib.resources import files
 from pathlib import Path
 
+from .europe import build_goe_europe_campaign
 from .models import CampaignState
 from .state_io import campaign_from_dict
 
@@ -13,5 +14,9 @@ def load_scenario(path: str | Path) -> CampaignState:
 
 
 def load_bundled_scenario() -> CampaignState:
+    return build_goe_europe_campaign()
+
+
+def load_legacy_test_scenario() -> CampaignState:
     resource = files("gates_of_codex").joinpath("data/four_faction.json")
     return campaign_from_dict(json.loads(resource.read_text(encoding="utf-8")))
