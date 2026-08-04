@@ -332,7 +332,7 @@ class CampaignState:
             for neighbor_id in province.neighbors:
                 if province.province_id not in self.provinces[neighbor_id].neighbors:
                     raise ValueError(f"Adjacency must be reciprocal: {province.province_id} -> {neighbor_id}")
-        occupied: dict[str, str] = {}
+        occupied_factions: dict[str, Faction] = {}
         for key, battalion in self.battalions.items():
             if key != battalion.battalion_id:
                 raise ValueError(f"Battalion key mismatch: {key}")
@@ -345,9 +345,13 @@ class CampaignState:
                     raise ValueError(f"Battalion {key} references missing formation {battalion.formation_id}")
                 if formation.faction != battalion.faction:
                     raise ValueError(f"Battalion {key} faction does not match formation {formation.formation_id}")
-            previous = occupied.setdefault(battalion.province_id, key)
-            if previous != key:
-                raise ValueError(f"Province {battalion.province_id} contains multiple battalions")
+            previous_faction = occupied_factions.setdefault(
+                battalion.province_id, battalion.faction
+            )
+            if previous_faction != battalion.faction:
+                raise ValueError(
+                    f"Province {battalion.province_id} contains battalions from multiple factions"
+                )
         for faction_state in self.factions.values():
             if faction_state.resources < 0:
                 raise ValueError(f"Faction {faction_state.faction.value} has negative resources")
