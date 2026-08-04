@@ -20,7 +20,7 @@ from .strategic import (
 from .supply import reachable_supply_provinces
 
 
-FRONTEND_SCHEMA_VERSION = 6
+FRONTEND_SCHEMA_VERSION = 7
 FRONTEND_PYTHON_MODULE = "gates_of_codex"
 
 
@@ -70,6 +70,7 @@ def build_frontend_snapshot(
             "catalog_signature": state.catalog_signature,
             "outcome": asdict(outcome),
         },
+        "strategic_map": _strategic_map_block(state, snapshot_path),
         "bounds": {
             "min_x": min(xs),
             "max_x": max(xs),
@@ -270,6 +271,36 @@ def _pending_battle(state: CampaignState) -> dict | None:
         "completed": pending.completed,
         "attacking_battalions": [value.battalion_id for value in pending.attacking_participants],
         "defending_battalions": [value.battalion_id for value in pending.defending_participants],
+    }
+
+
+def _strategic_map_block(
+    state: CampaignState,
+    snapshot_path: str | Path | None,
+) -> dict:
+    snapshot_directory = Path(snapshot_path).resolve().parent if snapshot_path else None
+    configured = str(state.map_metadata.get("strategic_map_manifest", "")).strip()
+    if configured:
+        manifest = Path(configured).expanduser()
+        if not manifest.is_absolute() and snapshot_directory is not None:
+            manifest = snapshot_directory / manifest
+    elif snapshot_directory is not None:
+        manifest = snapshot_directory / "assets/maps/europe/interim_goe/map_manifest.json"
+    else:
+        manifest = None
+    resolved = manifest.resolve() if manifest is not None else None
+    return {
+        "enabled": bool(resolved and resolved.is_file()),
+        "manifest_path": str(resolved) if resolved else "",
+        "configured": bool(configured),
+        "map_id": state.map_id,
+        "provenance": str(
+            state.map_metadata.get(
+                "strategic_map_provenance",
+                "interim_goe_reference_asset" if state.map_id == "goe_europe" else "",
+            )
+        ),
+        "fallback": "marker_non_authoritative",
     }
 
 
