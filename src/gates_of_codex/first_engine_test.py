@@ -5,17 +5,16 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Iterable
 
-from .bridge.archive import CampaignSaveArchive
 from .campaign import CampaignEngine
 from .codex.catalog import CodeXCatalogScanner
 from .economy import initialize_economy
 from .models import Battalion, CampaignState, Faction
 from .modstack import resolve_stack, stack_to_strings
 from .scenario import load_bundled_scenario
-from .service import (
-    goh_conquest_save_filename,
-    read_status_campaign_name,
-    unique_acceptance_campaign_name,
+from .play_context import (
+    allocate_visible_campaign_name,
+    default_install_save_path,
+    resolve_status_template,
 )
 from .stack_acceptance import HandoffResult, prepare_stack_handoff
 from .starter import populate_acceptance_combat_rosters, populate_starter_rosters, set_player_faction
@@ -169,13 +168,16 @@ def run_first_engine_test(
     selection = stage_nato_russia_acceptance_battle(state)
     save_campaign(state, campaign_path)
 
-    reserved_names = _collect_visible_campaign_names(install_root)
-    visible_name = unique_acceptance_campaign_name(selection.battle_id, reserved=reserved_names)
+    visible_name = allocate_visible_campaign_name(
+        selection.battle_id,
+        install_root=install_root,
+        prefix="Gates of CodeX Test",
+    )
     if install_name:
         installed_save_path = (install_root / install_name).resolve()
     else:
-        installed_save_path = (install_root / goh_conquest_save_filename(visible_name)).resolve()
-    template_path = _resolve_status_template(install_root, installed_save_path, template_save)
+        installed_save_path = default_install_save_path(install_root, visible_name)
+    template_path = resolve_status_template(install_root, installed_save_path, template_save)
 
     handoff = prepare_stack_handoff(
         campaign_path,
@@ -185,11 +187,14 @@ def run_first_engine_test(
         save_path=export_save_path,
         map_name=map_name,
         profile_directory=profile,
+        install_directory=install_root,
         install_save_path=installed_save_path,
         status_template_path=template_path,
         backup_root=backup_root,
         launch=launch,
         campaign_name=visible_name,
+        name_prefix="Gates of CodeX Test",
+        stack_config=stack_config,
     )
     if handoff.manifest.visible_campaign_name != visible_name:
         raise RuntimeError(
@@ -220,54 +225,6 @@ def run_first_engine_test(
         verify_command=verify_command,
         import_command=import_command,
         visible_campaign_name=visible_name,
-    )
-
-
-def _collect_visible_campaign_names(install_root: Path) -> set[str]:
-    names: set[str] = set()
-    archive = CampaignSaveArchive()
-    for path in install_root.glob("*.sav"):
-        try:
-            status = archive.read(path).status
-        except (OSError, ValueError):
-            continue
-        name = read_status_campaign_name(status)
-        if name:
-            names.add(name)
-    return names
-
-
-def _resolve_status_template(
-    install_root: Path,
-    installed_save_path: Path,
-    explicit: str | Path | None,
-) -> Path:
-    archive = CampaignSaveArchive()
-    if explicit:
-        candidate = Path(explicit).expanduser().resolve()
-        archive.validate(candidate)
-        return candidate
-
-    candidates = sorted(
-        (
-            path
-            for path in install_root.glob("*.sav")
-            if path.resolve() != installed_save_path.resolve()
-        ),
-        key=lambda path: path.stat().st_mtime,
-        reverse=True,
-    )
-    errors: list[str] = []
-    for candidate in candidates:
-        try:
-            archive.validate(candidate)
-            return candidate.resolve()
-        except (OSError, ValueError) as exc:
-            errors.append(f"{candidate.name}: {exc}")
-    detail = "; ".join(errors[:5]) if errors else "no other .sav files were found"
-    raise RuntimeError(
-        "No valid Conquest saveinfo template was found. Create and save one normal Conquest with the intended mod stack, "
-        f"or pass --template-save explicitly. Details: {detail}"
     )
 
 

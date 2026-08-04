@@ -198,16 +198,22 @@ class GatesOfCodeXService:
         return result
 
 
-def unique_acceptance_campaign_name(battle_id: str, *, reserved: Iterable[str] | None = None) -> str:
-    """Build a short, deterministic GoH-visible Conquest name for an acceptance handoff."""
+def unique_acceptance_campaign_name(
+    battle_id: str,
+    *,
+    reserved: Iterable[str] | None = None,
+    prefix: str = "Gates of CodeX",
+) -> str:
+    """Build a short, deterministic GoH-visible Conquest name for a battle handoff."""
 
     blocked = {value.strip() for value in (reserved or []) if value and value.strip()}
     token = _battle_token(battle_id)
+    label = prefix.strip() or "Gates of CodeX"
     candidates = [
-        f"Gates of CodeX Test {token}",
-        f"Gates of CodeX Test {token}-a",
-        f"Gates of CodeX Test {token}-b",
-        f"Gates of CodeX Test {battle_id.replace(':', '-')[-16:]}",
+        f"{label} {token}",
+        f"{label} {token}-a",
+        f"{label} {token}-b",
+        f"{label} {battle_id.replace(':', '-')[-16:]}",
     ]
     for candidate in candidates:
         if candidate not in blocked:

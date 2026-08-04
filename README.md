@@ -86,70 +86,51 @@ gates-of-codex doctor `
   --codex "E:\Steam\steamapps\workshop\content\400750\3261086933" `
   --stack-config ".\config\mod-stack.windows.json"
 
-# Create a Europe campaign from the complete stack
+# Create a Europe campaign and persist play context for later handoffs
 gates-of-codex new `
   --codex "E:\Steam\steamapps\workshop\content\400750\3261086933" `
   --stack-config ".\config\mod-stack.windows.json" `
+  --game "E:\Steam\steamapps\common\Call to Arms - Gates of Hell" `
+  --profile "C:\Users\paulf\AppData\Local\digitalmindsoft\gates of hell\profiles\46383268" `
+  --map "multi/dcg_[cwa71]_fulda" `
   --output campaign.json
 
-# Research, recruit, reinforce, repair, and construct
+# Strategic actions
+gates-of-codex campaign-status campaign.json
+gates-of-codex move campaign.json <battalion-id> <province-id>
+# Hostile move creates pending_battle
+
+# Hand off the pending battle to GoH (auto install path + printed verify/import)
+gates-of-codex-live handoff campaign.json `
+  --stack-config ".\config\mod-stack.windows.json" `
+  --launch
+
+# Play the printed Conquest entry in GoH, then:
+#   verify command printed by handoff
+#   import-battle command printed by handoff (only if verify is green)
+
+gates-of-codex end-turn campaign.json
+gates-of-codex run-ai-turn campaign.json --faction rusa --advance-turn
+
+# Economy / construction when needed
 gates-of-codex research-status campaign.json --faction nato
 gates-of-codex list-recruits campaign.json --formation nato-us-armored
-gates-of-codex recruit campaign.json --formation nato-us-armored --unit "tank(nato)"
-gates-of-codex assign-reinforcements campaign.json --formation nato-us-armored --unit "tank(nato)"
-gates-of-codex repair campaign.json --formation nato-us-armored --points 10
 gates-of-codex construct campaign.json Warszawa supply_hub --faction nato
 
-# Inspect objectives and campaign outcome
-gates-of-codex objectives campaign.json
-gates-of-codex campaign-status campaign.json
-
-# Run a non-player strategic, economy, and construction turn
-gates-of-codex run-ai-turn campaign.json --faction rusa --seed 7 --advance-turn
-
-# Export data for the Godot frontend
+# Godot snapshot (read-only viewer)
 gates-of-codex export-frontend campaign.json --output .\godot\campaign_snapshot.json
 ```
 
-Open `godot/project.godot` after generating `godot/campaign_snapshot.json`. Click provinces to inspect ownership, infrastructure, available construction, occupying formations, objectives, resources, and campaign status.
+`handoff` remembers game/profile/map/install paths on the campaign after the first run, auto-picks a unique GoH save filename from the visible Conquest name, and prints the exact load / verify / import steps. `first-test` remains acceptance-only.
 
-## Guarded live battle flow
+Open `godot/project.godot` after generating `godot/campaign_snapshot.json`. Click provinces to inspect ownership, infrastructure, formations, objectives, and resources. Godot is still a viewer (no write-back yet).
 
-```powershell
-# Validate the game, complete stack, all four factions, maps, and optional profile
-gates-of-codex-live validate `
-  --game "E:\Steam\steamapps\common\Call to Arms - Gates of Hell" `
-  --codex "E:\Steam\steamapps\workshop\content\400750\3261086933" `
-  --stack-config ".\config\mod-stack.windows.json"
+## Guarded live battle notes
 
-# Discover a valid map identifier across all stack layers
-gates-of-codex-live maps `
-  --game "E:\Steam\steamapps\common\Call to Arms - Gates of Hell" `
-  --codex "E:\Steam\steamapps\workshop\content\400750\3261086933" `
-  --stack-config ".\config\mod-stack.windows.json" `
-  --contains 2x2
-
-# Back up, export, and optionally launch
-gates-of-codex-live handoff campaign.json `
-  --game "E:\Steam\steamapps\common\Call to Arms - Gates of Hell" `
-  --codex "E:\Steam\steamapps\workshop\content\400750\3261086933" `
-  --stack-config ".\config\mod-stack.windows.json" `
-  --save ".\live\campaign.sav" `
-  --map "multi/2x2/<MAP>" `
-  --backup-root ".\backups" `
-  --launch
-
-# After completing the battle, verify against the same stack signature
-gates-of-codex-live verify campaign.json `
-  --save ".\live\campaign.sav" `
-  --stack-config ".\config\mod-stack.windows.json" `
-  --output ".\live\acceptance-report.json"
-
-# Import only after verification succeeds
-gates-of-codex import-battle campaign.json --save ".\live\campaign.sav"
-```
-
-See `docs/live-acceptance.md` for the complete first-engine-test and recovery procedure.
+- Prefer `handoff` on an existing campaign with a pending battle.
+- Use `first-test` only for disposable engine acceptance.
+- Always verify before import.
+- See `docs/live-acceptance.md` for recovery and first-engine-test details.
 
 ## Development
 

@@ -151,39 +151,112 @@ def validate_mod_stack(
 def prepare_stack_handoff(
     campaign_path: str | Path,
     *,
-    game_directory: str | Path,
-    code_x_directory: str | Path,
-    save_path: str | Path,
-    map_name: str,
+    game_directory: str | Path | None = None,
+    code_x_directory: str | Path | None = None,
+    save_path: str | Path | None = None,
+    map_name: str | None = None,
     resource_stack: Iterable[str | Path] | None = None,
     stack_config: str | Path | None = None,
     profile_directory: str | Path | None = None,
+    install_directory: str | Path | None = None,
     install_save_path: str | Path | None = None,
     status_template_path: str | Path | None = None,
     backup_root: str | Path | None = None,
+    work_root: str | Path = "live",
     launch: bool = False,
     campaign_name: str | None = None,
+    name_prefix: str = "Gates of CodeX",
 ) -> HandoffResult:
-    stack = resolve_stack(resource_stack, config=stack_config, fallback=code_x_directory)
+    from .play_context import (
+        allocate_visible_campaign_name,
+        build_operator_commands,
+        default_export_save_path,
+        default_install_save_path,
+        resolve_status_template,
+    )
+    from .state_io import load_campaign, save_campaign
+
+    campaign = Path(campaign_path).resolve()
+    state = load_campaign(campaign)
+    if state.pending_battle is None:
+        raise RuntimeError("Campaign has no pending battle to hand off")
+
+    game_raw = game_directory or state.game_directory
+    codex_raw = code_x_directory or state.code_x_directory
+    if not game_raw:
+        raise ValueError("game_directory is required (pass --game or persist it on the campaign)")
+    if not codex_raw:
+        raise ValueError("code_x_directory is required (pass --codex or persist it on the campaign)")
+    game = Path(game_raw).expanduser().resolve()
+    codex = Path(codex_raw).expanduser().resolve()
+
+    profile = None
+    if profile_directory or state.profile_directory:
+        profile = Path(profile_directory or state.profile_directory).expanduser().resolve()
+
+    preferred_map = map_name or str(state.map_metadata.get("preferred_map") or "")
+    if not preferred_map:
+        raise ValueError("map_name is required (pass --map or set campaign map_metadata.preferred_map)")
+
+    stack = resolve_stack(
+        resource_stack or state.map_metadata.get("resource_stack"),
+        config=stack_config or state.map_metadata.get("stack_config"),
+        fallback=codex,
+    )
     validation = validate_mod_stack(
-        game_directory,
-        code_x_directory,
+        game,
+        codex,
         resource_stack=stack,
-        profile_directory=profile_directory,
+        profile_directory=profile,
     )
     if not validation.ok:
         failed = [check.detail for check in validation.checks if not check.ok]
         raise RuntimeError("Live mod-stack validation failed: " + "; ".join(failed))
 
-    normalized = _normalize_map(map_name)
+    normalized = _normalize_map(preferred_map)
     discovered = {_normalize_map(value.identifier) for value in validation.maps}
     if normalized not in discovered:
-        raise ValueError(f"Map identifier was not discovered in the configured mod stack: {map_name}")
+        raise ValueError(f"Map identifier was not discovered in the configured mod stack: {preferred_map}")
 
-    campaign = Path(campaign_path).resolve()
-    export_save = Path(save_path).resolve()
-    installed = Path(install_save_path).resolve() if install_save_path else None
-    template = Path(status_template_path).resolve() if status_template_path else None
+    install_root = None
+    if install_directory:
+        install_root = Path(install_directory).expanduser().resolve()
+    elif state.map_metadata.get("install_directory"):
+        install_root = Path(str(state.map_metadata["install_directory"])).expanduser().resolve()
+    elif profile is not None:
+        candidate = profile / "campaign"
+        install_root = candidate if candidate.is_dir() else profile
+
+    visible_name = campaign_name or allocate_visible_campaign_name(
+        state.pending_battle.battle_id,
+        install_root=install_root,
+        prefix=name_prefix,
+    )
+
+    if save_path is None:
+        export_save = default_export_save_path(work_root, state.pending_battle.battle_id)
+    else:
+        export_save = Path(save_path).expanduser().resolve()
+        if export_save.exists() and export_save.is_dir():
+            export_save = export_save / f"{state.pending_battle.battle_id}.sav"
+        elif export_save.suffix.lower() != ".sav":
+            export_save.mkdir(parents=True, exist_ok=True)
+            export_save = export_save / f"{state.pending_battle.battle_id}.sav"
+
+    if install_save_path:
+        installed = Path(install_save_path).expanduser().resolve()
+    elif install_root is not None:
+        installed = default_install_save_path(install_root, visible_name)
+    else:
+        installed = None
+
+    if status_template_path:
+        template = Path(status_template_path).expanduser().resolve()
+    elif install_root is not None:
+        template = resolve_status_template(install_root, installed or export_save)
+    else:
+        template = None
+
     service = GatesOfCodeXService()
     if template is not None:
         service.archive.validate(template)
@@ -191,17 +264,17 @@ def prepare_stack_handoff(
     if installed is not None:
         paths.extend([installed, service.manifest_path(installed)])
     backup = backup_existing_files(paths, backup_root=backup_root, label="tactical-handoff")
-    profile_mods = read_profile_mod_tokens(profile_directory)
+    profile_mods = read_profile_mod_tokens(profile)
     export_mods = merge_mod_tokens(profile_mods, stack_mod_tokens(stack))
     manifest = service.export_battle(
         campaign,
-        code_x_directory=code_x_directory,
+        code_x_directory=codex,
         resource_stack=stack,
         save_path=export_save,
-        map_name=map_name,
+        map_name=preferred_map,
         status_template_path=template,
         allow_overwrite=True,
-        campaign_name=campaign_name,
+        campaign_name=visible_name,
         mods=export_mods,
     )
     service.archive.validate(export_save)
@@ -214,10 +287,35 @@ def prepare_stack_handoff(
         installed_manifest = replace(manifest, save_path=str(installed))
         apply_installed_fingerprint(installed_manifest, installed)
         service.write_manifest(installed_manifest)
-        # Keep the export-side manifest fingerprint-aligned with the installed target.
         apply_installed_fingerprint(manifest, installed)
         service.write_manifest(manifest)
         installed_path = str(installed)
+
+    # Persist play context so the next battle needs fewer flags.
+    state = load_campaign(campaign)
+    state.game_directory = str(game)
+    state.code_x_directory = str(codex)
+    if profile is not None:
+        state.profile_directory = str(profile)
+    state.map_metadata["resource_stack"] = stack_to_strings(stack)
+    state.map_metadata["preferred_map"] = preferred_map
+    if install_root is not None:
+        state.map_metadata["install_directory"] = str(install_root)
+    if stack_config:
+        state.map_metadata["stack_config"] = str(Path(stack_config).expanduser().resolve())
+    elif state.map_metadata.get("stack_config"):
+        pass
+    save_campaign(state, campaign)
+
+    verify_command = ""
+    import_command = ""
+    if installed_path:
+        verify_command, import_command = build_operator_commands(
+            campaign,
+            installed_save_path=installed_path,
+            stack_config=stack_config or state.map_metadata.get("stack_config"),
+            report_path=Path(export_save).with_name("acceptance-report.json"),
+        )
 
     session_path = service.manifest_path(export_save).with_suffix(".session.json")
     result = HandoffResult(
@@ -227,9 +325,12 @@ def prepare_stack_handoff(
         installed_save_path=installed_path,
         session_path=str(session_path),
         launched=False,
+        visible_campaign_name=manifest.visible_campaign_name,
+        verify_command=verify_command,
+        import_command=import_command,
     )
     if launch:
-        launch_game(game_directory)
+        launch_game(game)
         result.launched = True
     session_path.write_text(json.dumps(result.to_dict(), indent=2) + "\n", encoding="utf-8")
     return result
