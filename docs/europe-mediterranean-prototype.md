@@ -43,7 +43,9 @@ PR #63 is a pipeline checkpoint only. Do not describe the map or PR as finished.
 **Debug**
 
 - `I` — raw color-ID + province IDs/anchors  
-- `C` — measured calibration: background + NE silhouette + target (cyan) vs resulting (orange) points with px error (median≤8, max≤20)
+- `C` — measured calibration: background + NE silhouette + target (cyan) vs resulting (orange) points with px error
+
+`source_px` must be visual landmarks on the raw pack image (not residual-optimized). Honest visual-landmark affine residuals currently **fail** the 8/20 px target (median ~70 px) → single global affine is insufficient; piecewise/TPS warp is the next step after human review of the numbered source-point reference.
 
 Do not paint solid full-opacity ownership fills over the background.
 

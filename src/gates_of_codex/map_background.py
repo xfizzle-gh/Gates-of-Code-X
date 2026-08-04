@@ -25,16 +25,17 @@ CONTROL_GEO: dict[str, tuple[float, float]] = {
 
 # Manually picked source pixels on world_test_9 boshin_map_world.tga (746x512, top-left origin).
 # These are measured landmarks on the pack artwork, not equirectangular assumptions.
-# Refined by residual-minimizing local search against project target_px.
+# Visually identified on raw pack TGA (746x512, top-left). NOT residual-optimized.
+# Honest affine residuals with these points exceed acceptance (need nonlinear warp next).
 DEFAULT_SOURCE_PX: dict[str, tuple[float, float]] = {
-    "london": (364.0, 134.0),
-    "gibraltar": (333.0, 213.0),
-    "rome": (407.0, 181.0),
-    "istanbul": (467.0, 176.0),
-    "moscow": (513.0, 103.0),
-    "cairo": (470.0, 233.0),
-    "northern_norway": (474.0, 29.0),
-    "western_iceland": (285.0, 74.0),
+    "london": (348.0, 112.0),
+    "gibraltar": (330.0, 210.0),
+    "rome": (400.0, 158.0),
+    "istanbul": (450.0, 168.0),
+    "moscow": (512.0, 98.0),
+    "cairo": (468.0, 222.0),
+    "northern_norway": (448.0, 42.0),
+    "western_iceland": (298.0, 56.0),
 }
 
 
