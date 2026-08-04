@@ -12,6 +12,11 @@ from .economy import initialize_economy
 from .models import Battalion, CampaignState, Faction
 from .modstack import resolve_stack, stack_to_strings
 from .scenario import load_bundled_scenario
+from .service import (
+    goh_conquest_save_filename,
+    read_status_campaign_name,
+    unique_acceptance_campaign_name,
+)
 from .stack_acceptance import HandoffResult, prepare_stack_handoff
 from .starter import populate_acceptance_combat_rosters, populate_starter_rosters, set_player_faction
 from .state_io import save_campaign
@@ -19,7 +24,8 @@ from .strategic import evaluate_campaign_outcome
 
 
 DEFAULT_TEST_MAP = "multi/dcg_[cwa71]_fulda"
-DEFAULT_INSTALL_NAME = "gates_of_codex_acceptance.sav"
+# Empty means: derive the install filename from the visible Conquest name the way GoH does.
+DEFAULT_INSTALL_NAME = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,6 +77,7 @@ class FirstEngineTestResult:
                 if self.visible_campaign_name
                 else ""
             ),
+            "installed_save_name": Path(self.installed_save_path).name if self.installed_save_path else "",
         }
 
 
@@ -143,8 +150,6 @@ def run_first_engine_test(
     if profile not in (install_root, *install_root.parents):
         raise ValueError(f"Install directory is not inside the selected profile: {install_root}")
 
-    installed_save_path = install_root / install_name
-    template_path = _resolve_status_template(install_root, installed_save_path, template_save)
     stack = resolve_stack(resource_stack, config=stack_config, fallback=codex)
     catalog = CodeXCatalogScanner().scan_stack(stack)
     timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S.%fZ")
@@ -164,6 +169,14 @@ def run_first_engine_test(
     selection = stage_nato_russia_acceptance_battle(state)
     save_campaign(state, campaign_path)
 
+    reserved_names = _collect_visible_campaign_names(install_root)
+    visible_name = unique_acceptance_campaign_name(selection.battle_id, reserved=reserved_names)
+    if install_name:
+        installed_save_path = (install_root / install_name).resolve()
+    else:
+        installed_save_path = (install_root / goh_conquest_save_filename(visible_name)).resolve()
+    template_path = _resolve_status_template(install_root, installed_save_path, template_save)
+
     handoff = prepare_stack_handoff(
         campaign_path,
         game_directory=game,
@@ -176,7 +189,13 @@ def run_first_engine_test(
         status_template_path=template_path,
         backup_root=backup_root,
         launch=launch,
+        campaign_name=visible_name,
     )
+    if handoff.manifest.visible_campaign_name != visible_name:
+        raise RuntimeError(
+            "Handoff visible campaign name diverged from the precomputed GoH install name: "
+            f"{handoff.manifest.visible_campaign_name!r} != {visible_name!r}"
+        )
 
     verify_command = (
         f'& .\\.venv\\Scripts\\gates-of-codex-live.exe verify "{campaign_path}" '
@@ -187,7 +206,6 @@ def run_first_engine_test(
         f'& .\\.venv\\Scripts\\gates-of-codex.exe import-battle "{campaign_path}" '
         f'--save "{installed_save_path}"'
     )
-    visible_name = handoff.manifest.visible_campaign_name
     return FirstEngineTestResult(
         session_directory=str(session),
         campaign_path=str(campaign_path),
@@ -203,6 +221,20 @@ def run_first_engine_test(
         import_command=import_command,
         visible_campaign_name=visible_name,
     )
+
+
+def _collect_visible_campaign_names(install_root: Path) -> set[str]:
+    names: set[str] = set()
+    archive = CampaignSaveArchive()
+    for path in install_root.glob("*.sav"):
+        try:
+            status = archive.read(path).status
+        except (OSError, ValueError):
+            continue
+        name = read_status_campaign_name(status)
+        if name:
+            names.add(name)
+    return names
 
 
 def _resolve_status_template(

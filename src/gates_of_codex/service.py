@@ -215,6 +215,23 @@ def unique_acceptance_campaign_name(battle_id: str, *, reserved: Iterable[str] |
     raise ValueError(f"Could not allocate a unique Conquest visible name for battle {battle_id!r}")
 
 
+def goh_conquest_save_filename(visible_campaign_name: str) -> str:
+    """Return the on-disk Conquest filename GoH uses for a visible campaign name.
+
+    Live observation (GoH 1.065): installing ``gates_of_codex_acceptance.sav`` with
+    visible name ``Gates of CodeX Test 39379c4c`` caused GoH to write/rewrite
+    ``gates of codex test 39379c4c.sav`` instead of the underscored install path.
+    Matching that filename lets verify/import target the file GoH actually updates.
+    """
+
+    name = visible_campaign_name.strip().lower()
+    name = re.sub(r'[<>:"/\\|?*]', "", name)
+    name = re.sub(r"\s+", " ", name).strip(" .")
+    if not name:
+        raise ValueError("visible campaign name is empty")
+    return f"{name}.sav"
+
+
 def read_status_campaign_name(status_text: str) -> str:
     match = re.search(r'(?m)^\t\{name\s+"([^"]*)"\}\s*$', status_text.replace("\r\n", "\n").replace("\r", "\n"))
     return match.group(1) if match else ""

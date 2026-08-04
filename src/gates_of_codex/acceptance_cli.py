@@ -172,6 +172,10 @@ def main(argv: list[str] | None = None) -> int:
             print("Load this exact Conquest entry:")
             print(result.visible_campaign_name)
             print(f"Installed save file: {result.installed_save_path}")
+            print(
+                "GoH rewrites this same filename (derived from the visible name). "
+                "Do not pick a different gates_of_codex_acceptance entry."
+            )
         return 0
     if args.command == "backup":
         record = backup_existing_files(args.paths, backup_root=args.backup_root, label=args.label)
