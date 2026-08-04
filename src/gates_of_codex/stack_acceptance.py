@@ -162,6 +162,7 @@ def prepare_stack_handoff(
     status_template_path: str | Path | None = None,
     backup_root: str | Path | None = None,
     launch: bool = False,
+    campaign_name: str | None = None,
 ) -> HandoffResult:
     stack = resolve_stack(resource_stack, config=stack_config, fallback=code_x_directory)
     validation = validate_mod_stack(
@@ -200,6 +201,7 @@ def prepare_stack_handoff(
         map_name=map_name,
         status_template_path=template,
         allow_overwrite=True,
+        campaign_name=campaign_name,
         mods=export_mods,
     )
     service.archive.validate(export_save)

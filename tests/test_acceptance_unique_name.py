@@ -24,6 +24,7 @@ from gates_of_codex.service import (
     GatesOfCodeXService,
     apply_installed_fingerprint,
     fingerprint_save,
+    goh_conquest_save_filename,
     read_status_campaign_name,
     unique_acceptance_campaign_name,
 )
@@ -157,6 +158,18 @@ class AcceptanceUniqueNameTests(unittest.TestCase):
         self.assertEqual(first, second)
         self.assertEqual("Gates of CodeX Test b714b08b", first)
         self.assertLessEqual(len(first), 40)
+
+    def test_goh_install_filename_matches_live_rewrite_behavior(self) -> None:
+        # Observed live: GoH rewrote "gates of codex test 39379c4c.sav"
+        # instead of the underscored gates_of_codex_acceptance.sav install path.
+        self.assertEqual(
+            "gates of codex test 39379c4c.sav",
+            goh_conquest_save_filename("Gates of CodeX Test 39379c4c"),
+        )
+        self.assertEqual(
+            "gates of codex test b714b08b.sav",
+            goh_conquest_save_filename(unique_acceptance_campaign_name("goc-1-b714b08b42")),
+        )
 
     def test_unique_name_avoids_template_collision(self) -> None:
         reserved = {"Gates of CodeX Test b714b08b"}
