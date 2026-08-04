@@ -205,6 +205,15 @@ class CampaignScnBuilder:
 
 class CampaignScnParser:
     ROW = re.compile(r'\{"([^"]+)"\s+"([^"]+)"\s+([^}]*)\}')
+    DEAD_OBJECT_IDS = frozenset({"0xffffffff"})
+
+    @classmethod
+    def live_object_ids(cls, value: str) -> list[str]:
+        return [
+            object_id
+            for object_id in re.findall(r"0x[0-9a-fA-F]+", value)
+            if object_id.lower() not in cls.DEAD_OBJECT_IDS
+        ]
 
     def parse_squads(self, text: str) -> list[ParsedCampaignSquad]:
         marker = text.find("{CampaignSquads")
@@ -212,7 +221,7 @@ class CampaignScnParser:
             return []
         section = text[marker:]
         return [
-            ParsedCampaignSquad(match.group(1), match.group(2), re.findall(r"0x[0-9a-fA-F]+", match.group(3)))
+            ParsedCampaignSquad(match.group(1), match.group(2), self.live_object_ids(match.group(3)))
             for match in self.ROW.finditer(section)
         ]
 
