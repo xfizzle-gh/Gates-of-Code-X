@@ -10,3 +10,9 @@ dist/
 *.sav
 *.goc.json
 campaign.json
+
+# Local research map artwork (never commit pack-derived backgrounds)
+godot/assets/maps/**/background_config.json
+godot/assets/maps/**/background_pack_reference.png
+godot/assets/maps/**/background_local*.png
+**/europe_mediterranean_background.png

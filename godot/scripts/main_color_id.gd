@@ -2,6 +2,8 @@ extends "res://scripts/main_writeback.gd"
 
 const ColorIdMapScript = preload("res://scripts/color_id_map.gd")
 const DEFAULT_MAP_MANIFEST := "res://assets/maps/europe/interim_goe/map_manifest.json"
+const EM_FROM_GOE_MANIFEST := "res://assets/maps/europe_mediterranean/from_goe/map_manifest.json"
+const EM_MAP_MANIFEST := "res://assets/maps/europe_mediterranean/prototype/map_manifest.json"
 
 var color_id_map = ColorIdMapScript.new()
 var map_manifest_source_path := DEFAULT_MAP_MANIFEST
@@ -13,7 +15,39 @@ func _ready() -> void:
 	if args.size() > 1:
 		map_manifest_source_path = String(args[1])
 	super._ready()
+	if args.size() <= 1:
+		map_manifest_source_path = _resolve_map_manifest_path()
 	_open_color_id_map()
+
+
+func _resolve_map_manifest_path() -> String:
+	var contract: Dictionary = snapshot.get("strategic_map", {})
+	var exported := String(contract.get("manifest_path", "")).strip_edges()
+	if not exported.is_empty() and FileAccess.file_exists(exported):
+		return exported
+	var map_id := String(contract.get("map_id", ""))
+	if map_id == "europe_mediterranean_from_goe" and FileAccess.file_exists(EM_FROM_GOE_MANIFEST):
+		return EM_FROM_GOE_MANIFEST
+	if map_id == "europe_mediterranean_prototype" and FileAccess.file_exists(EM_MAP_MANIFEST):
+		return EM_MAP_MANIFEST
+	if map_id in ["goe_europe", "interim_goe_europe"] and FileAccess.file_exists(DEFAULT_MAP_MANIFEST):
+		return DEFAULT_MAP_MANIFEST
+	var campaign: Dictionary = snapshot.get("campaign", {})
+	var meta: Dictionary = campaign.get("map_metadata", {})
+	var configured := String(meta.get("strategic_map_id", ""))
+	if configured == "europe_mediterranean_from_goe" and FileAccess.file_exists(EM_FROM_GOE_MANIFEST):
+		return EM_FROM_GOE_MANIFEST
+	if configured == "europe_mediterranean_prototype" and FileAccess.file_exists(EM_MAP_MANIFEST):
+		return EM_MAP_MANIFEST
+	if configured in ["goe_europe", "interim_goe_europe"] and FileAccess.file_exists(DEFAULT_MAP_MANIFEST):
+		return DEFAULT_MAP_MANIFEST
+	if map_id == "europe_mediterranean_from_goe" or configured == "europe_mediterranean_from_goe":
+		if FileAccess.file_exists(EM_FROM_GOE_MANIFEST):
+			return EM_FROM_GOE_MANIFEST
+	if map_id == "europe_mediterranean_prototype" or configured == "europe_mediterranean_prototype":
+		if FileAccess.file_exists(EM_MAP_MANIFEST):
+			return EM_MAP_MANIFEST
+	return DEFAULT_MAP_MANIFEST
 
 
 func _load_snapshot(path: String) -> void:
@@ -48,17 +82,39 @@ func _draw() -> void:
 	var map_width := viewport.x - PANEL_WIDTH
 	draw_rect(Rect2(0, 0, map_width, viewport.y), Color(0.025, 0.035, 0.047, 1.0))
 	var texture_rect := _map_texture_rect()
-	if color_id_map.owner_texture != null:
-		draw_texture_rect(color_id_map.owner_texture, texture_rect, false)
-	if color_id_map.border_texture != null:
-		draw_texture_rect(color_id_map.border_texture, texture_rect, false)
-	_draw_coalition_fronts()
-	if color_id_map.highlight_texture != null:
-		draw_texture_rect(color_id_map.highlight_texture, texture_rect, false)
-	_draw_color_id_pending_battle()
-	_draw_color_id_overlays()
+	if color_id_map.debug_color_id_view:
+		if color_id_map.debug_id_texture != null:
+			draw_texture_rect(color_id_map.debug_id_texture, texture_rect, false)
+		if color_id_map.border_texture != null:
+			draw_texture_rect(color_id_map.border_texture, texture_rect, false)
+		_draw_debug_province_ids()
+	elif color_id_map.debug_calibration_view:
+		if color_id_map.background_texture != null:
+			draw_texture_rect(color_id_map.background_texture, texture_rect, false)
+		if color_id_map.land_silhouette_image != null:
+			# Draw NE/project coastline silhouette lightly over pack background.
+			var sil := ImageTexture.create_from_image(color_id_map.land_silhouette_image)
+			draw_texture_rect(sil, texture_rect, false, Color(0.35, 0.85, 1.0, 0.28))
+		if color_id_map.border_texture != null:
+			draw_texture_rect(color_id_map.border_texture, texture_rect, false)
+		_draw_calibration_control_points()
+	else:
+		# Layer stack: visual background -> ownership tint -> borders -> highlights -> units.
+		if color_id_map.background_texture != null:
+			draw_texture_rect(color_id_map.background_texture, texture_rect, false)
+		if color_id_map.owner_texture != null:
+			draw_texture_rect(color_id_map.owner_texture, texture_rect, false)
+		if color_id_map.border_texture != null:
+			draw_texture_rect(color_id_map.border_texture, texture_rect, false)
+		_draw_coalition_fronts()
+		if color_id_map.highlight_texture != null:
+			draw_texture_rect(color_id_map.highlight_texture, texture_rect, false)
+		_draw_color_id_pending_battle()
+		_draw_color_id_overlays()
 
 	var campaign: Dictionary = snapshot.get("campaign", {})
+	var map_contract: Dictionary = snapshot.get("strategic_map", {})
+	var map_id := String(map_contract.get("map_id", campaign.get("map_id", "")))
 	var title := "%s  |  Turn %s  |  %s" % [
 		campaign.get("name", "Gates of CodeX"),
 		campaign.get("turn_number", 1),
@@ -73,7 +129,32 @@ func _draw() -> void:
 		22,
 		Color.WHITE
 	)
-	var hint := "F fit front  |  click province shape  |  wheel zoom  |  drag pan"
+	var province_count := int(snapshot.get("provinces", []).size())
+	var manifest_path := String(map_contract.get("manifest_path", map_manifest_source_path))
+	var short_manifest := manifest_path
+	if short_manifest.find("assets/maps/") >= 0:
+		short_manifest = short_manifest.substr(short_manifest.find("assets/maps/"))
+	var mode := "normal"
+	if color_id_map.debug_color_id_view:
+		mode = "DEBUG color-ID"
+	elif color_id_map.debug_calibration_view:
+		mode = "DEBUG calibration"
+	var diag := "Map: %s  |  Provinces: %s  |  %s  |  %s" % [
+		map_id,
+		province_count,
+		color_id_map.background_status(),
+		mode,
+	]
+	draw_string(
+		ThemeDB.fallback_font,
+		Vector2(24, 56),
+		diag,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		map_width - 48,
+		14,
+		Color("9fd7ff")
+	)
+	var hint := "F fit  |  I color-ID  |  C calibration  |  click province  |  wheel zoom  |  drag pan"
 	if not status_message.is_empty():
 		hint = status_message
 	draw_string(
@@ -86,6 +167,66 @@ func _draw() -> void:
 		Color(0.78, 0.82, 0.86, 0.95)
 	)
 	_draw_management_panel()
+
+
+func _draw_debug_province_ids() -> void:
+	for province: Dictionary in snapshot.get("provinces", []):
+		var province_id := String(province.get("id", ""))
+		if not color_id_map.row_by_province.has(province_id):
+			continue
+		var position := _image_to_screen(color_id_map.anchor_pixel(province_id))
+		draw_circle(position, 2.5, Color(1, 1, 1, 0.85))
+		draw_string(
+			ThemeDB.fallback_font,
+			position + Vector2(6, -4),
+			province_id,
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			11,
+			Color(0.95, 0.97, 1.0, 0.9)
+		)
+
+
+func _draw_calibration_control_points() -> void:
+	var errors: Array[float] = []
+	for raw: Variant in color_id_map.control_points:
+		if not raw is Dictionary:
+			continue
+		var row := raw as Dictionary
+		var target: Vector2 = row.get("target_px", row.get("gameplay_px", Vector2.ZERO))
+		var resulting: Vector2 = row.get("resulting_px", target)
+		var err := float(row.get("error_px", target.distance_to(resulting)))
+		errors.append(err)
+		var target_screen := _image_to_screen(target)
+		var result_screen := _image_to_screen(resulting)
+		# Expected project point (cyan) vs transformed pack point (orange).
+		draw_line(target_screen, result_screen, Color(1.0, 0.85, 0.2, 0.9), 2.0)
+		draw_circle(target_screen, 5.0, Color(0.25, 0.9, 1.0, 0.95))
+		draw_arc(target_screen, 9.0, 0.0, TAU, 24, Color(0.2, 0.7, 1.0, 0.9), 1.5)
+		draw_circle(result_screen, 4.5, Color(1.0, 0.45, 0.15, 0.95))
+		draw_string(
+			ThemeDB.fallback_font,
+			target_screen + Vector2(10, -8),
+			"%s  err=%.1fpx" % [String(row.get("name", "?")), err],
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			12,
+			Color(1.0, 0.95, 0.75, 0.95)
+		)
+	if not errors.is_empty():
+		errors.sort()
+		var mid := errors[errors.size() / 2]
+		var mx := errors[errors.size() - 1]
+		var summary := "Calibration residuals  median=%.1fpx  max=%.1fpx  (target med<=8 max<=20)" % [mid, mx]
+		draw_string(
+			ThemeDB.fallback_font,
+			Vector2(24, 78),
+			summary,
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			13,
+			Color(1.0, 0.9, 0.5, 0.95) if mx > 20.0 or mid > 8.0 else Color(0.6, 1.0, 0.7, 0.95)
+		)
 
 
 func _draw_coalition_fronts() -> void:
@@ -141,10 +282,10 @@ func _draw_color_id_overlays() -> void:
 		var infrastructure: Dictionary = province.get("infrastructure", {})
 		if int(infrastructure.get("supply_hub", 0)) > 0:
 			draw_rect(Rect2(position + Vector2(-13, 12), Vector2(6, 6)), Color("63d69f"))
-		if int(infrastructure.get("command_post", 0)) > 0:
-			draw_rect(Rect2(position + Vector2(-4, 12), Vector2(6, 6)), Color("b892ff"))
-		if int(infrastructure.get("air_base", 0)) > 0:
+		if int(infrastructure.get("command_post", 0)) > 0 or int(infrastructure.get("air_base", 0)) > 0:
 			draw_circle(position + Vector2(8, 15), 3.2, Color("7fe7ff"))
+		if int(infrastructure.get("port", 0)) > 0:
+			draw_rect(Rect2(position + Vector2(10, 8), Vector2(6, 4)), Color("4f8fd8"))
 
 		if occupied:
 			if not bool(battalion.get("is_in_supply", true)):
@@ -225,7 +366,6 @@ func _province_label(province: Dictionary, province_id: String) -> String:
 	var label := String(province.get("display_name", province_id)).strip_edges()
 	if label.is_empty():
 		return province_id
-	# Prefer manifest source name when campaign still has a generic label.
 	if not _is_named_province(label) and color_id_map != null and color_id_map.row_by_province.has(province_id):
 		var row: Dictionary = color_id_map.row_by_province[province_id]
 		var source_label := String(row.get("display_name", "")).strip_edges()
@@ -244,6 +384,24 @@ func _is_named_province(label: String) -> bool:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		var key := event as InputEventKey
+		if key.keycode == KEY_I and color_id_map != null and color_id_map.is_ready:
+			color_id_map.debug_color_id_view = not color_id_map.debug_color_id_view
+			if color_id_map.debug_color_id_view:
+				color_id_map.debug_calibration_view = false
+			status_message = "Debug color-ID view ON (I)." if color_id_map.debug_color_id_view else "Normal map view."
+			queue_redraw()
+			get_viewport().set_input_as_handled()
+			return
+		if key.keycode == KEY_C and color_id_map != null and color_id_map.is_ready:
+			color_id_map.debug_calibration_view = not color_id_map.debug_calibration_view
+			if color_id_map.debug_calibration_view:
+				color_id_map.debug_color_id_view = false
+			status_message = "Calibration overlay ON (C): background + NE silhouette + control points." if color_id_map.debug_calibration_view else "Normal map view."
+			queue_redraw()
+			get_viewport().set_input_as_handled()
+			return
 	if event is InputEventMouseMotion and color_id_map != null and color_id_map.is_ready:
 		var motion := event as InputEventMouseMotion
 		var map_width := get_viewport_rect().size.x - PANEL_WIDTH
@@ -262,65 +420,13 @@ func _fit_to_focus(force: bool) -> void:
 		return
 	if fitted_once and not force:
 		return
-	var ids: Dictionary = {}
-	for id: Variant in focus_province_ids.keys():
-		ids[String(id)] = true
-	# Prefer a useful theatre, not a single selected rear province.
-	var campaign: Dictionary = snapshot.get("campaign", {})
-	var current := String(campaign.get("current_faction", ""))
-	for battalion: Dictionary in snapshot.get("battalions", []):
-		if String(battalion.get("faction", "")) == current:
-			ids[String(battalion.get("province_id", ""))] = true
-	for option: Dictionary in snapshot.get("front_options", []):
-		ids[String(option.get("origin", ""))] = true
-		ids[String(option.get("target", ""))] = true
-	var pending: Variant = snapshot.get("pending_battle")
-	if pending is Dictionary:
-		var battle := pending as Dictionary
-		ids[String(battle.get("origin_province_id", ""))] = true
-		ids[String(battle.get("target_province_id", ""))] = true
-
-	var min_x := INF
-	var min_y := INF
-	var max_x := -INF
-	var max_y := -INF
-	var count := 0
-	for id: Variant in ids.keys():
-		var province_id := String(id)
-		if province_id.is_empty() or not color_id_map.row_by_province.has(province_id):
-			continue
-		var anchor := color_id_map.anchor_pixel(province_id)
-		min_x = minf(min_x, anchor.x)
-		max_x = maxf(max_x, anchor.x)
-		min_y = minf(min_y, anchor.y)
-		max_y = maxf(max_y, anchor.y)
-		count += 1
-	if count < 4:
-		# Fall back to whole map so Fit never zooms onto one rear province.
-		for province_id: Variant in color_id_map.row_by_province.keys():
-			var anchor := color_id_map.anchor_pixel(String(province_id))
-			min_x = minf(min_x, anchor.x)
-			max_x = maxf(max_x, anchor.x)
-			min_y = minf(min_y, anchor.y)
-			max_y = maxf(max_y, anchor.y)
-			count += 1
-		view_scale = 1.0
-		view_offset = Vector2.ZERO
-		fitted_once = true
-		status_message = "Fitted color-ID map to full theatre."
-		queue_redraw()
-		return
-	var image_size := color_id_map.image_size()
-	var span := Vector2(maxf(max_x - min_x, 48.0), maxf(max_y - min_y, 48.0))
-	var padding := 1.45
-	view_scale = clampf(minf(image_size.x / (span.x * padding), image_size.y / (span.y * padding)), 1.0, 4.5)
+	# Fit the full theatre map by default for EM prototype readability.
+	view_scale = 1.0
 	view_offset = Vector2.ZERO
-	var focus_center := Vector2((min_x + max_x) * 0.5, (min_y + max_y) * 0.5)
-	var map_center := Vector2(
-		(get_viewport_rect().size.x - PANEL_WIDTH) * 0.5,
-		get_viewport_rect().size.y * 0.5
-	)
-	view_offset = map_center - _image_to_screen(focus_center)
 	fitted_once = true
-	status_message = "Fitted color-ID map to front (%s provinces)." % count
+	var map_contract: Dictionary = snapshot.get("strategic_map", {})
+	status_message = "Fitted map %s (%s provinces)." % [
+		String(map_contract.get("map_id", "")),
+		int(snapshot.get("provinces", []).size()),
+	]
 	queue_redraw()

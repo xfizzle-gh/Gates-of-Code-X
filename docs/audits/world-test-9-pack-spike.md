@@ -66,13 +66,26 @@ This matches the “~92 European bos_ identifiers + localized names” summary.
 4. Treat `world_test_9.pack` as **research/prototype input**, not a drop-in Godot asset.
 5. Keep the current Europe interim color-ID map playable while world conversion is researched.
 
+## regions.esf decode pass (2026-08-04)
+
+See **[`world-test-9-regions-esf-decode.md`](world-test-9-regions-esf-decode.md)** for the full report.
+
+Summary:
+
+- Geometry **schema present** in `regions.esf` (`vertices`, `regions`, `outlines`, `faces`, `connectivity`, `settlement_and_slots`, …).
+- Raw campaign-unit coordinates exist in the binary.
+- **Per-region polygons joined to `bos_*` IDs were not exported** (RPFM not available; lightweight CAAB walker insufficient).
+- Settlement/port **names/IDs yes**; **geographic coordinates no**.
+- Pack TGA must **not** be used as coastline. Natural Earth is authoritative land/water.
+- Current EM map must **not** claim pack province geometry — only optional name/ID reference.
+
 ## Next engineering spike
 
-1. Decode `regions.esf` geometry (RPFM ESF tooling or CAF!/ESF parser).
-2. Join settlements/towns/ports tables to region IDs + coordinates.
-3. If polygons recover → rasterize to unique-RGB color-ID texture + adjacency + anchors for `import-strategic-map`.
-4. If only points recover → author simplified provinces over the same projection using settlement seeds + MapChart/geo boundaries.
-5. Do not replace the Europe playable path until a validated world importer exists.
+1. If pack meshes are still desired: install RPFM CLI (or full ESF exporter) and dump per-region outlines + keys.
+2. Join settlements/towns/ports names to project public-geo coordinates (pack coords unrecovered).
+3. Use recovered outlines only as **reference** to reshape Natural Earth–clipped project provinces.
+4. If ESF export remains blocked → stop claiming pack geometry; continue project-authored strategic provinces.
+5. Keep Europe interim playable; keep pack binaries out of git.
 
 ## Machine-readable local outputs
 

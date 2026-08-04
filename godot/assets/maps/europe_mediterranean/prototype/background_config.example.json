@@ -1,0 +1,53 @@
+{
+  "background_texture": "E:/path/to/local/europe_mediterranean_background.png",
+  "background_status": "local_research_reference",
+  "source_kind": "pack_world_tga_affine_calibrated",
+  "notes": [
+    "Copy to background_config.json (gitignored).",
+    "Generate with: python -c \"from gates_of_codex.map_background import export_local_pack_background; export_local_pack_background(source_tga=r'path\\\\to\\\\boshin_map_world.tga', output_png=r'path\\\\to\\\\europe_mediterranean_background.png', config_json=r'godot\\\\assets\\\\maps\\\\europe_mediterranean\\\\prototype\\\\background_config.json')\"",
+    "Control points must include measured source_px (pack image) and target_px (project theatre).",
+    "Do not commit pack-derived PNG artwork."
+  ],
+  "control_points": [
+    {
+      "name": "london",
+      "source_px": [364.0, 134.0],
+      "target_px": [530.3, 435.6]
+    },
+    {
+      "name": "gibraltar",
+      "source_px": [333.0, 213.0],
+      "target_px": [418.9, 762.2]
+    },
+    {
+      "name": "rome",
+      "source_px": [407.0, 181.0],
+      "target_px": [799.4, 639.7]
+    },
+    {
+      "name": "istanbul",
+      "source_px": [467.0, 176.0],
+      "target_px": [1150.8, 658.7]
+    },
+    {
+      "name": "moscow",
+      "source_px": [513.0, 103.0],
+      "target_px": [1335.0, 345.3]
+    },
+    {
+      "name": "cairo",
+      "source_px": [470.0, 233.0],
+      "target_px": [1198.9, 891.8]
+    },
+    {
+      "name": "northern_norway",
+      "source_px": [474.0, 29.0],
+      "target_px": [1066.0, 21.3]
+    },
+    {
+      "name": "western_iceland",
+      "source_px": [285.0, 74.0],
+      "target_px": [42.6, 153.0]
+    }
+  ]
+}
