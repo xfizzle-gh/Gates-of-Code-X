@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Iterable, Sequence
 
 from .europe import load_goe_europe_graph
-from .map_layout import load_marker_layout
+from .map_layout import is_human_readable_name, load_marker_layout, source_display_name
 
 
 MAP_SCHEMA_VERSION = 1
@@ -192,9 +192,17 @@ def build_interim_goe_province_table() -> list[dict]:
         if color in seen_colors:
             raise ValueError(f"Duplicate source RGB {color}")
         seen_colors.add(color)
+        graph_name = str(graph[province_id].get("display_name", province_id))
+        source_name = source_display_name(
+            marker.get("display_name"),
+            marker.get("id"),
+            source_id,
+        )
+        display_name = source_name or graph_name
         table.append({
             "province_id": province_id,
-            "display_name": graph[province_id].get("display_name", province_id),
+            "display_name": display_name,
+            "name_is_human_readable": is_human_readable_name(display_name),
             "rgb": list(color),
             "source_province_id": source_id,
             "mapping_method": result.methods[province_id],
