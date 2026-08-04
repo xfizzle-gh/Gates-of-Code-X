@@ -192,8 +192,9 @@ func image_size() -> Vector2:
 
 
 func _rebuild_border_texture() -> void:
-	# Single-pixel, single-sided borders: paint only when the right or down
-	# neighbor differs. Avoids double-width lines from painting both sides.
+	# Borders only between two different PLAYABLE provinces.
+	# Cosmetic/nonplayable land has no province IDs here, so it never gets
+	# internal borders (continuous muted geography via background only).
 	var output := Image.create(id_image.get_width(), id_image.get_height(), false, Image.FORMAT_RGBA8)
 	output.fill(Color.TRANSPARENT)
 	var border_color := Color(0.40, 0.43, 0.46, 0.55 if has_background else 0.65)

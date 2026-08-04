@@ -8,30 +8,40 @@
 - Color-ID remains authoritative for click / ownership / adjacency
 - Pack calibration / affine / TPS is **research-only** and not required
 
-## Theatre bounds (GoE marker space)
+## Theatre bounds (red-box framing)
+
+Display crop is driven by **playable land bbox only** (not deep cosmetic Africa).
 
 ```text
-x: -4.2 .. 3.2
-y: -2.2 .. 5.0
+marker playable window:
+  x: -4.0 .. 3.0
+  y: -0.95 .. 6.0   (+ FORCE_INCLUDE coastal Maghreb/Egypt/Levant)
+
+display pad from playable bbox:
+  north 10% / south 2% / west 3% / east 3%
 ```
+
+**Frozen display extent:** `817×920` (red-box baseline; force-includes clip into this frame and must not expand it).
+
+Outside-theatre land is a **continuous parchment underlay** (map art), not grey disabled provinces: no borders, no labels, no interaction. Only playable↔playable borders are drawn.
 
 ### Intentionally kept
 
 - British Isles and western Europe
 - Central Europe and Balkans
 - Mediterranean basin
-- Limited North Africa (Maghreb / Egypt coastal belt as present in GoE)
-- Limited Near East / Black Sea approaches as present in GoE
-- Scandinavia / Baltic as present in GoE framing
+- Limited North Africa coastal belt (Maghreb / Egypt / Levant via force-include)
+- Black Sea / Turkey approaches present in GoE
+- Scandinavia / Baltic (expanded north)
 
 ### Intentionally excluded from the visible theatre
 
+- Deep Sahara / sub-Saharan filler (not used to expand the canvas)
 - Deep Central Asia / far-eastern filler
-- Deep sub-Saharan Africa
 - Far Atlantic / Americas filler
-- Extreme arctic filler outside useful Scandinavia framing
+- Large empty ocean margins
 
-Exact kept set = provinces whose GoE `marker_anchor` falls inside the marker bounds above **and** that retain pixels after the ID-map crop.
+Playable set = marker window ∪ force-include coastal − force-exclude interiors, clipped to the display crop. Edge provinces may be reshaped by the crop.
 
 ## Layers
 
@@ -45,7 +55,7 @@ Exact kept set = provinces whose GoE `marker_anchor` falls inside the marker bou
 
 ```powershell
 python -m gates_of_codex generate-europe-mediterranean-from-goe
-python -m gates_of_codex new --map europe_mediterranean_from_goe --faction nato --output live/em_goe_campaign.json
+python -m gates_of_codex new --strategic-map europe_mediterranean_from_goe --faction nato --output live/em_goe_campaign.json
 python -m gates_of_codex export-frontend live/em_goe_campaign.json --output godot/campaign_snapshot.json
 ```
 

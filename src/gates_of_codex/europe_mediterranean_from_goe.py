@@ -15,15 +15,24 @@ DEFAULT_OUTPUT_DIR = "godot/assets/maps/europe_mediterranean/from_goe"
 INTERIM_DIR = Path("godot/assets/maps/europe/interim_goe")
 
 # Playable marker-space theatre (y increases north).
+# Tuned to red-box Europe–Med operational frame (not oversized regional canvas).
 MARKER_THEATRE = {
-    "x_min": -4.2,
-    "x_max": 3.2,
-    "y_min": -2.2,
-    "y_max": 6.2,  # expanded Scandinavia / far north
+    "x_min": -4.0,
+    "x_max": 3.0,
+    "y_min": -0.95,  # general south cutoff; FORCE_INCLUDE pulls coastal N Africa
+    "y_max": 6.0,  # Scandinavia / far north
+}
+
+# Frozen red-box display frame (source pixels). Never expanded by force-includes.
+FROZEN_DISPLAY_CROP = {
+    "x0": 206,
+    "y0": 47,
+    "width": 817,
+    "height": 920,
 }
 
 # Coastal Maghreb / Egypt / Levant always playable when present.
-FORCE_INCLUDE_PROVINCE_IDS: frozenset[str] = frozenset(
+FORCE_INCLUDE_COASTAL_PROVINCE_IDS: frozenset[str] = frozenset(
     {
         "province_0101",  # Casablanca
         "province_0111",  # Spanish Africa
@@ -51,6 +60,25 @@ FORCE_INCLUDE_PROVINCE_IDS: frozenset[str] = frozenset(
     }
 )
 
+# Important edge provinces restored by ID (not x/y thresholds). Geometry is
+# clipped to FROZEN_DISPLAY_CROP — must not expand the canvas.
+FORCE_INCLUDE_STRATEGIC_PROVINCES: dict[str, str] = {
+    "province_0156": "Lisbon",
+    "province_0408": "Moscow",
+    "province_0384": "Tula",
+    "province_0284": "Donetsk",  # historical Stalino
+    "province_0327": "Luhansk",  # historical Voroshilovgrad
+    "province_0126": "Malatya",
+    "province_0143": "Sivas",
+    "province_0502": "Salla",
+}
+
+FORCE_INCLUDE_PROVINCE_IDS: frozenset[str] = frozenset(
+    set(FORCE_INCLUDE_COASTAL_PROVINCE_IDS) | set(FORCE_INCLUDE_STRATEGIC_PROVINCES)
+)
+
+DISPLAY_NAME_OVERRIDES: dict[str, str] = dict(FORCE_INCLUDE_STRATEGIC_PROVINCES)
+
 # Deep interior Africa — never playable (may still be visual land).
 FORCE_EXCLUDE_PROVINCE_IDS: frozenset[str] = frozenset(
     {
@@ -67,12 +95,13 @@ FORCE_EXCLUDE_PROVINCE_IDS: frozenset[str] = frozenset(
     }
 )
 
-# Display crop expansion from the base playable pixel bbox (source pixels).
+# Display crop padding from playable land bbox only (no deep-Africa expansion).
+# Matches tighter red-box theatre framing.
 DISPLAY_EXPAND = {
-    "north": 0.15,
-    "south": 0.08,
-    "west": 0.04,
-    "east": 0.04,
+    "north": 0.10,  # room for Scandinavia
+    "south": 0.02,  # thin margin below Maghreb/Egypt coastal belt
+    "west": 0.03,
+    "east": 0.03,
 }
 
 MIN_PLAYABLE_PIXELS = 12
@@ -128,11 +157,17 @@ def select_playable_provinces(province_table: list[dict]) -> tuple[list[dict], d
         if row is None or pid in FORCE_EXCLUDE_PROVINCE_IDS:
             continue
         if pid not in selected:
+            if pid in FORCE_INCLUDE_STRATEGIC_PROVINCES:
+                reason = "force_include_strategic_edge"
+                name = FORCE_INCLUDE_STRATEGIC_PROVINCES[pid]
+            else:
+                reason = "force_include_mediterranean_coastal"
+                name = str(row.get("display_name", pid))
             forced_in.append(
                 {
                     "province_id": pid,
-                    "display_name": str(row.get("display_name", pid)),
-                    "reason": "force_include_mediterranean_coastal",
+                    "display_name": name,
+                    "reason": reason,
                 }
             )
         selected[pid] = row
@@ -273,6 +308,79 @@ def _m2p(mx: float, my: float, xm, ym) -> tuple[float, float]:
     return p * mx + q * my + r, s * mx + t * my + u
 
 
+def _close_visual_land_mask(mask: list[bool], w: int, h: int) -> list[bool]:
+    """Remove internal province-separator cracks without flooding open ocean.
+
+    1) Morphological close (dilate then erode) seals thin black separators.
+    2) Flood-fill from border through non-land; remaining non-land pockets are
+       interior holes and become land (continuous silhouette).
+    """
+
+    def dilate(src: list[bool]) -> list[bool]:
+        out = list(src)
+        for y in range(h):
+            for x in range(w):
+                if src[y * w + x]:
+                    continue
+                for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+                    if 0 <= nx < w and 0 <= ny < h and src[ny * w + nx]:
+                        out[y * w + x] = True
+                        break
+        return out
+
+    def erode(src: list[bool]) -> list[bool]:
+        out = list(src)
+        for y in range(h):
+            for x in range(w):
+                if not src[y * w + x]:
+                    continue
+                for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+                    if nx < 0 or ny < 0 or nx >= w or ny >= h or not src[ny * w + nx]:
+                        out[y * w + x] = False
+                        break
+        return out
+
+    closed = mask
+    for _ in range(3):
+        closed = dilate(closed)
+    for _ in range(3):
+        closed = erode(closed)
+
+    # Exterior = non-land reachable from image border.
+    exterior = [False] * (w * h)
+    stack: list[int] = []
+    for x in range(w):
+        for y in (0, h - 1):
+            idx = y * w + x
+            if not closed[idx] and not exterior[idx]:
+                exterior[idx] = True
+                stack.append(idx)
+    for y in range(h):
+        for x in (0, w - 1):
+            idx = y * w + x
+            if not closed[idx] and not exterior[idx]:
+                exterior[idx] = True
+                stack.append(idx)
+    while stack:
+        idx = stack.pop()
+        x = idx % w
+        y = idx // w
+        for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+            if nx < 0 or ny < 0 or nx >= w or ny >= h:
+                continue
+            nidx = ny * w + nx
+            if closed[nidx] or exterior[nidx]:
+                continue
+            exterior[nidx] = True
+            stack.append(nidx)
+
+    out = list(closed)
+    for i, is_land in enumerate(closed):
+        if not is_land and not exterior[i]:
+            out[i] = True  # interior hole → continuous land
+    return out
+
+
 def generate_europe_mediterranean_from_goe(
     *,
     output_dir: str | Path = DEFAULT_OUTPUT_DIR,
@@ -291,75 +399,49 @@ def generate_europe_mediterranean_from_goe(
     playable_ids = {str(r["province_id"]) for r in playable_rows}
     playable_colors = {tuple(int(c) for c in r["rgb"]) for r in playable_rows}
 
-    # Base pixel bbox from all land that should be visible: playable + excluded African
-    # interiors (cosmetic) + any land inside expanded marker theatre.
-    visual_colors = set(playable_colors)
-    cosmetic_ids: list[dict] = []
-    for color, stat in color_stats.items():
-        row = color_to_row.get(color)
-        if row is None:
-            continue
-        pid = str(row["province_id"])
-        ax, ay = row.get("marker_anchor") or [0.0, 0.0]
-        x, y = float(ax), float(ay)
-        in_wide = (
-            MARKER_THEATRE["x_min"] - 0.4 <= x <= MARKER_THEATRE["x_max"] + 0.4
-            and -3.2 <= y <= MARKER_THEATRE["y_max"] + 0.6
+    # Locked red-box frame — force-includes clip into this, never expand it.
+    min_x = int(FROZEN_DISPLAY_CROP["x0"])
+    min_y = int(FROZEN_DISPLAY_CROP["y0"])
+    crop_w = int(FROZEN_DISPLAY_CROP["width"])
+    crop_h = int(FROZEN_DISPLAY_CROP["height"])
+    max_x = min_x + crop_w - 1
+    max_y = min_y + crop_h - 1
+    if max_x >= image.width or max_y >= image.height or min_x < 0 or min_y < 0:
+        raise RuntimeError(
+            f"Frozen crop {FROZEN_DISPLAY_CROP} outside source {image.width}x{image.height}"
         )
-        if pid in FORCE_EXCLUDE_PROVINCE_IDS or (
-            in_wide and pid not in playable_ids and y < 1.0
-        ):
-            # Deep/excluded African or southern land: visual only.
-            visual_colors.add(color)
-            if pid not in playable_ids:
-                cosmetic_ids.append(
-                    {
-                        "province_id": pid,
-                        "display_name": str(row.get("display_name", pid)),
-                        "role": "visual_land_only",
-                        "pixels": int(stat["count"]),
-                    }
-                )
-        elif in_wide and color in all_land_colors:
-            visual_colors.add(color)
+    _ = pad_px  # retained for API compat; crop is frozen
 
-    # Pixel bbox of visual land, then expand for display crop.
-    min_x = image.width
-    min_y = image.height
-    max_x = -1
-    max_y = -1
-    for color in visual_colors:
-        stat = color_stats.get(color)
-        if not stat:
-            continue
-        min_x = min(min_x, stat["min_x"])
-        max_x = max(max_x, stat["max_x"])
-        min_y = min(min_y, stat["min_y"])
-        max_y = max(max_y, stat["max_y"])
-    if max_x < 0:
-        raise RuntimeError("No visual land found")
-
-    base_w = max_x - min_x + 1
-    base_h = max_y - min_y + 1
-    # Source pixel Y increases south; "north expand" decreases min_y.
-    exp_n = int(round(base_h * DISPLAY_EXPAND["north"]))
-    exp_s = int(round(base_h * DISPLAY_EXPAND["south"]))
-    exp_w = int(round(base_w * DISPLAY_EXPAND["west"]))
-    exp_e = int(round(base_w * DISPLAY_EXPAND["east"]))
-    min_x = max(0, min_x - exp_w - pad_px)
-    max_x = min(image.width - 1, max_x + exp_e + pad_px)
-    min_y = max(0, min_y - exp_n - pad_px)
-    max_y = min(image.height - 1, max_y + exp_s + pad_px)
-    crop_w = max_x - min_x + 1
-    crop_h = max_y - min_y + 1
-
-    # --- visual land mask (all source land in display crop) ---
+    # Visual land = any source land color inside frozen frame (map-art silhouette).
     visual_mask = [False] * (crop_w * crop_h)
+    cosmetic_ids: list[dict] = []
+    cosmetic_seen: set[str] = set()
     for y in range(crop_h):
         for x in range(crop_w):
             color = image.color_at(min_x + x, min_y + y)
-            if color != WHITE and color != BLACK and color in all_land_colors:
-                visual_mask[y * crop_w + x] = True
+            if color == WHITE or color == BLACK or color not in all_land_colors:
+                continue
+            visual_mask[y * crop_w + x] = True
+            row = color_to_row.get(color)
+            if row is None:
+                continue
+            pid = str(row["province_id"])
+            if pid not in playable_ids and pid not in cosmetic_seen:
+                cosmetic_seen.add(pid)
+                cosmetic_ids.append(
+                    {
+                        "province_id": pid,
+                        "display_name": str(
+                            DISPLAY_NAME_OVERRIDES.get(pid, row.get("display_name", pid))
+                        ),
+                        "role": "visual_background_only",
+                    }
+                )
+
+    # Close internal separator cracks: morph-close + fill holes not connected to border.
+    before_close = sum(1 for v in visual_mask if v)
+    visual_mask = _close_visual_land_mask(visual_mask, crop_w, crop_h)
+    visual_separators_closed = sum(1 for v in visual_mask if v) - before_close
 
     # --- playable ID grid ---
     playable_grid: list[tuple[int, int, int]] = [BLACK] * (crop_w * crop_h)
@@ -532,11 +614,13 @@ def generate_europe_mediterranean_from_goe(
             snapped += 1
         land = sorted(set(land_neighbors.get(pid, [])))
         auth = sorted(set(authored_neighbors.get(pid, [])))
+        display_name = DISPLAY_NAME_OVERRIDES.get(pid, row.get("display_name", pid))
+        human = bool(row.get("name_is_human_readable", True)) or pid in DISPLAY_NAME_OVERRIDES
         table.append(
             {
                 "province_id": pid,
-                "display_name": row.get("display_name", pid),
-                "name_is_human_readable": bool(row.get("name_is_human_readable", True)),
+                "display_name": display_name,
+                "name_is_human_readable": human,
                 "rgb": list(row["rgb"]),
                 "marker_anchor": [float(ax), float(crop_h - 1 - ay)],
                 "source_neighbors": sorted(set(land) | set(auth)),
@@ -548,9 +632,10 @@ def generate_europe_mediterranean_from_goe(
                 "source_province_id": row.get("source_province_id", pid),
                 "mapping_method": "goe_theatre_playable",
                 "provenance": {
-                    "generator": "europe_mediterranean_from_goe_v5_visual_split",
+                    "generator": "europe_mediterranean_from_goe_v6_continuous_underlay",
                     "pixels": int(sums[pid][2]),
                     "anchor_snapped": did,
+                    "clipped_to_frozen_frame": pid in FORCE_INCLUDE_STRATEGIC_PROVINCES,
                 },
             }
         )
@@ -566,21 +651,21 @@ def generate_europe_mediterranean_from_goe(
         if color_to_pid.get(color) != row["province_id"]:
             raise RuntimeError(f"Anchor outside province {row['province_id']}")
 
-    # Background from visual land mask (not playable ID alone).
-    # water: cool near-white; playable land: light parchment; cosmetic land: muted darker
+    # Continuous map-art underlay: ONE soft parchment for all visual land
+    # (playable + surrounding). No grey "disabled province" treatment.
+    # Water is a distinct cool tone. Internal structure comes only from the
+    # playable color-ID / ownership / border layers on top.
+    LAND_RGB = (232, 226, 212)
+    WATER_RGB = (214, 224, 234)
     bg = bytearray(crop_w * crop_h * 3)
     for y in range(crop_h):
         for x in range(crop_w):
             idx = y * crop_w + x
             base = idx * 3
-            playable = owners[idx] >= 0
-            visual = visual_mask[idx]
-            if playable:
-                bg[base : base + 3] = bytes((230, 224, 210))
-            elif visual:
-                bg[base : base + 3] = bytes((198, 196, 188))  # muted nonplayable land
+            if visual_mask[idx]:
+                bg[base : base + 3] = bytes(LAND_RGB)
             else:
-                bg[base : base + 3] = bytes((236, 240, 244))
+                bg[base : base + 3] = bytes(WATER_RGB)
 
     # visual_land_mask.png: white=land any, black=water
     mask_bytes = bytearray(crop_w * crop_h * 3)
@@ -611,7 +696,18 @@ def generate_europe_mediterranean_from_goe(
     selection_report["authored_non_land_edges"] = len(authored_edges)
     selection_report["anchors_snapped"] = snapped
     selection_report["black_separators_filled"] = separators_filled
+    selection_report["visual_separators_closed"] = visual_separators_closed
     selection_report["land_adjacency_mode"] = "direct_4_neighbor_playable_only"
+    selection_report["cosmetic_interaction"] = {
+        "hover": False,
+        "selection": False,
+        "labels": False,
+        "counters": False,
+        "facilities": False,
+        "objectives": False,
+        "adjacency": False,
+        "note": "outside-theatre land is continuous background art only; not in ID map or graph",
+    }
     selection_report["dropped_tiny"] = dropped_tiny
     selection_report["display_expand"] = dict(DISPLAY_EXPAND)
     selection_report["display_crop_px"] = {
@@ -621,7 +717,13 @@ def generate_europe_mediterranean_from_goe(
         "y1": max_y,
         "width": crop_w,
         "height": crop_h,
+        "frozen": True,
     }
+    selection_report["force_include_strategic"] = [
+        {"province_id": pid, "display_name": name}
+        for pid, name in sorted(FORCE_INCLUDE_STRATEGIC_PROVINCES.items())
+    ]
+    selection_report["underlay_style"] = "continuous_parchment_no_province_subdivision"
 
     result = import_strategic_map(
         id_png,
@@ -659,14 +761,15 @@ def generate_europe_mediterranean_from_goe(
         "repo_stores_pack_artwork": False,
         "gameplay_authority": "color_id_province_map",
         "status_label": "project_procedural",
-        "nonplayable_land": "visible_muted_unselectable",
+        "nonplayable_land": "continuous_parchment_background_art_only",
     }
     result["provenance_table"] = {
-        "visible_geography": "all_source_land_in_expanded_display_crop",
-        "playable_geography": "selected_goe_provinces_only",
+        "visible_geography": "continuous_land_silhouette_in_frozen_frame",
+        "playable_geography": "selected_goe_provinces_clipped_to_frozen_frame",
         "adjacency": "direct_4_neighbor_playable_plus_authored_crossings",
         "north_africa": "continuous_visual_land_coastal_playable_belt",
         "scandinavia": "expanded_playable_north",
+        "display_frame": "frozen_817x920",
     }
     (out / "map_manifest.json").write_text(
         json.dumps(result, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
@@ -678,10 +781,10 @@ def generate_europe_mediterranean_from_goe(
                 "# Europe–Mediterranean theatre (from GoE)",
                 "",
                 f"- playable provinces: {len(table)}",
-                f"- display: {crop_w}×{crop_h}",
-                "- `province_id_map.png` — playable only (selection/ownership)",
-                "- `visual_land_mask.png` — full visible land silhouette",
-                "- `background_procedural.png` — from visual mask (muted nonplayable land)",
+                f"- frozen display: {crop_w}×{crop_h}",
+                "- `province_id_map.png` — playable only (selection/ownership/borders)",
+                "- `visual_land_mask.png` — continuous land silhouette (no province cracks)",
+                "- `background_procedural.png` — parchment land / cool water underlay",
                 "",
             ]
         ),
@@ -705,14 +808,18 @@ def build_europe_mediterranean_from_goe_campaign(
         raise ValueError(f"Expected map_id {MAP_ID}, got {manifest.get('map_id')}")
 
     state = build_goe_europe_campaign()
-    kept_ids = {str(row["province_id"]) for row in manifest.get("province_table", [])}
+    rows = list(manifest.get("province_table", []))
+    kept_ids = {str(row["province_id"]) for row in rows}
     anchors = {
-        str(row["province_id"]): row.get("marker_anchor") or [0.0, 0.0]
-        for row in manifest.get("province_table", [])
+        str(row["province_id"]): row.get("marker_anchor") or [0.0, 0.0] for row in rows
     }
     neighbors_map = {
         str(row["province_id"]): [str(n) for n in row.get("source_neighbors", [])]
-        for row in manifest.get("province_table", [])
+        for row in rows
+    }
+    display_names = {
+        str(row["province_id"]): str(row.get("display_name") or row["province_id"])
+        for row in rows
     }
 
     state.provinces = {pid: p for pid, p in state.provinces.items() if pid in kept_ids}
@@ -721,9 +828,16 @@ def build_europe_mediterranean_from_goe_campaign(
         province.x = float(anchor[0])
         province.y = float(anchor[1])
         province.neighbors = neighbors_map.get(pid, [])
+        if pid in display_names:
+            province.display_name = display_names[pid]
+            province.metadata["display_name_locked"] = True
+            province.metadata["name_source"] = "em_theatre_manifest"
         province.map_region = "europe_mediterranean"
         province.metadata["europe_mediterranean_from_goe"] = True
         province.metadata["playable"] = True
+        province.metadata["name_is_human_readable"] = not str(
+            display_names.get(pid, pid)
+        ).lower().startswith("province")
 
     state.battalions = {
         bid: b for bid, b in state.battalions.items() if b.province_id in state.provinces

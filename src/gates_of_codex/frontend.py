@@ -286,20 +286,37 @@ def _strategic_map_block(
     snapshot_directory = Path(snapshot_path).resolve().parent if snapshot_path else None
     configured = str(state.map_metadata.get("strategic_map_manifest", "")).strip()
     map_id = str(state.map_metadata.get("strategic_map_id", state.map_id))
+    relative_by_id = {
+        "europe_mediterranean_from_goe": "assets/maps/europe_mediterranean/from_goe/map_manifest.json",
+        "goe_europe": "assets/maps/europe/interim_goe/map_manifest.json",
+        "interim_goe_europe": "assets/maps/europe/interim_goe/map_manifest.json",
+    }
+    candidates: list[Path] = []
     if configured:
-        manifest = Path(configured).expanduser()
-        if not manifest.is_absolute() and snapshot_directory is not None:
-            manifest = snapshot_directory / manifest
-    elif snapshot_directory is not None:
-        relative = {
-            "europe_mediterranean_from_goe": "assets/maps/europe_mediterranean/from_goe/map_manifest.json",
-            "goe_europe": "assets/maps/europe/interim_goe/map_manifest.json",
-            "interim_goe_europe": "assets/maps/europe/interim_goe/map_manifest.json",
-        }.get(map_id, "assets/maps/europe/interim_goe/map_manifest.json")
-        manifest = snapshot_directory / relative
-    else:
-        manifest = None
-    resolved = manifest.resolve() if manifest is not None else None
+        configured_path = Path(configured).expanduser()
+        if configured_path.is_absolute():
+            candidates.append(configured_path)
+        else:
+            if snapshot_directory is not None:
+                candidates.append(snapshot_directory / configured_path)
+            # Repo-root exports often use godot/assets/... while the snapshot lives in godot/.
+            candidates.append(Path.cwd() / configured_path)
+            candidates.append(Path.cwd() / "godot" / configured_path)
+            if configured_path.parts and configured_path.parts[0] != "godot":
+                candidates.append(Path.cwd() / "godot" / configured_path)
+    if snapshot_directory is not None:
+        candidates.append(snapshot_directory / relative_by_id.get(map_id, relative_by_id["interim_goe_europe"]))
+    candidates.append(Path.cwd() / "godot" / relative_by_id.get(map_id, relative_by_id["interim_goe_europe"]))
+
+    resolved: Path | None = None
+    for candidate in candidates:
+        try:
+            path = candidate.resolve()
+        except OSError:
+            continue
+        if path.is_file():
+            resolved = path
+            break
     default_prov = "interim_goe_reference_asset"
     if map_id == "europe_mediterranean_from_goe":
         default_prov = "derived_from_interim_goe_europe_theatre_crop"

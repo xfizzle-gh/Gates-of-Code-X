@@ -58,6 +58,10 @@ def apply_source_display_names(state: CampaignState) -> dict[str, int | float]:
     applied = 0
     kept_generic = 0
     for province_id, province in state.provinces.items():
+        # Theatre/manifest locks (e.g. Donetsk/Luhansk modern names) win.
+        if bool(province.metadata.get("display_name_locked")):
+            applied += 1
+            continue
         source_key = alignment.graph_to_source.get(province_id)
         if not source_key:
             if not is_human_readable_name(province.display_name):

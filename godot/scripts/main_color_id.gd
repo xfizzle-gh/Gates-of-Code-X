@@ -3,21 +3,62 @@ extends "res://scripts/main_writeback.gd"
 const ColorIdMapScript = preload("res://scripts/color_id_map.gd")
 const DEFAULT_MAP_MANIFEST := "res://assets/maps/europe/interim_goe/map_manifest.json"
 const EM_FROM_GOE_MANIFEST := "res://assets/maps/europe_mediterranean/from_goe/map_manifest.json"
+const HOME_MAP_MARGIN := Vector2(18, 18)
+const HOME_FIT_FILL := 1.10  # use more of the map panel at full-theatre Home
 
 var color_id_map = ColorIdMapScript.new()
 var map_manifest_source_path := DEFAULT_MAP_MANIFEST
 var hovered_province_id := ""
 var show_coalition_fronts := false
+var _screenshot_path := ""
+var _screenshot_frames_left := -1
 
 
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
-	if args.size() > 1:
-		map_manifest_source_path = String(args[1])
+	var filtered: PackedStringArray = PackedStringArray()
+	for arg in args:
+		var text := String(arg)
+		if text.begins_with("--screenshot="):
+			_screenshot_path = text.substr(String("--screenshot=").length()).strip_edges()
+			continue
+		filtered.append(text)
+	if filtered.size() > 1:
+		map_manifest_source_path = String(filtered[1])
 	super._ready()
-	if args.size() <= 1:
+	if filtered.size() <= 1:
 		map_manifest_source_path = _resolve_map_manifest_path()
 	_open_color_id_map()
+	if not _screenshot_path.is_empty():
+		_fit_complete_theatre()
+		_screenshot_frames_left = 18
+		set_process(true)
+		queue_redraw()
+
+
+func _process(_delta: float) -> void:
+	if _screenshot_frames_left < 0:
+		return
+	_screenshot_frames_left -= 1
+	queue_redraw()
+	if _screenshot_frames_left > 0:
+		return
+	_screenshot_frames_left = -1
+	set_process(false)
+	call_deferred("_capture_screenshot_and_quit")
+
+
+func _capture_screenshot_and_quit() -> void:
+	if _screenshot_path.is_empty():
+		return
+	var image := get_viewport().get_texture().get_image()
+	if image != null and not image.is_empty():
+		image.save_png(_screenshot_path)
+		status_message = "Saved screenshot err=0 path=%s ready=%s" % [
+			_screenshot_path,
+			str(color_id_map.is_ready),
+		]
+	get_tree().quit()
 
 
 func _resolve_map_manifest_path() -> String:
@@ -52,13 +93,18 @@ func _rebuild_legal_targets() -> void:
 
 
 func _open_color_id_map() -> void:
+	var previous_ready: bool = color_id_map != null and bool(color_id_map.is_ready)
 	if color_id_map.open(map_manifest_source_path, snapshot, FACTION_COLORS):
 		color_id_map.refresh_highlights(selected_province_id, legal_targets)
-		status_message = "Color-ID province renderer active."
+		status_message = "Color-ID province renderer active (%s)." % map_manifest_source_path.get_file()
 		fitted_once = false
 		_fit_complete_theatre()
 	else:
-		status_message = "%s Marker fallback remains non-authoritative." % color_id_map.error
+		# Keep a previously successful open; only fall back if nothing is ready.
+		if previous_ready:
+			status_message = "%s Kept previous color-ID map." % color_id_map.error
+		else:
+			status_message = "%s Marker fallback remains non-authoritative." % color_id_map.error
 	queue_redraw()
 
 
@@ -169,6 +215,10 @@ func _draw_color_id_pending_battle() -> void:
 
 
 func _draw_color_id_overlays() -> void:
+	# Pass 1: facilities + counters (always). Pass 2: priority label declutter.
+	var label_candidates: Array = []
+	var reserved: Array = []  # Rect2 obstacles (counters first)
+
 	for province: Dictionary in snapshot.get("provinces", []):
 		var province_id := String(province.get("id", ""))
 		if not color_id_map.row_by_province.has(province_id):
@@ -195,6 +245,7 @@ func _draw_color_id_overlays() -> void:
 			if int(battalion.get("encircled_turns", 0)) > 0:
 				draw_arc(position, 25.0, 0.0, TAU, 30, Color("ffb14e"), 2.4)
 			_draw_battalion_counter(position, battalion, faction_color, selected)
+			reserved.append(Rect2(position + Vector2(-18, -14), Vector2(36, 28)))
 			var stack: Array = battalion_stacks_by_province.get(province_id, [])
 			if stack.size() > 1:
 				var badge := position + Vector2(19, -14)
@@ -209,23 +260,63 @@ func _draw_color_id_overlays() -> void:
 					11,
 					Color.WHITE
 				)
+				reserved.append(Rect2(badge + Vector2(-9, -9), Vector2(18, 18)))
 
 		var label := _province_label(province, province_id)
 		var named := bool(province.get("name_is_human_readable", _is_named_province(label)))
 		var hovered := province_id == hovered_province_id
-		var show_label := occupied or selected or target or hovered
-		if not show_label and view_scale >= 2.4 and named:
-			show_label = true
-		if show_label:
-			draw_string(
-				ThemeDB.fallback_font,
-				position + Vector2(13, -9),
-				label,
-				HORIZONTAL_ALIGNMENT_LEFT,
-				-1,
-				12 if selected or target or occupied or hovered else 11,
-				Color(0.95, 0.96, 0.98, 0.98 if occupied or selected or target or hovered else 0.78)
-			)
+		var priority := 0
+		if selected:
+			priority = 100
+		elif hovered:
+			priority = 90
+		elif target:
+			priority = 80
+		elif occupied:
+			priority = 70
+		elif named and view_scale >= 2.4:
+			priority = 40
+		elif named and view_scale >= 1.35:
+			priority = 20
+		if priority <= 0:
+			continue
+		var font_size := 12 if priority >= 70 else 11
+		var text_w := float(ThemeDB.fallback_font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x)
+		var text_pos := position + Vector2(13, -9)
+		var text_rect := Rect2(text_pos + Vector2(0, -font_size), Vector2(text_w + 4.0, float(font_size) + 4.0))
+		label_candidates.append({
+			"priority": priority,
+			"label": label,
+			"pos": text_pos,
+			"rect": text_rect,
+			"font_size": font_size,
+			"color": Color(0.95, 0.96, 0.98, 0.98 if priority >= 70 else 0.78),
+			"must_show": priority >= 90,
+		})
+
+	label_candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return int(a.get("priority", 0)) > int(b.get("priority", 0))
+	)
+	for candidate: Dictionary in label_candidates:
+		var rect: Rect2 = candidate.get("rect", Rect2())
+		var blocked := false
+		if not bool(candidate.get("must_show", false)):
+			for prior: Variant in reserved:
+				if rect.intersects(prior as Rect2):
+					blocked = true
+					break
+		if blocked:
+			continue
+		draw_string(
+			ThemeDB.fallback_font,
+			candidate.get("pos", Vector2.ZERO),
+			String(candidate.get("label", "")),
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			int(candidate.get("font_size", 11)),
+			candidate.get("color", Color.WHITE)
+		)
+		reserved.append(rect)
 
 
 func _province_at(screen_position: Vector2) -> String:
@@ -257,7 +348,7 @@ func _image_to_screen(pixel: Vector2) -> Vector2:
 func _map_texture_rect() -> Rect2:
 	var viewport := get_viewport_rect().size
 	var map_size := Vector2(viewport.x - PANEL_WIDTH, viewport.y)
-	var available := map_size - MAP_MARGIN * 2.0
+	var available := map_size - HOME_MAP_MARGIN * 2.0
 	var image_size := color_id_map.image_size()
 	var fit_scale := minf(available.x / image_size.x, available.y / image_size.y)
 	var rendered_size := image_size * fit_scale * view_scale
@@ -321,13 +412,14 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _fit_complete_theatre() -> void:
 	if color_id_map == null or not color_id_map.is_ready:
-		view_scale = 1.0
+		view_scale = HOME_FIT_FILL
 		view_offset = Vector2.ZERO
 		fitted_once = true
 		status_message = "Fitted full theatre."
 		queue_redraw()
 		return
-	view_scale = 1.0
+	# Fill more of the map panel while keeping aspect ratio; panel stays clear.
+	view_scale = HOME_FIT_FILL
 	view_offset = Vector2.ZERO
 	fitted_once = true
 	var map_contract: Dictionary = snapshot.get("strategic_map", {})
