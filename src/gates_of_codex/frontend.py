@@ -7,7 +7,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from .economy import available_research, formation_recruitment_offers
-from .map_layout import apply_marker_layout
+from .map_layout import apply_marker_layout, is_human_readable_name, province_name_coverage
 from .models import CampaignState, Faction
 from .play_context import list_front_options
 from .strategic import (
@@ -108,6 +108,8 @@ def build_frontend_snapshot(
             {
                 "id": province.province_id,
                 "display_name": province.display_name,
+                "name_is_human_readable": is_human_readable_name(province.display_name),
+                "name_source": str(province.metadata.get("name_source", "")),
                 "owner": province.owner.value,
                 "x": province.x,
                 "y": province.y,
@@ -194,6 +196,9 @@ def build_frontend_snapshot(
         "pending_battle": _pending_battle(state),
         "front_options": list_front_options(state, state.current_faction),
         "control": _control_block(campaign_path, snapshot_path),
+        "province_names": dict(
+            state.map_metadata.get("province_names") or province_name_coverage(state)
+        ),
     }
 
 

@@ -49,6 +49,7 @@
         1.965000033378601
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Baden",
       "rgb": [
         35,
@@ -77,6 +78,7 @@
         2.944999933242798
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Bialystok",
       "rgb": [
         117,
@@ -104,6 +106,7 @@
         2.884999990463257
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Bobryusk",
       "rgb": [
         118,
@@ -129,6 +132,7 @@
         2.265000104904175
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Bohemia",
       "rgb": [
         54,
@@ -154,6 +158,7 @@
         2.7750000953674316
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Brandenburg",
       "rgb": [
         102,
@@ -180,6 +185,7 @@
         2.2850000858306885
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Czeske Slezko",
       "rgb": [
         70,
@@ -205,6 +211,7 @@
         3.1549999713897705
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Danzig",
       "rgb": [
         143,
@@ -227,6 +234,7 @@
         2.075000047683716
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Eastern Slovakia",
       "rgb": [
         49,
@@ -251,6 +259,7 @@
         3.0850000381469727
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Ermland Masuren",
       "rgb": [
         134,
@@ -276,6 +285,7 @@
         2.255000114440918
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Franken",
       "rgb": [
         58,
@@ -302,6 +312,7 @@
         2.994999885559082
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Gdynia",
       "rgb": [
         124,
@@ -328,6 +339,7 @@
         2.815000057220459
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Hannover",
       "rgb": [
         100,
@@ -355,6 +367,7 @@
         2.384999990463257
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Hessen",
       "rgb": [
         68,
@@ -382,6 +395,7 @@
         3.065000057220459
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Hinterpommern",
       "rgb": [
         129,
@@ -406,6 +420,7 @@
         3.0950000286102295
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Holstein",
       "rgb": [
         136,
@@ -429,6 +444,7 @@
         2.325000047683716
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Katowice",
       "rgb": [
         77,
@@ -452,6 +468,7 @@
         2.444999933242798
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Kielce",
       "rgb": [
         79,
@@ -476,6 +493,7 @@
         3.255000114440918
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Koningsberg",
       "rgb": [
         148,
@@ -499,6 +517,7 @@
         2.255000114440918
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Krakow",
       "rgb": [
         60,
@@ -527,6 +546,7 @@
         4.414999961853027
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "Leningrad",
       "rgb": [
         213,
@@ -550,6 +570,7 @@
         2.625
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Lodz",
       "rgb": [
         91,
@@ -576,6 +597,7 @@
         2.5450000762939453
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Lublin",
       "rgb": [
         81,
@@ -603,6 +625,7 @@
         4.255000114440918
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "Luga",
       "rgb": [
         203,
@@ -628,6 +651,7 @@
         2.2049999237060547
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Lwow",
       "rgb": [
         51,
@@ -654,6 +678,7 @@
         3.0350000858306885
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Mecklenburg",
       "rgb": [
         131,
@@ -678,6 +703,7 @@
         3.0850000381469727
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Minsk",
       "rgb": [
         130,
@@ -703,6 +729,7 @@
         2.1449999809265137
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Moravia",
       "rgb": [
         55,
@@ -727,6 +754,7 @@
         2.2049999237060547
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Moselland",
       "rgb": [
         57,
@@ -752,6 +780,7 @@
         2.6649999618530273
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Mozyr",
       "rgb": [
         95,
@@ -778,6 +807,7 @@
         3.634999990463257
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Nevel",
       "rgb": [
         167,
@@ -804,6 +834,7 @@
         2.0850000381469727
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Niederbayern",
       "rgb": [
         48,
@@ -829,6 +860,7 @@
         1.8049999475479126
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Niederosterreich",
       "rgb": [
         20,
@@ -854,6 +886,7 @@
         2.5450000762939453
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Niederschlesien",
       "rgb": [
         80,
@@ -880,6 +913,7 @@
         2.3550000190734863
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "North Sudetenland",
       "rgb": [
         69,
@@ -904,6 +938,7 @@
         2.994999885559082
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Nowogrodek",
       "rgb": [
         125,
@@ -931,6 +966,7 @@
         1.8949999809265137
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Oberbayern",
       "rgb": [
         30,
@@ -957,6 +993,7 @@
         1.8250000476837158
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Oberosterreich",
       "rgb": [
         15,
@@ -982,6 +1019,7 @@
         2.4149999618530273
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Oberschlesien",
       "rgb": [
         78,
@@ -1007,6 +1045,7 @@
         2.7950000762939453
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Ostmark",
       "rgb": [
         103,
@@ -1033,6 +1072,7 @@
         2.8550000190734863
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Plock",
       "rgb": [
         115,
@@ -1058,6 +1098,7 @@
         1.9450000524520874
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Podkarpatska Rus",
       "rgb": [
         42,
@@ -1083,6 +1124,7 @@
         2.7049999237060547
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Polesie",
       "rgb": [
         94,
@@ -1109,6 +1151,7 @@
         2.765000104904175
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Poznan",
       "rgb": [
         98,
@@ -1135,6 +1178,7 @@
         2.1549999713897705
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Proskuriv",
       "rgb": [
         50,
@@ -1160,6 +1204,7 @@
         3.9549999237060547
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "Pskov",
       "rgb": [
         186,
@@ -1185,6 +1230,7 @@
         2.484999895095825
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Rhineland",
       "rgb": [
         82,
@@ -1211,6 +1257,7 @@
         2.5450000762939453
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Sachsen",
       "rgb": [
         83,
@@ -1236,6 +1283,7 @@
         3.2149999141693115
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Schleswig",
       "rgb": [
         144,
@@ -1258,6 +1306,7 @@
         2.0350000858306885
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Stanislawow",
       "rgb": [
         41,
@@ -1283,6 +1332,7 @@
         2.615000009536743
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Sussex",
       "rgb": [
         96,
@@ -1307,6 +1357,7 @@
         2.2149999141693115
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Tesinsko",
       "rgb": [
         65,
@@ -1332,6 +1383,7 @@
         2.505000114440918
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Thuringen",
       "rgb": [
         85,
@@ -1357,6 +1409,7 @@
         1.6950000524520874
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Tyrol",
       "rgb": [
         18,
@@ -1383,6 +1436,7 @@
         3.3350000381469727
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Vitebsk",
       "rgb": [
         145,
@@ -1409,6 +1463,7 @@
         3.015000104904175
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Vorpommern",
       "rgb": [
         127,
@@ -1433,6 +1488,7 @@
         2.674999952316284
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Warszawa",
       "rgb": [
         97,
@@ -1458,6 +1514,7 @@
         2.8550000190734863
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Wester Ems",
       "rgb": [
         113,
@@ -1481,6 +1538,7 @@
         2.015000104904175
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Western Slovakia",
       "rgb": [
         46,
@@ -1507,6 +1565,7 @@
         2.625
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "Westfalen",
       "rgb": [
         92,
@@ -1532,6 +1591,7 @@
         3.2950000762939453
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Wilejka",
       "rgb": [
         142,
@@ -1558,6 +1618,7 @@
         3.244999885559082
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Wilno",
       "rgb": [
         141,
@@ -1584,6 +1645,7 @@
         2.434999942779541
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Wolyn",
       "rgb": [
         75,
@@ -1609,6 +1671,7 @@
         2.365000009536743
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "Zhytomyr",
       "rgb": [
         62,
@@ -1634,6 +1697,7 @@
         -7.135000228881836
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0001",
       "rgb": [
         1,
@@ -1653,6 +1717,7 @@
         -6.485000133514404
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0002",
       "rgb": [
         2,
@@ -1677,6 +1742,7 @@
         -6.485000133514404
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0003",
       "rgb": [
         3,
@@ -1699,6 +1765,7 @@
         -6.275000095367432
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0004",
       "rgb": [
         4,
@@ -1722,6 +1789,7 @@
         -5.974999904632568
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0005",
       "rgb": [
         5,
@@ -1745,6 +1813,7 @@
         -5.474999904632568
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0006",
       "rgb": [
         6,
@@ -1771,6 +1840,7 @@
         -5.335000038146973
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0007",
       "rgb": [
         7,
@@ -1798,6 +1868,7 @@
         -5.565000057220459
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0008",
       "rgb": [
         8,
@@ -1822,6 +1893,7 @@
         -5.34499979019165
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0009",
       "rgb": [
         9,
@@ -1847,6 +1919,7 @@
         -5.255000114440918
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0010",
       "rgb": [
         10,
@@ -1873,6 +1946,7 @@
         -5.284999847412109
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0011",
       "rgb": [
         11,
@@ -1897,6 +1971,7 @@
         -5.425000190734863
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0012",
       "rgb": [
         12,
@@ -1920,6 +1995,7 @@
         -5.375
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0013",
       "rgb": [
         13,
@@ -1943,6 +2019,7 @@
         -5.144999980926514
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0014",
       "rgb": [
         14,
@@ -1966,6 +2043,7 @@
         -5.175000190734863
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0015",
       "rgb": [
         15,
@@ -1991,6 +2069,7 @@
         -5.114999771118164
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0016",
       "rgb": [
         16,
@@ -2014,6 +2093,7 @@
         -5.09499979019165
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0017",
       "rgb": [
         17,
@@ -2040,6 +2120,7 @@
         -5.224999904632568
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0018",
       "rgb": [
         18,
@@ -2064,6 +2145,7 @@
         -5.045000076293945
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0019",
       "rgb": [
         19,
@@ -2087,6 +2169,7 @@
         -4.835000038146973
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0020",
       "rgb": [
         20,
@@ -2112,6 +2195,7 @@
         -5.005000114440918
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0021",
       "rgb": [
         21,
@@ -2140,6 +2224,7 @@
         -5.014999866485596
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0022",
       "rgb": [
         22,
@@ -2162,6 +2247,7 @@
         -4.715000152587891
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0023",
       "rgb": [
         23,
@@ -2182,13 +2268,14 @@
       "source_province_id": "province_0023"
     },
     {
-      "display_name": "Province 0024",
+      "display_name": "British Somaliland",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.480000019073486,
         -4.835000038146973
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0024",
       "rgb": [
         24,
@@ -2211,6 +2298,7 @@
         -4.635000228881836
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0025",
       "rgb": [
         25,
@@ -2230,13 +2318,14 @@
       "source_province_id": "province_0025"
     },
     {
-      "display_name": "Province 0026",
+      "display_name": "Kurdufan",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.75,
         -4.505000114440918
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0026",
       "rgb": [
         26,
@@ -2263,6 +2352,7 @@
         -4.494999885559082
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0027",
       "rgb": [
         27,
@@ -2281,13 +2371,14 @@
       "source_province_id": "province_0027"
     },
     {
-      "display_name": "Province 0028",
+      "display_name": "South Darfur",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.0299999713897705,
         -4.394999980926514
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0028",
       "rgb": [
         28,
@@ -2314,6 +2405,7 @@
         -4.894999980926514
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0029",
       "rgb": [
         29,
@@ -2339,6 +2431,7 @@
         -4.605000019073486
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0030",
       "rgb": [
         30,
@@ -2363,6 +2456,7 @@
         -4.434999942779541
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0031",
       "rgb": [
         31,
@@ -2390,6 +2484,7 @@
         -4.635000228881836
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0032",
       "rgb": [
         32,
@@ -2415,6 +2510,7 @@
         -4.425000190734863
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0033",
       "rgb": [
         33,
@@ -2433,13 +2529,14 @@
       "source_province_id": "province_0033"
     },
     {
-      "display_name": "Province 0034",
+      "display_name": "Blue Nile",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.5999999046325684,
         -4.255000114440918
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0034",
       "rgb": [
         34,
@@ -2467,6 +2564,7 @@
         -4.514999866485596
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0035",
       "rgb": [
         35,
@@ -2493,6 +2591,7 @@
         -4.414999961853027
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0036",
       "rgb": [
         36,
@@ -2519,6 +2618,7 @@
         -4.494999885559082
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0037",
       "rgb": [
         37,
@@ -2543,6 +2643,7 @@
         -4.335000038146973
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0038",
       "rgb": [
         38,
@@ -2568,6 +2669,7 @@
         -4.445000171661377
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0039",
       "rgb": [
         39,
@@ -2590,6 +2692,7 @@
         -4.184999942779541
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0040",
       "rgb": [
         40,
@@ -2615,6 +2718,7 @@
         -4.114999771118164
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0041",
       "rgb": [
         41,
@@ -2634,13 +2738,14 @@
       "source_province_id": "province_0041"
     },
     {
-      "display_name": "Province 0042",
+      "display_name": "Eritrea",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.259999990463257,
         -3.875
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0042",
       "rgb": [
         42,
@@ -2666,6 +2771,7 @@
         -4.065000057220459
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0043",
       "rgb": [
         43,
@@ -2691,6 +2797,7 @@
         -3.7950000762939453
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0044",
       "rgb": [
         44,
@@ -2715,6 +2822,7 @@
         -4.164999961853027
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0045",
       "rgb": [
         45,
@@ -2732,13 +2840,14 @@
       "source_province_id": "province_0045"
     },
     {
-      "display_name": "Province 0046",
+      "display_name": "Yemen",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.21999979019165,
         -3.9049999713897705
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0046",
       "rgb": [
         46,
@@ -2762,6 +2871,7 @@
         -3.5450000762939453
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0047",
       "rgb": [
         47,
@@ -2791,6 +2901,7 @@
         -4.244999885559082
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0048",
       "rgb": [
         48,
@@ -2805,13 +2916,14 @@
       "source_province_id": "province_0048"
     },
     {
-      "display_name": "Province 0049",
+      "display_name": "Khartoum",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.259999990463257,
         -3.444999933242798
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0049",
       "rgb": [
         49,
@@ -2839,6 +2951,7 @@
         -3.7750000953674316
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0050",
       "rgb": [
         50,
@@ -2859,13 +2972,14 @@
       "source_province_id": "province_0050"
     },
     {
-      "display_name": "Province 0051",
+      "display_name": "Kassala",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.880000114440918,
         -3.2249999046325684
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0051",
       "rgb": [
         51,
@@ -2890,6 +3004,7 @@
         -3.5250000953674316
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0052",
       "rgb": [
         52,
@@ -2908,13 +3023,14 @@
       "source_province_id": "province_0052"
     },
     {
-      "display_name": "Province 0053",
+      "display_name": "North Darfur",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.4299999475479126,
         -3.424999952316284
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0053",
       "rgb": [
         53,
@@ -2941,6 +3057,7 @@
         -3.444999933242798
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0054",
       "rgb": [
         54,
@@ -2965,6 +3082,7 @@
         -2.984999895095825
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0055",
       "rgb": [
         55,
@@ -2991,6 +3109,7 @@
         -3.0850000381469727
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0056",
       "rgb": [
         56,
@@ -3015,6 +3134,7 @@
         -3.1050000190734863
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0057",
       "rgb": [
         57,
@@ -3039,6 +3159,7 @@
         -3.065000057220459
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0058",
       "rgb": [
         58,
@@ -3062,6 +3183,7 @@
         -3.3350000381469727
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0059",
       "rgb": [
         59,
@@ -3087,6 +3209,7 @@
         -2.9049999713897705
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0060",
       "rgb": [
         60,
@@ -3107,13 +3230,14 @@
       "source_province_id": "province_0060"
     },
     {
-      "display_name": "Province 0061",
+      "display_name": "Libyan Desert",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.07999999821186066,
         -2.2249999046325684
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0061",
       "rgb": [
         61,
@@ -3144,6 +3268,7 @@
         -2.005000114440918
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0062",
       "rgb": [
         62,
@@ -3172,6 +3297,7 @@
         -2.565000057220459
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0063",
       "rgb": [
         63,
@@ -3198,6 +3324,7 @@
         -2.325000047683716
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0064",
       "rgb": [
         64,
@@ -3215,13 +3342,14 @@
       "source_province_id": "province_0064"
     },
     {
-      "display_name": "Province 0065",
+      "display_name": "Eastern Desert",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.5199999809265137,
         -2.244999885559082
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0065",
       "rgb": [
         65,
@@ -3240,13 +3368,14 @@
       "source_province_id": "Eastern Desert"
     },
     {
-      "display_name": "Province 0066",
+      "display_name": "Western Desert",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.600000023841858,
         -2.194999933242798
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0066",
       "rgb": [
         66,
@@ -3267,13 +3396,14 @@
       "source_province_id": "Western Desert"
     },
     {
-      "display_name": "Province 0067",
+      "display_name": "Aswan",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.259999990463257,
         -2.3450000286102295
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0067",
       "rgb": [
         67,
@@ -3298,6 +3428,7 @@
         -2.384999990463257
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0068",
       "rgb": [
         68,
@@ -3322,6 +3453,7 @@
         -2.515000104904175
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0069",
       "rgb": [
         69,
@@ -3344,6 +3476,7 @@
         -2.0350000858306885
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0070",
       "rgb": [
         70,
@@ -3369,6 +3502,7 @@
         -1.9550000429153442
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0071",
       "rgb": [
         71,
@@ -3395,6 +3529,7 @@
         -1.8849999904632568
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0072",
       "rgb": [
         72,
@@ -3420,6 +3555,7 @@
         -2.2950000762939453
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0073",
       "rgb": [
         73,
@@ -3442,6 +3578,7 @@
         -2.015000104904175
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0074",
       "rgb": [
         74,
@@ -3464,6 +3601,7 @@
         -1.6749999523162842
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0075",
       "rgb": [
         75,
@@ -3488,6 +3626,7 @@
         -1.2649999856948853
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0076",
       "rgb": [
         76,
@@ -3513,6 +3652,7 @@
         -1.4450000524520874
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0077",
       "rgb": [
         77,
@@ -3530,13 +3670,14 @@
       "source_province_id": "province_0077"
     },
     {
-      "display_name": "Province 0078",
+      "display_name": "Sinai",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.5399999618530273,
         -1.5449999570846558
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0078",
       "rgb": [
         78,
@@ -3554,13 +3695,14 @@
       "source_province_id": "Sinai"
     },
     {
-      "display_name": "Province 0079",
+      "display_name": "Cairo",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.049999952316284,
         -1.565000057220459
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0079",
       "rgb": [
         79,
@@ -3579,13 +3721,14 @@
       "source_province_id": "Cairo"
     },
     {
-      "display_name": "Province 0080",
+      "display_name": "Marrakech",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.700000047683716,
         -1.274999976158142
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0080",
       "rgb": [
         80,
@@ -3603,13 +3746,14 @@
       "source_province_id": "Marrakech"
     },
     {
-      "display_name": "Province 0081",
+      "display_name": "Fezzan",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.20999999344348907,
         -1.5950000286102295
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0081",
       "rgb": [
         81,
@@ -3635,6 +3779,7 @@
         -1.5549999475479126
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0082",
       "rgb": [
         82,
@@ -3651,13 +3796,14 @@
       "source_province_id": "province_0082"
     },
     {
-      "display_name": "Province 0083",
+      "display_name": "Jordan",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.9700000286102295,
         -1.3049999475479126
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0083",
       "rgb": [
         83,
@@ -3685,6 +3831,7 @@
         -1.125
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0084",
       "rgb": [
         84,
@@ -3705,13 +3852,14 @@
       "source_province_id": "province_0084"
     },
     {
-      "display_name": "Province 0085",
+      "display_name": "Sirte",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.03999999910593033,
         -1.4049999713897705
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0085",
       "rgb": [
         85,
@@ -3729,13 +3877,14 @@
       "source_province_id": "Sirte"
     },
     {
-      "display_name": "Province 0086",
+      "display_name": "Suez",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.3399999141693115,
         -1.3849999904632568
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0086",
       "rgb": [
         86,
@@ -3752,13 +3901,14 @@
       "source_province_id": "Suez"
     },
     {
-      "display_name": "Province 0087",
+      "display_name": "Matrouh",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.4199999570846558,
         -1.3550000190734863
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0087",
       "rgb": [
         87,
@@ -3783,6 +3933,7 @@
         -1.2549999952316284
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0088",
       "rgb": [
         88,
@@ -3801,13 +3952,14 @@
       "source_province_id": "province_0088"
     },
     {
-      "display_name": "Province 0089",
+      "display_name": "Tripolitania",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -0.7099999785423279,
         -1.2949999570846558
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0089",
       "rgb": [
         89,
@@ -3826,13 +3978,14 @@
       "source_province_id": "Tripolitania"
     },
     {
-      "display_name": "Province 0090",
+      "display_name": "Palestine",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.7200000286102295,
         -1.215000033378601
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0090",
       "rgb": [
         90,
@@ -3850,13 +4003,14 @@
       "source_province_id": "Palestine"
     },
     {
-      "display_name": "Province 0091",
+      "display_name": "Cyrenaica",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.7200000286102295,
         -1.2549999952316284
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0091",
       "rgb": [
         91,
@@ -3876,13 +4030,14 @@
       "source_province_id": "Cyrenaica"
     },
     {
-      "display_name": "Province 0092",
+      "display_name": "Al Hajara",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.300000190734863,
         -1.065000057220459
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0092",
       "rgb": [
         92,
@@ -3901,13 +4056,14 @@
       "source_province_id": "Al Hajara"
     },
     {
-      "display_name": "Province 0093",
+      "display_name": "El Agheila",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.4000000059604645,
         -1.3849999904632568
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0093",
       "rgb": [
         93,
@@ -3925,13 +4081,14 @@
       "source_province_id": "El Agheila"
     },
     {
-      "display_name": "Province 0094",
+      "display_name": "Alexandria",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.9700000286102295,
         -1.315000057220459
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0094",
       "rgb": [
         94,
@@ -3948,13 +4105,14 @@
       "source_province_id": "Alexandria"
     },
     {
-      "display_name": "Province 0095",
+      "display_name": "Gabes",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -1.2400000095367432,
         -0.9549999833106995
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0095",
       "rgb": [
         95,
@@ -3981,6 +4139,7 @@
         -1.024999976158142
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0096",
       "rgb": [
         96,
@@ -3999,13 +4158,14 @@
       "source_province_id": "province_0096"
     },
     {
-      "display_name": "Province 0097",
+      "display_name": "Tripoli",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -0.6100000143051147,
         -1.0750000476837158
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0097",
       "rgb": [
         97,
@@ -4023,13 +4183,14 @@
       "source_province_id": "Tripoli"
     },
     {
-      "display_name": "Province 0098",
+      "display_name": "Benghasi",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.4300000071525574,
         -1.1549999713897705
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0098",
       "rgb": [
         98,
@@ -4046,13 +4207,14 @@
       "source_province_id": "Benghasi"
     },
     {
-      "display_name": "Province 0099",
+      "display_name": "Derna",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.8399999737739563,
         -1.0750000476837158
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0099",
       "rgb": [
         99,
@@ -4075,6 +4237,7 @@
         -0.7049999833106995
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0100",
       "rgb": [
         100,
@@ -4094,13 +4257,14 @@
       "source_province_id": "province_0100"
     },
     {
-      "display_name": "Province 0101",
+      "display_name": "Casablanca",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.5899999141693115,
         -0.8450000286102295
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0101",
       "rgb": [
         101,
@@ -4118,13 +4282,14 @@
       "source_province_id": "Casablanca"
     },
     {
-      "display_name": "Province 0102",
+      "display_name": "Syria",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.009999990463257,
         -0.875
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0102",
       "rgb": [
         102,
@@ -4143,13 +4308,14 @@
       "source_province_id": "Syria"
     },
     {
-      "display_name": "Province 0103",
+      "display_name": "Algerian Desert",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.240000009536743,
         -0.7250000238418579
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0103",
       "rgb": [
         103,
@@ -4177,6 +4343,7 @@
         -0.5849999785423279
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0104",
       "rgb": [
         104,
@@ -4202,6 +4369,7 @@
         -0.675000011920929
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0105",
       "rgb": [
         105,
@@ -4221,13 +4389,14 @@
       "source_province_id": "province_0105"
     },
     {
-      "display_name": "Province 0106",
+      "display_name": "Deir az Zur",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.430000066757202,
         -0.5249999761581421
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0106",
       "rgb": [
         106,
@@ -4247,13 +4416,14 @@
       "source_province_id": "Deir az Zur"
     },
     {
-      "display_name": "Province 0107",
+      "display_name": "Lebanon",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.859999895095825,
         -0.7649999856948853
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0107",
       "rgb": [
         107,
@@ -4276,6 +4446,7 @@
         -0.4749999940395355
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0108",
       "rgb": [
         108,
@@ -4302,6 +4473,7 @@
         -0.3449999988079071
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0109",
       "rgb": [
         109,
@@ -4319,13 +4491,14 @@
       "source_province_id": "province_0109"
     },
     {
-      "display_name": "Province 0110",
+      "display_name": "Aleppo",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.049999952316284,
         -0.48500001430511475
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0110",
       "rgb": [
         110,
@@ -4345,13 +4518,14 @@
       "source_province_id": "Aleppo"
     },
     {
-      "display_name": "Province 0111",
+      "display_name": "Spanish Africa",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.430000066757202,
         -0.574999988079071
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0111",
       "rgb": [
         111,
@@ -4366,13 +4540,14 @@
       "source_province_id": "Spanish Africa"
     },
     {
-      "display_name": "Province 0112",
+      "display_name": "Tunis",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -1.2400000095367432,
         -0.42500001192092896
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0112",
       "rgb": [
         112,
@@ -4391,13 +4566,14 @@
       "source_province_id": "Tunis"
     },
     {
-      "display_name": "Province 0113",
+      "display_name": "Cyprus",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.430000066757202,
         -0.5849999785423279
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0113",
       "rgb": [
         113,
@@ -4413,13 +4589,14 @@
       "source_province_id": "Cyprus"
     },
     {
-      "display_name": "Province 0114",
+      "display_name": "Algiers",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.4600000381469727,
         -0.4050000011920929
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0114",
       "rgb": [
         114,
@@ -4436,13 +4613,14 @@
       "source_province_id": "Algiers"
     },
     {
-      "display_name": "Province 0115",
+      "display_name": "Crete",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.1699999570846558,
         -0.5550000071525574
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0115",
       "rgb": [
         115,
@@ -4455,13 +4633,14 @@
       "source_province_id": "Crete"
     },
     {
-      "display_name": "Province 0116",
+      "display_name": "Tehran",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         5.539999961853027,
         -0.3050000071525574
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0116",
       "rgb": [
         116,
@@ -4480,13 +4659,14 @@
       "source_province_id": "Tehran"
     },
     {
-      "display_name": "Province 0117",
+      "display_name": "Constantine",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -1.75,
         -0.36500000953674316
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0117",
       "rgb": [
         117,
@@ -4503,13 +4683,14 @@
       "source_province_id": "Constantine"
     },
     {
-      "display_name": "Province 0118",
+      "display_name": "Tabriz",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.880000114440918,
         -0.2150000035762787
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0118",
       "rgb": [
         118,
@@ -4535,6 +4716,7 @@
         -0.3449999988079071
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0119",
       "rgb": [
         119,
@@ -4550,13 +4732,14 @@
       "source_province_id": "province_0119"
     },
     {
-      "display_name": "Province 0120",
+      "display_name": "Mersin",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.430000066757202,
         -0.2549999952316284
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0120",
       "rgb": [
         120,
@@ -4575,13 +4758,14 @@
       "source_province_id": "Mersin"
     },
     {
-      "display_name": "Province 0121",
+      "display_name": "Antalya",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.8799999952316284,
         -0.2150000035762787
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0121",
       "rgb": [
         121,
@@ -4606,6 +4790,7 @@
         -0.06499999761581421
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0122",
       "rgb": [
         122,
@@ -4626,13 +4811,14 @@
       "source_province_id": "province_0122"
     },
     {
-      "display_name": "Province 0123",
+      "display_name": "Andalusia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.680000066757202,
         -0.1550000011920929
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0123",
       "rgb": [
         123,
@@ -4650,13 +4836,14 @@
       "source_province_id": "Andalusia"
     },
     {
-      "display_name": "Province 0124",
+      "display_name": "Granada",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.25,
         -0.20499999821186066
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0124",
       "rgb": [
         124,
@@ -4680,6 +4867,7 @@
         -0.125
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0125",
       "rgb": [
         125,
@@ -4695,13 +4883,14 @@
       "source_province_id": "province_0125"
     },
     {
-      "display_name": "Province 0126",
+      "display_name": "Malatya",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.0799999237060547,
         -0.125
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0126",
       "rgb": [
         126,
@@ -4722,13 +4911,14 @@
       "source_province_id": "Malatya"
     },
     {
-      "display_name": "Province 0127",
+      "display_name": "Sicillia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -0.5299999713897705,
         -0.11500000208616257
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0127",
       "rgb": [
         127,
@@ -4753,6 +4943,7 @@
         -0.13500000536441803
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0128",
       "rgb": [
         128,
@@ -4771,13 +4962,14 @@
       "source_province_id": "province_0128"
     },
     {
-      "display_name": "Province 0129",
+      "display_name": "Sevilla",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -4.0,
         -0.07500000298023224
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0129",
       "rgb": [
         129,
@@ -4794,13 +4986,14 @@
       "source_province_id": "Sevilla"
     },
     {
-      "display_name": "Province 0130",
+      "display_name": "Konya",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.3399999141693115,
         -0.02500000037252903
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0130",
       "rgb": [
         130,
@@ -4827,6 +5020,7 @@
         -0.04500000178813934
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0131",
       "rgb": [
         131,
@@ -4845,13 +5039,14 @@
       "source_province_id": "province_0131"
     },
     {
-      "display_name": "Province 0132",
+      "display_name": "Adana",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.8399999141693115,
         0.004999999888241291
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0132",
       "rgb": [
         132,
@@ -4877,6 +5072,7 @@
         -0.04500000178813934
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0133",
       "rgb": [
         133,
@@ -4895,13 +5091,14 @@
       "source_province_id": "province_0133"
     },
     {
-      "display_name": "Province 0134",
+      "display_name": "Izmir",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.6100000143051147,
         0.03500000014901161
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0134",
       "rgb": [
         134,
@@ -4918,13 +5115,14 @@
       "source_province_id": "Izmir"
     },
     {
-      "display_name": "Province 0135",
+      "display_name": "Ashkhabad",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         6.03000020980835,
         0.24500000476837158
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0135",
       "rgb": [
         135,
@@ -4943,13 +5141,14 @@
       "source_province_id": "Ashkhabad"
     },
     {
-      "display_name": "Province 0136",
+      "display_name": "Afyon",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.9199999570846558,
         0.0949999988079071
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0136",
       "rgb": [
         136,
@@ -4968,13 +5167,14 @@
       "source_province_id": "Afyon"
     },
     {
-      "display_name": "Province 0137",
+      "display_name": "Murcia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.009999990463257,
         0.054999999701976776
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0137",
       "rgb": [
         137,
@@ -4993,13 +5193,14 @@
       "source_province_id": "Murcia"
     },
     {
-      "display_name": "Province 0138",
+      "display_name": "Attica",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.7900000214576721,
         0.14499999582767487
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0138",
       "rgb": [
         138,
@@ -5016,13 +5217,14 @@
       "source_province_id": "Attica"
     },
     {
-      "display_name": "Province 0139",
+      "display_name": "Calabria",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -0.1899999976158142,
         0.17499999701976776
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0139",
       "rgb": [
         139,
@@ -5038,13 +5240,14 @@
       "source_province_id": "Calabria"
     },
     {
-      "display_name": "Province 0140",
+      "display_name": "Extremadura",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.690000057220459,
         0.17499999701976776
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0140",
       "rgb": [
         140,
@@ -5066,13 +5269,14 @@
       "source_province_id": "Extremadura"
     },
     {
-      "display_name": "Province 0141",
+      "display_name": "Valencia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.8399999141693115,
         0.17499999701976776
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0141",
       "rgb": [
         141,
@@ -5089,13 +5293,14 @@
       "source_province_id": "Valencia"
     },
     {
-      "display_name": "Province 0142",
+      "display_name": "Erzurum",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.5,
         0.1850000023841858
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0142",
       "rgb": [
         142,
@@ -5115,13 +5320,14 @@
       "source_province_id": "Erzurum"
     },
     {
-      "display_name": "Province 0143",
+      "display_name": "Sivas",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.130000114440918,
         0.22499999403953552
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0143",
       "rgb": [
         143,
@@ -5140,13 +5346,14 @@
       "source_province_id": "Sivas"
     },
     {
-      "display_name": "Province 0144",
+      "display_name": "Beja",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.9700000286102295,
         0.1550000011920929
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0144",
       "rgb": [
         144,
@@ -5164,13 +5371,14 @@
       "source_province_id": "Beja"
     },
     {
-      "display_name": "Province 0145",
+      "display_name": "Thessaly",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.5699999928474426,
         0.2549999952316284
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0145",
       "rgb": [
         145,
@@ -5189,13 +5397,14 @@
       "source_province_id": "Thessaly"
     },
     {
-      "display_name": "Province 0146",
+      "display_name": "Castilla La Nueva",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.3399999141693115,
         0.13500000536441803
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0146",
       "rgb": [
         146,
@@ -5214,13 +5423,14 @@
       "source_province_id": "Castilla La Nueva"
     },
     {
-      "display_name": "Province 0147",
+      "display_name": "Kars",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.9700000286102295,
         0.2150000035762787
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0147",
       "rgb": [
         147,
@@ -5239,13 +5449,14 @@
       "source_province_id": "Kars"
     },
     {
-      "display_name": "Province 0148",
+      "display_name": "Azerbaijan",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.710000038146973,
         0.4050000011920929
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0148",
       "rgb": [
         148,
@@ -5264,13 +5475,14 @@
       "source_province_id": "Azerbaijan"
     },
     {
-      "display_name": "Province 0149",
+      "display_name": "Kayseri",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.700000047683716,
         0.23499999940395355
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0149",
       "rgb": [
         149,
@@ -5290,13 +5502,14 @@
       "source_province_id": "Kayseri"
     },
     {
-      "display_name": "Province 0150",
+      "display_name": "Armenia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.269999980926514,
         0.35499998927116394
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0150",
       "rgb": [
         150,
@@ -5315,13 +5528,14 @@
       "source_province_id": "Armenia"
     },
     {
-      "display_name": "Province 0151",
+      "display_name": "Sardegna",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -1.3300000429153442,
         0.35499998927116394
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0151",
       "rgb": [
         151,
@@ -5338,13 +5552,14 @@
       "source_province_id": "Sardegna"
     },
     {
-      "display_name": "Province 0152",
+      "display_name": "Ankara",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.259999990463257,
         0.29499998688697815
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0152",
       "rgb": [
         152,
@@ -5364,13 +5579,14 @@
       "source_province_id": "Ankara"
     },
     {
-      "display_name": "Province 0153",
+      "display_name": "Valladolid",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.119999885559082,
         0.38499999046325684
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0153",
       "rgb": [
         153,
@@ -5391,13 +5607,14 @@
       "source_province_id": "Valladolid"
     },
     {
-      "display_name": "Province 0154",
+      "display_name": "Bursa",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.649999976158142,
         0.32499998807907104
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0154",
       "rgb": [
         154,
@@ -5417,13 +5634,14 @@
       "source_province_id": "Bursa"
     },
     {
-      "display_name": "Province 0155",
+      "display_name": "Isle Baleares",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.2699999809265137,
         0.26499998569488525
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0155",
       "rgb": [
         155,
@@ -5436,13 +5654,14 @@
       "source_province_id": "Isle Baleares"
     },
     {
-      "display_name": "Province 0156",
+      "display_name": "Lisbon",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -4.059999942779541,
         0.38499999046325684
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0156",
       "rgb": [
         156,
@@ -5459,13 +5678,14 @@
       "source_province_id": "Lisbon"
     },
     {
-      "display_name": "Province 0157",
+      "display_name": "Madrid",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.4100000858306885,
         0.375
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0157",
       "rgb": [
         157,
@@ -5484,13 +5704,14 @@
       "source_province_id": "Madrid"
     },
     {
-      "display_name": "Province 0158",
+      "display_name": "Tashauz",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         6.389999866485596,
         0.5149999856948853
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0158",
       "rgb": [
         158,
@@ -5507,13 +5728,14 @@
       "source_province_id": "Tashauz"
     },
     {
-      "display_name": "Province 0159",
+      "display_name": "Trabzon",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.7100000381469727,
         0.4449999928474426
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0159",
       "rgb": [
         159,
@@ -5532,13 +5754,14 @@
       "source_province_id": "Trabzon"
     },
     {
-      "display_name": "Province 0160",
+      "display_name": "Guarda",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.9100000858306885,
         0.41499999165534973
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0160",
       "rgb": [
         160,
@@ -5557,13 +5780,14 @@
       "source_province_id": "Guarda"
     },
     {
-      "display_name": "Province 0161",
+      "display_name": "Epirus",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.41999998688697815,
         0.36500000953674316
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0161",
       "rgb": [
         161,
@@ -5579,13 +5803,14 @@
       "source_province_id": "Epirus"
     },
     {
-      "display_name": "Province 0162",
+      "display_name": "Puglia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -0.15000000596046448,
         0.5249999761581421
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0162",
       "rgb": [
         162,
@@ -5601,13 +5826,14 @@
       "source_province_id": "Puglia"
     },
     {
-      "display_name": "Province 0163",
+      "display_name": "Catalonia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.759999990463257,
         0.6150000095367432
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0163",
       "rgb": [
         163,
@@ -5626,13 +5852,14 @@
       "source_province_id": "Catalonia"
     },
     {
-      "display_name": "Province 0164",
+      "display_name": "Kastamonu",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.5799999237060547,
         0.5350000262260437
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0164",
       "rgb": [
         164,
@@ -5650,13 +5877,14 @@
       "source_province_id": "Kastamonu"
     },
     {
-      "display_name": "Province 0165",
+      "display_name": "Samsun",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.0,
         0.4650000035762787
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0165",
       "rgb": [
         165,
@@ -5674,13 +5902,14 @@
       "source_province_id": "Samsun"
     },
     {
-      "display_name": "Province 0166",
+      "display_name": "Campania",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -0.3400000035762787,
         0.4650000035762787
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0166",
       "rgb": [
         166,
@@ -5698,13 +5927,14 @@
       "source_province_id": "Campania"
     },
     {
-      "display_name": "Province 0167",
+      "display_name": "Peloponnese",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.8100000023841858,
         0.4749999940395355
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0167",
       "rgb": [
         167,
@@ -5723,13 +5953,14 @@
       "source_province_id": "Peloponnese"
     },
     {
-      "display_name": "Province 0168",
+      "display_name": "Eskisehir",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.1600000858306885,
         0.4950000047683716
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0168",
       "rgb": [
         168,
@@ -5747,13 +5978,14 @@
       "source_province_id": "Eskisehir"
     },
     {
-      "display_name": "Province 0169",
+      "display_name": "Eastern Aragon",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.9100000858306885,
         0.6150000095367432
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0169",
       "rgb": [
         169,
@@ -5772,13 +6004,14 @@
       "source_province_id": "Eastern Aragon"
     },
     {
-      "display_name": "Province 0170",
+      "display_name": "Western Aragon",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.700000047683716,
         0.42500001192092896
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0170",
       "rgb": [
         170,
@@ -5793,13 +6026,14 @@
       "source_province_id": "Western Aragon"
     },
     {
-      "display_name": "Province 0171",
+      "display_name": "Salamanca",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.680000066757202,
         0.48500001430511475
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0171",
       "rgb": [
         171,
@@ -5819,13 +6053,14 @@
       "source_province_id": "Salamanca"
     },
     {
-      "display_name": "Province 0172",
+      "display_name": "Albania",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.3799999952316284,
         0.4950000047683716
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0172",
       "rgb": [
         172,
@@ -5842,13 +6077,14 @@
       "source_province_id": "Albania"
     },
     {
-      "display_name": "Province 0173",
+      "display_name": "Edirne",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.5,
         0.5849999785423279
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0173",
       "rgb": [
         173,
@@ -5873,6 +6109,7 @@
         0.675000011920929
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": false,
       "province_id": "province_0174",
       "rgb": [
         174,
@@ -5899,6 +6136,7 @@
         0.6850000023841858
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": false,
       "province_id": "province_0175",
       "rgb": [
         175,
@@ -5921,6 +6159,7 @@
         0.5450000166893005
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0176",
       "rgb": [
         176,
@@ -5937,13 +6176,14 @@
       "source_province_id": "province_0176"
     },
     {
-      "display_name": "Province 0177",
+      "display_name": "Izmit",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.850000023841858,
         0.5249999761581421
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0177",
       "rgb": [
         177,
@@ -5960,13 +6200,14 @@
       "source_province_id": "Izmit"
     },
     {
-      "display_name": "Province 0178",
+      "display_name": "Macedonia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.6399999856948853,
         0.6349999904632568
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0178",
       "rgb": [
         178,
@@ -5988,13 +6229,14 @@
       "source_province_id": "Macedonia"
     },
     {
-      "display_name": "Province 0179",
+      "display_name": "Istanbul",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.7200000286102295,
         0.5550000071525574
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0179",
       "rgb": [
         179,
@@ -6010,13 +6252,14 @@
       "source_province_id": "Istanbul"
     },
     {
-      "display_name": "Province 0180",
+      "display_name": "Georgia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.110000133514404,
         0.675000011920929
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0180",
       "rgb": [
         180,
@@ -6037,13 +6280,14 @@
       "source_province_id": "Georgia"
     },
     {
-      "display_name": "Province 0181",
+      "display_name": "Porto",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.930000066757202,
         0.6150000095367432
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0181",
       "rgb": [
         181,
@@ -6062,13 +6306,14 @@
       "source_province_id": "Porto"
     },
     {
-      "display_name": "Province 0182",
+      "display_name": "Burgos",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.180000066757202,
         0.7149999737739563
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0182",
       "rgb": [
         182,
@@ -6088,13 +6333,14 @@
       "source_province_id": "Burgos"
     },
     {
-      "display_name": "Province 0183",
+      "display_name": "Leon",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.6500000953674316,
         0.7549999952316284
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0183",
       "rgb": [
         183,
@@ -6113,13 +6359,14 @@
       "source_province_id": "Leon"
     },
     {
-      "display_name": "Province 0184",
+      "display_name": "Khiva",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         6.360000133514404,
         0.8450000286102295
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0184",
       "rgb": [
         184,
@@ -6136,13 +6383,14 @@
       "source_province_id": "Khiva"
     },
     {
-      "display_name": "Province 0185",
+      "display_name": "Lazio",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -0.7400000095367432,
         0.7149999737739563
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0185",
       "rgb": [
         185,
@@ -6159,13 +6407,14 @@
       "source_province_id": "Lazio"
     },
     {
-      "display_name": "Province 0186",
+      "display_name": "Dagestan",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.579999923706055,
         0.9449999928474426
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0186",
       "rgb": [
         186,
@@ -6190,6 +6439,7 @@
         0.7049999833106995
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0187",
       "rgb": [
         187,
@@ -6209,13 +6459,14 @@
       "source_province_id": "province_0187"
     },
     {
-      "display_name": "Province 0188",
+      "display_name": "Karakalpakstan",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         6.119999885559082,
         1.0549999475479126
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0188",
       "rgb": [
         188,
@@ -6234,13 +6485,14 @@
       "source_province_id": "Karakalpakstan"
     },
     {
-      "display_name": "Province 0189",
+      "display_name": "Abruzzo",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -0.6200000047683716,
         0.8450000286102295
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0189",
       "rgb": [
         189,
@@ -6259,13 +6511,14 @@
       "source_province_id": "Abruzzo"
     },
     {
-      "display_name": "Province 0190",
+      "display_name": "Montenegro",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.3799999952316284,
         0.7049999833106995
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0190",
       "rgb": [
         190,
@@ -6283,13 +6536,14 @@
       "source_province_id": "Montenegro"
     },
     {
-      "display_name": "Province 0191",
+      "display_name": "Ust Urt",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         5.71999979019165,
         1.225000023841858
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0191",
       "rgb": [
         191,
@@ -6307,13 +6561,14 @@
       "source_province_id": "Ust Urt"
     },
     {
-      "display_name": "Province 0192",
+      "display_name": "Corsica",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -1.309999942779541,
         0.7350000143051147
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0192",
       "rgb": [
         192,
@@ -6329,13 +6584,14 @@
       "source_province_id": "Corsica"
     },
     {
-      "display_name": "Province 0193",
+      "display_name": "Galicia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.9600000381469727,
         0.8550000190734863
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0193",
       "rgb": [
         193,
@@ -6359,6 +6615,7 @@
         0.875
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0194",
       "rgb": [
         194,
@@ -6376,13 +6633,14 @@
       "source_province_id": "province_0194"
     },
     {
-      "display_name": "Province 0195",
+      "display_name": "Herzegovina",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.25999999046325684,
         0.8550000190734863
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0195",
       "rgb": [
         195,
@@ -6401,13 +6659,14 @@
       "source_province_id": "Herzegovina"
     },
     {
-      "display_name": "Province 0196",
+      "display_name": "Navarra",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.990000009536743,
         0.8450000286102295
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0196",
       "rgb": [
         196,
@@ -6432,6 +6691,7 @@
         0.8949999809265137
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0197",
       "rgb": [
         197,
@@ -6452,13 +6712,14 @@
       "source_province_id": "province_0197"
     },
     {
-      "display_name": "Province 0198",
+      "display_name": "Chechnya Ingushetia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.400000095367432,
         0.8650000095367432
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0198",
       "rgb": [
         198,
@@ -6475,13 +6736,14 @@
       "source_province_id": "Chechnya Ingushetia"
     },
     {
-      "display_name": "Province 0199",
+      "display_name": "Kosovo",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.5299999713897705,
         0.824999988079071
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0199",
       "rgb": [
         199,
@@ -6507,6 +6769,7 @@
         0.8050000071525574
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0200",
       "rgb": [
         200,
@@ -6524,13 +6787,14 @@
       "source_province_id": "province_0200"
     },
     {
-      "display_name": "Province 0201",
+      "display_name": "North Ossetia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.210000038146973,
         0.9049999713897705
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0201",
       "rgb": [
         201,
@@ -6548,13 +6812,14 @@
       "source_province_id": "North Ossetia"
     },
     {
-      "display_name": "Province 0202",
+      "display_name": "Abkhazia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.7300000190734863,
         0.8949999809265137
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0202",
       "rgb": [
         202,
@@ -6578,6 +6843,7 @@
         0.8550000190734863
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0203",
       "rgb": [
         203,
@@ -6592,13 +6858,14 @@
       "source_province_id": "province_0203"
     },
     {
-      "display_name": "Province 0204",
+      "display_name": "Midi Pyrenees",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.5399999618530273,
         0.9649999737739563
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0204",
       "rgb": [
         204,
@@ -6618,13 +6885,14 @@
       "source_province_id": "Midi Pyrenees"
     },
     {
-      "display_name": "Province 0205",
+      "display_name": "Toscana",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -0.9800000190734863,
         0.9750000238418579
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0205",
       "rgb": [
         205,
@@ -6641,13 +6909,14 @@
       "source_province_id": "Toscana"
     },
     {
-      "display_name": "Province 0206",
+      "display_name": "Kabardino Balkaria",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.039999961853027,
         0.9150000214576721
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0206",
       "rgb": [
         206,
@@ -6666,13 +6935,14 @@
       "source_province_id": "Kabardino Balkaria"
     },
     {
-      "display_name": "Province 0207",
+      "display_name": "Basque Country",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.1500000953674316,
         0.9049999713897705
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0207",
       "rgb": [
         207,
@@ -6696,6 +6966,7 @@
         0.9449999928474426
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0208",
       "rgb": [
         208,
@@ -6722,6 +6993,7 @@
         1.0149999856948853
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0209",
       "rgb": [
         209,
@@ -6743,13 +7015,14 @@
       "source_province_id": "province_0209"
     },
     {
-      "display_name": "Province 0210",
+      "display_name": "Asturias",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.6700000762939453,
         0.9449999928474426
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0210",
       "rgb": [
         210,
@@ -6766,13 +7039,14 @@
       "source_province_id": "Asturias"
     },
     {
-      "display_name": "Province 0211",
+      "display_name": "Dalmatia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.07999999821186066,
         0.9549999833106995
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0211",
       "rgb": [
         211,
@@ -6789,13 +7063,14 @@
       "source_province_id": "Dalmatia"
     },
     {
-      "display_name": "Province 0212",
+      "display_name": "Cantabria",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.369999885559082,
         0.9350000023841858
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0212",
       "rgb": [
         212,
@@ -6820,6 +7095,7 @@
         0.925000011920929
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0213",
       "rgb": [
         213,
@@ -6835,13 +7111,14 @@
       "source_province_id": "province_0213"
     },
     {
-      "display_name": "Province 0214",
+      "display_name": "Pyrenees Atlantiques",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.890000104904175,
         0.9850000143051147
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0214",
       "rgb": [
         214,
@@ -6859,13 +7136,14 @@
       "source_province_id": "Pyrenees Atlantiques"
     },
     {
-      "display_name": "Province 0215",
+      "display_name": "Provence",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -1.7599999904632568,
         1.0149999856948853
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0215",
       "rgb": [
         215,
@@ -6882,13 +7160,14 @@
       "source_province_id": "Provence"
     },
     {
-      "display_name": "Province 0216",
+      "display_name": "Sochi",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.640000104904175,
         1.034999966621399
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0216",
       "rgb": [
         216,
@@ -6906,13 +7185,14 @@
       "source_province_id": "Sochi"
     },
     {
-      "display_name": "Province 0217",
+      "display_name": "Rhone",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -1.8899999856948853,
         1.065000057220459
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0217",
       "rgb": [
         217,
@@ -6930,13 +7210,14 @@
       "source_province_id": "Rhone"
     },
     {
-      "display_name": "Province 0218",
+      "display_name": "Languedoc",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.2300000190734863,
         1.0850000381469727
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0218",
       "rgb": [
         218,
@@ -6962,6 +7243,7 @@
         1.034999966621399
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0219",
       "rgb": [
         219,
@@ -6978,13 +7260,14 @@
       "source_province_id": "province_0219"
     },
     {
-      "display_name": "Province 0220",
+      "display_name": "Croatia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -0.28999999165534973,
         1.1950000524520874
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0220",
       "rgb": [
         220,
@@ -7003,13 +7286,14 @@
       "source_province_id": "Croatia"
     },
     {
-      "display_name": "Province 0221",
+      "display_name": "Bosnia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.029999999329447746,
         1.1649999618530273
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0221",
       "rgb": [
         221,
@@ -7028,13 +7312,14 @@
       "source_province_id": "Bosnia"
     },
     {
-      "display_name": "Province 0222",
+      "display_name": "Savoy",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -1.7200000286102295,
         1.284999966621399
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0222",
       "rgb": [
         222,
@@ -7055,13 +7340,14 @@
       "source_province_id": "Savoy"
     },
     {
-      "display_name": "Province 0223",
+      "display_name": "Serbia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.4300000071525574,
         1.1449999809265137
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0223",
       "rgb": [
         223,
@@ -7080,13 +7366,14 @@
       "source_province_id": "Serbia"
     },
     {
-      "display_name": "Province 0224",
+      "display_name": "Stavropol",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.0,
         1.2350000143051147
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0224",
       "rgb": [
         224,
@@ -7107,13 +7394,14 @@
       "source_province_id": "Stavropol"
     },
     {
-      "display_name": "Province 0225",
+      "display_name": "Oltenia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.9399999976158142,
         1.1950000524520874
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0225",
       "rgb": [
         225,
@@ -7133,13 +7421,14 @@
       "source_province_id": "Oltenia"
     },
     {
-      "display_name": "Province 0226",
+      "display_name": "Dobrudja",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.409999966621399,
         1.215000033378601
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0226",
       "rgb": [
         226,
@@ -7159,13 +7448,14 @@
       "source_province_id": "Dobrudja"
     },
     {
-      "display_name": "Province 0227",
+      "display_name": "Piemonte",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -1.4800000190734863,
         1.284999966621399
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0227",
       "rgb": [
         227,
@@ -7184,13 +7474,14 @@
       "source_province_id": "Piemonte"
     },
     {
-      "display_name": "Province 0228",
+      "display_name": "Aquitaine",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.8499999046325684,
         1.2050000429153442
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0228",
       "rgb": [
         228,
@@ -7208,13 +7499,14 @@
       "source_province_id": "Aquitaine"
     },
     {
-      "display_name": "Province 0229",
+      "display_name": "Emilia Romagna",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -1.0299999713897705,
         1.1950000524520874
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0229",
       "rgb": [
         229,
@@ -7233,13 +7525,14 @@
       "source_province_id": "Emilia Romagna"
     },
     {
-      "display_name": "Province 0230",
+      "display_name": "Krasnodar",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.4200000762939453,
         1.3350000381469727
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0230",
       "rgb": [
         230,
@@ -7257,13 +7550,14 @@
       "source_province_id": "Krasnodar"
     },
     {
-      "display_name": "Province 0231",
+      "display_name": "Limousin",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.569999933242798,
         1.3049999475479126
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0231",
       "rgb": [
         231,
@@ -7283,13 +7577,14 @@
       "source_province_id": "Limousin"
     },
     {
-      "display_name": "Province 0232",
+      "display_name": "Alpes",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.009999990463257,
         1.4149999618530273
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0232",
       "rgb": [
         232,
@@ -7310,13 +7605,14 @@
       "source_province_id": "Alpes"
     },
     {
-      "display_name": "Province 0233",
+      "display_name": "Var",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -1.899999976158142,
         1.2949999570846558
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0233",
       "rgb": [
         233,
@@ -7333,13 +7629,14 @@
       "source_province_id": "Var"
     },
     {
-      "display_name": "Province 0234",
+      "display_name": "Crimea",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.609999895095825,
         1.3350000381469727
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0234",
       "rgb": [
         234,
@@ -7354,13 +7651,14 @@
       "source_province_id": "Crimea"
     },
     {
-      "display_name": "Province 0235",
+      "display_name": "Auvergne",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.259999990463257,
         1.4049999713897705
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0235",
       "rgb": [
         235,
@@ -7380,13 +7678,14 @@
       "source_province_id": "Auvergne"
     },
     {
-      "display_name": "Province 0236",
+      "display_name": "Banat",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.6499999761581421,
         1.3650000095367432
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0236",
       "rgb": [
         236,
@@ -7413,6 +7712,7 @@
         1.2649999856948853
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0237",
       "rgb": [
         237,
@@ -7437,6 +7737,7 @@
         1.3250000476837158
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0238",
       "rgb": [
         238,
@@ -7454,13 +7755,14 @@
       "source_province_id": "province_0238"
     },
     {
-      "display_name": "Province 0239",
+      "display_name": "Kalmykia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.380000114440918,
         1.5449999570846558
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0239",
       "rgb": [
         239,
@@ -7479,13 +7781,14 @@
       "source_province_id": "Kalmykia"
     },
     {
-      "display_name": "Province 0240",
+      "display_name": "Lombardia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -1.1799999475479126,
         1.3949999809265137
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0240",
       "rgb": [
         240,
@@ -7505,13 +7808,14 @@
       "source_province_id": "Lombardia"
     },
     {
-      "display_name": "Province 0241",
+      "display_name": "Istria",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -0.5400000214576721,
         1.3250000476837158
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0241",
       "rgb": [
         241,
@@ -7527,13 +7831,14 @@
       "source_province_id": "Istria"
     },
     {
-      "display_name": "Province 0242",
+      "display_name": "Slovenia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -0.07000000029802322,
         1.3849999904632568
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0242",
       "rgb": [
         242,
@@ -7555,13 +7860,14 @@
       "source_province_id": "Slovenia"
     },
     {
-      "display_name": "Province 0243",
+      "display_name": "Veneto",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -0.8299999833106995,
         1.434999942779541
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0243",
       "rgb": [
         243,
@@ -7581,13 +7887,14 @@
       "source_province_id": "Veneto"
     },
     {
-      "display_name": "Province 0244",
+      "display_name": "Poitou",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.799999952316284,
         1.534999966621399
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0244",
       "rgb": [
         244,
@@ -7606,13 +7913,14 @@
       "source_province_id": "Poitou"
     },
     {
-      "display_name": "Province 0245",
+      "display_name": "Vojvodina",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.30000001192092896,
         1.3949999809265137
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0245",
       "rgb": [
         245,
@@ -7631,13 +7939,14 @@
       "source_province_id": "Vojvodina"
     },
     {
-      "display_name": "Province 0246",
+      "display_name": "Moldova",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.4500000476837158,
         1.6150000095367432
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0246",
       "rgb": [
         246,
@@ -7656,13 +7965,14 @@
       "source_province_id": "Moldova"
     },
     {
-      "display_name": "Province 0247",
+      "display_name": "Bessarabia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.840000033378601,
         1.4550000429153442
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0247",
       "rgb": [
         247,
@@ -7681,13 +7991,14 @@
       "source_province_id": "Bessarabia"
     },
     {
-      "display_name": "Province 0248",
+      "display_name": "South Transylvania",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.0,
         1.465000033378601
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0248",
       "rgb": [
         248,
@@ -7706,13 +8017,14 @@
       "source_province_id": "South Transylvania"
     },
     {
-      "display_name": "Province 0249",
+      "display_name": "South Tyrol",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -0.5799999833106995,
         1.4450000524520874
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0249",
       "rgb": [
         249,
@@ -7738,6 +8050,7 @@
         1.434999942779541
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": false,
       "province_id": "province_0250",
       "rgb": [
         250,
@@ -7755,13 +8068,14 @@
       "source_province_id": "province_0250"
     },
     {
-      "display_name": "Province 0251",
+      "display_name": "Northern Bessarabia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.659999966621399,
         1.7350000143051147
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0251",
       "rgb": [
         251,
@@ -7781,13 +8095,14 @@
       "source_province_id": "Northern Bessarabia"
     },
     {
-      "display_name": "Province 0252",
+      "display_name": "Trentino",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -1.0199999809265137,
         1.475000023841858
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0252",
       "rgb": [
         252,
@@ -7804,13 +8119,14 @@
       "source_province_id": "Trentino"
     },
     {
-      "display_name": "Province 0253",
+      "display_name": "Akhtubinsk",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         6.25,
         1.9850000143051147
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0253",
       "rgb": [
         253,
@@ -7830,13 +8146,14 @@
       "source_province_id": "Akhtubinsk"
     },
     {
-      "display_name": "Province 0254",
+      "display_name": "North Transylvania",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.0299999713897705,
         1.6749999523162842
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0254",
       "rgb": [
         254,
@@ -7857,13 +8174,14 @@
       "source_province_id": "North Transylvania"
     },
     {
-      "display_name": "Province 0255",
+      "display_name": "Astrakhan",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.610000133514404,
         1.725000023841858
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0255",
       "rgb": [
         255,
@@ -7881,13 +8199,14 @@
       "source_province_id": "Astrakhan"
     },
     {
-      "display_name": "Province 0256",
+      "display_name": "Centre-Sud",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.4700000286102295,
         1.5950000286102295
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0256",
       "rgb": [
         0,
@@ -7905,13 +8224,14 @@
       "source_province_id": "Centre-Sud"
     },
     {
-      "display_name": "Province 0257",
+      "display_name": "North Transdanubia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.029999999329447746,
         1.6749999523162842
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0257",
       "rgb": [
         1,
@@ -7939,6 +8259,7 @@
         1.534999966621399
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": false,
       "province_id": "province_0258",
       "rgb": [
         2,
@@ -7963,6 +8284,7 @@
         1.534999966621399
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": false,
       "province_id": "province_0259",
       "rgb": [
         3,
@@ -7982,13 +8304,14 @@
       "source_province_id": "province_0259"
     },
     {
-      "display_name": "Province 0260",
+      "display_name": "Tiszantul",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.5,
         1.6749999523162842
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0260",
       "rgb": [
         4,
@@ -8009,13 +8332,14 @@
       "source_province_id": "Tiszantul"
     },
     {
-      "display_name": "Province 0261",
+      "display_name": "Volgodonsk",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.819999933242798,
         1.6150000095367432
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0261",
       "rgb": [
         5,
@@ -8035,13 +8359,14 @@
       "source_province_id": "Volgodonsk"
     },
     {
-      "display_name": "Province 0262",
+      "display_name": "Alto Adige",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -0.9300000071525574,
         1.5750000476837158
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0262",
       "rgb": [
         6,
@@ -8059,13 +8384,14 @@
       "source_province_id": "Alto Adige"
     },
     {
-      "display_name": "Province 0263",
+      "display_name": "Crisana",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.699999988079071,
         1.565000057220459
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0263",
       "rgb": [
         7,
@@ -8090,6 +8416,7 @@
         1.534999966621399
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": false,
       "province_id": "province_0264",
       "rgb": [
         8,
@@ -8107,13 +8434,14 @@
       "source_province_id": "province_0264"
     },
     {
-      "display_name": "Province 0265",
+      "display_name": "Kherson",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.509999990463257,
         1.6050000190734863
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0265",
       "rgb": [
         9,
@@ -8131,13 +8459,14 @@
       "source_province_id": "Kherson"
     },
     {
-      "display_name": "Province 0266",
+      "display_name": "Odessa",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.069999933242798,
         1.7050000429153442
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0266",
       "rgb": [
         10,
@@ -8155,13 +8484,14 @@
       "source_province_id": "Odessa"
     },
     {
-      "display_name": "Province 0267",
+      "display_name": "Guryev",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         5.329999923706055,
         1.8049999475479126
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0267",
       "rgb": [
         11,
@@ -8179,13 +8509,14 @@
       "source_province_id": "Guryev"
     },
     {
-      "display_name": "Province 0268",
+      "display_name": "Swiss Plateu",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -1.4600000381469727,
         1.684999942779541
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0268",
       "rgb": [
         12,
@@ -8211,6 +8542,7 @@
         1.6150000095367432
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": false,
       "province_id": "province_0269",
       "rgb": [
         13,
@@ -8229,13 +8561,14 @@
       "source_province_id": "province_0269"
     },
     {
-      "display_name": "Province 0270",
+      "display_name": "Burgundy",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.0999999046325684,
         1.725000023841858
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0270",
       "rgb": [
         14,
@@ -8255,13 +8588,14 @@
       "source_province_id": "Burgundy"
     },
     {
-      "display_name": "Province 0272",
+      "display_name": "Zaporozhe",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.819999933242798,
         1.715000033378601
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0272",
       "rgb": [
         16,
@@ -8285,6 +8619,7 @@
         1.684999942779541
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": false,
       "province_id": "province_0273",
       "rgb": [
         17,
@@ -8304,13 +8639,14 @@
       "source_province_id": "province_0273"
     },
     {
-      "display_name": "Province 0275",
+      "display_name": "Balta Tiraspol",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.8799999952316284,
         1.774999976158142
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0275",
       "rgb": [
         19,
@@ -8329,13 +8665,14 @@
       "source_province_id": "Balta Tiraspol"
     },
     {
-      "display_name": "Province 0277",
+      "display_name": "Mykolaiv",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.2699999809265137,
         1.7949999570846558
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0277",
       "rgb": [
         21,
@@ -8353,13 +8690,14 @@
       "source_province_id": "Mykolaiv"
     },
     {
-      "display_name": "Province 0278",
+      "display_name": "Rostov",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.450000047683716,
         1.7649999856948853
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0278",
       "rgb": [
         22,
@@ -8378,13 +8716,14 @@
       "source_province_id": "Rostov"
     },
     {
-      "display_name": "Province 0279",
+      "display_name": "Franche-Comte",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -1.7599999904632568,
         1.8250000476837158
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0279",
       "rgb": [
         23,
@@ -8403,13 +8742,14 @@
       "source_province_id": "Franche-Comte"
     },
     {
-      "display_name": "Province 0280",
+      "display_name": "Centre",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.450000047683716,
         1.7949999570846558
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0280",
       "rgb": [
         24,
@@ -8436,6 +8776,7 @@
         1.7050000429153442
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": false,
       "province_id": "province_0281",
       "rgb": [
         25,
@@ -8454,13 +8795,14 @@
       "source_province_id": "province_0281"
     },
     {
-      "display_name": "Province 0282",
+      "display_name": "Northern Hungary",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.4099999964237213,
         1.8250000476837158
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0282",
       "rgb": [
         26,
@@ -8479,13 +8821,14 @@
       "source_province_id": "Northern Hungary"
     },
     {
-      "display_name": "Province 0283",
+      "display_name": "Loire",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.8399999141693115,
         1.815000057220459
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0283",
       "rgb": [
         27,
@@ -8503,13 +8846,14 @@
       "source_province_id": "Loire"
     },
     {
-      "display_name": "Province 0284",
+      "display_name": "Stalino",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.130000114440918,
         1.875
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0284",
       "rgb": [
         28,
@@ -8528,13 +8872,14 @@
       "source_province_id": "Stalino"
     },
     {
-      "display_name": "Province 0285",
+      "display_name": "Alsace Lorraine",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -1.6299999952316284,
         1.9950000047683716
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0285",
       "rgb": [
         29,
@@ -8554,13 +8899,14 @@
       "source_province_id": "Alsace Lorraine"
     },
     {
-      "display_name": "Province 0287",
+      "display_name": "Dnipropetrovsk",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.680000066757202,
         1.9049999713897705
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0287",
       "rgb": [
         31,
@@ -8581,13 +8927,14 @@
       "source_province_id": "Dnipropetrovsk"
     },
     {
-      "display_name": "Province 0288",
+      "display_name": "Stalingrad",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.230000019073486,
         1.9950000047683716
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0288",
       "rgb": [
         32,
@@ -8608,13 +8955,14 @@
       "source_province_id": "Stalingrad"
     },
     {
-      "display_name": "Province 0289",
+      "display_name": "Millerovo",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.740000009536743,
         1.9850000143051147
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0289",
       "rgb": [
         33,
@@ -8634,13 +8982,14 @@
       "source_province_id": "Millerovo"
     },
     {
-      "display_name": "Province 0290",
+      "display_name": "Brittany",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.190000057220459,
         1.9049999713897705
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0290",
       "rgb": [
         34,
@@ -8655,13 +9004,14 @@
       "source_province_id": "Brittany"
     },
     {
-      "display_name": "Province 0292",
+      "display_name": "Bucovina",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.2599999904632568,
         1.8949999809265137
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0292",
       "rgb": [
         36,
@@ -8680,13 +9030,14 @@
       "source_province_id": "Bucovina"
     },
     {
-      "display_name": "Province 0293",
+      "display_name": "Uralsk",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         5.230000019073486,
         2.2049999237060547
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0293",
       "rgb": [
         37,
@@ -8707,13 +9058,14 @@
       "source_province_id": "Uralsk"
     },
     {
-      "display_name": "Province 0294",
+      "display_name": "Champagne",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.009999990463257,
         2.0250000953674316
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0294",
       "rgb": [
         38,
@@ -8733,13 +9085,14 @@
       "source_province_id": "Champagne"
     },
     {
-      "display_name": "Province 0295",
+      "display_name": "Belgorod",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.3299999237060547,
         2.0450000762939453
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0295",
       "rgb": [
         39,
@@ -8759,13 +9112,14 @@
       "source_province_id": "Belgorod"
     },
     {
-      "display_name": "Province 0296",
+      "display_name": "Southern Slovakia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.10000000149011612,
         1.875
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0296",
       "rgb": [
         40,
@@ -8783,13 +9137,14 @@
       "source_province_id": "Southern Slovakia"
     },
     {
-      "display_name": "Province 0299",
+      "display_name": "Ile de France",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.390000104904175,
         1.9950000047683716
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0299",
       "rgb": [
         43,
@@ -8808,13 +9163,14 @@
       "source_province_id": "Ile de France"
     },
     {
-      "display_name": "Province 0300",
+      "display_name": "Cherkasy",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.200000047683716,
         2.0450000762939453
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0300",
       "rgb": [
         44,
@@ -8836,13 +9192,14 @@
       "source_province_id": "Cherkasy"
     },
     {
-      "display_name": "Province 0301",
+      "display_name": "Vinnytsia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.7300000190734863,
         2.0350000858306885
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0301",
       "rgb": [
         45,
@@ -8862,13 +9219,14 @@
       "source_province_id": "Vinnytsia"
     },
     {
-      "display_name": "Province 0303",
+      "display_name": "Normandy",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.7100000381469727,
         2.0950000286102295
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0303",
       "rgb": [
         47,
@@ -8886,13 +9244,14 @@
       "source_province_id": "Normandy"
     },
     {
-      "display_name": "Province 0308",
+      "display_name": "Kharkov",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.950000047683716,
         2.1649999618530273
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0308",
       "rgb": [
         52,
@@ -8912,13 +9271,14 @@
       "source_province_id": "Kharkov"
     },
     {
-      "display_name": "Province 0309",
+      "display_name": "Poltava",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.549999952316284,
         2.184999942779541
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0309",
       "rgb": [
         53,
@@ -8937,13 +9297,14 @@
       "source_province_id": "Poltava"
     },
     {
-      "display_name": "Province 0312",
+      "display_name": "Mikhaylovka",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.9700000286102295,
         2.2850000858306885
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0312",
       "rgb": [
         56,
@@ -8962,13 +9323,14 @@
       "source_province_id": "Mikhaylovka"
     },
     {
-      "display_name": "Province 0315",
+      "display_name": "Picardy",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.2799999713897705,
         2.184999942779541
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0315",
       "rgb": [
         59,
@@ -8986,13 +9348,14 @@
       "source_province_id": "Picardy"
     },
     {
-      "display_name": "Province 0317",
+      "display_name": "Kyiv",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.009999990463257,
         2.305000066757202
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0317",
       "rgb": [
         61,
@@ -9011,13 +9374,14 @@
       "source_province_id": "Kyiv"
     },
     {
-      "display_name": "Province 0319",
+      "display_name": "Saratov",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.429999828338623,
         2.3550000190734863
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0319",
       "rgb": [
         63,
@@ -9036,13 +9400,14 @@
       "source_province_id": "Saratov"
     },
     {
-      "display_name": "Province 0320",
+      "display_name": "Luxembourg",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -1.7899999618530273,
         2.2149999141693115
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0320",
       "rgb": [
         64,
@@ -9059,13 +9424,14 @@
       "source_province_id": "Luxembourg"
     },
     {
-      "display_name": "Province 0322",
+      "display_name": "Voronezh",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.509999990463257,
         2.424999952316284
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0322",
       "rgb": [
         66,
@@ -9087,13 +9453,14 @@
       "source_province_id": "Voronezh"
     },
     {
-      "display_name": "Province 0323",
+      "display_name": "Wallonie",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -1.9299999475479126,
         2.3350000381469727
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0323",
       "rgb": [
         67,
@@ -9112,13 +9479,14 @@
       "source_province_id": "Wallonie"
     },
     {
-      "display_name": "Province 0327",
+      "display_name": "Voroshilovgrad",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.0899999141693115,
         2.375
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0327",
       "rgb": [
         71,
@@ -9137,13 +9505,14 @@
       "source_province_id": "Voroshilovgrad"
     },
     {
-      "display_name": "Province 0328",
+      "display_name": "Engels",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.820000171661377,
         2.5250000953674316
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0328",
       "rgb": [
         72,
@@ -9162,13 +9531,14 @@
       "source_province_id": "Engels"
     },
     {
-      "display_name": "Province 0329",
+      "display_name": "Nord Pas De Calais",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.3299999237060547,
         2.3550000190734863
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0329",
       "rgb": [
         73,
@@ -9186,13 +9556,14 @@
       "source_province_id": "Nord Pas De Calais"
     },
     {
-      "display_name": "Province 0330",
+      "display_name": "Chernigov",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.25,
         2.505000114440918
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0330",
       "rgb": [
         74,
@@ -9213,13 +9584,14 @@
       "source_province_id": "Chernigov"
     },
     {
-      "display_name": "Province 0332",
+      "display_name": "Sumy",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.569999933242798,
         2.4649999141693115
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0332",
       "rgb": [
         76,
@@ -9239,13 +9611,14 @@
       "source_province_id": "Sumy"
     },
     {
-      "display_name": "Province 0340",
+      "display_name": "Antwerpen",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.0899999141693115,
         2.4749999046325684
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0340",
       "rgb": [
         84,
@@ -9262,13 +9635,14 @@
       "source_province_id": "Antwerpen"
     },
     {
-      "display_name": "Province 0342",
+      "display_name": "Orenburg",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         5.650000095367432,
         2.7249999046325684
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0342",
       "rgb": [
         86,
@@ -9289,13 +9663,14 @@
       "source_province_id": "Orenburg"
     },
     {
-      "display_name": "Province 0343",
+      "display_name": "Magnitogorsk",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         6.360000133514404,
         2.8350000381469727
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0343",
       "rgb": [
         87,
@@ -9313,13 +9688,14 @@
       "source_province_id": "Magnitogorsk"
     },
     {
-      "display_name": "Province 0344",
+      "display_name": "Kursk",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.859999895095825,
         2.575000047683716
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0344",
       "rgb": [
         88,
@@ -9339,13 +9715,14 @@
       "source_province_id": "Kursk"
     },
     {
-      "display_name": "Province 0345",
+      "display_name": "Tambov",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.260000228881836,
         2.615000009536743
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0345",
       "rgb": [
         89,
@@ -9367,13 +9744,14 @@
       "source_province_id": "Tambov"
     },
     {
-      "display_name": "Province 0346",
+      "display_name": "South West England",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.4100000858306885,
         2.5450000762939453
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0346",
       "rgb": [
         90,
@@ -9389,13 +9767,14 @@
       "source_province_id": "South West England"
     },
     {
-      "display_name": "Province 0349",
+      "display_name": "Brabant",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -1.8700000047683716,
         2.5950000286102295
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0349",
       "rgb": [
         93,
@@ -9413,13 +9792,14 @@
       "source_province_id": "Brabant"
     },
     {
-      "display_name": "Province 0355",
+      "display_name": "Lipetsk",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.7300000190734863,
         2.7850000858306885
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0355",
       "rgb": [
         99,
@@ -9438,13 +9818,14 @@
       "source_province_id": "Lipetsk"
     },
     {
-      "display_name": "Province 0357",
+      "display_name": "Gloucestershire",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.1500000953674316,
         2.7049999237060547
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0357",
       "rgb": [
         101,
@@ -9463,13 +9844,14 @@
       "source_province_id": "Gloucestershire"
     },
     {
-      "display_name": "Province 0360",
+      "display_name": "Holland",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.0,
         2.7149999141693115
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0360",
       "rgb": [
         104,
@@ -9485,13 +9867,14 @@
       "source_province_id": "Holland"
     },
     {
-      "display_name": "Province 0361",
+      "display_name": "Orel",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.3499999046325684,
         2.7750000953674316
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0361",
       "rgb": [
         105,
@@ -9511,13 +9894,14 @@
       "source_province_id": "Orel"
     },
     {
-      "display_name": "Province 0362",
+      "display_name": "Balakovo",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         5.110000133514404,
         2.924999952316284
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0362",
       "rgb": [
         106,
@@ -9536,13 +9920,14 @@
       "source_province_id": "Balakovo"
     },
     {
-      "display_name": "Province 0363",
+      "display_name": "Bryansk",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.4600000381469727,
         2.8450000286102295
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0363",
       "rgb": [
         107,
@@ -9563,13 +9948,14 @@
       "source_province_id": "Bryansk"
     },
     {
-      "display_name": "Province 0364",
+      "display_name": "Roslavl",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.940000057220459,
         2.805000066757202
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0364",
       "rgb": [
         108,
@@ -9588,13 +9974,14 @@
       "source_province_id": "Roslavl"
     },
     {
-      "display_name": "Province 0365",
+      "display_name": "Greater London Area",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.869999885559082,
         2.7249999046325684
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0365",
       "rgb": [
         109,
@@ -9612,13 +9999,14 @@
       "source_province_id": "Greater London Area"
     },
     {
-      "display_name": "Province 0366",
+      "display_name": "Friesland",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -1.75,
         2.8350000381469727
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0366",
       "rgb": [
         110,
@@ -9637,13 +10025,14 @@
       "source_province_id": "Friesland"
     },
     {
-      "display_name": "Province 0367",
+      "display_name": "Wales",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.4100000858306885,
         2.865000009536743
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0367",
       "rgb": [
         111,
@@ -9661,13 +10050,14 @@
       "source_province_id": "Wales"
     },
     {
-      "display_name": "Province 0368",
+      "display_name": "Gomel",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.109999895095825,
         2.924999952316284
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0368",
       "rgb": [
         112,
@@ -9696,6 +10086,7 @@
         2.875
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": false,
       "province_id": "province_0370",
       "rgb": [
         114,
@@ -9711,13 +10102,14 @@
       "source_province_id": "province_0370"
     },
     {
-      "display_name": "Province 0372",
+      "display_name": "Penza",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.159999847412109,
         2.9649999141693115
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0372",
       "rgb": [
         116,
@@ -9736,13 +10128,14 @@
       "source_province_id": "Penza"
     },
     {
-      "display_name": "Province 0375",
+      "display_name": "East Anglia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.7300000190734863,
         2.875
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0375",
       "rgb": [
         119,
@@ -9758,13 +10151,14 @@
       "source_province_id": "East Anglia"
     },
     {
-      "display_name": "Province 0376",
+      "display_name": "Ulyanovsky",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.630000114440918,
         3.055000066757202
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0376",
       "rgb": [
         120,
@@ -9784,13 +10178,14 @@
       "source_province_id": "Ulyanovsky"
     },
     {
-      "display_name": "Province 0377",
+      "display_name": "West Midlands",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.190000057220459,
         2.9149999618530273
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0377",
       "rgb": [
         121,
@@ -9809,13 +10204,14 @@
       "source_province_id": "West Midlands"
     },
     {
-      "display_name": "Province 0378",
+      "display_name": "East Midlands",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -2.940000057220459,
         2.984999895095825
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0378",
       "rgb": [
         122,
@@ -9833,13 +10229,14 @@
       "source_province_id": "East Midlands"
     },
     {
-      "display_name": "Province 0379",
+      "display_name": "Chelyabinsk",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         5.940000057220459,
         3.234999895095825
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0379",
       "rgb": [
         123,
@@ -9866,6 +10263,7 @@
         3.075000047683716
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": false,
       "province_id": "province_0382",
       "rgb": [
         126,
@@ -9882,13 +10280,14 @@
       "source_province_id": "province_0382"
     },
     {
-      "display_name": "Province 0384",
+      "display_name": "Tula",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.0899999141693115,
         3.055000066757202
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0384",
       "rgb": [
         128,
@@ -9907,13 +10306,14 @@
       "source_province_id": "Tula"
     },
     {
-      "display_name": "Province 0388",
+      "display_name": "Kaluga",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.7799999713897705,
         3.1549999713897705
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0388",
       "rgb": [
         132,
@@ -9933,13 +10333,14 @@
       "source_province_id": "Kaluga"
     },
     {
-      "display_name": "Province 0389",
+      "display_name": "Ryazan",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.569999933242798,
         3.134999990463257
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0389",
       "rgb": [
         133,
@@ -9960,13 +10361,14 @@
       "source_province_id": "Ryazan"
     },
     {
-      "display_name": "Province 0391",
+      "display_name": "Mogilev",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.3399999141693115,
         3.134999990463257
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0391",
       "rgb": [
         135,
@@ -9984,13 +10386,14 @@
       "source_province_id": "Mogilev"
     },
     {
-      "display_name": "Province 0393",
+      "display_name": "Lancashire",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.2300000190734863,
         3.125
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0393",
       "rgb": [
         137,
@@ -10015,6 +10418,7 @@
         3.1649999618530273
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": false,
       "province_id": "province_0394",
       "rgb": [
         138,
@@ -10032,13 +10436,14 @@
       "source_province_id": "province_0394"
     },
     {
-      "display_name": "Province 0395",
+      "display_name": "Yorkshire",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.0399999618530273,
         3.2149999141693115
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0395",
       "rgb": [
         139,
@@ -10057,13 +10462,14 @@
       "source_province_id": "Yorkshire"
     },
     {
-      "display_name": "Province 0396",
+      "display_name": "Suwalki",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.9200000166893005,
         3.2249999046325684
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0396",
       "rgb": [
         140,
@@ -10082,13 +10488,14 @@
       "source_province_id": "Suwalki"
     },
     {
-      "display_name": "Province 0402",
+      "display_name": "Kuibyshev",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         5.170000076293945,
         3.365000009536743
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0402",
       "rgb": [
         146,
@@ -10110,13 +10517,14 @@
       "source_province_id": "Kuibyshev"
     },
     {
-      "display_name": "Province 0403",
+      "display_name": "Kaunas",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.0399999618530273,
         3.325000047683716
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0403",
       "rgb": [
         147,
@@ -10134,13 +10542,14 @@
       "source_province_id": "Kaunas"
     },
     {
-      "display_name": "Province 0405",
+      "display_name": "Gorki",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.139999866485596,
         3.5250000953674316
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0405",
       "rgb": [
         149,
@@ -10162,13 +10571,14 @@
       "source_province_id": "Gorki"
     },
     {
-      "display_name": "Province 0406",
+      "display_name": "Smolensk",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.430000066757202,
         3.3450000286102295
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0406",
       "rgb": [
         150,
@@ -10189,13 +10599,14 @@
       "source_province_id": "Smolensk"
     },
     {
-      "display_name": "Province 0407",
+      "display_name": "Kazan",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.570000171661377,
         3.375
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0407",
       "rgb": [
         151,
@@ -10213,13 +10624,14 @@
       "source_province_id": "Kazan"
     },
     {
-      "display_name": "Province 0408",
+      "display_name": "Moscow",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.119999885559082,
         3.434999942779541
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0408",
       "rgb": [
         152,
@@ -10241,13 +10653,14 @@
       "source_province_id": "Moscow"
     },
     {
-      "display_name": "Province 0409",
+      "display_name": "Northern Ireland",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.890000104904175,
         3.3550000190734863
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0409",
       "rgb": [
         153,
@@ -10264,13 +10677,14 @@
       "source_province_id": "Northern Ireland"
     },
     {
-      "display_name": "Province 0410",
+      "display_name": "Cumbria",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.2699999809265137,
         3.365000009536743
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0410",
       "rgb": [
         154,
@@ -10289,13 +10703,14 @@
       "source_province_id": "Cumbria"
     },
     {
-      "display_name": "Province 0411",
+      "display_name": "Zlatoust",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         6.409999847412109,
         3.755000114440918
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0411",
       "rgb": [
         155,
@@ -10319,6 +10734,7 @@
         3.365000009536743
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": false,
       "province_id": "province_0412",
       "rgb": [
         156,
@@ -10334,13 +10750,14 @@
       "source_province_id": "province_0412"
     },
     {
-      "display_name": "Province 0413",
+      "display_name": "Ivanovo",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.6600000858306885,
         3.634999990463257
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0413",
       "rgb": [
         157,
@@ -10359,13 +10776,14 @@
       "source_province_id": "Ivanovo"
     },
     {
-      "display_name": "Province 0414",
+      "display_name": "Northumberland",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.109999895095825,
         3.4549999237060547
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0414",
       "rgb": [
         158,
@@ -10389,6 +10807,7 @@
         3.384999990463257
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": false,
       "province_id": "province_0415",
       "rgb": [
         159,
@@ -10401,13 +10820,14 @@
       "source_province_id": "province_0415"
     },
     {
-      "display_name": "Province 0416",
+      "display_name": "Siauliai",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.100000023841858,
         3.494999885559082
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0416",
       "rgb": [
         160,
@@ -10433,6 +10853,7 @@
         3.4149999618530273
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": false,
       "province_id": "province_0417",
       "rgb": [
         161,
@@ -10448,13 +10869,14 @@
       "source_province_id": "province_0417"
     },
     {
-      "display_name": "Province 0418",
+      "display_name": "Zemaitija",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.7300000190734863,
         3.505000114440918
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0418",
       "rgb": [
         162,
@@ -10473,13 +10895,14 @@
       "source_province_id": "Zemaitija"
     },
     {
-      "display_name": "Province 0419",
+      "display_name": "Sjaelland",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -0.9100000262260437,
         3.4149999618530273
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0419",
       "rgb": [
         163,
@@ -10494,13 +10917,14 @@
       "source_province_id": "Sjaelland"
     },
     {
-      "display_name": "Province 0420",
+      "display_name": "Lanark",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.4800000190734863,
         3.5450000762939453
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0420",
       "rgb": [
         164,
@@ -10526,6 +10950,7 @@
         3.575000047683716
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0421",
       "rgb": [
         165,
@@ -10541,13 +10966,14 @@
       "source_province_id": "province_0421"
     },
     {
-      "display_name": "Province 0422",
+      "display_name": "Jylland",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -1.2899999618530273,
         3.575000047683716
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0422",
       "rgb": [
         166,
@@ -10563,13 +10989,14 @@
       "source_province_id": "Jylland"
     },
     {
-      "display_name": "Province 0424",
+      "display_name": "Rzhev",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.490000009536743,
         3.684999942779541
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0424",
       "rgb": [
         168,
@@ -10589,13 +11016,14 @@
       "source_province_id": "Rzhev"
     },
     {
-      "display_name": "Province 0425",
+      "display_name": "Zemgale",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.2899999618530273,
         3.575000047683716
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0425",
       "rgb": [
         169,
@@ -10621,6 +11049,7 @@
         3.505000114440918
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": false,
       "province_id": "province_0426",
       "rgb": [
         170,
@@ -10635,13 +11064,14 @@
       "source_province_id": "province_0426"
     },
     {
-      "display_name": "Province 0427",
+      "display_name": "Latgale",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.4900000095367432,
         3.674999952316284
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0427",
       "rgb": [
         171,
@@ -10663,13 +11093,14 @@
       "source_province_id": "Latgale"
     },
     {
-      "display_name": "Province 0428",
+      "display_name": "Lothian",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.2899999618530273,
         3.5850000381469727
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0428",
       "rgb": [
         172,
@@ -10687,13 +11118,14 @@
       "source_province_id": "Lothian"
     },
     {
-      "display_name": "Province 0429",
+      "display_name": "Chuvashia",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.679999828338623,
         3.674999952316284
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0429",
       "rgb": [
         173,
@@ -10711,13 +11143,14 @@
       "source_province_id": "Chuvashia"
     },
     {
-      "display_name": "Province 0430",
+      "display_name": "Izhevsk",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         5.46999979019165,
         3.765000104904175
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0430",
       "rgb": [
         174,
@@ -10735,13 +11168,14 @@
       "source_province_id": "Izhevsk"
     },
     {
-      "display_name": "Province 0431",
+      "display_name": "Perm",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         6.059999942779541,
         4.335000038146973
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0431",
       "rgb": [
         175,
@@ -10762,13 +11196,14 @@
       "source_province_id": "Perm"
     },
     {
-      "display_name": "Province 0432",
+      "display_name": "Kurzeme",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.6899999976158142,
         3.744999885559082
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0432",
       "rgb": [
         176,
@@ -10784,13 +11219,14 @@
       "source_province_id": "Kurzeme"
     },
     {
-      "display_name": "Province 0433",
+      "display_name": "Zemgale2",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.949999988079071,
         3.684999942779541
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0433",
       "rgb": [
         177,
@@ -10808,13 +11244,14 @@
       "source_province_id": "Zemgale2"
     },
     {
-      "display_name": "Province 0434",
+      "display_name": "Kalinin",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.930000066757202,
         3.865000009536743
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0434",
       "rgb": [
         178,
@@ -10832,13 +11269,14 @@
       "source_province_id": "Kalinin"
     },
     {
-      "display_name": "Province 0435",
+      "display_name": "Kirov",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.900000095367432,
         4.195000171661377
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0435",
       "rgb": [
         179,
@@ -10867,6 +11305,7 @@
         3.765000104904175
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0436",
       "rgb": [
         180,
@@ -10883,13 +11322,14 @@
       "source_province_id": "province_0436"
     },
     {
-      "display_name": "Province 0437",
+      "display_name": "Yaroslavl",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.4100000858306885,
         3.934999942779541
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0437",
       "rgb": [
         181,
@@ -10907,13 +11347,14 @@
       "source_province_id": "Yaroslavl"
     },
     {
-      "display_name": "Province 0438",
+      "display_name": "Perthshire",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.4100000858306885,
         3.7149999141693115
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0438",
       "rgb": [
         182,
@@ -10930,13 +11371,14 @@
       "source_province_id": "Perthshire"
     },
     {
-      "display_name": "Province 0439",
+      "display_name": "Scottish Highlands",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.569999933242798,
         4.005000114440918
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0439",
       "rgb": [
         183,
@@ -10952,13 +11394,14 @@
       "source_province_id": "Scottish Highlands"
     },
     {
-      "display_name": "Province 0440",
+      "display_name": "Riga",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.1399999856948853,
         3.755000114440918
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0440",
       "rgb": [
         184,
@@ -10983,6 +11426,7 @@
         3.8450000286102295
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0441",
       "rgb": [
         185,
@@ -10995,13 +11439,14 @@
       "source_province_id": "province_0441"
     },
     {
-      "display_name": "Province 0443",
+      "display_name": "Aberdeenshire",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -3.309999942779541,
         3.9049999713897705
       ],
       "marker_map_region": 1,
+      "name_is_human_readable": true,
       "province_id": "province_0443",
       "rgb": [
         187,
@@ -11018,13 +11463,14 @@
       "source_province_id": "Aberdeenshire"
     },
     {
-      "display_name": "Province 0444",
+      "display_name": "Vidzeme",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.25,
         3.875
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0444",
       "rgb": [
         188,
@@ -11049,6 +11495,7 @@
         3.825000047683716
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0445",
       "rgb": [
         189,
@@ -11063,13 +11510,14 @@
       "source_province_id": "province_0445"
     },
     {
-      "display_name": "Province 0446",
+      "display_name": "Novgorod",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.200000047683716,
         3.994999885559082
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0446",
       "rgb": [
         190,
@@ -11096,6 +11544,7 @@
         3.994999885559082
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0447",
       "rgb": [
         191,
@@ -11122,6 +11571,7 @@
         4.025000095367432
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0448",
       "rgb": [
         192,
@@ -11138,13 +11588,14 @@
       "source_province_id": "province_0448"
     },
     {
-      "display_name": "Province 0449",
+      "display_name": "Vologda",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.619999885559082,
         4.34499979019165
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0449",
       "rgb": [
         193,
@@ -11165,13 +11616,14 @@
       "source_province_id": "Vologda"
     },
     {
-      "display_name": "Province 0450",
+      "display_name": "Tartu",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.4199999570846558,
         3.994999885559082
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0450",
       "rgb": [
         194,
@@ -11197,6 +11649,7 @@
         4.005000114440918
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0451",
       "rgb": [
         195,
@@ -11213,13 +11666,14 @@
       "source_province_id": "province_0451"
     },
     {
-      "display_name": "Province 0452",
+      "display_name": "Parnu",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.1100000143051147,
         4.09499979019165
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0452",
       "rgb": [
         196,
@@ -11243,6 +11697,7 @@
         4.15500020980835
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0453",
       "rgb": [
         197,
@@ -11258,13 +11713,14 @@
       "source_province_id": "province_0453"
     },
     {
-      "display_name": "Province 0454",
+      "display_name": "Tikhvin",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.690000057220459,
         4.315000057220459
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0454",
       "rgb": [
         198,
@@ -11284,13 +11740,14 @@
       "source_province_id": "Tikhvin"
     },
     {
-      "display_name": "Province 0455",
+      "display_name": "Saaremaa",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.7699999809265137,
         4.074999809265137
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0455",
       "rgb": [
         199,
@@ -11312,6 +11769,7 @@
         4.744999885559082
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0456",
       "rgb": [
         200,
@@ -11336,6 +11794,7 @@
         4.125
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0457",
       "rgb": [
         201,
@@ -11360,6 +11819,7 @@
         4.114999771118164
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0458",
       "rgb": [
         202,
@@ -11377,13 +11837,14 @@
       "source_province_id": "province_0458"
     },
     {
-      "display_name": "Province 0460",
+      "display_name": "Virumaa",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.409999966621399,
         4.224999904632568
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0460",
       "rgb": [
         204,
@@ -11400,13 +11861,14 @@
       "source_province_id": "Virumaa"
     },
     {
-      "display_name": "Province 0461",
+      "display_name": "Volkhov",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.309999942779541,
         4.315000057220459
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0461",
       "rgb": [
         205,
@@ -11431,6 +11893,7 @@
         4.215000152587891
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0462",
       "rgb": [
         206,
@@ -11446,13 +11909,14 @@
       "source_province_id": "province_0462"
     },
     {
-      "display_name": "Province 0463",
+      "display_name": "Sodermalm",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -0.17000000178813934,
         4.364999771118164
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0463",
       "rgb": [
         207,
@@ -11479,6 +11943,7 @@
         4.385000228881836
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0464",
       "rgb": [
         208,
@@ -11499,13 +11964,14 @@
       "source_province_id": "province_0464"
     },
     {
-      "display_name": "Province 0465",
+      "display_name": "Harju",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.149999976158142,
         4.255000114440918
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0465",
       "rgb": [
         209,
@@ -11522,13 +11988,14 @@
       "source_province_id": "Harju"
     },
     {
-      "display_name": "Province 0466",
+      "display_name": "Sverdlovsk",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         6.550000190734863,
         4.284999847412109
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0466",
       "rgb": [
         210,
@@ -11550,6 +12017,7 @@
         4.414999961853027
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0467",
       "rgb": [
         211,
@@ -11567,13 +12035,14 @@
       "source_province_id": "province_0467"
     },
     {
-      "display_name": "Province 0468",
+      "display_name": "Oslofjord",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         -1.0099999904632568,
         4.40500020980835
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": true,
       "province_id": "province_0468",
       "rgb": [
         212,
@@ -11598,6 +12067,7 @@
         4.744999885559082
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0470",
       "rgb": [
         214,
@@ -11617,13 +12087,14 @@
       "source_province_id": "province_0470"
     },
     {
-      "display_name": "Province 0471",
+      "display_name": "Uusimaa",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.1699999570846558,
         4.554999828338623
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0471",
       "rgb": [
         215,
@@ -11649,6 +12120,7 @@
         4.784999847412109
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0472",
       "rgb": [
         216,
@@ -11675,6 +12147,7 @@
         5.054999828338623
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0473",
       "rgb": [
         217,
@@ -11692,13 +12165,14 @@
       "source_province_id": "province_0473"
     },
     {
-      "display_name": "Province 0474",
+      "display_name": "Turuku",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.75,
         4.715000152587891
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0474",
       "rgb": [
         218,
@@ -11716,13 +12190,14 @@
       "source_province_id": "Turuku"
     },
     {
-      "display_name": "Province 0475",
+      "display_name": "Karjala",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.0199999809265137,
         4.804999828338623
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0475",
       "rgb": [
         219,
@@ -11742,13 +12217,14 @@
       "source_province_id": "Karjala"
     },
     {
-      "display_name": "Province 0476",
+      "display_name": "Syktyvkar",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         5.429999828338623,
         5.045000076293945
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0476",
       "rgb": [
         220,
@@ -11767,13 +12243,14 @@
       "source_province_id": "Syktyvkar"
     },
     {
-      "display_name": "Province 0477",
+      "display_name": "Kotlas",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         4.179999828338623,
         4.965000152587891
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0477",
       "rgb": [
         221,
@@ -11793,13 +12270,14 @@
       "source_province_id": "Kotlas"
     },
     {
-      "display_name": "Province 0478",
+      "display_name": "Kymi",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.5700000524520874,
         4.675000190734863
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0478",
       "rgb": [
         222,
@@ -11817,13 +12295,14 @@
       "source_province_id": "Kymi"
     },
     {
-      "display_name": "Province 0479",
+      "display_name": "South Hame",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.949999988079071,
         4.635000228881836
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0479",
       "rgb": [
         223,
@@ -11840,13 +12319,14 @@
       "source_province_id": "South Hame"
     },
     {
-      "display_name": "Province 0480",
+      "display_name": "Olonets",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.490000009536743,
         4.84499979019165
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0480",
       "rgb": [
         224,
@@ -11864,13 +12344,14 @@
       "source_province_id": "Olonets"
     },
     {
-      "display_name": "Province 0481",
+      "display_name": "Kargopol",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.2899999618530273,
         4.914999961853027
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0481",
       "rgb": [
         225,
@@ -11889,13 +12370,14 @@
       "source_province_id": "Kargopol"
     },
     {
-      "display_name": "Province 0482",
+      "display_name": "Hame",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.0800000429153442,
         4.804999828338623
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0482",
       "rgb": [
         226,
@@ -11921,6 +12403,7 @@
         4.775000095367432
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": false,
       "province_id": "province_0483",
       "rgb": [
         227,
@@ -11944,6 +12427,7 @@
         4.795000076293945
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": false,
       "province_id": "province_0484",
       "rgb": [
         228,
@@ -11958,13 +12442,14 @@
       "source_province_id": "province_0484"
     },
     {
-      "display_name": "Province 0485",
+      "display_name": "Mikkeli",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.5199999809265137,
         4.894999980926514
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0485",
       "rgb": [
         229,
@@ -11983,13 +12468,14 @@
       "source_province_id": "Mikkeli"
     },
     {
-      "display_name": "Province 0486",
+      "display_name": "Vaasa",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         0.9399999976158142,
         5.135000228881836
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0486",
       "rgb": [
         230,
@@ -12015,6 +12501,7 @@
         5.255000114440918
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0487",
       "rgb": [
         231,
@@ -12033,13 +12520,14 @@
       "source_province_id": "province_0487"
     },
     {
-      "display_name": "Province 0488",
+      "display_name": "Kuopio",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.7000000476837158,
         5.184999942779541
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0488",
       "rgb": [
         232,
@@ -12058,13 +12546,14 @@
       "source_province_id": "Kuopio"
     },
     {
-      "display_name": "Province 0489",
+      "display_name": "Onega",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.7200000286102295,
         4.994999885559082
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0489",
       "rgb": [
         233,
@@ -12080,13 +12569,14 @@
       "source_province_id": "Onega"
     },
     {
-      "display_name": "Province 0490",
+      "display_name": "Northern Urals",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         6.420000076293945,
         5.335000038146973
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0490",
       "rgb": [
         234,
@@ -12110,6 +12600,7 @@
         5.364999771118164
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0491",
       "rgb": [
         235,
@@ -12128,13 +12619,14 @@
       "source_province_id": "province_0491"
     },
     {
-      "display_name": "Province 0492",
+      "display_name": "Arkhangelsk",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         3.740000009536743,
         5.525000095367432
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0492",
       "rgb": [
         236,
@@ -12153,13 +12645,14 @@
       "source_province_id": "Arkhangelsk"
     },
     {
-      "display_name": "Province 0493",
+      "display_name": "Onega",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.359999895095825,
         5.554999828338623
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0493",
       "rgb": [
         237,
@@ -12188,6 +12681,7 @@
         5.715000152587891
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0494",
       "rgb": [
         238,
@@ -12206,13 +12700,14 @@
       "source_province_id": "province_0494"
     },
     {
-      "display_name": "Province 0495",
+      "display_name": "Pechora",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         5.489999771118164,
         5.755000114440918
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0495",
       "rgb": [
         239,
@@ -12231,13 +12726,14 @@
       "source_province_id": "Pechora"
     },
     {
-      "display_name": "Province 0496",
+      "display_name": "Oulu",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.5499999523162842,
         5.625
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0496",
       "rgb": [
         240,
@@ -12263,6 +12759,7 @@
         5.90500020980835
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0497",
       "rgb": [
         241,
@@ -12287,6 +12784,7 @@
         6.065000057220459
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0498",
       "rgb": [
         242,
@@ -12299,13 +12797,14 @@
       "source_province_id": "province_0498"
     },
     {
-      "display_name": "Province 0499",
+      "display_name": "Nenets",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         5.25,
         6.244999885559082
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0499",
       "rgb": [
         243,
@@ -12328,6 +12827,7 @@
         6.224999904632568
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": false,
       "province_id": "province_0500",
       "rgb": [
         244,
@@ -12346,13 +12846,14 @@
       "source_province_id": "province_0500"
     },
     {
-      "display_name": "Province 0501",
+      "display_name": "Lappi",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.3600000143051147,
         6.375
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0501",
       "rgb": [
         245,
@@ -12374,13 +12875,14 @@
       "source_province_id": "Lappi"
     },
     {
-      "display_name": "Province 0502",
+      "display_name": "Salla",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.9199999570846558,
         6.105000019073486
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0502",
       "rgb": [
         246,
@@ -12398,13 +12900,14 @@
       "source_province_id": "Salla"
     },
     {
-      "display_name": "Province 0503",
+      "display_name": "Murmansk",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         2.75,
         6.364999771118164
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0503",
       "rgb": [
         247,
@@ -12430,6 +12933,7 @@
         6.244999885559082
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0504",
       "rgb": [
         248,
@@ -12453,6 +12957,7 @@
         6.534999847412109
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0505",
       "rgb": [
         249,
@@ -12468,13 +12973,14 @@
       "source_province_id": "province_0505"
     },
     {
-      "display_name": "Province 0506",
+      "display_name": "Petsamo",
       "mapping_method": "preserved_source_index_1",
       "marker_anchor": [
         1.9299999475479126,
         6.684999942779541
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": true,
       "province_id": "province_0506",
       "rgb": [
         250,
@@ -12498,6 +13004,7 @@
         6.614999771118164
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0507",
       "rgb": [
         251,
@@ -12517,6 +13024,7 @@
         6.764999866485596
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": false,
       "province_id": "province_0508",
       "rgb": [
         252,
@@ -12543,6 +13051,7 @@
         6.945000171661377
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": false,
       "province_id": "province_0509",
       "rgb": [
         253,
@@ -12566,6 +13075,7 @@
         6.744999885559082
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0510",
       "rgb": [
         254,
@@ -12585,6 +13095,7 @@
         6.795000076293945
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0511",
       "rgb": [
         255,
@@ -12606,6 +13117,7 @@
         6.84499979019165
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": false,
       "province_id": "province_0512",
       "rgb": [
         0,
@@ -12629,6 +13141,7 @@
         6.864999771118164
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0513",
       "rgb": [
         1,
@@ -12650,6 +13163,7 @@
         6.90500020980835
       ],
       "marker_map_region": 2,
+      "name_is_human_readable": false,
       "province_id": "province_0514",
       "rgb": [
         2,
@@ -12671,6 +13185,7 @@
         7.014999866485596
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0515",
       "rgb": [
         3,
@@ -12690,6 +13205,7 @@
         7.364999771118164
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0516",
       "rgb": [
         4,
@@ -12709,6 +13225,7 @@
         7.445000171661377
       ],
       "marker_map_region": 0,
+      "name_is_human_readable": false,
       "province_id": "province_0517",
       "rgb": [
         5,

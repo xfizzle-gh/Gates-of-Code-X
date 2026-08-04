@@ -202,9 +202,20 @@ def build_interim_goe_province_table() -> list[dict]:
         if color in colors:
             raise ValueError(f"Duplicate GoE source RGB {color}")
         colors.add(color)
+        from .map_layout import is_human_readable_name, source_display_name
+
+        graph_name = str(graph[province_id].get("display_name", province_id))
+        source_name = source_display_name(
+            marker.get("display_name"),
+            marker.get("source_province_id"),
+            marker.get("id"),
+            source_key,
+        )
+        display_name = source_name or graph_name
         table.append({
             "province_id": province_id,
-            "display_name": graph[province_id].get("display_name", province_id),
+            "display_name": display_name,
+            "name_is_human_readable": is_human_readable_name(display_name),
             "rgb": list(color),
             "source_province_id": marker["source_province_id"],
             "source_node_key": source_key,
