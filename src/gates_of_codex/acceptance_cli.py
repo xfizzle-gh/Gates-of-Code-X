@@ -167,6 +167,11 @@ def main(argv: list[str] | None = None) -> int:
                 json.dump(payload, destination, indent=2)
                 destination.write("\n")
         print(json.dumps(payload, indent=2))
+        if result.visible_campaign_name:
+            print()
+            print("Load this exact Conquest entry:")
+            print(result.visible_campaign_name)
+            print(f"Installed save file: {result.installed_save_path}")
         return 0
     if args.command == "backup":
         record = backup_existing_files(args.paths, backup_root=args.backup_root, label=args.label)
