@@ -24,7 +24,7 @@ from .modstack import (
     validate_known_order,
     validate_stack_paths,
 )
-from .service import BattleExportManifest, GatesOfCodeXService
+from .service import BattleExportManifest, GatesOfCodeXService, apply_installed_fingerprint
 
 
 @dataclass(slots=True)
@@ -200,10 +200,11 @@ def prepare_stack_handoff(
         _atomic_copy(export_save, installed)
         service.archive.validate(installed)
         installed_manifest = replace(manifest, save_path=str(installed))
-        service.manifest_path(installed).write_text(
-            json.dumps(asdict(installed_manifest), indent=2) + "\n",
-            encoding="utf-8",
-        )
+        apply_installed_fingerprint(installed_manifest, installed)
+        service.write_manifest(installed_manifest)
+        # Keep the export-side manifest fingerprint-aligned with the installed target.
+        apply_installed_fingerprint(manifest, installed)
+        service.write_manifest(manifest)
         installed_path = str(installed)
 
     session_path = service.manifest_path(export_save).with_suffix(".session.json")
@@ -234,7 +235,7 @@ def verify_stack_result(
     report.warnings = [value for value in report.warnings if "signature was not rechecked" not in value]
     manifest_path = GatesOfCodeXService.manifest_path(save_path)
     try:
-        manifest = BattleExportManifest(**json.loads(Path(manifest_path).read_text(encoding="utf-8-sig")))
+        manifest = GatesOfCodeXService.load_manifest(manifest_path)
         stack = resolve_stack(
             resource_stack or manifest.resource_stack,
             config=stack_config,

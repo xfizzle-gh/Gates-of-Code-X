@@ -14,7 +14,11 @@ from .bridge.scn import CampaignScnBuilder, CampaignScnParser
 from .bridge.status import StatusBuilder
 from .codex.catalog import CodeXCatalogScanner
 from .launcher import find_game_executable, launch_game
-from .service import BattleExportManifest, GatesOfCodeXService
+from .service import (
+    BattleExportManifest,
+    GatesOfCodeXService,
+    fingerprint_save,
+)
 from .state_io import load_campaign
 
 
@@ -91,8 +95,10 @@ class AcceptanceReport:
     ok: bool
     battle_id: str = ""
     map_name: str = ""
+    visible_campaign_name: str = ""
     catalog_matches: bool = False
     archive_valid: bool = False
+    installed_save_rewritten: bool | None = None
     played_games_before: int = 0
     played_games_after: int = 0
     won_games_before: int = 0
@@ -264,9 +270,16 @@ def prepare_tactical_handoff(
     )
     installed_path = ""
     if installed is not None:
+        from .service import apply_installed_fingerprint
+
         installed.parent.mkdir(parents=True, exist_ok=True)
         _atomic_copy(export_save, installed)
-        _atomic_copy(service.manifest_path(export_save), service.manifest_path(installed))
+        installed_manifest = service.load_manifest(service.manifest_path(export_save))
+        installed_manifest.save_path = str(installed)
+        apply_installed_fingerprint(installed_manifest, installed)
+        service.write_manifest(installed_manifest)
+        apply_installed_fingerprint(manifest, installed)
+        service.write_manifest(manifest)
         installed_path = str(installed)
 
     session_path = service.manifest_path(export_save).with_suffix(".session.json")
@@ -307,15 +320,30 @@ def verify_tactical_result(
         return report
 
     try:
-        manifest = BattleExportManifest(**json.loads(manifest_path.read_text(encoding="utf-8-sig")))
+        manifest = GatesOfCodeXService.load_manifest(manifest_path)
         report.battle_id = manifest.battle_id
         report.map_name = manifest.map_name
+        report.visible_campaign_name = manifest.visible_campaign_name
         report.played_games_before = manifest.played_games
         report.won_games_before = manifest.won_games
         if Path(manifest.campaign_path).resolve() != campaign:
             report.errors.append("Manifest belongs to a different strategic campaign")
         if Path(manifest.save_path).resolve() != save:
             report.errors.append("Manifest belongs to a different tactical save")
+        if manifest.has_installed_fingerprint:
+            current_fingerprint = fingerprint_save(save)
+            unchanged = (
+                current_fingerprint.sha256 == manifest.installed_sha256
+                and current_fingerprint.size == manifest.installed_size
+            )
+            report.installed_save_rewritten = not unchanged
+            if unchanged:
+                report.errors.append("Installed acceptance save was not rewritten by GoH")
+        else:
+            report.warnings.append(
+                "Installed save fingerprint was not recorded at handoff; "
+                "untouched-target detection is unavailable for this manifest"
+            )
         state = load_campaign(campaign)
         if state.pending_battle is None or state.pending_battle.battle_id != manifest.battle_id:
             report.errors.append("Campaign pending battle does not match the manifest")

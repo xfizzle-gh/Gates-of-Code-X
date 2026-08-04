@@ -49,6 +49,7 @@ class FirstEngineTestResult:
     handoff: HandoffResult
     verify_command: str
     import_command: str
+    visible_campaign_name: str = ""
 
     def to_dict(self) -> dict:
         return {
@@ -60,10 +61,16 @@ class FirstEngineTestResult:
             "map_name": self.map_name,
             "profile_directory": self.profile_directory,
             "install_directory": self.install_directory,
+            "visible_campaign_name": self.visible_campaign_name,
             "selection": asdict(self.selection),
             "handoff": self.handoff.to_dict(),
             "verify_command": self.verify_command,
             "import_command": self.import_command,
+            "load_instruction": (
+                f"Load this exact Conquest entry: {self.visible_campaign_name}"
+                if self.visible_campaign_name
+                else ""
+            ),
         }
 
 
@@ -179,6 +186,7 @@ def run_first_engine_test(
         f'& .\\.venv\\Scripts\\gates-of-codex.exe import-battle "{campaign_path}" '
         f'--save "{installed_save_path}"'
     )
+    visible_name = handoff.manifest.visible_campaign_name
     return FirstEngineTestResult(
         session_directory=str(session),
         campaign_path=str(campaign_path),
@@ -192,6 +200,7 @@ def run_first_engine_test(
         handoff=handoff,
         verify_command=verify_command,
         import_command=import_command,
+        visible_campaign_name=visible_name,
     )
 
 
