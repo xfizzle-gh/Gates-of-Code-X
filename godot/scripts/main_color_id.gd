@@ -5,6 +5,7 @@ const DEFAULT_MAP_MANIFEST := "res://assets/maps/europe/interim_goe/map_manifest
 
 var color_id_map = ColorIdMapScript.new()
 var map_manifest_source_path := DEFAULT_MAP_MANIFEST
+var hovered_province_id := ""
 
 
 func _ready() -> void:
@@ -167,8 +168,10 @@ func _draw_color_id_overlays() -> void:
 				)
 
 		var label := _province_label(province, province_id)
-		var show_label := occupied or selected or target
-		if not show_label and view_scale >= 2.4 and _is_named_province(label):
+		var named := bool(province.get("name_is_human_readable", _is_named_province(label)))
+		var hovered := province_id == hovered_province_id
+		var show_label := occupied or selected or target or hovered
+		if not show_label and view_scale >= 2.4 and named:
 			show_label = true
 		if show_label:
 			draw_string(
@@ -177,8 +180,8 @@ func _draw_color_id_overlays() -> void:
 				label,
 				HORIZONTAL_ALIGNMENT_LEFT,
 				-1,
-				12 if selected or target or occupied else 11,
-				Color(0.95, 0.96, 0.98, 0.98 if occupied or selected or target else 0.78)
+				12 if selected or target or occupied or hovered else 11,
+				Color(0.95, 0.96, 0.98, 0.98 if occupied or selected or target or hovered else 0.78)
 			)
 
 
@@ -222,16 +225,35 @@ func _province_label(province: Dictionary, province_id: String) -> String:
 	var label := String(province.get("display_name", province_id)).strip_edges()
 	if label.is_empty():
 		return province_id
+	# Prefer manifest source name when campaign still has a generic label.
+	if not _is_named_province(label) and color_id_map != null and color_id_map.row_by_province.has(province_id):
+		var row: Dictionary = color_id_map.row_by_province[province_id]
+		var source_label := String(row.get("display_name", "")).strip_edges()
+		if _is_named_province(source_label):
+			return source_label
 	return label
 
 
 func _is_named_province(label: String) -> bool:
-	var lower := label.to_lower()
+	var lower := label.to_lower().strip_edges()
+	if lower.is_empty():
+		return false
 	if lower.begins_with("province"):
 		return false
-	if lower.begins_with("province_"):
-		return false
 	return true
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion and color_id_map != null and color_id_map.is_ready:
+		var motion := event as InputEventMouseMotion
+		var map_width := get_viewport_rect().size.x - PANEL_WIDTH
+		var next_hover := ""
+		if motion.position.x < map_width:
+			next_hover = _province_at(motion.position)
+		if next_hover != hovered_province_id:
+			hovered_province_id = next_hover
+			queue_redraw()
+	super._unhandled_input(event)
 
 
 func _fit_to_focus(force: bool) -> void:

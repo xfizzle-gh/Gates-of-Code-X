@@ -305,6 +305,16 @@ func _draw_management_panel() -> void:
 		faction.get("income_last_round", 0),
 		faction.get("maintenance_last_round", 0),
 	], x, y)
+	var names: Dictionary = snapshot.get("province_names", {})
+	if names.is_empty():
+		var meta: Dictionary = campaign.get("map_metadata", {})
+		names = meta.get("province_names", {})
+	if not names.is_empty():
+		y = _panel_line("Names %s/%s human-readable (%s%%)" % [
+			names.get("human_readable", 0),
+			names.get("total", 0),
+			names.get("human_readable_pct", 0),
+		], x, y, Color("9fd7ff"), 12)
 	y += 6.0
 
 	y = _panel_heading("ACTIONS", x, y)
@@ -329,6 +339,8 @@ func _draw_management_panel() -> void:
 		y = _panel_line("Click a province on the map.", x, y)
 	else:
 		y = _panel_line(String(province.get("display_name", selected_province_id)), x, y, Color.WHITE, 16)
+		if String(province.get("display_name", "")) != selected_province_id:
+			y = _panel_line("ID %s" % selected_province_id, x, y, Color("9aa7b2"), 12)
 		y = _panel_line("Owner %s   Yield %s   Fort %s" % [
 			String(province.get("owner", "neutral")).to_upper(),
 			province.get("resource_yield", 0),
