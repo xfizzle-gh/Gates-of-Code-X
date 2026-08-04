@@ -107,34 +107,38 @@ class EuropeMediterraneanFromGoeTests(unittest.TestCase):
         payload = json.loads(MANIFEST.read_text(encoding="utf-8"))
         image = decode_png_rgb(ID_MAP)
         color_to_pid = {tuple(row["rgb"]): row["province_id"] for row in payload["province_table"]}
-        # Build owners grid (empty string = ignored border/sea)
         w, h = image.width, image.height
+        white = (255, 255, 255)
+        black = (0, 0, 0)
+        # White exterior must be gone from repaired theatre raster.
+        white_count = sum(1 for c in image.pixels if c == white)
+        self.assertEqual(0, white_count)
+        # Direct province-province contact must exist (separators closed).
+        touch = 0
+        for y in range(image.height):
+            for x in range(image.width - 1):
+                a = image.color_at(x, y)
+                b = image.color_at(x + 1, y)
+                if a not in (black, white) and b not in (black, white) and a != b:
+                    touch += 1
+        self.assertGreater(touch, 100)
         owners: list[str] = []
         for y in range(h):
             for x in range(w):
                 owners.append(color_to_pid.get(image.color_at(x, y), ""))
-        # Land edges from raster with gap scan through ignored border pixels
-        max_gap = 6
+        # Direct 4-neighbor land edges only (gap = 0)
         edges: set[tuple[str, str]] = set()
         for y in range(h):
             for x in range(w):
                 a = owners[y * w + x]
                 if not a:
                     continue
-                for dx, dy in ((1, 0), (0, 1)):
-                    cx, cy = x + dx, y + dy
-                    gap = 0
-                    while 0 <= cx < w and 0 <= cy < h:
-                        b = owners[cy * w + cx]
-                        if b:
-                            if b != a:
-                                edges.add(tuple(sorted((a, b))))
-                            break
-                        gap += 1
-                        if gap > max_gap:
-                            break
-                        cx += dx
-                        cy += dy
+                for nx, ny in ((x + 1, y), (x, y + 1)):
+                    if nx >= w or ny >= h:
+                        continue
+                    b = owners[ny * w + nx]
+                    if b and b != a:
+                        edges.add(tuple(sorted((a, b))))
         by_id = {row["province_id"]: row for row in payload["province_table"]}
         listed: set[tuple[str, str]] = set()
         for row in payload["province_table"]:
@@ -144,14 +148,51 @@ class EuropeMediterraneanFromGoeTests(unittest.TestCase):
                 key = tuple(sorted((row["province_id"], n)))
                 self.assertIn(key, edges)
                 listed.add(key)
+                # Typed land
+                self.assertEqual("land", (row.get("edge_types") or {}).get(n, "land"))
             for n in land:
                 peer = set(by_id[n].get("land_neighbors") or [])
                 self.assertIn(row["province_id"], peer)
             ax = int(round(row["marker_anchor"][0]))
             ay = h - 1 - int(round(row["marker_anchor"][1]))
             self.assertEqual(row["province_id"], color_to_pid.get(image.color_at(ax, ay)))
-        # Manifest land graph equals raster land graph
         self.assertEqual(listed, edges)
+
+        # Channel / sea must not be ordinary land adjacency.
+        def _ids(*names: str) -> set[str]:
+            found = set()
+            for row in payload["province_table"]:
+                dn = str(row.get("display_name", "")).lower()
+                pid = row["province_id"]
+                for name in names:
+                    if name.lower() in dn or name == pid:
+                        found.add(pid)
+            return found
+
+        britain = _ids("Greater London Area", "Sussex", "province_0365")
+        france_coast = _ids("Nord Pas De Calais", "province_0329")
+        for a in britain:
+            for b in france_coast:
+                self.assertNotIn(b, set(by_id[a].get("land_neighbors") or []))
+                # May exist as typed ferry
+                et = (by_id[a].get("edge_types") or {}).get(b)
+                if et is not None:
+                    self.assertIn(et, {"strait", "ferry_or_sea_lane"})
+
+        # Background land silhouette matches repaired ID land
+        if BG.is_file():
+            bg = decode_png_rgb(BG)
+            self.assertEqual(image.width, bg.width)
+            self.assertEqual(image.height, bg.height)
+            for i, color in enumerate(image.pixels):
+                id_land = color != black
+                br, bgc, bb = bg.pixels[i]
+                bg_land = (br + bgc + bb) < 700  # parchment darker than sea panel
+                # sea panel ~236,240,244 sum~720; land parchment ~228,222,208 sum~658
+                if id_land:
+                    self.assertLess(br + bgc + bb, 700)
+                else:
+                    self.assertGreaterEqual(br + bgc + bb, 700)
 
     def test_full_interim_goe_still_loadable(self) -> None:
         state = build_goe_europe_campaign()

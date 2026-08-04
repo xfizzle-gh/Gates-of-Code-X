@@ -76,6 +76,22 @@ CLIP_THEATRE = {
 
 MIN_CLIPPED_PIXELS = 12
 MIN_CLIP_RATIO_TO_DROP = 0.08
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+# Iterations of edge dilation into separator pixels (black borders in this GoE ID map).
+SEPARATOR_FILL_ITERS = 3
+
+# Explicit cross-water connections (only if both endpoints survive the theatre).
+# Typed separately from ordinary land adjacency (which requires direct raster contact).
+AUTHED_CROSSINGS: tuple[tuple[str, str, str], ...] = (
+    ("province_0365", "province_0329", "ferry_or_sea_lane"),  # Greater London Area – Nord Pas De Calais
+    ("Sussex", "province_0329", "ferry_or_sea_lane"),  # Sussex – Nord Pas De Calais
+    ("province_0127", "province_0139", "strait"),  # Sicillia – Calabria
+    ("province_0179", "province_0173", "strait"),  # Istanbul – Edirne (European approach)
+    ("province_0179", "province_0177", "strait"),  # Istanbul – Izmit (Asian approach)
+    ("Schleswig", "province_0419", "ferry_or_sea_lane"),  # Schleswig – Sjaelland
+    ("Holstein", "province_0419", "ferry_or_sea_lane"),  # Holstein – Sjaelland
+)
 
 EXCLUDES = [
     "deep Central Asia / far Russia east of theatre",
@@ -313,12 +329,14 @@ def generate_europe_mediterranean_from_goe(
     }
 
     # Output crop tightly around clip rect.
+    # Preserve source classes: province RGB / white separator / black water.
     min_x, min_y, max_x, max_y = clip_min_x, clip_min_y, clip_max_x, clip_max_y
     crop_w = max_x - min_x + 1
     crop_h = max_y - min_y + 1
 
-    sea = (0, 0, 0)
-    cropped = bytearray(crop_w * crop_h * 3)
+    sea = BLACK
+    # Working grid: province RGB / black separator-or-water / white exterior.
+    grid: list[tuple[int, int, int]] = [sea] * (crop_w * crop_h)
     pixel_counts: dict[str, int] = defaultdict(int)
     full_counts: dict[str, int] = {
         str(kept_by_color[c]["province_id"]): int(color_stats.get(c, {}).get("count", 0))
@@ -328,13 +346,66 @@ def generate_europe_mediterranean_from_goe(
         for x in range(crop_w):
             sx, sy = min_x + x, min_y + y
             color = image.color_at(sx, sy)
-            if color not in kept_colors:
-                color = sea
+            idx = y * crop_w + x
+            if color == WHITE:
+                # Exterior/background frame in this GoE extract → water/panel.
+                grid[idx] = BLACK
+            elif color == BLACK:
+                grid[idx] = BLACK  # separator candidate or true water
+            elif color in kept_colors:
+                grid[idx] = color
+                pixel_counts[str(kept_by_color[color]["province_id"])] += 1
             else:
-                pid = str(kept_by_color[color]["province_id"])
-                pixel_counts[pid] += 1
-            i = (y * crop_w + x) * 3
-            cropped[i : i + 3] = bytes(color)
+                # Excluded province RGB → outside theatre.
+                grid[idx] = BLACK
+
+    # This GoE ID map uses black separators between provinces (not white).
+    # Dilate retained provinces into black for a few iterations so internal
+    # borders close. Wide seas/channels remain black (need >SEPARATOR_FILL_ITERS
+    # steps to bridge). Tie-break by stable province_id.
+    separators_filled = 0
+    for _pass in range(SEPARATOR_FILL_ITERS):
+        claims: list[tuple[int, int, tuple[int, int, int]]] = []
+        for y in range(crop_h):
+            for x in range(crop_w):
+                idx = y * crop_w + x
+                if grid[idx] != BLACK:
+                    continue
+                candidates: list[tuple[str, tuple[int, int, int]]] = []
+                seen: set[str] = set()
+                for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+                    if nx < 0 or ny < 0 or nx >= crop_w or ny >= crop_h:
+                        continue
+                    cand = grid[ny * crop_w + nx]
+                    if cand == BLACK or cand not in kept_colors:
+                        continue
+                    pid = str(kept_by_color[cand]["province_id"])
+                    if pid in seen:
+                        continue
+                    seen.add(pid)
+                    candidates.append((pid, cand))
+                if not candidates:
+                    continue
+                candidates.sort(key=lambda item: item[0])
+                claims.append((x, y, candidates[0][1]))
+        if not claims:
+            break
+        for x, y, color in claims:
+            idx = y * crop_w + x
+            if grid[idx] != BLACK:
+                continue
+            grid[idx] = color
+            pixel_counts[str(kept_by_color[color]["province_id"])] += 1
+            separators_filled += 1
+
+    white_filled = separators_filled
+    white_left = 0
+
+    # Pack repaired grid to bytes.
+    cropped = bytearray(crop_w * crop_h * 3)
+    for idx, color in enumerate(grid):
+        base = idx * 3
+        cropped[base : base + 3] = bytes(color)
 
     # Classify clipped vs intact; drop tiny remnants from gameplay.
     clipped_ids: list[dict] = []
@@ -345,7 +416,6 @@ def generate_europe_mediterranean_from_goe(
         kept_px = pixel_counts.get(pid, 0)
         full_px = max(full_counts.get(pid, 0), 1)
         ratio = kept_px / full_px
-        # Drop only near-empty clipped remnants, not naturally small intact provinces.
         if kept_px < MIN_CLIPPED_PIXELS or (
             ratio < MIN_CLIP_RATIO_TO_DROP and kept_px < full_px
         ):
@@ -377,19 +447,19 @@ def generate_europe_mediterranean_from_goe(
     active_ids = {str(row["province_id"]) for row in active_rows}
     active_colors = {tuple(int(c) for c in row["rgb"]) for row in active_rows}
 
-    # Second pass: erase non-active colors (tiny remnants).
+    # Erase non-active province colors (tiny remnants) → black water.
     if dropped_tiny:
         drop_colors = {
             tuple(int(c) for c in row["rgb"])
             for row in source_table
             if str(row["province_id"]) in {d["province_id"] for d in dropped_tiny}
         }
-        for y in range(crop_h):
-            for x in range(crop_w):
-                i = (y * crop_w + x) * 3
-                color = (cropped[i], cropped[i + 1], cropped[i + 2])
-                if color in drop_colors:
-                    cropped[i : i + 3] = bytes(sea)
+        for idx in range(crop_w * crop_h):
+            base = idx * 3
+            color = (cropped[base], cropped[base + 1], cropped[base + 2])
+            if color in drop_colors:
+                cropped[base : base + 3] = bytes(sea)
+                grid[idx] = sea
 
     color_to_pid = {
         tuple(int(c) for c in row["rgb"]): str(row["province_id"]) for row in active_rows
@@ -412,40 +482,37 @@ def generate_europe_mediterranean_from_goe(
             sums[pid][2] += 1
             pixels_by_pid[pid].append((x, y))
 
-    # Ordinary land adjacency from final clipped raster.
-    # GoE ID maps separate provinces with white/black border pixels, so scan through
-    # a small ignored gap (same idea as strategic_map.extract_color_adjacency).
-    max_gap = 6
+    # Direct-contact land adjacency only (gap = 0) on the repaired raster.
     land_edges: set[tuple[str, str]] = set()
     for y in range(crop_h):
         for x in range(crop_w):
             a = owners_grid[y * crop_w + x]
             if a < 0:
                 continue
-            for dx, dy in ((1, 0), (0, 1)):
-                cx, cy = x + dx, y + dy
-                gap = 0
-                while 0 <= cx < crop_w and 0 <= cy < crop_h:
-                    b = owners_grid[cy * crop_w + cx]
-                    if b >= 0:
-                        if b != a:
-                            left, right = sorted((index_pid[a], index_pid[b]))
-                            land_edges.add((left, right))
-                        break
-                    gap += 1
-                    if gap > max_gap:
-                        break
-                    cx += dx
-                    cy += dy
+            for nx, ny in ((x + 1, y), (x, y + 1)):
+                if nx >= crop_w or ny >= crop_h:
+                    continue
+                b = owners_grid[ny * crop_w + nx]
+                if b >= 0 and b != a:
+                    left, right = sorted((index_pid[a], index_pid[b]))
+                    land_edges.add((left, right))
     land_neighbors: dict[str, list[str]] = defaultdict(list)
     for left, right in sorted(land_edges):
         land_neighbors[left].append(right)
         land_neighbors[right].append(left)
 
-    # Optional authored non-land edges from source, only if both endpoints remain.
+    # Authored cross-water edges (never inferred by gap scan).
     authored_edges: list[dict] = []
-    # GoE interim table has no typed strait/ferry today; reserved for future.
     authored_neighbors: dict[str, list[str]] = defaultdict(list)
+    for left, right, edge_type in AUTHED_CROSSINGS:
+        if left not in active_ids or right not in active_ids:
+            continue
+        key = tuple(sorted((left, right)))
+        if key in land_edges:
+            continue  # already true land contact after repair
+        authored_edges.append({"a": key[0], "b": key[1], "type": edge_type})
+        authored_neighbors[left].append(right)
+        authored_neighbors[right].append(left)
 
     def _snap_anchor(pid: str, cx: float, cy: float) -> tuple[float, float, bool]:
         """Ensure anchor lies on a pixel of this province; snap if needed."""
@@ -492,7 +559,7 @@ def generate_europe_mediterranean_from_goe(
                 "source_province_id": row.get("source_province_id", pid),
                 "mapping_method": row.get("mapping_method", "goe_theatre_crop"),
                 "provenance": {
-                    "generator": "europe_mediterranean_from_goe_v3_raster_adj",
+                    "generator": "europe_mediterranean_from_goe_v4_white_fill",
                     "source_map_id": manifest.get("map_id", "goe_europe"),
                     "marker_theatre": dict(MARKER_THEATRE),
                     "clip_theatre": dict(CLIP_THEATRE),
@@ -514,7 +581,11 @@ def generate_europe_mediterranean_from_goe(
 
     selection_report["land_adjacency_edges"] = len(land_edges)
     selection_report["authored_non_land_edges"] = len(authored_edges)
+    selection_report["authored_edges"] = authored_edges
     selection_report["anchors_snapped"] = anchors_snapped
+    selection_report["black_separators_filled"] = separators_filled
+    selection_report["white_exterior_to_black"] = True
+    selection_report["land_adjacency_mode"] = "direct_4_neighbor_after_separator_dilation"
 
     selection_report["intersecting_edge_added"] = sorted(intersecting_ids - set(selection_report.get("force_include_ids", [])))
     selection_report["clipped_provinces"] = clipped_ids
@@ -586,7 +657,8 @@ def generate_europe_mediterranean_from_goe(
         "province_geometry": "interim_goe_color_id_crop_with_edge_clip",
         "province_ids": "preserved_from_goe_graph_where_in_theatre",
         "edge_handling": "intersecting_provinces_clipped_to_theatre_mask",
-        "adjacency": "recomputed_land_touch_from_final_clipped_raster",
+        "adjacency": "direct_4_neighbor_after_black_separator_dilation",
+        "separators": "goe_black_borders_dilated_into_provinces_white_exterior_to_water",
         "visual_background": "procedural_light_neutral_from_crop_silhouette",
         "pack_artwork": "not_used",
     }
@@ -635,15 +707,9 @@ def build_europe_mediterranean_from_goe_campaign(
         str(row["province_id"]): row.get("marker_anchor") or [0.0, 0.0]
         for row in manifest.get("province_table", [])
     }
+    # Movement graph = land contact + authored strait/ferry (source_neighbors).
     neighbors_map = {
-        str(row["province_id"]): [
-            str(n)
-            for n in (
-                row.get("land_neighbors")
-                if row.get("land_neighbors") is not None
-                else row.get("source_neighbors", [])
-            )
-        ]
+        str(row["province_id"]): [str(n) for n in row.get("source_neighbors", [])]
         for row in manifest.get("province_table", [])
     }
 
