@@ -9,6 +9,7 @@ from .models import (
 
 STRATEGIC_FORMATION_SCHEMA_VERSION = 6
 MIGRATION_RECORD_KEY = "strategic_formation_migration"
+DEFAULT_MOVEMENT_STATE = "in_province"
 
 
 def strategic_formation_id_for_battalion(battalion_id: str) -> str:
@@ -24,7 +25,8 @@ def ensure_strategic_formations(state: CampaignState) -> dict:
     - Do **not** invent commander entities.
     - Formation location is authoritative; battalion province is synchronized.
     - Each battalion belongs to exactly one formation.
-    - IDs are deterministic and fully state-idempotent after the first migration.
+    - IDs are deterministic; one-time migration record is stable.
+    - Derived summaries refresh deterministically after migration.
     - Pending/archived battles are left untouched.
     - Dangling commander refs are cleared only for legacy pre-schema-6 saves.
     """
@@ -33,6 +35,7 @@ def ensure_strategic_formations(state: CampaignState) -> dict:
     legacy = incoming_schema < STRATEGIC_FORMATION_SCHEMA_VERSION
 
     if _already_migrated(state):
+        refresh_strategic_formation_summaries(state)
         record = state.map_metadata.get(MIGRATION_RECORD_KEY)
         if not isinstance(record, dict):
             record = _stable_migration_record(incoming_schema)
@@ -63,7 +66,7 @@ def ensure_strategic_formations(state: CampaignState) -> dict:
                 battalion_ids=[battalion.battalion_id],
                 template_formation_id=battalion.formation_id,
                 stack_order=0,
-                movement_state="at_anchor",
+                movement_state=DEFAULT_MOVEMENT_STATE,
                 stance="standard",
                 actor_id=_actor_id_for_battalion(state, battalion),
                 condition_summary=battalion.condition,
@@ -80,6 +83,9 @@ def ensure_strategic_formations(state: CampaignState) -> dict:
                 battalion.province_id = force.province_id
             if not force.template_formation_id and battalion.formation_id:
                 force.template_formation_id = battalion.formation_id
+            # Legacy migration only knew province occupancy, not operational anchors.
+            if force.movement_state == "at_anchor":
+                force.movement_state = DEFAULT_MOVEMENT_STATE
 
         battalion.strategic_formation_id = force_id
         if legacy:
@@ -91,25 +97,45 @@ def ensure_strategic_formations(state: CampaignState) -> dict:
 
     # Final co-location pass for every force.
     for force in state.strategic_formations.values():
-        members = [
-            state.battalions[item]
-            for item in force.battalion_ids
-            if item in state.battalions
-        ]
-        for battalion in members:
+        for battalion_id in force.battalion_ids:
+            battalion = state.battalions.get(battalion_id)
+            if battalion is None:
+                continue
             if battalion.province_id != force.province_id:
                 battalion.province_id = force.province_id
             battalion.strategic_formation_id = force.strategic_formation_id
-        if members:
-            force.condition_summary = _average(item.condition for item in members)
-            force.supply_summary = _average(item.supply for item in members)
-            force.experience_summary = _average(item.experience for item in members)
 
+    refresh_strategic_formation_summaries(state)
     state.schema_version = max(state.schema_version, STRATEGIC_FORMATION_SCHEMA_VERSION)
     # Persist a stable record once. Do not rewrite run counters on every load/save.
     if MIGRATION_RECORD_KEY not in state.map_metadata:
         state.map_metadata[MIGRATION_RECORD_KEY] = _stable_migration_record(incoming_schema)
     return state.map_metadata[MIGRATION_RECORD_KEY]
+
+
+def refresh_strategic_formation_summaries(state: CampaignState) -> None:
+    """Recompute deterministic aggregate summaries from current battalion members.
+
+    Safe to call repeatedly: unchanged battalions produce an identical serialized state.
+    """
+
+    for force in sorted(
+        state.strategic_formations.values(),
+        key=lambda value: value.strategic_formation_id,
+    ):
+        members = [
+            state.battalions[item]
+            for item in force.battalion_ids
+            if item in state.battalions
+        ]
+        if not members:
+            force.condition_summary = 0
+            force.supply_summary = 0
+            force.experience_summary = 0
+            continue
+        force.condition_summary = _average(item.condition for item in members)
+        force.supply_summary = _average(item.supply for item in members)
+        force.experience_summary = _average(item.experience for item in members)
 
 
 def _already_migrated(state: CampaignState) -> bool:
@@ -141,6 +167,7 @@ def _stable_migration_record(incoming_schema: int) -> dict:
         "migrated_from_schema": min(incoming_schema, STRATEGIC_FORMATION_SCHEMA_VERSION),
         "commanders_invented": 0,
         "id_scheme": "sf-{battalion_id}",
+        "default_movement_state": DEFAULT_MOVEMENT_STATE,
         "note": "Legacy independent battalions wrapped as battalion-echelon strategic formations.",
     }
 

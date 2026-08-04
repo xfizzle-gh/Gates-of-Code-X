@@ -8,8 +8,10 @@ from pathlib import Path
 
 from gates_of_codex.campaign import CampaignEngine
 from gates_of_codex.force_migration import (
+    DEFAULT_MOVEMENT_STATE,
     STRATEGIC_FORMATION_SCHEMA_VERSION,
     ensure_strategic_formations,
+    refresh_strategic_formation_summaries,
     strategic_formation_id_for_battalion,
 )
 from gates_of_codex.frontend import FRONTEND_SCHEMA_VERSION, build_frontend_snapshot
@@ -94,6 +96,8 @@ class StrategicFormationSchemaTests(unittest.TestCase):
         self.assertIn(force_id, state.strategic_formations)
         force = state.strategic_formations[force_id]
         self.assertEqual(ForceEchelon.BATTALION, force.echelon)
+        self.assertEqual(DEFAULT_MOVEMENT_STATE, force.movement_state)
+        self.assertEqual("in_province", force.movement_state)
         self.assertEqual(["bn-1"], force.battalion_ids)
         self.assertIsNone(force.commander_id)
         self.assertEqual(force_id, state.battalions["bn-1"].strategic_formation_id)
@@ -338,6 +342,47 @@ class StrategicFormationSchemaTests(unittest.TestCase):
         CampaignEngine(state)._remove_battalion("bn-1")
         self.assertNotIn("bn-1", state.battalions)
         self.assertNotIn(force_id, state.strategic_formations)
+
+    def test_formation_summaries_refresh_after_member_mutation(self) -> None:
+        state = _minimal_state()
+        ensure_strategic_formations(state)
+        force_id = strategic_formation_id_for_battalion("bn-1")
+        force = state.strategic_formations[force_id]
+        state.battalions["bn-1"].condition = 100
+        state.battalions["bn-1"].supply = 100
+        state.battalions["bn-2"] = Battalion(
+            battalion_id="bn-2",
+            faction=Faction.NATO,
+            province_id="a",
+            formation_id="toe-nato",
+            strategic_formation_id=force_id,
+            condition=40,
+            supply=20,
+            experience=10,
+            roster=[BattalionRosterEntry("infantry(nato)", 2, category="infantry")],
+            authorized_roster=[BattalionRosterEntry("infantry(nato)", 2, category="infantry")],
+        )
+        force.battalion_ids = ["bn-1", "bn-2"]
+        force.echelon = ForceEchelon.REGIMENT
+        refresh_strategic_formation_summaries(state)
+        self.assertEqual(70, force.condition_summary)
+        self.assertEqual(60, force.supply_summary)
+
+        CampaignEngine(state)._remove_battalion("bn-2")
+        refresh_strategic_formation_summaries(state)
+        self.assertEqual(["bn-1"], force.battalion_ids)
+        self.assertEqual(100, force.condition_summary)
+
+        state.battalions["bn-1"].supply = 55
+        ensure_strategic_formations(state)
+        snapshot = build_frontend_snapshot(state)
+        row = next(item for item in snapshot["strategic_formations"] if item["id"] == force_id)
+        self.assertEqual(55, row["supply_summary"])
+        self.assertEqual(55, state.strategic_formations[force_id].supply_summary)
+
+        first = copy.deepcopy(state.to_dict())
+        ensure_strategic_formations(state)
+        self.assertEqual(first, state.to_dict())
 
     def test_retreat_keeps_surviving_members_colocated(self) -> None:
         state = _minimal_state()

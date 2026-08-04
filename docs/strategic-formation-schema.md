@@ -20,9 +20,10 @@
 7. Pending/archived battles are not rewritten in PR1 (no tactical-assignment fields).
 8. Campaign `schema_version` becomes **≥ 6** after migration.
 9. Frontend snapshot schema becomes **8** and adds `strategic_formations` + `commanders`.
-10. Migration is **fully state-idempotent**: after the first successful migration, repeated `ensure_strategic_formations` / load / save does not change `state.to_dict()`.
+10. One-time migration metadata is stable. Derived formation summaries (`condition_summary`, `supply_summary`, `experience_summary`) refresh deterministically via `refresh_strategic_formation_summaries`; repeated calls with unchanged battalions leave `state.to_dict()` identical.
 11. Dangling commander IDs are cleared **only** while migrating legacy pre-schema-6 saves. Schema 6+ leaves invalid references for validation to reject.
 12. Until PR2 adds formation-level map selection, the existing **battalion move command temporarily acts as a formation move**: all members of the strategic formation co-locate with the acting battalion.
+13. Legacy migration sets `movement_state="in_province"` (province occupancy only). Operational anchors (`at_anchor`) belong to issue #59.
 
 ## Scope note vs PR #57
 
