@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sys
 import tempfile
 from dataclasses import asdict
 from pathlib import Path
@@ -19,7 +20,8 @@ from .strategic import (
 from .supply import reachable_supply_provinces
 
 
-FRONTEND_SCHEMA_VERSION = 5
+FRONTEND_SCHEMA_VERSION = 6
+FRONTEND_PYTHON_MODULE = "gates_of_codex"
 
 
 def build_frontend_snapshot(
@@ -33,7 +35,11 @@ def build_frontend_snapshot(
     objectives = update_operational_objectives(state)
     outcome = evaluate_campaign_outcome(state)
     state.validate()
-    occupied = {battalion.province_id: battalion.battalion_id for battalion in state.battalions.values()}
+
+    occupied: dict[str, list[str]] = {}
+    for battalion in sorted(state.battalions.values(), key=lambda value: value.battalion_id):
+        occupied.setdefault(battalion.province_id, []).append(battalion.battalion_id)
+
     xs = [province.x for province in state.provinces.values()]
     ys = [province.y for province in state.provinces.values()]
     edges = sorted(
@@ -113,7 +119,8 @@ def build_frontend_snapshot(
                 "construction_options": construction_options(
                     state, state.selected_faction, province.province_id
                 ),
-                "occupied_by": occupied.get(province.province_id, ""),
+                "occupied_by": occupied.get(province.province_id, [""])[0],
+                "occupied_by_battalions": list(occupied.get(province.province_id, [])),
                 "supply_source_for": sorted(
                     set(province.metadata.get("supply_source_for", []))
                     | set(province.metadata.get("static_supply_source_for", []))
@@ -179,6 +186,10 @@ def build_frontend_snapshot(
             }
             for battalion in sorted(state.battalions.values(), key=lambda value: value.battalion_id)
         ],
+        "battalion_stacks": {
+            province_id: list(battalion_ids)
+            for province_id, battalion_ids in sorted(occupied.items())
+        },
         "pending_battle": _pending_battle(state),
         "front_options": list_front_options(state, state.current_faction),
         "control": _control_block(campaign_path, snapshot_path),
@@ -219,6 +230,30 @@ def write_frontend_snapshot(
     return destination
 
 
+def build_frontend_apply_invocation(control: dict) -> tuple[str, list[str]]:
+    executable = str(control.get("python_executable", "")).strip()
+    module = str(control.get("python_module", FRONTEND_PYTHON_MODULE)).strip()
+    campaign_path = str(control.get("campaign_path", "")).strip()
+    snapshot_path = str(control.get("snapshot_path", "")).strip()
+    commands_path = str(control.get("commands_path", "")).strip()
+    if not executable:
+        raise ValueError("control.python_executable is required")
+    if not module:
+        raise ValueError("control.python_module is required")
+    if not campaign_path or not snapshot_path or not commands_path:
+        raise ValueError("control campaign, snapshot, and commands paths are required")
+    return executable, [
+        "-m",
+        module,
+        "apply-frontend",
+        campaign_path,
+        "--snapshot",
+        snapshot_path,
+        "--commands",
+        commands_path,
+    ]
+
+
 def _pending_battle(state: CampaignState) -> dict | None:
     pending = state.pending_battle
     if pending is None:
@@ -247,6 +282,8 @@ def _control_block(campaign_path: str | Path | None, snapshot_path: str | Path |
         "campaign_path": str(campaign) if campaign else "",
         "snapshot_path": str(snapshot) if snapshot else "",
         "commands_path": str(commands) if commands else "",
+        "python_executable": str(Path(sys.executable).resolve()),
+        "python_module": FRONTEND_PYTHON_MODULE,
         "supported_ops": [
             "move",
             "end_turn",
