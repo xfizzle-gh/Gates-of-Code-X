@@ -17,6 +17,15 @@ class ParsedCampaignSquad:
     object_ids: list[str] = field(default_factory=list)
 
 
+@dataclass(frozen=True, slots=True)
+class BreedInventoryItem:
+    name: str
+    filled: bool = False
+    quantity: int | None = None
+    kind: str = ""  # "", "ammo", "grenade", ...
+    filling: str = ""
+
+
 class ObjectIdAllocator:
     def __init__(self, start: int = 0x8000) -> None:
         self.next = start
@@ -43,7 +52,9 @@ class CampaignScnBuilder:
         self.roots = normalize_stack(values)
         if not self.roots:
             raise ValueError("CampaignScnBuilder requires at least one resource stack layer")
-        self._breed_index: dict[str, str] | None = None
+        self._breed_token_index: dict[str, str] | None = None
+        self._breed_path_index: dict[str, Path] | None = None
+        self._inventory_cache: dict[str, list[BreedInventoryItem]] = {}
 
     def build(self, state: CampaignState, pending: PendingBattle) -> str:
         ids = ObjectIdAllocator()
@@ -80,7 +91,7 @@ class CampaignScnBuilder:
                         object_id, mid = ids.allocate()
                         object_ids.append(object_id)
                         objects.append(self._entity(vehicle, object_id, player=player, mid=mid))
-                        inventories.append(self._inventory(object_id))
+                        inventories.append(self._inventory(object_id, items=[]))
                     for breed, count in definition.members.items():
                         for _ in range(count):
                             object_id, mid = ids.allocate()
@@ -95,7 +106,12 @@ class CampaignScnBuilder:
                                     mid=mid,
                                 )
                             )
-                            inventories.append(self._inventory(object_id))
+                            inventories.append(
+                                self._inventory(
+                                    object_id,
+                                    items=self._breed_inventory(breed, definition.side, definition.period),
+                                )
+                            )
                     if not object_ids:
                         raise ValueError(f"Unit {entry.unit_name} has no materializable members")
                     squads.append(f'\t\t{{"{entry.unit_name}" "{stage}" {" ".join(object_ids)}}}')
@@ -136,6 +152,10 @@ class CampaignScnBuilder:
                     raise ValueError(f"Invalid object graph for {object_id}")
 
     def _resolve_breed(self, breed: str, side: str, period: str) -> str:
+        path = self._resolve_breed_path(breed, side, period)
+        return self._to_breed_token(self._relative_breed_posix(path))
+
+    def _resolve_breed_path(self, breed: str, side: str, period: str) -> Path:
         for root in reversed(self.roots):
             resources = resource_root(root)
             candidates = [
@@ -146,20 +166,39 @@ class CampaignScnBuilder:
             ]
             for path in candidates:
                 if path.is_file():
-                    return self._to_breed_token(path.relative_to(resources).as_posix())
-        if self._breed_index is None:
-            self._breed_index = {}
-            for root in reversed(self.roots):
-                resources = resource_root(root)
-                breed_root = resources / "set/breed"
-                if breed_root.is_dir():
-                    for path in breed_root.rglob("*.set"):
-                        token = self._to_breed_token(path.relative_to(resources).as_posix())
-                        self._breed_index.setdefault(path.stem.lower(), token)
-        result = self._breed_index.get(breed.lower()) if self._breed_index else None
-        if not result:
+                    return path
+        self._ensure_breed_indexes()
+        assert self._breed_path_index is not None
+        path = self._breed_path_index.get(breed.lower())
+        if path is None:
             raise FileNotFoundError(f"Could not resolve Code:X breed {breed} in the configured mod stack")
-        return result
+        return path
+
+    def _ensure_breed_indexes(self) -> None:
+        if self._breed_token_index is not None and self._breed_path_index is not None:
+            return
+        token_index: dict[str, str] = {}
+        path_index: dict[str, Path] = {}
+        for root in reversed(self.roots):
+            resources = resource_root(root)
+            breed_root = resources / "set/breed"
+            if not breed_root.is_dir():
+                continue
+            for path in breed_root.rglob("*.set"):
+                stem = path.stem.lower()
+                token_index.setdefault(stem, self._to_breed_token(path.relative_to(resources).as_posix()))
+                path_index.setdefault(stem, path)
+        self._breed_token_index = token_index
+        self._breed_path_index = path_index
+
+    def _relative_breed_posix(self, path: Path) -> str:
+        for root in reversed(self.roots):
+            resources = resource_root(root)
+            try:
+                return path.relative_to(resources).as_posix()
+            except ValueError:
+                continue
+        return path.as_posix()
 
     @staticmethod
     def _to_breed_token(relative_posix: str) -> str:
@@ -198,9 +237,123 @@ class CampaignScnBuilder:
             f"\t}}"
         )
 
-    @staticmethod
-    def _inventory(object_id: str) -> str:
-        return f"\t{{Inventory {object_id}\n\t\t{{box\n\t\t\t{{clear}}\n\t\t}}\n\t}}"
+    def _breed_inventory(self, breed: str, side: str, period: str) -> list[BreedInventoryItem]:
+        cache_key = f"{side}/{period}/{breed}".lower()
+        cached = self._inventory_cache.get(cache_key)
+        if cached is not None:
+            return cached
+        path = self._resolve_breed_path(breed, side, period)
+        text = path.read_text(encoding="utf-8-sig", errors="replace")
+        items = parse_breed_inventory(text)
+        self._inventory_cache[cache_key] = items
+        return items
+
+    @classmethod
+    def _inventory(cls, object_id: str, *, items: list[BreedInventoryItem] | None = None) -> str:
+        values = list(items or [])
+        if not values:
+            return f"\t{{Inventory {object_id}\n\t\t{{box\n\t\t\t{{clear}}\n\t\t}}\n\t}}"
+        lines = [f"\t{{Inventory {object_id}", "\t\t{box"]
+        cell_x = 0
+        cell_y = 0
+        handed = False
+        for item in values:
+            cell = f"{{cell {cell_x} {cell_y}}}"
+            if item.filled and not handed and _looks_like_weapon(item.name):
+                lines.append(f'\t\t\t{{item "{item.name}" filled {cell}{{user "hand_right"}}}}')
+                handed = True
+            elif item.kind:
+                qty = item.quantity if item.quantity is not None else 1
+                lines.append(f'\t\t\t{{item "{item.name}" "{item.kind}" {qty} {cell}}}')
+            elif item.filled:
+                lines.append(f'\t\t\t{{item "{item.name}" filled {cell}}}')
+            elif item.quantity is not None:
+                lines.append(f'\t\t\t{{item "{item.name}" {item.quantity} {cell}}}')
+            else:
+                lines.append(f'\t\t\t{{item "{item.name}" {cell}}}')
+            cell_x += 2
+            if cell_x > 8:
+                cell_x = 0
+                cell_y += 1
+        lines.extend(["\t\t}", "\t}"])
+        return "\n".join(lines)
+
+
+def parse_breed_inventory(text: str) -> list[BreedInventoryItem]:
+    """Parse Code:X breed ``{inventory ...}`` defaults into campaign inventory items."""
+
+    block = _extract_inventory_block(text)
+    if not block:
+        return []
+    items: list[BreedInventoryItem] = []
+    for raw in re.finditer(r"\{item\b([^}]*)\}", block):
+        body = raw.group(1).strip()
+        if not body:
+            continue
+        name_match = re.match(r'"([^"]+)"\s*(.*)$', body)
+        if not name_match:
+            continue
+        name = name_match.group(1).strip()
+        rest = name_match.group(2).strip()
+        filling_match = re.search(r'filling\s+"([^"]+)"', rest)
+        filling = filling_match.group(1) if filling_match else ""
+        filled = bool(re.search(r"\bfilled\b", rest)) or bool(filling)
+        numbers = [float(value) for value in re.findall(r"(?<![\w.])(\d+(?:\.\d+)?)(?![\w.])", rest)]
+        quantity = int(numbers[0]) if numbers else None
+        kind = ""
+        item_name = name
+        lowered = name.lower()
+        for suffix, label in ((" ammo", "ammo"), (" grenade", "grenade"), (" weapon", "")):
+            if lowered.endswith(suffix):
+                item_name = name[: -len(suffix)].strip()
+                kind = label
+                break
+        if kind == "" and " ammo" in f" {rest.lower()} ":
+            kind = "ammo"
+        if filling and not kind:
+            # Keep weapon name; ammo is separate in many breed rows.
+            pass
+        items.append(
+            BreedInventoryItem(
+                name=item_name,
+                filled=filled,
+                quantity=quantity,
+                kind=kind,
+                filling=filling,
+            )
+        )
+        if filling and quantity is not None:
+            fill_name = filling
+            fill_kind = ""
+            if fill_name.lower().endswith(" ammo"):
+                fill_name = fill_name[: -len(" ammo")].strip()
+                fill_kind = "ammo"
+            items.append(BreedInventoryItem(name=fill_name, quantity=quantity, kind=fill_kind or "ammo"))
+    return items
+
+
+def _extract_inventory_block(text: str) -> str:
+    marker = re.search(r"\{inventory\b", text, flags=re.IGNORECASE)
+    if marker is None:
+        return ""
+    start = marker.start()
+    depth = 0
+    for index in range(start, len(text)):
+        char = text[index]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start : index + 1]
+    return ""
+
+
+def _looks_like_weapon(name: str) -> bool:
+    lowered = name.lower()
+    if any(token in lowered for token in ("bandage", "shovel", "backpack", "vest", "belt", "mask", "helmet", "armor")):
+        return False
+    return True
 
 
 class CampaignScnParser:
