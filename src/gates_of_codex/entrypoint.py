@@ -137,6 +137,39 @@ def _run_write_interim_goe_table(arguments: list[str]) -> int:
     return 0
 
 
+def _run_generate_europe_mediterranean_from_goe(arguments: list[str]) -> int:
+    from .europe_mediterranean_from_goe import generate_europe_mediterranean_from_goe
+
+    parser = argparse.ArgumentParser(prog="gates-of-codex generate-europe-mediterranean-from-goe")
+    parser.add_argument(
+        "--output-dir",
+        default="godot/assets/maps/europe_mediterranean/from_goe",
+        help="Generated theatre outputs directory",
+    )
+    parser.add_argument("--pad-px", type=int, default=12, help="Padding around theatre pixel bbox")
+    args = parser.parse_args(arguments)
+    manifest = generate_europe_mediterranean_from_goe(output_dir=args.output_dir, pad_px=args.pad_px)
+    print(
+        json.dumps(
+            {
+                "ok": True,
+                "map_id": manifest["map_id"],
+                "province_count": manifest["province_count"],
+                "output": args.output_dir,
+                "texture": manifest["id_texture"]["path"],
+                "dimensions": [
+                    manifest["id_texture"]["width"],
+                    manifest["id_texture"]["height"],
+                ],
+                "source_province_count": manifest["theatre"]["source_province_count"],
+                "crop_px": manifest["theatre"]["crop_px"],
+            },
+            indent=2,
+        )
+    )
+    return 0
+
+
 def _run_generate_europe_mediterranean_prototype(arguments: list[str]) -> int:
     from .europe_mediterranean_map import generate_europe_mediterranean_prototype
 
@@ -282,9 +315,13 @@ def _run_new(arguments: list[str]) -> int:
     parser.add_argument("--faction", choices=FACTION_CHOICES, default="nato")
     parser.add_argument(
         "--map",
-        choices=["interim_goe_europe", "europe_mediterranean_prototype"],
+        choices=[
+            "interim_goe_europe",
+            "europe_mediterranean_from_goe",
+            "europe_mediterranean_prototype",
+        ],
         default="interim_goe_europe",
-        help="Strategic campaign map: GoE Europe fallback or Europe-Mediterranean prototype",
+        help="Strategic campaign map: full GoE Europe, GoE-derived EM theatre, or research prototype",
     )
     parser.add_argument("--tactical-map", help="Preferred tactical GoH map id persisted on the campaign")
     parser.add_argument("--game", help="GoH install directory persisted on the campaign")
@@ -295,10 +332,17 @@ def _run_new(arguments: list[str]) -> int:
     )
     parser.add_argument(
         "--em-manifest",
-        help="Path to europe_mediterranean prototype map_manifest.json",
+        help="Path to europe_mediterranean map_manifest.json (from_goe or prototype)",
     )
     args = parser.parse_args(arguments)
-    if args.map == "europe_mediterranean_prototype":
+    if args.map == "europe_mediterranean_from_goe":
+        from .europe_mediterranean_from_goe import build_europe_mediterranean_from_goe_campaign
+
+        state = build_europe_mediterranean_from_goe_campaign(
+            manifest_path=args.em_manifest,
+            selected_faction=Faction(args.faction),
+        )
+    elif args.map == "europe_mediterranean_prototype":
         from .europe_mediterranean_campaign import build_europe_mediterranean_prototype_campaign
 
         state = build_europe_mediterranean_prototype_campaign(
@@ -371,8 +415,10 @@ def main(argv: list[str] | None = None) -> int:
         return _run_write_interim_goe_table(remainder)
     if command == "import-strategic-map":
         return _run_import_strategic_map(remainder)
+    if command == "generate-europe-mediterranean-from-goe":
+        return _run_generate_europe_mediterranean_from_goe(remainder)
     if command in {"generate-europe-mediterranean-prototype", "generate-world-prototype"}:
-        # generate-world-prototype kept as deprecated alias during rename.
+        # Research prototype path (pack/NE experiment). Not the main production theatre.
         return _run_generate_europe_mediterranean_prototype(remainder)
     if command == "new":
         return _run_new(remainder)

@@ -2,6 +2,7 @@ extends "res://scripts/main_writeback.gd"
 
 const ColorIdMapScript = preload("res://scripts/color_id_map.gd")
 const DEFAULT_MAP_MANIFEST := "res://assets/maps/europe/interim_goe/map_manifest.json"
+const EM_FROM_GOE_MANIFEST := "res://assets/maps/europe_mediterranean/from_goe/map_manifest.json"
 const EM_MAP_MANIFEST := "res://assets/maps/europe_mediterranean/prototype/map_manifest.json"
 
 var color_id_map = ColorIdMapScript.new()
@@ -25,6 +26,8 @@ func _resolve_map_manifest_path() -> String:
 	if not exported.is_empty() and FileAccess.file_exists(exported):
 		return exported
 	var map_id := String(contract.get("map_id", ""))
+	if map_id == "europe_mediterranean_from_goe" and FileAccess.file_exists(EM_FROM_GOE_MANIFEST):
+		return EM_FROM_GOE_MANIFEST
 	if map_id == "europe_mediterranean_prototype" and FileAccess.file_exists(EM_MAP_MANIFEST):
 		return EM_MAP_MANIFEST
 	if map_id in ["goe_europe", "interim_goe_europe"] and FileAccess.file_exists(DEFAULT_MAP_MANIFEST):
@@ -32,11 +35,15 @@ func _resolve_map_manifest_path() -> String:
 	var campaign: Dictionary = snapshot.get("campaign", {})
 	var meta: Dictionary = campaign.get("map_metadata", {})
 	var configured := String(meta.get("strategic_map_id", ""))
+	if configured == "europe_mediterranean_from_goe" and FileAccess.file_exists(EM_FROM_GOE_MANIFEST):
+		return EM_FROM_GOE_MANIFEST
 	if configured == "europe_mediterranean_prototype" and FileAccess.file_exists(EM_MAP_MANIFEST):
 		return EM_MAP_MANIFEST
 	if configured in ["goe_europe", "interim_goe_europe"] and FileAccess.file_exists(DEFAULT_MAP_MANIFEST):
 		return DEFAULT_MAP_MANIFEST
-	# Prefer EM prototype when present and campaign is EM; else Europe fallback.
+	if map_id == "europe_mediterranean_from_goe" or configured == "europe_mediterranean_from_goe":
+		if FileAccess.file_exists(EM_FROM_GOE_MANIFEST):
+			return EM_FROM_GOE_MANIFEST
 	if map_id == "europe_mediterranean_prototype" or configured == "europe_mediterranean_prototype":
 		if FileAccess.file_exists(EM_MAP_MANIFEST):
 			return EM_MAP_MANIFEST

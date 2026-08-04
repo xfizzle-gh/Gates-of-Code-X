@@ -143,12 +143,13 @@ func _load_background(manifest_file_path: String) -> void:
 				var external := String(cfg.get("background_texture", "")).strip_edges()
 				if not external.is_empty():
 					candidates.append(external)
-	# 2) Manifest optional path (must not be pack art committed to repo).
+	# 2) Manifest presentation underlay (project-owned procedural preferred).
 	var bg: Dictionary = manifest.get("visual_background", {})
 	var rel := String(bg.get("path", "")).strip_edges()
 	if not rel.is_empty() and not rel.ends_with("background_pack_reference.png"):
 		candidates.append(_resolve_relative_path(manifest_file_path, rel))
-	# 3) Project-owned placeholder fixture.
+	# 3) Project-owned fixtures.
+	candidates.append(_resolve_relative_path(manifest_file_path, "background_procedural.png"))
 	candidates.append(_resolve_relative_path(manifest_file_path, "background_placeholder.png"))
 	if land_silhouette_image != null:
 		# Final guaranteed fallback built from silhouette image already loaded.

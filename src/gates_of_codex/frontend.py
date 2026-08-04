@@ -292,6 +292,7 @@ def _strategic_map_block(
             manifest = snapshot_directory / manifest
     elif snapshot_directory is not None:
         relative = {
+            "europe_mediterranean_from_goe": "assets/maps/europe_mediterranean/from_goe/map_manifest.json",
             "europe_mediterranean_prototype": "assets/maps/europe_mediterranean/prototype/map_manifest.json",
             "goe_europe": "assets/maps/europe/interim_goe/map_manifest.json",
             "interim_goe_europe": "assets/maps/europe/interim_goe/map_manifest.json",
@@ -300,6 +301,11 @@ def _strategic_map_block(
     else:
         manifest = None
     resolved = manifest.resolve() if manifest is not None else None
+    default_prov = "interim_goe_reference_asset"
+    if map_id == "europe_mediterranean_from_goe":
+        default_prov = "derived_from_interim_goe_europe_theatre_crop"
+    elif map_id == "europe_mediterranean_prototype":
+        default_prov = "research_derived_europe_mediterranean_prototype_v2"
     return {
         "enabled": bool(resolved and resolved.is_file()),
         "manifest_path": str(resolved) if resolved else "",
@@ -307,16 +313,10 @@ def _strategic_map_block(
         "map_id": map_id,
         "available_map_ids": [
             "interim_goe_europe",
+            "europe_mediterranean_from_goe",
             "europe_mediterranean_prototype",
         ],
-        "provenance": str(
-            state.map_metadata.get(
-                "strategic_map_provenance",
-                "research_derived_europe_mediterranean_prototype_v2"
-                if map_id == "europe_mediterranean_prototype"
-                else "interim_goe_reference_asset",
-            )
-        ),
+        "provenance": str(state.map_metadata.get("strategic_map_provenance", default_prov)),
         "fallback": "marker_non_authoritative",
     }
 
