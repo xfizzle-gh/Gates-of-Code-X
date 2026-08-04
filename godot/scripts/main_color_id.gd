@@ -181,22 +181,44 @@ func _draw_debug_province_ids() -> void:
 
 
 func _draw_calibration_control_points() -> void:
+	var errors: Array[float] = []
 	for raw: Variant in color_id_map.control_points:
 		if not raw is Dictionary:
 			continue
 		var row := raw as Dictionary
-		var px: Vector2 = row.get("gameplay_px", Vector2.ZERO)
-		var position := _image_to_screen(px)
-		draw_circle(position, 5.0, Color(1.0, 0.85, 0.2, 0.95))
-		draw_arc(position, 9.0, 0.0, TAU, 24, Color(1.0, 0.2, 0.2, 0.9), 2.0)
+		var target: Vector2 = row.get("target_px", row.get("gameplay_px", Vector2.ZERO))
+		var resulting: Vector2 = row.get("resulting_px", target)
+		var err := float(row.get("error_px", target.distance_to(resulting)))
+		errors.append(err)
+		var target_screen := _image_to_screen(target)
+		var result_screen := _image_to_screen(resulting)
+		# Expected project point (cyan) vs transformed pack point (orange).
+		draw_line(target_screen, result_screen, Color(1.0, 0.85, 0.2, 0.9), 2.0)
+		draw_circle(target_screen, 5.0, Color(0.25, 0.9, 1.0, 0.95))
+		draw_arc(target_screen, 9.0, 0.0, TAU, 24, Color(0.2, 0.7, 1.0, 0.9), 1.5)
+		draw_circle(result_screen, 4.5, Color(1.0, 0.45, 0.15, 0.95))
 		draw_string(
 			ThemeDB.fallback_font,
-			position + Vector2(10, -6),
-			"%s (%.0f,%.0f)" % [String(row.get("name", "?")), px.x, px.y],
+			target_screen + Vector2(10, -8),
+			"%s  err=%.1fpx" % [String(row.get("name", "?")), err],
 			HORIZONTAL_ALIGNMENT_LEFT,
 			-1,
 			12,
 			Color(1.0, 0.95, 0.75, 0.95)
+		)
+	if not errors.is_empty():
+		errors.sort()
+		var mid := errors[errors.size() / 2]
+		var mx := errors[errors.size() - 1]
+		var summary := "Calibration residuals  median=%.1fpx  max=%.1fpx  (target med<=8 max<=20)" % [mid, mx]
+		draw_string(
+			ThemeDB.fallback_font,
+			Vector2(24, 78),
+			summary,
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			13,
+			Color(1.0, 0.9, 0.5, 0.95) if mx > 20.0 or mid > 8.0 else Color(0.6, 1.0, 0.7, 0.95)
 		)
 
 

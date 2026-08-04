@@ -236,15 +236,35 @@ func _rebuild_control_points() -> void:
 		var row := raw as Dictionary
 		var lat := float(row.get("lat", 0.0))
 		var lon := float(row.get("lon", 0.0))
-		var lon_span := maxf(lon_max - lon_min, 0.0001)
-		var lat_span := maxf(lat_max - lat_min, 0.0001)
-		var x := (lon - lon_min) / lon_span * (width - 1.0)
-		var y := (lat_max - lat) / lat_span * (height - 1.0)
+		var target_arr: Array = row.get("target_px", [])
+		var result_arr: Array = row.get("resulting_px", [])
+		var source_arr: Array = row.get("source_px", [])
+		var target := Vector2.ZERO
+		if target_arr.size() >= 2:
+			target = Vector2(float(target_arr[0]), float(target_arr[1]))
+		else:
+			var lon_span := maxf(lon_max - lon_min, 0.0001)
+			var lat_span := maxf(lat_max - lat_min, 0.0001)
+			target = Vector2(
+				(lon - lon_min) / lon_span * (width - 1.0),
+				(lat_max - lat) / lat_span * (height - 1.0)
+			)
+		var resulting := target
+		if result_arr.size() >= 2:
+			resulting = Vector2(float(result_arr[0]), float(result_arr[1]))
+		var err := float(row.get("error_px", target.distance_to(resulting)))
 		control_points.append({
 			"name": String(row.get("name", "?")),
 			"lat": lat,
 			"lon": lon,
-			"gameplay_px": Vector2(x, y),
+			"source_px": Vector2(
+				float(source_arr[0]) if source_arr.size() > 0 else 0.0,
+				float(source_arr[1]) if source_arr.size() > 1 else 0.0
+			),
+			"target_px": target,
+			"resulting_px": resulting,
+			"error_px": err,
+			"gameplay_px": target,
 		})
 
 

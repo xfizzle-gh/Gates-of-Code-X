@@ -43,7 +43,7 @@ PR #63 is a pipeline checkpoint only. Do not describe the map or PR as finished.
 **Debug**
 
 - `I` — raw color-ID + province IDs/anchors  
-- `C` — calibration: background + Natural Earth silhouette + control points  
+- `C` — measured calibration: background + NE silhouette + target (cyan) vs resulting (orange) points with px error (median≤8, max≤20)
 
 Do not paint solid full-opacity ownership fills over the background.
 
