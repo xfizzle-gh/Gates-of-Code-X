@@ -1,0 +1,6630 @@
+{
+  "schema": "gates-of-codex.unclassified-unit-tokens",
+  "schema_version": 1,
+  "stack_signature": "3610d0a1b33de2cb20f62540352a134e0a5fcbd9e42bc724dd2f7734613d2a13",
+  "tokens": [
+    {
+      "count": 230,
+      "token": "vehicleman",
+      "unit_names": [
+        "2c9",
+        "2s19_msta_ua",
+        "2s1_gvozdika_ukr",
+        "2s3m_akatsiya_ukr",
+        "2s6_ukr",
+        "2s7m_malka_ukr",
+        "9k35_strela-10_ukr",
+        "9s18_kupol_ukr",
+        "aaleo_n",
+        "aaleo_ukr",
+        "amx10rc",
+        "arf_crew",
+        "as90",
+        "as90_ua",
+        "bmd2_ukr",
+        "bmd4",
+        "bmd_4m",
+        "bmp-1_vsu",
+        "bmp1p_vsu",
+        "bmp2_ukr",
+        "bmp3_ukr",
+        "boxer_mgs",
+        "btr3e",
+        "btr4e",
+        "btr80_ukr",
+        "btr80a_ukr",
+        "btr_mdm",
+        "buk_m1_ukr",
+        "c1_ariete_pso",
+        "centauro_105_n",
+        "centauro_105_ukr",
+        "centauro_rgo",
+        "challenger2",
+        "challenger2_n",
+        "challenger2_tes",
+        "cv_9030",
+        "cv_9035",
+        "cv_90_mk_iv",
+        "d21_11_mgun",
+        "d21_21_ammo",
+        "fv432_mk2",
+        "k2_batch_i",
+        "k2_batch_i_era",
+        "kipri1",
+        "kipri2",
+        "leclerc",
+        "leclerc_azur",
+        "leclerc_sxxi",
+        "leopard-2a5",
+        "leopard_1a5_kontakt-1_era",
+        "leopard_1a5_n",
+        "leopard_1a5_ukr",
+        "leopard_2_pl",
+        "leopard_2a4_era",
+        "leopard_2a7+",
+        "leopard_c2_mexas",
+        "leopord_2a4",
+        "leopord_2a4m",
+        "leopord_2a6",
+        "leopord_2a6_era",
+        "leopord_2a6_ma3",
+        "leopord_2a6_n",
+        "m-270_gb",
+        "m109_paladin",
+        "m1126_jav",
+        "m1126_mk19",
+        "m113_vsu",
+        "m113a3",
+        "m1a1",
+        "m1a1_sa",
+        "m270_n",
+        "m2a2_ods_bradley",
+        "m2a2_ods_bradley_arat",
+        "marder_1a3",
+        "marder_1a3_n",
+        "mars",
+        "maxxpro",
+        "mp/nato/2022s/gb_vehicleman",
+        "mp/nato/2022s/nato_vehicleman",
+        "mp/rusa/2022s/ldnr_vehicleman",
+        "mp/rusa/2022s/vdv_vehicleman",
+        "mp/rusa/2022s/wgn_vehicleman",
+        "mp/ukr/2022s/ukr_vehicleman",
+        "mp/ukr/2022s/ukr_vehicleman_cmd",
+        "mrls_atacms_n",
+        "mtlb_new_vsu",
+        "otomatic",
+        "puma",
+        "puma_vjtf",
+        "pzh2000_n",
+        "pzh2000_ukr",
+        "rosomak",
+        "squad_3rd_rozv_hatred(ukr)",
+        "squad_95dhsv_2s1(ukr)",
+        "squad_95dhsv_2s3(ukr)",
+        "squad_95dhsv_bmp2(ukr)",
+        "squad_95dhsv_btr3(ukr)",
+        "squad_95dhsv_btr80(ukr)",
+        "squad_95dhsv_m1126_jav(ukr)",
+        "squad_95dhsv_m1126_mk19(ukr)",
+        "squad_95dhsv_marder(ukr)",
+        "squad_95dhsv_mtlb(ukr)",
+        "squad_95dhsv_t80bv(ukr)",
+        "squad_95dhsv_tzz2(ukr)",
+        "squad_arf_ariete(nato)",
+        "squad_arf_centauro105(nato)",
+        "squad_arf_centauro_rgo(nato)",
+        "squad_arf_cv9035_rifle(nato)",
+        "squad_arf_cv9040_mkiv_rifle(nato)",
+        "squad_arf_cv9040_rifle(nato)",
+        "squad_arf_ypr765_rifle(nato)",
+        "squad_bmp1p_azov3(ukr)",
+        "squad_bmp2_azov3(ukr)",
+        "squad_bmp2m_wgn(rusa)",
+        "squad_bmp2m_wgn_ai",
+        "squad_btr82a_wgn_ai",
+        "squad_btr90_rusc(rusa)",
+        "squad_dsk_boxer_geb(nato)",
+        "squad_dsk_boxer_gmg_geb(nato)",
+        "squad_dsk_tiger_at(nato)",
+        "squad_dsk_tiger_rkt(nato)",
+        "squad_efp_2s1(nato)",
+        "squad_efp_k2gf(nato)",
+        "squad_efp_leopard2pl(nato)",
+        "squad_efp_rm70(nato)",
+        "squad_efp_t72(nato)",
+        "squad_gb3_art_as90(nato)",
+        "squad_gb3_art_m270(nato)",
+        "squad_gb3_mech_rifle_fv510_milan(nato)",
+        "squad_gb3_mot_rifle_boxer(nato)",
+        "squad_gb3_scouts_ajax(nato)",
+        "squad_gb3_tank_challenger(nato)",
+        "squad_gb3_tank_challenger_tes(nato)",
+        "squad_gru_razv_btr80a(rusa)",
+        "squad_kraken_bmp2(ukr)",
+        "squad_kraken_btr80a(ukr)",
+        "squad_kraken_m113(ukr)",
+        "squad_kraken_t72amt(ukr)",
+        "squad_kraken_t80bv(ukr)",
+        "squad_ksk_nh90(nato)",
+        "squad_ksk_wiesel_gun(nato)",
+        "squad_ksk_wiesel_motar(nato)",
+        "squad_ksk_wiesel_tow(nato)",
+        "squad_m113a3_azov3(ukr)",
+        "squad_pz10_boxer_mgs(nato)",
+        "squad_pz10_cv9030_rifle(nato)",
+        "squad_pz10_fennek(nato)",
+        "squad_pz10_fennek_gmg(nato)",
+        "squad_pz10_leopard2a6(nato)",
+        "squad_pz10_leopard2a6_ma3(nato)",
+        "squad_pz10_leopard2a7(nato)",
+        "squad_pz10_mars(nato)",
+        "squad_pz10_puma_mells_rifle(nato)",
+        "squad_pz10_pzh2000(nato)",
+        "squad_pz10_ypr765_rifle(nato)",
+        "squad_sto_mtlb_2022(rusa)",
+        "squad_ter_bmp1_2022(ukr)",
+        "squad_ter_bmp1p_2022(ukr)",
+        "squad_ter_m113_2022(ukr)",
+        "squad_ukr21_2s1(ukr)",
+        "squad_ukr21_9040c(ukr)",
+        "squad_ukr21_9040c_nlaw(ukr)",
+        "squad_ukr21_leopard1a5(ukr)",
+        "squad_ukr21_leopard1a5_era(ukr)",
+        "squad_ukr21_leopard2a4(ukr)",
+        "squad_ukr21_leopard2a4_era(ukr)",
+        "squad_ukr21_leopard2a6(ukr)",
+        "squad_ukr21_leopard2a6_era(ukr)",
+        "squad_ukr21_strv122(ukr)",
+        "squad_ukr21_strv122_era(ukr)",
+        "squad_ukr47_bm21(ukr)",
+        "squad_ukr47_bmp1_2022(ukr)",
+        "squad_ukr47_m109(ukr)",
+        "squad_ukr47_m113_2022(ukr)",
+        "squad_ukr47_m1a1(ukr)",
+        "squad_ukr47_m1a1_sa(ukr)",
+        "squad_ukr47_m2a2_2022(ukr)",
+        "squad_ukr47_m2a2_arat_2022(ukr)",
+        "squad_ukr47_t64bv(ukr)",
+        "squad_ukr93_2s1(ukr)",
+        "squad_ukr93_m109a6(ukr)",
+        "squad_ukr93_mech_bmp1(ukr)",
+        "squad_ukr93_mech_bmp2(ukr)",
+        "squad_ukr93_mech_cv90(ukr)",
+        "squad_ukr93_mech_m113(ukr)",
+        "squad_ukr93_t64bv(ukr)",
+        "squad_ukr93_t80bv(ukr)",
+        "squad_ukr93_t80u(ukr)",
+        "squad_vdv106_mech_bmd4(rusa)",
+        "squad_vdv45_razv_btr80a(rusa)",
+        "squad_vdv76_2s25(rusa)",
+        "squad_vdv76_mech_bmd4(rusa)",
+        "squad_vdv76_mech_btrmdm(rusa)",
+        "squad_vdv76_t72b3(rusa)",
+        "squad_vdv76_t72b3_2024(rusa)",
+        "squad_vdv76_t90m(rusa)",
+        "strf9040c",
+        "strf9040c_n",
+        "strv_122",
+        "strv_122_era",
+        "strv_122_n",
+        "t-64bv_ukr",
+        "t62m1_ukr",
+        "t64a_ukr",
+        "t64bv2017",
+        "t64bv2022",
+        "t64bv2024",
+        "t72a_solntsepek_ukr",
+        "t72a_ukr",
+        "t72amt_mod2017",
+        "t72amt_mod2022",
+        "t72b3_ukr",
+        "t72b_ukr",
+        "t80bv_2018",
+        "t80bv_ukr",
+        "t80bv_wgn",
+        "t80u_ukr",
+        "t84_120_yatagan",
+        "t84_oplot_m",
+        "t90a_ukr",
+        "t_55m_fin",
+        "t_64_bv-turtletank_ukr",
+        "typhoon_ads",
+        "typhoon_vdv",
+        "ugv_mine",
+        "ukr_vehicleman",
+        "ural_ammo_vsu",
+        "ural_vsu",
+        "warrior",
+        "ypr_765"
+      ]
+    },
+    {
+      "count": 166,
+      "token": "squadlead",
+      "unit_names": [
+        "13dhsv_c130_paratrooper",
+        "c130_paratrooper_82nd",
+        "c130_paratrooper_dsk",
+        "c130_paratrooper_dsk_eng",
+        "c130_wiesel_gun",
+        "c130_wiesel_motar",
+        "c130_wiesel_tow",
+        "mp/nato/2022s/1ad_squadlead",
+        "mp/nato/2022s/82nd_squadlead",
+        "mp/nato/2022s/dg_squadlead",
+        "mp/nato/2022s/fj_squadlead",
+        "mp/nato/2022s/fr_squadlead",
+        "mp/nato/2022s/gb_squadlead",
+        "mp/nato/2022s/gbpf_squadlead",
+        "mp/nato/2022s/inf2_squadlead",
+        "mp/nato/2022s/inf2_squadlead_ngsw",
+        "mp/nato/2022s/jager_squadlead",
+        "mp/nato/2022s/lrs_squadlead",
+        "mp/nato/2022s/nato_squadlead",
+        "mp/nato/2022s/pzgd_squadlead",
+        "mp/nato/2022s/rg_squadlead",
+        "mp/nato/2022s/rng_squadlead",
+        "mp/nato/2022s/rng_squadlead_r",
+        "mp/rusa/2022s/106vdv_squadlead",
+        "mp/rusa/2022s/45vdv_squadlead",
+        "mp/rusa/2022s/dpr100_squadlead",
+        "mp/rusa/2022s/kor_squadlead",
+        "mp/rusa/2022s/lud_squadlead",
+        "mp/rusa/2022s/rus110_squadlead",
+        "mp/rusa/2022s/rus114_rez_squadlead",
+        "mp/rusa/2022s/rus114_rez_squadlead_assault",
+        "mp/rusa/2022s/rus114_squadlead",
+        "mp/rusa/2022s/rus150_squadlead",
+        "mp/rusa/2022s/rus155_squadlead",
+        "mp/rusa/2022s/rus4_squadlead",
+        "mp/rusa/2022s/rus80_squadlead",
+        "mp/rusa/2022s/rus80_squadlead_sso",
+        "mp/rusa/2022s/rus90_saperi_squadlead",
+        "mp/rusa/2022s/rus90_squadlead",
+        "mp/rusa/2022s/rusc_squadlead",
+        "mp/rusa/2022s/spd_squadlead",
+        "mp/rusa/2022s/spz_squadlead",
+        "mp/rusa/2022s/sso_squadlead",
+        "mp/rusa/2022s/sto_squadlead",
+        "mp/rusa/2022s/vdv76_squadlead",
+        "mp/rusa/2022s/wgn2_squadlead",
+        "mp/rusa/2022s/wgn_squadlead",
+        "mp/ukr/2022s/azov3_squadlead",
+        "mp/ukr/2022s/azov3_squadlead_h",
+        "mp/ukr/2022s/azov3_squadlead_sso",
+        "mp/ukr/2022s/demon_squadlead",
+        "mp/ukr/2022s/hur_squadlead",
+        "mp/ukr/2022s/kra_squadlead",
+        "mp/ukr/2022s/nato_squadlead",
+        "mp/ukr/2022s/ter_squadlead",
+        "mp/ukr/2022s/ukr13_squadlead",
+        "mp/ukr/2022s/ukr211_squadlead",
+        "mp/ukr/2022s/ukr21_squadlead",
+        "mp/ukr/2022s/ukr47_squadlead",
+        "mp/ukr/2022s/ukr47_squadlead_assault",
+        "mp/ukr/2022s/ukr82_squadlead",
+        "mp/ukr/2022s/ukr93_squadlead",
+        "mp/ukr/2022s/ukr_squadlead",
+        "squad_3rd_rozv_hatred(ukr)",
+        "squad_82nd_lrs(nato)",
+        "squad_95dhsv_bmp2(ukr)",
+        "squad_95dhsv_btr3(ukr)",
+        "squad_95dhsv_btr80(ukr)",
+        "squad_95dhsv_m1126_jav(ukr)",
+        "squad_95dhsv_m1126_mk19(ukr)",
+        "squad_95dhsv_marder(ukr)",
+        "squad_95dhsv_mi17(ukr)",
+        "squad_95dhsv_mi24(ukr)",
+        "squad_95dhsv_mtlb(ukr)",
+        "squad_arf_cv9035_rifle(nato)",
+        "squad_arf_cv9040_mkiv_rifle(nato)",
+        "squad_arf_cv9040_rifle(nato)",
+        "squad_arf_kipri_scout(nato)",
+        "squad_arf_rifle(nato)",
+        "squad_arf_rifle_spike(nato)",
+        "squad_arf_scout",
+        "squad_arf_scout(nato)",
+        "squad_arf_ypr765_rifle(nato)",
+        "squad_bmp1p_azov3(ukr)",
+        "squad_bmp2_azov3(ukr)",
+        "squad_bmp2m_wgn(rusa)",
+        "squad_bmp2m_wgn_ai",
+        "squad_btr82a_wgn_ai",
+        "squad_btr90_rusc(rusa)",
+        "squad_dsk_boxer_geb(nato)",
+        "squad_dsk_boxer_gmg_geb(nato)",
+        "squad_dsk_ksk",
+        "squad_dsk_ksk_at",
+        "squad_dsk_rifle",
+        "squad_dsk_rifle_pzf3",
+        "squad_dsk_rifle_spike",
+        "squad_gb1_eng",
+        "squad_gb1_eng_at",
+        "squad_gb1_rifle(nato)",
+        "squad_gb1_rifle_nlaw(nato)",
+        "squad_gb1_scout",
+        "squad_gb3_eng",
+        "squad_gb3_eng_at",
+        "squad_gb3_mech_rifle_fv510_milan(nato)",
+        "squad_gb3_mot_rifle_boxer(nato)",
+        "squad_gb3_mot_rifle_cougar(nato)",
+        "squad_gb3_rifle(nato)",
+        "squad_gb3_rifle_javelin",
+        "squad_gb3_rifle_nlaw(nato)",
+        "squad_gb3_scouts_nlaw",
+        "squad_gb3_scouts_ranger(nato)",
+        "squad_gru_razv_btr80a(rusa)",
+        "squad_gru_razv_tigr",
+        "squad_gru_razv_tigr_rus4",
+        "squad_gru_razv_typhoon(rusa)",
+        "squad_inf2_light_at",
+        "squad_inf2_light_rifle(nato)",
+        "squad_inf2_recon",
+        "squad_inf2_recon_m82",
+        "squad_inf2_rifle(nato)",
+        "squad_inf2_rifle_m3(nato)",
+        "squad_inf2_rifle_ngsw(nato)",
+        "squad_kraken_bmp2(ukr)",
+        "squad_kraken_btr80a(ukr)",
+        "squad_kraken_kozak2(ukr)",
+        "squad_kraken_m113(ukr)",
+        "squad_ksk_nh90(nato)",
+        "squad_ksk_sniper",
+        "squad_luft_nh90_geb(nato)",
+        "squad_m113a3_azov3(ukr)",
+        "squad_pz10_boxer_mgs(nato)",
+        "squad_pz10_cv9030_rifle(nato)",
+        "squad_pz10_puma_mells_rifle(nato)",
+        "squad_pz10_rec",
+        "squad_pz10_rec(nato)",
+        "squad_pz10_rifle(nato)",
+        "squad_pz10_rifle_pzf3",
+        "squad_pz10_ypr765_rifle(nato)",
+        "squad_rus155_razv_tigr",
+        "squad_rus155_razv_tigr(rusa)",
+        "squad_rus90_razv_tiger",
+        "squad_rus90_razv_tiger(rusa)",
+        "squad_tank1_fireteam(nato)",
+        "squad_tank1_fireteam_javelin",
+        "squad_tank1_recon",
+        "squad_ter_bmp1_2022(ukr)",
+        "squad_ter_bmp1p_2022(ukr)",
+        "squad_ter_m113_2022(ukr)",
+        "squad_ukr21_9040c(ukr)",
+        "squad_ukr21_9040c_nlaw(ukr)",
+        "squad_ukr47_bmp1_2022(ukr)",
+        "squad_ukr47_m113_2022(ukr)",
+        "squad_ukr47_m2a2_2022(ukr)",
+        "squad_ukr47_m2a2_arat_2022(ukr)",
+        "squad_ukr93_mech_bmp1(ukr)",
+        "squad_ukr93_mech_bmp2(ukr)",
+        "squad_ukr93_mech_cv90(ukr)",
+        "squad_ukr93_mech_m113(ukr)",
+        "squad_ukr93_razv_arty(ukr)",
+        "squad_ukr93_razv_novator(ukr)",
+        "squad_vdv106_mech_bmd4(rusa)",
+        "squad_vdv45_razv_btr80a(rusa)",
+        "squad_vdv45_razv_tigr",
+        "squad_vdv45_razv_typhoon(rusa)",
+        "squad_vdv76_mech_bmd4(rusa)",
+        "squad_vdv76_mech_btrmdm(rusa)"
+      ]
+    },
+    {
+      "count": 153,
+      "token": "rifleman",
+      "unit_names": [
+        "13dhsv_c130_paratrooper",
+        "c130_paratrooper_82nd",
+        "c130_paratrooper_dsk",
+        "c130_paratrooper_dsk_eng",
+        "c130_wiesel_gun",
+        "c130_wiesel_motar",
+        "c130_wiesel_tow",
+        "defense_mg_mt12",
+        "defense_mg_nsv",
+        "defense_mk19_tripod",
+        "mp/nato/2022s/1ad_rifleman",
+        "mp/nato/2022s/82nd_rifleman",
+        "mp/nato/2022s/dg_rifleman",
+        "mp/nato/2022s/fj_rifleman",
+        "mp/nato/2022s/fr_rifleman",
+        "mp/nato/2022s/gb_rifleman",
+        "mp/nato/2022s/gbpf_rifleman",
+        "mp/nato/2022s/inf2_rifleman",
+        "mp/nato/2022s/inf2_rifleman_ngsw",
+        "mp/nato/2022s/jager_rifleman",
+        "mp/nato/2022s/jager_rifleman_puma",
+        "mp/nato/2022s/lrs_rifleman",
+        "mp/nato/2022s/nato_rifleman",
+        "mp/nato/2022s/pzgd_rifleman",
+        "mp/nato/2022s/pzgd_rifleman_puma",
+        "mp/nato/2022s/rg_rifleman",
+        "mp/nato/2022s/rng_rifleman",
+        "mp/nato/2022s/rng_rifleman_r",
+        "mp/rusa/2022s/106vdv_rifleman",
+        "mp/rusa/2022s/45vdv_rifleman",
+        "mp/rusa/2022s/dpr100_rifleman",
+        "mp/rusa/2022s/kor_rifleman",
+        "mp/rusa/2022s/lud_rifleman",
+        "mp/rusa/2022s/rus110_rifleman",
+        "mp/rusa/2022s/rus114_rez_rifleman",
+        "mp/rusa/2022s/rus114_rez_rifleman_assault",
+        "mp/rusa/2022s/rus114_rifleman",
+        "mp/rusa/2022s/rus150_rifleman",
+        "mp/rusa/2022s/rus155_rifleman",
+        "mp/rusa/2022s/rus4_rifleman",
+        "mp/rusa/2022s/rus80_rifleman",
+        "mp/rusa/2022s/rus80_rifleman_sso",
+        "mp/rusa/2022s/rus90_rifleman",
+        "mp/rusa/2022s/rus90_rifleman_assault",
+        "mp/rusa/2022s/rusc_rifleman",
+        "mp/rusa/2022s/spd_rifleman",
+        "mp/rusa/2022s/spz_rifleman",
+        "mp/rusa/2022s/sso_rifleman",
+        "mp/rusa/2022s/sto_rifleman",
+        "mp/rusa/2022s/vdv76_rifleman",
+        "mp/rusa/2022s/wgn2_rifleman",
+        "mp/rusa/2022s/wgn_rifleman",
+        "mp/ukr/2022s/azov3_rifleman",
+        "mp/ukr/2022s/azov3_rifleman_h",
+        "mp/ukr/2022s/azov3_rifleman_sso",
+        "mp/ukr/2022s/demon_rifleman",
+        "mp/ukr/2022s/hur_rifleman",
+        "mp/ukr/2022s/kra_rifleman",
+        "mp/ukr/2022s/nato_rifleman",
+        "mp/ukr/2022s/ter_rifleman",
+        "mp/ukr/2022s/ukr13_rifleman",
+        "mp/ukr/2022s/ukr21_rifleman",
+        "mp/ukr/2022s/ukr21_rifleman_nlaw",
+        "mp/ukr/2022s/ukr47_rifleman",
+        "mp/ukr/2022s/ukr47_rifleman_assault",
+        "mp/ukr/2022s/ukr82_rifleman",
+        "mp/ukr/2022s/ukr93_rifleman",
+        "mp/ukr/2022s/ukr_rifleman",
+        "squad_3rd_rozv_hatred(ukr)",
+        "squad_82nd_lrs(nato)",
+        "squad_95dhsv_bmp2(ukr)",
+        "squad_95dhsv_btr3(ukr)",
+        "squad_95dhsv_btr80(ukr)",
+        "squad_95dhsv_m1126_jav(ukr)",
+        "squad_95dhsv_m1126_mk19(ukr)",
+        "squad_95dhsv_marder(ukr)",
+        "squad_95dhsv_mi17(ukr)",
+        "squad_95dhsv_mi24(ukr)",
+        "squad_95dhsv_mtlb(ukr)",
+        "squad_arf_cv9035_rifle(nato)",
+        "squad_arf_cv9040_mkiv_rifle(nato)",
+        "squad_arf_cv9040_rifle(nato)",
+        "squad_arf_kipri_scout(nato)",
+        "squad_arf_rifle(nato)",
+        "squad_arf_rifle_spike(nato)",
+        "squad_arf_ypr765_rifle(nato)",
+        "squad_bmp1p_azov3(ukr)",
+        "squad_bmp2_azov3(ukr)",
+        "squad_bmp2m_wgn(rusa)",
+        "squad_bmp2m_wgn_ai",
+        "squad_btr82a_wgn_ai",
+        "squad_btr90_rusc(rusa)",
+        "squad_dsk_ksk",
+        "squad_dsk_ksk_at",
+        "squad_dsk_rifle",
+        "squad_dsk_rifle_pzf3",
+        "squad_dsk_rifle_spike",
+        "squad_gb1_rifle(nato)",
+        "squad_gb1_rifle_nlaw(nato)",
+        "squad_gb1_scout",
+        "squad_gb3_mech_rifle_fv510_milan(nato)",
+        "squad_gb3_mot_rifle_boxer(nato)",
+        "squad_gb3_mot_rifle_cougar(nato)",
+        "squad_gb3_rifle(nato)",
+        "squad_gb3_rifle_at_javelin",
+        "squad_gb3_rifle_at_javelin(nato)",
+        "squad_gb3_rifle_javelin",
+        "squad_gb3_rifle_mg",
+        "squad_gb3_rifle_mg(nato)",
+        "squad_gb3_rifle_nlaw(nato)",
+        "squad_gb3_scouts_ranger(nato)",
+        "squad_gru_razv_btr80a(rusa)",
+        "squad_gru_razv_typhoon(rusa)",
+        "squad_inf2_light_rifle(nato)",
+        "squad_inf2_rifle(nato)",
+        "squad_inf2_rifle_m3(nato)",
+        "squad_inf2_rifle_ngsw(nato)",
+        "squad_kraken_bmp2(ukr)",
+        "squad_kraken_btr80a(ukr)",
+        "squad_kraken_kozak2(ukr)",
+        "squad_kraken_m113(ukr)",
+        "squad_ksk_nh90(nato)",
+        "squad_ksk_sniper",
+        "squad_luft_nh90_geb(nato)",
+        "squad_m113a3_azov3(ukr)",
+        "squad_pz10_cv9030_rifle(nato)",
+        "squad_pz10_fireteam_at",
+        "squad_pz10_puma_mells_rifle(nato)",
+        "squad_pz10_rifle(nato)",
+        "squad_pz10_rifle_pzf3",
+        "squad_pz10_ypr765_rifle(nato)",
+        "squad_tank1_fireteam(nato)",
+        "squad_ter_bmp1_2022(ukr)",
+        "squad_ter_bmp1p_2022(ukr)",
+        "squad_ter_m113_2022(ukr)",
+        "squad_ukr21_9040c(ukr)",
+        "squad_ukr21_9040c_nlaw(ukr)",
+        "squad_ukr47_bmp1_2022(ukr)",
+        "squad_ukr47_m113_2022(ukr)",
+        "squad_ukr47_m2a2_2022(ukr)",
+        "squad_ukr47_m2a2_arat_2022(ukr)",
+        "squad_ukr93_mech_bmp1(ukr)",
+        "squad_ukr93_mech_bmp2(ukr)",
+        "squad_ukr93_mech_cv90(ukr)",
+        "squad_ukr93_mech_m113(ukr)",
+        "squad_ukr93_razv_arty(ukr)",
+        "squad_ukr93_razv_novator(ukr)",
+        "squad_ukr_cmd(ukr)",
+        "squad_vdv106_mech_bmd4(rusa)",
+        "squad_vdv45_razv_btr80a(rusa)",
+        "squad_vdv45_razv_typhoon(rusa)",
+        "squad_vdv76_mech_bmd4(rusa)",
+        "squad_vdv76_mech_btrmdm(rusa)"
+      ]
+    },
+    {
+      "count": 142,
+      "token": "doctrine",
+      "unit_names": [
+        "doctrine(nato)",
+        "doctrine(rusa)",
+        "doctrine(ukr)",
+        "doctrine_squad_211th_recon(ukr)",
+        "doctrine_squad_21th_9040(ukr)",
+        "doctrine_squad_25th_assault(ukr)",
+        "doctrine_squad_3rd(ukr)",
+        "doctrine_squad_3rd_at(ukr)",
+        "doctrine_squad_3rd_bmp1(ukr)",
+        "doctrine_squad_3rd_mg(ukr)",
+        "doctrine_squad_3rd_saperi(ukr)",
+        "doctrine_squad_3rd_svd(ukr)",
+        "doctrine_squad_47th(ukr)",
+        "doctrine_squad_47th_bmp1(ukr)",
+        "doctrine_squad_47th_javelin(ukr)",
+        "doctrine_squad_47th_m2a2(ukr)",
+        "doctrine_squad_47th_mg(ukr)",
+        "doctrine_squad_47th_weapon(ukr)",
+        "doctrine_squad_93th(ukr)",
+        "doctrine_squad_93th_bmp2(ukr)",
+        "doctrine_squad_93th_btr80a(ukr)",
+        "doctrine_squad_93th_demon(ukr)",
+        "doctrine_squad_93th_m113(ukr)",
+        "doctrine_squad_93th_mg(ukr)",
+        "doctrine_squad_93th_novator(ukr)",
+        "doctrine_squad_93th_recon(ukr)",
+        "doctrine_squad_93th_weapon(ukr)",
+        "doctrine_squad_desan(rusa)",
+        "doctrine_squad_desan_saperi(rusa)",
+        "doctrine_squad_dsh(rusa)",
+        "doctrine_squad_dsh_bmd2(rusa)",
+        "doctrine_squad_dsh_bmd4(rusa)",
+        "doctrine_squad_dsh_btrd(rusa)",
+        "doctrine_squad_dsh_btrd_zu(rusa)",
+        "doctrine_squad_dsh_kornet(rusa)",
+        "doctrine_squad_dsh_mg(rusa)",
+        "doctrine_squad_dsh_razvedka(rusa)",
+        "doctrine_squad_rus114(rusa)",
+        "doctrine_squad_rus114_bmp2(rusa)",
+        "doctrine_squad_rus114_btr80a(rusa)",
+        "doctrine_squad_rus114_mtlb(rusa)",
+        "doctrine_squad_rus114_recon(rusa)",
+        "doctrine_squad_rus114_saperi(rusa)",
+        "doctrine_squad_rus114_saperi_bmp2(rusa)",
+        "doctrine_squad_rus114_t72b(rusa)",
+        "doctrine_squad_rus114_t80bvm(rusa)",
+        "doctrine_squad_rus114_tbg(rusa)",
+        "doctrine_squad_rus114_weapon(rusa)",
+        "doctrine_squad_rus155(rusa)",
+        "doctrine_squad_rus155_assault_og7v(rusa)",
+        "doctrine_squad_rus155_assault_rhsg(rusa)",
+        "doctrine_squad_rus155_bmp3(rusa)",
+        "doctrine_squad_rus155_btr80(rusa)",
+        "doctrine_squad_rus155_btr90(rusa)",
+        "doctrine_squad_rus155_mg(rusa)",
+        "doctrine_squad_rus155_mtlb(rusa)",
+        "doctrine_squad_rus155_svd(rusa)",
+        "doctrine_squad_rus155_t80bv(rusa)",
+        "doctrine_squad_rus90(rusa)",
+        "doctrine_squad_rus90_9m113(rusa)",
+        "doctrine_squad_rus90_bmp1(rusa)",
+        "doctrine_squad_rus90_bmp2(rusa)",
+        "doctrine_squad_rus90_btr80a(rusa)",
+        "doctrine_squad_rus90_mg(rusa)",
+        "doctrine_squad_rus90_mtlb(rusa)",
+        "doctrine_squad_rus90_recon(rusa)",
+        "doctrine_squad_rus90_rpg29(rusa)",
+        "doctrine_squad_rus90_saperi(rusa)",
+        "doctrine_squad_rus90_svd(rusa)",
+        "doctrine_vehicle_2s1_3rd(ukr)",
+        "doctrine_vehicle_2s1_rus114(rusa)",
+        "doctrine_vehicle_2s1_rus155(rusa)",
+        "doctrine_vehicle_2s1_rus90(rusa)",
+        "doctrine_vehicle_2s1_ukr93(ukr)",
+        "doctrine_vehicle_2s25(rusa)",
+        "doctrine_vehicle_2s3(ukr)",
+        "doctrine_vehicle_2s3_rus90(rusa)",
+        "doctrine_vehicle_Bradley_47th(ukr)",
+        "doctrine_vehicle_ampv(nato)",
+        "doctrine_vehicle_bm21_nplm(rusa)",
+        "doctrine_vehicle_bm21_nplm(ukr)",
+        "doctrine_vehicle_bm21_rus114(rusa)",
+        "doctrine_vehicle_bm21_ukr21(ukr)",
+        "doctrine_vehicle_bm21_ukr93(ukr)",
+        "doctrine_vehicle_bm27(rusa)",
+        "doctrine_vehicle_bmd2(rusa)",
+        "doctrine_vehicle_bmd4m(rusa)",
+        "doctrine_vehicle_bmp2_rus114(rusa)",
+        "doctrine_vehicle_bmp2_rus90(rusa)",
+        "doctrine_vehicle_bmp2_ukr93(ukr)",
+        "doctrine_vehicle_bmp31(rusa)",
+        "doctrine_vehicle_fh70(nato)",
+        "doctrine_vehicle_leopard2a5(nato)",
+        "doctrine_vehicle_leopard2a6(nato)",
+        "doctrine_vehicle_leopard2a6(ukr)",
+        "doctrine_vehicle_leopard2a6_era(ukr)",
+        "doctrine_vehicle_leopard2a7(nato)",
+        "doctrine_vehicle_m109a6(ukr)",
+        "doctrine_vehicle_m109a6_47(ukr)",
+        "doctrine_vehicle_m109a6_ukr93(ukr)",
+        "doctrine_vehicle_m119(nato)",
+        "doctrine_vehicle_m1a1(ukr)",
+        "doctrine_vehicle_m1a1sa(nato)",
+        "doctrine_vehicle_m1a1sa(ukr)",
+        "doctrine_vehicle_m1a1sa_era(ukr)",
+        "doctrine_vehicle_m1a2sep(nato)",
+        "doctrine_vehicle_m1a2sepv2(nato)",
+        "doctrine_vehicle_m1a2tusk(nato)",
+        "doctrine_vehicle_m2a2ods(ukr)",
+        "doctrine_vehicle_m2a3(nato)",
+        "doctrine_vehicle_m3a3(nato)",
+        "doctrine_vehicle_marder(nato)",
+        "doctrine_vehicle_mtlb_mt12(rusa)",
+        "doctrine_vehicle_puma(nato)",
+        "doctrine_vehicle_pzh2000(nato)",
+        "doctrine_vehicle_roland(nato)",
+        "doctrine_vehicle_strv122(ukr)",
+        "doctrine_vehicle_t64bv_2022_3rd(ukr)",
+        "doctrine_vehicle_t64bv_rus114(rusa)",
+        "doctrine_vehicle_t64bv_ukr47(ukr)",
+        "doctrine_vehicle_t64bv_ukr93(ukr)",
+        "doctrine_vehicle_t72aa_rus90(rusa)",
+        "doctrine_vehicle_t72amt_3rd(ukr)",
+        "doctrine_vehicle_t72b3_2011_rus90(rusa)",
+        "doctrine_vehicle_t72b3_rus90(rusa)",
+        "doctrine_vehicle_t72b3_vdv(rusa)",
+        "doctrine_vehicle_t72b_3rd(ukr)",
+        "doctrine_vehicle_t72bb_rus90(rusa)",
+        "doctrine_vehicle_t72bu_rus114(rusa)",
+        "doctrine_vehicle_t80bv2023(rusa)",
+        "doctrine_vehicle_t80bv_ukr93(ukr)",
+        "doctrine_vehicle_t80bvm(rusa)",
+        "doctrine_vehicle_t80bvm_ukr93(ukr)",
+        "doctrine_vehicle_t80u(ukr)",
+        "doctrine_vehicle_t84(ukr)",
+        "doctrine_vehicle_t84_120(ukr)",
+        "doctrine_vehicle_t90m_rus90(rusa)",
+        "doctrine_vehicle_tornado(rusa)",
+        "doctrine_vehicle_tos_rus90(rusa)",
+        "doctrine_vehicle_typhoon_45vdv(rusa)",
+        "doctrine_vehicle_typhoon_vdv(rusa)",
+        "doctrine_vehicle_wiesel(nato)"
+      ]
+    },
+    {
+      "count": 84,
+      "token": "inf",
+      "unit_names": [
+        "21th_inf_razv",
+        "21th_inf_razv_m107",
+        "21th_inf_rifle",
+        "21th_inf_rifle_mg",
+        "21th_inf_rifle_nlaw",
+        "21th_inf_rifle_og7v",
+        "21th_inf_saperi",
+        "21th_inf_saperi_at",
+        "47th_inf_at(ukr)",
+        "47th_inf_javelin(ukr)",
+        "47th_inf_pkm(ukr)",
+        "47th_inf_razv_211",
+        "47th_inf_rifle(ukr)",
+        "47th_inf_saperi",
+        "47th_inf_saperi_at",
+        "47th_inf_sniper(ukr)",
+        "47th_inf_sniper_m107(ukr)",
+        "93th_alcatraz_inf_rpg26(ukr)",
+        "hur_inf_javelin",
+        "hur_inf_mk17",
+        "hur_inf_rifle",
+        "kor_inf_ags",
+        "kor_inf_at",
+        "kor_inf_at(rusa)",
+        "kor_inf_mg",
+        "kor_inf_mg(rusa)",
+        "kor_inf_rifle",
+        "kor_inf_rifle(rusa)",
+        "kor_inf_saperi",
+        "kor_inf_saperi_at",
+        "kor_inf_spg",
+        "rus114_inf_rifle",
+        "rus114_inf_rifle(rusa)",
+        "rus114_inf_saperi",
+        "rus114_inf_saperi_at",
+        "rus114_inf_tbg7",
+        "rus114_inf_tbg7(rusa)",
+        "rus150_inf_gm94",
+        "rus150_inf_metis",
+        "rus150_inf_mg",
+        "rus150_inf_og7v",
+        "rus150_inf_rifle",
+        "rus150_inf_saperi",
+        "rus150_inf_saperi_at",
+        "rus155_inf_assault",
+        "rus155_inf_metis_m",
+        "rus155_inf_rifle",
+        "rus155_inf_rpg28",
+        "rus155_inf_rpg28(rusa)",
+        "rus155_inf_saperi",
+        "rus155_inf_saperi_at",
+        "rus155_inf_spg",
+        "rus155_inf_weapon",
+        "rus4_inf_razv",
+        "rus4_inf_rifle",
+        "rus4_inf_rifle_at",
+        "rus4_inf_rifle_mg",
+        "rus4_inf_rifle_rpg27",
+        "rus4_inf_rifle_rpg27(rusa)",
+        "rus4_inf_rifle_tbg7",
+        "rus4_inf_saperi",
+        "rus4_inf_saperi_at",
+        "rus80_inf_asvk",
+        "rus80_inf_rshg",
+        "rus90_inf_assault(rusa)",
+        "rus90_inf_at(rusa)",
+        "rus90_inf_mg(rusa)",
+        "rus90_inf_rifle(rusa)",
+        "rus90_inf_sniper",
+        "rus90_inf_sniper(rusa)",
+        "sso_inf_gm94",
+        "sso_inf_kornet",
+        "sso_inf_mg",
+        "stoe_inf_saperi",
+        "stoe_inf_saperi_at",
+        "vdv76_inf_at",
+        "vdv76_inf_metis",
+        "vdv76_inf_metis(rusa)",
+        "vdv76_inf_mg",
+        "vdv76_inf_rifle",
+        "vdv76_inf_rpg28",
+        "vdv76_inf_rpg28(rusa)",
+        "vdv76_inf_saperi",
+        "vdv76_inf_saperi_rpo"
+      ]
+    },
+    {
+      "count": 82,
+      "token": "medic",
+      "unit_names": [
+        "arf_medic",
+        "arf_medic(nato)",
+        "c130_paratrooper_82nd",
+        "c130_paratrooper_dsk",
+        "c130_paratrooper_dsk_eng",
+        "c130_wiesel_gun",
+        "c130_wiesel_motar",
+        "c130_wiesel_tow",
+        "mp/nato/2022s/1ad_medic",
+        "mp/nato/2022s/82nd_medic",
+        "mp/nato/2022s/dg_medic",
+        "mp/nato/2022s/fr_medic",
+        "mp/nato/2022s/gb_medic",
+        "mp/nato/2022s/inf2_medic",
+        "mp/nato/2022s/inf2_medic_ngsw",
+        "mp/nato/2022s/nato_medic",
+        "mp/nato/2022s/pzgd_medic",
+        "mp/nato/2022s/rng_medic",
+        "mp/nato/2022s/rng_medic_r",
+        "mp/rusa/2022s/106vdv_medic",
+        "mp/rusa/2022s/45vdv_medic",
+        "mp/rusa/2022s/dpr100_medic",
+        "mp/rusa/2022s/kor_medic",
+        "mp/rusa/2022s/lud_medic",
+        "mp/rusa/2022s/rus110_medic",
+        "mp/rusa/2022s/rus114_medic",
+        "mp/rusa/2022s/rus114_rez_medic",
+        "mp/rusa/2022s/rus150_medic",
+        "mp/rusa/2022s/rus155_medic",
+        "mp/rusa/2022s/rus80_medic",
+        "mp/rusa/2022s/rus90_medic",
+        "mp/rusa/2022s/rusc_medic",
+        "mp/rusa/2022s/spd_medic",
+        "mp/rusa/2022s/spz_medic",
+        "mp/rusa/2022s/sto_medic",
+        "mp/rusa/2022s/vdv76_medic",
+        "mp/rusa/2022s/wgn2_medic",
+        "mp/rusa/2022s/wgn_medic",
+        "mp/ukr/2022s/azov3_medic",
+        "mp/ukr/2022s/azov3_medic_h",
+        "mp/ukr/2022s/demon_medic",
+        "mp/ukr/2022s/hur_medic",
+        "mp/ukr/2022s/ter_medic",
+        "mp/ukr/2022s/ukr13_medic",
+        "mp/ukr/2022s/ukr21_medic",
+        "mp/ukr/2022s/ukr47_medic",
+        "mp/ukr/2022s/ukr82_medic",
+        "mp/ukr/2022s/ukr93_medic",
+        "mp/ukr/2022s/ukr_medic",
+        "squad_arf_rifle(nato)",
+        "squad_arf_rifle_spike(nato)",
+        "squad_bmp1p_azov3(ukr)",
+        "squad_bmp2_azov3(ukr)",
+        "squad_btr82a_wgn_ai",
+        "squad_btr90_rusc(rusa)",
+        "squad_gb1_rifle(nato)",
+        "squad_gb1_rifle_nlaw(nato)",
+        "squad_gb3_mech_rifle_fv510_milan(nato)",
+        "squad_gb3_mot_rifle_boxer(nato)",
+        "squad_gb3_mot_rifle_cougar(nato)",
+        "squad_inf2_light_rifle(nato)",
+        "squad_inf2_rifle(nato)",
+        "squad_inf2_rifle_m3(nato)",
+        "squad_inf2_rifle_ngsw(nato)",
+        "squad_m113a3_azov3(ukr)",
+        "squad_pz10_rifle(nato)",
+        "squad_pz10_rifle_pzf3",
+        "squad_tank1_fireteam(nato)",
+        "squad_tank1_fireteam_javelin",
+        "squad_ter_bmp1_2022(ukr)",
+        "squad_ter_bmp1p_2022(ukr)",
+        "squad_ter_m113_2022(ukr)",
+        "squad_ukr21_9040c(ukr)",
+        "squad_ukr21_9040c_nlaw(ukr)",
+        "squad_ukr47_bmp1_2022(ukr)",
+        "squad_ukr47_m113_2022(ukr)",
+        "squad_ukr47_m2a2_2022(ukr)",
+        "squad_ukr93_mech_bmp1(ukr)",
+        "squad_ukr93_mech_bmp2(ukr)",
+        "squad_ukr93_mech_cv90(ukr)",
+        "squad_ukr93_mech_m113(ukr)",
+        "squad_vdv76_mech_bmd4(rusa)"
+      ]
+    },
+    {
+      "count": 71,
+      "token": "marksman",
+      "unit_names": [
+        "mp/nato/2022s/1ad_marksman",
+        "mp/nato/2022s/82nd_marksman",
+        "mp/nato/2022s/82nd_marksman_m82",
+        "mp/nato/2022s/dg_marksman",
+        "mp/nato/2022s/fj_marksman",
+        "mp/nato/2022s/fj_marksman_m82",
+        "mp/nato/2022s/gb_marksman",
+        "mp/nato/2022s/inf2_marksman",
+        "mp/nato/2022s/inf2_marksman_m82",
+        "mp/nato/2022s/jager_marksman",
+        "mp/nato/2022s/lrs_marksman",
+        "mp/nato/2022s/pzgd_marksman",
+        "mp/rusa/2022s/45vdv_marksman",
+        "mp/rusa/2022s/kor_marksman",
+        "mp/rusa/2022s/lud_marksman",
+        "mp/rusa/2022s/rus114_marksman",
+        "mp/rusa/2022s/rus150_marksman",
+        "mp/rusa/2022s/rus155_marksman",
+        "mp/rusa/2022s/rus4_marksman",
+        "mp/rusa/2022s/rus90_marksman",
+        "mp/rusa/2022s/rusc_marksman",
+        "mp/rusa/2022s/sto_marksman",
+        "mp/rusa/2022s/vdv76_marksman",
+        "mp/rusa/2022s/wgn2_marksman",
+        "mp/rusa/2022s/wgn_marksman",
+        "mp/ukr/2022s/azov3_marksman",
+        "mp/ukr/2022s/azov3_marksman_h",
+        "mp/ukr/2022s/azov3_marksman_sso",
+        "mp/ukr/2022s/demon_marksman",
+        "mp/ukr/2022s/hur_marksman_ax50",
+        "mp/ukr/2022s/hur_marksman_mk17",
+        "mp/ukr/2022s/hur_marksman_svd",
+        "mp/ukr/2022s/kra_marksman",
+        "mp/ukr/2022s/ter_marksman",
+        "mp/ukr/2022s/ukr13_marksman",
+        "mp/ukr/2022s/ukr21_marksman",
+        "mp/ukr/2022s/ukr21_marksman_m107",
+        "mp/ukr/2022s/ukr47_marksman",
+        "mp/ukr/2022s/ukr82_marksman",
+        "mp/ukr/2022s/ukr93_marksman",
+        "mp/ukr/2022s/ukr_marksman",
+        "squad_3rd_rozv_hatred(ukr)",
+        "squad_95dhsv_bmp2(ukr)",
+        "squad_95dhsv_btr3(ukr)",
+        "squad_95dhsv_btr80(ukr)",
+        "squad_95dhsv_m1126_jav(ukr)",
+        "squad_95dhsv_m1126_mk19(ukr)",
+        "squad_95dhsv_marder(ukr)",
+        "squad_95dhsv_mi17(ukr)",
+        "squad_95dhsv_mi24(ukr)",
+        "squad_95dhsv_mtlb(ukr)",
+        "squad_btr82a_wgn_ai",
+        "squad_btr90_rusc(rusa)",
+        "squad_gb1_rifle(nato)",
+        "squad_gb1_rifle_nlaw(nato)",
+        "squad_gb3_mech_rifle_fv510_milan(nato)",
+        "squad_gb3_mot_rifle_boxer(nato)",
+        "squad_gb3_mot_rifle_cougar(nato)",
+        "squad_gb3_rifle(nato)",
+        "squad_gb3_rifle_javelin",
+        "squad_gb3_rifle_nlaw(nato)",
+        "squad_inf2_recon_m82",
+        "squad_inf2_rifle(nato)",
+        "squad_inf2_rifle_m3(nato)",
+        "squad_pz10_fireteam_mg(nato)",
+        "squad_ukr47_bmp1_2022(ukr)",
+        "squad_ukr47_m113_2022(ukr)",
+        "squad_ukr93_mech_bmp1(ukr)",
+        "squad_ukr93_mech_bmp2(ukr)",
+        "squad_ukr93_mech_m113(ukr)",
+        "squad_ukr93_razv_novator(ukr)"
+      ]
+    },
+    {
+      "count": 66,
+      "token": "pzgd",
+      "unit_names": [
+        "boxer_mgs",
+        "leopard-2a5",
+        "leopard_2a7+",
+        "leopord_2a6_ma3",
+        "leopord_2a6_n",
+        "marder_1a3_n",
+        "mp/nato/2022s/pzgd_antitank",
+        "mp/nato/2022s/pzgd_antitank_pzf3",
+        "mp/nato/2022s/pzgd_antitank_rgw",
+        "mp/nato/2022s/pzgd_eng",
+        "mp/nato/2022s/pzgd_eng_at",
+        "mp/nato/2022s/pzgd_grenadier",
+        "mp/nato/2022s/pzgd_marksman",
+        "mp/nato/2022s/pzgd_medic",
+        "mp/nato/2022s/pzgd_mg",
+        "mp/nato/2022s/pzgd_rifleman",
+        "mp/nato/2022s/pzgd_rifleman_puma",
+        "mp/nato/2022s/pzgd_sniper",
+        "mp/nato/2022s/pzgd_spotter",
+        "mp/nato/2022s/pzgd_squadlead",
+        "mp/nato/2022s/pzgd_teamlead",
+        "puma",
+        "puma_vjtf",
+        "pzgd_22_1(nato)",
+        "pzgd_22_2(nato)",
+        "pzgd_at(nato)",
+        "pzgd_manpad(nato)",
+        "pzgd_mg(nato)",
+        "pzgd_rifle(nato)",
+        "squad_dsk_boxer_geb(nato)",
+        "squad_dsk_boxer_gmg_geb(nato)",
+        "squad_dsk_ksk",
+        "squad_dsk_ksk_at",
+        "squad_dsk_rifle",
+        "squad_dsk_rifle_pzf3",
+        "squad_dsk_rifle_spike",
+        "squad_dsk_tiger_at(nato)",
+        "squad_dsk_tiger_rkt(nato)",
+        "squad_ksk_nh90(nato)",
+        "squad_ksk_sniper",
+        "squad_ksk_wiesel_gun(nato)",
+        "squad_ksk_wiesel_motar(nato)",
+        "squad_ksk_wiesel_tow(nato)",
+        "squad_pz10_boxer_mgs(nato)",
+        "squad_pz10_eng",
+        "squad_pz10_eng(nato)",
+        "squad_pz10_eng_at",
+        "squad_pz10_fennek(nato)",
+        "squad_pz10_fennek_gmg(nato)",
+        "squad_pz10_fireteam_at",
+        "squad_pz10_fireteam_carl(nato)",
+        "squad_pz10_fireteam_mg(nato)",
+        "squad_pz10_leopard2a6(nato)",
+        "squad_pz10_leopard2a6_ma3(nato)",
+        "squad_pz10_leopard2a7(nato)",
+        "squad_pz10_mars(nato)",
+        "squad_pz10_puma_mells_rifle(nato)",
+        "squad_pz10_pzh2000(nato)",
+        "squad_pz10_rec",
+        "squad_pz10_rec(nato)",
+        "squad_pz10_rifle(nato)",
+        "squad_pz10_rifle_pzf3",
+        "squad_pzgd_boxer(nato)",
+        "squad_pzgd_marder(nato)",
+        "squad_pzgd_puma(nato)",
+        "squad_pzgd_puma_vjtf(nato)"
+      ]
+    },
+    {
+      "count": 58,
+      "token": "rus114",
+      "unit_names": [
+        "doctrine_squad_rus114(rusa)",
+        "doctrine_squad_rus114_bmp2(rusa)",
+        "doctrine_squad_rus114_btr80a(rusa)",
+        "doctrine_squad_rus114_mtlb(rusa)",
+        "doctrine_squad_rus114_recon(rusa)",
+        "doctrine_squad_rus114_saperi(rusa)",
+        "doctrine_squad_rus114_saperi_bmp2(rusa)",
+        "doctrine_squad_rus114_t72b(rusa)",
+        "doctrine_squad_rus114_t80bvm(rusa)",
+        "doctrine_squad_rus114_tbg(rusa)",
+        "doctrine_squad_rus114_weapon(rusa)",
+        "doctrine_vehicle_2s1_rus114(rusa)",
+        "doctrine_vehicle_bm21_rus114(rusa)",
+        "doctrine_vehicle_bmp2_rus114(rusa)",
+        "doctrine_vehicle_t64bv_rus114(rusa)",
+        "doctrine_vehicle_t72bu_rus114(rusa)",
+        "mp/rusa/2022s/rus114_antitank",
+        "mp/rusa/2022s/rus114_antitank_javelin",
+        "mp/rusa/2022s/rus114_antitank_tbg",
+        "mp/rusa/2022s/rus114_marksman",
+        "mp/rusa/2022s/rus114_medic",
+        "mp/rusa/2022s/rus114_mg",
+        "mp/rusa/2022s/rus114_recon",
+        "mp/rusa/2022s/rus114_rez_2b14crew",
+        "mp/rusa/2022s/rus114_rez_antitank",
+        "mp/rusa/2022s/rus114_rez_antitank_og7v",
+        "mp/rusa/2022s/rus114_rez_antitank_rpg26",
+        "mp/rusa/2022s/rus114_rez_antitankasst",
+        "mp/rusa/2022s/rus114_rez_medic",
+        "mp/rusa/2022s/rus114_rez_mg",
+        "mp/rusa/2022s/rus114_rez_mg_assault",
+        "mp/rusa/2022s/rus114_rez_mgunasst",
+        "mp/rusa/2022s/rus114_rez_rifleman",
+        "mp/rusa/2022s/rus114_rez_rifleman1",
+        "mp/rusa/2022s/rus114_rez_rifleman_assault",
+        "mp/rusa/2022s/rus114_rez_seniorrifleman",
+        "mp/rusa/2022s/rus114_rez_seniorrifleman_assault",
+        "mp/rusa/2022s/rus114_rez_sniper",
+        "mp/rusa/2022s/rus114_rez_spg9crew",
+        "mp/rusa/2022s/rus114_rez_squadlead",
+        "mp/rusa/2022s/rus114_rez_squadlead_assault",
+        "mp/rusa/2022s/rus114_rifleman",
+        "mp/rusa/2022s/rus114_rifleman2",
+        "mp/rusa/2022s/rus114_seniorrifleman",
+        "mp/rusa/2022s/rus114_squadlead",
+        "rus114_inf_rifle",
+        "rus114_inf_rifle(rusa)",
+        "rus114_inf_saperi",
+        "rus114_inf_saperi_at",
+        "rus114_inf_tbg7",
+        "rus114_inf_tbg7(rusa)",
+        "rus114_rez_rezer_assault",
+        "rus114_rez_rezer_assault(rusa)",
+        "rus114_rez_rezer_at",
+        "rus114_rez_rezer_mg",
+        "rus114_rez_rezer_mg(rusa)",
+        "rus114_rez_rezer_rifle",
+        "rus114_rez_rezer_rifle(rusa)"
+      ]
+    },
+    {
+      "count": 57,
+      "token": "wepcrew",
+      "unit_names": [
+        "100mm_ks19m2",
+        "122mm_d-30_ukr",
+        "152mm_2a36_giacint_b_ukr",
+        "2b11_mortar_ukr_ai",
+        "2b14_mortar_ukr_ai",
+        "atgm_rbs17",
+        "bgm71_tow_ai",
+        "bm-21_grad_ukr",
+        "bm-21_grad_ukr_nplm",
+        "fpv_rpg(ukr)",
+        "hawkeye_105_mws",
+        "kraz_fiona_bm3m",
+        "m270_ukr",
+        "m270_ukr_clu",
+        "m777",
+        "mg_stand_nsvt_ukr_ai",
+        "mk19_tripod_ai",
+        "mp/rusa/2022s/wgn_wepcrew",
+        "mp/ukr/2022s/hur_wepcrew_mk19",
+        "mp/ukr/2022s/hur_wepcrew_tow2",
+        "mp/ukr/2022s/ukr82_wepcrew",
+        "mp/ukr/2022s/ukr82_wepcrew_metis",
+        "mp/ukr/2022s/ukr93_wepcrew",
+        "mp/ukr/2022s/ukr93_wepcrew_stugna",
+        "mp/ukr/2022s/ukr93_wepcrew_stugna_assist",
+        "mp/ukr/2022s/ukr_wepcrew",
+        "mp/ukr/2022s/ukr_wepcrew_2b11",
+        "mp/ukr/2022s/ukr_wepcrew_2b14",
+        "mp/ukr/2022s/ukr_wepcrew_mk19",
+        "mp/ukr/2022s/ukr_wepcrew_nsvt",
+        "mp/ukr/2022s/ukr_wepcrew_spg9",
+        "mp/ukr/2022s/ukr_wepcrew_tow",
+        "mrls_atacms",
+        "mrls_atacms1",
+        "mtlb_mt12_ukr",
+        "novator_stugna-p",
+        "rm_70_ua",
+        "spg9_ukr(ukr)",
+        "squad_95dhsv_btr3(ukr)",
+        "squad_95dhsv_btr80(ukr)",
+        "squad_95dhsv_m1126_mk19(ukr)",
+        "squad_ukr93_mt12(ukr)",
+        "squad_ukr93_mt12_mtlb(ukr)",
+        "t-12_ukr",
+        "technical_grad_reb",
+        "technical_s-8",
+        "ukr_2b11_team(ukr)",
+        "ukr_2b14_team(ukr)",
+        "ukr_mk19_team(ukr)",
+        "ukr_nsvt_team(ukr)",
+        "ukr_tow_team(ukr)",
+        "uragan_ua",
+        "uragan_ua_clu",
+        "vilkha",
+        "vilkha_clu",
+        "zu-23-2_ukr",
+        "zu-23-2_ukr_ai"
+      ]
+    },
+    {
+      "count": 56,
+      "token": "assault",
+      "unit_names": [
+        "13dhsv_c130_paratrooper",
+        "3rd_assault_at(ukr)",
+        "3rd_assault_decepticons(ukr)",
+        "3rd_assault_javelin(ukr)",
+        "3rd_assault_mg3(ukr)",
+        "3rd_assault_saperi",
+        "3rd_assault_saperi_at",
+        "47th_assault_at4(ukr)",
+        "47th_assault_nlaw(ukr)",
+        "doctrine_squad_25th_assault(ukr)",
+        "doctrine_squad_rus155_assault_og7v(rusa)",
+        "doctrine_squad_rus155_assault_rhsg(rusa)",
+        "mp/rusa/2022s/45vdv_assault",
+        "mp/rusa/2022s/aeng_assault",
+        "mp/rusa/2022s/kor_assault_rpg26",
+        "mp/rusa/2022s/kor_assault_rpg27",
+        "mp/rusa/2022s/kor_assault_rpg30",
+        "mp/rusa/2022s/rus114_rez_mg_assault",
+        "mp/rusa/2022s/rus114_rez_rifleman_assault",
+        "mp/rusa/2022s/rus114_rez_seniorrifleman_assault",
+        "mp/rusa/2022s/rus114_rez_squadlead_assault",
+        "mp/rusa/2022s/rus90_assault",
+        "mp/rusa/2022s/rus90_rifleman_assault",
+        "mp/rusa/2022s/sso_assault",
+        "mp/rusa/2022s/vdv76_assault",
+        "mp/rusa/2022s/wgn2_assault",
+        "mp/rusa/2022s/wgn_assault",
+        "mp/ukr/2022s/azov3_assault",
+        "mp/ukr/2022s/azov3_assault_h",
+        "mp/ukr/2022s/hur_assault",
+        "mp/ukr/2022s/ukr13_assault",
+        "mp/ukr/2022s/ukr13_assault_og7v",
+        "mp/ukr/2022s/ukr47_assault_at4",
+        "mp/ukr/2022s/ukr47_assault_m72",
+        "mp/ukr/2022s/ukr47_assault_nlaw",
+        "mp/ukr/2022s/ukr47_lmg_assault",
+        "mp/ukr/2022s/ukr47_rifleman_assault",
+        "mp/ukr/2022s/ukr47_seniorrifleman_assault",
+        "mp/ukr/2022s/ukr47_squadlead_assault",
+        "mp/ukr/2022s/ukr82_assault",
+        "rus114_rez_rezer_assault",
+        "rus114_rez_rezer_assault(rusa)",
+        "rus155_inf_assault",
+        "rus90_inf_assault(rusa)",
+        "rus90_saperi_assault",
+        "squad_95dhsv_bmp2(ukr)",
+        "squad_95dhsv_btr3(ukr)",
+        "squad_95dhsv_btr80(ukr)",
+        "squad_95dhsv_m1126_jav(ukr)",
+        "squad_95dhsv_m1126_mk19(ukr)",
+        "squad_95dhsv_marder(ukr)",
+        "squad_95dhsv_mi17(ukr)",
+        "squad_95dhsv_mi24(ukr)",
+        "squad_95dhsv_mtlb(ukr)",
+        "squad_ukr47_m2a2_arat_2022(ukr)",
+        "squad_vdv45_razv_btr80a(rusa)"
+      ]
+    },
+    {
+      "count": 54,
+      "token": "saperi",
+      "unit_names": [
+        "21th_inf_saperi",
+        "21th_inf_saperi_at",
+        "3rd_assault_saperi",
+        "3rd_assault_saperi_at",
+        "47th_inf_saperi",
+        "47th_inf_saperi_at",
+        "93th_alcatraz_saperi",
+        "93th_alcatraz_saperi_at",
+        "doctrine_squad_3rd_saperi(ukr)",
+        "doctrine_squad_desan_saperi(rusa)",
+        "doctrine_squad_rus114_saperi(rusa)",
+        "doctrine_squad_rus114_saperi_bmp2(rusa)",
+        "doctrine_squad_rus90_saperi(rusa)",
+        "hur_saperi",
+        "hur_saperi_at",
+        "kor_inf_saperi",
+        "kor_inf_saperi_at",
+        "mp/rusa/2022s/rus90_saperi",
+        "mp/rusa/2022s/rus90_saperi_mg",
+        "mp/rusa/2022s/rus90_saperi_rpo",
+        "mp/rusa/2022s/rus90_saperi_squadlead",
+        "mp/rusa/2022s/vdv76_saperi",
+        "mp/rusa/2022s/vdv76_saperi_rpo",
+        "mp/rusa/2022s/vdv76_saperi_rpo_mg",
+        "mp/ukr/2022s/azov3_saperi",
+        "mp/ukr/2022s/azov3_saperi_rpo",
+        "mp/ukr/2022s/demon_saperi",
+        "mp/ukr/2022s/demon_saperi_RPO",
+        "mp/ukr/2022s/hur_saperi",
+        "mp/ukr/2022s/hur_saperi_m72",
+        "mp/ukr/2022s/ukr13_saperi",
+        "mp/ukr/2022s/ukr13_saperi_at",
+        "mp/ukr/2022s/ukr21_saperi",
+        "mp/ukr/2022s/ukr21_saperi_at",
+        "mp/ukr/2022s/ukr47_saperi",
+        "mp/ukr/2022s/ukr47_saperi_m72",
+        "rus114_inf_saperi",
+        "rus114_inf_saperi_at",
+        "rus150_inf_saperi",
+        "rus150_inf_saperi_at",
+        "rus155_inf_saperi",
+        "rus155_inf_saperi_at",
+        "rus4_inf_saperi",
+        "rus4_inf_saperi_at",
+        "rus90_saperi",
+        "rus90_saperi_assault",
+        "rus90_saperi_at",
+        "rus90_saperi_at(rusa)",
+        "squad_13dhsv_saperi",
+        "squad_13dhsv_saperi_at",
+        "stoe_inf_saperi",
+        "stoe_inf_saperi_at",
+        "vdv76_inf_saperi",
+        "vdv76_inf_saperi_rpo"
+      ]
+    },
+    {
+      "count": 50,
+      "token": "rus90",
+      "unit_names": [
+        "doctrine_squad_rus90(rusa)",
+        "doctrine_squad_rus90_9m113(rusa)",
+        "doctrine_squad_rus90_bmp1(rusa)",
+        "doctrine_squad_rus90_bmp2(rusa)",
+        "doctrine_squad_rus90_btr80a(rusa)",
+        "doctrine_squad_rus90_mg(rusa)",
+        "doctrine_squad_rus90_mtlb(rusa)",
+        "doctrine_squad_rus90_recon(rusa)",
+        "doctrine_squad_rus90_rpg29(rusa)",
+        "doctrine_squad_rus90_saperi(rusa)",
+        "doctrine_squad_rus90_svd(rusa)",
+        "doctrine_vehicle_2s1_rus90(rusa)",
+        "doctrine_vehicle_2s3_rus90(rusa)",
+        "doctrine_vehicle_bmp2_rus90(rusa)",
+        "doctrine_vehicle_t72aa_rus90(rusa)",
+        "doctrine_vehicle_t72b3_2011_rus90(rusa)",
+        "doctrine_vehicle_t72b3_rus90(rusa)",
+        "doctrine_vehicle_t72bb_rus90(rusa)",
+        "doctrine_vehicle_t90m_rus90(rusa)",
+        "doctrine_vehicle_tos_rus90(rusa)",
+        "mp/rusa/2022s/rus90_antitank",
+        "mp/rusa/2022s/rus90_antitank_rpg26",
+        "mp/rusa/2022s/rus90_antitank_rpg27",
+        "mp/rusa/2022s/rus90_assault",
+        "mp/rusa/2022s/rus90_marksman",
+        "mp/rusa/2022s/rus90_medic",
+        "mp/rusa/2022s/rus90_mg",
+        "mp/rusa/2022s/rus90_recon",
+        "mp/rusa/2022s/rus90_rifleman",
+        "mp/rusa/2022s/rus90_rifleman_assault",
+        "mp/rusa/2022s/rus90_saperi",
+        "mp/rusa/2022s/rus90_saperi_mg",
+        "mp/rusa/2022s/rus90_saperi_rpo",
+        "mp/rusa/2022s/rus90_saperi_squadlead",
+        "mp/rusa/2022s/rus90_seniorrifleman",
+        "mp/rusa/2022s/rus90_sniper",
+        "mp/rusa/2022s/rus90_squadlead",
+        "rus90_inf_assault(rusa)",
+        "rus90_inf_at(rusa)",
+        "rus90_inf_mg(rusa)",
+        "rus90_inf_rifle(rusa)",
+        "rus90_inf_sniper",
+        "rus90_inf_sniper(rusa)",
+        "rus90_saperi",
+        "rus90_saperi_assault",
+        "rus90_saperi_at",
+        "rus90_saperi_at(rusa)",
+        "squad_rus90_bmp1(rusa)",
+        "squad_rus90_razv_tiger",
+        "squad_rus90_razv_tiger(rusa)"
+      ]
+    },
+    {
+      "count": 44,
+      "token": "teamlead",
+      "unit_names": [
+        "c130_paratrooper_82nd",
+        "mp/nato/2022s/1ad_teamlead",
+        "mp/nato/2022s/82nd_teamlead",
+        "mp/nato/2022s/dg_teamlead",
+        "mp/nato/2022s/fj_teamlead",
+        "mp/nato/2022s/inf2_teamlead",
+        "mp/nato/2022s/inf2_teamlead_ngsw",
+        "mp/nato/2022s/jager_teamlead",
+        "mp/nato/2022s/nato_teamlead",
+        "mp/nato/2022s/pzgd_teamlead",
+        "squad_arf_at(nato)",
+        "squad_arf_cv9035_rifle(nato)",
+        "squad_arf_cv9040_mkiv_rifle(nato)",
+        "squad_arf_cv9040_rifle(nato)",
+        "squad_arf_kipri_scout(nato)",
+        "squad_arf_mg(nato)",
+        "squad_arf_rifle(nato)",
+        "squad_arf_rifle_spike(nato)",
+        "squad_arf_ypr765_rifle(nato)",
+        "squad_dsk_ksk",
+        "squad_dsk_ksk_at",
+        "squad_dsk_rifle",
+        "squad_dsk_rifle_pzf3",
+        "squad_dsk_rifle_spike",
+        "squad_inf2_rifle(nato)",
+        "squad_inf2_rifle_javelin",
+        "squad_inf2_rifle_m3(nato)",
+        "squad_inf2_rifle_mg(nato)",
+        "squad_inf2_rifle_ngsw(nato)",
+        "squad_ksk_nh90(nato)",
+        "squad_ksk_sniper",
+        "squad_luft_nh90_geb(nato)",
+        "squad_pz10_cv9030_rifle(nato)",
+        "squad_pz10_fireteam_at",
+        "squad_pz10_fireteam_carl(nato)",
+        "squad_pz10_fireteam_mg(nato)",
+        "squad_pz10_puma_mells_rifle(nato)",
+        "squad_pz10_rifle(nato)",
+        "squad_pz10_rifle_pzf3",
+        "squad_pz10_ypr765_rifle(nato)",
+        "squad_tank1_fireteam(nato)",
+        "squad_tank1_fireteam_javelin",
+        "squad_tank1_rifle_m3(nato)",
+        "squad_tank1_rifle_mg(nato)"
+      ]
+    },
+    {
+      "count": 37,
+      "token": "lmg",
+      "unit_names": [
+        "13dhsv_c130_paratrooper",
+        "mp/rusa/2022s/45vdv_lmg",
+        "mp/rusa/2022s/lud_lmg",
+        "mp/rusa/2022s/rus155_lmg",
+        "mp/rusa/2022s/vdv76_lmg",
+        "mp/rusa/2022s/wgn2_lmg",
+        "mp/rusa/2022s/wgn_lmg",
+        "mp/ukr/2022s/hur_lmg",
+        "mp/ukr/2022s/ukr13_lmg",
+        "mp/ukr/2022s/ukr21_lmg",
+        "mp/ukr/2022s/ukr47_lmg",
+        "mp/ukr/2022s/ukr47_lmg_assault",
+        "mp/ukr/2022s/ukr47_lmg_pkm",
+        "mp/ukr/2022s/ukr82_lmg",
+        "mp/ukr/2022s/ukr93_lmg",
+        "mp/ukr/2022s/ukr_lmg",
+        "squad_95dhsv_bmp2(ukr)",
+        "squad_95dhsv_btr3(ukr)",
+        "squad_95dhsv_btr80(ukr)",
+        "squad_95dhsv_m1126_jav(ukr)",
+        "squad_95dhsv_m1126_mk19(ukr)",
+        "squad_95dhsv_marder(ukr)",
+        "squad_95dhsv_mi17(ukr)",
+        "squad_95dhsv_mi24(ukr)",
+        "squad_95dhsv_mtlb(ukr)",
+        "squad_bmp2m_wgn(rusa)",
+        "squad_bmp2m_wgn_ai",
+        "squad_btr82a_wgn_ai",
+        "squad_ukr47_bmp1_2022(ukr)",
+        "squad_ukr47_m113_2022(ukr)",
+        "squad_ukr47_m2a2_2022(ukr)",
+        "squad_ukr47_m2a2_arat_2022(ukr)",
+        "squad_ukr93_mech_bmp1(ukr)",
+        "squad_ukr93_mech_bmp2(ukr)",
+        "squad_ukr93_mech_cv90(ukr)",
+        "squad_ukr93_mech_m113(ukr)",
+        "squad_vdv45_razv_typhoon(rusa)"
+      ]
+    },
+    {
+      "count": 37,
+      "token": "rus155",
+      "unit_names": [
+        "doctrine_squad_rus155(rusa)",
+        "doctrine_squad_rus155_assault_og7v(rusa)",
+        "doctrine_squad_rus155_assault_rhsg(rusa)",
+        "doctrine_squad_rus155_bmp3(rusa)",
+        "doctrine_squad_rus155_btr80(rusa)",
+        "doctrine_squad_rus155_btr90(rusa)",
+        "doctrine_squad_rus155_mg(rusa)",
+        "doctrine_squad_rus155_mtlb(rusa)",
+        "doctrine_squad_rus155_svd(rusa)",
+        "doctrine_squad_rus155_t80bv(rusa)",
+        "doctrine_vehicle_2s1_rus155(rusa)",
+        "mp/rusa/2022s/rus155_9k115_crew",
+        "mp/rusa/2022s/rus155_antitank",
+        "mp/rusa/2022s/rus155_antitank_og7",
+        "mp/rusa/2022s/rus155_antitank_r",
+        "mp/rusa/2022s/rus155_antitank_rpg28",
+        "mp/rusa/2022s/rus155_lmg",
+        "mp/rusa/2022s/rus155_marksman",
+        "mp/rusa/2022s/rus155_medic",
+        "mp/rusa/2022s/rus155_recon",
+        "mp/rusa/2022s/rus155_rifleman",
+        "mp/rusa/2022s/rus155_rmg",
+        "mp/rusa/2022s/rus155_rshg",
+        "mp/rusa/2022s/rus155_seniorrifleman",
+        "mp/rusa/2022s/rus155_squadlead",
+        "rus155_inf_assault",
+        "rus155_inf_metis_m",
+        "rus155_inf_rifle",
+        "rus155_inf_rpg28",
+        "rus155_inf_rpg28(rusa)",
+        "rus155_inf_saperi",
+        "rus155_inf_saperi_at",
+        "rus155_inf_spg",
+        "rus155_inf_weapon",
+        "rus155_manpad(rusa)",
+        "squad_rus155_razv_tigr",
+        "squad_rus155_razv_tigr(rusa)"
+      ]
+    },
+    {
+      "count": 37,
+      "token": "ukr93",
+      "unit_names": [
+        "doctrine_vehicle_2s1_ukr93(ukr)",
+        "doctrine_vehicle_bm21_ukr93(ukr)",
+        "doctrine_vehicle_bmp2_ukr93(ukr)",
+        "doctrine_vehicle_m109a6_ukr93(ukr)",
+        "doctrine_vehicle_t64bv_ukr93(ukr)",
+        "doctrine_vehicle_t80bv_ukr93(ukr)",
+        "doctrine_vehicle_t80bvm_ukr93(ukr)",
+        "mp/ukr/2022s/ukr93_antitank",
+        "mp/ukr/2022s/ukr93_antitank_javelin",
+        "mp/ukr/2022s/ukr93_antitank_javelin_assist",
+        "mp/ukr/2022s/ukr93_atassist",
+        "mp/ukr/2022s/ukr93_lmg",
+        "mp/ukr/2022s/ukr93_lmgassist",
+        "mp/ukr/2022s/ukr93_marksman",
+        "mp/ukr/2022s/ukr93_medic",
+        "mp/ukr/2022s/ukr93_recon",
+        "mp/ukr/2022s/ukr93_recon_mg",
+        "mp/ukr/2022s/ukr93_rifleman",
+        "mp/ukr/2022s/ukr93_seniorrifleman",
+        "mp/ukr/2022s/ukr93_squadlead",
+        "mp/ukr/2022s/ukr93_wepcrew",
+        "mp/ukr/2022s/ukr93_wepcrew_stugna",
+        "mp/ukr/2022s/ukr93_wepcrew_stugna_assist",
+        "novator_stugna-p",
+        "squad_ukr93_2s1(ukr)",
+        "squad_ukr93_m109a6(ukr)",
+        "squad_ukr93_mech_bmp1(ukr)",
+        "squad_ukr93_mech_bmp2(ukr)",
+        "squad_ukr93_mech_cv90(ukr)",
+        "squad_ukr93_mech_m113(ukr)",
+        "squad_ukr93_mt12(ukr)",
+        "squad_ukr93_mt12_mtlb(ukr)",
+        "squad_ukr93_razv_arty(ukr)",
+        "squad_ukr93_razv_novator(ukr)",
+        "squad_ukr93_t64bv(ukr)",
+        "squad_ukr93_t80bv(ukr)",
+        "squad_ukr93_t80u(ukr)"
+      ]
+    },
+    {
+      "count": 35,
+      "token": "azov3",
+      "unit_names": [
+        "mp/ukr/2022s/azov3_antitank",
+        "mp/ukr/2022s/azov3_antitank_h",
+        "mp/ukr/2022s/azov3_assault",
+        "mp/ukr/2022s/azov3_assault_h",
+        "mp/ukr/2022s/azov3_demo",
+        "mp/ukr/2022s/azov3_demon_h",
+        "mp/ukr/2022s/azov3_drone",
+        "mp/ukr/2022s/azov3_marksman",
+        "mp/ukr/2022s/azov3_marksman_h",
+        "mp/ukr/2022s/azov3_marksman_sso",
+        "mp/ukr/2022s/azov3_medic",
+        "mp/ukr/2022s/azov3_medic_h",
+        "mp/ukr/2022s/azov3_mg",
+        "mp/ukr/2022s/azov3_mg3",
+        "mp/ukr/2022s/azov3_mg_h",
+        "mp/ukr/2022s/azov3_rifleman",
+        "mp/ukr/2022s/azov3_rifleman1_sso",
+        "mp/ukr/2022s/azov3_rifleman_h",
+        "mp/ukr/2022s/azov3_rifleman_sso",
+        "mp/ukr/2022s/azov3_saperi",
+        "mp/ukr/2022s/azov3_saperi_rpo",
+        "mp/ukr/2022s/azov3_sniper",
+        "mp/ukr/2022s/azov3_spotter",
+        "mp/ukr/2022s/azov3_spotter_sso",
+        "mp/ukr/2022s/azov3_squadlead",
+        "mp/ukr/2022s/azov3_squadlead_h",
+        "mp/ukr/2022s/azov3_squadlead_sso",
+        "mp/ukr/2022s/azov3_sup",
+        "squad_3rd_rozv_hatred(ukr)",
+        "squad_bmp1p_azov3(ukr)",
+        "squad_bmp2_azov3(ukr)",
+        "squad_m113a3_azov3(ukr)",
+        "squad_nc13_ugv_ammo",
+        "squad_nc13_ugv_mg(ukr)",
+        "squad_nc13_ugv_mine(ukr)"
+      ]
+    },
+    {
+      "count": 35,
+      "token": "pilot",
+      "unit_names": [
+        "13dhsv_c130_paratrooper",
+        "a-10c_at",
+        "a-10c_bomber",
+        "a-10c_support",
+        "ah-64_apache_heavy_airborne",
+        "c130_paratrooper_82nd",
+        "c130_paratrooper_dsk",
+        "c130_paratrooper_dsk_eng",
+        "c130_wiesel_gun",
+        "c130_wiesel_motar",
+        "c130_wiesel_tow",
+        "mi-24v2_airborne",
+        "mi-24v2_airborne_ukr",
+        "mi-24v_airborne",
+        "mi-24v_airborne_ukr",
+        "mi17_b8_ukr",
+        "mi17_b8_ukr_airborne",
+        "mi17_ukr",
+        "mi24vm_ukr",
+        "mq9_nato",
+        "mq9_nato_recon",
+        "squad_95dhsv_mi17(ukr)",
+        "squad_95dhsv_mi24(ukr)",
+        "su-25sm_accurate_ukr",
+        "su-25sm_accurate_ukr_ai",
+        "su-25sm_at_ukr",
+        "su-25sm_at_ukr_ai",
+        "su-25sm_support_light_ukr",
+        "su-25sm_support_light_ukr_ai",
+        "su-25sm_support_ukr",
+        "su-25sm_support_ukr_ai",
+        "tiger",
+        "tiger_heavy",
+        "tornado_gr4_at",
+        "tornado_gr4_support_light"
+      ]
+    },
+    {
+      "count": 33,
+      "token": "eng",
+      "unit_names": [
+        "c130_paratrooper_dsk_eng",
+        "mp/nato/2022s/dg_eng",
+        "mp/nato/2022s/dg_eng_at",
+        "mp/nato/2022s/gb_eng",
+        "mp/nato/2022s/gb_eng_at",
+        "mp/nato/2022s/nato_eng",
+        "mp/nato/2022s/nato_eng_at",
+        "mp/nato/2022s/pzgd_eng",
+        "mp/nato/2022s/pzgd_eng_at",
+        "mp/rusa/2022s/spz_eng",
+        "mp/rusa/2022s/sto_eng",
+        "mp/ukr/2022s/nato_eng",
+        "mp/ukr/2022s/ukr_eng",
+        "mp/ukr/2022s/ukr_eng_ap",
+        "mp/ukr/2022s/ukr_eng_at",
+        "nato_eng(ukr)",
+        "rus2_eng(rusa)",
+        "squad_dsk_boxer_geb(nato)",
+        "squad_dsk_boxer_gmg_geb(nato)",
+        "squad_dsk_eng",
+        "squad_dsk_eng_at",
+        "squad_gb1_eng",
+        "squad_gb1_eng_at",
+        "squad_gb3_eng",
+        "squad_gb3_eng_at",
+        "squad_inf2_eng",
+        "squad_inf2_eng_at(nato)",
+        "squad_pz10_eng",
+        "squad_pz10_eng(nato)",
+        "squad_pz10_eng_at",
+        "squad_tank1_eng",
+        "squad_tank1_eng_at(nato)",
+        "ukr_eng(ukr)"
+      ]
+    },
+    {
+      "count": 33,
+      "token": "ukr47",
+      "unit_names": [
+        "doctrine_vehicle_t64bv_ukr47(ukr)",
+        "mp/ukr/2022s/ukr47_antitank",
+        "mp/ukr/2022s/ukr47_antitank_h",
+        "mp/ukr/2022s/ukr47_antitank_l",
+        "mp/ukr/2022s/ukr47_assault_at4",
+        "mp/ukr/2022s/ukr47_assault_m72",
+        "mp/ukr/2022s/ukr47_assault_nlaw",
+        "mp/ukr/2022s/ukr47_crew_cmd",
+        "mp/ukr/2022s/ukr47_lmg",
+        "mp/ukr/2022s/ukr47_lmg_assault",
+        "mp/ukr/2022s/ukr47_lmg_pkm",
+        "mp/ukr/2022s/ukr47_marksman",
+        "mp/ukr/2022s/ukr47_medic",
+        "mp/ukr/2022s/ukr47_recon",
+        "mp/ukr/2022s/ukr47_rifleman",
+        "mp/ukr/2022s/ukr47_rifleman_assault",
+        "mp/ukr/2022s/ukr47_saperi",
+        "mp/ukr/2022s/ukr47_saperi_m72",
+        "mp/ukr/2022s/ukr47_seniorrifleman",
+        "mp/ukr/2022s/ukr47_seniorrifleman_assault",
+        "mp/ukr/2022s/ukr47_sniper",
+        "mp/ukr/2022s/ukr47_sniper_m107",
+        "mp/ukr/2022s/ukr47_squadlead",
+        "mp/ukr/2022s/ukr47_squadlead_assault",
+        "squad_ukr47_bm21(ukr)",
+        "squad_ukr47_bmp1_2022(ukr)",
+        "squad_ukr47_m109(ukr)",
+        "squad_ukr47_m113_2022(ukr)",
+        "squad_ukr47_m1a1(ukr)",
+        "squad_ukr47_m1a1_sa(ukr)",
+        "squad_ukr47_m2a2_2022(ukr)",
+        "squad_ukr47_m2a2_arat_2022(ukr)",
+        "squad_ukr47_t64bv(ukr)"
+      ]
+    },
+    {
+      "count": 32,
+      "token": "inf2",
+      "unit_names": [
+        "mp/nato/2022s/inf2_antitank",
+        "mp/nato/2022s/inf2_antitank_ngsw",
+        "mp/nato/2022s/inf2_autorifle",
+        "mp/nato/2022s/inf2_autorifle_ngsw",
+        "mp/nato/2022s/inf2_engineer",
+        "mp/nato/2022s/inf2_engineer_at",
+        "mp/nato/2022s/inf2_grenadier",
+        "mp/nato/2022s/inf2_javelin",
+        "mp/nato/2022s/inf2_marksman",
+        "mp/nato/2022s/inf2_marksman_m82",
+        "mp/nato/2022s/inf2_medic",
+        "mp/nato/2022s/inf2_medic_ngsw",
+        "mp/nato/2022s/inf2_mg",
+        "mp/nato/2022s/inf2_mgassist",
+        "mp/nato/2022s/inf2_rifleman",
+        "mp/nato/2022s/inf2_rifleman_ngsw",
+        "mp/nato/2022s/inf2_scout",
+        "mp/nato/2022s/inf2_squadlead",
+        "mp/nato/2022s/inf2_squadlead_ngsw",
+        "mp/nato/2022s/inf2_teamlead",
+        "mp/nato/2022s/inf2_teamlead_ngsw",
+        "squad_inf2_eng",
+        "squad_inf2_eng_at(nato)",
+        "squad_inf2_light_at",
+        "squad_inf2_light_rifle(nato)",
+        "squad_inf2_recon",
+        "squad_inf2_recon_m82",
+        "squad_inf2_rifle(nato)",
+        "squad_inf2_rifle_javelin",
+        "squad_inf2_rifle_m3(nato)",
+        "squad_inf2_rifle_mg(nato)",
+        "squad_inf2_rifle_ngsw(nato)"
+      ]
+    },
+    {
+      "count": 32,
+      "token": "ukr21",
+      "unit_names": [
+        "doctrine_vehicle_bm21_ukr21(ukr)",
+        "mp/ukr/2022s/ukr21_antitank",
+        "mp/ukr/2022s/ukr21_antitank_l",
+        "mp/ukr/2022s/ukr21_antitank_og7v",
+        "mp/ukr/2022s/ukr21_drone",
+        "mp/ukr/2022s/ukr21_drone_fpv",
+        "mp/ukr/2022s/ukr21_ksp58",
+        "mp/ukr/2022s/ukr21_ksp90b",
+        "mp/ukr/2022s/ukr21_lmg",
+        "mp/ukr/2022s/ukr21_marksman",
+        "mp/ukr/2022s/ukr21_marksman_m107",
+        "mp/ukr/2022s/ukr21_medic",
+        "mp/ukr/2022s/ukr21_recon",
+        "mp/ukr/2022s/ukr21_rifleman",
+        "mp/ukr/2022s/ukr21_rifleman_nlaw",
+        "mp/ukr/2022s/ukr21_saperi",
+        "mp/ukr/2022s/ukr21_saperi_at",
+        "mp/ukr/2022s/ukr21_seniorrifleman",
+        "mp/ukr/2022s/ukr21_squadlead",
+        "squad_ukr21_2s1(ukr)",
+        "squad_ukr21_9040c(ukr)",
+        "squad_ukr21_9040c_nlaw(ukr)",
+        "squad_ukr21_bm21(ukr)",
+        "squad_ukr21_leopard1a5(ukr)",
+        "squad_ukr21_leopard1a5_era(ukr)",
+        "squad_ukr21_leopard2a4(ukr)",
+        "squad_ukr21_leopard2a4_era(ukr)",
+        "squad_ukr21_leopard2a6(ukr)",
+        "squad_ukr21_leopard2a6_era(ukr)",
+        "squad_ukr21_rbs_17(ukr)",
+        "squad_ukr21_strv122(ukr)",
+        "squad_ukr21_strv122_era(ukr)"
+      ]
+    },
+    {
+      "count": 31,
+      "token": "vdv76",
+      "unit_names": [
+        "mp/rusa/2022s/vdv76_ammo",
+        "mp/rusa/2022s/vdv76_antitank",
+        "mp/rusa/2022s/vdv76_antitank_rpg28",
+        "mp/rusa/2022s/vdv76_assault",
+        "mp/rusa/2022s/vdv76_greenader",
+        "mp/rusa/2022s/vdv76_lmg",
+        "mp/rusa/2022s/vdv76_marksman",
+        "mp/rusa/2022s/vdv76_medic",
+        "mp/rusa/2022s/vdv76_metis_crew",
+        "mp/rusa/2022s/vdv76_mg",
+        "mp/rusa/2022s/vdv76_recon",
+        "mp/rusa/2022s/vdv76_rifleman",
+        "mp/rusa/2022s/vdv76_saperi",
+        "mp/rusa/2022s/vdv76_saperi_rpo",
+        "mp/rusa/2022s/vdv76_saperi_rpo_mg",
+        "mp/rusa/2022s/vdv76_squadlead",
+        "squad_vdv76_2s25(rusa)",
+        "squad_vdv76_mech_bmd4(rusa)",
+        "squad_vdv76_mech_btrmdm(rusa)",
+        "squad_vdv76_t72b3(rusa)",
+        "squad_vdv76_t72b3_2024(rusa)",
+        "squad_vdv76_t90m(rusa)",
+        "vdv76_inf_at",
+        "vdv76_inf_metis",
+        "vdv76_inf_metis(rusa)",
+        "vdv76_inf_mg",
+        "vdv76_inf_rifle",
+        "vdv76_inf_rpg28",
+        "vdv76_inf_rpg28(rusa)",
+        "vdv76_inf_saperi",
+        "vdv76_inf_saperi_rpo"
+      ]
+    },
+    {
+      "count": 30,
+      "token": "kor",
+      "unit_names": [
+        "kor_inf_ags",
+        "kor_inf_at",
+        "kor_inf_at(rusa)",
+        "kor_inf_mg",
+        "kor_inf_mg(rusa)",
+        "kor_inf_rifle",
+        "kor_inf_rifle(rusa)",
+        "kor_inf_saperi",
+        "kor_inf_saperi_at",
+        "kor_inf_spg",
+        "mp/rusa/2022s/kor_antitank_rpg29",
+        "mp/rusa/2022s/kor_antitank_rpg30",
+        "mp/rusa/2022s/kor_antitank_rpg7",
+        "mp/rusa/2022s/kor_assault_rpg26",
+        "mp/rusa/2022s/kor_assault_rpg27",
+        "mp/rusa/2022s/kor_assault_rpg30",
+        "mp/rusa/2022s/kor_atassist",
+        "mp/rusa/2022s/kor_atassist_rpg29",
+        "mp/rusa/2022s/kor_grenadier",
+        "mp/rusa/2022s/kor_marksman",
+        "mp/rusa/2022s/kor_marksman1",
+        "mp/rusa/2022s/kor_medic",
+        "mp/rusa/2022s/kor_mg",
+        "mp/rusa/2022s/kor_mgunasst",
+        "mp/rusa/2022s/kor_recon",
+        "mp/rusa/2022s/kor_recon1",
+        "mp/rusa/2022s/kor_rifleman",
+        "mp/rusa/2022s/kor_rifleman3",
+        "mp/rusa/2022s/kor_seniorrifleman",
+        "mp/rusa/2022s/kor_squadlead"
+      ]
+    },
+    {
+      "count": 29,
+      "token": "spotter",
+      "unit_names": [
+        "arf_drone",
+        "mp/nato/2022s/fj_spotter",
+        "mp/nato/2022s/fr_spotter",
+        "mp/nato/2022s/jager_spotter",
+        "mp/nato/2022s/nato_spotter",
+        "mp/nato/2022s/pzgd_spotter",
+        "mp/nato/2022s/rng_spotter",
+        "mp/nato/2022s/rng_spotter_r",
+        "mp/rusa/2022s/rus80_spotter",
+        "mp/rusa/2022s/spz_spotter",
+        "mp/ukr/2022s/azov3_spotter",
+        "mp/ukr/2022s/azov3_spotter_sso",
+        "mp/ukr/2022s/kra_spotter",
+        "mp/ukr/2022s/nato_spotter",
+        "squad_3rd_rozv_hatred(ukr)",
+        "squad_arf_kipri_scout(nato)",
+        "squad_arf_scout",
+        "squad_arf_scout(nato)",
+        "squad_bmp1p_azov3(ukr)",
+        "squad_bmp2_azov3(ukr)",
+        "squad_gru_razv_btr80a(rusa)",
+        "squad_gru_razv_tigr",
+        "squad_gru_razv_tigr_rus4",
+        "squad_gru_razv_typhoon(rusa)",
+        "squad_kraken_kozak2(ukr)",
+        "squad_m113a3_azov3(ukr)",
+        "squad_pz10_boxer_mgs(nato)",
+        "squad_pz10_rec",
+        "squad_pz10_rec(nato)"
+      ]
+    },
+    {
+      "count": 28,
+      "token": "seniorrifleman",
+      "unit_names": [
+        "mp/rusa/2022s/dpr100_seniorrifleman",
+        "mp/rusa/2022s/kor_seniorrifleman",
+        "mp/rusa/2022s/rus110_seniorrifleman",
+        "mp/rusa/2022s/rus114_rez_seniorrifleman",
+        "mp/rusa/2022s/rus114_rez_seniorrifleman_assault",
+        "mp/rusa/2022s/rus114_seniorrifleman",
+        "mp/rusa/2022s/rus150_seniorrifleman",
+        "mp/rusa/2022s/rus155_seniorrifleman",
+        "mp/rusa/2022s/rus4_seniorrifleman",
+        "mp/rusa/2022s/rus80_seniorrifleman",
+        "mp/rusa/2022s/rus90_seniorrifleman",
+        "mp/rusa/2022s/spd_seniorrifleman",
+        "mp/ukr/2022s/demon_seniorrifleman",
+        "mp/ukr/2022s/hur_seniorrifleman",
+        "mp/ukr/2022s/nato_seniorrifleman",
+        "mp/ukr/2022s/ukr21_seniorrifleman",
+        "mp/ukr/2022s/ukr47_seniorrifleman",
+        "mp/ukr/2022s/ukr47_seniorrifleman_assault",
+        "mp/ukr/2022s/ukr93_seniorrifleman",
+        "mp/ukr/2022s/ukr_seniorrifleman",
+        "squad_ukr47_bmp1_2022(ukr)",
+        "squad_ukr47_m113_2022(ukr)",
+        "squad_ukr47_m2a2_2022(ukr)",
+        "squad_ukr47_m2a2_arat_2022(ukr)",
+        "squad_ukr93_mech_bmp1(ukr)",
+        "squad_ukr93_mech_bmp2(ukr)",
+        "squad_ukr93_mech_cv90(ukr)",
+        "squad_ukr93_mech_m113(ukr)"
+      ]
+    },
+    {
+      "count": 25,
+      "token": "rez",
+      "unit_names": [
+        "mp/rusa/2022s/rus114_rez_2b14crew",
+        "mp/rusa/2022s/rus114_rez_antitank",
+        "mp/rusa/2022s/rus114_rez_antitank_og7v",
+        "mp/rusa/2022s/rus114_rez_antitank_rpg26",
+        "mp/rusa/2022s/rus114_rez_antitankasst",
+        "mp/rusa/2022s/rus114_rez_medic",
+        "mp/rusa/2022s/rus114_rez_mg",
+        "mp/rusa/2022s/rus114_rez_mg_assault",
+        "mp/rusa/2022s/rus114_rez_mgunasst",
+        "mp/rusa/2022s/rus114_rez_rifleman",
+        "mp/rusa/2022s/rus114_rez_rifleman1",
+        "mp/rusa/2022s/rus114_rez_rifleman_assault",
+        "mp/rusa/2022s/rus114_rez_seniorrifleman",
+        "mp/rusa/2022s/rus114_rez_seniorrifleman_assault",
+        "mp/rusa/2022s/rus114_rez_sniper",
+        "mp/rusa/2022s/rus114_rez_spg9crew",
+        "mp/rusa/2022s/rus114_rez_squadlead",
+        "mp/rusa/2022s/rus114_rez_squadlead_assault",
+        "rus114_rez_rezer_assault",
+        "rus114_rez_rezer_assault(rusa)",
+        "rus114_rez_rezer_at",
+        "rus114_rez_rezer_mg",
+        "rus114_rez_rezer_mg(rusa)",
+        "rus114_rez_rezer_rifle",
+        "rus114_rez_rezer_rifle(rusa)"
+      ]
+    },
+    {
+      "count": 25,
+      "token": "supcrew",
+      "unit_names": [
+        "105mm_m119",
+        "2s1_n",
+        "arf_m120",
+        "arf_m252",
+        "arf_m2hb",
+        "arf_mk19",
+        "arf_tow",
+        "fh70_new",
+        "hawkeye_105_mws_n",
+        "mp/nato/2022s/nato_supcrew_m120",
+        "mp/nato/2022s/nato_supcrew_m252",
+        "mp/nato/2022s/nato_supcrew_m2hb",
+        "mp/nato/2022s/nato_supcrew_mk19",
+        "mp/nato/2022s/nato_supcrew_tow",
+        "rm_70",
+        "squad_arf_kipri_scout(nato)",
+        "squad_luft_nh90_geb(nato)",
+        "ugv_30c",
+        "ugv_mg_ap",
+        "ugv_mg_ap2",
+        "ugv_mg_ap3",
+        "ugv_mg_at",
+        "ugv_mg_at2",
+        "ugv_supl",
+        "vz_77_dana"
+      ]
+    },
+    {
+      "count": 25,
+      "token": "teamleader",
+      "unit_names": [
+        "c130_paratrooper_dsk",
+        "c130_paratrooper_dsk_eng",
+        "c130_wiesel_gun",
+        "c130_wiesel_motar",
+        "c130_wiesel_tow",
+        "mp/nato/2022s/gb_teamleader",
+        "mp/nato/2022s/gbpf_teamleader",
+        "mp/nato/2022s/rg_teamleader",
+        "squad_gb1_eng",
+        "squad_gb1_eng_at",
+        "squad_gb1_rifle(nato)",
+        "squad_gb1_rifle_nlaw(nato)",
+        "squad_gb3_eng",
+        "squad_gb3_eng_at",
+        "squad_gb3_mech_rifle_fv510_milan(nato)",
+        "squad_gb3_mot_rifle_boxer(nato)",
+        "squad_gb3_mot_rifle_cougar(nato)",
+        "squad_gb3_rifle(nato)",
+        "squad_gb3_rifle_at_javelin",
+        "squad_gb3_rifle_at_javelin(nato)",
+        "squad_gb3_rifle_javelin",
+        "squad_gb3_rifle_mg",
+        "squad_gb3_rifle_mg(nato)",
+        "squad_gb3_rifle_nlaw(nato)",
+        "squad_gb3_scouts_ranger(nato)"
+      ]
+    },
+    {
+      "count": 24,
+      "token": "hur",
+      "unit_names": [
+        "hur_inf_javelin",
+        "hur_inf_mk17",
+        "hur_inf_rifle",
+        "hur_mk19_crew",
+        "hur_saperi",
+        "hur_saperi_at",
+        "hur_tow2_crew",
+        "mp/ukr/2022s/hur_assault",
+        "mp/ukr/2022s/hur_crew",
+        "mp/ukr/2022s/hur_grenadier",
+        "mp/ukr/2022s/hur_javelin",
+        "mp/ukr/2022s/hur_lmg",
+        "mp/ukr/2022s/hur_marksman_ax50",
+        "mp/ukr/2022s/hur_marksman_mk17",
+        "mp/ukr/2022s/hur_marksman_svd",
+        "mp/ukr/2022s/hur_medic",
+        "mp/ukr/2022s/hur_recon",
+        "mp/ukr/2022s/hur_rifleman",
+        "mp/ukr/2022s/hur_saperi",
+        "mp/ukr/2022s/hur_saperi_m72",
+        "mp/ukr/2022s/hur_seniorrifleman",
+        "mp/ukr/2022s/hur_squadlead",
+        "mp/ukr/2022s/hur_wepcrew_mk19",
+        "mp/ukr/2022s/hur_wepcrew_tow2"
+      ]
+    },
+    {
+      "count": 24,
+      "token": "sto",
+      "unit_names": [
+        "mp/rusa/2022s/sto_antitank",
+        "mp/rusa/2022s/sto_antitank1",
+        "mp/rusa/2022s/sto_antitank2",
+        "mp/rusa/2022s/sto_atassist",
+        "mp/rusa/2022s/sto_atassist1",
+        "mp/rusa/2022s/sto_eng",
+        "mp/rusa/2022s/sto_marksman",
+        "mp/rusa/2022s/sto_medic",
+        "mp/rusa/2022s/sto_medic1",
+        "mp/rusa/2022s/sto_medic2",
+        "mp/rusa/2022s/sto_mg",
+        "mp/rusa/2022s/sto_mg2",
+        "mp/rusa/2022s/sto_recon",
+        "mp/rusa/2022s/sto_rifleman",
+        "mp/rusa/2022s/sto_rifleman1",
+        "mp/rusa/2022s/sto_sniper",
+        "mp/rusa/2022s/sto_sniper1",
+        "mp/rusa/2022s/sto_squadlead",
+        "mp/rusa/2022s/sto_squadlead1",
+        "squad_sto_mtlb_2022(rusa)",
+        "sto_22_1",
+        "sto_22_1(rusa)",
+        "sto_22_2(rusa)",
+        "sto_22_3(rusa)"
+      ]
+    },
+    {
+      "count": 23,
+      "token": "arf",
+      "unit_names": [
+        "arf_crew",
+        "arf_drone",
+        "arf_m120",
+        "arf_m252",
+        "arf_m2hb",
+        "arf_medic",
+        "arf_medic(nato)",
+        "arf_mk19",
+        "arf_tow",
+        "squad_arf_ariete(nato)",
+        "squad_arf_at(nato)",
+        "squad_arf_centauro105(nato)",
+        "squad_arf_centauro_rgo(nato)",
+        "squad_arf_cv9035_rifle(nato)",
+        "squad_arf_cv9040_mkiv_rifle(nato)",
+        "squad_arf_cv9040_rifle(nato)",
+        "squad_arf_kipri_scout(nato)",
+        "squad_arf_mg(nato)",
+        "squad_arf_rifle(nato)",
+        "squad_arf_rifle_spike(nato)",
+        "squad_arf_scout",
+        "squad_arf_scout(nato)",
+        "squad_arf_ypr765_rifle(nato)"
+      ]
+    },
+    {
+      "count": 22,
+      "token": "1ad",
+      "unit_names": [
+        "mp/nato/2022s/1ad_antitank",
+        "mp/nato/2022s/1ad_autorifle",
+        "mp/nato/2022s/1ad_engineer",
+        "mp/nato/2022s/1ad_engineer_at",
+        "mp/nato/2022s/1ad_engineer_javelin",
+        "mp/nato/2022s/1ad_grenadier",
+        "mp/nato/2022s/1ad_javelin",
+        "mp/nato/2022s/1ad_marksman",
+        "mp/nato/2022s/1ad_medic",
+        "mp/nato/2022s/1ad_mg",
+        "mp/nato/2022s/1ad_mgassist",
+        "mp/nato/2022s/1ad_rifleman",
+        "mp/nato/2022s/1ad_scout",
+        "mp/nato/2022s/1ad_squadlead",
+        "mp/nato/2022s/1ad_teamlead",
+        "squad_tank1_eng",
+        "squad_tank1_eng_at(nato)",
+        "squad_tank1_fireteam(nato)",
+        "squad_tank1_fireteam_javelin",
+        "squad_tank1_recon",
+        "squad_tank1_rifle_m3(nato)",
+        "squad_tank1_rifle_mg(nato)"
+      ]
+    },
+    {
+      "count": 22,
+      "token": "sniper",
+      "unit_names": [
+        "47th_inf_sniper(ukr)",
+        "47th_inf_sniper_m107(ukr)",
+        "kraken_razv_sniper",
+        "mp/nato/2022s/fr_sniper",
+        "mp/nato/2022s/frn_sniper",
+        "mp/nato/2022s/jager_sniper",
+        "mp/nato/2022s/nato_sniper",
+        "mp/nato/2022s/pzgd_sniper",
+        "mp/rusa/2022s/rus114_rez_sniper",
+        "mp/rusa/2022s/rus80_sniper",
+        "mp/rusa/2022s/rus90_sniper",
+        "mp/rusa/2022s/spd_sniper",
+        "mp/rusa/2022s/sto_sniper",
+        "mp/ukr/2022s/azov3_sniper",
+        "mp/ukr/2022s/kra_sniper",
+        "mp/ukr/2022s/nato_sniper",
+        "mp/ukr/2022s/ukr211_sniper",
+        "mp/ukr/2022s/ukr47_sniper",
+        "mp/ukr/2022s/ukr47_sniper_m107",
+        "rus90_inf_sniper",
+        "rus90_inf_sniper(rusa)",
+        "squad_ksk_sniper"
+      ]
+    },
+    {
+      "count": 22,
+      "token": "ukr82",
+      "unit_names": [
+        "mp/ukr/2022s/ukr82_antitank",
+        "mp/ukr/2022s/ukr82_antitank_l",
+        "mp/ukr/2022s/ukr82_assault",
+        "mp/ukr/2022s/ukr82_assault2",
+        "mp/ukr/2022s/ukr82_hmg",
+        "mp/ukr/2022s/ukr82_lmg",
+        "mp/ukr/2022s/ukr82_marksman",
+        "mp/ukr/2022s/ukr82_medic",
+        "mp/ukr/2022s/ukr82_recon",
+        "mp/ukr/2022s/ukr82_rifleman",
+        "mp/ukr/2022s/ukr82_squadlead",
+        "mp/ukr/2022s/ukr82_wepcrew",
+        "mp/ukr/2022s/ukr82_wepcrew_metis",
+        "squad_95dhsv_bmp2(ukr)",
+        "squad_95dhsv_btr3(ukr)",
+        "squad_95dhsv_btr80(ukr)",
+        "squad_95dhsv_m1126_jav(ukr)",
+        "squad_95dhsv_m1126_mk19(ukr)",
+        "squad_95dhsv_marder(ukr)",
+        "squad_95dhsv_mi17(ukr)",
+        "squad_95dhsv_mi24(ukr)",
+        "squad_95dhsv_mtlb(ukr)"
+      ]
+    },
+    {
+      "count": 22,
+      "token": "wgn",
+      "unit_names": [
+        "mp/rusa/2022s/wgn_ammo",
+        "mp/rusa/2022s/wgn_antitank",
+        "mp/rusa/2022s/wgn_assault",
+        "mp/rusa/2022s/wgn_atassist",
+        "mp/rusa/2022s/wgn_lmg",
+        "mp/rusa/2022s/wgn_lmgassist",
+        "mp/rusa/2022s/wgn_marksman",
+        "mp/rusa/2022s/wgn_medic",
+        "mp/rusa/2022s/wgn_rifleman",
+        "mp/rusa/2022s/wgn_rifleman2",
+        "mp/rusa/2022s/wgn_rifleman3",
+        "mp/rusa/2022s/wgn_squadlead",
+        "mp/rusa/2022s/wgn_vehicleman",
+        "mp/rusa/2022s/wgn_wepcrew",
+        "squad_bmp2m_wgn(rusa)",
+        "squad_bmp2m_wgn_ai",
+        "squad_btr82a_wgn_ai",
+        "squad_btr90_rusc(rusa)",
+        "squad_sto_mtlb_2022(rusa)",
+        "t80bv_wgn",
+        "wgn_22_2",
+        "wgn_22_3"
+      ]
+    },
+    {
+      "count": 21,
+      "token": "gb3",
+      "unit_names": [
+        "squad_gb3_art_as90(nato)",
+        "squad_gb3_art_l118(nato)",
+        "squad_gb3_art_m270(nato)",
+        "squad_gb3_eng",
+        "squad_gb3_eng_at",
+        "squad_gb3_mech_rifle_fv510_milan(nato)",
+        "squad_gb3_mot_rifle_boxer(nato)",
+        "squad_gb3_mot_rifle_cougar(nato)",
+        "squad_gb3_rifle(nato)",
+        "squad_gb3_rifle_at_javelin",
+        "squad_gb3_rifle_at_javelin(nato)",
+        "squad_gb3_rifle_javelin",
+        "squad_gb3_rifle_mg",
+        "squad_gb3_rifle_mg(nato)",
+        "squad_gb3_rifle_nlaw(nato)",
+        "squad_gb3_scouts_ajax(nato)",
+        "squad_gb3_scouts_jackal",
+        "squad_gb3_scouts_nlaw",
+        "squad_gb3_scouts_ranger(nato)",
+        "squad_gb3_tank_challenger(nato)",
+        "squad_gb3_tank_challenger_tes(nato)"
+      ]
+    },
+    {
+      "count": 21,
+      "token": "pz10",
+      "unit_names": [
+        "squad_pz10_boxer_mgs(nato)",
+        "squad_pz10_cv9030_rifle(nato)",
+        "squad_pz10_eng",
+        "squad_pz10_eng(nato)",
+        "squad_pz10_eng_at",
+        "squad_pz10_fennek(nato)",
+        "squad_pz10_fennek_gmg(nato)",
+        "squad_pz10_fireteam_at",
+        "squad_pz10_fireteam_carl(nato)",
+        "squad_pz10_fireteam_mg(nato)",
+        "squad_pz10_leopard2a6(nato)",
+        "squad_pz10_leopard2a6_ma3(nato)",
+        "squad_pz10_leopard2a7(nato)",
+        "squad_pz10_mars(nato)",
+        "squad_pz10_puma_mells_rifle(nato)",
+        "squad_pz10_pzh2000(nato)",
+        "squad_pz10_rec",
+        "squad_pz10_rec(nato)",
+        "squad_pz10_rifle(nato)",
+        "squad_pz10_rifle_pzf3",
+        "squad_pz10_ypr765_rifle(nato)"
+      ]
+    },
+    {
+      "count": 21,
+      "token": "rus150",
+      "unit_names": [
+        "mp/rusa/2022s/rus150_antitank",
+        "mp/rusa/2022s/rus150_antitank_metis",
+        "mp/rusa/2022s/rus150_antitank_og7v",
+        "mp/rusa/2022s/rus150_antitank_rhsg",
+        "mp/rusa/2022s/rus150_grenadier_gm94",
+        "mp/rusa/2022s/rus150_grenadier_tm62",
+        "mp/rusa/2022s/rus150_marksman",
+        "mp/rusa/2022s/rus150_medic",
+        "mp/rusa/2022s/rus150_metis",
+        "mp/rusa/2022s/rus150_mg",
+        "mp/rusa/2022s/rus150_recon",
+        "mp/rusa/2022s/rus150_rifleman",
+        "mp/rusa/2022s/rus150_seniorrifleman",
+        "mp/rusa/2022s/rus150_squadlead",
+        "rus150_inf_gm94",
+        "rus150_inf_metis",
+        "rus150_inf_mg",
+        "rus150_inf_og7v",
+        "rus150_inf_rifle",
+        "rus150_inf_saperi",
+        "rus150_inf_saperi_at"
+      ]
+    },
+    {
+      "count": 21,
+      "token": "rus4",
+      "unit_names": [
+        "mp/rusa/2022s/rus4_antitank",
+        "mp/rusa/2022s/rus4_antitank_rpg22",
+        "mp/rusa/2022s/rus4_antitank_rpg27",
+        "mp/rusa/2022s/rus4_antitank_rpg7vr",
+        "mp/rusa/2022s/rus4_antitank_tbg7",
+        "mp/rusa/2022s/rus4_marksman",
+        "mp/rusa/2022s/rus4_mg",
+        "mp/rusa/2022s/rus4_recon",
+        "mp/rusa/2022s/rus4_rifleman",
+        "mp/rusa/2022s/rus4_seniorrifleman",
+        "mp/rusa/2022s/rus4_squadlead",
+        "rus4_inf_razv",
+        "rus4_inf_rifle",
+        "rus4_inf_rifle_at",
+        "rus4_inf_rifle_mg",
+        "rus4_inf_rifle_rpg27",
+        "rus4_inf_rifle_rpg27(rusa)",
+        "rus4_inf_rifle_tbg7",
+        "rus4_inf_saperi",
+        "rus4_inf_saperi_at",
+        "squad_gru_razv_tigr_rus4"
+      ]
+    },
+    {
+      "count": 21,
+      "token": "vdv",
+      "unit_names": [
+        "2c9",
+        "bmd4",
+        "bmd_4m",
+        "btr_mdm",
+        "doctrine_vehicle_t72b3_vdv(rusa)",
+        "doctrine_vehicle_typhoon_vdv(rusa)",
+        "mp/rusa/2022s/vdv_vehicleman",
+        "mp/rusa/2022s/vdv_vehicleman1",
+        "squad_gru_razv_btr80a(rusa)",
+        "squad_gru_razv_typhoon(rusa)",
+        "squad_vdv106_mech_bmd4(rusa)",
+        "squad_vdv45_razv_btr80a(rusa)",
+        "squad_vdv45_razv_typhoon(rusa)",
+        "squad_vdv76_2s25(rusa)",
+        "squad_vdv76_mech_bmd4(rusa)",
+        "squad_vdv76_mech_btrmdm(rusa)",
+        "squad_vdv76_t72b3(rusa)",
+        "squad_vdv76_t72b3_2024(rusa)",
+        "squad_vdv76_t90m(rusa)",
+        "typhoon_ads",
+        "typhoon_vdv"
+      ]
+    },
+    {
+      "count": 20,
+      "token": "razv",
+      "unit_names": [
+        "21th_inf_razv",
+        "21th_inf_razv_m107",
+        "47th_inf_razv_211",
+        "kraken_razv_javelin",
+        "kraken_razv_mg",
+        "kraken_razv_sniper",
+        "rus4_inf_razv",
+        "squad_gru_razv_btr80a(rusa)",
+        "squad_gru_razv_tigr",
+        "squad_gru_razv_tigr_rus4",
+        "squad_gru_razv_typhoon(rusa)",
+        "squad_rus155_razv_tigr",
+        "squad_rus155_razv_tigr(rusa)",
+        "squad_rus90_razv_tiger",
+        "squad_rus90_razv_tiger(rusa)",
+        "squad_ukr93_razv_arty(ukr)",
+        "squad_ukr93_razv_novator(ukr)",
+        "squad_vdv45_razv_btr80a(rusa)",
+        "squad_vdv45_razv_tigr",
+        "squad_vdv45_razv_typhoon(rusa)"
+      ]
+    },
+    {
+      "count": 20,
+      "token": "rus80",
+      "unit_names": [
+        "mp/rusa/2022s/rus80_antitank",
+        "mp/rusa/2022s/rus80_antitank_rhsg",
+        "mp/rusa/2022s/rus80_antitank_sso",
+        "mp/rusa/2022s/rus80_fpv",
+        "mp/rusa/2022s/rus80_medic",
+        "mp/rusa/2022s/rus80_mg",
+        "mp/rusa/2022s/rus80_mg1",
+        "mp/rusa/2022s/rus80_mg_sso",
+        "mp/rusa/2022s/rus80_mgunasst",
+        "mp/rusa/2022s/rus80_rifleman",
+        "mp/rusa/2022s/rus80_rifleman1",
+        "mp/rusa/2022s/rus80_rifleman_sso",
+        "mp/rusa/2022s/rus80_seniorrifleman",
+        "mp/rusa/2022s/rus80_sniper",
+        "mp/rusa/2022s/rus80_spotter",
+        "mp/rusa/2022s/rus80_squadlead",
+        "mp/rusa/2022s/rus80_squadlead_sso",
+        "mp/rusa/2022s/rus80_uav",
+        "rus80_inf_asvk",
+        "rus80_inf_rshg"
+      ]
+    },
+    {
+      "count": 20,
+      "token": "sup",
+      "unit_names": [
+        "artillery_barrage_heavy_rusa",
+        "artillery_barrage_heavy_ukr",
+        "artillery_barrage_light_rusa",
+        "artillery_barrage_light_ukr",
+        "artillery_barrage_medium_rusa",
+        "artillery_barrage_medium_ukr",
+        "artillery_barrage_smoke_rusa",
+        "artillery_barrage_smoke_ukr",
+        "defense_mg_fk20_nato",
+        "defense_mg_m2_nato",
+        "defense_mg_m45_nato",
+        "mg_stand_m2g_ai",
+        "mk19_stan_ai)",
+        "mortar_barrage_light_ukr",
+        "mortar_barrage_medium_ukr",
+        "mortar_barrage_smoke_ukr",
+        "mp/ukr/2022s/azov3_sup",
+        "squad_nc13_ugv_ammo",
+        "squad_nc13_ugv_mg(ukr)",
+        "squad_nc13_ugv_mine(ukr)"
+      ]
+    },
+    {
+      "count": 18,
+      "token": "47th",
+      "unit_names": [
+        "47th_assault_at4(ukr)",
+        "47th_assault_nlaw(ukr)",
+        "47th_inf_at(ukr)",
+        "47th_inf_javelin(ukr)",
+        "47th_inf_pkm(ukr)",
+        "47th_inf_razv_211",
+        "47th_inf_rifle(ukr)",
+        "47th_inf_saperi",
+        "47th_inf_saperi_at",
+        "47th_inf_sniper(ukr)",
+        "47th_inf_sniper_m107(ukr)",
+        "doctrine_squad_47th(ukr)",
+        "doctrine_squad_47th_bmp1(ukr)",
+        "doctrine_squad_47th_javelin(ukr)",
+        "doctrine_squad_47th_m2a2(ukr)",
+        "doctrine_squad_47th_mg(ukr)",
+        "doctrine_squad_47th_weapon(ukr)",
+        "doctrine_vehicle_Bradley_47th(ukr)"
+      ]
+    },
+    {
+      "count": 18,
+      "token": "sso",
+      "unit_names": [
+        "mp/rusa/2022s/rus80_antitank_sso",
+        "mp/rusa/2022s/rus80_mg_sso",
+        "mp/rusa/2022s/rus80_rifleman_sso",
+        "mp/rusa/2022s/rus80_squadlead_sso",
+        "mp/rusa/2022s/sso_9m133_crew",
+        "mp/rusa/2022s/sso_assault",
+        "mp/rusa/2022s/sso_rifleman",
+        "mp/rusa/2022s/sso_rifleman1",
+        "mp/rusa/2022s/sso_squadlead",
+        "mp/ukr/2022s/azov3_marksman_sso",
+        "mp/ukr/2022s/azov3_rifleman1_sso",
+        "mp/ukr/2022s/azov3_rifleman_sso",
+        "mp/ukr/2022s/azov3_spotter_sso",
+        "mp/ukr/2022s/azov3_squadlead_sso",
+        "squad_3rd_rozv_hatred(ukr)",
+        "sso_inf_gm94",
+        "sso_inf_kornet",
+        "sso_inf_mg"
+      ]
+    },
+    {
+      "count": 17,
+      "token": "3rd",
+      "unit_names": [
+        "3rd_assault_at(ukr)",
+        "3rd_assault_decepticons(ukr)",
+        "3rd_assault_javelin(ukr)",
+        "3rd_assault_mg3(ukr)",
+        "3rd_assault_saperi",
+        "3rd_assault_saperi_at",
+        "doctrine_squad_3rd(ukr)",
+        "doctrine_squad_3rd_at(ukr)",
+        "doctrine_squad_3rd_bmp1(ukr)",
+        "doctrine_squad_3rd_mg(ukr)",
+        "doctrine_squad_3rd_saperi(ukr)",
+        "doctrine_squad_3rd_svd(ukr)",
+        "doctrine_vehicle_2s1_3rd(ukr)",
+        "doctrine_vehicle_t64bv_2022_3rd(ukr)",
+        "doctrine_vehicle_t72amt_3rd(ukr)",
+        "doctrine_vehicle_t72b_3rd(ukr)",
+        "squad_3rd_rozv_hatred(ukr)"
+      ]
+    },
+    {
+      "count": 17,
+      "token": "82nd",
+      "unit_names": [
+        "c130_paratrooper_82nd",
+        "mp/nato/2022s/82nd_antitank",
+        "mp/nato/2022s/82nd_autorifle",
+        "mp/nato/2022s/82nd_engineer",
+        "mp/nato/2022s/82nd_engineer_at",
+        "mp/nato/2022s/82nd_grenadier",
+        "mp/nato/2022s/82nd_javelin",
+        "mp/nato/2022s/82nd_marksman",
+        "mp/nato/2022s/82nd_marksman_m82",
+        "mp/nato/2022s/82nd_medic",
+        "mp/nato/2022s/82nd_mg",
+        "mp/nato/2022s/82nd_mgassist",
+        "mp/nato/2022s/82nd_rifleman",
+        "mp/nato/2022s/82nd_scout",
+        "mp/nato/2022s/82nd_squadlead",
+        "mp/nato/2022s/82nd_teamlead",
+        "squad_82nd_lrs(nato)"
+      ]
+    },
+    {
+      "count": 17,
+      "token": "93th",
+      "unit_names": [
+        "93th_alcatraz_inf_rpg26(ukr)",
+        "93th_alcatraz_mg_pkm(ukr)",
+        "93th_alcatraz_rifle(ukr)",
+        "93th_alcatraz_rifle_gp25(ukr)",
+        "93th_alcatraz_saperi",
+        "93th_alcatraz_saperi_at",
+        "93th_at_javelin(ukr)",
+        "93th_at_stugna",
+        "doctrine_squad_93th(ukr)",
+        "doctrine_squad_93th_bmp2(ukr)",
+        "doctrine_squad_93th_btr80a(ukr)",
+        "doctrine_squad_93th_demon(ukr)",
+        "doctrine_squad_93th_m113(ukr)",
+        "doctrine_squad_93th_mg(ukr)",
+        "doctrine_squad_93th_novator(ukr)",
+        "doctrine_squad_93th_recon(ukr)",
+        "doctrine_squad_93th_weapon(ukr)"
+      ]
+    },
+    {
+      "count": 16,
+      "token": "95dhsv",
+      "unit_names": [
+        "squad_95dhsv_2s1(ukr)",
+        "squad_95dhsv_2s3(ukr)",
+        "squad_95dhsv_bm21(ukr)",
+        "squad_95dhsv_bmp2(ukr)",
+        "squad_95dhsv_btr3(ukr)",
+        "squad_95dhsv_btr80(ukr)",
+        "squad_95dhsv_d30(ukr)",
+        "squad_95dhsv_m1126_jav(ukr)",
+        "squad_95dhsv_m1126_mk19(ukr)",
+        "squad_95dhsv_m777(ukr)",
+        "squad_95dhsv_marder(ukr)",
+        "squad_95dhsv_mi17(ukr)",
+        "squad_95dhsv_mi24(ukr)",
+        "squad_95dhsv_mtlb(ukr)",
+        "squad_95dhsv_t80bv(ukr)",
+        "squad_95dhsv_tzz2(ukr)"
+      ]
+    },
+    {
+      "count": 16,
+      "token": "demon",
+      "unit_names": [
+        "doctrine_squad_93th_demon(ukr)",
+        "mp/ukr/2022s/azov3_demon_h",
+        "mp/ukr/2022s/demon_antitank",
+        "mp/ukr/2022s/demon_antitank_assist",
+        "mp/ukr/2022s/demon_antitank_rpg22",
+        "mp/ukr/2022s/demon_antitank_rpg26",
+        "mp/ukr/2022s/demon_grenadier",
+        "mp/ukr/2022s/demon_marksman",
+        "mp/ukr/2022s/demon_medic",
+        "mp/ukr/2022s/demon_mg",
+        "mp/ukr/2022s/demon_mg_rpk",
+        "mp/ukr/2022s/demon_rifleman",
+        "mp/ukr/2022s/demon_saperi",
+        "mp/ukr/2022s/demon_saperi_RPO",
+        "mp/ukr/2022s/demon_seniorrifleman",
+        "mp/ukr/2022s/demon_squadlead"
+      ]
+    },
+    {
+      "count": 16,
+      "token": "rng",
+      "unit_names": [
+        "mp/nato/2022s/rng_antitank",
+        "mp/nato/2022s/rng_antitank_r",
+        "mp/nato/2022s/rng_grenadier",
+        "mp/nato/2022s/rng_grenadier_r",
+        "mp/nato/2022s/rng_javelin",
+        "mp/nato/2022s/rng_medic",
+        "mp/nato/2022s/rng_medic_r",
+        "mp/nato/2022s/rng_mg",
+        "mp/nato/2022s/rng_mg_r",
+        "mp/nato/2022s/rng_rifleman",
+        "mp/nato/2022s/rng_rifleman1",
+        "mp/nato/2022s/rng_rifleman_r",
+        "mp/nato/2022s/rng_spotter",
+        "mp/nato/2022s/rng_spotter_r",
+        "mp/nato/2022s/rng_squadlead",
+        "mp/nato/2022s/rng_squadlead_r"
+      ]
+    },
+    {
+      "count": 15,
+      "token": "kra",
+      "unit_names": [
+        "mp/ukr/2022s/kra_antitank",
+        "mp/ukr/2022s/kra_antitank_carl",
+        "mp/ukr/2022s/kra_demo",
+        "mp/ukr/2022s/kra_demo_sadm",
+        "mp/ukr/2022s/kra_grenadier",
+        "mp/ukr/2022s/kra_marksman",
+        "mp/ukr/2022s/kra_mg",
+        "mp/ukr/2022s/kra_rifleman",
+        "mp/ukr/2022s/kra_sniper",
+        "mp/ukr/2022s/kra_spotter",
+        "mp/ukr/2022s/kra_squadlead",
+        "squad_kraken_bmp2(ukr)",
+        "squad_kraken_btr80a(ukr)",
+        "squad_kraken_kozak2(ukr)",
+        "squad_kraken_m113(ukr)"
+      ]
+    },
+    {
+      "count": 15,
+      "token": "mk19",
+      "unit_names": [
+        "arf_mk19",
+        "defense_mk19_tripod",
+        "humvee_mk19_ukr",
+        "hur_mk19_crew",
+        "m1126_mk19",
+        "matv_open_mk19",
+        "mk19_stan",
+        "mk19_stan_ai)",
+        "mk19_tripod",
+        "mk19_tripod_ai",
+        "mp/nato/2022s/nato_supcrew_mk19",
+        "mp/ukr/2022s/hur_wepcrew_mk19",
+        "mp/ukr/2022s/ukr_wepcrew_mk19",
+        "squad_95dhsv_m1126_mk19(ukr)",
+        "ukr_mk19_team(ukr)"
+      ]
+    },
+    {
+      "count": 15,
+      "token": "ukr13",
+      "unit_names": [
+        "13dhsv_c130_paratrooper",
+        "mp/ukr/2022s/ukr13_antitank",
+        "mp/ukr/2022s/ukr13_antitank_javelin",
+        "mp/ukr/2022s/ukr13_assault",
+        "mp/ukr/2022s/ukr13_assault_og7v",
+        "mp/ukr/2022s/ukr13_lmg",
+        "mp/ukr/2022s/ukr13_marksman",
+        "mp/ukr/2022s/ukr13_medic",
+        "mp/ukr/2022s/ukr13_recon",
+        "mp/ukr/2022s/ukr13_recon_at4",
+        "mp/ukr/2022s/ukr13_recon_drop",
+        "mp/ukr/2022s/ukr13_rifleman",
+        "mp/ukr/2022s/ukr13_saperi",
+        "mp/ukr/2022s/ukr13_saperi_at",
+        "mp/ukr/2022s/ukr13_squadlead"
+      ]
+    },
+    {
+      "count": 14,
+      "token": "45vdv",
+      "unit_names": [
+        "doctrine_vehicle_typhoon_45vdv(rusa)",
+        "mp/rusa/2022s/45vdv_antitank",
+        "mp/rusa/2022s/45vdv_assault",
+        "mp/rusa/2022s/45vdv_lmg",
+        "mp/rusa/2022s/45vdv_manpad",
+        "mp/rusa/2022s/45vdv_marksman",
+        "mp/rusa/2022s/45vdv_medic",
+        "mp/rusa/2022s/45vdv_recon",
+        "mp/rusa/2022s/45vdv_rifleman",
+        "mp/rusa/2022s/45vdv_spg9crew",
+        "mp/rusa/2022s/45vdv_squadlead",
+        "squad_vdv45_razv_btr80a(rusa)",
+        "squad_vdv45_razv_tigr",
+        "squad_vdv45_razv_typhoon(rusa)"
+      ]
+    },
+    {
+      "count": 14,
+      "token": "bmp2",
+      "unit_names": [
+        "bmp2_ukr",
+        "doctrine_squad_93th_bmp2(ukr)",
+        "doctrine_squad_rus114_bmp2(rusa)",
+        "doctrine_squad_rus114_saperi_bmp2(rusa)",
+        "doctrine_squad_rus90_bmp2(rusa)",
+        "doctrine_vehicle_bmp2_rus114(rusa)",
+        "doctrine_vehicle_bmp2_rus90(rusa)",
+        "doctrine_vehicle_bmp2_ukr93(ukr)",
+        "squad_95dhsv_bmp2(ukr)",
+        "squad_bmp2_azov3(ukr)",
+        "squad_bmp2m_wgn_ai",
+        "squad_kraken_bmp2(ukr)",
+        "squad_sto_mtlb_2022(rusa)",
+        "squad_ukr93_mech_bmp2(ukr)"
+      ]
+    },
+    {
+      "count": 14,
+      "token": "vsu",
+      "unit_names": [
+        "bmp-1_vsu",
+        "bmp1p_vsu",
+        "hamer_vsu",
+        "m113_vsu",
+        "mtlb_new_vsu",
+        "squad_3rd_rozv_hatred(ukr)",
+        "squad_95dhsv_mtlb(ukr)",
+        "squad_bmp1p_azov3(ukr)",
+        "squad_ter_bmp1_2022(ukr)",
+        "squad_ter_bmp1p_2022(ukr)",
+        "squad_ukr47_bmp1_2022(ukr)",
+        "squad_ukr93_mech_bmp1(ukr)",
+        "ural_ammo_vsu",
+        "ural_vsu"
+      ]
+    },
+    {
+      "count": 13,
+      "token": "acav",
+      "unit_names": [
+        "acav_22_1(nato)",
+        "acav_22_1_ng(nato)",
+        "acav_22_2(nato)",
+        "acav_22_2_ng(nato)",
+        "acav_at(nato)",
+        "acav_manpad(nato)",
+        "acav_mg(nato)",
+        "acav_rifle(nato)",
+        "mp/nato/2022s/acav_engineer",
+        "squad_acav_ampv(nato)",
+        "squad_acav_ampv_ng(nato)",
+        "squad_acav_m2a3(nato)",
+        "squad_acav_m2a3_brat_ng(nato)"
+      ]
+    },
+    {
+      "count": 13,
+      "token": "dsk",
+      "unit_names": [
+        "c130_paratrooper_dsk",
+        "c130_paratrooper_dsk_eng",
+        "squad_dsk_boxer_geb(nato)",
+        "squad_dsk_boxer_gmg_geb(nato)",
+        "squad_dsk_eng",
+        "squad_dsk_eng_at",
+        "squad_dsk_ksk",
+        "squad_dsk_ksk_at",
+        "squad_dsk_rifle",
+        "squad_dsk_rifle_pzf3",
+        "squad_dsk_rifle_spike",
+        "squad_dsk_tiger_at(nato)",
+        "squad_dsk_tiger_rkt(nato)"
+      ]
+    },
+    {
+      "count": 13,
+      "token": "jager",
+      "unit_names": [
+        "mp/nato/2022s/jager_antitank",
+        "mp/nato/2022s/jager_antitank_pzf3",
+        "mp/nato/2022s/jager_antitank_rgw",
+        "mp/nato/2022s/jager_grenadier",
+        "mp/nato/2022s/jager_marksman",
+        "mp/nato/2022s/jager_mg",
+        "mp/nato/2022s/jager_rifleman",
+        "mp/nato/2022s/jager_rifleman_puma",
+        "mp/nato/2022s/jager_sniper",
+        "mp/nato/2022s/jager_spotter",
+        "mp/nato/2022s/jager_squadlead",
+        "mp/nato/2022s/jager_teamlead",
+        "squad_luft_nh90_geb(nato)"
+      ]
+    },
+    {
+      "count": 12,
+      "token": "autorifle",
+      "unit_names": [
+        "mp/nato/2022s/1ad_autorifle",
+        "mp/nato/2022s/82nd_autorifle",
+        "mp/nato/2022s/fj_autorifle",
+        "mp/nato/2022s/inf2_autorifle",
+        "mp/nato/2022s/inf2_autorifle_ngsw",
+        "squad_inf2_light_at",
+        "squad_inf2_light_rifle(nato)",
+        "squad_inf2_rifle(nato)",
+        "squad_inf2_rifle_m3(nato)",
+        "squad_inf2_rifle_ngsw(nato)",
+        "squad_tank1_fireteam(nato)",
+        "squad_tank1_fireteam_javelin"
+      ]
+    },
+    {
+      "count": 12,
+      "token": "era",
+      "unit_names": [
+        "doctrine_vehicle_leopard2a6_era(ukr)",
+        "doctrine_vehicle_m1a1sa_era(ukr)",
+        "k2_batch_i_era",
+        "leopard_1a5_kontakt-1_era",
+        "leopard_2a4_era",
+        "leopord_2a6_era",
+        "squad_efp_k2gf(nato)",
+        "squad_ukr21_leopard1a5_era(ukr)",
+        "squad_ukr21_leopard2a4_era(ukr)",
+        "squad_ukr21_leopard2a6_era(ukr)",
+        "squad_ukr21_strv122_era(ukr)",
+        "strv_122_era"
+      ]
+    },
+    {
+      "count": 12,
+      "token": "lud",
+      "unit_names": [
+        "lud_22_1(rusa)",
+        "mp/rusa/2022s/lud_antitank",
+        "mp/rusa/2022s/lud_atassist",
+        "mp/rusa/2022s/lud_lmg",
+        "mp/rusa/2022s/lud_lmgunasst",
+        "mp/rusa/2022s/lud_marksman",
+        "mp/rusa/2022s/lud_medic",
+        "mp/rusa/2022s/lud_mg",
+        "mp/rusa/2022s/lud_mgunasst",
+        "mp/rusa/2022s/lud_ptrs",
+        "mp/rusa/2022s/lud_rifleman",
+        "mp/rusa/2022s/lud_squadlead"
+      ]
+    },
+    {
+      "count": 12,
+      "token": "spd",
+      "unit_names": [
+        "mp/rusa/2022s/spd_antitank",
+        "mp/rusa/2022s/spd_antitankasst",
+        "mp/rusa/2022s/spd_fpv",
+        "mp/rusa/2022s/spd_medic",
+        "mp/rusa/2022s/spd_mg",
+        "mp/rusa/2022s/spd_mgunasst",
+        "mp/rusa/2022s/spd_rifleman",
+        "mp/rusa/2022s/spd_rifleman1",
+        "mp/rusa/2022s/spd_seniorrifleman",
+        "mp/rusa/2022s/spd_sniper",
+        "mp/rusa/2022s/spd_squadlead",
+        "mp/rusa/2022s/spd_uav"
+      ]
+    },
+    {
+      "count": 12,
+      "token": "spz",
+      "unit_names": [
+        "mp/rusa/2022s/spz_demo",
+        "mp/rusa/2022s/spz_eng",
+        "mp/rusa/2022s/spz_marsman",
+        "mp/rusa/2022s/spz_medic",
+        "mp/rusa/2022s/spz_mg",
+        "mp/rusa/2022s/spz_rifleman",
+        "mp/rusa/2022s/spz_spotter",
+        "mp/rusa/2022s/spz_squadlead",
+        "squad_gru_razv_btr80a(rusa)",
+        "squad_gru_razv_tigr",
+        "squad_gru_razv_tigr_rus4",
+        "squad_gru_razv_typhoon(rusa)"
+      ]
+    },
+    {
+      "count": 11,
+      "token": "2s1",
+      "unit_names": [
+        "2s1_gvozdika_ukr",
+        "2s1_n",
+        "doctrine_vehicle_2s1_3rd(ukr)",
+        "doctrine_vehicle_2s1_rus114(rusa)",
+        "doctrine_vehicle_2s1_rus155(rusa)",
+        "doctrine_vehicle_2s1_rus90(rusa)",
+        "doctrine_vehicle_2s1_ukr93(ukr)",
+        "squad_95dhsv_2s1(ukr)",
+        "squad_efp_2s1(nato)",
+        "squad_ukr21_2s1(ukr)",
+        "squad_ukr93_2s1(ukr)"
+      ]
+    },
+    {
+      "count": 11,
+      "token": "barrage",
+      "unit_names": [
+        "artillery_barrage_heavy_rusa",
+        "artillery_barrage_heavy_ukr",
+        "artillery_barrage_light_rusa",
+        "artillery_barrage_light_ukr",
+        "artillery_barrage_medium_rusa",
+        "artillery_barrage_medium_ukr",
+        "artillery_barrage_smoke_rusa",
+        "artillery_barrage_smoke_ukr",
+        "mortar_barrage_light_ukr",
+        "mortar_barrage_medium_ukr",
+        "mortar_barrage_smoke_ukr"
+      ]
+    },
+    {
+      "count": 11,
+      "token": "guncrew",
+      "unit_names": [
+        "artillery_barrage_heavy_rusa",
+        "artillery_barrage_heavy_ukr",
+        "artillery_barrage_light_rusa",
+        "artillery_barrage_light_ukr",
+        "artillery_barrage_medium_rusa",
+        "artillery_barrage_medium_ukr",
+        "artillery_barrage_smoke_rusa",
+        "artillery_barrage_smoke_ukr",
+        "mortar_barrage_light_ukr",
+        "mortar_barrage_medium_ukr",
+        "mortar_barrage_smoke_ukr"
+      ]
+    },
+    {
+      "count": 11,
+      "token": "kraken",
+      "unit_names": [
+        "kraken_razv_javelin",
+        "kraken_razv_mg",
+        "kraken_razv_sniper",
+        "squad_kraken_bmp2(ukr)",
+        "squad_kraken_btr80a(ukr)",
+        "squad_kraken_d30(ukr)",
+        "squad_kraken_kozak2(ukr)",
+        "squad_kraken_m113(ukr)",
+        "squad_kraken_m777(ukr)",
+        "squad_kraken_t72amt(ukr)",
+        "squad_kraken_t80bv(ukr)"
+      ]
+    },
+    {
+      "count": 11,
+      "token": "leopord",
+      "unit_names": [
+        "leopord_2a4",
+        "leopord_2a4m",
+        "leopord_2a6",
+        "leopord_2a6_era",
+        "leopord_2a6_ma3",
+        "leopord_2a6_n",
+        "squad_pz10_leopard2a6(nato)",
+        "squad_pz10_leopard2a6_ma3(nato)",
+        "squad_ukr21_leopard2a4(ukr)",
+        "squad_ukr21_leopard2a6(ukr)",
+        "squad_ukr21_leopard2a6_era(ukr)"
+      ]
+    },
+    {
+      "count": 11,
+      "token": "metis",
+      "unit_names": [
+        "mp/rusa/2022s/rus150_antitank_metis",
+        "mp/rusa/2022s/rus150_metis",
+        "mp/rusa/2022s/vdv76_metis_crew",
+        "mp/ukr/2022s/ukr82_wepcrew_metis",
+        "rus150_inf_metis",
+        "rus155_inf_metis_m",
+        "squad_95dhsv_btr3(ukr)",
+        "squad_95dhsv_btr80(ukr)",
+        "squad_95dhsv_m1126_mk19(ukr)",
+        "vdv76_inf_metis",
+        "vdv76_inf_metis(rusa)"
+      ]
+    },
+    {
+      "count": 11,
+      "token": "rifleman1",
+      "unit_names": [
+        "mp/nato/2022s/rng_rifleman1",
+        "mp/rusa/2022s/rus114_rez_rifleman1",
+        "mp/rusa/2022s/rus80_rifleman1",
+        "mp/rusa/2022s/spd_rifleman1",
+        "mp/rusa/2022s/sso_rifleman1",
+        "mp/rusa/2022s/sto_rifleman1",
+        "mp/ukr/2022s/azov3_rifleman1_sso",
+        "mp/ukr/2022s/nato_rifleman1",
+        "mp/ukr/2022s/ukr_rifleman1",
+        "squad_3rd_rozv_hatred(ukr)",
+        "squad_sto_mtlb_2022(rusa)"
+      ]
+    },
+    {
+      "count": 11,
+      "token": "ter",
+      "unit_names": [
+        "mp/ukr/2022s/ter_antitank",
+        "mp/ukr/2022s/ter_antitank2",
+        "mp/ukr/2022s/ter_marksman",
+        "mp/ukr/2022s/ter_medic",
+        "mp/ukr/2022s/ter_mg",
+        "mp/ukr/2022s/ter_rifleman",
+        "mp/ukr/2022s/ter_squadlead",
+        "squad_ter_bmp1_2022(ukr)",
+        "squad_ter_bmp1p_2022(ukr)",
+        "squad_ter_m113_2022(ukr)",
+        "ter_22_1(ukr)"
+      ]
+    },
+    {
+      "count": 11,
+      "token": "ugv",
+      "unit_names": [
+        "squad_nc13_ugv_ammo",
+        "squad_nc13_ugv_mg(ukr)",
+        "squad_nc13_ugv_mine(ukr)",
+        "ugv_30c",
+        "ugv_mg_ap",
+        "ugv_mg_ap2",
+        "ugv_mg_ap3",
+        "ugv_mg_at",
+        "ugv_mg_at2",
+        "ugv_mine",
+        "ugv_supl"
+      ]
+    },
+    {
+      "count": 10,
+      "token": "106vdv",
+      "unit_names": [
+        "mp/rusa/2022s/106vdv_ags17crew",
+        "mp/rusa/2022s/106vdv_antitank",
+        "mp/rusa/2022s/106vdv_greenader",
+        "mp/rusa/2022s/106vdv_kordcrew",
+        "mp/rusa/2022s/106vdv_medic",
+        "mp/rusa/2022s/106vdv_mg",
+        "mp/rusa/2022s/106vdv_rifleman",
+        "mp/rusa/2022s/106vdv_rifleman3",
+        "mp/rusa/2022s/106vdv_squadlead",
+        "squad_vdv106_mech_bmd4(rusa)"
+      ]
+    },
+    {
+      "count": 10,
+      "token": "atassist",
+      "unit_names": [
+        "mp/rusa/2022s/kor_atassist",
+        "mp/rusa/2022s/kor_atassist_rpg29",
+        "mp/rusa/2022s/lud_atassist",
+        "mp/rusa/2022s/sto_atassist",
+        "mp/rusa/2022s/wgn_atassist",
+        "mp/ukr/2022s/ukr93_atassist",
+        "mp/ukr/2022s/ukr_atassist",
+        "squad_bmp2m_wgn(rusa)",
+        "squad_bmp2m_wgn_ai",
+        "squad_btr82a_wgn_ai"
+      ]
+    },
+    {
+      "count": 10,
+      "token": "nlaw",
+      "unit_names": [
+        "21th_inf_rifle_nlaw",
+        "47th_assault_nlaw(ukr)",
+        "mp/nato/2022s/dg_antitank_nlaw",
+        "mp/nato/2022s/gb_antitank_nlaw",
+        "mp/ukr/2022s/ukr21_rifleman_nlaw",
+        "mp/ukr/2022s/ukr47_assault_nlaw",
+        "squad_gb1_rifle_nlaw(nato)",
+        "squad_gb3_rifle_nlaw(nato)",
+        "squad_gb3_scouts_nlaw",
+        "squad_ukr21_9040c_nlaw(ukr)"
+      ]
+    },
+    {
+      "count": 9,
+      "token": "21th",
+      "unit_names": [
+        "21th_inf_razv",
+        "21th_inf_razv_m107",
+        "21th_inf_rifle",
+        "21th_inf_rifle_mg",
+        "21th_inf_rifle_nlaw",
+        "21th_inf_rifle_og7v",
+        "21th_inf_saperi",
+        "21th_inf_saperi_at",
+        "doctrine_squad_21th_9040(ukr)"
+      ]
+    },
+    {
+      "count": 9,
+      "token": "dpr100",
+      "unit_names": [
+        "mp/rusa/2022s/dpr100_152ob",
+        "mp/rusa/2022s/dpr100_antitank",
+        "mp/rusa/2022s/dpr100_antitankasst",
+        "mp/rusa/2022s/dpr100_medic",
+        "mp/rusa/2022s/dpr100_mg",
+        "mp/rusa/2022s/dpr100_mgunasst",
+        "mp/rusa/2022s/dpr100_rifleman",
+        "mp/rusa/2022s/dpr100_seniorrifleman",
+        "mp/rusa/2022s/dpr100_squadlead"
+      ]
+    },
+    {
+      "count": 9,
+      "token": "manpad",
+      "unit_names": [
+        "acav_manpad(nato)",
+        "mp/rusa/2022s/45vdv_manpad",
+        "mp/ukr/2022s/ukr_manpad_operator",
+        "mp/ukr/2022s/ukr_manpad_supporter",
+        "nato_manpad(ukr)",
+        "pzgd_manpad(nato)",
+        "rus155_manpad(rusa)",
+        "ukr53_manpad(ukr)",
+        "ukr_manpad_operator(ukr)"
+      ]
+    },
+    {
+      "count": 9,
+      "token": "mtlb",
+      "unit_names": [
+        "doctrine_squad_rus114_mtlb(rusa)",
+        "doctrine_squad_rus155_mtlb(rusa)",
+        "doctrine_squad_rus90_mtlb(rusa)",
+        "doctrine_vehicle_mtlb_mt12(rusa)",
+        "mtlb_mt12_ukr",
+        "mtlb_new_vsu",
+        "squad_95dhsv_mtlb(ukr)",
+        "squad_sto_mtlb_2022(rusa)",
+        "squad_ukr93_mt12_mtlb(ukr)"
+      ]
+    },
+    {
+      "count": 9,
+      "token": "puma",
+      "unit_names": [
+        "doctrine_vehicle_puma(nato)",
+        "mp/nato/2022s/jager_rifleman_puma",
+        "mp/nato/2022s/pzgd_rifleman_puma",
+        "puma",
+        "puma_vjtf",
+        "squad_ksk_nh90(nato)",
+        "squad_pz10_puma_mells_rifle(nato)",
+        "squad_pzgd_puma(nato)",
+        "squad_pzgd_puma_vjtf(nato)"
+      ]
+    },
+    {
+      "count": 9,
+      "token": "pzh2000",
+      "unit_names": [
+        "doctrine_vehicle_pzh2000(nato)",
+        "pzh2000_n",
+        "pzh2000_ukr",
+        "squad_dsk_tiger_at(nato)",
+        "squad_dsk_tiger_rkt(nato)",
+        "squad_ksk_wiesel_gun(nato)",
+        "squad_ksk_wiesel_motar(nato)",
+        "squad_ksk_wiesel_tow(nato)",
+        "squad_pz10_pzh2000(nato)"
+      ]
+    },
+    {
+      "count": 9,
+      "token": "rus110",
+      "unit_names": [
+        "mp/rusa/2022s/rus110_203ob",
+        "mp/rusa/2022s/rus110_antitank",
+        "mp/rusa/2022s/rus110_antitankasst",
+        "mp/rusa/2022s/rus110_medic",
+        "mp/rusa/2022s/rus110_mg",
+        "mp/rusa/2022s/rus110_mgunasst",
+        "mp/rusa/2022s/rus110_rifleman",
+        "mp/rusa/2022s/rus110_seniorrifleman",
+        "mp/rusa/2022s/rus110_squadlead"
+      ]
+    },
+    {
+      "count": 9,
+      "token": "rusc",
+      "unit_names": [
+        "mp/rusa/2022s/rusc_antitank",
+        "mp/rusa/2022s/rusc_marksman",
+        "mp/rusa/2022s/rusc_medic",
+        "mp/rusa/2022s/rusc_mg",
+        "mp/rusa/2022s/rusc_rifleman",
+        "mp/rusa/2022s/rusc_rifleman2",
+        "mp/rusa/2022s/rusc_rifleman3",
+        "mp/rusa/2022s/rusc_squadlead",
+        "squad_btr90_rusc(rusa)"
+      ]
+    },
+    {
+      "count": 9,
+      "token": "wgn2",
+      "unit_names": [
+        "mp/rusa/2022s/wgn2_antitank",
+        "mp/rusa/2022s/wgn2_assault",
+        "mp/rusa/2022s/wgn2_lmg",
+        "mp/rusa/2022s/wgn2_marksman",
+        "mp/rusa/2022s/wgn2_medic",
+        "mp/rusa/2022s/wgn2_rifleman",
+        "mp/rusa/2022s/wgn2_rifleman2",
+        "mp/rusa/2022s/wgn2_rifleman3",
+        "mp/rusa/2022s/wgn2_squadlead"
+      ]
+    },
+    {
+      "count": 8,
+      "token": "25sm",
+      "unit_names": [
+        "su-25sm_accurate_ukr",
+        "su-25sm_accurate_ukr_ai",
+        "su-25sm_at_ukr",
+        "su-25sm_at_ukr_ai",
+        "su-25sm_support_light_ukr",
+        "su-25sm_support_light_ukr_ai",
+        "su-25sm_support_ukr",
+        "su-25sm_support_ukr_ai"
+      ]
+    },
+    {
+      "count": 8,
+      "token": "2a6",
+      "unit_names": [
+        "leopord_2a6",
+        "leopord_2a6_era",
+        "leopord_2a6_ma3",
+        "leopord_2a6_n",
+        "squad_pz10_leopard2a6(nato)",
+        "squad_pz10_leopard2a6_ma3(nato)",
+        "squad_ukr21_leopard2a6(ukr)",
+        "squad_ukr21_leopard2a6_era(ukr)"
+      ]
+    },
+    {
+      "count": 8,
+      "token": "bm21",
+      "unit_names": [
+        "doctrine_vehicle_bm21_nplm(rusa)",
+        "doctrine_vehicle_bm21_nplm(ukr)",
+        "doctrine_vehicle_bm21_rus114(rusa)",
+        "doctrine_vehicle_bm21_ukr21(ukr)",
+        "doctrine_vehicle_bm21_ukr93(ukr)",
+        "squad_95dhsv_bm21(ukr)",
+        "squad_ukr21_bm21(ukr)",
+        "squad_ukr47_bm21(ukr)"
+      ]
+    },
+    {
+      "count": 8,
+      "token": "dsh",
+      "unit_names": [
+        "doctrine_squad_dsh(rusa)",
+        "doctrine_squad_dsh_bmd2(rusa)",
+        "doctrine_squad_dsh_bmd4(rusa)",
+        "doctrine_squad_dsh_btrd(rusa)",
+        "doctrine_squad_dsh_btrd_zu(rusa)",
+        "doctrine_squad_dsh_kornet(rusa)",
+        "doctrine_squad_dsh_mg(rusa)",
+        "doctrine_squad_dsh_razvedka(rusa)"
+      ]
+    },
+    {
+      "count": 8,
+      "token": "light",
+      "unit_names": [
+        "artillery_barrage_light_rusa",
+        "artillery_barrage_light_ukr",
+        "mortar_barrage_light_ukr",
+        "squad_inf2_light_at",
+        "squad_inf2_light_rifle(nato)",
+        "su-25sm_support_light_ukr",
+        "su-25sm_support_light_ukr_ai",
+        "tornado_gr4_support_light"
+      ]
+    },
+    {
+      "count": 8,
+      "token": "mech",
+      "unit_names": [
+        "squad_gb3_mech_rifle_fv510_milan(nato)",
+        "squad_ukr93_mech_bmp1(ukr)",
+        "squad_ukr93_mech_bmp2(ukr)",
+        "squad_ukr93_mech_cv90(ukr)",
+        "squad_ukr93_mech_m113(ukr)",
+        "squad_vdv106_mech_bmd4(rusa)",
+        "squad_vdv76_mech_bmd4(rusa)",
+        "squad_vdv76_mech_btrmdm(rusa)"
+      ]
+    },
+    {
+      "count": 8,
+      "token": "og7v",
+      "unit_names": [
+        "21th_inf_rifle_og7v",
+        "doctrine_squad_rus155_assault_og7v(rusa)",
+        "mp/rusa/2022s/rus114_rez_antitank_og7v",
+        "mp/rusa/2022s/rus150_antitank_og7v",
+        "mp/ukr/2022s/ukr13_assault_og7v",
+        "mp/ukr/2022s/ukr21_antitank_og7v",
+        "rus150_inf_og7v",
+        "squad_13dhsv_og7v"
+      ]
+    },
+    {
+      "count": 8,
+      "token": "rgw",
+      "unit_names": [
+        "mp/nato/2022s/jager_antitank_rgw",
+        "mp/nato/2022s/pzgd_antitank_rgw",
+        "squad_dsk_ksk",
+        "squad_dsk_ksk_at",
+        "squad_dsk_rifle",
+        "squad_dsk_rifle_pzf3",
+        "squad_dsk_rifle_spike",
+        "squad_pz10_rifle(nato)"
+      ]
+    },
+    {
+      "count": 8,
+      "token": "t80bv",
+      "unit_names": [
+        "doctrine_squad_rus155_t80bv(rusa)",
+        "doctrine_vehicle_t80bv_ukr93(ukr)",
+        "squad_95dhsv_t80bv(ukr)",
+        "squad_kraken_t80bv(ukr)",
+        "squad_ukr93_t80bv(ukr)",
+        "t80bv_2018",
+        "t80bv_ukr",
+        "t80bv_wgn"
+      ]
+    },
+    {
+      "count": 7,
+      "token": "ammo",
+      "unit_names": [
+        "d21_21_ammo",
+        "mp/nato/2022s/nato_ammo",
+        "mp/rusa/2022s/vdv76_ammo",
+        "mp/rusa/2022s/wgn_ammo",
+        "mp/ukr/2022s/nato_ammo",
+        "squad_nc13_ugv_ammo",
+        "ural_ammo_vsu"
+      ]
+    },
+    {
+      "count": 7,
+      "token": "bmp1",
+      "unit_names": [
+        "doctrine_squad_3rd_bmp1(ukr)",
+        "doctrine_squad_47th_bmp1(ukr)",
+        "doctrine_squad_rus90_bmp1(rusa)",
+        "squad_rus90_bmp1(rusa)",
+        "squad_ter_bmp1_2022(ukr)",
+        "squad_ukr47_bmp1_2022(ukr)",
+        "squad_ukr93_mech_bmp1(ukr)"
+      ]
+    },
+    {
+      "count": 7,
+      "token": "btr80a",
+      "unit_names": [
+        "btr80a_ukr",
+        "doctrine_squad_93th_btr80a(ukr)",
+        "doctrine_squad_rus114_btr80a(rusa)",
+        "doctrine_squad_rus90_btr80a(rusa)",
+        "squad_gru_razv_btr80a(rusa)",
+        "squad_kraken_btr80a(ukr)",
+        "squad_vdv45_razv_btr80a(rusa)"
+      ]
+    },
+    {
+      "count": 7,
+      "token": "c130",
+      "unit_names": [
+        "13dhsv_c130_paratrooper",
+        "c130_paratrooper_82nd",
+        "c130_paratrooper_dsk",
+        "c130_paratrooper_dsk_eng",
+        "c130_wiesel_gun",
+        "c130_wiesel_motar",
+        "c130_wiesel_tow"
+      ]
+    },
+    {
+      "count": 7,
+      "token": "cmd",
+      "unit_names": [
+        "mp/nato/2022s/nato_cmd",
+        "mp/ukr/2022s/ukr47_crew_cmd",
+        "mp/ukr/2022s/ukr_cmd",
+        "mp/ukr/2022s/ukr_vehicleman_cmd",
+        "squad_ukr47_m2a2_arat_2022(ukr)",
+        "squad_ukr_cmd(ukr)",
+        "t64bv2022"
+      ]
+    },
+    {
+      "count": 7,
+      "token": "demo",
+      "unit_names": [
+        "mp/rusa/2022s/spz_demo",
+        "mp/ukr/2022s/azov3_demo",
+        "mp/ukr/2022s/kra_demo",
+        "mp/ukr/2022s/kra_demo_sadm",
+        "mp/ukr/2022s/ukr211_demo",
+        "squad_gru_razv_btr80a(rusa)",
+        "squad_gru_razv_typhoon(rusa)"
+      ]
+    },
+    {
+      "count": 7,
+      "token": "ksk",
+      "unit_names": [
+        "squad_dsk_ksk",
+        "squad_dsk_ksk_at",
+        "squad_ksk_nh90(nato)",
+        "squad_ksk_sniper",
+        "squad_ksk_wiesel_gun(nato)",
+        "squad_ksk_wiesel_motar(nato)",
+        "squad_ksk_wiesel_tow(nato)"
+      ]
+    },
+    {
+      "count": 7,
+      "token": "leopard2a6",
+      "unit_names": [
+        "doctrine_vehicle_leopard2a6(nato)",
+        "doctrine_vehicle_leopard2a6(ukr)",
+        "doctrine_vehicle_leopard2a6_era(ukr)",
+        "squad_pz10_leopard2a6(nato)",
+        "squad_pz10_leopard2a6_ma3(nato)",
+        "squad_ukr21_leopard2a6(ukr)",
+        "squad_ukr21_leopard2a6_era(ukr)"
+      ]
+    },
+    {
+      "count": 7,
+      "token": "lrs",
+      "unit_names": [
+        "mp/nato/2022s/lrs_antitank",
+        "mp/nato/2022s/lrs_javelin",
+        "mp/nato/2022s/lrs_marksman",
+        "mp/nato/2022s/lrs_mg",
+        "mp/nato/2022s/lrs_rifleman",
+        "mp/nato/2022s/lrs_squadlead",
+        "squad_82nd_lrs(nato)"
+      ]
+    },
+    {
+      "count": 7,
+      "token": "m2hb",
+      "unit_names": [
+        "arf_m2hb",
+        "humvee_m2hb_ukr",
+        "matv_open_m2hb",
+        "mp/nato/2022s/nato_supcrew_m2hb",
+        "mp/nato/2022s/rg_m2hb_crew",
+        "squad_gb3_scouts_ranger(nato)",
+        "squad_ukr93_razv_arty(ukr)"
+      ]
+    },
+    {
+      "count": 7,
+      "token": "mgun",
+      "unit_names": [
+        "d21_11_mgun",
+        "kozak2_mgun",
+        "kozak5_mgun",
+        "squad_dsk_boxer_geb(nato)",
+        "squad_gb3_mot_rifle_boxer(nato)",
+        "squad_kraken_kozak2(ukr)",
+        "squad_nc13_ugv_mg(ukr)"
+      ]
+    },
+    {
+      "count": 7,
+      "token": "mgunasst",
+      "unit_names": [
+        "mp/rusa/2022s/dpr100_mgunasst",
+        "mp/rusa/2022s/kor_mgunasst",
+        "mp/rusa/2022s/lud_mgunasst",
+        "mp/rusa/2022s/rus110_mgunasst",
+        "mp/rusa/2022s/rus114_rez_mgunasst",
+        "mp/rusa/2022s/rus80_mgunasst",
+        "mp/rusa/2022s/spd_mgunasst"
+      ]
+    },
+    {
+      "count": 7,
+      "token": "ngsw",
+      "unit_names": [
+        "mp/nato/2022s/inf2_antitank_ngsw",
+        "mp/nato/2022s/inf2_autorifle_ngsw",
+        "mp/nato/2022s/inf2_medic_ngsw",
+        "mp/nato/2022s/inf2_rifleman_ngsw",
+        "mp/nato/2022s/inf2_squadlead_ngsw",
+        "mp/nato/2022s/inf2_teamlead_ngsw",
+        "squad_inf2_rifle_ngsw(nato)"
+      ]
+    },
+    {
+      "count": 7,
+      "token": "rezer",
+      "unit_names": [
+        "rus114_rez_rezer_assault",
+        "rus114_rez_rezer_assault(rusa)",
+        "rus114_rez_rezer_at",
+        "rus114_rez_rezer_mg",
+        "rus114_rez_rezer_mg(rusa)",
+        "rus114_rez_rezer_rifle",
+        "rus114_rez_rezer_rifle(rusa)"
+      ]
+    },
+    {
+      "count": 7,
+      "token": "rifleman2",
+      "unit_names": [
+        "mp/rusa/2022s/rus114_rifleman2",
+        "mp/rusa/2022s/rusc_rifleman2",
+        "mp/rusa/2022s/wgn2_rifleman2",
+        "mp/rusa/2022s/wgn_rifleman2",
+        "mp/ukr/2022s/nato_rifleman2",
+        "mp/ukr/2022s/ukr_rifleman2",
+        "squad_btr90_rusc(rusa)"
+      ]
+    },
+    {
+      "count": 7,
+      "token": "rifleman3",
+      "unit_names": [
+        "mp/rusa/2022s/106vdv_rifleman3",
+        "mp/rusa/2022s/kor_rifleman3",
+        "mp/rusa/2022s/rusc_rifleman3",
+        "mp/rusa/2022s/wgn2_rifleman3",
+        "mp/rusa/2022s/wgn_rifleman3",
+        "mp/ukr/2022s/nato_rifleman3",
+        "squad_btr90_rusc(rusa)"
+      ]
+    },
+    {
+      "count": 7,
+      "token": "rpg28",
+      "unit_names": [
+        "mp/rusa/2022s/rus155_antitank_rpg28",
+        "mp/rusa/2022s/vdv76_antitank_rpg28",
+        "rus155_inf_rpg28",
+        "rus155_inf_rpg28(rusa)",
+        "squad_vdv76_mech_btrmdm(rusa)",
+        "vdv76_inf_rpg28",
+        "vdv76_inf_rpg28(rusa)"
+      ]
+    },
+    {
+      "count": 7,
+      "token": "supporter",
+      "unit_names": [
+        "defense_mg_fk20_nato",
+        "defense_mg_m2_nato",
+        "defense_mg_m45_nato",
+        "mg_stand_m2g_ai",
+        "mk19_stan_ai)",
+        "mp/ukr/2022s/ukr_manpad_supporter",
+        "ukr_manpad_operator(ukr)"
+      ]
+    },
+    {
+      "count": 7,
+      "token": "tank1",
+      "unit_names": [
+        "squad_tank1_eng",
+        "squad_tank1_eng_at(nato)",
+        "squad_tank1_fireteam(nato)",
+        "squad_tank1_fireteam_javelin",
+        "squad_tank1_recon",
+        "squad_tank1_rifle_m3(nato)",
+        "squad_tank1_rifle_mg(nato)"
+      ]
+    },
+    {
+      "count": 7,
+      "token": "wiesel",
+      "unit_names": [
+        "c130_wiesel_gun",
+        "c130_wiesel_motar",
+        "c130_wiesel_tow",
+        "doctrine_vehicle_wiesel(nato)",
+        "squad_ksk_wiesel_gun(nato)",
+        "squad_ksk_wiesel_motar(nato)",
+        "squad_ksk_wiesel_tow(nato)"
+      ]
+    },
+    {
+      "count": 6,
+      "token": "13dhsv",
+      "unit_names": [
+        "13dhsv_c130_paratrooper",
+        "squad_13dhsv_drone",
+        "squad_13dhsv_javelin",
+        "squad_13dhsv_og7v",
+        "squad_13dhsv_saperi",
+        "squad_13dhsv_saperi_at"
+      ]
+    },
+    {
+      "count": 6,
+      "token": "2b14",
+      "unit_names": [
+        "2b14_mortar_ukr",
+        "2b14_mortar_ukr_ai",
+        "mortar_barrage_light_ukr",
+        "mortar_barrage_smoke_ukr",
+        "mp/ukr/2022s/ukr_wepcrew_2b14",
+        "ukr_2b14_team(ukr)"
+      ]
+    },
+    {
+      "count": 6,
+      "token": "alcatraz",
+      "unit_names": [
+        "93th_alcatraz_inf_rpg26(ukr)",
+        "93th_alcatraz_mg_pkm(ukr)",
+        "93th_alcatraz_rifle(ukr)",
+        "93th_alcatraz_rifle_gp25(ukr)",
+        "93th_alcatraz_saperi",
+        "93th_alcatraz_saperi_at"
+      ]
+    },
+    {
+      "count": 6,
+      "token": "assault2",
+      "unit_names": [
+        "mp/ukr/2022s/ukr82_assault2",
+        "squad_95dhsv_bmp2(ukr)",
+        "squad_95dhsv_marder(ukr)",
+        "squad_95dhsv_mi17(ukr)",
+        "squad_95dhsv_mi24(ukr)",
+        "squad_95dhsv_mtlb(ukr)"
+      ]
+    },
+    {
+      "count": 6,
+      "token": "challenger2",
+      "unit_names": [
+        "challenger2",
+        "challenger2_n",
+        "challenger2_tes",
+        "squad_95dhsv_tzz2(ukr)",
+        "squad_gb3_tank_challenger(nato)",
+        "squad_gb3_tank_challenger_tes(nato)"
+      ]
+    },
+    {
+      "count": 6,
+      "token": "defense",
+      "unit_names": [
+        "defense_mg_fk20_nato",
+        "defense_mg_m2_nato",
+        "defense_mg_m45_nato",
+        "defense_mg_mt12",
+        "defense_mg_nsv",
+        "defense_mk19_tripod"
+      ]
+    },
+    {
+      "count": 6,
+      "token": "efp",
+      "unit_names": [
+        "squad_efp_2s1(nato)",
+        "squad_efp_k2gf(nato)",
+        "squad_efp_leopard2pl(nato)",
+        "squad_efp_recon_iveco",
+        "squad_efp_rm70(nato)",
+        "squad_efp_t72(nato)"
+      ]
+    },
+    {
+      "count": 6,
+      "token": "grad",
+      "unit_names": [
+        "bm-21_grad_ukr",
+        "bm-21_grad_ukr_nplm",
+        "squad_95dhsv_bm21(ukr)",
+        "squad_ukr21_bm21(ukr)",
+        "squad_ukr47_bm21(ukr)",
+        "technical_grad_reb"
+      ]
+    },
+    {
+      "count": 6,
+      "token": "m113a3",
+      "unit_names": [
+        "m113a3",
+        "squad_kraken_m113(ukr)",
+        "squad_m113a3_azov3(ukr)",
+        "squad_ter_m113_2022(ukr)",
+        "squad_ukr47_m113_2022(ukr)",
+        "squad_ukr93_mech_m113(ukr)"
+      ]
+    },
+    {
+      "count": 6,
+      "token": "rpo",
+      "unit_names": [
+        "mp/rusa/2022s/rus90_saperi_rpo",
+        "mp/rusa/2022s/vdv76_saperi_rpo",
+        "mp/rusa/2022s/vdv76_saperi_rpo_mg",
+        "mp/ukr/2022s/azov3_saperi_rpo",
+        "mp/ukr/2022s/demon_saperi_RPO",
+        "vdv76_inf_saperi_rpo"
+      ]
+    },
+    {
+      "count": 6,
+      "token": "strf9040c",
+      "unit_names": [
+        "squad_arf_cv9040_rifle(nato)",
+        "squad_ukr21_9040c(ukr)",
+        "squad_ukr21_9040c_nlaw(ukr)",
+        "squad_ukr93_mech_cv90(ukr)",
+        "strf9040c",
+        "strf9040c_n"
+      ]
+    },
+    {
+      "count": 6,
+      "token": "t64bv",
+      "unit_names": [
+        "doctrine_vehicle_t64bv_2022_3rd(ukr)",
+        "doctrine_vehicle_t64bv_rus114(rusa)",
+        "doctrine_vehicle_t64bv_ukr47(ukr)",
+        "doctrine_vehicle_t64bv_ukr93(ukr)",
+        "squad_ukr47_t64bv(ukr)",
+        "squad_ukr93_t64bv(ukr)"
+      ]
+    },
+    {
+      "count": 6,
+      "token": "t72b3",
+      "unit_names": [
+        "doctrine_vehicle_t72b3_2011_rus90(rusa)",
+        "doctrine_vehicle_t72b3_rus90(rusa)",
+        "doctrine_vehicle_t72b3_vdv(rusa)",
+        "squad_vdv76_t72b3(rusa)",
+        "squad_vdv76_t72b3_2024(rusa)",
+        "t72b3_ukr"
+      ]
+    },
+    {
+      "count": 6,
+      "token": "tiger",
+      "unit_names": [
+        "squad_dsk_tiger_at(nato)",
+        "squad_dsk_tiger_rkt(nato)",
+        "squad_rus90_razv_tiger",
+        "squad_rus90_razv_tiger(rusa)",
+        "tiger",
+        "tiger_heavy"
+      ]
+    },
+    {
+      "count": 6,
+      "token": "typhoon",
+      "unit_names": [
+        "doctrine_vehicle_typhoon_45vdv(rusa)",
+        "doctrine_vehicle_typhoon_vdv(rusa)",
+        "squad_gru_razv_typhoon(rusa)",
+        "squad_vdv45_razv_typhoon(rusa)",
+        "typhoon_ads",
+        "typhoon_vdv"
+      ]
+    },
+    {
+      "count": 5,
+      "token": "122mm",
+      "unit_names": [
+        "122mm_d-30_ukr",
+        "artillery_barrage_light_rusa",
+        "artillery_barrage_smoke_rusa",
+        "squad_95dhsv_d30(ukr)",
+        "squad_kraken_d30(ukr)"
+      ]
+    },
+    {
+      "count": 5,
+      "token": "1a5",
+      "unit_names": [
+        "leopard_1a5_kontakt-1_era",
+        "leopard_1a5_n",
+        "leopard_1a5_ukr",
+        "squad_ukr21_leopard1a5(ukr)",
+        "squad_ukr21_leopard1a5_era(ukr)"
+      ]
+    },
+    {
+      "count": 5,
+      "token": "2b11",
+      "unit_names": [
+        "2b11_mortar_ukr",
+        "2b11_mortar_ukr_ai",
+        "mortar_barrage_medium_ukr",
+        "mp/ukr/2022s/ukr_wepcrew_2b11",
+        "ukr_2b11_team(ukr)"
+      ]
+    },
+    {
+      "count": 5,
+      "token": "at4",
+      "unit_names": [
+        "47th_assault_at4(ukr)",
+        "mp/nato/2022s/gb_antitank_at4",
+        "mp/ukr/2022s/ukr13_recon_at4",
+        "mp/ukr/2022s/ukr47_assault_at4",
+        "squad_ukr47_m2a2_arat_2022(ukr)"
+      ]
+    },
+    {
+      "count": 5,
+      "token": "carl",
+      "unit_names": [
+        "mp/ukr/2022s/kra_antitank_carl",
+        "squad_kraken_bmp2(ukr)",
+        "squad_kraken_kozak2(ukr)",
+        "squad_kraken_m113(ukr)",
+        "squad_pz10_fireteam_carl(nato)"
+      ]
+    },
+    {
+      "count": 5,
+      "token": "centauro",
+      "unit_names": [
+        "centauro_105_n",
+        "centauro_105_ukr",
+        "centauro_rgo",
+        "squad_arf_centauro105(nato)",
+        "squad_arf_centauro_rgo(nato)"
+      ]
+    },
+    {
+      "count": 5,
+      "token": "drone",
+      "unit_names": [
+        "arf_drone",
+        "mp/ukr/2022s/azov3_drone",
+        "mp/ukr/2022s/ukr21_drone",
+        "mp/ukr/2022s/ukr21_drone_fpv",
+        "squad_13dhsv_drone"
+      ]
+    },
+    {
+      "count": 5,
+      "token": "fireteam",
+      "unit_names": [
+        "squad_pz10_fireteam_at",
+        "squad_pz10_fireteam_carl(nato)",
+        "squad_pz10_fireteam_mg(nato)",
+        "squad_tank1_fireteam(nato)",
+        "squad_tank1_fireteam_javelin"
+      ]
+    },
+    {
+      "count": 5,
+      "token": "gb1",
+      "unit_names": [
+        "squad_gb1_eng",
+        "squad_gb1_eng_at",
+        "squad_gb1_rifle(nato)",
+        "squad_gb1_rifle_nlaw(nato)",
+        "squad_gb1_scout"
+      ]
+    },
+    {
+      "count": 5,
+      "token": "gbpara",
+      "unit_names": [
+        "c130_paratrooper_dsk",
+        "c130_paratrooper_dsk_eng",
+        "c130_wiesel_gun",
+        "c130_wiesel_motar",
+        "c130_wiesel_tow"
+      ]
+    },
+    {
+      "count": 5,
+      "token": "greenader",
+      "unit_names": [
+        "mp/rusa/2022s/106vdv_greenader",
+        "mp/rusa/2022s/vdv76_greenader",
+        "squad_vdv106_mech_bmd4(rusa)",
+        "squad_vdv76_mech_bmd4(rusa)",
+        "squad_vdv76_mech_btrmdm(rusa)"
+      ]
+    },
+    {
+      "count": 5,
+      "token": "humvee",
+      "unit_names": [
+        "humvee_kpvt_ukr",
+        "humvee_m134_ukr",
+        "humvee_m2hb_ukr",
+        "humvee_mk19_ukr",
+        "squad_ukr93_razv_arty(ukr)"
+      ]
+    },
+    {
+      "count": 5,
+      "token": "m119",
+      "unit_names": [
+        "105mm_m119",
+        "artillery_barrage_light_ukr",
+        "artillery_barrage_smoke_ukr",
+        "doctrine_vehicle_m119(nato)",
+        "squad_gb3_art_l118(nato)"
+      ]
+    },
+    {
+      "count": 5,
+      "token": "m1a1",
+      "unit_names": [
+        "doctrine_vehicle_m1a1(ukr)",
+        "m1a1",
+        "m1a1_sa",
+        "squad_ukr47_m1a1(ukr)",
+        "squad_ukr47_m1a1_sa(ukr)"
+      ]
+    },
+    {
+      "count": 5,
+      "token": "m2a2",
+      "unit_names": [
+        "doctrine_squad_47th_m2a2(ukr)",
+        "m2a2_ods_bradley",
+        "m2a2_ods_bradley_arat",
+        "squad_ukr47_m2a2_2022(ukr)",
+        "squad_ukr47_m2a2_arat_2022(ukr)"
+      ]
+    },
+    {
+      "count": 5,
+      "token": "mt12",
+      "unit_names": [
+        "defense_mg_mt12",
+        "doctrine_vehicle_mtlb_mt12(rusa)",
+        "mtlb_mt12_ukr",
+        "squad_ukr93_mt12(ukr)",
+        "squad_ukr93_mt12_mtlb(ukr)"
+      ]
+    },
+    {
+      "count": 5,
+      "token": "nsvt",
+      "unit_names": [
+        "mg_stand_nsvt",
+        "mg_stand_nsvt_ukr",
+        "mg_stand_nsvt_ukr_ai",
+        "mp/ukr/2022s/ukr_wepcrew_nsvt",
+        "ukr_nsvt_team(ukr)"
+      ]
+    },
+    {
+      "count": 5,
+      "token": "rpg26",
+      "unit_names": [
+        "93th_alcatraz_inf_rpg26(ukr)",
+        "mp/rusa/2022s/kor_assault_rpg26",
+        "mp/rusa/2022s/rus114_rez_antitank_rpg26",
+        "mp/rusa/2022s/rus90_antitank_rpg26",
+        "mp/ukr/2022s/demon_antitank_rpg26"
+      ]
+    },
+    {
+      "count": 5,
+      "token": "rpg27",
+      "unit_names": [
+        "mp/rusa/2022s/kor_assault_rpg27",
+        "mp/rusa/2022s/rus4_antitank_rpg27",
+        "mp/rusa/2022s/rus90_antitank_rpg27",
+        "rus4_inf_rifle_rpg27",
+        "rus4_inf_rifle_rpg27(rusa)"
+      ]
+    },
+    {
+      "count": 5,
+      "token": "stand",
+      "unit_names": [
+        "mg_stand_m2",
+        "mg_stand_m2g_ai",
+        "mg_stand_nsvt",
+        "mg_stand_nsvt_ukr",
+        "mg_stand_nsvt_ukr_ai"
+      ]
+    },
+    {
+      "count": 5,
+      "token": "strv",
+      "unit_names": [
+        "squad_ukr21_strv122(ukr)",
+        "squad_ukr21_strv122_era(ukr)",
+        "strv_122",
+        "strv_122_era",
+        "strv_122_n"
+      ]
+    },
+    {
+      "count": 5,
+      "token": "tigr",
+      "unit_names": [
+        "squad_gru_razv_tigr",
+        "squad_gru_razv_tigr_rus4",
+        "squad_rus155_razv_tigr",
+        "squad_rus155_razv_tigr(rusa)",
+        "squad_vdv45_razv_tigr"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "105mm",
+      "unit_names": [
+        "105mm_m119",
+        "artillery_barrage_light_ukr",
+        "artillery_barrage_smoke_ukr",
+        "squad_gb3_art_l118(nato)"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "2a4",
+      "unit_names": [
+        "leopard_2a4_era",
+        "leopord_2a4",
+        "squad_ukr21_leopard2a4(ukr)",
+        "squad_ukr21_leopard2a4_era(ukr)"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "antitankasst",
+      "unit_names": [
+        "mp/rusa/2022s/dpr100_antitankasst",
+        "mp/rusa/2022s/rus110_antitankasst",
+        "mp/rusa/2022s/rus114_rez_antitankasst",
+        "mp/rusa/2022s/spd_antitankasst"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "bmd4",
+      "unit_names": [
+        "bmd4",
+        "doctrine_squad_dsh_bmd4(rusa)",
+        "squad_vdv106_mech_bmd4(rusa)",
+        "squad_vdv76_mech_bmd4(rusa)"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "bmp1p",
+      "unit_names": [
+        "bmp1p_vsu",
+        "squad_3rd_rozv_hatred(ukr)",
+        "squad_bmp1p_azov3(ukr)",
+        "squad_ter_bmp1p_2022(ukr)"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "d21",
+      "unit_names": [
+        "d21_11_mgun",
+        "d21_21_ammo",
+        "squad_nc13_ugv_ammo",
+        "squad_nc13_ugv_mg(ukr)"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "fpv",
+      "unit_names": [
+        "fpv_rpg(ukr)",
+        "mp/rusa/2022s/rus80_fpv",
+        "mp/rusa/2022s/spd_fpv",
+        "mp/ukr/2022s/ukr21_drone_fpv"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "gbpf",
+      "unit_names": [
+        "mp/nato/2022s/gbpf_javelin",
+        "mp/nato/2022s/gbpf_rifleman",
+        "mp/nato/2022s/gbpf_squadlead",
+        "mp/nato/2022s/gbpf_teamleader"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "gru",
+      "unit_names": [
+        "squad_gru_razv_btr80a(rusa)",
+        "squad_gru_razv_tigr",
+        "squad_gru_razv_tigr_rus4",
+        "squad_gru_razv_typhoon(rusa)"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "gvozdika",
+      "unit_names": [
+        "2s1_gvozdika_ukr",
+        "squad_95dhsv_2s1(ukr)",
+        "squad_ukr21_2s1(ukr)",
+        "squad_ukr93_2s1(ukr)"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "heavy",
+      "unit_names": [
+        "ah-64_apache_heavy_airborne",
+        "artillery_barrage_heavy_rusa",
+        "artillery_barrage_heavy_ukr",
+        "tiger_heavy"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "m107",
+      "unit_names": [
+        "21th_inf_razv_m107",
+        "47th_inf_sniper_m107(ukr)",
+        "mp/ukr/2022s/ukr21_marksman_m107",
+        "mp/ukr/2022s/ukr47_sniper_m107"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "m109a6",
+      "unit_names": [
+        "doctrine_vehicle_m109a6(ukr)",
+        "doctrine_vehicle_m109a6_47(ukr)",
+        "doctrine_vehicle_m109a6_ukr93(ukr)",
+        "squad_ukr93_m109a6(ukr)"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "m1126",
+      "unit_names": [
+        "m1126_jav",
+        "m1126_mk19",
+        "squad_95dhsv_m1126_jav(ukr)",
+        "squad_95dhsv_m1126_mk19(ukr)"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "m270",
+      "unit_names": [
+        "m270_n",
+        "m270_ukr",
+        "m270_ukr_clu",
+        "squad_gb3_art_m270(nato)"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "m777",
+      "unit_names": [
+        "artillery_barrage_medium_ukr",
+        "m777",
+        "squad_95dhsv_m777(ukr)",
+        "squad_kraken_m777(ukr)"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "m82",
+      "unit_names": [
+        "mp/nato/2022s/82nd_marksman_m82",
+        "mp/nato/2022s/fj_marksman_m82",
+        "mp/nato/2022s/inf2_marksman_m82",
+        "squad_inf2_recon_m82"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "mg3",
+      "unit_names": [
+        "3rd_assault_mg3(ukr)",
+        "mp/nato/2022s/nato_mg_mg3",
+        "mp/ukr/2022s/azov3_mg3",
+        "squad_arf_mg(nato)"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "mgassist",
+      "unit_names": [
+        "mp/nato/2022s/1ad_mgassist",
+        "mp/nato/2022s/82nd_mgassist",
+        "mp/nato/2022s/fj_mgassist",
+        "mp/nato/2022s/inf2_mgassist"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "mi17",
+      "unit_names": [
+        "mi17_b8_ukr",
+        "mi17_b8_ukr_airborne",
+        "mi17_ukr",
+        "squad_95dhsv_mi17(ukr)"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "ods",
+      "unit_names": [
+        "m2a2_ods_bradley",
+        "m2a2_ods_bradley_arat",
+        "squad_ukr47_m2a2_2022(ukr)",
+        "squad_ukr47_m2a2_arat_2022(ukr)"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "para",
+      "unit_names": [
+        "13dhsv_c130_paratrooper",
+        "c130_paratrooper_82nd",
+        "c130_paratrooper_dsk",
+        "c130_paratrooper_dsk_eng"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "pzf3",
+      "unit_names": [
+        "mp/nato/2022s/jager_antitank_pzf3",
+        "mp/nato/2022s/pzgd_antitank_pzf3",
+        "squad_dsk_rifle_pzf3",
+        "squad_pz10_rifle_pzf3"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "scouts",
+      "unit_names": [
+        "squad_gb3_scouts_ajax(nato)",
+        "squad_gb3_scouts_jackal",
+        "squad_gb3_scouts_nlaw",
+        "squad_gb3_scouts_ranger(nato)"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "stugna",
+      "unit_names": [
+        "93th_at_stugna",
+        "mp/ukr/2022s/ukr93_wepcrew_stugna",
+        "mp/ukr/2022s/ukr93_wepcrew_stugna_assist",
+        "novator_stugna-p"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "svd",
+      "unit_names": [
+        "doctrine_squad_3rd_svd(ukr)",
+        "doctrine_squad_rus155_svd(rusa)",
+        "doctrine_squad_rus90_svd(rusa)",
+        "mp/ukr/2022s/hur_marksman_svd"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "t72amt",
+      "unit_names": [
+        "doctrine_vehicle_t72amt_3rd(ukr)",
+        "squad_kraken_t72amt(ukr)",
+        "t72amt_mod2017",
+        "t72amt_mod2022"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "t84",
+      "unit_names": [
+        "doctrine_vehicle_t84(ukr)",
+        "doctrine_vehicle_t84_120(ukr)",
+        "t84_120_yatagan",
+        "t84_oplot_m"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "tbg7",
+      "unit_names": [
+        "mp/rusa/2022s/rus4_antitank_tbg7",
+        "rus114_inf_tbg7",
+        "rus114_inf_tbg7(rusa)",
+        "rus4_inf_rifle_tbg7"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "ukr211",
+      "unit_names": [
+        "mp/ukr/2022s/ukr211_demo",
+        "mp/ukr/2022s/ukr211_recon",
+        "mp/ukr/2022s/ukr211_sniper",
+        "mp/ukr/2022s/ukr211_squadlead"
+      ]
+    },
+    {
+      "count": 4,
+      "token": "weapon",
+      "unit_names": [
+        "doctrine_squad_47th_weapon(ukr)",
+        "doctrine_squad_93th_weapon(ukr)",
+        "doctrine_squad_rus114_weapon(rusa)",
+        "rus155_inf_weapon"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "10c",
+      "unit_names": [
+        "a-10c_at",
+        "a-10c_bomber",
+        "a-10c_support"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "1a3",
+      "unit_names": [
+        "marder_1a3",
+        "marder_1a3_n",
+        "squad_95dhsv_marder(ukr)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "2s3",
+      "unit_names": [
+        "doctrine_vehicle_2s3(ukr)",
+        "doctrine_vehicle_2s3_rus90(rusa)",
+        "squad_95dhsv_2s3(ukr)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "2s7m",
+      "unit_names": [
+        "2s7m_malka_ukr",
+        "artillery_barrage_heavy_rusa",
+        "artillery_barrage_heavy_ukr"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "82a",
+      "unit_names": [
+        "squad_btr82a_wgn_ai",
+        "squad_gru_razv_btr80a(rusa)",
+        "squad_vdv45_razv_btr80a(rusa)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "aeng",
+      "unit_names": [
+        "mp/rusa/2022s/aeng_antitank",
+        "mp/rusa/2022s/aeng_assault",
+        "mp/rusa/2022s/aeng_mg"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "ampv",
+      "unit_names": [
+        "doctrine_vehicle_ampv(nato)",
+        "squad_acav_ampv(nato)",
+        "squad_acav_ampv_ng(nato)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "antitank2",
+      "unit_names": [
+        "mp/rusa/2022s/sto_antitank2",
+        "mp/ukr/2022s/ter_antitank2",
+        "squad_sto_mtlb_2022(rusa)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "art",
+      "unit_names": [
+        "squad_gb3_art_as90(nato)",
+        "squad_gb3_art_l118(nato)",
+        "squad_gb3_art_m270(nato)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "as90",
+      "unit_names": [
+        "as90",
+        "as90_ua",
+        "squad_gb3_art_as90(nato)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "assist",
+      "unit_names": [
+        "mp/ukr/2022s/demon_antitank_assist",
+        "mp/ukr/2022s/ukr93_antitank_javelin_assist",
+        "mp/ukr/2022s/ukr93_wepcrew_stugna_assist"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "batch",
+      "unit_names": [
+        "k2_batch_i",
+        "k2_batch_i_era",
+        "squad_efp_k2gf(nato)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "bmd2",
+      "unit_names": [
+        "bmd2_ukr",
+        "doctrine_squad_dsh_bmd2(rusa)",
+        "doctrine_vehicle_bmd2(rusa)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "btr80",
+      "unit_names": [
+        "btr80_ukr",
+        "doctrine_squad_rus155_btr80(rusa)",
+        "squad_95dhsv_btr80(ukr)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "clu",
+      "unit_names": [
+        "m270_ukr_clu",
+        "uragan_ua_clu",
+        "vilkha_clu"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "geb",
+      "unit_names": [
+        "squad_dsk_boxer_geb(nato)",
+        "squad_dsk_boxer_gmg_geb(nato)",
+        "squad_luft_nh90_geb(nato)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "gm94",
+      "unit_names": [
+        "mp/rusa/2022s/rus150_grenadier_gm94",
+        "rus150_inf_gm94",
+        "sso_inf_gm94"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "gun",
+      "unit_names": [
+        "c130_wiesel_gun",
+        "squad_ksk_wiesel_gun(nato)",
+        "wiesel1_gun"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "ksp58",
+      "unit_names": [
+        "mp/ukr/2022s/ukr21_ksp58",
+        "squad_ukr21_9040c(ukr)",
+        "squad_ukr21_9040c_nlaw(ukr)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "leclerc",
+      "unit_names": [
+        "leclerc",
+        "leclerc_azur",
+        "leclerc_sxxi"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "lmgassist",
+      "unit_names": [
+        "mp/rusa/2022s/wgn_lmgassist",
+        "mp/ukr/2022s/ukr93_lmgassist",
+        "mp/ukr/2022s/ukr_lmgassist"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "m109",
+      "unit_names": [
+        "m109_paladin",
+        "squad_ukr47_m109(ukr)",
+        "squad_ukr93_m109a6(ukr)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "m120",
+      "unit_names": [
+        "arf_m120",
+        "m120_mortar",
+        "mp/nato/2022s/nato_supcrew_m120"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "m1a1sa",
+      "unit_names": [
+        "doctrine_vehicle_m1a1sa(nato)",
+        "doctrine_vehicle_m1a1sa(ukr)",
+        "doctrine_vehicle_m1a1sa_era(ukr)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "m252",
+      "unit_names": [
+        "arf_m252",
+        "m252_mortar",
+        "mp/nato/2022s/nato_supcrew_m252"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "m2a3",
+      "unit_names": [
+        "doctrine_vehicle_m2a3(nato)",
+        "squad_acav_m2a3(nato)",
+        "squad_acav_m2a3_brat_ng(nato)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "m72",
+      "unit_names": [
+        "mp/ukr/2022s/hur_saperi_m72",
+        "mp/ukr/2022s/ukr47_assault_m72",
+        "mp/ukr/2022s/ukr47_saperi_m72"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "malka",
+      "unit_names": [
+        "2s7m_malka_ukr",
+        "artillery_barrage_heavy_rusa",
+        "artillery_barrage_heavy_ukr"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "matv",
+      "unit_names": [
+        "matv_open_m240",
+        "matv_open_m2hb",
+        "matv_open_mk19"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "medium",
+      "unit_names": [
+        "artillery_barrage_medium_rusa",
+        "artillery_barrage_medium_ukr",
+        "mortar_barrage_medium_ukr"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "mrls",
+      "unit_names": [
+        "mrls_atacms",
+        "mrls_atacms1",
+        "mrls_atacms_n"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "nc13",
+      "unit_names": [
+        "squad_nc13_ugv_ammo",
+        "squad_nc13_ugv_mg(ukr)",
+        "squad_nc13_ugv_mine(ukr)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "new",
+      "unit_names": [
+        "fh70_new",
+        "mtlb_new_vsu",
+        "squad_95dhsv_mtlb(ukr)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "novator",
+      "unit_names": [
+        "doctrine_squad_93th_novator(ukr)",
+        "novator_stugna-p",
+        "squad_ukr93_razv_novator(ukr)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "nplm",
+      "unit_names": [
+        "bm-21_grad_ukr_nplm",
+        "doctrine_vehicle_bm21_nplm(rusa)",
+        "doctrine_vehicle_bm21_nplm(ukr)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "open",
+      "unit_names": [
+        "matv_open_m240",
+        "matv_open_m2hb",
+        "matv_open_mk19"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "operator",
+      "unit_names": [
+        "mp/nato/2022s/fr_operator",
+        "mp/ukr/2022s/ukr_manpad_operator",
+        "ukr_manpad_operator(ukr)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "paladin",
+      "unit_names": [
+        "m109_paladin",
+        "squad_ukr47_m109(ukr)",
+        "squad_ukr93_m109a6(ukr)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "pkm",
+      "unit_names": [
+        "47th_inf_pkm(ukr)",
+        "93th_alcatraz_mg_pkm(ukr)",
+        "mp/ukr/2022s/ukr47_lmg_pkm"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "rhsg",
+      "unit_names": [
+        "doctrine_squad_rus155_assault_rhsg(rusa)",
+        "mp/rusa/2022s/rus150_antitank_rhsg",
+        "mp/rusa/2022s/rus80_antitank_rhsg"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "rpg29",
+      "unit_names": [
+        "doctrine_squad_rus90_rpg29(rusa)",
+        "mp/rusa/2022s/kor_antitank_rpg29",
+        "mp/rusa/2022s/kor_atassist_rpg29"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "rus2",
+      "unit_names": [
+        "rus2_eng(rusa)",
+        "rus2_scout(rusa)",
+        "squad_sto_mtlb_2022(rusa)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "smoke",
+      "unit_names": [
+        "artillery_barrage_smoke_rusa",
+        "artillery_barrage_smoke_ukr",
+        "mortar_barrage_smoke_ukr"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "spike",
+      "unit_names": [
+        "mp/nato/2022s/nato_antitank_spike",
+        "squad_arf_rifle_spike(nato)",
+        "squad_dsk_rifle_spike"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "stoe",
+      "unit_names": [
+        "stoe_22_1",
+        "stoe_inf_saperi",
+        "stoe_inf_saperi_at"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "strv122",
+      "unit_names": [
+        "doctrine_vehicle_strv122(ukr)",
+        "squad_ukr21_strv122(ukr)",
+        "squad_ukr21_strv122_era(ukr)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "t72a",
+      "unit_names": [
+        "squad_efp_t72(nato)",
+        "t72a_solntsepek_ukr",
+        "t72a_ukr"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "t72b",
+      "unit_names": [
+        "doctrine_squad_rus114_t72b(rusa)",
+        "doctrine_vehicle_t72b_3rd(ukr)",
+        "t72b_ukr"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "t80bvm",
+      "unit_names": [
+        "doctrine_squad_rus114_t80bvm(rusa)",
+        "doctrine_vehicle_t80bvm(rusa)",
+        "doctrine_vehicle_t80bvm_ukr93(ukr)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "t80u",
+      "unit_names": [
+        "doctrine_vehicle_t80u(ukr)",
+        "squad_ukr93_t80u(ukr)",
+        "t80u_ukr"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "tornado",
+      "unit_names": [
+        "doctrine_vehicle_tornado(rusa)",
+        "tornado_gr4_at",
+        "tornado_gr4_support_light"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "tripod",
+      "unit_names": [
+        "defense_mk19_tripod",
+        "mk19_tripod",
+        "mk19_tripod_ai"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "vdv45",
+      "unit_names": [
+        "squad_vdv45_razv_btr80a(rusa)",
+        "squad_vdv45_razv_tigr",
+        "squad_vdv45_razv_typhoon(rusa)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "vjtf",
+      "unit_names": [
+        "puma_vjtf",
+        "squad_pz10_puma_mells_rifle(nato)",
+        "squad_pzgd_puma_vjtf(nato)"
+      ]
+    },
+    {
+      "count": 3,
+      "token": "ypr",
+      "unit_names": [
+        "squad_arf_ypr765_rifle(nato)",
+        "squad_pz10_ypr765_rifle(nato)",
+        "ypr_765"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "152mm",
+      "unit_names": [
+        "152mm_2a36_giacint_b_ukr",
+        "artillery_barrage_medium_rusa"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "24v",
+      "unit_names": [
+        "mi-24v_airborne",
+        "mi-24v_airborne_ukr"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "24v2",
+      "unit_names": [
+        "mi-24v2_airborne",
+        "mi-24v2_airborne_ukr"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "2a7",
+      "unit_names": [
+        "leopard_2a7+",
+        "squad_pz10_leopard2a7(nato)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "2s25",
+      "unit_names": [
+        "doctrine_vehicle_2s25(rusa)",
+        "squad_vdv76_2s25(rusa)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "2s25m",
+      "unit_names": [
+        "2s25m",
+        "squad_vdv76_2s25(rusa)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "2s3m",
+      "unit_names": [
+        "2s3m_akatsiya_ukr",
+        "squad_95dhsv_2s3(ukr)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "9040c",
+      "unit_names": [
+        "squad_ukr21_9040c(ukr)",
+        "squad_ukr21_9040c_nlaw(ukr)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "aaleo",
+      "unit_names": [
+        "aaleo_n",
+        "aaleo_ukr"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "accurate",
+      "unit_names": [
+        "su-25sm_accurate_ukr",
+        "su-25sm_accurate_ukr_ai"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "ads",
+      "unit_names": [
+        "squad_vdv45_razv_typhoon(rusa)",
+        "typhoon_ads"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "ajax",
+      "unit_names": [
+        "ajax",
+        "squad_gb3_scouts_ajax(nato)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "akatsiya",
+      "unit_names": [
+        "2s3m_akatsiya_ukr",
+        "squad_95dhsv_2s3(ukr)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "arat",
+      "unit_names": [
+        "m2a2_ods_bradley_arat",
+        "squad_ukr47_m2a2_arat_2022(ukr)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "ariete",
+      "unit_names": [
+        "c1_ariete_pso",
+        "squad_arf_ariete(nato)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "atacms",
+      "unit_names": [
+        "mrls_atacms",
+        "mrls_atacms_n"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "bgm71",
+      "unit_names": [
+        "bgm71_tow",
+        "bgm71_tow_ai"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "bmd",
+      "unit_names": [
+        "bmd_4m",
+        "squad_vdv76_mech_bmd4(rusa)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "bmp2m",
+      "unit_names": [
+        "squad_bmp2m_wgn(rusa)",
+        "squad_bmp2m_wgn_ai"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "bmp3",
+      "unit_names": [
+        "bmp3_ukr",
+        "doctrine_squad_rus155_bmp3(rusa)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "btr3e",
+      "unit_names": [
+        "btr3e",
+        "squad_95dhsv_btr3(ukr)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "btr90",
+      "unit_names": [
+        "doctrine_squad_rus155_btr90(rusa)",
+        "squad_btr90_rusc(rusa)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "btrd",
+      "unit_names": [
+        "doctrine_squad_dsh_btrd(rusa)",
+        "doctrine_squad_dsh_btrd_zu(rusa)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "cv9040",
+      "unit_names": [
+        "squad_arf_cv9040_mkiv_rifle(nato)",
+        "squad_arf_cv9040_rifle(nato)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "d30",
+      "unit_names": [
+        "squad_95dhsv_d30(ukr)",
+        "squad_kraken_d30(ukr)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "desan",
+      "unit_names": [
+        "doctrine_squad_desan(rusa)",
+        "doctrine_squad_desan_saperi(rusa)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "fennek",
+      "unit_names": [
+        "squad_pz10_fennek(nato)",
+        "squad_pz10_fennek_gmg(nato)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "fh70",
+      "unit_names": [
+        "doctrine_vehicle_fh70(nato)",
+        "fh70_new"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "gmg",
+      "unit_names": [
+        "squad_dsk_boxer_gmg_geb(nato)",
+        "squad_pz10_fennek_gmg(nato)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "gr4",
+      "unit_names": [
+        "tornado_gr4_at",
+        "tornado_gr4_support_light"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "hawkeye",
+      "unit_names": [
+        "hawkeye_105_mws",
+        "hawkeye_105_mws_n"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "jav",
+      "unit_names": [
+        "m1126_jav",
+        "squad_95dhsv_m1126_jav(ukr)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "kipri2",
+      "unit_names": [
+        "kipri2",
+        "squad_arf_kipri_scout(nato)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "kontakt",
+      "unit_names": [
+        "leopard_1a5_kontakt-1_era",
+        "squad_ukr21_leopard1a5_era(ukr)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "kozak2",
+      "unit_names": [
+        "kozak2_mgun",
+        "squad_kraken_kozak2(ukr)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "leopard1a5",
+      "unit_names": [
+        "squad_ukr21_leopard1a5(ukr)",
+        "squad_ukr21_leopard1a5_era(ukr)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "leopard2a4",
+      "unit_names": [
+        "squad_ukr21_leopard2a4(ukr)",
+        "squad_ukr21_leopard2a4_era(ukr)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "leopard2a7",
+      "unit_names": [
+        "doctrine_vehicle_leopard2a7(nato)",
+        "squad_pz10_leopard2a7(nato)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "ma3",
+      "unit_names": [
+        "leopord_2a6_ma3",
+        "squad_pz10_leopard2a6_ma3(nato)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "mars",
+      "unit_names": [
+        "mars",
+        "squad_pz10_mars(nato)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "mdm",
+      "unit_names": [
+        "btr_mdm",
+        "squad_vdv76_mech_btrmdm(rusa)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "medic1",
+      "unit_names": [
+        "mp/rusa/2022s/sto_medic1",
+        "squad_sto_mtlb_2022(rusa)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "mgs",
+      "unit_names": [
+        "boxer_mgs",
+        "squad_pz10_boxer_mgs(nato)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "mi24vm",
+      "unit_names": [
+        "mi24vm_ukr",
+        "squad_95dhsv_mi24(ukr)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "mine",
+      "unit_names": [
+        "squad_nc13_ugv_mine(ukr)",
+        "ugv_mine"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "mk17",
+      "unit_names": [
+        "hur_inf_mk17",
+        "mp/ukr/2022s/hur_marksman_mk17"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "mod2017",
+      "unit_names": [
+        "squad_kraken_t72amt(ukr)",
+        "t72amt_mod2017"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "mot",
+      "unit_names": [
+        "squad_gb3_mot_rifle_boxer(nato)",
+        "squad_gb3_mot_rifle_cougar(nato)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "motar",
+      "unit_names": [
+        "c130_wiesel_motar",
+        "squad_ksk_wiesel_motar(nato)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "mq9",
+      "unit_names": [
+        "mq9_nato",
+        "mq9_nato_recon"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "msta",
+      "unit_names": [
+        "2s19_msta_ua",
+        "artillery_barrage_medium_rusa"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "mws",
+      "unit_names": [
+        "hawkeye_105_mws",
+        "hawkeye_105_mws_n"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "nh90",
+      "unit_names": [
+        "squad_ksk_nh90(nato)",
+        "squad_luft_nh90_geb(nato)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "pso",
+      "unit_names": [
+        "c1_ariete_pso",
+        "squad_arf_ariete(nato)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "pzf",
+      "unit_names": [
+        "squad_pz10_fireteam_at",
+        "squad_pz10_rifle_pzf3"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "rbs17",
+      "unit_names": [
+        "atgm_rbs17",
+        "squad_ukr21_rbs_17(ukr)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "rec",
+      "unit_names": [
+        "squad_pz10_rec",
+        "squad_pz10_rec(nato)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "research",
+      "unit_names": [
+        "research_stage",
+        "research_stage_max"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "rgo",
+      "unit_names": [
+        "centauro_rgo",
+        "squad_arf_centauro_rgo(nato)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "rpg22",
+      "unit_names": [
+        "mp/rusa/2022s/rus4_antitank_rpg22",
+        "mp/ukr/2022s/demon_antitank_rpg22"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "rpg30",
+      "unit_names": [
+        "mp/rusa/2022s/kor_antitank_rpg30",
+        "mp/rusa/2022s/kor_assault_rpg30"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "rshg",
+      "unit_names": [
+        "mp/rusa/2022s/rus155_rshg",
+        "rus80_inf_rshg"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "rus1",
+      "unit_names": [
+        "artillery_barrage_heavy_rusa",
+        "artillery_barrage_medium_rusa"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "spg9",
+      "unit_names": [
+        "mp/ukr/2022s/ukr_wepcrew_spg9",
+        "spg9_ukr(ukr)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "spg9crew",
+      "unit_names": [
+        "mp/rusa/2022s/45vdv_spg9crew",
+        "mp/rusa/2022s/rus114_rez_spg9crew"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "squadlead1",
+      "unit_names": [
+        "mp/rusa/2022s/sto_squadlead1",
+        "squad_sto_mtlb_2022(rusa)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "stage",
+      "unit_names": [
+        "research_stage",
+        "research_stage_max"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "stan",
+      "unit_names": [
+        "mk19_stan",
+        "mk19_stan_ai)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "t64bv2017",
+      "unit_names": [
+        "squad_ukr47_t64bv(ukr)",
+        "t64bv2017"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "t64bv2024",
+      "unit_names": [
+        "squad_ukr93_t64bv(ukr)",
+        "t64bv2024"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "t90m",
+      "unit_names": [
+        "doctrine_vehicle_t90m_rus90(rusa)",
+        "squad_vdv76_t90m(rusa)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "tbg",
+      "unit_names": [
+        "doctrine_squad_rus114_tbg(rusa)",
+        "mp/rusa/2022s/rus114_antitank_tbg"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "technical",
+      "unit_names": [
+        "technical_grad_reb",
+        "technical_s-8"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "tes",
+      "unit_names": [
+        "challenger2_tes",
+        "squad_gb3_tank_challenger_tes(nato)"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "tow2",
+      "unit_names": [
+        "hur_tow2_crew",
+        "mp/ukr/2022s/hur_wepcrew_tow2"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "uav",
+      "unit_names": [
+        "mp/rusa/2022s/rus80_uav",
+        "mp/rusa/2022s/spd_uav"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "uragan",
+      "unit_names": [
+        "uragan_ua",
+        "uragan_ua_clu"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "ural",
+      "unit_names": [
+        "ural_ammo_vsu",
+        "ural_vsu"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "vilkha",
+      "unit_names": [
+        "vilkha",
+        "vilkha_clu"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "wiesel1",
+      "unit_names": [
+        "wiesel1_gun",
+        "wiesel1_tow"
+      ]
+    },
+    {
+      "count": 2,
+      "token": "ypr765",
+      "unit_names": [
+        "squad_arf_ypr765_rifle(nato)",
+        "squad_pz10_ypr765_rifle(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "100mm",
+      "unit_names": [
+        "100mm_ks19m2"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "152ob",
+      "unit_names": [
+        "mp/rusa/2022s/dpr100_152ob"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "155ob",
+      "unit_names": [
+        "squad_ukr93_razv_arty(ukr)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "203ob",
+      "unit_names": [
+        "mp/rusa/2022s/rus110_203ob"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "211th",
+      "unit_names": [
+        "doctrine_squad_211th_recon(ukr)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "25th",
+      "unit_names": [
+        "doctrine_squad_25th_assault(ukr)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "2a36",
+      "unit_names": [
+        "152mm_2a36_giacint_b_ukr"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "2a4m",
+      "unit_names": [
+        "leopord_2a4m"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "2a5",
+      "unit_names": [
+        "leopard-2a5"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "2b14crew",
+      "unit_names": [
+        "mp/rusa/2022s/rus114_rez_2b14crew"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "2c9",
+      "unit_names": [
+        "2c9"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "2s19",
+      "unit_names": [
+        "2s19_msta_ua"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "2s22",
+      "unit_names": [
+        "2s22_bohdana"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "2s6",
+      "unit_names": [
+        "2s6_ukr"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "30c",
+      "unit_names": [
+        "ugv_30c"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "55m",
+      "unit_names": [
+        "t_55m_fin"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "64bv",
+      "unit_names": [
+        "t-64bv_ukr"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "82at",
+      "unit_names": [
+        "squad_btr90_rusc(rusa)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "9k115",
+      "unit_names": [
+        "mp/rusa/2022s/rus155_9k115_crew"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "9k35",
+      "unit_names": [
+        "9k35_strela-10_ukr"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "9m113",
+      "unit_names": [
+        "doctrine_squad_rus90_9m113(rusa)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "9m133",
+      "unit_names": [
+        "mp/rusa/2022s/sso_9m133_crew"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "9s18",
+      "unit_names": [
+        "9s18_kupol_ukr"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "ags",
+      "unit_names": [
+        "kor_inf_ags"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "ags17crew",
+      "unit_names": [
+        "mp/rusa/2022s/106vdv_ags17crew"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "amx10rc",
+      "unit_names": [
+        "amx10rc"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "antitank1",
+      "unit_names": [
+        "mp/rusa/2022s/sto_antitank1"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "ap2",
+      "unit_names": [
+        "ugv_mg_ap2"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "ap3",
+      "unit_names": [
+        "ugv_mg_ap3"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "apache",
+      "unit_names": [
+        "ah-64_apache_heavy_airborne"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "arty",
+      "unit_names": [
+        "squad_ukr93_razv_arty(ukr)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "asvk",
+      "unit_names": [
+        "rus80_inf_asvk"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "at2",
+      "unit_names": [
+        "ugv_mg_at2"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "atacms1",
+      "unit_names": [
+        "mrls_atacms1"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "atassist1",
+      "unit_names": [
+        "mp/rusa/2022s/sto_atassist1"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "ax50",
+      "unit_names": [
+        "mp/ukr/2022s/hur_marksman_ax50"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "azur",
+      "unit_names": [
+        "leclerc_azur"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "bm27",
+      "unit_names": [
+        "doctrine_vehicle_bm27(rusa)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "bm3m",
+      "unit_names": [
+        "kraz_fiona_bm3m"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "bmd4m",
+      "unit_names": [
+        "doctrine_vehicle_bmd4m(rusa)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "bmp31",
+      "unit_names": [
+        "doctrine_vehicle_bmp31(rusa)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "bohdana",
+      "unit_names": [
+        "2s22_bohdana"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "bomber",
+      "unit_names": [
+        "a-10c_bomber"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "brat",
+      "unit_names": [
+        "squad_acav_m2a3_brat_ng(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "btr3",
+      "unit_names": [
+        "squad_95dhsv_btr3(ukr)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "btr4e",
+      "unit_names": [
+        "btr4e"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "btr82a",
+      "unit_names": [
+        "squad_btr82a_wgn_ai"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "btrmdm",
+      "unit_names": [
+        "squad_vdv76_mech_btrmdm(rusa)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "buk",
+      "unit_names": [
+        "buk_m1_ukr"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "centauro105",
+      "unit_names": [
+        "squad_arf_centauro105(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "cougar",
+      "unit_names": [
+        "squad_gb3_mot_rifle_cougar(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "cv90",
+      "unit_names": [
+        "squad_ukr93_mech_cv90(ukr)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "cv9030",
+      "unit_names": [
+        "squad_pz10_cv9030_rifle(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "cv9035",
+      "unit_names": [
+        "squad_arf_cv9035_rifle(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "dana",
+      "unit_names": [
+        "vz_77_dana"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "decepticons",
+      "unit_names": [
+        "3rd_assault_decepticons(ukr)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "drop",
+      "unit_names": [
+        "mp/ukr/2022s/ukr13_recon_drop"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "f150shahid",
+      "unit_names": [
+        "ford-f150shahid"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "fin",
+      "unit_names": [
+        "t_55m_fin"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "fiona",
+      "unit_names": [
+        "kraz_fiona_bm3m"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "fk20",
+      "unit_names": [
+        "defense_mg_fk20_nato"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "ford",
+      "unit_names": [
+        "ford-f150shahid"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "frn",
+      "unit_names": [
+        "mp/nato/2022s/frn_sniper"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "fv432",
+      "unit_names": [
+        "fv432_mk2"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "fv510",
+      "unit_names": [
+        "squad_gb3_mech_rifle_fv510_milan(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "giacint",
+      "unit_names": [
+        "152mm_2a36_giacint_b_ukr"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "gp25",
+      "unit_names": [
+        "93th_alcatraz_rifle_gp25(ukr)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "hamer",
+      "unit_names": [
+        "hamer_vsu"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "hatred",
+      "unit_names": [
+        "squad_3rd_rozv_hatred(ukr)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "hmg",
+      "unit_names": [
+        "mp/ukr/2022s/ukr82_hmg"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "item",
+      "unit_names": [
+        "item"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "iveco",
+      "unit_names": [
+        "squad_efp_recon_iveco"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "jackal",
+      "unit_names": [
+        "squad_gb3_scouts_jackal"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "k2gf",
+      "unit_names": [
+        "squad_efp_k2gf(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "kipri",
+      "unit_names": [
+        "squad_arf_kipri_scout(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "kipri1",
+      "unit_names": [
+        "kipri1"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "kordcrew",
+      "unit_names": [
+        "mp/rusa/2022s/106vdv_kordcrew"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "kozak5",
+      "unit_names": [
+        "kozak5_mgun"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "kpvt",
+      "unit_names": [
+        "humvee_kpvt_ukr"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "kraz",
+      "unit_names": [
+        "kraz_fiona_bm3m"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "ks19m2",
+      "unit_names": [
+        "100mm_ks19m2"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "ksp90b",
+      "unit_names": [
+        "mp/ukr/2022s/ukr21_ksp90b"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "kupol",
+      "unit_names": [
+        "9s18_kupol_ukr"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "l118",
+      "unit_names": [
+        "squad_gb3_art_l118(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "lav25",
+      "unit_names": [
+        "lav25"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "ldnr",
+      "unit_names": [
+        "mp/rusa/2022s/ldnr_vehicleman"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "leopard2a5",
+      "unit_names": [
+        "doctrine_vehicle_leopard2a5(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "leopard2pl",
+      "unit_names": [
+        "squad_efp_leopard2pl(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "lmgunasst",
+      "unit_names": [
+        "mp/rusa/2022s/lud_lmgunasst"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "luft",
+      "unit_names": [
+        "squad_luft_nh90_geb(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "m134",
+      "unit_names": [
+        "humvee_m134_ukr"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "m1a2sep",
+      "unit_names": [
+        "doctrine_vehicle_m1a2sep(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "m1a2sepv2",
+      "unit_names": [
+        "doctrine_vehicle_m1a2sepv2(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "m1a2tusk",
+      "unit_names": [
+        "doctrine_vehicle_m1a2tusk(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "m240",
+      "unit_names": [
+        "matv_open_m240"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "m2a2ods",
+      "unit_names": [
+        "doctrine_vehicle_m2a2ods(ukr)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "m2g",
+      "unit_names": [
+        "mg_stand_m2g_ai"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "m3a3",
+      "unit_names": [
+        "doctrine_vehicle_m3a3(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "m45",
+      "unit_names": [
+        "defense_mg_m45_nato"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "marksman1",
+      "unit_names": [
+        "mp/rusa/2022s/kor_marksman1"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "marsman",
+      "unit_names": [
+        "mp/rusa/2022s/spz_marsman"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "max",
+      "unit_names": [
+        "research_stage_max"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "maxxpro",
+      "unit_names": [
+        "maxxpro"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "mechanic",
+      "unit_names": [
+        "2s25m"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "medic2",
+      "unit_names": [
+        "mp/rusa/2022s/sto_medic2"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "mells",
+      "unit_names": [
+        "squad_pz10_puma_mells_rifle(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "mexas",
+      "unit_names": [
+        "leopard_c2_mexas"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "mg1",
+      "unit_names": [
+        "mp/rusa/2022s/rus80_mg1"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "mg2",
+      "unit_names": [
+        "mp/rusa/2022s/sto_mg2"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "mi24",
+      "unit_names": [
+        "squad_95dhsv_mi24(ukr)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "milan",
+      "unit_names": [
+        "squad_gb3_mech_rifle_fv510_milan(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "mk2",
+      "unit_names": [
+        "fv432_mk2"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "mkiv",
+      "unit_names": [
+        "squad_arf_cv9040_mkiv_rifle(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "mod",
+      "unit_names": [
+        "squad_btr82a_wgn_ai"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "mod1",
+      "unit_names": [
+        "squad_vdv76_t72b3_2024(rusa)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "mod2022",
+      "unit_names": [
+        "t72amt_mod2022"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "nsv",
+      "unit_names": [
+        "defense_mg_nsv"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "og7",
+      "unit_names": [
+        "mp/rusa/2022s/rus155_antitank_og7"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "oplot",
+      "unit_names": [
+        "t84_oplot_m"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "otomatic",
+      "unit_names": [
+        "otomatic"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "pardo",
+      "unit_names": [
+        "squad_ukr_cmd(ukr)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "ptrs",
+      "unit_names": [
+        "mp/rusa/2022s/lud_ptrs"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "ranger",
+      "unit_names": [
+        "squad_gb3_scouts_ranger(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "razvedka",
+      "unit_names": [
+        "doctrine_squad_dsh_razvedka(rusa)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "rbs",
+      "unit_names": [
+        "squad_ukr21_rbs_17(ukr)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "reb",
+      "unit_names": [
+        "technical_grad_reb"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "recon1",
+      "unit_names": [
+        "mp/rusa/2022s/kor_recon1"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "rkt",
+      "unit_names": [
+        "squad_dsk_tiger_rkt(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "rm70",
+      "unit_names": [
+        "squad_efp_rm70(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "rmg",
+      "unit_names": [
+        "mp/rusa/2022s/rus155_rmg"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "roland",
+      "unit_names": [
+        "doctrine_vehicle_roland(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "rosomak",
+      "unit_names": [
+        "rosomak"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "rozv",
+      "unit_names": [
+        "squad_3rd_rozv_hatred(ukr)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "rpg",
+      "unit_names": [
+        "fpv_rpg(ukr)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "rpg7",
+      "unit_names": [
+        "mp/rusa/2022s/kor_antitank_rpg7"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "rpg7vr",
+      "unit_names": [
+        "mp/rusa/2022s/rus4_antitank_rpg7vr"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "rpk",
+      "unit_names": [
+        "mp/ukr/2022s/demon_mg_rpk"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "sadm",
+      "unit_names": [
+        "mp/ukr/2022s/kra_demo_sadm"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "sniper1",
+      "unit_names": [
+        "mp/rusa/2022s/sto_sniper1"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "solntsepek",
+      "unit_names": [
+        "t72a_solntsepek_ukr"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "strela",
+      "unit_names": [
+        "9k35_strela-10_ukr"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "supl",
+      "unit_names": [
+        "ugv_supl"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "sxxi",
+      "unit_names": [
+        "leclerc_sxxi"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "t62m1",
+      "unit_names": [
+        "t62m1_ukr"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "t64a",
+      "unit_names": [
+        "t64a_ukr"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "t64bv2022",
+      "unit_names": [
+        "t64bv2022"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "t72aa",
+      "unit_names": [
+        "doctrine_vehicle_t72aa_rus90(rusa)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "t72bb",
+      "unit_names": [
+        "doctrine_vehicle_t72bb_rus90(rusa)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "t72bu",
+      "unit_names": [
+        "doctrine_vehicle_t72bu_rus114(rusa)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "t80bv2023",
+      "unit_names": [
+        "doctrine_vehicle_t80bv2023(rusa)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "t90a",
+      "unit_names": [
+        "t90a_ukr"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "teamleade",
+      "unit_names": [
+        "squad_inf2_light_rifle(nato)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "tm62",
+      "unit_names": [
+        "mp/rusa/2022s/rus150_grenadier_tm62"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "tos",
+      "unit_names": [
+        "doctrine_vehicle_tos_rus90(rusa)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "toyota",
+      "unit_names": [
+        "squad_ukr_cmd(ukr)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "turtletank",
+      "unit_names": [
+        "t_64_bv-turtletank_ukr"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "tzz2",
+      "unit_names": [
+        "squad_95dhsv_tzz2(ukr)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "ukr1",
+      "unit_names": [
+        "artillery_barrage_heavy_ukr"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "ukr53",
+      "unit_names": [
+        "ukr53_manpad(ukr)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "ulman",
+      "unit_names": [
+        "ulman_squad"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "varta",
+      "unit_names": [
+        "varta"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "vdv106",
+      "unit_names": [
+        "squad_vdv106_mech_bmd4(rusa)"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "vdve",
+      "unit_names": [
+        "2s25m"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "vehicleman1",
+      "unit_names": [
+        "mp/rusa/2022s/vdv_vehicleman1"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "vilkas",
+      "unit_names": [
+        "vilkas"
+      ]
+    },
+    {
+      "count": 1,
+      "token": "yatagan",
+      "unit_names": [
+        "t84_120_yatagan"
+      ]
+    }
+  ]
+}

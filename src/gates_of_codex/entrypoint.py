@@ -18,6 +18,7 @@ from .stack_acceptance import validate_mod_stack
 from .starter import populate_starter_rosters, set_player_faction
 from .state_io import save_campaign
 from .strategic import evaluate_campaign_outcome
+from .unit_pool_audit import audit_unit_pools
 
 
 FACTION_CHOICES = ["nato", "ukr", "rusa", "prc"]
@@ -80,6 +81,37 @@ def _run_scan(arguments: list[str]) -> int:
         "resource_stack": catalog.resource_stack,
         "signature": catalog.signature,
         "units": {faction: len(catalog.by_faction(faction)) for faction in FACTION_CHOICES},
+    }, indent=2))
+    return 0
+
+
+def _run_audit_unit_pools(arguments: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="gates-of-codex audit-unit-pools")
+    _add_stack_arguments(parser, require_codex=False)
+    parser.add_argument("--output", default="docs/audits/unit-pools.json")
+    parser.add_argument("--summary", default="docs/audits/unit-pools-summary.md")
+    parser.add_argument(
+        "--unclassified",
+        default="docs/audits/unclassified-unit-tokens.json",
+    )
+    args = parser.parse_args(arguments)
+    stack = resolve_stack(args.stack, config=args.stack_config, fallback=args.codex)
+    if not stack:
+        parser.error("provide --stack-config, --stack, or --codex")
+    payload = audit_unit_pools(
+        stack,
+        output=args.output,
+        summary=args.summary,
+        unclassified=args.unclassified,
+    )
+    print(json.dumps({
+        "ok": True,
+        "stack_signature": payload["stack_signature"],
+        "rows": payload["row_count"],
+        "actors": len(payload["actors"]),
+        "output": str(Path(args.output)),
+        "summary": str(Path(args.summary)),
+        "unclassified": str(Path(args.unclassified)),
     }, indent=2))
     return 0
 
@@ -153,6 +185,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_doctor(remainder)
     if command == "scan":
         return _run_scan(remainder)
+    if command == "audit-unit-pools":
+        return _run_audit_unit_pools(remainder)
     if command == "new":
         return _run_new(remainder)
     if command == "export-battle":
