@@ -101,6 +101,58 @@ class EuropeMediterraneanFromGoeTests(unittest.TestCase):
         self.assertEqual(payload["id_texture"]["width"], image.width)
         self.assertFalse((OUT / "background_pack_reference.png").is_file())
 
+    def test_raster_land_adjacency_and_anchors_inside_provinces(self) -> None:
+        if not MANIFEST.is_file() or not ID_MAP.is_file():
+            self.skipTest("from_goe assets missing")
+        payload = json.loads(MANIFEST.read_text(encoding="utf-8"))
+        image = decode_png_rgb(ID_MAP)
+        color_to_pid = {tuple(row["rgb"]): row["province_id"] for row in payload["province_table"]}
+        # Build owners grid (empty string = ignored border/sea)
+        w, h = image.width, image.height
+        owners: list[str] = []
+        for y in range(h):
+            for x in range(w):
+                owners.append(color_to_pid.get(image.color_at(x, y), ""))
+        # Land edges from raster with gap scan through ignored border pixels
+        max_gap = 6
+        edges: set[tuple[str, str]] = set()
+        for y in range(h):
+            for x in range(w):
+                a = owners[y * w + x]
+                if not a:
+                    continue
+                for dx, dy in ((1, 0), (0, 1)):
+                    cx, cy = x + dx, y + dy
+                    gap = 0
+                    while 0 <= cx < w and 0 <= cy < h:
+                        b = owners[cy * w + cx]
+                        if b:
+                            if b != a:
+                                edges.add(tuple(sorted((a, b))))
+                            break
+                        gap += 1
+                        if gap > max_gap:
+                            break
+                        cx += dx
+                        cy += dy
+        by_id = {row["province_id"]: row for row in payload["province_table"]}
+        listed: set[tuple[str, str]] = set()
+        for row in payload["province_table"]:
+            land = set(row.get("land_neighbors") or [])
+            for n in land:
+                self.assertIn(n, by_id)
+                key = tuple(sorted((row["province_id"], n)))
+                self.assertIn(key, edges)
+                listed.add(key)
+            for n in land:
+                peer = set(by_id[n].get("land_neighbors") or [])
+                self.assertIn(row["province_id"], peer)
+            ax = int(round(row["marker_anchor"][0]))
+            ay = h - 1 - int(round(row["marker_anchor"][1]))
+            self.assertEqual(row["province_id"], color_to_pid.get(image.color_at(ax, ay)))
+        # Manifest land graph equals raster land graph
+        self.assertEqual(listed, edges)
+
     def test_full_interim_goe_still_loadable(self) -> None:
         state = build_goe_europe_campaign()
         self.assertEqual(517, len(state.provinces))

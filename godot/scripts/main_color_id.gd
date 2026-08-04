@@ -56,7 +56,7 @@ func _open_color_id_map() -> void:
 		color_id_map.refresh_highlights(selected_province_id, legal_targets)
 		status_message = "Color-ID province renderer active."
 		fitted_once = false
-		_fit_to_focus(true)
+		_fit_complete_theatre()
 	else:
 		status_message = "%s Marker fallback remains non-authoritative." % color_id_map.error
 	queue_redraw()
@@ -115,7 +115,7 @@ func _draw() -> void:
 		14,
 		Color("9fd7ff")
 	)
-	var hint := "F fit  |  G coalition fronts  |  click province  |  wheel zoom  |  drag pan"
+	var hint := "Home full theatre  |  F fit front  |  G fronts debug  |  click  |  wheel zoom"
 	if not status_message.is_empty():
 		hint = status_message
 	draw_string(
@@ -299,6 +299,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			queue_redraw()
 			get_viewport().set_input_as_handled()
 			return
+		if key.keycode == KEY_HOME:
+			_fit_complete_theatre()
+			get_viewport().set_input_as_handled()
+			return
+		if key.keycode == KEY_F:
+			_fit_to_focus(true)
+			get_viewport().set_input_as_handled()
+			return
 	if event is InputEventMouseMotion and color_id_map != null and color_id_map.is_ready:
 		var motion := event as InputEventMouseMotion
 		var map_width := get_viewport_rect().size.x - PANEL_WIDTH
@@ -311,6 +319,29 @@ func _unhandled_input(event: InputEvent) -> void:
 	super._unhandled_input(event)
 
 
+func _fit_complete_theatre() -> void:
+	if color_id_map == null or not color_id_map.is_ready:
+		view_scale = 1.0
+		view_offset = Vector2.ZERO
+		fitted_once = true
+		status_message = "Fitted full theatre."
+		queue_redraw()
+		return
+	view_scale = 1.0
+	view_offset = Vector2.ZERO
+	fitted_once = true
+	var map_contract: Dictionary = snapshot.get("strategic_map", {})
+	status_message = "Fitted complete theatre (%s provinces). Home=full  F=front." % [
+		int(snapshot.get("provinces", []).size())
+	]
+	if not String(map_contract.get("map_id", "")).is_empty():
+		status_message = "Fitted complete theatre map %s (%s provinces)." % [
+			String(map_contract.get("map_id", "")),
+			int(snapshot.get("provinces", []).size()),
+		]
+	queue_redraw()
+
+
 func _fit_to_focus(force: bool) -> void:
 	if color_id_map == null or not color_id_map.is_ready:
 		super._fit_to_focus(force)
@@ -320,7 +351,6 @@ func _fit_to_focus(force: bool) -> void:
 	var ids: Dictionary = {}
 	for id: Variant in focus_province_ids.keys():
 		ids[String(id)] = true
-	# Prefer a useful theatre, not a single selected rear province.
 	var campaign: Dictionary = snapshot.get("campaign", {})
 	var current := String(campaign.get("current_faction", ""))
 	for battalion: Dictionary in snapshot.get("battalions", []):
@@ -351,19 +381,8 @@ func _fit_to_focus(force: bool) -> void:
 		max_y = maxf(max_y, anchor.y)
 		count += 1
 	if count < 4:
-		# Fall back to whole map so Fit never zooms onto one rear province.
-		for province_id: Variant in color_id_map.row_by_province.keys():
-			var anchor := color_id_map.anchor_pixel(String(province_id))
-			min_x = minf(min_x, anchor.x)
-			max_x = maxf(max_x, anchor.x)
-			min_y = minf(min_y, anchor.y)
-			max_y = maxf(max_y, anchor.y)
-			count += 1
-		view_scale = 1.0
-		view_offset = Vector2.ZERO
-		fitted_once = true
-		status_message = "Fitted color-ID map to full theatre."
-		queue_redraw()
+		_fit_complete_theatre()
+		status_message = "Fit Front had <4 nodes; fell back to complete theatre."
 		return
 	var image_size := color_id_map.image_size()
 	var span := Vector2(maxf(max_x - min_x, 48.0), maxf(max_y - min_y, 48.0))
@@ -377,5 +396,5 @@ func _fit_to_focus(force: bool) -> void:
 	)
 	view_offset = map_center - _image_to_screen(focus_center)
 	fitted_once = true
-	status_message = "Fitted color-ID map to front (%s provinces)." % count
+	status_message = "Fitted operational front (%s provinces). Home=full theatre." % count
 	queue_redraw()

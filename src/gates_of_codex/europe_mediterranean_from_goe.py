@@ -391,49 +391,130 @@ def generate_europe_mediterranean_from_goe(
                 if color in drop_colors:
                     cropped[i : i + 3] = bytes(sea)
 
+    color_to_pid = {
+        tuple(int(c) for c in row["rgb"]): str(row["province_id"]) for row in active_rows
+    }
+    owners_grid = [-1] * (crop_w * crop_h)
+    pid_index = {pid: i for i, pid in enumerate(sorted(active_ids))}
+    index_pid = {i: pid for pid, i in pid_index.items()}
     sums: dict[str, list[float]] = defaultdict(lambda: [0.0, 0.0, 0.0])
+    pixels_by_pid: dict[str, list[tuple[int, int]]] = defaultdict(list)
     for y in range(crop_h):
         for x in range(crop_w):
             i = (y * crop_w + x) * 3
             color = (cropped[i], cropped[i + 1], cropped[i + 2])
-            if color not in active_colors:
+            pid = color_to_pid.get(color)
+            if pid is None:
                 continue
-            pid = str(kept_by_color[color]["province_id"])
+            owners_grid[y * crop_w + x] = pid_index[pid]
             sums[pid][0] += x
             sums[pid][1] += y
             sums[pid][2] += 1
+            pixels_by_pid[pid].append((x, y))
+
+    # Ordinary land adjacency from final clipped raster.
+    # GoE ID maps separate provinces with white/black border pixels, so scan through
+    # a small ignored gap (same idea as strategic_map.extract_color_adjacency).
+    max_gap = 6
+    land_edges: set[tuple[str, str]] = set()
+    for y in range(crop_h):
+        for x in range(crop_w):
+            a = owners_grid[y * crop_w + x]
+            if a < 0:
+                continue
+            for dx, dy in ((1, 0), (0, 1)):
+                cx, cy = x + dx, y + dy
+                gap = 0
+                while 0 <= cx < crop_w and 0 <= cy < crop_h:
+                    b = owners_grid[cy * crop_w + cx]
+                    if b >= 0:
+                        if b != a:
+                            left, right = sorted((index_pid[a], index_pid[b]))
+                            land_edges.add((left, right))
+                        break
+                    gap += 1
+                    if gap > max_gap:
+                        break
+                    cx += dx
+                    cy += dy
+    land_neighbors: dict[str, list[str]] = defaultdict(list)
+    for left, right in sorted(land_edges):
+        land_neighbors[left].append(right)
+        land_neighbors[right].append(left)
+
+    # Optional authored non-land edges from source, only if both endpoints remain.
+    authored_edges: list[dict] = []
+    # GoE interim table has no typed strait/ferry today; reserved for future.
+    authored_neighbors: dict[str, list[str]] = defaultdict(list)
+
+    def _snap_anchor(pid: str, cx: float, cy: float) -> tuple[float, float, bool]:
+        """Ensure anchor lies on a pixel of this province; snap if needed."""
+        ix, iy = int(round(cx)), int(round(cy))
+        if 0 <= ix < crop_w and 0 <= iy < crop_h and owners_grid[iy * crop_w + ix] == pid_index[pid]:
+            return float(ix), float(iy), False
+        best = None
+        best_d = 10**18
+        for px, py in pixels_by_pid[pid]:
+            d = (px - cx) * (px - cx) + (py - cy) * (py - cy)
+            if d < best_d:
+                best_d = d
+                best = (px, py)
+        if best is None:
+            raise RuntimeError(f"No pixels for province {pid}")
+        return float(best[0]), float(best[1]), True
 
     table = []
+    anchors_snapped = 0
     for row in sorted(active_rows, key=lambda item: str(item["province_id"])):
         pid = str(row["province_id"])
         count = max(int(sums[pid][2]), 1)
         cx = sums[pid][0] / count
         cy = sums[pid][1] / count
-        neighbors = [
-            str(n)
-            for n in row.get("source_neighbors", [])
-            if str(n) in active_ids
-        ]
+        ax, ay, snapped = _snap_anchor(pid, cx, cy)
+        if snapped:
+            anchors_snapped += 1
+        land = sorted(set(land_neighbors.get(pid, [])))
+        authored = sorted(set(authored_neighbors.get(pid, [])))
+        all_neighbors = sorted(set(land) | set(authored))
         table.append(
             {
                 "province_id": pid,
                 "display_name": row.get("display_name", pid),
                 "name_is_human_readable": bool(row.get("name_is_human_readable", True)),
                 "rgb": list(row["rgb"]),
-                "marker_anchor": [float(cx), float(crop_h - 1 - cy)],
-                "source_neighbors": sorted(set(neighbors)),
+                "marker_anchor": [float(ax), float(crop_h - 1 - ay)],
+                "source_neighbors": all_neighbors,
+                "land_neighbors": land,
+                "edge_types": {
+                    **{n: "land" for n in land},
+                    **{n: "ferry_or_sea_lane" for n in authored if n not in land},
+                },
                 "source_province_id": row.get("source_province_id", pid),
                 "mapping_method": row.get("mapping_method", "goe_theatre_crop"),
                 "provenance": {
-                    "generator": "europe_mediterranean_from_goe_v2_clip",
+                    "generator": "europe_mediterranean_from_goe_v3_raster_adj",
                     "source_map_id": manifest.get("map_id", "goe_europe"),
                     "marker_theatre": dict(MARKER_THEATRE),
                     "clip_theatre": dict(CLIP_THEATRE),
                     "crop_px": [min_x, min_y, max_x, max_y],
                     "pixels": int(sums[pid][2]),
+                    "anchor_snapped": snapped,
                 },
             }
         )
+
+    # Validate every anchor samples its own color.
+    for row in table:
+        ax = int(round(row["marker_anchor"][0]))
+        ay = crop_h - 1 - int(round(row["marker_anchor"][1]))
+        i = (ay * crop_w + ax) * 3
+        color = (cropped[i], cropped[i + 1], cropped[i + 2])
+        if color_to_pid.get(color) != row["province_id"]:
+            raise RuntimeError(f"Anchor outside province {row['province_id']}")
+
+    selection_report["land_adjacency_edges"] = len(land_edges)
+    selection_report["authored_non_land_edges"] = len(authored_edges)
+    selection_report["anchors_snapped"] = anchors_snapped
 
     selection_report["intersecting_edge_added"] = sorted(intersecting_ids - set(selection_report.get("force_include_ids", [])))
     selection_report["clipped_provinces"] = clipped_ids
@@ -505,7 +586,7 @@ def generate_europe_mediterranean_from_goe(
         "province_geometry": "interim_goe_color_id_crop_with_edge_clip",
         "province_ids": "preserved_from_goe_graph_where_in_theatre",
         "edge_handling": "intersecting_provinces_clipped_to_theatre_mask",
-        "adjacency": "filtered_source_neighbors_within_theatre",
+        "adjacency": "recomputed_land_touch_from_final_clipped_raster",
         "visual_background": "procedural_light_neutral_from_crop_silhouette",
         "pack_artwork": "not_used",
     }
@@ -555,7 +636,14 @@ def build_europe_mediterranean_from_goe_campaign(
         for row in manifest.get("province_table", [])
     }
     neighbors_map = {
-        str(row["province_id"]): [str(n) for n in row.get("source_neighbors", [])]
+        str(row["province_id"]): [
+            str(n)
+            for n in (
+                row.get("land_neighbors")
+                if row.get("land_neighbors") is not None
+                else row.get("source_neighbors", [])
+            )
+        ]
         for row in manifest.get("province_table", [])
     }
 
@@ -566,9 +654,7 @@ def build_europe_mediterranean_from_goe_campaign(
         anchor = anchors.get(pid, [province.x, province.y])
         province.x = float(anchor[0])
         province.y = float(anchor[1])
-        province.neighbors = neighbors_map.get(
-            pid, [n for n in province.neighbors if n in kept_ids]
-        )
+        province.neighbors = neighbors_map.get(pid, [])
         province.map_region = "europe_mediterranean"
         province.metadata["europe_mediterranean_from_goe"] = True
 

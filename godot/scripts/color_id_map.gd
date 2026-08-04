@@ -192,22 +192,27 @@ func image_size() -> Vector2:
 
 
 func _rebuild_border_texture() -> void:
+	# Single-pixel, single-sided borders: paint only when the right or down
+	# neighbor differs. Avoids double-width lines from painting both sides.
 	var output := Image.create(id_image.get_width(), id_image.get_height(), false, Image.FORMAT_RGBA8)
 	output.fill(Color.TRANSPARENT)
-	for y in range(id_image.get_height()):
-		for x in range(id_image.get_width()):
+	var border_color := Color(0.40, 0.43, 0.46, 0.55 if has_background else 0.65)
+	var w := id_image.get_width()
+	var h := id_image.get_height()
+	for y in range(h):
+		for x in range(w):
 			var current := province_at_pixel(Vector2i(x, y))
 			if current.is_empty():
 				continue
-			var is_border := false
-			for offset in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
-				var other := province_at_pixel(Vector2i(x, y) + offset)
-				if other != current:
-					is_border = true
-					break
-			if is_border:
-				# Subtle gray edge; selected/front overlays carry emphasis.
-				output.set_pixel(x, y, Color(0.42, 0.45, 0.48, 0.38 if has_background else 0.50))
+			if x + 1 < w:
+				var right := province_at_pixel(Vector2i(x + 1, y))
+				if not right.is_empty() and right != current:
+					output.set_pixel(x, y, border_color)
+					continue
+			if y + 1 < h:
+				var down := province_at_pixel(Vector2i(x, y + 1))
+				if not down.is_empty() and down != current:
+					output.set_pixel(x, y, border_color)
 	border_texture = ImageTexture.create_from_image(output)
 
 
