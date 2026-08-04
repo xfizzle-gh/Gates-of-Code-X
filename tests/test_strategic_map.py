@@ -9,14 +9,17 @@ import zlib
 from pathlib import Path
 
 from gates_of_codex.europe import load_goe_europe_graph
-from gates_of_codex.strategic_map import (
-    DecodedIdImage,
+from gates_of_codex.goe_strategic_map import (
+    build_goe_source_nodes,
     build_interim_goe_province_table,
+    duplicate_marker_ids,
+    resolve_goe_graph_mapping,
+)
+from gates_of_codex.strategic_map import (
     decode_png_rgb,
     extract_color_adjacency,
     import_strategic_map,
     owner_color_lookup,
-    resolve_goe_graph_mapping,
     resolve_graph_mapping,
 )
 
@@ -48,19 +51,30 @@ class StrategicMapTests(unittest.TestCase):
         )
         self.assertEqual(4, len(set(first.graph_to_source.values())))
 
+    def test_duplicate_marker_text_id_does_not_drop_an_rgb_node(self) -> None:
+        duplicates = duplicate_marker_ids()
+        source_nodes = build_goe_source_nodes()
+        self.assertEqual(517, len(source_nodes))
+        self.assertEqual(1, len(duplicates))
+        duplicate_rows = next(iter(duplicates.values()))
+        self.assertEqual(2, len(duplicate_rows))
+        self.assertNotEqual(duplicate_rows[0]["rgb"], duplicate_rows[1]["rgb"])
+        suffixed = [key for key in source_nodes if "#" in key]
+        self.assertEqual(2, len(suffixed))
+
     def test_actual_goe_graph_resolves_all_517_records(self) -> None:
         graph = load_goe_europe_graph()["provinces"]
+        source = build_goe_source_nodes()
         result = resolve_goe_graph_mapping()
         self.assertTrue(result.verified)
         self.assertEqual(517, len(result.graph_to_source))
         self.assertEqual(517, len(set(result.graph_to_source.values())))
         for province_id, source_id in result.graph_to_source.items():
-            mapped_neighbors = {
+            mapped_neighbors = sorted(
                 result.graph_to_source[neighbor]
                 for neighbor in graph[province_id].get("neighbors", [])
-            }
-            self.assertIsInstance(source_id, str)
-            self.assertEqual(len(graph[province_id].get("neighbors", [])), len(mapped_neighbors))
+            )
+            self.assertEqual(source[source_id]["neighbors"], mapped_neighbors)
 
     def test_interim_table_has_one_rgb_per_campaign_province(self) -> None:
         table = build_interim_goe_province_table()
@@ -68,6 +82,7 @@ class StrategicMapTests(unittest.TestCase):
         self.assertEqual(517, len({row["province_id"] for row in table}))
         self.assertEqual(517, len({tuple(row["rgb"]) for row in table}))
         self.assertTrue(all(row["source_province_id"] for row in table))
+        self.assertTrue(all(row["source_node_key"] for row in table))
         self.assertTrue(all(row["mapping_method"] for row in table))
 
     def test_png_decode_pixel_lookup_adjacency_and_import(self) -> None:
