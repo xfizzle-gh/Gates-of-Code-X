@@ -173,6 +173,7 @@ def prepare_stack_handoff(
         default_export_save_path,
         default_install_save_path,
         resolve_status_template,
+        select_tactical_map,
     )
     from .state_io import load_campaign, save_campaign
 
@@ -194,10 +195,6 @@ def prepare_stack_handoff(
     if profile_directory or state.profile_directory:
         profile = Path(profile_directory or state.profile_directory).expanduser().resolve()
 
-    preferred_map = map_name or str(state.map_metadata.get("preferred_map") or "")
-    if not preferred_map:
-        raise ValueError("map_name is required (pass --map or set campaign map_metadata.preferred_map)")
-
     stack = resolve_stack(
         resource_stack or state.map_metadata.get("resource_stack"),
         config=stack_config or state.map_metadata.get("stack_config"),
@@ -213,6 +210,15 @@ def prepare_stack_handoff(
         failed = [check.detail for check in validation.checks if not check.ok]
         raise RuntimeError("Live mod-stack validation failed: " + "; ".join(failed))
 
+    used_maps = [str(value) for value in state.map_metadata.get("used_tactical_maps", []) if value]
+    available_maps = [value.identifier for value in validation.maps]
+    preferred_map = select_tactical_map(
+        available_maps,
+        preferred=str(state.map_metadata.get("preferred_map") or "") or None,
+        used=used_maps,
+        battle_id=state.pending_battle.battle_id,
+        explicit=map_name,
+    )
     normalized = _normalize_map(preferred_map)
     discovered = {_normalize_map(value.identifier) for value in validation.maps}
     if normalized not in discovered:
@@ -299,6 +305,10 @@ def prepare_stack_handoff(
         state.profile_directory = str(profile)
     state.map_metadata["resource_stack"] = stack_to_strings(stack)
     state.map_metadata["preferred_map"] = preferred_map
+    history = [str(value) for value in state.map_metadata.get("used_tactical_maps", []) if value]
+    history.append(preferred_map)
+    # Keep a short rotation window so maps come back after enough battles.
+    state.map_metadata["used_tactical_maps"] = history[-12:]
     if install_root is not None:
         state.map_metadata["install_directory"] = str(install_root)
     if stack_config:

@@ -32,6 +32,7 @@ from .strategic import (
     update_operational_objectives,
 )
 from .strategic_ai import StrategicAI
+from .play_context import list_front_options
 from .supply import reachable_supply_provinces, refresh_supply_for_faction
 
 
@@ -82,6 +83,8 @@ def build_parser() -> argparse.ArgumentParser:
     recruits = sub.add_parser("list-recruits")
     recruits.add_argument("campaign")
     recruits.add_argument("--formation", required=True)
+    recruits.add_argument("--contains", help="Only show unit names containing this text")
+    recruits.add_argument("--limit", type=int, default=0, help="Max rows to print (0 = all)")
     recruit = sub.add_parser("recruit")
     recruit.add_argument("campaign")
     recruit.add_argument("--formation", required=True)
@@ -109,6 +112,10 @@ def build_parser() -> argparse.ArgumentParser:
     objectives.add_argument("campaign")
     campaign_status = sub.add_parser("campaign-status")
     campaign_status.add_argument("campaign")
+    front = sub.add_parser("front", help="List legal moves and attacks for the current faction")
+    front.add_argument("campaign")
+    front.add_argument("--faction", choices=FACTION_CHOICES)
+    front.add_argument("--kind", choices=["battle", "capture", "neutral", "move"])
     export = sub.add_parser("export-battle")
     export.add_argument("campaign")
     export.add_argument("--codex", required=True)
@@ -274,7 +281,13 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "list-recruits":
         state = load_campaign(args.campaign)
-        print(json.dumps([asdict(offer) for offer in formation_recruitment_offers(state, args.formation)], indent=2))
+        offers = [asdict(offer) for offer in formation_recruitment_offers(state, args.formation)]
+        if args.contains:
+            needle = args.contains.lower()
+            offers = [offer for offer in offers if needle in str(offer.get("unit_name", "")).lower()]
+        if args.limit and args.limit > 0:
+            offers = offers[: args.limit]
+        print(json.dumps(offers, indent=2))
         return 0
     if args.command == "recruit":
         state = load_campaign(args.campaign)
@@ -330,6 +343,19 @@ def main(argv: list[str] | None = None) -> int:
             },
         }, indent=2))
         save_campaign(state, args.campaign)
+        return 0
+    if args.command == "front":
+        state = load_campaign(args.campaign)
+        faction = Faction(args.faction) if args.faction else None
+        options = list_front_options(state, faction)
+        if args.kind:
+            options = [row for row in options if row.get("kind") == args.kind]
+        print(json.dumps({
+            "current_faction": state.current_faction.value,
+            "turn_number": state.turn_number,
+            "pending_battle": state.pending_battle.battle_id if state.pending_battle else None,
+            "options": options,
+        }, indent=2))
         return 0
     if args.command == "export-battle":
         manifest = GatesOfCodeXService().export_battle(
