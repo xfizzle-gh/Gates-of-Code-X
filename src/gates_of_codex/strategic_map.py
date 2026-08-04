@@ -258,6 +258,8 @@ def import_strategic_map(
     extracted_edges = extract_color_adjacency(
         image,
         recognized_colors=set(table_colors),
+        ignored_colors=ignored,
+        max_gap=6,
     )
     province_edges = {
         tuple(sorted((table_colors[left], table_colors[right])))
@@ -420,22 +422,64 @@ def extract_color_adjacency(
     image: DecodedIdImage,
     *,
     recognized_colors: set[RGB],
+    ignored_colors: set[RGB] | None = None,
+    max_gap: int = 0,
 ) -> set[tuple[RGB, RGB]]:
+    """Find province edges in an id-color map.
+
+    MapChart/GoE id maps often separate provinces with white/black border pixels.
+    ``max_gap`` allows scanning through that many ignored pixels when looking for
+    a neighboring province color.
+    """
+
+    ignored = ignored_colors or set()
     edges: set[tuple[RGB, RGB]] = set()
     for y in range(image.height):
         for x in range(image.width):
             current = image.color_at(x, y)
             if current not in recognized_colors:
                 continue
-            if x + 1 < image.width:
-                other = image.color_at(x + 1, y)
-                if other in recognized_colors and other != current:
-                    edges.add(tuple(sorted((current, other))))
-            if y + 1 < image.height:
-                other = image.color_at(x, y + 1)
-                if other in recognized_colors and other != current:
+            for dx, dy in ((1, 0), (0, 1)):
+                other = _first_recognized_neighbor(
+                    image,
+                    x,
+                    y,
+                    dx,
+                    dy,
+                    recognized_colors=recognized_colors,
+                    ignored_colors=ignored,
+                    max_gap=max_gap,
+                )
+                if other is not None and other != current:
                     edges.add(tuple(sorted((current, other))))
     return edges
+
+
+def _first_recognized_neighbor(
+    image: DecodedIdImage,
+    x: int,
+    y: int,
+    dx: int,
+    dy: int,
+    *,
+    recognized_colors: set[RGB],
+    ignored_colors: set[RGB],
+    max_gap: int,
+) -> RGB | None:
+    gap = 0
+    cx, cy = x + dx, y + dy
+    while 0 <= cx < image.width and 0 <= cy < image.height:
+        color = image.color_at(cx, cy)
+        if color in recognized_colors:
+            return color
+        if color not in ignored_colors:
+            return None
+        gap += 1
+        if gap > max_gap:
+            return None
+        cx += dx
+        cy += dy
+    return None
 
 
 def owner_color_lookup(

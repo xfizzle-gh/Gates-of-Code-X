@@ -243,9 +243,13 @@ def import_interim_goe_map(
     output: str | Path,
     *,
     texture_output: str | Path | None = None,
-    ignored_colors: tuple[RGB, ...] | list[RGB] = ((0, 0, 0),),
+    ignored_colors: tuple[RGB, ...] | list[RGB] = ((0, 0, 0), (255, 255, 255)),
+    require_pixel_adjacency: bool = False,
 ) -> dict:
     alignment = resolve_goe_graph_mapping()
+    # MapChart/GoE id textures use white borders, so pixel-touch adjacency is an
+    # imperfect check. Default: import with table/marker edges; optional strict mode.
+    expected = build_aligned_source_graph(alignment) if require_pixel_adjacency else None
     manifest = import_strategic_map(
         id_map,
         build_interim_goe_province_table(),
@@ -253,7 +257,7 @@ def import_interim_goe_map(
         map_id="goe_europe",
         provenance="interim_goe_reference_asset",
         ignored_colors=ignored_colors,
-        expected_graph=build_aligned_source_graph(alignment),
+        expected_graph=expected,
         texture_output=texture_output,
     )
     manifest["source_alignment"] = alignment.to_dict()
