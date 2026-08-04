@@ -10,6 +10,7 @@ from . import cli
 from .codex.catalog import CodeXCatalogScanner
 from .doctor import diagnose
 from .economy import initialize_economy
+from .goe_source_audit import write_goe_source_audit
 from .models import Faction
 from .modstack import resolve_stack, stack_to_strings
 from .scenario import load_bundled_scenario
@@ -84,6 +85,34 @@ def _run_scan(arguments: list[str]) -> int:
     return 0
 
 
+def _run_audit_goe_provinces(arguments: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="gates-of-codex audit-goe-provinces")
+    parser.add_argument("--output", default="docs/audits/goe-province-detailed.json")
+    parser.add_argument("--summary", default="docs/audits/goe-province-detailed.md")
+    parser.add_argument(
+        "--summary-only",
+        action="store_true",
+        help="omit the 517 per-province mapping rows from JSON output",
+    )
+    args = parser.parse_args(arguments)
+    payload = write_goe_source_audit(
+        args.output,
+        args.summary,
+        include_mappings=not args.summary_only,
+    )
+    coverage = payload["mapping_coverage"]
+    print(json.dumps({
+        "ok": True,
+        "output": str(Path(args.output)),
+        "summary": str(Path(args.summary)),
+        "province_count": payload["province_count"],
+        "unique_rgb_count": payload["source_inventory"]["marker_id_database"]["unique_rgb_count"],
+        "mapped_graph_records": coverage["mapped_graph_records"],
+        "unmapped_graph_records": coverage["unmapped_graph_records"],
+    }, indent=2))
+    return 0
+
+
 def _run_new(arguments: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="gates-of-codex new")
     _add_stack_arguments(parser)
@@ -153,6 +182,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_doctor(remainder)
     if command == "scan":
         return _run_scan(remainder)
+    if command == "audit-goe-provinces":
+        return _run_audit_goe_provinces(remainder)
     if command == "new":
         return _run_new(remainder)
     if command == "export-battle":
