@@ -115,10 +115,20 @@ class GatesOfCodeXTests(unittest.TestCase):
             "\t{army ger}\n"
             "\t{enemyArmy rus}\n"
             "\t{difficulty heroic}\n"
+            "\t{duration 3}\n"
+            "\t{resources 2}\n"
+            "\t{selectedMapPoint point_2_4}\n"
             "\t{playedGames 4}\n"
             "\t{wonGames 2}\n"
             "\t{mods\n\t\t\"mod_2897299509:0\"\n\t}\n"
             "\t{unlockedResearch\n\t\t{\"old_key\"}\n\t}\n"
+            "\t{mapPoints\n"
+            "\t\t{\n"
+            "\t\t\t{name point_2_4}\n"
+            "\t\t\t{map \"multi/old_map:campaign_capture_the_flag:4x4\"}\n"
+            "\t\t}\n"
+            "\t}\n"
+            "\t{roundsHistory}\n"
             "}\n"
         )
         text = StatusBuilder().build(
@@ -135,9 +145,65 @@ class GatesOfCodeXTests(unittest.TestCase):
         self.assertIn('{name "Gates of CodeX Acceptance"}', text)
         self.assertIn('{army nato}', text)
         self.assertIn('{enemyArmy rusa}', text)
+        self.assertIn('{selectedMapPoint point_2_4}', text)
+        self.assertIn('{map "multi/4x4/test:campaign_capture_the_flag:4x4"}', text)
+        # Template campaign option enums must stay valid (not CP-scale values).
+        self.assertIn("{resources 2}", text)
+        self.assertNotIn("{resources 1000}", text)
         self.assertIn('"mod_2897299509:0"', text)
         self.assertIn('{"new_key"}', text)
         self.assertNotIn('{"old_key"}', text)
+        self.assertEqual(1, text.count("{army "))
+        self.assertEqual(1, text.count("{timestamp "))
+
+    def test_status_template_crlf_is_patched_in_place(self) -> None:
+        state = load_bundled_scenario()
+        self._prepare_nato_russia_battle(state)
+        template = (
+            "{saveinfo\r\n"
+            "\t{version 9}\r\n"
+            "\t{gameVersion \"1.065.0\"}\r\n"
+            "\t{timestamp 1}\r\n"
+            "\t{name \"Conquest 395\"}\r\n"
+            "\t{army ger}\r\n"
+            "\t{enemyArmy rus}\r\n"
+            "\t{selectedMapPoint point_2_4}\r\n"
+            "\t{playedGames 0}\r\n"
+            "\t{wonGames 0}\r\n"
+            "\t{mapPoints\r\n"
+            "\t\t{\r\n"
+            "\t\t\t{name point_2_4}\r\n"
+            "\t\t\t{map \"multi/old:campaign_capture_the_flag:4x4\"}\r\n"
+            "\t\t}\r\n"
+            "\t}\r\n"
+            "\t{roundsHistory}\r\n"
+            "}\r\n"
+        )
+        text = StatusBuilder().build(
+            state.pending_battle,
+            BattleStatusOptions(
+                "multi/dcg_[cwa71]_fulda",
+                template_status=template,
+                campaign_name="Gates of CodeX Acceptance",
+            ),
+        )
+        self.assertNotIn("\r", text)
+        self.assertEqual(1, text.count("{army "))
+        self.assertEqual(1, text.count('{name "'))
+        self.assertIn('{army nato}', text)
+        self.assertIn('{name "Gates of CodeX Acceptance"}', text)
+        self.assertIn('{map "multi/dcg_[cwa71]_fulda:campaign_capture_the_flag:4x4"}', text)
+        StatusBuilder.validate(text)
+
+    def test_status_rejects_duplicate_scalars_that_crash_conquest_menu(self) -> None:
+        bad = (
+            "{saveinfo\n"
+            "\t{army ger}\n"
+            "\t{army nato}\n"
+            "}\n"
+        )
+        with self.assertRaisesRegex(ValueError, "duplicate '\\{army'"):
+            StatusBuilder.validate(bad)
 
     def test_campaign_scn_graph(self) -> None:
         state = load_bundled_scenario()

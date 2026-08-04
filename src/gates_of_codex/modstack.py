@@ -92,17 +92,22 @@ def validate_known_order(values: Iterable[str | Path]) -> tuple[bool, str]:
             positions.setdefault("3261086933", index)
         if "3636883799" in text or "ai overhaul" in text or "conquest ai overhaul" in text:
             positions.setdefault("3636883799", index)
-        if "gates-of-code-x" in text or "gates of code:x" in text:
+        if (
+            "3700832981" in text
+            or "gates-of-code-x" in text
+            or "gates of code:x" in text
+            or "gates of codex" in text
+        ):
             positions.setdefault("gates", index)
     missing = [value for value in KNOWN_WORKSHOP_ORDER if value not in positions]
     if "gates" not in positions:
-        missing.append("Gates of Code:X")
+        missing.append("Gates of CodeX")
     if missing:
         return False, "Missing required stack layers: " + ", ".join(missing)
     ordered = [positions[value] for value in KNOWN_WORKSHOP_ORDER] + [positions["gates"]]
     if ordered != sorted(ordered) or positions["gates"] != len(roots) - 1:
-        return False, "Expected West81 -> Code:X -> Code:X AI Overhaul -> Gates of Code:X, with Gates last"
-    return True, "West81 -> Code:X -> Code:X AI Overhaul -> Gates of Code:X order confirmed"
+        return False, "Expected West81 -> Code:X -> Code:X AI Overhaul -> Gates of CodeX, with Gates last"
+    return True, "West81 -> Code:X -> Code:X AI Overhaul -> Gates of CodeX order confirmed"
 
 
 def stack_signature(values: Iterable[str | Path]) -> str:
@@ -135,3 +140,23 @@ def stack_signature(values: Iterable[str | Path]) -> str:
 
 def stack_to_strings(values: Iterable[str | Path]) -> list[str]:
     return [str(path) for path in normalize_stack(values)]
+
+
+def stack_mod_tokens(values: Iterable[str | Path]) -> list[str]:
+    """Return GoH saveinfo mod tokens for workshop layers in the stack.
+
+    Format matches engine saves: ``mod_<workshopId>:0``. Vanilla resource roots
+    and non-workshop paths are skipped.
+    """
+    tokens: list[str] = []
+    seen: set[str] = set()
+    for root in normalize_stack(values):
+        workshop_id = ""
+        for part in root.parts:
+            if part.isdigit() and len(part) >= 8:
+                workshop_id = part
+        if not workshop_id or workshop_id in seen:
+            continue
+        seen.add(workshop_id)
+        tokens.append(f"mod_{workshop_id}:0")
+    return tokens

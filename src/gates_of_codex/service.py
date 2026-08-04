@@ -13,7 +13,7 @@ from .bridge.scn import CampaignScnBuilder
 from .bridge.status import BattleStatusOptions, StatusBuilder, StatusResult
 from .campaign import CampaignEngine
 from .codex.catalog import CodeXCatalogScanner
-from .modstack import resolve_stack, stack_to_strings
+from .modstack import resolve_stack, stack_mod_tokens, stack_to_strings
 from .state_io import load_campaign, save_campaign
 
 
@@ -83,14 +83,18 @@ class GatesOfCodeXService:
         baseline = previous_status or (
             self.status.parse_result(template_status) if template_status else StatusResult(0, 0)
         )
+        research = []
+        if state.selected_faction.value in state.factions:
+            research = state.factions[state.selected_faction.value].researched_keys
         options = BattleStatusOptions(
             map_name=map_name,
             difficulty=state.difficulty,
-            research=state.factions.get(state.selected_faction.value).researched_keys if state.selected_faction.value in state.factions else [],
+            research=research,
             played_games=baseline.played_games,
             won_games=baseline.won_games,
             template_status=template_status,
             campaign_name="Gates of CodeX Acceptance",
+            mods=stack_mod_tokens(stack),
         )
         status_text = self.status.build(state.pending_battle, options)
         scn_text = CampaignScnBuilder(catalog, resource_stack=stack).build(state, state.pending_battle)

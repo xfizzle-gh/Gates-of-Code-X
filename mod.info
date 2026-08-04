@@ -1,7 +1,7 @@
 {mod
-	{name "Gates of Code:X"}
-	{tags "singleplayer" "multiplayer"}
+	{name "Gates of CodeX"}
+	{tags "singleplayer"}
 	{desc "Strategic campaign bridge and final overlay for West81, Code:X, and the Code:X AI Overhaul."}
-	{minGameVersion "any"}
-	{maxGameVersion "any"}
+	{minGameVersion "1.065.0"}
+	{maxGameVersion "1.075.0"}
 }

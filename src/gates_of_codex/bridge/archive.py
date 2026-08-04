@@ -27,9 +27,10 @@ class CampaignSaveArchive:
         with tempfile.NamedTemporaryFile(prefix=f".{destination.name}.", suffix=".tmp", dir=destination.parent, delete=False) as temporary:
             temporary_path = Path(temporary.name)
         try:
+            # Real GoH Conquest saves store campaign.scn before status.
             with zipfile.ZipFile(temporary_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
-                archive.writestr(self.STATUS_NAME, status)
-                archive.writestr(self.SCN_NAME, campaign_scn)
+                archive.writestr(self.SCN_NAME, self._to_game_bytes(campaign_scn))
+                archive.writestr(self.STATUS_NAME, self._to_game_bytes(status))
             self.validate(temporary_path)
             temporary_path.replace(destination)
         except Exception:
@@ -55,3 +56,10 @@ class CampaignSaveArchive:
     def validate(self, path: str | Path) -> Path:
         self.read(path)
         return Path(path)
+
+    @staticmethod
+    def _to_game_bytes(text: str) -> bytes:
+        normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+        if not normalized.endswith("\n"):
+            normalized += "\n"
+        return normalized.replace("\n", "\r\n").encode("utf-8")

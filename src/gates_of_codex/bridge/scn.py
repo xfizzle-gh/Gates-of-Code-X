@@ -18,13 +18,16 @@ class ParsedCampaignSquad:
 
 
 class ObjectIdAllocator:
-    def __init__(self, start: int = 0x10000001) -> None:
+    def __init__(self, start: int = 0x8000) -> None:
         self.next = start
+        self.mid = 1
 
-    def allocate(self) -> str:
-        value = f"0x{self.next:08x}"
+    def allocate(self) -> tuple[str, int]:
+        value = f"0x{self.next:x}"
+        mid = self.mid
         self.next += 1
-        return value
+        self.mid += 1
+        return value, mid
 
 
 class CampaignScnBuilder:
@@ -52,10 +55,21 @@ class CampaignScnBuilder:
             for item in (*pending.attacking_participants, *pending.defending_participants)
         }
         self._preflight_rosters(state, participants)
+        player_by_battalion = {
+            item.battalion_id: (0 if pending.player_is_attacker else 1)
+            for item in pending.attacking_participants
+        }
+        player_by_battalion.update(
+            {
+                item.battalion_id: (1 if pending.player_is_attacker else 0)
+                for item in pending.defending_participants
+            }
+        )
         for battalion_id, stage in participants.items():
             battalion = state.battalions.get(battalion_id)
             if battalion is None:
                 raise KeyError(f"Missing battalion {battalion_id}")
+            player = player_by_battalion.get(battalion_id, 0)
             for entry in battalion.roster:
                 definition = self.catalog.units.get(entry.unit_name)
                 if definition is None:
@@ -63,15 +77,24 @@ class CampaignScnBuilder:
                 for _ in range(entry.quantity):
                     object_ids: list[str] = []
                     for vehicle in definition.vehicles[:1]:
-                        object_id = ids.allocate()
+                        object_id, mid = ids.allocate()
                         object_ids.append(object_id)
-                        objects.append(self._entity(vehicle, object_id))
+                        objects.append(self._entity(vehicle, object_id, player=player, mid=mid))
                         inventories.append(self._inventory(object_id))
                     for breed, count in definition.members.items():
                         for _ in range(count):
-                            object_id = ids.allocate()
+                            object_id, mid = ids.allocate()
                             object_ids.append(object_id)
-                            objects.append(self._human(breed, definition.side, definition.period, object_id))
+                            objects.append(
+                                self._human(
+                                    breed,
+                                    definition.side,
+                                    definition.period,
+                                    object_id,
+                                    player=player,
+                                    mid=mid,
+                                )
+                            )
                             inventories.append(self._inventory(object_id))
                     if not object_ids:
                         raise ValueError(f"Unit {entry.unit_name} has no materializable members")
@@ -116,13 +139,14 @@ class CampaignScnBuilder:
         for root in reversed(self.roots):
             resources = resource_root(root)
             candidates = [
+                resources / f"set/breed/mp/{side}/{period}/{breed}.set",
                 resources / f"set/breed/mp/{side}/{breed}.set",
                 resources / f"set/breed/mp/{period}/{side}/{breed}.set",
                 resources / f"set/breed/{breed}.set",
             ]
             for path in candidates:
                 if path.is_file():
-                    return path.relative_to(resources).as_posix()
+                    return self._to_breed_token(path.relative_to(resources).as_posix())
         if self._breed_index is None:
             self._breed_index = {}
             for root in reversed(self.roots):
@@ -130,19 +154,49 @@ class CampaignScnBuilder:
                 breed_root = resources / "set/breed"
                 if breed_root.is_dir():
                     for path in breed_root.rglob("*.set"):
-                        self._breed_index.setdefault(path.stem.lower(), path.relative_to(resources).as_posix())
+                        token = self._to_breed_token(path.relative_to(resources).as_posix())
+                        self._breed_index.setdefault(path.stem.lower(), token)
         result = self._breed_index.get(breed.lower()) if self._breed_index else None
         if not result:
             raise FileNotFoundError(f"Could not resolve Code:X breed {breed} in the configured mod stack")
         return result
 
-    def _human(self, breed: str, side: str, period: str, object_id: str) -> str:
+    @staticmethod
+    def _to_breed_token(relative_posix: str) -> str:
+        # Real Conquest saves store short tokens like mp/nato/2022s/usarmy_vehicleman
+        # rather than set/breed/.../*.set filesystem paths.
+        text = relative_posix.replace("\\", "/")
+        if text.startswith("set/breed/"):
+            text = text[len("set/breed/") :]
+        if text.endswith(".set"):
+            text = text[: -len(".set")]
+        return text
+
+    def _human(self, breed: str, side: str, period: str, object_id: str, *, player: int, mid: int) -> str:
         path = self._resolve_breed(breed, side, period)
-        return f'\t{{Human "{path}" {object_id}\n\t\t{{Position 0 0}}\n\t\t{{Player 0}}\n\t\t{{MID {int(object_id, 16)}}}\n\t}}'
+        return (
+            f'\t{{Human "{path}" {object_id}\n'
+            f"\t\t{{Position 0 0}}\n"
+            f"\t\t{{xform zl 90}}\n"
+            f'\t\t{{TexMod "auto"}}\n'
+            f"\t\t{{SpawnedInFog}}\n"
+            f"\t\t{{Player {player}}}\n"
+            f"\t\t{{MID {mid}}}\n"
+            f'\t\t{{FsmState "stand_noaim"}}\n'
+            f"\t}}"
+        )
 
     @staticmethod
-    def _entity(entity: str, object_id: str) -> str:
-        return f'\t{{Entity "{entity}" {object_id}\n\t\t{{Position 0 0}}\n\t\t{{Player 0}}\n\t\t{{MID {int(object_id, 16)}}}\n\t}}'
+    def _entity(entity: str, object_id: str, *, player: int, mid: int) -> str:
+        return (
+            f'\t{{Entity "{entity}" {object_id}\n'
+            f"\t\t{{Position 0 0}}\n"
+            f"\t\t{{xform zl 90}}\n"
+            f'\t\t{{TexMod "auto"}}\n'
+            f"\t\t{{Player {player}}}\n"
+            f"\t\t{{MID {mid}}}\n"
+            f"\t}}"
+        )
 
     @staticmethod
     def _inventory(object_id: str) -> str:
