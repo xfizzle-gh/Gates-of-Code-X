@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Iterable
 
 from .bridge.archive import CampaignSaveArchive
+from .models import CampaignState, Faction
 from .service import goh_conquest_save_filename, read_status_campaign_name, unique_acceptance_campaign_name
 from .state_io import load_campaign, save_campaign
 
@@ -121,3 +123,111 @@ def build_operator_commands(
     )
     import_cmd = f'& .\\.venv\\Scripts\\gates-of-codex.exe import-battle "{campaign}" --save "{installed}"'
     return verify, import_cmd
+
+
+def normalize_map_id(value: str) -> str:
+    normalized = value.replace("\\", "/").strip("/").lower()
+    for prefix in ("resource/map/", "resource/maps/"):
+        if normalized.startswith(prefix):
+            normalized = normalized[len(prefix) :]
+    return normalized
+
+
+def select_tactical_map(
+    available: Iterable[str],
+    *,
+    preferred: str | None = None,
+    used: Iterable[str] | None = None,
+    battle_id: str = "",
+    explicit: str | None = None,
+) -> str:
+    """Choose a tactical map for handoff.
+
+    Explicit ``--map`` always wins. Otherwise rotate through playable ``dcg_``
+    maps, skipping recently used ones so Conquest does not keep forcing Fulda.
+    """
+
+    if explicit:
+        return explicit
+    pool = [str(value) for value in available if str(value).strip()]
+    if not pool:
+        raise ValueError("No tactical maps are available in the configured mod stack")
+    ranked = [
+        value
+        for value in pool
+        if "dcg_" in value.lower() and "test" not in value.lower() and "zeeland_sum_test" not in value.lower()
+    ]
+    if not ranked:
+        ranked = list(pool)
+    used_norm = {normalize_map_id(value) for value in (used or []) if value}
+    fresh = [value for value in ranked if normalize_map_id(value) not in used_norm]
+    choices = fresh or ranked
+    if preferred:
+        preferred_norm = normalize_map_id(preferred)
+        for value in choices:
+            if normalize_map_id(value) == preferred_norm:
+                # Only keep preferred while it is still fresh.
+                if preferred_norm not in used_norm or not fresh:
+                    return value
+    if battle_id:
+        index = sum(ord(character) for character in battle_id) % len(choices)
+        return choices[index]
+    return choices[0]
+
+
+def list_front_options(state: CampaignState, faction: Faction | None = None) -> list[dict]:
+    """List legal moves/attacks for the current (or specified) faction."""
+
+    from .diplomacy import are_allied, is_friendly_owner
+
+    active = faction or state.current_faction
+    options: list[dict] = []
+    for battalion in sorted(state.battalions.values(), key=lambda value: value.battalion_id):
+        if battalion.faction != active:
+            continue
+        if battalion.movement_remaining <= 0 and battalion.combat_actions_remaining <= 0:
+            continue
+        origin = state.provinces[battalion.province_id]
+        for neighbor_id in origin.neighbors:
+            target = state.provinces[neighbor_id]
+            occupant = next(
+                (
+                    other
+                    for other in state.battalions.values()
+                    if other.province_id == neighbor_id
+                ),
+                None,
+            )
+            if occupant is not None and are_allied(state, battalion.faction, occupant.faction):
+                continue
+            if occupant is not None and not are_allied(state, battalion.faction, occupant.faction):
+                kind = "battle"
+                enemies = [occupant.battalion_id]
+            elif occupant is None and (
+                target.owner == Faction.NEUTRAL or is_friendly_owner(state, battalion.faction, target.owner)
+            ):
+                kind = "neutral" if target.owner == Faction.NEUTRAL else "move"
+                enemies = []
+            elif occupant is None and target.owner != Faction.NEUTRAL and not is_friendly_owner(
+                state, battalion.faction, target.owner
+            ):
+                kind = "capture"
+                enemies = []
+            else:
+                continue
+            options.append(
+                {
+                    "battalion_id": battalion.battalion_id,
+                    "formation_id": battalion.formation_id,
+                    "origin": battalion.province_id,
+                    "origin_name": origin.display_name,
+                    "target": neighbor_id,
+                    "target_name": target.display_name,
+                    "target_owner": target.owner.value,
+                    "kind": kind,
+                    "enemies": enemies,
+                    "command": f"move {battalion.battalion_id} {neighbor_id}",
+                }
+            )
+    kind_order = {"battle": 0, "capture": 1, "neutral": 2, "move": 3}
+    return sorted(options, key=lambda row: (kind_order.get(str(row["kind"]), 9), str(row["battalion_id"]), str(row["target"])))
