@@ -26,7 +26,7 @@ Alliance membership does not merge faction turns, resources, research, recruitme
 
 ## Frontend snapshot
 
-`gates-of-codex export-frontend` writes a versioned JSON document with schema identifier `gates-of-codex.frontend` (schema version 5+).
+`gates-of-codex export-frontend` writes a versioned JSON document with schema identifier `gates-of-codex.frontend` (schema version 6+).
 
 The document contains:
 
@@ -36,10 +36,11 @@ The document contains:
 - all provinces and current control
 - deduplicated graph edges
 - formations and battalions
-- occupied province references
+- `battalion_stacks`, a deterministic `province_id -> [battalion_id, ...]` contract
+- `occupied_by_battalions` on each province, with legacy `occupied_by` retaining the first sorted ID
 - pending-battle state
-- `front_options` legal move/attack rows for the current faction
-- `control` write-back paths (`campaign_path`, `snapshot_path`, `commands_path`)
+- `front_options` legal move/attack rows containing the acting `battalion_id`
+- `control` write-back paths and the exact `python_executable` / `python_module`
 
 Godot does not read or mutate Python internals directly. The snapshot is the stable interface between the strategic backend and the presentation layer.
 
@@ -66,9 +67,21 @@ Apply and refresh with:
 gates-of-codex apply-frontend campaign.json --snapshot godot/campaign_snapshot.json
 ```
 
-The backend applies commands in order, clears the queue, rewrites the snapshot, and returns a JSON result. Godot invokes the same command via `python -m gates_of_codex apply-frontend ...` after writing the queue.
+For write-enabled snapshots, the control block exports the exact interpreter used for the frontend export, normally the repository `.venv` Python. Godot passes that executable directly to `OS.execute()` and passes every path as a separate argument, so paths containing spaces do not depend on shell parsing or editor PATH configuration. Bare command fallback exists only for older snapshots that omit the explicit executable.
 
-Supported ops: `move`, `end_turn`, `run_ai`, `auto_resolve`, `construct`, `repair`, `refresh`.
+The backend applies commands in order, clears the queue, rewrites the snapshot, and returns a JSON result.
+
+Supported ops: `move`, `end_turn`, `run_ai`, `auto_resolve`, `construct`, `repair`, `handoff`, `refresh`.
+
+## Multi-battalion checkpoint
+
+PR #50 preserves every battalion in each province and displays an aggregate compact counter with a stack-count badge. Until the full selector in #52 lands, the acting battalion is deterministic:
+
+1. retain the currently selected battalion if it still has legal options
+2. otherwise select the lexicographically first battalion ID with legal options
+3. if none can act, retain the first sorted battalion as the display representative
+
+Every move command includes that exact battalion ID. The full stack tabs, battalion cards, and explicit selection UI remain in #52.
 
 ## Godot checkpoint
 
@@ -80,4 +93,6 @@ Export a write-enabled snapshot before launching Godot:
 gates-of-codex export-frontend live/campaign.json --output godot/campaign_snapshot.json
 ```
 
-Then open the `godot/` project. Select an owned unit, click a highlighted neighbor to move/attack, or use panel buttons for end turn / AI / auto-resolve / construct.
+Then open the `godot/` project. Select an owned counter, click a highlighted neighbor to move/attack, or use panel buttons for end turn, AI, auto-resolve, construction, and handoff.
+
+The marker-based map in this checkpoint remains temporary. Authoritative province-shaped selection and runtime recoloring are implemented under #51 using the interim GoE-derived color-ID source behind the generic map-import boundary.
