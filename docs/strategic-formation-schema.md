@@ -20,6 +20,13 @@
 7. Pending/archived battles are not rewritten in PR1 (no tactical-assignment fields).
 8. Campaign `schema_version` becomes **≥ 6** after migration.
 9. Frontend snapshot schema becomes **8** and adds `strategic_formations` + `commanders`.
+10. Migration is **fully state-idempotent**: after the first successful migration, repeated `ensure_strategic_formations` / load / save does not change `state.to_dict()`.
+11. Dangling commander IDs are cleared **only** while migrating legacy pre-schema-6 saves. Schema 6+ leaves invalid references for validation to reject.
+12. Until PR2 adds formation-level map selection, the existing **battalion move command temporarily acts as a formation move**: all members of the strategic formation co-locate with the acting battalion.
+
+## Scope note vs PR #57
+
+PR #61 is stacked on `feat/stack-panel` (PR #57). This PR also repairs a missing PR #57 dependency by wiring `build_stack_presentations()` into `frontend.py` (`stack_presentations`, `battalion_presentations`, per-battalion `presentation`). That wiring is required for PR #57’s own tests/UI contracts and is documented here as a foundation repair, not formation gameplay.
 
 ## Dependency
 

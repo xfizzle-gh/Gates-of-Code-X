@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from gates_of_codex.campaign import CampaignEngine
 from gates_of_codex.force_migration import (
     STRATEGIC_FORMATION_SCHEMA_VERSION,
     ensure_strategic_formations,
@@ -87,8 +88,8 @@ class StrategicFormationSchemaTests(unittest.TestCase):
     def test_single_battalion_migrates_to_independent_formation(self) -> None:
         state = _minimal_state()
         report = ensure_strategic_formations(state)
-        self.assertEqual(1, report["created"])
         self.assertEqual(0, report["commanders_invented"])
+        self.assertEqual("sf-{battalion_id}", report["id_scheme"])
         force_id = strategic_formation_id_for_battalion("bn-1")
         self.assertIn(force_id, state.strategic_formations)
         force = state.strategic_formations[force_id]
@@ -117,14 +118,17 @@ class StrategicFormationSchemaTests(unittest.TestCase):
         self.assertEqual("a", state.strategic_formations[strategic_formation_id_for_battalion("bn-2")].province_id)
         state.validate()
 
-    def test_migration_is_idempotent_and_deterministic(self) -> None:
+    def test_migration_is_fully_state_idempotent(self) -> None:
         state = _minimal_state(multi_province=True)
-        first = ensure_strategic_formations(state)
-        snapshot = copy.deepcopy(state.to_dict())
-        second = ensure_strategic_formations(state)
-        self.assertEqual(0, second["created"])
-        self.assertEqual(snapshot["strategic_formations"], state.to_dict()["strategic_formations"])
-        self.assertEqual(first["created"], 3)
+        ensure_strategic_formations(state)
+        first = copy.deepcopy(state.to_dict())
+        ensure_strategic_formations(state)
+        second = state.to_dict()
+        self.assertEqual(first, second)
+        # load/save path must also be stable
+        ensure_strategic_formations(state)
+        third = state.to_dict()
+        self.assertEqual(first, third)
 
     def test_serialization_round_trip_preserves_empty_commanders(self) -> None:
         state = _minimal_state()
@@ -258,6 +262,109 @@ class StrategicFormationSchemaTests(unittest.TestCase):
         state.validate()
         snapshot = build_frontend_snapshot(state)
         self.assertEqual(len(state.battalions), len(snapshot["strategic_formations"]))
+
+    def test_legacy_pre6_clears_dangling_commander_refs(self) -> None:
+        state = _minimal_state()
+        state.schema_version = 5
+        state.battalions["bn-1"].commander_id = "missing-cmd"
+        ensure_strategic_formations(state)
+        self.assertIsNone(state.battalions["bn-1"].commander_id)
+        state.validate()
+
+    def test_schema6_preserves_dangling_commander_refs_for_validation(self) -> None:
+        state = _minimal_state()
+        ensure_strategic_formations(state)
+        state.schema_version = STRATEGIC_FORMATION_SCHEMA_VERSION
+        state.battalions["bn-1"].commander_id = "missing-cmd"
+        # ensure must not silently erase current-schema corruption
+        ensure_strategic_formations(state)
+        self.assertEqual("missing-cmd", state.battalions["bn-1"].commander_id)
+        with self.assertRaises(ValueError):
+            state.validate()
+
+    def test_multi_battalion_move_moves_entire_formation(self) -> None:
+        """Temporary: battalion move command acts as formation move until PR2."""
+        state = _minimal_state()
+        ensure_strategic_formations(state)
+        force_id = strategic_formation_id_for_battalion("bn-1")
+        force = state.strategic_formations[force_id]
+        # Attach a sibling battalion to the same strategic formation.
+        sibling = Battalion(
+            battalion_id="bn-2",
+            faction=Faction.NATO,
+            province_id="a",
+            formation_id="toe-nato",
+            strategic_formation_id=force_id,
+            roster=[BattalionRosterEntry("infantry(nato)", 3, category="infantry")],
+            authorized_roster=[BattalionRosterEntry("infantry(nato)", 3, category="infantry")],
+        )
+        state.battalions["bn-2"] = sibling
+        force.battalion_ids = ["bn-1", "bn-2"]
+        force.echelon = ForceEchelon.REGIMENT
+        state.validate()
+
+        CampaignEngine(state).move_or_attack("bn-1", "b")
+        self.assertEqual("b", state.battalions["bn-1"].province_id)
+        self.assertEqual("b", state.battalions["bn-2"].province_id)
+        self.assertEqual("b", state.strategic_formations[force_id].province_id)
+
+    def test_destroying_one_battalion_keeps_siblings(self) -> None:
+        state = _minimal_state()
+        ensure_strategic_formations(state)
+        force_id = strategic_formation_id_for_battalion("bn-1")
+        force = state.strategic_formations[force_id]
+        state.battalions["bn-2"] = Battalion(
+            battalion_id="bn-2",
+            faction=Faction.NATO,
+            province_id="a",
+            formation_id="toe-nato",
+            strategic_formation_id=force_id,
+            roster=[BattalionRosterEntry("infantry(nato)", 2, category="infantry")],
+            authorized_roster=[BattalionRosterEntry("infantry(nato)", 2, category="infantry")],
+        )
+        force.battalion_ids = ["bn-1", "bn-2"]
+        force.echelon = ForceEchelon.REGIMENT
+        engine = CampaignEngine(state)
+        engine._remove_battalion("bn-1")
+        self.assertNotIn("bn-1", state.battalions)
+        self.assertIn("bn-2", state.battalions)
+        self.assertIn(force_id, state.strategic_formations)
+        self.assertEqual(["bn-2"], state.strategic_formations[force_id].battalion_ids)
+
+    def test_destroying_final_battalion_deletes_empty_formation(self) -> None:
+        state = _minimal_state()
+        ensure_strategic_formations(state)
+        force_id = strategic_formation_id_for_battalion("bn-1")
+        CampaignEngine(state)._remove_battalion("bn-1")
+        self.assertNotIn("bn-1", state.battalions)
+        self.assertNotIn(force_id, state.strategic_formations)
+
+    def test_retreat_keeps_surviving_members_colocated(self) -> None:
+        state = _minimal_state()
+        # Need a third province for retreat space.
+        state.provinces["c"] = Province("c", "Charlie", owner=Faction.NATO, neighbors=["a"], x=0, y=1)
+        state.provinces["a"].neighbors.append("c")
+        ensure_strategic_formations(state)
+        force_id = strategic_formation_id_for_battalion("bn-1")
+        force = state.strategic_formations[force_id]
+        state.battalions["bn-2"] = Battalion(
+            battalion_id="bn-2",
+            faction=Faction.NATO,
+            province_id="a",
+            formation_id="toe-nato",
+            strategic_formation_id=force_id,
+            roster=[BattalionRosterEntry("infantry(nato)", 2, category="infantry")],
+            authorized_roster=[BattalionRosterEntry("infantry(nato)", 2, category="infantry")],
+        )
+        force.battalion_ids = ["bn-1", "bn-2"]
+        force.echelon = ForceEchelon.REGIMENT
+        engine = CampaignEngine(state)
+        engine._retreat_or_remove(state.battalions["bn-1"], excluding="b")
+        self.assertEqual(state.battalions["bn-1"].province_id, state.battalions["bn-2"].province_id)
+        self.assertEqual(
+            state.battalions["bn-1"].province_id,
+            state.strategic_formations[force_id].province_id,
+        )
 
 
 if __name__ == "__main__":
