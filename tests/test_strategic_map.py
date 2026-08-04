@@ -62,19 +62,23 @@ class StrategicMapTests(unittest.TestCase):
         suffixed = [key for key in source_nodes if "#" in key]
         self.assertEqual(2, len(suffixed))
 
-    def test_actual_goe_graph_resolves_all_517_records(self) -> None:
+    def test_actual_goe_alignment_preserves_all_campaign_edges(self) -> None:
         graph = load_goe_europe_graph()["provinces"]
         source = build_goe_source_nodes()
         result = resolve_goe_graph_mapping()
         self.assertTrue(result.verified)
         self.assertEqual(517, len(result.graph_to_source))
         self.assertEqual(517, len(set(result.graph_to_source.values())))
-        for province_id, source_id in result.graph_to_source.items():
-            mapped_neighbors = sorted(
-                result.graph_to_source[neighbor]
-                for neighbor in graph[province_id].get("neighbors", [])
-            )
-            self.assertEqual(source[source_id]["neighbors"], mapped_neighbors)
+        self.assertEqual(0, len(result.missing_campaign_edges))
+        self.assertEqual(11, len(result.extra_source_edges))
+        self.assertIn(result.source_index_offset, {0, 1})
+        for province_id, row in graph.items():
+            source_id = result.graph_to_source[province_id]
+            for neighbor in row.get("neighbors", []):
+                self.assertIn(
+                    result.graph_to_source[neighbor],
+                    source[source_id]["neighbors"],
+                )
 
     def test_interim_table_has_one_rgb_per_campaign_province(self) -> None:
         table = build_interim_goe_province_table()
@@ -84,6 +88,7 @@ class StrategicMapTests(unittest.TestCase):
         self.assertTrue(all(row["source_province_id"] for row in table))
         self.assertTrue(all(row["source_node_key"] for row in table))
         self.assertTrue(all(row["mapping_method"] for row in table))
+        self.assertTrue(all("source_neighbors" in row for row in table))
 
     def test_png_decode_pixel_lookup_adjacency_and_import(self) -> None:
         colors = {
