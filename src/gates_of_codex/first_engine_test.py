@@ -13,7 +13,7 @@ from .models import Battalion, CampaignState, Faction
 from .modstack import resolve_stack, stack_to_strings
 from .scenario import load_bundled_scenario
 from .stack_acceptance import HandoffResult, prepare_stack_handoff
-from .starter import populate_starter_rosters, set_player_faction
+from .starter import populate_acceptance_combat_rosters, populate_starter_rosters, set_player_faction
 from .state_io import save_campaign
 from .strategic import evaluate_campaign_outcome
 
@@ -158,6 +158,7 @@ def run_first_engine_test(
     state.map_metadata["resource_stack"] = stack_to_strings(stack)
     set_player_faction(state, Faction.NATO)
     populate_starter_rosters(state, catalog)
+    populate_acceptance_combat_rosters(state, catalog)
     initialize_economy(state, catalog)
     evaluate_campaign_outcome(state)
     selection = stage_nato_russia_acceptance_battle(state)

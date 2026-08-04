@@ -87,6 +87,7 @@ class GatesOfCodeXService:
         status_template_path: str | Path | None = None,
         allow_overwrite: bool = False,
         campaign_name: str | None = None,
+        mods: Iterable[str] | None = None,
     ) -> BattleExportManifest:
         campaign_file = Path(campaign_path).resolve()
         destination = Path(save_path).resolve()
@@ -129,6 +130,7 @@ class GatesOfCodeXService:
         research = []
         if state.selected_faction.value in state.factions:
             research = state.factions[state.selected_faction.value].researched_keys
+        mod_tokens = [str(value) for value in mods] if mods is not None else stack_mod_tokens(stack)
         options = BattleStatusOptions(
             map_name=map_name,
             difficulty=state.difficulty,
@@ -137,7 +139,7 @@ class GatesOfCodeXService:
             won_games=baseline.won_games,
             template_status=template_status,
             campaign_name=visible_name,
-            mods=stack_mod_tokens(stack),
+            mods=mod_tokens,
         )
         status_text = self.status.build(state.pending_battle, options)
         scn_text = CampaignScnBuilder(catalog, resource_stack=stack).build(state, state.pending_battle)
@@ -241,6 +243,31 @@ def file_sha256(path: Path) -> str:
         for chunk in iter(lambda: source.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def read_profile_mod_tokens(profile_directory: str | Path | None) -> list[str]:
+    """Read active GoH mod tokens from a profile options.set, if present."""
+
+    if not profile_directory:
+        return []
+    options = Path(profile_directory).expanduser().resolve() / "options.set"
+    if not options.is_file():
+        return []
+    text = options.read_text(encoding="utf-8-sig", errors="replace")
+    return re.findall(r'"(mod_\d+:\d+)"', text)
+
+
+def merge_mod_tokens(*groups: Iterable[str]) -> list[str]:
+    merged: list[str] = []
+    seen: set[str] = set()
+    for group in groups:
+        for token in group:
+            value = str(token).strip()
+            if not value or value in seen:
+                continue
+            seen.add(value)
+            merged.append(value)
+    return merged
 
 
 def _battle_token(battle_id: str) -> str:
