@@ -91,16 +91,30 @@ def build_parser() -> argparse.ArgumentParser:
     cleanup = sub.add_parser("cleanup-save", help="Remove a generated acceptance save and its sidecar files")
     cleanup.add_argument("--save", required=True)
 
-    handoff = sub.add_parser("handoff", help="Validate, back up, export, optionally install, and launch")
+    handoff = sub.add_parser(
+        "handoff",
+        help="Validate, back up, export, install to GoH, and print verify/import commands for an existing campaign",
+    )
     handoff.add_argument("campaign")
-    handoff.add_argument("--game", required=True)
-    _add_stack_arguments(handoff)
-    handoff.add_argument("--save", required=True)
-    handoff.add_argument("--map", required=True)
-    handoff.add_argument("--profile")
-    handoff.add_argument("--install-save")
+    handoff.add_argument("--game", help="GoH install directory (optional if stored on the campaign)")
+    _add_stack_arguments(handoff, require_codex=False)
+    handoff.add_argument(
+        "--save",
+        help="Local export .sav path or directory. Defaults to live/<battle-id>/campaign.sav",
+    )
+    handoff.add_argument("--map", help="Tactical map id (optional if campaign preferred_map is set)")
+    handoff.add_argument("--profile", help="GoH profile directory (optional if stored on the campaign)")
+    handoff.add_argument(
+        "--install-directory",
+        help="Profile campaign folder for install. Defaults to <profile>/campaign",
+    )
+    handoff.add_argument(
+        "--install-save",
+        help="Exact installed .sav path. Defaults to GoH display-name filename under install-directory",
+    )
     handoff.add_argument("--template-save")
-    handoff.add_argument("--backup-root")
+    handoff.add_argument("--work-root", default="live")
+    handoff.add_argument("--backup-root", default="backups")
     handoff.add_argument("--launch", action="store_true")
 
     verify = sub.add_parser("verify", help="Verify that GoH completed and rewrote the tactical save")
@@ -209,12 +223,29 @@ def main(argv: list[str] | None = None) -> int:
             save_path=args.save,
             map_name=args.map,
             profile_directory=args.profile,
+            install_directory=args.install_directory,
             install_save_path=args.install_save,
             status_template_path=args.template_save,
             backup_root=args.backup_root,
+            work_root=args.work_root,
             launch=args.launch,
         )
         print(json.dumps(result.to_dict(), indent=2))
+        visible = result.visible_campaign_name or result.manifest.visible_campaign_name
+        if visible:
+            print()
+            print("Load this exact Conquest entry:")
+            print(visible)
+            if result.installed_save_path:
+                print(f"Installed save file: {result.installed_save_path}")
+            if result.verify_command:
+                print()
+                print("After the battle, verify with:")
+                print(result.verify_command)
+            if result.import_command:
+                print()
+                print("If verify is green, import once with:")
+                print(result.import_command)
         return 0
     if args.command == "verify":
         report = verify_stack_result(

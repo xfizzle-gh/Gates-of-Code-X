@@ -89,12 +89,33 @@ def _run_new(arguments: list[str]) -> int:
     _add_stack_arguments(parser)
     parser.add_argument("--output", default="campaign.json")
     parser.add_argument("--faction", choices=FACTION_CHOICES, default="nato")
+    parser.add_argument("--game", help="GoH install directory persisted on the campaign")
+    parser.add_argument("--profile", help="GoH profile directory persisted on the campaign")
+    parser.add_argument("--map", help="Preferred tactical map id persisted on the campaign")
+    parser.add_argument(
+        "--install-directory",
+        help="Profile campaign folder for Conquest installs (defaults to <profile>/campaign)",
+    )
     args = parser.parse_args(arguments)
     stack = resolve_stack(args.stack, config=args.stack_config, fallback=args.codex)
     catalog = CodeXCatalogScanner().scan_stack(stack)
     state = load_bundled_scenario()
     state.code_x_directory = str(Path(args.codex).resolve())
     state.map_metadata["resource_stack"] = stack_to_strings(stack)
+    if args.game:
+        state.game_directory = str(Path(args.game).expanduser().resolve())
+    if args.profile:
+        state.profile_directory = str(Path(args.profile).expanduser().resolve())
+    if args.map:
+        state.map_metadata["preferred_map"] = args.map
+    if args.install_directory:
+        state.map_metadata["install_directory"] = str(Path(args.install_directory).expanduser().resolve())
+    elif args.profile:
+        campaign_dir = Path(args.profile).expanduser().resolve() / "campaign"
+        if campaign_dir.is_dir():
+            state.map_metadata["install_directory"] = str(campaign_dir)
+    if args.stack_config:
+        state.map_metadata["stack_config"] = str(Path(args.stack_config).expanduser().resolve())
     set_player_faction(state, Faction(args.faction))
     populate_starter_rosters(state, catalog)
     initialize_economy(state, catalog)

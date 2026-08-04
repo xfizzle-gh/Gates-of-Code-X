@@ -78,6 +78,9 @@ class HandoffResult:
     installed_save_path: str = ""
     session_path: str = ""
     launched: bool = False
+    visible_campaign_name: str = ""
+    verify_command: str = ""
+    import_command: str = ""
 
     def to_dict(self) -> dict:
         return {
@@ -87,6 +90,14 @@ class HandoffResult:
             "installed_save_path": self.installed_save_path,
             "session_path": self.session_path,
             "launched": self.launched,
+            "visible_campaign_name": self.visible_campaign_name or self.manifest.visible_campaign_name,
+            "verify_command": self.verify_command,
+            "import_command": self.import_command,
+            "load_instruction": (
+                f"Load this exact Conquest entry: {self.visible_campaign_name or self.manifest.visible_campaign_name}"
+                if (self.visible_campaign_name or self.manifest.visible_campaign_name)
+                else ""
+            ),
         }
 
 

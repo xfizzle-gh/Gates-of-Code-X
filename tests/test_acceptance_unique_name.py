@@ -156,8 +156,12 @@ class AcceptanceUniqueNameTests(unittest.TestCase):
         first = unique_acceptance_campaign_name("goc-1-b714b08b42")
         second = unique_acceptance_campaign_name("goc-1-b714b08b42")
         self.assertEqual(first, second)
-        self.assertEqual("Gates of CodeX Test b714b08b", first)
+        self.assertEqual("Gates of CodeX b714b08b", first)
         self.assertLessEqual(len(first), 40)
+        self.assertEqual(
+            "Gates of CodeX Test b714b08b",
+            unique_acceptance_campaign_name("goc-1-b714b08b42", prefix="Gates of CodeX Test"),
+        )
 
     def test_goh_install_filename_matches_live_rewrite_behavior(self) -> None:
         # Observed live: GoH rewrote "gates of codex test 39379c4c.sav"
@@ -167,15 +171,21 @@ class AcceptanceUniqueNameTests(unittest.TestCase):
             goh_conquest_save_filename("Gates of CodeX Test 39379c4c"),
         )
         self.assertEqual(
-            "gates of codex test b714b08b.sav",
+            "gates of codex b714b08b.sav",
             goh_conquest_save_filename(unique_acceptance_campaign_name("goc-1-b714b08b42")),
+        )
+        self.assertEqual(
+            "gates of codex test b714b08b.sav",
+            goh_conquest_save_filename(
+                unique_acceptance_campaign_name("goc-1-b714b08b42", prefix="Gates of CodeX Test")
+            ),
         )
 
     def test_unique_name_avoids_template_collision(self) -> None:
-        reserved = {"Gates of CodeX Test b714b08b"}
+        reserved = {"Gates of CodeX b714b08b"}
         name = unique_acceptance_campaign_name("goc-1-b714b08b42", reserved=reserved)
-        self.assertNotEqual("Gates of CodeX Test b714b08b", name)
-        self.assertTrue(name.startswith("Gates of CodeX Test "))
+        self.assertNotEqual("Gates of CodeX b714b08b", name)
+        self.assertTrue(name.startswith("Gates of CodeX "))
 
     def test_two_saves_same_internal_name_are_disambiguated_on_export(self) -> None:
         service = GatesOfCodeXService()
@@ -192,7 +202,7 @@ class AcceptanceUniqueNameTests(unittest.TestCase):
         self.assertEqual("Gates of CodeX Acceptance", template_name)
         self.assertEqual(generated.visible_campaign_name, generated_name)
         self.assertNotEqual(template_name, generated_name)
-        self.assertEqual("Gates of CodeX Test b714b08b", generated_name)
+        self.assertEqual("Gates of CodeX b714b08b", generated_name)
         # Template file remains untouched.
         self.assertEqual(
             "Gates of CodeX Acceptance",
