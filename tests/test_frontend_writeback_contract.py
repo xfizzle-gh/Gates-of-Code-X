@@ -44,6 +44,12 @@ class FrontendWritebackContractTests(unittest.TestCase):
 
         round_trip = json.loads(json.dumps(snapshot))
         self.assertEqual(expected_python, round_trip["control"]["python_executable"])
+        self.assertEqual("marker_non_authoritative", round_trip["strategic_map"]["fallback"])
+        self.assertTrue(
+            round_trip["strategic_map"]["manifest_path"].endswith(
+                "assets/maps/europe/interim_goe/map_manifest.json"
+            )
+        )
 
     def test_snapshot_preserves_two_battalions_in_one_province(self) -> None:
         state = build_goe_europe_campaign()
@@ -91,6 +97,7 @@ class FrontendWritebackContractTests(unittest.TestCase):
         )
         script = (root / "godot/scripts/main_writeback.gd").read_text(encoding="utf-8")
         color_client = (root / "godot/scripts/main_color_id.gd").read_text(encoding="utf-8")
+        map_contract = (root / "godot/scripts/main_map_contract.gd").read_text(encoding="utf-8")
         scene = (root / "godot/main.tscn").read_text(encoding="utf-8")
 
         self.assertEqual(
@@ -105,7 +112,8 @@ class FrontendWritebackContractTests(unittest.TestCase):
                 if value["origin"] == "Warszawa"
             },
         )
-        self.assertIn("res://scripts/main_color_id.gd", scene)
+        self.assertIn("res://scripts/main_map_contract.gd", scene)
+        self.assertIn('extends "res://scripts/main_color_id.gd"', map_contract)
         self.assertIn('extends "res://scripts/main_writeback.gd"', color_client)
         self.assertIn("battalion_stacks_by_province", script)
         self.assertIn(".append(battalion)", script)
