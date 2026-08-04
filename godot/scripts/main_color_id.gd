@@ -2,6 +2,7 @@ extends "res://scripts/main_writeback.gd"
 
 const ColorIdMapScript = preload("res://scripts/color_id_map.gd")
 const DEFAULT_MAP_MANIFEST := "res://assets/maps/europe/interim_goe/map_manifest.json"
+const EM_FROM_GOE_MANIFEST := "res://assets/maps/europe_mediterranean/from_goe/map_manifest.json"
 
 var color_id_map = ColorIdMapScript.new()
 var map_manifest_source_path := DEFAULT_MAP_MANIFEST
@@ -13,7 +14,27 @@ func _ready() -> void:
 	if args.size() > 1:
 		map_manifest_source_path = String(args[1])
 	super._ready()
+	if args.size() <= 1:
+		map_manifest_source_path = _resolve_map_manifest_path()
 	_open_color_id_map()
+
+
+func _resolve_map_manifest_path() -> String:
+	var contract: Dictionary = snapshot.get("strategic_map", {})
+	var exported := String(contract.get("manifest_path", "")).strip_edges()
+	if not exported.is_empty() and FileAccess.file_exists(exported):
+		return exported
+	var map_id := String(contract.get("map_id", ""))
+	if map_id == "europe_mediterranean_from_goe" and FileAccess.file_exists(EM_FROM_GOE_MANIFEST):
+		return EM_FROM_GOE_MANIFEST
+	var campaign: Dictionary = snapshot.get("campaign", {})
+	var meta: Dictionary = campaign.get("map_metadata", {})
+	var configured := String(meta.get("strategic_map_id", ""))
+	if configured == "europe_mediterranean_from_goe" and FileAccess.file_exists(EM_FROM_GOE_MANIFEST):
+		return EM_FROM_GOE_MANIFEST
+	if FileAccess.file_exists(DEFAULT_MAP_MANIFEST):
+		return DEFAULT_MAP_MANIFEST
+	return DEFAULT_MAP_MANIFEST
 
 
 func _load_snapshot(path: String) -> void:
@@ -48,6 +69,8 @@ func _draw() -> void:
 	var map_width := viewport.x - PANEL_WIDTH
 	draw_rect(Rect2(0, 0, map_width, viewport.y), Color(0.025, 0.035, 0.047, 1.0))
 	var texture_rect := _map_texture_rect()
+	if color_id_map.background_texture != null:
+		draw_texture_rect(color_id_map.background_texture, texture_rect, false)
 	if color_id_map.owner_texture != null:
 		draw_texture_rect(color_id_map.owner_texture, texture_rect, false)
 	if color_id_map.border_texture != null:
@@ -59,6 +82,7 @@ func _draw() -> void:
 	_draw_color_id_overlays()
 
 	var campaign: Dictionary = snapshot.get("campaign", {})
+	var map_contract: Dictionary = snapshot.get("strategic_map", {})
 	var title := "%s  |  Turn %s  |  %s" % [
 		campaign.get("name", "Gates of CodeX"),
 		campaign.get("turn_number", 1),
@@ -72,6 +96,20 @@ func _draw() -> void:
 		-1,
 		22,
 		Color.WHITE
+	)
+	var diag := "Map: %s  |  Provinces: %s  |  %s" % [
+		String(map_contract.get("map_id", campaign.get("map_id", ""))),
+		int(snapshot.get("provinces", []).size()),
+		color_id_map.background_status(),
+	]
+	draw_string(
+		ThemeDB.fallback_font,
+		Vector2(24, 56),
+		diag,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		map_width - 48,
+		14,
+		Color("9fd7ff")
 	)
 	var hint := "F fit front  |  click province shape  |  wheel zoom  |  drag pan"
 	if not status_message.is_empty():

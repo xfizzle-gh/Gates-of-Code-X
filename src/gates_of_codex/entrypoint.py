@@ -215,11 +215,48 @@ def _parse_rgb(value: str) -> tuple[int, int, int]:
     return rgb
 
 
+def _run_generate_europe_mediterranean_from_goe(arguments: list[str]) -> int:
+    from .europe_mediterranean_from_goe import generate_europe_mediterranean_from_goe
+
+    parser = argparse.ArgumentParser(prog="gates-of-codex generate-europe-mediterranean-from-goe")
+    parser.add_argument(
+        "--output-dir",
+        default="godot/assets/maps/europe_mediterranean/from_goe",
+    )
+    parser.add_argument("--pad-px", type=int, default=12)
+    args = parser.parse_args(arguments)
+    manifest = generate_europe_mediterranean_from_goe(output_dir=args.output_dir, pad_px=args.pad_px)
+    print(
+        json.dumps(
+            {
+                "ok": True,
+                "map_id": manifest["map_id"],
+                "province_count": manifest["province_count"],
+                "output": args.output_dir,
+                "dimensions": [
+                    manifest["id_texture"]["width"],
+                    manifest["id_texture"]["height"],
+                ],
+                "selection": manifest["theatre"]["selection"],
+            },
+            indent=2,
+        )
+    )
+    return 0
+
+
 def _run_new(arguments: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="gates-of-codex new")
-    _add_stack_arguments(parser)
+    _add_stack_arguments(parser, require_codex=False)
     parser.add_argument("--output", default="campaign.json")
     parser.add_argument("--faction", choices=FACTION_CHOICES, default="nato")
+    parser.add_argument(
+        "--strategic-map",
+        choices=["interim_goe_europe", "europe_mediterranean_from_goe"],
+        default="interim_goe_europe",
+        help="Strategic theatre: full GoE Europe or cropped Europe-Mediterranean",
+    )
+    parser.add_argument("--em-manifest", help="Optional path to from_goe map_manifest.json")
     parser.add_argument("--game", help="GoH install directory persisted on the campaign")
     parser.add_argument("--profile", help="GoH profile directory persisted on the campaign")
     parser.add_argument("--map", help="Preferred tactical map id persisted on the campaign")
@@ -228,11 +265,36 @@ def _run_new(arguments: list[str]) -> int:
         help="Profile campaign folder for Conquest installs (defaults to <profile>/campaign)",
     )
     args = parser.parse_args(arguments)
+    if args.strategic_map == "europe_mediterranean_from_goe":
+        from .europe_mediterranean_from_goe import build_europe_mediterranean_from_goe_campaign
+
+        state = build_europe_mediterranean_from_goe_campaign(
+            manifest_path=args.em_manifest,
+            selected_faction=Faction(args.faction),
+        )
+        if args.game:
+            state.game_directory = str(Path(args.game).expanduser().resolve())
+        if args.profile:
+            state.profile_directory = str(Path(args.profile).expanduser().resolve())
+        if args.map:
+            state.map_metadata["preferred_map"] = args.map
+        if args.install_directory:
+            state.map_metadata["install_directory"] = str(
+                Path(args.install_directory).expanduser().resolve()
+            )
+        evaluate_campaign_outcome(state)
+        save_campaign(state, args.output)
+        print(args.output)
+        return 0
+
+    if not args.codex:
+        parser.error("--codex is required for interim_goe_europe campaigns")
     stack = resolve_stack(args.stack, config=args.stack_config, fallback=args.codex)
     catalog = CodeXCatalogScanner().scan_stack(stack)
     state = load_bundled_scenario()
     state.code_x_directory = str(Path(args.codex).resolve())
     state.map_metadata["resource_stack"] = stack_to_strings(stack)
+    state.map_metadata["strategic_map_id"] = "interim_goe_europe"
     if args.game:
         state.game_directory = str(Path(args.game).expanduser().resolve())
     if args.profile:
@@ -290,6 +352,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_write_interim_goe_table(remainder)
     if command == "import-strategic-map":
         return _run_import_strategic_map(remainder)
+    if command == "generate-europe-mediterranean-from-goe":
+        return _run_generate_europe_mediterranean_from_goe(remainder)
     if command == "new":
         return _run_new(remainder)
     if command == "export-battle":

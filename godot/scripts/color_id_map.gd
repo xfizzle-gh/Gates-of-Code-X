@@ -5,6 +5,7 @@ var manifest: Dictionary = {}
 var manifest_path := ""
 var texture_path := ""
 var id_image: Image
+var background_texture: ImageTexture
 var owner_texture: ImageTexture
 var border_texture: ImageTexture
 var highlight_texture: ImageTexture
@@ -13,12 +14,18 @@ var row_by_province: Dictionary = {}
 var anchor_bounds := Rect2()
 var error := ""
 var is_ready := false
+var has_background := false
+var background_status_text := "background: none"
+const OWNER_TINT_ALPHA := 0.34
+const OWNER_TINT_ALPHA_NO_BG := 0.90
 
 
 func open(path: String, snapshot: Dictionary, faction_colors: Dictionary) -> bool:
 	manifest_path = path
 	error = ""
 	is_ready = false
+	has_background = false
+	background_texture = null
 	province_by_color.clear()
 	row_by_province.clear()
 	if not FileAccess.file_exists(path):
@@ -71,11 +78,40 @@ func open(path: String, snapshot: Dictionary, faction_colors: Dictionary) -> boo
 	if province_by_color.size() != int(manifest.get("province_count", province_by_color.size())):
 		error = "Strategic map province table count does not match the manifest."
 		return false
+	_load_background(path)
 	_compute_anchor_bounds()
 	_rebuild_border_texture()
 	refresh_snapshot(snapshot, faction_colors)
 	is_ready = true
 	return true
+
+
+func _load_background(manifest_file_path: String) -> void:
+	has_background = false
+	background_texture = null
+	background_status_text = "background: none"
+	var bg: Dictionary = manifest.get("visual_background", {})
+	var rel := String(bg.get("path", "background_procedural.png")).strip_edges()
+	var candidate := _resolve_relative_path(manifest_file_path, rel)
+	if not FileAccess.file_exists(candidate):
+		return
+	var image := Image.load_from_file(candidate)
+	if image == null or image.is_empty():
+		return
+	if image.get_width() != id_image.get_width() or image.get_height() != id_image.get_height():
+		image.resize(id_image.get_width(), id_image.get_height(), Image.INTERPOLATE_BILINEAR)
+	image.convert(Image.FORMAT_RGBA8)
+	background_texture = ImageTexture.create_from_image(image)
+	has_background = true
+	var status := String(bg.get("asset_status", "project_procedural"))
+	if status in ["project_procedural", "project_owned_procedural"] or rel.ends_with("background_procedural.png"):
+		background_status_text = "background: project_procedural"
+	else:
+		background_status_text = "background: %s" % status
+
+
+func background_status() -> String:
+	return background_status_text
 
 
 func refresh_snapshot(snapshot: Dictionary, faction_colors: Dictionary) -> void:
@@ -85,15 +121,19 @@ func refresh_snapshot(snapshot: Dictionary, faction_colors: Dictionary) -> void:
 	for province: Dictionary in snapshot.get("provinces", []):
 		ownership[String(province.get("id", ""))] = String(province.get("owner", "neutral"))
 	var output := Image.create(id_image.get_width(), id_image.get_height(), false, Image.FORMAT_RGBA8)
+	var tint_alpha := OWNER_TINT_ALPHA if has_background else OWNER_TINT_ALPHA_NO_BG
 	for y in range(id_image.get_height()):
 		for x in range(id_image.get_width()):
 			var province_id: String = province_by_color.get(_rgb_key(id_image.get_pixel(x, y)), "")
 			if province_id.is_empty():
-				output.set_pixel(x, y, Color(0.07, 0.085, 0.10, 1.0))
+				if has_background:
+					output.set_pixel(x, y, Color(0, 0, 0, 0))
+				else:
+					output.set_pixel(x, y, Color(0.07, 0.085, 0.10, 1.0))
 				continue
 			var owner := String(ownership.get(province_id, "neutral"))
 			var fill: Color = faction_colors.get(owner, faction_colors.get("neutral", Color("707780")))
-			fill.a = 0.90
+			fill.a = tint_alpha
 			output.set_pixel(x, y, fill)
 	owner_texture = ImageTexture.create_from_image(output)
 
@@ -126,11 +166,18 @@ func province_at_pixel(pixel: Vector2i) -> String:
 func anchor_pixel(province_id: String) -> Vector2:
 	var row: Dictionary = row_by_province.get(province_id, {})
 	var anchor: Array = row.get("marker_anchor", [])
-	if anchor.size() != 2 or anchor_bounds.size.x <= 0.0 or anchor_bounds.size.y <= 0.0:
+	if anchor.size() != 2:
+		return Vector2(id_image.get_width() * 0.5, id_image.get_height() * 0.5)
+	var ax := float(anchor[0])
+	var ay_bottom := float(anchor[1])
+	# Cropped theatre stores anchors in image pixel space (bottom-left Y).
+	if ax >= 0.0 and ay_bottom >= 0.0 and ax < float(id_image.get_width()) and ay_bottom < float(id_image.get_height()):
+		return Vector2(ax, float(id_image.get_height() - 1) - ay_bottom)
+	if anchor_bounds.size.x <= 0.0 or anchor_bounds.size.y <= 0.0:
 		return Vector2(id_image.get_width() * 0.5, id_image.get_height() * 0.5)
 	var normalized := Vector2(
-		(float(anchor[0]) - anchor_bounds.position.x) / anchor_bounds.size.x,
-		1.0 - ((float(anchor[1]) - anchor_bounds.position.y) / anchor_bounds.size.y)
+		(ax - anchor_bounds.position.x) / anchor_bounds.size.x,
+		1.0 - ((ay_bottom - anchor_bounds.position.y) / anchor_bounds.size.y)
 	)
 	return Vector2(
 		normalized.x * float(id_image.get_width()),
