@@ -165,9 +165,10 @@ class CampaignPlayLoopTests(unittest.TestCase):
         )
         # Campaign remembers play context for the next battle.
         state = load_campaign(self.campaign)
-        self.assertEqual(str(self.game), state.game_directory)
-        self.assertEqual(str(self.profile), state.profile_directory)
+        self.assertEqual(self.game.resolve(), Path(state.game_directory).resolve())
+        self.assertEqual(self.profile.resolve(), Path(state.profile_directory).resolve())
         self.assertEqual("multi/2x2/live_test", state.map_metadata.get("preferred_map"))
+        self.assertEqual(expected_path.resolve(), Path(result.installed_save_path).resolve())
 
     def test_handoff_cli_args_are_optional(self) -> None:
         args = build_parser().parse_args(["handoff", "campaign.json", "--launch"])
