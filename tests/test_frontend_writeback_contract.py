@@ -90,6 +90,7 @@ class FrontendWritebackContractTests(unittest.TestCase):
             )
         )
         script = (root / "godot/scripts/main_writeback.gd").read_text(encoding="utf-8")
+        color_client = (root / "godot/scripts/main_color_id.gd").read_text(encoding="utf-8")
         scene = (root / "godot/main.tscn").read_text(encoding="utf-8")
 
         self.assertEqual(
@@ -104,7 +105,8 @@ class FrontendWritebackContractTests(unittest.TestCase):
                 if value["origin"] == "Warszawa"
             },
         )
-        self.assertIn("res://scripts/main_writeback.gd", scene)
+        self.assertIn("res://scripts/main_color_id.gd", scene)
+        self.assertIn('extends "res://scripts/main_writeback.gd"', color_client)
         self.assertIn("battalion_stacks_by_province", script)
         self.assertIn(".append(battalion)", script)
         self.assertIn("selected_battalion_id", script)
