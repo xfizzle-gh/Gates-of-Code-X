@@ -225,15 +225,20 @@ func _draw_province(province: Dictionary) -> void:
 		draw_rect(Rect2(position + Vector2(-12, 10), Vector2(5, 5)), Color("63d69f"))
 	if int(infrastructure.get("command_post", 0)) > 0:
 		draw_rect(Rect2(position + Vector2(-4, 10), Vector2(5, 5)), Color("b892ff"))
-	if view_scale >= 1.2 or occupied or selected or not target_option.is_empty():
+	var label := String(province.get("display_name", province_id))
+	var named := not label.to_lower().begins_with("province")
+	var show_label := occupied or selected or not target_option.is_empty()
+	if not show_label and view_scale >= 2.4 and named:
+		show_label = true
+	if show_label:
 		draw_string(
 			ThemeDB.fallback_font,
 			position + Vector2(12, -8),
-			String(province.get("display_name", province_id)),
+			label,
 			HORIZONTAL_ALIGNMENT_LEFT,
 			-1,
-			12 if selected or not target_option.is_empty() else 11,
-			Color(0.92, 0.94, 0.96, 0.95 if in_focus or occupied else 0.45)
+			12 if selected or not target_option.is_empty() or occupied else 11,
+			Color(0.92, 0.94, 0.96, 0.95 if in_focus or occupied else 0.55)
 		)
 
 
