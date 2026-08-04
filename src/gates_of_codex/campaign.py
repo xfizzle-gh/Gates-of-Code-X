@@ -5,7 +5,7 @@ import uuid
 from dataclasses import dataclass
 
 from .diplomacy import are_allied, is_friendly_owner
-from .models import Battalion, BattleParticipant, CampaignState, Faction, PendingBattle
+from .models import Battalion, BattleParticipant, CampaignState, CommanderStatus, Faction, PendingBattle
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,6 +48,7 @@ class CampaignEngine:
         if defender is None and friendly_or_neutral:
             battalion.province_id = target_province_id
             battalion.movement_remaining -= 1
+            self._sync_strategic_formation_location(battalion)
             if target.owner == Faction.NEUTRAL:
                 target.owner = battalion.faction
                 from .strategic import evaluate_campaign_outcome, sync_province_infrastructure_owner
@@ -142,15 +143,16 @@ class CampaignEngine:
                 self._retreat_or_remove(defender, excluding=target.province_id)
             if not attacker.is_destroyed:
                 attacker.province_id = target.province_id
+                self._sync_strategic_formation_location(attacker)
                 target.owner = attacker.faction
                 from .strategic import sync_province_infrastructure_owner
 
                 sync_province_infrastructure_owner(target)
         else:
             if attacker.is_destroyed:
-                self.state.battalions.pop(attacker.battalion_id, None)
+                self._remove_battalion(attacker.battalion_id)
             if defender and defender.is_destroyed:
-                self.state.battalions.pop(defender.battalion_id, None)
+                self._remove_battalion(defender.battalion_id)
         pending.completed = True
         self.state.pending_battle = None
         from .strategic import evaluate_campaign_outcome
@@ -160,7 +162,7 @@ class CampaignEngine:
 
     def _retreat_or_remove(self, battalion: Battalion, *, excluding: str) -> None:
         if battalion.is_destroyed:
-            self.state.battalions.pop(battalion.battalion_id, None)
+            self._remove_battalion(battalion.battalion_id)
             return
         current = self._get_province(battalion.province_id)
         candidates = [
@@ -172,8 +174,41 @@ class CampaignEngine:
         ]
         if candidates:
             battalion.province_id = sorted(candidates)[0]
+            self._sync_strategic_formation_location(battalion)
         else:
-            self.state.battalions.pop(battalion.battalion_id, None)
+            self._remove_battalion(battalion.battalion_id)
+
+    def _sync_strategic_formation_location(self, battalion: Battalion) -> None:
+        force_id = battalion.strategic_formation_id
+        if not force_id:
+            return
+        force = self.state.strategic_formations.get(force_id)
+        if force is None:
+            return
+        force.province_id = battalion.province_id
+        for member_id in force.battalion_ids:
+            member = self.state.battalions.get(member_id)
+            if member is not None:
+                member.province_id = force.province_id
+
+    def _remove_battalion(self, battalion_id: str) -> None:
+        battalion = self.state.battalions.pop(battalion_id, None)
+        if battalion is None:
+            return
+        force_id = battalion.strategic_formation_id
+        if not force_id:
+            return
+        force = self.state.strategic_formations.get(force_id)
+        if force is None:
+            return
+        force.battalion_ids = [item for item in force.battalion_ids if item != battalion_id]
+        if not force.battalion_ids:
+            self.state.strategic_formations.pop(force_id, None)
+            if force.commander_id and force.commander_id in self.state.commanders:
+                commander = self.state.commanders[force.commander_id]
+                if commander.assigned_strategic_formation_id == force_id:
+                    commander.assigned_strategic_formation_id = None
+                    commander.status = CommanderStatus.UNASSIGNED
 
     def _build_pending_battle(self, attacker: Battalion, defender: Battalion | None, target_id: str) -> PendingBattle:
         defender_faction = defender.faction if defender else self.state.provinces[target_id].owner

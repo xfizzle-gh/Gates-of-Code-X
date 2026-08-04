@@ -103,6 +103,8 @@ def stage_nato_russia_acceptance_battle(state: CampaignState) -> AcceptanceBattl
     defender.combat_actions_remaining = 1
     defender.condition = max(defender.condition, 80)
     defender.supply = max(defender.supply, 80)
+    _sync_force_province(state, attacker)
+    _sync_force_province(state, defender)
 
     result = CampaignEngine(state).move_or_attack(attacker.battalion_id, target_id)
     if result.pending_battle is None:
@@ -264,6 +266,22 @@ def _select_battalion(state: CampaignState, faction: Faction, preferred_formatio
     )[0]
 
 
+def _sync_force_province(state: CampaignState, battalion: Battalion) -> None:
+    """Keep strategic formation location authoritative when tests teleport battalions."""
+
+    force_id = battalion.strategic_formation_id
+    if not force_id:
+        return
+    force = state.strategic_formations.get(force_id)
+    if force is None:
+        return
+    force.province_id = battalion.province_id
+    for member_id in force.battalion_ids:
+        member = state.battalions.get(member_id)
+        if member is not None:
+            member.province_id = force.province_id
+
+
 def _clear_border_occupants(
     state: CampaignState,
     origin_id: str,
@@ -289,3 +307,4 @@ def _clear_border_occupants(
         occupied.discard(battalion.province_id)
         battalion.province_id = destination
         occupied.add(destination)
+        _sync_force_province(state, battalion)
