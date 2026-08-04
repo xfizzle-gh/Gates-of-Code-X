@@ -12,6 +12,10 @@ from .doctor import diagnose
 from .economy import initialize_economy
 from .europe import load_goe_europe_graph
 from .goe_source_audit import write_goe_source_audit
+from .goe_strategic_map import (
+    import_interim_goe_map,
+    write_interim_goe_province_table,
+)
 from .models import Faction
 from .modstack import resolve_stack, stack_to_strings
 from .scenario import load_bundled_scenario
@@ -20,12 +24,7 @@ from .stack_acceptance import validate_mod_stack
 from .starter import populate_starter_rosters, set_player_faction
 from .state_io import save_campaign
 from .strategic import evaluate_campaign_outcome
-from .strategic_map import (
-    import_interim_goe_map,
-    import_strategic_map,
-    load_province_table,
-    write_interim_goe_province_table,
-)
+from .strategic_map import import_strategic_map, load_province_table
 
 
 FACTION_CHOICES = ["nato", "ukr", "rusa", "prc"]
