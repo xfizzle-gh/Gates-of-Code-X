@@ -799,13 +799,31 @@ def generate_europe_mediterranean_prototype(
         "pr_complete": False,
         "warnings": warnings,
     }
+    placeholder = out / "background_placeholder.png"
+    if not placeholder.is_file() and (out / "land_silhouette.png").is_file():
+        # Ensure repo-safe fixture exists beside generated outputs.
+        placeholder.write_bytes((out / "land_silhouette.png").read_bytes())
+    manifest["visual_background_policy"] = {
+        "repo_stores_pack_artwork": False,
+        "local_config": "background_config.json",
+        "example_config": "background_config.example.json",
+        "placeholder": "background_placeholder.png",
+        "status": (
+            "Pack background integration works locally. "
+            "Pack image is not stored or distributed by the repository. "
+            "Province geometry remains provisional."
+        ),
+    }
     manifest["provenance_table"] = {
-        "coastline": "natural_earth_land_mask",
-        "province_boundaries": "project_component_voronoi",
+        "visual_background": "local_external_optional_not_in_repo",
+        "visual_background_fixture": "background_placeholder.png",
+        "gameplay_land_mask": "natural_earth_or_package_mask",
+        "province_boundaries_selection": "project_color_id_texture",
+        "province_boundaries_layout": "project_component_voronoi_provisional",
         "settlement_names": "title_case_seed_or_optional_pack_loc",
         "settlement_coordinates": "project_public_geo_table",
         "ports": "not_imported_from_pack",
-        "terrain": "not_imported_from_pack",
+        "terrain_gameplay": "not_imported_from_pack",
         "adjacency": "project_land_touch_plus_authored_crossings",
     }
     manifest["clean_room"] = {

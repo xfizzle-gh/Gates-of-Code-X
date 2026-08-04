@@ -101,6 +101,10 @@ class EuropeMediterraneanPrototypeTests(unittest.TestCase):
         self.assertIn("land", payload["adjacency"]["types"])
         self.assertIn("strait", payload["adjacency"]["types"])
         self.assertIn("ferry_or_sea_lane", payload["adjacency"]["types"])
+        policy = payload.get("visual_background_policy", {})
+        self.assertFalse(policy.get("repo_stores_pack_artwork", True))
+        self.assertTrue((EM_DIR / "background_placeholder.png").is_file())
+        self.assertFalse((EM_DIR / "background_pack_reference.png").is_file())
 
     def test_committed_seas_remain_water(self) -> None:
         if not ID_MAP.is_file():

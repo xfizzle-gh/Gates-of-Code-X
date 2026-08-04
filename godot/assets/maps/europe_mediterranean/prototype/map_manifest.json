@@ -8986,5 +8986,12 @@
     "name": "Europe-Mediterranean",
     "province_count": 143,
     "width": 1600
+  },
+  "visual_background_policy": {
+    "example_config": "background_config.example.json",
+    "local_config": "background_config.json",
+    "placeholder": "background_placeholder.png",
+    "repo_stores_pack_artwork": false,
+    "status": "Pack background integration works locally. Pack image is not stored or distributed by the repository."
   }
 }

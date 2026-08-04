@@ -1,0 +1,15 @@
+{
+  "background_texture": "E:/path/to/local/europe_mediterranean_background.png",
+  "background_status": "local_research_reference",
+  "source_kind": "full_world_or_campaign_texture",
+  "source_bounds_lon_lat": [-180.0, 180.0, -90.0, 90.0],
+  "target_bounds_lon_lat": [-25.0, 50.0, 25.0, 72.0],
+  "fit": "contain",
+  "offset_px": [0.0, 0.0],
+  "scale": 1.0,
+  "notes": [
+    "This file is local-only. Copy to background_config.json (gitignored).",
+    "Do not commit pack-derived PNG artwork to the repository.",
+    "If background_texture is missing, Godot falls back to project silhouette."
+  ]
+}

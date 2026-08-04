@@ -75,15 +75,35 @@ func _draw() -> void:
 	var map_width := viewport.x - PANEL_WIDTH
 	draw_rect(Rect2(0, 0, map_width, viewport.y), Color(0.025, 0.035, 0.047, 1.0))
 	var texture_rect := _map_texture_rect()
-	if color_id_map.owner_texture != null:
-		draw_texture_rect(color_id_map.owner_texture, texture_rect, false)
-	if color_id_map.border_texture != null:
-		draw_texture_rect(color_id_map.border_texture, texture_rect, false)
-	_draw_coalition_fronts()
-	if color_id_map.highlight_texture != null:
-		draw_texture_rect(color_id_map.highlight_texture, texture_rect, false)
-	_draw_color_id_pending_battle()
-	_draw_color_id_overlays()
+	if color_id_map.debug_color_id_view:
+		if color_id_map.debug_id_texture != null:
+			draw_texture_rect(color_id_map.debug_id_texture, texture_rect, false)
+		if color_id_map.border_texture != null:
+			draw_texture_rect(color_id_map.border_texture, texture_rect, false)
+		_draw_debug_province_ids()
+	elif color_id_map.debug_calibration_view:
+		if color_id_map.background_texture != null:
+			draw_texture_rect(color_id_map.background_texture, texture_rect, false)
+		if color_id_map.land_silhouette_image != null:
+			# Draw NE/project coastline silhouette lightly over pack background.
+			var sil := ImageTexture.create_from_image(color_id_map.land_silhouette_image)
+			draw_texture_rect(sil, texture_rect, false, Color(0.35, 0.85, 1.0, 0.28))
+		if color_id_map.border_texture != null:
+			draw_texture_rect(color_id_map.border_texture, texture_rect, false)
+		_draw_calibration_control_points()
+	else:
+		# Layer stack: visual background -> ownership tint -> borders -> highlights -> units.
+		if color_id_map.background_texture != null:
+			draw_texture_rect(color_id_map.background_texture, texture_rect, false)
+		if color_id_map.owner_texture != null:
+			draw_texture_rect(color_id_map.owner_texture, texture_rect, false)
+		if color_id_map.border_texture != null:
+			draw_texture_rect(color_id_map.border_texture, texture_rect, false)
+		_draw_coalition_fronts()
+		if color_id_map.highlight_texture != null:
+			draw_texture_rect(color_id_map.highlight_texture, texture_rect, false)
+		_draw_color_id_pending_battle()
+		_draw_color_id_overlays()
 
 	var campaign: Dictionary = snapshot.get("campaign", {})
 	var map_contract: Dictionary = snapshot.get("strategic_map", {})
@@ -107,7 +127,17 @@ func _draw() -> void:
 	var short_manifest := manifest_path
 	if short_manifest.find("assets/maps/") >= 0:
 		short_manifest = short_manifest.substr(short_manifest.find("assets/maps/"))
-	var diag := "Map: %s  |  Provinces: %s  |  Manifest: %s" % [map_id, province_count, short_manifest]
+	var mode := "normal"
+	if color_id_map.debug_color_id_view:
+		mode = "DEBUG color-ID"
+	elif color_id_map.debug_calibration_view:
+		mode = "DEBUG calibration"
+	var diag := "Map: %s  |  Provinces: %s  |  %s  |  %s" % [
+		map_id,
+		province_count,
+		color_id_map.background_status(),
+		mode,
+	]
 	draw_string(
 		ThemeDB.fallback_font,
 		Vector2(24, 56),
@@ -117,7 +147,7 @@ func _draw() -> void:
 		14,
 		Color("9fd7ff")
 	)
-	var hint := "F fit front  |  click province shape  |  wheel zoom  |  drag pan"
+	var hint := "F fit  |  I color-ID  |  C calibration  |  click province  |  wheel zoom  |  drag pan"
 	if not status_message.is_empty():
 		hint = status_message
 	draw_string(
@@ -130,6 +160,44 @@ func _draw() -> void:
 		Color(0.78, 0.82, 0.86, 0.95)
 	)
 	_draw_management_panel()
+
+
+func _draw_debug_province_ids() -> void:
+	for province: Dictionary in snapshot.get("provinces", []):
+		var province_id := String(province.get("id", ""))
+		if not color_id_map.row_by_province.has(province_id):
+			continue
+		var position := _image_to_screen(color_id_map.anchor_pixel(province_id))
+		draw_circle(position, 2.5, Color(1, 1, 1, 0.85))
+		draw_string(
+			ThemeDB.fallback_font,
+			position + Vector2(6, -4),
+			province_id,
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			11,
+			Color(0.95, 0.97, 1.0, 0.9)
+		)
+
+
+func _draw_calibration_control_points() -> void:
+	for raw: Variant in color_id_map.control_points:
+		if not raw is Dictionary:
+			continue
+		var row := raw as Dictionary
+		var px: Vector2 = row.get("gameplay_px", Vector2.ZERO)
+		var position := _image_to_screen(px)
+		draw_circle(position, 5.0, Color(1.0, 0.85, 0.2, 0.95))
+		draw_arc(position, 9.0, 0.0, TAU, 24, Color(1.0, 0.2, 0.2, 0.9), 2.0)
+		draw_string(
+			ThemeDB.fallback_font,
+			position + Vector2(10, -6),
+			"%s (%.0f,%.0f)" % [String(row.get("name", "?")), px.x, px.y],
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			12,
+			Color(1.0, 0.95, 0.75, 0.95)
+		)
 
 
 func _draw_coalition_fronts() -> void:
@@ -287,6 +355,24 @@ func _is_named_province(label: String) -> bool:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		var key := event as InputEventKey
+		if key.keycode == KEY_I and color_id_map != null and color_id_map.is_ready:
+			color_id_map.debug_color_id_view = not color_id_map.debug_color_id_view
+			if color_id_map.debug_color_id_view:
+				color_id_map.debug_calibration_view = false
+			status_message = "Debug color-ID view ON (I)." if color_id_map.debug_color_id_view else "Normal map view."
+			queue_redraw()
+			get_viewport().set_input_as_handled()
+			return
+		if key.keycode == KEY_C and color_id_map != null and color_id_map.is_ready:
+			color_id_map.debug_calibration_view = not color_id_map.debug_calibration_view
+			if color_id_map.debug_calibration_view:
+				color_id_map.debug_color_id_view = false
+			status_message = "Calibration overlay ON (C): background + NE silhouette + control points." if color_id_map.debug_calibration_view else "Normal map view."
+			queue_redraw()
+			get_viewport().set_input_as_handled()
+			return
 	if event is InputEventMouseMotion and color_id_map != null and color_id_map.is_ready:
 		var motion := event as InputEventMouseMotion
 		var map_width := get_viewport_rect().size.x - PANEL_WIDTH
