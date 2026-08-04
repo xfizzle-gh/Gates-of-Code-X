@@ -1,0 +1,106 @@
+from __future__ import annotations
+
+import json
+import tempfile
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+from gates_of_codex.europe import build_goe_europe_campaign
+from gates_of_codex.frontend import (
+    FRONTEND_SCHEMA_VERSION,
+    build_frontend_apply_invocation,
+    build_frontend_snapshot,
+)
+
+
+class FrontendWritebackContractTests(unittest.TestCase):
+    def test_control_exports_exact_python_path_with_spaces(self) -> None:
+        state = build_goe_europe_campaign()
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "Gates of Code X"
+            fake_python = root / ".venv" / "Scripts" / "python executable.exe"
+            campaign = root / "live campaign" / "campaign.json"
+            snapshot_path = root / "godot client" / "campaign snapshot.json"
+            with patch("gates_of_codex.frontend.sys.executable", str(fake_python)):
+                snapshot = build_frontend_snapshot(
+                    state,
+                    campaign_path=campaign,
+                    snapshot_path=snapshot_path,
+                )
+
+        control = snapshot["control"]
+        expected_python = str(fake_python.resolve())
+        self.assertEqual(expected_python, control["python_executable"])
+        self.assertEqual("gates_of_codex", control["python_module"])
+
+        executable, arguments = build_frontend_apply_invocation(control)
+        self.assertEqual(expected_python, executable)
+        self.assertEqual("-m", arguments[0])
+        self.assertEqual("gates_of_codex", arguments[1])
+        self.assertIn(str(campaign.resolve()), arguments)
+        self.assertIn(str(snapshot_path.resolve()), arguments)
+        self.assertIn(str(snapshot_path.resolve().with_name("frontend_commands.json")), arguments)
+
+        round_trip = json.loads(json.dumps(snapshot))
+        self.assertEqual(expected_python, round_trip["control"]["python_executable"])
+
+    def test_snapshot_preserves_two_battalions_in_one_province(self) -> None:
+        state = build_goe_europe_campaign()
+        battalions = sorted(state.battalions.values(), key=lambda value: value.battalion_id)
+        first = battalions[0]
+        second = next(value for value in battalions[1:] if value.faction == first.faction)
+        second.province_id = first.province_id
+
+        snapshot = build_frontend_snapshot(state)
+        expected_ids = sorted([first.battalion_id, second.battalion_id])
+        stack_ids = snapshot["battalion_stacks"][first.province_id]
+        province = next(
+            value for value in snapshot["provinces"] if value["id"] == first.province_id
+        )
+
+        self.assertEqual(FRONTEND_SCHEMA_VERSION, snapshot["schema_version"])
+        self.assertEqual(expected_ids, stack_ids)
+        self.assertEqual(expected_ids, province["occupied_by_battalions"])
+        self.assertEqual(expected_ids[0], province["occupied_by"])
+        self.assertEqual(
+            expected_ids,
+            sorted(
+                value["id"]
+                for value in snapshot["battalions"]
+                if value["province_id"] == first.province_id
+            ),
+        )
+
+    def test_godot_stack_fixture_and_exact_invocation_contract(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        fixture = json.loads(
+            (root / "tests/fixtures/frontend/two_battalions_one_province.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        script = (root / "godot/scripts/main_writeback.gd").read_text(encoding="utf-8")
+        scene = (root / "godot/main.tscn").read_text(encoding="utf-8")
+
+        self.assertEqual(
+            ["alpha-battalion", "bravo-battalion"],
+            fixture["battalion_stacks"]["Warszawa"],
+        )
+        self.assertEqual(
+            {"alpha-battalion", "bravo-battalion"},
+            {
+                value["battalion_id"]
+                for value in fixture["front_options"]
+                if value["origin"] == "Warszawa"
+            },
+        )
+        self.assertIn("res://scripts/main_writeback.gd", scene)
+        self.assertIn("battalion_stacks_by_province", script)
+        self.assertIn(".append(battalion)", script)
+        self.assertIn("selected_battalion_id", script)
+        self.assertIn("FileAccess.file_exists(python_executable)", script)
+        self.assertIn("OS.execute(python_executable, python_args", script)
+
+
+if __name__ == "__main__":
+    unittest.main()
