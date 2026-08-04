@@ -1,8 +1,7 @@
 # Europe–Mediterranean theatre (from GoE)
 
-- map_id: `europe_mediterranean_from_goe`
-- provinces: 348 (from interim GoE 517)
-- texture: 764×697 crop of interim GoE color-ID
-- gameplay authority: color-ID layer
-- background: project-owned procedural underlay only
-- pack artwork: not used
+- playable provinces: 339
+- display: 1048×1242
+- `province_id_map.png` — playable only (selection/ownership)
+- `visual_land_mask.png` — full visible land silhouette
+- `background_procedural.png` — from visual mask (muted nonplayable land)
