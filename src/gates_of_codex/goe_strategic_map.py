@@ -16,8 +16,9 @@ RGB = tuple[int, int, int]
 
 
 def build_goe_source_nodes() -> dict[str, dict]:
-    rows = [dict(row) for row in load_marker_layout()["provinces"]]
-    id_counts = Counter(str(row.get("id", "")) for row in rows)
+    original_rows = [dict(row) for row in load_marker_layout()["provinces"]]
+    rows = [dict(row) for row in original_rows]
+    id_counts = Counter(str(row.get("id", "")) for row in original_rows)
     node_rows: dict[str, dict] = {}
     node_keys: list[str] = []
     for row in rows:
@@ -38,7 +39,6 @@ def build_goe_source_nodes() -> dict[str, dict]:
         node_rows[node_key] = row
         node_keys.append(node_key)
 
-    original_rows = rows
     for left_index, left_key in enumerate(node_keys):
         left_original = original_rows[left_index]
         left_id = str(left_original["id"])
