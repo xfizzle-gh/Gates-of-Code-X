@@ -360,6 +360,34 @@ def import_interim_goe_map(
     )
 
 
+def write_png_rgb(path: str | Path, width: int, height: int, rgb: bytes) -> Path:
+    if len(rgb) != width * height * 3:
+        raise ValueError("RGB payload size does not match width*height*3")
+
+    def chunk(tag: bytes, payload: bytes) -> bytes:
+        return (
+            struct.pack(">I", len(payload))
+            + tag
+            + payload
+            + struct.pack(">I", zlib.crc32(tag + payload) & 0xFFFFFFFF)
+        )
+
+    rows = bytearray()
+    row = width * 3
+    for y in range(height):
+        rows.append(0)
+        rows.extend(rgb[y * row : (y + 1) * row])
+    destination = Path(path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0))
+        + chunk(b"IDAT", zlib.compress(bytes(rows), 6))
+        + chunk(b"IEND", b"")
+    )
+    return destination
+
+
 def decode_png_rgb(path: str | Path) -> DecodedIdImage:
     data = Path(path).read_bytes()
     if not data.startswith(b"\x89PNG\r\n\x1a\n"):

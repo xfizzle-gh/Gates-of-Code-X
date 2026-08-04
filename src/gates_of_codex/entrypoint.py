@@ -137,6 +137,48 @@ def _run_write_interim_goe_table(arguments: list[str]) -> int:
     return 0
 
 
+def _run_generate_world_prototype(arguments: list[str]) -> int:
+    from .world_map_prototype import generate_world_prototype
+
+    parser = argparse.ArgumentParser(prog="gates-of-codex generate-world-prototype")
+    parser.add_argument(
+        "--extract-root",
+        help="Local research extract of world_test_9.pack files (not committed)",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default="godot/assets/maps/world/prototype",
+        help="Project-owned generated outputs",
+    )
+    parser.add_argument("--width", type=int, default=2048)
+    parser.add_argument("--height", type=int, default=1024)
+    args = parser.parse_args(arguments)
+    manifest = generate_world_prototype(
+        extract_root=args.extract_root,
+        output_dir=args.output_dir,
+        width=args.width,
+        height=args.height,
+    )
+    print(
+        json.dumps(
+            {
+                "ok": True,
+                "map_id": manifest["map_id"],
+                "province_count": manifest["province_count"],
+                "output": args.output_dir,
+                "texture": manifest["id_texture"]["path"],
+                "dimensions": [
+                    manifest["id_texture"]["width"],
+                    manifest["id_texture"]["height"],
+                ],
+                "adjacency_edges": manifest["adjacency"]["edge_count"],
+            },
+            indent=2,
+        )
+    )
+    return 0
+
+
 def _run_import_strategic_map(arguments: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="gates-of-codex import-strategic-map")
     parser.add_argument("--id-map", required=True)
@@ -290,6 +332,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_write_interim_goe_table(remainder)
     if command == "import-strategic-map":
         return _run_import_strategic_map(remainder)
+    if command == "generate-world-prototype":
+        return _run_generate_world_prototype(remainder)
     if command == "new":
         return _run_new(remainder)
     if command == "export-battle":

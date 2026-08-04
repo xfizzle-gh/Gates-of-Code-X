@@ -1,0 +1,3433 @@
+{
+  "adjacency": {
+    "edge_count": 312,
+    "extra_edges": [],
+    "missing_edges": [],
+    "validated_against_graph": false
+  },
+  "asset_status": "project_owned",
+  "clean_room": {
+    "committed_outputs": [
+      "world_id_map.png",
+      "world_land_silhouette.png",
+      "map_manifest.json"
+    ],
+    "geometry_method": "settlement-seeded Voronoi; regions.esf polygons not decoded",
+    "research_only_inputs": [
+      "world_test_9.pack (not committed)",
+      "boshin_map_world.tga land silhouette only (not committed)",
+      "settlement loc labels (names only)"
+    ]
+  },
+  "id_texture": {
+    "format": "RGB8",
+    "height": 1024,
+    "ignored_colors": [
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "path": "world_id_map.png",
+    "sampling": "nearest",
+    "sha256": "5cad65b6cab922b4486eb79d37190e0ff3c55f389c149d15797901d816234ca9",
+    "width": 2048
+  },
+  "layers": [
+    "background",
+    "owner_fill",
+    "province_borders",
+    "coalition_front",
+    "supply_encirclement",
+    "selection_targets",
+    "infrastructure_bases",
+    "battalion_counters",
+    "labels"
+  ],
+  "map_id": "world_prototype",
+  "provenance": "project_owned_world_prototype_v1",
+  "province_count": 110,
+  "province_table": [
+    {
+      "display_name": "Ajaccio",
+      "marker_anchor": [
+        1073.0,
+        750.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 41.9267,
+        "lon": 8.7369,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_ajaccio",
+        "source_settlement_key": "ajaccio"
+      },
+      "province_id": "wp_ajaccio",
+      "rgb": [
+        1,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_cagliari",
+        "wp_genoa",
+        "wp_marseille",
+        "wp_turin"
+      ]
+    },
+    {
+      "display_name": "Faro",
+      "marker_anchor": [
+        978.0,
+        722.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 37.0194,
+        "lon": -7.9322,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_algarve",
+        "source_settlement_key": "algarve"
+      },
+      "province_id": "wp_algarve",
+      "rgb": [
+        2,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_badajoz",
+        "wp_casablanca",
+        "wp_gibraltar",
+        "wp_lisbon"
+      ]
+    },
+    {
+      "display_name": "Algiers",
+      "marker_anchor": [
+        1041.0,
+        720.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "public_geo_theatre_extension",
+        "generator": "world_map_prototype_v1",
+        "lat": 36.7538,
+        "lon": 3.0588,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "",
+        "source_settlement_key": "algiers"
+      },
+      "province_id": "wp_algiers",
+      "rgb": [
+        3,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_balearic",
+        "wp_cagliari",
+        "wp_casablanca",
+        "wp_gibraltar",
+        "wp_granada",
+        "wp_tripoli",
+        "wp_tunis",
+        "wp_valencia"
+      ]
+    },
+    {
+      "display_name": "Amsterdam",
+      "marker_anchor": [
+        1051.0,
+        809.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 52.3676,
+        "lon": 4.9041,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_amsterdam",
+        "source_settlement_key": "amsterdam"
+      },
+      "province_id": "wp_amsterdam",
+      "rgb": [
+        4,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bergen",
+        "wp_brussels",
+        "wp_cologne",
+        "wp_edinburgh",
+        "wp_groningen",
+        "wp_lille",
+        "wp_london"
+      ]
+    },
+    {
+      "display_name": "Ankara",
+      "marker_anchor": [
+        1210.0,
+        738.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "public_geo_theatre_extension",
+        "generator": "world_map_prototype_v1",
+        "lat": 39.9334,
+        "lon": 32.8597,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "",
+        "source_settlement_key": "ankara"
+      },
+      "province_id": "wp_ankara",
+      "rgb": [
+        5,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_baghdad",
+        "wp_beirut",
+        "wp_cairo",
+        "wp_istanbul",
+        "wp_kyiv",
+        "wp_moscow"
+      ]
+    },
+    {
+      "display_name": "Aarhus",
+      "marker_anchor": [
+        1082.0,
+        831.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 56.1629,
+        "lon": 10.2039,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_arhus",
+        "source_settlement_key": "arhus"
+      },
+      "province_id": "wp_arhus",
+      "rgb": [
+        6,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_copenhagen",
+        "wp_gothenburg",
+        "wp_hamburg",
+        "wp_herning",
+        "wp_kristiansand",
+        "wp_oslo"
+      ]
+    },
+    {
+      "display_name": "Athens",
+      "marker_anchor": [
+        1158.0,
+        727.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "public_geo_theatre_extension",
+        "generator": "world_map_prototype_v1",
+        "lat": 37.9838,
+        "lon": 23.7275,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "",
+        "source_settlement_key": "athens"
+      },
+      "province_id": "wp_athens",
+      "rgb": [
+        7,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bari",
+        "wp_bucharest",
+        "wp_cairo",
+        "wp_catania",
+        "wp_cosenza",
+        "wp_istanbul",
+        "wp_tripoli"
+      ]
+    },
+    {
+      "display_name": "Badajoz",
+      "marker_anchor": [
+        984.0,
+        732.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 38.8794,
+        "lon": -6.9706,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_badajoz",
+        "source_settlement_key": "badajoz"
+      },
+      "province_id": "wp_badajoz",
+      "rgb": [
+        8,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_algarve",
+        "wp_gibraltar",
+        "wp_granada",
+        "wp_lisbon",
+        "wp_madrid",
+        "wp_porto"
+      ]
+    },
+    {
+      "display_name": "Baghdad",
+      "marker_anchor": [
+        1276.0,
+        701.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "public_geo_theatre_extension",
+        "generator": "world_map_prototype_v1",
+        "lat": 33.3152,
+        "lon": 44.3661,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "",
+        "source_settlement_key": "baghdad"
+      },
+      "province_id": "wp_baghdad",
+      "rgb": [
+        9,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_ankara",
+        "wp_beirut",
+        "wp_cairo",
+        "wp_jerusalem",
+        "wp_moscow",
+        "wp_tehran"
+      ]
+    },
+    {
+      "display_name": "Palma",
+      "marker_anchor": [
+        1039.0,
+        736.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 39.5696,
+        "lon": 2.6502,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_balearic",
+        "source_settlement_key": "balearic"
+      },
+      "province_id": "wp_balearic",
+      "rgb": [
+        10,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_algiers",
+        "wp_barcelona",
+        "wp_cagliari",
+        "wp_marseille",
+        "wp_valencia"
+      ]
+    },
+    {
+      "display_name": "Barcelona",
+      "marker_anchor": [
+        1036.0,
+        747.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 41.3874,
+        "lon": 2.1686,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_barcelona",
+        "source_settlement_key": "barcelona"
+      },
+      "province_id": "wp_barcelona",
+      "rgb": [
+        11,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_balearic",
+        "wp_marseille",
+        "wp_toulouse",
+        "wp_valencia"
+      ]
+    },
+    {
+      "display_name": "Bari",
+      "marker_anchor": [
+        1119.0,
+        746.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 41.1171,
+        "lon": 16.8719,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_bari",
+        "source_settlement_key": "bari"
+      },
+      "province_id": "wp_bari",
+      "rgb": [
+        12,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_athens",
+        "wp_bucharest",
+        "wp_budapest",
+        "wp_cosenza",
+        "wp_graz",
+        "wp_naples"
+      ]
+    },
+    {
+      "display_name": "Beirut",
+      "marker_anchor": [
+        1225.0,
+        704.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "public_geo_theatre_extension",
+        "generator": "world_map_prototype_v1",
+        "lat": 33.8938,
+        "lon": 35.5018,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "",
+        "source_settlement_key": "beirut"
+      },
+      "province_id": "wp_beirut",
+      "rgb": [
+        13,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_ankara",
+        "wp_baghdad",
+        "wp_cairo",
+        "wp_jerusalem"
+      ]
+    },
+    {
+      "display_name": "Belfast",
+      "marker_anchor": [
+        990.0,
+        822.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 54.5973,
+        "lon": -5.9301,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_belfast",
+        "source_settlement_key": "belfast"
+      },
+      "province_id": "wp_belfast",
+      "rgb": [
+        14,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_cork",
+        "wp_dublin",
+        "wp_edinburgh",
+        "wp_inverness",
+        "wp_liverpool"
+      ]
+    },
+    {
+      "display_name": "Bergen",
+      "marker_anchor": [
+        1054.0,
+        855.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 60.3913,
+        "lon": 5.3221,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_bergen",
+        "source_settlement_key": "bergen"
+      },
+      "province_id": "wp_bergen",
+      "rgb": [
+        15,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_amsterdam",
+        "wp_bodo",
+        "wp_edinburgh",
+        "wp_groningen",
+        "wp_inverness",
+        "wp_kristiansand",
+        "wp_oslo",
+        "wp_trondheim"
+      ]
+    },
+    {
+      "display_name": "Berlin",
+      "marker_anchor": [
+        1100.0,
+        810.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 52.52,
+        "lon": 13.405,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_berlin",
+        "source_settlement_key": "berlin"
+      },
+      "province_id": "wp_berlin",
+      "rgb": [
+        16,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_copenhagen",
+        "wp_dresden",
+        "wp_hamburg",
+        "wp_hannover",
+        "wp_kalmar",
+        "wp_malmo",
+        "wp_nuremberg",
+        "wp_prague",
+        "wp_warsaw"
+      ]
+    },
+    {
+      "display_name": "Bern",
+      "marker_anchor": [
+        1066.0,
+        778.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 46.948,
+        "lon": 7.4474,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_bern",
+        "source_settlement_key": "bern"
+      },
+      "province_id": "wp_bern",
+      "rgb": [
+        17,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_lyon",
+        "wp_metz",
+        "wp_milan",
+        "wp_turin",
+        "wp_zurich"
+      ]
+    },
+    {
+      "display_name": "Bilbao",
+      "marker_anchor": [
+        1007.0,
+        758.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 43.263,
+        "lon": -2.935,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_bilbao",
+        "source_settlement_key": "bilbao"
+      },
+      "province_id": "wp_bilbao",
+      "rgb": [
+        18,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bordeaux",
+        "wp_brest",
+        "wp_coruna",
+        "wp_madrid",
+        "wp_nantes",
+        "wp_toulouse",
+        "wp_valencia"
+      ]
+    },
+    {
+      "display_name": "Bodø",
+      "marker_anchor": [
+        1105.0,
+        894.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 67.2804,
+        "lon": 14.4049,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_bodo",
+        "source_settlement_key": "bodo"
+      },
+      "province_id": "wp_bodo",
+      "rgb": [
+        19,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bergen",
+        "wp_inverness",
+        "wp_lulea",
+        "wp_ostersund",
+        "wp_trondheim",
+        "wp_umea"
+      ]
+    },
+    {
+      "display_name": "Bologna",
+      "marker_anchor": [
+        1088.0,
+        764.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 44.4949,
+        "lon": 11.3426,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_bologna",
+        "source_settlement_key": "bologna"
+      },
+      "province_id": "wp_bologna",
+      "rgb": [
+        20,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_florence",
+        "wp_genoa",
+        "wp_innsbruck",
+        "wp_milan",
+        "wp_venice"
+      ]
+    },
+    {
+      "display_name": "Bordeaux",
+      "marker_anchor": [
+        1020.0,
+        766.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 44.8378,
+        "lon": -0.5792,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_bordeaux",
+        "source_settlement_key": "bordeaux"
+      },
+      "province_id": "wp_bordeaux",
+      "rgb": [
+        21,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bilbao",
+        "wp_limoges",
+        "wp_nantes",
+        "wp_toulouse"
+      ]
+    },
+    {
+      "display_name": "Bremen",
+      "marker_anchor": [
+        1074.0,
+        813.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 53.0793,
+        "lon": 8.8017,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_bremen",
+        "source_settlement_key": "bremen"
+      },
+      "province_id": "wp_bremen",
+      "rgb": [
+        22,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_cologne",
+        "wp_frankfurt",
+        "wp_groningen",
+        "wp_hamburg",
+        "wp_hannover",
+        "wp_herning"
+      ]
+    },
+    {
+      "display_name": "Brest",
+      "marker_anchor": [
+        998.0,
+        787.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 48.3905,
+        "lon": -4.486,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_brest",
+        "source_settlement_key": "brest"
+      },
+      "province_id": "wp_brest",
+      "rgb": [
+        23,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bilbao",
+        "wp_cork",
+        "wp_coruna",
+        "wp_nantes",
+        "wp_plymouth"
+      ]
+    },
+    {
+      "display_name": "Brussels",
+      "marker_anchor": [
+        1048.0,
+        800.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 50.8503,
+        "lon": 4.3517,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_brussels",
+        "source_settlement_key": "brussels"
+      },
+      "province_id": "wp_brussels",
+      "rgb": [
+        24,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_amsterdam",
+        "wp_cologne",
+        "wp_lille",
+        "wp_luxemburg",
+        "wp_paris"
+      ]
+    },
+    {
+      "display_name": "Bucharest",
+      "marker_anchor": [
+        1172.0,
+        764.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "public_geo_theatre_extension",
+        "generator": "world_map_prototype_v1",
+        "lat": 44.4268,
+        "lon": 26.1025,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "",
+        "source_settlement_key": "bucharest"
+      },
+      "province_id": "wp_bucharest",
+      "rgb": [
+        25,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_athens",
+        "wp_bari",
+        "wp_budapest",
+        "wp_istanbul",
+        "wp_kyiv",
+        "wp_minsk",
+        "wp_warsaw"
+      ]
+    },
+    {
+      "display_name": "Budapest",
+      "marker_anchor": [
+        1132.0,
+        781.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "public_geo_theatre_extension",
+        "generator": "world_map_prototype_v1",
+        "lat": 47.4979,
+        "lon": 19.0402,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "",
+        "source_settlement_key": "budapest"
+      },
+      "province_id": "wp_budapest",
+      "rgb": [
+        26,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bari",
+        "wp_bucharest",
+        "wp_graz",
+        "wp_vienna",
+        "wp_warsaw"
+      ]
+    },
+    {
+      "display_name": "Cagliari",
+      "marker_anchor": [
+        1075.0,
+        734.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 39.2238,
+        "lon": 9.1217,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_cagliari",
+        "source_settlement_key": "cagliari"
+      },
+      "province_id": "wp_cagliari",
+      "rgb": [
+        27,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_ajaccio",
+        "wp_algiers",
+        "wp_balearic",
+        "wp_palermo",
+        "wp_rome",
+        "wp_tunis"
+      ]
+    },
+    {
+      "display_name": "Cairo",
+      "marker_anchor": [
+        1201.0,
+        682.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "public_geo_theatre_extension",
+        "generator": "world_map_prototype_v1",
+        "lat": 30.0444,
+        "lon": 31.2357,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "",
+        "source_settlement_key": "cairo"
+      },
+      "province_id": "wp_cairo",
+      "rgb": [
+        28,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_ankara",
+        "wp_athens",
+        "wp_baghdad",
+        "wp_beirut",
+        "wp_jerusalem",
+        "wp_tripoli"
+      ]
+    },
+    {
+      "display_name": "Cardiff",
+      "marker_anchor": [
+        1005.0,
+        804.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 51.4816,
+        "lon": -3.1791,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_cardiff",
+        "source_settlement_key": "cardiff"
+      },
+      "province_id": "wp_cardiff",
+      "rgb": [
+        29,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_dublin",
+        "wp_liverpool",
+        "wp_london",
+        "wp_nantes",
+        "wp_plymouth"
+      ]
+    },
+    {
+      "display_name": "Casablanca",
+      "marker_anchor": [
+        980.0,
+        702.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "public_geo_theatre_extension",
+        "generator": "world_map_prototype_v1",
+        "lat": 33.5731,
+        "lon": -7.5898,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "",
+        "source_settlement_key": "casablanca"
+      },
+      "province_id": "wp_casablanca",
+      "rgb": [
+        30,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_algarve",
+        "wp_algiers",
+        "wp_gibraltar",
+        "wp_lisbon",
+        "wp_tripoli"
+      ]
+    },
+    {
+      "display_name": "Catania",
+      "marker_anchor": [
+        1109.0,
+        725.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 37.5079,
+        "lon": 15.083,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_catania",
+        "source_settlement_key": "catania"
+      },
+      "province_id": "wp_catania",
+      "rgb": [
+        31,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_athens",
+        "wp_cosenza",
+        "wp_palermo",
+        "wp_tripoli"
+      ]
+    },
+    {
+      "display_name": "Cologne",
+      "marker_anchor": [
+        1063.0,
+        801.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 50.9375,
+        "lon": 6.9603,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_cologne",
+        "source_settlement_key": "cologne"
+      },
+      "province_id": "wp_cologne",
+      "rgb": [
+        32,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_amsterdam",
+        "wp_bremen",
+        "wp_brussels",
+        "wp_frankfurt",
+        "wp_groningen",
+        "wp_luxemburg",
+        "wp_metz"
+      ]
+    },
+    {
+      "display_name": "Copenhagen",
+      "marker_anchor": [
+        1095.0,
+        828.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 55.6761,
+        "lon": 12.5683,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_copenhagen",
+        "source_settlement_key": "copenhagen"
+      },
+      "province_id": "wp_copenhagen",
+      "rgb": [
+        33,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_arhus",
+        "wp_berlin",
+        "wp_gothenburg",
+        "wp_hamburg",
+        "wp_malmo"
+      ]
+    },
+    {
+      "display_name": "Cork",
+      "marker_anchor": [
+        975.0,
+        806.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 51.8985,
+        "lon": -8.4756,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_cork",
+        "source_settlement_key": "cork"
+      },
+      "province_id": "wp_cork",
+      "rgb": [
+        34,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_belfast",
+        "wp_brest",
+        "wp_coruna",
+        "wp_dublin",
+        "wp_inverness",
+        "wp_lisbon",
+        "wp_plymouth",
+        "wp_porto"
+      ]
+    },
+    {
+      "display_name": "A Coruña",
+      "marker_anchor": [
+        976.0,
+        758.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 43.3623,
+        "lon": -8.4115,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_coruna",
+        "source_settlement_key": "coruna"
+      },
+      "province_id": "wp_coruna",
+      "rgb": [
+        35,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bilbao",
+        "wp_brest",
+        "wp_cork",
+        "wp_madrid",
+        "wp_porto"
+      ]
+    },
+    {
+      "display_name": "Cosenza",
+      "marker_anchor": [
+        1116.0,
+        735.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 39.2983,
+        "lon": 16.2537,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_cosenza",
+        "source_settlement_key": "cosenza"
+      },
+      "province_id": "wp_cosenza",
+      "rgb": [
+        36,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_athens",
+        "wp_bari",
+        "wp_catania",
+        "wp_naples"
+      ]
+    },
+    {
+      "display_name": "Dresden",
+      "marker_anchor": [
+        1102.0,
+        802.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 51.0504,
+        "lon": 13.7373,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_dresden",
+        "source_settlement_key": "dresden"
+      },
+      "province_id": "wp_dresden",
+      "rgb": [
+        37,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_berlin",
+        "wp_nuremberg",
+        "wp_prague"
+      ]
+    },
+    {
+      "display_name": "Dublin",
+      "marker_anchor": [
+        988.0,
+        815.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 53.3498,
+        "lon": -6.2603,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_dublin",
+        "source_settlement_key": "dublin"
+      },
+      "province_id": "wp_dublin",
+      "rgb": [
+        38,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_belfast",
+        "wp_cardiff",
+        "wp_cork",
+        "wp_liverpool",
+        "wp_plymouth"
+      ]
+    },
+    {
+      "display_name": "Edinburgh",
+      "marker_anchor": [
+        1005.0,
+        830.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 55.9533,
+        "lon": -3.1883,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_edinburgh",
+        "source_settlement_key": "edinburgh"
+      },
+      "province_id": "wp_edinburgh",
+      "rgb": [
+        39,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_amsterdam",
+        "wp_belfast",
+        "wp_bergen",
+        "wp_inverness",
+        "wp_liverpool",
+        "wp_london"
+      ]
+    },
+    {
+      "display_name": "Florence",
+      "marker_anchor": [
+        1088.0,
+        760.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 43.7696,
+        "lon": 11.2558,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_florence",
+        "source_settlement_key": "florence"
+      },
+      "province_id": "wp_florence",
+      "rgb": [
+        40,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bologna",
+        "wp_genoa",
+        "wp_rome",
+        "wp_venice"
+      ]
+    },
+    {
+      "display_name": "Frankfurt",
+      "marker_anchor": [
+        1073.0,
+        796.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 50.1109,
+        "lon": 8.6821,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_frankfurt",
+        "source_settlement_key": "frankfurt"
+      },
+      "province_id": "wp_frankfurt",
+      "rgb": [
+        41,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bremen",
+        "wp_cologne",
+        "wp_hannover",
+        "wp_metz",
+        "wp_nuremberg",
+        "wp_stuttgart"
+      ]
+    },
+    {
+      "display_name": "Genoa",
+      "marker_anchor": [
+        1074.0,
+        766.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 44.4056,
+        "lon": 8.9463,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_genoa",
+        "source_settlement_key": "genoa"
+      },
+      "province_id": "wp_genoa",
+      "rgb": [
+        42,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_ajaccio",
+        "wp_bologna",
+        "wp_florence",
+        "wp_milan",
+        "wp_turin"
+      ]
+    },
+    {
+      "display_name": "Gibraltar",
+      "marker_anchor": [
+        993.0,
+        717.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 36.1408,
+        "lon": -5.3536,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_gibraltar",
+        "source_settlement_key": "gibraltar"
+      },
+      "province_id": "wp_gibraltar",
+      "rgb": [
+        43,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_algarve",
+        "wp_algiers",
+        "wp_badajoz",
+        "wp_casablanca",
+        "wp_granada"
+      ]
+    },
+    {
+      "display_name": "Gothenburg",
+      "marker_anchor": [
+        1092.0,
+        839.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 57.7089,
+        "lon": 11.9746,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_gothenburg",
+        "source_settlement_key": "gothenburg"
+      },
+      "province_id": "wp_gothenburg",
+      "rgb": [
+        44,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_arhus",
+        "wp_copenhagen",
+        "wp_karlstad",
+        "wp_malmo",
+        "wp_oslo"
+      ]
+    },
+    {
+      "display_name": "Granada",
+      "marker_anchor": [
+        1005.0,
+        724.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 37.1773,
+        "lon": -3.5986,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_granada",
+        "source_settlement_key": "granada"
+      },
+      "province_id": "wp_granada",
+      "rgb": [
+        45,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_algiers",
+        "wp_badajoz",
+        "wp_gibraltar",
+        "wp_madrid",
+        "wp_valencia"
+      ]
+    },
+    {
+      "display_name": "Graz",
+      "marker_anchor": [
+        1111.0,
+        779.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 47.0707,
+        "lon": 15.4395,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_graz",
+        "source_settlement_key": "graz"
+      },
+      "province_id": "wp_graz",
+      "rgb": [
+        46,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bari",
+        "wp_budapest",
+        "wp_prague",
+        "wp_salzburg",
+        "wp_trieste",
+        "wp_vienna"
+      ]
+    },
+    {
+      "display_name": "Groningen",
+      "marker_anchor": [
+        1061.0,
+        814.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 53.2194,
+        "lon": 6.5665,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_groningen",
+        "source_settlement_key": "groningen"
+      },
+      "province_id": "wp_groningen",
+      "rgb": [
+        47,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_amsterdam",
+        "wp_bergen",
+        "wp_bremen",
+        "wp_cologne",
+        "wp_herning",
+        "wp_kristiansand"
+      ]
+    },
+    {
+      "display_name": "Hamburg",
+      "marker_anchor": [
+        1080.0,
+        816.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 53.5511,
+        "lon": 9.9937,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_hamburg",
+        "source_settlement_key": "hamburg"
+      },
+      "province_id": "wp_hamburg",
+      "rgb": [
+        48,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_arhus",
+        "wp_berlin",
+        "wp_bremen",
+        "wp_copenhagen",
+        "wp_hannover",
+        "wp_herning"
+      ]
+    },
+    {
+      "display_name": "Hannover",
+      "marker_anchor": [
+        1079.0,
+        809.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 52.3759,
+        "lon": 9.732,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_hannover",
+        "source_settlement_key": "hannover"
+      },
+      "province_id": "wp_hannover",
+      "rgb": [
+        49,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_berlin",
+        "wp_bremen",
+        "wp_frankfurt",
+        "wp_hamburg",
+        "wp_nuremberg"
+      ]
+    },
+    {
+      "display_name": "Helsinki",
+      "marker_anchor": [
+        1165.0,
+        853.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 60.1699,
+        "lon": 24.9384,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_helsinki",
+        "source_settlement_key": "helsinki"
+      },
+      "province_id": "wp_helsinki",
+      "rgb": [
+        50,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_joensuu",
+        "wp_kuopio",
+        "wp_minsk",
+        "wp_oulu",
+        "wp_riga",
+        "wp_turku",
+        "wp_vaasa"
+      ]
+    },
+    {
+      "display_name": "Herning",
+      "marker_anchor": [
+        1075.0,
+        831.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 56.1389,
+        "lon": 8.97,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_herning",
+        "source_settlement_key": "herning"
+      },
+      "province_id": "wp_herning",
+      "rgb": [
+        51,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_arhus",
+        "wp_bremen",
+        "wp_groningen",
+        "wp_hamburg",
+        "wp_kristiansand"
+      ]
+    },
+    {
+      "display_name": "Innsbruck",
+      "marker_anchor": [
+        1088.0,
+        780.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 47.2692,
+        "lon": 11.4041,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_innsbruck",
+        "source_settlement_key": "innsbruck"
+      },
+      "province_id": "wp_innsbruck",
+      "rgb": [
+        52,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bologna",
+        "wp_milan",
+        "wp_munich",
+        "wp_salzburg",
+        "wp_stuttgart",
+        "wp_venice",
+        "wp_zurich"
+      ]
+    },
+    {
+      "display_name": "Inverness",
+      "marker_anchor": [
+        999.0,
+        838.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 57.4778,
+        "lon": -4.2247,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_inverness",
+        "source_settlement_key": "inverness"
+      },
+      "province_id": "wp_inverness",
+      "rgb": [
+        53,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_belfast",
+        "wp_bergen",
+        "wp_bodo",
+        "wp_cork",
+        "wp_edinburgh"
+      ]
+    },
+    {
+      "display_name": "Istanbul",
+      "marker_anchor": [
+        1188.0,
+        746.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "public_geo_theatre_extension",
+        "generator": "world_map_prototype_v1",
+        "lat": 41.0082,
+        "lon": 28.9784,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "",
+        "source_settlement_key": "istanbul"
+      },
+      "province_id": "wp_istanbul",
+      "rgb": [
+        54,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_ankara",
+        "wp_athens",
+        "wp_bucharest",
+        "wp_kyiv"
+      ]
+    },
+    {
+      "display_name": "Jerusalem",
+      "marker_anchor": [
+        1224.0,
+        692.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "public_geo_theatre_extension",
+        "generator": "world_map_prototype_v1",
+        "lat": 31.7683,
+        "lon": 35.2137,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "",
+        "source_settlement_key": "jerusalem"
+      },
+      "province_id": "wp_jerusalem",
+      "rgb": [
+        55,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_baghdad",
+        "wp_beirut",
+        "wp_cairo"
+      ]
+    },
+    {
+      "display_name": "Joensuu",
+      "marker_anchor": [
+        1193.0,
+        867.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 62.601,
+        "lon": 29.7636,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_joensuu",
+        "source_settlement_key": "joensuu"
+      },
+      "province_id": "wp_joensuu",
+      "rgb": [
+        56,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_helsinki",
+        "wp_kuopio",
+        "wp_minsk",
+        "wp_moscow",
+        "wp_oulu"
+      ]
+    },
+    {
+      "display_name": "Kalmar",
+      "marker_anchor": [
+        1117.0,
+        834.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 56.6634,
+        "lon": 16.3566,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_kalmar",
+        "source_settlement_key": "kalmar"
+      },
+      "province_id": "wp_kalmar",
+      "rgb": [
+        57,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_berlin",
+        "wp_karlstad",
+        "wp_malmo",
+        "wp_riga",
+        "wp_stockholm",
+        "wp_uppsala",
+        "wp_warsaw"
+      ]
+    },
+    {
+      "display_name": "Karlstad",
+      "marker_anchor": [
+        1100.0,
+        849.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 59.3793,
+        "lon": 13.5036,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_karlstad",
+        "source_settlement_key": "karlstad"
+      },
+      "province_id": "wp_karlstad",
+      "rgb": [
+        58,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_gothenburg",
+        "wp_kalmar",
+        "wp_malmo",
+        "wp_oslo",
+        "wp_ostersund",
+        "wp_uppsala"
+      ]
+    },
+    {
+      "display_name": "Kristiansand",
+      "marker_anchor": [
+        1069.0,
+        842.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 58.1467,
+        "lon": 7.9956,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_kristiansand",
+        "source_settlement_key": "kristiansand"
+      },
+      "province_id": "wp_kristiansand",
+      "rgb": [
+        59,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_arhus",
+        "wp_bergen",
+        "wp_groningen",
+        "wp_herning",
+        "wp_oslo"
+      ]
+    },
+    {
+      "display_name": "Kuopio",
+      "marker_anchor": [
+        1181.0,
+        869.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 62.8924,
+        "lon": 27.677,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_kuopio",
+        "source_settlement_key": "kuopio"
+      },
+      "province_id": "wp_kuopio",
+      "rgb": [
+        60,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_helsinki",
+        "wp_joensuu",
+        "wp_oulu"
+      ]
+    },
+    {
+      "display_name": "Kyiv",
+      "marker_anchor": [
+        1197.0,
+        798.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "public_geo_theatre_extension",
+        "generator": "world_map_prototype_v1",
+        "lat": 50.4501,
+        "lon": 30.5234,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "",
+        "source_settlement_key": "kyiv"
+      },
+      "province_id": "wp_kyiv",
+      "rgb": [
+        61,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_ankara",
+        "wp_bucharest",
+        "wp_istanbul",
+        "wp_minsk",
+        "wp_moscow"
+      ]
+    },
+    {
+      "display_name": "Lille",
+      "marker_anchor": [
+        1041.0,
+        799.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 50.6292,
+        "lon": 3.0573,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_lille",
+        "source_settlement_key": "lille"
+      },
+      "province_id": "wp_lille",
+      "rgb": [
+        62,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_amsterdam",
+        "wp_brussels",
+        "wp_london",
+        "wp_paris"
+      ]
+    },
+    {
+      "display_name": "Limoges",
+      "marker_anchor": [
+        1031.0,
+        774.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 45.8336,
+        "lon": 1.2611,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_limoges",
+        "source_settlement_key": "limoges"
+      },
+      "province_id": "wp_limoges",
+      "rgb": [
+        63,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bordeaux",
+        "wp_lyon",
+        "wp_nantes",
+        "wp_paris",
+        "wp_toulouse"
+      ]
+    },
+    {
+      "display_name": "Lisbon",
+      "marker_anchor": [
+        972.0,
+        732.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 38.7223,
+        "lon": -9.1393,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_lisbon",
+        "source_settlement_key": "lisbon"
+      },
+      "province_id": "wp_lisbon",
+      "rgb": [
+        64,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_algarve",
+        "wp_badajoz",
+        "wp_casablanca",
+        "wp_cork",
+        "wp_porto"
+      ]
+    },
+    {
+      "display_name": "Liverpool",
+      "marker_anchor": [
+        1006.0,
+        815.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 53.4084,
+        "lon": -2.9916,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_liverpool",
+        "source_settlement_key": "liverpool"
+      },
+      "province_id": "wp_liverpool",
+      "rgb": [
+        65,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_belfast",
+        "wp_cardiff",
+        "wp_dublin",
+        "wp_edinburgh",
+        "wp_london"
+      ]
+    },
+    {
+      "display_name": "London",
+      "marker_anchor": [
+        1023.0,
+        804.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 51.5074,
+        "lon": -0.1278,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_london",
+        "source_settlement_key": "london"
+      },
+      "province_id": "wp_london",
+      "rgb": [
+        66,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_amsterdam",
+        "wp_cardiff",
+        "wp_edinburgh",
+        "wp_lille",
+        "wp_liverpool",
+        "wp_nantes",
+        "wp_paris"
+      ]
+    },
+    {
+      "display_name": "Luleå",
+      "marker_anchor": [
+        1149.0,
+        884.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 65.5848,
+        "lon": 22.1547,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_lulea",
+        "source_settlement_key": "lulea"
+      },
+      "province_id": "wp_lulea",
+      "rgb": [
+        67,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bodo",
+        "wp_oulu",
+        "wp_umea",
+        "wp_vaasa"
+      ]
+    },
+    {
+      "display_name": "Luxemburg",
+      "marker_anchor": [
+        1058.0,
+        793.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 49.6116,
+        "lon": 6.1319,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_luxemburg",
+        "source_settlement_key": "luxemburg"
+      },
+      "province_id": "wp_luxemburg",
+      "rgb": [
+        68,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_brussels",
+        "wp_cologne",
+        "wp_lyon",
+        "wp_metz",
+        "wp_paris"
+      ]
+    },
+    {
+      "display_name": "Lyon",
+      "marker_anchor": [
+        1052.0,
+        774.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 45.764,
+        "lon": 4.8357,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_lyon",
+        "source_settlement_key": "lyon"
+      },
+      "province_id": "wp_lyon",
+      "rgb": [
+        69,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bern",
+        "wp_limoges",
+        "wp_luxemburg",
+        "wp_marseille",
+        "wp_metz",
+        "wp_paris",
+        "wp_toulouse",
+        "wp_turin"
+      ]
+    },
+    {
+      "display_name": "Madrid",
+      "marker_anchor": [
+        1002.0,
+        742.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 40.4168,
+        "lon": -3.7038,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_madrid",
+        "source_settlement_key": "madrid"
+      },
+      "province_id": "wp_madrid",
+      "rgb": [
+        70,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_badajoz",
+        "wp_bilbao",
+        "wp_coruna",
+        "wp_granada",
+        "wp_porto",
+        "wp_valencia"
+      ]
+    },
+    {
+      "display_name": "Malmö",
+      "marker_anchor": [
+        1097.0,
+        828.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 55.605,
+        "lon": 13.0038,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_malmo",
+        "source_settlement_key": "malmo"
+      },
+      "province_id": "wp_malmo",
+      "rgb": [
+        71,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_berlin",
+        "wp_copenhagen",
+        "wp_gothenburg",
+        "wp_kalmar",
+        "wp_karlstad"
+      ]
+    },
+    {
+      "display_name": "Marseille",
+      "marker_anchor": [
+        1054.0,
+        758.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 43.2965,
+        "lon": 5.3698,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_marseille",
+        "source_settlement_key": "marseille"
+      },
+      "province_id": "wp_marseille",
+      "rgb": [
+        72,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_ajaccio",
+        "wp_balearic",
+        "wp_barcelona",
+        "wp_lyon",
+        "wp_toulouse",
+        "wp_turin"
+      ]
+    },
+    {
+      "display_name": "Metz",
+      "marker_anchor": [
+        1059.0,
+        792.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 49.1193,
+        "lon": 6.1757,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_metz",
+        "source_settlement_key": "metz"
+      },
+      "province_id": "wp_metz",
+      "rgb": [
+        73,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bern",
+        "wp_cologne",
+        "wp_frankfurt",
+        "wp_luxemburg",
+        "wp_lyon",
+        "wp_stuttgart",
+        "wp_zurich"
+      ]
+    },
+    {
+      "display_name": "Milan",
+      "marker_anchor": [
+        1076.0,
+        770.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 45.4642,
+        "lon": 9.19,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_milan",
+        "source_settlement_key": "milan"
+      },
+      "province_id": "wp_milan",
+      "rgb": [
+        74,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bern",
+        "wp_bologna",
+        "wp_genoa",
+        "wp_innsbruck",
+        "wp_turin",
+        "wp_zurich"
+      ]
+    },
+    {
+      "display_name": "Minsk",
+      "marker_anchor": [
+        1181.0,
+        818.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "public_geo_theatre_extension",
+        "generator": "world_map_prototype_v1",
+        "lat": 53.9006,
+        "lon": 27.559,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "",
+        "source_settlement_key": "minsk"
+      },
+      "province_id": "wp_minsk",
+      "rgb": [
+        75,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bucharest",
+        "wp_helsinki",
+        "wp_joensuu",
+        "wp_kyiv",
+        "wp_moscow",
+        "wp_riga",
+        "wp_vilnius",
+        "wp_warsaw"
+      ]
+    },
+    {
+      "display_name": "Moscow",
+      "marker_anchor": [
+        1237.0,
+        828.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "public_geo_theatre_extension",
+        "generator": "world_map_prototype_v1",
+        "lat": 55.7558,
+        "lon": 37.6173,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "",
+        "source_settlement_key": "moscow"
+      },
+      "province_id": "wp_moscow",
+      "rgb": [
+        76,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_ankara",
+        "wp_baghdad",
+        "wp_joensuu",
+        "wp_kyiv",
+        "wp_minsk",
+        "wp_tehran"
+      ]
+    },
+    {
+      "display_name": "Munich",
+      "marker_anchor": [
+        1089.0,
+        785.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 48.1351,
+        "lon": 11.582,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_munich",
+        "source_settlement_key": "munich"
+      },
+      "province_id": "wp_munich",
+      "rgb": [
+        77,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_innsbruck",
+        "wp_nuremberg",
+        "wp_salzburg",
+        "wp_stuttgart"
+      ]
+    },
+    {
+      "display_name": "Nantes",
+      "marker_anchor": [
+        1015.0,
+        782.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 47.2184,
+        "lon": -1.5536,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_nantes",
+        "source_settlement_key": "nantes"
+      },
+      "province_id": "wp_nantes",
+      "rgb": [
+        78,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bilbao",
+        "wp_bordeaux",
+        "wp_brest",
+        "wp_cardiff",
+        "wp_limoges",
+        "wp_london",
+        "wp_paris",
+        "wp_plymouth"
+      ]
+    },
+    {
+      "display_name": "Naples",
+      "marker_anchor": [
+        1105.0,
+        743.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 40.8518,
+        "lon": 14.2681,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_naples",
+        "source_settlement_key": "naples"
+      },
+      "province_id": "wp_naples",
+      "rgb": [
+        79,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bari",
+        "wp_cosenza",
+        "wp_palermo",
+        "wp_rome",
+        "wp_trieste"
+      ]
+    },
+    {
+      "display_name": "Nuremberg",
+      "marker_anchor": [
+        1086.0,
+        793.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 49.4521,
+        "lon": 11.0767,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_nuremberg",
+        "source_settlement_key": "nuremberg"
+      },
+      "province_id": "wp_nuremberg",
+      "rgb": [
+        80,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_berlin",
+        "wp_dresden",
+        "wp_frankfurt",
+        "wp_hannover",
+        "wp_munich",
+        "wp_prague",
+        "wp_salzburg",
+        "wp_stuttgart"
+      ]
+    },
+    {
+      "display_name": "Oslo",
+      "marker_anchor": [
+        1085.0,
+        852.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 59.9139,
+        "lon": 10.7522,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_oslo",
+        "source_settlement_key": "oslo"
+      },
+      "province_id": "wp_oslo",
+      "rgb": [
+        81,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_arhus",
+        "wp_bergen",
+        "wp_gothenburg",
+        "wp_karlstad",
+        "wp_kristiansand",
+        "wp_ostersund",
+        "wp_trondheim"
+      ]
+    },
+    {
+      "display_name": "Östersund",
+      "marker_anchor": [
+        1107.0,
+        871.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 63.1767,
+        "lon": 14.6361,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_ostersund",
+        "source_settlement_key": "ostersund"
+      },
+      "province_id": "wp_ostersund",
+      "rgb": [
+        82,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bodo",
+        "wp_karlstad",
+        "wp_oslo",
+        "wp_trondheim",
+        "wp_umea",
+        "wp_uppsala"
+      ]
+    },
+    {
+      "display_name": "Oulu",
+      "marker_anchor": [
+        1168.0,
+        881.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 65.0121,
+        "lon": 25.4651,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_oulu",
+        "source_settlement_key": "oulu"
+      },
+      "province_id": "wp_oulu",
+      "rgb": [
+        83,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_helsinki",
+        "wp_joensuu",
+        "wp_kuopio",
+        "wp_lulea",
+        "wp_vaasa"
+      ]
+    },
+    {
+      "display_name": "Palermo",
+      "marker_anchor": [
+        1099.0,
+        728.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 38.1157,
+        "lon": 13.3615,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_palermo",
+        "source_settlement_key": "palermo"
+      },
+      "province_id": "wp_palermo",
+      "rgb": [
+        84,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_cagliari",
+        "wp_catania",
+        "wp_naples",
+        "wp_rome",
+        "wp_tripoli",
+        "wp_tunis"
+      ]
+    },
+    {
+      "display_name": "Paris",
+      "marker_anchor": [
+        1037.0,
+        787.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 48.8566,
+        "lon": 2.3522,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_paris",
+        "source_settlement_key": "paris"
+      },
+      "province_id": "wp_paris",
+      "rgb": [
+        85,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_brussels",
+        "wp_lille",
+        "wp_limoges",
+        "wp_london",
+        "wp_luxemburg",
+        "wp_lyon",
+        "wp_nantes"
+      ]
+    },
+    {
+      "display_name": "Plymouth",
+      "marker_anchor": [
+        1000.0,
+        798.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 50.3755,
+        "lon": -4.1427,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_plymouth",
+        "source_settlement_key": "plymouth"
+      },
+      "province_id": "wp_plymouth",
+      "rgb": [
+        86,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_brest",
+        "wp_cardiff",
+        "wp_cork",
+        "wp_dublin",
+        "wp_nantes"
+      ]
+    },
+    {
+      "display_name": "Porto",
+      "marker_anchor": [
+        974.0,
+        745.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 41.1579,
+        "lon": -8.6291,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_porto",
+        "source_settlement_key": "porto"
+      },
+      "province_id": "wp_porto",
+      "rgb": [
+        87,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_badajoz",
+        "wp_cork",
+        "wp_coruna",
+        "wp_lisbon",
+        "wp_madrid"
+      ]
+    },
+    {
+      "display_name": "Prague",
+      "marker_anchor": [
+        1106.0,
+        796.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "public_geo_theatre_extension",
+        "generator": "world_map_prototype_v1",
+        "lat": 50.0755,
+        "lon": 14.4378,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "",
+        "source_settlement_key": "prague"
+      },
+      "province_id": "wp_prague",
+      "rgb": [
+        88,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_berlin",
+        "wp_dresden",
+        "wp_graz",
+        "wp_nuremberg",
+        "wp_salzburg",
+        "wp_vienna",
+        "wp_warsaw"
+      ]
+    },
+    {
+      "display_name": "Riga",
+      "marker_anchor": [
+        1161.0,
+        835.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "public_geo_theatre_extension",
+        "generator": "world_map_prototype_v1",
+        "lat": 56.9496,
+        "lon": 24.1052,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "",
+        "source_settlement_key": "riga"
+      },
+      "province_id": "wp_riga",
+      "rgb": [
+        89,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_helsinki",
+        "wp_kalmar",
+        "wp_minsk",
+        "wp_stockholm",
+        "wp_turku",
+        "wp_vilnius",
+        "wp_warsaw"
+      ]
+    },
+    {
+      "display_name": "Rome",
+      "marker_anchor": [
+        1095.0,
+        750.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 41.9028,
+        "lon": 12.4964,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_rome",
+        "source_settlement_key": "rome"
+      },
+      "province_id": "wp_rome",
+      "rgb": [
+        90,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_cagliari",
+        "wp_florence",
+        "wp_naples",
+        "wp_palermo",
+        "wp_trieste",
+        "wp_venice"
+      ]
+    },
+    {
+      "display_name": "Salzburg",
+      "marker_anchor": [
+        1098.0,
+        783.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 47.8095,
+        "lon": 13.055,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_salzburg",
+        "source_settlement_key": "salzburg"
+      },
+      "province_id": "wp_salzburg",
+      "rgb": [
+        91,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_graz",
+        "wp_innsbruck",
+        "wp_munich",
+        "wp_nuremberg",
+        "wp_prague",
+        "wp_trieste",
+        "wp_venice"
+      ]
+    },
+    {
+      "display_name": "Stockholm",
+      "marker_anchor": [
+        1126.0,
+        849.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 59.3293,
+        "lon": 18.0686,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_stockholm",
+        "source_settlement_key": "stockholm"
+      },
+      "province_id": "wp_stockholm",
+      "rgb": [
+        92,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_kalmar",
+        "wp_riga",
+        "wp_turku",
+        "wp_uppsala"
+      ]
+    },
+    {
+      "display_name": "Stuttgart",
+      "marker_anchor": [
+        1076.0,
+        789.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 48.7758,
+        "lon": 9.1829,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_stuttgart",
+        "source_settlement_key": "stuttgart"
+      },
+      "province_id": "wp_stuttgart",
+      "rgb": [
+        93,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_frankfurt",
+        "wp_innsbruck",
+        "wp_metz",
+        "wp_munich",
+        "wp_nuremberg",
+        "wp_zurich"
+      ]
+    },
+    {
+      "display_name": "Tehran",
+      "marker_anchor": [
+        1316.0,
+        714.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "public_geo_theatre_extension",
+        "generator": "world_map_prototype_v1",
+        "lat": 35.6892,
+        "lon": 51.389,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "",
+        "source_settlement_key": "tehran"
+      },
+      "province_id": "wp_tehran",
+      "rgb": [
+        94,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_baghdad",
+        "wp_moscow"
+      ]
+    },
+    {
+      "display_name": "Toulouse",
+      "marker_anchor": [
+        1032.0,
+        759.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 43.6047,
+        "lon": 1.4442,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_toulouse",
+        "source_settlement_key": "toulouse"
+      },
+      "province_id": "wp_toulouse",
+      "rgb": [
+        95,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_barcelona",
+        "wp_bilbao",
+        "wp_bordeaux",
+        "wp_limoges",
+        "wp_lyon",
+        "wp_marseille",
+        "wp_valencia"
+      ]
+    },
+    {
+      "display_name": "Trieste",
+      "marker_anchor": [
+        1102.0,
+        772.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 45.6495,
+        "lon": 13.7768,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_trieste",
+        "source_settlement_key": "trieste"
+      },
+      "province_id": "wp_trieste",
+      "rgb": [
+        96,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_graz",
+        "wp_naples",
+        "wp_rome",
+        "wp_salzburg",
+        "wp_venice"
+      ]
+    },
+    {
+      "display_name": "Tripoli",
+      "marker_anchor": [
+        1099.0,
+        698.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "public_geo_theatre_extension",
+        "generator": "world_map_prototype_v1",
+        "lat": 32.8872,
+        "lon": 13.1913,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "",
+        "source_settlement_key": "tripoli"
+      },
+      "province_id": "wp_tripoli",
+      "rgb": [
+        97,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_algiers",
+        "wp_athens",
+        "wp_cairo",
+        "wp_casablanca",
+        "wp_catania",
+        "wp_palermo",
+        "wp_tunis"
+      ]
+    },
+    {
+      "display_name": "Trondheim",
+      "marker_anchor": [
+        1083.0,
+        872.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 63.4305,
+        "lon": 10.3951,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_trondheim",
+        "source_settlement_key": "trondheim"
+      },
+      "province_id": "wp_trondheim",
+      "rgb": [
+        98,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bergen",
+        "wp_bodo",
+        "wp_oslo",
+        "wp_ostersund"
+      ]
+    },
+    {
+      "display_name": "Tunis",
+      "marker_anchor": [
+        1081.0,
+        722.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "public_geo_theatre_extension",
+        "generator": "world_map_prototype_v1",
+        "lat": 36.8065,
+        "lon": 10.1815,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "",
+        "source_settlement_key": "tunis"
+      },
+      "province_id": "wp_tunis",
+      "rgb": [
+        99,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_algiers",
+        "wp_cagliari",
+        "wp_palermo",
+        "wp_tripoli"
+      ]
+    },
+    {
+      "display_name": "Turin",
+      "marker_anchor": [
+        1067.0,
+        768.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 45.0703,
+        "lon": 7.6869,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_turin",
+        "source_settlement_key": "turin"
+      },
+      "province_id": "wp_turin",
+      "rgb": [
+        100,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_ajaccio",
+        "wp_bern",
+        "wp_genoa",
+        "wp_lyon",
+        "wp_marseille",
+        "wp_milan"
+      ]
+    },
+    {
+      "display_name": "Turku",
+      "marker_anchor": [
+        1150.0,
+        855.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 60.4518,
+        "lon": 22.2666,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_turku",
+        "source_settlement_key": "turku"
+      },
+      "province_id": "wp_turku",
+      "rgb": [
+        101,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_helsinki",
+        "wp_riga",
+        "wp_stockholm",
+        "wp_uppsala",
+        "wp_vaasa"
+      ]
+    },
+    {
+      "display_name": "Umeå",
+      "marker_anchor": [
+        1139.0,
+        874.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 63.8258,
+        "lon": 20.263,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_umea",
+        "source_settlement_key": "umea"
+      },
+      "province_id": "wp_umea",
+      "rgb": [
+        102,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bodo",
+        "wp_lulea",
+        "wp_ostersund",
+        "wp_uppsala",
+        "wp_vaasa"
+      ]
+    },
+    {
+      "display_name": "Uppsala",
+      "marker_anchor": [
+        1124.0,
+        852.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 59.8586,
+        "lon": 17.6389,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_uppsala",
+        "source_settlement_key": "uppsala"
+      },
+      "province_id": "wp_uppsala",
+      "rgb": [
+        103,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_kalmar",
+        "wp_karlstad",
+        "wp_ostersund",
+        "wp_stockholm",
+        "wp_turku",
+        "wp_umea",
+        "wp_vaasa"
+      ]
+    },
+    {
+      "display_name": "Vaasa",
+      "marker_anchor": [
+        1146.0,
+        870.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 63.0951,
+        "lon": 21.6165,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_vaasa",
+        "source_settlement_key": "vaasa"
+      },
+      "province_id": "wp_vaasa",
+      "rgb": [
+        104,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_helsinki",
+        "wp_lulea",
+        "wp_oulu",
+        "wp_turku",
+        "wp_umea",
+        "wp_uppsala"
+      ]
+    },
+    {
+      "display_name": "Valencia",
+      "marker_anchor": [
+        1021.0,
+        736.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 39.4699,
+        "lon": -0.3763,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_valencia",
+        "source_settlement_key": "valencia"
+      },
+      "province_id": "wp_valencia",
+      "rgb": [
+        105,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_algiers",
+        "wp_balearic",
+        "wp_barcelona",
+        "wp_bilbao",
+        "wp_granada",
+        "wp_madrid",
+        "wp_toulouse"
+      ]
+    },
+    {
+      "display_name": "Venice",
+      "marker_anchor": [
+        1094.0,
+        770.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 45.4408,
+        "lon": 12.3155,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_venice",
+        "source_settlement_key": "venice"
+      },
+      "province_id": "wp_venice",
+      "rgb": [
+        106,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bologna",
+        "wp_florence",
+        "wp_innsbruck",
+        "wp_rome",
+        "wp_salzburg",
+        "wp_trieste"
+      ]
+    },
+    {
+      "display_name": "Vienna",
+      "marker_anchor": [
+        1117.0,
+        785.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 48.2082,
+        "lon": 16.3738,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_vienna",
+        "source_settlement_key": "vienna"
+      },
+      "province_id": "wp_vienna",
+      "rgb": [
+        107,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_budapest",
+        "wp_graz",
+        "wp_prague",
+        "wp_warsaw"
+      ]
+    },
+    {
+      "display_name": "Vilnius",
+      "marker_anchor": [
+        1167.0,
+        822.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "public_geo_theatre_extension",
+        "generator": "world_map_prototype_v1",
+        "lat": 54.6872,
+        "lon": 25.2797,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "",
+        "source_settlement_key": "vilnius"
+      },
+      "province_id": "wp_vilnius",
+      "rgb": [
+        108,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_minsk",
+        "wp_riga",
+        "wp_warsaw"
+      ]
+    },
+    {
+      "display_name": "Warsaw",
+      "marker_anchor": [
+        1143.0,
+        808.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "public_geo_theatre_extension",
+        "generator": "world_map_prototype_v1",
+        "lat": 52.2297,
+        "lon": 21.0122,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "",
+        "source_settlement_key": "warsaw"
+      },
+      "province_id": "wp_warsaw",
+      "rgb": [
+        109,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_berlin",
+        "wp_bucharest",
+        "wp_budapest",
+        "wp_kalmar",
+        "wp_minsk",
+        "wp_prague",
+        "wp_riga",
+        "wp_vienna",
+        "wp_vilnius"
+      ]
+    },
+    {
+      "display_name": "Zürich",
+      "marker_anchor": [
+        1072.0,
+        781.0
+      ],
+      "name_is_human_readable": true,
+      "provenance": {
+        "confidence": "settlement_loc+public_geo",
+        "generator": "world_map_prototype_v1",
+        "lat": 47.3769,
+        "lon": 8.5417,
+        "method": "settlement_seeded_voronoi_equirectangular",
+        "source_region_key": "bos_zurich",
+        "source_settlement_key": "zurich"
+      },
+      "province_id": "wp_zurich",
+      "rgb": [
+        110,
+        0,
+        0
+      ],
+      "source_neighbors": [
+        "wp_bern",
+        "wp_innsbruck",
+        "wp_metz",
+        "wp_milan",
+        "wp_stuttgart"
+      ]
+    }
+  ],
+  "runtime_contract": {
+    "gameplay_key": "province_id",
+    "ownership": "runtime recolor only; source ID texture remains immutable",
+    "pixel_lookup": "sample source ID texture with nearest-neighbor coordinates"
+  },
+  "schema": "gates-of-codex.strategic-map",
+  "schema_version": 1,
+  "theatre": {
+    "description": "Full equirectangular world projection; denser seeds in Europe/N.Africa/ME/W.Russia",
+    "height": 1024,
+    "province_count": 110,
+    "seed_count": 110,
+    "width": 2048
+  }
+}

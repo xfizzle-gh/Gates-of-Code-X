@@ -2,6 +2,7 @@ extends "res://scripts/main_writeback.gd"
 
 const ColorIdMapScript = preload("res://scripts/color_id_map.gd")
 const DEFAULT_MAP_MANIFEST := "res://assets/maps/europe/interim_goe/map_manifest.json"
+const WORLD_MAP_MANIFEST := "res://assets/maps/world/prototype/map_manifest.json"
 
 var color_id_map = ColorIdMapScript.new()
 var map_manifest_source_path := DEFAULT_MAP_MANIFEST
@@ -13,7 +14,32 @@ func _ready() -> void:
 	if args.size() > 1:
 		map_manifest_source_path = String(args[1])
 	super._ready()
+	if args.size() <= 1:
+		map_manifest_source_path = _resolve_map_manifest_path()
 	_open_color_id_map()
+
+
+func _resolve_map_manifest_path() -> String:
+	var contract: Dictionary = snapshot.get("strategic_map", {})
+	var exported := String(contract.get("manifest_path", "")).strip_edges()
+	if not exported.is_empty() and FileAccess.file_exists(exported):
+		return exported
+	var map_id := String(contract.get("map_id", ""))
+	if map_id in ["goe_europe", "interim_goe_europe"] and FileAccess.file_exists(DEFAULT_MAP_MANIFEST):
+		return DEFAULT_MAP_MANIFEST
+	if map_id == "world_prototype" and FileAccess.file_exists(WORLD_MAP_MANIFEST):
+		return WORLD_MAP_MANIFEST
+	var campaign: Dictionary = snapshot.get("campaign", {})
+	var meta: Dictionary = campaign.get("map_metadata", {})
+	var configured := String(meta.get("strategic_map_id", ""))
+	if configured in ["goe_europe", "interim_goe_europe"] and FileAccess.file_exists(DEFAULT_MAP_MANIFEST):
+		return DEFAULT_MAP_MANIFEST
+	if configured == "world_prototype" and FileAccess.file_exists(WORLD_MAP_MANIFEST):
+		return WORLD_MAP_MANIFEST
+	# New strategic target: prefer world prototype when present; Europe remains fallback.
+	if FileAccess.file_exists(WORLD_MAP_MANIFEST):
+		return WORLD_MAP_MANIFEST
+	return DEFAULT_MAP_MANIFEST
 
 
 func _load_snapshot(path: String) -> void:

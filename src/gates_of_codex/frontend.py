@@ -285,12 +285,18 @@ def _strategic_map_block(
 ) -> dict:
     snapshot_directory = Path(snapshot_path).resolve().parent if snapshot_path else None
     configured = str(state.map_metadata.get("strategic_map_manifest", "")).strip()
+    map_id = str(state.map_metadata.get("strategic_map_id", state.map_id) or state.map_id)
     if configured:
         manifest = Path(configured).expanduser()
         if not manifest.is_absolute() and snapshot_directory is not None:
             manifest = snapshot_directory / manifest
     elif snapshot_directory is not None:
-        manifest = snapshot_directory / "assets/maps/europe/interim_goe/map_manifest.json"
+        relative = {
+            "world_prototype": "assets/maps/world/prototype/map_manifest.json",
+            "goe_europe": "assets/maps/europe/interim_goe/map_manifest.json",
+            "interim_goe_europe": "assets/maps/europe/interim_goe/map_manifest.json",
+        }.get(map_id, "assets/maps/europe/interim_goe/map_manifest.json")
+        manifest = snapshot_directory / relative
     else:
         manifest = None
     resolved = manifest.resolve() if manifest is not None else None
@@ -298,11 +304,17 @@ def _strategic_map_block(
         "enabled": bool(resolved and resolved.is_file()),
         "manifest_path": str(resolved) if resolved else "",
         "configured": bool(configured),
-        "map_id": state.map_id,
+        "map_id": map_id,
+        "available_map_ids": [
+            "interim_goe_europe",
+            "world_prototype",
+        ],
         "provenance": str(
             state.map_metadata.get(
                 "strategic_map_provenance",
-                "interim_goe_reference_asset" if state.map_id == "goe_europe" else "",
+                "project_owned_world_prototype_v1"
+                if map_id == "world_prototype"
+                else "interim_goe_reference_asset",
             )
         ),
         "fallback": "marker_non_authoritative",
