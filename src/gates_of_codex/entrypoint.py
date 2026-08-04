@@ -10,6 +10,7 @@ from . import cli
 from .codex.catalog import CodeXCatalogScanner
 from .doctor import diagnose
 from .economy import initialize_economy
+from .europe import load_goe_europe_graph
 from .goe_source_audit import write_goe_source_audit
 from .models import Faction
 from .modstack import resolve_stack, stack_to_strings
@@ -19,6 +20,12 @@ from .stack_acceptance import validate_mod_stack
 from .starter import populate_starter_rosters, set_player_faction
 from .state_io import save_campaign
 from .strategic import evaluate_campaign_outcome
+from .strategic_map import (
+    import_interim_goe_map,
+    import_strategic_map,
+    load_province_table,
+    write_interim_goe_province_table,
+)
 
 
 FACTION_CHOICES = ["nato", "ukr", "rusa", "prc"]
@@ -113,6 +120,102 @@ def _run_audit_goe_provinces(arguments: list[str]) -> int:
     return 0
 
 
+def _run_write_interim_goe_table(arguments: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="gates-of-codex write-interim-goe-table")
+    parser.add_argument(
+        "--output",
+        default="assets/maps/europe/interim_goe/provinces.json",
+    )
+    args = parser.parse_args(arguments)
+    destination = write_interim_goe_province_table(args.output)
+    payload = json.loads(destination.read_text(encoding="utf-8"))
+    print(json.dumps({
+        "ok": True,
+        "output": str(destination),
+        "province_count": len(payload["provinces"]),
+        "provenance": payload["provenance"],
+    }, indent=2))
+    return 0
+
+
+def _run_import_strategic_map(arguments: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="gates-of-codex import-strategic-map")
+    parser.add_argument("--id-map", required=True)
+    parser.add_argument("--province-table")
+    parser.add_argument(
+        "--goe-interim",
+        action="store_true",
+        help="use the deterministic 517-row interim GoE province table",
+    )
+    parser.add_argument("--output", required=True)
+    parser.add_argument("--texture-output")
+    parser.add_argument("--map-id", default="custom")
+    parser.add_argument("--provenance", default="project_owned")
+    parser.add_argument(
+        "--ignore-rgb",
+        action="append",
+        default=[],
+        help="background RGB to ignore, such as 0,0,0; may be repeated",
+    )
+    parser.add_argument("--validate-against-goe-graph", action="store_true")
+    args = parser.parse_args(arguments)
+    ignored = [_parse_rgb(value) for value in (args.ignore_rgb or ["0,0,0"])]
+    if args.goe_interim:
+        if args.province_table:
+            parser.error("--goe-interim cannot be combined with --province-table")
+        manifest = import_interim_goe_map(
+            args.id_map,
+            args.output,
+            texture_output=args.texture_output,
+            ignored_colors=ignored,
+        )
+    else:
+        if not args.province_table:
+            parser.error("provide --province-table or --goe-interim")
+        expected_graph = (
+            load_goe_europe_graph()["provinces"]
+            if args.validate_against_goe_graph
+            else None
+        )
+        manifest = import_strategic_map(
+            args.id_map,
+            load_province_table(args.province_table),
+            args.output,
+            map_id=args.map_id,
+            provenance=args.provenance,
+            ignored_colors=ignored,
+            expected_graph=expected_graph,
+            texture_output=args.texture_output,
+        )
+    print(json.dumps({
+        "ok": True,
+        "output": str(Path(args.output)),
+        "map_id": manifest["map_id"],
+        "provenance": manifest["provenance"],
+        "province_count": manifest["province_count"],
+        "texture": manifest["id_texture"]["path"],
+        "dimensions": [
+            manifest["id_texture"]["width"],
+            manifest["id_texture"]["height"],
+        ],
+        "adjacency_edges": manifest["adjacency"]["edge_count"],
+    }, indent=2))
+    return 0
+
+
+def _parse_rgb(value: str) -> tuple[int, int, int]:
+    parts = [part.strip() for part in value.split(",")]
+    if len(parts) != 3:
+        raise argparse.ArgumentTypeError(f"RGB must contain three comma-separated values: {value}")
+    try:
+        rgb = tuple(int(part) for part in parts)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"RGB must contain integers: {value}") from exc
+    if any(channel < 0 or channel > 255 for channel in rgb):
+        raise argparse.ArgumentTypeError(f"RGB channels must be 0..255: {value}")
+    return rgb
+
+
 def _run_new(arguments: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="gates-of-codex new")
     _add_stack_arguments(parser)
@@ -184,6 +287,10 @@ def main(argv: list[str] | None = None) -> int:
         return _run_scan(remainder)
     if command == "audit-goe-provinces":
         return _run_audit_goe_provinces(remainder)
+    if command == "write-interim-goe-table":
+        return _run_write_interim_goe_table(remainder)
+    if command == "import-strategic-map":
+        return _run_import_strategic_map(remainder)
     if command == "new":
         return _run_new(remainder)
     if command == "export-battle":
