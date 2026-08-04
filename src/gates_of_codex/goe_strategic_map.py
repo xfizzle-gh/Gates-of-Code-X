@@ -1,18 +1,41 @@
 from __future__ import annotations
 
+import json
+import re
 from collections import Counter
+from dataclasses import dataclass
 from pathlib import Path
 
 from .europe import load_goe_europe_graph
 from .map_layout import load_marker_layout
-from .strategic_map import (
-    GraphMappingResult,
-    import_strategic_map,
-    resolve_graph_mapping,
-)
+from .strategic_map import import_strategic_map
 
 
 RGB = tuple[int, int, int]
+Edge = tuple[str, str]
+
+
+@dataclass(frozen=True, slots=True)
+class GoEGraphAlignment:
+    graph_to_source: dict[str, str]
+    methods: dict[str, str]
+    source_index_offset: int
+    seed_count: int
+    missing_campaign_edges: tuple[Edge, ...]
+    extra_source_edges: tuple[Edge, ...]
+    verified: bool
+
+    def to_dict(self) -> dict:
+        return {
+            "graph_to_source": dict(sorted(self.graph_to_source.items())),
+            "methods": dict(sorted(self.methods.items())),
+            "source_index_offset": self.source_index_offset,
+            "seed_count": self.seed_count,
+            "missing_campaign_edges": [list(edge) for edge in self.missing_campaign_edges],
+            "extra_source_edges": [list(edge) for edge in self.extra_source_edges],
+            "verified": self.verified,
+            "method_counts": dict(sorted(Counter(self.methods.values()).items())),
+        }
 
 
 def build_goe_source_nodes() -> dict[str, dict]:
@@ -25,12 +48,7 @@ def build_goe_source_nodes() -> dict[str, dict]:
         original_id = str(row.get("id", "")).strip()
         if not original_id:
             raise ValueError("GoE marker row has no textual ID")
-        color = _rgb(row["id_color"])
-        node_key = (
-            original_id
-            if id_counts[original_id] == 1
-            else f"{original_id}#{color[0]:02x}{color[1]:02x}{color[2]:02x}"
-        )
+        node_key = _source_key(row, id_counts)
         if node_key in node_rows:
             raise ValueError(f"GoE marker row key still collides: {node_key}")
         row["source_province_id"] = original_id
@@ -71,19 +89,114 @@ def build_goe_source_nodes() -> dict[str, dict]:
     return node_rows
 
 
-def resolve_goe_graph_mapping() -> GraphMappingResult:
+def resolve_goe_graph_mapping() -> GoEGraphAlignment:
     graph = load_goe_europe_graph()["provinces"]
-    return resolve_graph_mapping(graph, build_goe_source_nodes())
+    marker_rows = [dict(row) for row in load_marker_layout()["provinces"]]
+    source = build_goe_source_nodes()
+    id_counts = Counter(str(row.get("id", "")) for row in marker_rows)
+    graph_edges = _edges(graph)
+    source_edges = _edges(source)
+    candidates: list[GoEGraphAlignment] = []
+
+    for offset in (0, 1):
+        mapping: dict[str, str] = {}
+        methods: dict[str, str] = {}
+        used: set[str] = set()
+        valid = True
+        seed_count = 0
+        for graph_id, graph_row in graph.items():
+            synthetic = re.fullmatch(r"province_(\d+)", graph_id)
+            marker_row: dict | None = None
+            method = ""
+            if synthetic:
+                marker_index = int(synthetic.group(1)) - offset
+                if 0 <= marker_index < len(marker_rows):
+                    marker_row = marker_rows[marker_index]
+                    method = f"preserved_source_index_{offset}"
+            else:
+                graph_name = str(graph_row.get("display_name", graph_id))
+                matches = [
+                    row
+                    for row in marker_rows
+                    if str(row.get("id", "")) == graph_id
+                    or str(row.get("display_name", "")) == graph_name
+                ]
+                if len(matches) == 1:
+                    marker_row = matches[0]
+                    method = "exact_text_id"
+                    seed_count += 1
+            if marker_row is None:
+                valid = False
+                break
+            source_key = _source_key(marker_row, id_counts)
+            if source_key not in source or source_key in used:
+                valid = False
+                break
+            mapping[graph_id] = source_key
+            methods[graph_id] = method
+            used.add(source_key)
+
+        if not valid or len(mapping) != len(graph) or len(used) != len(source):
+            continue
+        mapped_graph_edges = {
+            tuple(sorted((mapping[left], mapping[right])))
+            for left, right in graph_edges
+        }
+        missing = tuple(sorted(mapped_graph_edges - source_edges))
+        extra = tuple(sorted(source_edges - mapped_graph_edges))
+        candidates.append(
+            GoEGraphAlignment(
+                graph_to_source=dict(sorted(mapping.items())),
+                methods=dict(sorted(methods.items())),
+                source_index_offset=offset,
+                seed_count=seed_count,
+                missing_campaign_edges=missing,
+                extra_source_edges=extra,
+                verified=not missing,
+            )
+        )
+
+    if not candidates:
+        raise ValueError("Could not construct a complete GoE source-index alignment")
+    selected = min(
+        candidates,
+        key=lambda value: (
+            len(value.missing_campaign_edges),
+            len(value.extra_source_edges),
+            value.source_index_offset,
+        ),
+    )
+    if not selected.verified:
+        raise ValueError(
+            "GoE source-index alignment omits campaign graph edges: "
+            f"{len(selected.missing_campaign_edges)}"
+        )
+    return selected
+
+
+def build_aligned_source_graph(
+    alignment: GoEGraphAlignment | None = None,
+) -> dict[str, dict]:
+    resolved = alignment or resolve_goe_graph_mapping()
+    source = build_goe_source_nodes()
+    reverse = {source_id: graph_id for graph_id, source_id in resolved.graph_to_source.items()}
+    graph: dict[str, dict] = {}
+    for graph_id, source_id in resolved.graph_to_source.items():
+        graph[graph_id] = {
+            "neighbors": sorted(reverse[neighbor] for neighbor in source[source_id]["neighbors"]),
+        }
+    return graph
 
 
 def build_interim_goe_province_table() -> list[dict]:
     graph = load_goe_europe_graph()["provinces"]
     source = build_goe_source_nodes()
-    result = resolve_graph_mapping(graph, source)
+    alignment = resolve_goe_graph_mapping()
+    reverse = {source_id: graph_id for graph_id, source_id in alignment.graph_to_source.items()}
     table: list[dict] = []
     colors: set[RGB] = set()
     for province_id in sorted(graph):
-        source_key = result.graph_to_source[province_id]
+        source_key = alignment.graph_to_source[province_id]
         marker = source[source_key]
         color = _rgb(marker["id_color"])
         if color in colors:
@@ -95,7 +208,9 @@ def build_interim_goe_province_table() -> list[dict]:
             "rgb": list(color),
             "source_province_id": marker["source_province_id"],
             "source_node_key": source_key,
-            "mapping_method": result.methods[province_id],
+            "mapping_method": alignment.methods[province_id],
+            "source_index_offset": alignment.source_index_offset,
+            "source_neighbors": sorted(reverse[neighbor] for neighbor in marker["neighbors"]),
             "marker_anchor": [float(marker["x"]), float(marker["y"])],
             "marker_map_region": marker.get("map_region"),
         })
@@ -105,15 +220,15 @@ def build_interim_goe_province_table() -> list[dict]:
 
 
 def write_interim_goe_province_table(path: str | Path) -> Path:
-    import json
-
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
+    alignment = resolve_goe_graph_mapping()
     payload = {
         "schema": "gates-of-codex.province-table",
         "schema_version": 1,
         "map_id": "goe_europe",
         "provenance": "interim_goe_reference_asset",
+        "alignment": alignment.to_dict(),
         "provinces": build_interim_goe_province_table(),
     }
     destination.write_text(
@@ -130,16 +245,25 @@ def import_interim_goe_map(
     texture_output: str | Path | None = None,
     ignored_colors: tuple[RGB, ...] | list[RGB] = ((0, 0, 0),),
 ) -> dict:
-    return import_strategic_map(
+    campaign_graph = load_goe_europe_graph()["provinces"]
+    alignment = resolve_goe_graph_mapping()
+    manifest = import_strategic_map(
         id_map,
         build_interim_goe_province_table(),
         output,
         map_id="goe_europe",
         provenance="interim_goe_reference_asset",
         ignored_colors=ignored_colors,
-        expected_graph=load_goe_europe_graph()["provinces"],
+        expected_graph=build_aligned_source_graph(alignment),
+        campaign_graph=campaign_graph,
         texture_output=texture_output,
     )
+    manifest["source_alignment"] = alignment.to_dict()
+    Path(output).write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return manifest
 
 
 def duplicate_marker_ids() -> dict[str, list[dict]]:
@@ -168,6 +292,23 @@ def degree_distributions() -> dict[str, dict[int, int]]:
     return {
         "graph": dict(sorted(Counter(len(row.get("neighbors", [])) for row in graph.values()).items())),
         "source": dict(sorted(Counter(len(row.get("neighbors", [])) for row in source.values()).items())),
+    }
+
+
+def _source_key(row: dict, counts: Counter[str]) -> str:
+    original_id = str(row.get("id", "")).strip()
+    if counts[original_id] == 1:
+        return original_id
+    color = _rgb(row["id_color"])
+    return f"{original_id}#{color[0]:02x}{color[1]:02x}{color[2]:02x}"
+
+
+def _edges(rows: dict[str, dict]) -> set[Edge]:
+    return {
+        tuple(sorted((node_id, str(neighbor))))
+        for node_id, row in rows.items()
+        for neighbor in row.get("neighbors", [])
+        if str(neighbor) in rows and str(neighbor) != node_id
     }
 
 
