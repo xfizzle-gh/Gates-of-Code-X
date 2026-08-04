@@ -7,6 +7,7 @@ const EM_FROM_GOE_MANIFEST := "res://assets/maps/europe_mediterranean/from_goe/m
 var color_id_map = ColorIdMapScript.new()
 var map_manifest_source_path := DEFAULT_MAP_MANIFEST
 var hovered_province_id := ""
+var show_coalition_fronts := false
 
 
 func _ready() -> void:
@@ -75,7 +76,8 @@ func _draw() -> void:
 		draw_texture_rect(color_id_map.owner_texture, texture_rect, false)
 	if color_id_map.border_texture != null:
 		draw_texture_rect(color_id_map.border_texture, texture_rect, false)
-	_draw_coalition_fronts()
+	if show_coalition_fronts:
+		_draw_coalition_fronts()
 	if color_id_map.highlight_texture != null:
 		draw_texture_rect(color_id_map.highlight_texture, texture_rect, false)
 	_draw_color_id_pending_battle()
@@ -97,10 +99,12 @@ func _draw() -> void:
 		22,
 		Color.WHITE
 	)
-	var diag := "Map: %s  |  Provinces: %s  |  %s" % [
+	var front_mode := "fronts:on" if show_coalition_fronts else "fronts:off"
+	var diag := "Map: %s  |  Provinces: %s  |  %s  |  %s" % [
 		String(map_contract.get("map_id", campaign.get("map_id", ""))),
 		int(snapshot.get("provinces", []).size()),
 		color_id_map.background_status(),
+		front_mode,
 	]
 	draw_string(
 		ThemeDB.fallback_font,
@@ -111,7 +115,7 @@ func _draw() -> void:
 		14,
 		Color("9fd7ff")
 	)
-	var hint := "F fit front  |  click province shape  |  wheel zoom  |  drag pan"
+	var hint := "F fit  |  G coalition fronts  |  click province  |  wheel zoom  |  drag pan"
 	if not status_message.is_empty():
 		hint = status_message
 	draw_string(
@@ -127,6 +131,7 @@ func _draw() -> void:
 
 
 func _draw_coalition_fronts() -> void:
+	# Debug-only: orange lines are ownership-adjacency front segments, not province borders.
 	for edge: Array in snapshot.get("edges", []):
 		if edge.size() != 2:
 			continue
@@ -141,8 +146,8 @@ func _draw_coalition_fronts() -> void:
 		draw_line(
 			_image_to_screen(color_id_map.anchor_pixel(left_id)),
 			_image_to_screen(color_id_map.anchor_pixel(right_id)),
-			Color(1.0, 0.76, 0.31, 0.42),
-			1.4
+			Color(1.0, 0.76, 0.31, 0.35),
+			1.0
 		)
 
 
@@ -282,6 +287,18 @@ func _is_named_province(label: String) -> bool:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		var key := event as InputEventKey
+		if key.keycode == KEY_G:
+			show_coalition_fronts = not show_coalition_fronts
+			status_message = (
+				"Coalition front lines ON (ownership-adjacency debug). Press G to hide."
+				if show_coalition_fronts
+				else "Coalition front lines OFF."
+			)
+			queue_redraw()
+			get_viewport().set_input_as_handled()
+			return
 	if event is InputEventMouseMotion and color_id_map != null and color_id_map.is_ready:
 		var motion := event as InputEventMouseMotion
 		var map_width := get_viewport_rect().size.x - PANEL_WIDTH

@@ -206,7 +206,8 @@ func _rebuild_border_texture() -> void:
 					is_border = true
 					break
 			if is_border:
-				output.set_pixel(x, y, Color(0.025, 0.03, 0.04, 0.82))
+				# Subtle gray edge; selected/front overlays carry emphasis.
+				output.set_pixel(x, y, Color(0.42, 0.45, 0.48, 0.38 if has_background else 0.50))
 	border_texture = ImageTexture.create_from_image(output)
 
 

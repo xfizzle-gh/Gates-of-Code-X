@@ -48,20 +48,34 @@ FORCE_INCLUDE_PROVINCE_IDS: frozenset[str] = frozenset(
     }
 )
 
+# Deep interior only. Coastal Libyan/Egyptian approaches are CLIPPED, not deleted,
+# so the Mediterranean silhouette stays intact.
 FORCE_EXCLUDE_PROVINCE_IDS: frozenset[str] = frozenset(
     {
         "province_0066",  # Western Desert
         "province_0081",  # Fezzan
         "province_0103",  # Algerian Desert
         "province_0080",  # Marrakech
-        "province_0093",  # El Agheila
-        "province_0085",  # Sirte desert belt
-        "province_0087",  # Matrouh desert approach
         "province_0062",  # deep south generic
         "province_0072",  # deep south/east generic
         "province_0083",  # Jordan interior
     }
 )
+
+# Marker-space clip mask (tighter south than selection). Edge provinces intersecting
+# this rect are reshaped; pixels outside become sea. Whole provinces are not deleted
+# merely for straddling the boundary.
+CLIP_THEATRE = {
+    "x_min": -4.2,
+    "x_max": 3.2,
+    # Marker y increases north. Keep Nile Delta (~-1.56) and Maghreb coast;
+    # clip only deeper Sahara south of that belt.
+    "y_min": -1.72,
+    "y_max": 5.0,
+}
+
+MIN_CLIPPED_PIXELS = 12
+MIN_CLIP_RATIO_TO_DROP = 0.08
 
 EXCLUDES = [
     "deep Central Asia / far Russia east of theatre",
@@ -143,23 +157,97 @@ def select_theatre_provinces(province_table: list[dict]) -> tuple[list[dict], di
     return kept, report
 
 
-def _province_pixel_bbox(
-    image,
-    kept_colors: set[tuple[int, int, int]],
-) -> tuple[int, int, int, int]:
-    min_x, min_y = image.width, image.height
-    max_x, max_y = -1, -1
+def _province_pixel_stats(image) -> dict[tuple[int, int, int], dict]:
+    """Per-color pixel count and centroid on the full ID map."""
+
+    stats: dict[tuple[int, int, int], dict] = {}
     for y in range(image.height):
         for x in range(image.width):
-            if image.color_at(x, y) not in kept_colors:
+            color = image.color_at(x, y)
+            if color == (0, 0, 0) or color == (255, 255, 255):
                 continue
-            min_x = min(min_x, x)
-            max_x = max(max_x, x)
-            min_y = min(min_y, y)
-            max_y = max(max_y, y)
-    if max_x < 0:
-        raise RuntimeError("No theatre province pixels found in ID map")
-    return min_x, min_y, max_x, max_y
+            row = stats.get(color)
+            if row is None:
+                row = {"count": 0, "sx": 0.0, "sy": 0.0, "min_x": x, "max_x": x, "min_y": y, "max_y": y}
+                stats[color] = row
+            row["count"] += 1
+            row["sx"] += x
+            row["sy"] += y
+            row["min_x"] = min(row["min_x"], x)
+            row["max_x"] = max(row["max_x"], x)
+            row["min_y"] = min(row["min_y"], y)
+            row["max_y"] = max(row["max_y"], y)
+    for row in stats.values():
+        n = max(row["count"], 1)
+        row["cx"] = row["sx"] / n
+        row["cy"] = row["sy"] / n
+    return stats
+
+
+def _fit_marker_to_pixel(
+    province_table: list[dict],
+    color_stats: dict[tuple[int, int, int], dict],
+) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
+    """Linear map marker (mx,my) -> pixel (px,py) using province anchors/centroids."""
+
+    pairs: list[tuple[float, float, float, float]] = []
+    for row in province_table:
+        color = tuple(int(c) for c in row.get("rgb", []))
+        stat = color_stats.get(color)
+        if stat is None or stat["count"] < 8:
+            continue
+        anchor = row.get("marker_anchor") or [0.0, 0.0]
+        pairs.append((float(anchor[0]), float(anchor[1]), float(stat["cx"]), float(stat["cy"])))
+    if len(pairs) < 8:
+        raise RuntimeError("Not enough provinces to fit marker→pixel map")
+
+    def fit_axis(src_a: list[float], src_b: list[float], dst: list[float]) -> tuple[float, float, float]:
+        # dst ~= p*src_a + q*src_b + r
+        n = float(len(dst))
+        sa = sum(src_a)
+        sb = sum(src_b)
+        sd = sum(dst)
+        saa = sum(a * a for a in src_a)
+        sbb = sum(b * b for b in src_b)
+        sab = sum(a * b for a, b in zip(src_a, src_b))
+        sad = sum(a * d for a, d in zip(src_a, dst))
+        sbd = sum(b * d for b, d in zip(src_b, dst))
+        # Solve 3x3 normal equations.
+        m = [
+            [saa, sab, sa, sad],
+            [sab, sbb, sb, sbd],
+            [sa, sb, n, sd],
+        ]
+        for col in range(3):
+            pivot = max(range(col, 3), key=lambda r: abs(m[r][col]))
+            m[col], m[pivot] = m[pivot], m[col]
+            div = m[col][col] or 1e-12
+            for j in range(col, 4):
+                m[col][j] /= div
+            for row_i in range(3):
+                if row_i == col:
+                    continue
+                factor = m[row_i][col]
+                for j in range(col, 4):
+                    m[row_i][j] -= factor * m[col][j]
+        return m[0][3], m[1][3], m[2][3]
+
+    mxs = [p[0] for p in pairs]
+    mys = [p[1] for p in pairs]
+    pxs = [p[2] for p in pairs]
+    pys = [p[3] for p in pairs]
+    return fit_axis(mxs, mys, pxs), fit_axis(mxs, mys, pys)
+
+
+def _marker_to_pixel(
+    mx: float,
+    my: float,
+    x_map: tuple[float, float, float],
+    y_map: tuple[float, float, float],
+) -> tuple[float, float]:
+    p, q, r = x_map
+    s, t, u = y_map
+    return p * mx + q * my + r, s * mx + t * my + u
 
 
 def generate_europe_mediterranean_from_goe(
@@ -167,54 +255,150 @@ def generate_europe_mediterranean_from_goe(
     output_dir: str | Path = DEFAULT_OUTPUT_DIR,
     pad_px: int = 12,
 ) -> dict:
-    """Crop the working interim GoE color-ID map to a Europe–Mediterranean theatre."""
+    """Crop/clip the working interim GoE color-ID map to a Europe–Mediterranean theatre."""
 
     manifest, image = _load_interim()
     source_table = list(manifest.get("province_table", []))
-    kept_rows, selection_report = select_theatre_provinces(source_table)
-    kept_ids = {str(row["province_id"]) for row in kept_rows}
-    kept_colors = {tuple(int(c) for c in row["rgb"]) for row in kept_rows}
+    color_stats = _province_pixel_stats(image)
+    x_map, y_map = _fit_marker_to_pixel(source_table, color_stats)
 
-    min_x, min_y, max_x, max_y = _province_pixel_bbox(image, kept_colors)
-    min_x = max(0, min_x - pad_px)
-    min_y = max(0, min_y - pad_px)
-    max_x = min(image.width - 1, max_x + pad_px)
-    max_y = min(image.height - 1, max_y + pad_px)
+    # Pixel-space clip rectangle from CLIP_THEATRE corners.
+    corners = [
+        (CLIP_THEATRE["x_min"], CLIP_THEATRE["y_min"]),
+        (CLIP_THEATRE["x_min"], CLIP_THEATRE["y_max"]),
+        (CLIP_THEATRE["x_max"], CLIP_THEATRE["y_min"]),
+        (CLIP_THEATRE["x_max"], CLIP_THEATRE["y_max"]),
+    ]
+    pix = [_marker_to_pixel(mx, my, x_map, y_map) for mx, my in corners]
+    clip_min_x = max(0, int(min(p[0] for p in pix)) - pad_px)
+    clip_max_x = min(image.width - 1, int(max(p[0] for p in pix)) + pad_px)
+    clip_min_y = max(0, int(min(p[1] for p in pix)) - pad_px)
+    clip_max_y = min(image.height - 1, int(max(p[1] for p in pix)) + pad_px)
+
+    selected_rows, selection_report = select_theatre_provinces(source_table)
+    selected_ids = {str(row["province_id"]) for row in selected_rows}
+    color_to_row = {tuple(int(c) for c in row["rgb"]): row for row in source_table}
+
+    # Also keep any non-excluded province that has pixels inside the clip rect
+    # (preserves edge landmasses whose anchors sit just outside marker bounds).
+    intersecting_ids: set[str] = set()
+    for color, stat in color_stats.items():
+        row = color_to_row.get(color)
+        if row is None:
+            continue
+        pid = str(row["province_id"])
+        if pid in FORCE_EXCLUDE_PROVINCE_IDS:
+            continue
+        if (
+            stat["max_x"] < clip_min_x
+            or stat["min_x"] > clip_max_x
+            or stat["max_y"] < clip_min_y
+            or stat["min_y"] > clip_max_y
+        ):
+            continue
+        intersecting_ids.add(pid)
+        if pid not in selected_ids:
+            selected_rows.append(row)
+            selected_ids.add(pid)
+
+    kept_colors = {
+        tuple(int(c) for c in row["rgb"])
+        for row in selected_rows
+        if str(row["province_id"]) not in FORCE_EXCLUDE_PROVINCE_IDS
+    }
+    kept_by_color = {
+        tuple(int(c) for c in row["rgb"]): row
+        for row in selected_rows
+        if str(row["province_id"]) not in FORCE_EXCLUDE_PROVINCE_IDS
+    }
+
+    # Output crop tightly around clip rect.
+    min_x, min_y, max_x, max_y = clip_min_x, clip_min_y, clip_max_x, clip_max_y
     crop_w = max_x - min_x + 1
     crop_h = max_y - min_y + 1
 
-    # Crop ID texture; drop pixels whose colors are outside the theatre set.
     sea = (0, 0, 0)
     cropped = bytearray(crop_w * crop_h * 3)
-    present_colors: set[tuple[int, int, int]] = set()
+    pixel_counts: dict[str, int] = defaultdict(int)
+    full_counts: dict[str, int] = {
+        str(kept_by_color[c]["province_id"]): int(color_stats.get(c, {}).get("count", 0))
+        for c in kept_colors
+    }
     for y in range(crop_h):
         for x in range(crop_w):
-            color = image.color_at(min_x + x, min_y + y)
+            sx, sy = min_x + x, min_y + y
+            color = image.color_at(sx, sy)
             if color not in kept_colors:
                 color = sea
             else:
-                present_colors.add(color)
+                pid = str(kept_by_color[color]["province_id"])
+                pixel_counts[pid] += 1
             i = (y * crop_w + x) * 3
             cropped[i : i + 3] = bytes(color)
 
-    # Keep only provinces that still have pixels after crop.
-    color_to_row = {tuple(int(c) for c in row["rgb"]): row for row in kept_rows}
-    active_rows = []
-    for color in sorted(present_colors):
-        row = dict(color_to_row[color])
-        active_rows.append(row)
-    active_ids = {str(row["province_id"]) for row in active_rows}
+    # Classify clipped vs intact; drop tiny remnants from gameplay.
+    clipped_ids: list[dict] = []
+    dropped_tiny: list[dict] = []
+    active_rows: list[dict] = []
+    for color, row in kept_by_color.items():
+        pid = str(row["province_id"])
+        kept_px = pixel_counts.get(pid, 0)
+        full_px = max(full_counts.get(pid, 0), 1)
+        ratio = kept_px / full_px
+        # Drop only near-empty clipped remnants, not naturally small intact provinces.
+        if kept_px < MIN_CLIPPED_PIXELS or (
+            ratio < MIN_CLIP_RATIO_TO_DROP and kept_px < full_px
+        ):
+            dropped_tiny.append(
+                {
+                    "province_id": pid,
+                    "display_name": str(row.get("display_name", pid)),
+                    "pixels_kept": kept_px,
+                    "pixels_full": full_px,
+                    "kept_ratio": round(ratio, 3),
+                }
+            )
+            continue
+        entry = dict(row)
+        if ratio < 0.97:
+            clipped_ids.append(
+                {
+                    "province_id": pid,
+                    "display_name": str(row.get("display_name", pid)),
+                    "pixels_kept": kept_px,
+                    "pixels_full": full_px,
+                    "kept_ratio": round(ratio, 3),
+                    "role": "gameplay_clipped",
+                }
+            )
+            entry["mapping_method"] = "goe_theatre_edge_clip"
+        active_rows.append(entry)
 
-    # Remap anchors into cropped pixel space (bottom-left Y for Godot marker helper).
-    # Prefer pixel centroid inside crop for stable click anchors.
+    active_ids = {str(row["province_id"]) for row in active_rows}
+    active_colors = {tuple(int(c) for c in row["rgb"]) for row in active_rows}
+
+    # Second pass: erase non-active colors (tiny remnants).
+    if dropped_tiny:
+        drop_colors = {
+            tuple(int(c) for c in row["rgb"])
+            for row in source_table
+            if str(row["province_id"]) in {d["province_id"] for d in dropped_tiny}
+        }
+        for y in range(crop_h):
+            for x in range(crop_w):
+                i = (y * crop_w + x) * 3
+                color = (cropped[i], cropped[i + 1], cropped[i + 2])
+                if color in drop_colors:
+                    cropped[i : i + 3] = bytes(sea)
+
     sums: dict[str, list[float]] = defaultdict(lambda: [0.0, 0.0, 0.0])
     for y in range(crop_h):
         for x in range(crop_w):
             i = (y * crop_w + x) * 3
             color = (cropped[i], cropped[i + 1], cropped[i + 2])
-            if color == sea:
+            if color not in active_colors:
                 continue
-            pid = str(color_to_row[color]["province_id"])
+            pid = str(kept_by_color[color]["province_id"])
             sums[pid][0] += x
             sums[pid][1] += y
             sums[pid][2] += 1
@@ -239,15 +423,23 @@ def generate_europe_mediterranean_from_goe(
                 "marker_anchor": [float(cx), float(crop_h - 1 - cy)],
                 "source_neighbors": sorted(set(neighbors)),
                 "source_province_id": row.get("source_province_id", pid),
-                "mapping_method": "goe_theatre_crop",
+                "mapping_method": row.get("mapping_method", "goe_theatre_crop"),
                 "provenance": {
-                    "generator": "europe_mediterranean_from_goe_v1",
+                    "generator": "europe_mediterranean_from_goe_v2_clip",
                     "source_map_id": manifest.get("map_id", "goe_europe"),
                     "marker_theatre": dict(MARKER_THEATRE),
+                    "clip_theatre": dict(CLIP_THEATRE),
                     "crop_px": [min_x, min_y, max_x, max_y],
+                    "pixels": int(sums[pid][2]),
                 },
             }
         )
+
+    selection_report["intersecting_edge_added"] = sorted(intersecting_ids - set(selection_report.get("force_include_ids", [])))
+    selection_report["clipped_provinces"] = clipped_ids
+    selection_report["clipped_count"] = len(clipped_ids)
+    selection_report["dropped_tiny_after_clip"] = dropped_tiny
+    selection_report["final_count"] = len(table)
 
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -310,8 +502,9 @@ def generate_europe_mediterranean_from_goe(
         "layer_role": "presentation_underlay_only",
     }
     result["provenance_table"] = {
-        "province_geometry": "interim_goe_color_id_crop",
+        "province_geometry": "interim_goe_color_id_crop_with_edge_clip",
         "province_ids": "preserved_from_goe_graph_where_in_theatre",
+        "edge_handling": "intersecting_provinces_clipped_to_theatre_mask",
         "adjacency": "filtered_source_neighbors_within_theatre",
         "visual_background": "procedural_light_neutral_from_crop_silhouette",
         "pack_artwork": "not_used",
