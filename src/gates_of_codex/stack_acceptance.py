@@ -20,11 +20,18 @@ from .launcher import find_game_executable, launch_game
 from .map_discovery import MapCandidate, discover_maps
 from .modstack import (
     resolve_stack,
+    stack_mod_tokens,
     stack_to_strings,
     validate_known_order,
     validate_stack_paths,
 )
-from .service import BattleExportManifest, GatesOfCodeXService, apply_installed_fingerprint
+from .service import (
+    BattleExportManifest,
+    GatesOfCodeXService,
+    apply_installed_fingerprint,
+    merge_mod_tokens,
+    read_profile_mod_tokens,
+)
 
 
 @dataclass(slots=True)
@@ -183,6 +190,8 @@ def prepare_stack_handoff(
     if installed is not None:
         paths.extend([installed, service.manifest_path(installed)])
     backup = backup_existing_files(paths, backup_root=backup_root, label="tactical-handoff")
+    profile_mods = read_profile_mod_tokens(profile_directory)
+    export_mods = merge_mod_tokens(profile_mods, stack_mod_tokens(stack))
     manifest = service.export_battle(
         campaign,
         code_x_directory=code_x_directory,
@@ -191,6 +200,7 @@ def prepare_stack_handoff(
         map_name=map_name,
         status_template_path=template,
         allow_overwrite=True,
+        mods=export_mods,
     )
     service.archive.validate(export_save)
 
