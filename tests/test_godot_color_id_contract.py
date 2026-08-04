@@ -8,10 +8,14 @@ class GodotColorIdContractTests(unittest.TestCase):
     def test_scene_uses_color_id_client_and_pixel_selection(self) -> None:
         root = Path(__file__).resolve().parents[1]
         scene = (root / "godot/main.tscn").read_text(encoding="utf-8")
+        contract = (root / "godot/scripts/main_map_contract.gd").read_text(encoding="utf-8")
         main = (root / "godot/scripts/main_color_id.gd").read_text(encoding="utf-8")
         layer = (root / "godot/scripts/color_id_map.gd").read_text(encoding="utf-8")
 
-        self.assertIn("res://scripts/main_color_id.gd", scene)
+        self.assertIn("res://scripts/main_map_contract.gd", scene)
+        self.assertIn('extends "res://scripts/main_color_id.gd"', contract)
+        self.assertIn('snapshot.get("strategic_map"', contract)
+        self.assertIn("manifest_path", contract)
         self.assertIn("DEFAULT_MAP_MANIFEST", main)
         self.assertIn("province_at_pixel(pixel)", main)
         self.assertIn("func _province_at(screen_position", main)
@@ -23,8 +27,8 @@ class GodotColorIdContractTests(unittest.TestCase):
         self.assertIn("highlight_texture", layer)
         self.assertIn("refresh_snapshot", layer)
         self.assertIn("refresh_highlights", layer)
-        self.assertNotIn("1314", main + layer)
-        self.assertNotIn("1513", main + layer)
+        self.assertNotIn("1314", contract + main + layer)
+        self.assertNotIn("1513", contract + main + layer)
 
     def test_visual_layers_remain_independent(self) -> None:
         root = Path(__file__).resolve().parents[1]
