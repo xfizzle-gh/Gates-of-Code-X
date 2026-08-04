@@ -793,18 +793,31 @@ def generate_europe_mediterranean_prototype(
     }
     manifest["geography_status"] = {
         "pipeline": "accepted_checkpoint",
-        "map_geometry": "in_progress",
+        "map_geometry": "provisional_project_voronoi",
         "land_mask": land_source,
+        "pack_region_meshes": "not_imported",
+        "pr_complete": False,
         "warnings": warnings,
+    }
+    manifest["provenance_table"] = {
+        "coastline": "natural_earth_land_mask",
+        "province_boundaries": "project_component_voronoi",
+        "settlement_names": "title_case_seed_or_optional_pack_loc",
+        "settlement_coordinates": "project_public_geo_table",
+        "ports": "not_imported_from_pack",
+        "terrain": "not_imported_from_pack",
+        "adjacency": "project_land_touch_plus_authored_crossings",
     }
     manifest["clean_room"] = {
         "status": "prototype-only; Natural Earth land mask is public domain; not final ship art",
         "committed_outputs": ["id_map.png", "land_silhouette.png", "map_manifest.json"],
         "geometry_method": (
             "component-locked settlement Voronoi on geographic land mask; "
-            "authored strait/ferry edges; ocean unselectable"
+            "authored strait/ferry edges; ocean unselectable; "
+            "world_test_9.pack is name/ID reference only (regions.esf meshes not imported)"
         ),
         "land_mask_rights": "Natural Earth public domain when land_source is natural_earth_* / package mask derived from it",
+        "pack_role": "research reference for names/IDs/future anchors; not coastline; not current province meshes",
     }
     (out / "map_manifest.json").write_text(
         json.dumps(manifest, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
