@@ -72,6 +72,16 @@ class FrontendWritebackContractTests(unittest.TestCase):
             ),
         )
 
+    def test_campaign_validation_still_rejects_mixed_faction_stacks(self) -> None:
+        state = build_goe_europe_campaign()
+        battalions = sorted(state.battalions.values(), key=lambda value: value.battalion_id)
+        first = battalions[0]
+        hostile = next(value for value in battalions[1:] if value.faction != first.faction)
+        hostile.province_id = first.province_id
+
+        with self.assertRaisesRegex(ValueError, "multiple factions"):
+            state.validate()
+
     def test_godot_stack_fixture_and_exact_invocation_contract(self) -> None:
         root = Path(__file__).resolve().parents[1]
         fixture = json.loads(
