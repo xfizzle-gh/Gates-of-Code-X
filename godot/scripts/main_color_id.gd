@@ -166,15 +166,19 @@ func _draw_color_id_overlays() -> void:
 					Color.WHITE
 				)
 
-		if view_scale >= 1.25 or occupied or selected or target:
+		var label := _province_label(province, province_id)
+		var show_label := occupied or selected or target
+		if not show_label and view_scale >= 2.4 and _is_named_province(label):
+			show_label = true
+		if show_label:
 			draw_string(
 				ThemeDB.fallback_font,
 				position + Vector2(13, -9),
-				String(province.get("display_name", province_id)),
+				label,
 				HORIZONTAL_ALIGNMENT_LEFT,
 				-1,
-				12 if selected or target else 11,
-				Color(0.95, 0.96, 0.98, 0.98 if occupied or selected or target else 0.72)
+				12 if selected or target or occupied else 11,
+				Color(0.95, 0.96, 0.98, 0.98 if occupied or selected or target else 0.78)
 			)
 
 
@@ -214,23 +218,54 @@ func _map_texture_rect() -> Rect2:
 	return Rect2(map_size * 0.5 - rendered_size * 0.5 + view_offset, rendered_size)
 
 
+func _province_label(province: Dictionary, province_id: String) -> String:
+	var label := String(province.get("display_name", province_id)).strip_edges()
+	if label.is_empty():
+		return province_id
+	return label
+
+
+func _is_named_province(label: String) -> bool:
+	var lower := label.to_lower()
+	if lower.begins_with("province"):
+		return false
+	if lower.begins_with("province_"):
+		return false
+	return true
+
+
 func _fit_to_focus(force: bool) -> void:
 	if color_id_map == null or not color_id_map.is_ready:
 		super._fit_to_focus(force)
 		return
 	if fitted_once and not force:
 		return
-	var ids: Array = focus_province_ids.keys()
-	if ids.is_empty():
-		ids = color_id_map.row_by_province.keys()
+	var ids: Dictionary = {}
+	for id: Variant in focus_province_ids.keys():
+		ids[String(id)] = true
+	# Prefer a useful theatre, not a single selected rear province.
+	var campaign: Dictionary = snapshot.get("campaign", {})
+	var current := String(campaign.get("current_faction", ""))
+	for battalion: Dictionary in snapshot.get("battalions", []):
+		if String(battalion.get("faction", "")) == current:
+			ids[String(battalion.get("province_id", ""))] = true
+	for option: Dictionary in snapshot.get("front_options", []):
+		ids[String(option.get("origin", ""))] = true
+		ids[String(option.get("target", ""))] = true
+	var pending: Variant = snapshot.get("pending_battle")
+	if pending is Dictionary:
+		var battle := pending as Dictionary
+		ids[String(battle.get("origin_province_id", ""))] = true
+		ids[String(battle.get("target_province_id", ""))] = true
+
 	var min_x := INF
 	var min_y := INF
 	var max_x := -INF
 	var max_y := -INF
 	var count := 0
-	for id: Variant in ids:
+	for id: Variant in ids.keys():
 		var province_id := String(id)
-		if not color_id_map.row_by_province.has(province_id):
+		if province_id.is_empty() or not color_id_map.row_by_province.has(province_id):
 			continue
 		var anchor := color_id_map.anchor_pixel(province_id)
 		min_x = minf(min_x, anchor.x)
@@ -238,12 +273,25 @@ func _fit_to_focus(force: bool) -> void:
 		min_y = minf(min_y, anchor.y)
 		max_y = maxf(max_y, anchor.y)
 		count += 1
-	if count == 0:
+	if count < 4:
+		# Fall back to whole map so Fit never zooms onto one rear province.
+		for province_id: Variant in color_id_map.row_by_province.keys():
+			var anchor := color_id_map.anchor_pixel(String(province_id))
+			min_x = minf(min_x, anchor.x)
+			max_x = maxf(max_x, anchor.x)
+			min_y = minf(min_y, anchor.y)
+			max_y = maxf(max_y, anchor.y)
+			count += 1
+		view_scale = 1.0
+		view_offset = Vector2.ZERO
+		fitted_once = true
+		status_message = "Fitted color-ID map to full theatre."
+		queue_redraw()
 		return
 	var image_size := color_id_map.image_size()
-	var span := Vector2(maxf(max_x - min_x, 1.0), maxf(max_y - min_y, 1.0))
-	var padding := 1.35
-	view_scale = clampf(minf(image_size.x / (span.x * padding), image_size.y / (span.y * padding)), 1.0, 8.0)
+	var span := Vector2(maxf(max_x - min_x, 48.0), maxf(max_y - min_y, 48.0))
+	var padding := 1.45
+	view_scale = clampf(minf(image_size.x / (span.x * padding), image_size.y / (span.y * padding)), 1.0, 4.5)
 	view_offset = Vector2.ZERO
 	var focus_center := Vector2((min_x + max_x) * 0.5, (min_y + max_y) * 0.5)
 	var map_center := Vector2(
