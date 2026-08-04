@@ -137,27 +137,45 @@ def _run_write_interim_goe_table(arguments: list[str]) -> int:
     return 0
 
 
-def _run_generate_world_prototype(arguments: list[str]) -> int:
-    from .world_map_prototype import generate_world_prototype
+def _run_generate_europe_mediterranean_prototype(arguments: list[str]) -> int:
+    from .europe_mediterranean_map import generate_europe_mediterranean_prototype
 
-    parser = argparse.ArgumentParser(prog="gates-of-codex generate-world-prototype")
+    parser = argparse.ArgumentParser(prog="gates-of-codex generate-europe-mediterranean-prototype")
+    parser.add_argument("--settlements-loc", help="Optional UTF-16 settlement loc from research extract")
     parser.add_argument(
-        "--extract-root",
-        help="Local research extract of world_test_9.pack files (not committed)",
+        "--land-geojson",
+        help="Natural Earth (or compatible) land polygons GeoJSON for geographic mask",
+    )
+    parser.add_argument(
+        "--land-mask-png",
+        help="Pre-rasterized theatre land mask PNG (white/gray=land, dark=water)",
+    )
+    parser.add_argument(
+        "--world-tga",
+        help="Legacy research world TGA crop (not preferred; geographic geojson/mask preferred)",
     )
     parser.add_argument(
         "--output-dir",
-        default="godot/assets/maps/world/prototype",
-        help="Project-owned generated outputs",
+        default="godot/assets/maps/europe_mediterranean/prototype",
+        help="Generated outputs directory",
     )
-    parser.add_argument("--width", type=int, default=2048)
-    parser.add_argument("--height", type=int, default=1024)
+    parser.add_argument("--width", type=int, default=1600)
+    parser.add_argument("--height", type=int, default=1000)
+    parser.add_argument(
+        "--commit-mask-copy",
+        action="store_true",
+        help="Write package land mask under src/gates_of_codex/data/",
+    )
     args = parser.parse_args(arguments)
-    manifest = generate_world_prototype(
-        extract_root=args.extract_root,
+    manifest = generate_europe_mediterranean_prototype(
+        settlements_loc=args.settlements_loc,
+        world_tga=args.world_tga,
+        land_geojson=args.land_geojson,
+        land_mask_png=args.land_mask_png,
         output_dir=args.output_dir,
         width=args.width,
         height=args.height,
+        commit_mask_copy=args.commit_mask_copy,
     )
     print(
         json.dumps(
@@ -259,28 +277,52 @@ def _parse_rgb(value: str) -> tuple[int, int, int]:
 
 def _run_new(arguments: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="gates-of-codex new")
-    _add_stack_arguments(parser)
+    _add_stack_arguments(parser, require_codex=False)
     parser.add_argument("--output", default="campaign.json")
     parser.add_argument("--faction", choices=FACTION_CHOICES, default="nato")
+    parser.add_argument(
+        "--map",
+        choices=["interim_goe_europe", "europe_mediterranean_prototype"],
+        default="interim_goe_europe",
+        help="Strategic campaign map: GoE Europe fallback or Europe-Mediterranean prototype",
+    )
+    parser.add_argument("--tactical-map", help="Preferred tactical GoH map id persisted on the campaign")
     parser.add_argument("--game", help="GoH install directory persisted on the campaign")
     parser.add_argument("--profile", help="GoH profile directory persisted on the campaign")
-    parser.add_argument("--map", help="Preferred tactical map id persisted on the campaign")
     parser.add_argument(
         "--install-directory",
         help="Profile campaign folder for Conquest installs (defaults to <profile>/campaign)",
     )
+    parser.add_argument(
+        "--em-manifest",
+        help="Path to europe_mediterranean prototype map_manifest.json",
+    )
     args = parser.parse_args(arguments)
-    stack = resolve_stack(args.stack, config=args.stack_config, fallback=args.codex)
-    catalog = CodeXCatalogScanner().scan_stack(stack)
-    state = load_bundled_scenario()
-    state.code_x_directory = str(Path(args.codex).resolve())
-    state.map_metadata["resource_stack"] = stack_to_strings(stack)
+    if args.map == "europe_mediterranean_prototype":
+        from .europe_mediterranean_campaign import build_europe_mediterranean_prototype_campaign
+
+        state = build_europe_mediterranean_prototype_campaign(
+            manifest_path=args.em_manifest,
+            selected_faction=Faction(args.faction),
+        )
+    else:
+        if not args.codex:
+            parser.error("--codex is required for interim_goe_europe campaigns")
+        stack = resolve_stack(args.stack, config=args.stack_config, fallback=args.codex)
+        catalog = CodeXCatalogScanner().scan_stack(stack)
+        state = load_bundled_scenario()
+        state.code_x_directory = str(Path(args.codex).resolve())
+        state.map_metadata["resource_stack"] = stack_to_strings(stack)
+        state.map_metadata["strategic_map_id"] = "interim_goe_europe"
+        set_player_faction(state, Faction(args.faction))
+        populate_starter_rosters(state, catalog)
+        initialize_economy(state, catalog)
     if args.game:
         state.game_directory = str(Path(args.game).expanduser().resolve())
     if args.profile:
         state.profile_directory = str(Path(args.profile).expanduser().resolve())
-    if args.map:
-        state.map_metadata["preferred_map"] = args.map
+    if args.tactical_map:
+        state.map_metadata["preferred_map"] = args.tactical_map
     if args.install_directory:
         state.map_metadata["install_directory"] = str(Path(args.install_directory).expanduser().resolve())
     elif args.profile:
@@ -289,9 +331,6 @@ def _run_new(arguments: list[str]) -> int:
             state.map_metadata["install_directory"] = str(campaign_dir)
     if args.stack_config:
         state.map_metadata["stack_config"] = str(Path(args.stack_config).expanduser().resolve())
-    set_player_faction(state, Faction(args.faction))
-    populate_starter_rosters(state, catalog)
-    initialize_economy(state, catalog)
     evaluate_campaign_outcome(state)
     save_campaign(state, args.output)
     print(args.output)
@@ -332,8 +371,9 @@ def main(argv: list[str] | None = None) -> int:
         return _run_write_interim_goe_table(remainder)
     if command == "import-strategic-map":
         return _run_import_strategic_map(remainder)
-    if command == "generate-world-prototype":
-        return _run_generate_world_prototype(remainder)
+    if command in {"generate-europe-mediterranean-prototype", "generate-world-prototype"}:
+        # generate-world-prototype kept as deprecated alias during rename.
+        return _run_generate_europe_mediterranean_prototype(remainder)
     if command == "new":
         return _run_new(remainder)
     if command == "export-battle":

@@ -292,7 +292,7 @@ def _strategic_map_block(
             manifest = snapshot_directory / manifest
     elif snapshot_directory is not None:
         relative = {
-            "world_prototype": "assets/maps/world/prototype/map_manifest.json",
+            "europe_mediterranean_prototype": "assets/maps/europe_mediterranean/prototype/map_manifest.json",
             "goe_europe": "assets/maps/europe/interim_goe/map_manifest.json",
             "interim_goe_europe": "assets/maps/europe/interim_goe/map_manifest.json",
         }.get(map_id, "assets/maps/europe/interim_goe/map_manifest.json")
@@ -307,13 +307,13 @@ def _strategic_map_block(
         "map_id": map_id,
         "available_map_ids": [
             "interim_goe_europe",
-            "world_prototype",
+            "europe_mediterranean_prototype",
         ],
         "provenance": str(
             state.map_metadata.get(
                 "strategic_map_provenance",
-                "project_owned_world_prototype_v1"
-                if map_id == "world_prototype"
+                "research_derived_europe_mediterranean_prototype_v2"
+                if map_id == "europe_mediterranean_prototype"
                 else "interim_goe_reference_asset",
             )
         ),
