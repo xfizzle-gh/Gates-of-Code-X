@@ -245,7 +245,6 @@ def import_interim_goe_map(
     texture_output: str | Path | None = None,
     ignored_colors: tuple[RGB, ...] | list[RGB] = ((0, 0, 0),),
 ) -> dict:
-    campaign_graph = load_goe_europe_graph()["provinces"]
     alignment = resolve_goe_graph_mapping()
     manifest = import_strategic_map(
         id_map,
@@ -255,7 +254,6 @@ def import_interim_goe_map(
         provenance="interim_goe_reference_asset",
         ignored_colors=ignored_colors,
         expected_graph=build_aligned_source_graph(alignment),
-        campaign_graph=campaign_graph,
         texture_output=texture_output,
     )
     manifest["source_alignment"] = alignment.to_dict()
