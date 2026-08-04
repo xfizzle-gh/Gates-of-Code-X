@@ -6,7 +6,9 @@ from dataclasses import asdict
 from pathlib import Path
 
 from .economy import available_research, formation_recruitment_offers
+from .map_layout import apply_marker_layout
 from .models import CampaignState, Faction
+from .play_context import list_front_options
 from .strategic import (
     construction_options,
     ensure_strategic_layer,
@@ -17,11 +19,17 @@ from .strategic import (
 from .supply import reachable_supply_provinces
 
 
-FRONTEND_SCHEMA_VERSION = 4
+FRONTEND_SCHEMA_VERSION = 5
 
 
-def build_frontend_snapshot(state: CampaignState) -> dict:
+def build_frontend_snapshot(
+    state: CampaignState,
+    *,
+    campaign_path: str | Path | None = None,
+    snapshot_path: str | Path | None = None,
+) -> dict:
     ensure_strategic_layer(state)
+    apply_marker_layout(state)
     objectives = update_operational_objectives(state)
     outcome = evaluate_campaign_outcome(state)
     state.validate()
@@ -96,6 +104,7 @@ def build_frontend_snapshot(state: CampaignState) -> dict:
                 "owner": province.owner.value,
                 "x": province.x,
                 "y": province.y,
+                "id_color": dict(province.metadata.get("id_color", {})),
                 "terrain": province.terrain,
                 "map_region": province.map_region,
                 "resource_yield": province.resource_yield,
@@ -171,13 +180,31 @@ def build_frontend_snapshot(state: CampaignState) -> dict:
             for battalion in sorted(state.battalions.values(), key=lambda value: value.battalion_id)
         ],
         "pending_battle": _pending_battle(state),
+        "front_options": list_front_options(state, state.current_faction),
+        "control": _control_block(campaign_path, snapshot_path),
     }
 
 
-def write_frontend_snapshot(state: CampaignState, path: str | Path) -> Path:
+def write_frontend_snapshot(
+    state: CampaignState,
+    path: str | Path,
+    *,
+    campaign_path: str | Path | None = None,
+) -> Path:
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(build_frontend_snapshot(state), indent=2, ensure_ascii=False) + "\n"
+    payload = (
+        json.dumps(
+            build_frontend_snapshot(
+                state,
+                campaign_path=campaign_path,
+                snapshot_path=destination,
+            ),
+            indent=2,
+            ensure_ascii=False,
+        )
+        + "\n"
+    )
     with tempfile.NamedTemporaryFile(
         mode="w",
         encoding="utf-8",
@@ -208,4 +235,26 @@ def _pending_battle(state: CampaignState) -> dict | None:
         "completed": pending.completed,
         "attacking_battalions": [value.battalion_id for value in pending.attacking_participants],
         "defending_battalions": [value.battalion_id for value in pending.defending_participants],
+    }
+
+
+def _control_block(campaign_path: str | Path | None, snapshot_path: str | Path | None) -> dict:
+    snapshot = Path(snapshot_path).resolve() if snapshot_path else None
+    campaign = Path(campaign_path).resolve() if campaign_path else None
+    commands = snapshot.with_name("frontend_commands.json") if snapshot is not None else None
+    return {
+        "enabled": campaign is not None and snapshot is not None,
+        "campaign_path": str(campaign) if campaign else "",
+        "snapshot_path": str(snapshot) if snapshot else "",
+        "commands_path": str(commands) if commands else "",
+        "supported_ops": [
+            "move",
+            "end_turn",
+            "run_ai",
+            "auto_resolve",
+            "construct",
+            "repair",
+            "handoff",
+            "refresh",
+        ],
     }

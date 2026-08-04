@@ -26,7 +26,7 @@ Alliance membership does not merge faction turns, resources, research, recruitme
 
 ## Frontend snapshot
 
-`gates-of-codex export-frontend` writes a versioned JSON document with schema identifier `gates-of-codex.frontend`.
+`gates-of-codex export-frontend` writes a versioned JSON document with schema identifier `gates-of-codex.frontend` (schema version 5+).
 
 The document contains:
 
@@ -38,11 +38,46 @@ The document contains:
 - formations and battalions
 - occupied province references
 - pending-battle state
+- `front_options` legal move/attack rows for the current faction
+- `control` write-back paths (`campaign_path`, `snapshot_path`, `commands_path`)
 
 Godot does not read or mutate Python internals directly. The snapshot is the stable interface between the strategic backend and the presentation layer.
 
+## Write-back command queue
+
+Godot writes operator actions to `frontend_commands.json` next to the snapshot:
+
+```json
+{
+  "commands": [
+    {"op": "move", "battalion": "formation-04", "province": "Nowogrodek"},
+    {"op": "end_turn"},
+    {"op": "run_ai", "faction": "ukr", "advance_turn": true},
+    {"op": "auto_resolve"},
+    {"op": "construct", "province": "Berlin", "building": "supply_hub"},
+    {"op": "refresh"}
+  ]
+}
+```
+
+Apply and refresh with:
+
+```text
+gates-of-codex apply-frontend campaign.json --snapshot godot/campaign_snapshot.json
+```
+
+The backend applies commands in order, clears the queue, rewrites the snapshot, and returns a JSON result. Godot invokes the same command via `python -m gates_of_codex apply-frontend ...` after writing the queue.
+
+Supported ops: `move`, `end_turn`, `run_ai`, `auto_resolve`, `construct`, `repair`, `refresh`.
+
 ## Godot checkpoint
 
-The `godot/` project is an initial Godot 4 viewer. It loads the snapshot, draws the graph, colors provinces by faction, marks occupied provinces, and supports pan and zoom.
+The `godot/` project is a Godot 4 strategic map client. It loads the snapshot, draws the graph, colors provinces by faction, highlights legal targets for the selected battalion, and supports pan/zoom plus panel actions.
 
-This checkpoint does not include final art, polished interaction panels, hand-corrected geographic positions, or write commands back to the Python backend. Those remain later frontend passes.
+Export a write-enabled snapshot before launching Godot:
+
+```text
+gates-of-codex export-frontend live/campaign.json --output godot/campaign_snapshot.json
+```
+
+Then open the `godot/` project. Select an owned unit, click a highlighted neighbor to move/attack, or use panel buttons for end turn / AI / auto-resolve / construct.
