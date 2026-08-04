@@ -1,4 +1,4 @@
-# Map pipeline (GoE method, clean-room)
+# Map pipeline and interim GoE source
 
 Gates of Europa's author described their map pipeline as:
 
@@ -9,30 +9,39 @@ Gates of Europa's author described their map pipeline as:
 
 That is **not** a hand-drawn polygon mesh and **not** one decorative PNG of Europe with baked ownership colors. Ownership is recolored at runtime by looking up the id-color.
 
-## What CodeX does
+## Current source status
 
-| Piece | Source | Shipped? |
-|-------|--------|----------|
-| Adjacency graph (517) | Observed GoE contract | Yes (`goe_graph_*.b85`) |
-| Marker anchors + id-colors | Extracted province DB | Yes (`goe_marker_layout.json`) |
-| Decorative / id texture art | GoE Unity `province_idnew_map` | **No** (third-party map art) |
-| Runtime ownership paint | Godot fills + counters | Yes |
+The project owner has authorized the available GoE-derived color-ID source as an **interim implementation asset** so province-shaped rendering is not blocked. A project-owned clean-room replacement remains planned.
 
-`apply_marker_layout()` remaps campaign province `x/y` onto observed marker anchors where IDs/names/neighbor growth match. Frontend export always applies this so live campaigns pick up the geographic layout.
+| Piece | Source | Status |
+|-------|--------|--------|
+| Adjacency graph (517) | Observed GoE contract | Tracked (`goe_graph_*.b85`) |
+| Marker anchors + id-colors | Extracted province DB | Tracked (`goe_marker_layout.json`) |
+| 1314×1513 RGB24 ID texture | GoE Unity `province_idnew_map` | Interim source for #51, isolated behind the generic importer |
+| Runtime ownership paint | Godot color-ID renderer | Implemented separately in #51 |
 
-## Godot presentation
+The interim source must remain behind a generic map manifest/import boundary. Gameplay must not depend on the texture dimensions, specific RGB assignments, or original source format. Replacing the texture and lookup table must not require campaign-rule changes.
 
-- Ownership soft blobs + edges (stand-in for full id-map shader)
-- HOI-style battalion counters: type glyph + strength on a faction-colored plate
-- Pending battle link, fit-to-front, write-back actions
+## PR #50 marker checkpoint
 
-## Future: full color-ID renderer
+`apply_marker_layout()` remaps campaign province `x/y` onto observed marker anchors where IDs, names, or neighbor growth match. Frontend export applies this so live campaigns receive a recognizable geographic layout.
 
-To match GoE's filled provinces without shipping their texture:
+This marker placement is temporary presentation only. It is not the authoritative clickable province map, and neighbor-assisted marker positions are not a substitute for exact color-ID pixel selection.
 
-1. Create our own MapChart (or other) export for the theatre we want (modern Europe, 40k, etc.)
-2. Run a script: unique RGB per province → neighbor extract → names
-3. Ship **our** `province_id_map.png` + id table
-4. Godot shader: sample id texture → lookup owner color → draw
+The PR #50 Godot presentation includes:
 
-This is also the path for "import your own map" tooling.
+- ownership soft blobs + edges as a temporary stand-in
+- HOI-style battalion counters
+- pending battle link, fit-to-front, and write-back actions
+
+## Color-ID renderer boundary
+
+Issue #51 replaces marker hit-testing with the real province-shaped renderer:
+
+1. Read a generic map manifest.
+2. Load the configured ID texture and RGB-to-province lookup table.
+3. Resolve mouse pixels deterministically to province IDs.
+4. Recolor ownership at runtime.
+5. Draw borders, highlights, supply, infrastructure, bases, counters, and labels as independent layers.
+
+The same importer boundary will accept the future project-owned replacement and additional theatres without hardcoded dimensions or RGB values.
