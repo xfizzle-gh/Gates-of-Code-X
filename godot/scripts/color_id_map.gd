@@ -184,33 +184,36 @@ func _load_background(manifest_file_path: String) -> void:
 func _calibrate_background_image(source: Image, cfg: Dictionary) -> Image:
 	"""Fit background into gameplay frame without independent X/Y distortion.
 
-	If source already matches id map size, keep it (pre-calibrated local export).
+	If source already matches id map size and no offset/scale override, keep it.
 	Otherwise letterbox/contain into the id-map frame.
 	"""
 	var target_w := id_image.get_width()
 	var target_h := id_image.get_height()
-	if source.get_width() == target_w and source.get_height() == target_h and cfg.is_empty():
-		return source
-
-	var fit := String(cfg.get("fit", "contain"))
 	var scale_mul := float(cfg.get("scale", 1.0))
 	var offset: Array = cfg.get("offset_px", [0.0, 0.0])
 	var ox := float(offset[0]) if offset.size() > 0 else 0.0
 	var oy := float(offset[1]) if offset.size() > 1 else 0.0
+	var identity := is_equal_approx(scale_mul, 1.0) and is_zero_approx(ox) and is_zero_approx(oy)
+	if source.get_width() == target_w and source.get_height() == target_h and identity:
+		var ready := source.duplicate()
+		ready.convert(Image.FORMAT_RGBA8)
+		return ready
 
+	var fit := String(cfg.get("fit", "contain"))
 	var sx := float(target_w) / float(source.get_width())
 	var sy := float(target_h) / float(source.get_height())
 	var base := minf(sx, sy) if fit != "cover" else maxf(sx, sy)
 	base *= scale_mul
-	var draw_w := int(round(float(source.get_width()) * base))
-	var draw_h := int(round(float(source.get_height()) * base))
+	var draw_w := maxi(1, int(round(float(source.get_width()) * base)))
+	var draw_h := maxi(1, int(round(float(source.get_height()) * base)))
 	var resized := source.duplicate()
-	resized.resize(max(draw_w, 1), max(draw_h, 1), Image.INTERPOLATE_BILINEAR)
+	resized.convert(Image.FORMAT_RGBA8)
+	resized.resize(draw_w, draw_h, Image.INTERPOLATE_BILINEAR)
 
 	var output := Image.create(target_w, target_h, false, Image.FORMAT_RGBA8)
 	output.fill(Color(0.045, 0.055, 0.07, 1.0))
-	var origin_x := int(round((target_w - draw_w) * 0.5 + ox))
-	var origin_y := int(round((target_h - draw_h) * 0.5 + oy))
+	var origin_x := int(round((float(target_w - draw_w) * 0.5) + ox))
+	var origin_y := int(round((float(target_h - draw_h) * 0.5) + oy))
 	output.blit_rect(resized, Rect2i(0, 0, resized.get_width(), resized.get_height()), Vector2i(origin_x, origin_y))
 	return output
 
@@ -233,8 +236,10 @@ func _rebuild_control_points() -> void:
 		var row := raw as Dictionary
 		var lat := float(row.get("lat", 0.0))
 		var lon := float(row.get("lon", 0.0))
-		var x := (lon - lon_min) / max(lon_max - lon_min, 0.0001) * (width - 1.0)
-		var y := (lat_max - lat) / max(lat_max - lat_min, 0.0001) * (height - 1.0)
+		var lon_span := maxf(lon_max - lon_min, 0.0001)
+		var lat_span := maxf(lat_max - lat_min, 0.0001)
+		var x := (lon - lon_min) / lon_span * (width - 1.0)
+		var y := (lat_max - lat) / lat_span * (height - 1.0)
 		control_points.append({
 			"name": String(row.get("name", "?")),
 			"lat": lat,
