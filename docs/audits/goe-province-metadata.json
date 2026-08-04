@@ -1,0 +1,96 @@
+{
+  "schema": "gates-of-codex.goe-province-source-manifest",
+  "schema_version": 1,
+  "province_count": 517,
+  "canonical_province_records": {
+    "bundled_graph": {
+      "path": "src/gates_of_codex/data/goe_graph_*.b85",
+      "record_count": 517,
+      "classification": "extracted_reference_data",
+      "fields": [
+        "province_id",
+        "display_name",
+        "neighbors",
+        "x",
+        "y",
+        "metadata"
+      ]
+    },
+    "marker_id_database": {
+      "path": "src/gates_of_codex/data/goe_marker_layout.json",
+      "record_count": 517,
+      "unique_rgb_count": 517,
+      "classification": "extracted_reference_data",
+      "fields": [
+        "id",
+        "display_name",
+        "x",
+        "y",
+        "id_color",
+        "neighbors",
+        "map_region"
+      ],
+      "note": "This canonical file records every extracted ID color and marker anchor. The docs audit does not duplicate those 517 records."
+    }
+  },
+  "id_texture": {
+    "asset_name": "province_idnew_map",
+    "width": 1314,
+    "height": 1513,
+    "format": "RGB24",
+    "province_id_color_count": 517,
+    "repository_path": null,
+    "status": "owner-authorized interim GoE-derived asset for the generic #51 importer",
+    "provenance": "GoE Unity binary inspection recorded in issues #49 and #53"
+  },
+  "mapping_coverage": {
+    "graph_records": 517,
+    "marker_records": 517,
+    "mapped_graph_records": 302,
+    "unmapped_graph_records": 215,
+    "unmapped_placement": "neighbor_average in the temporary PR #50 marker presentation",
+    "authoritative_click_target": "color-ID texture pixels in #51"
+  },
+  "field_availability": {
+    "province_id": "available",
+    "display_name": "available",
+    "adjacency": "available",
+    "marker_anchor": "available_for_all_marker_records",
+    "id_color": "available_for_all_marker_records",
+    "regional_grouping": "numeric_value_unresolved",
+    "country_ownership": "not_found",
+    "capital_status": "not_found",
+    "ports_coastal": "not_found",
+    "rail_logistics": "not_found",
+    "terrain": "not_found",
+    "special_zones": "not_found",
+    "scenario_overrides": "not_found_in_extracted_sources"
+  },
+  "scenario_design_separation": {
+    "modern_control_profile": {
+      "value": "modern_europe_v1",
+      "source": "src/gates_of_codex/control.py",
+      "classification": "new_scenario_design",
+      "goe_ownership_claimed": false
+    },
+    "formation_deployments": {
+      "source": "src/gates_of_codex/formations.py",
+      "classification": "new_scenario_design",
+      "goe_deployment_claimed": false
+    },
+    "strategic_capitals_and_objectives": {
+      "source": "src/gates_of_codex/strategic.py",
+      "classification": "new_scenario_design",
+      "goe_metadata_claimed": false
+    }
+  },
+  "required_authoring": [
+    "country and neutral-actor geographic ownership",
+    "capital designations",
+    "ports and coastal access",
+    "rail and logistics corridors",
+    "terrain tags including river, mountain, forest, urban, and industrial",
+    "disputed, demilitarized, and special-zone designations",
+    "scenario-specific ownership and deployment overrides"
+  ]
+}
