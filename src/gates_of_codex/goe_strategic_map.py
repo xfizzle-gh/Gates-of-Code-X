@@ -43,12 +43,24 @@ def build_goe_source_nodes() -> dict[str, dict]:
         left_original = original_rows[left_index]
         left_id = str(left_original["id"])
         left_tokens = {str(value) for value in left_original.get("neighbors", [])}
+        left_id_is_duplicate = id_counts[left_id] > 1
         for right_index in range(left_index + 1, len(node_keys)):
             right_key = node_keys[right_index]
             right_original = original_rows[right_index]
             right_id = str(right_original["id"])
             right_tokens = {str(value) for value in right_original.get("neighbors", [])}
-            if right_id in left_tokens and left_id in right_tokens:
+            right_id_is_duplicate = id_counts[right_id] > 1
+            left_mentions_right = right_id in left_tokens
+            right_mentions_left = left_id in right_tokens
+
+            is_edge = left_mentions_right and right_mentions_left
+            if not is_edge and not left_id_is_duplicate and not right_id_is_duplicate:
+                is_edge = left_mentions_right or right_mentions_left
+            elif not is_edge and left_id_is_duplicate and not right_id_is_duplicate:
+                is_edge = left_mentions_right
+            elif not is_edge and right_id_is_duplicate and not left_id_is_duplicate:
+                is_edge = right_mentions_left
+            if is_edge:
                 node_rows[left_key]["neighbors"].append(right_key)
                 node_rows[right_key]["neighbors"].append(left_key)
 
@@ -147,6 +159,15 @@ def duplicate_marker_ids() -> dict[str, list[dict]]:
         ]
         for province_id, count in sorted(counts.items())
         if count > 1
+    }
+
+
+def degree_distributions() -> dict[str, dict[int, int]]:
+    graph = load_goe_europe_graph()["provinces"]
+    source = build_goe_source_nodes()
+    return {
+        "graph": dict(sorted(Counter(len(row.get("neighbors", [])) for row in graph.values()).items())),
+        "source": dict(sorted(Counter(len(row.get("neighbors", [])) for row in source.values()).items())),
     }
 
 
