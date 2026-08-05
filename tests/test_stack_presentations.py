@@ -185,6 +185,40 @@ class StackPresentationTests(unittest.TestCase):
         self.assertEqual(first, rows[self.first.battalion_id])
         self.assertEqual(second, rows[self.second.battalion_id])
 
+    def test_frontend_snapshot_hierarchy_is_coherent(self) -> None:
+        """Regression: stale snapshots showed 0 formations while rendering tabs.
+
+        A fresh export must include strategic_formation_presentations and matching
+        stack.strategic_formation_ids with non-empty battalion membership.
+        """
+        snapshot = build_frontend_snapshot(self.state)
+        stack = snapshot["stack_presentations"][self.first.province_id]
+        forces = snapshot["strategic_formation_presentations"]
+        self.assertIn("strategic_formation_ids", stack)
+        self.assertEqual(2, stack["formation_count"])
+        self.assertEqual(2, len(stack["strategic_formation_ids"]))
+        self.assertEqual(
+            "2 formations | 2 battalions | 2 tactical units",
+            stack["summary_label"],
+        )
+        for force_id in stack["strategic_formation_ids"]:
+            self.assertIn(force_id, forces)
+            force = forces[force_id]
+            self.assertEqual(self.first.province_id, force["province_id"])
+            self.assertEqual(1, force["battalion_count"])
+            self.assertEqual(1, len(force["battalion_ids"]))
+            self.assertTrue(str(force["display_name"]).strip())
+            self.assertFalse(str(force["display_name"]).lower().startswith("formation-0"))
+            member = force["battalion_ids"][0]
+            self.assertIn(member, snapshot["battalion_presentations"])
+            bn = snapshot["battalion_presentations"][member]
+            self.assertEqual(self.first.province_id, bn["province_id"])
+            # Placeholders are hidden in normal mode; unit_count may still be > 0.
+            for card in bn.get("cards") or []:
+                self.assertNotIn("placeholder", str(card.get("unit_name", "")).lower())
+                self.assertNotEqual("Placeholder", str(card.get("display_name", "")))
+
 
 if __name__ == "__main__":
     unittest.main()
+
