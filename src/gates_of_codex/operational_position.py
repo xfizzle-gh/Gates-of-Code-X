@@ -10,24 +10,26 @@ from .operational_schema import (
     FormationOperationalPosition,
     OperationalRouteEdge,
     PositionMode,
+    require_strict_int,
     stable_node_id,
 )
 
 OPERATIONAL_POSITION_SCHEMA_VERSION = 7
 MIGRATION_RECORD_KEY = "operational_position_migration"
 
-# map_id -> path relative to repo root (package parent).
-_GRAPH_RELATIVE_PATHS: dict[str, str] = {
+# Relative to a strategic map asset root (sibling of map_manifest.json).
+_DEFAULT_GRAPH_RELATIVE = "operational/operational_graph.json"
+
+# map_id -> path under godot/ (frontend-style asset contract).
+_GRAPH_UNDER_GODOT: dict[str, str] = {
     "europe_mediterranean_from_goe": (
-        "godot/assets/maps/europe_mediterranean/from_goe/operational/operational_graph.json"
+        "assets/maps/europe_mediterranean/from_goe/operational/operational_graph.json"
     ),
 }
 
-_REPO_ROOT = Path(__file__).resolve().parents[2]
-
 
 def province_anchor_position(province_id: str) -> FormationOperationalPosition:
-    """M1 default: highest-weight site node when present; else province anchor node."""
+    """M1 default when no higher-weight site node exists: province anchor node."""
     return FormationOperationalPosition(
         mode=PositionMode.AT_NODE.value,
         node_id=stable_node_id(province_id, "anchor"),
@@ -56,19 +58,30 @@ def position_from_dict(raw: Any) -> FormationOperationalPosition | None:
         raise ValueError("position must be an object or null")
     if not raw:
         return None
+    progress_raw = raw.get("progress_milli", 0)
+    progress_milli = require_strict_int(progress_raw, name="progress_milli", minimum=0, maximum=1000)
     return FormationOperationalPosition(
         mode=str(raw.get("mode", PositionMode.AT_NODE.value)),
         node_id=None if raw.get("node_id") in (None, "") else str(raw.get("node_id")),
         edge_id=None if raw.get("edge_id") in (None, "") else str(raw.get("edge_id")),
-        progress_milli=int(raw.get("progress_milli", 0)),
+        progress_milli=progress_milli,
         facing_node_id=(
             None if raw.get("facing_node_id") in (None, "") else str(raw.get("facing_node_id"))
         ),
     )
 
 
-def place_formation_at_province_anchor(force: StrategicFormation) -> FormationOperationalPosition:
-    """Set formation position to the province migration anchor (M1)."""
+def place_formation_at_province_anchor(
+    force: StrategicFormation,
+    state: CampaignState | None = None,
+) -> FormationOperationalPosition | None:
+    """Snap formation to province migration anchor when an operational graph is available.
+
+    Without a declared graph, clears any position (unsupported map) and returns None.
+    """
+    if state is not None and load_operational_graph_for_state(state) is None:
+        force.position = None
+        return None
     position = province_anchor_position(force.province_id)
     force.position = position
     return position
@@ -77,19 +90,27 @@ def place_formation_at_province_anchor(force: StrategicFormation) -> FormationOp
 def ensure_operational_positions(state: CampaignState) -> dict:
     """Hydrate missing/invalid operational positions (S2 / M1).
 
-    - Does not invent sites or edges.
-    - Places each strategic formation at its province anchor node when needed.
-    - Keeps writing province_id for legacy systems (unchanged here).
-    - Idempotent: valid positions are left alone; re-run yields stable serialization.
-    - No movement resolution, capture, interception, or AI.
+    Only maps with a resolvable operational graph receive positions and schema 7.
+    Unsupported maps keep position=None and are not schema-bumped for S2.
     """
     from .force_migration import ensure_strategic_formations
 
     ensure_strategic_formations(state)
     incoming_schema = int(state.schema_version)
-    graph = load_operational_graph_payload(state.map_id)
-    node_ids, edge_ids, edges_by_id, nodes_by_id = _graph_indexes(graph)
+    graph = load_operational_graph_for_state(state)
+    if graph is None:
+        # Strip any previously invented fake positions on unsupported maps.
+        for force in state.strategic_formations.values():
+            force.position = None
+        return {
+            "schema_version": incoming_schema,
+            "map_id": state.map_id,
+            "graph_loaded": False,
+            "skipped": True,
+            "note": "No operational graph for map; positions left unset.",
+        }
 
+    node_ids, edge_ids, edges_by_id, nodes_by_id = _graph_indexes(graph)
     hydrated = 0
     for force in sorted(
         state.strategic_formations.values(),
@@ -102,10 +123,8 @@ def ensure_operational_positions(state: CampaignState) -> dict:
             edge_ids=edge_ids,
             edges_by_id=edges_by_id,
             nodes_by_id=nodes_by_id,
-            require_graph=graph is not None,
         ):
             continue
-        # Prefer highest-weight site node in province when graph has sites; else anchor.
         force.position = _migration_position_for_province(
             force.province_id,
             graph=graph,
@@ -116,10 +135,9 @@ def ensure_operational_positions(state: CampaignState) -> dict:
     state.schema_version = max(state.schema_version, OPERATIONAL_POSITION_SCHEMA_VERSION)
     if MIGRATION_RECORD_KEY not in state.map_metadata:
         state.map_metadata[MIGRATION_RECORD_KEY] = _stable_migration_record(
-            incoming_schema, map_id=state.map_id, graph_loaded=graph is not None
+            incoming_schema, map_id=state.map_id, graph_loaded=True
         )
     record = state.map_metadata[MIGRATION_RECORD_KEY]
-    # Keep a deterministic hydrated counter only on first write; do not thrash on reload.
     if "hydrated_on_first_pass" not in record:
         record["hydrated_on_first_pass"] = hydrated
     return record
@@ -130,7 +148,7 @@ def resolve_display_pixel(
     force: StrategicFormation,
 ) -> list[int] | None:
     """Pixel for UI draw: node/edge lerp when graph known, else province marker."""
-    graph = load_operational_graph_payload(state.map_id)
+    graph = load_operational_graph_for_state(state)
     if force.position is not None and graph is not None:
         pixel = _pixel_from_position(force.position, graph)
         if pixel is not None:
@@ -141,17 +159,89 @@ def resolve_display_pixel(
     return [int(round(province.x)), int(round(province.y))]
 
 
-def load_operational_graph_payload(map_id: str) -> dict[str, Any] | None:
-    relative = _GRAPH_RELATIVE_PATHS.get(str(map_id))
-    if not relative:
-        return None
-    path = _REPO_ROOT / relative
-    if not path.is_file():
-        return None
-    return _read_graph_json(str(path))
+def load_operational_graph_for_state(state: CampaignState) -> dict[str, Any] | None:
+    """Resolve operational graph via map metadata / asset contract (not package path)."""
+    return load_operational_graph_payload(
+        map_id=str(state.map_id),
+        map_metadata=state.map_metadata,
+    )
 
 
-@lru_cache(maxsize=4)
+def load_operational_graph_payload(
+    map_id: str,
+    *,
+    map_metadata: dict[str, Any] | None = None,
+    search_roots: list[Path] | None = None,
+) -> dict[str, Any] | None:
+    """Load operational graph JSON if the map declares one and a file is found.
+
+    Resolution order:
+    1. Absolute/relative path in map_metadata['operational_graph']
+    2. Sibling of strategic_map_manifest: operational/operational_graph.json
+    3. Known map_id under godot/assets/... (cwd and provided search roots)
+    """
+    meta = dict(map_metadata or {})
+    roots = list(search_roots or [])
+    cwd = Path.cwd()
+    if cwd not in roots:
+        roots.append(cwd)
+
+    for candidate in _graph_candidate_paths(map_id=map_id, map_metadata=meta, roots=roots):
+        try:
+            path = candidate.resolve()
+        except OSError:
+            continue
+        if path.is_file():
+            return _read_graph_json(str(path))
+    return None
+
+
+def _graph_candidate_paths(
+    *,
+    map_id: str,
+    map_metadata: dict[str, Any],
+    roots: list[Path],
+) -> list[Path]:
+    candidates: list[Path] = []
+    configured = str(map_metadata.get("operational_graph", "") or "").strip()
+    if configured:
+        configured_path = Path(configured).expanduser()
+        if configured_path.is_absolute():
+            candidates.append(configured_path)
+        else:
+            for root in roots:
+                candidates.append(root / configured_path)
+                candidates.append(root / "godot" / configured_path)
+                # assets/... form used in campaign metadata
+                if configured_path.parts and configured_path.parts[0] != "godot":
+                    candidates.append(root / "godot" / configured_path)
+
+    manifest = str(map_metadata.get("strategic_map_manifest", "") or "").strip()
+    if manifest:
+        manifest_path = Path(manifest).expanduser()
+        manifest_candidates: list[Path] = []
+        if manifest_path.is_absolute():
+            manifest_candidates.append(manifest_path)
+        else:
+            for root in roots:
+                manifest_candidates.append(root / manifest_path)
+                manifest_candidates.append(root / "godot" / manifest_path)
+                if manifest_path.parts and manifest_path.parts[0] != "godot":
+                    manifest_candidates.append(root / "godot" / manifest_path)
+        for mpath in manifest_candidates:
+            parent = mpath.parent if mpath.suffix else mpath
+            candidates.append(parent / _DEFAULT_GRAPH_RELATIVE)
+
+    relative = _GRAPH_UNDER_GODOT.get(str(map_id))
+    if relative:
+        for root in roots:
+            candidates.append(root / "godot" / relative)
+            candidates.append(root / relative)
+
+    return candidates
+
+
+@lru_cache(maxsize=8)
 def _read_graph_json(path: str) -> dict[str, Any]:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
@@ -170,7 +260,7 @@ def _stable_migration_record(incoming_schema: int, *, map_id: str, graph_loaded:
 def _migration_position_for_province(
     province_id: str,
     *,
-    graph: dict[str, Any] | None,
+    graph: dict[str, Any],
     nodes_by_id: dict[str, dict[str, Any]],
 ) -> FormationOperationalPosition:
     site_node = _highest_weight_site_node(province_id, graph=graph, nodes_by_id=nodes_by_id)
@@ -200,18 +290,18 @@ def _highest_weight_site_node(
         return None
 
     def sort_key(site: dict[str, Any]) -> tuple:
-        weight = site.get("control_weight", 0)
+        # S1 schema field is control_weight_milli (strict int). Ignore legacy aliases.
+        weight = site.get("control_weight_milli", 0)
         try:
-            weight_key = -float(weight)
+            weight_key = -int(weight)
         except (TypeError, ValueError):
-            weight_key = 0.0
+            weight_key = 0
         return (weight_key, str(site.get("site_id", "")))
 
     best = sorted(sites, key=sort_key)[0]
     route_node_id = best.get("route_node_id")
     if route_node_id and str(route_node_id) in nodes_by_id:
         return nodes_by_id[str(route_node_id)]
-    # Fallback: any node in province tagged with this site.
     site_id = str(best.get("site_id", ""))
     candidates = [
         node
@@ -227,60 +317,40 @@ def _position_is_valid(
     position: FormationOperationalPosition | None,
     *,
     province_id: str,
-    node_ids: set[str] | None,
-    edge_ids: set[str] | None,
-    edges_by_id: dict[str, OperationalRouteEdge] | None,
-    nodes_by_id: dict[str, dict[str, Any]] | None,
-    require_graph: bool,
+    node_ids: set[str],
+    edge_ids: set[str],
+    edges_by_id: dict[str, OperationalRouteEdge],
+    nodes_by_id: dict[str, dict[str, Any]],
 ) -> bool:
     if position is None:
         return False
     try:
-        if require_graph and node_ids is not None and edge_ids is not None and edges_by_id is not None:
-            position.validate(node_ids=node_ids, edge_ids=edge_ids, edges_by_id=edges_by_id)
-            if position.mode == PositionMode.AT_NODE.value and nodes_by_id is not None:
-                node = nodes_by_id.get(str(position.node_id))
-                if node is None or str(node.get("province_id")) != province_id:
-                    return False
-            if position.mode == PositionMode.ON_EDGE.value and nodes_by_id is not None:
-                edge = edges_by_id[str(position.edge_id)]
-                provinces = {
-                    str(nodes_by_id.get(edge.a, {}).get("province_id", "")),
-                    str(nodes_by_id.get(edge.b, {}).get("province_id", "")),
-                }
-                if province_id not in provinces:
-                    return False
-        else:
-            # No graph: accept shape + default anchor node id match when at_node.
-            if position.mode == PositionMode.AT_NODE.value:
-                if position.node_id != stable_node_id(province_id, "anchor"):
-                    # Still accept any non-empty node_id shape for forward-compat.
-                    if not position.node_id:
-                        return False
-                if position.edge_id is not None or position.facing_node_id is not None:
-                    return False
-                if int(position.progress_milli) != 0:
-                    return False
-            elif position.mode == PositionMode.ON_EDGE.value:
-                if not position.edge_id or not position.facing_node_id or position.node_id is not None:
-                    return False
-            else:
+        position.validate(node_ids=node_ids, edge_ids=edge_ids, edges_by_id=edges_by_id)
+        if position.mode == PositionMode.AT_NODE.value:
+            node = nodes_by_id.get(str(position.node_id))
+            if node is None or str(node.get("province_id")) != province_id:
                 return False
-    except (TypeError, ValueError):
+        if position.mode == PositionMode.ON_EDGE.value:
+            edge = edges_by_id[str(position.edge_id)]
+            provinces = {
+                str(nodes_by_id.get(edge.a, {}).get("province_id", "")),
+                str(nodes_by_id.get(edge.b, {}).get("province_id", "")),
+            }
+            if province_id not in provinces:
+                return False
+    except (TypeError, ValueError, KeyError):
         return False
     return True
 
 
 def _graph_indexes(
-    graph: dict[str, Any] | None,
+    graph: dict[str, Any],
 ) -> tuple[
-    set[str] | None,
-    set[str] | None,
-    dict[str, OperationalRouteEdge] | None,
-    dict[str, dict[str, Any]] | None,
+    set[str],
+    set[str],
+    dict[str, OperationalRouteEdge],
+    dict[str, dict[str, Any]],
 ]:
-    if graph is None:
-        return None, None, None, None
     nodes_by_id = {str(node["node_id"]): node for node in graph.get("nodes") or []}
     node_ids = set(nodes_by_id)
     edges_by_id: dict[str, OperationalRouteEdge] = {}
@@ -325,7 +395,6 @@ def _pixel_from_position(
         b = nodes.get(str(edge["b"]))
         if a is None or b is None:
             return None
-        # Facing is destination; progress 0 at the other endpoint.
         facing = str(position.facing_node_id)
         if facing == str(edge["b"]):
             start, end = a, b

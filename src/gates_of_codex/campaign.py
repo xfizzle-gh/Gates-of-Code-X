@@ -188,8 +188,9 @@ class CampaignEngine:
         if force is None:
             return
         force.province_id = battalion.province_id
-        # Adjacency moves stay province-authoritative until S3; snap to new province anchor.
-        place_formation_at_province_anchor(force)
+        # Adjacency moves stay province-authoritative until S3; snap to new province anchor
+        # only when this map has an operational graph.
+        place_formation_at_province_anchor(force, self.state)
         for member_id in force.battalion_ids:
             member = self.state.battalions.get(member_id)
             if member is not None:
