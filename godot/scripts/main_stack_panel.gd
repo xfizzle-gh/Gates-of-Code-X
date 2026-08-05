@@ -1,150 +1,271 @@
 extends "res://scripts/main_map_contract.gd"
 
-const STACK_PANEL_TOP := 48.0
-const STACK_PANEL_HEIGHT := 470.0
-const STACK_TAB_HEIGHT := 46.0
-const UNIT_CARD_HEIGHT := 66.0
-const PORTRAIT_SIZE := 48.0
+const STACK_HEADER_H := 52.0
+const STACK_TAB_H := 44.0
+const UNIT_CARD_H := 64.0
+const PORTRAIT_SIZE := 44.0
+const COLLAPSED_BAR_H := 36.0
 
 var stack_tab_rects: Dictionary = {}
 var unit_card_rects: Dictionary = {}
 var portrait_cache: Dictionary = {}
 var hovered_unit_tooltip := ""
+var stack_panel_expanded := true
+var unit_scroll_offset := 0
+var _collapse_button_rect := Rect2()
+var _scroll_up_rect := Rect2()
+var _scroll_down_rect := Rect2()
 
 
 func _draw_management_panel() -> void:
-	super._draw_management_panel()
-	_draw_stack_panel()
+	# Full opaque side panel — no ghosted legacy province UI underneath.
+	var viewport := get_viewport_rect().size
+	var panel_x := viewport.x - PANEL_WIDTH
+	draw_rect(Rect2(panel_x, 0, PANEL_WIDTH, viewport.y), Color(0.035, 0.047, 0.062, 1.0))
+	draw_line(Vector2(panel_x, 0), Vector2(panel_x, viewport.y), Color(0.28, 0.34, 0.42, 0.85), 1.0)
+
+	var x := panel_x + 18.0
+	var y := 28.0
+	var campaign: Dictionary = snapshot.get("campaign", {})
+	var control: Dictionary = snapshot.get("control", {})
+	var writeback := bool(control.get("enabled", false))
+	var has_battle := snapshot.get("pending_battle") != null
+
+	y = _panel_heading("CAMPAIGN COMMAND", x, y)
+	y = _panel_line(
+		"Faction: %s   Current: %s" % [
+			String(campaign.get("selected_faction", "")).to_upper(),
+			String(campaign.get("current_faction", "")).to_upper(),
+		],
+		x,
+		y
+	)
+	var faction: Dictionary = factions_by_id.get(String(campaign.get("selected_faction", "")), {})
+	y = _panel_line(
+		"Resources %s   Inc/Maint %s/%s" % [
+			_fmt_int(faction.get("resources", 0)),
+			_fmt_int(faction.get("income_last_round", 0)),
+			_fmt_int(faction.get("maintenance_last_round", 0)),
+		],
+		x,
+		y
+	)
+	y += 8.0
+	y = _panel_heading("ACTIONS", x, y)
+	y = _draw_button("fit", "Fit front (F)", x, y, true, Color("243140"))
+	y = _draw_button("refresh", "Refresh", x, y, writeback)
+	y = _draw_button("end_turn", "End turn (E)", x, y, writeback and not has_battle)
+	y = _draw_button("run_ai", "Run AI + advance", x, y, writeback and not has_battle)
+	y = _draw_button("auto_resolve", "Auto-resolve battle (A)", x, y, writeback and has_battle, Color("4a2f18"))
+	y = _draw_button("handoff", "Handoff to GoH (H)", x, y, writeback and has_battle, Color("5a2418"))
+	if not writeback:
+		y = _panel_line("Write-back off — re-export frontend.", x, y, Color("ff8e72"), 12)
+	y += 10.0
+
+	_draw_stack_section(panel_x, y, viewport.y - y - 12.0)
+
+	# Targets / objectives under the stack section when collapsed enough room.
+	var stack_bottom := _stack_section_bottom(y, viewport.y - y - 12.0)
+	if stack_bottom + 80.0 < viewport.y:
+		_draw_targets_and_objectives(x, stack_bottom + 12.0)
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseMotion:
-		var next_tooltip := _unit_tooltip_at(event.position)
-		if next_tooltip != hovered_unit_tooltip:
-			hovered_unit_tooltip = next_tooltip
-			queue_redraw()
-	elif event is InputEventMouseButton \
-	and event.button_index == MOUSE_BUTTON_LEFT \
-	and event.pressed:
-		for battalion_id: String in stack_tab_rects:
-			var rect: Rect2 = stack_tab_rects[battalion_id]
-			if rect.has_point(event.position):
-				selected_battalion_id = battalion_id
-				_rebuild_legal_targets()
-				status_message = "Selected %s as acting battalion." % _selected_presentation().get("display_name", battalion_id)
-				queue_redraw()
-				get_viewport().set_input_as_handled()
-				return
-	super._unhandled_input(event)
+func _stack_section_bottom(section_top: float, available_h: float) -> float:
+	if not stack_panel_expanded:
+		return section_top + COLLAPSED_BAR_H
+	return section_top + minf(available_h, 420.0)
 
 
-func _draw_stack_panel() -> void:
+func _draw_stack_section(panel_x: float, top: float, available_h: float) -> void:
 	stack_tab_rects.clear()
 	unit_card_rects.clear()
-	var viewport := get_viewport_rect().size
-	var left := viewport.x - PANEL_WIDTH
-	var panel_rect := Rect2(left, STACK_PANEL_TOP, PANEL_WIDTH, STACK_PANEL_HEIGHT)
-	draw_rect(panel_rect, Color(0.035, 0.047, 0.062, 0.985))
-	draw_line(
-		Vector2(left, STACK_PANEL_TOP),
-		Vector2(left, STACK_PANEL_TOP + STACK_PANEL_HEIGHT),
-		Color(0.28, 0.34, 0.42, 0.8),
-		1.0
-	)
-
+	var left := panel_x
+	var width := PANEL_WIDTH
 	var stack: Dictionary = snapshot.get("stack_presentations", {}).get(selected_province_id, {})
 	var battalion_ids: Array = stack.get("battalion_ids", [])
+	var province: Dictionary = provinces_by_id.get(selected_province_id, {})
+	var province_name := String(province.get("display_name", selected_province_id))
+
+	# Collapse bar always visible.
+	var bar := Rect2(left + 10.0, top, width - 20.0, COLLAPSED_BAR_H)
+	draw_rect(bar, Color(0.07, 0.10, 0.14, 1.0))
+	draw_rect(bar, Color(0.30, 0.38, 0.48, 0.9), false, 1.0)
+	_collapse_button_rect = Rect2(bar.end.x - 70.0, bar.position.y + 6.0, 60.0, 24.0)
+	draw_rect(_collapse_button_rect, Color(0.14, 0.20, 0.28, 1.0))
+	_draw_panel_text(
+		"Hide" if stack_panel_expanded else "Show",
+		_collapse_button_rect.position + Vector2(14, 16),
+		11,
+		Color(0.90, 0.94, 0.98, 1.0)
+	)
+	var summary := String(stack.get("summary_label", ""))
+	if summary.is_empty() and not battalion_ids.is_empty():
+		summary = "%s battalion(s)" % _fmt_int(battalion_ids.size())
+	if summary.is_empty():
+		summary = "No forces in province"
+	_draw_panel_text(
+		"%s  ·  %s" % [province_name, summary],
+		bar.position + Vector2(10, 22),
+		12,
+		Color(0.94, 0.96, 0.99, 1.0)
+	)
+
+	if not stack_panel_expanded:
+		return
+
+	var body_top := top + COLLAPSED_BAR_H + 8.0
+	var body_h := minf(available_h - COLLAPSED_BAR_H - 8.0, 380.0)
+	var body := Rect2(left + 10.0, body_top, width - 20.0, body_h)
+	draw_rect(body, Color(0.045, 0.06, 0.08, 1.0))
+	draw_rect(body, Color(0.24, 0.30, 0.38, 0.75), false, 1.0)
+
 	if battalion_ids.is_empty():
 		_draw_panel_text(
-			"No battalion selected",
-			Vector2(left + 18, STACK_PANEL_TOP + 28),
-			16,
+			"Select a province with forces.",
+			body.position + Vector2(12, 28),
+			13,
 			Color(0.72, 0.77, 0.83, 1.0)
 		)
 		return
+
 	if selected_battalion_id.is_empty() or not battalion_ids.has(selected_battalion_id):
 		selected_battalion_id = String(battalion_ids[0])
 		_rebuild_legal_targets()
 
-	_draw_stack_summary(left, stack)
-	var tab_y := STACK_PANEL_TOP + 58.0
-	var tab_width := (PANEL_WIDTH - 28.0) / maxf(float(battalion_ids.size()), 1.0)
+	# Stack summary (integers only).
+	_draw_panel_text(
+		String(stack.get("summary_label", "")),
+		body.position + Vector2(12, 22),
+		13,
+		Color(0.95, 0.97, 1.0, 1.0)
+	)
+	_draw_panel_text(
+		"Cond %s%%   Sup %s%%   Reinf %s   Repair %s" % [
+			_fmt_int(stack.get("condition", 0)),
+			_fmt_int(stack.get("supply", 0)),
+			_fmt_int(stack.get("reinforcement_cost", 0)),
+			_fmt_int(stack.get("repair_cost", 0)),
+		],
+		body.position + Vector2(12, 42),
+		11,
+		Color(0.65, 0.77, 0.88, 1.0)
+	)
+
+	# Formation / battalion tabs.
+	var tab_y := body.position.y + 56.0
+	var tab_w := (body.size.x - 8.0) / maxf(float(battalion_ids.size()), 1.0)
 	for index in range(battalion_ids.size()):
 		var battalion_id := String(battalion_ids[index])
-		var rect := Rect2(
-			left + 14.0 + tab_width * index,
-			tab_y,
-			tab_width - 4.0,
-			STACK_TAB_HEIGHT
-		)
+		var rect := Rect2(body.position.x + 4.0 + tab_w * index, tab_y, tab_w - 4.0, STACK_TAB_H)
 		stack_tab_rects[battalion_id] = rect
 		_draw_battalion_tab(rect, battalion_id)
 
 	var presentation := _selected_presentation()
 	if presentation.is_empty():
 		return
-	var header_y := tab_y + STACK_TAB_HEIGHT + 18.0
-	_draw_selected_header(left, header_y, presentation)
-	var card_y := header_y + 86.0
+
+	var header_y := tab_y + STACK_TAB_H + 14.0
+	_draw_selected_header(body.position.x, header_y, presentation)
+
+	# Scrollable tactical unit cards.
 	var cards: Array = presentation.get("cards", [])
-	for index in range(cards.size()):
-		if card_y + UNIT_CARD_HEIGHT > STACK_PANEL_TOP + STACK_PANEL_HEIGHT - 42.0:
+	var cards_top := header_y + 78.0
+	var cards_bottom := body.position.y + body.size.y - 28.0
+	var visible_h := cards_bottom - cards_top
+	var max_visible := maxi(int(floor(visible_h / UNIT_CARD_H)), 1)
+	var max_scroll := maxi(cards.size() - max_visible, 0)
+	unit_scroll_offset = clampi(unit_scroll_offset, 0, max_scroll)
+
+	_scroll_up_rect = Rect2(body.end.x - 54.0, cards_top - 2.0, 22.0, 18.0)
+	_scroll_down_rect = Rect2(body.end.x - 28.0, cards_top - 2.0, 22.0, 18.0)
+	if max_scroll > 0:
+		_draw_scroll_button(_scroll_up_rect, "^", unit_scroll_offset > 0)
+		_draw_scroll_button(_scroll_down_rect, "v", unit_scroll_offset < max_scroll)
+
+	if cards.is_empty():
+		var debug_on := bool(snapshot.get("campaign", {}).get("map_metadata", {}).get("debug_show_placeholder_units", false))
+		if debug_on:
 			_draw_panel_text(
-				"+%s more unit groups" % (cards.size() - index),
-				Vector2(left + 18, card_y + 18),
-				12,
-				Color(0.68, 0.73, 0.79, 1.0)
+				"[debug] No non-placeholder tactical units in this battalion.",
+				Vector2(body.position.x + 12, cards_top + 20),
+				11,
+				Color(0.95, 0.75, 0.40, 1.0)
 			)
-			break
+		else:
+			_draw_panel_text(
+				"No tactical unit cards (roster empty or placeholders hidden).",
+				Vector2(body.position.x + 12, cards_top + 20),
+				11,
+				Color(0.70, 0.76, 0.82, 1.0)
+			)
+		return
+
+	var card_y := cards_top
+	var end_index := mini(unit_scroll_offset + max_visible, cards.size())
+	for index in range(unit_scroll_offset, end_index):
 		var card: Dictionary = cards[index]
-		var rect := Rect2(left + 14.0, card_y, PANEL_WIDTH - 28.0, UNIT_CARD_HEIGHT - 4.0)
+		var rect := Rect2(body.position.x + 8.0, card_y, body.size.x - 16.0, UNIT_CARD_H - 4.0)
 		unit_card_rects[index] = {"rect": rect, "tooltip": String(card.get("tooltip", ""))}
 		_draw_unit_card(rect, card)
-		card_y += UNIT_CARD_HEIGHT
+		card_y += UNIT_CARD_H
 
-	if not hovered_unit_tooltip.is_empty():
-		var tooltip_rect := Rect2(
-			left + 12.0,
-			STACK_PANEL_TOP + STACK_PANEL_HEIGHT - 66.0,
-			PANEL_WIDTH - 24.0,
-			58.0
+	if end_index < cards.size():
+		_draw_panel_text(
+			"+%s more unit groups  (scroll)" % (cards.size() - end_index),
+			Vector2(body.position.x + 12, cards_bottom - 4),
+			10,
+			Color(0.68, 0.73, 0.79, 1.0)
 		)
-		draw_rect(tooltip_rect, Color(0.02, 0.026, 0.035, 0.98))
-		draw_rect(tooltip_rect, Color(0.45, 0.55, 0.68, 0.8), false, 1.0)
-		_draw_wrapped_text(hovered_unit_tooltip, tooltip_rect.grow(-8.0), 11, Color(0.92, 0.94, 0.97, 1.0))
 
 
-func _draw_stack_summary(left: float, stack: Dictionary) -> void:
-	_draw_panel_text(
-		"STACK · %s BATTALIONS · %s/%s UNITS" % [
-			stack.get("battalion_count", 0),
-			stack.get("unit_count", 0),
-			stack.get("authorized_unit_count", 0),
-		],
-		Vector2(left + 16, STACK_PANEL_TOP + 22),
-		14,
-		Color(0.94, 0.96, 0.99, 1.0)
-	)
-	_draw_panel_text(
-		"COND %s   SUP %s   REINF %s   REPAIR %s" % [
-			stack.get("condition", 0),
-			stack.get("supply", 0),
-			stack.get("reinforcement_cost", 0),
-			stack.get("repair_cost", 0),
-		],
-		Vector2(left + 16, STACK_PANEL_TOP + 43),
-		11,
-		Color(0.65, 0.77, 0.88, 1.0)
-	)
+func _draw_targets_and_objectives(x: float, y: float) -> float:
+	y = _panel_heading("TARGETS", x, y)
+	var writeback := bool(snapshot.get("control", {}).get("enabled", false))
+	var options: Array = front_by_origin.get(selected_province_id, [])
+	if options.is_empty():
+		y = _panel_line("No legal moves for selected battalion.", x, y, Color(0.7, 0.75, 0.8), 12)
+	else:
+		var shown := 0
+		for option: Dictionary in options:
+			if shown >= 4:
+				y = _panel_line("+ more targets in list…", x, y, Color(0.65, 0.7, 0.75), 11)
+				break
+			var tid := String(option.get("target", ""))
+			var label := "%s  %s" % [
+				String(option.get("kind", "move")).to_upper(),
+				String(option.get("target_name", tid)),
+			]
+			y = _draw_button(
+				"move:%s" % tid,
+				label,
+				x,
+				y,
+				writeback,
+				Color("2a3d28") if String(option.get("kind", "")) == "move" else Color("4a2f18")
+			)
+			shown += 1
+	y += 6.0
+	y = _panel_heading("OBJECTIVES", x, y)
+	for objective: Dictionary in snapshot.get("objectives", []):
+		y = _panel_line(
+			"%s/%s  %s" % [
+				_fmt_int(objective.get("progress", 0)),
+				_fmt_int(objective.get("threshold", 0)),
+				String(objective.get("display_name", objective.get("id", ""))),
+			],
+			x,
+			y,
+			Color(0.78, 0.82, 0.86, 1.0),
+			12
+		)
+	return y
 
 
 func _draw_battalion_tab(rect: Rect2, battalion_id: String) -> void:
 	var presentation: Dictionary = snapshot.get("battalion_presentations", {}).get(battalion_id, {})
 	var selected := battalion_id == selected_battalion_id
 	var can_act := bool(presentation.get("can_act", false))
-	var fill := Color(0.12, 0.18, 0.24, 1.0) if selected else Color(0.065, 0.085, 0.11, 1.0)
-	if selected:
-		fill = Color(0.12, 0.28, 0.34, 1.0)
+	var fill := Color(0.12, 0.28, 0.34, 1.0) if selected else Color(0.065, 0.085, 0.11, 1.0)
 	draw_rect(rect, fill)
 	draw_rect(
 		rect,
@@ -154,69 +275,57 @@ func _draw_battalion_tab(rect: Rect2, battalion_id: String) -> void:
 	)
 	_draw_panel_text(
 		String(presentation.get("actor_marker", "?")),
-		rect.position + Vector2(7, 16),
+		rect.position + Vector2(7, 14),
 		10,
 		Color(0.95, 0.84, 0.42, 1.0)
 	)
-	_draw_panel_text(
-		String(presentation.get("display_name", battalion_id)).left(17),
-		rect.position + Vector2(7, 33),
-		11,
-		Color.WHITE
-	)
+	var name := String(presentation.get("display_name", battalion_id))
+	_draw_panel_text(name.left(18), rect.position + Vector2(7, 30), 11, Color.WHITE)
 	if can_act:
 		draw_circle(rect.position + Vector2(rect.size.x - 8, 9), 3.5, Color(0.30, 1.0, 0.56, 1.0))
 
 
 func _draw_selected_header(left: float, y: float, presentation: Dictionary) -> void:
+	_draw_panel_text("STRATEGIC FORMATION", Vector2(left + 12, y + 4), 10, Color(0.55, 0.72, 0.86, 1.0))
 	_draw_panel_text(
-		String(presentation.get("display_name", "Battalion")),
-		Vector2(left + 16, y + 18),
-		18,
+		String(presentation.get("formation_name", presentation.get("display_name", "Formation"))),
+		Vector2(left + 12, y + 22),
+		15,
 		Color(0.98, 0.99, 1.0, 1.0)
 	)
 	_draw_panel_text(
-		"%s · %s · %s" % [
+		"Battalion · %s · %s · %s" % [
 			presentation.get("actor_marker", "?"),
-			presentation.get("formation_name", "Unknown formation"),
 			presentation.get("type_label", "Battalion"),
+			presentation.get("battalion_label", presentation.get("id", "")),
 		],
-		Vector2(left + 16, y + 39),
+		Vector2(left + 12, y + 40),
 		11,
 		Color(0.64, 0.78, 0.90, 1.0)
 	)
 	_draw_panel_text(
-		"%s/%s units   C%s   S%s   XP%s   M%s   A%s" % [
-			presentation.get("unit_count", 0),
-			presentation.get("authorized_unit_count", 0),
-			presentation.get("condition", 0),
-			presentation.get("supply", 0),
-			presentation.get("experience", 0),
-			presentation.get("movement_remaining", 0),
-			presentation.get("combat_actions_remaining", 0),
+		"%s tactical units   C%s%%  S%s%%  XP%s  M%s  A%s" % [
+			_fmt_int(presentation.get("unit_count", 0)),
+			_fmt_int(presentation.get("condition", 0)),
+			_fmt_int(presentation.get("supply", 0)),
+			_fmt_int(presentation.get("experience", 0)),
+			_fmt_int(presentation.get("movement_remaining", 0)),
+			_fmt_int(presentation.get("combat_actions_remaining", 0)),
 		],
-		Vector2(left + 16, y + 60),
+		Vector2(left + 12, y + 58),
 		11,
 		Color(0.83, 0.86, 0.90, 1.0)
 	)
 	_draw_panel_text(
-		"Reinforce %s · Repair %s · %s legal targets" % [
-			presentation.get("reinforcement_cost", 0),
-			presentation.get("repair_cost", 0),
-			presentation.get("legal_option_count", 0),
-		],
-		Vector2(left + 16, y + 78),
+		"%s legal targets for this battalion" % _fmt_int(presentation.get("legal_option_count", 0)),
+		Vector2(left + 12, y + 74),
 		10,
 		Color(0.68, 0.74, 0.81, 1.0)
 	)
 
 
 func _draw_unit_card(rect: Rect2, card: Dictionary) -> void:
-	var role := String(card.get("source", {}).get("role", "unknown"))
-	var fill := Color(0.075, 0.095, 0.12, 0.98)
-	if role == "legacy_reserve":
-		fill = Color(0.12, 0.105, 0.075, 0.98)
-	draw_rect(rect, fill)
+	draw_rect(rect, Color(0.075, 0.095, 0.12, 0.98))
 	draw_rect(rect, Color(0.26, 0.32, 0.39, 0.9), false, 1.0)
 	var portrait_rect := Rect2(rect.position + Vector2(7, 7), Vector2(PORTRAIT_SIZE, PORTRAIT_SIZE))
 	var portrait := _portrait_texture(String(card.get("portrait_key", "")))
@@ -227,40 +336,91 @@ func _draw_unit_card(rect: Rect2, card: Dictionary) -> void:
 		draw_rect(portrait_rect, Color(0.38, 0.46, 0.56, 0.9), false, 1.0)
 		_draw_panel_text(
 			String(card.get("portrait_fallback", "UNIT")),
-			portrait_rect.position + Vector2(6, 28),
+			portrait_rect.position + Vector2(6, 26),
 			11,
 			Color(0.88, 0.92, 0.96, 1.0)
 		)
 	var text_x := rect.position.x + PORTRAIT_SIZE + 14.0
+	_draw_panel_text("TACTICAL UNIT", Vector2(text_x, rect.position.y + 12), 9, Color(0.55, 0.70, 0.82, 1.0))
 	_draw_panel_text(
 		String(card.get("short_name", card.get("display_name", "Unknown unit"))),
-		Vector2(text_x, rect.position.y + 18),
+		Vector2(text_x, rect.position.y + 28),
 		12,
 		Color(0.97, 0.98, 1.0, 1.0)
 	)
+	var qty := int(card.get("quantity", 0))
+	var auth := int(card.get("authorized_quantity", 0))
+	var qty_label := str(qty) if auth <= 0 else "%s/%s" % [qty, auth]
 	_draw_panel_text(
-		"%s/%s   C%s   S%s   XP%s" % [
-			card.get("quantity", 0),
-			card.get("authorized_quantity", 0),
-			card.get("condition", 0),
-			card.get("supply", 0),
-			card.get("experience", 0),
+		"%s fielded   C%s%%  S%s%%  XP%s" % [
+			qty_label,
+			_fmt_int(card.get("condition", 0)),
+			_fmt_int(card.get("supply", 0)),
+			_fmt_int(card.get("experience", 0)),
 		],
-		Vector2(text_x, rect.position.y + 38),
+		Vector2(text_x, rect.position.y + 46),
 		10,
 		Color(0.72, 0.81, 0.88, 1.0)
 	)
-	var source: Dictionary = card.get("source", {})
-	_draw_panel_text(
-		"%s · %s · R%s" % [
-			source.get("marker", "?"),
-			card.get("category_icon", "UNIT"),
-			card.get("replacement_cost", 0),
-		],
-		Vector2(text_x, rect.position.y + 55),
-		9,
-		Color(0.90, 0.72, 0.40, 1.0) if role == "legacy_reserve" else Color(0.62, 0.70, 0.78, 1.0)
-	)
+
+
+func _draw_scroll_button(rect: Rect2, label: String, enabled: bool) -> void:
+	draw_rect(rect, Color(0.12, 0.16, 0.22, 1.0) if enabled else Color(0.07, 0.09, 0.12, 1.0))
+	draw_rect(rect, Color(0.35, 0.42, 0.52, 0.9), false, 1.0)
+	_draw_panel_text(label, rect.position + Vector2(7, 13), 11, Color.WHITE if enabled else Color(0.4, 0.45, 0.5, 1.0))
+
+
+func _draw_province(province: Dictionary) -> void:
+	# Custom province draw: clearer stack badge (no ambiguous black circle).
+	var position := _map_to_screen(province)
+	var owner := String(province.get("owner", "neutral"))
+	var color: Color = FACTION_COLORS.get(owner, FACTION_COLORS["neutral"])
+	var province_id := String(province.get("id", ""))
+	var battalion: Dictionary = battalions_by_province.get(province_id, {})
+	var occupied := not battalion.is_empty()
+	var selected := province_id == selected_province_id
+	var target_option: Dictionary = legal_targets.get(province_id, {})
+	var stack: Array = battalion_stacks_by_province.get(province_id, [])
+
+	if color_id_map != null and color_id_map.is_ready:
+		# Color-ID path: only overlays (map fill already drawn).
+		pass
+	else:
+		draw_circle(position, 10.0 if selected else 7.0, color)
+
+	if not target_option.is_empty():
+		var kind := String(target_option.get("kind", "move"))
+		draw_arc(position, 16.0, 0.0, TAU, 28, Color("3dff8a") if kind == "move" else Color("ff9f43"), 2.0)
+
+	if occupied:
+		_draw_battalion_counter(position, battalion, color, selected)
+		if stack.size() > 1:
+			var badge := position + Vector2(18, -16)
+			var badge_rect := Rect2(badge - Vector2(10, 9), Vector2(28, 18))
+			draw_rect(badge_rect, Color(0.04, 0.06, 0.09, 0.96))
+			draw_rect(badge_rect, Color.WHITE, false, 1.2)
+			draw_string(
+				ThemeDB.fallback_font,
+				badge + Vector2(-6, 4),
+				"x%s" % stack.size(),
+				HORIZONTAL_ALIGNMENT_LEFT,
+				-1,
+				11,
+				Color.WHITE
+			)
+
+	var label := String(province.get("display_name", province_id))
+	var show_label := occupied or selected or not target_option.is_empty()
+	if show_label:
+		draw_string(
+			ThemeDB.fallback_font,
+			position + Vector2(14, -8),
+			label,
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			12 if selected or occupied else 11,
+			Color(0.95, 0.96, 0.98, 0.95)
+		)
 
 
 func _portrait_texture(key: String) -> Texture2D:
@@ -288,6 +448,10 @@ func _selected_presentation() -> Dictionary:
 	return snapshot.get("battalion_presentations", {}).get(selected_battalion_id, {})
 
 
+func _fmt_int(value: Variant) -> String:
+	return str(int(round(float(value))))
+
+
 func _draw_panel_text(text: String, position: Vector2, font_size: int, color: Color) -> void:
 	draw_string(
 		ThemeDB.fallback_font,
@@ -300,19 +464,51 @@ func _draw_panel_text(text: String, position: Vector2, font_size: int, color: Co
 	)
 
 
-func _draw_wrapped_text(text: String, rect: Rect2, font_size: int, color: Color) -> void:
-	var lines := text.split("\n")
-	var y := rect.position.y + font_size
-	for line: String in lines:
-		draw_string(
-			ThemeDB.fallback_font,
-			Vector2(rect.position.x, y),
-			line,
-			HORIZONTAL_ALIGNMENT_LEFT,
-			rect.size.x,
-			font_size,
-			color
-		)
-		y += font_size + 3
-		if y > rect.end.y:
-			break
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion:
+		var next_tooltip := _unit_tooltip_at(event.position)
+		if next_tooltip != hovered_unit_tooltip:
+			hovered_unit_tooltip = next_tooltip
+			queue_redraw()
+	elif event is InputEventMouseButton and event.pressed:
+		var mouse := event as InputEventMouseButton
+		if mouse.button_index == MOUSE_BUTTON_LEFT:
+			if _collapse_button_rect.has_point(mouse.position):
+				stack_panel_expanded = not stack_panel_expanded
+				status_message = "Stack panel %s." % ("expanded" if stack_panel_expanded else "collapsed")
+				queue_redraw()
+				get_viewport().set_input_as_handled()
+				return
+			if _scroll_up_rect.has_point(mouse.position):
+				unit_scroll_offset = maxi(unit_scroll_offset - 1, 0)
+				queue_redraw()
+				get_viewport().set_input_as_handled()
+				return
+			if _scroll_down_rect.has_point(mouse.position):
+				unit_scroll_offset += 1
+				queue_redraw()
+				get_viewport().set_input_as_handled()
+				return
+			for battalion_id: String in stack_tab_rects:
+				var rect: Rect2 = stack_tab_rects[battalion_id]
+				if rect.has_point(mouse.position):
+					selected_battalion_id = battalion_id
+					unit_scroll_offset = 0
+					_rebuild_legal_targets()
+					status_message = "Selected %s as acting battalion." % _selected_presentation().get("display_name", battalion_id)
+					queue_redraw()
+					get_viewport().set_input_as_handled()
+					return
+		elif mouse.button_index == MOUSE_BUTTON_WHEEL_UP and stack_panel_expanded:
+			if Rect2(get_viewport_rect().size.x - PANEL_WIDTH, 0, PANEL_WIDTH, get_viewport_rect().size.y).has_point(mouse.position):
+				unit_scroll_offset = maxi(unit_scroll_offset - 1, 0)
+				queue_redraw()
+				get_viewport().set_input_as_handled()
+				return
+		elif mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN and stack_panel_expanded:
+			if Rect2(get_viewport_rect().size.x - PANEL_WIDTH, 0, PANEL_WIDTH, get_viewport_rect().size.y).has_point(mouse.position):
+				unit_scroll_offset += 1
+				queue_redraw()
+				get_viewport().set_input_as_handled()
+				return
+	super._unhandled_input(event)

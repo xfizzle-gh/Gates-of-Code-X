@@ -334,19 +334,20 @@ func _draw_color_id_overlays() -> void:
 			reserved.append(Rect2(position + Vector2(-18, -14), Vector2(36, 28)))
 			var stack: Array = battalion_stacks_by_province.get(province_id, [])
 			if stack.size() > 1:
-				var badge := _clamp_point_in_rect(position + Vector2(19, -14), overlay_bounds, 10.0)
-				draw_circle(badge, 8.5, Color(0.04, 0.055, 0.07, 0.98))
-				draw_circle(badge, 8.5, Color.WHITE, false, 1.0)
+				var badge := _clamp_point_in_rect(position + Vector2(19, -14), overlay_bounds, 12.0)
+				var badge_rect := Rect2(badge - Vector2(11, 9), Vector2(30, 18))
+				draw_rect(badge_rect, Color(0.04, 0.06, 0.09, 0.96))
+				draw_rect(badge_rect, Color.WHITE, false, 1.2)
 				draw_string(
 					ThemeDB.fallback_font,
-					badge + Vector2(-3.5, 4.0),
-					str(stack.size()),
+					badge + Vector2(-7, 4),
+					"x%s" % stack.size(),
 					HORIZONTAL_ALIGNMENT_LEFT,
 					-1,
 					11,
 					Color.WHITE
 				)
-				reserved.append(Rect2(badge + Vector2(-9, -9), Vector2(18, 18)))
+				reserved.append(badge_rect)
 
 		var label := _province_label(province, province_id)
 		var named := bool(province.get("name_is_human_readable", _is_named_province(label)))
