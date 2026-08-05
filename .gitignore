@@ -42,3 +42,6 @@ Thumbs.db
 # Keep authored fixtures (do not ignore)
 # tests/fixtures/**
 # examples/**
+
+godot/assets/maps/**/prototype/
+
