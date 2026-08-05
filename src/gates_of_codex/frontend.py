@@ -31,6 +31,9 @@ def build_frontend_snapshot(
     snapshot_path: str | Path | None = None,
 ) -> dict:
     ensure_strategic_layer(state)
+    from .force_migration import ensure_strategic_formations
+
+    ensure_strategic_formations(state)
     apply_marker_layout(state)
     objectives = update_operational_objectives(state)
     outcome = evaluate_campaign_outcome(state)
@@ -170,10 +173,52 @@ def build_frontend_snapshot(
             }
             for formation in sorted(state.formations.values(), key=lambda value: value.formation_id)
         ],
+        "strategic_formations": [
+            {
+                "id": force.strategic_formation_id,
+                "display_name": force.display_name,
+                "faction": force.faction.value,
+                "province_id": force.province_id,
+                "echelon": force.echelon.value,
+                "commander_id": force.commander_id,
+                "commander_display_name": _commander_display_name(state, force.commander_id),
+                "battalion_ids": list(force.battalion_ids),
+                "template_formation_id": force.template_formation_id,
+                "stack_order": force.stack_order,
+                "movement_state": force.movement_state,
+                "stance": force.stance,
+                "actor_id": force.actor_id,
+                "condition_summary": force.condition_summary,
+                "supply_summary": force.supply_summary,
+                "experience_summary": force.experience_summary,
+                "is_player_controlled": force.is_player_controlled,
+            }
+            for force in sorted(
+                state.strategic_formations.values(), key=lambda value: value.strategic_formation_id
+            )
+        ],
+        "commanders": [
+            {
+                "id": commander.commander_id,
+                "display_name": commander.display_name,
+                "rank": commander.rank,
+                "portrait_key": commander.portrait_key,
+                "assigned_strategic_formation_id": commander.assigned_strategic_formation_id,
+                "assigned_battalion_id": commander.assigned_battalion_id,
+                "status": commander.status.value,
+                "experience": commander.experience,
+                "source": commander.source,
+                "provenance": commander.provenance,
+            }
+            for commander in sorted(state.commanders.values(), key=lambda value: value.commander_id)
+        ],
         "battalions": [
             {
                 "id": battalion.battalion_id,
                 "formation_id": battalion.formation_id,
+                "strategic_formation_id": battalion.strategic_formation_id,
+                "commander_id": battalion.commander_id,
+                "commander_display_name": _commander_display_name(state, battalion.commander_id),
                 "faction": battalion.faction.value,
                 "province_id": battalion.province_id,
                 "battalion_type": battalion.battalion_type.value,
@@ -266,6 +311,17 @@ def build_frontend_apply_invocation(control: dict) -> tuple[str, list[str]]:
         "--commands",
         commands_path,
     ]
+
+
+def _commander_display_name(state: CampaignState, commander_id: str | None) -> str:
+    """Presentation-only fallback. Does not invent serialized commander records."""
+
+    if not commander_id:
+        return "Unassigned Commander"
+    commander = state.commanders.get(commander_id)
+    if commander is None or not commander.display_name.strip():
+        return "Unassigned Commander"
+    return commander.display_name
 
 
 def _pending_battle(state: CampaignState) -> dict | None:

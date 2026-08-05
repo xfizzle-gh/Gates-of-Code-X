@@ -38,6 +38,16 @@ class EmCrossingMovementSmokeTests(unittest.TestCase):
         b.movement_remaining = 1
         b.condition = 100
         b.combat_actions_remaining = 1
+        # Strategic formation location is authoritative after schema migration.
+        force_id = getattr(b, "strategic_formation_id", "") or ""
+        force = state.strategic_formations.get(force_id) if force_id else None
+        if force is not None:
+            force.province_id = province_id
+            for member_id in force.battalion_ids:
+                member = state.battalions.get(member_id)
+                if member is not None:
+                    member.province_id = province_id
+                    member.movement_remaining = max(int(member.movement_remaining), 1)
 
     def _nato_battalion(self, state) -> str:
         for bid, b in state.battalions.items():

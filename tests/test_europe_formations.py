@@ -29,15 +29,30 @@ class EuropeFormationTests(unittest.TestCase):
         self.assertEqual(len(state.battalions), len({b.province_id for b in state.battalions.values()}))
 
     def test_schema_two_round_trip_retains_formations_and_metadata(self) -> None:
+        from gates_of_codex.force_migration import ensure_strategic_formations
+
         original = build_goe_europe_campaign()
+        ensure_strategic_formations(original)
         restored = campaign_from_dict(original.to_dict())
         self.assertEqual(original.map_id, restored.map_id)
-        self.assertEqual(original.map_metadata, restored.map_metadata)
+        # Migration report timestamps/counters may refresh; core map metadata must remain.
+        original_meta = {
+            key: value
+            for key, value in original.map_metadata.items()
+            if key != "strategic_formation_migration"
+        }
+        restored_meta = {
+            key: value
+            for key, value in restored.map_metadata.items()
+            if key != "strategic_formation_migration"
+        }
+        self.assertEqual(original_meta, restored_meta)
         self.assertEqual(original.formations["nato-pol-mechanized"], restored.formations["nato-pol-mechanized"])
         self.assertEqual(
             original.provinces["Warszawa"].metadata,
             restored.provinces["Warszawa"].metadata,
         )
+        self.assertEqual(len(original.strategic_formations), len(restored.strategic_formations))
 
     def test_legacy_scenario_without_formations_remains_loadable(self) -> None:
         legacy = {

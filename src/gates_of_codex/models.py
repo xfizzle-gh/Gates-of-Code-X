@@ -34,6 +34,22 @@ class FormationKind(StrEnum):
     SUPPORT_GROUP = "support_group"
 
 
+class ForceEchelon(StrEnum):
+    """Strategic-map formation size. Balance/capacity values are intentionally unset."""
+
+    BATTALION = "battalion"
+    REGIMENT = "regiment"
+    BRIGADE = "brigade"
+    DIVISION = "division"
+
+
+class CommanderStatus(StrEnum):
+    ACTIVE = "active"
+    UNASSIGNED = "unassigned"
+    CASUALTY = "casualty"
+    MISSING = "missing"
+
+
 @dataclass(slots=True)
 class BattalionRosterEntry:
     unit_name: str
@@ -134,6 +150,8 @@ class Alliance:
 
 @dataclass(slots=True)
 class Formation:
+    """TOE / national identity template (not the on-map strategic container)."""
+
     formation_id: str
     display_name: str
     faction: Faction
@@ -157,6 +175,73 @@ class Formation:
 
 
 @dataclass(slots=True)
+class Commander:
+    """Optional commander record. Old saves may have zero commanders."""
+
+    commander_id: str
+    display_name: str
+    rank: str = ""
+    portrait_key: str = ""
+    assigned_strategic_formation_id: str | None = None
+    assigned_battalion_id: str | None = None
+    status: CommanderStatus = CommanderStatus.UNASSIGNED
+    experience: int = 0
+    source: str = "unassigned"
+    provenance: str = ""
+
+    def validate(self) -> None:
+        if not self.commander_id.strip():
+            raise ValueError("Commander ID cannot be empty")
+        if not self.display_name.strip():
+            raise ValueError(f"Commander {self.commander_id} has no display name")
+        if self.assigned_strategic_formation_id and self.assigned_battalion_id:
+            raise ValueError(
+                f"Commander {self.commander_id} cannot be assigned to a formation and battalion simultaneously"
+            )
+        if self.experience < 0:
+            raise ValueError(f"Commander {self.commander_id} experience cannot be negative")
+
+
+@dataclass(slots=True)
+class StrategicFormation:
+    """On-map strategic force container (battalion..division). Designers call this a formation.
+
+    Distinct from :class:`Formation`, which remains the TOE/identity template.
+    """
+
+    strategic_formation_id: str
+    display_name: str
+    faction: Faction
+    province_id: str
+    echelon: ForceEchelon = ForceEchelon.BATTALION
+    commander_id: str | None = None
+    battalion_ids: list[str] = field(default_factory=list)
+    template_formation_id: str = ""
+    stack_order: int = 0
+    movement_state: str = "at_anchor"
+    stance: str = "standard"
+    actor_id: str = ""
+    condition_summary: int = 100
+    supply_summary: int = 100
+    experience_summary: int = 0
+    is_player_controlled: bool = False
+
+    def validate(self) -> None:
+        if not self.strategic_formation_id.strip():
+            raise ValueError("Strategic formation ID cannot be empty")
+        if not self.display_name.strip():
+            raise ValueError(f"Strategic formation {self.strategic_formation_id} has no display name")
+        if not self.province_id.strip():
+            raise ValueError(f"Strategic formation {self.strategic_formation_id} has no province")
+        if self.faction == Faction.NEUTRAL:
+            raise ValueError(f"Strategic formation {self.strategic_formation_id} cannot belong to neutral")
+        if not self.battalion_ids:
+            raise ValueError(f"Strategic formation {self.strategic_formation_id} must contain at least one battalion")
+        if len(set(self.battalion_ids)) != len(self.battalion_ids):
+            raise ValueError(f"Strategic formation {self.strategic_formation_id} has duplicate battalion membership")
+
+
+@dataclass(slots=True)
 class Battalion:
     battalion_id: str
     faction: Faction
@@ -165,6 +250,8 @@ class Battalion:
     roster: list[BattalionRosterEntry] = field(default_factory=list)
     authorized_roster: list[BattalionRosterEntry] = field(default_factory=list)
     formation_id: str = ""
+    strategic_formation_id: str = ""
+    commander_id: str | None = None
     is_player_controlled: bool = False
     movement_remaining: int = 1
     combat_actions_remaining: int = 1
@@ -280,6 +367,8 @@ class CampaignState:
     factions: dict[str, FactionState] = field(default_factory=dict)
     alliances: dict[str, Alliance] = field(default_factory=dict)
     formations: dict[str, Formation] = field(default_factory=dict)
+    strategic_formations: dict[str, StrategicFormation] = field(default_factory=dict)
+    commanders: dict[str, Commander] = field(default_factory=dict)
     research_nodes: dict[str, ResearchNode] = field(default_factory=dict)
     unit_economy: dict[str, UnitEconomy] = field(default_factory=dict)
     provinces: dict[str, Province] = field(default_factory=dict)
@@ -333,6 +422,59 @@ class CampaignState:
                 if province.province_id not in self.provinces[neighbor_id].neighbors:
                     raise ValueError(f"Adjacency must be reciprocal: {province.province_id} -> {neighbor_id}")
         occupied_factions: dict[str, Faction] = {}
+        membership: dict[str, str] = {}
+        for key, force in self.strategic_formations.items():
+            if key != force.strategic_formation_id:
+                raise ValueError(f"Strategic formation key mismatch: {key}")
+            force.validate()
+            if force.faction.value not in self.factions:
+                raise ValueError(f"Strategic formation {key} references missing faction")
+            if force.province_id not in self.provinces:
+                raise ValueError(f"Strategic formation {key} references missing province")
+            if force.template_formation_id:
+                template = self.formations.get(force.template_formation_id)
+                if template is None:
+                    raise ValueError(
+                        f"Strategic formation {key} references missing TOE template {force.template_formation_id}"
+                    )
+                if template.faction != force.faction:
+                    raise ValueError(f"Strategic formation {key} faction does not match TOE template")
+            if force.commander_id:
+                commander = self.commanders.get(force.commander_id)
+                if commander is None:
+                    raise ValueError(f"Strategic formation {key} references missing commander {force.commander_id}")
+                if commander.assigned_strategic_formation_id != key:
+                    raise ValueError(f"Commander {force.commander_id} is not assigned back to formation {key}")
+                if commander.assigned_battalion_id:
+                    raise ValueError(f"Commander {force.commander_id} has dual assignment")
+            for battalion_id in force.battalion_ids:
+                if battalion_id in membership:
+                    raise ValueError(
+                        f"Battalion {battalion_id} belongs to multiple strategic formations "
+                        f"({membership[battalion_id]} and {key})"
+                    )
+                membership[battalion_id] = key
+        for key, commander in self.commanders.items():
+            if key != commander.commander_id:
+                raise ValueError(f"Commander key mismatch: {key}")
+            commander.validate()
+            if commander.assigned_strategic_formation_id:
+                force = self.strategic_formations.get(commander.assigned_strategic_formation_id)
+                if force is None:
+                    raise ValueError(
+                        f"Commander {key} references missing strategic formation "
+                        f"{commander.assigned_strategic_formation_id}"
+                    )
+                if force.commander_id != key:
+                    raise ValueError(f"Strategic formation {force.strategic_formation_id} commander mismatch")
+            if commander.assigned_battalion_id:
+                battalion = self.battalions.get(commander.assigned_battalion_id)
+                if battalion is None:
+                    raise ValueError(
+                        f"Commander {key} references missing battalion {commander.assigned_battalion_id}"
+                    )
+                if battalion.commander_id != key:
+                    raise ValueError(f"Battalion {battalion.battalion_id} commander mismatch")
         for key, battalion in self.battalions.items():
             if key != battalion.battalion_id:
                 raise ValueError(f"Battalion key mismatch: {key}")
@@ -345,6 +487,33 @@ class CampaignState:
                     raise ValueError(f"Battalion {key} references missing formation {battalion.formation_id}")
                 if formation.faction != battalion.faction:
                     raise ValueError(f"Battalion {key} faction does not match formation {formation.formation_id}")
+            if battalion.strategic_formation_id:
+                force = self.strategic_formations.get(battalion.strategic_formation_id)
+                if force is None:
+                    raise ValueError(
+                        f"Battalion {key} references missing strategic formation {battalion.strategic_formation_id}"
+                    )
+                if key not in force.battalion_ids:
+                    raise ValueError(f"Battalion {key} missing from strategic formation membership list")
+                if force.faction != battalion.faction:
+                    raise ValueError(f"Battalion {key} faction does not match strategic formation")
+                if force.province_id != battalion.province_id:
+                    raise ValueError(
+                        f"Battalion {key} province {battalion.province_id} does not match "
+                        f"strategic formation province {force.province_id}"
+                    )
+                if membership.get(key) != battalion.strategic_formation_id:
+                    raise ValueError(f"Battalion {key} strategic formation membership is inconsistent")
+            elif self.strategic_formations:
+                raise ValueError(f"Battalion {key} is not assigned to a strategic formation")
+            if battalion.commander_id:
+                commander = self.commanders.get(battalion.commander_id)
+                if commander is None:
+                    raise ValueError(f"Battalion {key} references missing commander {battalion.commander_id}")
+                if commander.assigned_battalion_id != key:
+                    raise ValueError(f"Commander {battalion.commander_id} is not assigned back to battalion {key}")
+                if commander.assigned_strategic_formation_id:
+                    raise ValueError(f"Commander {battalion.commander_id} has dual assignment")
             previous_faction = occupied_factions.setdefault(
                 battalion.province_id, battalion.faction
             )
@@ -352,6 +521,10 @@ class CampaignState:
                 raise ValueError(
                     f"Province {battalion.province_id} contains battalions from multiple factions"
                 )
+        if self.strategic_formations:
+            orphan_members = set(membership) - set(self.battalions)
+            if orphan_members:
+                raise ValueError(f"Strategic formations reference missing battalions: {sorted(orphan_members)}")
         for faction_state in self.factions.values():
             if faction_state.resources < 0:
                 raise ValueError(f"Faction {faction_state.faction.value} has negative resources")

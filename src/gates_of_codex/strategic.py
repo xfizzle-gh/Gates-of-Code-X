@@ -124,6 +124,9 @@ def ensure_strategic_layer(state: CampaignState) -> None:
         infrastructure_levels(province)
         sync_province_infrastructure_owner(province)
     state.schema_version = max(state.schema_version, 5)
+    from .force_migration import ensure_strategic_formations
+
+    ensure_strategic_formations(state)
 
 
 def infrastructure_levels(province: Province) -> dict[str, int]:

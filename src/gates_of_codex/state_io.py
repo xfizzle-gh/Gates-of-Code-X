@@ -12,14 +12,18 @@ from .models import (
     BattalionType,
     BattleParticipant,
     CampaignState,
+    Commander,
+    CommanderStatus,
     Faction,
     FactionState,
+    ForceEchelon,
     Formation,
     FormationKind,
     PendingBattle,
     Province,
     ReinforcementPoolEntry,
     ResearchNode,
+    StrategicFormation,
     UnitEconomy,
 )
 
@@ -134,6 +138,7 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
             )
             for entry in roster
         ]
+        commander_raw = value.get("commander_id", None)
         battalions[key] = Battalion(
             battalion_id=value["battalion_id"],
             faction=Faction(value["faction"]),
@@ -142,6 +147,8 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
             roster=roster,
             authorized_roster=authorized,
             formation_id=value.get("formation_id", ""),
+            strategic_formation_id=str(value.get("strategic_formation_id", "") or ""),
+            commander_id=None if commander_raw in (None, "") else str(commander_raw),
             is_player_controlled=value.get("is_player_controlled", False),
             movement_remaining=int(value.get("movement_remaining", 1)),
             combat_actions_remaining=int(value.get("combat_actions_remaining", 1)),
@@ -150,6 +157,54 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
             experience=int(value.get("experience", 0)),
             encircled_turns=int(value.get("encircled_turns", 0)),
         )
+    strategic_formations = {
+        key: StrategicFormation(
+            strategic_formation_id=value["strategic_formation_id"],
+            display_name=value["display_name"],
+            faction=Faction(value["faction"]),
+            province_id=value["province_id"],
+            echelon=ForceEchelon(value.get("echelon", "battalion")),
+            commander_id=(
+                None
+                if value.get("commander_id") in (None, "")
+                else str(value.get("commander_id"))
+            ),
+            battalion_ids=list(value.get("battalion_ids", [])),
+            template_formation_id=str(value.get("template_formation_id", "") or ""),
+            stack_order=int(value.get("stack_order", 0)),
+            movement_state=str(value.get("movement_state", "at_anchor")),
+            stance=str(value.get("stance", "standard")),
+            actor_id=str(value.get("actor_id", "") or ""),
+            condition_summary=int(value.get("condition_summary", 100)),
+            supply_summary=int(value.get("supply_summary", 100)),
+            experience_summary=int(value.get("experience_summary", 0)),
+            is_player_controlled=bool(value.get("is_player_controlled", False)),
+        )
+        for key, value in data.get("strategic_formations", {}).items()
+    }
+    commanders = {
+        key: Commander(
+            commander_id=value["commander_id"],
+            display_name=value["display_name"],
+            rank=str(value.get("rank", "") or ""),
+            portrait_key=str(value.get("portrait_key", "") or ""),
+            assigned_strategic_formation_id=(
+                None
+                if value.get("assigned_strategic_formation_id") in (None, "")
+                else str(value.get("assigned_strategic_formation_id"))
+            ),
+            assigned_battalion_id=(
+                None
+                if value.get("assigned_battalion_id") in (None, "")
+                else str(value.get("assigned_battalion_id"))
+            ),
+            status=CommanderStatus(value.get("status", "unassigned")),
+            experience=int(value.get("experience", 0)),
+            source=str(value.get("source", "unassigned") or "unassigned"),
+            provenance=str(value.get("provenance", "") or ""),
+        )
+        for key, value in data.get("commanders", {}).items()
+    }
     pending_data = data.get("pending_battle")
     pending = None
     if pending_data:
@@ -198,6 +253,8 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
         factions=factions,
         alliances=alliances,
         formations=formations,
+        strategic_formations=strategic_formations,
+        commanders=commanders,
         research_nodes=research_nodes,
         unit_economy=unit_economy,
         provinces=provinces,
@@ -205,6 +262,9 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
         pending_battle=pending,
         schema_version=max(1, int(data.get("schema_version", 1))),
     )
+    from .force_migration import ensure_strategic_formations
+
+    ensure_strategic_formations(state)
     state.validate()
     return state
 
@@ -215,9 +275,11 @@ def load_campaign(path: str | Path) -> CampaignState:
 
 
 def save_campaign(state: CampaignState, path: str | Path) -> Path:
+    from .force_migration import ensure_strategic_formations
     from .strategic import ensure_strategic_layer
 
     ensure_strategic_layer(state)
+    ensure_strategic_formations(state)
     state.validate()
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
