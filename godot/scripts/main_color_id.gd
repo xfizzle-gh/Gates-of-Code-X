@@ -4,12 +4,17 @@ const ColorIdMapScript = preload("res://scripts/color_id_map.gd")
 const DEFAULT_MAP_MANIFEST := "res://assets/maps/europe/interim_goe/map_manifest.json"
 const EM_FROM_GOE_MANIFEST := "res://assets/maps/europe_mediterranean/from_goe/map_manifest.json"
 const HOME_MAP_MARGIN := Vector2(18, 18)
-const HOME_FIT_FILL := 1.10  # use more of the map panel at full-theatre Home
+const HOME_FIT_FILL := 1.06
+# Reserve space so title/diagnostic rows never cover the theatre.
+const HEADER_SAFE_TOP := 64.0
+const FOOTER_SAFE_BOTTOM := 28.0
+const OVERLAY_EDGE_PAD := 18.0
 
 var color_id_map = ColorIdMapScript.new()
 var map_manifest_source_path := DEFAULT_MAP_MANIFEST
 var hovered_province_id := ""
 var show_coalition_fronts := false
+var show_crossing_overlay := false
 var _screenshot_path := ""
 var _screenshot_frames_left := -1
 
@@ -21,6 +26,9 @@ func _ready() -> void:
 		var text := String(arg)
 		if text.begins_with("--screenshot="):
 			_screenshot_path = text.substr(String("--screenshot=").length()).strip_edges()
+			continue
+		if text == "--crossings" or text == "--screenshot-crossings":
+			show_crossing_overlay = true
 			continue
 		filtered.append(text)
 	if filtered.size() > 1:
@@ -124,6 +132,8 @@ func _draw() -> void:
 		draw_texture_rect(color_id_map.border_texture, texture_rect, false)
 	if show_coalition_fronts:
 		_draw_coalition_fronts()
+	if show_crossing_overlay:
+		_draw_crossing_overlay()
 	if color_id_map.highlight_texture != null:
 		draw_texture_rect(color_id_map.highlight_texture, texture_rect, false)
 	_draw_color_id_pending_battle()
@@ -131,6 +141,8 @@ func _draw() -> void:
 
 	var campaign: Dictionary = snapshot.get("campaign", {})
 	var map_contract: Dictionary = snapshot.get("strategic_map", {})
+	# Opaque header band so map never shows through title/status.
+	draw_rect(Rect2(0, 0, map_width, HEADER_SAFE_TOP), Color(0.025, 0.035, 0.047, 0.96))
 	var title := "%s  |  Turn %s  |  %s" % [
 		campaign.get("name", "Gates of CodeX"),
 		campaign.get("turn_number", 1),
@@ -138,39 +150,45 @@ func _draw() -> void:
 	]
 	draw_string(
 		ThemeDB.fallback_font,
-		Vector2(24, 34),
+		Vector2(24, 28),
 		title,
 		HORIZONTAL_ALIGNMENT_LEFT,
 		-1,
-		22,
+		20,
 		Color.WHITE
 	)
 	var front_mode := "fronts:on" if show_coalition_fronts else "fronts:off"
-	var diag := "Map: %s  |  Provinces: %s  |  %s  |  %s" % [
+	var cross_mode := "crossings:on" if show_crossing_overlay else "crossings:off"
+	var diag := "Map: %s  |  Provinces: %s  |  %s  |  %s  |  %s" % [
 		String(map_contract.get("map_id", campaign.get("map_id", ""))),
 		int(snapshot.get("provinces", []).size()),
 		color_id_map.background_status(),
 		front_mode,
+		cross_mode,
 	]
 	draw_string(
 		ThemeDB.fallback_font,
-		Vector2(24, 56),
+		Vector2(24, 50),
 		diag,
 		HORIZONTAL_ALIGNMENT_LEFT,
 		map_width - 48,
-		14,
+		13,
 		Color("9fd7ff")
 	)
-	var hint := "Home full theatre  |  F fit front  |  G fronts debug  |  click  |  wheel zoom"
+	draw_rect(
+		Rect2(0, viewport.y - FOOTER_SAFE_BOTTOM, map_width, FOOTER_SAFE_BOTTOM),
+		Color(0.025, 0.035, 0.047, 0.92)
+	)
+	var hint := "Home full  |  F front  |  G fronts  |  C crossings  |  click  |  wheel"
 	if not status_message.is_empty():
 		hint = status_message
 	draw_string(
 		ThemeDB.fallback_font,
-		Vector2(24, viewport.y - 22),
+		Vector2(24, viewport.y - 10),
 		hint,
 		HORIZONTAL_ALIGNMENT_LEFT,
 		map_width - 48,
-		14,
+		13,
 		Color(0.78, 0.82, 0.86, 0.95)
 	)
 	_draw_management_panel()
@@ -197,6 +215,66 @@ func _draw_coalition_fronts() -> void:
 		)
 
 
+func _draw_crossing_overlay() -> void:
+	# Debug topology: land / strait / ferry / sea-lane edges from manifest edge_types.
+	var drawn: Dictionary = {}
+	for province_id: Variant in color_id_map.row_by_province.keys():
+		var pid := String(province_id)
+		var row: Dictionary = color_id_map.row_by_province.get(pid, {})
+		var edge_types: Dictionary = row.get("edge_types", {})
+		if edge_types.is_empty():
+			continue
+		var origin := _image_to_screen(color_id_map.anchor_pixel(pid))
+		for neighbor_id: Variant in edge_types.keys():
+			var nid := String(neighbor_id)
+			if not color_id_map.row_by_province.has(nid):
+				continue
+			var key := pid + "|" + nid if pid < nid else nid + "|" + pid
+			if drawn.has(key):
+				continue
+			drawn[key] = true
+			var etype := String(edge_types.get(nid, "land"))
+			var target := _image_to_screen(color_id_map.anchor_pixel(nid))
+			var color := Color(0.55, 0.58, 0.62, 0.22)
+			var width := 1.0
+			var label := ""
+			if etype == "land":
+				color = Color(0.45, 0.48, 0.52, 0.18)
+				width = 1.0
+			elif etype == "strait":
+				color = Color(0.25, 0.85, 1.0, 0.75)
+				width = 2.2
+				label = "strait"
+			elif etype == "ferry" or etype == "ferry_or_sea_lane":
+				color = Color(0.35, 1.0, 0.55, 0.78)
+				width = 2.0
+				label = "ferry" if etype == "ferry" else "ferry/lane"
+			elif etype == "sea_lane":
+				color = Color(0.95, 0.75, 0.25, 0.80)
+				width = 2.0
+				label = "sea"
+			else:
+				color = Color(1.0, 0.4, 0.9, 0.7)
+				width = 1.5
+				label = etype
+			# Land edges stay very faint; non-land get strong strokes + midpoint labels.
+			if etype == "land":
+				draw_line(origin, target, color, width)
+			else:
+				draw_line(origin, target, color, width)
+				var mid := (origin + target) * 0.5
+				if not label.is_empty():
+					draw_string(
+						ThemeDB.fallback_font,
+						mid + Vector2(4, -4),
+						label,
+						HORIZONTAL_ALIGNMENT_LEFT,
+						-1,
+						11,
+						color
+					)
+
+
 func _draw_color_id_pending_battle() -> void:
 	var pending: Variant = snapshot.get("pending_battle")
 	if not pending is Dictionary:
@@ -216,20 +294,28 @@ func _draw_color_id_pending_battle() -> void:
 
 func _draw_color_id_overlays() -> void:
 	# Pass 1: facilities + counters (always). Pass 2: priority label declutter.
+	# Counters/labels are clamped inside the map viewport (header/footer safe).
 	var label_candidates: Array = []
 	var reserved: Array = []  # Rect2 obstacles (counters first)
+	var overlay_bounds := _overlay_clamp_rect()
 
 	for province: Dictionary in snapshot.get("provinces", []):
 		var province_id := String(province.get("id", ""))
 		if not color_id_map.row_by_province.has(province_id):
 			continue
-		var position := _image_to_screen(color_id_map.anchor_pixel(province_id))
+		var anchor := _image_to_screen(color_id_map.anchor_pixel(province_id))
+		var position := _clamp_point_in_rect(anchor, overlay_bounds, OVERLAY_EDGE_PAD)
+		var shifted := position.distance_to(anchor) > 0.5
 		var battalion: Dictionary = battalions_by_province.get(province_id, {})
 		var occupied := not battalion.is_empty()
 		var selected := province_id == selected_province_id
 		var target := legal_targets.has(province_id)
 		var owner := String(province.get("owner", "neutral"))
 		var faction_color: Color = FACTION_COLORS.get(owner, FACTION_COLORS["neutral"])
+
+		if shifted and (occupied or selected or target):
+			draw_line(anchor, position, Color(0.85, 0.9, 0.95, 0.55), 1.0)
+			draw_circle(anchor, 2.0, Color(0.85, 0.9, 0.95, 0.7))
 
 		var infrastructure: Dictionary = province.get("infrastructure", {})
 		if int(infrastructure.get("supply_hub", 0)) > 0:
@@ -248,7 +334,7 @@ func _draw_color_id_overlays() -> void:
 			reserved.append(Rect2(position + Vector2(-18, -14), Vector2(36, 28)))
 			var stack: Array = battalion_stacks_by_province.get(province_id, [])
 			if stack.size() > 1:
-				var badge := position + Vector2(19, -14)
+				var badge := _clamp_point_in_rect(position + Vector2(19, -14), overlay_bounds, 10.0)
 				draw_circle(badge, 8.5, Color(0.04, 0.055, 0.07, 0.98))
 				draw_circle(badge, 8.5, Color.WHITE, false, 1.0)
 				draw_string(
@@ -276,13 +362,16 @@ func _draw_color_id_overlays() -> void:
 			priority = 70
 		elif named and view_scale >= 2.4:
 			priority = 40
-		elif named and view_scale >= 1.35:
-			priority = 20
+		# Full-theatre Home: suppress ambient names (declutter).
 		if priority <= 0:
 			continue
 		var font_size := 12 if priority >= 70 else 11
 		var text_w := float(ThemeDB.fallback_font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x)
-		var text_pos := position + Vector2(13, -9)
+		var raw_text_pos := position + Vector2(13, -9)
+		var text_pos := _clamp_point_in_rect(raw_text_pos, overlay_bounds, OVERLAY_EDGE_PAD)
+		# Keep label fully inside bounds.
+		text_pos.x = minf(text_pos.x, overlay_bounds.position.x + overlay_bounds.size.x - text_w - 4.0)
+		text_pos.y = clampf(text_pos.y, overlay_bounds.position.y + font_size, overlay_bounds.position.y + overlay_bounds.size.y - 4.0)
 		var text_rect := Rect2(text_pos + Vector2(0, -font_size), Vector2(text_w + 4.0, float(font_size) + 4.0))
 		label_candidates.append({
 			"priority": priority,
@@ -345,14 +434,43 @@ func _image_to_screen(pixel: Vector2) -> Vector2:
 	return rect.position + (pixel / color_id_map.image_size()) * rect.size
 
 
-func _map_texture_rect() -> Rect2:
+func _map_content_rect() -> Rect2:
+	# Usable map panel excluding header/footer chrome and side panel.
 	var viewport := get_viewport_rect().size
-	var map_size := Vector2(viewport.x - PANEL_WIDTH, viewport.y)
-	var available := map_size - HOME_MAP_MARGIN * 2.0
+	var map_width := viewport.x - PANEL_WIDTH
+	return Rect2(
+		Vector2(HOME_MAP_MARGIN.x, HEADER_SAFE_TOP + HOME_MAP_MARGIN.y),
+		Vector2(
+			map_width - HOME_MAP_MARGIN.x * 2.0,
+			viewport.y - HEADER_SAFE_TOP - FOOTER_SAFE_BOTTOM - HOME_MAP_MARGIN.y * 2.0
+		)
+	)
+
+
+func _map_texture_rect() -> Rect2:
+	var content := _map_content_rect()
 	var image_size := color_id_map.image_size()
-	var fit_scale := minf(available.x / image_size.x, available.y / image_size.y)
+	var fit_scale := minf(content.size.x / image_size.x, content.size.y / image_size.y)
 	var rendered_size := image_size * fit_scale * view_scale
-	return Rect2(map_size * 0.5 - rendered_size * 0.5 + view_offset, rendered_size)
+	var origin := content.position + (content.size - rendered_size) * 0.5 + view_offset
+	return Rect2(origin, rendered_size)
+
+
+func _overlay_clamp_rect() -> Rect2:
+	# Keep counters/labels fully inside the visible map panel (under header).
+	var viewport := get_viewport_rect().size
+	var map_width := viewport.x - PANEL_WIDTH
+	return Rect2(
+		Vector2(4.0, HEADER_SAFE_TOP + 4.0),
+		Vector2(map_width - 8.0, viewport.y - HEADER_SAFE_TOP - FOOTER_SAFE_BOTTOM - 8.0)
+	)
+
+
+func _clamp_point_in_rect(point: Vector2, bounds: Rect2, pad: float) -> Vector2:
+	return Vector2(
+		clampf(point.x, bounds.position.x + pad, bounds.position.x + bounds.size.x - pad),
+		clampf(point.y, bounds.position.y + pad, bounds.position.y + bounds.size.y - pad)
+	)
 
 
 func _province_label(province: Dictionary, province_id: String) -> String:
@@ -386,6 +504,16 @@ func _unhandled_input(event: InputEvent) -> void:
 				"Coalition front lines ON (ownership-adjacency debug). Press G to hide."
 				if show_coalition_fronts
 				else "Coalition front lines OFF."
+			)
+			queue_redraw()
+			get_viewport().set_input_as_handled()
+			return
+		if key.keycode == KEY_C:
+			show_crossing_overlay = not show_crossing_overlay
+			status_message = (
+				"Crossing overlay ON (land faint / strait cyan / ferry green / sea gold). Press C to hide."
+				if show_crossing_overlay
+				else "Crossing overlay OFF."
 			)
 			queue_redraw()
 			get_viewport().set_input_as_handled()

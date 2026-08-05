@@ -31,6 +31,19 @@ Outside-theatre land is a **continuous parchment underlay** (map art), not grey 
 - Authored crossings keep exact types (`strait` / `ferry_or_sea_lane` / …) with movement metadata.
 - Generator reports land components + nearest-coast **candidates** (review only; not auto-committed).
 
+### Crossing movement rules (current engine)
+Authored crossings are **normal adjacency** for gameplay (`province.neighbors`).
+`CampaignEngine.move_or_attack` spends **1 movement** per hop regardless of edge type.
+
+Stored `edge_meta` fields (`movement_cost_multiplier`, `requires_port`, `can_be_blockaded`) are
+**metadata only today** — not enforced by the movement engine. They exist for future supply/naval rules
+and for the Godot `C` crossing debug overlay.
+
+### Godot chrome
+- Header safe band (~64px) + footer band keep title/status off the map.
+- Counters/labels clamp inside the map viewport; shifted counters keep a leader line to the province anchor.
+- `C` toggles crossing overlay (land faint / strait cyan / ferry green / sea gold).
+
 ### Intentionally kept
 
 - British Isles and western Europe
