@@ -143,32 +143,30 @@ class EmCrossingMovementSmokeTests(unittest.TestCase):
     def test_ai_can_path_across_authored_crossing(self) -> None:
         # Lightweight pathfind using province.neighbors (same graph AI would use).
         state = self._state()
-        start = "province_0409"
-        goal = "province_0365"  # London area via Britain
         graph = {pid: set(p.neighbors) for pid, p in state.provinces.items()}
-        q = deque([(start, [start])])
-        seen = {start}
-        found = None
-        while q:
-            cur, path = q.popleft()
-            if cur == goal:
-                found = path
-                break
-            for nxt in graph.get(cur, ()):
-                if nxt not in seen:
-                    seen.add(nxt)
-                    q.append((nxt, path + [nxt]))
-        self.assertIsNotNone(found)
-        # Path must use the NI→Scotland ferry hop.
-        self.assertTrue(
-            any(
-                a == "province_0409" and b == "province_0420"
-                for a, b in zip(found, found[1:])
-            )
-            or any(
-                a == "province_0420" and b == "province_0409"
-                for a, b in zip(found, found[1:])
-            )
+
+        def path_between(start: str, goal: str) -> list[str]:
+            q = deque([(start, [start])])
+            seen = {start}
+            while q:
+                cur, path = q.popleft()
+                if cur == goal:
+                    return path
+                for nxt in graph.get(cur, ()):
+                    if nxt not in seen:
+                        seen.add(nxt)
+                        q.append((nxt, path + [nxt]))
+            self.fail(f"no AI path {start} -> {goal}")
+
+        # NI ferry into Britain, then overland to London.
+        ni_to_scot = path_between("province_0409", "province_0420")
+        self.assertEqual(["province_0409", "province_0420"], ni_to_scot)
+        scot_to_london = path_between("province_0420", "province_0365")
+        self.assertGreaterEqual(len(scot_to_london), 2)
+        # Munster ferry into Wales is also a legal AI hop.
+        self.assertEqual(
+            ["province_0370", "province_0367"],
+            path_between("province_0370", "province_0367"),
         )
 
     def test_crossing_cost_metadata_is_not_enforced_yet(self) -> None:
