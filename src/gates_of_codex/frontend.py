@@ -63,6 +63,7 @@ def build_frontend_snapshot(
 
     stack_payload = build_stack_presentations(state, front_options)
     battalion_presentations = stack_payload["battalions"]
+    strategic_formation_presentations = stack_payload.get("strategic_formations", {})
 
     return {
         "schema": "gates-of-codex.frontend",
@@ -246,6 +247,7 @@ def build_frontend_snapshot(
         },
         "stack_presentations": stack_payload["stacks"],
         "battalion_presentations": battalion_presentations,
+        "strategic_formation_presentations": strategic_formation_presentations,
         "pending_battle": _pending_battle(state),
         "front_options": front_options,
         "control": _control_block(campaign_path, snapshot_path),

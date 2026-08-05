@@ -193,17 +193,20 @@ This **absorbs** the deferred “enforce crossing costs” work into the route m
 ### Province capture
 
 1. Province has one or more **control sites** (`control_weight`).
-2. A faction controls a site if it has a friendly formation **at the site node** (or within capture radius rule: at_node only for v1) and no enemy formation contesting.
-3. Province owner flips when attacker control weight ≥ `capture_threshold` of total site weight **and** hold ticks ≥ H (proposal H=2).
+2. A faction controls a site if it has a friendly formation **at the site node** (v1: node only, no radius) and no enemy formation contesting.
+3. Province owner flips when attacker control weight ≥ `capture_threshold` of total site weight **and** **2 consecutive uncontested operational ticks** (timer resets on contest/loss).
 4. Merely entering the province polygon / being on a road through it does **not** flip ownership.
 
-### Interception
+### Interception (swept movement — no universal 0.15 window)
 
-- Two enemy formations **intercept** if:
-  - on the same node, or
-  - on the same edge and `|progress_a - progress_b| ≤ intercept_window` (proposal 0.15), or
-  - on adjacent edges sharing a node and both within approach window.
-- Interception creates a **pending battle** with `encounter_pixel` = lerp along edge.
+During each operational tick, resolve movement intervals on edges/nodes. Intercept if any of:
+
+- same-node occupation during the tick
+- simultaneous arrival at a shared node
+- opposing movement intervals cross on the same edge
+- same-direction catch-up (faster formation reaches slower on same edge)
+
+Interception creates a **pending battle** with `encounter_pixel` from the contact point.
 
 ### Ambush / blocking
 
@@ -307,18 +310,33 @@ Existing authored edge `province_0370 ↔ province_0367` seeds this ferry edge.
 
 ---
 
-## 12. Explicit owner decisions required
+## 12. Owner decisions (LOCKED 2026-08-05)
 
-Please confirm or amend:
+| # | Decision |
+|---|---|
+| 1 | **`ticks_per_strategic_turn = 10`**, stored in campaign rules (`OperationalRules`), not hardcoded. |
+| 2 | **Capture is control-site-node-only for v1.** No radius capture. |
+| 3 | **Province capture requires 2 consecutive uncontested operational ticks.** Contesting or losing the site resets the timer. |
+| 4 | **Reject universal 0.15 progress window.** Use **swept movement interception** during a tick: same-node occupation; simultaneous node arrival; opposing intervals crossing on the same edge; same-direction catch-up. |
+| 5 | **Max 3 friendly strategic formations per node.** |
+| 6 | **Enemy contact at a node creates a pending battle** (no peaceful enemy co-location). |
+| 7 | **Hybrid route authoring:** generate candidates; authored allowlist/overrides authoritative; existing strait/ferry/sea-lane records remain authoritative; candidates never silently become gameplay-authoritative. |
+| 8 | **Strategic formation is the movement authority for v1.** All attached battalions travel together. |
+| 9 | **Battalions remain attached and co-located** with their strategic formation on the strategic map. |
+| 10 | **Tactical handoff selects exactly one battalion per side** from the participating formation. |
+| 11 | **Hybrid option C approved:** deterministic route-graph simulation with continuous visual interpolation. |
 
-1. **Ticks per strategic turn:** 10?  
-2. **Capture:** site-node only (v1) vs radius?  
-3. **Hold ticks H before province flip:** 2?  
-4. **Intercept window** on edge progress: 0.15?  
-5. **Stack cap** per node (formations): unlimited v1 or cap 3?  
-6. **Should rail/road graphs be auto-derived from GoE geometry, fully authored, or hybrid seed+author?** Proposal: **hybrid** — auto candidates, authored allowlist (same philosophy as sea crossings).  
-7. **Battalion vs formation movement authority:** formation moves as one stack v1?  
-8. **Approve hybrid recommendation (option C)?**
+### Hierarchy reminder (UI and schema)
+
+```text
+Strategic Formation   ← on-map container / movement authority
+├── Battalion         ← tactical handoff selector / roster owner
+│   └── Tactical units
+└── Battalion
+    └── Tactical units
+```
+
+Migration may still create one strategic formation per legacy battalion; that is a **compatibility bridge**, not the final identity model. UI must label tabs as strategic formations.
 
 ---
 
