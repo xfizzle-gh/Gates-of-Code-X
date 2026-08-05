@@ -217,7 +217,7 @@ def _stack_summary_label(
         parts.append(f"{int(unit_count)}/{int(authorized_unit_count)} tactical units")
     else:
         parts.append(f"{int(unit_count)} tactical unit" + ("s" if unit_count != 1 else ""))
-    return " · ".join(parts)
+    return " | ".join(parts)
 
 
 def is_placeholder_unit_name(unit_name: str) -> bool:
