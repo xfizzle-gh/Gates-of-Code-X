@@ -17,7 +17,7 @@ func _draw_management_panel() -> void:
 	_draw_stack_panel()
 
 
-func _input(event: InputEvent) -> void:
+func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		var next_tooltip := _unit_tooltip_at(event.position)
 		if next_tooltip != hovered_unit_tooltip:
@@ -35,7 +35,7 @@ func _input(event: InputEvent) -> void:
 				queue_redraw()
 				get_viewport().set_input_as_handled()
 				return
-	super._input(event)
+	super._unhandled_input(event)
 
 
 func _draw_stack_panel() -> void:
