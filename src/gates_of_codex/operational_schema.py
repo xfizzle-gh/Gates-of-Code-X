@@ -391,7 +391,6 @@ class OperationalMoveOrder:
             if self.locked_stance is not None:
                 raise ValueError("draft orders must not set locked_stance")
         # Once committed (or later lifecycle states), retain commitment info.
-        # cancelled may drop commitment (explicit cancel clears lock).
         if self.status in _COMMITMENT_RETAINING_STATUSES:
             if self.committed_turn is None:
                 raise ValueError(
@@ -400,6 +399,15 @@ class OperationalMoveOrder:
             if self.locked_stance is None:
                 raise ValueError(
                     f"{self.status} orders require locked_stance"
+                )
+        # Cancelled: both commitment fields or neither (not a half-pair).
+        if self.status == MoveOrderStatus.CANCELLED.value:
+            has_turn = self.committed_turn is not None
+            has_stance = self.locked_stance is not None
+            if has_turn != has_stance:
+                raise ValueError(
+                    "cancelled orders require both committed_turn and locked_stance, "
+                    "or neither"
                 )
         if not self.path_node_ids:
             raise ValueError("path_node_ids must be non-empty")

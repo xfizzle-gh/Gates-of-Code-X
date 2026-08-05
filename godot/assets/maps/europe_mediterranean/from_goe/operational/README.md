@@ -40,4 +40,4 @@ ambush
 |--------|--------------------------------|
 | draft | must be absent |
 | committed, active, completed, blocked | required |
-| cancelled | optional (may clear) |
+| cancelled | both present, or neither (not one alone) |

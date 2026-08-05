@@ -343,6 +343,64 @@ class OperationalEmS1Tests(unittest.TestCase):
                 edges_by_id=edges_by_id,
             )
 
+        # Cancelled: neither commitment field (pre-commit cancel)
+        OperationalMoveOrder(
+            order_id="ord-cancel-none",
+            formation_id="sf-x",
+            path_node_ids=[sample_edge.a, sample_edge.b],
+            path_edge_ids=[sample_edge.edge_id],
+            status=MoveOrderStatus.CANCELLED.value,
+        ).validate(
+            node_ids=nodes,
+            edge_ids=edge_ids,
+            site_ids=set(),
+            edges_by_id=edges_by_id,
+        )
+        # Cancelled: both commitment fields (post-commit cancel)
+        OperationalMoveOrder(
+            order_id="ord-cancel-both",
+            formation_id="sf-x",
+            path_node_ids=[sample_edge.a, sample_edge.b],
+            path_edge_ids=[sample_edge.edge_id],
+            status=MoveOrderStatus.CANCELLED.value,
+            committed_turn=2,
+            locked_stance=FormationStance.ENTRENCHED.value,
+        ).validate(
+            node_ids=nodes,
+            edge_ids=edge_ids,
+            site_ids=set(),
+            edges_by_id=edges_by_id,
+        )
+        # Cancelled: exactly one field is invalid
+        with self.assertRaises(ValueError):
+            OperationalMoveOrder(
+                order_id="ord-cancel-turn-only",
+                formation_id="sf-x",
+                path_node_ids=[sample_edge.a, sample_edge.b],
+                path_edge_ids=[sample_edge.edge_id],
+                status=MoveOrderStatus.CANCELLED.value,
+                committed_turn=3,
+            ).validate(
+                node_ids=nodes,
+                edge_ids=edge_ids,
+                site_ids=set(),
+                edges_by_id=edges_by_id,
+            )
+        with self.assertRaises(ValueError):
+            OperationalMoveOrder(
+                order_id="ord-cancel-stance-only",
+                formation_id="sf-x",
+                path_node_ids=[sample_edge.a, sample_edge.b],
+                path_edge_ids=[sample_edge.edge_id],
+                status=MoveOrderStatus.CANCELLED.value,
+                locked_stance=FormationStance.AMBUSH.value,
+            ).validate(
+                node_ids=nodes,
+                edge_ids=edge_ids,
+                site_ids=set(),
+                edges_by_id=edges_by_id,
+            )
+
         # Reject unknown stance text
         with self.assertRaises(ValueError):
             OperationalMoveOrder(
