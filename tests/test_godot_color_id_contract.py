@@ -12,7 +12,15 @@ class GodotColorIdContractTests(unittest.TestCase):
         main = (root / "godot/scripts/main_color_id.gd").read_text(encoding="utf-8")
         layer = (root / "godot/scripts/color_id_map.gd").read_text(encoding="utf-8")
 
-        self.assertIn("res://scripts/main_map_contract.gd", scene)
+        # Main scene may use stack panel (extends map contract) or map contract directly.
+        self.assertTrue(
+            "res://scripts/main_map_contract.gd" in scene
+            or "res://scripts/main_stack_panel.gd" in scene,
+            msg="main.tscn must use color-ID map contract or stack panel client",
+        )
+        stack = (root / "godot/scripts/main_stack_panel.gd").read_text(encoding="utf-8")
+        if "res://scripts/main_stack_panel.gd" in scene:
+            self.assertIn('extends "res://scripts/main_map_contract.gd"', stack)
         self.assertIn('extends "res://scripts/main_color_id.gd"', contract)
         self.assertIn('snapshot.get("strategic_map"', contract)
         self.assertIn("manifest_path", contract)
