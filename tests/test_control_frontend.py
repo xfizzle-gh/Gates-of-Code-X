@@ -12,7 +12,7 @@ from gates_of_codex.europe import build_goe_europe_campaign
 from gates_of_codex.formations import FORMATION_DEPLOYMENTS
 from gates_of_codex.frontend import FRONTEND_SCHEMA_VERSION, build_frontend_snapshot, write_frontend_snapshot
 from gates_of_codex.frontend_commands import apply_frontend_commands, write_commands
-from gates_of_codex.map_layout import apply_marker_layout
+from gates_of_codex.map_layout import apply_marker_layout, apply_source_display_names, is_human_readable_name
 from gates_of_codex.models import Faction
 from gates_of_codex.state_io import save_campaign
 
@@ -66,6 +66,18 @@ class ModernControlAndFrontendTests(unittest.TestCase):
         warsaw = state.provinces.get("Warszawa")
         self.assertIsNotNone(warsaw)
         self.assertEqual("goe_marker_layout", warsaw.metadata.get("layout_source"))
+
+    def test_source_display_names_populate_without_fabrication(self) -> None:
+        state = build_goe_europe_campaign()
+        report = apply_source_display_names(state)
+        self.assertEqual(517, report["total"])
+        self.assertGreaterEqual(int(report["human_readable"]), 300)
+        self.assertLess(int(report["generic"]), 220)
+        self.assertTrue(is_human_readable_name(state.provinces["Warszawa"].display_name))
+        snapshot = build_frontend_snapshot(state)
+        self.assertIn("province_names", snapshot)
+        self.assertEqual(report["human_readable"], snapshot["province_names"]["human_readable"])
+        self.assertTrue(any(row.get("name_is_human_readable") for row in snapshot["provinces"]))
 
     def test_frontend_snapshot_writes_valid_json(self) -> None:
         state = build_goe_europe_campaign()

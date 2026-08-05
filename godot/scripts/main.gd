@@ -225,15 +225,20 @@ func _draw_province(province: Dictionary) -> void:
 		draw_rect(Rect2(position + Vector2(-12, 10), Vector2(5, 5)), Color("63d69f"))
 	if int(infrastructure.get("command_post", 0)) > 0:
 		draw_rect(Rect2(position + Vector2(-4, 10), Vector2(5, 5)), Color("b892ff"))
-	if view_scale >= 1.2 or occupied or selected or not target_option.is_empty():
+	var label := String(province.get("display_name", province_id))
+	var named := not label.to_lower().begins_with("province")
+	var show_label := occupied or selected or not target_option.is_empty()
+	if not show_label and view_scale >= 2.4 and named:
+		show_label = true
+	if show_label:
 		draw_string(
 			ThemeDB.fallback_font,
 			position + Vector2(12, -8),
-			String(province.get("display_name", province_id)),
+			label,
 			HORIZONTAL_ALIGNMENT_LEFT,
 			-1,
-			12 if selected or not target_option.is_empty() else 11,
-			Color(0.92, 0.94, 0.96, 0.95 if in_focus or occupied else 0.45)
+			12 if selected or not target_option.is_empty() or occupied else 11,
+			Color(0.92, 0.94, 0.96, 0.95 if in_focus or occupied else 0.55)
 		)
 
 
@@ -300,6 +305,16 @@ func _draw_management_panel() -> void:
 		faction.get("income_last_round", 0),
 		faction.get("maintenance_last_round", 0),
 	], x, y)
+	var names: Dictionary = snapshot.get("province_names", {})
+	if names.is_empty():
+		var meta: Dictionary = campaign.get("map_metadata", {})
+		names = meta.get("province_names", {})
+	if not names.is_empty():
+		y = _panel_line("Names %s/%s human-readable (%s%%)" % [
+			names.get("human_readable", 0),
+			names.get("total", 0),
+			names.get("human_readable_pct", 0),
+		], x, y, Color("9fd7ff"), 12)
 	y += 6.0
 
 	y = _panel_heading("ACTIONS", x, y)
@@ -324,6 +339,8 @@ func _draw_management_panel() -> void:
 		y = _panel_line("Click a province on the map.", x, y)
 	else:
 		y = _panel_line(String(province.get("display_name", selected_province_id)), x, y, Color.WHITE, 16)
+		if String(province.get("display_name", "")) != selected_province_id:
+			y = _panel_line("ID %s" % selected_province_id, x, y, Color("9aa7b2"), 12)
 		y = _panel_line("Owner %s   Yield %s   Fort %s" % [
 			String(province.get("owner", "neutral")).to_upper(),
 			province.get("resource_yield", 0),

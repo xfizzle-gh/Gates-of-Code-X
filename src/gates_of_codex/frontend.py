@@ -7,7 +7,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from .economy import available_research, formation_recruitment_offers
-from .map_layout import apply_marker_layout
+from .map_layout import apply_marker_layout, is_human_readable_name, province_name_coverage
 from .models import CampaignState, Faction
 from .play_context import list_front_options
 from .strategic import (
@@ -20,7 +20,7 @@ from .strategic import (
 from .supply import reachable_supply_provinces
 
 
-FRONTEND_SCHEMA_VERSION = 6
+FRONTEND_SCHEMA_VERSION = 7
 FRONTEND_PYTHON_MODULE = "gates_of_codex"
 
 
@@ -70,6 +70,7 @@ def build_frontend_snapshot(
             "catalog_signature": state.catalog_signature,
             "outcome": asdict(outcome),
         },
+        "strategic_map": _strategic_map_block(state, snapshot_path),
         "bounds": {
             "min_x": min(xs),
             "max_x": max(xs),
@@ -107,6 +108,8 @@ def build_frontend_snapshot(
             {
                 "id": province.province_id,
                 "display_name": province.display_name,
+                "name_is_human_readable": is_human_readable_name(province.display_name),
+                "name_source": str(province.metadata.get("name_source", "")),
                 "owner": province.owner.value,
                 "x": province.x,
                 "y": province.y,
@@ -193,6 +196,9 @@ def build_frontend_snapshot(
         "pending_battle": _pending_battle(state),
         "front_options": list_front_options(state, state.current_faction),
         "control": _control_block(campaign_path, snapshot_path),
+        "province_names": dict(
+            state.map_metadata.get("province_names") or province_name_coverage(state)
+        ),
     }
 
 
@@ -270,6 +276,36 @@ def _pending_battle(state: CampaignState) -> dict | None:
         "completed": pending.completed,
         "attacking_battalions": [value.battalion_id for value in pending.attacking_participants],
         "defending_battalions": [value.battalion_id for value in pending.defending_participants],
+    }
+
+
+def _strategic_map_block(
+    state: CampaignState,
+    snapshot_path: str | Path | None,
+) -> dict:
+    snapshot_directory = Path(snapshot_path).resolve().parent if snapshot_path else None
+    configured = str(state.map_metadata.get("strategic_map_manifest", "")).strip()
+    if configured:
+        manifest = Path(configured).expanduser()
+        if not manifest.is_absolute() and snapshot_directory is not None:
+            manifest = snapshot_directory / manifest
+    elif snapshot_directory is not None:
+        manifest = snapshot_directory / "assets/maps/europe/interim_goe/map_manifest.json"
+    else:
+        manifest = None
+    resolved = manifest.resolve() if manifest is not None else None
+    return {
+        "enabled": bool(resolved and resolved.is_file()),
+        "manifest_path": str(resolved) if resolved else "",
+        "configured": bool(configured),
+        "map_id": state.map_id,
+        "provenance": str(
+            state.map_metadata.get(
+                "strategic_map_provenance",
+                "interim_goe_reference_asset" if state.map_id == "goe_europe" else "",
+            )
+        ),
+        "fallback": "marker_non_authoritative",
     }
 
 

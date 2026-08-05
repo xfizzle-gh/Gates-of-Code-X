@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from functools import lru_cache
 from importlib.resources import files
 from pathlib import Path
@@ -8,11 +9,91 @@ from pathlib import Path
 from .models import CampaignState
 
 
+_GENERIC_NAME = re.compile(r"(?i)^province([_\s-]?\d+)?$")
+
+
 @lru_cache(maxsize=1)
 def load_marker_layout() -> dict:
     package = files("gates_of_codex")
     raw = package.joinpath("data/goe_marker_layout.json").read_text(encoding="utf-8")
     return json.loads(raw)
+
+
+def is_human_readable_name(value: object) -> bool:
+    text = str(value or "").strip()
+    if not text:
+        return False
+    return _GENERIC_NAME.fullmatch(text) is None
+
+
+def source_display_name(*candidates: object) -> str | None:
+    """Return the first explicit non-generic name; never invent labels."""
+
+    for candidate in candidates:
+        text = str(candidate or "").strip()
+        if is_human_readable_name(text):
+            return text
+    return None
+
+
+def province_name_coverage(state: CampaignState) -> dict[str, int | float]:
+    total = len(state.provinces)
+    named = sum(1 for province in state.provinces.values() if is_human_readable_name(province.display_name))
+    generic = total - named
+    return {
+        "total": total,
+        "human_readable": named,
+        "generic": generic,
+        "human_readable_pct": round((100.0 * named / total), 1) if total else 0.0,
+    }
+
+
+def apply_source_display_names(state: CampaignState) -> dict[str, int | float]:
+    """Copy extracted GoE marker/source names onto campaign provinces via alignment."""
+
+    from .goe_strategic_map import build_goe_source_nodes, resolve_goe_graph_mapping
+
+    alignment = resolve_goe_graph_mapping()
+    source = build_goe_source_nodes()
+    applied = 0
+    kept_generic = 0
+    for province_id, province in state.provinces.items():
+        source_key = alignment.graph_to_source.get(province_id)
+        if not source_key:
+            if not is_human_readable_name(province.display_name):
+                kept_generic += 1
+            continue
+        marker = source[source_key]
+        label = source_display_name(
+            marker.get("display_name"),
+            marker.get("source_province_id"),
+            marker.get("id"),
+            source_key,
+        )
+        if label is None:
+            kept_generic += 1
+            province.metadata["name_source"] = "generic"
+            continue
+        if province.display_name != label:
+            province.metadata["previous_display_name"] = province.display_name
+        province.display_name = label
+        province.metadata["name_source"] = "goe_marker"
+        province.metadata["source_node_key"] = source_key
+        applied += 1
+
+    coverage = province_name_coverage(state)
+    state.map_metadata["province_names"] = {
+        **coverage,
+        "applied_from_source": applied,
+        "kept_generic": kept_generic,
+        "mapping_methods": dict(sorted(
+            {
+                method: sum(1 for value in alignment.methods.values() if value == method)
+                for method in set(alignment.methods.values())
+            }.items()
+        )),
+    }
+    return state.map_metadata["province_names"]
 
 
 def apply_marker_layout(state: CampaignState) -> int:
@@ -115,6 +196,7 @@ def apply_marker_layout(state: CampaignState) -> int:
         "matched": applied,
         "total": len(state.provinces),
     }
+    apply_source_display_names(state)
     return applied
 
 
