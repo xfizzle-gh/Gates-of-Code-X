@@ -90,17 +90,26 @@ def build_stack_presentations(
         weighted_supply = sum(
             int(row["supply"]) * max(int(row["unit_count"]), 1) for row in rows
         )
+        formation_ids = sorted(
+            {
+                str(row.get("formation_id", ""))
+                for row in rows
+                if str(row.get("formation_id", ""))
+            }
+        )
         stack_presentations[province_id] = {
             "province_id": province_id,
             "battalion_ids": list(battalion_ids),
-            "battalion_count": len(battalion_ids),
-            "unit_count": total_units,
-            "authorized_unit_count": total_authorized,
-            "replacement_deficit": max(0, total_authorized - total_units),
-            "condition": round(weighted_condition / weight),
-            "supply": round(weighted_supply / weight),
-            "reinforcement_cost": sum(int(row["reinforcement_cost"]) for row in rows),
-            "repair_cost": sum(int(row["repair_cost"]) for row in rows),
+            "battalion_count": int(len(battalion_ids)),
+            "formation_count": int(len(formation_ids)),
+            "formation_ids": formation_ids,
+            "unit_count": int(total_units),
+            "authorized_unit_count": int(total_authorized),
+            "replacement_deficit": int(max(0, total_authorized - total_units)),
+            "condition": int(round(weighted_condition / weight)),
+            "supply": int(round(weighted_supply / weight)),
+            "reinforcement_cost": int(sum(int(row["reinforcement_cost"]) for row in rows)),
+            "repair_cost": int(sum(int(row["repair_cost"]) for row in rows)),
             "can_act": any(bool(row["can_act"]) for row in rows),
             "actor_markers": sorted(
                 {
@@ -108,6 +117,12 @@ def build_stack_presentations(
                     for row in rows
                     if str(row["actor_marker"])
                 }
+            ),
+            "summary_label": _stack_summary_label(
+                formation_count=len(formation_ids),
+                battalion_count=len(battalion_ids),
+                unit_count=total_units,
+                authorized_unit_count=total_authorized,
             ),
         }
     return {
@@ -129,12 +144,24 @@ def build_battalion_presentation(
         (dict(option) for option in legal_options),
         key=lambda value: (str(value.get("target", "")), str(value.get("kind", ""))),
     )
-    cards = _unit_cards(state, battalion)
+    show_placeholders = bool(state.map_metadata.get("debug_show_placeholder_units", False))
+    cards = [
+        card
+        for card in _unit_cards(state, battalion)
+        if show_placeholders or not is_placeholder_unit_name(str(card.get("unit_name", "")))
+    ]
+    if not cards and not show_placeholders:
+        # Explicit empty tactical content — UI shows diagnostic only in debug mode.
+        cards = []
     reinforcement_cost = sum(int(card["replacement_cost"]) for card in cards)
     repair_cost = sum(int(card["repair_cost"]) for card in cards)
+    battalion_label = readable_battalion_name(battalion.battalion_id)
+    # Prefer real formation display names over synthetic formation-01 IDs.
+    primary_name = formation_name if formation is not None else battalion_label
     return {
         "id": battalion.battalion_id,
-        "display_name": readable_battalion_name(battalion.battalion_id),
+        "display_name": primary_name,
+        "battalion_label": battalion_label,
         "formation_id": battalion.formation_id,
         "formation_name": formation_name,
         "actor_marker": actor_marker,
@@ -171,8 +198,30 @@ def readable_unit_name(unit_name: str) -> str:
 
 
 def readable_battalion_name(battalion_id: str) -> str:
-    value = re.sub(r"^(?:battalion|bn)[-_]", "", battalion_id, flags=re.I)
+    value = re.sub(r"^(?:battalion|bn|formation)[-_]", "", battalion_id, flags=re.I)
     return readable_unit_name(value)
+
+
+def _stack_summary_label(
+    *,
+    formation_count: int,
+    battalion_count: int,
+    unit_count: int,
+    authorized_unit_count: int,
+) -> str:
+    parts = [
+        f"{int(formation_count)} formation" + ("s" if formation_count != 1 else ""),
+        f"{int(battalion_count)} battalion" + ("s" if battalion_count != 1 else ""),
+    ]
+    if authorized_unit_count > 0:
+        parts.append(f"{int(unit_count)}/{int(authorized_unit_count)} tactical units")
+    else:
+        parts.append(f"{int(unit_count)} tactical unit" + ("s" if unit_count != 1 else ""))
+    return " | ".join(parts)
+
+
+def is_placeholder_unit_name(unit_name: str) -> bool:
+    return "placeholder" in unit_name.strip().lower()
 
 
 def portrait_key(unit_name: str) -> str:
