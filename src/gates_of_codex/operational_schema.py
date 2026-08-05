@@ -47,6 +47,18 @@ class PositionMode(str, Enum):
     ON_EDGE = "on_edge"
 
 
+class MoveOrderStatus(str, Enum):
+    PENDING = "pending"
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    BLOCKED = "blocked"
+
+
+PROGRESS_MILLI_MIN = 0
+PROGRESS_MILLI_MAX = 1000
+
+
 DEFAULT_CROSSING_META: dict[str, dict[str, Any]] = {
     EdgeKind.STRAIT.value: {
         "movement_cost_multiplier": 1.25,
@@ -182,7 +194,13 @@ class OperationalRouteEdge:
     legacy_crossing_type: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
-    def validate(self, *, node_ids: set[str]) -> None:
+    def validate(
+        self,
+        *,
+        node_ids: set[str],
+        province_ids: set[str],
+        node_province: dict[str, str],
+    ) -> None:
         if not self.edge_id.strip():
             raise ValueError("edge_id required")
         if self.a not in node_ids or self.b not in node_ids:
@@ -197,6 +215,40 @@ class OperationalRouteEdge:
             raise ValueError(f"edge {self.edge_id} length must be positive")
         if self.base_move_points <= 0:
             raise ValueError(f"edge {self.edge_id} base_move_points must be positive")
+        if len(self.province_ids) != 2 or len(set(self.province_ids)) != 2:
+            raise ValueError(
+                f"edge {self.edge_id} must list exactly two distinct province_ids"
+            )
+        for pid in self.province_ids:
+            if pid not in province_ids:
+                raise ValueError(f"edge {self.edge_id} province missing: {pid}")
+        endpoint_provinces = {node_province[self.a], node_province[self.b]}
+        if endpoint_provinces != set(self.province_ids):
+            raise ValueError(
+                f"edge {self.edge_id} province_ids must match endpoint node provinces"
+            )
+        # Authority vs kind rules.
+        if self.authority == EdgeAuthority.AUTHORED.value and self.kind == EdgeKind.CORRIDOR.value:
+            raise ValueError(f"authored edge {self.edge_id} cannot be corridor")
+        if self.authority == EdgeAuthority.CANDIDATE.value and self.kind in {
+            EdgeKind.ROAD.value,
+            EdgeKind.RAIL.value,
+        }:
+            raise ValueError(f"candidate edge {self.edge_id} cannot claim road/rail")
+        if self.authority == EdgeAuthority.CANDIDATE.value and self.kind != EdgeKind.CORRIDOR.value:
+            # S1 candidates are corridors only.
+            raise ValueError(f"candidate edge {self.edge_id} must be corridor in S1")
+        if self.authority == EdgeAuthority.AUTHORED.value and self.kind not in {
+            EdgeKind.STRAIT.value,
+            EdgeKind.FERRY.value,
+            EdgeKind.FERRY_OR_SEA_LANE.value,
+            EdgeKind.SEA_LANE.value,
+        }:
+            # Current authored set is sea/strait/ferry only; keep strict for S1.
+            if self.legacy_crossing_type:
+                raise ValueError(
+                    f"authored crossing edge {self.edge_id} has unexpected kind {self.kind}"
+                )
 
 
 @dataclass(slots=True)
@@ -206,20 +258,38 @@ class FormationOperationalPosition:
     mode: str = PositionMode.AT_NODE.value
     node_id: str | None = None
     edge_id: str | None = None
-    progress_0_1: float = 0.0
+    progress_milli: int = 0
     facing_node_id: str | None = None
 
-    def validate(self, *, node_ids: set[str], edge_ids: set[str]) -> None:
+    def validate(
+        self,
+        *,
+        node_ids: set[str],
+        edge_ids: set[str],
+        edges_by_id: dict[str, OperationalRouteEdge],
+    ) -> None:
         if self.mode == PositionMode.AT_NODE.value:
             if not self.node_id or self.node_id not in node_ids:
                 raise ValueError("at_node position requires valid node_id")
             if self.edge_id is not None:
                 raise ValueError("at_node position must not set edge_id")
+            if int(self.progress_milli) != 0:
+                raise ValueError("at_node progress_milli must be 0")
+            if self.facing_node_id is not None:
+                raise ValueError("at_node position must not set facing_node_id")
         elif self.mode == PositionMode.ON_EDGE.value:
             if not self.edge_id or self.edge_id not in edge_ids:
                 raise ValueError("on_edge position requires valid edge_id")
-            if not (0.0 <= float(self.progress_0_1) <= 1.0):
-                raise ValueError("progress_0_1 must be in [0,1]")
+            if self.node_id is not None:
+                raise ValueError("on_edge position must not set node_id")
+            progress = int(self.progress_milli)
+            if progress < PROGRESS_MILLI_MIN or progress > PROGRESS_MILLI_MAX:
+                raise ValueError("progress_milli must be in 0..1000")
+            if not self.facing_node_id or self.facing_node_id not in node_ids:
+                raise ValueError("on_edge requires valid facing_node_id")
+            edge = edges_by_id[self.edge_id]
+            if self.facing_node_id not in {edge.a, edge.b}:
+                raise ValueError("facing_node_id must be an endpoint of edge_id")
         else:
             raise ValueError(f"invalid position mode {self.mode}")
 
@@ -232,11 +302,45 @@ class OperationalMoveOrder:
     path_edge_ids: list[str] = field(default_factory=list)
     destination_site_id: str | None = None
     issued_tick: int = 0
-    status: str = "pending"
+    status: str = MoveOrderStatus.PENDING.value
 
-    def validate(self) -> None:
+    def validate(
+        self,
+        *,
+        node_ids: set[str],
+        edge_ids: set[str],
+        site_ids: set[str],
+        edges_by_id: dict[str, OperationalRouteEdge],
+    ) -> None:
         if not self.order_id.strip() or not self.formation_id.strip():
             raise ValueError("order_id and formation_id required")
+        if self.status not in {item.value for item in MoveOrderStatus}:
+            raise ValueError(f"invalid move order status {self.status}")
+        if int(self.issued_tick) < 0:
+            raise ValueError("issued_tick must be >= 0")
+        if not self.path_node_ids:
+            raise ValueError("path_node_ids must be non-empty")
+        if len(self.path_node_ids) != len(self.path_edge_ids) + 1:
+            raise ValueError("len(path_node_ids) must equal len(path_edge_ids) + 1")
+        for node_id in self.path_node_ids:
+            if node_id not in node_ids:
+                raise ValueError(f"path references missing node {node_id}")
+        for edge_id in self.path_edge_ids:
+            if edge_id not in edge_ids:
+                raise ValueError(f"path references missing edge {edge_id}")
+        for left, right in zip(self.path_node_ids, self.path_node_ids[1:]):
+            if left == right:
+                raise ValueError("path must not contain consecutive duplicate nodes")
+        for index, edge_id in enumerate(self.path_edge_ids):
+            edge = edges_by_id[edge_id]
+            pair = {self.path_node_ids[index], self.path_node_ids[index + 1]}
+            if pair != {edge.a, edge.b}:
+                raise ValueError(
+                    f"path edge {edge_id} does not connect nodes "
+                    f"{self.path_node_ids[index]} and {self.path_node_ids[index + 1]}"
+                )
+        if self.destination_site_id is not None and self.destination_site_id not in site_ids:
+            raise ValueError(f"destination_site_id missing: {self.destination_site_id}")
 
 
 @dataclass(slots=True)
@@ -282,15 +386,18 @@ class OperationalGraph:
             raise ValueError("duplicate site_ids")
         node_id_set = set(node_ids)
         site_id_set = set(site_ids)
+        node_province = {node.node_id: node.province_id for node in self.nodes}
+        edges_by_id = {edge.edge_id: edge for edge in self.edges}
         for site in self.sites:
             site.validate(node_ids=node_id_set, province_ids=provinces)
         for node in self.nodes:
             node.validate(province_ids=provinces, site_ids=site_id_set)
         for edge in self.edges:
-            edge.validate(node_ids=node_id_set)
-            if edge.bidirectional:
-                # Canonical undirected identity: sorted endpoints must be unique.
-                pass
+            edge.validate(
+                node_ids=node_id_set,
+                province_ids=provinces,
+                node_province=node_province,
+            )
         # Bidirectional undirected uniqueness.
         undirected: set[tuple[str, str, str]] = set()
         for edge in self.edges:
@@ -298,6 +405,8 @@ class OperationalGraph:
             if key in undirected:
                 raise ValueError(f"duplicate undirected edge for {key}")
             undirected.add(key)
+        # Expose helpers for optional order/position checks by callers.
+        self.metadata.setdefault("_validated_edge_ids", sorted(edges_by_id))
 
     def to_dict(self) -> dict[str, Any]:
         return {

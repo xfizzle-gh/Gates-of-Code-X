@@ -55,9 +55,6 @@ def generate_em_operational_graph(
     }
     rows = list(manifest.get("province_table", []))
     province_ids = sorted(str(row["province_id"]) for row in rows)
-    if len(province_ids) != 342:
-        # Soft check — still valid if theatre size changes later, but S1 locks 342.
-        pass
 
     nodes: list[OperationalRouteNode] = []
     for row in sorted(rows, key=lambda item: str(item["province_id"])):
@@ -191,18 +188,22 @@ def generate_em_operational_graph(
         sites=[],  # S1: no invented settlements/ports/airfields
         nodes=nodes,
         edges=edges,
-        metadata={
-            "generator": "operational_em_generate_s1",
-            "frame": {"width": width, "height": height},
-            "province_count": len(province_ids),
-            "notes": [
-                "No invented settlements, ports, roads, or railways.",
-                "Land adjacency exported as corridor candidates only.",
-                "Authored crossings are authoritative typed edges.",
-                "S1 does not change formation movement or ownership.",
-            ],
-        },
-    )
+            metadata={
+                "generator": "operational_em_generate_s1",
+                "frame": {"width": width, "height": height},
+                "province_count": len(province_ids),
+                "notes": [
+                    "No invented settlements, ports, roads, or railways.",
+                    "Land adjacency exported as corridor candidates only.",
+                    "Authored crossings are authoritative typed edges.",
+                    "S1 does not change formation movement or ownership.",
+                    "S3 must not activate ferry/sea-lane traversal until required "
+                    "port sites are authored or an owner-approved temporary "
+                    "embarkation rule exists.",
+                    "Formation position uses progress_milli int 0..1000 (not float).",
+                ],
+            },
+        )
     graph.validate(province_ids=province_ids)
 
     out = Path(output_dir)
