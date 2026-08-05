@@ -6,12 +6,14 @@ const UNIT_CARD_H := 64.0
 const PORTRAIT_SIZE := 44.0
 const COLLAPSED_BAR_H := 36.0
 
-var stack_tab_rects: Dictionary = {}
+var stack_tab_rects: Dictionary = {}  # strategic_formation_id -> Rect2
+var battalion_row_rects: Dictionary = {}  # battalion_id -> Rect2
 var unit_card_rects: Dictionary = {}
 var portrait_cache: Dictionary = {}
 var hovered_unit_tooltip := ""
 var stack_panel_expanded := true
 var unit_scroll_offset := 0
+var selected_strategic_formation_id := ""
 var _collapse_button_rect := Rect2()
 var _scroll_up_rect := Rect2()
 var _scroll_down_rect := Rect2()
@@ -78,13 +80,16 @@ func _stack_section_bottom(section_top: float, available_h: float) -> float:
 
 func _draw_stack_section(panel_x: float, top: float, available_h: float) -> void:
 	stack_tab_rects.clear()
+	battalion_row_rects.clear()
 	unit_card_rects.clear()
 	var left := panel_x
 	var width := PANEL_WIDTH
 	var stack: Dictionary = snapshot.get("stack_presentations", {}).get(selected_province_id, {})
 	var battalion_ids: Array = stack.get("battalion_ids", [])
+	var force_ids: Array = stack.get("strategic_formation_ids", [])
 	var province: Dictionary = provinces_by_id.get(selected_province_id, {})
 	var province_name := String(province.get("display_name", selected_province_id))
+	var force_presentations: Dictionary = snapshot.get("strategic_formation_presentations", {})
 
 	# Collapse bar always visible.
 	var bar := Rect2(left + 10.0, top, width - 20.0, COLLAPSED_BAR_H)
@@ -98,15 +103,19 @@ func _draw_stack_section(panel_x: float, top: float, available_h: float) -> void
 		11,
 		Color(0.90, 0.94, 0.98, 1.0)
 	)
-	var summary := String(stack.get("summary_label", ""))
-	if summary.is_empty() and not battalion_ids.is_empty():
-		summary = "%s battalion(s)" % _fmt_int(battalion_ids.size())
-	if summary.is_empty():
-		summary = "No forces in province"
+	# Always show all three hierarchy counts in the header.
+	var header_summary := "%s | %s | %s | %s" % [
+		province_name,
+		_count_words(int(stack.get("formation_count", force_ids.size())), "formation", "formations"),
+		_count_words(int(stack.get("battalion_count", battalion_ids.size())), "battalion", "battalions"),
+		_count_words(int(stack.get("unit_count", 0)), "tactical unit", "tactical units"),
+	]
+	if battalion_ids.is_empty() and force_ids.is_empty():
+		header_summary = "%s | No forces in province" % province_name
 	_draw_panel_text(
-		"%s  ·  %s" % [province_name, summary],
+		header_summary,
 		bar.position + Vector2(10, 22),
-		12,
+		11,
 		Color(0.94, 0.96, 0.99, 1.0)
 	)
 
@@ -114,12 +123,12 @@ func _draw_stack_section(panel_x: float, top: float, available_h: float) -> void
 		return
 
 	var body_top := top + COLLAPSED_BAR_H + 8.0
-	var body_h := minf(available_h - COLLAPSED_BAR_H - 8.0, 380.0)
+	var body_h := minf(available_h - COLLAPSED_BAR_H - 8.0, 400.0)
 	var body := Rect2(left + 10.0, body_top, width - 20.0, body_h)
 	draw_rect(body, Color(0.045, 0.06, 0.08, 1.0))
 	draw_rect(body, Color(0.24, 0.30, 0.38, 0.75), false, 1.0)
 
-	if battalion_ids.is_empty():
+	if force_ids.is_empty() and battalion_ids.is_empty():
 		_draw_panel_text(
 			"Select a province with forces.",
 			body.position + Vector2(12, 28),
@@ -128,17 +137,12 @@ func _draw_stack_section(panel_x: float, top: float, available_h: float) -> void
 		)
 		return
 
-	if selected_battalion_id.is_empty() or not battalion_ids.has(selected_battalion_id):
-		selected_battalion_id = String(battalion_ids[0])
-		_rebuild_legal_targets()
+	# Fallback if older snapshot lacks strategic_formation_ids.
+	if force_ids.is_empty():
+		force_ids = _force_ids_from_battalions(battalion_ids)
 
-	# Stack summary (integers only).
-	_draw_panel_text(
-		String(stack.get("summary_label", "")),
-		body.position + Vector2(12, 22),
-		13,
-		Color(0.95, 0.97, 1.0, 1.0)
-	)
+	_ensure_selection(force_ids, battalion_ids)
+
 	_draw_panel_text(
 		"Cond %s%%   Sup %s%%   Reinf %s   Repair %s" % [
 			_fmt_int(stack.get("condition", 0)),
@@ -146,35 +150,70 @@ func _draw_stack_section(panel_x: float, top: float, available_h: float) -> void
 			_fmt_int(stack.get("reinforcement_cost", 0)),
 			_fmt_int(stack.get("repair_cost", 0)),
 		],
-		body.position + Vector2(12, 42),
+		body.position + Vector2(12, 20),
 		11,
 		Color(0.65, 0.77, 0.88, 1.0)
 	)
 
-	# Formation / battalion tabs.
-	var tab_y := body.position.y + 56.0
-	var tab_w := (body.size.x - 8.0) / maxf(float(battalion_ids.size()), 1.0)
-	for index in range(battalion_ids.size()):
-		var battalion_id := String(battalion_ids[index])
+	# Top-level tabs = StrategicFormations (not battalions).
+	var tab_y := body.position.y + 36.0
+	var tab_w := (body.size.x - 8.0) / maxf(float(force_ids.size()), 1.0)
+	for index in range(force_ids.size()):
+		var force_id := String(force_ids[index])
 		var rect := Rect2(body.position.x + 4.0 + tab_w * index, tab_y, tab_w - 4.0, STACK_TAB_H)
-		stack_tab_rects[battalion_id] = rect
-		_draw_battalion_tab(rect, battalion_id)
+		stack_tab_rects[force_id] = rect
+		_draw_formation_tab(rect, force_id)
+
+	var force_row: Dictionary = force_presentations.get(selected_strategic_formation_id, {})
+	if force_row.is_empty() and force_ids.size() > 0:
+		force_row = force_presentations.get(String(force_ids[0]), {})
+
+	var header_y := tab_y + STACK_TAB_H + 12.0
+	_draw_formation_header(body.position.x, header_y, force_row)
+
+	# Battalion list inside selected strategic formation.
+	var member_ids: Array = force_row.get("battalion_ids", [])
+	var bn_y := header_y + 70.0
+	_draw_panel_text("BATTALIONS IN FORMATION", Vector2(body.position.x + 12, bn_y), 10, Color(0.55, 0.72, 0.86, 1.0))
+	bn_y += 8.0
+	for battalion_id_variant in member_ids:
+		var battalion_id := String(battalion_id_variant)
+		var row_rect := Rect2(body.position.x + 10.0, bn_y, body.size.x - 20.0, 26.0)
+		battalion_row_rects[battalion_id] = row_rect
+		var selected_bn := battalion_id == selected_battalion_id
+		draw_rect(row_rect, Color(0.12, 0.26, 0.32, 1.0) if selected_bn else Color(0.06, 0.08, 0.11, 1.0))
+		draw_rect(row_rect, Color(0.30, 0.92, 0.76, 0.9) if selected_bn else Color(0.25, 0.32, 0.40, 0.7), false, 1.0)
+		var bn_pres: Dictionary = snapshot.get("battalion_presentations", {}).get(battalion_id, {})
+		var bn_label := String(bn_pres.get("battalion_label", battalion_id))
+		var bn_type := String(bn_pres.get("type_label", "Battalion"))
+		_draw_panel_text(
+			"%s  ·  %s%s" % [bn_label, bn_type, "  (selected)" if selected_bn else ""],
+			row_rect.position + Vector2(8, 17),
+			11,
+			Color.WHITE if selected_bn else Color(0.85, 0.88, 0.92, 1.0)
+		)
+		bn_y += 30.0
 
 	var presentation := _selected_presentation()
 	if presentation.is_empty():
 		return
 
-	var header_y := tab_y + STACK_TAB_H + 14.0
-	_draw_selected_header(body.position.x, header_y, presentation)
-
-	# Scrollable tactical unit cards.
+	# Scrollable tactical unit cards for selected battalion.
 	var cards: Array = presentation.get("cards", [])
-	var cards_top := header_y + 78.0
+	var cards_top := bn_y + 10.0
 	var cards_bottom := body.position.y + body.size.y - 28.0
 	var visible_h := cards_bottom - cards_top
 	var max_visible := maxi(int(floor(visible_h / UNIT_CARD_H)), 1)
 	var max_scroll := maxi(cards.size() - max_visible, 0)
 	unit_scroll_offset = clampi(unit_scroll_offset, 0, max_scroll)
+
+	_draw_panel_text(
+		"TACTICAL UNITS IN SELECTED BATTALION",
+		Vector2(body.position.x + 12, cards_top - 2),
+		10,
+		Color(0.55, 0.72, 0.86, 1.0)
+	)
+	cards_top += 14.0
 
 	_scroll_up_rect = Rect2(body.end.x - 54.0, cards_top - 2.0, 22.0, 18.0)
 	_scroll_down_rect = Rect2(body.end.x - 28.0, cards_top - 2.0, 22.0, 18.0)
@@ -261,9 +300,9 @@ func _draw_targets_and_objectives(x: float, y: float) -> float:
 	return y
 
 
-func _draw_battalion_tab(rect: Rect2, battalion_id: String) -> void:
-	var presentation: Dictionary = snapshot.get("battalion_presentations", {}).get(battalion_id, {})
-	var selected := battalion_id == selected_battalion_id
+func _draw_formation_tab(rect: Rect2, force_id: String) -> void:
+	var presentation: Dictionary = snapshot.get("strategic_formation_presentations", {}).get(force_id, {})
+	var selected := force_id == selected_strategic_formation_id
 	var can_act := bool(presentation.get("can_act", false))
 	var fill := Color(0.12, 0.28, 0.34, 1.0) if selected else Color(0.065, 0.085, 0.11, 1.0)
 	draw_rect(rect, fill)
@@ -279,49 +318,90 @@ func _draw_battalion_tab(rect: Rect2, battalion_id: String) -> void:
 		10,
 		Color(0.95, 0.84, 0.42, 1.0)
 	)
-	var name := String(presentation.get("display_name", battalion_id))
-	_draw_panel_text(name.left(18), rect.position + Vector2(7, 30), 11, Color.WHITE)
+	# StrategicFormation.display_name (tab_label may include compact disambiguator).
+	var name := String(presentation.get("tab_label", presentation.get("display_name", force_id)))
+	_draw_panel_text(name.left(20), rect.position + Vector2(7, 30), 11, Color.WHITE)
 	if can_act:
 		draw_circle(rect.position + Vector2(rect.size.x - 8, 9), 3.5, Color(0.30, 1.0, 0.56, 1.0))
 
 
-func _draw_selected_header(left: float, y: float, presentation: Dictionary) -> void:
+func _draw_formation_header(left: float, y: float, force_row: Dictionary) -> void:
 	_draw_panel_text("STRATEGIC FORMATION", Vector2(left + 12, y + 4), 10, Color(0.55, 0.72, 0.86, 1.0))
 	_draw_panel_text(
-		String(presentation.get("formation_name", presentation.get("display_name", "Formation"))),
+		String(force_row.get("display_name", "Formation")),
 		Vector2(left + 12, y + 22),
 		15,
 		Color(0.98, 0.99, 1.0, 1.0)
 	)
+	var echelon := String(force_row.get("echelon", "battalion")).replace("_", " ")
 	_draw_panel_text(
-		"Battalion · %s · %s · %s" % [
-			presentation.get("actor_marker", "?"),
-			presentation.get("type_label", "Battalion"),
-			presentation.get("battalion_label", presentation.get("id", "")),
+		"Echelon: %s  ·  Commander: %s  ·  %s" % [
+			echelon.capitalize(),
+			force_row.get("commander_label", "Unassigned Commander"),
+			force_row.get("actor_marker", "?"),
 		],
-		Vector2(left + 12, y + 40),
+		Vector2(left + 12, y + 42),
 		11,
 		Color(0.64, 0.78, 0.90, 1.0)
 	)
 	_draw_panel_text(
-		"%s tactical units   C%s%%  S%s%%  XP%s  M%s  A%s" % [
-			_fmt_int(presentation.get("unit_count", 0)),
-			_fmt_int(presentation.get("condition", 0)),
-			_fmt_int(presentation.get("supply", 0)),
-			_fmt_int(presentation.get("experience", 0)),
-			_fmt_int(presentation.get("movement_remaining", 0)),
-			_fmt_int(presentation.get("combat_actions_remaining", 0)),
+		"%s  ·  %s tactical units in formation" % [
+			_count_words(int(force_row.get("battalion_count", 0)), "battalion", "battalions"),
+			_fmt_int(force_row.get("unit_count", 0)),
 		],
 		Vector2(left + 12, y + 58),
 		11,
 		Color(0.83, 0.86, 0.90, 1.0)
 	)
-	_draw_panel_text(
-		"%s legal targets for this battalion" % _fmt_int(presentation.get("legal_option_count", 0)),
-		Vector2(left + 12, y + 74),
-		10,
-		Color(0.68, 0.74, 0.81, 1.0)
+
+
+func _ensure_selection(force_ids: Array, battalion_ids: Array) -> void:
+	if force_ids.is_empty():
+		return
+	if selected_strategic_formation_id.is_empty() or not force_ids.has(selected_strategic_formation_id):
+		selected_strategic_formation_id = String(force_ids[0])
+	var force_row: Dictionary = snapshot.get("strategic_formation_presentations", {}).get(
+		selected_strategic_formation_id, {}
 	)
+	var members: Array = force_row.get("battalion_ids", [])
+	if members.is_empty():
+		members = battalion_ids
+	if selected_battalion_id.is_empty() or not members.has(selected_battalion_id):
+		# Prefer a battalion that can act.
+		selected_battalion_id = ""
+		for battalion_id_variant in members:
+			var battalion_id := String(battalion_id_variant)
+			var row: Dictionary = snapshot.get("battalion_presentations", {}).get(battalion_id, {})
+			if bool(row.get("can_act", false)):
+				selected_battalion_id = battalion_id
+				break
+		if selected_battalion_id.is_empty() and members.size() > 0:
+			selected_battalion_id = String(members[0])
+		_rebuild_legal_targets()
+
+
+func _force_ids_from_battalions(battalion_ids: Array) -> Array:
+	var out: Array = []
+	var seen: Dictionary = {}
+	var forces: Dictionary = snapshot.get("strategic_formation_presentations", {})
+	for force_id_variant in forces.keys():
+		var force_id := String(force_id_variant)
+		var row: Dictionary = forces[force_id]
+		if String(row.get("province_id", "")) != selected_province_id:
+			continue
+		if seen.has(force_id):
+			continue
+		seen[force_id] = true
+		out.append(force_id)
+	if out.is_empty():
+		# Last-resort: one synthetic tab per battalion (legacy snapshots).
+		for battalion_id_variant in battalion_ids:
+			out.append(String(battalion_id_variant))
+	return out
+
+
+func _count_words(count: int, singular: String, plural: String) -> String:
+	return "%s %s" % [count, singular if count == 1 else plural]
 
 
 func _draw_unit_card(rect: Rect2, card: Dictionary) -> void:
@@ -489,13 +569,39 @@ func _unhandled_input(event: InputEvent) -> void:
 				queue_redraw()
 				get_viewport().set_input_as_handled()
 				return
-			for battalion_id: String in stack_tab_rects:
-				var rect: Rect2 = stack_tab_rects[battalion_id]
+			for force_id: String in stack_tab_rects:
+				var rect: Rect2 = stack_tab_rects[force_id]
 				if rect.has_point(mouse.position):
+					selected_strategic_formation_id = force_id
+					unit_scroll_offset = 0
+					var force_row: Dictionary = snapshot.get("strategic_formation_presentations", {}).get(force_id, {})
+					var members: Array = force_row.get("battalion_ids", [])
+					selected_battalion_id = ""
+					for battalion_id_variant in members:
+						var battalion_id := String(battalion_id_variant)
+						var row: Dictionary = snapshot.get("battalion_presentations", {}).get(battalion_id, {})
+						if bool(row.get("can_act", false)):
+							selected_battalion_id = battalion_id
+							break
+					if selected_battalion_id.is_empty() and members.size() > 0:
+						selected_battalion_id = String(members[0])
+					_rebuild_legal_targets()
+					status_message = "Selected formation %s (acting battalion %s)." % [
+						force_row.get("display_name", force_id),
+						_selected_presentation().get("battalion_label", selected_battalion_id),
+					]
+					queue_redraw()
+					get_viewport().set_input_as_handled()
+					return
+			for battalion_id: String in battalion_row_rects:
+				var bn_rect: Rect2 = battalion_row_rects[battalion_id]
+				if bn_rect.has_point(mouse.position):
 					selected_battalion_id = battalion_id
 					unit_scroll_offset = 0
 					_rebuild_legal_targets()
-					status_message = "Selected %s as acting battalion." % _selected_presentation().get("display_name", battalion_id)
+					status_message = "Selected acting battalion %s." % _selected_presentation().get(
+						"battalion_label", battalion_id
+					)
 					queue_redraw()
 					get_viewport().set_input_as_handled()
 					return

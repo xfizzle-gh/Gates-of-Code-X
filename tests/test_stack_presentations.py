@@ -57,6 +57,20 @@ class StackPresentationTests(unittest.TestCase):
                 for row in payload["battalions"][self.first.battalion_id]["legal_options"]
             ],
         )
+        # Hierarchy: stack counts strategic formations separately from battalions.
+        self.assertIn("strategic_formation_ids", stack)
+        self.assertEqual(2, stack["formation_count"])
+        self.assertIn("formations", stack["summary_label"])
+        self.assertIn("battalions", stack["summary_label"])
+        self.assertIn("tactical units", stack["summary_label"])
+        forces = payload["strategic_formations"]
+        self.assertEqual(2, len(stack["strategic_formation_ids"]))
+        for force_id in stack["strategic_formation_ids"]:
+            self.assertIn(force_id, forces)
+            self.assertTrue(str(forces[force_id]["display_name"]).strip())
+            self.assertNotEqual(forces[force_id]["display_name"], force_id)
+            self.assertIn("tab_label", forces[force_id])
+            self.assertEqual("Unassigned Commander", forces[force_id]["commander_label"])
 
     def test_unit_cards_expose_readable_names_tooltips_costs_and_source(self) -> None:
         long_name = "west81_legacy_motorized_rifle_company_with_exceptionally_long_name"

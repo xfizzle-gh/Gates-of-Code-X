@@ -78,6 +78,54 @@ def build_stack_presentations(
         battalions[battalion.battalion_id] = presentation
         stacks[battalion.province_id].append(battalion.battalion_id)
 
+    # Strategic-formation presentations (on-map containers). Tabs use these, not
+    # template formation IDs or raw battalion IDs.
+    force_presentations: dict[str, dict[str, Any]] = {}
+    for force in sorted(
+        state.strategic_formations.values(),
+        key=lambda value: value.strategic_formation_id,
+    ):
+        member_ids = [
+            battalion_id
+            for battalion_id in force.battalion_ids
+            if battalion_id in battalions
+        ]
+        if not member_ids:
+            continue
+        member_rows = [battalions[battalion_id] for battalion_id in member_ids]
+        total_units = sum(int(row["unit_count"]) for row in member_rows)
+        force_presentations[force.strategic_formation_id] = {
+            "id": force.strategic_formation_id,
+            "display_name": force.display_name,
+            "echelon": force.echelon.value if hasattr(force.echelon, "value") else str(force.echelon),
+            "commander_id": force.commander_id,
+            "commander_label": _commander_label(state, force.commander_id),
+            "faction": force.faction.value,
+            "province_id": force.province_id,
+            "actor_marker": force.actor_id or (
+                member_rows[0]["actor_marker"] if member_rows else force.faction.value.upper()
+            ),
+            "battalion_ids": list(member_ids),
+            "battalion_count": len(member_ids),
+            "unit_count": int(total_units),
+            "can_act": any(bool(row["can_act"]) for row in member_rows),
+            "template_formation_id": force.template_formation_id,
+        }
+
+    # Disambiguate colliding strategic-formation display names in a province.
+    names_by_province: dict[str, list[str]] = defaultdict(list)
+    for force_id, row in force_presentations.items():
+        names_by_province[str(row["province_id"])].append(str(row["display_name"]))
+    for force_id, row in force_presentations.items():
+        name = str(row["display_name"])
+        province_id = str(row["province_id"])
+        if names_by_province[province_id].count(name) > 1:
+            # Compact disambiguator; keep authored name primary.
+            suffix = force_id.replace("sf-", "")[-4:]
+            row["tab_label"] = f"{name} ({suffix})"
+        else:
+            row["tab_label"] = name
+
     stack_presentations: dict[str, dict[str, Any]] = {}
     for province_id, battalion_ids in sorted(stacks.items()):
         rows = [battalions[battalion_id] for battalion_id in battalion_ids]
@@ -90,7 +138,15 @@ def build_stack_presentations(
         weighted_supply = sum(
             int(row["supply"]) * max(int(row["unit_count"]), 1) for row in rows
         )
-        formation_ids = sorted(
+        strategic_formation_ids = sorted(
+            {
+                force_id
+                for force_id, force_row in force_presentations.items()
+                if str(force_row.get("province_id")) == province_id
+            }
+        )
+        # Compatibility: template formation ids still listed for older clients.
+        template_formation_ids = sorted(
             {
                 str(row.get("formation_id", ""))
                 for row in rows
@@ -101,8 +157,9 @@ def build_stack_presentations(
             "province_id": province_id,
             "battalion_ids": list(battalion_ids),
             "battalion_count": int(len(battalion_ids)),
-            "formation_count": int(len(formation_ids)),
-            "formation_ids": formation_ids,
+            "formation_count": int(len(strategic_formation_ids)),
+            "formation_ids": template_formation_ids,
+            "strategic_formation_ids": strategic_formation_ids,
             "unit_count": int(total_units),
             "authorized_unit_count": int(total_authorized),
             "replacement_deficit": int(max(0, total_authorized - total_units)),
@@ -119,7 +176,7 @@ def build_stack_presentations(
                 }
             ),
             "summary_label": _stack_summary_label(
-                formation_count=len(formation_ids),
+                formation_count=len(strategic_formation_ids),
                 battalion_count=len(battalion_ids),
                 unit_count=total_units,
                 authorized_unit_count=total_authorized,
@@ -128,6 +185,7 @@ def build_stack_presentations(
     return {
         "battalions": battalions,
         "stacks": stack_presentations,
+        "strategic_formations": force_presentations,
     }
 
 
@@ -210,14 +268,31 @@ def _stack_summary_label(
     authorized_unit_count: int,
 ) -> str:
     parts = [
-        f"{int(formation_count)} formation" + ("s" if formation_count != 1 else ""),
-        f"{int(battalion_count)} battalion" + ("s" if battalion_count != 1 else ""),
+        _count_label(int(formation_count), "formation", "formations"),
+        _count_label(int(battalion_count), "battalion", "battalions"),
     ]
     if authorized_unit_count > 0:
-        parts.append(f"{int(unit_count)}/{int(authorized_unit_count)} tactical units")
+        parts.append(
+            f"{int(unit_count)}/{int(authorized_unit_count)} "
+            f"{'tactical unit' if unit_count == 1 else 'tactical units'}"
+        )
     else:
-        parts.append(f"{int(unit_count)} tactical unit" + ("s" if unit_count != 1 else ""))
+        parts.append(_count_label(int(unit_count), "tactical unit", "tactical units"))
     return " | ".join(parts)
+
+
+def _count_label(count: int, singular: str, plural: str) -> str:
+    return f"{count} {singular if count == 1 else plural}"
+
+
+def _commander_label(state: CampaignState, commander_id: str | None) -> str:
+    if not commander_id:
+        return "Unassigned Commander"
+    commander = state.commanders.get(commander_id)
+    if commander is None:
+        return "Unassigned Commander"
+    name = str(getattr(commander, "display_name", "") or "").strip()
+    return name or "Unassigned Commander"
 
 
 def is_placeholder_unit_name(unit_name: str) -> bool:
