@@ -4,6 +4,7 @@ import json
 import unittest
 
 from gates_of_codex.europe import build_goe_europe_campaign
+from gates_of_codex.force_migration import ensure_strategic_formations
 from gates_of_codex.frontend import build_frontend_snapshot
 from gates_of_codex.models import BattalionRosterEntry, Faction, UnitEconomy
 from gates_of_codex.presentation import build_stack_presentations
@@ -24,6 +25,15 @@ class StackPresentationTests(unittest.TestCase):
             faction_state.is_human_controlled = faction_state.faction == self.first.faction
         for battalion in self.state.battalions.values():
             battalion.is_player_controlled = battalion.faction == self.first.faction
+        # Hierarchy presentations require strategic formations (migration bridge).
+        ensure_strategic_formations(self.state)
+        # Keep both battalions co-located after formation location sync.
+        force_a = self.state.strategic_formations[self.first.strategic_formation_id]
+        force_b = self.state.strategic_formations[self.second.strategic_formation_id]
+        force_a.province_id = self.first.province_id
+        force_b.province_id = self.first.province_id
+        self.first.province_id = force_a.province_id
+        self.second.province_id = force_b.province_id
 
     def test_two_battalion_stack_preserves_explicit_selection_rows(self) -> None:
         front_options = [
