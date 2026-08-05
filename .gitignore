@@ -1,3 +1,4 @@
+# Python
 .venv/
 __pycache__/
 *.py[cod]
@@ -7,6 +8,40 @@ dist/
 *.spec
 .pytest_cache/
 .coverage
+.mypy_cache/
+.ruff_cache/
+
+# Local campaign / runtime dumps (never commit)
+live/
+backups/
+campaign.json
 *.sav
 *.goc.json
-campaign.json
+
+# Godot local / generated frontend bridge files
+godot/.godot/
+godot/campaign_snapshot.json
+godot/frontend_commands.json
+godot/**/*.uid
+godot/home_*.png
+godot/.import/
+
+# Local screenshots and ad-hoc reports
+*.log
+live_*/
+**/screenshot_log.txt
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# Keep authored fixtures (do not ignore)
+# tests/fixtures/**
+# examples/**
+
+godot/assets/maps/**/prototype/
+
