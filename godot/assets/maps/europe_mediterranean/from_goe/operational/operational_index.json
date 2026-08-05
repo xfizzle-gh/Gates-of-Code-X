@@ -1,0 +1,21 @@
+{
+  "map_id": "europe_mediterranean_from_goe",
+  "schema_version": 2,
+  "node_count": 342,
+  "edge_count": 751,
+  "site_count": 0,
+  "authored_edge_count": 20,
+  "candidate_edge_count": 731,
+  "rules": {
+    "ticks_per_strategic_turn": 10,
+    "capture_hold_ticks": 2,
+    "max_friendly_formations_per_node": 3,
+    "capture_mode": "control_site_node_only",
+    "interception_mode": "swept_movement",
+    "formation_is_movement_authority": true,
+    "authored_crossings_traversable_v1": true,
+    "enforce_port_requirements": false,
+    "enforce_blockades": false
+  },
+  "graph_path": "operational_graph.json"
+}
