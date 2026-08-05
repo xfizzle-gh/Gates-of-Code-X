@@ -4,6 +4,14 @@ from dataclasses import asdict, dataclass, field
 from enum import StrEnum
 from typing import Any
 
+from .operational_schema import (
+    PROGRESS_MILLI_MAX,
+    PROGRESS_MILLI_MIN,
+    FormationOperationalPosition,
+    PositionMode,
+    require_strict_int,
+)
+
 
 class Faction(StrEnum):
     NATO = "nato"
@@ -225,6 +233,8 @@ class StrategicFormation:
     supply_summary: int = 100
     experience_summary: int = 0
     is_player_controlled: bool = False
+    # Operational graph location (S2). province_id remains derived/legacy authority.
+    position: FormationOperationalPosition | None = None
 
     def validate(self) -> None:
         if not self.strategic_formation_id.strip():
@@ -239,6 +249,8 @@ class StrategicFormation:
             raise ValueError(f"Strategic formation {self.strategic_formation_id} must contain at least one battalion")
         if len(set(self.battalion_ids)) != len(self.battalion_ids):
             raise ValueError(f"Strategic formation {self.strategic_formation_id} has duplicate battalion membership")
+        if self.position is not None:
+            _validate_position_shape(self.position, force_id=self.strategic_formation_id)
 
 
 @dataclass(slots=True)
@@ -536,3 +548,34 @@ class CampaignState:
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+
+def _validate_position_shape(position: FormationOperationalPosition, *, force_id: str) -> None:
+    """Shape-only checks when no operational graph is loaded (full graph validate is S2 migration)."""
+    try:
+        progress = require_strict_int(
+            position.progress_milli,
+            name="progress_milli",
+            minimum=PROGRESS_MILLI_MIN,
+            maximum=PROGRESS_MILLI_MAX,
+        )
+    except ValueError as exc:
+        raise ValueError(f"Strategic formation {force_id} position invalid: {exc}") from exc
+    if position.mode == PositionMode.AT_NODE.value:
+        if not position.node_id or not str(position.node_id).strip():
+            raise ValueError(f"Strategic formation {force_id} at_node position requires node_id")
+        if position.edge_id is not None:
+            raise ValueError(f"Strategic formation {force_id} at_node position must not set edge_id")
+        if progress != 0:
+            raise ValueError(f"Strategic formation {force_id} at_node progress_milli must be 0")
+        if position.facing_node_id is not None:
+            raise ValueError(f"Strategic formation {force_id} at_node must not set facing_node_id")
+    elif position.mode == PositionMode.ON_EDGE.value:
+        if not position.edge_id or not str(position.edge_id).strip():
+            raise ValueError(f"Strategic formation {force_id} on_edge position requires edge_id")
+        if position.node_id is not None:
+            raise ValueError(f"Strategic formation {force_id} on_edge position must not set node_id")
+        if not position.facing_node_id or not str(position.facing_node_id).strip():
+            raise ValueError(f"Strategic formation {force_id} on_edge requires facing_node_id")
+    else:
+        raise ValueError(f"Strategic formation {force_id} has invalid position mode {position.mode}")

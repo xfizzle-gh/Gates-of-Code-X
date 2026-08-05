@@ -80,6 +80,8 @@ def build_stack_presentations(
 
     # Strategic-formation presentations (on-map containers). Tabs use these, not
     # template formation IDs or raw battalion IDs.
+    from .operational_position import position_to_dict, resolve_display_pixel
+
     force_presentations: dict[str, dict[str, Any]] = {}
     for force in sorted(
         state.strategic_formations.values(),
@@ -102,6 +104,8 @@ def build_stack_presentations(
             "commander_label": _commander_label(state, force.commander_id),
             "faction": force.faction.value,
             "province_id": force.province_id,
+            "position": position_to_dict(force.position),
+            "display_pixel": resolve_display_pixel(state, force),
             "actor_marker": force.actor_id or (
                 member_rows[0]["actor_marker"] if member_rows else force.faction.value.upper()
             ),

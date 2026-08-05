@@ -36,15 +36,16 @@ class EuropeFormationTests(unittest.TestCase):
         restored = campaign_from_dict(original.to_dict())
         self.assertEqual(original.map_id, restored.map_id)
         # Migration report timestamps/counters may refresh; core map metadata must remain.
+        migration_keys = {"strategic_formation_migration", "operational_position_migration"}
         original_meta = {
             key: value
             for key, value in original.map_metadata.items()
-            if key != "strategic_formation_migration"
+            if key not in migration_keys
         }
         restored_meta = {
             key: value
             for key, value in restored.map_metadata.items()
-            if key != "strategic_formation_migration"
+            if key not in migration_keys
         }
         self.assertEqual(original_meta, restored_meta)
         self.assertEqual(original.formations["nato-pol-mechanized"], restored.formations["nato-pol-mechanized"])

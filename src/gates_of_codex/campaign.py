@@ -179,6 +179,8 @@ class CampaignEngine:
             self._remove_battalion(battalion.battalion_id)
 
     def _sync_strategic_formation_location(self, battalion: Battalion) -> None:
+        from .operational_position import place_formation_at_province_anchor
+
         force_id = battalion.strategic_formation_id
         if not force_id:
             return
@@ -186,6 +188,8 @@ class CampaignEngine:
         if force is None:
             return
         force.province_id = battalion.province_id
+        # Adjacency moves stay province-authoritative until S3; snap to new province anchor.
+        place_formation_at_province_anchor(force)
         for member_id in force.battalion_ids:
             member = self.state.battalions.get(member_id)
             if member is not None:
