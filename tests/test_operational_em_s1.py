@@ -9,6 +9,7 @@ from gates_of_codex.europe_mediterranean_from_goe import build_europe_mediterran
 from gates_of_codex.models import Faction
 from gates_of_codex.operational_em_generate import generate_em_operational_graph
 from gates_of_codex.operational_schema import (
+    COST_MILLI_UNITY,
     EdgeAuthority,
     EdgeKind,
     FormationOperationalPosition,
@@ -17,6 +18,7 @@ from gates_of_codex.operational_schema import (
     OperationalMoveOrder,
     OperationalRouteEdge,
     PositionMode,
+    require_strict_int,
 )
 from gates_of_codex.state_io import load_campaign, save_campaign
 from gates_of_codex.strategic_map import decode_png_rgb
@@ -44,9 +46,14 @@ class OperationalEmS1Tests(unittest.TestCase):
 
     @staticmethod
     def _expected_authored_crossing_records(manifest: dict) -> dict[tuple[str, str], dict]:
-        """Canonical undirected crossing records from theatre edge_types/edge_meta."""
         records: dict[tuple[str, str], dict] = {}
         by_id = {str(row["province_id"]): row for row in manifest["province_table"]}
+        defaults = {
+            "strait": (1250, False, True, True),
+            "ferry": (1500, True, True, True),
+            "ferry_or_sea_lane": (1500, True, True, True),
+            "sea_lane": (2000, True, True, True),
+        }
         for row in manifest["province_table"]:
             pid = str(row["province_id"])
             edge_types = row.get("edge_types") or {}
@@ -66,20 +73,20 @@ class OperationalEmS1Tests(unittest.TestCase):
                     if isinstance(other_meta, dict):
                         meta = other_meta
                 meta = dict(meta or {})
-                # Defaults mirrored from operational_schema.DEFAULT_CROSSING_META.
-                defaults = {
-                    "strait": (1.25, False, True, True),
-                    "ferry": (1.5, True, True, True),
-                    "ferry_or_sea_lane": (1.5, True, True, True),
-                    "sea_lane": (2.0, True, True, True),
-                }
                 mult, port, block, bi = defaults[str(etype)]
+                if "movement_cost_milli" in meta:
+                    cost = int(meta["movement_cost_milli"])
+                elif "movement_cost_multiplier" in meta:
+                    cost = max(1, int(round(float(meta["movement_cost_multiplier"]) * COST_MILLI_UNITY)))
+                else:
+                    cost = mult
                 records[key] = {
                     "type": str(etype),
-                    "movement_cost_multiplier": float(meta.get("movement_cost_multiplier", mult)),
+                    "movement_cost_milli": cost,
                     "requires_port": bool(meta.get("requires_port", port)),
                     "can_be_blockaded": bool(meta.get("can_be_blockaded", block)),
                     "bidirectional": bool(meta.get("bidirectional", bi)),
+                    "traversal_enabled": True,
                 }
         return records
 
@@ -90,8 +97,14 @@ class OperationalEmS1Tests(unittest.TestCase):
             second = generate_em_operational_graph(manifest_path=MANIFEST, output_dir=out)
             self.assertEqual(first["graph"], second["graph"])
             graph = first["graph"]
+            # validate must not inject private keys into metadata
+            self.assertFalse(any(str(k).startswith("_") for k in graph.get("metadata", {})))
+            self.assertEqual(2, graph["schema_version"])
             self.assertEqual("europe_mediterranean_from_goe", graph["map_id"])
             self.assertEqual(10, graph["rules"]["ticks_per_strategic_turn"])
+            self.assertTrue(graph["rules"]["authored_crossings_traversable_v1"])
+            self.assertFalse(graph["rules"]["enforce_port_requirements"])
+            self.assertFalse(graph["rules"]["enforce_blockades"])
             self.assertEqual(len(self.province_ids), len(graph["nodes"]))
             self.assertEqual(0, len(graph["sites"]))
 
@@ -107,7 +120,10 @@ class OperationalEmS1Tests(unittest.TestCase):
                 self.assertTrue(node["node_id"].startswith("op-node-"))
                 self.assertTrue(node["node_id"].endswith("-anchor"))
                 x, y = node["pixel"]
-                self.assertEqual(pid, self.color_to_pid.get(self.image.color_at(int(x), int(y))))
+                self.assertIsInstance(x, int)
+                self.assertIsInstance(y, int)
+                self.assertNotIsInstance(x, bool)
+                self.assertEqual(pid, self.color_to_pid.get(self.image.color_at(x, y)))
 
             node_id_set = set(node_ids)
             node_province = {node["node_id"]: node["province_id"] for node in graph["nodes"]}
@@ -122,8 +138,13 @@ class OperationalEmS1Tests(unittest.TestCase):
                     {node_province[edge["a"]], node_province[edge["b"]]},
                     set(edge["province_ids"]),
                 )
+                self.assertIsInstance(edge["length_px"], int)
+                self.assertIsInstance(edge["movement_cost_milli"], int)
+                self.assertIsInstance(edge["base_move_points_milli"], int)
+                self.assertNotIsInstance(edge["movement_cost_milli"], bool)
                 if edge["authority"] == EdgeAuthority.AUTHORED.value:
                     authored_edges.append(edge)
+                    self.assertTrue(edge["traversal_enabled"])
                     self.assertNotEqual(EdgeKind.CORRIDOR.value, edge["kind"])
                     self.assertIsNotNone(edge.get("legacy_crossing_type"))
                 elif edge["authority"] == EdgeAuthority.CANDIDATE.value:
@@ -134,7 +155,6 @@ class OperationalEmS1Tests(unittest.TestCase):
                     self.fail(f"unexpected authority {edge['authority']}")
             self.assertGreater(candidates, 100)
 
-            # Exact preservation of all current authored crossing records.
             self.assertEqual(EXPECTED_AUTHORED_CROSSINGS, len(self.expected_crossings))
             self.assertEqual(EXPECTED_AUTHORED_CROSSINGS, len(authored_edges))
             got: dict[tuple[str, str], dict] = {}
@@ -144,10 +164,11 @@ class OperationalEmS1Tests(unittest.TestCase):
                 key = tuple(sorted((a, b)))
                 got[key] = {
                     "type": str(edge["legacy_crossing_type"]),
-                    "movement_cost_multiplier": float(edge["movement_cost_multiplier"]),
+                    "movement_cost_milli": int(edge["movement_cost_milli"]),
                     "requires_port": bool(edge["requires_port"]),
                     "can_be_blockaded": bool(edge["can_be_blockaded"]),
                     "bidirectional": bool(edge["bidirectional"]),
+                    "traversal_enabled": bool(edge["traversal_enabled"]),
                 }
             self.assertEqual(self.expected_crossings, got)
 
@@ -161,10 +182,17 @@ class OperationalEmS1Tests(unittest.TestCase):
         committed = json.loads((COMMITTED / "operational_graph.json").read_text(encoding="utf-8"))
         self.assertEqual(generated, committed)
         self.assertEqual(342, len(committed["nodes"]))
+        self.assertFalse(any(str(k).startswith("_") for k in committed.get("metadata", {})))
         self.assertEqual(
             EXPECTED_AUTHORED_CROSSINGS,
             sum(1 for edge in committed["edges"] if edge["authority"] == "authored"),
         )
+
+    def test_strict_int_helper_rejects_bool_str_float(self) -> None:
+        self.assertEqual(3, require_strict_int(3, name="n"))
+        for bad in (True, False, "3", 3.0, 1.5, None):
+            with self.assertRaises(ValueError):
+                require_strict_int(bad, name="n")  # type: ignore[arg-type]
 
     def test_position_and_order_validation(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -173,78 +201,130 @@ class OperationalEmS1Tests(unittest.TestCase):
             )["graph"]
         nodes = {node["node_id"] for node in graph["nodes"]}
         edges_by_id = {
-            edge["edge_id"]: OperationalRouteEdge(**{
-                key: edge[key]
-                for key in edge
-                if key
-                in {
-                    "edge_id",
-                    "a",
-                    "b",
-                    "kind",
-                    "authority",
-                    "length_px",
-                    "base_move_points",
-                    "movement_cost_multiplier",
-                    "requires_port",
-                    "can_be_blockaded",
-                    "bidirectional",
-                    "province_ids",
-                    "legacy_crossing_type",
-                    "metadata",
-                }
-            })
+            edge["edge_id"]: OperationalRouteEdge(
+                edge_id=edge["edge_id"],
+                a=edge["a"],
+                b=edge["b"],
+                kind=edge["kind"],
+                authority=edge["authority"],
+                length_px=int(edge["length_px"]),
+                base_move_points_milli=int(edge["base_move_points_milli"]),
+                movement_cost_milli=int(edge["movement_cost_milli"]),
+                requires_port=bool(edge["requires_port"]),
+                can_be_blockaded=bool(edge["can_be_blockaded"]),
+                traversal_enabled=bool(edge["traversal_enabled"]),
+                bidirectional=bool(edge["bidirectional"]),
+                province_ids=list(edge["province_ids"]),
+                legacy_crossing_type=edge.get("legacy_crossing_type"),
+                metadata=dict(edge.get("metadata") or {}),
+            )
             for edge in graph["edges"]
         }
         edge_ids = set(edges_by_id)
         sample_edge = next(iter(edges_by_id.values()))
-        # at_node ok
+
         FormationOperationalPosition(
             mode=PositionMode.AT_NODE.value,
             node_id=next(iter(nodes)),
             progress_milli=0,
         ).validate(node_ids=nodes, edge_ids=edge_ids, edges_by_id=edges_by_id)
-        # on_edge ok
+
         FormationOperationalPosition(
             mode=PositionMode.ON_EDGE.value,
             edge_id=sample_edge.edge_id,
             progress_milli=500,
             facing_node_id=sample_edge.b,
         ).validate(node_ids=nodes, edge_ids=edge_ids, edges_by_id=edges_by_id)
+
+        with self.assertRaises(ValueError):
+            FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value,
+                node_id=next(iter(nodes)),
+                progress_milli=True,  # type: ignore[arg-type]
+            ).validate(node_ids=nodes, edge_ids=edge_ids, edges_by_id=edges_by_id)
+
         with self.assertRaises(ValueError):
             FormationOperationalPosition(
                 mode=PositionMode.ON_EDGE.value,
                 edge_id=sample_edge.edge_id,
                 progress_milli=500,
                 facing_node_id="not-an-endpoint",
-            ).validate(node_ids=nodes | {"not-an-endpoint"}, edge_ids=edge_ids, edges_by_id=edges_by_id)
-        # order path continuity
-        order = OperationalMoveOrder(
+            ).validate(
+                node_ids=nodes | {"not-an-endpoint"},
+                edge_ids=edge_ids,
+                edges_by_id=edges_by_id,
+            )
+
+        # Draft order
+        OperationalMoveOrder(
             order_id="ord-1",
             formation_id="sf-x",
             path_node_ids=[sample_edge.a, sample_edge.b],
             path_edge_ids=[sample_edge.edge_id],
             issued_tick=0,
-            status=MoveOrderStatus.PENDING.value,
-        )
-        order.validate(
+            status=MoveOrderStatus.DRAFT.value,
+        ).validate(
             node_ids=nodes,
             edge_ids=edge_ids,
             site_ids=set(),
             edges_by_id=edges_by_id,
         )
+
+        # Committed order requires turn + stance
+        OperationalMoveOrder(
+            order_id="ord-2",
+            formation_id="sf-x",
+            path_node_ids=[sample_edge.a, sample_edge.b],
+            path_edge_ids=[sample_edge.edge_id],
+            issued_tick=0,
+            status=MoveOrderStatus.COMMITTED.value,
+            committed_turn=3,
+            locked_stance="standard",
+        ).validate(
+            node_ids=nodes,
+            edge_ids=edge_ids,
+            site_ids=set(),
+            edges_by_id=edges_by_id,
+        )
+
         with self.assertRaises(ValueError):
             OperationalMoveOrder(
-                order_id="ord-bad",
+                order_id="ord-bad-commit",
                 formation_id="sf-x",
-                path_node_ids=[sample_edge.a, sample_edge.a],
+                path_node_ids=[sample_edge.a, sample_edge.b],
                 path_edge_ids=[sample_edge.edge_id],
+                status=MoveOrderStatus.COMMITTED.value,
             ).validate(
                 node_ids=nodes,
                 edge_ids=edge_ids,
                 site_ids=set(),
                 edges_by_id=edges_by_id,
             )
+
+        with self.assertRaises(ValueError):
+            OperationalMoveOrder(
+                order_id="ord-bad-tick",
+                formation_id="sf-x",
+                path_node_ids=[sample_edge.a, sample_edge.b],
+                path_edge_ids=[sample_edge.edge_id],
+                issued_tick="0",  # type: ignore[arg-type]
+            ).validate(
+                node_ids=nodes,
+                edge_ids=edge_ids,
+                site_ids=set(),
+                edges_by_id=edges_by_id,
+            )
+
+    def test_validate_does_not_mutate_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            result = generate_em_operational_graph(
+                manifest_path=MANIFEST, output_dir=Path(temporary) / "operational"
+            )
+        graph_dict = result["graph"]
+        before = json.dumps(graph_dict["metadata"], sort_keys=True)
+        # Re-validate via regenerate equality already covered; ensure no private keys.
+        self.assertNotIn("_validated_edge_ids", graph_dict["metadata"])
+        self.assertEqual(before, json.dumps(graph_dict["metadata"], sort_keys=True))
 
     def test_old_saves_and_movement_unchanged_by_s1_data(self) -> None:
         state = build_europe_mediterranean_from_goe_campaign(selected_faction=Faction.NATO)

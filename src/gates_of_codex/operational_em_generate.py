@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from .operational_schema import (
+    COST_MILLI_UNITY,
     EdgeAuthority,
     EdgeKind,
     NodeKind,
@@ -12,7 +13,7 @@ from .operational_schema import (
     OperationalRouteEdge,
     OperationalRouteNode,
     OperationalRules,
-    apply_default_meta,
+    apply_default_meta_milli,
     crossing_type_to_edge_kind,
     stable_edge_id,
     stable_node_id,
@@ -95,8 +96,8 @@ def generate_em_operational_graph(
             a = node_by_province[key[0]]
             b = node_by_province[key[1]]
             kind = EdgeKind.CORRIDOR.value
-            meta = apply_default_meta(kind)
-            length = _pixel_distance(a.pixel, b.pixel)
+            meta = apply_default_meta_milli(kind)
+            length = _pixel_distance_int(a.pixel, b.pixel)
             edges.append(
                 OperationalRouteEdge(
                     edge_id=stable_edge_id(kind, a.node_id, b.node_id),
@@ -105,10 +106,11 @@ def generate_em_operational_graph(
                     kind=kind,
                     authority=EdgeAuthority.CANDIDATE.value,
                     length_px=length,
-                    base_move_points=1.0,
-                    movement_cost_multiplier=float(meta["movement_cost_multiplier"]),
+                    base_move_points_milli=COST_MILLI_UNITY,
+                    movement_cost_milli=int(meta["movement_cost_milli"]),
                     requires_port=bool(meta["requires_port"]),
                     can_be_blockaded=bool(meta["can_be_blockaded"]),
+                    traversal_enabled=True,
                     bidirectional=bool(meta["bidirectional"]),
                     province_ids=[key[0], key[1]],
                     legacy_crossing_type=None,
@@ -144,7 +146,7 @@ def generate_em_operational_graph(
                     other_meta = (other_row.get("edge_meta") or {}).get(pid)
                     if isinstance(other_meta, dict):
                         overrides = other_meta
-            meta = apply_default_meta(kind, overrides)
+            meta = apply_default_meta_milli(kind, overrides)
             a = node_by_province[pair[0]]
             b = node_by_province[pair[1]]
             # Remove candidate corridor between same endpoints if present.
@@ -163,11 +165,14 @@ def generate_em_operational_graph(
                     b=b.node_id,
                     kind=kind,
                     authority=EdgeAuthority.AUTHORED.value,
-                    length_px=_pixel_distance(a.pixel, b.pixel),
-                    base_move_points=1.0,
-                    movement_cost_multiplier=float(meta["movement_cost_multiplier"]),
+                    length_px=_pixel_distance_int(a.pixel, b.pixel),
+                    base_move_points_milli=COST_MILLI_UNITY,
+                    movement_cost_milli=int(meta["movement_cost_milli"]),
                     requires_port=bool(meta["requires_port"]),
                     can_be_blockaded=bool(meta["can_be_blockaded"]),
+                    # Authored crossings function in v1 topology; port/blockade
+                    # enforcement is deferred (see OperationalRules flags).
+                    traversal_enabled=True,
                     bidirectional=bool(meta["bidirectional"]),
                     province_ids=[pair[0], pair[1]],
                     legacy_crossing_type=str(etype),
@@ -184,26 +189,34 @@ def generate_em_operational_graph(
             capture_mode="control_site_node_only",
             interception_mode="swept_movement",
             formation_is_movement_authority=True,
+            authored_crossings_traversable_v1=True,
+            enforce_port_requirements=False,
+            enforce_blockades=False,
         ),
         sites=[],  # S1: no invented settlements/ports/airfields
         nodes=nodes,
         edges=edges,
-            metadata={
-                "generator": "operational_em_generate_s1",
-                "frame": {"width": width, "height": height},
-                "province_count": len(province_ids),
-                "notes": [
-                    "No invented settlements, ports, roads, or railways.",
-                    "Land adjacency exported as corridor candidates only.",
-                    "Authored crossings are authoritative typed edges.",
-                    "S1 does not change formation movement or ownership.",
-                    "S3 must not activate ferry/sea-lane traversal until required "
-                    "port sites are authored or an owner-approved temporary "
-                    "embarkation rule exists.",
-                    "Formation position uses progress_milli int 0..1000 (not float).",
-                ],
-            },
-        )
+        metadata={
+            "generator": "operational_em_generate_s1",
+            "schema_notes": "schema_version 2: fixed-point milli costs, commitment fields",
+            "frame": {"width": width, "height": height},
+            "province_count": len(province_ids),
+            "notes": [
+                "No invented settlements, ports, roads, or railways.",
+                "Land adjacency exported as corridor candidates only.",
+                "Authored crossings are authoritative typed edges and are "
+                "traversable in v1 (topology). Port requirement and blockade "
+                "enforcement remain deferred (rules.enforce_port_requirements="
+                "false, rules.enforce_blockades=false).",
+                "S1 does not change formation movement or ownership.",
+                "Formation position uses progress_milli int 0..1000.",
+                "Costs use movement_cost_milli / base_move_points_milli "
+                "(1000 == 1.0).",
+                "Move orders support draft vs committed with committed_turn "
+                "and locked_stance.",
+            ],
+        },
+    )
     graph.validate(province_ids=province_ids)
 
     out = Path(output_dir)
@@ -291,7 +304,7 @@ def _resolve_anchor_pixel(
     raise RuntimeError(f"no pixels for province {pid}")
 
 
-def _pixel_distance(a: list[int], b: list[int]) -> float:
+def _pixel_distance_int(a: list[int], b: list[int]) -> int:
     dx = float(a[0] - b[0])
     dy = float(a[1] - b[1])
-    return max((dx * dx + dy * dy) ** 0.5, 1.0)
+    return max(int(round((dx * dx + dy * dy) ** 0.5)), 1)
