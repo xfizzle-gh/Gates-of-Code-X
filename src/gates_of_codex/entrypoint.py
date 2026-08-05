@@ -245,6 +245,24 @@ def _run_generate_europe_mediterranean_from_goe(arguments: list[str]) -> int:
     return 0
 
 
+def _run_generate_em_operational_graph(arguments: list[str]) -> int:
+    from .operational_em_generate import generate_em_operational_graph
+
+    parser = argparse.ArgumentParser(prog="gates-of-codex generate-em-operational-graph")
+    parser.add_argument(
+        "--manifest",
+        default="godot/assets/maps/europe_mediterranean/from_goe/map_manifest.json",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default="godot/assets/maps/europe_mediterranean/from_goe/operational",
+    )
+    args = parser.parse_args(arguments)
+    result = generate_em_operational_graph(manifest_path=args.manifest, output_dir=args.output_dir)
+    print(json.dumps({"ok": True, **result["index"], "output_dir": result["output_dir"]}, indent=2))
+    return 0
+
+
 def _run_new(arguments: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="gates-of-codex new")
     _add_stack_arguments(parser, require_codex=False)
@@ -354,6 +372,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_import_strategic_map(remainder)
     if command == "generate-europe-mediterranean-from-goe":
         return _run_generate_europe_mediterranean_from_goe(remainder)
+    if command == "generate-em-operational-graph":
+        return _run_generate_em_operational_graph(remainder)
     if command == "new":
         return _run_new(remainder)
     if command == "export-battle":
