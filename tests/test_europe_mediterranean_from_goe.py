@@ -6,13 +6,18 @@ import unittest
 from pathlib import Path
 
 from gates_of_codex.europe import build_goe_europe_campaign
+from collections import deque
+
 from gates_of_codex.europe_mediterranean_from_goe import (
+    AUTHED_CROSSINGS,
     FORCE_EXCLUDE_PROVINCE_IDS,
     FORCE_INCLUDE_PROVINCE_IDS,
     FORCE_INCLUDE_STRATEGIC_PROVINCES,
     FROZEN_DISPLAY_CROP,
+    IRELAND_COMPONENT_SEED,
     MAP_ID,
     build_europe_mediterranean_from_goe_campaign,
+    discover_ireland_province_ids,
     generate_europe_mediterranean_from_goe,
     select_playable_provinces,
 )
@@ -205,6 +210,115 @@ class EuropeMediterraneanFromGoeTests(unittest.TestCase):
         self.assertTrue(crop.get("frozen"))
         self.assertEqual(817, int(crop.get("width", 0)))
         self.assertEqual(920, int(crop.get("height", 0)))
+
+    def test_topology_ireland_scandinavia_crossings(self) -> None:
+        if not MANIFEST.is_file() or not ID_MAP.is_file():
+            self.skipTest("from_goe assets missing")
+        payload = json.loads(MANIFEST.read_text(encoding="utf-8"))
+        by_id = {r["province_id"]: r for r in payload["province_table"]}
+        selection = (payload.get("theatre") or {}).get("selection") or {}
+
+        # Ireland landmass fully playable inside frozen frame.
+        interim = json.loads((INTERIM / "map_manifest.json").read_text(encoding="utf-8"))
+        source_img = decode_png_rgb(INTERIM / "province_id_map.png")
+        ireland_ids = set(discover_ireland_province_ids(interim["province_table"], source_img))
+        self.assertGreaterEqual(len(ireland_ids), 4)
+        self.assertIn(IRELAND_COMPONENT_SEED, ireland_ids)
+        for pid in ireland_ids:
+            self.assertIn(pid, by_id)
+        ireland_report = selection.get("ireland_playable") or []
+        self.assertEqual(len(ireland_ids), len(ireland_report))
+
+        # No land edge Ireland -> Britain.
+        britain_keys = (
+            "london",
+            "wales",
+            "scotland",
+            "midlands",
+            "yorkshire",
+            "sussex",
+            "england",
+            "lanark",
+            "lothian",
+            "cumbria",
+        )
+        britain_ids = {
+            pid
+            for pid, row in by_id.items()
+            if any(k in str(row.get("display_name", "")).lower() for k in britain_keys)
+        }
+        for pid in ireland_ids:
+            land = set(by_id[pid].get("land_neighbors") or [])
+            self.assertFalse(land & britain_ids, msg=f"{pid} has land to Britain: {land & britain_ids}")
+
+        # At least two authored Ireland-Britain crossings.
+        ie_sea = []
+        for pid in ireland_ids:
+            for n, t in (by_id[pid].get("edge_types") or {}).items():
+                if t != "land" and n in britain_ids:
+                    ie_sea.append((pid, n, t))
+        self.assertGreaterEqual(len({tuple(sorted((a, b))) for a, b, _ in ie_sea}), 2)
+
+        # Continental Europe reaches Sweden via Denmark/Zealand crossings.
+        graph: dict[str, set[str]] = {pid: set() for pid in by_id}
+        for pid, row in by_id.items():
+            for n in row.get("source_neighbors") or []:
+                if n in by_id:
+                    graph[pid].add(n)
+                    graph[n].add(pid)
+
+        def reachable(src: str, dst: str) -> bool:
+            q = deque([src])
+            seen = {src}
+            while q:
+                cur = q.popleft()
+                if cur == dst:
+                    return True
+                for nxt in graph[cur]:
+                    if nxt not in seen:
+                        seen.add(nxt)
+                        q.append(nxt)
+            return False
+
+        self.assertTrue(reachable("Holstein", "province_0419"))  # to Zealand
+        self.assertTrue(reachable("province_0419", "province_0421"))  # Oresund
+        self.assertTrue(reachable("Holstein", "province_0468"))  # Oslofjord
+        self.assertTrue(reachable("Holstein", "province_0463"))  # Stockholm area
+        self.assertTrue(reachable("Holstein", "province_0496"))  # Oulu / Finland
+
+        # Norway/Sweden/Finland land contacts where raster touches remain land-typed.
+        oulu = by_id["province_0496"]
+        self.assertTrue(oulu.get("land_neighbors"))
+        for n in oulu["land_neighbors"]:
+            self.assertEqual("land", (oulu.get("edge_types") or {}).get(n))
+
+        # Every non-mainland component connected or allowlisted.
+        unresolved = selection.get("disconnected_components_unresolved") or []
+        self.assertEqual([], unresolved)
+
+        # Crossing types exact + symmetric for committed authored edges only.
+        # (If two coasts touch in the raster, the land edge wins and the
+        # authored entry is intentionally skipped.)
+        authored = selection.get("authored_edges") or []
+        self.assertGreaterEqual(len(authored), 10)
+        for edge in authored:
+            a, b, etype = edge["a"], edge["b"], edge["type"]
+            self.assertEqual(etype, (by_id[a].get("edge_types") or {}).get(b))
+            self.assertEqual(etype, (by_id[b].get("edge_types") or {}).get(a))
+            meta_l = (by_id[a].get("edge_meta") or {}).get(b) or {}
+            self.assertEqual(etype, meta_l.get("crossing_type"))
+            self.assertIn("movement_cost_multiplier", meta_l)
+            # Must not also be listed as land.
+            self.assertNotIn(b, by_id[a].get("land_neighbors") or [])
+        for cand in selection.get("crossing_candidates") or []:
+            self.assertEqual("candidate_only_not_committed", cand.get("status"))
+            key = tuple(sorted((cand["a"], cand["b"])))
+            # Candidates are proposals; allowlisted pairs may also appear as candidates.
+            _ = key
+
+        # Frozen frame unchanged.
+        self.assertEqual(817, int(payload["id_texture"]["width"]))
+        self.assertEqual(920, int(payload["id_texture"]["height"]))
 
     def test_full_interim_goe_still_loadable(self) -> None:
         state = build_goe_europe_campaign()

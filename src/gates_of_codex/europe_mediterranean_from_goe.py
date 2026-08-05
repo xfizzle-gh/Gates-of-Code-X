@@ -71,6 +71,16 @@ FORCE_INCLUDE_STRATEGIC_PROVINCES: dict[str, str] = {
     "province_0126": "Malatya",
     "province_0143": "Sivas",
     "province_0502": "Salla",
+    # North Scandinavia land-bridge (Sweden/Norway ↔ Finland via Lappi corridor).
+    "province_0500": "Tornedalen",
+    "province_0501": "Lappi",
+    "province_0504": "Norrbotten",
+    # Full island of Ireland (raster component; not marker-window only).
+    "province_0370": "Munster",
+    "province_0382": "Leinster",
+    "province_0394": "Connacht",
+    "province_0409": "Northern Ireland",
+    "province_0417": "Ulster West",
 }
 
 FORCE_INCLUDE_PROVINCE_IDS: frozenset[str] = frozenset(
@@ -78,6 +88,13 @@ FORCE_INCLUDE_PROVINCE_IDS: frozenset[str] = frozenset(
 )
 
 DISPLAY_NAME_OVERRIDES: dict[str, str] = dict(FORCE_INCLUDE_STRATEGIC_PROVINCES)
+
+# Seed province for Ireland land-component detection in the source raster.
+IRELAND_COMPONENT_SEED = "province_0409"
+
+# Explicit allowlist of intentionally isolated playable components (by label).
+# Empty by default — islands must have authored crossings.
+INTENTIONALLY_ISOLATED_COMPONENTS: frozenset[str] = frozenset()
 
 # Deep interior Africa — never playable (may still be visual land).
 FORCE_EXCLUDE_PROVINCE_IDS: frozenset[str] = frozenset(
@@ -109,15 +126,64 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 SEPARATOR_FILL_ITERS = 3
 
+# (left, right, crossing_type) — exact type is preserved on both endpoints.
 AUTHED_CROSSINGS: tuple[tuple[str, str, str], ...] = (
+    # English Channel
     ("province_0365", "province_0329", "ferry_or_sea_lane"),
     ("Sussex", "province_0329", "ferry_or_sea_lane"),
-    ("province_0127", "province_0139", "strait"),
-    ("province_0179", "province_0173", "strait"),
-    ("province_0179", "province_0177", "strait"),
+    # Denmark ↔ Zealand ↔ Sweden
     ("Schleswig", "province_0419", "ferry_or_sea_lane"),
     ("Holstein", "province_0419", "ferry_or_sea_lane"),
+    ("province_0419", "province_0421", "strait"),  # Oresund: Sjaelland ↔ Skane
+    # Ireland ↔ Britain (no land edges)
+    ("province_0409", "province_0420", "ferry_or_sea_lane"),  # NI ↔ SW Scotland
+    ("province_0370", "province_0367", "ferry_or_sea_lane"),  # Munster/east IE ↔ Wales
+    # Mediterranean / Black Sea straits and short ferries
+    ("province_0127", "province_0139", "strait"),  # Sicily ↔ Calabria
+    ("province_0179", "province_0173", "strait"),  # Bosporus
+    ("province_0179", "province_0177", "strait"),
+    ("province_0111", "province_0123", "strait"),  # Gibraltar: Spanish Africa ↔ Andalusia
+    ("province_0127", "province_0112", "ferry_or_sea_lane"),  # Sicily ↔ Tunis
+    ("province_0115", "province_0167", "ferry_or_sea_lane"),  # Crete ↔ Peloponnese
+    ("province_0113", "province_0107", "ferry_or_sea_lane"),  # Cyprus ↔ Lebanon
+    ("province_0151", "province_0192", "ferry_or_sea_lane"),  # Sardinia ↔ Corsica
+    ("province_0192", "province_0215", "ferry_or_sea_lane"),  # Corsica ↔ Provence
+    ("province_0155", "province_0141", "ferry_or_sea_lane"),  # Balearics ↔ Valencia
+    ("province_0234", "province_0265", "strait"),  # Crimea ↔ Kherson
+    ("province_0455", "province_0465", "ferry_or_sea_lane"),  # Saaremaa ↔ Harju
+    ("province_0415", "province_0412", "ferry_or_sea_lane"),  # Danish island ↔ Jutland coast
+    ("province_0441", "province_0436", "ferry_or_sea_lane"),  # Baltic island ↔ S. Sweden
 )
+
+CROSSING_META: dict[str, dict] = {
+    "strait": {
+        "movement_cost_multiplier": 1.25,
+        "requires_port": False,
+        "can_be_blockaded": True,
+        "bidirectional": True,
+    },
+    "ferry": {
+        "movement_cost_multiplier": 1.5,
+        "requires_port": True,
+        "can_be_blockaded": True,
+        "bidirectional": True,
+    },
+    "ferry_or_sea_lane": {
+        "movement_cost_multiplier": 1.5,
+        "requires_port": True,
+        "can_be_blockaded": True,
+        "bidirectional": True,
+    },
+    "sea_lane": {
+        "movement_cost_multiplier": 2.0,
+        "requires_port": True,
+        "can_be_blockaded": True,
+        "bidirectional": True,
+    },
+}
+
+# Max water gap (source pixels) when proposing nearest-coast candidates (not auto-committed).
+CROSSING_CANDIDATE_MAX_GAP_PX = 48
 
 EXCLUDES = [
     "deep Central Asia",
@@ -134,7 +200,54 @@ def _load_interim() -> tuple[dict, object]:
     return json.loads(manifest_path.read_text(encoding="utf-8")), decode_png_rgb(texture_path)
 
 
-def select_playable_provinces(province_table: list[dict]) -> tuple[list[dict], dict]:
+def discover_ireland_province_ids(
+    province_table: list[dict],
+    image,
+) -> list[str]:
+    """Return every source province color on the Ireland landmass (seed = NI)."""
+    by_id = {str(row["province_id"]): row for row in province_table}
+    seed = by_id.get(IRELAND_COMPONENT_SEED)
+    if seed is None:
+        return []
+    seed_rgb = tuple(int(c) for c in seed["rgb"])
+    color_to_pid = {
+        tuple(int(c) for c in row["rgb"]): str(row["province_id"]) for row in province_table
+    }
+    seeds: list[tuple[int, int]] = []
+    for y in range(image.height):
+        for x in range(image.width):
+            if image.color_at(x, y) == seed_rgb:
+                seeds.append((x, y))
+    if not seeds:
+        return [IRELAND_COMPONENT_SEED]
+    from collections import deque
+
+    seen: set[tuple[int, int]] = set(seeds)
+    q = deque(seeds)
+    colors: set[tuple[int, int, int]] = {seed_rgb}
+    while q:
+        x, y = q.popleft()
+        for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+            if nx < 0 or ny < 0 or nx >= image.width or ny >= image.height:
+                continue
+            if (nx, ny) in seen:
+                continue
+            color = image.color_at(nx, ny)
+            if color == WHITE:
+                continue
+            seen.add((nx, ny))
+            q.append((nx, ny))
+            if color != BLACK:
+                colors.add(color)
+    ids = sorted({color_to_pid[c] for c in colors if c in color_to_pid})
+    return ids
+
+
+def select_playable_provinces(
+    province_table: list[dict],
+    *,
+    ireland_ids: frozenset[str] | None = None,
+) -> tuple[list[dict], dict]:
     by_id = {str(row["province_id"]): row for row in province_table}
     selected: dict[str, dict] = {}
     marker_bound = 0
@@ -152,7 +265,10 @@ def select_playable_provinces(province_table: list[dict]) -> tuple[list[dict], d
             marker_bound += 1
 
     forced_in = []
-    for pid in sorted(FORCE_INCLUDE_PROVINCE_IDS):
+    include_ids = set(FORCE_INCLUDE_PROVINCE_IDS)
+    if ireland_ids:
+        include_ids |= set(ireland_ids)
+    for pid in sorted(include_ids):
         row = by_id.get(pid)
         if row is None or pid in FORCE_EXCLUDE_PROVINCE_IDS:
             continue
@@ -160,6 +276,11 @@ def select_playable_provinces(province_table: list[dict]) -> tuple[list[dict], d
             if pid in FORCE_INCLUDE_STRATEGIC_PROVINCES:
                 reason = "force_include_strategic_edge"
                 name = FORCE_INCLUDE_STRATEGIC_PROVINCES[pid]
+            elif ireland_ids and pid in ireland_ids:
+                reason = "force_include_ireland_landmass"
+                name = str(
+                    DISPLAY_NAME_OVERRIDES.get(pid, row.get("display_name", pid))
+                )
             else:
                 reason = "force_include_mediterranean_coastal"
                 name = str(row.get("display_name", pid))
@@ -308,6 +429,145 @@ def _m2p(mx: float, my: float, xm, ym) -> tuple[float, float]:
     return p * mx + q * my + r, s * mx + t * my + u
 
 
+def _land_connected_components(land_neighbors: dict[str, list[str]], active_ids: set[str]) -> list[list[str]]:
+    seen: set[str] = set()
+    comps: list[list[str]] = []
+    for pid in sorted(active_ids):
+        if pid in seen:
+            continue
+        stack = [pid]
+        seen.add(pid)
+        comp: list[str] = []
+        while stack:
+            cur = stack.pop()
+            comp.append(cur)
+            for nxt in land_neighbors.get(cur, []):
+                if nxt in active_ids and nxt not in seen:
+                    seen.add(nxt)
+                    stack.append(nxt)
+        comps.append(sorted(comp))
+    comps.sort(key=len, reverse=True)
+    return comps
+
+
+def _component_label(comp: list[str], by_name: dict[str, str]) -> str:
+    names = " ".join(by_name.get(pid, pid) for pid in comp).lower()
+    ids = set(comp)
+    if IRELAND_COMPONENT_SEED in ids or "northern ireland" in names:
+        return "ireland"
+    if any(k in names for k in ("london", "wales", "scotland", "midlands", "yorkshire", "sussex")):
+        return "great_britain"
+    if any(k in names for k in ("sjaelland", "zealand")) and len(comp) <= 4:
+        return "zealand"
+    if any(k in names for k in ("oslo", "sodermalm", "stockholm")) and len(comp) < 80:
+        return "scandinavia_west"
+    if "sicillia" in names or "sicily" in names:
+        return "sicily"
+    if "sardegna" in names or "sardinia" in names:
+        return "sardinia"
+    if "corsica" in names:
+        return "corsica"
+    if "crete" in names:
+        return "crete"
+    if "cyprus" in names:
+        return "cyprus"
+    if "baleares" in names or "balear" in names:
+        return "balearics"
+    if "crimea" in names:
+        return "crimea"
+    if "saaremaa" in names:
+        return "saaremaa"
+    if "cairo" in names or "algiers" in names or "casablanca" in names:
+        return "north_africa_near_east"
+    if len(comp) >= 80:
+        return "mainland_europe"
+    if len(comp) == 1:
+        return f"singleton:{by_name.get(comp[0], comp[0])}"
+    return f"component:{by_name.get(comp[0], comp[0])}"
+
+
+def propose_nearest_coast_crossings(
+    *,
+    owners: list[int],
+    index_pid: dict[int, str],
+    crop_w: int,
+    crop_h: int,
+    components: list[list[str]],
+    max_gap_px: int = CROSSING_CANDIDATE_MAX_GAP_PX,
+) -> list[dict]:
+    """Deterministic candidate proposer. Never auto-commits gameplay edges."""
+    pid_comp: dict[str, int] = {}
+    for i, comp in enumerate(components):
+        for pid in comp:
+            pid_comp[pid] = i
+    # Shoreline pixels: playable land with a water (owner < 0) 4-neighbor.
+    shores: dict[int, list[tuple[int, int]]] = defaultdict(list)
+    for y in range(crop_h):
+        for x in range(crop_w):
+            a = owners[y * crop_w + x]
+            if a < 0:
+                continue
+            for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+                if nx < 0 or ny < 0 or nx >= crop_w or ny >= crop_h:
+                    continue
+                if owners[ny * crop_w + nx] < 0:
+                    shores[a].append((x, y))
+                    break
+    # Downsample shores for speed.
+    sample: dict[int, list[tuple[int, int]]] = {}
+    for idx, pts in shores.items():
+        step = max(1, len(pts) // 80)
+        sample[idx] = pts[::step][:80]
+    candidates: list[dict] = []
+    idxs = sorted(sample)
+    for i, ai in enumerate(idxs):
+        for bi in idxs[i + 1 :]:
+            ca = pid_comp.get(index_pid[ai], -1)
+            cb = pid_comp.get(index_pid[bi], -1)
+            if ca < 0 or cb < 0 or ca == cb:
+                continue
+            best = None
+            for ax, ay in sample[ai]:
+                for bx, by in sample[bi]:
+                    dist = abs(ax - bx) + abs(ay - by)
+                    if dist <= 1 or dist > max_gap_px:
+                        continue
+                    # segment must be mostly water
+                    steps = max(dist, 1)
+                    water = 0
+                    total = 0
+                    for s in range(1, steps):
+                        t = s / steps
+                        x = int(round(ax + (bx - ax) * t))
+                        y = int(round(ay + (by - ay) * t))
+                        if x < 0 or y < 0 or x >= crop_w or y >= crop_h:
+                            continue
+                        total += 1
+                        if owners[y * crop_w + x] < 0:
+                            water += 1
+                    if total == 0 or water / total < 0.75:
+                        continue
+                    if best is None or dist < best[0]:
+                        best = (dist, ax, ay, bx, by, water, total)
+            if best is None:
+                continue
+            dist, ax, ay, bx, by, water, total = best
+            candidates.append(
+                {
+                    "a": index_pid[ai],
+                    "b": index_pid[bi],
+                    "gap_px": int(dist),
+                    "water_fraction": round(water / max(total, 1), 3),
+                    "shore_a": [ax, ay],
+                    "shore_b": [bx, by],
+                    "status": "candidate_only_not_committed",
+                    "components": [ca, cb],
+                }
+            )
+    candidates.sort(key=lambda row: (row["gap_px"], row["a"], row["b"]))
+    return candidates[:80]
+
+
 def _close_visual_land_mask(mask: list[bool], w: int, h: int) -> list[bool]:
     """Remove internal province-separator cracks without flooding open ocean.
 
@@ -395,7 +655,11 @@ def generate_europe_mediterranean_from_goe(
     color_to_row = {tuple(int(c) for c in row["rgb"]): row for row in source_table}
     all_land_colors = set(color_stats)
 
-    playable_rows, selection_report = select_playable_provinces(source_table)
+    ireland_ids = frozenset(discover_ireland_province_ids(source_table, image))
+    playable_rows, selection_report = select_playable_provinces(
+        source_table, ireland_ids=ireland_ids
+    )
+    selection_report["ireland_landmass_province_ids"] = sorted(ireland_ids)
     playable_ids = {str(r["province_id"]) for r in playable_rows}
     playable_colors = {tuple(int(c) for c in r["rgb"]) for r in playable_rows}
 
@@ -581,17 +845,54 @@ def generate_europe_mediterranean_from_goe(
         land_neighbors[a].append(b)
         land_neighbors[b].append(a)
 
+    # Preserve exact authored crossing types per directed endpoint pair.
+    authored_edge_types: dict[str, dict[str, str]] = defaultdict(dict)
     authored_edges: list[dict] = []
-    authored_neighbors: dict[str, list[str]] = defaultdict(list)
     for left, right, etype in AUTHED_CROSSINGS:
         if left not in active_ids or right not in active_ids:
             continue
         key = tuple(sorted((left, right)))
         if key in land_edges:
             continue
-        authored_edges.append({"a": key[0], "b": key[1], "type": etype})
-        authored_neighbors[left].append(right)
-        authored_neighbors[right].append(left)
+        meta = dict(CROSSING_META.get(etype, CROSSING_META["ferry_or_sea_lane"]))
+        authored_edges.append(
+            {
+                "a": key[0],
+                "b": key[1],
+                "type": etype,
+                "crossing_type": etype,
+                **meta,
+            }
+        )
+        authored_edge_types[left][right] = etype
+        authored_edge_types[right][left] = etype
+
+    # Land-only connected components + nearest-coast candidates (review only).
+    components = _land_connected_components(land_neighbors, active_ids)
+    by_display = {
+        str(r["province_id"]): str(
+            DISPLAY_NAME_OVERRIDES.get(str(r["province_id"]), r.get("display_name", r["province_id"]))
+        )
+        for r in active_rows
+    }
+    component_report = []
+    for comp in components:
+        label = _component_label(comp, by_display)
+        component_report.append(
+            {
+                "label": label,
+                "size": len(comp),
+                "province_ids": comp,
+                "display_names": [by_display[p] for p in comp],
+            }
+        )
+    crossing_candidates = propose_nearest_coast_crossings(
+        owners=owners,
+        index_pid=index_pid,
+        crop_w=crop_w,
+        crop_h=crop_h,
+        components=components,
+    )
 
     def snap(pid: str, cx: float, cy: float) -> tuple[float, float, bool]:
         ix, iy = int(round(cx)), int(round(cy))
@@ -613,9 +914,18 @@ def generate_europe_mediterranean_from_goe(
         if did:
             snapped += 1
         land = sorted(set(land_neighbors.get(pid, [])))
-        auth = sorted(set(authored_neighbors.get(pid, [])))
+        auth_types = dict(authored_edge_types.get(pid, {}))
+        auth = sorted(auth_types)
         display_name = DISPLAY_NAME_OVERRIDES.get(pid, row.get("display_name", pid))
         human = bool(row.get("name_is_human_readable", True)) or pid in DISPLAY_NAME_OVERRIDES
+        edge_types = {n: "land" for n in land}
+        edge_meta: dict[str, dict] = {}
+        for n, etype in auth_types.items():
+            edge_types[n] = etype
+            edge_meta[n] = {
+                "crossing_type": etype,
+                **dict(CROSSING_META.get(etype, CROSSING_META["ferry_or_sea_lane"])),
+            }
         table.append(
             {
                 "province_id": pid,
@@ -625,17 +935,16 @@ def generate_europe_mediterranean_from_goe(
                 "marker_anchor": [float(ax), float(crop_h - 1 - ay)],
                 "source_neighbors": sorted(set(land) | set(auth)),
                 "land_neighbors": land,
-                "edge_types": {
-                    **{n: "land" for n in land},
-                    **{n: "ferry_or_sea_lane" for n in auth},
-                },
+                "edge_types": edge_types,
+                "edge_meta": edge_meta,
                 "source_province_id": row.get("source_province_id", pid),
                 "mapping_method": "goe_theatre_playable",
                 "provenance": {
-                    "generator": "europe_mediterranean_from_goe_v6_continuous_underlay",
+                    "generator": "europe_mediterranean_from_goe_v7_topology",
                     "pixels": int(sums[pid][2]),
                     "anchor_snapped": did,
-                    "clipped_to_frozen_frame": pid in FORCE_INCLUDE_STRATEGIC_PROVINCES,
+                    "clipped_to_frozen_frame": pid in FORCE_INCLUDE_STRATEGIC_PROVINCES
+                    or pid in ireland_ids,
                 },
             }
         )
@@ -724,6 +1033,69 @@ def generate_europe_mediterranean_from_goe(
         for pid, name in sorted(FORCE_INCLUDE_STRATEGIC_PROVINCES.items())
     ]
     selection_report["underlay_style"] = "continuous_parchment_no_province_subdivision"
+    selection_report["land_components"] = component_report
+    selection_report["land_component_count"] = len(component_report)
+    selection_report["crossing_candidates"] = crossing_candidates
+    selection_report["crossing_candidates_note"] = (
+        "Deterministic nearest-coast proposals only; not gameplay edges unless allowlisted"
+    )
+    # Connectivity policy: every non-mainland component needs an authored crossing
+    # unless explicitly allowlisted as intentionally isolated.
+    mainland_ids = set()
+    for item in component_report:
+        if item["label"] == "mainland_europe":
+            mainland_ids = set(item["province_ids"])
+            break
+    if not mainland_ids and component_report:
+        mainland_ids = set(component_report[0]["province_ids"])
+    authored_pairs = {tuple(sorted((e["a"], e["b"]))) for e in authored_edges}
+    component_connectivity = []
+    for item in component_report:
+        label = item["label"]
+        ids = set(item["province_ids"])
+        if label == "mainland_europe" or ids == mainland_ids:
+            status = "mainland"
+        elif label in INTENTIONALLY_ISOLATED_COMPONENTS:
+            status = "intentionally_isolated"
+        else:
+            linked = False
+            for a, b in authored_pairs:
+                if (a in ids) != (b in ids):
+                    linked = True
+                    break
+            status = "connected_by_authored_crossing" if linked else "incorrectly_disconnected"
+        component_connectivity.append(
+            {
+                "label": label,
+                "size": item["size"],
+                "status": status,
+                "province_ids": item["province_ids"],
+            }
+        )
+    selection_report["component_connectivity"] = component_connectivity
+    bad = [c for c in component_connectivity if c["status"] == "incorrectly_disconnected"]
+    selection_report["disconnected_components_unresolved"] = bad
+    # Ireland report rows
+    ireland_report = []
+    by_table = {r["province_id"]: r for r in table}
+    for pid in sorted(ireland_ids):
+        row = by_table.get(pid)
+        if row is None:
+            continue
+        ireland_report.append(
+            {
+                "province_id": pid,
+                "display_name": row["display_name"],
+                "pixel_area": int(row.get("provenance", {}).get("pixels", 0)),
+                "land_neighbors": list(row.get("land_neighbors") or []),
+                "authored_sea_connections": {
+                    n: t
+                    for n, t in (row.get("edge_types") or {}).items()
+                    if t != "land"
+                },
+            }
+        )
+    selection_report["ireland_playable"] = ireland_report
 
     result = import_strategic_map(
         id_png,

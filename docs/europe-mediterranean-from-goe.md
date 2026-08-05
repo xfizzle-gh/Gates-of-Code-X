@@ -25,6 +25,12 @@ display pad from playable bbox:
 
 Outside-theatre land is a **continuous parchment underlay** (map art), not grey disabled provinces: no borders, no labels, no interaction. Only playable↔playable borders are drawn.
 
+### Topology
+- Full **Ireland** landmass (raster component) is playable with ≥2 ferry links to Britain (not land).
+- **Scandinavia** joins the continental graph via north land-bridge provinces (Tornedalen/Lappi/Norrbotten) plus Denmark→Zealand→Sweden (Oresund strait).
+- Authored crossings keep exact types (`strait` / `ferry_or_sea_lane` / …) with movement metadata.
+- Generator reports land components + nearest-coast **candidates** (review only; not auto-committed).
+
 ### Intentionally kept
 
 - British Isles and western Europe
