@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import json
+import sys
 import tempfile
 from dataclasses import asdict
 from pathlib import Path
 
 from .economy import available_research, formation_recruitment_offers
+from .map_layout import apply_marker_layout
 from .models import CampaignState, Faction
+from .play_context import list_front_options
 from .strategic import (
     construction_options,
     ensure_strategic_layer,
@@ -17,15 +20,26 @@ from .strategic import (
 from .supply import reachable_supply_provinces
 
 
-FRONTEND_SCHEMA_VERSION = 4
+FRONTEND_SCHEMA_VERSION = 6
+FRONTEND_PYTHON_MODULE = "gates_of_codex"
 
 
-def build_frontend_snapshot(state: CampaignState) -> dict:
+def build_frontend_snapshot(
+    state: CampaignState,
+    *,
+    campaign_path: str | Path | None = None,
+    snapshot_path: str | Path | None = None,
+) -> dict:
     ensure_strategic_layer(state)
+    apply_marker_layout(state)
     objectives = update_operational_objectives(state)
     outcome = evaluate_campaign_outcome(state)
     state.validate()
-    occupied = {battalion.province_id: battalion.battalion_id for battalion in state.battalions.values()}
+
+    occupied: dict[str, list[str]] = {}
+    for battalion in sorted(state.battalions.values(), key=lambda value: value.battalion_id):
+        occupied.setdefault(battalion.province_id, []).append(battalion.battalion_id)
+
     xs = [province.x for province in state.provinces.values()]
     ys = [province.y for province in state.provinces.values()]
     edges = sorted(
@@ -96,6 +110,7 @@ def build_frontend_snapshot(state: CampaignState) -> dict:
                 "owner": province.owner.value,
                 "x": province.x,
                 "y": province.y,
+                "id_color": dict(province.metadata.get("id_color", {})),
                 "terrain": province.terrain,
                 "map_region": province.map_region,
                 "resource_yield": province.resource_yield,
@@ -104,7 +119,8 @@ def build_frontend_snapshot(state: CampaignState) -> dict:
                 "construction_options": construction_options(
                     state, state.selected_faction, province.province_id
                 ),
-                "occupied_by": occupied.get(province.province_id, ""),
+                "occupied_by": occupied.get(province.province_id, [""])[0],
+                "occupied_by_battalions": list(occupied.get(province.province_id, [])),
                 "supply_source_for": sorted(
                     set(province.metadata.get("supply_source_for", []))
                     | set(province.metadata.get("static_supply_source_for", []))
@@ -170,14 +186,36 @@ def build_frontend_snapshot(state: CampaignState) -> dict:
             }
             for battalion in sorted(state.battalions.values(), key=lambda value: value.battalion_id)
         ],
+        "battalion_stacks": {
+            province_id: list(battalion_ids)
+            for province_id, battalion_ids in sorted(occupied.items())
+        },
         "pending_battle": _pending_battle(state),
+        "front_options": list_front_options(state, state.current_faction),
+        "control": _control_block(campaign_path, snapshot_path),
     }
 
 
-def write_frontend_snapshot(state: CampaignState, path: str | Path) -> Path:
+def write_frontend_snapshot(
+    state: CampaignState,
+    path: str | Path,
+    *,
+    campaign_path: str | Path | None = None,
+) -> Path:
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(build_frontend_snapshot(state), indent=2, ensure_ascii=False) + "\n"
+    payload = (
+        json.dumps(
+            build_frontend_snapshot(
+                state,
+                campaign_path=campaign_path,
+                snapshot_path=destination,
+            ),
+            indent=2,
+            ensure_ascii=False,
+        )
+        + "\n"
+    )
     with tempfile.NamedTemporaryFile(
         mode="w",
         encoding="utf-8",
@@ -190,6 +228,30 @@ def write_frontend_snapshot(state: CampaignState, path: str | Path) -> Path:
         temporary_path = Path(temporary.name)
     temporary_path.replace(destination)
     return destination
+
+
+def build_frontend_apply_invocation(control: dict) -> tuple[str, list[str]]:
+    executable = str(control.get("python_executable", "")).strip()
+    module = str(control.get("python_module", FRONTEND_PYTHON_MODULE)).strip()
+    campaign_path = str(control.get("campaign_path", "")).strip()
+    snapshot_path = str(control.get("snapshot_path", "")).strip()
+    commands_path = str(control.get("commands_path", "")).strip()
+    if not executable:
+        raise ValueError("control.python_executable is required")
+    if not module:
+        raise ValueError("control.python_module is required")
+    if not campaign_path or not snapshot_path or not commands_path:
+        raise ValueError("control campaign, snapshot, and commands paths are required")
+    return executable, [
+        "-m",
+        module,
+        "apply-frontend",
+        campaign_path,
+        "--snapshot",
+        snapshot_path,
+        "--commands",
+        commands_path,
+    ]
 
 
 def _pending_battle(state: CampaignState) -> dict | None:
@@ -208,4 +270,28 @@ def _pending_battle(state: CampaignState) -> dict | None:
         "completed": pending.completed,
         "attacking_battalions": [value.battalion_id for value in pending.attacking_participants],
         "defending_battalions": [value.battalion_id for value in pending.defending_participants],
+    }
+
+
+def _control_block(campaign_path: str | Path | None, snapshot_path: str | Path | None) -> dict:
+    snapshot = Path(snapshot_path).resolve() if snapshot_path else None
+    campaign = Path(campaign_path).resolve() if campaign_path else None
+    commands = snapshot.with_name("frontend_commands.json") if snapshot is not None else None
+    return {
+        "enabled": campaign is not None and snapshot is not None,
+        "campaign_path": str(campaign) if campaign else "",
+        "snapshot_path": str(snapshot) if snapshot else "",
+        "commands_path": str(commands) if commands else "",
+        "python_executable": str(Path(sys.executable).resolve()),
+        "python_module": FRONTEND_PYTHON_MODULE,
+        "supported_ops": [
+            "move",
+            "end_turn",
+            "run_ai",
+            "auto_resolve",
+            "construct",
+            "repair",
+            "handoff",
+            "refresh",
+        ],
     }

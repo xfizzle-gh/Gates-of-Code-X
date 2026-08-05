@@ -1,0 +1,36 @@
+{
+  "schema": "gates-of-codex.frontend",
+  "schema_version": 6,
+  "battalions": [
+    {
+      "id": "alpha-battalion",
+      "province_id": "Warszawa",
+      "faction": "nato"
+    },
+    {
+      "id": "bravo-battalion",
+      "province_id": "Warszawa",
+      "faction": "nato"
+    }
+  ],
+  "battalion_stacks": {
+    "Warszawa": [
+      "alpha-battalion",
+      "bravo-battalion"
+    ]
+  },
+  "front_options": [
+    {
+      "origin": "Warszawa",
+      "target": "Lodz",
+      "kind": "move",
+      "battalion_id": "alpha-battalion"
+    },
+    {
+      "origin": "Warszawa",
+      "target": "Radom",
+      "kind": "move",
+      "battalion_id": "bravo-battalion"
+    }
+  ]
+}

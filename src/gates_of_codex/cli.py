@@ -18,6 +18,7 @@ from .economy import (
     repair_formation,
 )
 from .frontend import write_frontend_snapshot
+from .frontend_commands import apply_frontend_commands, default_commands_path
 from .launcher import launch_game
 from .models import Faction
 from .scenario import load_bundled_scenario
@@ -127,6 +128,13 @@ def build_parser() -> argparse.ArgumentParser:
     frontend = sub.add_parser("export-frontend")
     frontend.add_argument("campaign")
     frontend.add_argument("--output", default="godot/campaign_snapshot.json")
+    apply_frontend = sub.add_parser(
+        "apply-frontend",
+        help="Apply Godot frontend command queue and refresh the snapshot",
+    )
+    apply_frontend.add_argument("campaign")
+    apply_frontend.add_argument("--snapshot", default="godot/campaign_snapshot.json")
+    apply_frontend.add_argument("--commands", help="Defaults to <snapshot-dir>/frontend_commands.json")
     launch = sub.add_parser("launch")
     launch.add_argument("--game", required=True)
     ui = sub.add_parser("ui")
@@ -369,10 +377,20 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "export-frontend":
         state = load_campaign(args.campaign)
-        output = write_frontend_snapshot(state, args.output)
+        output = write_frontend_snapshot(state, args.output, campaign_path=args.campaign)
         save_campaign(state, args.campaign)
         print(output)
         return 0
+    if args.command == "apply-frontend":
+        snapshot = Path(args.snapshot)
+        commands = Path(args.commands) if args.commands else default_commands_path(snapshot)
+        result = apply_frontend_commands(
+            args.campaign,
+            commands_path=commands,
+            snapshot_path=snapshot,
+        )
+        print(json.dumps(result, indent=2))
+        return 0 if result.get("ok") else 1
     if args.command == "launch":
         launch_game(args.game)
         return 0

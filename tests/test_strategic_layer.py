@@ -4,7 +4,7 @@ import unittest
 
 from gates_of_codex.cli import build_parser
 from gates_of_codex.economy import formation_recruitment_offers
-from gates_of_codex.frontend import build_frontend_snapshot
+from gates_of_codex.frontend import FRONTEND_SCHEMA_VERSION, build_frontend_snapshot
 from gates_of_codex.models import (
     Alliance,
     Battalion,
@@ -118,9 +118,11 @@ class StrategicLayerTests(unittest.TestCase):
     def test_frontend_exports_infrastructure_objectives_and_outcome(self) -> None:
         state = self._state()
         snapshot = build_frontend_snapshot(state)
-        self.assertEqual(4, snapshot["schema_version"])
+        self.assertEqual(FRONTEND_SCHEMA_VERSION, snapshot["schema_version"])
         self.assertIn("objectives", snapshot)
         self.assertIn("outcome", snapshot["campaign"])
+        self.assertIn("front_options", snapshot)
+        self.assertIn("control", snapshot)
         province = next(value for value in snapshot["provinces"] if value["id"] == "a")
         self.assertIn("infrastructure", province)
         self.assertEqual(4, len(province["construction_options"]))

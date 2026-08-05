@@ -7,6 +7,7 @@ from importlib.resources import files
 
 from .control import apply_modern_control_profile, default_alliances
 from .formations import default_formations, seed_formation_battalions
+from .map_layout import apply_marker_layout
 from .models import CampaignState, Faction, FactionState, Province
 
 
@@ -59,5 +60,6 @@ def build_goe_europe_campaign() -> CampaignState:
     )
     seed_formation_battalions(state)
     apply_modern_control_profile(state)
+    apply_marker_layout(state)
     state.validate()
     return state
