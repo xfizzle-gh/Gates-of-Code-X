@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -77,11 +78,11 @@ def place_formation_at_province_anchor(
 ) -> FormationOperationalPosition | None:
     """Snap formation to province migration anchor when an operational graph is available.
 
-    Without a declared graph, clears any position (unsupported map) and returns None.
+    If the graph cannot be resolved, leave ``force.position`` completely unchanged
+    (temporary path/packaging failures must not erase saved positions).
     """
     if state is not None and load_operational_graph_for_state(state) is None:
-        force.position = None
-        return None
+        return force.position
     position = province_anchor_position(force.province_id)
     force.position = position
     return position
@@ -90,8 +91,13 @@ def place_formation_at_province_anchor(
 def ensure_operational_positions(state: CampaignState) -> dict:
     """Hydrate missing/invalid operational positions (S2 / M1).
 
-    Only maps with a resolvable operational graph receive positions and schema 7.
-    Unsupported maps keep position=None and are not schema-bumped for S2.
+    Only when an operational graph file is successfully loaded:
+    - missing/invalid positions are placed (M1)
+    - campaign schema may bump to 7
+    - migration metadata may be written
+
+    If the graph cannot be resolved, leave formation positions, schema_version,
+    and map_metadata completely unchanged.
     """
     from .force_migration import ensure_strategic_formations
 
@@ -99,15 +105,12 @@ def ensure_operational_positions(state: CampaignState) -> dict:
     incoming_schema = int(state.schema_version)
     graph = load_operational_graph_for_state(state)
     if graph is None:
-        # Strip any previously invented fake positions on unsupported maps.
-        for force in state.strategic_formations.values():
-            force.position = None
         return {
             "schema_version": incoming_schema,
             "map_id": state.map_id,
             "graph_loaded": False,
             "skipped": True,
-            "note": "No operational graph for map; positions left unset.",
+            "note": "Operational graph unresolved; existing positions left unchanged.",
         }
 
     node_ids, edge_ids, edges_by_id, nodes_by_id = _graph_indexes(graph)
@@ -167,24 +170,89 @@ def load_operational_graph_for_state(state: CampaignState) -> dict[str, Any] | N
     )
 
 
+def default_asset_search_roots() -> list[Path]:
+    """Automatic roots for installed package / Windows executable / frozen builds.
+
+    Production callers should not need to pass ``search_roots``; cwd alone is not enough
+    when the process is launched from another directory.
+    """
+    roots: list[Path] = []
+
+    def _add(path: Path | None) -> None:
+        if path is None:
+            return
+        try:
+            resolved = path.resolve()
+        except OSError:
+            return
+        if resolved not in roots:
+            roots.append(resolved)
+
+    # PyInstaller one-file extract dir / frozen resource root.
+    meipass = getattr(sys, "_MEIPASS", None)
+    if meipass:
+        _add(Path(str(meipass)))
+
+    # Executable directory (Windows .exe, PyInstaller one-dir, python.exe in venv).
+    try:
+        exe = Path(sys.executable).resolve()
+        _add(exe.parent)
+        _add(exe.parent / "_internal")
+        _add(exe.parent / "godot")
+    except OSError:
+        pass
+
+    # argv[0] may differ from sys.executable for wrapped launchers.
+    if sys.argv:
+        try:
+            argv0 = Path(sys.argv[0]).expanduser()
+            if argv0.is_file():
+                _add(argv0.resolve().parent)
+                _add(argv0.resolve().parent / "godot")
+        except OSError:
+            pass
+
+    # Installed / editable package locations.
+    try:
+        import gates_of_codex as _pkg
+
+        pkg_dir = Path(_pkg.__file__).resolve().parent
+        _add(pkg_dir)
+        if pkg_dir.parent.name == "src":
+            _add(pkg_dir.parents[1])  # repo root
+        else:
+            _add(pkg_dir.parent)
+    except Exception:
+        pass
+
+    _add(Path.cwd())
+    return roots
+
+
 def load_operational_graph_payload(
     map_id: str,
     *,
     map_metadata: dict[str, Any] | None = None,
     search_roots: list[Path] | None = None,
 ) -> dict[str, Any] | None:
-    """Load operational graph JSON if the map declares one and a file is found.
+    """Load operational graph JSON if a matching asset file is found.
 
-    Resolution order:
+    Resolution order (per root):
     1. Absolute/relative path in map_metadata['operational_graph']
     2. Sibling of strategic_map_manifest: operational/operational_graph.json
-    3. Known map_id under godot/assets/... (cwd and provided search roots)
+    3. Known map_id under godot/assets/...
+
+    Default roots: executable dir, frozen ``_MEIPASS``, package/repo layout, cwd.
     """
     meta = dict(map_metadata or {})
-    roots = list(search_roots or [])
-    cwd = Path.cwd()
-    if cwd not in roots:
-        roots.append(cwd)
+    if search_roots is None:
+        roots = default_asset_search_roots()
+    else:
+        roots = list(search_roots)
+        # Always include automatic roots after explicit ones.
+        for root in default_asset_search_roots():
+            if root not in roots:
+                roots.append(root)
 
     for candidate in _graph_candidate_paths(map_id=map_id, map_metadata=meta, roots=roots):
         try:

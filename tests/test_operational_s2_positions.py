@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 import shutil
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from gates_of_codex.campaign import CampaignEngine
 from gates_of_codex.force_migration import (
@@ -25,8 +28,10 @@ from gates_of_codex.models import (
 )
 from gates_of_codex.operational_position import (
     OPERATIONAL_POSITION_SCHEMA_VERSION,
+    default_asset_search_roots,
     ensure_operational_positions,
     load_operational_graph_payload,
+    place_formation_at_province_anchor,
     position_from_dict,
     province_anchor_position,
 )
@@ -180,6 +185,20 @@ class OperationalS2PositionTests(unittest.TestCase):
         self.assertEqual(STRATEGIC_FORMATION_SCHEMA_VERSION, state.schema_version)
         self.assertNotIn("operational_position_migration", state.map_metadata)
 
+    def test_missing_graph_leaves_existing_positions_unchanged(self) -> None:
+        state = _minimal_state(map_id="custom")
+        ensure_strategic_formations(state)
+        force = next(iter(state.strategic_formations.values()))
+        force.position = province_anchor_position("a")
+        before = copy.deepcopy(state.to_dict())
+        report = ensure_operational_positions(state)
+        self.assertTrue(report.get("skipped"))
+        self.assertEqual(before, state.to_dict())
+        # Movement-sync also must not erase when graph is missing.
+        place_formation_at_province_anchor(force, state)
+        self.assertEqual(stable_node_id("a", "anchor"), force.position.node_id)
+        self.assertEqual(before, state.to_dict())
+
     def test_m1_hydrates_when_graph_declared_via_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -296,12 +315,15 @@ class OperationalS2PositionTests(unittest.TestCase):
             self.assertEqual(stable_node_id("b", "anchor"), force.position.node_id)
 
         bare = _minimal_state(map_id="custom")
-        ensure_operational_positions(bare)
+        ensure_strategic_formations(bare)
+        force = next(iter(bare.strategic_formations.values()))
+        force.position = province_anchor_position("a")
         engine = CampaignEngine(bare)
         engine.move_or_attack("bn-1", "b")
-        force = next(iter(bare.strategic_formations.values()))
         self.assertEqual("b", force.province_id)
-        self.assertIsNone(force.position)
+        # Graph missing: do not invent a new anchor and do not wipe the save.
+        assert force.position is not None
+        self.assertEqual(stable_node_id("a", "anchor"), force.position.node_id)
 
     def test_position_from_dict_rejects_coerced_ints(self) -> None:
         good = position_from_dict(
@@ -351,6 +373,73 @@ class OperationalS2PositionTests(unittest.TestCase):
                 search_roots=[root],
             )
             self.assertIsNotNone(rel_loaded)
+
+    def test_default_search_roots_include_executable_and_cwd(self) -> None:
+        roots = default_asset_search_roots()
+        self.assertIn(Path(sys.executable).resolve().parent, roots)
+        self.assertIn(Path.cwd().resolve(), roots)
+
+    def test_automatic_roots_find_graph_when_cwd_is_elsewhere(self) -> None:
+        """Production path: search_roots=None must use executable-dir roots, not cwd alone."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            # Fake Windows/frozen layout: assets beside a fake executable.
+            exe_dir = root / "app"
+            exe_dir.mkdir()
+            fake_exe = exe_dir / "gates-of-codex.exe"
+            fake_exe.write_text("", encoding="utf-8")
+            op_dir = exe_dir / "godot" / "assets" / "maps" / "auto_root_test" / "operational"
+            op_dir.mkdir(parents=True)
+            (op_dir / "operational_graph.json").write_text(
+                json.dumps(_tiny_graph()), encoding="utf-8"
+            )
+            foreign_cwd = root / "elsewhere"
+            foreign_cwd.mkdir()
+            old_cwd = Path.cwd()
+            try:
+                os.chdir(foreign_cwd)
+                with mock.patch.object(sys, "executable", str(fake_exe)):
+                    with mock.patch.object(sys, "argv", [str(fake_exe)]):
+                        roots = default_asset_search_roots()
+                        self.assertIn(exe_dir.resolve(), roots)
+                        loaded = load_operational_graph_payload(
+                            "auto_root_test",
+                            map_metadata={
+                                "operational_graph": (
+                                    "assets/maps/auto_root_test/operational/"
+                                    "operational_graph.json"
+                                )
+                            },
+                            search_roots=None,
+                        )
+            finally:
+                os.chdir(old_cwd)
+            self.assertIsNotNone(loaded)
+            assert loaded is not None
+            self.assertEqual(2, len(loaded["nodes"]))
+
+    def test_frozen_meipass_root_is_searched(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            meipass = root / "_MEIPASS"
+            op_dir = meipass / "godot" / "assets" / "maps" / "frozen_test" / "operational"
+            op_dir.mkdir(parents=True)
+            (op_dir / "operational_graph.json").write_text(
+                json.dumps(_tiny_graph()), encoding="utf-8"
+            )
+            with mock.patch.object(sys, "_MEIPASS", str(meipass), create=True):
+                roots = default_asset_search_roots()
+                self.assertIn(meipass.resolve(), roots)
+                loaded = load_operational_graph_payload(
+                    "frozen_test",
+                    map_metadata={
+                        "operational_graph": (
+                            "assets/maps/frozen_test/operational/operational_graph.json"
+                        )
+                    },
+                    search_roots=None,
+                )
+            self.assertIsNotNone(loaded)
 
     def test_frontend_exports_position_when_graph_available(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
