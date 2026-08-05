@@ -22,6 +22,26 @@ python -m gates_of_codex export-frontend live/em_goe_campaign.json --output godo
 
 Open `godot/project.godot` and press F5.
 
+### Stale snapshot warning
+
+`godot/campaign_snapshot.json` is **generated and gitignored**. After pulling UI/presentation
+changes (especially stack hierarchy / `strategic_formation_presentations`), you **must**
+re-export before F5. A stale snapshot can show contradictions such as:
+
+```text
+0 formations | 2 battalions
+```
+
+while still drawing tabs, or empty formation membership with leftover Placeholder cards.
+
+A clean export for a two-force stack must look like:
+
+```text
+2 formations | 2 battalions | 2 tactical units
+```
+
+with each `strategic_formation_presentations` entry listing its `battalion_ids`.
+
 ## Tests
 
 Unit tests must write under `tempfile` directories, not repository `live/`.
