@@ -13,10 +13,14 @@ from gates_of_codex.operational_schema import (
     EdgeAuthority,
     EdgeKind,
     FormationOperationalPosition,
+    FormationStance,
     MoveOrderStatus,
     NodeKind,
+    OperationalGraph,
     OperationalMoveOrder,
     OperationalRouteEdge,
+    OperationalRouteNode,
+    OperationalRules,
     PositionMode,
     require_strict_int,
 )
@@ -150,6 +154,7 @@ class OperationalEmS1Tests(unittest.TestCase):
                 elif edge["authority"] == EdgeAuthority.CANDIDATE.value:
                     candidates += 1
                     self.assertEqual(EdgeKind.CORRIDOR.value, edge["kind"])
+                    self.assertFalse(edge["traversal_enabled"])
                     self.assertNotIn(edge["kind"], {EdgeKind.ROAD.value, EdgeKind.RAIL.value})
                 else:
                     self.fail(f"unexpected authority {edge['authority']}")
@@ -270,7 +275,7 @@ class OperationalEmS1Tests(unittest.TestCase):
             edges_by_id=edges_by_id,
         )
 
-        # Committed order requires turn + stance
+        # Committed order requires turn + approved stance ID
         OperationalMoveOrder(
             order_id="ord-2",
             formation_id="sf-x",
@@ -279,13 +284,81 @@ class OperationalEmS1Tests(unittest.TestCase):
             issued_tick=0,
             status=MoveOrderStatus.COMMITTED.value,
             committed_turn=3,
-            locked_stance="standard",
+            locked_stance=FormationStance.OPERATIONAL.value,
         ).validate(
             node_ids=nodes,
             edge_ids=edge_ids,
             site_ids=set(),
             edges_by_id=edges_by_id,
         )
+
+        # Active/completed/blocked must retain commitment fields
+        for status in (
+            MoveOrderStatus.ACTIVE.value,
+            MoveOrderStatus.COMPLETED.value,
+            MoveOrderStatus.BLOCKED.value,
+        ):
+            OperationalMoveOrder(
+                order_id=f"ord-{status}",
+                formation_id="sf-x",
+                path_node_ids=[sample_edge.a, sample_edge.b],
+                path_edge_ids=[sample_edge.edge_id],
+                issued_tick=1,
+                status=status,
+                committed_turn=3,
+                locked_stance=FormationStance.FORCED_MARCH.value,
+            ).validate(
+                node_ids=nodes,
+                edge_ids=edge_ids,
+                site_ids=set(),
+                edges_by_id=edges_by_id,
+            )
+            with self.assertRaises(ValueError):
+                OperationalMoveOrder(
+                    order_id=f"ord-{status}-missing",
+                    formation_id="sf-x",
+                    path_node_ids=[sample_edge.a, sample_edge.b],
+                    path_edge_ids=[sample_edge.edge_id],
+                    status=status,
+                ).validate(
+                    node_ids=nodes,
+                    edge_ids=edge_ids,
+                    site_ids=set(),
+                    edges_by_id=edges_by_id,
+                )
+
+        # Draft must not carry commitment fields
+        with self.assertRaises(ValueError):
+            OperationalMoveOrder(
+                order_id="ord-draft-bad",
+                formation_id="sf-x",
+                path_node_ids=[sample_edge.a, sample_edge.b],
+                path_edge_ids=[sample_edge.edge_id],
+                status=MoveOrderStatus.DRAFT.value,
+                committed_turn=1,
+            ).validate(
+                node_ids=nodes,
+                edge_ids=edge_ids,
+                site_ids=set(),
+                edges_by_id=edges_by_id,
+            )
+
+        # Reject unknown stance text
+        with self.assertRaises(ValueError):
+            OperationalMoveOrder(
+                order_id="ord-stance-bad",
+                formation_id="sf-x",
+                path_node_ids=[sample_edge.a, sample_edge.b],
+                path_edge_ids=[sample_edge.edge_id],
+                status=MoveOrderStatus.COMMITTED.value,
+                committed_turn=1,
+                locked_stance="standard",
+            ).validate(
+                node_ids=nodes,
+                edge_ids=edge_ids,
+                site_ids=set(),
+                edges_by_id=edges_by_id,
+            )
 
         with self.assertRaises(ValueError):
             OperationalMoveOrder(
@@ -315,16 +388,46 @@ class OperationalEmS1Tests(unittest.TestCase):
                 edges_by_id=edges_by_id,
             )
 
-    def test_validate_does_not_mutate_metadata(self) -> None:
+    def test_validate_does_not_mutate_graph(self) -> None:
+        """Compare graph object before and after validate() — no mutation."""
         with tempfile.TemporaryDirectory() as temporary:
-            result = generate_em_operational_graph(
+            payload = generate_em_operational_graph(
                 manifest_path=MANIFEST, output_dir=Path(temporary) / "operational"
-            )
-        graph_dict = result["graph"]
-        before = json.dumps(graph_dict["metadata"], sort_keys=True)
-        # Re-validate via regenerate equality already covered; ensure no private keys.
-        self.assertNotIn("_validated_edge_ids", graph_dict["metadata"])
-        self.assertEqual(before, json.dumps(graph_dict["metadata"], sort_keys=True))
+            )["graph"]
+        graph = OperationalGraph(
+            map_id=payload["map_id"],
+            schema=payload["schema"],
+            schema_version=int(payload["schema_version"]),
+            rules=OperationalRules(**payload["rules"]),
+            sites=[],
+            nodes=[OperationalRouteNode(**node) for node in payload["nodes"]],
+            edges=[
+                OperationalRouteEdge(
+                    edge_id=edge["edge_id"],
+                    a=edge["a"],
+                    b=edge["b"],
+                    kind=edge["kind"],
+                    authority=edge["authority"],
+                    length_px=int(edge["length_px"]),
+                    base_move_points_milli=int(edge["base_move_points_milli"]),
+                    movement_cost_milli=int(edge["movement_cost_milli"]),
+                    requires_port=bool(edge["requires_port"]),
+                    can_be_blockaded=bool(edge["can_be_blockaded"]),
+                    traversal_enabled=bool(edge["traversal_enabled"]),
+                    bidirectional=bool(edge["bidirectional"]),
+                    province_ids=list(edge["province_ids"]),
+                    legacy_crossing_type=edge.get("legacy_crossing_type"),
+                    metadata=dict(edge.get("metadata") or {}),
+                )
+                for edge in payload["edges"]
+            ],
+            metadata=dict(payload.get("metadata") or {}),
+        )
+        before = graph.to_dict()
+        graph.validate(province_ids=self.province_ids)
+        after = graph.to_dict()
+        self.assertEqual(before, after)
+        self.assertNotIn("_validated_edge_ids", after["metadata"])
 
     def test_old_saves_and_movement_unchanged_by_s1_data(self) -> None:
         state = build_europe_mediterranean_from_goe_campaign(selected_faction=Faction.NATO)

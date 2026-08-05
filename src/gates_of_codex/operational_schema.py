@@ -58,6 +58,26 @@ class MoveOrderStatus(str, Enum):
     BLOCKED = "blocked"
 
 
+class FormationStance(str, Enum):
+    """Approved stable stance IDs for locked commitment."""
+
+    OPERATIONAL = "operational"
+    FORCED_MARCH = "forced_march"
+    ENTRENCHED = "entrenched"
+    REFIT_RESUPPLY = "refit_resupply"
+    AMBUSH = "ambush"
+
+
+# Statuses that must retain commitment fields once set.
+_COMMITMENT_RETAINING_STATUSES = frozenset(
+    {
+        MoveOrderStatus.COMMITTED.value,
+        MoveOrderStatus.ACTIVE.value,
+        MoveOrderStatus.COMPLETED.value,
+        MoveOrderStatus.BLOCKED.value,
+    }
+)
+
 PROGRESS_MILLI_MIN = 0
 PROGRESS_MILLI_MAX = 1000
 # Fixed-point: 1000 == 1.0x cost / 1.0 base move point.
@@ -264,6 +284,11 @@ class OperationalRouteEdge:
             and self.kind != EdgeKind.CORRIDOR.value
         ):
             raise ValueError(f"candidate edge {self.edge_id} must be corridor in S1")
+        if self.authority == EdgeAuthority.CANDIDATE.value and self.traversal_enabled:
+            raise ValueError(
+                f"candidate edge {self.edge_id} must have traversal_enabled=false "
+                "until explicitly authored or approved"
+            )
         if self.authority == EdgeAuthority.AUTHORED.value and self.kind not in {
             EdgeKind.STRAIT.value,
             EdgeKind.FERRY.value,
@@ -352,11 +377,30 @@ class OperationalMoveOrder:
         require_strict_int(self.issued_tick, name="issued_tick", minimum=0)
         if self.committed_turn is not None:
             require_strict_int(self.committed_turn, name="committed_turn", minimum=0)
-        if self.status == MoveOrderStatus.COMMITTED.value:
+        if self.locked_stance is not None:
+            if self.locked_stance not in {item.value for item in FormationStance}:
+                raise ValueError(
+                    f"locked_stance must be one of "
+                    f"{sorted(item.value for item in FormationStance)}, "
+                    f"got {self.locked_stance!r}"
+                )
+        # Draft must not carry commitment fields.
+        if self.status == MoveOrderStatus.DRAFT.value:
+            if self.committed_turn is not None:
+                raise ValueError("draft orders must not set committed_turn")
+            if self.locked_stance is not None:
+                raise ValueError("draft orders must not set locked_stance")
+        # Once committed (or later lifecycle states), retain commitment info.
+        # cancelled may drop commitment (explicit cancel clears lock).
+        if self.status in _COMMITMENT_RETAINING_STATUSES:
             if self.committed_turn is None:
-                raise ValueError("committed orders require committed_turn")
-            if not self.locked_stance or not str(self.locked_stance).strip():
-                raise ValueError("committed orders require locked_stance")
+                raise ValueError(
+                    f"{self.status} orders require committed_turn"
+                )
+            if self.locked_stance is None:
+                raise ValueError(
+                    f"{self.status} orders require locked_stance"
+                )
         if not self.path_node_ids:
             raise ValueError("path_node_ids must be non-empty")
         if len(self.path_node_ids) != len(self.path_edge_ids) + 1:

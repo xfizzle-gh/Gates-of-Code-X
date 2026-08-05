@@ -7210,7 +7210,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Baden",
@@ -7232,7 +7232,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Baden",
@@ -7254,7 +7254,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Baden",
@@ -7276,7 +7276,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Baden",
@@ -7298,7 +7298,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Baden",
@@ -7320,7 +7320,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Baden",
@@ -7342,7 +7342,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Baden",
@@ -7364,7 +7364,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Baden",
@@ -7386,7 +7386,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Bialystok",
@@ -7408,7 +7408,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Bialystok",
@@ -7430,7 +7430,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Bialystok",
@@ -7452,7 +7452,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Bialystok",
@@ -7474,7 +7474,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Bialystok",
@@ -7496,7 +7496,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Bialystok",
@@ -7518,7 +7518,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Bialystok",
@@ -7540,7 +7540,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Bobryusk",
@@ -7562,7 +7562,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Bobryusk",
@@ -7584,7 +7584,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Bobryusk",
@@ -7606,7 +7606,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Bobryusk",
@@ -7628,7 +7628,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Bobryusk",
@@ -7650,7 +7650,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Bohemia",
@@ -7672,7 +7672,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Bohemia",
@@ -7694,7 +7694,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Bohemia",
@@ -7716,7 +7716,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Bohemia",
@@ -7738,7 +7738,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Brandenburg",
@@ -7760,7 +7760,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Brandenburg",
@@ -7782,7 +7782,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Brandenburg",
@@ -7804,7 +7804,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Brandenburg",
@@ -7826,7 +7826,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Brandenburg",
@@ -7848,7 +7848,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Brandenburg",
@@ -7870,7 +7870,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Czeske Slezko",
@@ -7892,7 +7892,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Czeske Slezko",
@@ -7914,7 +7914,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Czeske Slezko",
@@ -7936,7 +7936,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Czeske Slezko",
@@ -7958,7 +7958,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Danzig",
@@ -7980,7 +7980,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Danzig",
@@ -8002,7 +8002,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Eastern Slovakia",
@@ -8024,7 +8024,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Eastern Slovakia",
@@ -8046,7 +8046,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Eastern Slovakia",
@@ -8068,7 +8068,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Eastern Slovakia",
@@ -8090,7 +8090,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Ermland Masuren",
@@ -8112,7 +8112,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Ermland Masuren",
@@ -8134,7 +8134,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Ermland Masuren",
@@ -8156,7 +8156,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Franken",
@@ -8178,7 +8178,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Franken",
@@ -8200,7 +8200,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Franken",
@@ -8222,7 +8222,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Franken",
@@ -8244,7 +8244,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Franken",
@@ -8266,7 +8266,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Franken",
@@ -8288,7 +8288,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Gdynia",
@@ -8310,7 +8310,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Gdynia",
@@ -8332,7 +8332,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Gdynia",
@@ -8354,7 +8354,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Gdynia",
@@ -8376,7 +8376,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Hannover",
@@ -8398,7 +8398,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Hannover",
@@ -8420,7 +8420,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Hannover",
@@ -8442,7 +8442,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Hannover",
@@ -8464,7 +8464,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Hannover",
@@ -8486,7 +8486,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Hannover",
@@ -8508,7 +8508,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Hessen",
@@ -8530,7 +8530,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Hessen",
@@ -8552,7 +8552,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Hessen",
@@ -8574,7 +8574,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Hessen",
@@ -8596,7 +8596,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Hinterpommern",
@@ -8618,7 +8618,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Hinterpommern",
@@ -8640,7 +8640,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Hinterpommern",
@@ -8662,7 +8662,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Holstein",
@@ -8684,7 +8684,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Holstein",
@@ -8706,7 +8706,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Katowice",
@@ -8728,7 +8728,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Katowice",
@@ -8750,7 +8750,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Katowice",
@@ -8772,7 +8772,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Kielce",
@@ -8794,7 +8794,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Kielce",
@@ -8816,7 +8816,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Kielce",
@@ -8838,7 +8838,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Kielce",
@@ -8860,7 +8860,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Koningsberg",
@@ -8882,7 +8882,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Koningsberg",
@@ -8904,7 +8904,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Krakow",
@@ -8926,7 +8926,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Krakow",
@@ -8948,7 +8948,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Krakow",
@@ -8970,7 +8970,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Krakow",
@@ -8992,7 +8992,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Krakow",
@@ -9014,7 +9014,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Leningrad",
@@ -9036,7 +9036,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Leningrad",
@@ -9058,7 +9058,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Leningrad",
@@ -9080,7 +9080,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Lodz",
@@ -9102,7 +9102,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Lodz",
@@ -9124,7 +9124,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Lodz",
@@ -9146,7 +9146,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Lodz",
@@ -9168,7 +9168,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Lublin",
@@ -9190,7 +9190,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Lublin",
@@ -9212,7 +9212,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Lublin",
@@ -9234,7 +9234,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Lublin",
@@ -9256,7 +9256,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Luga",
@@ -9278,7 +9278,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Luga",
@@ -9300,7 +9300,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Luga",
@@ -9322,7 +9322,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Luga",
@@ -9344,7 +9344,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Lwow",
@@ -9366,7 +9366,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Lwow",
@@ -9388,7 +9388,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Lwow",
@@ -9410,7 +9410,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Lwow",
@@ -9432,7 +9432,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Lwow",
@@ -9454,7 +9454,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Mecklenburg",
@@ -9476,7 +9476,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Minsk",
@@ -9498,7 +9498,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Minsk",
@@ -9520,7 +9520,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Minsk",
@@ -9542,7 +9542,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Minsk",
@@ -9564,7 +9564,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Moravia",
@@ -9586,7 +9586,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Moravia",
@@ -9608,7 +9608,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Moselland",
@@ -9630,7 +9630,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Moselland",
@@ -9652,7 +9652,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Moselland",
@@ -9674,7 +9674,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Moselland",
@@ -9696,7 +9696,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Mozyr",
@@ -9718,7 +9718,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Mozyr",
@@ -9740,7 +9740,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Mozyr",
@@ -9762,7 +9762,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Mozyr",
@@ -9784,7 +9784,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Mozyr",
@@ -9806,7 +9806,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Nevel",
@@ -9828,7 +9828,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Nevel",
@@ -9850,7 +9850,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Nevel",
@@ -9872,7 +9872,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Nevel",
@@ -9894,7 +9894,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Nevel",
@@ -9916,7 +9916,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Nevel",
@@ -9938,7 +9938,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Niederbayern",
@@ -9960,7 +9960,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Niederbayern",
@@ -9982,7 +9982,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Niederbayern",
@@ -10004,7 +10004,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Niederosterreich",
@@ -10026,7 +10026,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Niederosterreich",
@@ -10048,7 +10048,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Niederosterreich",
@@ -10070,7 +10070,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Niederosterreich",
@@ -10092,7 +10092,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Niederosterreich",
@@ -10114,7 +10114,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Niederschlesien",
@@ -10136,7 +10136,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Niederschlesien",
@@ -10158,7 +10158,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Niederschlesien",
@@ -10180,7 +10180,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Niederschlesien",
@@ -10202,7 +10202,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "North Sudetenland",
@@ -10224,7 +10224,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Nowogrodek",
@@ -10246,7 +10246,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Nowogrodek",
@@ -10268,7 +10268,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Nowogrodek",
@@ -10290,7 +10290,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Nowogrodek",
@@ -10312,7 +10312,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Oberbayern",
@@ -10334,7 +10334,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Oberbayern",
@@ -10356,7 +10356,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Oberbayern",
@@ -10378,7 +10378,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Oberosterreich",
@@ -10400,7 +10400,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Oberosterreich",
@@ -10422,7 +10422,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Oberschlesien",
@@ -10444,7 +10444,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Ostmark",
@@ -10466,7 +10466,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Ostmark",
@@ -10488,7 +10488,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Ostmark",
@@ -10510,7 +10510,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Plock",
@@ -10532,7 +10532,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Podkarpatska Rus",
@@ -10554,7 +10554,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Podkarpatska Rus",
@@ -10576,7 +10576,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Podkarpatska Rus",
@@ -10598,7 +10598,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Polesie",
@@ -10620,7 +10620,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Proskuriv",
@@ -10642,7 +10642,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Proskuriv",
@@ -10664,7 +10664,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Proskuriv",
@@ -10686,7 +10686,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Proskuriv",
@@ -10708,7 +10708,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Pskov",
@@ -10730,7 +10730,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Pskov",
@@ -10752,7 +10752,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Pskov",
@@ -10774,7 +10774,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Rhineland",
@@ -10796,7 +10796,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Rhineland",
@@ -10818,7 +10818,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Rhineland",
@@ -10840,7 +10840,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Rhineland",
@@ -10862,7 +10862,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Sachsen",
@@ -10884,7 +10884,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Schleswig",
@@ -10906,7 +10906,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Stanislawow",
@@ -10928,7 +10928,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Stanislawow",
@@ -10950,7 +10950,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Sussex",
@@ -10972,7 +10972,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Sussex",
@@ -10994,7 +10994,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Tesinsko",
@@ -11016,7 +11016,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Tyrol",
@@ -11038,7 +11038,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Tyrol",
@@ -11060,7 +11060,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Tyrol",
@@ -11082,7 +11082,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Tyrol",
@@ -11104,7 +11104,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Vitebsk",
@@ -11126,7 +11126,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Vitebsk",
@@ -11148,7 +11148,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Vitebsk",
@@ -11170,7 +11170,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Vitebsk",
@@ -11192,7 +11192,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Wester Ems",
@@ -11214,7 +11214,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Wester Ems",
@@ -11236,7 +11236,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Western Slovakia",
@@ -11258,7 +11258,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Western Slovakia",
@@ -11280,7 +11280,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Westfalen",
@@ -11302,7 +11302,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Wilejka",
@@ -11324,7 +11324,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Wilejka",
@@ -11346,7 +11346,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Wilejka",
@@ -11368,7 +11368,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Wilno",
@@ -11390,7 +11390,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Wilno",
@@ -11412,7 +11412,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Wilno",
@@ -11434,7 +11434,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Wolyn",
@@ -11456,7 +11456,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Zhytomyr",
@@ -11478,7 +11478,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "Zhytomyr",
@@ -11500,7 +11500,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0078",
@@ -11522,7 +11522,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0078",
@@ -11544,7 +11544,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0079",
@@ -11566,7 +11566,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0079",
@@ -11588,7 +11588,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0085",
@@ -11610,7 +11610,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0085",
@@ -11632,7 +11632,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0085",
@@ -11654,7 +11654,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0087",
@@ -11676,7 +11676,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0087",
@@ -11698,7 +11698,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0087",
@@ -11720,7 +11720,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0089",
@@ -11742,7 +11742,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0089",
@@ -11764,7 +11764,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0090",
@@ -11786,7 +11786,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0091",
@@ -11808,7 +11808,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0091",
@@ -11830,7 +11830,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0091",
@@ -11852,7 +11852,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0093",
@@ -11874,7 +11874,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0095",
@@ -11896,7 +11896,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0095",
@@ -11918,7 +11918,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0098",
@@ -11940,7 +11940,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0101",
@@ -11962,7 +11962,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0101",
@@ -11984,7 +11984,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0102",
@@ -12006,7 +12006,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0102",
@@ -12028,7 +12028,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0107",
@@ -12050,7 +12050,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0110",
@@ -12072,7 +12072,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0110",
@@ -12094,7 +12094,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0112",
@@ -12116,7 +12116,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0114",
@@ -12138,7 +12138,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0119",
@@ -12160,7 +12160,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0120",
@@ -12182,7 +12182,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0120",
@@ -12204,7 +12204,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0120",
@@ -12226,7 +12226,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0120",
@@ -12248,7 +12248,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0121",
@@ -12270,7 +12270,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0121",
@@ -12292,7 +12292,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0121",
@@ -12314,7 +12314,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0123",
@@ -12336,7 +12336,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0123",
@@ -12358,7 +12358,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0123",
@@ -12380,7 +12380,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0123",
@@ -12402,7 +12402,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0124",
@@ -12424,7 +12424,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0124",
@@ -12446,7 +12446,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0125",
@@ -12468,7 +12468,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0125",
@@ -12490,7 +12490,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0126",
@@ -12512,7 +12512,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0126",
@@ -12534,7 +12534,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0129",
@@ -12556,7 +12556,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0129",
@@ -12578,7 +12578,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0130",
@@ -12600,7 +12600,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0130",
@@ -12622,7 +12622,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0130",
@@ -12644,7 +12644,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0130",
@@ -12666,7 +12666,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0132",
@@ -12688,7 +12688,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0132",
@@ -12710,7 +12710,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0133",
@@ -12732,7 +12732,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0133",
@@ -12754,7 +12754,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0133",
@@ -12776,7 +12776,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0134",
@@ -12798,7 +12798,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0134",
@@ -12820,7 +12820,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0136",
@@ -12842,7 +12842,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0136",
@@ -12864,7 +12864,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0137",
@@ -12886,7 +12886,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0137",
@@ -12908,7 +12908,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0137",
@@ -12930,7 +12930,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0138",
@@ -12952,7 +12952,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0138",
@@ -12974,7 +12974,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0139",
@@ -12996,7 +12996,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0140",
@@ -13018,7 +13018,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0140",
@@ -13040,7 +13040,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0140",
@@ -13062,7 +13062,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0140",
@@ -13084,7 +13084,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0140",
@@ -13106,7 +13106,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0141",
@@ -13128,7 +13128,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0141",
@@ -13150,7 +13150,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0141",
@@ -13172,7 +13172,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0143",
@@ -13194,7 +13194,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0143",
@@ -13216,7 +13216,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0144",
@@ -13238,7 +13238,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0144",
@@ -13260,7 +13260,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0145",
@@ -13282,7 +13282,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0145",
@@ -13304,7 +13304,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0145",
@@ -13326,7 +13326,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0146",
@@ -13348,7 +13348,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0146",
@@ -13370,7 +13370,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0149",
@@ -13392,7 +13392,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0149",
@@ -13414,7 +13414,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0149",
@@ -13436,7 +13436,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0152",
@@ -13458,7 +13458,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0152",
@@ -13480,7 +13480,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0152",
@@ -13502,7 +13502,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0153",
@@ -13524,7 +13524,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0153",
@@ -13546,7 +13546,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0153",
@@ -13568,7 +13568,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0153",
@@ -13590,7 +13590,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0154",
@@ -13612,7 +13612,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0154",
@@ -13634,7 +13634,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0156",
@@ -13656,7 +13656,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0156",
@@ -13678,7 +13678,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0157",
@@ -13700,7 +13700,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0157",
@@ -13722,7 +13722,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0160",
@@ -13744,7 +13744,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0160",
@@ -13766,7 +13766,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0161",
@@ -13788,7 +13788,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0162",
@@ -13810,7 +13810,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0162",
@@ -13832,7 +13832,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0163",
@@ -13854,7 +13854,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0163",
@@ -13876,7 +13876,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0163",
@@ -13898,7 +13898,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0163",
@@ -13920,7 +13920,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0164",
@@ -13942,7 +13942,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0164",
@@ -13964,7 +13964,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0166",
@@ -13986,7 +13986,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0166",
@@ -14008,7 +14008,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0167",
@@ -14030,7 +14030,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0167",
@@ -14052,7 +14052,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0167",
@@ -14074,7 +14074,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0168",
@@ -14096,7 +14096,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0169",
@@ -14118,7 +14118,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0169",
@@ -14140,7 +14140,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0169",
@@ -14162,7 +14162,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0170",
@@ -14184,7 +14184,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0171",
@@ -14206,7 +14206,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0171",
@@ -14228,7 +14228,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0171",
@@ -14250,7 +14250,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0172",
@@ -14272,7 +14272,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0172",
@@ -14294,7 +14294,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0173",
@@ -14316,7 +14316,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0173",
@@ -14338,7 +14338,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0173",
@@ -14360,7 +14360,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0174",
@@ -14382,7 +14382,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0174",
@@ -14404,7 +14404,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0174",
@@ -14426,7 +14426,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0175",
@@ -14448,7 +14448,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0176",
@@ -14470,7 +14470,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0178",
@@ -14492,7 +14492,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0178",
@@ -14514,7 +14514,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0178",
@@ -14536,7 +14536,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0178",
@@ -14558,7 +14558,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0178",
@@ -14580,7 +14580,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0181",
@@ -14602,7 +14602,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0181",
@@ -14624,7 +14624,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0182",
@@ -14646,7 +14646,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0182",
@@ -14668,7 +14668,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0182",
@@ -14690,7 +14690,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0183",
@@ -14712,7 +14712,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0183",
@@ -14734,7 +14734,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0185",
@@ -14756,7 +14756,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0185",
@@ -14778,7 +14778,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0187",
@@ -14800,7 +14800,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0187",
@@ -14822,7 +14822,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0187",
@@ -14844,7 +14844,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0189",
@@ -14866,7 +14866,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0189",
@@ -14888,7 +14888,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0190",
@@ -14910,7 +14910,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0190",
@@ -14932,7 +14932,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0193",
@@ -14954,7 +14954,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0194",
@@ -14976,7 +14976,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0194",
@@ -14998,7 +14998,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0195",
@@ -15020,7 +15020,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0195",
@@ -15042,7 +15042,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0195",
@@ -15064,7 +15064,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0195",
@@ -15086,7 +15086,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0196",
@@ -15108,7 +15108,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0196",
@@ -15130,7 +15130,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0197",
@@ -15152,7 +15152,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0197",
@@ -15174,7 +15174,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0197",
@@ -15196,7 +15196,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0197",
@@ -15218,7 +15218,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0197",
@@ -15240,7 +15240,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0199",
@@ -15262,7 +15262,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0199",
@@ -15284,7 +15284,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0200",
@@ -15306,7 +15306,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0200",
@@ -15328,7 +15328,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0204",
@@ -15350,7 +15350,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0204",
@@ -15372,7 +15372,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0204",
@@ -15394,7 +15394,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0204",
@@ -15416,7 +15416,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0205",
@@ -15438,7 +15438,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0208",
@@ -15460,7 +15460,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0208",
@@ -15482,7 +15482,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0209",
@@ -15504,7 +15504,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0209",
@@ -15526,7 +15526,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0209",
@@ -15548,7 +15548,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0209",
@@ -15570,7 +15570,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0209",
@@ -15592,7 +15592,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0210",
@@ -15614,7 +15614,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0211",
@@ -15636,7 +15636,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0211",
@@ -15658,7 +15658,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0214",
@@ -15680,7 +15680,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0215",
@@ -15702,7 +15702,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0215",
@@ -15724,7 +15724,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0217",
@@ -15746,7 +15746,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0217",
@@ -15768,7 +15768,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0217",
@@ -15790,7 +15790,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0218",
@@ -15812,7 +15812,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0218",
@@ -15834,7 +15834,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0218",
@@ -15856,7 +15856,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0219",
@@ -15878,7 +15878,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0220",
@@ -15900,7 +15900,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0220",
@@ -15922,7 +15922,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0220",
@@ -15944,7 +15944,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0220",
@@ -15966,7 +15966,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0221",
@@ -15988,7 +15988,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0221",
@@ -16010,7 +16010,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0222",
@@ -16032,7 +16032,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0222",
@@ -16054,7 +16054,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0222",
@@ -16076,7 +16076,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0222",
@@ -16098,7 +16098,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0222",
@@ -16120,7 +16120,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0223",
@@ -16142,7 +16142,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0223",
@@ -16164,7 +16164,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0223",
@@ -16186,7 +16186,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0223",
@@ -16208,7 +16208,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0225",
@@ -16230,7 +16230,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0225",
@@ -16252,7 +16252,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0225",
@@ -16274,7 +16274,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0226",
@@ -16296,7 +16296,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0226",
@@ -16318,7 +16318,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0226",
@@ -16340,7 +16340,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0227",
@@ -16362,7 +16362,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0227",
@@ -16384,7 +16384,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0227",
@@ -16406,7 +16406,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0227",
@@ -16428,7 +16428,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0228",
@@ -16450,7 +16450,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0228",
@@ -16472,7 +16472,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0229",
@@ -16494,7 +16494,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0229",
@@ -16516,7 +16516,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0231",
@@ -16538,7 +16538,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0231",
@@ -16560,7 +16560,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0231",
@@ -16582,7 +16582,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0232",
@@ -16604,7 +16604,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0232",
@@ -16626,7 +16626,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0232",
@@ -16648,7 +16648,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0232",
@@ -16670,7 +16670,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0235",
@@ -16692,7 +16692,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0235",
@@ -16714,7 +16714,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0235",
@@ -16736,7 +16736,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0236",
@@ -16758,7 +16758,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0236",
@@ -16780,7 +16780,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0236",
@@ -16802,7 +16802,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0236",
@@ -16824,7 +16824,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0237",
@@ -16846,7 +16846,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0237",
@@ -16868,7 +16868,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0237",
@@ -16890,7 +16890,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0238",
@@ -16912,7 +16912,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0240",
@@ -16934,7 +16934,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0240",
@@ -16956,7 +16956,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0240",
@@ -16978,7 +16978,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0240",
@@ -17000,7 +17000,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0240",
@@ -17022,7 +17022,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0241",
@@ -17044,7 +17044,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0242",
@@ -17066,7 +17066,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0242",
@@ -17088,7 +17088,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0242",
@@ -17110,7 +17110,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0242",
@@ -17132,7 +17132,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0243",
@@ -17154,7 +17154,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0243",
@@ -17176,7 +17176,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0243",
@@ -17198,7 +17198,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0244",
@@ -17220,7 +17220,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0244",
@@ -17242,7 +17242,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0244",
@@ -17264,7 +17264,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0245",
@@ -17286,7 +17286,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0245",
@@ -17308,7 +17308,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0246",
@@ -17330,7 +17330,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0246",
@@ -17352,7 +17352,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0246",
@@ -17374,7 +17374,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0247",
@@ -17396,7 +17396,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0247",
@@ -17418,7 +17418,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0247",
@@ -17440,7 +17440,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0248",
@@ -17462,7 +17462,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0248",
@@ -17484,7 +17484,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0249",
@@ -17506,7 +17506,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0249",
@@ -17528,7 +17528,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0250",
@@ -17550,7 +17550,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0251",
@@ -17572,7 +17572,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0251",
@@ -17594,7 +17594,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0251",
@@ -17616,7 +17616,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0252",
@@ -17638,7 +17638,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0254",
@@ -17660,7 +17660,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0254",
@@ -17682,7 +17682,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0254",
@@ -17704,7 +17704,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0256",
@@ -17726,7 +17726,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0257",
@@ -17748,7 +17748,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0257",
@@ -17770,7 +17770,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0257",
@@ -17792,7 +17792,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0257",
@@ -17814,7 +17814,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0258",
@@ -17836,7 +17836,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0258",
@@ -17858,7 +17858,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0258",
@@ -17880,7 +17880,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0260",
@@ -17902,7 +17902,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0260",
@@ -17924,7 +17924,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0262",
@@ -17946,7 +17946,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0264",
@@ -17968,7 +17968,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0265",
@@ -17990,7 +17990,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0265",
@@ -18012,7 +18012,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0265",
@@ -18034,7 +18034,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0266",
@@ -18056,7 +18056,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0266",
@@ -18078,7 +18078,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0266",
@@ -18100,7 +18100,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0268",
@@ -18122,7 +18122,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0268",
@@ -18144,7 +18144,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0268",
@@ -18166,7 +18166,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0269",
@@ -18188,7 +18188,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0270",
@@ -18210,7 +18210,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0270",
@@ -18232,7 +18232,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0270",
@@ -18254,7 +18254,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0270",
@@ -18276,7 +18276,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0272",
@@ -18298,7 +18298,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0272",
@@ -18320,7 +18320,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0273",
@@ -18342,7 +18342,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0273",
@@ -18364,7 +18364,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0275",
@@ -18386,7 +18386,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0275",
@@ -18408,7 +18408,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0277",
@@ -18430,7 +18430,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0277",
@@ -18452,7 +18452,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0279",
@@ -18474,7 +18474,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0279",
@@ -18496,7 +18496,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0280",
@@ -18518,7 +18518,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0280",
@@ -18540,7 +18540,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0282",
@@ -18562,7 +18562,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0283",
@@ -18584,7 +18584,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0283",
@@ -18606,7 +18606,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0283",
@@ -18628,7 +18628,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0284",
@@ -18650,7 +18650,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0284",
@@ -18672,7 +18672,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0285",
@@ -18694,7 +18694,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0285",
@@ -18716,7 +18716,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0287",
@@ -18738,7 +18738,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0287",
@@ -18760,7 +18760,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0287",
@@ -18782,7 +18782,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0290",
@@ -18804,7 +18804,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0294",
@@ -18826,7 +18826,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0294",
@@ -18848,7 +18848,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0294",
@@ -18870,7 +18870,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0299",
@@ -18892,7 +18892,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0299",
@@ -18914,7 +18914,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0300",
@@ -18936,7 +18936,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0300",
@@ -18958,7 +18958,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0300",
@@ -18980,7 +18980,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0300",
@@ -19002,7 +19002,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0301",
@@ -19024,7 +19024,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0303",
@@ -19046,7 +19046,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0308",
@@ -19068,7 +19068,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0308",
@@ -19090,7 +19090,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0308",
@@ -19112,7 +19112,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0309",
@@ -19134,7 +19134,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0309",
@@ -19156,7 +19156,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0315",
@@ -19178,7 +19178,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0317",
@@ -19200,7 +19200,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0320",
@@ -19222,7 +19222,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0323",
@@ -19244,7 +19244,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0323",
@@ -19266,7 +19266,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0327",
@@ -19288,7 +19288,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0327",
@@ -19310,7 +19310,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0329",
@@ -19332,7 +19332,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0330",
@@ -19354,7 +19354,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0330",
@@ -19376,7 +19376,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0330",
@@ -19398,7 +19398,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0332",
@@ -19420,7 +19420,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0332",
@@ -19442,7 +19442,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0340",
@@ -19464,7 +19464,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0344",
@@ -19486,7 +19486,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0344",
@@ -19508,7 +19508,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0346",
@@ -19530,7 +19530,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0349",
@@ -19552,7 +19552,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0349",
@@ -19574,7 +19574,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0357",
@@ -19596,7 +19596,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0357",
@@ -19618,7 +19618,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0357",
@@ -19640,7 +19640,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0360",
@@ -19662,7 +19662,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0363",
@@ -19684,7 +19684,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0363",
@@ -19706,7 +19706,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0363",
@@ -19728,7 +19728,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0363",
@@ -19750,7 +19750,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0364",
@@ -19772,7 +19772,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0364",
@@ -19794,7 +19794,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0365",
@@ -19816,7 +19816,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0365",
@@ -19838,7 +19838,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0367",
@@ -19860,7 +19860,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0367",
@@ -19882,7 +19882,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0368",
@@ -19904,7 +19904,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0368",
@@ -19926,7 +19926,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0370",
@@ -19948,7 +19948,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0370",
@@ -19970,7 +19970,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0375",
@@ -19992,7 +19992,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0377",
@@ -20014,7 +20014,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0377",
@@ -20036,7 +20036,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0377",
@@ -20058,7 +20058,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0378",
@@ -20080,7 +20080,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0382",
@@ -20102,7 +20102,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0382",
@@ -20124,7 +20124,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0384",
@@ -20146,7 +20146,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0384",
@@ -20168,7 +20168,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0388",
@@ -20190,7 +20190,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0388",
@@ -20212,7 +20212,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0388",
@@ -20234,7 +20234,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0391",
@@ -20256,7 +20256,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0393",
@@ -20278,7 +20278,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0393",
@@ -20300,7 +20300,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0394",
@@ -20322,7 +20322,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0394",
@@ -20344,7 +20344,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0395",
@@ -20366,7 +20366,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0395",
@@ -20388,7 +20388,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0396",
@@ -20410,7 +20410,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0396",
@@ -20432,7 +20432,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0403",
@@ -20454,7 +20454,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0403",
@@ -20476,7 +20476,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0406",
@@ -20498,7 +20498,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0406",
@@ -20520,7 +20520,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0408",
@@ -20542,7 +20542,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0408",
@@ -20564,7 +20564,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0409",
@@ -20586,7 +20586,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0410",
@@ -20608,7 +20608,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0410",
@@ -20630,7 +20630,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0410",
@@ -20652,7 +20652,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0412",
@@ -20674,7 +20674,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0414",
@@ -20696,7 +20696,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0416",
@@ -20718,7 +20718,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0416",
@@ -20740,7 +20740,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0416",
@@ -20762,7 +20762,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0418",
@@ -20784,7 +20784,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0418",
@@ -20806,7 +20806,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0419",
@@ -20828,7 +20828,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0420",
@@ -20850,7 +20850,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0420",
@@ -20872,7 +20872,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0420",
@@ -20894,7 +20894,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0420",
@@ -20916,7 +20916,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0421",
@@ -20938,7 +20938,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0421",
@@ -20960,7 +20960,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0422",
@@ -20982,7 +20982,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0424",
@@ -21004,7 +21004,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0424",
@@ -21026,7 +21026,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0424",
@@ -21048,7 +21048,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0425",
@@ -21070,7 +21070,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0425",
@@ -21092,7 +21092,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0427",
@@ -21114,7 +21114,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0427",
@@ -21136,7 +21136,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0427",
@@ -21158,7 +21158,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0428",
@@ -21180,7 +21180,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0432",
@@ -21202,7 +21202,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0433",
@@ -21224,7 +21224,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0434",
@@ -21246,7 +21246,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0436",
@@ -21268,7 +21268,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0436",
@@ -21290,7 +21290,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0438",
@@ -21312,7 +21312,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0439",
@@ -21334,7 +21334,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0440",
@@ -21356,7 +21356,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0444",
@@ -21378,7 +21378,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0444",
@@ -21400,7 +21400,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0446",
@@ -21422,7 +21422,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0446",
@@ -21444,7 +21444,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0447",
@@ -21466,7 +21466,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0447",
@@ -21488,7 +21488,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0447",
@@ -21510,7 +21510,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0447",
@@ -21532,7 +21532,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0448",
@@ -21554,7 +21554,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0448",
@@ -21576,7 +21576,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0450",
@@ -21598,7 +21598,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0450",
@@ -21620,7 +21620,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0451",
@@ -21642,7 +21642,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0451",
@@ -21664,7 +21664,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0452",
@@ -21686,7 +21686,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0452",
@@ -21708,7 +21708,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0453",
@@ -21730,7 +21730,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0453",
@@ -21752,7 +21752,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0454",
@@ -21774,7 +21774,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0454",
@@ -21796,7 +21796,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0456",
@@ -21818,7 +21818,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0456",
@@ -21840,7 +21840,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0456",
@@ -21862,7 +21862,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0457",
@@ -21884,7 +21884,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0457",
@@ -21906,7 +21906,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0457",
@@ -21928,7 +21928,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0458",
@@ -21950,7 +21950,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0460",
@@ -21972,7 +21972,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0462",
@@ -21994,7 +21994,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0463",
@@ -22016,7 +22016,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0463",
@@ -22038,7 +22038,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0463",
@@ -22060,7 +22060,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0464",
@@ -22082,7 +22082,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0464",
@@ -22104,7 +22104,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0464",
@@ -22126,7 +22126,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0467",
@@ -22148,7 +22148,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0467",
@@ -22170,7 +22170,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0468",
@@ -22192,7 +22192,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0470",
@@ -22214,7 +22214,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0470",
@@ -22236,7 +22236,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0470",
@@ -22258,7 +22258,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0470",
@@ -22280,7 +22280,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0471",
@@ -22302,7 +22302,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0471",
@@ -22324,7 +22324,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0471",
@@ -22346,7 +22346,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0471",
@@ -22368,7 +22368,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0471",
@@ -22390,7 +22390,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0472",
@@ -22412,7 +22412,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0473",
@@ -22434,7 +22434,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0473",
@@ -22456,7 +22456,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0474",
@@ -22478,7 +22478,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0474",
@@ -22500,7 +22500,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0474",
@@ -22522,7 +22522,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0475",
@@ -22544,7 +22544,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0475",
@@ -22566,7 +22566,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0475",
@@ -22588,7 +22588,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0475",
@@ -22610,7 +22610,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0475",
@@ -22632,7 +22632,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0478",
@@ -22654,7 +22654,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0478",
@@ -22676,7 +22676,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0478",
@@ -22698,7 +22698,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0479",
@@ -22720,7 +22720,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0480",
@@ -22742,7 +22742,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0480",
@@ -22764,7 +22764,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0482",
@@ -22786,7 +22786,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0482",
@@ -22808,7 +22808,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0483",
@@ -22830,7 +22830,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0485",
@@ -22852,7 +22852,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0485",
@@ -22874,7 +22874,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0486",
@@ -22896,7 +22896,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0486",
@@ -22918,7 +22918,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0487",
@@ -22940,7 +22940,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0487",
@@ -22962,7 +22962,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0487",
@@ -22984,7 +22984,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0488",
@@ -23006,7 +23006,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0488",
@@ -23028,7 +23028,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0491",
@@ -23050,7 +23050,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0493",
@@ -23072,7 +23072,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0493",
@@ -23094,7 +23094,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0494",
@@ -23116,7 +23116,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0494",
@@ -23138,7 +23138,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0494",
@@ -23160,7 +23160,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0496",
@@ -23182,7 +23182,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0496",
@@ -23204,7 +23204,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0497",
@@ -23226,7 +23226,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0500",
@@ -23248,7 +23248,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0500",
@@ -23270,7 +23270,7 @@
       "movement_cost_milli": 1000,
       "requires_port": false,
       "can_be_blockaded": false,
-      "traversal_enabled": true,
+      "traversal_enabled": false,
       "bidirectional": true,
       "province_ids": [
         "province_0501",
