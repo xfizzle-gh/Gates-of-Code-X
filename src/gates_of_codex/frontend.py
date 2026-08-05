@@ -20,7 +20,7 @@ from .strategic import (
 from .supply import reachable_supply_provinces
 
 
-FRONTEND_SCHEMA_VERSION = 7
+FRONTEND_SCHEMA_VERSION = 8
 FRONTEND_PYTHON_MODULE = "gates_of_codex"
 
 
@@ -55,6 +55,11 @@ def build_frontend_snapshot(
         for faction in (Faction.NATO, Faction.UKRAINE, Faction.RUSSIA, Faction.PRC)
         if faction.value in state.factions
     }
+    front_options = list_front_options(state, state.current_faction)
+    from .presentation import build_stack_presentations
+
+    stack_payload = build_stack_presentations(state, front_options)
+    battalion_presentations = stack_payload["battalions"]
 
     return {
         "schema": "gates-of-codex.frontend",
@@ -186,6 +191,7 @@ def build_frontend_snapshot(
                 "is_player_controlled": battalion.is_player_controlled,
                 "roster": [asdict(entry) for entry in battalion.roster],
                 "authorized_roster": [asdict(entry) for entry in battalion.authorized_roster],
+                "presentation": battalion_presentations.get(battalion.battalion_id, {}),
             }
             for battalion in sorted(state.battalions.values(), key=lambda value: value.battalion_id)
         ],
@@ -193,8 +199,10 @@ def build_frontend_snapshot(
             province_id: list(battalion_ids)
             for province_id, battalion_ids in sorted(occupied.items())
         },
+        "stack_presentations": stack_payload["stacks"],
+        "battalion_presentations": battalion_presentations,
         "pending_battle": _pending_battle(state),
-        "front_options": list_front_options(state, state.current_faction),
+        "front_options": front_options,
         "control": _control_block(campaign_path, snapshot_path),
         "province_names": dict(
             state.map_metadata.get("province_names") or province_name_coverage(state)

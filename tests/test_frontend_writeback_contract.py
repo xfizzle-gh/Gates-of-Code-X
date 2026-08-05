@@ -112,7 +112,11 @@ class FrontendWritebackContractTests(unittest.TestCase):
                 if value["origin"] == "Warszawa"
             },
         )
-        self.assertIn("res://scripts/main_map_contract.gd", scene)
+        self.assertTrue(
+            "res://scripts/main_map_contract.gd" in scene
+            or "res://scripts/main_stack_panel.gd" in scene,
+            msg="main.tscn must use map contract or stack panel client",
+        )
         self.assertIn('extends "res://scripts/main_color_id.gd"', map_contract)
         self.assertIn('extends "res://scripts/main_writeback.gd"', color_client)
         self.assertIn("battalion_stacks_by_province", script)
