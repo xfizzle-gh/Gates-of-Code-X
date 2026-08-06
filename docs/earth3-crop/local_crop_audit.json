@@ -4,7 +4,7 @@
   "candidate_id": "em_reference_masked",
   "generation": {
     "source": "tools/earth3/generate_local_audit.py",
-    "commit_sha": "bd34ce2ad493d8e9c7231fc25a905dc7ad86300b",
+    "commit_sha": "9282258a6f0697d58ad16506442bc470386578b1",
     "tool_version": "0.11.0",
     "authoritative_geometry_engine": "shapely",
     "comparison_geometry_engine": "stdlib_earclip_sh",
