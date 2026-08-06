@@ -1,6 +1,6 @@
 {
   "schema": "gates-of-codex.earth3-crop-candidates",
-  "schema_version": 1,
+  "schema_version": 2,
   "source": "AoH3 Earth3 province geometry (permission-cleared for project use)",
   "coordinate_space": {
     "canvas_width": 17760,
@@ -14,35 +14,143 @@
     "no_sliver_clipping": true,
     "not_continent_equals_europe": true,
     "iceland_explicit": true,
-    "far_northern_scandinavia_excluded_by_min_y": true
+    "mask_overlap_is_authority_for_masked_candidate": true,
+    "rect_is_broad_query_only_for_masked_candidate": true,
+    "overlap_method": "polygon_intersection_area_via_earclip_and_sutherland_hodgman"
   },
+  "mask_defaults": {
+    "inclusion_threshold": 0.35,
+    "review_band_low": 0.15,
+    "review_band_high": 0.50,
+    "notes": "Include whole province when overlap_ratio >= 0.35. Flag review when 0.15 <= ratio <= 0.50."
+  },
+  "shared_comparison_view": {
+    "min_x": 6700,
+    "min_y": 500,
+    "max_x": 11800,
+    "max_y": 4300,
+    "notes": "Identical camera for all four candidate overview previews."
+  },
+  "reference_extent_outline": [
+    [7200, 780],
+    [7580, 780],
+    [7580, 1040],
+    [7600, 1180],
+    [7800, 1250],
+    [8200, 1120],
+    [8800, 1080],
+    [9400, 1100],
+    [9900, 1180],
+    [10300, 1320],
+    [10700, 1480],
+    [11100, 1700],
+    [11350, 2100],
+    [11400, 2500],
+    [11300, 2900],
+    [11000, 3200],
+    [10600, 3450],
+    [10100, 3600],
+    [9500, 3680],
+    [8900, 3650],
+    [8300, 3580],
+    [7800, 3450],
+    [7500, 3200],
+    [7420, 2800],
+    [7400, 2300],
+    [7450, 1800],
+    [7550, 1400],
+    [7200, 1040]
+  ],
   "candidates": [
     {
       "id": "em_ref_tight",
-      "title": "EM reference-tight",
-      "description": "Closest match to the supplied Europe-Mediterranean reference framing. Cuts far-northern Scandinavia via min_y while keeping Iceland by centroid band and required includes.",
+      "title": "EM reference-tight (rect)",
+      "description": "Axis-aligned rect candidate retained for comparison. Centroid/full-contain selection.",
+      "selection_mode": "rect_centroid",
       "rect": {"min_x": 6850, "min_y": 680, "max_x": 11550, "max_y": 3950},
       "required_include_ids": [],
       "explicit_exclude_ids": [],
-      "notes": "Primary recommendation candidate pending owner review."
+      "notes": "Rectangular baseline. May still admit northern-Russian fringe (e.g. Arkhangelsk)."
     },
     {
       "id": "em_north_east_expand",
-      "title": "EM + slight N/E expand",
-      "description": "Slightly lower min_y (more southern Norway/Sweden/Finland retained) and slightly higher max_x (more Rostov/Caucasus/east approaches).",
+      "title": "EM + slight N/E expand (rect)",
+      "description": "Rectangular N/E expand retained for comparison.",
+      "selection_mode": "rect_centroid",
       "rect": {"min_x": 6820, "min_y": 620, "max_x": 11680, "max_y": 4000},
       "required_include_ids": [],
       "explicit_exclude_ids": [],
-      "notes": "Use if Donbas eastern operational depth or Baltic north feels tight."
+      "notes": "Rectangular comparison only."
     },
     {
       "id": "em_south_west_expand",
-      "title": "EM + slight S/W expand",
-      "description": "Slightly more Atlantic west and deeper North-African coastal belt; slightly higher min_y to keep Scandinavia cutoff firm.",
+      "title": "EM + slight S/W expand (rect)",
+      "description": "Rectangular S/W expand retained for comparison.",
+      "selection_mode": "rect_centroid",
       "rect": {"min_x": 6780, "min_y": 700, "max_x": 11520, "max_y": 4150},
       "required_include_ids": [],
       "explicit_exclude_ids": [],
-      "notes": "Use if Maghreb depth or Atlantic islands framing needs more room."
+      "notes": "Rectangular comparison only."
+    },
+    {
+      "id": "em_reference_masked",
+      "title": "EM reference-masked (authored polygon mask)",
+      "description": "Non-rectangular theatre mask shaped to the supplied Europe-Mediterranean reference. Whole-polygon inclusion by polygon∩mask overlap ratio. Iceland is a separate mask ring. Northern edge steps south-east to drop Murmansk/Arkhangelsk/deep northern Russia while keeping Baltic routes, Donbas eastern depth, Turkey, Caucasus edge, and Maghreb coastal belt.",
+      "selection_mode": "mask_overlap",
+      "inclusion_threshold": 0.35,
+      "review_band_low": 0.15,
+      "review_band_high": 0.50,
+      "rect": {"min_x": 7100, "min_y": 700, "max_x": 11550, "max_y": 3800},
+      "mask_rings": [
+        [
+          [7160, 760],
+          [7590, 760],
+          [7590, 1030],
+          [7160, 1030]
+        ],
+        [
+          [7480, 3380],
+          [7780, 3550],
+          [8300, 3620],
+          [8900, 3680],
+          [9450, 3700],
+          [9950, 3660],
+          [10380, 3520],
+          [10720, 3320],
+          [11040, 3050],
+          [11280, 2750],
+          [11360, 2450],
+          [11340, 2200],
+          [11220, 1950],
+          [11040, 1750],
+          [10820, 1580],
+          [10540, 1450],
+          [10220, 1340],
+          [9880, 1240],
+          [9520, 1160],
+          [9120, 1120],
+          [8720, 1120],
+          [8320, 1180],
+          [7960, 1280],
+          [7680, 1400],
+          [7520, 1600],
+          [7440, 1900],
+          [7400, 2300],
+          [7420, 2700],
+          [7460, 3050],
+          [7480, 3380]
+        ]
+      ],
+      "required_include_ids": [
+        950, 951, 952, 953, 954, 955, 958, 959, 960, 961, 962, 963, 964,
+        6847, 6848, 6849,
+        1268, 1271, 3782, 6627, 10868, 10869, 12175
+      ],
+      "explicit_exclude_ids": [
+        11370,
+        11764
+      ],
+      "notes": "Mask authority. required_include covers Iceland city provinces plus Crimea/Kherson/Zaporizhzhia/Donetsk/Luhansk/Rostov anchors. explicit_exclude forces Murmansk (11370) and Arkhangelsk (11764) out even if overlap noise occurs. No production authority until owner approval."
     }
   ],
   "required_region_checks": [
@@ -71,7 +179,10 @@
     ],
     "Rostov_approach": ["Rostov on Don p=10868"],
     "Iceland": ["Reykjavik p=951"],
-    "Far_north_should_exclude": ["Murmansk p=11370 must remain outside crop"]
+    "Far_north_should_exclude": [
+      "Murmansk p=11370 must remain outside crop",
+      "Arkhangelsk p=11764 must remain outside crop"
+    ]
   },
   "permission": {
     "status": "GRANTED",
@@ -79,12 +190,15 @@
     "notes": "Owner confirmed applicable Earth3 geometry/adjacency may be used, converted, modified, and redistributed in Gates of Code:X. Archive and background tiles stay uncommitted."
   },
   "assumptions": [
-    "Earth3 continent id is metadata only; crop uses authored rect + whole-polygon rules.",
-    "Far-northern Scandinavia is excluded by min_y, not by deleting Norway/Sweden/Finland entirely.",
-    "Iceland remains included because its centroids sit south of the far-north cutoff while still west of the main mass.",
-    "No province rings are clipped; boundary spill uses whole-polygon keep when centroid is inside.",
+    "Earth3 continent id is metadata only; crop uses authored mask/rect + whole-polygon rules.",
+    "Rectangular candidates remain for comparison only; mask candidate is the authored-theatre design under review.",
+    "Mask overlap ratio is area(province ∩ mask) / area(province); threshold default 0.35.",
+    "Provinces are never polygon-clipped; boundary spill keeps the complete Earth3 ring when included.",
+    "Iceland is a separate mask ring plus required-include IDs.",
+    "Murmansk and Arkhangelsk are explicit excludes on the masked candidate.",
+    "No production Earth3 subset is committed until owner approves a candidate.",
     "AoH3 background tiles and scenarios are not imported.",
-    "Arkhangelsk may still fall inside the northern Russian fringe of em_ref_tight; owner may raise min_y or add exclude IDs if that is too deep.",
-    "Region coverage is validated via Earth3 city anchors, not political ownership."
+    "Region coverage is validated via Earth3 city anchors, not political ownership.",
+    "No candidate is recommended as production authority in this revision package."
   ]
 }

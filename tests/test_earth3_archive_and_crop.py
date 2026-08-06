@@ -9,7 +9,13 @@ from pathlib import Path
 from gates_of_codex.earth3.aoh_json import parse_aoh_json
 from gates_of_codex.earth3.archive import Earth3ArchiveError, open_earth3_archive
 from gates_of_codex.earth3.crop import CropCandidate, CropRect, apply_crop
-from gates_of_codex.earth3.model import Earth3Dataset, Earth3Province
+from gates_of_codex.earth3.geometry import (
+    ear_clip_triangles,
+    overlap_ratio,
+    shoelace_area,
+    sutherland_hodgman,
+)
+from gates_of_codex.earth3.model import Earth3City, Earth3Dataset, Earth3Province
 
 
 class AohJsonTests(unittest.TestCase):
@@ -46,15 +52,11 @@ class ArchiveSafetyTests(unittest.TestCase):
             path = Path(tmp) / "evil.zip"
             with zipfile.ZipFile(path, "w") as zf:
                 zf.writestr("Earth3/Config.json", '{"Name":"x","NumOfProvinces":0}')
-                # Some zip tools allow writing odd names; open should reject unsafe norms.
                 try:
                     zf.writestr("../escape.txt", "nope")
                 except ValueError:
-                    # Python zipfile may already block; synthesize via ZipInfo.
                     info = zipfile.ZipInfo("../escape.txt")
                     zf.writestr(info, "nope")
-            # Opening scans members and must not raise unless unsafe path slips in.
-            # If Python stored ../escape.txt, open_earth3_archive must reject.
             try:
                 with open_earth3_archive(path) as archive:
                     names = archive.names
@@ -72,9 +74,29 @@ class ArchiveSafetyTests(unittest.TestCase):
             self.assertIn("Earth", text)
 
 
+class GeometryTests(unittest.TestCase):
+    def test_shoelace_unit_square(self) -> None:
+        ring = ((0.0, 0.0), (10.0, 0.0), (10.0, 10.0), (0.0, 10.0))
+        self.assertAlmostEqual(shoelace_area(ring), 100.0)
+
+    def test_overlap_ratio_full_and_partial(self) -> None:
+        subject = ((0.0, 0.0), (10.0, 0.0), (10.0, 10.0), (0.0, 10.0))
+        mask_full = (((-1.0, -1.0), (11.0, -1.0), (11.0, 11.0), (-1.0, 11.0)),)
+        mask_half = (((5.0, -1.0), (11.0, -1.0), (11.0, 11.0), (5.0, 11.0)),)
+        self.assertAlmostEqual(overlap_ratio(subject, mask_full), 1.0, places=5)
+        self.assertAlmostEqual(overlap_ratio(subject, mask_half), 0.5, places=5)
+
+    def test_sutherland_and_earclip_stable(self) -> None:
+        square = ((0.0, 0.0), (4.0, 0.0), (4.0, 4.0), (0.0, 4.0))
+        clip = ((1.0, 1.0), (3.0, 1.0), (3.0, 3.0), (1.0, 3.0))
+        clipped = sutherland_hodgman(square, clip)
+        self.assertGreaterEqual(len(clipped), 3)
+        tris = ear_clip_triangles(square)
+        self.assertEqual(len(tris), 2)
+
+
 class CropWholePolygonTests(unittest.TestCase):
     def _dataset(self) -> Earth3Dataset:
-        # Three squares: inside, boundary spill, outside.
         provinces = {
             1: Earth3Province(
                 source_id=1,
@@ -121,12 +143,7 @@ class CropWholePolygonTests(unittest.TestCase):
                 base_development=0,
             ),
         }
-        adjacency = {
-            1: {2},
-            2: {1},
-            3: set(),
-            4: set(),
-        }
+        adjacency = {1: {2}, 2: {1}, 3: set(), 4: set()}
         return Earth3Dataset(provinces=provinces, adjacency=adjacency)
 
     def test_includes_whole_polygon_when_centroid_inside_even_if_bounds_spill(self) -> None:
@@ -136,12 +153,12 @@ class CropWholePolygonTests(unittest.TestCase):
             title="t",
             description="t",
             rect=CropRect(0, 0, 25, 25),
+            selection_mode="rect_centroid",
         )
         result = apply_crop(ds, candidate)
         self.assertIn(1, result.included_ids)
-        self.assertIn(2, result.included_ids)  # spills outside but centroid inside
+        self.assertIn(2, result.included_ids)
         self.assertNotIn(3, result.included_ids)
-        # No clipped rings: original vertex counts preserved in dataset.
         self.assertEqual(len(ds.provinces[2].ring), 4)
 
     def test_required_include_and_explicit_exclude(self) -> None:
@@ -153,39 +170,69 @@ class CropWholePolygonTests(unittest.TestCase):
             rect=CropRect(0, 0, 25, 25),
             required_include_ids=(3,),
             explicit_exclude_ids=(2,),
+            selection_mode="rect_centroid",
         )
         result = apply_crop(ds, candidate)
         self.assertIn(3, result.included_ids)
         self.assertNotIn(2, result.included_ids)
         self.assertEqual(result.inclusion_reason[3], "required_include")
 
+    def test_mask_overlap_threshold_and_review_band(self) -> None:
+        ds = self._dataset()
+        # Mask fully covers province 1; covers ~75% of province 2 (x 18-30 → 18-27).
+        mask = (
+            ((0.0, 0.0), (27.0, 0.0), (27.0, 27.0), (0.0, 27.0)),
+        )
+        candidate = CropCandidate(
+            id="mask",
+            title="mask",
+            description="mask",
+            rect=CropRect(0, 0, 60, 60),
+            mask_rings=mask,
+            selection_mode="mask_overlap",
+            inclusion_threshold=0.35,
+            review_band_low=0.15,
+            review_band_high=0.80,
+            explicit_exclude_ids=(3,),
+        )
+        result = apply_crop(ds, candidate)
+        self.assertIn(1, result.included_ids)
+        self.assertIn(2, result.included_ids)
+        self.assertNotIn(3, result.included_ids)
+        self.assertGreaterEqual(result.overlap_ratios[1], 0.99)
+        # Province 2 is 18..30 in x/y; mask to 27 clips both axes → 9/12 * 9/12 = 0.5625.
+        self.assertAlmostEqual(result.overlap_ratios[2], 0.5625, places=3)
+        self.assertIn(2, result.threshold_review_ids)
+        self.assertEqual(len(ds.provinces[2].ring), 4)
+
     def test_crop_config_file_loads(self) -> None:
         root = Path(__file__).resolve().parents[1]
         config = root / "config/earth3/crop_candidates_v1.json"
         data = json.loads(config.read_text(encoding="utf-8"))
         self.assertEqual(data["schema"], "gates-of-codex.earth3-crop-candidates")
-        self.assertEqual(len(data["candidates"]), 3)
+        self.assertEqual(len(data["candidates"]), 4)
         self.assertTrue(data["rules"]["no_sliver_clipping"])
         self.assertTrue(data["rules"]["not_continent_equals_europe"])
         self.assertEqual(data["permission"]["status"], "GRANTED")
-        self.assertEqual(
-            data["permission"]["product_shape"],
-            "APPROVED_EXACT_IMPORT_CROPPED_THEATRE",
-        )
+        masked = next(c for c in data["candidates"] if c["id"] == "em_reference_masked")
+        self.assertEqual(masked["selection_mode"], "mask_overlap")
+        self.assertGreaterEqual(len(masked["mask_rings"]), 2)
+        self.assertIn(11370, masked["explicit_exclude_ids"])
+        self.assertIn(11764, masked["explicit_exclude_ids"])
 
     def test_region_coverage_requires_included_city_anchors(self) -> None:
-        from gates_of_codex.earth3.model import Earth3City
-
         ds = self._dataset()
         ds.cities = (
             Earth3City("Kherson", 15, 15, 1, 0),
             Earth3City("Murmansk", 45, 45, 3, 1),
+            Earth3City("Arkhangelsk", 45, 45, 3, 2),
         )
         candidate = CropCandidate(
             id="t",
             title="t",
             description="t",
             rect=CropRect(0, 0, 25, 25),
+            selection_mode="rect_centroid",
         )
         result = apply_crop(ds, candidate)
         self.assertTrue(result.region_coverage["Ukraine_Crimea_Donbas"]["ok"])

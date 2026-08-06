@@ -1,42 +1,64 @@
 # Earth3 Europe–Mediterranean crop candidates
 
-**Status:** awaiting owner crop approval on GitHub issue **#92**.
+**Status:** awaiting owner crop approval on GitHub issue **#92**.  
+**No production recommendation** in this package.
 
 **Permission:** Earth3 province geometry and adjacency may be used, converted, modified, and redistributed in Gates of Code:X (`APPROVED_EXACT_IMPORT_CROPPED_THEATRE`). The original 81 MB archive and AoH3 background tiles are **not** committed.
 
-## What this folder contains
+## Comparison package
 
 | File | Purpose |
 |---|---|
-| `preview_em_ref_tight.png` | Candidate A preview |
-| `preview_em_north_east_expand.png` | Candidate B preview |
-| `preview_em_south_west_expand.png` | Candidate C preview |
-| `crop_candidates_audit.json` | Machine-readable counts, region coverage, diffs, assumptions |
+| `preview_em_ref_tight.png` | Rect A — shared camera |
+| `preview_em_north_east_expand.png` | Rect B — shared camera |
+| `preview_em_south_west_expand.png` | Rect C — shared camera |
+| `preview_em_reference_masked.png` | **Mask D** — shared camera |
+| `closeups/*_scandinavia_north_russia.png` | N Scandinavia / N Russia close-up |
+| `closeups/*_ukraine_donbas_caucasus.png` | Crimea / Donbas / Rostov / Caucasus |
+| `closeups/*_north_africa_east_med.png` | Maghreb / E.Med close-up |
+| `crop_candidates_audit.json` | Machine audit |
+| `COMPARISON.md` | Human summary |
 
-Crop definitions: `config/earth3/crop_candidates_v1.json`
+Crop definitions: `config/earth3/crop_candidates_v1.json` (schema v2)
 
-## Rules (enforced)
+## Selection rules
 
-- Whole Earth3 polygons only (no clipped slivers)
-- Not `continent == Europe`
-- Far-northern Scandinavia cut by `min_y`
-- Iceland retained (centroids sit below far-north cutoff)
-- Required theatre coverage checked via Earth3 city anchors (Crimea/Kherson/Zaporizhzhia/Donetsk/Luhansk/Rostov, etc.)
-- Murmansk must remain outside the crop
-- No AoH3 scenarios/owners/background art imported
-- No production normalized subset committed until crop approval
+| Candidate | Mode | Authority |
+|---|---|---|
+| `em_ref_tight` / N-E / S-W | `rect_centroid` | axis-aligned rect (comparison only) |
+| **`em_reference_masked`** | `mask_overlap` | authored multi-ring mask + area overlap ratio |
 
-## Candidate summary (from last local archive run)
+Masked inclusion:
 
-| ID | Provinces | Land | Water* | Vertices | Edges | Land components |
-|---|---:|---:|---:|---:|---:|---:|
-| **em_ref_tight** (recommended) | 4371 | 4087 | 284 | 443943 | 12779 | 29 |
-| em_north_east_expand | 4492 | 4201 | 291 | 462234 | 13128 | 29 |
-| em_south_west_expand | 4497 | 4201 | 296 | 462223 | 13142 | 30 |
+1. Broad-phase AABB = query rect ∩ mask bounds  
+2. `overlap_ratio = area(province ∩ mask) / area(province)` via ear-clip + Sutherland–Hodgman  
+3. Include whole Earth3 polygon if `ratio >= 0.35`  
+4. Flag review if `0.15 <= ratio <= 0.50`  
+5. `required_include_ids` / `explicit_exclude_ids` override  
+6. **Never clip** province rings  
 
-\*Ocean-continent provinces inside the crop.
+## Latest counts
 
-## Regenerating previews
+| ID | Mode | Provinces | Land | Water | Vertices | Edges | Components | Review |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| em_ref_tight | rect | 4371 | 4087 | 284 | 443943 | 12779 | 29 | 0 |
+| em_north_east_expand | rect | 4492 | 4201 | 291 | 462234 | 13128 | 29 | 0 |
+| em_south_west_expand | rect | 4497 | 4201 | 296 | 462223 | 13142 | 30 | 0 |
+| **em_reference_masked** | mask | **3648** | 3431 | 217 | 333352 | 10642 | 25 | 55 |
+
+`em_reference_masked` vs `em_ref_tight`: **−723** provinces (0 added).  
+Murmansk + Arkhangelsk excluded on masked candidate. All required region city-anchors OK.
+
+## Legend (previews)
+
+- **gold** = query rect (broad phase)  
+- **magenta** = authored mask rings  
+- **green** = reference extent outline  
+- **cyan** = export bounds of included polygons  
+- **red labels** = Murmansk / Arkhangelsk  
+- **red muted fills** = excluded boundary-touch provinces  
+
+## Regenerating
 
 ```powershell
 $env:PYTHONPATH = "src"
@@ -44,14 +66,9 @@ python tools/earth3/render_crop_previews.py `
   --archive "C:\Users\paulf\Downloads\AOH3_Earth3_map_provinces.zip"
 ```
 
-Requires local archive path + optional `Pillow` for PNG output.
-
-## Assumptions needing owner eyes
-
-- Arkhangelsk can still fall inside the northern Russian fringe of `em_ref_tight`; raise `min_y` or add exclude IDs if too deep.
-- ~26 source name-points lie outside their polygon rings (flagged; do not block crop choice).
-- Disconnected land components (~29) are expected (islands); ferry/sea-lane crossings are **not** invented here.
+Requires local archive path + `Pillow`.
 
 ## Next step
 
-Owner selects one candidate (or requests a revised rect / include-exclude list) on **#92**. Only then commit the normalized production subset and continue the PR chain (stable IDs → geometry renderer → operational graph → migration).
+Owner reviews the four-candidate package on **#92** (especially `em_reference_masked` and close-ups).  
+Only after explicit approval: commit normalized production subset + stable Gates IDs.

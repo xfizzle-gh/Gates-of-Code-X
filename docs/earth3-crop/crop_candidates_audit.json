@@ -1,6 +1,6 @@
 {
   "schema": "gates-of-codex.earth3-crop-audit",
-  "schema_version": 1,
+  "schema_version": 2,
   "source_provinces": 13892,
   "canvas_size": [
     17760,
@@ -12,70 +12,7 @@
     "one_way_source_pair_count": 40933,
     "mutual_source_pair_count": 0,
     "one_way_storage_is_expected": true,
-    "notes": "Earth3 stores undirected neighbors mostly as single directed pid->wp records. Importer symmetrizes for gameplay adjacency.",
-    "one_way_sample": [
-      [
-        0,
-        1
-      ],
-      [
-        0,
-        3
-      ],
-      [
-        0,
-        2284
-      ],
-      [
-        0,
-        12057
-      ],
-      [
-        1,
-        2
-      ],
-      [
-        1,
-        3
-      ],
-      [
-        1,
-        91
-      ],
-      [
-        1,
-        12057
-      ],
-      [
-        1,
-        12058
-      ],
-      [
-        2,
-        3
-      ],
-      [
-        2,
-        5
-      ],
-      [
-        2,
-        91
-      ],
-      [
-        2,
-        92
-      ],
-      [
-        2,
-        2282
-      ],
-      [
-        3,
-        4
-      ]
-    ],
-    "mutual_sample": []
+    "notes": "Earth3 stores undirected neighbors mostly as single directed pid->wp records. Importer symmetrizes for gameplay adjacency."
   },
   "city_count": 12111,
   "permission": {
@@ -88,14 +25,20 @@
     ],
     "product_shape": "APPROVED_EXACT_IMPORT_CROPPED_THEATRE"
   },
-  "recommended_candidate_id": "em_ref_tight",
-  "recommendation_rationale": "em_ref_tight best matches the supplied Europe-Mediterranean reference: keeps Iceland, cuts far-northern Scandinavia via min_y, and frames Crimea/Donbas/Turkey/N.Africa without silent continent==Europe selection.",
+  "recommended_candidate_id": null,
+  "recommendation_status": "no_production_recommendation_until_owner_reviews_masked_candidate",
   "status": "awaiting_owner_crop_approval",
   "candidates": [
     {
       "id": "em_ref_tight",
-      "title": "EM reference-tight",
-      "description": "Closest match to the supplied Europe-Mediterranean reference framing. Cuts far-northern Scandinavia via min_y while keeping Iceland by centroid band and required includes.",
+      "title": "EM reference-tight (rect)",
+      "description": "Axis-aligned rect candidate retained for comparison. Centroid/full-contain selection.",
+      "selection_mode": "rect_centroid",
+      "inclusion_threshold": 0.35,
+      "review_band": [
+        0.15,
+        0.5
+      ],
       "province_count": 4371,
       "land_province_count": 4087,
       "water_or_ocean_continent_count": 284,
@@ -108,16 +51,27 @@
         11646.0,
         4091.0
       ],
-      "crop_rect": {
+      "query_rect": {
         "min_x": 6850.0,
         "min_y": 680.0,
         "max_x": 11550.0,
         "max_y": 3950.0
       },
+      "export_rect": {
+        "min_x": 6692.0,
+        "min_y": 530.0,
+        "max_x": 11666.0,
+        "max_y": 4111.0
+      },
+      "mask_ring_count": 0,
       "estimated_runtime_geometry_bytes": 7382832,
       "estimated_frontend_snapshot_bytes": 2273646,
       "disconnected_land_components": 29,
       "missing_required_ids": [],
+      "required_include_ids": [],
+      "explicit_exclude_ids": [],
+      "threshold_review_count": 0,
+      "threshold_review_ids": [],
       "label_outside_polygon_count": 26,
       "label_outside_polygon_sample": [
         3735,
@@ -172,7 +126,22 @@
         4909,
         4924,
         5002,
-        5004
+        5004,
+        5038,
+        5040,
+        5771,
+        5842,
+        6044,
+        6046,
+        6047,
+        6048,
+        6096,
+        6105,
+        6140,
+        6232,
+        10473,
+        10475,
+        10505
       ],
       "far_north_excluded_sample": [
         974,
@@ -766,7 +735,7 @@
           ]
         },
         "Far_north_should_exclude": {
-          "ok": true,
+          "ok": false,
           "anchors": [
             {
               "city": "Murmansk",
@@ -774,17 +743,50 @@
               "included": false,
               "x": 9961.0,
               "y": 474.0
+            },
+            {
+              "city": "Arkhangelsk",
+              "source_province_id": 11764,
+              "included": true,
+              "x": 10325.0,
+              "y": 892.0
             }
           ]
         }
       },
-      "region_coverage_failures": [],
-      "notes": "Primary recommendation candidate pending owner review."
+      "region_coverage_failures": [
+        "Far_north_should_exclude"
+      ],
+      "notes": "Rectangular baseline. May still admit northern-Russian fringe (e.g. Arkhangelsk).",
+      "forced_far_north_city_status": [
+        {
+          "city": "Murmansk",
+          "source_province_id": 11370,
+          "included": false,
+          "x": 9961.0,
+          "y": 474.0,
+          "overlap_ratio": null
+        },
+        {
+          "city": "Arkhangelsk",
+          "source_province_id": 11764,
+          "included": true,
+          "x": 10325.0,
+          "y": 892.0,
+          "overlap_ratio": 1.0
+        }
+      ]
     },
     {
       "id": "em_north_east_expand",
-      "title": "EM + slight N/E expand",
-      "description": "Slightly lower min_y (more southern Norway/Sweden/Finland retained) and slightly higher max_x (more Rostov/Caucasus/east approaches).",
+      "title": "EM + slight N/E expand (rect)",
+      "description": "Rectangular N/E expand retained for comparison.",
+      "selection_mode": "rect_centroid",
+      "inclusion_threshold": 0.35,
+      "review_band": [
+        0.15,
+        0.5
+      ],
       "province_count": 4492,
       "land_province_count": 4201,
       "water_or_ocean_continent_count": 291,
@@ -797,16 +799,27 @@
         11772.0,
         4181.0
       ],
-      "crop_rect": {
+      "query_rect": {
         "min_x": 6820.0,
         "min_y": 620.0,
         "max_x": 11680.0,
         "max_y": 4000.0
       },
+      "export_rect": {
+        "min_x": 6437.0,
+        "min_y": 480.0,
+        "max_x": 11792.0,
+        "max_y": 4201.0
+      },
+      "mask_ring_count": 0,
       "estimated_runtime_geometry_bytes": 7683232,
       "estimated_frontend_snapshot_bytes": 2336472,
       "disconnected_land_components": 29,
       "missing_required_ids": [],
+      "required_include_ids": [],
+      "explicit_exclude_ids": [],
+      "threshold_review_count": 0,
+      "threshold_review_ids": [],
       "label_outside_polygon_count": 26,
       "label_outside_polygon_sample": [
         3735,
@@ -861,7 +874,22 @@
         4879,
         4952,
         4954,
-        5010
+        5010,
+        5036,
+        5038,
+        5396,
+        5407,
+        5408,
+        5409,
+        5754,
+        5767,
+        5846,
+        5847,
+        5854,
+        5882,
+        5884,
+        6042,
+        6043
       ],
       "far_north_excluded_sample": [
         974,
@@ -1448,7 +1476,7 @@
           ]
         },
         "Far_north_should_exclude": {
-          "ok": true,
+          "ok": false,
           "anchors": [
             {
               "city": "Murmansk",
@@ -1456,17 +1484,107 @@
               "included": false,
               "x": 9961.0,
               "y": 474.0
+            },
+            {
+              "city": "Arkhangelsk",
+              "source_province_id": 11764,
+              "included": true,
+              "x": 10325.0,
+              "y": 892.0
             }
           ]
         }
       },
-      "region_coverage_failures": [],
-      "notes": "Use if Donbas eastern operational depth or Baltic north feels tight."
+      "region_coverage_failures": [
+        "Far_north_should_exclude"
+      ],
+      "notes": "Rectangular comparison only.",
+      "diff_vs_em_ref_tight": {
+        "added_count": 121,
+        "removed_count": 0,
+        "added_sample": [
+          1313,
+          1314,
+          1315,
+          1316,
+          1317,
+          1321,
+          1322,
+          1440,
+          2656,
+          2712,
+          2714,
+          2736,
+          2740,
+          2939,
+          2953,
+          2955,
+          4350,
+          4421,
+          4505,
+          4507,
+          4530,
+          4531,
+          4629,
+          4803,
+          4818,
+          4825,
+          4880,
+          4909,
+          4911,
+          4924,
+          5002,
+          5004,
+          5040,
+          5400,
+          5401,
+          5402,
+          5403,
+          5404,
+          5405,
+          5406,
+          5421,
+          5422,
+          5423,
+          5424,
+          5755,
+          5771,
+          5842,
+          5848,
+          5850,
+          5851
+        ],
+        "removed_sample": []
+      },
+      "forced_far_north_city_status": [
+        {
+          "city": "Murmansk",
+          "source_province_id": 11370,
+          "included": false,
+          "x": 9961.0,
+          "y": 474.0,
+          "overlap_ratio": null
+        },
+        {
+          "city": "Arkhangelsk",
+          "source_province_id": 11764,
+          "included": true,
+          "x": 10325.0,
+          "y": 892.0,
+          "overlap_ratio": 1.0
+        }
+      ]
     },
     {
       "id": "em_south_west_expand",
-      "title": "EM + slight S/W expand",
-      "description": "Slightly more Atlantic west and deeper North-African coastal belt; slightly higher min_y to keep Scandinavia cutoff firm.",
+      "title": "EM + slight S/W expand (rect)",
+      "description": "Rectangular S/W expand retained for comparison.",
+      "selection_mode": "rect_centroid",
+      "inclusion_threshold": 0.35,
+      "review_band": [
+        0.15,
+        0.5
+      ],
       "province_count": 4497,
       "land_province_count": 4201,
       "water_or_ocean_continent_count": 296,
@@ -1479,16 +1597,27 @@
         11646.0,
         4389.0
       ],
-      "crop_rect": {
+      "query_rect": {
         "min_x": 6780.0,
         "min_y": 700.0,
         "max_x": 11520.0,
         "max_y": 4150.0
       },
+      "export_rect": {
+        "min_x": 6437.0,
+        "min_y": 530.0,
+        "max_x": 11666.0,
+        "max_y": 4409.0
+      },
+      "mask_ring_count": 0,
       "estimated_runtime_geometry_bytes": 7683376,
       "estimated_frontend_snapshot_bytes": 2339058,
       "disconnected_land_components": 30,
       "missing_required_ids": [],
+      "required_include_ids": [],
+      "explicit_exclude_ids": [],
+      "threshold_review_count": 0,
+      "threshold_review_ids": [],
       "label_outside_polygon_count": 26,
       "label_outside_polygon_sample": [
         3735,
@@ -1543,7 +1672,22 @@
         4622,
         4744,
         4751,
-        4811
+        4811,
+        4817,
+        4890,
+        4933,
+        4938,
+        4939,
+        4940,
+        4957,
+        4958,
+        5043,
+        5049,
+        5771,
+        6014,
+        6015,
+        6017,
+        6023
       ],
       "far_north_excluded_sample": [
         974,
@@ -2138,6 +2282,915 @@
           ]
         },
         "Far_north_should_exclude": {
+          "ok": false,
+          "anchors": [
+            {
+              "city": "Murmansk",
+              "source_province_id": 11370,
+              "included": false,
+              "x": 9961.0,
+              "y": 474.0
+            },
+            {
+              "city": "Arkhangelsk",
+              "source_province_id": 11764,
+              "included": true,
+              "x": 10325.0,
+              "y": 892.0
+            }
+          ]
+        }
+      },
+      "region_coverage_failures": [
+        "Far_north_should_exclude"
+      ],
+      "notes": "Rectangular comparison only.",
+      "diff_vs_em_ref_tight": {
+        "added_count": 148,
+        "removed_count": 22,
+        "added_sample": [
+          1381,
+          1382,
+          1383,
+          1384,
+          1385,
+          1386,
+          2656,
+          2712,
+          2714,
+          2716,
+          2717,
+          2718,
+          2721,
+          2722,
+          2727,
+          2736,
+          2737,
+          2740,
+          4297,
+          4350,
+          4353,
+          4354,
+          4419,
+          4420,
+          4421,
+          4430,
+          4431,
+          4496,
+          4497,
+          4501,
+          4502,
+          4503,
+          4504,
+          4505,
+          4506,
+          4507,
+          4511,
+          4513,
+          4514,
+          4530,
+          4531,
+          4566,
+          4568,
+          4569,
+          4570,
+          4625,
+          4626,
+          4627,
+          4629,
+          4720
+        ],
+        "removed_sample": [
+          1312,
+          1320,
+          10492,
+          10513,
+          10516,
+          10636,
+          10643,
+          10645,
+          10646,
+          10799,
+          10936,
+          11020,
+          11048,
+          11116,
+          11123,
+          11126,
+          11181,
+          11187,
+          11373,
+          11377,
+          11847,
+          11954
+        ]
+      },
+      "forced_far_north_city_status": [
+        {
+          "city": "Murmansk",
+          "source_province_id": 11370,
+          "included": false,
+          "x": 9961.0,
+          "y": 474.0,
+          "overlap_ratio": null
+        },
+        {
+          "city": "Arkhangelsk",
+          "source_province_id": 11764,
+          "included": true,
+          "x": 10325.0,
+          "y": 892.0,
+          "overlap_ratio": 1.0
+        }
+      ]
+    },
+    {
+      "id": "em_reference_masked",
+      "title": "EM reference-masked (authored polygon mask)",
+      "description": "Non-rectangular theatre mask shaped to the supplied Europe-Mediterranean reference. Whole-polygon inclusion by polygon\u2229mask overlap ratio. Iceland is a separate mask ring. Northern edge steps south-east to drop Murmansk/Arkhangelsk/deep northern Russia while keeping Baltic routes, Donbas eastern depth, Turkey, Caucasus edge, and Maghreb coastal belt.",
+      "selection_mode": "mask_overlap",
+      "inclusion_threshold": 0.35,
+      "review_band": [
+        0.15,
+        0.5
+      ],
+      "province_count": 3648,
+      "land_province_count": 3431,
+      "water_or_ocean_continent_count": 217,
+      "polygon_count": 3648,
+      "total_vertices": 333352,
+      "adjacency_edge_count": 10642,
+      "source_bounds": [
+        7109.0,
+        714.0,
+        11409.0,
+        3822.0
+      ],
+      "query_rect": {
+        "min_x": 7100.0,
+        "min_y": 700.0,
+        "max_x": 11550.0,
+        "max_y": 3800.0
+      },
+      "export_rect": {
+        "min_x": 7089.0,
+        "min_y": 694.0,
+        "max_x": 11429.0,
+        "max_y": 3842.0
+      },
+      "mask_ring_count": 2,
+      "estimated_runtime_geometry_bytes": 5567104,
+      "estimated_frontend_snapshot_bytes": 1897008,
+      "disconnected_land_components": 25,
+      "missing_required_ids": [],
+      "required_include_ids": [
+        950,
+        951,
+        952,
+        953,
+        954,
+        955,
+        958,
+        959,
+        960,
+        961,
+        962,
+        963,
+        964,
+        6847,
+        6848,
+        6849,
+        1268,
+        1271,
+        3782,
+        6627,
+        10868,
+        10869,
+        12175
+      ],
+      "explicit_exclude_ids": [
+        11370,
+        11764
+      ],
+      "threshold_review_count": 55,
+      "threshold_review_ids": [
+        956,
+        1022,
+        1024,
+        1028,
+        1044,
+        1448,
+        1460,
+        2566,
+        2611,
+        2623,
+        2624,
+        2693,
+        2698,
+        3003,
+        3507,
+        3736,
+        4347,
+        4399,
+        4405,
+        4962,
+        4965,
+        4999,
+        5014,
+        5020,
+        5028,
+        6091,
+        6162,
+        6163,
+        6632,
+        6676,
+        6683,
+        6850,
+        10577,
+        10587,
+        10851,
+        10857,
+        10915,
+        10919,
+        11170,
+        11177,
+        11180,
+        11323,
+        11355,
+        11385,
+        11689,
+        11690,
+        12037,
+        12180,
+        12189,
+        12191,
+        12304,
+        12910,
+        13076,
+        13131,
+        13151
+      ],
+      "label_outside_polygon_count": 22,
+      "label_outside_polygon_sample": [
+        3735,
+        6881,
+        10805,
+        11989,
+        12002,
+        12005,
+        12016,
+        12021,
+        12028,
+        12034,
+        12045,
+        12092,
+        12095,
+        12109,
+        12180,
+        12184,
+        12233,
+        12306,
+        12307,
+        12510,
+        12515,
+        12584
+      ],
+      "excluded_boundary_touch_count": 74,
+      "excluded_boundary_sample": [
+        956,
+        1022,
+        1027,
+        1044,
+        1443,
+        1460,
+        2566,
+        2597,
+        2602,
+        2611,
+        2631,
+        2693,
+        2710,
+        3507,
+        3736,
+        3751,
+        4533,
+        4536,
+        4788,
+        4789,
+        4791,
+        4870,
+        4907,
+        4912,
+        4962,
+        4965,
+        4966,
+        4999,
+        5014,
+        5018,
+        5020,
+        5028,
+        5030,
+        5031,
+        6114,
+        6163,
+        6164,
+        6675,
+        6676,
+        6683
+      ],
+      "far_north_excluded_sample": [
+        914,
+        956,
+        957,
+        994,
+        995,
+        1022,
+        1025,
+        1026,
+        1027,
+        1032,
+        1033,
+        1034,
+        1035,
+        1036,
+        1037,
+        1038,
+        1039,
+        1040,
+        1041,
+        1044,
+        1045,
+        1046,
+        1047,
+        1048,
+        1054,
+        1055,
+        1076,
+        1077,
+        1082,
+        1440,
+        1441,
+        1442,
+        1443,
+        1444,
+        1445,
+        1446,
+        1447,
+        1449,
+        1450,
+        1452
+      ],
+      "region_coverage": {
+        "Iceland": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Reykjav\u00edk",
+              "source_province_id": 951,
+              "included": true,
+              "x": 7281.0,
+              "y": 930.0
+            },
+            {
+              "city": "Akureyri",
+              "source_province_id": 963,
+              "included": true,
+              "x": 7461.0,
+              "y": 795.0
+            }
+          ]
+        },
+        "Britain_Ireland": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "London",
+              "source_province_id": 825,
+              "included": true,
+              "x": 8337.0,
+              "y": 1992.0
+            },
+            {
+              "city": "East London",
+              "source_province_id": 3252,
+              "included": false,
+              "x": 9701.0,
+              "y": 6887.0
+            },
+            {
+              "city": "New London",
+              "source_province_id": 8725,
+              "included": false,
+              "x": 4798.0,
+              "y": 2738.0
+            },
+            {
+              "city": "London",
+              "source_province_id": 10009,
+              "included": false,
+              "x": 4357.0,
+              "y": 2629.0
+            },
+            {
+              "city": "Dublin",
+              "source_province_id": 920,
+              "included": true,
+              "x": 8040.0,
+              "y": 1844.0
+            },
+            {
+              "city": "Edinburgh",
+              "source_province_id": 891,
+              "included": true,
+              "x": 8189.0,
+              "y": 1627.0
+            },
+            {
+              "city": "Cardiff",
+              "source_province_id": 868,
+              "included": true,
+              "x": 8191.0,
+              "y": 1993.0
+            }
+          ]
+        },
+        "Iberia": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Madrid",
+              "source_province_id": 6561,
+              "included": true,
+              "x": 8165.0,
+              "y": 2774.0
+            },
+            {
+              "city": "Lamadrid",
+              "source_province_id": 9178,
+              "included": false,
+              "x": 3353.0,
+              "y": 3603.0
+            },
+            {
+              "city": "Lisbon",
+              "source_province_id": 11,
+              "included": true,
+              "x": 7898.0,
+              "y": 2879.0
+            },
+            {
+              "city": "Barcelona",
+              "source_province_id": 6548,
+              "included": true,
+              "x": 8449.0,
+              "y": 2711.0
+            }
+          ]
+        },
+        "France_Benelux_Germany": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Paris",
+              "source_province_id": 260,
+              "included": true,
+              "x": 8461.0,
+              "y": 2194.0
+            },
+            {
+              "city": "Paris",
+              "source_province_id": 9228,
+              "included": false,
+              "x": 3663.0,
+              "y": 3214.0
+            },
+            {
+              "city": "Brussels",
+              "source_province_id": 832,
+              "included": true,
+              "x": 8557.0,
+              "y": 2042.0
+            },
+            {
+              "city": "Amsterdam",
+              "source_province_id": 6502,
+              "included": true,
+              "x": 8583.0,
+              "y": 1928.0
+            },
+            {
+              "city": "Berlin",
+              "source_province_id": 592,
+              "included": true,
+              "x": 9000.0,
+              "y": 1913.0
+            },
+            {
+              "city": "Munich",
+              "source_province_id": 716,
+              "included": true,
+              "x": 8911.0,
+              "y": 2250.0
+            }
+          ]
+        },
+        "Italy": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Rome",
+              "source_province_id": 6881,
+              "included": true,
+              "x": 8954.0,
+              "y": 2678.0
+            },
+            {
+              "city": "New Rome",
+              "source_province_id": 7685,
+              "included": false,
+              "x": 6024.0,
+              "y": 5769.0
+            },
+            {
+              "city": "Rome",
+              "source_province_id": 8700,
+              "included": false,
+              "x": 4166.0,
+              "y": 3177.0
+            },
+            {
+              "city": "Rome",
+              "source_province_id": 9533,
+              "included": false,
+              "x": 2582.0,
+              "y": 2643.0
+            },
+            {
+              "city": "Milan",
+              "source_province_id": 151,
+              "included": true,
+              "x": 8793.0,
+              "y": 2438.0
+            },
+            {
+              "city": "Milando",
+              "source_province_id": 4197,
+              "included": false,
+              "x": 9200.0,
+              "y": 5519.0
+            },
+            {
+              "city": "Naples",
+              "source_province_id": 196,
+              "included": true,
+              "x": 9039.0,
+              "y": 2743.0
+            },
+            {
+              "city": "Palermo",
+              "source_province_id": 119,
+              "included": true,
+              "x": 8993.0,
+              "y": 2921.0
+            },
+            {
+              "city": "Palermo",
+              "source_province_id": 8160,
+              "included": false,
+              "x": 4729.0,
+              "y": 5040.0
+            }
+          ]
+        },
+        "Balkans_Greece": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Athens",
+              "source_province_id": 2202,
+              "included": true,
+              "x": 9502.0,
+              "y": 2927.0
+            },
+            {
+              "city": "Athens",
+              "source_province_id": 8703,
+              "included": false,
+              "x": 4256.0,
+              "y": 3196.0
+            },
+            {
+              "city": "Athens",
+              "source_province_id": 9851,
+              "included": false,
+              "x": 4317.0,
+              "y": 2867.0
+            },
+            {
+              "city": "Athens",
+              "source_province_id": 9502,
+              "included": false,
+              "x": 3647.0,
+              "y": 3298.0
+            },
+            {
+              "city": "Belgrade",
+              "source_province_id": 1431,
+              "included": true,
+              "x": 9341.0,
+              "y": 2485.0
+            },
+            {
+              "city": "Sofia",
+              "source_province_id": 3130,
+              "included": true,
+              "x": 9481.0,
+              "y": 2625.0
+            },
+            {
+              "city": "Bucharest",
+              "source_province_id": 473,
+              "included": true,
+              "x": 9617.0,
+              "y": 2507.0
+            },
+            {
+              "city": "Zagreb",
+              "source_province_id": 3107,
+              "included": true,
+              "x": 9124.0,
+              "y": 2413.0
+            }
+          ]
+        },
+        "Ukraine_Crimea_Donbas": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Kyiv",
+              "source_province_id": 3757,
+              "included": true,
+              "x": 9832.0,
+              "y": 2074.0
+            },
+            {
+              "city": "Kherson",
+              "source_province_id": 1271,
+              "included": true,
+              "x": 9932.0,
+              "y": 2352.0
+            },
+            {
+              "city": "Zaporizhzhia",
+              "source_province_id": 3782,
+              "included": true,
+              "x": 10058.0,
+              "y": 2269.0
+            },
+            {
+              "city": "Donetsk",
+              "source_province_id": 12175,
+              "included": true,
+              "x": 10188.0,
+              "y": 2256.0
+            },
+            {
+              "city": "Severodonetsk",
+              "source_province_id": 10882,
+              "included": true,
+              "x": 10221.0,
+              "y": 2187.0
+            },
+            {
+              "city": "Donetsk",
+              "source_province_id": 10895,
+              "included": true,
+              "x": 10295.0,
+              "y": 2229.0
+            },
+            {
+              "city": "Luhansk",
+              "source_province_id": 10869,
+              "included": true,
+              "x": 10261.0,
+              "y": 2216.0
+            },
+            {
+              "city": "Sevastopol",
+              "source_province_id": 1268,
+              "included": true,
+              "x": 9983.0,
+              "y": 2492.0
+            },
+            {
+              "city": "Simferopol",
+              "source_province_id": 6627,
+              "included": true,
+              "x": 10009.0,
+              "y": 2472.0
+            },
+            {
+              "city": "Odesan",
+              "source_province_id": 4316,
+              "included": false,
+              "x": 9610.0,
+              "y": 4667.0
+            },
+            {
+              "city": "Odesa",
+              "source_province_id": 3241,
+              "included": true,
+              "x": 9840.0,
+              "y": 2369.0
+            }
+          ]
+        },
+        "Rostov_approach": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Rostov on Don",
+              "source_province_id": 10868,
+              "included": true,
+              "x": 10278.0,
+              "y": 2309.0
+            }
+          ]
+        },
+        "Turkey": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Istanbul",
+              "source_province_id": 1116,
+              "included": true,
+              "x": 9757.0,
+              "y": 2733.0
+            },
+            {
+              "city": "Ankara",
+              "source_province_id": 2207,
+              "included": true,
+              "x": 9945.0,
+              "y": 2804.0
+            },
+            {
+              "city": "Lankaran",
+              "source_province_id": 1233,
+              "included": true,
+              "x": 10724.0,
+              "y": 2882.0
+            },
+            {
+              "city": "Izmir",
+              "source_province_id": null,
+              "included": false,
+              "missing_from_source_cities": true
+            }
+          ]
+        },
+        "Caucasus_edge": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Tbilisi",
+              "source_province_id": 10431,
+              "included": true,
+              "x": 10531.0,
+              "y": 2689.0
+            },
+            {
+              "city": "Baku",
+              "source_province_id": 2654,
+              "included": true,
+              "x": 10776.0,
+              "y": 2772.0
+            },
+            {
+              "city": "Yerevan",
+              "source_province_id": 10436,
+              "included": true,
+              "x": 10517.0,
+              "y": 2786.0
+            }
+          ]
+        },
+        "North_Africa_coast": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Tunis",
+              "source_province_id": 2242,
+              "included": true,
+              "x": 8845.0,
+              "y": 2974.0
+            },
+            {
+              "city": "Algiers",
+              "source_province_id": 1399,
+              "included": true,
+              "x": 8496.0,
+              "y": 2985.0
+            },
+            {
+              "city": "Cairo",
+              "source_province_id": 2669,
+              "included": true,
+              "x": 9867.0,
+              "y": 3402.0
+            },
+            {
+              "city": "Tripoli",
+              "source_province_id": 2200,
+              "included": true,
+              "x": 9436.0,
+              "y": 2957.0
+            },
+            {
+              "city": "Tripoli",
+              "source_province_id": 1365,
+              "included": true,
+              "x": 8989.0,
+              "y": 3231.0
+            },
+            {
+              "city": "Tripoli",
+              "source_province_id": 4976,
+              "included": true,
+              "x": 10090.0,
+              "y": 3148.0
+            }
+          ]
+        },
+        "Baltic": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Stockholm",
+              "source_province_id": 1049,
+              "included": true,
+              "x": 9225.0,
+              "y": 1315.0
+            },
+            {
+              "city": "Helsinki",
+              "source_province_id": 1461,
+              "included": true,
+              "x": 9560.0,
+              "y": 1240.0
+            },
+            {
+              "city": "Riga",
+              "source_province_id": 504,
+              "included": true,
+              "x": 9528.0,
+              "y": 1532.0
+            },
+            {
+              "city": "Ceerigaabo",
+              "source_province_id": 4378,
+              "included": false,
+              "x": 10653.0,
+              "y": 4495.0
+            },
+            {
+              "city": "Surigao",
+              "source_province_id": 5938,
+              "included": false,
+              "x": 14459.0,
+              "y": 4481.0
+            },
+            {
+              "city": "Dangriga",
+              "source_province_id": 7951,
+              "included": false,
+              "x": 4016.0,
+              "y": 4161.0
+            },
+            {
+              "city": "Rigaud",
+              "source_province_id": 10234,
+              "included": false,
+              "x": 4698.0,
+              "y": 2483.0
+            },
+            {
+              "city": "Tallinn",
+              "source_province_id": 513,
+              "included": true,
+              "x": 9550.0,
+              "y": 1310.0
+            },
+            {
+              "city": "Vilnius",
+              "source_province_id": 442,
+              "included": true,
+              "x": 9579.0,
+              "y": 1737.0
+            }
+          ]
+        },
+        "Far_north_should_exclude": {
           "ok": true,
           "anchors": [
             {
@@ -2146,14 +3199,111 @@
               "included": false,
               "x": 9961.0,
               "y": 474.0
+            },
+            {
+              "city": "Arkhangelsk",
+              "source_province_id": 11764,
+              "included": false,
+              "x": 10325.0,
+              "y": 892.0
             }
           ]
         }
       },
       "region_coverage_failures": [],
-      "notes": "Use if Maghreb depth or Atlantic islands framing needs more room."
+      "notes": "Mask authority. required_include covers Iceland city provinces plus Crimea/Kherson/Zaporizhzhia/Donetsk/Luhansk/Rostov anchors. explicit_exclude forces Murmansk (11370) and Arkhangelsk (11764) out even if overlap noise occurs. No production authority until owner approval.",
+      "diff_vs_em_ref_tight": {
+        "added_count": 0,
+        "removed_count": 723,
+        "added_sample": [],
+        "removed_sample": [
+          914,
+          956,
+          957,
+          994,
+          995,
+          1022,
+          1025,
+          1026,
+          1027,
+          1032,
+          1033,
+          1034,
+          1035,
+          1036,
+          1037,
+          1038,
+          1039,
+          1040,
+          1041,
+          1044,
+          1045,
+          1046,
+          1047,
+          1048,
+          1076,
+          1082,
+          1220,
+          1307,
+          1308,
+          1309,
+          1310,
+          1311,
+          1312,
+          1318,
+          1319,
+          1320,
+          1323,
+          1324,
+          1325,
+          1326,
+          1441,
+          1442,
+          1443,
+          1444,
+          1445,
+          1446,
+          1447,
+          1449,
+          1450,
+          1452
+        ]
+      },
+      "forced_far_north_city_status": [
+        {
+          "city": "Murmansk",
+          "source_province_id": 11370,
+          "included": false,
+          "x": 9961.0,
+          "y": 474.0,
+          "overlap_ratio": null
+        },
+        {
+          "city": "Arkhangelsk",
+          "source_province_id": 11764,
+          "included": false,
+          "x": 10325.0,
+          "y": 892.0,
+          "overlap_ratio": null
+        }
+      ]
     }
   ],
+  "mask_defaults": {
+    "inclusion_threshold": 0.35,
+    "review_band_low": 0.15,
+    "review_band_high": 0.5,
+    "notes": "Include whole province when overlap_ratio >= 0.35. Flag review when 0.15 <= ratio <= 0.50."
+  },
+  "rules": {
+    "selection": "whole_polygon_only",
+    "no_sliver_clipping": true,
+    "not_continent_equals_europe": true,
+    "iceland_explicit": true,
+    "mask_overlap_is_authority_for_masked_candidate": true,
+    "rect_is_broad_query_only_for_masked_candidate": true,
+    "overlap_method": "polygon_intersection_area_via_earclip_and_sutherland_hodgman"
+  },
   "boundary_province_diffs": {
     "em_ref_tight_vs_em_north_east_expand": {
       "only_in_first_count": 0,
@@ -2272,6 +3422,53 @@
         4530
       ]
     },
+    "em_ref_tight_vs_em_reference_masked": {
+      "only_in_first_count": 723,
+      "only_in_second_count": 0,
+      "only_in_first_sample": [
+        914,
+        956,
+        957,
+        994,
+        995,
+        1022,
+        1025,
+        1026,
+        1027,
+        1032,
+        1033,
+        1034,
+        1035,
+        1036,
+        1037,
+        1038,
+        1039,
+        1040,
+        1041,
+        1044,
+        1045,
+        1046,
+        1047,
+        1048,
+        1076,
+        1082,
+        1220,
+        1307,
+        1308,
+        1309,
+        1310,
+        1311,
+        1312,
+        1318,
+        1319,
+        1320,
+        1323,
+        1324,
+        1325,
+        1326
+      ],
+      "only_in_second_sample": []
+    },
     "em_north_east_expand_vs_em_south_west_expand": {
       "only_in_first_count": 105,
       "only_in_second_count": 110,
@@ -2359,13 +3556,109 @@
         4723,
         4724
       ]
+    },
+    "em_north_east_expand_vs_em_reference_masked": {
+      "only_in_first_count": 844,
+      "only_in_second_count": 0,
+      "only_in_first_sample": [
+        914,
+        956,
+        957,
+        994,
+        995,
+        1022,
+        1025,
+        1026,
+        1027,
+        1032,
+        1033,
+        1034,
+        1035,
+        1036,
+        1037,
+        1038,
+        1039,
+        1040,
+        1041,
+        1044,
+        1045,
+        1046,
+        1047,
+        1048,
+        1076,
+        1082,
+        1220,
+        1307,
+        1308,
+        1309,
+        1310,
+        1311,
+        1312,
+        1313,
+        1314,
+        1315,
+        1316,
+        1317,
+        1318,
+        1319
+      ],
+      "only_in_second_sample": []
+    },
+    "em_south_west_expand_vs_em_reference_masked": {
+      "only_in_first_count": 849,
+      "only_in_second_count": 0,
+      "only_in_first_sample": [
+        914,
+        956,
+        957,
+        994,
+        995,
+        1022,
+        1025,
+        1026,
+        1027,
+        1032,
+        1033,
+        1034,
+        1035,
+        1036,
+        1037,
+        1038,
+        1039,
+        1040,
+        1041,
+        1044,
+        1045,
+        1046,
+        1047,
+        1048,
+        1076,
+        1082,
+        1220,
+        1307,
+        1308,
+        1309,
+        1310,
+        1311,
+        1318,
+        1319,
+        1323,
+        1324,
+        1325,
+        1326,
+        1381,
+        1382
+      ],
+      "only_in_second_sample": []
     }
   },
   "assumptions": [
     "Whole-polygon inclusion only; no clipped slivers.",
-    "Crop is authored rect + centroid spill rule; not continent==Europe.",
-    "Far-northern Scandinavia excluded by min_y; Iceland retained.",
+    "em_reference_masked uses authored multi-ring mask + overlap ratio threshold.",
+    "Rectangle candidates retained for comparison; rect is broad query only on masked mode.",
+    "Murmansk and Arkhangelsk must be excluded on the masked candidate.",
     "No production Earth3 subset is committed until owner approves a candidate.",
+    "No production recommendation is made in this audit package.",
     "AoH3 background art/scenarios are not used."
   ]
 }
