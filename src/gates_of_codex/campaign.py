@@ -66,12 +66,18 @@ class CampaignEngine:
 
     def auto_resolve_pending_battle(self) -> Faction:
         pending = self._require_pending_battle()
-        attacker = self._get_battalion(pending.attacking_participants[0].battalion_id)
-        defender = self._get_battalion(pending.defending_participants[0].battalion_id) if pending.defending_participants else None
+        attackers = self._participants_battalions(pending.attacking_participants)
+        defenders = self._participants_battalions(pending.defending_participants)
         target = self._get_province(pending.target_province_id)
-        attacker_score = self._combat_score(attacker)
-        defender_score = (self._combat_score(defender) if defender else 1.0) * (1 + min(target.fortification, 5) * 0.12)
-        winner = attacker.faction if self._random.random() < attacker_score / max(attacker_score + defender_score, 1) else pending.defender_faction
+        attacker_score = sum(self._combat_score(item) for item in attackers) or 0.1
+        defender_score = (
+            sum(self._combat_score(item) for item in defenders) or 1.0
+        ) * (1 + min(target.fortification, 5) * 0.12)
+        winner = (
+            pending.attacker_faction
+            if self._random.random() < attacker_score / max(attacker_score + defender_score, 1)
+            else pending.defender_faction
+        )
         self.apply_battle_result(winner)
         return winner
 
@@ -87,18 +93,20 @@ class CampaignEngine:
 
     def apply_battle_result(self, winner: Faction) -> None:
         pending = self._require_pending_battle()
-        attacker = self._get_battalion(pending.attacking_participants[0].battalion_id)
-        defender = self._get_battalion(pending.defending_participants[0].battalion_id) if pending.defending_participants else None
+        attackers = self._participants_battalions(pending.attacking_participants)
+        defenders = self._participants_battalions(pending.defending_participants)
         if winner == pending.attacker_faction:
-            if defender:
+            for defender in defenders:
                 self._apply_percentage_losses(defender, 0.65)
                 defender.condition = max(10, defender.condition - 28)
-            self._apply_percentage_losses(attacker, 0.25)
-            attacker.condition = max(10, attacker.condition - 12)
+            for attacker in attackers:
+                self._apply_percentage_losses(attacker, 0.25)
+                attacker.condition = max(10, attacker.condition - 12)
         else:
-            self._apply_percentage_losses(attacker, 0.55)
-            attacker.condition = max(10, attacker.condition - 24)
-            if defender:
+            for attacker in attackers:
+                self._apply_percentage_losses(attacker, 0.55)
+                attacker.condition = max(10, attacker.condition - 24)
+            for defender in defenders:
                 self._apply_percentage_losses(defender, 0.20)
                 defender.condition = max(10, defender.condition - 10)
         self._finalize_positions(winner)
@@ -138,32 +146,67 @@ class CampaignEngine:
 
     def _finalize_positions(self, winner: Faction) -> None:
         pending = self._require_pending_battle()
-        attacker = self._get_battalion(pending.attacking_participants[0].battalion_id)
-        defender = self._get_battalion(pending.defending_participants[0].battalion_id) if pending.defending_participants else None
+        attackers = self._participants_battalions(pending.attacking_participants)
+        defenders = self._participants_battalions(pending.defending_participants)
         target = self._get_province(pending.target_province_id)
-        attacker.movement_remaining = 0
-        attacker.combat_actions_remaining = max(0, attacker.combat_actions_remaining - 1)
+        for attacker in attackers:
+            attacker.movement_remaining = 0
+            attacker.combat_actions_remaining = max(0, attacker.combat_actions_remaining - 1)
         if winner == pending.attacker_faction:
-            if defender:
+            for defender in list(defenders):
                 self._retreat_or_remove(defender, excluding=target.province_id)
-            if not attacker.is_destroyed:
+            for attacker in list(attackers):
+                if attacker.battalion_id not in self.state.battalions:
+                    continue
+                if attacker.is_destroyed:
+                    self._remove_battalion(attacker.battalion_id)
+                    continue
                 attacker.province_id = target.province_id
                 self._sync_strategic_formation_location(attacker)
-                target.owner = attacker.faction
+            if any(
+                bn.battalion_id in self.state.battalions and not bn.is_destroyed
+                for bn in attackers
+            ):
+                target.owner = pending.attacker_faction
                 from .strategic import sync_province_infrastructure_owner
 
                 sync_province_infrastructure_owner(target)
         else:
-            if attacker.is_destroyed:
-                self._remove_battalion(attacker.battalion_id)
-            if defender and defender.is_destroyed:
-                self._remove_battalion(defender.battalion_id)
+            for attacker in list(attackers):
+                if attacker.battalion_id not in self.state.battalions:
+                    continue
+                if attacker.is_destroyed:
+                    self._remove_battalion(attacker.battalion_id)
+                else:
+                    # Losers fall back toward origin when operational contact recorded it.
+                    retreat_exclude = target.province_id
+                    self._retreat_or_remove(attacker, excluding=retreat_exclude)
+            for defender in list(defenders):
+                if defender.battalion_id not in self.state.battalions:
+                    continue
+                if defender.is_destroyed:
+                    self._remove_battalion(defender.battalion_id)
+                else:
+                    self._sync_strategic_formation_location(defender)
         pending.completed = True
         self.state.pending_battle = None
         from .strategic import evaluate_campaign_outcome
 
         evaluate_campaign_outcome(self.state)
         self.state.validate()
+
+    def _participants_battalions(self, participants) -> list[Battalion]:
+        battalions: list[Battalion] = []
+        seen: set[str] = set()
+        for part in participants:
+            if part.battalion_id in seen:
+                continue
+            battalion = self.state.battalions.get(part.battalion_id)
+            if battalion is None:
+                continue
+            seen.add(part.battalion_id)
+            battalions.append(battalion)
+        return battalions
 
     def _retreat_or_remove(self, battalion: Battalion, *, excluding: str) -> None:
         if battalion.is_destroyed:

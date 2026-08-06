@@ -491,10 +491,20 @@ def _advance_formation_one_tick(
     delta = max(1, (base_mp * stance_milli) // cost)
     new_progress = int(position.progress_milli) + delta
     if new_progress >= PROGRESS_MILLI_MAX:
+        # Capture pre-entry province before destination sync (handoff/reporting).
+        origin_province_id = force.province_id
         # Pre-check stack only (no battle yet) before committing to the node.
         pre = inspect_node_entry(state, force, dest_node)
         if pre["reason"] == "friendly_stack_cap":
+            # Deterministic snap back to last legal node (this hop's origin).
+            force.position = FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value,
+                node_id=origin_node,
+                progress_milli=0,
+            )
+            force.movement_state = "at_anchor"
             force.move_order = _as_blocked(order)
+            sync_province_from_position(state, force)
             return False
         force.position = FormationOperationalPosition(
             mode=PositionMode.AT_NODE.value,
@@ -503,13 +513,30 @@ def _advance_formation_one_tick(
         )
         force.movement_state = "at_anchor"
         sync_province_from_position(state, force)
-        contact = resolve_node_entry_contact(state, force, dest_node, create_battle=True)
+        contact = resolve_node_entry_contact(
+            state,
+            force,
+            dest_node,
+            create_battle=True,
+            origin_province_id=origin_province_id,
+        )
         if contact["reason"] == "enemy_contact":
             force.move_order = _as_blocked(order)
             if contacts_out is not None:
                 contacts_out.append(force.strategic_formation_id)
                 contacts_out.extend(contact.get("enemies") or [])
             return True
+        if contact["reason"] == "invalid_contact_roster":
+            # Empty/invalid enemy roster: refuse co-location deadlock — snap back.
+            force.position = FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value,
+                node_id=origin_node,
+                progress_milli=0,
+            )
+            force.movement_state = "at_anchor"
+            force.move_order = _as_blocked(order)
+            sync_province_from_position(state, force)
+            return False
         if edge_index + 1 >= len(order.path_edge_ids):
             force.move_order = replace(order, status=MoveOrderStatus.COMPLETED.value)
         return True

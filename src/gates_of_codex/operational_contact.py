@@ -102,7 +102,6 @@ def node_is_contested(state: CampaignState, node_id: str) -> bool:
     factions = {force.faction for force in present}
     if len(factions) < 2:
         return False
-    # Contested if any pair is not allied.
     ordered = sorted(factions, key=lambda value: value.value)
     for index, left in enumerate(ordered):
         for right in ordered[index + 1 :]:
@@ -117,7 +116,6 @@ def can_enter_node_friendly_stack(
     node_id: str,
 ) -> bool:
     """True if force may occupy node without exceeding friendly stack cap."""
-    # Already on this node counts as occupying (re-entry ok).
     if formation_at_node_id(force) == node_id:
         return True
     friends = friendly_formations_at_node(
@@ -129,39 +127,124 @@ def can_enter_node_friendly_stack(
     return len(friends) < max_friendly_formations_per_node(state)
 
 
+def coalition_sides_at_node(
+    state: CampaignState,
+    node_id: str,
+    *,
+    seed_attacker: StrategicFormation,
+) -> tuple[list[StrategicFormation], list[StrategicFormation]]:
+    """Split all formations on a node into attacker coalition vs defender coalition."""
+    present = formations_at_node(state, node_id)
+    attackers: list[StrategicFormation] = []
+    defenders: list[StrategicFormation] = []
+    for force in present:
+        if force.faction == seed_attacker.faction or are_allied(
+            state, seed_attacker.faction, force.faction
+        ):
+            attackers.append(force)
+        else:
+            defenders.append(force)
+    # Ensure seed attacker is included even if position not yet committed.
+    if seed_attacker.strategic_formation_id not in {
+        item.strategic_formation_id for item in attackers
+    }:
+        attackers.append(seed_attacker)
+    attackers = sorted(attackers, key=lambda value: value.strategic_formation_id)
+    defenders = sorted(defenders, key=lambda value: value.strategic_formation_id)
+    return attackers, defenders
+
+
+def choose_static_attacker_defender(
+    state: CampaignState,
+    left: StrategicFormation,
+    right: StrategicFormation,
+    *,
+    node_province_id: str,
+) -> tuple[StrategicFormation, StrategicFormation]:
+    """Deterministic initiative for static co-location.
+
+    Rule: province owner defends when exactly one side matches owner;
+    otherwise lower strategic_formation_id attacks.
+    """
+    owner = Faction.NEUTRAL
+    province = state.provinces.get(node_province_id)
+    if province is not None:
+        owner = province.owner
+    left_owns = left.faction == owner or are_allied(state, left.faction, owner)
+    right_owns = right.faction == owner or are_allied(state, right.faction, owner)
+    if left_owns and not right_owns:
+        return right, left
+    if right_owns and not left_owns:
+        return left, right
+    if left.strategic_formation_id <= right.strategic_formation_id:
+        return left, right
+    return right, left
+
+
 def try_create_node_contact_battle(
     state: CampaignState,
-    attacker: StrategicFormation,
-    defender: StrategicFormation,
+    seed_attacker: StrategicFormation,
+    seed_defender: StrategicFormation,
     *,
     node_id: str,
+    origin_province_id: str | None = None,
 ) -> PendingBattle | None:
-    """Create pending battle for enemy node contact. No-op if battle already pending."""
+    """Create cooperative multi-formation node-contact battle.
+
+    Includes every battalion from every friendly formation on the attacker side
+    and every battalion from every hostile formation on the defender side at the node.
+    """
     if state.pending_battle is not None:
         return None
-    atk_bn = _primary_battalion(state, attacker)
-    def_bn = _primary_battalion(state, defender)
-    if atk_bn is None or def_bn is None:
+
+    attackers, defenders = coalition_sides_at_node(
+        state, node_id, seed_attacker=seed_attacker
+    )
+    # Ensure seed defender side is represented.
+    if seed_defender.strategic_formation_id not in {
+        item.strategic_formation_id for item in defenders
+    }:
+        # Re-bucket if seed defender was misclassified (should not happen).
+        if seed_defender.faction == seed_attacker.faction or are_allied(
+            state, seed_attacker.faction, seed_defender.faction
+        ):
+            return None
+        defenders.append(seed_defender)
+        defenders = sorted(defenders, key=lambda value: value.strategic_formation_id)
+
+    atk_parts = _participants_for_forces(state, attackers, stage="stage_1")
+    def_parts = _participants_for_forces(state, defenders, stage="stage_2")
+    if not atk_parts or not def_parts:
+        # Empty/invalid roster: cannot open a battle (caller must not deadlock).
         return None
-    province_id = attacker.province_id or defender.province_id
+
+    # Mark first battalion of seed formations as primary when present.
+    _mark_primary(atk_parts, seed_attacker, state)
+    _mark_primary(def_parts, seed_defender, state)
+
+    target_province = (
+        seed_defender.province_id
+        or seed_attacker.province_id
+        or origin_province_id
+        or ""
+    )
+    origin = origin_province_id or seed_attacker.province_id or target_province
+    primary_atk = seed_attacker.strategic_formation_id
+    primary_def = seed_defender.strategic_formation_id
     pending = PendingBattle(
         battle_id=f"goc-op-{state.turn_number}-{uuid.uuid4().hex[:10]}",
-        origin_province_id=attacker.province_id or province_id,
-        target_province_id=province_id,
-        attacker_faction=attacker.faction,
-        defender_faction=defender.faction,
-        attacking_participants=[
-            BattleParticipant(atk_bn.battalion_id, attacker.faction, "stage_1", True)
-        ],
-        defending_participants=[
-            BattleParticipant(def_bn.battalion_id, defender.faction, "stage_2", True)
-        ],
+        origin_province_id=str(origin),
+        target_province_id=str(target_province),
+        attacker_faction=seed_attacker.faction,
+        defender_faction=seed_defender.faction,
+        attacking_participants=atk_parts,
+        defending_participants=def_parts,
         player_faction=state.selected_faction,
-        player_is_attacker=attacker.faction == state.selected_faction,
+        player_is_attacker=seed_attacker.faction == state.selected_faction,
         encounter_node_id=node_id,
         encounter_kind=ENCOUNTER_KIND_NODE_CONTACT,
-        attacker_formation_id=attacker.strategic_formation_id,
-        defender_formation_id=defender.strategic_formation_id,
+        attacker_formation_id=primary_atk,
+        defender_formation_id=primary_def,
     )
     state.pending_battle = pending
     return pending
@@ -220,35 +303,52 @@ def resolve_node_entry_contact(
     node_id: str,
     *,
     create_battle: bool = True,
+    origin_province_id: str | None = None,
 ) -> dict[str, Any]:
-    """After a formation arrives/occupies a node: stack check + enemy contact.
-
-    Returns keys: ok, reason, battle_id, contested, enemies, friendlies.
-    """
+    """After a formation arrives/occupies a node: stack check + cooperative contact battle."""
     result = inspect_node_entry(state, force, node_id)
-    if result["reason"] == "enemy_contact" and create_battle:
-        enemies = enemy_formations_at_node(
-            state,
-            node_id,
-            faction=force.faction,
-            excluding_formation_id=force.strategic_formation_id,
-        )
-        if enemies:
-            battle = try_create_node_contact_battle(
-                state, force, enemies[0], node_id=node_id
-            )
-            result["battle_id"] = battle.battle_id if battle else (
-                state.pending_battle.battle_id if state.pending_battle else ""
-            )
+    if result["reason"] != "enemy_contact" or not create_battle:
+        return result
+    enemies = enemy_formations_at_node(
+        state,
+        node_id,
+        faction=force.faction,
+        excluding_formation_id=force.strategic_formation_id,
+    )
+    if not enemies:
+        return result
+    # Prefer province-owner as defender seed when possible.
+    seed_def = enemies[0]
+    province_id = force.province_id
+    for enemy in enemies:
+        province = state.provinces.get(enemy.province_id or "")
+        if province is not None and (
+            province.owner == enemy.faction
+            or are_allied(state, enemy.faction, province.owner)
+        ):
+            seed_def = enemy
+            break
+    battle = try_create_node_contact_battle(
+        state,
+        force,
+        seed_def,
+        node_id=node_id,
+        origin_province_id=origin_province_id or force.province_id,
+    )
+    if battle is None:
+        result["reason"] = "invalid_contact_roster"
+        result["battle_id"] = ""
+        return result
+    result["battle_id"] = battle.battle_id
+    result["enemies"] = [item.strategic_formation_id for item in enemies]
+    # Expand friendlies to full attacker coalition after battle build.
+    attackers, _defs = coalition_sides_at_node(state, node_id, seed_attacker=force)
+    result["friendlies"] = [item.strategic_formation_id for item in attackers]
     return result
 
 
 def detect_static_node_contacts(state: CampaignState) -> list[str]:
-    """If enemies already share a node and no battle pending, open contact battles.
-
-    Processes nodes in sorted order; creates at most one pending battle (engine limit).
-    Returns formation ids involved in detected contacts.
-    """
+    """Open one cooperative contact battle if enemies already share a node."""
     if state.pending_battle is not None:
         return []
     by_node: dict[str, list[StrategicFormation]] = {}
@@ -256,7 +356,6 @@ def detect_static_node_contacts(state: CampaignState) -> list[str]:
         node_id = formation_at_node_id(force)
         if node_id:
             by_node.setdefault(node_id, []).append(force)
-    involved: list[str] = []
     for node_id in sorted(by_node):
         present = sorted(by_node[node_id], key=lambda value: value.strategic_formation_id)
         for index, left in enumerate(present):
@@ -265,20 +364,64 @@ def detect_static_node_contacts(state: CampaignState) -> list[str]:
                     continue
                 if are_allied(state, left.faction, right.faction):
                     continue
+                province_id = left.province_id or right.province_id
+                attacker, defender = choose_static_attacker_defender(
+                    state, left, right, node_province_id=province_id
+                )
                 battle = try_create_node_contact_battle(
-                    state, left, right, node_id=node_id
+                    state,
+                    attacker,
+                    defender,
+                    node_id=node_id,
+                    origin_province_id=attacker.province_id,
                 )
                 if battle is not None:
-                    involved.extend(
-                        [left.strategic_formation_id, right.strategic_formation_id]
+                    attackers, defenders = coalition_sides_at_node(
+                        state, node_id, seed_attacker=attacker
                     )
-                    return involved
-    return involved
+                    return [
+                        item.strategic_formation_id for item in attackers + defenders
+                    ]
+                # Invalid roster: skip this pair, keep searching.
+    return []
 
 
-def _primary_battalion(state: CampaignState, force: StrategicFormation):
-    for battalion_id in force.battalion_ids:
-        battalion = state.battalions.get(battalion_id)
-        if battalion is not None:
-            return battalion
-    return None
+def _participants_for_forces(
+    state: CampaignState,
+    forces: list[StrategicFormation],
+    *,
+    stage: str,
+) -> list[BattleParticipant]:
+    parts: list[BattleParticipant] = []
+    seen: set[str] = set()
+    for force in forces:
+        for battalion_id in force.battalion_ids:
+            if battalion_id in seen:
+                continue
+            battalion = state.battalions.get(battalion_id)
+            if battalion is None:
+                continue
+            seen.add(battalion_id)
+            parts.append(
+                BattleParticipant(
+                    battalion_id=battalion_id,
+                    faction=battalion.faction,
+                    stage=stage,
+                    is_primary=False,
+                )
+            )
+    return parts
+
+
+def _mark_primary(
+    parts: list[BattleParticipant],
+    seed: StrategicFormation,
+    state: CampaignState,
+) -> None:
+    for battalion_id in seed.battalion_ids:
+        for part in parts:
+            if part.battalion_id == battalion_id:
+                part.is_primary = True
+                return
+    if parts:
+        parts[0].is_primary = True

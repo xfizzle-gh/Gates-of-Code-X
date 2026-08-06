@@ -544,9 +544,13 @@ class CampaignState:
                     raise ValueError(f"Commander {battalion.commander_id} is not assigned back to battalion {key}")
                 if commander.assigned_strategic_formation_id:
                     raise ValueError(f"Commander {battalion.commander_id} has dual assignment")
-            # Multi-faction province presence is allowed under operational maneuver (S4+):
-            # ownership is separate from temporary presence / node contact.
-            occupied_factions.setdefault(battalion.province_id, battalion.faction)
+            previous_faction = occupied_factions.setdefault(
+                battalion.province_id, battalion.faction
+            )
+            if previous_faction != battalion.faction and not self._allows_mixed_province_presence():
+                raise ValueError(
+                    f"Province {battalion.province_id} contains battalions from multiple factions"
+                )
         if self.strategic_formations:
             orphan_members = set(membership) - set(self.battalions)
             if orphan_members:
@@ -562,6 +566,17 @@ class CampaignState:
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+    def _allows_mixed_province_presence(self) -> bool:
+        """Hostile co-presence only under operational contact / graph-backed campaigns."""
+        pending = self.pending_battle
+        if pending is not None and str(getattr(pending, "encounter_kind", "") or ""):
+            return True
+        if any(force.position is not None for force in self.strategic_formations.values()):
+            return True
+        if str(self.map_metadata.get("operational_graph", "") or "").strip():
+            return True
+        return False
 
 
 def _validate_position_shape(position: FormationOperationalPosition, *, force_id: str) -> None:

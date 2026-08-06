@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from gates_of_codex.campaign import CampaignEngine
 from gates_of_codex.force_migration import ensure_strategic_formations
 from gates_of_codex.models import (
     Battalion,
@@ -27,6 +28,7 @@ from gates_of_codex.operational_contact import (
 from gates_of_codex.operational_movement import (
     activate_committed_orders,
     advance_operational_tick,
+    advance_operational_ticks,
     commit_move_orders,
     issue_move_order,
 )
@@ -40,6 +42,7 @@ from gates_of_codex.operational_schema import (
     stable_node_id,
 )
 from gates_of_codex.state_io import load_campaign, save_campaign
+from gates_of_codex.europe import build_goe_europe_campaign
 
 
 def _node(province_id: str, *, pixel: list[int]) -> dict:
@@ -99,8 +102,8 @@ def _bn(bid: str, faction: Faction, province: str) -> Battalion:
         faction=faction,
         province_id=province,
         formation_id=toe,
-        roster=[BattalionRosterEntry("tank(x)", 1, category="tank")],
-        authorized_roster=[BattalionRosterEntry("tank(x)", 1, category="tank")],
+        roster=[BattalionRosterEntry("tank(x)", 2, category="tank")],
+        authorized_roster=[BattalionRosterEntry("tank(x)", 2, category="tank")],
     )
 
 
@@ -112,6 +115,7 @@ def _force(fid: str, faction: Faction, province: str, bn_ids: list[str]) -> Stra
         province_id=province,
         echelon=ForceEchelon.BATTALION,
         battalion_ids=list(bn_ids),
+        template_formation_id="toe-nato" if faction == Faction.NATO else "toe-rusa",
         position=FormationOperationalPosition(
             mode=PositionMode.AT_NODE.value,
             node_id=stable_node_id(province),
@@ -124,16 +128,22 @@ def _state(tmp: Path, *, with_enemy: bool = True) -> CampaignState:
     graph_path = tmp / "operational_graph.json"
     graph_path.write_text(json.dumps(_graph()), encoding="utf-8")
     battalions = {
-        "bn-nato": _bn("bn-nato", Faction.NATO, "a"),
+        "bn-nato-a": _bn("bn-nato-a", Faction.NATO, "a"),
+        "bn-nato-b": _bn("bn-nato-b", Faction.NATO, "a"),
     }
     forces = {
-        "sf-nato": _force("sf-nato", Faction.NATO, "a", ["bn-nato"]),
+        "sf-nato": _force("sf-nato", Faction.NATO, "a", ["bn-nato-a", "bn-nato-b"]),
     }
-    battalions["bn-nato"].strategic_formation_id = "sf-nato"
+    battalions["bn-nato-a"].strategic_formation_id = "sf-nato"
+    battalions["bn-nato-b"].strategic_formation_id = "sf-nato"
     if with_enemy:
-        battalions["bn-rusa"] = _bn("bn-rusa", Faction.RUSSIA, "b")
-        forces["sf-rusa"] = _force("sf-rusa", Faction.RUSSIA, "b", ["bn-rusa"])
-        battalions["bn-rusa"].strategic_formation_id = "sf-rusa"
+        battalions["bn-rusa-a"] = _bn("bn-rusa-a", Faction.RUSSIA, "b")
+        battalions["bn-rusa-b"] = _bn("bn-rusa-b", Faction.RUSSIA, "b")
+        forces["sf-rusa"] = _force(
+            "sf-rusa", Faction.RUSSIA, "b", ["bn-rusa-a", "bn-rusa-b"]
+        )
+        battalions["bn-rusa-a"].strategic_formation_id = "sf-rusa"
+        battalions["bn-rusa-b"].strategic_formation_id = "sf-rusa"
     state = CampaignState(
         campaign_name="S4",
         map_id="s4_test",
@@ -171,7 +181,6 @@ def _state(tmp: Path, *, with_enemy: bool = True) -> CampaignState:
     )
     ensure_strategic_formations(state)
     ensure_operational_positions(state)
-    # Re-apply positions after hydrate (anchors).
     for force in state.strategic_formations.values():
         force.position = FormationOperationalPosition(
             mode=PositionMode.AT_NODE.value,
@@ -182,9 +191,15 @@ def _state(tmp: Path, *, with_enemy: bool = True) -> CampaignState:
 
 
 class OperationalS4ContactTests(unittest.TestCase):
-    def test_enemy_node_entry_stops_and_creates_battle(self) -> None:
+    def test_enemy_node_entry_preserves_origin_and_all_battalions(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             state = _state(Path(temporary), with_enemy=True)
+            # Second Russian formation already holding b (same side, multi-formation defense).
+            state.battalions["bn-rusa-c"] = _bn("bn-rusa-c", Faction.RUSSIA, "b")
+            state.battalions["bn-rusa-c"].strategic_formation_id = "sf-rusa-2"
+            state.strategic_formations["sf-rusa-2"] = _force(
+                "sf-rusa-2", Faction.RUSSIA, "b", ["bn-rusa-c"]
+            )
             na, nb = stable_node_id("a"), stable_node_id("b")
             edge = stable_edge_id("corridor", na, nb)
             issue_move_order(
@@ -196,36 +211,102 @@ class OperationalS4ContactTests(unittest.TestCase):
             self.assertTrue(report["advanced"])
             self.assertIsNotNone(state.pending_battle)
             assert state.pending_battle is not None
-            self.assertEqual(ENCOUNTER_KIND_NODE_CONTACT, state.pending_battle.encounter_kind)
-            self.assertEqual(nb, state.pending_battle.encounter_node_id)
-            self.assertEqual("sf-nato", state.pending_battle.attacker_formation_id)
-            self.assertEqual("sf-rusa", state.pending_battle.defender_formation_id)
+            pb = state.pending_battle
+            self.assertEqual(ENCOUNTER_KIND_NODE_CONTACT, pb.encounter_kind)
+            self.assertEqual(nb, pb.encounter_node_id)
+            # Origin is pre-entry province a, not destination b.
+            self.assertEqual("a", pb.origin_province_id)
+            self.assertEqual("b", pb.target_province_id)
+            atk_ids = {p.battalion_id for p in pb.attacking_participants}
+            def_ids = {p.battalion_id for p in pb.defending_participants}
+            self.assertEqual({"bn-nato-a", "bn-nato-b"}, atk_ids)
+            self.assertEqual({"bn-rusa-a", "bn-rusa-b", "bn-rusa-c"}, def_ids)
             nato = state.strategic_formations["sf-nato"]
-            assert nato.position is not None
-            self.assertEqual(nb, nato.position.node_id)
             assert nato.move_order is not None
             self.assertEqual(MoveOrderStatus.BLOCKED.value, nato.move_order.status)
             self.assertTrue(node_is_contested(state, nb))
+
+    def test_static_contact_includes_all_allied_formations(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary), with_enemy=True)
+            nb = stable_node_id("b")
+            # Two NATO formations + two Russian formations already on b.
+            state.battalions["bn-ally"] = _bn("bn-ally", Faction.NATO, "b")
+            state.battalions["bn-ally"].strategic_formation_id = "sf-ally"
+            state.strategic_formations["sf-ally"] = _force(
+                "sf-ally", Faction.NATO, "b", ["bn-ally"]
+            )
+            state.battalions["bn-rusa-c"] = _bn("bn-rusa-c", Faction.RUSSIA, "b")
+            state.battalions["bn-rusa-c"].strategic_formation_id = "sf-rusa-2"
+            state.strategic_formations["sf-rusa-2"] = _force(
+                "sf-rusa-2", Faction.RUSSIA, "b", ["bn-rusa-c"]
+            )
+            for fid in ("sf-nato", "sf-ally"):
+                state.strategic_formations[fid].position = FormationOperationalPosition(
+                    mode=PositionMode.AT_NODE.value, node_id=nb, progress_milli=0
+                )
+                state.strategic_formations[fid].province_id = "b"
+            for bid in ("bn-nato-a", "bn-nato-b", "bn-ally"):
+                state.battalions[bid].province_id = "b"
+            report = advance_operational_tick(state)
+            self.assertEqual("static_contact", report.get("reason"))
+            assert state.pending_battle is not None
+            atk_ids = {p.battalion_id for p in state.pending_battle.attacking_participants}
+            def_ids = {p.battalion_id for p in state.pending_battle.defending_participants}
+            self.assertEqual({"bn-nato-a", "bn-nato-b", "bn-ally"}, atk_ids)
+            self.assertEqual({"bn-rusa-a", "bn-rusa-b", "bn-rusa-c"}, def_ids)
+
+    def test_resolve_battle_updates_all_participants(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary), with_enemy=True)
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            edge = stable_edge_id("corridor", na, nb)
+            issue_move_order(
+                state, "sf-nato", path_node_ids=[na, nb], path_edge_ids=[edge]
+            )
+            commit_move_orders(state)
+            activate_committed_orders(state)
+            advance_operational_tick(state)
+            assert state.pending_battle is not None
+            atk_before = {
+                bn.battalion_id: bn.unit_count
+                for bn in state.battalions.values()
+                if bn.faction == Faction.NATO
+            }
+            engine = CampaignEngine(state, random_seed=1)
+            winner = engine.auto_resolve_pending_battle()
+            self.assertIn(winner, {Faction.NATO, Faction.RUSSIA})
+            self.assertIsNone(state.pending_battle)
+            # All original NATO battalions still tracked or removed coherently.
+            for bid in atk_before:
+                bn = state.battalions.get(bid)
+                if bn is not None:
+                    self.assertLessEqual(bn.unit_count, atk_before[bid])
+            state.validate()
 
     def test_static_co_location_opens_battle(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             state = _state(Path(temporary), with_enemy=True)
             nb = stable_node_id("b")
-            # Place NATO on same node as Russia without moving.
             state.strategic_formations["sf-nato"].position = FormationOperationalPosition(
                 mode=PositionMode.AT_NODE.value, node_id=nb, progress_milli=0
             )
             state.strategic_formations["sf-nato"].province_id = "b"
-            state.battalions["bn-nato"].province_id = "b"
+            for bid in ("bn-nato-a", "bn-nato-b"):
+                state.battalions[bid].province_id = "b"
             report = advance_operational_tick(state)
             self.assertEqual("static_contact", report.get("reason"))
             self.assertIsNotNone(state.pending_battle)
+            assert state.pending_battle is not None
+            # Owner (Russia) defends; NATO attacks.
+            self.assertEqual(Faction.NATO, state.pending_battle.attacker_faction)
+            self.assertEqual(Faction.RUSSIA, state.pending_battle.defender_faction)
 
-    def test_friendly_stack_cap_blocks_entry(self) -> None:
+    def test_friendly_stack_cap_snaps_to_origin_node(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             state = _state(Path(temporary), with_enemy=False)
             nb = stable_node_id("b")
-            # Three friendlies already on b.
+            na = stable_node_id("a")
             for index in range(3):
                 bid = f"bn-f{index}"
                 fid = f"sf-f{index}"
@@ -235,7 +316,6 @@ class OperationalS4ContactTests(unittest.TestCase):
             self.assertEqual(3, len(formations_at_node(state, nb)))
             mover = state.strategic_formations["sf-nato"]
             self.assertFalse(can_enter_node_friendly_stack(state, mover, nb))
-            na = stable_node_id("a")
             edge = stable_edge_id("corridor", na, nb)
             issue_move_order(
                 state, "sf-nato", path_node_ids=[na, nb], path_edge_ids=[edge]
@@ -245,36 +325,30 @@ class OperationalS4ContactTests(unittest.TestCase):
             advance_operational_tick(state)
             nato = state.strategic_formations["sf-nato"]
             assert nato.position is not None
-            # Did not enter b; stayed off the destination node.
-            self.assertNotEqual(nb, nato.position.node_id)
+            self.assertEqual(PositionMode.AT_NODE.value, nato.position.mode)
+            self.assertEqual(na, nato.position.node_id)
+            self.assertEqual("a", nato.province_id)
             assert nato.move_order is not None
             self.assertEqual(MoveOrderStatus.BLOCKED.value, nato.move_order.status)
             self.assertIsNone(state.pending_battle)
 
-    def test_friendly_cooperation_under_cap(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            state = _state(Path(temporary), with_enemy=False)
-            nb = stable_node_id("b")
-            state.battalions["bn-f0"] = _bn("bn-f0", Faction.NATO, "b")
-            state.battalions["bn-f0"].strategic_formation_id = "sf-f0"
-            state.strategic_formations["sf-f0"] = _force(
-                "sf-f0", Faction.NATO, "b", ["bn-f0"]
-            )
-            na = stable_node_id("a")
-            edge = stable_edge_id("corridor", na, nb)
-            issue_move_order(
-                state, "sf-nato", path_node_ids=[na, nb], path_edge_ids=[edge]
-            )
-            commit_move_orders(state)
-            activate_committed_orders(state)
-            advance_operational_tick(state)
-            nato = state.strategic_formations["sf-nato"]
-            assert nato.position is not None
-            self.assertEqual(nb, nato.position.node_id)
-            assert nato.move_order is not None
-            self.assertEqual(MoveOrderStatus.COMPLETED.value, nato.move_order.status)
-            self.assertIsNone(state.pending_battle)
-            self.assertEqual(2, len(formations_at_node(state, nb)))
+    def test_legacy_map_still_rejects_mixed_faction_province(self) -> None:
+        state = build_goe_europe_campaign()
+        ensure_strategic_formations(state)
+        # Clear operational positions so mixed presence is not granted.
+        for force in state.strategic_formations.values():
+            force.position = None
+        state.map_metadata.pop("operational_graph", None)
+        battalions = sorted(state.battalions.values(), key=lambda value: value.battalion_id)
+        first = battalions[0]
+        hostile = next(value for value in battalions[1:] if value.faction != first.faction)
+        hostile.province_id = first.province_id
+        force = state.strategic_formations.get(hostile.strategic_formation_id)
+        if force is not None:
+            force.province_id = first.province_id
+            force.position = None
+        with self.assertRaisesRegex(ValueError, "multiple factions"):
+            state.validate()
 
     def test_pending_battle_round_trips(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -295,6 +369,9 @@ class OperationalS4ContactTests(unittest.TestCase):
             assert reloaded.pending_battle is not None
             self.assertEqual(ENCOUNTER_KIND_NODE_CONTACT, reloaded.pending_battle.encounter_kind)
             self.assertEqual(nb, reloaded.pending_battle.encounter_node_id)
+            self.assertEqual("a", reloaded.pending_battle.origin_province_id)
+            self.assertGreaterEqual(len(reloaded.pending_battle.attacking_participants), 2)
+            self.assertGreaterEqual(len(reloaded.pending_battle.defending_participants), 2)
 
     def test_ticks_stop_after_contact_battle(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -306,8 +383,6 @@ class OperationalS4ContactTests(unittest.TestCase):
             )
             commit_move_orders(state)
             activate_committed_orders(state)
-            from gates_of_codex.operational_movement import advance_operational_ticks
-
             batch = advance_operational_ticks(state, 10)
             self.assertLess(batch["ticks"], 10)
             self.assertIsNotNone(state.pending_battle)
