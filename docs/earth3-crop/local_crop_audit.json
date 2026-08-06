@@ -3,7 +3,7 @@
   "schema_version": 1,
   "candidate_id": "em_reference_masked",
   "generation": {
-    "commit_sha": "2236e5aa4f19be467a88d874bda179db9aa38518",
+    "commit_sha": "b31fb473d26b5c907f012e459d2044f3a28aa0f7",
     "tool_version": "0.11.0",
     "authoritative_geometry_engine": "shapely",
     "comparison_geometry_engine": "stdlib_earclip_sh",
