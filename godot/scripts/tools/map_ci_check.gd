@@ -11,7 +11,10 @@ extends SceneTree
 
 const DEFAULT_SNAPSHOT := "res://fixtures/snapshots/em_theatre_profile.json"
 const DEFAULT_MANIFEST := "res://assets/maps/europe_mediterranean/from_goe/map_manifest.json"
+const EARTH3_SNAPSHOT := "res://fixtures/snapshots/earth3_theatre.json"
+const EARTH3_MANIFEST := "res://assets/maps/earth3_europe_mediterranean/map_manifest.json"
 const DEFAULT_FIXTURE := "res://fixtures/presentation/routes_and_battles.json"
+const PolygonMapScript = preload("res://scripts/polygon_map.gd")
 const ColorIdMapScript = preload("res://scripts/color_id_map.gd")
 const MapTextureLayerScript = preload("res://scripts/presentation/map_texture_layer.gd")
 const MapSpaceScript = preload("res://scripts/presentation/map_space.gd")
@@ -88,6 +91,26 @@ func _run() -> void:
 		mutated["provinces"] = provinces
 		color_map.refresh_snapshot(mutated, FACTION_COLORS)
 	print("map_ci_check: color_id refresh ok provinces=%s" % color_map.row_by_province.size())
+
+	# Earth3 polygon backend gate (when assets committed).
+	if FileAccess.file_exists(EARTH3_MANIFEST) and FileAccess.file_exists(EARTH3_SNAPSHOT):
+		var esnap := _load_json(EARTH3_SNAPSHOT)
+		var pmap = PolygonMapScript.new()
+		if not pmap.open(EARTH3_MANIFEST, esnap, FACTION_COLORS):
+			_fail("PolygonMap.open failed: %s" % pmap.error)
+			return
+		if int(pmap.province_count) != 3038:
+			_fail("Earth3 province_count expected 3038 got %s" % pmap.province_count)
+			return
+		var sample_id := String(pmap.province_by_index[10])
+		var hit := pmap.province_at_image_pos(pmap.centroids[10])
+		if hit != sample_id:
+			_fail("Earth3 hit test expected %s got %s" % [sample_id, hit])
+			return
+		pmap.refresh_snapshot(esnap, FACTION_COLORS)
+		print("map_ci_check: earth3 polygon ok provinces=%s load_ms=%s meshes=%s" % [
+			pmap.province_count, pmap.load_ms, pmap.mesh_count
+		])
 
 	DisplayServer.window_set_size(Vector2i(1280, 720))
 	if root is Window:

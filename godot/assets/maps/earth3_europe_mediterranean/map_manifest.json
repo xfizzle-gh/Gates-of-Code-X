@@ -1,0 +1,42 @@
+{
+  "schema": "gates-of-codex.strategic-map",
+  "schema_version": 1,
+  "map_id": "earth3_europe_mediterranean",
+  "renderer": "polygon_mesh",
+  "provenance": "earth3_em_reference_masked_approved",
+  "asset_status": "production_theatre",
+  "polygon_dataset": {
+    "path": "polygon_dataset.json",
+    "sha256": "c64faf85d66a1d97bdad4d005ff69a47b8b49b2d5e52ca80a5a268ffde2a2486",
+    "province_count": 3038
+  },
+  "province_count": 3038,
+  "bounds": {
+    "origin_source_xy": [
+      7076.0,
+      640.0
+    ],
+    "width": 3787.0,
+    "height": 2867.0,
+    "source_min_xy": [
+      7084.0,
+      648.0
+    ],
+    "source_max_xy": [
+      10855.0,
+      3499.0
+    ]
+  },
+  "fallback_map_id": "europe_mediterranean_from_goe",
+  "runtime_contract": {
+    "gameplay_key": "province_id",
+    "hit_test": "point_in_polygon_spatial_index",
+    "ownership_update": "event_driven_recolor"
+  },
+  "approved_included_ids_sha256": "7effdffbccbcce33ecba364dc8d161ded5053266db2df0deee605a98c36620dc",
+  "export": {
+    "archive_sha256": "b88cc599128c73a5711af3add8330f5a42629c9a3e07a5dd7aea8437a97fc760",
+    "crop_config_sha256": "25ff84cbc7b9de419723219ce6d9446471fdacfe58db3d54c2504643413bed7c",
+    "elapsed_ms": 8383
+  }
+}

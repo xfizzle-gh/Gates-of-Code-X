@@ -1,0 +1,42 @@
+{
+  "map_id": "earth3_europe_mediterranean",
+  "province_count": 3038,
+  "land_count": 2843,
+  "water_count": 195,
+  "vertex_count": 263521,
+  "triangle_count": 253175,
+  "edge_count": 8856,
+  "approved_included_ids_sha256": "7effdffbccbcce33ecba364dc8d161ded5053266db2df0deee605a98c36620dc",
+  "included_source_ids_sha256": "7effdffbccbcce33ecba364dc8d161ded5053266db2df0deee605a98c36620dc",
+  "dataset_sha256": "c64faf85d66a1d97bdad4d005ff69a47b8b49b2d5e52ca80a5a268ffde2a2486",
+  "bounds": {
+    "origin_source_xy": [
+      7076.0,
+      640.0
+    ],
+    "width": 3787.0,
+    "height": 2867.0,
+    "source_min_xy": [
+      7084.0,
+      648.0
+    ],
+    "source_max_xy": [
+      10855.0,
+      3499.0
+    ]
+  },
+  "sample_province_ids": [
+    "e3_0000",
+    "e3_0001",
+    "e3_0002",
+    "e3_0003",
+    "e3_0004"
+  ],
+  "sample_source_ids": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ]
+}
