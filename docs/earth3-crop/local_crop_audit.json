@@ -3,7 +3,7 @@
   "schema_version": 1,
   "candidate_id": "em_reference_masked",
   "generation": {
-    "commit_sha": "b31fb473d26b5c907f012e459d2044f3a28aa0f7",
+    "commit_sha": "309a4558ddbc7159e2038587ff35a2ba23b55725",
     "tool_version": "0.11.0",
     "authoritative_geometry_engine": "shapely",
     "comparison_geometry_engine": "stdlib_earclip_sh",
@@ -11,7 +11,7 @@
   },
   "source": {
     "archive_path_local_only": "C:\\Users\\paulf\\Downloads\\AOH3_Earth3_map_provinces.zip",
-    "archive_sha256": "b88cc599128c73a5711af3add8330f5a42629c9a3e07a5dd7aea8437a97fc760",
+    "archive_sha256": "41214c968af6254c413dc47fa2bd8a4c2be1a6be0af5044d57d9bfe31d32343a",
     "source_province_count": 13892,
     "archive_committed": false
   },
@@ -19,7 +19,7 @@
     "crop_config_path": "E:/Steam/steamapps/workshop/content/400750/Gates-of-Code-X-earth3/config/earth3/crop_candidates_v1.json",
     "crop_config_sha256": "55b09ccf102b4b5a0dc25b1e55d0859d142bd70350a69134001df0afc34e923a",
     "threshold_decisions_path": "E:/Steam/steamapps/workshop/content/400750/Gates-of-Code-X-earth3/config/earth3/threshold_decisions_em_reference_masked_v1.json",
-    "threshold_decisions_sha256": "8d89f09bef7e595d4d559bb2158bf24498f3f7aea0e44c67068d0cbf70cea12a"
+    "threshold_decisions_sha256": "67d62093a36411e3fc41bc66cbb6557d9afc2bf6ac674f32fa22eda17371d030"
   },
   "oracle": {
     "provinces_checked": 4028,

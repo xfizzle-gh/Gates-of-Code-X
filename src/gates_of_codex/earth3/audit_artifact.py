@@ -24,18 +24,19 @@ AUDIT_SCHEMA_VERSION = 1
 
 
 def sha256_file(path: str | Path) -> str:
-    digest = hashlib.sha256()
-    with Path(path).open("rb") as handle:
-        while True:
-            chunk = handle.read(1024 * 1024)
-            if not chunk:
-                break
-            digest.update(chunk)
-    return digest.hexdigest()
+    """SHA-256 of file bytes with newlines normalized to LF.
+
+    Git may check out tracked text as CRLF on Windows. Hashing the raw
+    working-tree bytes would make CI fail spuriously; normalize first so
+    tracked-input hashes are platform-stable.
+    """
+    data = Path(path).read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return hashlib.sha256(data).hexdigest()
 
 
 def sha256_text(text: str) -> str:
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
 def included_ids_hash(ids: list[int]) -> str:
