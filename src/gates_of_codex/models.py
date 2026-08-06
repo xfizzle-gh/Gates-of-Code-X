@@ -8,6 +8,8 @@ from .operational_schema import (
     PROGRESS_MILLI_MAX,
     PROGRESS_MILLI_MIN,
     FormationOperationalPosition,
+    MoveOrderStatus,
+    OperationalMoveOrder,
     PositionMode,
     require_strict_int,
 )
@@ -235,6 +237,8 @@ class StrategicFormation:
     is_player_controlled: bool = False
     # Operational graph location (S2). province_id remains derived/legacy authority.
     position: FormationOperationalPosition | None = None
+    # S3: current draft/active move order (formation is movement authority).
+    move_order: OperationalMoveOrder | None = None
 
     def validate(self) -> None:
         if not self.strategic_formation_id.strip():
@@ -251,6 +255,15 @@ class StrategicFormation:
             raise ValueError(f"Strategic formation {self.strategic_formation_id} has duplicate battalion membership")
         if self.position is not None:
             _validate_position_shape(self.position, force_id=self.strategic_formation_id)
+        if self.move_order is not None:
+            if self.move_order.formation_id and self.move_order.formation_id != self.strategic_formation_id:
+                raise ValueError(
+                    f"Strategic formation {self.strategic_formation_id} move_order formation_id mismatch"
+                )
+            if self.move_order.status not in {item.value for item in MoveOrderStatus}:
+                raise ValueError(
+                    f"Strategic formation {self.strategic_formation_id} has invalid move_order status"
+                )
 
 
 @dataclass(slots=True)

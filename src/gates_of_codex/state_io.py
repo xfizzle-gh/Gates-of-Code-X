@@ -157,6 +157,7 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
             experience=int(value.get("experience", 0)),
             encircled_turns=int(value.get("encircled_turns", 0)),
         )
+    from .operational_movement import move_order_from_dict
     from .operational_position import position_from_dict
 
     strategic_formations = {
@@ -182,6 +183,7 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
             experience_summary=int(value.get("experience_summary", 0)),
             is_player_controlled=bool(value.get("is_player_controlled", False)),
             position=position_from_dict(value.get("position")),
+            move_order=move_order_from_dict(value.get("move_order")),
         )
         for key, value in data.get("strategic_formations", {}).items()
     }

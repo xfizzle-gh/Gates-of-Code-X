@@ -172,6 +172,80 @@ def _apply_one(state, op: str, raw: dict[str, Any]) -> CommandResult:
     if op == "auto_resolve":
         winner = CampaignEngine(state).auto_resolve_pending_battle()
         return CommandResult(op=op, ok=True, detail=f"winner {winner.value}", data={"winner": winner.value})
+    if op == "issue_move_order":
+        from .operational_movement import issue_move_order, move_order_to_dict
+
+        formation_id = str(
+            raw.get("formation")
+            or raw.get("formation_id")
+            or raw.get("strategic_formation_id")
+            or ""
+        )
+        path_nodes = [str(item) for item in raw.get("path_node_ids") or raw.get("nodes") or []]
+        path_edges = [str(item) for item in raw.get("path_edge_ids") or raw.get("edges") or []]
+        if not formation_id or not path_nodes:
+            raise ValueError("issue_move_order requires formation and path_node_ids")
+        order = issue_move_order(
+            state,
+            formation_id,
+            path_node_ids=path_nodes,
+            path_edge_ids=path_edges,
+            destination_site_id=(
+                None
+                if raw.get("destination_site_id") in (None, "")
+                else str(raw.get("destination_site_id"))
+            ),
+            order_id=None if raw.get("order_id") in (None, "") else str(raw.get("order_id")),
+        )
+        return CommandResult(
+            op=op,
+            ok=True,
+            detail=f"draft {order.order_id}",
+            data={"move_order": move_order_to_dict(order)},
+        )
+    if op == "cancel_move_order":
+        from .operational_movement import cancel_move_order, move_order_to_dict
+
+        formation_id = str(
+            raw.get("formation")
+            or raw.get("formation_id")
+            or raw.get("strategic_formation_id")
+            or ""
+        )
+        if not formation_id:
+            raise ValueError("cancel_move_order requires formation")
+        order = cancel_move_order(state, formation_id)
+        return CommandResult(
+            op=op,
+            ok=True,
+            detail="cancelled" if order else "none",
+            data={"move_order": move_order_to_dict(order)},
+        )
+    if op == "commit_move_orders":
+        from .operational_movement import commit_move_orders
+
+        faction = raw.get("faction")
+        stance = str(raw.get("locked_stance") or raw.get("stance") or "operational")
+        ids = commit_move_orders(
+            state,
+            faction=None if faction in (None, "") else str(faction),
+            locked_stance=stance,
+        )
+        return CommandResult(
+            op=op,
+            ok=True,
+            detail=f"committed {len(ids)}",
+            data={"formation_ids": ids},
+        )
+    if op == "advance_operational_tick":
+        from .operational_movement import advance_operational_tick, advance_operational_ticks
+
+        count = raw.get("count")
+        if count is None:
+            report = advance_operational_tick(state)
+        else:
+            report = advance_operational_ticks(state, int(count))
+        return CommandResult(op=op, ok=True, detail="advanced", data=report)
     if op == "end_turn":
         nxt = CampaignEngine(state).end_turn()
         return CommandResult(op=op, ok=True, detail=f"next {nxt.value}", data={"next_faction": nxt.value})

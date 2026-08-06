@@ -20,7 +20,7 @@ from .strategic import (
 from .supply import reachable_supply_provinces
 
 
-FRONTEND_SCHEMA_VERSION = 9
+FRONTEND_SCHEMA_VERSION = 10
 FRONTEND_PYTHON_MODULE = "gates_of_codex"
 
 
@@ -32,6 +32,7 @@ def build_frontend_snapshot(
 ) -> dict:
     ensure_strategic_layer(state)
     from .force_migration import ensure_strategic_formations
+    from .operational_movement import get_operational_clock, move_order_to_dict
     from .operational_position import (
         ensure_operational_positions,
         position_to_dict,
@@ -40,6 +41,7 @@ def build_frontend_snapshot(
 
     ensure_strategic_formations(state)
     ensure_operational_positions(state)
+    operational_clock = get_operational_clock(state)
     apply_marker_layout(state)
     objectives = update_operational_objectives(state)
     outcome = evaluate_campaign_outcome(state)
@@ -84,6 +86,7 @@ def build_frontend_snapshot(
             "map_metadata": state.map_metadata,
             "catalog_signature": state.catalog_signature,
             "outcome": asdict(outcome),
+            "operational_clock": operational_clock,
         },
         "strategic_map": _strategic_map_block(state, snapshot_path),
         "bounds": {
@@ -188,6 +191,7 @@ def build_frontend_snapshot(
                 "province_id": force.province_id,
                 "position": position_to_dict(force.position),
                 "display_pixel": resolve_display_pixel(state, force),
+                "move_order": move_order_to_dict(force.move_order),
                 "echelon": force.echelon.value,
                 "commander_id": force.commander_id,
                 "commander_display_name": _commander_display_name(state, force.commander_id),
@@ -431,6 +435,10 @@ def _control_block(campaign_path: str | Path | None, snapshot_path: str | Path |
         "python_module": FRONTEND_PYTHON_MODULE,
         "supported_ops": [
             "move",
+            "issue_move_order",
+            "cancel_move_order",
+            "commit_move_orders",
+            "advance_operational_tick",
             "end_turn",
             "run_ai",
             "auto_resolve",
