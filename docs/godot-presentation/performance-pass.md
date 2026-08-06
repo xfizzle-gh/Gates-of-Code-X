@@ -132,13 +132,14 @@ Note: interactive Godot window capture hung in this agent environment; composite
 - None for this PR
 - After S6 merges, replace presentation-only edge fixtures with read-only live fields in Godot adapters only
 
-## Known limitations
+## Known limitations (state plainly)
 
-- Source art resolution still 817×920; true smooth vector borders are out of scope
-- Interactive FPS / draw-call GPU counters not captured in headless mode
-- Stack panel UI performance is unchanged except shared map-layer gains
-- **Synchronous `OS.execute()` write-back still blocks the Godot main thread** during commands — tracked in follow-up **#91** (async backend, busy state, duplicate-click protection)
-- Clean-checkout profiling uses committed `godot/fixtures/snapshots/em_theatre_profile.json` (not ignored `campaign_snapshot.json`)
+- **Map refresh performance is substantially improved** (ownership/highlight rebuilds are event-driven and cached).
+- **Synchronous `OS.execute()` write-back still blocks the Godot main thread** during commands — tracked in follow-up **#91**.
+- **Source visual art is still the interim 817×920** procedural/ID-derived theatre. This PR does **not** create final high-resolution terrain/coastline art.
+- **Production-quality / high-resolution visual map replacement remains in #74.**
+- True runtime screenshots require a real GL context (windowed or `xvfb-run`); pure dummy `--headless` cannot capture CanvasItem output.
+- Clean-checkout profiling/screenshots use explicit `--snapshot=res://fixtures/snapshots/em_theatre_profile.json` only (never a silent production fallback).
 
 ## Regressions covered
 

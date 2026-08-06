@@ -152,6 +152,31 @@ class GodotPresentationPerformanceTests(unittest.TestCase):
         self.assertIn("last_event", debug)
         self.assertIn("static_rebuilds_displayed", debug)
 
+    def test_no_silent_fixture_fallback_on_normal_launch(self) -> None:
+        main = (GODOT / "scripts/main_color_id.gd").read_text(encoding="utf-8")
+        self.assertNotIn("DEFAULT_PROFILE_SNAPSHOT", main)
+        self.assertIn("Never silently replace", main)
+        # Production path must not auto-load profiling fixture.
+        self.assertNotIn('_load_snapshot(DEFAULT_PROFILE_SNAPSHOT)', main)
+        self.assertNotIn('_load_snapshot("res://fixtures/snapshots/em_theatre_profile.json")', main)
+
+    def test_screenshot_tool_uses_true_viewport_capture(self) -> None:
+        shot = (GODOT / "scripts/tools/map_screenshot.gd").read_text(encoding="utf-8")
+        ci = (GODOT / "scripts/tools/map_ci_check.gd").read_text(encoding="utf-8")
+        self.assertIn("get_image()", shot)
+        self.assertIn("force_draw", shot)
+        self.assertIn("create_timer", shot)
+        self.assertNotIn("_compose_runtime_image", shot)
+        self.assertNotIn("_stamp_x", shot)
+        self.assertNotIn("blend_rect", shot)
+        self.assertIn("get_image()", ci)
+        self.assertIn("force_draw", ci)
+        self.assertIn("RENDER_FRAMES", ci)
+        workflow = (ROOT / ".github/workflows/gates-of-codex.yml").read_text(encoding="utf-8")
+        self.assertIn("xvfb-run", workflow)
+        self.assertIn("map_ci_check.gd", workflow)
+        self.assertIn("map_screenshot.gd", workflow)
+
     def test_edge_marker_interpolation_is_fixed_point(self) -> None:
         markers = (GODOT / "scripts/presentation/map_markers.gd").read_text(encoding="utf-8")
         self.assertIn("progress_fp", markers)

@@ -57,6 +57,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install system deps (xvfb for true GL render captures)
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1 libxcursor1 libxinerama1 libxrandr2 libxi6 libx11-6
       - name: Install Godot 4.7
         run: |
           set -euo pipefail
@@ -68,16 +73,20 @@ jobs:
           install -m 755 "$GODOT_BIN" "$HOME/godot"
           echo "$HOME" >> "$GITHUB_PATH"
           "$HOME/godot" --version
-      - name: Godot headless project import
+      - name: Godot project import
         working-directory: godot
         run: |
           set -euo pipefail
+          # Import can use headless; draw/capture steps require xvfb + real GL.
           "$HOME/godot" --headless --path . --import --quit-after 1
-      - name: Godot map CI check (scene + refresh)
+      - name: Godot map CI check (draw path + viewport smoke)
         working-directory: godot
         run: |
           set -euo pipefail
-          "$HOME/godot" --headless --path . -s res://scripts/tools/map_ci_check.gd
+          # True CanvasItem draw path needs a display (xvfb), not dummy headless.
+          xvfb-run -a -s "-screen 0 1920x1080x24" \
+            "$HOME/godot" --path . --audio-driver Dummy \
+            -s res://scripts/tools/map_ci_check.gd
       - name: Godot map profiler (committed fixture)
         run: |
           set -euo pipefail
@@ -94,28 +103,45 @@ jobs:
           assert int(data.get("province_count", 0)) >= 300, data
           print("profiler ok", data.get("map_open_ms"), "ms open")
           PY
-      - name: Godot runtime screenshots (SubViewport)
-        working-directory: godot
+      - name: Godot true runtime viewport screenshots
         run: |
           set -euo pipefail
-          OUT=../docs/godot-presentation/screenshots/runtime
+          OUT="$(pwd)/docs/godot-presentation/screenshots/runtime"
           mkdir -p "$OUT"
           SNAP=res://fixtures/snapshots/em_theatre_profile.json
           shoot() {
             local name="$1"; shift
-            "$HOME/godot" --headless --path . -s res://scripts/tools/map_screenshot.gd -- \
+            xvfb-run -a -s "-screen 0 2560x1440x24" \
+              "$HOME/godot" --path godot --audio-driver Dummy \
+              -s res://scripts/tools/map_screenshot.gd -- \
               --snapshot="$SNAP" --out="$OUT/$name" "$@"
             test -s "$OUT/$name"
           }
           shoot full_map_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/empty_map.json
           shoot full_map_1440p.png --width=2560 --height=1440 --fixture=res://fixtures/presentation/empty_map.json
-          shoot selected_hovered_1080p.png --width=1920 --height=1080 --select-first --hover-second
+          shoot selected_hovered_1080p.png --width=1920 --height=1080 --select-first --hover-second --fixture=res://fixtures/presentation/stack_and_selection.json
+          shoot selected_hovered_1440p.png --width=2560 --height=1440 --select-first --hover-second --fixture=res://fixtures/presentation/stack_and_selection.json
           shoot formation_stack_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/many_counters.json
-          shoot route_node_edge_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/routes_and_battles.json
+          shoot route_line_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/routes_and_battles.json
+          shoot node_edge_battle_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/routes_and_battles.json
           shoot control_site_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/control_sites.json
           shoot debug_overlay_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/control_sites.json --debug --select-first
-          shoot selected_hovered_1440p.png --width=2560 --height=1440 --select-first --hover-second
           ls -la "$OUT"
+          python3 - <<'PY'
+          import struct
+          from pathlib import Path
+          root = Path("docs/godot-presentation/screenshots/runtime")
+          files = sorted(root.glob("*.png"))
+          assert files, "no runtime screenshots"
+          for p in files:
+              data = p.read_bytes()
+              assert data[:8] == b"\x89PNG\r\n\x1a\n", p
+              # IHDR width/height
+              w, h = struct.unpack(">II", data[16:24])
+              assert w >= 1280 and h >= 720, (p, w, h)
+              assert p.stat().st_size > 50_000, (p, p.stat().st_size)
+              print("ok", p.name, f"{w}x{h}", p.stat().st_size)
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:

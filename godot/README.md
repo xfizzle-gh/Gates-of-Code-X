@@ -29,14 +29,17 @@ Default snapshot: `res://campaign_snapshot.json`. Optional first non-flag user a
 ### CLI helpers
 
 ```text
-Godot.exe --path godot -- --snapshot=res://fixtures/snapshots/em_theatre_profile.json --fixture=res://fixtures/presentation/routes_and_battles.json
-Godot.exe --path godot -- --debug-map
-Godot.exe --headless --path godot -s res://scripts/tools/map_ci_check.gd
+# Normal play uses campaign_snapshot.json (or --snapshot=...). Missing snapshot is a visible load error.
+Godot.exe --path godot -- --snapshot=res://fixtures/snapshots/em_theatre_profile.json --fixture=res://fixtures/presentation/routes_and_battles.json --debug-map
+
+# CI / tooling (true viewport capture needs a real GL context — not pure dummy headless)
+Godot.exe --path godot --audio-driver Dummy -s res://scripts/tools/map_ci_check.gd
 Godot.exe --headless --path godot -s res://scripts/tools/map_profiler.gd -- --snapshot=res://fixtures/snapshots/em_theatre_profile.json --out=../docs/godot-presentation/after_profile.json
-Godot.exe --headless --path godot -s res://scripts/tools/map_screenshot.gd -- --snapshot=res://fixtures/snapshots/em_theatre_profile.json --out=../docs/godot-presentation/screenshots/runtime/full_map_1080p.png --width=1920 --height=1080
+Godot.exe --path godot --audio-driver Dummy -s res://scripts/tools/map_screenshot.gd -- --snapshot=res://fixtures/snapshots/em_theatre_profile.json --out=../docs/godot-presentation/screenshots/runtime/full_map_1080p.png --width=1920 --height=1080
 ```
 
 Write-back remains synchronous (`OS.execute`) and can block the UI — see issue #91.
+This PR improves map refresh cost; it does not ship final high-res terrain art (#74).
 
 ### Presentation fixtures
 

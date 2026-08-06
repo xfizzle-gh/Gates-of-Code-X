@@ -8,7 +8,6 @@ const MapTextureLayerScript = preload("res://scripts/presentation/map_texture_la
 const DEFAULT_MAP_MANIFEST := "res://assets/maps/europe/interim_goe/map_manifest.json"
 const EM_FROM_GOE_MANIFEST := "res://assets/maps/europe_mediterranean/from_goe/map_manifest.json"
 const DEFAULT_PRESENTATION_FIXTURE := "res://fixtures/presentation/empty_map.json"
-const DEFAULT_PROFILE_SNAPSHOT := "res://fixtures/snapshots/em_theatre_profile.json"
 const HOME_MAP_MARGIN := Vector2(18, 18)
 const HOME_FIT_FILL := 1.06
 # Reserve space so title/diagnostic rows never cover the theatre.
@@ -62,62 +61,68 @@ func _ready() -> void:
 	if filtered.size() > 1:
 		map_manifest_source_path = String(filtered[1])
 	super._ready()
-	# Clean checkout fallback when ignored campaign_snapshot.json is absent.
-	if (
-		(snapshot.is_empty() or not load_error.is_empty())
-		and FileAccess.file_exists(DEFAULT_PROFILE_SNAPSHOT)
-	):
-		snapshot_source_path = DEFAULT_PROFILE_SNAPSHOT
-		load_error = ""
-		_load_snapshot(DEFAULT_PROFILE_SNAPSHOT)
+	# Never silently replace a missing/invalid campaign_snapshot with the profiling fixture.
+	# Fixture snapshot is only used when explicitly passed via --snapshot= (main.gd) or tooling.
 	if filtered.size() <= 1:
 		map_manifest_source_path = _resolve_map_manifest_path()
 	_ensure_presentation_layers()
 	_load_presentation_fixture(presentation_fixture_path)
 	_open_color_id_map()
-	set_process(map_debug.enabled or not _screenshot_path.is_empty())
+	set_process(map_debug.enabled)
 	if not _screenshot_path.is_empty():
+		# Legacy in-scene screenshot path: wait for real rendered frames.
 		_fit_complete_theatre()
 		_layers_dirty = true
 		_sync_presentation_layers()
-		_screenshot_frames_left = 12
 		queue_redraw()
+		if not RenderingServer.frame_post_draw.is_connected(_on_screenshot_frame_post_draw):
+			RenderingServer.frame_post_draw.connect(_on_screenshot_frame_post_draw)
+		_screenshot_frames_left = 12
 
 
 func _process(delta: float) -> void:
 	if map_debug.enabled:
 		map_debug.tick_fps(delta)
-	if _screenshot_frames_left < 0:
+	if _screenshot_frames_left >= 0:
+		_layers_dirty = true
+		_sync_presentation_layers()
+		queue_redraw()
+
+
+func _on_screenshot_frame_post_draw() -> void:
+	if _screenshot_path.is_empty() or _screenshot_frames_left < 0:
 		return
 	_screenshot_frames_left -= 1
-	_layers_dirty = true
-	_sync_presentation_layers()
-	queue_redraw()
 	if _screenshot_frames_left > 0:
 		return
 	_screenshot_frames_left = -1
-	if not map_debug.enabled:
-		set_process(false)
-	call_deferred("_capture_screenshot_and_quit")
+	if RenderingServer.frame_post_draw.is_connected(_on_screenshot_frame_post_draw):
+		RenderingServer.frame_post_draw.disconnect(_on_screenshot_frame_post_draw)
+	_capture_screenshot_and_quit()
 
 
 func _capture_screenshot_and_quit() -> void:
 	if _screenshot_path.is_empty():
 		return
 	var image := get_viewport().get_texture().get_image()
-	if image != null and not image.is_empty():
-		var base := _screenshot_path.get_base_dir()
-		if not base.is_empty() and not DirAccess.dir_exists_absolute(base):
-			DirAccess.make_dir_recursive_absolute(base)
-		var err := image.save_png(_screenshot_path)
-		status_message = "Saved screenshot err=%s path=%s ready=%s" % [
-			err,
-			_screenshot_path,
-			str(color_id_map.is_ready),
-		]
-		print(status_message)
-	else:
-		print("screenshot failed: empty viewport image path=%s" % _screenshot_path)
+	if image == null or image.is_empty():
+		push_error("screenshot failed: empty viewport image path=%s" % _screenshot_path)
+		get_tree().quit(3)
+		return
+	var base := _screenshot_path.get_base_dir()
+	if not base.is_empty() and not DirAccess.dir_exists_absolute(base):
+		DirAccess.make_dir_recursive_absolute(base)
+	var err := image.save_png(_screenshot_path)
+	if err != OK:
+		push_error("screenshot save_png failed err=%s path=%s" % [err, _screenshot_path])
+		get_tree().quit(4)
+		return
+	status_message = "Saved screenshot err=%s path=%s ready=%s" % [
+		err,
+		_screenshot_path,
+		str(color_id_map.is_ready),
+	]
+	print(status_message)
 	get_tree().quit(0)
 
 
