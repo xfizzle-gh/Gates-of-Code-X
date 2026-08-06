@@ -17,15 +17,37 @@ SITE_CONTROL_KEY = "operational_site_control"
 DEFAULT_CAPTURE_HOLD_TICKS = 2
 
 
-def get_site_control_state(state: CampaignState) -> dict[str, dict[str, Any]]:
+def get_site_control_state(
+    state: CampaignState,
+    *,
+    strict: bool = False,
+) -> dict[str, dict[str, Any]]:
+    """Return site-control rows.
+
+    When ``strict`` is True (graph available / ensure path), malformed roots or
+    non-object rows raise. When False (graph unavailable), return a best-effort
+    view without mutating or erasing data.
+    """
     raw = state.map_metadata.get(SITE_CONTROL_KEY)
-    if not isinstance(raw, dict):
+    if raw is None:
         return {}
-    return {
-        str(site_id): dict(value)
-        for site_id, value in raw.items()
-        if isinstance(value, dict)
-    }
+    if not isinstance(raw, dict):
+        if strict:
+            raise ValueError(
+                f"{SITE_CONTROL_KEY} must be an object, got {type(raw).__name__}"
+            )
+        return {}
+    out: dict[str, dict[str, Any]] = {}
+    for site_id, value in raw.items():
+        if not isinstance(value, dict):
+            if strict:
+                raise ValueError(
+                    f"{SITE_CONTROL_KEY}[{site_id!r}] must be an object, "
+                    f"got {type(value).__name__}"
+                )
+            continue
+        out[str(site_id)] = dict(value)
+    return out
 
 
 def set_site_control_state(state: CampaignState, control: dict[str, dict[str, Any]]) -> None:
@@ -35,16 +57,20 @@ def set_site_control_state(state: CampaignState, control: dict[str, dict[str, An
     }
 
 
-def capture_hold_ticks(state: CampaignState) -> int:
+def capture_hold_ticks(state: CampaignState, *, strict: bool = False) -> int:
+    """Return capture hold ticks from graph rules.
+
+    When the graph is available (or ``strict``), malformed values raise.
+    When the graph cannot be resolved, fall back to the default without error.
+    """
     graph = load_operational_graph_for_state(state)
     if graph is None:
+        if strict:
+            raise ValueError("capture_hold_ticks requires a resolvable operational graph")
         return DEFAULT_CAPTURE_HOLD_TICKS
     rules = graph.get("rules") or {}
     raw = rules.get("capture_hold_ticks", DEFAULT_CAPTURE_HOLD_TICKS)
-    try:
-        return require_strict_int(raw, name="capture_hold_ticks", minimum=1)
-    except ValueError:
-        return DEFAULT_CAPTURE_HOLD_TICKS
+    return require_strict_int(raw, name="capture_hold_ticks", minimum=1)
 
 
 def list_control_sites(state: CampaignState) -> list[dict[str, Any]]:
@@ -105,8 +131,9 @@ def ensure_site_control_state(state: CampaignState) -> dict[str, Any]:
     if not sites:
         return {"ensured": True, "reason": "no_sites", "site_count": 0}
 
-    hold = capture_hold_ticks(state)
-    existing = get_site_control_state(state)
+    # Graph is available: reject malformed capture config instead of erasing it.
+    hold = capture_hold_ticks(state, strict=True)
+    existing = get_site_control_state(state, strict=True)
     control: dict[str, dict[str, Any]] = {}
     for site in sites:
         site_id = str(site.get("site_id") or "")

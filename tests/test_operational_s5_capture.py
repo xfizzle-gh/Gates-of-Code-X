@@ -596,6 +596,48 @@ class OperationalS5CaptureTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 ensure_site_control_state(state)
 
+    def test_legacy_battle_on_operational_campaign_does_not_flip_owner(self) -> None:
+        """move_or_attack battle wins must not bypass site capture on op campaigns."""
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary))
+            state.battalions["bn-rusa"] = _bn(
+                "bn-rusa", Faction.RUSSIA, "b", force_id="sf-rusa"
+            )
+            state.strategic_formations["sf-rusa"] = _force(
+                "sf-rusa", Faction.RUSSIA, "b", ["bn-rusa"]
+            )
+            engine = CampaignEngine(state, random_seed=1)
+            result = engine.move_or_attack("bn-nato", "b")
+            self.assertIsNotNone(result.pending_battle)
+            assert state.pending_battle is not None
+            self.assertEqual("", state.pending_battle.encounter_kind)
+            engine.apply_battle_result(Faction.NATO)
+            self.assertEqual(Faction.RUSSIA, state.provinces["b"].owner)
+
+    def test_malformed_capture_hold_ticks_and_root_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for bad in ("2", True, 2.0):
+                state = _state(root)
+                graph = _graph_with_site()
+                graph["rules"]["capture_hold_ticks"] = bad
+                path = root / f"graph_bad_{type(bad).__name__}.json"
+                path.write_text(json.dumps(graph), encoding="utf-8")
+                state.map_metadata["operational_graph"] = str(path.resolve())
+                clear_operational_graph_cache()
+                with self.assertRaises(ValueError):
+                    ensure_site_control_state(state)
+            state = _state(root)
+            ensure_site_control_state(state)
+            state.map_metadata[SITE_CONTROL_KEY] = "not-an-object"
+            with self.assertRaises(ValueError):
+                ensure_site_control_state(state)
+            state.map_metadata[SITE_CONTROL_KEY] = {
+                stable_site_id("b", "objective", "hub"): "not-a-row"
+            }
+            with self.assertRaises(ValueError):
+                ensure_site_control_state(state)
+
 
 if __name__ == "__main__":
     unittest.main()

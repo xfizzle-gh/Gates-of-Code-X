@@ -182,10 +182,15 @@ class CampaignEngine:
                     lost=False,
                     hold_province=target.province_id,
                 )
-            # Operational contact victories do not flip ownership (S5 site capture does).
-            # Legacy province adjacency battles still flip when not operational contact.
-            if not is_op_contact and any(
-                self.state.strategic_formations.get(fid) for fid in atk_forces
+            # Operational-capable campaigns never flip ownership from battle wins (S5).
+            # Legacy campaigns without operational maneuver retain immediate ownership change.
+            operational_campaign = bool(
+                self.state.map_metadata.get("operational_maneuver_enabled")
+            ) or bool(str(self.state.map_metadata.get("operational_graph", "") or "").strip())
+            if (
+                not operational_campaign
+                and not is_op_contact
+                and any(self.state.strategic_formations.get(fid) for fid in atk_forces)
             ):
                 target.owner = pending.attacker_faction
                 from .strategic import sync_province_infrastructure_owner
