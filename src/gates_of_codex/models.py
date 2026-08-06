@@ -374,11 +374,14 @@ class PendingBattle:
     exported_save_path: str = ""
     started: bool = False
     completed: bool = False
-    # S4 operational contact (empty for legacy province adjacency battles).
+    # S4/S6 operational contact (empty for legacy province adjacency battles).
     encounter_node_id: str = ""
     encounter_kind: str = ""
     attacker_formation_id: str = ""
     defender_formation_id: str = ""
+    encounter_edge_id: str = ""
+    encounter_progress_milli: int | None = None
+    encounter_pixel: list[int] = field(default_factory=list)
 
 
 @dataclass(slots=True)

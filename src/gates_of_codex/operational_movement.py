@@ -287,10 +287,11 @@ def ensure_move_orders(state: CampaignState) -> dict[str, Any]:
 
 
 def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
-    """Advance all active orders by one operational tick.
+    """Advance all active orders by one operational tick (two-phase swept contact).
 
-    S4: enemy node contact stops movement and may create a pending battle.
-    Friendly stack caps block entry. Full edge interception is out of scope.
+    Phase 1: compute intended intervals from a frozen snapshot and detect contacts.
+    Phase 2: apply the primary contact (if any) or normal movement, then static
+    node contacts and site capture when no battle is pending.
     """
     if state.pending_battle is not None:
         return {
@@ -303,30 +304,116 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
     if graph is None:
         return {"advanced": False, "reason": "no_graph", "moved": [], "contacts": []}
 
-    from .operational_contact import detect_static_node_contacts
+    from .operational_contact import (
+        detect_static_node_contacts,
+        try_create_edge_contact_battle,
+    )
+    from .operational_interception import (
+        ENCOUNTER_KIND_EDGE_CATCHUP,
+        ENCOUNTER_KIND_EDGE_CROSS,
+        ENCOUNTER_KIND_NODE_SIMULTANEOUS,
+        apply_edge_contact_stop,
+        compute_movement_intervals,
+        detect_swept_contacts,
+        encounter_pixel_for_edge,
+        encounter_province_for_edge,
+        select_primary_contact,
+    )
 
-    # Active movers resolve first (stack-cap / entry contact), then residual static contacts.
     _node_ids, _edge_ids, edges_by_id, nodes_by_id = _indexes(graph)
+    # Phase 1 — frozen snapshot intervals (no mutations yet).
+    intervals = compute_movement_intervals(
+        state, edges_by_id=edges_by_id, nodes_by_id=nodes_by_id
+    )
+    swept = detect_swept_contacts(state, intervals, edges_by_id=edges_by_id)
+    primary = select_primary_contact(swept)
     moved: list[str] = []
     contacts: list[str] = []
-    for force in sorted(
-        state.strategic_formations.values(),
-        key=lambda value: value.strategic_formation_id,
-    ):
-        if state.pending_battle is not None:
-            break
-        order = force.move_order
-        if order is None or order.status != MoveOrderStatus.ACTIVE.value:
-            continue
-        if _advance_formation_one_tick(
+    skipped: set[str] = set()
+
+    if primary is not None and primary.kind in {
+        ENCOUNTER_KIND_EDGE_CROSS,
+        ENCOUNTER_KIND_EDGE_CATCHUP,
+    }:
+        apply_edge_contact_stop(
             state,
-            force,
-            order,
+            primary,
+            intervals,
             edges_by_id=edges_by_id,
             nodes_by_id=nodes_by_id,
-            contacts_out=contacts,
+        )
+        attacker = state.strategic_formations[primary.attacker_id]
+        defender = state.strategic_formations[primary.defender_id]
+        edge = edges_by_id[primary.edge_id]
+        pixel = encounter_pixel_for_edge(
+            edge=edge,
+            nodes_by_id=nodes_by_id,
+            progress_canonical=primary.progress_canonical,
+        )
+        province_id = encounter_province_for_edge(
+            edge=edge,
+            nodes_by_id=nodes_by_id,
+            progress_canonical=primary.progress_canonical,
+        )
+        atk_interval = next(
+            item for item in intervals if item.formation_id == primary.attacker_id
+        )
+        battle = try_create_edge_contact_battle(
+            state,
+            attacker=attacker,
+            defender=defender,
+            edge_id=primary.edge_id,
+            progress_canonical=primary.progress_canonical,
+            encounter_kind=primary.kind,
+            encounter_pixel=pixel,
+            encounter_province_id=province_id,
+            origin_province_id=atk_interval.origin_province_id,
+        )
+        if battle is not None:
+            contacts.extend(primary.participant_ids)
+            skipped.update(primary.participant_ids)
+    elif primary is not None and primary.kind == ENCOUNTER_KIND_NODE_SIMULTANEOUS:
+        # Apply arrivals for participants first, then node contact construction.
+        for item in intervals:
+            if item.formation_id not in primary.participant_ids:
+                continue
+            force = state.strategic_formations.get(item.formation_id)
+            order = force.move_order if force else None
+            if force is None or order is None:
+                continue
+            _advance_formation_one_tick(
+                state,
+                force,
+                order,
+                edges_by_id=edges_by_id,
+                nodes_by_id=nodes_by_id,
+                contacts_out=contacts,
+            )
+            skipped.add(item.formation_id)
+            moved.append(item.formation_id)
+
+    # Remaining movers (not stopped by edge contact).
+    if state.pending_battle is None:
+        for force in sorted(
+            state.strategic_formations.values(),
+            key=lambda value: value.strategic_formation_id,
         ):
-            moved.append(force.strategic_formation_id)
+            if state.pending_battle is not None:
+                break
+            if force.strategic_formation_id in skipped:
+                continue
+            order = force.move_order
+            if order is None or order.status != MoveOrderStatus.ACTIVE.value:
+                continue
+            if _advance_formation_one_tick(
+                state,
+                force,
+                order,
+                edges_by_id=edges_by_id,
+                nodes_by_id=nodes_by_id,
+                contacts_out=contacts,
+            ):
+                moved.append(force.strategic_formation_id)
 
     static_contacts: list[str] = []
     if state.pending_battle is None:
@@ -354,6 +441,7 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
         "battle_id": state.pending_battle.battle_id if state.pending_battle else "",
         "static_contact": bool(static_contacts),
         "capture": capture_report,
+        "swept_kind": primary.kind if primary else "",
     }
 
 

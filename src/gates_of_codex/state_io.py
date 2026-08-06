@@ -246,6 +246,11 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
             encounter_kind=str(pending_data.get("encounter_kind", "") or ""),
             attacker_formation_id=str(pending_data.get("attacker_formation_id", "") or ""),
             defender_formation_id=str(pending_data.get("defender_formation_id", "") or ""),
+            encounter_edge_id=str(pending_data.get("encounter_edge_id", "") or ""),
+            encounter_progress_milli=_optional_strict_int(
+                pending_data.get("encounter_progress_milli")
+            ),
+            encounter_pixel=_parse_encounter_pixel(pending_data.get("encounter_pixel")),
         )
     state = CampaignState(
         campaign_name=data["campaign_name"],
@@ -313,3 +318,24 @@ def save_campaign(state: CampaignState, path: str | Path) -> Path:
         temporary_path = Path(temporary.name)
     temporary_path.replace(destination)
     return destination
+
+
+def _optional_strict_int(value: Any) -> int | None:
+    if value is None or value == "":
+        return None
+    from .operational_schema import require_strict_int
+
+    return require_strict_int(value, name="encounter_progress_milli", minimum=0, maximum=1000)
+
+
+def _parse_encounter_pixel(value: Any) -> list[int]:
+    if value is None or value == "" or value == []:
+        return []
+    if not isinstance(value, list) or len(value) != 2:
+        raise ValueError("encounter_pixel must be a list of two strict ints")
+    from .operational_schema import require_strict_int
+
+    return [
+        require_strict_int(value[0], name="encounter_pixel[0]"),
+        require_strict_int(value[1], name="encounter_pixel[1]"),
+    ]

@@ -14,6 +14,9 @@ from .models import (
 from .operational_schema import PositionMode
 
 ENCOUNTER_KIND_NODE_CONTACT = "node_contact"
+ENCOUNTER_KIND_EDGE_CROSS = "edge_cross"
+ENCOUNTER_KIND_EDGE_CATCHUP = "edge_catchup"
+ENCOUNTER_KIND_NODE_SIMULTANEOUS = "node_simultaneous"
 DEFAULT_MAX_FRIENDLY_PER_NODE = 3
 
 
@@ -350,6 +353,89 @@ def resolve_node_entry_contact(
     attackers, _defs = coalition_sides_at_node(state, node_id, seed_attacker=force)
     result["friendlies"] = [item.strategic_formation_id for item in attackers]
     return result
+
+
+def try_create_edge_contact_battle(
+    state: CampaignState,
+    *,
+    attacker: StrategicFormation,
+    defender: StrategicFormation,
+    edge_id: str,
+    progress_canonical: int,
+    encounter_kind: str,
+    encounter_pixel: list[int],
+    encounter_province_id: str,
+    origin_province_id: str | None = None,
+) -> PendingBattle | None:
+    """Create cooperative edge-contact battle at a shared canonical progress."""
+    if state.pending_battle is not None:
+        return None
+    # Participants: formations stopped at this exact edge+progress (+ facing ignored for match).
+    attackers = [attacker]
+    defenders = [defender]
+    for force in sorted(
+        state.strategic_formations.values(),
+        key=lambda value: value.strategic_formation_id,
+    ):
+        if force.strategic_formation_id in {
+            attacker.strategic_formation_id,
+            defender.strategic_formation_id,
+        }:
+            continue
+        pos = force.position
+        if pos is None or pos.mode != PositionMode.ON_EDGE.value:
+            continue
+        if str(pos.edge_id) != edge_id:
+            continue
+        # Exact contact position: same edge; progress compared in formation space is unreliable
+        # across facings — require matching blocked status after stop (caller places them).
+        if force.faction == attacker.faction or are_allied(
+            state, attacker.faction, force.faction
+        ):
+            attackers.append(force)
+        elif force.faction == defender.faction or are_allied(
+            state, defender.faction, force.faction
+        ):
+            defenders.append(force)
+    attackers = sorted(attackers, key=lambda value: value.strategic_formation_id)
+    defenders = sorted(defenders, key=lambda value: value.strategic_formation_id)
+    atk_parts = _participants_for_forces(state, attackers, stage="stage_1")
+    def_parts = _participants_for_forces(state, defenders, stage="stage_2")
+    if not atk_parts or not def_parts:
+        return None
+    _mark_primary(atk_parts, attacker, state)
+    _mark_primary(def_parts, defender, state)
+    from .operational_schema import require_strict_int
+
+    progress = require_strict_int(
+        progress_canonical, name="encounter_progress_milli", minimum=0, maximum=1000
+    )
+    if not isinstance(encounter_pixel, list) or len(encounter_pixel) != 2:
+        raise ValueError("encounter_pixel must be [x, y] strict ints")
+    pixel = [
+        require_strict_int(encounter_pixel[0], name="encounter_pixel[0]"),
+        require_strict_int(encounter_pixel[1], name="encounter_pixel[1]"),
+    ]
+    pending = PendingBattle(
+        battle_id=f"goc-op-{state.turn_number}-{uuid.uuid4().hex[:10]}",
+        origin_province_id=str(origin_province_id or attacker.province_id or encounter_province_id),
+        target_province_id=str(encounter_province_id or defender.province_id),
+        attacker_faction=attacker.faction,
+        defender_faction=defender.faction,
+        attacking_participants=atk_parts,
+        defending_participants=def_parts,
+        player_faction=state.selected_faction,
+        player_is_attacker=attacker.faction == state.selected_faction,
+        encounter_node_id="",
+        encounter_kind=encounter_kind,
+        attacker_formation_id=attacker.strategic_formation_id,
+        defender_formation_id=defender.strategic_formation_id,
+        encounter_edge_id=edge_id,
+        encounter_progress_milli=progress,
+        encounter_pixel=pixel,
+    )
+    state.pending_battle = pending
+    return pending
 
 
 def detect_static_node_contacts(state: CampaignState) -> list[str]:
