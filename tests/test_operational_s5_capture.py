@@ -23,11 +23,22 @@ from gates_of_codex.models import (
 from gates_of_codex.operational_capture import (
     SITE_CONTROL_KEY,
     advance_site_capture,
+    ensure_site_control_state,
     get_site_control_state,
     list_control_sites,
+    set_site_control_state,
 )
-from gates_of_codex.operational_movement import advance_operational_tick
-from gates_of_codex.operational_position import ensure_operational_positions
+from gates_of_codex.operational_contact import ENCOUNTER_KIND_NODE_CONTACT
+from gates_of_codex.operational_movement import (
+    activate_committed_orders,
+    advance_operational_tick,
+    commit_move_orders,
+    issue_move_order,
+)
+from gates_of_codex.operational_position import (
+    clear_operational_graph_cache,
+    ensure_operational_positions,
+)
 from gates_of_codex.operational_schema import (
     COST_MILLI_UNITY,
     FormationOperationalPosition,
@@ -373,14 +384,21 @@ class OperationalS5CaptureTests(unittest.TestCase):
             self.assertEqual(1, control["progress_ticks"])
             self.assertEqual("nato", control["claimant_faction"])
 
-    def test_frontend_exports_site_control(self) -> None:
+    def test_frontend_exports_site_control_before_any_tick(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             state = _state(Path(temporary))
             snapshot = build_frontend_snapshot(state)
             self.assertEqual(11, snapshot["schema_version"])
             self.assertEqual(FRONTEND_SCHEMA_VERSION, snapshot["schema_version"])
-            self.assertIn("site_control", snapshot["campaign"])
-            self.assertTrue(snapshot["campaign"]["site_control"])
+            rows = snapshot["campaign"]["site_control"]
+            self.assertTrue(rows)
+            by_id = {row["site_id"]: row for row in rows}
+            site_b = stable_site_id("b", "objective", "hub")
+            self.assertEqual("rusa", by_id[site_b]["controller_faction"])
+            # Province a has synthetic fallback site initialized from owner.
+            site_a = stable_site_id("a", "control", "anchor")
+            self.assertIn(site_a, by_id)
+            self.assertEqual("nato", by_id[site_a]["controller_faction"])
 
     def test_tick_integration_runs_capture(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -402,6 +420,181 @@ class OperationalS5CaptureTests(unittest.TestCase):
             sites = list_control_sites(state)
             self.assertEqual(2, len(sites))
             self.assertTrue(all(s.get("metadata", {}).get("synthetic_anchor_control_site") for s in sites))
+
+    def test_partial_authored_sites_fill_missing_provinces(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary), with_site=True)
+            sites = list_control_sites(state)
+            ids = {str(s["site_id"]) for s in sites}
+            self.assertIn(stable_site_id("b", "objective", "hub"), ids)
+            self.assertIn(stable_site_id("a", "control", "anchor"), ids)
+            authored = [s for s in sites if not s.get("metadata", {}).get("synthetic_anchor_control_site")]
+            synthetic = [s for s in sites if s.get("metadata", {}).get("synthetic_anchor_control_site")]
+            self.assertEqual(1, len(authored))
+            self.assertEqual(1, len(synthetic))
+
+    def test_operational_battle_win_does_not_flip_province(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary))
+            # Enemy on b; NATO enters and wins contact battle.
+            state.battalions["bn-rusa"] = _bn("bn-rusa", Faction.RUSSIA, "b", force_id="sf-rusa")
+            state.strategic_formations["sf-rusa"] = _force(
+                "sf-rusa", Faction.RUSSIA, "b", ["bn-rusa"]
+            )
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            edge = stable_edge_id("corridor", na, nb)
+            issue_move_order(
+                state, "sf-nato", path_node_ids=[na, nb], path_edge_ids=[edge]
+            )
+            commit_move_orders(state)
+            activate_committed_orders(state)
+            advance_operational_tick(state)
+            self.assertIsNotNone(state.pending_battle)
+            assert state.pending_battle is not None
+            self.assertEqual(ENCOUNTER_KIND_NODE_CONTACT, state.pending_battle.encounter_kind)
+            CampaignEngine(state, random_seed=1).apply_battle_result(Faction.NATO)
+            # Attacker may occupy b, but ownership stays with defender until capture ticks.
+            self.assertEqual(Faction.RUSSIA, state.provinces["b"].owner)
+            # Two capture ticks while holding the site node complete ownership.
+            if "sf-nato" in state.strategic_formations:
+                force = state.strategic_formations["sf-nato"]
+                force.position = FormationOperationalPosition(
+                    mode=PositionMode.AT_NODE.value, node_id=nb, progress_milli=0
+                )
+                force.province_id = "b"
+                for bid in force.battalion_ids:
+                    if bid in state.battalions:
+                        state.battalions[bid].province_id = "b"
+            advance_site_capture(state)
+            self.assertEqual(Faction.RUSSIA, state.provinces["b"].owner)
+            advance_site_capture(state)
+            self.assertEqual(Faction.NATO, state.provinces["b"].owner)
+
+    def test_ensure_idempotent_and_graph_missing_preserves(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary))
+            r1 = ensure_site_control_state(state)
+            first = get_site_control_state(state)
+            r2 = ensure_site_control_state(state)
+            second = get_site_control_state(state)
+            self.assertTrue(r1["ensured"])
+            self.assertTrue(r2["ensured"])
+            self.assertEqual(first, second)
+            # Graph unavailable: leave capture data untouched.
+            state.map_metadata["operational_graph"] = str(Path(temporary) / "missing.json")
+            state.map_metadata.pop("operational_maneuver_enabled", None)
+            before = get_site_control_state(state)
+            report = ensure_site_control_state(state)
+            self.assertFalse(report["ensured"])
+            self.assertEqual(before, get_site_control_state(state))
+
+    def test_equal_site_weight_tie_preserves_owner(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary))
+            # Two sites in province b, each weight 1000; split controllers.
+            site_b = stable_site_id("b", "objective", "hub")
+            site_b2 = stable_site_id("b", "objective", "depot")
+            ensure_site_control_state(state)
+            control = get_site_control_state(state)
+            control[site_b]["controller_faction"] = "nato"
+            control[site_b]["control_weight_milli"] = 1000
+            control[site_b2] = {
+                "controller_faction": "rusa",
+                "claimant_faction": None,
+                "claimant_formation_id": None,
+                "progress_ticks": 0,
+                "required_ticks": 2,
+                "province_id": "b",
+                "route_node_id": stable_node_id("b"),
+                "control_weight_milli": 1000,
+            }
+            set_site_control_state(state, control)
+            # Inject second authored-like site into listing by writing graph with both.
+            graph = _graph_with_site()
+            graph["sites"].append(
+                {
+                    "site_id": site_b2,
+                    "display_name": "B depot",
+                    "kind": "objective",
+                    "province_id": "b",
+                    "pixel": [110, 0],
+                    "route_node_id": stable_node_id("b"),
+                    "control_weight_milli": 1000,
+                    "capture_threshold_milli": 1000,
+                    "owner_faction": "rusa",
+                    "metadata": {},
+                }
+            )
+            path = Path(temporary) / "operational_graph_tie.json"
+            path.write_text(json.dumps(graph), encoding="utf-8")
+            state.map_metadata["operational_graph"] = str(path.resolve())
+            clear_operational_graph_cache()
+            set_site_control_state(state, control)
+            from gates_of_codex.operational_capture import _apply_province_ownership_from_sites
+
+            flipped = _apply_province_ownership_from_sites(
+                state, list_control_sites(state), get_site_control_state(state)
+            )
+            self.assertEqual([], flipped)
+            self.assertEqual(Faction.RUSSIA, state.provinces["b"].owner)
+
+    def test_strict_majority_flips_ownership(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary))
+            site_b = stable_site_id("b", "objective", "hub")
+            site_b2 = stable_site_id("b", "objective", "depot")
+            graph = _graph_with_site()
+            graph["sites"].append(
+                {
+                    "site_id": site_b2,
+                    "display_name": "B depot",
+                    "kind": "objective",
+                    "province_id": "b",
+                    "pixel": [110, 0],
+                    "route_node_id": stable_node_id("b"),
+                    "control_weight_milli": 1000,
+                    "capture_threshold_milli": 1000,
+                    "owner_faction": "rusa",
+                    "metadata": {},
+                }
+            )
+            path = Path(temporary) / "operational_graph_majority.json"
+            path.write_text(json.dumps(graph), encoding="utf-8")
+            state.map_metadata["operational_graph"] = str(path.resolve())
+            clear_operational_graph_cache()
+            ensure_site_control_state(state)
+            control = get_site_control_state(state)
+            control[site_b]["controller_faction"] = "nato"
+            control[site_b]["control_weight_milli"] = 1000
+            control[site_b2]["controller_faction"] = "nato"
+            control[site_b2]["control_weight_milli"] = 1000
+            set_site_control_state(state, control)
+            from gates_of_codex.operational_capture import _apply_province_ownership_from_sites
+
+            flipped = _apply_province_ownership_from_sites(
+                state, list_control_sites(state), get_site_control_state(state)
+            )
+            self.assertIn("b", flipped)
+            self.assertEqual(Faction.NATO, state.provinces["b"].owner)
+
+    def test_malformed_capture_numeric_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary))
+            ensure_site_control_state(state)
+            site_id = stable_site_id("b", "objective", "hub")
+            control = get_site_control_state(state)
+            control[site_id]["progress_ticks"] = "1"
+            set_site_control_state(state, control)
+            with self.assertRaises(ValueError):
+                ensure_site_control_state(state)
+            control[site_id]["progress_ticks"] = True
+            set_site_control_state(state, control)
+            with self.assertRaises(ValueError):
+                ensure_site_control_state(state)
+            control[site_id]["progress_ticks"] = 1.0
+            set_site_control_state(state, control)
+            with self.assertRaises(ValueError):
+                ensure_site_control_state(state)
 
 
 if __name__ == "__main__":

@@ -314,6 +314,11 @@ def _read_graph_json(path: str) -> dict[str, Any]:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
+def clear_operational_graph_cache() -> None:
+    """Drop cached graph payloads (tests rewriting graph files on disk)."""
+    _read_graph_json.cache_clear()
+
+
 def _stable_migration_record(incoming_schema: int, *, map_id: str, graph_loaded: bool) -> dict:
     return {
         "schema_version": OPERATIONAL_POSITION_SCHEMA_VERSION,

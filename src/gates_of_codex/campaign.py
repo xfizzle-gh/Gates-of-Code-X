@@ -182,7 +182,11 @@ class CampaignEngine:
                     lost=False,
                     hold_province=target.province_id,
                 )
-            if any(self.state.strategic_formations.get(fid) for fid in atk_forces):
+            # Operational contact victories do not flip ownership (S5 site capture does).
+            # Legacy province adjacency battles still flip when not operational contact.
+            if not is_op_contact and any(
+                self.state.strategic_formations.get(fid) for fid in atk_forces
+            ):
                 target.owner = pending.attacker_faction
                 from .strategic import sync_province_infrastructure_owner
 
