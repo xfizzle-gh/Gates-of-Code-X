@@ -30,6 +30,7 @@ func _run_all() -> void:
 	await _test_failure_clears_busy()
 	_test_stale_callback_ignored()
 	await _test_exit_during_command_safe()
+	await _test_candidate_fallback()
 
 	print("command_runner_test: passed=%s failed=%s" % [_passed, _failed])
 	if _failed > 0:
@@ -197,19 +198,43 @@ func _test_stale_callback_ignored() -> void:
 
 func _test_exit_during_command_safe() -> void:
 	_finished_events.clear()
-	var fake: Dictionary = _fake_executable()
-	var start: Dictionary = _runner.try_start([{"op": "end_turn"}], fake.exe, fake.args, "res://s.json")
+	# Prefer a slower command so free overlaps a still-running worker when possible.
+	var start: Dictionary = _runner.try_start(
+		[{"op": "end_turn"}],
+		OS.get_executable_path(),
+		PackedStringArray(["--help"]),
+		"res://s.json"
+	)
 	_assert_true(
 		"start before free",
 		bool(start.get("ok")) or String(start.get("reason")) in ["busy", "duplicate_in_flight"],
 		str(start)
 	)
 	_host.queue_free()
-	await create_timer(0.25).timeout
+	await create_timer(0.4).timeout
 	_assert_true("exit during command did not crash", true)
 	_host = Node.new()
 	root.add_child(_host)
 	_make_runner()
+
+
+func _test_candidate_fallback() -> void:
+	_finished_events.clear()
+	var candidates := [
+		{"executable": "Z:/missing/backend-a", "args": ["--help"]},
+		{"executable": OS.get_executable_path(), "args": ["--version"]},
+	]
+	var start: Dictionary = _runner.try_start_candidates(
+		[{"op": "refresh"}],
+		candidates,
+		"res://snap.json"
+	)
+	_assert_true("fallback candidates start", bool(start.get("ok")), str(start))
+	await _wait_until_idle(8.0)
+	_assert_true("not busy after fallback", not _runner.is_busy())
+	_assert_eq("fallback one finished event", _finished_events.size(), 1)
+	if not _finished_events.is_empty():
+		_assert_eq("fallback success", bool(_finished_events[0].get("success")), true)
 
 
 func _wait_until_idle(timeout_sec: float) -> void:

@@ -23,6 +23,7 @@ var in_flight: Dictionary = {
 	"snapshot_path": "",
 	"result": {},
 	"error_text": "",
+	"launch_path": "",
 }
 
 var _thread: Thread
@@ -51,6 +52,10 @@ func generation() -> int:
 	return int(in_flight.get("generation", 0))
 
 
+func last_launch_path() -> String:
+	return String(in_flight.get("launch_path", ""))
+
+
 static func command_identity(commands: Array) -> String:
 	## Stable identity for duplicate suppression (deterministic JSON).
 	return JSON.stringify({"commands": commands})
@@ -68,8 +73,20 @@ func try_start(
 	args: PackedStringArray,
 	snapshot_path: String
 ) -> Dictionary:
-	## Attempt to start a backend command. Never blocks.
-	## Returns {ok:bool, reason:String, generation:int}
+	return try_start_candidates(
+		commands,
+		[{"executable": executable, "args": Array(args)}],
+		snapshot_path
+	)
+
+
+func try_start_candidates(
+	commands: Array,
+	candidates: Array,
+	snapshot_path: String
+) -> Dictionary:
+	## candidates: Array of {executable:String, args:Array|PackedStringArray}
+	## Tries each candidate in order. exit_code == -1 means "could not launch" → next.
 	if _shutting_down or not is_inside_tree():
 		return {"ok": false, "reason": "shutting_down", "generation": 0}
 	if commands.is_empty():
@@ -79,7 +96,7 @@ func try_start(
 		if identity == current_identity():
 			return {"ok": false, "reason": "duplicate_in_flight", "generation": generation()}
 		return {"ok": false, "reason": "busy", "generation": generation()}
-	if executable.is_empty():
+	if candidates.is_empty():
 		return {"ok": false, "reason": "missing_executable", "generation": 0}
 
 	_join_worker()
@@ -96,12 +113,32 @@ func try_start(
 		"snapshot_path": snapshot_path,
 		"result": {},
 		"error_text": "",
+		"launch_path": "",
 	}
+
+	var normalized: Array = []
+	for item in candidates:
+		if not item is Dictionary:
+			continue
+		var exe := String((item as Dictionary).get("executable", "")).strip_edges()
+		if exe.is_empty():
+			continue
+		var raw_args: Variant = (item as Dictionary).get("args", [])
+		var arg_list: Array = []
+		if raw_args is PackedStringArray:
+			for a in raw_args:
+				arg_list.append(String(a))
+		elif raw_args is Array:
+			for a in raw_args:
+				arg_list.append(String(a))
+		normalized.append({"executable": exe, "args": arg_list})
+	if normalized.is_empty():
+		in_flight["active"] = false
+		return {"ok": false, "reason": "missing_executable", "generation": gen}
 
 	var payload := {
 		"generation": gen,
-		"executable": executable,
-		"args": Array(args),
+		"candidates": normalized,
 		"commands": commands.duplicate(true),
 		"snapshot_path": snapshot_path,
 	}
@@ -118,6 +155,7 @@ func try_start(
 			"snapshot_path": snapshot_path,
 			"result": {},
 			"error_text": "failed to start worker thread",
+			"launch_path": "",
 		}
 		return {"ok": false, "reason": "thread_start_failed", "generation": gen}
 	return {"ok": true, "reason": "started", "generation": gen}
@@ -125,23 +163,34 @@ func try_start(
 
 func _worker_run(payload: Dictionary) -> void:
 	## WORKER THREAD — no Node access beyond call_deferred.
-	var executable := String(payload.get("executable", ""))
-	var args_variant: Variant = payload.get("args", [])
-	var args: PackedStringArray = PackedStringArray()
-	if args_variant is Array:
-		for item in args_variant:
-			args.append(String(item))
-	var output: Array = []
-	var exit_code := OS.execute(executable, args, output, true, false)
-	var text := "\n".join(output)
-	# Marshal back to main thread only.
+	var candidates: Array = payload.get("candidates", [])
+	var exit_code := -1
+	var text := ""
+	var launch_path := ""
+	for candidate in candidates:
+		if not candidate is Dictionary:
+			continue
+		var executable := String((candidate as Dictionary).get("executable", ""))
+		var args_variant: Variant = (candidate as Dictionary).get("args", [])
+		var args := PackedStringArray()
+		if args_variant is Array:
+			for item in args_variant:
+				args.append(String(item))
+		var output: Array = []
+		exit_code = OS.execute(executable, args, output, true, false)
+		text = "\n".join(output)
+		launch_path = executable
+		# -1: process could not be created → try next fallback.
+		if exit_code != -1:
+			break
 	call_deferred(
 		"_on_worker_finished",
 		int(payload.get("generation", 0)),
 		exit_code,
 		text,
 		payload.get("commands", []),
-		String(payload.get("snapshot_path", ""))
+		String(payload.get("snapshot_path", "")),
+		launch_path
 	)
 
 
@@ -150,22 +199,24 @@ func _on_worker_finished(
 	exit_code: int,
 	output_text: String,
 	commands: Array,
-	snapshot_path: String
+	snapshot_path: String,
+	launch_path: String = ""
 ) -> void:
 	if _shutting_down or not is_inside_tree():
 		return
 	if gen != int(in_flight.get("generation", -1)):
-		# Stale completion from a superseded generation.
 		return
 	if not bool(in_flight.get("active", false)):
 		return
 
 	var success := exit_code == 0
 	in_flight["active"] = false
+	in_flight["launch_path"] = launch_path
 	in_flight["result"] = {
 		"success": success,
 		"exit_code": exit_code,
 		"output_text": output_text,
+		"launch_path": launch_path,
 	}
 	in_flight["error_text"] = "" if success else output_text
 	_join_worker()

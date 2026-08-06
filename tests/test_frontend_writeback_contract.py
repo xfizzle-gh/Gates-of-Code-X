@@ -133,12 +133,16 @@ class FrontendWritebackContractTests(unittest.TestCase):
         self.assertIn(".append(battalion)", script)
         self.assertIn("selected_battalion_id", script)
         self.assertIn("FileAccess.file_exists(python_executable)", script)
-        # Async write-back: exact python path is still preferred; OS.execute runs on a worker.
-        self.assertIn("command_runner.try_start", script)
+        # Async write-back: a/b/c launch authority; OS.execute runs on a worker.
+        self.assertIn("command_runner.try_start_candidates", script)
+        self.assertIn("_backend_launch_candidates", script)
+        self.assertIn("gates-of-codex", script)
         self.assertIn("FrontendCommandRunnerScript", script)
+        self.assertIn("_try_build_snapshot_state", script)
         runner = (root / "godot/scripts/presentation/command_runner.gd").read_text(encoding="utf-8")
         self.assertIn("OS.execute", runner)
         self.assertIn("call_deferred", runner)
+        self.assertIn("try_start_candidates", runner)
 
 
 if __name__ == "__main__":
