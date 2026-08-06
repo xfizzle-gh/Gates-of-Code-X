@@ -147,7 +147,10 @@ def _state(tmp: Path, *, with_enemy: bool = True) -> CampaignState:
     state = CampaignState(
         campaign_name="S4",
         map_id="s4_test",
-        map_metadata={"operational_graph": str(graph_path.resolve())},
+        map_metadata={
+            "operational_graph": str(graph_path.resolve()),
+            "operational_maneuver_enabled": True,
+        },
         factions={
             Faction.NATO.value: FactionState(Faction.NATO, resources=500, is_human_controlled=True),
             Faction.RUSSIA.value: FactionState(Faction.RUSSIA, resources=500),
@@ -386,6 +389,104 @@ class OperationalS4ContactTests(unittest.TestCase):
             batch = advance_operational_ticks(state, 10)
             self.assertLess(batch["ticks"], 10)
             self.assertIsNotNone(state.pending_battle)
+
+    def test_multi_battalion_formation_retreats_once_to_origin(self) -> None:
+        """Three-battalion mover loses entry contact → one hop back to origin, cohesive."""
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary), with_enemy=True)
+            # Add third battalion to NATO mover.
+            state.battalions["bn-nato-c"] = _bn("bn-nato-c", Faction.NATO, "a")
+            state.battalions["bn-nato-c"].strategic_formation_id = "sf-nato"
+            state.strategic_formations["sf-nato"].battalion_ids.append("bn-nato-c")
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            edge = stable_edge_id("corridor", na, nb)
+            issue_move_order(
+                state, "sf-nato", path_node_ids=[na, nb], path_edge_ids=[edge]
+            )
+            commit_move_orders(state)
+            activate_committed_orders(state)
+            advance_operational_tick(state)
+            assert state.pending_battle is not None
+            self.assertEqual("a", state.pending_battle.origin_province_id)
+            # Force defender win.
+            engine = CampaignEngine(state, random_seed=0)
+            # Deterministic: apply defender victory directly.
+            engine.apply_battle_result(Faction.RUSSIA)
+            force = state.strategic_formations.get("sf-nato")
+            if force is None:
+                # Entire formation destroyed is acceptable only if no survivors.
+                self.assertFalse(
+                    any(bn.faction == Faction.NATO for bn in state.battalions.values())
+                )
+                return
+            # Exactly one retreat hop to origin province a.
+            self.assertEqual("a", force.province_id)
+            member_provinces = {
+                state.battalions[bid].province_id
+                for bid in force.battalion_ids
+                if bid in state.battalions
+            }
+            self.assertEqual({"a"}, member_provinces)
+            assert force.position is not None
+            self.assertEqual(PositionMode.AT_NODE.value, force.position.mode)
+            self.assertEqual(stable_node_id("a"), force.position.node_id)
+            assert force.move_order is not None
+            self.assertEqual(MoveOrderStatus.BLOCKED.value, force.move_order.status)
+
+    def test_allied_attackers_retreat_independently_once_each(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary), with_enemy=True)
+            nb = stable_node_id("b")
+            # Ally already on b; main force enters from a then both lose.
+            state.battalions["bn-ally"] = _bn("bn-ally", Faction.NATO, "b")
+            state.battalions["bn-ally"].strategic_formation_id = "sf-ally"
+            state.strategic_formations["sf-ally"] = _force(
+                "sf-ally", Faction.NATO, "b", ["bn-ally"]
+            )
+            state.provinces["c"] = Province(
+                "c", "C", owner=Faction.NATO, neighbors=["b"], x=200, y=0
+            )
+            state.provinces["b"].neighbors = ["a", "c"]
+            na = stable_node_id("a")
+            edge = stable_edge_id("corridor", na, nb)
+            issue_move_order(
+                state, "sf-nato", path_node_ids=[na, nb], path_edge_ids=[edge]
+            )
+            commit_move_orders(state)
+            activate_committed_orders(state)
+            advance_operational_tick(state)
+            assert state.pending_battle is not None
+            CampaignEngine(state, random_seed=0).apply_battle_result(Faction.RUSSIA)
+            mover = state.strategic_formations.get("sf-nato")
+            ally = state.strategic_formations.get("sf-ally")
+            if mover is not None:
+                self.assertEqual("a", mover.province_id)
+            if ally is not None:
+                # Ally was already on b; retreats once to a friendly neighbor (a or c).
+                self.assertIn(ally.province_id, {"a", "c"})
+                self.assertNotEqual("b", ally.province_id)
+
+    def test_stale_positions_without_graph_do_not_allow_mixed_presence(self) -> None:
+        state = build_goe_europe_campaign()
+        ensure_strategic_formations(state)
+        # Stale positions + no resolvable graph/flag must not unlock mixed presence.
+        for force in state.strategic_formations.values():
+            force.position = FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value,
+                node_id=stable_node_id(force.province_id),
+                progress_milli=0,
+            )
+        state.map_metadata.pop("operational_graph", None)
+        state.map_metadata.pop("operational_maneuver_enabled", None)
+        battalions = sorted(state.battalions.values(), key=lambda value: value.battalion_id)
+        first = battalions[0]
+        hostile = next(value for value in battalions[1:] if value.faction != first.faction)
+        hostile.province_id = first.province_id
+        force = state.strategic_formations.get(hostile.strategic_formation_id)
+        if force is not None:
+            force.province_id = first.province_id
+        with self.assertRaisesRegex(ValueError, "multiple factions"):
+            state.validate()
 
 
 if __name__ == "__main__":

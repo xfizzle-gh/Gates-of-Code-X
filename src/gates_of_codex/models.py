@@ -568,14 +568,33 @@ class CampaignState:
         return asdict(self)
 
     def _allows_mixed_province_presence(self) -> bool:
-        """Hostile co-presence only under operational contact / graph-backed campaigns."""
+        """Hostile co-presence only with explicit operational capability or contact.
+
+        A stale/non-null formation ``position`` alone is not sufficient.
+        """
         pending = self.pending_battle
         if pending is not None and str(getattr(pending, "encounter_kind", "") or ""):
             return True
-        if any(force.position is not None for force in self.strategic_formations.values()):
+        if bool(self.map_metadata.get("operational_maneuver_enabled")):
             return True
-        if str(self.map_metadata.get("operational_graph", "") or "").strip():
-            return True
+        # Resolvable operational graph path (must exist as a file, not merely be declared).
+        configured = str(self.map_metadata.get("operational_graph", "") or "").strip()
+        if configured:
+            from pathlib import Path
+
+            path = Path(configured).expanduser()
+            if path.is_file():
+                return True
+            # Relative assets next to cwd / godot (same contract as operational_position).
+            for candidate in (
+                Path.cwd() / configured,
+                Path.cwd() / "godot" / configured,
+            ):
+                try:
+                    if candidate.is_file():
+                        return True
+                except OSError:
+                    continue
         return False
 
 
