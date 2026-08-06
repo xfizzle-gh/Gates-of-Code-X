@@ -50,11 +50,15 @@ class GodotColorIdContractTests(unittest.TestCase):
             "infrastructure",
             "is_in_supply",
             "encircled_turns",
-            "_draw_battalion_counter",
             "display_name",
         ]
         for token in expected:
             self.assertIn(token, main)
+        # Formation counters are drawn via presentation markers (or legacy helper).
+        self.assertTrue(
+            "draw_formation_counter" in main or "_draw_battalion_counter" in main,
+            msg="color-ID client must draw formation counters",
+        )
 
     def test_marker_fallback_is_not_claimed_as_authoritative(self) -> None:
         root = Path(__file__).resolve().parents[1]

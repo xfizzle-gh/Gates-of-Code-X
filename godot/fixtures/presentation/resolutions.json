@@ -1,0 +1,16 @@
+{
+  "schema": "gates-of-codex.presentation-fixture",
+  "schema_version": 1,
+  "id": "resolutions",
+  "description": "Supported presentation resolutions for visual checks.",
+  "resolutions": [
+    {"name": "1080p", "width": 1920, "height": 1080},
+    {"name": "1440p", "width": 2560, "height": 1440},
+    {"name": "default_project", "width": 1440, "height": 900},
+    {"name": "4k_sanity", "width": 3840, "height": 2160, "optional": true}
+  ],
+  "notes": [
+    "Do not hardcode texture dimensions in UI code.",
+    "MapSpace derives fit scale from image_size() and content rect."
+  ]
+}

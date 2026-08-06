@@ -1,0 +1,22 @@
+{
+  "schema": "gates-of-codex.presentation-fixture",
+  "schema_version": 1,
+  "id": "rapid_hover",
+  "description": "Pixel samples for rapid province-hover changes.",
+  "hover_pixels": [
+    [200, 300],
+    [250, 320],
+    [300, 340],
+    [350, 360],
+    [400, 380],
+    [450, 400],
+    [500, 420],
+    [550, 440],
+    [400, 500],
+    [350, 480]
+  ],
+  "notes": [
+    "Hover must not rebuild ownership textures.",
+    "static_rebuilds_this_frame should stay 0 while only hover changes."
+  ]
+}

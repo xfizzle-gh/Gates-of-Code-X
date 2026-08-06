@@ -1,0 +1,25 @@
+{
+  "schema": "gates-of-codex.presentation-fixture",
+  "schema_version": 1,
+  "id": "many_counters",
+  "description": "Dense synthetic counters for overlay stress (presentation-only).",
+  "synthetic_counters": [
+    {"pixel": [200, 300], "faction": "nato", "glyph": "I", "strength": 12, "stack": 1},
+    {"pixel": [230, 320], "faction": "nato", "glyph": "T", "strength": 8, "stack": 2},
+    {"pixel": [260, 340], "faction": "ukr", "glyph": "M", "strength": 10, "stack": 1},
+    {"pixel": [290, 360], "faction": "rusa", "glyph": "I", "strength": 14, "stack": 3},
+    {"pixel": [320, 380], "faction": "rusa", "glyph": "A", "strength": 6, "stack": 1},
+    {"pixel": [350, 400], "faction": "prc", "glyph": "m", "strength": 9, "stack": 2},
+    {"pixel": [380, 420], "faction": "nato", "glyph": "I", "strength": 11, "stack": 1},
+    {"pixel": [410, 440], "faction": "ukr", "glyph": "T", "strength": 7, "stack": 1},
+    {"pixel": [440, 390], "faction": "rusa", "glyph": "I", "strength": 13, "stack": 4},
+    {"pixel": [470, 370], "faction": "nato", "glyph": "M", "strength": 10, "stack": 1},
+    {"pixel": [500, 350], "faction": "prc", "glyph": "I", "strength": 8, "stack": 1},
+    {"pixel": [530, 330], "faction": "neutral", "glyph": "X", "strength": 5, "stack": 1}
+  ],
+  "routes": [],
+  "battles": [],
+  "contacts": [],
+  "control_sites": [],
+  "notes": ["Does not mutate campaign snapshot battalions"]
+}

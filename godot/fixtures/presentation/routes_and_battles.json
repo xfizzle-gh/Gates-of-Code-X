@@ -1,0 +1,55 @@
+{
+  "schema": "gates-of-codex.presentation-fixture",
+  "schema_version": 1,
+  "id": "routes_and_battles",
+  "description": "Route line, node battle marker, and mock edge battle marker.",
+  "routes": [
+    {
+      "id": "presentation_route_demo",
+      "pixels": [
+        [220, 410],
+        [260, 390],
+        [310, 375],
+        [355, 360]
+      ],
+      "color": "7fe7ff"
+    }
+  ],
+  "battles": [
+    {
+      "id": "presentation_node_battle",
+      "kind": "node",
+      "pixel": [355, 360],
+      "notes": "presentation-only node coordinate"
+    },
+    {
+      "id": "presentation_edge_battle",
+      "kind": "edge",
+      "presentation_edge_a_pixel": [400, 420],
+      "presentation_edge_b_pixel": [470, 390],
+      "presentation_progress_fp": 625,
+      "notes": "presentation-only mock edge marker; progress is fixed-point 0..1000"
+    }
+  ],
+  "contacts": [
+    {
+      "id": "presentation_node_contact",
+      "kind": "node",
+      "pixel": [280, 440]
+    },
+    {
+      "id": "presentation_edge_contact",
+      "kind": "edge",
+      "presentation_edge_a_pixel": [300, 500],
+      "presentation_edge_b_pixel": [360, 480],
+      "presentation_progress_fp": 500
+    }
+  ],
+  "control_sites": [],
+  "operational_nodes": [],
+  "operational_edges": [],
+  "notes": [
+    "S6 Python interception contract is out of scope.",
+    "Edge interpolation is deterministic via presentation_progress_fp."
+  ]
+}
