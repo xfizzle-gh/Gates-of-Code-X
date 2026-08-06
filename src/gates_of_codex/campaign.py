@@ -29,6 +29,7 @@ class CampaignEngine:
         if self.state.pending_battle is not None:
             raise RuntimeError("Resolve the pending battle first")
         battalion = self._get_battalion(battalion_id)
+        self._reject_if_operational_order_locked(battalion)
         target = self._get_province(target_province_id)
         origin = self._get_province(battalion.province_id)
         if battalion.movement_remaining <= 0:
@@ -117,11 +118,15 @@ class CampaignEngine:
             index = -1
         next_faction = active[(index + 1) % len(active)]
         if index == len(active) - 1 or index == -1:
-            self.state.turn_number += 1
             from .economy import settle_round_economy
+            from .operational_movement import resolve_strategic_turn_movement
             from .strategic import evaluate_campaign_outcome
             from .supply import refresh_all_supply
 
+            # S3: resolve on the ending turn number so committed_turn matches
+            # (manual commit during turn N activates when turn N ends).
+            resolve_strategic_turn_movement(self.state)
+            self.state.turn_number += 1
             settle_round_economy(self.state)
             for battalion in self.state.battalions.values():
                 battalion.movement_remaining = 1
@@ -177,6 +182,26 @@ class CampaignEngine:
             self._sync_strategic_formation_location(battalion)
         else:
             self._remove_battalion(battalion.battalion_id)
+
+    def _reject_if_operational_order_locked(self, battalion: Battalion) -> None:
+        """Legacy adjacency move cannot bypass a committed/active operational order."""
+        from .operational_schema import MoveOrderStatus
+
+        force_id = battalion.strategic_formation_id
+        if not force_id:
+            return
+        force = self.state.strategic_formations.get(force_id)
+        if force is None or force.move_order is None:
+            return
+        status = force.move_order.status
+        if status in {
+            MoveOrderStatus.COMMITTED.value,
+            MoveOrderStatus.ACTIVE.value,
+        }:
+            raise ValueError(
+                f"Strategic formation {force_id} has a {status} operational order; "
+                "legacy adjacency move is locked until the order completes"
+            )
 
     def _sync_strategic_formation_location(self, battalion: Battalion) -> None:
         from .operational_position import place_formation_at_province_anchor

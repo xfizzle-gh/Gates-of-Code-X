@@ -69,12 +69,12 @@ class FormationStance(str, Enum):
 
 
 # Statuses that must retain commitment fields once set.
+# blocked/cancelled use both-or-neither (may reject a draft with no lock).
 _COMMITMENT_RETAINING_STATUSES = frozenset(
     {
         MoveOrderStatus.COMMITTED.value,
         MoveOrderStatus.ACTIVE.value,
         MoveOrderStatus.COMPLETED.value,
-        MoveOrderStatus.BLOCKED.value,
     }
 )
 
@@ -400,13 +400,16 @@ class OperationalMoveOrder:
                 raise ValueError(
                     f"{self.status} orders require locked_stance"
                 )
-        # Cancelled: both commitment fields or neither (not a half-pair).
-        if self.status == MoveOrderStatus.CANCELLED.value:
+        # Cancelled/blocked: both commitment fields or neither (not a half-pair).
+        if self.status in {
+            MoveOrderStatus.CANCELLED.value,
+            MoveOrderStatus.BLOCKED.value,
+        }:
             has_turn = self.committed_turn is not None
             has_stance = self.locked_stance is not None
             if has_turn != has_stance:
                 raise ValueError(
-                    "cancelled orders require both committed_turn and locked_stance, "
+                    f"{self.status} orders require both committed_turn and locked_stance, "
                     "or neither"
                 )
         if not self.path_node_ids:
