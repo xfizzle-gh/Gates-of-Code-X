@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, replace
 from typing import Any
 
@@ -81,11 +82,19 @@ class ContactCandidate:
     def time_equal(self, other: "ContactCandidate") -> bool:
         return self.time_num * other.time_den == other.time_num * self.time_den
 
+    def location_key(self) -> str:
+        """Single canonical location id — edge or node, never empty-string bias."""
+        if self.edge_id:
+            return f"e:{self.edge_id}"
+        if self.node_id:
+            return f"n:{self.node_id}"
+        return ""
+
     def tie_key(self) -> tuple:
         return (
-            self.edge_id or "",
-            self.node_id or "",
-            self.progress_canonical,
+            self.location_key(),
+            int(self.progress_canonical),
+            self.kind,
             tuple(sorted(self.participant_ids)),
         )
 
@@ -198,14 +207,15 @@ def detect_swept_contacts(
                 if contact is not None:
                     contacts.append(contact)
 
-    # Node arrivals grouped by (destination, exact arrival time).
+    # Node arrivals grouped by (destination, gcd-normalized exact arrival time).
     arrival_groups: dict[tuple[str, int, int], list[MovementInterval]] = {}
     for item in intervals:
         if not item.arrives_node or not item.end_node_id:
             continue
         if item.arrival_time_num is None or item.arrival_time_den is None:
             continue
-        key = (item.end_node_id, item.arrival_time_num, item.arrival_time_den)
+        t_num, t_den = normalize_rational(item.arrival_time_num, item.arrival_time_den)
+        key = (item.end_node_id, t_num, t_den)
         arrival_groups.setdefault(key, []).append(item)
 
     for (node_id, t_num, t_den), group in sorted(
@@ -321,6 +331,39 @@ def select_primary_contact(contacts: list[ContactCandidate]) -> ContactCandidate
     return best
 
 
+def normalize_rational(num: int, den: int) -> tuple[int, int]:
+    """Reduce num/den by gcd. Denominator stays positive."""
+    n = int(num)
+    d = int(den)
+    if d == 0:
+        raise ValueError("rational denominator must be non-zero")
+    if d < 0:
+        n, d = -n, -d
+    if n == 0:
+        return 0, 1
+    g = math.gcd(abs(n), d)
+    return n // g, d // g
+
+
+def rational_equal(a_num: int, a_den: int, b_num: int, b_den: int) -> bool:
+    """Exact equality of non-negative rationals via cross-multiply."""
+    return int(a_num) * int(b_den) == int(b_num) * int(a_den)
+
+
+def arrival_matches_contact_time(item: MovementInterval, contact: ContactCandidate) -> bool:
+    """True when the interval arrives at the contact node at the contact's exact time."""
+    if not item.arrives_node or item.end_node_id != contact.node_id:
+        return False
+    if item.arrival_time_num is None or item.arrival_time_den is None:
+        return False
+    return rational_equal(
+        item.arrival_time_num,
+        item.arrival_time_den,
+        contact.time_num,
+        contact.time_den,
+    )
+
+
 def formation_canonical_on_edge(
     force: StrategicFormation,
     *,
@@ -421,17 +464,13 @@ def apply_simultaneous_node_arrivals(
     already = {
         f.strategic_formation_id: f for f in formations_at_node(state, node_id)
     }
-    # Prefer contact-listed arrivals; also accept any interval arriving at this node
-    # (single entry-vs-occupant uses one arrival).
-    arrival_ids = {
-        fid
-        for fid in contact.participant_ids
-        if fid in by_id and by_id[fid].arrives_node and by_id[fid].end_node_id == node_id
-    }
-    for item in intervals:
-        if item.arrives_node and item.end_node_id == node_id:
-            arrival_ids.add(item.formation_id)
-    arrivals = [by_id[fid] for fid in sorted(arrival_ids) if fid in by_id]
+    # Only arrivals at this node at the selected contact's exact rational time.
+    # Later same-node arrivals this tick stay put and do not join the battle.
+    arrivals = [
+        item
+        for item in sorted(intervals, key=lambda value: value.formation_id)
+        if arrival_matches_contact_time(item, contact)
+    ]
     if not arrivals and not already:
         return False, ()
 
@@ -757,6 +796,7 @@ def _interval_for_formation(
     velocity = raw_delta if direction > 0 else (-raw_delta if direction < 0 else 0)
 
     # Exact exit/arrival time if the force reaches the endpoint before t=1.
+    # Stored gcd-normalized so 1/2 and 2/4 group identically.
     exit_num = exit_den = None
     arrival_num = arrival_den = None
     arrives = False
@@ -767,8 +807,8 @@ def _interval_for_formation(
             end_c = start_c
         elif raw_delta >= remaining:
             # Reaches B at t = remaining/raw_delta
-            exit_num, exit_den = remaining, raw_delta
-            arrival_num, arrival_den = remaining, raw_delta
+            exit_num, exit_den = normalize_rational(remaining, raw_delta)
+            arrival_num, arrival_den = exit_num, exit_den
             end_c = PROGRESS_MILLI_MAX
             arrives = True
             end_node = dest_node
@@ -780,8 +820,8 @@ def _interval_for_formation(
         if remaining <= 0:
             end_c = start_c
         elif mag >= remaining:
-            exit_num, exit_den = remaining, mag
-            arrival_num, arrival_den = remaining, mag
+            exit_num, exit_den = normalize_rational(remaining, mag)
+            arrival_num, arrival_den = exit_num, exit_den
             end_c = 0
             arrives = True
             end_node = dest_node
@@ -866,11 +906,12 @@ def _edge_pair_contact(
         # progress = s1 + t*v1 = s1 + num*v1/den
         progress = s1 + v1 * num // den
         progress = max(0, min(PROGRESS_MILLI_MAX, progress))
+        t_num, t_den = normalize_rational(num, den)
         ids = sorted((left.formation_id, right.formation_id))
         return ContactCandidate(
             kind=ENCOUNTER_KIND_EDGE_CROSS,
-            time_num=num,
-            time_den=den,
+            time_num=t_num,
+            time_den=t_den,
             edge_id=str(left.edge_id),
             node_id="",
             progress_canonical=progress,
@@ -916,10 +957,11 @@ def _edge_pair_contact(
             return None
         progress = sr + vr * num // den
         progress = max(0, min(PROGRESS_MILLI_MAX, progress))
+        t_num, t_den = normalize_rational(num, den)
         return ContactCandidate(
             kind=ENCOUNTER_KIND_EDGE_CATCHUP,
-            time_num=num,
-            time_den=den,
+            time_num=t_num,
+            time_den=t_den,
             edge_id=str(left.edge_id),
             node_id="",
             progress_canonical=progress,
@@ -967,10 +1009,11 @@ def _edge_pair_contact(
             return None
         progress = sr + rear.velocity_canonical * num // den
         progress = max(0, min(PROGRESS_MILLI_MAX, progress))
+        t_num, t_den = normalize_rational(num, den)
         return ContactCandidate(
             kind=ENCOUNTER_KIND_EDGE_CATCHUP,
-            time_num=num,
-            time_den=den,
+            time_num=t_num,
+            time_den=t_den,
             edge_id=str(left.edge_id),
             node_id="",
             progress_canonical=progress,

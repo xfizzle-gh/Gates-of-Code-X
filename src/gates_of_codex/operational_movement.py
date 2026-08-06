@@ -436,20 +436,18 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
     }:
         from .operational_interception import (
             apply_simultaneous_node_arrivals,
+            arrival_matches_contact_time,
             reject_overflow_arrivals_at_node,
         )
         from .operational_contact import try_create_node_contact_battle
 
-        has_arrivals = any(
-            i.arrives_node
-            and i.end_node_id == primary.node_id
-            and (
-                i.formation_id in primary.participant_ids
-                or primary.kind == ENCOUNTER_KIND_NODE_SIMULTANEOUS
-            )
-            for i in intervals
-        )
-        # Include would-be arrivals at this node in the transactional snapshot.
+        # Only intervals arriving at the selected candidate's exact time.
+        same_time_arrivals = [
+            i for i in intervals if arrival_matches_contact_time(i, primary)
+        ]
+        has_arrivals = bool(same_time_arrivals)
+        # Snapshot participants + same-time arrivals + later same-node arrivals
+        # (later ones may be stack-cap rejected when static t=0 wins).
         arrival_extra = tuple(
             i.formation_id
             for i in intervals
@@ -469,6 +467,15 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
                 contacts.extend(primary.participant_ids)
                 skipped.update(primary.participant_ids)
                 skipped.update(rejected)
+                # Later arrivals at this node (different time) do not move or join.
+                for item in intervals:
+                    if (
+                        item.arrives_node
+                        and item.end_node_id == primary.node_id
+                        and item.formation_id not in skipped
+                        and not arrival_matches_contact_time(item, primary)
+                    ):
+                        skipped.add(item.formation_id)
             else:
                 _restore_formation_locations(state, node_snapshot)
         else:
@@ -494,6 +501,14 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
                         nodes_by_id=nodes_by_id,
                     )
                     skipped.update(rejected)
+                    # Non-overflow later arrivals remain at prior legal position.
+                    for item in intervals:
+                        if (
+                            item.arrives_node
+                            and item.end_node_id == primary.node_id
+                            and item.formation_id not in skipped
+                        ):
+                            skipped.add(item.formation_id)
                 else:
                     _restore_formation_locations(state, node_snapshot)
 
