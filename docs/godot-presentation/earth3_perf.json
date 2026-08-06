@@ -1,0 +1,9 @@
+﻿{
+  "map_id": "earth3_europe_mediterranean",
+  "province_count": 3038,
+  "load_ms_avg": 260,
+  "mesh_count": 12,
+  "frame_ms_idle_estimate": 6.0,
+  "screenshot_center_rgb": [201, 91, 91],
+  "notes": "Load measured via polygon smoke / map_screenshot on RTX 4080 SUPER. Frame estimate idle with debug overlay."
+}
