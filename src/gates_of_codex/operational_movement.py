@@ -220,7 +220,12 @@ def commit_move_orders(
 
 
 def activate_committed_orders(state: CampaignState) -> int:
-    """Promote committed orders for the current turn to active."""
+    """Promote committed orders due for this resolution to active.
+
+    Activates orders whose ``committed_turn`` is unset or ``<=`` the current
+    campaign turn (orders locked during turn N resolve when turn N ends).
+    Future-dated commits (``committed_turn > turn``) stay waiting.
+    """
     count = 0
     turn = int(state.turn_number)
     for force in state.strategic_formations.values():
@@ -229,7 +234,7 @@ def activate_committed_orders(state: CampaignState) -> int:
             continue
         if order.status != MoveOrderStatus.COMMITTED.value:
             continue
-        if order.committed_turn is not None and int(order.committed_turn) != turn:
+        if order.committed_turn is not None and int(order.committed_turn) > turn:
             continue
         force.move_order = replace(order, status=MoveOrderStatus.ACTIVE.value)
         count += 1

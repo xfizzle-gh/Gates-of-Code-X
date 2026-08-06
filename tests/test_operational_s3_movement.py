@@ -317,6 +317,34 @@ class OperationalS3MovementTests(unittest.TestCase):
             self.assertEqual(nb, force.position.node_id)
             self.assertEqual(2, state.turn_number)
 
+    def test_manual_commit_then_end_turn_activates_and_resolves(self) -> None:
+        """issue → manual commit → end turn → activates/moves; not stuck committed."""
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state_with_graph(_graph_three_provinces(), Path(temporary))
+            self.assertEqual(1, state.turn_number)
+            force_id = next(iter(state.strategic_formations))
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            edge = stable_edge_id("corridor", na, nb)
+            issue_move_order(state, force_id, path_node_ids=[na, nb], path_edge_ids=[edge])
+            commit_move_orders(state)
+            force = state.strategic_formations[force_id]
+            assert force.move_order is not None
+            self.assertEqual(MoveOrderStatus.COMMITTED.value, force.move_order.status)
+            self.assertEqual(1, force.move_order.committed_turn)
+            CampaignEngine(state).end_turn()
+            force = state.strategic_formations[force_id]
+            assert force.move_order is not None
+            self.assertNotEqual(
+                MoveOrderStatus.COMMITTED.value,
+                force.move_order.status,
+                "order must not remain permanently committed after end_turn",
+            )
+            self.assertEqual(MoveOrderStatus.COMPLETED.value, force.move_order.status)
+            assert force.position is not None
+            self.assertEqual(nb, force.position.node_id)
+            self.assertEqual("b", force.province_id)
+            self.assertEqual(2, state.turn_number)
+
     def test_save_load_mid_edge(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

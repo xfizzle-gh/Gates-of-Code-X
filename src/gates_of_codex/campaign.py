@@ -118,14 +118,15 @@ class CampaignEngine:
             index = -1
         next_faction = active[(index + 1) % len(active)]
         if index == len(active) - 1 or index == -1:
-            self.state.turn_number += 1
             from .economy import settle_round_economy
             from .operational_movement import resolve_strategic_turn_movement
             from .strategic import evaluate_campaign_outcome
             from .supply import refresh_all_supply
 
-            # S3: once per strategic round — commit drafts, activate, advance N ticks.
+            # S3: resolve on the ending turn number so committed_turn matches
+            # (manual commit during turn N activates when turn N ends).
             resolve_strategic_turn_movement(self.state)
+            self.state.turn_number += 1
             settle_round_economy(self.state)
             for battalion in self.state.battalions.values():
                 battalion.movement_remaining = 1
