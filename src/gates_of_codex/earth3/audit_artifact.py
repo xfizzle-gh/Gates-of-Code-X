@@ -11,6 +11,7 @@ from .geometry import (
     AUTHORITATIVE_GEOMETRY_ENGINE,
     STDLIB_GEOMETRY_ENGINE,
     bounds_intersect,
+    overlap_ratio,
     overlap_ratio_stdlib,
     require_authoritative_geometry_engine,
     ring_bounds,
@@ -21,7 +22,11 @@ from .model import Earth3Dataset
 from .parse import load_earth3_dataset
 
 AUDIT_SCHEMA = "gates-of-codex.earth3-local-crop-audit"
-AUDIT_SCHEMA_VERSION = 2
+AUDIT_SCHEMA_VERSION = 3
+ICELAND_EXPECTED_LAND_IDS = (
+    950, 951, 952, 953, 954, 955, 956, 957, 958, 959, 960, 961, 962, 963, 964,
+    6847, 6848, 6849, 6850, 6851,
+)
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -175,44 +180,116 @@ def build_local_crop_audit(
             "include_ids": include_ids,
             "exclude_ids": exclude_ids,
         },
-        "exclusion_anchor_status": _exclusion_anchor_status(
-            dataset, set(result.included_ids), raw_config
+        "exclusion_anchor_geometry": _exclusion_anchor_geometry(
+            dataset, candidate, set(result.included_ids), raw_config
         ),
-        "iceland_land_province_count": _iceland_land_count(dataset, set(result.included_ids)),
+        "iceland": _iceland_exact_set_report(dataset, set(result.included_ids), raw_config),
         "exact_required_locations": locations,
         "expected_gating_location_keys": list(GATING_LOCATION_KEYS),
     }
 
 
-def _exclusion_anchor_status(
-    dataset: Earth3Dataset, included: set[int], raw_config: dict
-) -> list[dict]:
+def _exclusion_anchor_geometry(
+    dataset: Earth3Dataset,
+    candidate,
+    included: set[int],
+    raw_config: dict,
+) -> dict:
+    """Prove named anchors are outside the mask by raw overlap, not only overrides."""
+    thr = float(candidate.inclusion_threshold)
     rows = []
+    failures = []
     for anchor in raw_config.get("exclusion_city_anchors", []):
         pid = int(anchor["source_province_id"])
-        rows.append(
-            {
-                "name": anchor["name"],
-                "source_province_id": pid,
-                "included": pid in included,
-                "ok_excluded": pid not in included,
-                "x": anchor.get("x"),
-                "y": anchor.get("y"),
-            }
-        )
-    return rows
-
-
-def _iceland_land_count(dataset: Earth3Dataset, included: set[int]) -> int:
-    count = 0
-    for pid in included:
-        province = dataset.provinces[pid]
-        if province.is_water:
+        province = dataset.provinces.get(pid)
+        if province is None:
+            rows.append(
+                {
+                    "name": anchor["name"],
+                    "source_province_id": pid,
+                    "error": "missing_province",
+                    "geometry_ok": False,
+                }
+            )
+            failures.append(anchor["name"])
             continue
-        cx, cy = province.centroid
-        if 7000 < cx < 7900 and 650 < cy < 1200:
-            count += 1
-    return count
+        broad_hit = candidate.rect.intersects_bounds(province.bounds)
+        mask_hit = any(
+            bounds_intersect(province.bounds, ring_bounds(ring))
+            for ring in candidate.mask_rings
+        )
+        raw_ratio = 0.0
+        if broad_hit and mask_hit:
+            raw_ratio = float(overlap_ratio(province.ring, candidate.mask_rings))
+        auto_include = raw_ratio + 1e-12 >= thr
+        final_included = pid in included
+        geometry_ok = (raw_ratio < thr) or (not mask_hit) or (not broad_hit)
+        row = {
+            "name": anchor["name"],
+            "source_province_id": pid,
+            "group": anchor.get("group"),
+            "x": anchor.get("x"),
+            "y": anchor.get("y"),
+            "broad_phase_intersects": broad_hit,
+            "mask_bounds_intersects": mask_hit,
+            "raw_overlap_ratio": round(raw_ratio, 6),
+            "automatic_threshold_include": auto_include,
+            "final_included_after_overrides": final_included,
+            "geometry_ok_raw_below_threshold": geometry_ok,
+            "final_ok_excluded": not final_included,
+        }
+        rows.append(row)
+        if not geometry_ok or final_included:
+            failures.append(str(anchor["name"]))
+    return {
+        "ok": not failures,
+        "failure_names": failures,
+        "requirement": "raw_overlap_ratio < inclusion_threshold OR no mask intersection",
+        "anchors": rows,
+    }
+
+
+def _iceland_exact_set_report(
+    dataset: Earth3Dataset, included: set[int], raw_config: dict
+) -> dict:
+    expected = [
+        int(v)
+        for v in raw_config.get("iceland_expected_land_province_ids", ICELAND_EXPECTED_LAND_IDS)
+    ]
+    expected_set = set(expected)
+    present = sorted(pid for pid in expected if pid in included)
+    missing = sorted(expected_set - included)
+    # Connectivity on land adjacency restricted to expected set.
+    land = {pid for pid in expected_set if pid in dataset.provinces and not dataset.provinces[pid].is_water}
+    if not land:
+        components = 0
+    else:
+        seen: set[int] = set()
+        components = 0
+        for start in sorted(land):
+            if start in seen:
+                continue
+            components += 1
+            stack = [start]
+            seen.add(start)
+            while stack:
+                pid = stack.pop()
+                for nb in dataset.neighbors(pid):
+                    if nb in land and nb not in seen:
+                        seen.add(nb)
+                        stack.append(nb)
+    id_hash = included_ids_hash(expected)
+    return {
+        "ok": not missing and components == 1 and set(present) == expected_set,
+        "expected_ids": expected,
+        "expected_count": len(expected),
+        "included_expected_ids": present,
+        "missing_ids": missing,
+        "hofn_included": 956 in included,
+        "bakkafjordur_included": 6850 in included,
+        "connected_components_in_expected_set": components,
+        "expected_ids_sha256": id_hash,
+    }
 
 
 def write_local_crop_audit(path: str | Path, payload: dict) -> Path:
@@ -314,16 +391,28 @@ def validate_committed_audit_artifact(
     if expected_field and expected_field != expected_keys:
         errors.append("expected_gating_location_keys field mismatch")
 
-    anchors = payload.get("exclusion_anchor_status") or []
-    for row in anchors:
-        if not row.get("ok_excluded", False):
+    geom = payload.get("exclusion_anchor_geometry") or {}
+    if not geom.get("ok"):
+        errors.append(f"exclusion_anchor_geometry failed: {geom.get('failure_names')}")
+    for row in geom.get("anchors") or []:
+        if not row.get("geometry_ok_raw_below_threshold", False):
             errors.append(
-                f"exclusion anchor still included: {row.get('name')} p={row.get('source_province_id')}"
+                f"anchor raw overlap not below threshold: {row.get('name')} "
+                f"ratio={row.get('raw_overlap_ratio')}"
             )
+        if row.get("final_included_after_overrides"):
+            errors.append(f"anchor still included after overrides: {row.get('name')}")
 
-    iceland_n = int(payload.get("iceland_land_province_count", -1))
-    if iceland_n < 18:
-        errors.append(f"iceland_land_province_count {iceland_n} < 18")
+    iceland = payload.get("iceland") or {}
+    if not iceland.get("ok"):
+        errors.append(
+            f"iceland exact set failed missing={iceland.get('missing_ids')} "
+            f"components={iceland.get('connected_components_in_expected_set')}"
+        )
+    if int(iceland.get("expected_count", -1)) != 20:
+        errors.append("iceland expected_count must be 20")
+    if not iceland.get("hofn_included") or not iceland.get("bakkafjordur_included"):
+        errors.append("Höfn/Bakkafjörður must be included")
 
     src = payload.get("source") or {}
     if src.get("archive_committed") is not False:

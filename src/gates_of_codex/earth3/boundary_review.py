@@ -8,62 +8,77 @@ from pathlib import Path
 from .model import Earth3Dataset
 
 BOUNDARY_GROUPS = (
-    "Iceland_Atlantic",
-    "Scandinavia_northern_Russia",
-    "eastern_Russia",
+    "Europe_Scandinavia",
+    "western_Russia",
     "Caucasus",
-    "North_Africa",
-    "eastern_Mediterranean_Levant",
-    "southern_export_boundary",
-    "water_boundary",
+    "northwestern_Iran_fringe",
+    "Levant",
+    "Arabian_interior",
+    "North_African_coast",
+    "Sahara",
+    "Mediterranean_water",
+    "Atlantic_Nordic_water",
+    "Caspian_water",
+    "Red_Sea_water",
+    "other_water",
+    "other_land",
 )
 
-# Reviewed anchors (Earth3 city name + province id) used for grouping, not coords alone.
 _GROUP_CITY_ANCHORS: dict[str, tuple[tuple[str, int], ...]] = {
-    "Iceland_Atlantic": (
+    "Europe_Scandinavia": (
         ("Reykjavík", 951),
         ("Höfn", 956),
         ("Bakkafjörður", 6850),
-        ("Akureyri", 963),
-    ),
-    "Scandinavia_northern_Russia": (
         ("Stockholm", 1049),
         ("Helsinki", 1461),
         ("Oslo", 1009),
+        ("London", 825),
+        ("Paris", 260),
+        ("Berlin", 592),
+        ("Rome", 6881),
+        ("Athens", 2202),
+        ("Kyiv", 3757),
         ("Murmansk", 11370),
-        ("Arkhangelsk", 11764),
     ),
-    "eastern_Russia": (
+    "western_Russia": (
+        ("Rostov on Don", 10868),
         ("Naberezhnye Chelny", 10857),
         ("Yaransk", 11170),
         ("Tuymazy", 11323),
         ("Galich", 11689),
         ("Orsk", 10919),
-        ("Rostov on Don", 10868),
+        ("Arkhangelsk", 11764),
     ),
     "Caucasus": (
         ("Tbilisi", 10431),
         ("Yerevan", 10436),
         ("Baku", 2654),
-        ("Turtkul", 10587),
-        ("Ayteke Bi", 11177),
-        ("Karabutak", 11180),
     ),
-    "North_Africa": (
+    "northwestern_Iran_fringe": (
+        ("Urmia", 1194),
+        ("Ahvaz", 2624),
+        ("Anarak", 3507),
+        ("Moalleman", 10577),
+    ),
+    "Levant": (
+        ("Istanbul", 1116),
+        ("Ankara", 2207),
+    ),
+    "Arabian_interior": (
+        ("Hail", 6162),
+        ("Hegra", 6091),
+        ("Ash Shamli", 6163),
+        ("Turaif", 6193),
+        ("An Nahidayn", 6202),
+    ),
+    "North_African_coast": (
         ("Tunis", 2242),
         ("Algiers", 1399),
         ("Tripoli", 1365),
         ("Cairo", 2669),
     ),
-    "eastern_Mediterranean_Levant": (
-        ("Istanbul", 1116),
-        ("Ankara", 2207),
-        ("Hail", 6162),
-        ("Hegra", 6091),
-        ("Ash Shamli", 6163),
-        ("Ahvaz", 2624),
-        ("Anarak", 3507),
-        ("Moalleman", 10577),
+    "Sahara": (
+        ("Dujal", 4796),
     ),
 }
 
@@ -75,16 +90,24 @@ def classify_boundary_group(
     centroid: tuple[float, float],
     is_water: bool,
 ) -> str:
+    x, y = centroid
     if is_water:
-        return "water_boundary"
+        # Water basins by reviewed geography, not residual "North Africa".
+        if 9800 <= x <= 10300 and 3300 <= y <= 3700:
+            return "Red_Sea_water"
+        if x >= 10600 and 2400 <= y <= 3000:
+            return "Caspian_water"
+        if x < 7800 or (y < 1600 and x < 9000):
+            return "Atlantic_Nordic_water"
+        if 7800 <= x <= 10800 and 2500 <= y <= 3600:
+            return "Mediterranean_water"
+        return "other_water"
 
-    # Prefer nearest reviewed city-anchor group by province adjacency/id hit.
     for group, anchors in _GROUP_CITY_ANCHORS.items():
         for _name, apid in anchors:
             if pid == apid:
                 return group
 
-    # Nearest reviewed city among dataset cities that match anchor names.
     cx, cy = centroid
     best_group = None
     best_d2 = None
@@ -99,26 +122,30 @@ def classify_boundary_group(
         if best_d2 is None or d2 < best_d2:
             best_d2 = d2
             best_group = group
-    if best_group is not None and best_d2 is not None and best_d2 ** 0.5 < 400:
+    if best_group is not None and best_d2 is not None and best_d2 ** 0.5 < 350:
+        # Never label Iraq/Saudi anchors as North Africa (anchor table already separates).
         return best_group
 
-    # Residual geometric fallback only after city-anchor attempt.
-    x, y = centroid
+    # Residual geometry only after city anchors.
     if x < 7900 and y < 1200:
-        return "Iceland_Atlantic"
+        return "Europe_Scandinavia"
+    if y >= 3500 and x < 10000:
+        return "Sahara"
     if y >= 3300 and x < 10200:
-        return "North_Africa"
-    if y >= 3000:
-        return "eastern_Mediterranean_Levant"
-    if x >= 10600 and 1800 <= y <= 3000:
+        return "North_African_coast"
+    if 10000 <= x <= 10500 and y >= 3000:
+        return "Arabian_interior"
+    if x >= 10500 and y >= 2880:
+        return "northwestern_Iran_fringe"
+    if x >= 10400 and 2500 <= y <= 2900:
         return "Caucasus"
     if x >= 10300 and y < 2000:
-        return "eastern_Russia"
-    if y < 1400:
-        return "Scandinavia_northern_Russia"
-    if y >= 3400:
-        return "southern_export_boundary"
-    return "Scandinavia_northern_Russia"
+        return "western_Russia"
+    if y < 1500:
+        return "Europe_Scandinavia"
+    if 9600 <= x <= 10400 and 2600 <= y <= 3200:
+        return "Levant"
+    return "other_land"
 
 
 def nearest_city_label(dataset: Earth3Dataset, x: float, y: float) -> dict[str, object] | None:
@@ -141,18 +168,23 @@ def nearest_city_label(dataset: Earth3Dataset, x: float, y: float) -> dict[str, 
 
 
 def closeup_for_group(group: str) -> str:
-    if group in {"Iceland_Atlantic", "Scandinavia_northern_Russia", "eastern_Russia"}:
+    if group in {
+        "Europe_Scandinavia",
+        "western_Russia",
+        "Atlantic_Nordic_water",
+    }:
         return "closeups/em_reference_masked_scandinavia_north_russia.png"
-    if group in {"Caucasus"}:
+    if group in {"Caucasus", "northwestern_Iran_fringe", "Caspian_water"}:
         return "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
     if group in {
-        "North_Africa",
-        "eastern_Mediterranean_Levant",
-        "southern_export_boundary",
+        "North_African_coast",
+        "Sahara",
+        "Levant",
+        "Arabian_interior",
+        "Red_Sea_water",
+        "Mediterranean_water",
     }:
         return "closeups/em_reference_masked_north_africa_east_med.png"
-    if group == "water_boundary":
-        return "preview_em_reference_masked.png"
     return "preview_em_reference_masked.png"
 
 
@@ -170,14 +202,20 @@ def geographic_reason(
         f"{'≥' if decision == 'include' else '<'} 0.35 threshold."
     )
     notes = {
-        "Iceland_Atlantic": "Iceland/Atlantic fringe; full Iceland land component is required-include.",
-        "Scandinavia_northern_Russia": "Northern Scandinavian / N-Russia mask edge.",
-        "eastern_Russia": "Eastern Russian depth edge; deep-east anchors must stay out.",
-        "Caucasus": "Caucasus edge; keep Tbilisi/Yerevan/Baku, cut Central Asia spill.",
-        "North_Africa": "North African coastal belt edge.",
-        "eastern_Mediterranean_Levant": "E.Med/Levant edge; cut Arabia/Iran interior anchors.",
-        "southern_export_boundary": "Southern export/mask depth edge.",
-        "water_boundary": "Water/sea province on mask perimeter.",
+        "Europe_Scandinavia": "European / Scandinavian theatre edge.",
+        "western_Russia": "Western Russian approaches; deep-east anchors must stay out.",
+        "Caucasus": "Caucasus edge; keep Tbilisi/Yerevan/Baku.",
+        "northwestern_Iran_fringe": "NW Iran fringe; Urmia default excluded.",
+        "Levant": "Levant / Anatolia edge.",
+        "Arabian_interior": "Arabian interior; must stay out of launch theatre.",
+        "North_African_coast": "Mediterranean North African coastal belt.",
+        "Sahara": "Deep Sahara / interior Maghreb; must stay out.",
+        "Mediterranean_water": "Mediterranean sea province.",
+        "Atlantic_Nordic_water": "Atlantic / Nordic sea province.",
+        "Caspian_water": "Caspian sea province.",
+        "Red_Sea_water": "Red Sea water; must stay out while keeping Cairo/Sinai framing.",
+        "other_water": "Other water province on mask perimeter.",
+        "other_land": "Other land boundary province.",
     }
     water = " Water province." if is_water else ""
     near = f" Nearest city: {nearest_name}." if nearest_name else ""
@@ -233,13 +271,13 @@ def build_boundary_review(
 
     return {
         "schema": "gates-of-codex.earth3-boundary-review",
-        "schema_version": 2,
+        "schema_version": 3,
         "candidate_id": decisions.get("candidate_id", "em_reference_masked"),
         "status": "algorithmic_recommendation_pending_owner_review",
         "note": (
             "Automatic threshold outcomes are algorithmic recommendations only. "
-            "They are not completed owner boundary review. Grouping uses reviewed "
-            "Earth3 city/region anchors before residual geometry."
+            "Grouping uses reviewed Earth3 city anchors and explicit basin labels "
+            "(Iraq/Saudi are not North Africa)."
         ),
         "decision_count": len(rows),
         "groups": {
@@ -269,7 +307,7 @@ def write_boundary_review_markdown(review: dict, path: str | Path) -> Path:
         "",
         review["note"],
         "",
-        f"Total formerly threshold-band provinces: **{review['decision_count']}**",
+        f"Total threshold-band provinces: **{review['decision_count']}**",
         "",
     ]
     for group, payload in review["groups"].items():

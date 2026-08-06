@@ -272,9 +272,16 @@ class LiveArchiveCorrectnessTests(unittest.TestCase):
         self.assertEqual(
             self.result.water_count, artifact["crop_result"]["water_province_count"]
         )
-        self.assertGreaterEqual(artifact.get("iceland_land_province_count", 0), 18)
-        for row in artifact.get("exclusion_anchor_status", []):
-            self.assertTrue(row["ok_excluded"], msg=row)
+        iceland = artifact.get("iceland") or {}
+        self.assertTrue(iceland.get("ok"), msg=iceland)
+        self.assertEqual(iceland.get("expected_count"), 20)
+        self.assertTrue(iceland.get("hofn_included"))
+        self.assertTrue(iceland.get("bakkafjordur_included"))
+        geom = artifact.get("exclusion_anchor_geometry") or {}
+        self.assertTrue(geom.get("ok"), msg=geom.get("failure_names"))
+        for row in geom.get("anchors") or []:
+            self.assertTrue(row.get("geometry_ok_raw_below_threshold"), msg=row)
+            self.assertFalse(row.get("final_included_after_overrides"), msg=row)
 
     def test_audit_artifact_matches_live_run(self) -> None:
         artifact = json.loads(LOCAL_AUDIT.read_text(encoding="utf-8"))
