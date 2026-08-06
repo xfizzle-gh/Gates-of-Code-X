@@ -20,7 +20,7 @@ from .strategic import (
 from .supply import reachable_supply_provinces
 
 
-FRONTEND_SCHEMA_VERSION = 10
+FRONTEND_SCHEMA_VERSION = 11
 FRONTEND_PYTHON_MODULE = "gates_of_codex"
 
 
@@ -43,10 +43,13 @@ def build_frontend_snapshot(
         resolve_display_pixel,
     )
 
+    from .operational_capture import site_control_snapshot
+
     ensure_strategic_formations(state)
     ensure_operational_positions(state)
     ensure_move_orders(state)
     operational_clock = get_operational_clock(state)
+    site_control = site_control_snapshot(state)
     apply_marker_layout(state)
     objectives = update_operational_objectives(state)
     outcome = evaluate_campaign_outcome(state)
@@ -92,6 +95,7 @@ def build_frontend_snapshot(
             "catalog_signature": state.catalog_signature,
             "outcome": asdict(outcome),
             "operational_clock": operational_clock,
+            "site_control": site_control,
         },
         "strategic_map": _strategic_map_block(state, snapshot_path),
         "bounds": {

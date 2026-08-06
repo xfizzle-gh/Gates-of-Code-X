@@ -50,7 +50,10 @@ class CampaignEngine:
             battalion.province_id = target_province_id
             battalion.movement_remaining -= 1
             self._sync_strategic_formation_location(battalion)
-            if target.owner == Faction.NEUTRAL:
+            # Operational maneuver: ownership only via control-site capture (S5), not entry.
+            if target.owner == Faction.NEUTRAL and not bool(
+                self.state.map_metadata.get("operational_maneuver_enabled")
+            ):
                 target.owner = battalion.faction
                 from .strategic import evaluate_campaign_outcome, sync_province_infrastructure_owner
 
