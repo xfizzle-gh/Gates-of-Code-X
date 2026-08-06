@@ -431,6 +431,32 @@ class OperationalS3MovementTests(unittest.TestCase):
             self.assertIn(force_id, report["blocked"])
             assert force.move_order is not None
             self.assertEqual(MoveOrderStatus.BLOCKED.value, force.move_order.status)
+            # Rejected draft → blocked with neither commitment field (schema-valid).
+            self.assertIsNone(force.move_order.committed_turn)
+            self.assertIsNone(force.move_order.locked_stance)
+            path = Path(temporary) / "blocked_draft.json"
+            save_campaign(state, path)
+            reloaded = load_campaign(path)
+            blocked = reloaded.strategic_formations[force_id].move_order
+            assert blocked is not None
+            self.assertEqual(MoveOrderStatus.BLOCKED.value, blocked.status)
+            self.assertIsNone(blocked.committed_turn)
+            self.assertIsNone(blocked.locked_stance)
+
+    def test_legacy_move_rejects_locked_operational_order(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state_with_graph(_graph_three_provinces(), Path(temporary))
+            force_id = next(iter(state.strategic_formations))
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            edge = stable_edge_id("corridor", na, nb)
+            issue_move_order(state, force_id, path_node_ids=[na, nb], path_edge_ids=[edge])
+            commit_move_orders(state)
+            engine = CampaignEngine(state)
+            with self.assertRaises(ValueError):
+                engine.move_or_attack("bn-1", "b")
+            activate_committed_orders(state)
+            with self.assertRaises(ValueError):
+                engine.move_or_attack("bn-1", "b")
 
     def test_ensure_move_orders_preserves_when_graph_missing(self) -> None:
         state = CampaignState(

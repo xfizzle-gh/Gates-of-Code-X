@@ -292,11 +292,10 @@ class OperationalEmS1Tests(unittest.TestCase):
             edges_by_id=edges_by_id,
         )
 
-        # Active/completed/blocked must retain commitment fields
+        # Active/completed must retain commitment fields
         for status in (
             MoveOrderStatus.ACTIVE.value,
             MoveOrderStatus.COMPLETED.value,
-            MoveOrderStatus.BLOCKED.value,
         ):
             OperationalMoveOrder(
                 order_id=f"ord-{status}",
@@ -326,6 +325,48 @@ class OperationalEmS1Tests(unittest.TestCase):
                     site_ids=set(),
                     edges_by_id=edges_by_id,
                 )
+
+        # Blocked: both commitment fields or neither (like cancelled)
+        OperationalMoveOrder(
+            order_id="ord-blocked-none",
+            formation_id="sf-x",
+            path_node_ids=[sample_edge.a, sample_edge.b],
+            path_edge_ids=[sample_edge.edge_id],
+            status=MoveOrderStatus.BLOCKED.value,
+        ).validate(
+            node_ids=nodes,
+            edge_ids=edge_ids,
+            site_ids=set(),
+            edges_by_id=edges_by_id,
+        )
+        OperationalMoveOrder(
+            order_id="ord-blocked-both",
+            formation_id="sf-x",
+            path_node_ids=[sample_edge.a, sample_edge.b],
+            path_edge_ids=[sample_edge.edge_id],
+            status=MoveOrderStatus.BLOCKED.value,
+            committed_turn=2,
+            locked_stance=FormationStance.OPERATIONAL.value,
+        ).validate(
+            node_ids=nodes,
+            edge_ids=edge_ids,
+            site_ids=set(),
+            edges_by_id=edges_by_id,
+        )
+        with self.assertRaises(ValueError):
+            OperationalMoveOrder(
+                order_id="ord-blocked-half",
+                formation_id="sf-x",
+                path_node_ids=[sample_edge.a, sample_edge.b],
+                path_edge_ids=[sample_edge.edge_id],
+                status=MoveOrderStatus.BLOCKED.value,
+                committed_turn=2,
+            ).validate(
+                node_ids=nodes,
+                edge_ids=edge_ids,
+                site_ids=set(),
+                edges_by_id=edges_by_id,
+            )
 
         # Draft must not carry commitment fields
         with self.assertRaises(ValueError):

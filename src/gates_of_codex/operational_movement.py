@@ -276,7 +276,7 @@ def ensure_move_orders(state: CampaignState) -> dict[str, Any]:
             if order.formation_id and order.formation_id != force.strategic_formation_id:
                 raise ValueError("formation_id mismatch")
         except (TypeError, ValueError, KeyError):
-            force.move_order = replace(order, status=MoveOrderStatus.BLOCKED.value)
+            force.move_order = _as_blocked(order)
             blocked.append(force.strategic_formation_id)
     return {"validated": True, "blocked": blocked}
 
@@ -382,7 +382,7 @@ def _advance_formation_one_tick(
 
     edge_index, desync = _current_edge_index(position, order)
     if desync:
-        force.move_order = replace(order, status=MoveOrderStatus.BLOCKED.value)
+        force.move_order = _as_blocked(order)
         return False
     if edge_index is None:
         # True arrival at final path node only.
@@ -395,13 +395,13 @@ def _advance_formation_one_tick(
             force.movement_state = "at_anchor"
             sync_province_from_position(state, force)
             return False
-        force.move_order = replace(order, status=MoveOrderStatus.BLOCKED.value)
+        force.move_order = _as_blocked(order)
         return False
 
     edge_id = order.path_edge_ids[edge_index]
     edge = edges_by_id.get(edge_id)
     if edge is None:
-        force.move_order = replace(order, status=MoveOrderStatus.BLOCKED.value)
+        force.move_order = _as_blocked(order)
         return False
     dest_node = order.path_node_ids[edge_index + 1]
     origin_node = order.path_node_ids[edge_index]
@@ -409,12 +409,12 @@ def _advance_formation_one_tick(
     # Enter edge if still at origin node.
     if position.mode == PositionMode.AT_NODE.value:
         if position.node_id != origin_node:
-            force.move_order = replace(order, status=MoveOrderStatus.BLOCKED.value)
+            force.move_order = _as_blocked(order)
             return False
         try:
             _assert_edge_direction(edge, origin=origin_node, dest=dest_node)
         except ValueError:
-            force.move_order = replace(order, status=MoveOrderStatus.BLOCKED.value)
+            force.move_order = _as_blocked(order)
             return False
         position = FormationOperationalPosition(
             mode=PositionMode.ON_EDGE.value,
@@ -428,7 +428,7 @@ def _advance_formation_one_tick(
         sync_province_from_position(state, force)
 
     if position.mode != PositionMode.ON_EDGE.value or position.edge_id != edge_id:
-        force.move_order = replace(order, status=MoveOrderStatus.BLOCKED.value)
+        force.move_order = _as_blocked(order)
         return False
 
     cost = max(1, int(edge.movement_cost_milli))
@@ -492,6 +492,20 @@ def _current_edge_index(
                 return index, False
         return None, True
     return None, True
+
+
+def _as_blocked(order: OperationalMoveOrder) -> OperationalMoveOrder:
+    """Mark blocked with a valid commitment pair (both present, or neither)."""
+    has_turn = order.committed_turn is not None
+    has_stance = order.locked_stance is not None
+    if has_turn and has_stance:
+        return replace(order, status=MoveOrderStatus.BLOCKED.value)
+    return replace(
+        order,
+        status=MoveOrderStatus.BLOCKED.value,
+        committed_turn=None,
+        locked_stance=None,
+    )
 
 
 def _stance_speed_milli(stance: str | None) -> int:

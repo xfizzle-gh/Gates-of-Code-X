@@ -285,8 +285,8 @@ def generate_em_operational_graph(
                 "| status | committed_turn / locked_stance |",
                 "|--------|--------------------------------|",
                 "| draft | must be absent |",
-                "| committed, active, completed, blocked | required |",
-                "| cancelled | both present, or neither (not one alone) |",
+                "| committed, active, completed | required |",
+                "| cancelled, blocked | both present, or neither (not one alone) |",
                 "",
             ]
         ),
