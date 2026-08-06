@@ -23,15 +23,24 @@ AUDIT_SCHEMA = "gates-of-codex.earth3-local-crop-audit"
 AUDIT_SCHEMA_VERSION = 1
 
 
-def sha256_file(path: str | Path) -> str:
-    """SHA-256 of file bytes with newlines normalized to LF.
+def sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
 
-    Git may check out tracked text as CRLF on Windows. Hashing the raw
-    working-tree bytes would make CI fail spuriously; normalize first so
-    tracked-input hashes are platform-stable.
+
+def sha256_file(path: str | Path) -> str:
+    """SHA-256 of raw file bytes (for binary sources such as the local archive)."""
+    return sha256_bytes(Path(path).read_bytes())
+
+
+def sha256_text_file(path: str | Path) -> str:
+    """SHA-256 of a tracked text file with newlines normalized to LF.
+
+    Git may check out tracked text as CRLF on Windows. Normalize before
+    hashing so CI validation is platform-stable. Never use this for binary
+    archives.
     """
     data = Path(path).read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
-    return hashlib.sha256(data).hexdigest()
+    return sha256_bytes(data)
 
 
 def sha256_text(text: str) -> str:
@@ -91,7 +100,7 @@ def build_local_crop_audit(
     for row in raw_config.get("candidates", []):
         if row.get("id") == candidate_id and row.get("threshold_decisions_file"):
             decisions_file = (crop_config_path.parent / row["threshold_decisions_file"]).resolve()
-            decisions_sha = sha256_file(decisions_file)
+            decisions_sha = sha256_text_file(decisions_file)
             break
 
     decisions_payload = {}
@@ -123,11 +132,12 @@ def build_local_crop_audit(
         },
         "tracked_inputs": {
             "crop_config_path": str(crop_config_path.as_posix()),
-            "crop_config_sha256": sha256_file(crop_config_path),
+            "crop_config_sha256": sha256_text_file(crop_config_path),
             "threshold_decisions_path": (
                 str(Path(decisions_file).as_posix()) if decisions_file else None
             ),
             "threshold_decisions_sha256": decisions_sha,
+            "hash_normalization": "tracked_text_lf_only_archive_raw_bytes",
         },
         "oracle": {
             "provinces_checked": checked,
@@ -188,7 +198,7 @@ def validate_committed_audit_artifact(
         errors.append("authoritative_geometry_engine must be shapely")
 
     tracked = payload.get("tracked_inputs") or {}
-    expected_cfg = sha256_file(crop_config_path)
+    expected_cfg = sha256_text_file(crop_config_path)
     if tracked.get("crop_config_sha256") != expected_cfg:
         errors.append("crop_config_sha256 does not match tracked config file")
 
@@ -205,7 +215,7 @@ def validate_committed_audit_artifact(
                 break
     if threshold_decisions_path is not None:
         threshold_decisions_path = Path(threshold_decisions_path)
-        expected_dec = sha256_file(threshold_decisions_path)
+        expected_dec = sha256_text_file(threshold_decisions_path)
         if tracked.get("threshold_decisions_sha256") != expected_dec:
             errors.append("threshold_decisions_sha256 does not match tracked decisions file")
         dec = json.loads(threshold_decisions_path.read_text(encoding="utf-8"))
