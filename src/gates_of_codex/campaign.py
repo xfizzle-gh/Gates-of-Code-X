@@ -268,6 +268,12 @@ class CampaignEngine:
                         force.move_order, status=MoveOrderStatus.BLOCKED.value
                     )
 
+        # Clear all edge-retreat metadata after op battle finalization (no stale reuse).
+        if is_op_contact:
+            store = self.state.map_metadata.get("operational_edge_retreat_nodes")
+            if isinstance(store, dict):
+                store.clear()
+
         pending.completed = True
         self.state.pending_battle = None
         from .strategic import evaluate_campaign_outcome

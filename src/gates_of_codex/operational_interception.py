@@ -121,35 +121,50 @@ def detect_swept_contacts(
                 contact = _edge_pair_contact(left, right)
                 if contact is not None:
                     contacts.append(contact)
-    # Simultaneous node arrivals among movers
+    # Simultaneous node arrivals: one candidate per destination containing ALL arrivals.
     arrivals: dict[str, list[MovementInterval]] = {}
     for item in intervals:
         if item.arrives_node and item.end_node_id:
             arrivals.setdefault(item.end_node_id, []).append(item)
     for node_id in sorted(arrivals):
         group = sorted(arrivals[node_id], key=lambda value: value.formation_id)
+        if len(group) < 2:
+            continue
+        # Require at least one hostile pair among the full arrival set.
+        has_hostile = False
+        seed_atk = seed_def = None
         for i, left in enumerate(group):
             for right in group[i + 1 :]:
                 if left.faction == right.faction or are_allied(
                     state, left.faction, right.faction
                 ):
                     continue
-                attacker, defender = _node_attacker_defender(state, left, right, node_id)
-                contacts.append(
-                    ContactCandidate(
-                        kind=ENCOUNTER_KIND_NODE_SIMULTANEOUS,
-                        time_num=1,
-                        time_den=1,  # end of tick arrival
-                        edge_id="",
-                        node_id=node_id,
-                        progress_canonical=0,
-                        attacker_id=attacker.formation_id,
-                        defender_id=defender.formation_id,
-                        participant_ids=tuple(
-                            sorted((attacker.formation_id, defender.formation_id))
-                        ),
-                    )
-                )
+                has_hostile = True
+                seed_atk, seed_def = _node_attacker_defender(state, left, right, node_id)
+                break
+            if has_hostile:
+                break
+        if not has_hostile or seed_atk is None or seed_def is None:
+            continue
+        retreat = tuple(
+            (item.formation_id, item.path_origin_node or item.start_node_id or "")
+            for item in group
+            if (item.path_origin_node or item.start_node_id)
+        )
+        contacts.append(
+            ContactCandidate(
+                kind=ENCOUNTER_KIND_NODE_SIMULTANEOUS,
+                time_num=1,
+                time_den=1,  # end of tick arrival
+                edge_id="",
+                node_id=node_id,
+                progress_canonical=0,
+                attacker_id=seed_atk.formation_id,
+                defender_id=seed_def.formation_id,
+                participant_ids=tuple(item.formation_id for item in group),
+                retreat_nodes=tuple((fid, nid) for fid, nid in retreat if nid),
+            )
+        )
     return contacts
 
 
@@ -247,81 +262,87 @@ def apply_simultaneous_node_arrivals(
     *,
     edges_by_id: dict[str, OperationalRouteEdge],
     nodes_by_id: dict[str, dict[str, Any]],
-) -> bool:
+) -> tuple[bool, tuple[str, ...]]:
     """Atomically place accepted arrivals and open one node_simultaneous battle.
 
-    Capacity is validated from the frozen snapshot (pre-mutation). Returns True
-    if a battle was created.
+    Capacity is validated from the frozen snapshot (pre-mutation). Returns
+    (created, rejected_formation_ids). Rejected arrivals stay at their exact
+    previous legal node and are blocked (no active retry after the battle).
     """
     from .operational_contact import (
-        can_enter_node_friendly_stack,
         formations_at_node,
+        max_friendly_formations_per_node,
         try_create_node_contact_battle,
+        choose_static_attacker_defender,
     )
 
     node_id = contact.node_id
     by_id = {item.formation_id: item for item in intervals}
-    # Snapshot occupants already at node (not arriving this tick).
     already = {
         f.strategic_formation_id: f for f in formations_at_node(state, node_id)
     }
-    # Group arrivals by coalition for capacity (friendly stack).
     arrivals = [
         by_id[fid]
         for fid in sorted(contact.participant_ids)
         if fid in by_id and by_id[fid].arrives_node
     ]
     if len(arrivals) < 2:
-        return False
+        return False, ()
 
-    # Validate each arrival against frozen capacity (already + earlier accepted).
     accepted: list[MovementInterval] = []
-    tentative_friends: dict[str, list[str]] = {}  # faction -> formation ids counted
+    rejected: list[MovementInterval] = []
+    tentative: list[tuple[Faction, str]] = []  # (faction, formation_id)
 
     def _friend_count(faction: Faction) -> int:
         count = 0
         for force in already.values():
             if force.faction == faction or are_allied(state, faction, force.faction):
                 count += 1
-        for fid in tentative_friends.get(faction.value, []):
-            count += 1
-        # Count allies of faction in tentative under other keys
-        for other_key, fids in tentative_friends.items():
-            if other_key == faction.value:
-                continue
-            try:
-                other_f = Faction(other_key)
-            except ValueError:
-                continue
-            if are_allied(state, faction, other_f):
-                count += len(fids)
+        for other_f, _fid in tentative:
+            if other_f == faction or are_allied(state, faction, other_f):
+                count += 1
         return count
-
-    from .operational_contact import max_friendly_formations_per_node
 
     cap = max_friendly_formations_per_node(state)
     for item in sorted(arrivals, key=lambda value: value.formation_id):
         force = state.strategic_formations.get(item.formation_id)
         if force is None:
             continue
-        # Capacity: how many friendlies would be present if this force enters.
-        friends = _friend_count(force.faction)
-        # If already on node, always ok.
         if item.formation_id in already:
             accepted.append(item)
             continue
-        if friends >= cap:
-            # Reject this arrival — leave for normal movement / block later.
+        if _friend_count(force.faction) >= cap:
+            rejected.append(item)
             continue
         accepted.append(item)
-        tentative_friends.setdefault(force.faction.value, []).append(item.formation_id)
+        tentative.append((force.faction, item.formation_id))
 
-    # Need at least one hostile pair among accepted + already.
     present_ids = set(already) | {item.formation_id for item in accepted}
-    if len(present_ids) < 2:
-        return False
+    # Need hostile pair in final group.
+    present_forces = [
+        state.strategic_formations[fid]
+        for fid in sorted(present_ids)
+        if fid in state.strategic_formations
+    ]
+    seed_atk = seed_def = None
+    province_id = str((nodes_by_id.get(node_id) or {}).get("province_id") or "")
+    for i, left in enumerate(present_forces):
+        for right in present_forces[i + 1 :]:
+            if left.faction == right.faction or are_allied(
+                state, left.faction, right.faction
+            ):
+                continue
+            seed_atk, seed_def = choose_static_attacker_defender(
+                state, left, right, node_province_id=province_id
+            )
+            break
+        if seed_atk is not None:
+            break
+    if seed_atk is None or seed_def is None:
+        # No battle — leave everyone unmoved (including rejected).
+        return False, ()
 
-    # Place all accepted arrivals together at the destination node.
+    # Place accepted arrivals at destination.
     for item in accepted:
         force = state.strategic_formations[item.formation_id]
         force.position = FormationOperationalPosition(
@@ -330,45 +351,50 @@ def apply_simultaneous_node_arrivals(
             progress_milli=0,
         )
         force.movement_state = "at_anchor"
-        province_id = str((nodes_by_id.get(node_id) or {}).get("province_id") or force.province_id)
-        force.province_id = province_id
+        dest_province = str(
+            (nodes_by_id.get(node_id) or {}).get("province_id") or force.province_id
+        )
+        force.province_id = dest_province
         if force.move_order is not None:
-            # Not completed unless final path node — block pending battle.
             force.move_order = replace(
                 force.move_order, status=MoveOrderStatus.BLOCKED.value
             )
         for battalion_id in force.battalion_ids:
             battalion = state.battalions.get(battalion_id)
             if battalion is not None:
-                battalion.province_id = province_id
+                battalion.province_id = dest_province
                 battalion.strategic_formation_id = force.strategic_formation_id
 
-    # Owner-defends using destination node province.
-    province_id = str((nodes_by_id.get(node_id) or {}).get("province_id") or "")
-    present_forces = [
-        state.strategic_formations[fid]
-        for fid in sorted(present_ids)
-        if fid in state.strategic_formations
-    ]
-    # Pick hostile pair with owner-defends / stable ID.
-    seed_atk = None
-    seed_def = None
-    for i, left in enumerate(present_forces):
-        for right in present_forces[i + 1 :]:
-            if left.faction == right.faction or are_allied(
-                state, left.faction, right.faction
-            ):
-                continue
-            from .operational_contact import choose_static_attacker_defender
-
-            seed_atk, seed_def = choose_static_attacker_defender(
-                state, left, right, node_province_id=province_id
+    # Rejected arrivals: exact last legal node, blocked, no retry.
+    rejected_ids: list[str] = []
+    for item in rejected:
+        force = state.strategic_formations.get(item.formation_id)
+        if force is None:
+            continue
+        last_node = item.path_origin_node or item.start_node_id
+        if last_node:
+            force.position = FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value,
+                node_id=str(last_node),
+                progress_milli=0,
             )
-            break
-        if seed_atk is not None:
-            break
-    if seed_atk is None or seed_def is None:
-        return False
+            force.movement_state = "at_anchor"
+            origin_province = str(
+                (nodes_by_id.get(str(last_node)) or {}).get("province_id")
+                or force.province_id
+            )
+            force.province_id = origin_province
+            for battalion_id in force.battalion_ids:
+                battalion = state.battalions.get(battalion_id)
+                if battalion is not None:
+                    battalion.province_id = origin_province
+                    battalion.strategic_formation_id = force.strategic_formation_id
+        if force.move_order is not None:
+            force.move_order = replace(
+                force.move_order, status=MoveOrderStatus.BLOCKED.value
+            )
+        rejected_ids.append(item.formation_id)
+
     battle = try_create_node_contact_battle(
         state,
         seed_atk,
@@ -377,10 +403,9 @@ def apply_simultaneous_node_arrivals(
         origin_province_id=seed_atk.province_id,
     )
     if battle is None:
-        return False
-    # Tag as simultaneous arrival (not generic node_contact).
+        return False, tuple(sorted(rejected_ids))
     battle.encounter_kind = ENCOUNTER_KIND_NODE_SIMULTANEOUS
-    return True
+    return True, tuple(sorted(rejected_ids))
 
 
 def expand_edge_participants_exact(

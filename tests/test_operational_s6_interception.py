@@ -685,31 +685,36 @@ class OperationalS6InterceptionTests(unittest.TestCase):
             select_primary_contact,
         )
 
-        # time 1/3 vs 1/2 — 1/3 is earlier
+        # Collision under old floor(time * 10_000_000) key (both floor to 0),
+        # but 2/20000003 < 1/10000001 exactly.
         early = ContactCandidate(
             kind=ENCOUNTER_KIND_EDGE_CROSS,
-            time_num=1,
-            time_den=3,
-            edge_id="e-late-id",
+            time_num=2,
+            time_den=20_000_003,
+            edge_id="z-edge",
             node_id="",
-            progress_canonical=100,
-            attacker_id="a",
-            defender_id="b",
-            participant_ids=("a", "b"),
+            progress_canonical=900,
+            attacker_id="z1",
+            defender_id="z2",
+            participant_ids=("z1", "z2"),
         )
         late = ContactCandidate(
             kind=ENCOUNTER_KIND_EDGE_CROSS,
             time_num=1,
-            time_den=2,
-            edge_id="e-early-id",
+            time_den=10_000_001,
+            edge_id="a-edge",
             node_id="",
-            progress_canonical=50,
-            attacker_id="c",
-            defender_id="d",
-            participant_ids=("c", "d"),
+            progress_canonical=1,
+            attacker_id="a1",
+            defender_id="a2",
+            participant_ids=("a1", "a2"),
         )
-        # Truncating sort would mis-order large dens; exact must pick early
+        old_early = early.time_num * 10_000_000 // early.time_den
+        old_late = late.time_num * 10_000_000 // late.time_den
+        self.assertEqual(0, old_early)
+        self.assertEqual(0, old_late)  # old key collides
         self.assertTrue(early.time_less_than(late))
+        # If times were treated equal, tie-break would pick a-edge; exact must pick early.
         self.assertIs(select_primary_contact([late, early]), early)
 
     def test_site_capture_paused_during_edge_contact(self) -> None:
@@ -742,6 +747,129 @@ class OperationalS6InterceptionTests(unittest.TestCase):
             report = advance_operational_tick(state)
             self.assertIsNotNone(state.pending_battle)
             self.assertFalse(report.get("capture", {}).get("advanced"))
+
+    def test_tick_halts_for_nonparticipants_after_contact(self) -> None:
+        """Single-battle model: nonparticipants do not continue moving this tick."""
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary), _graph(ab_cost=2000))
+            # Third formation moving a→b from node, would arrive if tick continued.
+            state.battalions["bn-x"] = _bn("bn-x", Faction.NATO, "a", "sf-x")
+            state.strategic_formations["sf-x"] = _force("sf-x", Faction.NATO, "a", "bn-x")
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            edge = stable_edge_id("corridor", na, nb)
+            for fid, face, prog in (("sf-n", nb, 200), ("sf-r", na, 200)):
+                state.strategic_formations[fid].position = FormationOperationalPosition(
+                    mode=PositionMode.ON_EDGE.value,
+                    edge_id=edge,
+                    progress_milli=prog,
+                    facing_node_id=face,
+                )
+            issue_move_order(
+                state, "sf-n", path_node_ids=[na, nb], path_edge_ids=[edge], order_id="n"
+            )
+            issue_move_order(
+                state, "sf-r", path_node_ids=[nb, na], path_edge_ids=[edge], order_id="r"
+            )
+            issue_move_order(
+                state, "sf-x", path_node_ids=[na, nb], path_edge_ids=[edge], order_id="x"
+            )
+            for fid, face, prog in (("sf-n", nb, 200), ("sf-r", na, 200)):
+                state.strategic_formations[fid].position = FormationOperationalPosition(
+                    mode=PositionMode.ON_EDGE.value,
+                    edge_id=edge,
+                    progress_milli=prog,
+                    facing_node_id=face,
+                )
+            state.strategic_formations["sf-x"].position = FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value, node_id=na, progress_milli=0
+            )
+            commit_move_orders(state)
+            activate_committed_orders(state)
+            advance_operational_tick(state)
+            self.assertIsNotNone(state.pending_battle)
+            # Nonparticipant still at origin node (did not move this tick).
+            x = state.strategic_formations["sf-x"]
+            assert x.position is not None
+            self.assertEqual(PositionMode.AT_NODE.value, x.position.mode)
+            self.assertEqual(na, x.position.node_id)
+
+    def test_encounter_contract_rejects_mixed_shapes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary), _graph(ab_cost=2000))
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            edge = stable_edge_id("corridor", na, nb)
+            for fid, face, prog in (("sf-n", nb, 200), ("sf-r", na, 200)):
+                state.strategic_formations[fid].position = FormationOperationalPosition(
+                    mode=PositionMode.ON_EDGE.value,
+                    edge_id=edge,
+                    progress_milli=prog,
+                    facing_node_id=face,
+                )
+            issue_move_order(
+                state, "sf-n", path_node_ids=[na, nb], path_edge_ids=[edge], order_id="n"
+            )
+            issue_move_order(
+                state, "sf-r", path_node_ids=[nb, na], path_edge_ids=[edge], order_id="r"
+            )
+            for fid, face, prog in (("sf-n", nb, 200), ("sf-r", na, 200)):
+                state.strategic_formations[fid].position = FormationOperationalPosition(
+                    mode=PositionMode.ON_EDGE.value,
+                    edge_id=edge,
+                    progress_milli=prog,
+                    facing_node_id=face,
+                )
+            commit_move_orders(state)
+            activate_committed_orders(state)
+            advance_operational_tick(state)
+            assert state.pending_battle is not None
+            payload = state.to_dict()
+            # Edge kind with node id set — invalid.
+            payload["pending_battle"]["encounter_node_id"] = "op-node-a-anchor"
+            from gates_of_codex.state_io import campaign_from_dict
+
+            with self.assertRaises(ValueError):
+                campaign_from_dict(payload)
+            payload["pending_battle"]["encounter_node_id"] = ""
+            payload["pending_battle"]["encounter_kind"] = "node_contact"
+            payload["pending_battle"]["encounter_edge_id"] = edge
+            with self.assertRaises(ValueError):
+                campaign_from_dict(payload)
+
+    def test_retreat_metadata_cleared_after_battle(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary), _graph(ab_cost=2000))
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            edge = stable_edge_id("corridor", na, nb)
+            for fid, face, prog in (("sf-n", nb, 200), ("sf-r", na, 200)):
+                state.strategic_formations[fid].position = FormationOperationalPosition(
+                    mode=PositionMode.ON_EDGE.value,
+                    edge_id=edge,
+                    progress_milli=prog,
+                    facing_node_id=face,
+                )
+            issue_move_order(
+                state, "sf-n", path_node_ids=[na, nb], path_edge_ids=[edge], order_id="n"
+            )
+            issue_move_order(
+                state, "sf-r", path_node_ids=[nb, na], path_edge_ids=[edge], order_id="r"
+            )
+            for fid, face, prog in (("sf-n", nb, 200), ("sf-r", na, 200)):
+                state.strategic_formations[fid].position = FormationOperationalPosition(
+                    mode=PositionMode.ON_EDGE.value,
+                    edge_id=edge,
+                    progress_milli=prog,
+                    facing_node_id=face,
+                )
+            commit_move_orders(state)
+            activate_committed_orders(state)
+            advance_operational_tick(state)
+            self.assertTrue(
+                state.map_metadata.get("operational_edge_retreat_nodes")
+            )
+            CampaignEngine(state, random_seed=1).apply_battle_result(Faction.NATO)
+            store = state.map_metadata.get("operational_edge_retreat_nodes") or {}
+            self.assertNotIn("sf-n", store)
+            self.assertNotIn("sf-r", store)
 
     def test_edge_battle_no_ownership_flip_winner_stays(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

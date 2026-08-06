@@ -331,6 +331,8 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
     contacts: list[str] = []
     skipped: set[str] = set()
 
+    # Single-battle model: earliest contact consumes the entire remaining tick.
+    # Non-participants do not continue moving once a battle is created.
     if primary is not None and primary.kind in {
         ENCOUNTER_KIND_EDGE_CROSS,
         ENCOUNTER_KIND_EDGE_CATCHUP,
@@ -338,22 +340,43 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
         from .operational_interception import expand_edge_participants_exact
 
         edge = edges_by_id[primary.edge_id]
-        # Expand seeds with allies already at exact canonical progress (pre-stop).
         expanded = expand_edge_participants_exact(
             state,
             edge=edge,
             progress_canonical=primary.progress_canonical,
             seed_ids=primary.participant_ids,
         )
-        # Also include seeds that will be stopped (they may not be at progress yet).
         expanded = tuple(sorted(set(expanded) | set(primary.participant_ids)))
+        # Stationary exact-progress allies need retreat endpoints too.
+        retreat_extra: list[tuple[str, str]] = []
+        for fid in expanded:
+            if any(a == fid for a, _ in primary.retreat_nodes):
+                continue
+            force = state.strategic_formations.get(fid)
+            if force is None or force.position is None:
+                continue
+            # Prefer non-facing endpoint as last legal node when already on edge.
+            if force.position.mode == PositionMode.ON_EDGE.value and force.position.facing_node_id:
+                facing = str(force.position.facing_node_id)
+                origin = edge.b if facing == edge.a else edge.a
+                retreat_extra.append((fid, origin))
+        if retreat_extra:
+            primary = replace(
+                primary,
+                retreat_nodes=tuple(
+                    sorted(set(primary.retreat_nodes) | set(retreat_extra))
+                ),
+            )
+
         attacker = state.strategic_formations.get(primary.attacker_id)
         defender = state.strategic_formations.get(primary.defender_id)
+        snapshot = _snapshot_formation_locations(state, expanded)
         if attacker is not None and defender is not None:
-            # Preflight: both seeds must have at least one battalion.
             atk_ok = any(bid in state.battalions for bid in attacker.battalion_ids)
             def_ok = any(bid in state.battalions for bid in defender.battalion_ids)
-            if atk_ok and def_ok:
+            # Preflight coalition rosters without mutating.
+            preflight_ok = atk_ok and def_ok
+            if preflight_ok:
                 apply_edge_contact_stop(
                     state,
                     primary,
@@ -396,23 +419,14 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
                     edge=edge,
                 )
                 if battle is None:
-                    # Roll back stops — restore is complex; re-block without battle is forbidden.
-                    # Clear blocked orders back to active and leave positions (best-effort abort).
-                    for fid in expanded:
-                        force = state.strategic_formations.get(fid)
-                        if force is None or force.move_order is None:
-                            continue
-                        if force.move_order.status == MoveOrderStatus.BLOCKED.value:
-                            force.move_order = replace(
-                                force.move_order, status=MoveOrderStatus.ACTIVE.value
-                            )
+                    _restore_formation_locations(state, snapshot)
                 else:
                     contacts.extend(expanded)
                     skipped.update(expanded)
     elif primary is not None and primary.kind == ENCOUNTER_KIND_NODE_SIMULTANEOUS:
         from .operational_interception import apply_simultaneous_node_arrivals
 
-        created = apply_simultaneous_node_arrivals(
+        created, rejected = apply_simultaneous_node_arrivals(
             state,
             primary,
             intervals,
@@ -422,8 +436,9 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
         if created:
             contacts.extend(primary.participant_ids)
             skipped.update(primary.participant_ids)
+            skipped.update(rejected)
 
-    # Remaining movers (not stopped by edge contact).
+    # Remaining movers only when no battle was created this tick.
     if state.pending_battle is None:
         for force in sorted(
             state.strategic_formations.values(),
@@ -474,6 +489,91 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
         "capture": capture_report,
         "swept_kind": primary.kind if primary else "",
     }
+
+
+def _snapshot_formation_locations(
+    state: CampaignState, formation_ids: tuple[str, ...] | list[str]
+) -> dict[str, dict[str, Any]]:
+    """Deep snapshot of formation/battalion location fields for transactional rollback."""
+    snap: dict[str, dict[str, Any]] = {"formations": {}, "battalions": {}, "retreat": {}}
+    retreat_store = state.map_metadata.get("operational_edge_retreat_nodes")
+    if isinstance(retreat_store, dict):
+        snap["retreat"] = {
+            str(k): str(v)
+            for k, v in retreat_store.items()
+            if str(k) in set(formation_ids)
+        }
+    for fid in formation_ids:
+        force = state.strategic_formations.get(fid)
+        if force is None:
+            continue
+        pos = force.position
+        snap["formations"][fid] = {
+            "province_id": force.province_id,
+            "movement_state": force.movement_state,
+            "position": None
+            if pos is None
+            else {
+                "mode": pos.mode,
+                "node_id": pos.node_id,
+                "edge_id": pos.edge_id,
+                "progress_milli": pos.progress_milli,
+                "facing_node_id": pos.facing_node_id,
+            },
+            "move_order_status": None
+            if force.move_order is None
+            else force.move_order.status,
+        }
+        for bid in force.battalion_ids:
+            bn = state.battalions.get(bid)
+            if bn is None:
+                continue
+            snap["battalions"][bid] = {
+                "province_id": bn.province_id,
+                "strategic_formation_id": bn.strategic_formation_id,
+            }
+    return snap
+
+
+def _restore_formation_locations(
+    state: CampaignState, snapshot: dict[str, dict[str, Any]]
+) -> None:
+    """Restore formation/battalion location fields after a failed edge-contact apply."""
+    for fid, row in (snapshot.get("formations") or {}).items():
+        force = state.strategic_formations.get(fid)
+        if force is None:
+            continue
+        force.province_id = str(row["province_id"])
+        force.movement_state = str(row["movement_state"])
+        pos_row = row.get("position")
+        if pos_row is None:
+            force.position = None
+        else:
+            force.position = FormationOperationalPosition(
+                mode=str(pos_row["mode"]),
+                node_id=pos_row.get("node_id"),
+                edge_id=pos_row.get("edge_id"),
+                progress_milli=int(pos_row.get("progress_milli") or 0),
+                facing_node_id=pos_row.get("facing_node_id"),
+            )
+        if force.move_order is not None and row.get("move_order_status"):
+            force.move_order = replace(
+                force.move_order, status=str(row["move_order_status"])
+            )
+    for bid, row in (snapshot.get("battalions") or {}).items():
+        bn = state.battalions.get(bid)
+        if bn is None:
+            continue
+        bn.province_id = str(row["province_id"])
+        bn.strategic_formation_id = str(row["strategic_formation_id"])
+    # Restore retreat metadata subset.
+    store = state.map_metadata.get("operational_edge_retreat_nodes")
+    if isinstance(store, dict):
+        # Drop keys we may have written for these formations, then restore snapshot.
+        for fid in snapshot.get("formations") or {}:
+            store.pop(str(fid), None)
+        for fid, node_id in (snapshot.get("retreat") or {}).items():
+            store[str(fid)] = str(node_id)
 
 
 def advance_operational_ticks(state: CampaignState, count: int | None = None) -> dict[str, Any]:
