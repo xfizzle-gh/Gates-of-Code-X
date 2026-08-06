@@ -134,7 +134,8 @@ _REGION_CITY_ANCHORS: dict[str, tuple[str, ...]] = {
 
 
 def load_crop_candidates(path: str | Path) -> list[CropCandidate]:
-    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    path = Path(path)
+    payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict) or "candidates" not in payload:
         raise ValueError("crop config must contain candidates array")
     defaults = payload.get("mask_defaults", {})
@@ -153,6 +154,29 @@ def load_crop_candidates(path: str | Path) -> list[CropCandidate]:
                 raise ValueError(f"mask ring too small in candidate {row.get('id')}")
             mask_rings.append(pts)
         mode = str(row.get("selection_mode", "rect_centroid"))
+
+        include_ids = [int(v) for v in row.get("required_include_ids", [])]
+        exclude_ids = [int(v) for v in row.get("explicit_exclude_ids", [])]
+
+        # Optional frozen threshold-decision file (explicit include/exclude for band).
+        decisions_rel = row.get("threshold_decisions_file")
+        if decisions_rel:
+            decisions_path = (path.parent / decisions_rel).resolve()
+            decisions = json.loads(decisions_path.read_text(encoding="utf-8"))
+            include_ids.extend(int(v) for v in decisions.get("include_ids", []))
+            exclude_ids.extend(int(v) for v in decisions.get("exclude_ids", []))
+
+        # Inline threshold decisions if present.
+        inline = row.get("threshold_decisions") or {}
+        include_ids.extend(int(v) for v in inline.get("include_ids", []))
+        exclude_ids.extend(int(v) for v in inline.get("exclude_ids", []))
+
+        # Stable unique preserve order.
+        include_ids = list(dict.fromkeys(include_ids))
+        exclude_ids = list(dict.fromkeys(exclude_ids))
+        # Excludes win if listed in both.
+        include_ids = [pid for pid in include_ids if pid not in set(exclude_ids)]
+
         out.append(
             CropCandidate(
                 id=str(row["id"]),
@@ -164,8 +188,8 @@ def load_crop_candidates(path: str | Path) -> list[CropCandidate]:
                     max_x=float(rect["max_x"]),
                     max_y=float(rect["max_y"]),
                 ),
-                required_include_ids=tuple(int(v) for v in row.get("required_include_ids", [])),
-                explicit_exclude_ids=tuple(int(v) for v in row.get("explicit_exclude_ids", [])),
+                required_include_ids=tuple(include_ids),
+                explicit_exclude_ids=tuple(exclude_ids),
                 mask_rings=tuple(mask_rings),
                 inclusion_threshold=float(row.get("inclusion_threshold", default_threshold)),
                 review_band_low=float(row.get("review_band_low", default_low)),

@@ -201,15 +201,30 @@ def union_intersection_area(subject: Sequence[Point], mask_rings: Sequence[Ring]
     return sum(intersection_area(subject, ring) for ring in mask_rings)
 
 
-def overlap_ratio(subject: Sequence[Point], mask_rings: Sequence[Ring]) -> float:
+def overlap_ratio_stdlib(subject: Sequence[Point], mask_rings: Sequence[Ring]) -> float:
+    """Stdlib-only overlap ratio (ear-clip + Sutherland–Hodgman)."""
     area = shoelace_area(subject)
     if area <= 1e-9:
         return 0.0
     inter = union_intersection_area(subject, mask_rings)
-    # Clamp numerical overshoot.
     ratio = inter / area
     if ratio < 0.0:
         return 0.0
     if ratio > 1.0:
         return 1.0
     return ratio
+
+
+def overlap_ratio(subject: Sequence[Point], mask_rings: Sequence[Ring]) -> float:
+    """Province∩mask area ratio.
+
+    Prefers Shapely boolean intersection when installed (robust for concave
+    rings / make_valid repairs). Falls back to the deterministic stdlib path.
+    """
+    try:
+        from .oracle import SHAPELY_AVAILABLE, shapely_overlap_ratio
+    except Exception:  # pragma: no cover
+        return overlap_ratio_stdlib(subject, mask_rings)
+    if SHAPELY_AVAILABLE:
+        return shapely_overlap_ratio(subject, mask_rings)
+    return overlap_ratio_stdlib(subject, mask_rings)

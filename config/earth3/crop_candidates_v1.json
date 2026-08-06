@@ -150,7 +150,8 @@
         11370,
         11764
       ],
-      "notes": "Mask authority. required_include covers Iceland city provinces plus Crimea/Kherson/Zaporizhzhia/Donetsk/Luhansk/Rostov anchors. explicit_exclude forces Murmansk (11370) and Arkhangelsk (11764) out even if overlap noise occurs. No production authority until owner approval."
+      "threshold_decisions_file": "threshold_decisions_em_reference_masked_v1.json",
+      "notes": "Mask authority. required_include covers Iceland city provinces plus Crimea/Kherson/Zaporizhzhia/Donetsk/Luhansk/Rostov anchors. explicit_exclude forces Murmansk (11370) and Arkhangelsk (11764) out. All 55 former threshold-band provinces have explicit freeze decisions in threshold_decisions_em_reference_masked_v1.json. No production authority until owner approval."
     }
   ],
   "required_region_checks": [
@@ -185,9 +186,24 @@
     ]
   },
   "permission": {
-    "status": "GRANTED",
+    "status": "OWNER_ASSERTED_GRANT",
     "product_shape": "APPROVED_EXACT_IMPORT_CROPPED_THEATRE",
-    "notes": "Owner confirmed applicable Earth3 geometry/adjacency may be used, converted, modified, and redistributed in Gates of Code:X. Archive and background tiles stay uncommitted."
+    "asserted_by": "repository owner (issue #92 / agent brief)",
+    "scope_claimed": [
+      "use applicable Earth3 province geometry",
+      "convert and modify geometry/adjacency for Gates of Code:X",
+      "redistribute converted province geometry and adjacency in this project"
+    ],
+    "not_present_in_repo": [
+      "signed license instrument",
+      "rights-holder email/PDF attachment"
+    ],
+    "excluded_from_grant_as_understood": [
+      "original 81MB archive commit",
+      "AoH3 background tiles/art",
+      "AoH3 scenarios, owners, diplomacy, wonders, formables"
+    ],
+    "notes": "Permission wording is an owner assertion recorded for engineering gating. It is not a substitute for filing the underlying written instrument in-repo. Engineering must not overstate legal status beyond this assertion."
   },
   "assumptions": [
     "Earth3 continent id is metadata only; crop uses authored mask/rect + whole-polygon rules.",

@@ -16,12 +16,21 @@
   },
   "city_count": 12111,
   "permission": {
-    "status": "GRANTED",
-    "scope": "use, convert, modify, and redistribute applicable AoH3 Earth3 province geometry and adjacency data in Gates of Code:X",
-    "excluded": [
-      "original 81MB archive",
-      "AoH3 background tiles",
-      "AoH3 scenarios"
+    "status": "OWNER_ASSERTED_GRANT",
+    "asserted_by": "repository owner (issue #92 / agent brief)",
+    "scope_claimed": [
+      "use applicable Earth3 province geometry",
+      "convert and modify geometry/adjacency for Gates of Code:X",
+      "redistribute converted province geometry and adjacency in this project"
+    ],
+    "not_present_in_repo": [
+      "signed license instrument",
+      "rights-holder email/PDF attachment"
+    ],
+    "excluded_from_grant_as_understood": [
+      "original 81MB archive commit",
+      "AoH3 background tiles/art",
+      "AoH3 scenarios, owners, diplomacy, wonders, formables"
     ],
     "product_shape": "APPROVED_EXACT_IMPORT_CROPPED_THEATRE"
   },
@@ -775,7 +784,411 @@
           "y": 892.0,
           "overlap_ratio": 1.0
         }
-      ]
+      ],
+      "exact_required_locations": {
+        "ok": false,
+        "failure_keys": [
+          "Arkhangelsk"
+        ],
+        "locations": [
+          {
+            "key": "Reykjavik",
+            "city_name_exact": "Reykjav\u00edk",
+            "source_province_id": 951,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              7281.0,
+              930.0
+            ],
+            "expected_xy": [
+              7281.0,
+              930.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Sevastopol",
+            "city_name_exact": "Sevastopol",
+            "source_province_id": 1268,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9983.0,
+              2492.0
+            ],
+            "expected_xy": [
+              9983.0,
+              2492.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Simferopol",
+            "city_name_exact": "Simferopol",
+            "source_province_id": 6627,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10009.0,
+              2472.0
+            ],
+            "expected_xy": [
+              10009.0,
+              2472.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Kherson",
+            "city_name_exact": "Kherson",
+            "source_province_id": 1271,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9932.0,
+              2352.0
+            ],
+            "expected_xy": [
+              9932.0,
+              2352.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Zaporizhzhia",
+            "city_name_exact": "Zaporizhzhia",
+            "source_province_id": 3782,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10058.0,
+              2269.0
+            ],
+            "expected_xy": [
+              10058.0,
+              2269.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Donetsk",
+            "city_name_exact": "Donetsk",
+            "source_province_id": 12175,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10188.0,
+              2256.0
+            ],
+            "expected_xy": [
+              10188.0,
+              2256.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Luhansk",
+            "city_name_exact": "Luhansk",
+            "source_province_id": 10869,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10261.0,
+              2216.0
+            ],
+            "expected_xy": [
+              10261.0,
+              2216.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Rostov_on_Don",
+            "city_name_exact": "Rostov on Don",
+            "source_province_id": 10868,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10278.0,
+              2309.0
+            ],
+            "expected_xy": [
+              10278.0,
+              2309.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Kyiv",
+            "city_name_exact": "Kyiv",
+            "source_province_id": 3757,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9832.0,
+              2074.0
+            ],
+            "expected_xy": [
+              9832.0,
+              2074.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Odesa",
+            "city_name_exact": "Odesa",
+            "source_province_id": 3241,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9840.0,
+              2369.0
+            ],
+            "expected_xy": [
+              9840.0,
+              2369.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Istanbul",
+            "city_name_exact": "Istanbul",
+            "source_province_id": 1116,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9757.0,
+              2733.0
+            ],
+            "expected_xy": [
+              9757.0,
+              2733.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Ankara",
+            "city_name_exact": "Ankara",
+            "source_province_id": 2207,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9945.0,
+              2804.0
+            ],
+            "expected_xy": [
+              9945.0,
+              2804.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Tbilisi",
+            "city_name_exact": "Tbilisi",
+            "source_province_id": 10431,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10531.0,
+              2689.0
+            ],
+            "expected_xy": [
+              10531.0,
+              2689.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Baku",
+            "city_name_exact": "Baku",
+            "source_province_id": 2654,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10776.0,
+              2772.0
+            ],
+            "expected_xy": [
+              10776.0,
+              2772.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Tunis",
+            "city_name_exact": "Tunis",
+            "source_province_id": 2242,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              8845.0,
+              2974.0
+            ],
+            "expected_xy": [
+              8845.0,
+              2974.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Algiers",
+            "city_name_exact": "Algiers",
+            "source_province_id": 1399,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              8496.0,
+              2985.0
+            ],
+            "expected_xy": [
+              8496.0,
+              2985.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Cairo",
+            "city_name_exact": "Cairo",
+            "source_province_id": 2669,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9867.0,
+              3402.0
+            ],
+            "expected_xy": [
+              9867.0,
+              3402.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Oslo",
+            "city_name_exact": "Oslo",
+            "source_province_id": 1009,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              8870.0,
+              1261.0
+            ],
+            "expected_xy": [
+              8870.0,
+              1261.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Stockholm",
+            "city_name_exact": "Stockholm",
+            "source_province_id": 1049,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9225.0,
+              1315.0
+            ],
+            "expected_xy": [
+              9225.0,
+              1315.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Helsinki",
+            "city_name_exact": "Helsinki",
+            "source_province_id": 1461,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9560.0,
+              1240.0
+            ],
+            "expected_xy": [
+              9560.0,
+              1240.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Murmansk",
+            "city_name_exact": "Murmansk",
+            "source_province_id": 11370,
+            "must_include": false,
+            "included": false,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9961.0,
+              474.0
+            ],
+            "expected_xy": [
+              9961.0,
+              474.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Arkhangelsk",
+            "city_name_exact": "Arkhangelsk",
+            "source_province_id": 11764,
+            "must_include": false,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10325.0,
+              892.0
+            ],
+            "expected_xy": [
+              10325.0,
+              892.0
+            ],
+            "ok": false
+          }
+        ]
+      }
     },
     {
       "id": "em_north_east_expand",
@@ -1573,7 +1986,411 @@
           "y": 892.0,
           "overlap_ratio": 1.0
         }
-      ]
+      ],
+      "exact_required_locations": {
+        "ok": false,
+        "failure_keys": [
+          "Arkhangelsk"
+        ],
+        "locations": [
+          {
+            "key": "Reykjavik",
+            "city_name_exact": "Reykjav\u00edk",
+            "source_province_id": 951,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              7281.0,
+              930.0
+            ],
+            "expected_xy": [
+              7281.0,
+              930.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Sevastopol",
+            "city_name_exact": "Sevastopol",
+            "source_province_id": 1268,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9983.0,
+              2492.0
+            ],
+            "expected_xy": [
+              9983.0,
+              2492.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Simferopol",
+            "city_name_exact": "Simferopol",
+            "source_province_id": 6627,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10009.0,
+              2472.0
+            ],
+            "expected_xy": [
+              10009.0,
+              2472.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Kherson",
+            "city_name_exact": "Kherson",
+            "source_province_id": 1271,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9932.0,
+              2352.0
+            ],
+            "expected_xy": [
+              9932.0,
+              2352.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Zaporizhzhia",
+            "city_name_exact": "Zaporizhzhia",
+            "source_province_id": 3782,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10058.0,
+              2269.0
+            ],
+            "expected_xy": [
+              10058.0,
+              2269.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Donetsk",
+            "city_name_exact": "Donetsk",
+            "source_province_id": 12175,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10188.0,
+              2256.0
+            ],
+            "expected_xy": [
+              10188.0,
+              2256.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Luhansk",
+            "city_name_exact": "Luhansk",
+            "source_province_id": 10869,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10261.0,
+              2216.0
+            ],
+            "expected_xy": [
+              10261.0,
+              2216.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Rostov_on_Don",
+            "city_name_exact": "Rostov on Don",
+            "source_province_id": 10868,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10278.0,
+              2309.0
+            ],
+            "expected_xy": [
+              10278.0,
+              2309.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Kyiv",
+            "city_name_exact": "Kyiv",
+            "source_province_id": 3757,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9832.0,
+              2074.0
+            ],
+            "expected_xy": [
+              9832.0,
+              2074.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Odesa",
+            "city_name_exact": "Odesa",
+            "source_province_id": 3241,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9840.0,
+              2369.0
+            ],
+            "expected_xy": [
+              9840.0,
+              2369.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Istanbul",
+            "city_name_exact": "Istanbul",
+            "source_province_id": 1116,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9757.0,
+              2733.0
+            ],
+            "expected_xy": [
+              9757.0,
+              2733.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Ankara",
+            "city_name_exact": "Ankara",
+            "source_province_id": 2207,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9945.0,
+              2804.0
+            ],
+            "expected_xy": [
+              9945.0,
+              2804.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Tbilisi",
+            "city_name_exact": "Tbilisi",
+            "source_province_id": 10431,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10531.0,
+              2689.0
+            ],
+            "expected_xy": [
+              10531.0,
+              2689.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Baku",
+            "city_name_exact": "Baku",
+            "source_province_id": 2654,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10776.0,
+              2772.0
+            ],
+            "expected_xy": [
+              10776.0,
+              2772.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Tunis",
+            "city_name_exact": "Tunis",
+            "source_province_id": 2242,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              8845.0,
+              2974.0
+            ],
+            "expected_xy": [
+              8845.0,
+              2974.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Algiers",
+            "city_name_exact": "Algiers",
+            "source_province_id": 1399,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              8496.0,
+              2985.0
+            ],
+            "expected_xy": [
+              8496.0,
+              2985.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Cairo",
+            "city_name_exact": "Cairo",
+            "source_province_id": 2669,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9867.0,
+              3402.0
+            ],
+            "expected_xy": [
+              9867.0,
+              3402.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Oslo",
+            "city_name_exact": "Oslo",
+            "source_province_id": 1009,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              8870.0,
+              1261.0
+            ],
+            "expected_xy": [
+              8870.0,
+              1261.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Stockholm",
+            "city_name_exact": "Stockholm",
+            "source_province_id": 1049,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9225.0,
+              1315.0
+            ],
+            "expected_xy": [
+              9225.0,
+              1315.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Helsinki",
+            "city_name_exact": "Helsinki",
+            "source_province_id": 1461,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9560.0,
+              1240.0
+            ],
+            "expected_xy": [
+              9560.0,
+              1240.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Murmansk",
+            "city_name_exact": "Murmansk",
+            "source_province_id": 11370,
+            "must_include": false,
+            "included": false,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9961.0,
+              474.0
+            ],
+            "expected_xy": [
+              9961.0,
+              474.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Arkhangelsk",
+            "city_name_exact": "Arkhangelsk",
+            "source_province_id": 11764,
+            "must_include": false,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10325.0,
+              892.0
+            ],
+            "expected_xy": [
+              10325.0,
+              892.0
+            ],
+            "ok": false
+          }
+        ]
+      }
     },
     {
       "id": "em_south_west_expand",
@@ -2402,7 +3219,411 @@
           "y": 892.0,
           "overlap_ratio": 1.0
         }
-      ]
+      ],
+      "exact_required_locations": {
+        "ok": false,
+        "failure_keys": [
+          "Arkhangelsk"
+        ],
+        "locations": [
+          {
+            "key": "Reykjavik",
+            "city_name_exact": "Reykjav\u00edk",
+            "source_province_id": 951,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              7281.0,
+              930.0
+            ],
+            "expected_xy": [
+              7281.0,
+              930.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Sevastopol",
+            "city_name_exact": "Sevastopol",
+            "source_province_id": 1268,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9983.0,
+              2492.0
+            ],
+            "expected_xy": [
+              9983.0,
+              2492.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Simferopol",
+            "city_name_exact": "Simferopol",
+            "source_province_id": 6627,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10009.0,
+              2472.0
+            ],
+            "expected_xy": [
+              10009.0,
+              2472.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Kherson",
+            "city_name_exact": "Kherson",
+            "source_province_id": 1271,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9932.0,
+              2352.0
+            ],
+            "expected_xy": [
+              9932.0,
+              2352.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Zaporizhzhia",
+            "city_name_exact": "Zaporizhzhia",
+            "source_province_id": 3782,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10058.0,
+              2269.0
+            ],
+            "expected_xy": [
+              10058.0,
+              2269.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Donetsk",
+            "city_name_exact": "Donetsk",
+            "source_province_id": 12175,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10188.0,
+              2256.0
+            ],
+            "expected_xy": [
+              10188.0,
+              2256.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Luhansk",
+            "city_name_exact": "Luhansk",
+            "source_province_id": 10869,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10261.0,
+              2216.0
+            ],
+            "expected_xy": [
+              10261.0,
+              2216.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Rostov_on_Don",
+            "city_name_exact": "Rostov on Don",
+            "source_province_id": 10868,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10278.0,
+              2309.0
+            ],
+            "expected_xy": [
+              10278.0,
+              2309.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Kyiv",
+            "city_name_exact": "Kyiv",
+            "source_province_id": 3757,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9832.0,
+              2074.0
+            ],
+            "expected_xy": [
+              9832.0,
+              2074.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Odesa",
+            "city_name_exact": "Odesa",
+            "source_province_id": 3241,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9840.0,
+              2369.0
+            ],
+            "expected_xy": [
+              9840.0,
+              2369.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Istanbul",
+            "city_name_exact": "Istanbul",
+            "source_province_id": 1116,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9757.0,
+              2733.0
+            ],
+            "expected_xy": [
+              9757.0,
+              2733.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Ankara",
+            "city_name_exact": "Ankara",
+            "source_province_id": 2207,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9945.0,
+              2804.0
+            ],
+            "expected_xy": [
+              9945.0,
+              2804.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Tbilisi",
+            "city_name_exact": "Tbilisi",
+            "source_province_id": 10431,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10531.0,
+              2689.0
+            ],
+            "expected_xy": [
+              10531.0,
+              2689.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Baku",
+            "city_name_exact": "Baku",
+            "source_province_id": 2654,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10776.0,
+              2772.0
+            ],
+            "expected_xy": [
+              10776.0,
+              2772.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Tunis",
+            "city_name_exact": "Tunis",
+            "source_province_id": 2242,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              8845.0,
+              2974.0
+            ],
+            "expected_xy": [
+              8845.0,
+              2974.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Algiers",
+            "city_name_exact": "Algiers",
+            "source_province_id": 1399,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              8496.0,
+              2985.0
+            ],
+            "expected_xy": [
+              8496.0,
+              2985.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Cairo",
+            "city_name_exact": "Cairo",
+            "source_province_id": 2669,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9867.0,
+              3402.0
+            ],
+            "expected_xy": [
+              9867.0,
+              3402.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Oslo",
+            "city_name_exact": "Oslo",
+            "source_province_id": 1009,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              8870.0,
+              1261.0
+            ],
+            "expected_xy": [
+              8870.0,
+              1261.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Stockholm",
+            "city_name_exact": "Stockholm",
+            "source_province_id": 1049,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9225.0,
+              1315.0
+            ],
+            "expected_xy": [
+              9225.0,
+              1315.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Helsinki",
+            "city_name_exact": "Helsinki",
+            "source_province_id": 1461,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9560.0,
+              1240.0
+            ],
+            "expected_xy": [
+              9560.0,
+              1240.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Murmansk",
+            "city_name_exact": "Murmansk",
+            "source_province_id": 11370,
+            "must_include": false,
+            "included": false,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9961.0,
+              474.0
+            ],
+            "expected_xy": [
+              9961.0,
+              474.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Arkhangelsk",
+            "city_name_exact": "Arkhangelsk",
+            "source_province_id": 11764,
+            "must_include": false,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10325.0,
+              892.0
+            ],
+            "expected_xy": [
+              10325.0,
+              892.0
+            ],
+            "ok": false
+          }
+        ]
+      }
     },
     {
       "id": "em_reference_masked",
@@ -2466,70 +3687,69 @@
         6627,
         10868,
         10869,
-        12175
-      ],
-      "explicit_exclude_ids": [
-        11370,
-        11764
-      ],
-      "threshold_review_count": 55,
-      "threshold_review_ids": [
-        956,
-        1022,
+        12175,
         1024,
         1028,
-        1044,
         1448,
-        1460,
-        2566,
-        2611,
         2623,
         2624,
-        2693,
         2698,
         3003,
-        3507,
-        3736,
         4347,
         4399,
         4405,
+        6091,
+        6162,
+        6632,
+        10577,
+        10857,
+        10915,
+        10919,
+        11170,
+        11323,
+        11385,
+        11689,
+        12180,
+        12304,
+        13151
+      ],
+      "explicit_exclude_ids": [
+        11370,
+        11764,
+        956,
+        1022,
+        1044,
+        1460,
+        2566,
+        2611,
+        2693,
+        3507,
+        3736,
         4962,
         4965,
         4999,
         5014,
         5020,
         5028,
-        6091,
-        6162,
         6163,
-        6632,
         6676,
         6683,
         6850,
-        10577,
         10587,
         10851,
-        10857,
-        10915,
-        10919,
-        11170,
         11177,
         11180,
-        11323,
         11355,
-        11385,
-        11689,
         11690,
         12037,
-        12180,
         12189,
         12191,
-        12304,
         12910,
         13076,
-        13131,
-        13151
+        13131
       ],
+      "threshold_review_count": 0,
+      "threshold_review_ids": [],
       "label_outside_polygon_count": 22,
       "label_outside_polygon_sample": [
         3735,
@@ -2555,23 +3775,14 @@
         12515,
         12584
       ],
-      "excluded_boundary_touch_count": 74,
+      "excluded_boundary_touch_count": 43,
       "excluded_boundary_sample": [
-        956,
-        1022,
         1027,
-        1044,
         1443,
-        1460,
-        2566,
         2597,
         2602,
-        2611,
         2631,
-        2693,
         2710,
-        3507,
-        3736,
         3751,
         4533,
         4536,
@@ -2581,22 +3792,31 @@
         4870,
         4907,
         4912,
-        4962,
-        4965,
         4966,
-        4999,
-        5014,
         5018,
-        5020,
-        5028,
         5030,
         5031,
         6114,
-        6163,
         6164,
         6675,
-        6676,
-        6683
+        6851,
+        10575,
+        10576,
+        10588,
+        10635,
+        10830,
+        10983,
+        10997,
+        11045,
+        11192,
+        11326,
+        11351,
+        11598,
+        11652,
+        11687,
+        12193,
+        12583,
+        12915
       ],
       "far_north_excluded_sample": [
         914,
@@ -3211,7 +4431,7 @@
         }
       },
       "region_coverage_failures": [],
-      "notes": "Mask authority. required_include covers Iceland city provinces plus Crimea/Kherson/Zaporizhzhia/Donetsk/Luhansk/Rostov anchors. explicit_exclude forces Murmansk (11370) and Arkhangelsk (11764) out even if overlap noise occurs. No production authority until owner approval.",
+      "notes": "Mask authority. required_include covers Iceland city provinces plus Crimea/Kherson/Zaporizhzhia/Donetsk/Luhansk/Rostov anchors. explicit_exclude forces Murmansk (11370) and Arkhangelsk (11764) out. All 55 former threshold-band provinces have explicit freeze decisions in threshold_decisions_em_reference_masked_v1.json. No production authority until owner approval.",
       "diff_vs_em_ref_tight": {
         "added_count": 0,
         "removed_count": 723,
@@ -3286,7 +4506,409 @@
           "y": 892.0,
           "overlap_ratio": null
         }
-      ]
+      ],
+      "exact_required_locations": {
+        "ok": true,
+        "failure_keys": [],
+        "locations": [
+          {
+            "key": "Reykjavik",
+            "city_name_exact": "Reykjav\u00edk",
+            "source_province_id": 951,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              7281.0,
+              930.0
+            ],
+            "expected_xy": [
+              7281.0,
+              930.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Sevastopol",
+            "city_name_exact": "Sevastopol",
+            "source_province_id": 1268,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9983.0,
+              2492.0
+            ],
+            "expected_xy": [
+              9983.0,
+              2492.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Simferopol",
+            "city_name_exact": "Simferopol",
+            "source_province_id": 6627,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10009.0,
+              2472.0
+            ],
+            "expected_xy": [
+              10009.0,
+              2472.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Kherson",
+            "city_name_exact": "Kherson",
+            "source_province_id": 1271,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9932.0,
+              2352.0
+            ],
+            "expected_xy": [
+              9932.0,
+              2352.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Zaporizhzhia",
+            "city_name_exact": "Zaporizhzhia",
+            "source_province_id": 3782,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10058.0,
+              2269.0
+            ],
+            "expected_xy": [
+              10058.0,
+              2269.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Donetsk",
+            "city_name_exact": "Donetsk",
+            "source_province_id": 12175,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10188.0,
+              2256.0
+            ],
+            "expected_xy": [
+              10188.0,
+              2256.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Luhansk",
+            "city_name_exact": "Luhansk",
+            "source_province_id": 10869,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10261.0,
+              2216.0
+            ],
+            "expected_xy": [
+              10261.0,
+              2216.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Rostov_on_Don",
+            "city_name_exact": "Rostov on Don",
+            "source_province_id": 10868,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10278.0,
+              2309.0
+            ],
+            "expected_xy": [
+              10278.0,
+              2309.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Kyiv",
+            "city_name_exact": "Kyiv",
+            "source_province_id": 3757,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9832.0,
+              2074.0
+            ],
+            "expected_xy": [
+              9832.0,
+              2074.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Odesa",
+            "city_name_exact": "Odesa",
+            "source_province_id": 3241,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9840.0,
+              2369.0
+            ],
+            "expected_xy": [
+              9840.0,
+              2369.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Istanbul",
+            "city_name_exact": "Istanbul",
+            "source_province_id": 1116,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9757.0,
+              2733.0
+            ],
+            "expected_xy": [
+              9757.0,
+              2733.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Ankara",
+            "city_name_exact": "Ankara",
+            "source_province_id": 2207,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9945.0,
+              2804.0
+            ],
+            "expected_xy": [
+              9945.0,
+              2804.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Tbilisi",
+            "city_name_exact": "Tbilisi",
+            "source_province_id": 10431,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10531.0,
+              2689.0
+            ],
+            "expected_xy": [
+              10531.0,
+              2689.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Baku",
+            "city_name_exact": "Baku",
+            "source_province_id": 2654,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10776.0,
+              2772.0
+            ],
+            "expected_xy": [
+              10776.0,
+              2772.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Tunis",
+            "city_name_exact": "Tunis",
+            "source_province_id": 2242,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              8845.0,
+              2974.0
+            ],
+            "expected_xy": [
+              8845.0,
+              2974.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Algiers",
+            "city_name_exact": "Algiers",
+            "source_province_id": 1399,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              8496.0,
+              2985.0
+            ],
+            "expected_xy": [
+              8496.0,
+              2985.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Cairo",
+            "city_name_exact": "Cairo",
+            "source_province_id": 2669,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9867.0,
+              3402.0
+            ],
+            "expected_xy": [
+              9867.0,
+              3402.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Oslo",
+            "city_name_exact": "Oslo",
+            "source_province_id": 1009,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              8870.0,
+              1261.0
+            ],
+            "expected_xy": [
+              8870.0,
+              1261.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Stockholm",
+            "city_name_exact": "Stockholm",
+            "source_province_id": 1049,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9225.0,
+              1315.0
+            ],
+            "expected_xy": [
+              9225.0,
+              1315.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Helsinki",
+            "city_name_exact": "Helsinki",
+            "source_province_id": 1461,
+            "must_include": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9560.0,
+              1240.0
+            ],
+            "expected_xy": [
+              9560.0,
+              1240.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Murmansk",
+            "city_name_exact": "Murmansk",
+            "source_province_id": 11370,
+            "must_include": false,
+            "included": false,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              9961.0,
+              474.0
+            ],
+            "expected_xy": [
+              9961.0,
+              474.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Arkhangelsk",
+            "city_name_exact": "Arkhangelsk",
+            "source_province_id": 11764,
+            "must_include": false,
+            "included": false,
+            "point_in_province_polygon": true,
+            "city_row_found": true,
+            "city_xy": [
+              10325.0,
+              892.0
+            ],
+            "expected_xy": [
+              10325.0,
+              892.0
+            ],
+            "ok": true
+          }
+        ]
+      }
     }
   ],
   "mask_defaults": {

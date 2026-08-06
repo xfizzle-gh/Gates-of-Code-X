@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from .crop import CropCandidate, CropRect, CropResult
+from .locations import validate_required_locations
 from .model import Earth3Dataset
 
 try:
@@ -210,12 +211,22 @@ def write_audit_report(
         },
         "city_count": len(dataset.cities),
         "permission": {
-            "status": "GRANTED",
-            "scope": (
-                "use, convert, modify, and redistribute applicable AoH3 Earth3 "
-                "province geometry and adjacency data in Gates of Code:X"
-            ),
-            "excluded": ["original 81MB archive", "AoH3 background tiles", "AoH3 scenarios"],
+            "status": "OWNER_ASSERTED_GRANT",
+            "asserted_by": "repository owner (issue #92 / agent brief)",
+            "scope_claimed": [
+                "use applicable Earth3 province geometry",
+                "convert and modify geometry/adjacency for Gates of Code:X",
+                "redistribute converted province geometry and adjacency in this project",
+            ],
+            "not_present_in_repo": [
+                "signed license instrument",
+                "rights-holder email/PDF attachment",
+            ],
+            "excluded_from_grant_as_understood": [
+                "original 81MB archive commit",
+                "AoH3 background tiles/art",
+                "AoH3 scenarios, owners, diplomacy, wonders, formables",
+            ],
             "product_shape": "APPROVED_EXACT_IMPORT_CROPPED_THEATRE",
         },
         "recommended_candidate_id": recommended_id,
@@ -303,6 +314,9 @@ def write_audit_report(
         # Explicit city status for Murmansk / Arkhangelsk
         entry["forced_far_north_city_status"] = _city_status(
             dataset, result, ("Murmansk", "Arkhangelsk")
+        )
+        entry["exact_required_locations"] = validate_required_locations(
+            dataset, set(result.included_ids)
         )
         payload["candidates"].append(entry)
 

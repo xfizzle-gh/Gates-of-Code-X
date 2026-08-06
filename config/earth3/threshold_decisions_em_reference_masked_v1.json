@@ -1,0 +1,732 @@
+{
+  "schema": "gates-of-codex.earth3-threshold-decisions",
+  "schema_version": 1,
+  "candidate_id": "em_reference_masked",
+  "inclusion_threshold": 0.35,
+  "review_band": [
+    0.15,
+    0.5
+  ],
+  "decision_rule": "For each threshold-band province, freeze the automatic outcome: include if ratio>=threshold (or already included), else exclude. Recorded as explicit overrides so the band is empty after apply.",
+  "include_ids": [
+    1024,
+    1028,
+    1448,
+    2623,
+    2624,
+    2698,
+    3003,
+    4347,
+    4399,
+    4405,
+    6091,
+    6162,
+    6632,
+    10577,
+    10857,
+    10915,
+    10919,
+    11170,
+    11323,
+    11385,
+    11689,
+    12180,
+    12304,
+    13151
+  ],
+  "exclude_ids": [
+    956,
+    1022,
+    1044,
+    1460,
+    2566,
+    2611,
+    2693,
+    3507,
+    3736,
+    4962,
+    4965,
+    4999,
+    5014,
+    5020,
+    5028,
+    6163,
+    6676,
+    6683,
+    6850,
+    10587,
+    10851,
+    11177,
+    11180,
+    11355,
+    11690,
+    12037,
+    12189,
+    12191,
+    12910,
+    13076,
+    13131
+  ],
+  "decisions": [
+    {
+      "source_province_id": 956,
+      "overlap_ratio": 0.213221,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        7614.518987341772,
+        890.0316455696203
+      ],
+      "is_water": false,
+      "continent_id": 2
+    },
+    {
+      "source_province_id": 1022,
+      "overlap_ratio": 0.330202,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        8772.437869822485,
+        1113.4378698224853
+      ],
+      "is_water": false,
+      "continent_id": 2
+    },
+    {
+      "source_province_id": 1024,
+      "overlap_ratio": 0.458904,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        8624.511111111111,
+        1125.7272727272727
+      ],
+      "is_water": false,
+      "continent_id": 2
+    },
+    {
+      "source_province_id": 1028,
+      "overlap_ratio": 0.477077,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        8971.733333333334,
+        1117.3904761904762
+      ],
+      "is_water": false,
+      "continent_id": 2
+    },
+    {
+      "source_province_id": 1044,
+      "overlap_ratio": 0.173157,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        9046.689024390244,
+        1099.7621951219512
+      ],
+      "is_water": false,
+      "continent_id": 2
+    },
+    {
+      "source_province_id": 1448,
+      "overlap_ratio": 0.456842,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        9476.568181818182,
+        1151.8484848484848
+      ],
+      "is_water": false,
+      "continent_id": 2
+    },
+    {
+      "source_province_id": 1460,
+      "overlap_ratio": 0.202932,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        9644.268041237114,
+        1175.5773195876288
+      ],
+      "is_water": false,
+      "continent_id": 2
+    },
+    {
+      "source_province_id": 2566,
+      "overlap_ratio": 0.247249,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        10799.567010309278,
+        3266.907216494845
+      ],
+      "is_water": false,
+      "continent_id": 1
+    },
+    {
+      "source_province_id": 2611,
+      "overlap_ratio": 0.209703,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        10642.402597402597,
+        3379.155844155844
+      ],
+      "is_water": false,
+      "continent_id": 1
+    },
+    {
+      "source_province_id": 2623,
+      "overlap_ratio": 0.459581,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        10697.376470588235,
+        3338.6823529411763
+      ],
+      "is_water": false,
+      "continent_id": 1
+    },
+    {
+      "source_province_id": 2624,
+      "overlap_ratio": 0.397191,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        10722.102564102564,
+        3323.4358974358975
+      ],
+      "is_water": false,
+      "continent_id": 1
+    },
+    {
+      "source_province_id": 2693,
+      "overlap_ratio": 0.162704,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        9949.094488188977,
+        3677.3779527559054
+      ],
+      "is_water": false,
+      "continent_id": 6
+    },
+    {
+      "source_province_id": 2698,
+      "overlap_ratio": 0.448186,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        9996.869863013699,
+        3643.527397260274
+      ],
+      "is_water": false,
+      "continent_id": 6
+    },
+    {
+      "source_province_id": 3003,
+      "overlap_ratio": 0.418355,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        9165.502304147465,
+        1123.152073732719
+      ],
+      "is_water": false,
+      "continent_id": 2
+    },
+    {
+      "source_province_id": 3507,
+      "overlap_ratio": 0.196543,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        10922.203791469194,
+        3179.9857819905214
+      ],
+      "is_water": false,
+      "continent_id": 1
+    },
+    {
+      "source_province_id": 3736,
+      "overlap_ratio": 0.30503,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        9739.682170542636,
+        1204.84496124031
+      ],
+      "is_water": false,
+      "continent_id": 2
+    },
+    {
+      "source_province_id": 4347,
+      "overlap_ratio": 0.358378,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        9075.751072961373,
+        3716.785407725322
+      ],
+      "is_water": false,
+      "continent_id": 6
+    },
+    {
+      "source_province_id": 4399,
+      "overlap_ratio": 0.444545,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        9674.731707317073,
+        3687.8926829268294
+      ],
+      "is_water": false,
+      "continent_id": 6
+    },
+    {
+      "source_province_id": 4405,
+      "overlap_ratio": 0.377971,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        9794.65,
+        3676.6214285714286
+      ],
+      "is_water": false,
+      "continent_id": 6
+    },
+    {
+      "source_province_id": 4962,
+      "overlap_ratio": 0.301425,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        8640.457264957266,
+        3679.3076923076924
+      ],
+      "is_water": false,
+      "continent_id": 6
+    },
+    {
+      "source_province_id": 4965,
+      "overlap_ratio": 0.337866,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        8777.65243902439,
+        3683.890243902439
+      ],
+      "is_water": false,
+      "continent_id": 6
+    },
+    {
+      "source_province_id": 4999,
+      "overlap_ratio": 0.25761,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        9443.489510489511,
+        1133.020979020979
+      ],
+      "is_water": false,
+      "continent_id": 2
+    },
+    {
+      "source_province_id": 5014,
+      "overlap_ratio": 0.191862,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        9258.892857142857,
+        3725.408163265306
+      ],
+      "is_water": false,
+      "continent_id": 6
+    },
+    {
+      "source_province_id": 5020,
+      "overlap_ratio": 0.191485,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        9508.066225165563,
+        3725.1523178807947
+      ],
+      "is_water": false,
+      "continent_id": 6
+    },
+    {
+      "source_province_id": 5028,
+      "overlap_ratio": 0.264159,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        8195.875,
+        3632.8072916666665
+      ],
+      "is_water": false,
+      "continent_id": 6
+    },
+    {
+      "source_province_id": 6091,
+      "overlap_ratio": 0.460428,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        10209.093023255815,
+        3573.4728682170544
+      ],
+      "is_water": false,
+      "continent_id": 1
+    },
+    {
+      "source_province_id": 6162,
+      "overlap_ratio": 0.353909,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        10372.339805825242,
+        3525.6990291262136
+      ],
+      "is_water": false,
+      "continent_id": 1
+    },
+    {
+      "source_province_id": 6163,
+      "overlap_ratio": 0.215619,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        10298.647482014389,
+        3565.3309352517986
+      ],
+      "is_water": false,
+      "continent_id": 1
+    },
+    {
+      "source_province_id": 6632,
+      "overlap_ratio": 0.459787,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        8903.585365853658,
+        1118.7317073170732
+      ],
+      "is_water": false,
+      "continent_id": 2
+    },
+    {
+      "source_province_id": 6676,
+      "overlap_ratio": 0.168188,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        9529.225806451614,
+        1147.3870967741937
+      ],
+      "is_water": false,
+      "continent_id": 2
+    },
+    {
+      "source_province_id": 6683,
+      "overlap_ratio": 0.312,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        10319.949275362318,
+        1368.1884057971015
+      ],
+      "is_water": false,
+      "continent_id": 2
+    },
+    {
+      "source_province_id": 6850,
+      "overlap_ratio": 0.239338,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        7602.635922330097,
+        761.3446601941747
+      ],
+      "is_water": false,
+      "continent_id": 2
+    },
+    {
+      "source_province_id": 10577,
+      "overlap_ratio": 0.350714,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        10987.65034965035,
+        3099.104895104895
+      ],
+      "is_water": false,
+      "continent_id": 1
+    },
+    {
+      "source_province_id": 10587,
+      "overlap_ratio": 0.306482,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        11316.797297297297,
+        2662.4662162162163
+      ],
+      "is_water": false,
+      "continent_id": 1
+    },
+    {
+      "source_province_id": 10851,
+      "overlap_ratio": 0.319198,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        11264.617486338799,
+        2018.9016393442623
+      ],
+      "is_water": false,
+      "continent_id": 1
+    },
+    {
+      "source_province_id": 10857,
+      "overlap_ratio": 0.464787,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        10934.132183908046,
+        1657.1206896551723
+      ],
+      "is_water": false,
+      "continent_id": 2
+    },
+    {
+      "source_province_id": 10915,
+      "overlap_ratio": 0.385635,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        10881.744525547445,
+        1619.14598540146
+      ],
+      "is_water": false,
+      "continent_id": 2
+    },
+    {
+      "source_province_id": 10919,
+      "overlap_ratio": 0.498804,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        11225.75,
+        1970.9944444444445
+      ],
+      "is_water": false,
+      "continent_id": 1
+    },
+    {
+      "source_province_id": 11170,
+      "overlap_ratio": 0.391779,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        10675.2,
+        1498.9414634146342
+      ],
+      "is_water": false,
+      "continent_id": 2
+    },
+    {
+      "source_province_id": 11177,
+      "overlap_ratio": 0.156284,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        11382.710344827587,
+        2375.848275862069
+      ],
+      "is_water": false,
+      "continent_id": 1
+    },
+    {
+      "source_province_id": 11180,
+      "overlap_ratio": 0.273596,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        11326.896341463415,
+        2099.743902439024
+      ],
+      "is_water": false,
+      "continent_id": 1
+    },
+    {
+      "source_province_id": 11323,
+      "overlap_ratio": 0.458783,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        10986.115384615385,
+        1706.553846153846
+      ],
+      "is_water": false,
+      "continent_id": 2
+    },
+    {
+      "source_province_id": 11355,
+      "overlap_ratio": 0.234072,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        10145.608333333334,
+        1302.9583333333333
+      ],
+      "is_water": false,
+      "continent_id": 2
+    },
+    {
+      "source_province_id": 11385,
+      "overlap_ratio": 0.480695,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        7654.4,
+        3496.6666666666665
+      ],
+      "is_water": false,
+      "continent_id": 6
+    },
+    {
+      "source_province_id": 11689,
+      "overlap_ratio": 0.435422,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        10453.012195121952,
+        1414.689024390244
+      ],
+      "is_water": false,
+      "continent_id": 2
+    },
+    {
+      "source_province_id": 11690,
+      "overlap_ratio": 0.278838,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        10385.105555555556,
+        1371.2388888888888
+      ],
+      "is_water": false,
+      "continent_id": 2
+    },
+    {
+      "source_province_id": 12037,
+      "overlap_ratio": 0.323875,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        9388.741463414633,
+        1130.1853658536586
+      ],
+      "is_water": true,
+      "continent_id": 0
+    },
+    {
+      "source_province_id": 12180,
+      "overlap_ratio": 0.402984,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        8633.271428571428,
+        1146.6612244897958
+      ],
+      "is_water": true,
+      "continent_id": 0
+    },
+    {
+      "source_province_id": 12189,
+      "overlap_ratio": 0.241381,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        7224.954372623574,
+        793.0177439797212
+      ],
+      "is_water": true,
+      "continent_id": 0
+    },
+    {
+      "source_province_id": 12191,
+      "overlap_ratio": 0.29388,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        7590.720698254364,
+        916.6832917705735
+      ],
+      "is_water": true,
+      "continent_id": 0
+    },
+    {
+      "source_province_id": 12304,
+      "overlap_ratio": 0.450761,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        10023.471074380166,
+        3636.181818181818
+      ],
+      "is_water": true,
+      "continent_id": 0
+    },
+    {
+      "source_province_id": 12910,
+      "overlap_ratio": 0.150037,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        7410.705882352941,
+        3359.176470588235
+      ],
+      "is_water": true,
+      "continent_id": 0
+    },
+    {
+      "source_province_id": 13076,
+      "overlap_ratio": 0.243474,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        7348.178571428572,
+        1916.142857142857
+      ],
+      "is_water": true,
+      "continent_id": 0
+    },
+    {
+      "source_province_id": 13131,
+      "overlap_ratio": 0.162392,
+      "decision": "exclude",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        8013.481318681319,
+        1101.065934065934
+      ],
+      "is_water": true,
+      "continent_id": 0
+    },
+    {
+      "source_province_id": 13151,
+      "overlap_ratio": 0.400647,
+      "decision": "include",
+      "rule": "freeze_threshold_outcome_ratio_ge_0_35_include_else_exclude",
+      "centroid": [
+        7733.615384615385,
+        1342.9615384615386
+      ],
+      "is_water": true,
+      "continent_id": 0
+    }
+  ]
+}

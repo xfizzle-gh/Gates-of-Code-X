@@ -213,12 +213,17 @@ class CropWholePolygonTests(unittest.TestCase):
         self.assertEqual(len(data["candidates"]), 4)
         self.assertTrue(data["rules"]["no_sliver_clipping"])
         self.assertTrue(data["rules"]["not_continent_equals_europe"])
-        self.assertEqual(data["permission"]["status"], "GRANTED")
+        self.assertEqual(data["permission"]["status"], "OWNER_ASSERTED_GRANT")
+        self.assertIn("signed license instrument", data["permission"]["not_present_in_repo"])
         masked = next(c for c in data["candidates"] if c["id"] == "em_reference_masked")
         self.assertEqual(masked["selection_mode"], "mask_overlap")
         self.assertGreaterEqual(len(masked["mask_rings"]), 2)
         self.assertIn(11370, masked["explicit_exclude_ids"])
         self.assertIn(11764, masked["explicit_exclude_ids"])
+        self.assertEqual(
+            masked.get("threshold_decisions_file"),
+            "threshold_decisions_em_reference_masked_v1.json",
+        )
 
     def test_region_coverage_requires_included_city_anchors(self) -> None:
         ds = self._dataset()
