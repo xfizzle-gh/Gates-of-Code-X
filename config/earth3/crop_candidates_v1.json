@@ -1,0 +1,68 @@
+{
+  "schema": "gates-of-codex.earth3-crop-candidates",
+  "schema_version": 1,
+  "source": "AoH3 Earth3 province geometry (permission-cleared for project use)",
+  "coordinate_space": {
+    "canvas_width": 17760,
+    "canvas_height": 8600,
+    "origin": "top-left",
+    "y_axis": "downward_positive",
+    "notes": "Coordinates match Earth3 ProvincePoints / ProvinceNamePoints map pixels."
+  },
+  "rules": {
+    "selection": "whole_polygon_only",
+    "no_sliver_clipping": true,
+    "not_continent_equals_europe": true,
+    "iceland_explicit": true,
+    "far_northern_scandinavia_excluded_by_min_y": true
+  },
+  "candidates": [
+    {
+      "id": "em_ref_tight",
+      "title": "EM reference-tight",
+      "description": "Closest match to the supplied Europe-Mediterranean reference framing. Cuts far-northern Scandinavia via min_y while keeping Iceland by centroid band and required includes.",
+      "rect": {"min_x": 6850, "min_y": 680, "max_x": 11550, "max_y": 3950},
+      "required_include_ids": [],
+      "explicit_exclude_ids": [],
+      "notes": "Primary recommendation candidate pending owner review."
+    },
+    {
+      "id": "em_north_east_expand",
+      "title": "EM + slight N/E expand",
+      "description": "Slightly lower min_y (more southern Norway/Sweden/Finland retained) and slightly higher max_x (more Rostov/Caucasus/east approaches).",
+      "rect": {"min_x": 6820, "min_y": 620, "max_x": 11680, "max_y": 4000},
+      "required_include_ids": [],
+      "explicit_exclude_ids": [],
+      "notes": "Use if Donbas eastern operational depth or Baltic north feels tight."
+    },
+    {
+      "id": "em_south_west_expand",
+      "title": "EM + slight S/W expand",
+      "description": "Slightly more Atlantic west and deeper North-African coastal belt; slightly higher min_y to keep Scandinavia cutoff firm.",
+      "rect": {"min_x": 6780, "min_y": 700, "max_x": 11520, "max_y": 4150},
+      "required_include_ids": [],
+      "explicit_exclude_ids": [],
+      "notes": "Use if Maghreb depth or Atlantic islands framing needs more room."
+    }
+  ],
+  "required_region_checks": [
+    "Iceland",
+    "Britain_Ireland",
+    "Iberia",
+    "France_Benelux_Germany",
+    "Italy",
+    "Balkans_Greece",
+    "Ukraine_Crimea_Donbas",
+    "Turkey",
+    "Caucasus_edge",
+    "North_Africa_coast",
+    "Mediterranean_islands"
+  ],
+  "assumptions": [
+    "Earth3 continent id is metadata only; crop uses authored rect + whole-polygon rules.",
+    "Far-northern Scandinavia is excluded by min_y, not by deleting Norway/Sweden/Finland entirely.",
+    "Iceland remains included because its centroids sit south of the far-north cutoff while still west of the main mass.",
+    "No province rings are clipped; boundary spill uses whole-polygon keep when centroid is inside.",
+    "AoH3 background tiles and scenarios are not imported."
+  ]
+}
