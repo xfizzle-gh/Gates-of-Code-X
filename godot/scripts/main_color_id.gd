@@ -84,6 +84,8 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if has_method("is_command_busy") and is_command_busy():
+		queue_redraw()
 	if map_debug.enabled:
 		map_debug.tick_fps(delta)
 	if _screenshot_frames_left >= 0:
@@ -386,6 +388,27 @@ func _draw() -> void:
 		Color(0.78, 0.82, 0.86, 0.95)
 	)
 	_draw_management_panel()
+	_draw_command_busy_overlay()
+
+
+func _draw_command_busy_overlay() -> void:
+	if not has_method("is_command_busy") or not is_command_busy():
+		return
+	var viewport := get_viewport_rect().size
+	var map_width := viewport.x - PANEL_WIDTH
+	var band := Rect2(0, HEADER_SAFE_TOP, map_width, 28.0)
+	draw_rect(band, Color(0.12, 0.08, 0.02, 0.92))
+	draw_rect(band, Color("ffb14e"), false, 1.0)
+	var label := command_busy_label() if has_method("command_busy_label") else "Backend busy..."
+	draw_string(
+		ThemeDB.fallback_font,
+		Vector2(16, HEADER_SAFE_TOP + 19.0),
+		label + "  (pan/zoom still available)",
+		HORIZONTAL_ALIGNMENT_LEFT,
+		map_width - 32,
+		14,
+		Color("ffd27a")
+	)
 
 
 func _draw_coalition_fronts() -> void:
@@ -847,6 +870,15 @@ func _is_named_province(label: String) -> bool:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		var key := event as InputEventKey
+		if has_method("is_command_busy") and is_command_busy():
+			if key.keycode in [KEY_E, KEY_A, KEY_H, KEY_R]:
+				var busy_label := "backend"
+				if has_method("command_busy_label"):
+					busy_label = String(command_busy_label())
+				status_message = "Busy - wait for command (%s)." % busy_label
+				queue_redraw()
+				get_viewport().set_input_as_handled()
+				return
 		if key.keycode == KEY_F3:
 			map_debug.toggle()
 			set_process(map_debug.enabled or _screenshot_frames_left >= 0)
