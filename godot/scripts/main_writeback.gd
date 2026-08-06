@@ -1,10 +1,43 @@
 extends "res://scripts/main.gd"
 
 # Correctness layer for the write-back checkpoint. The full stack UI remains in #52.
+const FrontendCommandRunnerScript = preload("res://scripts/presentation/command_runner.gd")
+
 var battalion_stacks_by_province: Dictionary = {}
 var battalions_by_id: Dictionary = {}
 var all_front_by_origin: Dictionary = {}
 var selected_battalion_id := ""
+var command_runner: Node
+var _busy_status := ""
+var _last_command_gen_handled := 0
+
+
+func _ready() -> void:
+	_ensure_command_runner()
+	super._ready()
+
+
+func _ensure_command_runner() -> void:
+	if command_runner != null and is_instance_valid(command_runner):
+		return
+	command_runner = FrontendCommandRunnerScript.new()
+	command_runner.name = "FrontendCommandRunner"
+	add_child(command_runner)
+	if not command_runner.command_finished.is_connected(_on_command_finished):
+		command_runner.command_finished.connect(_on_command_finished)
+
+
+func is_command_busy() -> bool:
+	return command_runner != null and command_runner.is_busy()
+
+
+func command_busy_label() -> String:
+	if not is_command_busy():
+		return ""
+	var op := String(command_runner.current_op())
+	if op.is_empty():
+		op = "command"
+	return "Backend busy: %s…" % op
 
 
 func _load_snapshot(path: String) -> void:
@@ -154,7 +187,39 @@ func _draw_province(province: Dictionary) -> void:
 	)
 
 
+func _command_mutates_state(button_id: String) -> bool:
+	if button_id in ["fit"]:
+		return false
+	if button_id.begins_with("move:") or button_id.begins_with("construct:"):
+		return true
+	return button_id in ["refresh", "end_turn", "run_ai", "auto_resolve", "handoff"]
+
+
+func _handle_button(button_id: String) -> void:
+	if is_command_busy() and _command_mutates_state(button_id):
+		status_message = "Busy — wait for %s to finish." % command_runner.current_op()
+		queue_redraw()
+		return
+	super._handle_button(button_id)
+
+
+func _issue_move(target_province_id: String) -> void:
+	if is_command_busy():
+		status_message = "Busy — move ignored until %s finishes." % command_runner.current_op()
+		queue_redraw()
+		return
+	super._issue_move(target_province_id)
+
+
+func _draw_button(id: String, label: String, x: float, y: float, enabled: bool, fill := Color("1a2a38")) -> float:
+	var allow := enabled
+	if is_command_busy() and _command_mutates_state(id):
+		allow = false
+	return super._draw_button(id, label, x, y, allow, fill)
+
+
 func _queue_and_apply(commands: Array) -> void:
+	_ensure_command_runner()
 	var control: Dictionary = snapshot.get("control", {})
 	if not bool(control.get("enabled", false)):
 		status_message = "Write-back disabled. Re-export frontend with campaign path."
@@ -167,6 +232,17 @@ func _queue_and_apply(commands: Array) -> void:
 		status_message = "Control paths missing from snapshot."
 		queue_redraw()
 		return
+
+	# Duplicate / busy rejection before writing commands file.
+	var identity := FrontendCommandRunnerScript.command_identity(commands)
+	if is_command_busy():
+		if identity == command_runner.current_identity():
+			status_message = "Duplicate %s ignored — already in flight." % command_runner.current_op()
+		else:
+			status_message = "Busy with %s — new command rejected." % command_runner.current_op()
+		queue_redraw()
+		return
+
 	var payload := {"commands": commands}
 	var file := FileAccess.open(commands_path, FileAccess.WRITE)
 	if file == null:
@@ -184,44 +260,94 @@ func _queue_and_apply(commands: Array) -> void:
 		"--commands",
 		commands_path,
 	]
-	var output: Array = []
 	var python_executable := String(control.get("python_executable", "")).strip_edges()
 	var python_module := String(control.get("python_module", "gates_of_codex")).strip_edges()
-	var exit_code := -1
+	var executable := ""
+	var args := PackedStringArray()
 	if not python_executable.is_empty():
 		if not FileAccess.file_exists(python_executable):
 			status_message = "Configured backend executable no longer exists: %s" % python_executable
 			queue_redraw()
 			return
-		var python_args := ["-m", python_module]
-		python_args.append_array(apply_args)
-		exit_code = OS.execute(python_executable, python_args, output, true, false)
+		executable = python_executable
+		args.append_array(PackedStringArray(["-m", python_module]))
+		args.append_array(PackedStringArray(apply_args))
 	else:
-		# Backward-compatible fallback for older snapshots only.
-		exit_code = OS.execute("gates-of-codex", apply_args, output, true, false)
-		if exit_code == -1:
-			output.clear()
-			var fallback_args := ["-m", "gates_of_codex"]
-			fallback_args.append_array(apply_args)
-			exit_code = OS.execute("python", fallback_args, output, true, false)
+		# Prefer explicit module invocation for async path portability.
+		executable = "python"
+		args.append_array(PackedStringArray(["-m", "gates_of_codex"]))
+		args.append_array(PackedStringArray(apply_args))
 
-	var joined := "\n".join(output)
-	if exit_code != 0:
-		if joined.strip_edges().is_empty():
-			joined = "backend process could not be launched"
-		status_message = "Apply failed: %s" % joined.substr(0, 200)
+	var start := command_runner.try_start(
+		commands,
+		executable,
+		args,
+		snapshot_path if not snapshot_path.is_empty() else snapshot_source_path
+	)
+	if not bool(start.get("ok", false)):
+		var reason := String(start.get("reason", "rejected"))
+		if reason == "duplicate_in_flight":
+			status_message = "Duplicate %s ignored — already in flight." % FrontendCommandRunnerScript.primary_op(commands)
+		elif reason == "busy":
+			status_message = "Busy — command rejected."
+		else:
+			status_message = "Unable to start backend: %s" % reason
 		queue_redraw()
 		return
-	_parse_apply_output(joined)
+
+	_busy_status = "Running %s…" % FrontendCommandRunnerScript.primary_op(commands)
+	status_message = _busy_status
+	set_process(true)
+	queue_redraw()
+
+
+func _process(_delta: float) -> void:
+	# Keep busy banner/status responsive without blocking; stop when idle unless subclasses need process.
+	if is_command_busy():
+		queue_redraw()
+		return
+	# Allow subclasses (debug/screenshot) to keep process; only clear if we solely owned it for busy.
+	if not _busy_status.is_empty():
+		_busy_status = ""
+
+
+func _on_command_finished(
+	generation: int,
+	success: bool,
+	exit_code: int,
+	output_text: String,
+	commands: Array,
+	snapshot_path: String
+) -> void:
+	if not is_inside_tree():
+		return
+	if generation <= _last_command_gen_handled:
+		# Stale or duplicate delivery.
+		return
+	_last_command_gen_handled = generation
+	_busy_status = ""
+
+	var op := FrontendCommandRunnerScript.primary_op(commands)
+	if not success:
+		var detail := output_text.strip_edges()
+		if detail.is_empty():
+			detail = "backend exit %s" % exit_code
+		status_message = "Apply failed (%s): %s" % [op, detail.substr(0, 240)]
+		# Preserve current valid snapshot — do not reload.
+		queue_redraw()
+		return
+
+	# Success: parse once, reload snapshot once, restore selection.
+	_parse_apply_output(output_text)
 	var previous_selected := selected_province_id
 	var previous_battalion := selected_battalion_id
-	_load_snapshot(snapshot_path if not snapshot_path.is_empty() else snapshot_source_path)
+	var load_path := snapshot_path if not snapshot_path.is_empty() else snapshot_source_path
+	_load_snapshot(load_path)
 	if provinces_by_id.has(previous_selected):
 		selected_province_id = previous_selected
 		selected_battalion_id = previous_battalion
 		_rebuild_legal_targets()
 		_rebuild_focus_set()
-	var op := String((commands[0] as Dictionary).get("op", "command"))
 	if status_message.is_empty():
 		status_message = "Applied %s." % op
 	if snapshot.get("pending_battle") != null and op != "handoff":
