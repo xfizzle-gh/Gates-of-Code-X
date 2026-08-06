@@ -277,16 +277,13 @@ func _open_color_id_map() -> void:
 
 
 func _open_operational_graph() -> void:
-	var graph_path := ""
-	var contract: Dictionary = snapshot.get("strategic_map", {})
-	var exported := String(contract.get("operational_graph_path", "")).strip_edges()
-	if not exported.is_empty() and FileAccess.file_exists(exported):
-		graph_path = exported
-	else:
-		graph_path = operational_graph.resolve_default_path(map_manifest_source_path)
+	var graph_path := operational_graph.resolve_path(map_manifest_source_path, snapshot)
+	if graph_path.is_empty():
+		operational_graph.clear()
+		return
 	if not operational_graph.open(graph_path):
-		# Presentation-only; missing graph falls back to legacy midpoint for old battles.
-		pass
+		# Presentation-only; unresolved graph uses next legitimate location fallback.
+		operational_graph.clear()
 
 
 func _sync_map_space() -> void:

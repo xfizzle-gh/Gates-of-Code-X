@@ -79,6 +79,12 @@ jobs:
           set -euo pipefail
           # Import can use headless; draw/capture steps require xvfb + real GL.
           "$HOME/godot" --headless --path . --import --quit-after 1
+      - name: Godot BattleLocation GDScript unit test
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --audio-driver Dummy \
+            -s res://scripts/tools/battle_location_test.gd
       - name: Godot map CI check (draw path + viewport smoke)
         working-directory: godot
         run: |
@@ -126,6 +132,12 @@ jobs:
           shoot node_edge_battle_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/routes_and_battles.json
           shoot control_site_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/control_sites.json
           shoot debug_overlay_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/control_sites.json --debug --select-first
+          # S6 pending-battle location captures (true viewport path)
+          shoot s6_node_contact_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/s6_node_contact.json
+          shoot s6_node_simultaneous_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/s6_node_simultaneous.json
+          shoot s6_edge_cross_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/s6_edge_cross.json
+          shoot s6_edge_catchup_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/s6_edge_catchup.json
+          shoot s6_legacy_midpoint_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/s6_legacy_midpoint.json
           ls -la "$OUT"
           python3 - <<'PY'
           import struct
