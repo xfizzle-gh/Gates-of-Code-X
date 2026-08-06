@@ -4608,42 +4608,42 @@
     },
     {
       "id": "em_reference_masked",
-      "title": "EM reference-masked (authored polygon mask v3)",
-      "description": "Authored multi-ring theatre mask. Iceland ring covers the full island landmass. Main ring keeps EM theatre through Rostov/Caucasus/Turkey/N.Africa coast while cutting deep Russia, Central Asia, unnecessary Iran, Arabian interior, and deep Sahara via geometry (not continent tags).",
+      "title": "EM reference-masked (authored polygon mask v5)",
+      "description": "Authored multi-ring theatre mask. Iceland full land set. Cuts deep Sahara (incl. Tabelbala/In Ghar/Ashkda), Madeira/Funchal Atlantic water, Arabian interior, deep Russia/Central Asia/Iran via geometry.",
       "selection_mode": "mask_overlap",
       "inclusion_threshold": 0.35,
       "review_band": [
         0.15,
         0.5
       ],
-      "province_count": 3074,
-      "land_province_count": 2875,
-      "water_or_ocean_continent_count": 199,
-      "polygon_count": 3074,
-      "total_vertices": 268261,
-      "adjacency_edge_count": 8961,
+      "province_count": 3038,
+      "land_province_count": 2843,
+      "water_or_ocean_continent_count": 195,
+      "polygon_count": 3038,
+      "total_vertices": 263522,
+      "adjacency_edge_count": 8856,
       "source_bounds": [
         7084.0,
         648.0,
         10855.0,
-        3629.0
+        3499.0
       ],
       "query_rect": {
         "min_x": 7100.0,
         "min_y": 700.0,
         "max_x": 11000.0,
-        "max_y": 3580.0
+        "max_y": 3520.0
       },
       "export_rect": {
         "min_x": 7064.0,
         "min_y": 628.0,
         "max_x": 10875.0,
-        "max_y": 3649.0
+        "max_y": 3519.0
       },
       "mask_ring_count": 2,
-      "estimated_runtime_geometry_bytes": 4488912,
-      "estimated_frontend_snapshot_bytes": 1598364,
-      "disconnected_land_components": 24,
+      "estimated_runtime_geometry_bytes": 4410784,
+      "estimated_frontend_snapshot_bytes": 1579644,
+      "disconnected_land_components": 23,
       "missing_required_ids": [],
       "required_include_ids": [
         950,
@@ -4683,12 +4683,11 @@
         1028,
         1227,
         1228,
-        2670,
+        1376,
         2706,
         3003,
-        4348,
-        4859,
-        4895,
+        4295,
+        4734,
         6632,
         6677,
         10826,
@@ -4696,7 +4695,8 @@
         12187,
         12189,
         12451,
-        12906
+        12912,
+        12914
       ],
       "explicit_exclude_ids": [
         11370,
@@ -4720,17 +4720,23 @@
         6202,
         4796,
         12307,
+        4348,
+        4859,
+        4895,
+        12906,
         1022,
         1024,
         1044,
         1348,
-        1369,
-        1379,
+        1377,
         1451,
+        2670,
+        3223,
         3741,
         3746,
-        4410,
-        4735,
+        4785,
+        4831,
+        4838,
         5051,
         5054,
         6679,
@@ -4743,7 +4749,10 @@
         11649,
         12037,
         12118,
+        12200,
         12508,
+        12902,
+        12907,
         13076,
         13151,
         13352
@@ -4780,19 +4789,21 @@
         1189,
         1212,
         1306,
+        1370,
+        1372,
+        1374,
+        1379,
         1448,
         1459,
         2683,
         2705,
-        2925,
-        3233,
         3731,
-        4409,
-        4795,
-        4797,
-        4806,
-        4942,
-        4969,
+        4410,
+        4787,
+        4851,
+        4857,
+        4860,
+        4961,
         4994,
         4999,
         5055,
@@ -4810,8 +4821,6 @@
         12165,
         12192,
         12193,
-        12915,
-        12918,
         13130,
         13131,
         13138
@@ -5432,7 +5441,7 @@
       "notes": "Mask geometry is primary exclusion tool for deep Russia/Central Asia/Iran/Arabia/Sahara. Explicit excludes mirror named anchors as fail-closed safety. Iceland required-include is the full 20-province connected land set (includes H\u00f6fn and Bakkafj\u00f6r\u00f0ur).",
       "diff_vs_em_ref_tight": {
         "added_count": 0,
-        "removed_count": 1297,
+        "removed_count": 1333,
         "added_sample": [],
         "removed_sample": [
           914,
@@ -6372,7 +6381,7 @@
       ]
     },
     "em_ref_tight_vs_em_reference_masked": {
-      "only_in_first_count": 1297,
+      "only_in_first_count": 1333,
       "only_in_second_count": 0,
       "only_in_first_sample": [
         914,
@@ -6507,7 +6516,7 @@
       ]
     },
     "em_north_east_expand_vs_em_reference_masked": {
-      "only_in_first_count": 1418,
+      "only_in_first_count": 1454,
       "only_in_second_count": 0,
       "only_in_first_sample": [
         914,
@@ -6554,7 +6563,7 @@
       "only_in_second_sample": []
     },
     "em_south_west_expand_vs_em_reference_masked": {
-      "only_in_first_count": 1423,
+      "only_in_first_count": 1459,
       "only_in_second_count": 0,
       "only_in_first_sample": [
         914,

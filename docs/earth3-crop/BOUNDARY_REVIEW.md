@@ -1,10 +1,10 @@
 # Earth3 em_reference_masked boundary review sheet
 
-**Status:** algorithmic_recommendation_pending_owner_review
+**Status:** approved
 
-Automatic threshold outcomes are algorithmic recommendations only. Grouping uses reviewed Earth3 city anchors and explicit basin labels (Iraq/Saudi are not North Africa).
+Boundary threshold-band provinces carry explicit owner include/exclude decisions. Grouping uses reviewed Earth3 city anchors and basin labels (Turkey/northern Levant is not North Africa; deep Sahara and Madeira water excluded).
 
-Total threshold-band provinces: **44**
+Total threshold-band provinces: **49**
 
 ## Europe_Scandinavia
 
@@ -12,14 +12,14 @@ Count: 8 (include rec: 3, exclude rec: 5)
 
 | PID | Ratio | Rec | Land/Water | Nearest city | Close-up | Reason |
 |---:|---:|---|---|---|---|---|
-| 1022 | 0.3026 | exclude | land | Dombås | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: exclude because overlap_ratio=0.3026 < 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Dombås. Owner review still required. |
-| 1024 | 0.3492 | exclude | land | Førde | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: exclude because overlap_ratio=0.3492 < 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Førde. Owner review still required. |
-| 1028 | 0.4771 | include | land | Idre | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: include because overlap_ratio=0.4771 ≥ 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Idre. Owner review still required. |
-| 1044 | 0.1732 | exclude | land | Sveg | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: exclude because overlap_ratio=0.1732 < 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Sveg. Owner review still required. |
-| 1451 | 0.2416 | exclude | land | Hämeenlinna | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: exclude because overlap_ratio=0.2416 < 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Hämeenlinna. Owner review still required. |
-| 3003 | 0.3629 | include | land | Hudiksvall | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: include because overlap_ratio=0.3629 ≥ 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Hudiksvall. Owner review still required. |
-| 3746 | 0.3281 | exclude | land | Volkhov | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: exclude because overlap_ratio=0.3281 < 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Volkhov. Owner review still required. |
-| 6632 | 0.4598 | include | land | Engerdal | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: include because overlap_ratio=0.4598 ≥ 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Engerdal. Owner review still required. |
+| 1022 | 0.3026 | exclude | land | Dombås | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3026; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+| 1024 | 0.3492 | exclude | land | Førde | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3492; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+| 1028 | 0.4771 | include | land | Idre | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4771; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review. |
+| 1044 | 0.1732 | exclude | land | Sveg | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.1732; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+| 1451 | 0.2416 | exclude | land | Hämeenlinna | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.2416; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+| 3003 | 0.3629 | include | land | Hudiksvall | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3629; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review. |
+| 3746 | 0.3281 | exclude | land | Volkhov | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3281; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+| 6632 | 0.4598 | include | land | Engerdal | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4598; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review. |
 
 ## western_Russia
 
@@ -27,16 +27,16 @@ Count: 10 (include rec: 1, exclude rec: 9)
 
 | PID | Ratio | Rec | Land/Water | Nearest city | Close-up | Reason |
 |---:|---:|---|---|---|---|---|
-| 3741 | 0.2832 | exclude | land | Novo | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: exclude because overlap_ratio=0.2832 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Novo. Owner review still required. |
-| 6677 | 0.4303 | include | land | Gubachevo | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: include because overlap_ratio=0.4303 ≥ 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Gubachevo. Owner review still required. |
-| 6679 | 0.2956 | exclude | land | Uglich | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: exclude because overlap_ratio=0.2956 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Uglich. Owner review still required. |
-| 6685 | 0.1875 | exclude | land | Sima | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: exclude because overlap_ratio=0.1875 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Sima. Owner review still required. |
-| 10890 | 0.3031 | exclude | land | Ilovlya | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: exclude because overlap_ratio=0.3031 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Ilovlya. Owner review still required. |
-| 11174 | 0.3346 | exclude | land | Mirnyy | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: exclude because overlap_ratio=0.3346 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Mirnyy. Owner review still required. |
-| 11559 | 0.2333 | exclude | land | Sudogda | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: exclude because overlap_ratio=0.2333 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Sudogda. Owner review still required. |
-| 11580 | 0.2753 | exclude | land | Arkadak | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: exclude because overlap_ratio=0.2753 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Arkadak. Owner review still required. |
-| 11601 | 0.2229 | exclude | land | Balashov | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: exclude because overlap_ratio=0.2229 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Balashov. Owner review still required. |
-| 11649 | 0.2949 | exclude | land | Kasimov | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: exclude because overlap_ratio=0.2949 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Kasimov. Owner review still required. |
+| 3741 | 0.2832 | exclude | land | Novo | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2832; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+| 6677 | 0.4303 | include | land | Gubachevo | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved include: boundary province group=western_Russia; raw/threshold ratio=0.4303; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review. |
+| 6679 | 0.2956 | exclude | land | Uglich | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2956; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+| 6685 | 0.1875 | exclude | land | Sima | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.1875; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+| 10890 | 0.3031 | exclude | land | Ilovlya | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.3031; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+| 11174 | 0.3346 | exclude | land | Mirnyy | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.3346; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+| 11559 | 0.2333 | exclude | land | Sudogda | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2333; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+| 11580 | 0.2753 | exclude | land | Arkadak | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2753; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+| 11601 | 0.2229 | exclude | land | Balashov | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2229; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+| 11649 | 0.2949 | exclude | land | Kasimov | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2949; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
 
 ## Caucasus
 
@@ -44,57 +44,83 @@ Count: 1 (include rec: 1, exclude rec: 0)
 
 | PID | Ratio | Rec | Land/Water | Nearest city | Close-up | Reason |
 |---:|---:|---|---|---|---|---|
-| 10826 | 0.4024 | include | land | Lagan | `closeups/em_reference_masked_ukraine_donbas_caucasus.png` | Algorithmic recommendation: include because overlap_ratio=0.4024 ≥ 0.35 threshold. Caucasus edge; keep Tbilisi/Yerevan/Baku. Nearest city: Lagan. Owner review still required. |
+| 10826 | 0.4024 | include | land | Lagan | `closeups/em_reference_masked_ukraine_donbas_caucasus.png` | Owner-approved include: boundary province group=Caucasus; raw/threshold ratio=0.4024; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review. |
 
-## northwestern_Iran_fringe
+## Turkey_northern_Levant
+
+Count: 4 (include rec: 2, exclude rec: 2)
+
+| PID | Ratio | Rec | Land/Water | Nearest city | Close-up | Reason |
+|---:|---:|---|---|---|---|---|
+| 1227 | 0.3526 | include | land | Viranşehir | `closeups/em_reference_masked_north_africa_east_med.png` | Owner-approved include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.3526; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review. |
+| 1228 | 0.4161 | include | land | Şanliurfa | `closeups/em_reference_masked_north_africa_east_med.png` | Owner-approved include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.4161; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review. |
+| 1348 | 0.2512 | exclude | land | Köprübaşi | `closeups/em_reference_masked_north_africa_east_med.png` | Owner-approved exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.2512; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+| 5054 | 0.1837 | exclude | land | Manbij | `closeups/em_reference_masked_north_africa_east_med.png` | Owner-approved exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.1837; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+
+## Egypt_Sinai
+
+Count: 3 (include rec: 2, exclude rec: 1)
+
+| PID | Ratio | Rec | Land/Water | Nearest city | Close-up | Reason |
+|---:|---:|---|---|---|---|---|
+| 2670 | 0.1692 | exclude | land | Faiyum | `closeups/em_reference_masked_north_africa_east_med.png` | Owner-approved exclude: boundary province group=Egypt_Sinai; raw/threshold ratio=0.1692; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+| 2706 | 0.4448 | include | land | Adabiya | `closeups/em_reference_masked_north_africa_east_med.png` | Owner-approved include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.4448; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review. |
+| 12451 | 0.3939 | include | land | El Qantara | `closeups/em_reference_masked_north_africa_east_med.png` | Owner-approved include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.3939; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review. |
+
+## North_African_coast
+
+Count: 4 (include rec: 2, exclude rec: 2)
+
+| PID | Ratio | Rec | Land/Water | Nearest city | Close-up | Reason |
+|---:|---:|---|---|---|---|---|
+| 1376 | 0.3687 | include | land | Awjilah | `closeups/em_reference_masked_north_africa_east_med.png` | Owner-approved include: boundary province group=North_African_coast; raw/threshold ratio=0.3687; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review. |
+| 4734 | 0.4738 | include | land | Ash Shwayrif | `closeups/em_reference_masked_north_africa_east_med.png` | Owner-approved include: boundary province group=North_African_coast; raw/threshold ratio=0.4738; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review. |
+| 5051 | 0.3115 | exclude | land | Kernaz | `closeups/em_reference_masked_north_africa_east_med.png` | Owner-approved exclude: boundary province group=North_African_coast; raw/threshold ratio=0.3115; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+| 12508 | 0.2242 | exclude | land | Baniyas | `closeups/em_reference_masked_north_africa_east_med.png` | Owner-approved exclude: boundary province group=North_African_coast; raw/threshold ratio=0.2242; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+
+## Sahara
+
+Count: 6 (include rec: 1, exclude rec: 5)
+
+| PID | Ratio | Rec | Land/Water | Nearest city | Close-up | Reason |
+|---:|---:|---|---|---|---|---|
+| 1377 | 0.2547 | exclude | land | Al Jaghbub | `closeups/em_reference_masked_north_africa_east_med.png` | Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2547; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+| 3223 | 0.1921 | exclude | land | Imintanoute | `closeups/em_reference_masked_north_africa_east_med.png` | Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.1921; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+| 4295 | 0.4595 | include | land | El Menia | `closeups/em_reference_masked_north_africa_east_med.png` | Owner-approved include: boundary province group=Sahara; raw/threshold ratio=0.4595; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review. |
+| 4785 | 0.2488 | exclude | land | Dirj | `closeups/em_reference_masked_north_africa_east_med.png` | Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+| 4831 | 0.2427 | exclude | land | Ouarzazate | `closeups/em_reference_masked_north_africa_east_med.png` | Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2427; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+| 4838 | 0.1894 | exclude | land | Zagora | `closeups/em_reference_masked_north_africa_east_med.png` | Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.1894; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+
+## Mediterranean_water
 
 Count: 1 (include rec: 0, exclude rec: 1)
 
 | PID | Ratio | Rec | Land/Water | Nearest city | Close-up | Reason |
 |---:|---:|---|---|---|---|---|
-| 1348 | 0.2512 | exclude | land | Köprübaşi | `closeups/em_reference_masked_ukraine_donbas_caucasus.png` | Algorithmic recommendation: exclude because overlap_ratio=0.2512 < 0.35 threshold. NW Iran fringe; Urmia default excluded. Nearest city: Köprübaşi. Owner review still required. |
-
-## North_African_coast
-
-Count: 12 (include rec: 7, exclude rec: 5)
-
-| PID | Ratio | Rec | Land/Water | Nearest city | Close-up | Reason |
-|---:|---:|---|---|---|---|---|
-| 1227 | 0.3526 | include | land | Viranşehir | `closeups/em_reference_masked_north_africa_east_med.png` | Algorithmic recommendation: include because overlap_ratio=0.3526 ≥ 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Viranşehir. Owner review still required. |
-| 1228 | 0.4161 | include | land | Şanliurfa | `closeups/em_reference_masked_north_africa_east_med.png` | Algorithmic recommendation: include because overlap_ratio=0.4161 ≥ 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Şanliurfa. Owner review still required. |
-| 1379 | 0.1754 | exclude | land | Siwa Oasis | `closeups/em_reference_masked_north_africa_east_med.png` | Algorithmic recommendation: exclude because overlap_ratio=0.1754 < 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Siwa Oasis. Owner review still required. |
-| 2670 | 0.4284 | include | land | Faiyum | `closeups/em_reference_masked_north_africa_east_med.png` | Algorithmic recommendation: include because overlap_ratio=0.4284 ≥ 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Faiyum. Owner review still required. |
-| 2706 | 0.4448 | include | land | Adabiya | `closeups/em_reference_masked_north_africa_east_med.png` | Algorithmic recommendation: include because overlap_ratio=0.4448 ≥ 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Adabiya. Owner review still required. |
-| 4410 | 0.2421 | exclude | land | Bawety | `closeups/em_reference_masked_north_africa_east_med.png` | Algorithmic recommendation: exclude because overlap_ratio=0.2421 < 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Bawety. Owner review still required. |
-| 4859 | 0.4190 | include | land | Tabelbala | `closeups/em_reference_masked_north_africa_east_med.png` | Algorithmic recommendation: include because overlap_ratio=0.4190 ≥ 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Tabelbala. Owner review still required. |
-| 4895 | 0.3540 | include | land | In Ghar | `closeups/em_reference_masked_north_africa_east_med.png` | Algorithmic recommendation: include because overlap_ratio=0.3540 ≥ 0.35 threshold. Mediterranean North African coastal belt. Nearest city: In Ghar. Owner review still required. |
-| 5051 | 0.3115 | exclude | land | Kernaz | `closeups/em_reference_masked_north_africa_east_med.png` | Algorithmic recommendation: exclude because overlap_ratio=0.3115 < 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Kernaz. Owner review still required. |
-| 5054 | 0.1837 | exclude | land | Manbij | `closeups/em_reference_masked_north_africa_east_med.png` | Algorithmic recommendation: exclude because overlap_ratio=0.1837 < 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Manbij. Owner review still required. |
-| 12451 | 0.3939 | include | land | El Qantara | `closeups/em_reference_masked_north_africa_east_med.png` | Algorithmic recommendation: include because overlap_ratio=0.3939 ≥ 0.35 threshold. Mediterranean North African coastal belt. Nearest city: El Qantara. Owner review still required. |
-| 12508 | 0.2242 | exclude | land | Baniyas | `closeups/em_reference_masked_north_africa_east_med.png` | Algorithmic recommendation: exclude because overlap_ratio=0.2242 < 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Baniyas. Owner review still required. |
-
-## Sahara
-
-Count: 3 (include rec: 1, exclude rec: 2)
-
-| PID | Ratio | Rec | Land/Water | Nearest city | Close-up | Reason |
-|---:|---:|---|---|---|---|---|
-| 1369 | 0.2064 | exclude | land | Sibele | `closeups/em_reference_masked_north_africa_east_med.png` | Algorithmic recommendation: exclude because overlap_ratio=0.2064 < 0.35 threshold. Deep Sahara / interior Maghreb; must stay out. Nearest city: Sibele. Owner review still required. |
-| 4348 | 0.4655 | include | land | Ashkda | `closeups/em_reference_masked_north_africa_east_med.png` | Algorithmic recommendation: include because overlap_ratio=0.4655 ≥ 0.35 threshold. Deep Sahara / interior Maghreb; must stay out. Nearest city: Ashkda. Owner review still required. |
-| 4735 | 0.1760 | exclude | land | Ashkda | `closeups/em_reference_masked_north_africa_east_med.png` | Algorithmic recommendation: exclude because overlap_ratio=0.1760 < 0.35 threshold. Deep Sahara / interior Maghreb; must stay out. Nearest city: Ashkda. Owner review still required. |
+| 12200 | 0.1621 | exclude | water | Agadir | `closeups/em_reference_masked_north_africa_east_med.png` | Owner-approved exclude: boundary province group=Mediterranean_water; raw/threshold ratio=0.1621; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
 
 ## Atlantic_Nordic_water
 
-Count: 6 (include rec: 4, exclude rec: 2)
+Count: 7 (include rec: 5, exclude rec: 2)
 
 | PID | Ratio | Rec | Land/Water | Nearest city | Close-up | Reason |
 |---:|---:|---|---|---|---|---|
-| 12180 | 0.3787 | include | water | Førde | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: include because overlap_ratio=0.3787 ≥ 0.35 threshold. Atlantic / Nordic sea province. Nearest city: Førde. Water province. Owner review still required. |
-| 12187 | 0.4602 | include | water | Brae | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: include because overlap_ratio=0.4602 ≥ 0.35 threshold. Atlantic / Nordic sea province. Nearest city: Brae. Water province. Owner review still required. |
-| 12189 | 0.3850 | include | water | Hólmavík | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: include because overlap_ratio=0.3850 ≥ 0.35 threshold. Atlantic / Nordic sea province. Nearest city: Hólmavík. Water province. Owner review still required. |
-| 12906 | 0.4928 | include | water | Funchal | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: include because overlap_ratio=0.4928 ≥ 0.35 threshold. Atlantic / Nordic sea province. Nearest city: Funchal. Water province. Owner review still required. |
-| 13076 | 0.2006 | exclude | water | Sneem | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: exclude because overlap_ratio=0.2006 < 0.35 threshold. Atlantic / Nordic sea province. Nearest city: Sneem. Water province. Owner review still required. |
-| 13151 | 0.3420 | exclude | water | Stornoway | `closeups/em_reference_masked_scandinavia_north_russia.png` | Algorithmic recommendation: exclude because overlap_ratio=0.3420 < 0.35 threshold. Atlantic / Nordic sea province. Nearest city: Stornoway. Water province. Owner review still required. |
+| 12180 | 0.3787 | include | water | Førde | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3787; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review. |
+| 12187 | 0.4602 | include | water | Brae | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4602; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review. |
+| 12189 | 0.3850 | include | water | Hólmavík | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3850; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review. |
+| 12912 | 0.4224 | include | water | Caldas da Rainha | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4224; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review. |
+| 12914 | 0.3826 | include | water | Sneem | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3826; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review. |
+| 13076 | 0.1596 | exclude | water | Sneem | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.1596; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+| 13151 | 0.3420 | exclude | water | Stornoway | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3420; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+
+## Atlantic_unrelated_water
+
+Count: 2 (include rec: 0, exclude rec: 2)
+
+| PID | Ratio | Rec | Land/Water | Nearest city | Close-up | Reason |
+|---:|---:|---|---|---|---|---|
+| 12902 | 0.1911 | exclude | water | Funchal | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1911; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
+| 12907 | 0.1665 | exclude | water | Funchal | `closeups/em_reference_masked_scandinavia_north_russia.png` | Owner-approved exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1665; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
 
 ## Caspian_water
 
@@ -102,7 +128,7 @@ Count: 1 (include rec: 0, exclude rec: 1)
 
 | PID | Ratio | Rec | Land/Water | Nearest city | Close-up | Reason |
 |---:|---:|---|---|---|---|---|
-| 13352 | 0.1986 | exclude | water | Lagan | `closeups/em_reference_masked_ukraine_donbas_caucasus.png` | Algorithmic recommendation: exclude because overlap_ratio=0.1986 < 0.35 threshold. Caspian sea province. Nearest city: Lagan. Water province. Owner review still required. |
+| 13352 | 0.1986 | exclude | water | Lagan | `closeups/em_reference_masked_ukraine_donbas_caucasus.png` | Owner-approved exclude: boundary province group=Caspian_water; raw/threshold ratio=0.1986; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
 
 ## Red_Sea_water
 
@@ -110,7 +136,7 @@ Count: 1 (include rec: 0, exclude rec: 1)
 
 | PID | Ratio | Rec | Land/Water | Nearest city | Close-up | Reason |
 |---:|---:|---|---|---|---|---|
-| 12118 | 0.3394 | exclude | water | Gaza | `closeups/em_reference_masked_north_africa_east_med.png` | Algorithmic recommendation: exclude because overlap_ratio=0.3394 < 0.35 threshold. Red Sea water; must stay out while keeping Cairo/Sinai framing. Nearest city: Gaza. Water province. Owner review still required. |
+| 12118 | 0.3394 | exclude | water | Gaza | `closeups/em_reference_masked_north_africa_east_med.png` | Owner-approved exclude: boundary province group=Red_Sea_water; raw/threshold ratio=0.3394; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
 
 ## other_water
 
@@ -118,5 +144,5 @@ Count: 1 (include rec: 0, exclude rec: 1)
 
 | PID | Ratio | Rec | Land/Water | Nearest city | Close-up | Reason |
 |---:|---:|---|---|---|---|---|
-| 12037 | 0.2488 | exclude | water | Pori | `preview_em_reference_masked.png` | Algorithmic recommendation: exclude because overlap_ratio=0.2488 < 0.35 threshold. Other water province on mask perimeter. Nearest city: Pori. Water province. Owner review still required. |
+| 12037 | 0.2488 | exclude | water | Pori | `preview_em_reference_masked.png` | Owner-approved exclude: boundary province group=other_water; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review. |
 

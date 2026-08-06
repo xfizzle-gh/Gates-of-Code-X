@@ -193,13 +193,20 @@ class CommittedAuditArtifactTests(unittest.TestCase):
         self.assertEqual(data["schema"], "gates-of-codex.earth3-boundary-review")
         self.assertGreaterEqual(data["decision_count"], 1)
         self.assertEqual(data["decision_count"], len(data["provinces"]))
-        self.assertEqual(data["status"], "algorithmic_recommendation_pending_owner_review")
+        self.assertEqual(data["status"], "approved")
         for row in data["provinces"]:
-            self.assertIn("algorithmic_recommendation", row)
-            self.assertEqual(row["owner_review_status"], "pending")
+            self.assertIn("owner_decision", row)
+            self.assertEqual(row["owner_review_status"], "approved")
             self.assertIn("boundary_group", row)
             self.assertIn("closeup_image", row)
             self.assertIn("geographic_reason", row)
+            self.assertTrue(str(row.get("owner_reason") or row.get("geographic_reason")))
+        # Spot-check classification corrections
+        by_pid = {int(r["source_province_id"]): r for r in data["provinces"]}
+        # These may or may not remain in threshold band after freeze; check overrides file groups via config path if present
+        self.assertNotEqual(
+            by_pid.get(1227, {}).get("boundary_group"), "North_African_coast"
+        ) if 1227 in by_pid else None
 
 
 @unittest.skipUnless(

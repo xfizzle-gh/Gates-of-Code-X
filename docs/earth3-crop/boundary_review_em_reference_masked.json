@@ -2,9 +2,9 @@
   "schema": "gates-of-codex.earth3-boundary-review",
   "schema_version": 3,
   "candidate_id": "em_reference_masked",
-  "status": "algorithmic_recommendation_pending_owner_review",
-  "note": "Automatic threshold outcomes are algorithmic recommendations only. Grouping uses reviewed Earth3 city anchors and explicit basin labels (Iraq/Saudi are not North Africa).",
-  "decision_count": 44,
+  "status": "approved",
+  "note": "Boundary threshold-band provinces carry explicit owner include/exclude decisions. Grouping uses reviewed Earth3 city anchors and basin labels (Turkey/northern Levant is not North Africa; deep Sahara and Madeira water excluded).",
+  "decision_count": 49,
   "groups": {
     "Europe_Scandinavia": {
       "count": 8,
@@ -15,7 +15,9 @@
           "source_province_id": 1022,
           "overlap_ratio": 0.302649,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3026; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "Europe_Scandinavia",
           "nearest_city": {
             "name": "Dombås",
@@ -31,14 +33,16 @@
             8772.437869822485,
             1113.4378698224853
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3026 < 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Dombås. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3026; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
           "source_province_id": 1024,
           "overlap_ratio": 0.349181,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3492; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "Europe_Scandinavia",
           "nearest_city": {
             "name": "Førde",
@@ -54,14 +58,16 @@
             8624.511111111111,
             1125.7272727272727
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3492 < 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Førde. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3492; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
           "source_province_id": 1028,
           "overlap_ratio": 0.477077,
           "algorithmic_recommendation": "include",
-          "owner_review_status": "pending",
+          "owner_decision": "include",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4771; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "boundary_group": "Europe_Scandinavia",
           "nearest_city": {
             "name": "Idre",
@@ -77,14 +83,16 @@
             8971.733333333334,
             1117.3904761904762
           ],
-          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4771 ≥ 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Idre. Owner review still required.",
+          "geographic_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4771; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
           "source_province_id": 1044,
           "overlap_ratio": 0.173157,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.1732; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "Europe_Scandinavia",
           "nearest_city": {
             "name": "Sveg",
@@ -100,14 +108,16 @@
             9046.689024390244,
             1099.7621951219512
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1732 < 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Sveg. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.1732; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
           "source_province_id": 1451,
           "overlap_ratio": 0.241613,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.2416; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "Europe_Scandinavia",
           "nearest_city": {
             "name": "Hämeenlinna",
@@ -123,14 +133,16 @@
             9554.488095238095,
             1179.9166666666667
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2416 < 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Hämeenlinna. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.2416; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
           "source_province_id": 3003,
           "overlap_ratio": 0.362911,
           "algorithmic_recommendation": "include",
-          "owner_review_status": "pending",
+          "owner_decision": "include",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3629; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "boundary_group": "Europe_Scandinavia",
           "nearest_city": {
             "name": "Hudiksvall",
@@ -146,14 +158,16 @@
             9165.502304147465,
             1123.152073732719
           ],
-          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3629 ≥ 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Hudiksvall. Owner review still required.",
+          "geographic_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3629; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
           "source_province_id": 3746,
           "overlap_ratio": 0.328087,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3281; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "Europe_Scandinavia",
           "nearest_city": {
             "name": "Volkhov",
@@ -169,14 +183,16 @@
             9896.297101449276,
             1264.5144927536232
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3281 < 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Volkhov. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3281; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
           "source_province_id": 6632,
           "overlap_ratio": 0.459787,
           "algorithmic_recommendation": "include",
-          "owner_review_status": "pending",
+          "owner_decision": "include",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4598; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "boundary_group": "Europe_Scandinavia",
           "nearest_city": {
             "name": "Engerdal",
@@ -192,7 +208,7 @@
             8903.585365853658,
             1118.7317073170732
           ],
-          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4598 ≥ 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Engerdal. Owner review still required.",
+          "geographic_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4598; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         }
       ]
@@ -206,7 +222,9 @@
           "source_province_id": 3741,
           "overlap_ratio": 0.283183,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2832; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "western_Russia",
           "nearest_city": {
             "name": "Novo",
@@ -222,14 +240,16 @@
             10231.320388349515,
             1501.6504854368932
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2832 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Novo. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2832; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
           "source_province_id": 6677,
           "overlap_ratio": 0.430292,
           "algorithmic_recommendation": "include",
-          "owner_review_status": "pending",
+          "owner_decision": "include",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved include: boundary province group=western_Russia; raw/threshold ratio=0.4303; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "boundary_group": "western_Russia",
           "nearest_city": {
             "name": "Gubachevo",
@@ -245,14 +265,16 @@
             10142.373626373626,
             1412.1868131868132
           ],
-          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4303 ≥ 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Gubachevo. Owner review still required.",
+          "geographic_reason": "Owner-approved include: boundary province group=western_Russia; raw/threshold ratio=0.4303; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
           "source_province_id": 6679,
           "overlap_ratio": 0.295566,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2956; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "western_Russia",
           "nearest_city": {
             "name": "Uglich",
@@ -268,14 +290,16 @@
             10206.776470588235,
             1469.2823529411764
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2956 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Uglich. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2956; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
           "source_province_id": 6685,
           "overlap_ratio": 0.187533,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.1875; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "western_Russia",
           "nearest_city": {
             "name": "Sima",
@@ -291,14 +315,16 @@
             10287.584,
             1561.8
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1875 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Sima. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.1875; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
           "source_province_id": 10890,
           "overlap_ratio": 0.303062,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.3031; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "western_Russia",
           "nearest_city": {
             "name": "Ilovlya",
@@ -314,14 +340,16 @@
             10499.801652892562,
             2140.8512396694214
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3031 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Ilovlya. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.3031; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
           "source_province_id": 11174,
           "overlap_ratio": 0.33461,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.3346; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "western_Russia",
           "nearest_city": {
             "name": "Mirnyy",
@@ -337,14 +365,16 @@
             10536.95,
             2275.3166666666666
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3346 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Mirnyy. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.3346; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
           "source_province_id": 11559,
           "overlap_ratio": 0.233257,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2333; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "western_Russia",
           "nearest_city": {
             "name": "Sudogda",
@@ -360,14 +390,16 @@
             10333.166666666666,
             1650.7962962962963
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2333 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Sudogda. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2333; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
           "source_province_id": 11580,
           "overlap_ratio": 0.27535,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2753; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "western_Russia",
           "nearest_city": {
             "name": "Arkadak",
@@ -383,14 +415,16 @@
             10448.164835164835,
             1957.4835164835165
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2753 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Arkadak. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2753; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
           "source_province_id": 11601,
           "overlap_ratio": 0.222925,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2229; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "western_Russia",
           "nearest_city": {
             "name": "Balashov",
@@ -406,14 +440,16 @@
             10466.184782608696,
             1998.7282608695652
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2229 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Balashov. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2229; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
           "source_province_id": 11649,
           "overlap_ratio": 0.294908,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2949; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "western_Russia",
           "nearest_city": {
             "name": "Kasimov",
@@ -429,7 +465,7 @@
             10356.268041237114,
             1709.979381443299
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2949 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Kasimov. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2949; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         }
       ]
@@ -443,7 +479,9 @@
           "source_province_id": 10826,
           "overlap_ratio": 0.402385,
           "algorithmic_recommendation": "include",
-          "owner_review_status": "pending",
+          "owner_decision": "include",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved include: boundary province group=Caucasus; raw/threshold ratio=0.4024; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "boundary_group": "Caucasus",
           "nearest_city": {
             "name": "Lagan",
@@ -459,52 +497,24 @@
             10630.239130434782,
             2419.8695652173915
           ],
-          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4024 ≥ 0.35 threshold. Caucasus edge; keep Tbilisi/Yerevan/Baku. Nearest city: Lagan. Owner review still required.",
+          "geographic_reason": "Owner-approved include: boundary province group=Caucasus; raw/threshold ratio=0.4024; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
         }
       ]
     },
-    "northwestern_Iran_fringe": {
-      "count": 1,
-      "include_count": 0,
-      "exclude_count": 1,
-      "provinces": [
-        {
-          "source_province_id": 1348,
-          "overlap_ratio": 0.251231,
-          "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
-          "boundary_group": "northwestern_Iran_fringe",
-          "nearest_city": {
-            "name": "Köprübaşi",
-            "source_province_id": 1348,
-            "x": 10362.0,
-            "y": 2914.0,
-            "distance_px": 25.503733823844172
-          },
-          "is_water": false,
-          "continent_id": 1,
-          "region_id": 0,
-          "centroid": [
-            10338.525925925926,
-            2904.0296296296297
-          ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2512 < 0.35 threshold. NW Iran fringe; Urmia default excluded. Nearest city: Köprübaşi. Owner review still required.",
-          "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
-        }
-      ]
-    },
-    "North_African_coast": {
-      "count": 12,
-      "include_count": 7,
-      "exclude_count": 5,
+    "Turkey_northern_Levant": {
+      "count": 4,
+      "include_count": 2,
+      "exclude_count": 2,
       "provinces": [
         {
           "source_province_id": 1227,
           "overlap_ratio": 0.352565,
           "algorithmic_recommendation": "include",
-          "owner_review_status": "pending",
-          "boundary_group": "North_African_coast",
+          "owner_decision": "include",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.3526; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "boundary_group": "Turkey_northern_Levant",
           "nearest_city": {
             "name": "Viranşehir",
             "source_province_id": 1227,
@@ -519,15 +529,17 @@
             10270.466666666667,
             2953.141666666667
           ],
-          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3526 ≥ 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Viranşehir. Owner review still required.",
+          "geographic_reason": "Owner-approved include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.3526; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
           "source_province_id": 1228,
           "overlap_ratio": 0.416138,
           "algorithmic_recommendation": "include",
-          "owner_review_status": "pending",
-          "boundary_group": "North_African_coast",
+          "owner_decision": "include",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.4161; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "boundary_group": "Turkey_northern_Levant",
           "nearest_city": {
             "name": "Şanliurfa",
             "source_province_id": 1228,
@@ -542,38 +554,74 @@
             10230.896,
             2973.472
           ],
-          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4161 ≥ 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Şanliurfa. Owner review still required.",
+          "geographic_reason": "Owner-approved include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.4161; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
-          "source_province_id": 1379,
-          "overlap_ratio": 0.175371,
+          "source_province_id": 1348,
+          "overlap_ratio": 0.251231,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
-          "boundary_group": "North_African_coast",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.2512; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "boundary_group": "Turkey_northern_Levant",
           "nearest_city": {
-            "name": "Siwa Oasis",
-            "source_province_id": 1379,
-            "x": 9588.0,
-            "y": 3450.0,
-            "distance_px": 89.94085990944247
+            "name": "Köprübaşi",
+            "source_province_id": 1348,
+            "x": 10362.0,
+            "y": 2914.0,
+            "distance_px": 25.503733823844172
           },
           "is_water": false,
-          "continent_id": 6,
+          "continent_id": 1,
           "region_id": 0,
           "centroid": [
-            9627.275,
-            3530.9125
+            10338.525925925926,
+            2904.0296296296297
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1754 < 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Siwa Oasis. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.2512; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
+          "source_province_id": 5054,
+          "overlap_ratio": 0.183715,
+          "algorithmic_recommendation": "exclude",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.1837; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "boundary_group": "Turkey_northern_Levant",
+          "nearest_city": {
+            "name": "Manbij",
+            "source_province_id": 5054,
+            "x": 10194.0,
+            "y": 3017.0,
+            "distance_px": 14.49306275376908
+          },
+          "is_water": false,
+          "continent_id": 1,
+          "region_id": 0,
+          "centroid": [
+            10200.723214285714,
+            3029.839285714286
+          ],
+          "geographic_reason": "Owner-approved exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.1837; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        }
+      ]
+    },
+    "Egypt_Sinai": {
+      "count": 3,
+      "include_count": 2,
+      "exclude_count": 1,
+      "provinces": [
+        {
           "source_province_id": 2670,
-          "overlap_ratio": 0.428437,
-          "algorithmic_recommendation": "include",
-          "owner_review_status": "pending",
-          "boundary_group": "North_African_coast",
+          "overlap_ratio": 0.169232,
+          "algorithmic_recommendation": "exclude",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=Egypt_Sinai; raw/threshold ratio=0.1692; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "boundary_group": "Egypt_Sinai",
           "nearest_city": {
             "name": "Faiyum",
             "source_province_id": 2670,
@@ -588,15 +636,17 @@
             9852.018181818183,
             3444.418181818182
           ],
-          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4284 ≥ 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Faiyum. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=Egypt_Sinai; raw/threshold ratio=0.1692; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
           "source_province_id": 2706,
           "overlap_ratio": 0.444845,
           "algorithmic_recommendation": "include",
-          "owner_review_status": "pending",
-          "boundary_group": "North_African_coast",
+          "owner_decision": "include",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.4448; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "boundary_group": "Egypt_Sinai",
           "nearest_city": {
             "name": "Adabiya",
             "source_province_id": 2706,
@@ -611,83 +661,98 @@
             9919.338983050848,
             3411.406779661017
           ],
-          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4448 ≥ 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Adabiya. Owner review still required.",
+          "geographic_reason": "Owner-approved include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.4448; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
-          "source_province_id": 4410,
-          "overlap_ratio": 0.242147,
-          "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
-          "boundary_group": "North_African_coast",
-          "nearest_city": {
-            "name": "Bawety",
-            "source_province_id": 4410,
-            "x": 9804.0,
-            "y": 3431.0,
-            "distance_px": 46.74013921231489
-          },
-          "is_water": false,
-          "continent_id": 6,
-          "region_id": 0,
-          "centroid": [
-            9792.162162162162,
-            3476.2162162162163
-          ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2421 < 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Bawety. Owner review still required.",
-          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-        },
-        {
-          "source_province_id": 4859,
-          "overlap_ratio": 0.419011,
+          "source_province_id": 12451,
+          "overlap_ratio": 0.393929,
           "algorithmic_recommendation": "include",
-          "owner_review_status": "pending",
+          "owner_decision": "include",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.3939; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "boundary_group": "Egypt_Sinai",
+          "nearest_city": {
+            "name": "El Qantara",
+            "source_province_id": 12451,
+            "x": 9935.0,
+            "y": 3367.0,
+            "distance_px": 14.468741579390981
+          },
+          "is_water": false,
+          "continent_id": 1,
+          "region_id": 0,
+          "centroid": [
+            9947.960784313726,
+            3373.4313725490197
+          ],
+          "geographic_reason": "Owner-approved include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.3939; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        }
+      ]
+    },
+    "North_African_coast": {
+      "count": 4,
+      "include_count": 2,
+      "exclude_count": 2,
+      "provinces": [
+        {
+          "source_province_id": 1376,
+          "overlap_ratio": 0.368744,
+          "algorithmic_recommendation": "include",
+          "owner_decision": "include",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved include: boundary province group=North_African_coast; raw/threshold ratio=0.3687; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "boundary_group": "North_African_coast",
           "nearest_city": {
-            "name": "Tabelbala",
-            "source_province_id": 4859,
-            "x": 8185.0,
-            "y": 3441.0,
-            "distance_px": 8.421549402044393
+            "name": "Awjilah",
+            "source_province_id": 1376,
+            "x": 9388.0,
+            "y": 3458.0,
+            "distance_px": 39.33615570662241
           },
           "is_water": false,
           "continent_id": 6,
           "region_id": 0,
           "centroid": [
-            8193.090476190477,
-            3443.3380952380953
+            9380.059210526315,
+            3419.4736842105262
           ],
-          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4190 ≥ 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Tabelbala. Owner review still required.",
+          "geographic_reason": "Owner-approved include: boundary province group=North_African_coast; raw/threshold ratio=0.3687; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
-          "source_province_id": 4895,
-          "overlap_ratio": 0.354025,
+          "source_province_id": 4734,
+          "overlap_ratio": 0.473793,
           "algorithmic_recommendation": "include",
-          "owner_review_status": "pending",
+          "owner_decision": "include",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved include: boundary province group=North_African_coast; raw/threshold ratio=0.4738; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "boundary_group": "North_African_coast",
           "nearest_city": {
-            "name": "In Ghar",
-            "source_province_id": 4895,
-            "x": 8450.0,
-            "y": 3536.0,
-            "distance_px": 48.3935453139377
+            "name": "Ash Shwayrif",
+            "source_province_id": 4734,
+            "x": 9041.0,
+            "y": 3406.0,
+            "distance_px": 30.498448539585866
           },
           "is_water": false,
           "continent_id": 6,
           "region_id": 0,
           "centroid": [
-            8431.63425925926,
-            3491.2268518518517
+            9010.888235294118,
+            3401.1588235294116
           ],
-          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3540 ≥ 0.35 threshold. Mediterranean North African coastal belt. Nearest city: In Ghar. Owner review still required.",
+          "geographic_reason": "Owner-approved include: boundary province group=North_African_coast; raw/threshold ratio=0.4738; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
           "source_province_id": 5051,
           "overlap_ratio": 0.311515,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=North_African_coast; raw/threshold ratio=0.3115; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "North_African_coast",
           "nearest_city": {
             "name": "Kernaz",
@@ -703,60 +768,16 @@
             10134.838235294117,
             3075.014705882353
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3115 < 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Kernaz. Owner review still required.",
-          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-        },
-        {
-          "source_province_id": 5054,
-          "overlap_ratio": 0.183715,
-          "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
-          "boundary_group": "North_African_coast",
-          "nearest_city": {
-            "name": "Manbij",
-            "source_province_id": 5054,
-            "x": 10194.0,
-            "y": 3017.0,
-            "distance_px": 14.49306275376908
-          },
-          "is_water": false,
-          "continent_id": 1,
-          "region_id": 0,
-          "centroid": [
-            10200.723214285714,
-            3029.839285714286
-          ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1837 < 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Manbij. Owner review still required.",
-          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-        },
-        {
-          "source_province_id": 12451,
-          "overlap_ratio": 0.393929,
-          "algorithmic_recommendation": "include",
-          "owner_review_status": "pending",
-          "boundary_group": "North_African_coast",
-          "nearest_city": {
-            "name": "El Qantara",
-            "source_province_id": 12451,
-            "x": 9935.0,
-            "y": 3367.0,
-            "distance_px": 14.468741579390981
-          },
-          "is_water": false,
-          "continent_id": 1,
-          "region_id": 0,
-          "centroid": [
-            9947.960784313726,
-            3373.4313725490197
-          ],
-          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3939 ≥ 0.35 threshold. Mediterranean North African coastal belt. Nearest city: El Qantara. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=North_African_coast; raw/threshold ratio=0.3115; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
           "source_province_id": 12508,
           "overlap_ratio": 0.224209,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=North_African_coast; raw/threshold ratio=0.2242; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "North_African_coast",
           "nearest_city": {
             "name": "Baniyas",
@@ -772,97 +793,212 @@
             10108.333333333334,
             3107.4848484848485
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2242 < 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Baniyas. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=North_African_coast; raw/threshold ratio=0.2242; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         }
       ]
     },
     "Sahara": {
-      "count": 3,
+      "count": 6,
       "include_count": 1,
-      "exclude_count": 2,
+      "exclude_count": 5,
       "provinces": [
         {
-          "source_province_id": 1369,
-          "overlap_ratio": 0.206405,
+          "source_province_id": 1377,
+          "overlap_ratio": 0.254655,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2547; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "Sahara",
           "nearest_city": {
-            "name": "Sibele",
-            "source_province_id": 1369,
-            "x": 9536.0,
-            "y": 3485.0,
-            "distance_px": 27.97116122211282
+            "name": "Al Jaghbub",
+            "source_province_id": 1377,
+            "x": 9540.0,
+            "y": 3421.0,
+            "distance_px": 53.81853088566993
           },
           "is_water": false,
           "continent_id": 6,
           "region_id": 0,
           "centroid": [
-            9533.330434782609,
-            3512.8434782608697
+            9490.63212435233,
+            3442.4300518134714
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2064 < 0.35 threshold. Deep Sahara / interior Maghreb; must stay out. Nearest city: Sibele. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2547; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
-          "source_province_id": 4348,
-          "overlap_ratio": 0.46546,
+          "source_province_id": 3223,
+          "overlap_ratio": 0.192066,
+          "algorithmic_recommendation": "exclude",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.1921; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "boundary_group": "Sahara",
+          "nearest_city": {
+            "name": "Imintanoute",
+            "source_province_id": 3223,
+            "x": 7914.0,
+            "y": 3335.0,
+            "distance_px": 3.2976942520453645
+          },
+          "is_water": false,
+          "continent_id": 6,
+          "region_id": 0,
+          "centroid": [
+            7915.866666666667,
+            3337.7185185185185
+          ],
+          "geographic_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.1921; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        },
+        {
+          "source_province_id": 4295,
+          "overlap_ratio": 0.459496,
           "algorithmic_recommendation": "include",
-          "owner_review_status": "pending",
+          "owner_decision": "include",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved include: boundary province group=Sahara; raw/threshold ratio=0.4595; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "boundary_group": "Sahara",
           "nearest_city": {
-            "name": "Ashkda",
-            "source_province_id": 4735,
-            "x": 9063.0,
-            "y": 3543.0,
-            "distance_px": 39.08319444267215
+            "name": "El Menia",
+            "source_province_id": 4295,
+            "x": 8486.0,
+            "y": 3369.0,
+            "distance_px": 18.81881651593455
           },
           "is_water": false,
           "continent_id": 6,
           "region_id": 0,
           "centroid": [
-            9037.927203065134,
-            3513.0191570881225
+            8501.877551020409,
+            3379.1020408163267
           ],
-          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4655 ≥ 0.35 threshold. Deep Sahara / interior Maghreb; must stay out. Nearest city: Ashkda. Owner review still required.",
+          "geographic_reason": "Owner-approved include: boundary province group=Sahara; raw/threshold ratio=0.4595; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
-          "source_province_id": 4735,
-          "overlap_ratio": 0.176015,
+          "source_province_id": 4785,
+          "overlap_ratio": 0.248763,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "Sahara",
           "nearest_city": {
-            "name": "Ashkda",
-            "source_province_id": 4735,
-            "x": 9063.0,
-            "y": 3543.0,
-            "distance_px": 28.548173663183363
+            "name": "Dirj",
+            "source_province_id": 4785,
+            "x": 8855.0,
+            "y": 3395.0,
+            "distance_px": 23.01192400782564
           },
           "is_water": false,
           "continent_id": 6,
           "region_id": 0,
           "centroid": [
-            9067.993243243243,
-            3514.891891891892
+            8855.029761904761,
+            3418.0119047619046
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1760 < 0.35 threshold. Deep Sahara / interior Maghreb; must stay out. Nearest city: Ashkda. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        },
+        {
+          "source_province_id": 4831,
+          "overlap_ratio": 0.242655,
+          "algorithmic_recommendation": "exclude",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2427; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "boundary_group": "Sahara",
+          "nearest_city": {
+            "name": "Ouarzazate",
+            "source_province_id": 4831,
+            "x": 8007.0,
+            "y": 3348.0,
+            "distance_px": 16.707225570002652
+          },
+          "is_water": false,
+          "continent_id": 6,
+          "region_id": 0,
+          "centroid": [
+            7993.073394495413,
+            3357.229357798165
+          ],
+          "geographic_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2427; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        },
+        {
+          "source_province_id": 4838,
+          "overlap_ratio": 0.189359,
+          "algorithmic_recommendation": "exclude",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.1894; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "boundary_group": "Sahara",
+          "nearest_city": {
+            "name": "Zagora",
+            "source_province_id": 4838,
+            "x": 8060.0,
+            "y": 3384.0,
+            "distance_px": 24.19962264709231
+          },
+          "is_water": false,
+          "continent_id": 6,
+          "region_id": 0,
+          "centroid": [
+            8046.504854368932,
+            3363.9126213592235
+          ],
+          "geographic_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.1894; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        }
+      ]
+    },
+    "Mediterranean_water": {
+      "count": 1,
+      "include_count": 0,
+      "exclude_count": 1,
+      "provinces": [
+        {
+          "source_province_id": 12200,
+          "overlap_ratio": 0.162109,
+          "algorithmic_recommendation": "exclude",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=Mediterranean_water; raw/threshold ratio=0.1621; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "boundary_group": "Mediterranean_water",
+          "nearest_city": {
+            "name": "Agadir",
+            "source_province_id": 2924,
+            "x": 7879.0,
+            "y": 3379.0,
+            "distance_px": 21.57507764828601
+          },
+          "is_water": true,
+          "continent_id": 0,
+          "region_id": 0,
+          "centroid": [
+            7858.601351351352,
+            3386.027027027027
+          ],
+          "geographic_reason": "Owner-approved exclude: boundary province group=Mediterranean_water; raw/threshold ratio=0.1621; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         }
       ]
     },
     "Atlantic_Nordic_water": {
-      "count": 6,
-      "include_count": 4,
+      "count": 7,
+      "include_count": 5,
       "exclude_count": 2,
       "provinces": [
         {
           "source_province_id": 12180,
           "overlap_ratio": 0.378713,
           "algorithmic_recommendation": "include",
-          "owner_review_status": "pending",
+          "owner_decision": "include",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3787; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "boundary_group": "Atlantic_Nordic_water",
           "nearest_city": {
             "name": "Førde",
@@ -878,14 +1014,16 @@
             8633.271428571428,
             1146.6612244897958
           ],
-          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3787 ≥ 0.35 threshold. Atlantic / Nordic sea province. Nearest city: Førde. Water province. Owner review still required.",
+          "geographic_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3787; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
           "source_province_id": 12187,
           "overlap_ratio": 0.460228,
           "algorithmic_recommendation": "include",
-          "owner_review_status": "pending",
+          "owner_decision": "include",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4602; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "boundary_group": "Atlantic_Nordic_water",
           "nearest_city": {
             "name": "Brae",
@@ -901,14 +1039,16 @@
             8267.941176470587,
             1212.4117647058824
           ],
-          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4602 ≥ 0.35 threshold. Atlantic / Nordic sea province. Nearest city: Brae. Water province. Owner review still required.",
+          "geographic_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4602; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
           "source_province_id": 12189,
           "overlap_ratio": 0.385032,
           "algorithmic_recommendation": "include",
-          "owner_review_status": "pending",
+          "owner_decision": "include",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3850; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "boundary_group": "Atlantic_Nordic_water",
           "nearest_city": {
             "name": "Hólmavík",
@@ -924,37 +1064,66 @@
             7224.954372623574,
             793.0177439797212
           ],
-          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3850 ≥ 0.35 threshold. Atlantic / Nordic sea province. Nearest city: Hólmavík. Water province. Owner review still required.",
+          "geographic_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3850; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
-          "source_province_id": 12906,
-          "overlap_ratio": 0.492775,
+          "source_province_id": 12912,
+          "overlap_ratio": 0.422391,
           "algorithmic_recommendation": "include",
-          "owner_review_status": "pending",
+          "owner_decision": "include",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4224; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "boundary_group": "Atlantic_Nordic_water",
           "nearest_city": {
-            "name": "Funchal",
-            "source_province_id": 10022,
-            "x": 7519.0,
-            "y": 3237.0,
-            "distance_px": 47.32195417497835
+            "name": "Caldas da Rainha",
+            "source_province_id": 18,
+            "x": 7901.0,
+            "y": 2838.0,
+            "distance_px": 431.909401266953
           },
           "is_water": true,
           "continent_id": 0,
           "region_id": 0,
           "centroid": [
-            7488.285714285715,
-            3201.0
+            7480.375,
+            2739.9166666666665
           ],
-          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4928 ≥ 0.35 threshold. Atlantic / Nordic sea province. Nearest city: Funchal. Water province. Owner review still required.",
+          "geographic_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4224; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 12914,
+          "overlap_ratio": 0.38264,
+          "algorithmic_recommendation": "include",
+          "owner_decision": "include",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3826; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "boundary_group": "Atlantic_Nordic_water",
+          "nearest_city": {
+            "name": "Sneem",
+            "source_province_id": 6485,
+            "x": 7860.0,
+            "y": 1967.0,
+            "distance_px": 474.98361129821166
+          },
+          "is_water": true,
+          "continent_id": 0,
+          "region_id": 0,
+          "centroid": [
+            7430.869565217391,
+            2170.608695652174
+          ],
+          "geographic_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3826; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
           "source_province_id": 13076,
-          "overlap_ratio": 0.200635,
+          "overlap_ratio": 0.159619,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.1596; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "Atlantic_Nordic_water",
           "nearest_city": {
             "name": "Sneem",
@@ -970,14 +1139,16 @@
             7348.178571428572,
             1916.142857142857
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2006 < 0.35 threshold. Atlantic / Nordic sea province. Nearest city: Sneem. Water province. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.1596; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
           "source_province_id": 13151,
           "overlap_ratio": 0.341999,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3420; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "Atlantic_Nordic_water",
           "nearest_city": {
             "name": "Stornoway",
@@ -993,7 +1164,64 @@
             7733.615384615385,
             1342.9615384615386
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3420 < 0.35 threshold. Atlantic / Nordic sea province. Nearest city: Stornoway. Water province. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3420; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        }
+      ]
+    },
+    "Atlantic_unrelated_water": {
+      "count": 2,
+      "include_count": 0,
+      "exclude_count": 2,
+      "provinces": [
+        {
+          "source_province_id": 12902,
+          "overlap_ratio": 0.191099,
+          "algorithmic_recommendation": "exclude",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1911; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "boundary_group": "Atlantic_unrelated_water",
+          "nearest_city": {
+            "name": "Funchal",
+            "source_province_id": 10022,
+            "x": 7519.0,
+            "y": 3237.0,
+            "distance_px": 175.70765374371456
+          },
+          "is_water": true,
+          "continent_id": 0,
+          "region_id": 0,
+          "centroid": [
+            7682.739130434783,
+            3300.7391304347825
+          ],
+          "geographic_reason": "Owner-approved exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1911; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 12907,
+          "overlap_ratio": 0.166486,
+          "algorithmic_recommendation": "exclude",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1665; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "boundary_group": "Atlantic_unrelated_water",
+          "nearest_city": {
+            "name": "Funchal",
+            "source_province_id": 10022,
+            "x": 7519.0,
+            "y": 3237.0,
+            "distance_px": 229.8673562715895
+          },
+          "is_water": true,
+          "continent_id": 0,
+          "region_id": 0,
+          "centroid": [
+            7526.923076923077,
+            3007.269230769231
+          ],
+          "geographic_reason": "Owner-approved exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1665; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         }
       ]
@@ -1007,7 +1235,9 @@
           "source_province_id": 13352,
           "overlap_ratio": 0.198636,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=Caspian_water; raw/threshold ratio=0.1986; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "Caspian_water",
           "nearest_city": {
             "name": "Lagan",
@@ -1023,7 +1253,7 @@
             10686.49609375,
             2441.89453125
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1986 < 0.35 threshold. Caspian sea province. Nearest city: Lagan. Water province. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=Caspian_water; raw/threshold ratio=0.1986; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
         }
       ]
@@ -1037,7 +1267,9 @@
           "source_province_id": 12118,
           "overlap_ratio": 0.339359,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=Red_Sea_water; raw/threshold ratio=0.3394; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "Red_Sea_water",
           "nearest_city": {
             "name": "Gaza",
@@ -1053,7 +1285,7 @@
             10002.420454545454,
             3308.2727272727275
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3394 < 0.35 threshold. Red Sea water; must stay out while keeping Cairo/Sinai framing. Nearest city: Gaza. Water province. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=Red_Sea_water; raw/threshold ratio=0.3394; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         }
       ]
@@ -1067,7 +1299,9 @@
           "source_province_id": 12037,
           "overlap_ratio": 0.248766,
           "algorithmic_recommendation": "exclude",
-          "owner_review_status": "pending",
+          "owner_decision": "exclude",
+          "owner_review_status": "approved",
+          "owner_reason": "Owner-approved exclude: boundary province group=other_water; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "boundary_group": "other_water",
           "nearest_city": {
             "name": "Pori",
@@ -1083,7 +1317,7 @@
             9388.741463414633,
             1130.1853658536586
           ],
-          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2488 < 0.35 threshold. Other water province on mask perimeter. Nearest city: Pori. Water province. Owner review still required.",
+          "geographic_reason": "Owner-approved exclude: boundary province group=other_water; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
           "closeup_image": "preview_em_reference_masked.png"
         }
       ]
@@ -1094,7 +1328,9 @@
       "source_province_id": 1022,
       "overlap_ratio": 0.302649,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3026; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "boundary_group": "Europe_Scandinavia",
       "nearest_city": {
         "name": "Dombås",
@@ -1110,14 +1346,16 @@
         8772.437869822485,
         1113.4378698224853
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3026 < 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Dombås. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3026; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
       "source_province_id": 1024,
       "overlap_ratio": 0.349181,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3492; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "boundary_group": "Europe_Scandinavia",
       "nearest_city": {
         "name": "Førde",
@@ -1133,14 +1371,16 @@
         8624.511111111111,
         1125.7272727272727
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3492 < 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Førde. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3492; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
       "source_province_id": 1028,
       "overlap_ratio": 0.477077,
       "algorithmic_recommendation": "include",
-      "owner_review_status": "pending",
+      "owner_decision": "include",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4771; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "boundary_group": "Europe_Scandinavia",
       "nearest_city": {
         "name": "Idre",
@@ -1156,14 +1396,16 @@
         8971.733333333334,
         1117.3904761904762
       ],
-      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4771 ≥ 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Idre. Owner review still required.",
+      "geographic_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4771; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
       "source_province_id": 1044,
       "overlap_ratio": 0.173157,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.1732; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "boundary_group": "Europe_Scandinavia",
       "nearest_city": {
         "name": "Sveg",
@@ -1179,15 +1421,17 @@
         9046.689024390244,
         1099.7621951219512
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1732 < 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Sveg. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.1732; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
       "source_province_id": 1227,
       "overlap_ratio": 0.352565,
       "algorithmic_recommendation": "include",
-      "owner_review_status": "pending",
-      "boundary_group": "North_African_coast",
+      "owner_decision": "include",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.3526; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "boundary_group": "Turkey_northern_Levant",
       "nearest_city": {
         "name": "Viranşehir",
         "source_province_id": 1227,
@@ -1202,15 +1446,17 @@
         10270.466666666667,
         2953.141666666667
       ],
-      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3526 ≥ 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Viranşehir. Owner review still required.",
+      "geographic_reason": "Owner-approved include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.3526; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
       "source_province_id": 1228,
       "overlap_ratio": 0.416138,
       "algorithmic_recommendation": "include",
-      "owner_review_status": "pending",
-      "boundary_group": "North_African_coast",
+      "owner_decision": "include",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.4161; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "boundary_group": "Turkey_northern_Levant",
       "nearest_city": {
         "name": "Şanliurfa",
         "source_province_id": 1228,
@@ -1225,15 +1471,17 @@
         10230.896,
         2973.472
       ],
-      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4161 ≥ 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Şanliurfa. Owner review still required.",
+      "geographic_reason": "Owner-approved include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.4161; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
       "source_province_id": 1348,
       "overlap_ratio": 0.251231,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
-      "boundary_group": "northwestern_Iran_fringe",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.2512; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "boundary_group": "Turkey_northern_Levant",
       "nearest_city": {
         "name": "Köprübaşi",
         "source_province_id": 1348,
@@ -1248,60 +1496,66 @@
         10338.525925925926,
         2904.0296296296297
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2512 < 0.35 threshold. NW Iran fringe; Urmia default excluded. Nearest city: Köprübaşi. Owner review still required.",
-      "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
-    },
-    {
-      "source_province_id": 1369,
-      "overlap_ratio": 0.206405,
-      "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
-      "boundary_group": "Sahara",
-      "nearest_city": {
-        "name": "Sibele",
-        "source_province_id": 1369,
-        "x": 9536.0,
-        "y": 3485.0,
-        "distance_px": 27.97116122211282
-      },
-      "is_water": false,
-      "continent_id": 6,
-      "region_id": 0,
-      "centroid": [
-        9533.330434782609,
-        3512.8434782608697
-      ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2064 < 0.35 threshold. Deep Sahara / interior Maghreb; must stay out. Nearest city: Sibele. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.2512; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
-      "source_province_id": 1379,
-      "overlap_ratio": 0.175371,
-      "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "source_province_id": 1376,
+      "overlap_ratio": 0.368744,
+      "algorithmic_recommendation": "include",
+      "owner_decision": "include",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved include: boundary province group=North_African_coast; raw/threshold ratio=0.3687; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "boundary_group": "North_African_coast",
       "nearest_city": {
-        "name": "Siwa Oasis",
-        "source_province_id": 1379,
-        "x": 9588.0,
-        "y": 3450.0,
-        "distance_px": 89.94085990944247
+        "name": "Awjilah",
+        "source_province_id": 1376,
+        "x": 9388.0,
+        "y": 3458.0,
+        "distance_px": 39.33615570662241
       },
       "is_water": false,
       "continent_id": 6,
       "region_id": 0,
       "centroid": [
-        9627.275,
-        3530.9125
+        9380.059210526315,
+        3419.4736842105262
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1754 < 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Siwa Oasis. Owner review still required.",
+      "geographic_reason": "Owner-approved include: boundary province group=North_African_coast; raw/threshold ratio=0.3687; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+    },
+    {
+      "source_province_id": 1377,
+      "overlap_ratio": 0.254655,
+      "algorithmic_recommendation": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2547; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "boundary_group": "Sahara",
+      "nearest_city": {
+        "name": "Al Jaghbub",
+        "source_province_id": 1377,
+        "x": 9540.0,
+        "y": 3421.0,
+        "distance_px": 53.81853088566993
+      },
+      "is_water": false,
+      "continent_id": 6,
+      "region_id": 0,
+      "centroid": [
+        9490.63212435233,
+        3442.4300518134714
+      ],
+      "geographic_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2547; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
       "source_province_id": 1451,
       "overlap_ratio": 0.241613,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.2416; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "boundary_group": "Europe_Scandinavia",
       "nearest_city": {
         "name": "Hämeenlinna",
@@ -1317,15 +1571,17 @@
         9554.488095238095,
         1179.9166666666667
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2416 < 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Hämeenlinna. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.2416; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
       "source_province_id": 2670,
-      "overlap_ratio": 0.428437,
-      "algorithmic_recommendation": "include",
-      "owner_review_status": "pending",
-      "boundary_group": "North_African_coast",
+      "overlap_ratio": 0.169232,
+      "algorithmic_recommendation": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=Egypt_Sinai; raw/threshold ratio=0.1692; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "boundary_group": "Egypt_Sinai",
       "nearest_city": {
         "name": "Faiyum",
         "source_province_id": 2670,
@@ -1340,15 +1596,17 @@
         9852.018181818183,
         3444.418181818182
       ],
-      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4284 ≥ 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Faiyum. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=Egypt_Sinai; raw/threshold ratio=0.1692; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
       "source_province_id": 2706,
       "overlap_ratio": 0.444845,
       "algorithmic_recommendation": "include",
-      "owner_review_status": "pending",
-      "boundary_group": "North_African_coast",
+      "owner_decision": "include",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.4448; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "boundary_group": "Egypt_Sinai",
       "nearest_city": {
         "name": "Adabiya",
         "source_province_id": 2706,
@@ -1363,14 +1621,16 @@
         9919.338983050848,
         3411.406779661017
       ],
-      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4448 ≥ 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Adabiya. Owner review still required.",
+      "geographic_reason": "Owner-approved include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.4448; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
       "source_province_id": 3003,
       "overlap_ratio": 0.362911,
       "algorithmic_recommendation": "include",
-      "owner_review_status": "pending",
+      "owner_decision": "include",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3629; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "boundary_group": "Europe_Scandinavia",
       "nearest_city": {
         "name": "Hudiksvall",
@@ -1386,14 +1646,41 @@
         9165.502304147465,
         1123.152073732719
       ],
-      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3629 ≥ 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Hudiksvall. Owner review still required.",
+      "geographic_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3629; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 3223,
+      "overlap_ratio": 0.192066,
+      "algorithmic_recommendation": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.1921; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "boundary_group": "Sahara",
+      "nearest_city": {
+        "name": "Imintanoute",
+        "source_province_id": 3223,
+        "x": 7914.0,
+        "y": 3335.0,
+        "distance_px": 3.2976942520453645
+      },
+      "is_water": false,
+      "continent_id": 6,
+      "region_id": 0,
+      "centroid": [
+        7915.866666666667,
+        3337.7185185185185
+      ],
+      "geographic_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.1921; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
       "source_province_id": 3741,
       "overlap_ratio": 0.283183,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2832; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "boundary_group": "western_Russia",
       "nearest_city": {
         "name": "Novo",
@@ -1409,14 +1696,16 @@
         10231.320388349515,
         1501.6504854368932
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2832 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Novo. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2832; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
       "source_province_id": 3746,
       "overlap_ratio": 0.328087,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3281; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "boundary_group": "Europe_Scandinavia",
       "nearest_city": {
         "name": "Volkhov",
@@ -1432,129 +1721,141 @@
         9896.297101449276,
         1264.5144927536232
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3281 < 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Volkhov. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3281; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
-      "source_province_id": 4348,
-      "overlap_ratio": 0.46546,
+      "source_province_id": 4295,
+      "overlap_ratio": 0.459496,
       "algorithmic_recommendation": "include",
-      "owner_review_status": "pending",
+      "owner_decision": "include",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved include: boundary province group=Sahara; raw/threshold ratio=0.4595; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "boundary_group": "Sahara",
       "nearest_city": {
-        "name": "Ashkda",
-        "source_province_id": 4735,
-        "x": 9063.0,
-        "y": 3543.0,
-        "distance_px": 39.08319444267215
+        "name": "El Menia",
+        "source_province_id": 4295,
+        "x": 8486.0,
+        "y": 3369.0,
+        "distance_px": 18.81881651593455
       },
       "is_water": false,
       "continent_id": 6,
       "region_id": 0,
       "centroid": [
-        9037.927203065134,
-        3513.0191570881225
+        8501.877551020409,
+        3379.1020408163267
       ],
-      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4655 ≥ 0.35 threshold. Deep Sahara / interior Maghreb; must stay out. Nearest city: Ashkda. Owner review still required.",
+      "geographic_reason": "Owner-approved include: boundary province group=Sahara; raw/threshold ratio=0.4595; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
-      "source_province_id": 4410,
-      "overlap_ratio": 0.242147,
-      "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "source_province_id": 4734,
+      "overlap_ratio": 0.473793,
+      "algorithmic_recommendation": "include",
+      "owner_decision": "include",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved include: boundary province group=North_African_coast; raw/threshold ratio=0.4738; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "boundary_group": "North_African_coast",
       "nearest_city": {
-        "name": "Bawety",
-        "source_province_id": 4410,
-        "x": 9804.0,
-        "y": 3431.0,
-        "distance_px": 46.74013921231489
+        "name": "Ash Shwayrif",
+        "source_province_id": 4734,
+        "x": 9041.0,
+        "y": 3406.0,
+        "distance_px": 30.498448539585866
       },
       "is_water": false,
       "continent_id": 6,
       "region_id": 0,
       "centroid": [
-        9792.162162162162,
-        3476.2162162162163
+        9010.888235294118,
+        3401.1588235294116
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2421 < 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Bawety. Owner review still required.",
+      "geographic_reason": "Owner-approved include: boundary province group=North_African_coast; raw/threshold ratio=0.4738; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
-      "source_province_id": 4735,
-      "overlap_ratio": 0.176015,
+      "source_province_id": 4785,
+      "overlap_ratio": 0.248763,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "boundary_group": "Sahara",
       "nearest_city": {
-        "name": "Ashkda",
-        "source_province_id": 4735,
-        "x": 9063.0,
-        "y": 3543.0,
-        "distance_px": 28.548173663183363
+        "name": "Dirj",
+        "source_province_id": 4785,
+        "x": 8855.0,
+        "y": 3395.0,
+        "distance_px": 23.01192400782564
       },
       "is_water": false,
       "continent_id": 6,
       "region_id": 0,
       "centroid": [
-        9067.993243243243,
-        3514.891891891892
+        8855.029761904761,
+        3418.0119047619046
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1760 < 0.35 threshold. Deep Sahara / interior Maghreb; must stay out. Nearest city: Ashkda. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
-      "source_province_id": 4859,
-      "overlap_ratio": 0.419011,
-      "algorithmic_recommendation": "include",
-      "owner_review_status": "pending",
-      "boundary_group": "North_African_coast",
+      "source_province_id": 4831,
+      "overlap_ratio": 0.242655,
+      "algorithmic_recommendation": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2427; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "boundary_group": "Sahara",
       "nearest_city": {
-        "name": "Tabelbala",
-        "source_province_id": 4859,
-        "x": 8185.0,
-        "y": 3441.0,
-        "distance_px": 8.421549402044393
+        "name": "Ouarzazate",
+        "source_province_id": 4831,
+        "x": 8007.0,
+        "y": 3348.0,
+        "distance_px": 16.707225570002652
       },
       "is_water": false,
       "continent_id": 6,
       "region_id": 0,
       "centroid": [
-        8193.090476190477,
-        3443.3380952380953
+        7993.073394495413,
+        3357.229357798165
       ],
-      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4190 ≥ 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Tabelbala. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2427; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
-      "source_province_id": 4895,
-      "overlap_ratio": 0.354025,
-      "algorithmic_recommendation": "include",
-      "owner_review_status": "pending",
-      "boundary_group": "North_African_coast",
+      "source_province_id": 4838,
+      "overlap_ratio": 0.189359,
+      "algorithmic_recommendation": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.1894; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "boundary_group": "Sahara",
       "nearest_city": {
-        "name": "In Ghar",
-        "source_province_id": 4895,
-        "x": 8450.0,
-        "y": 3536.0,
-        "distance_px": 48.3935453139377
+        "name": "Zagora",
+        "source_province_id": 4838,
+        "x": 8060.0,
+        "y": 3384.0,
+        "distance_px": 24.19962264709231
       },
       "is_water": false,
       "continent_id": 6,
       "region_id": 0,
       "centroid": [
-        8431.63425925926,
-        3491.2268518518517
+        8046.504854368932,
+        3363.9126213592235
       ],
-      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3540 ≥ 0.35 threshold. Mediterranean North African coastal belt. Nearest city: In Ghar. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.1894; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
       "source_province_id": 5051,
       "overlap_ratio": 0.311515,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=North_African_coast; raw/threshold ratio=0.3115; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "boundary_group": "North_African_coast",
       "nearest_city": {
         "name": "Kernaz",
@@ -1570,15 +1871,17 @@
         10134.838235294117,
         3075.014705882353
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3115 < 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Kernaz. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=North_African_coast; raw/threshold ratio=0.3115; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
       "source_province_id": 5054,
       "overlap_ratio": 0.183715,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
-      "boundary_group": "North_African_coast",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.1837; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "boundary_group": "Turkey_northern_Levant",
       "nearest_city": {
         "name": "Manbij",
         "source_province_id": 5054,
@@ -1593,14 +1896,16 @@
         10200.723214285714,
         3029.839285714286
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1837 < 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Manbij. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.1837; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
       "source_province_id": 6632,
       "overlap_ratio": 0.459787,
       "algorithmic_recommendation": "include",
-      "owner_review_status": "pending",
+      "owner_decision": "include",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4598; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "boundary_group": "Europe_Scandinavia",
       "nearest_city": {
         "name": "Engerdal",
@@ -1616,14 +1921,16 @@
         8903.585365853658,
         1118.7317073170732
       ],
-      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4598 ≥ 0.35 threshold. European / Scandinavian theatre edge. Nearest city: Engerdal. Owner review still required.",
+      "geographic_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4598; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
       "source_province_id": 6677,
       "overlap_ratio": 0.430292,
       "algorithmic_recommendation": "include",
-      "owner_review_status": "pending",
+      "owner_decision": "include",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved include: boundary province group=western_Russia; raw/threshold ratio=0.4303; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "boundary_group": "western_Russia",
       "nearest_city": {
         "name": "Gubachevo",
@@ -1639,14 +1946,16 @@
         10142.373626373626,
         1412.1868131868132
       ],
-      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4303 ≥ 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Gubachevo. Owner review still required.",
+      "geographic_reason": "Owner-approved include: boundary province group=western_Russia; raw/threshold ratio=0.4303; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
       "source_province_id": 6679,
       "overlap_ratio": 0.295566,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2956; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "boundary_group": "western_Russia",
       "nearest_city": {
         "name": "Uglich",
@@ -1662,14 +1971,16 @@
         10206.776470588235,
         1469.2823529411764
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2956 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Uglich. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2956; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
       "source_province_id": 6685,
       "overlap_ratio": 0.187533,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.1875; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "boundary_group": "western_Russia",
       "nearest_city": {
         "name": "Sima",
@@ -1685,14 +1996,16 @@
         10287.584,
         1561.8
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1875 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Sima. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.1875; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
       "source_province_id": 10826,
       "overlap_ratio": 0.402385,
       "algorithmic_recommendation": "include",
-      "owner_review_status": "pending",
+      "owner_decision": "include",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved include: boundary province group=Caucasus; raw/threshold ratio=0.4024; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "boundary_group": "Caucasus",
       "nearest_city": {
         "name": "Lagan",
@@ -1708,14 +2021,16 @@
         10630.239130434782,
         2419.8695652173915
       ],
-      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4024 ≥ 0.35 threshold. Caucasus edge; keep Tbilisi/Yerevan/Baku. Nearest city: Lagan. Owner review still required.",
+      "geographic_reason": "Owner-approved include: boundary province group=Caucasus; raw/threshold ratio=0.4024; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
     },
     {
       "source_province_id": 10890,
       "overlap_ratio": 0.303062,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.3031; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "boundary_group": "western_Russia",
       "nearest_city": {
         "name": "Ilovlya",
@@ -1731,14 +2046,16 @@
         10499.801652892562,
         2140.8512396694214
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3031 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Ilovlya. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.3031; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
       "source_province_id": 11174,
       "overlap_ratio": 0.33461,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.3346; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "boundary_group": "western_Russia",
       "nearest_city": {
         "name": "Mirnyy",
@@ -1754,14 +2071,16 @@
         10536.95,
         2275.3166666666666
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3346 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Mirnyy. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.3346; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
       "source_province_id": 11559,
       "overlap_ratio": 0.233257,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2333; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "boundary_group": "western_Russia",
       "nearest_city": {
         "name": "Sudogda",
@@ -1777,14 +2096,16 @@
         10333.166666666666,
         1650.7962962962963
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2333 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Sudogda. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2333; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
       "source_province_id": 11580,
       "overlap_ratio": 0.27535,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2753; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "boundary_group": "western_Russia",
       "nearest_city": {
         "name": "Arkadak",
@@ -1800,14 +2121,16 @@
         10448.164835164835,
         1957.4835164835165
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2753 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Arkadak. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2753; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
       "source_province_id": 11601,
       "overlap_ratio": 0.222925,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2229; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "boundary_group": "western_Russia",
       "nearest_city": {
         "name": "Balashov",
@@ -1823,14 +2146,16 @@
         10466.184782608696,
         1998.7282608695652
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2229 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Balashov. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2229; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
       "source_province_id": 11649,
       "overlap_ratio": 0.294908,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2949; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "boundary_group": "western_Russia",
       "nearest_city": {
         "name": "Kasimov",
@@ -1846,14 +2171,16 @@
         10356.268041237114,
         1709.979381443299
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2949 < 0.35 threshold. Western Russian approaches; deep-east anchors must stay out. Nearest city: Kasimov. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2949; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
       "source_province_id": 12037,
       "overlap_ratio": 0.248766,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=other_water; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "boundary_group": "other_water",
       "nearest_city": {
         "name": "Pori",
@@ -1869,14 +2196,16 @@
         9388.741463414633,
         1130.1853658536586
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2488 < 0.35 threshold. Other water province on mask perimeter. Nearest city: Pori. Water province. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=other_water; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "preview_em_reference_masked.png"
     },
     {
       "source_province_id": 12118,
       "overlap_ratio": 0.339359,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=Red_Sea_water; raw/threshold ratio=0.3394; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "boundary_group": "Red_Sea_water",
       "nearest_city": {
         "name": "Gaza",
@@ -1892,14 +2221,16 @@
         10002.420454545454,
         3308.2727272727275
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3394 < 0.35 threshold. Red Sea water; must stay out while keeping Cairo/Sinai framing. Nearest city: Gaza. Water province. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=Red_Sea_water; raw/threshold ratio=0.3394; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
       "source_province_id": 12180,
       "overlap_ratio": 0.378713,
       "algorithmic_recommendation": "include",
-      "owner_review_status": "pending",
+      "owner_decision": "include",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3787; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "boundary_group": "Atlantic_Nordic_water",
       "nearest_city": {
         "name": "Førde",
@@ -1915,14 +2246,16 @@
         8633.271428571428,
         1146.6612244897958
       ],
-      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3787 ≥ 0.35 threshold. Atlantic / Nordic sea province. Nearest city: Førde. Water province. Owner review still required.",
+      "geographic_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3787; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
       "source_province_id": 12187,
       "overlap_ratio": 0.460228,
       "algorithmic_recommendation": "include",
-      "owner_review_status": "pending",
+      "owner_decision": "include",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4602; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "boundary_group": "Atlantic_Nordic_water",
       "nearest_city": {
         "name": "Brae",
@@ -1938,14 +2271,16 @@
         8267.941176470587,
         1212.4117647058824
       ],
-      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4602 ≥ 0.35 threshold. Atlantic / Nordic sea province. Nearest city: Brae. Water province. Owner review still required.",
+      "geographic_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4602; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
       "source_province_id": 12189,
       "overlap_ratio": 0.385032,
       "algorithmic_recommendation": "include",
-      "owner_review_status": "pending",
+      "owner_decision": "include",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3850; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "boundary_group": "Atlantic_Nordic_water",
       "nearest_city": {
         "name": "Hólmavík",
@@ -1961,15 +2296,42 @@
         7224.954372623574,
         793.0177439797212
       ],
-      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3850 ≥ 0.35 threshold. Atlantic / Nordic sea province. Nearest city: Hólmavík. Water province. Owner review still required.",
+      "geographic_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3850; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 12200,
+      "overlap_ratio": 0.162109,
+      "algorithmic_recommendation": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=Mediterranean_water; raw/threshold ratio=0.1621; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "boundary_group": "Mediterranean_water",
+      "nearest_city": {
+        "name": "Agadir",
+        "source_province_id": 2924,
+        "x": 7879.0,
+        "y": 3379.0,
+        "distance_px": 21.57507764828601
+      },
+      "is_water": true,
+      "continent_id": 0,
+      "region_id": 0,
+      "centroid": [
+        7858.601351351352,
+        3386.027027027027
+      ],
+      "geographic_reason": "Owner-approved exclude: boundary province group=Mediterranean_water; raw/threshold ratio=0.1621; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
       "source_province_id": 12451,
       "overlap_ratio": 0.393929,
       "algorithmic_recommendation": "include",
-      "owner_review_status": "pending",
-      "boundary_group": "North_African_coast",
+      "owner_decision": "include",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.3939; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "boundary_group": "Egypt_Sinai",
       "nearest_city": {
         "name": "El Qantara",
         "source_province_id": 12451,
@@ -1984,14 +2346,16 @@
         9947.960784313726,
         3373.4313725490197
       ],
-      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3939 ≥ 0.35 threshold. Mediterranean North African coastal belt. Nearest city: El Qantara. Owner review still required.",
+      "geographic_reason": "Owner-approved include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.3939; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
       "source_province_id": 12508,
       "overlap_ratio": 0.224209,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=North_African_coast; raw/threshold ratio=0.2242; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "boundary_group": "North_African_coast",
       "nearest_city": {
         "name": "Baniyas",
@@ -2007,37 +2371,116 @@
         10108.333333333334,
         3107.4848484848485
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2242 < 0.35 threshold. Mediterranean North African coastal belt. Nearest city: Baniyas. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=North_African_coast; raw/threshold ratio=0.2242; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
-      "source_province_id": 12906,
-      "overlap_ratio": 0.492775,
-      "algorithmic_recommendation": "include",
-      "owner_review_status": "pending",
-      "boundary_group": "Atlantic_Nordic_water",
+      "source_province_id": 12902,
+      "overlap_ratio": 0.191099,
+      "algorithmic_recommendation": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1911; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "boundary_group": "Atlantic_unrelated_water",
       "nearest_city": {
         "name": "Funchal",
         "source_province_id": 10022,
         "x": 7519.0,
         "y": 3237.0,
-        "distance_px": 47.32195417497835
+        "distance_px": 175.70765374371456
       },
       "is_water": true,
       "continent_id": 0,
       "region_id": 0,
       "centroid": [
-        7488.285714285715,
-        3201.0
+        7682.739130434783,
+        3300.7391304347825
       ],
-      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4928 ≥ 0.35 threshold. Atlantic / Nordic sea province. Nearest city: Funchal. Water province. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1911; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 12907,
+      "overlap_ratio": 0.166486,
+      "algorithmic_recommendation": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1665; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "boundary_group": "Atlantic_unrelated_water",
+      "nearest_city": {
+        "name": "Funchal",
+        "source_province_id": 10022,
+        "x": 7519.0,
+        "y": 3237.0,
+        "distance_px": 229.8673562715895
+      },
+      "is_water": true,
+      "continent_id": 0,
+      "region_id": 0,
+      "centroid": [
+        7526.923076923077,
+        3007.269230769231
+      ],
+      "geographic_reason": "Owner-approved exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1665; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 12912,
+      "overlap_ratio": 0.422391,
+      "algorithmic_recommendation": "include",
+      "owner_decision": "include",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4224; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "boundary_group": "Atlantic_Nordic_water",
+      "nearest_city": {
+        "name": "Caldas da Rainha",
+        "source_province_id": 18,
+        "x": 7901.0,
+        "y": 2838.0,
+        "distance_px": 431.909401266953
+      },
+      "is_water": true,
+      "continent_id": 0,
+      "region_id": 0,
+      "centroid": [
+        7480.375,
+        2739.9166666666665
+      ],
+      "geographic_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4224; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 12914,
+      "overlap_ratio": 0.38264,
+      "algorithmic_recommendation": "include",
+      "owner_decision": "include",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3826; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "boundary_group": "Atlantic_Nordic_water",
+      "nearest_city": {
+        "name": "Sneem",
+        "source_province_id": 6485,
+        "x": 7860.0,
+        "y": 1967.0,
+        "distance_px": 474.98361129821166
+      },
+      "is_water": true,
+      "continent_id": 0,
+      "region_id": 0,
+      "centroid": [
+        7430.869565217391,
+        2170.608695652174
+      ],
+      "geographic_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3826; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
       "source_province_id": 13076,
-      "overlap_ratio": 0.200635,
+      "overlap_ratio": 0.159619,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.1596; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "boundary_group": "Atlantic_Nordic_water",
       "nearest_city": {
         "name": "Sneem",
@@ -2053,14 +2496,16 @@
         7348.178571428572,
         1916.142857142857
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2006 < 0.35 threshold. Atlantic / Nordic sea province. Nearest city: Sneem. Water province. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.1596; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
       "source_province_id": 13151,
       "overlap_ratio": 0.341999,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3420; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "boundary_group": "Atlantic_Nordic_water",
       "nearest_city": {
         "name": "Stornoway",
@@ -2076,14 +2521,16 @@
         7733.615384615385,
         1342.9615384615386
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3420 < 0.35 threshold. Atlantic / Nordic sea province. Nearest city: Stornoway. Water province. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3420; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
       "source_province_id": 13352,
       "overlap_ratio": 0.198636,
       "algorithmic_recommendation": "exclude",
-      "owner_review_status": "pending",
+      "owner_decision": "exclude",
+      "owner_review_status": "approved",
+      "owner_reason": "Owner-approved exclude: boundary province group=Caspian_water; raw/threshold ratio=0.1986; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "boundary_group": "Caspian_water",
       "nearest_city": {
         "name": "Lagan",
@@ -2099,7 +2546,7 @@
         10686.49609375,
         2441.89453125
       ],
-      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1986 < 0.35 threshold. Caspian sea province. Nearest city: Lagan. Water province. Owner review still required.",
+      "geographic_reason": "Owner-approved exclude: boundary province group=Caspian_water; raw/threshold ratio=0.1986; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
       "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
     }
   ]
