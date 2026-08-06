@@ -58,15 +58,38 @@ Murmansk + Arkhangelsk excluded on masked candidate. All required region city-an
 - **red labels** = Murmansk / Arkhangelsk  
 - **red muted fills** = excluded boundary-touch provinces  
 
-## Regenerating
+## Authoritative geometry engine
+
+**Shapely is mandatory** for authoritative Earth3 mask crop generation
+(`AUTHORITATIVE_GEOMETRY_ENGINE = "shapely"`).
+
+- Install: `pip install -e ".[earth3]"`
+- If Shapely is missing, crop generation **fails closed** (no silent stdlib fallback).
+- The stdlib ear-clip path is comparison/oracle tooling only.
+
+## Local archive audit (committed machine-readable)
+
+| File | Role |
+|---|---|
+| `local_crop_audit.json` | Local-only archive run results (hashes, oracle, counts, locations) |
+| `boundary_review_em_reference_masked.json` | 55 threshold-band boundary review rows |
+| `BOUNDARY_REVIEW.md` | Human-readable boundary review sheet |
+
+CI validates the **committed audit artifact schema/hashes/counts** without the archive.
+Archive-dependent unittest cases skip with **`LOCAL SOURCE REQUIRED`** when the zip is absent.
+
+## Regenerating (local archive required)
 
 ```powershell
 $env:PYTHONPATH = "src"
+pip install -e ".[earth3]" Pillow
+python tools/earth3/generate_local_audit.py `
+  --archive "C:\Users\paulf\Downloads\AOH3_Earth3_map_provinces.zip"
 python tools/earth3/render_crop_previews.py `
   --archive "C:\Users\paulf\Downloads\AOH3_Earth3_map_provinces.zip"
 ```
 
-Requires local archive path + `Pillow`.
+The original archive is never committed.
 
 ## Next step
 

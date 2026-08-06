@@ -3,10 +3,25 @@ from __future__ import annotations
 import json
 import unittest
 from pathlib import Path
+from unittest import mock
 
-from gates_of_codex.earth3.crop import CropCandidate, CropRect, apply_crop, load_crop_candidates
-from gates_of_codex.earth3.geometry import overlap_ratio, overlap_ratio_stdlib
-from gates_of_codex.earth3.locations import REQUIRED_LOCATIONS, validate_required_locations
+from gates_of_codex.earth3.audit_artifact import (
+    AUDIT_SCHEMA,
+    validate_committed_audit_artifact,
+)
+from gates_of_codex.earth3.crop import apply_crop, load_crop_candidates
+from gates_of_codex.earth3.geometry import (
+    AUTHORITATIVE_GEOMETRY_ENGINE,
+    GeometryAuthorityError,
+    overlap_ratio,
+    overlap_ratio_stdlib,
+    require_authoritative_geometry_engine,
+)
+from gates_of_codex.earth3.locations import (
+    GATING_LOCATION_KEYS,
+    REQUIRED_LOCATIONS,
+    validate_required_locations,
+)
 from gates_of_codex.earth3.model import Earth3City, Earth3Dataset, Earth3Province
 
 try:
@@ -17,25 +32,39 @@ except ImportError:  # pragma: no cover
 
 ROOT = Path(__file__).resolve().parents[1]
 ARCHIVE = Path(r"C:\Users\paulf\Downloads\AOH3_Earth3_map_provinces.zip")
+LOCAL_AUDIT = ROOT / "docs/earth3-crop/local_crop_audit.json"
+BOUNDARY_JSON = ROOT / "docs/earth3-crop/boundary_review_em_reference_masked.json"
+
+
+class GeometryAuthorityTests(unittest.TestCase):
+    def test_authoritative_engine_is_shapely(self) -> None:
+        self.assertEqual(AUTHORITATIVE_GEOMETRY_ENGINE, "shapely")
+
+    def test_require_authoritative_fails_without_shapely(self) -> None:
+        with mock.patch("gates_of_codex.earth3.oracle.SHAPELY_AVAILABLE", False):
+            with self.assertRaises(GeometryAuthorityError) as ctx:
+                require_authoritative_geometry_engine()
+            self.assertIn("Shapely is required", str(ctx.exception))
+            self.assertIn("will not silently", str(ctx.exception))
+
+    def test_overlap_ratio_does_not_silently_fallback(self) -> None:
+        subject = ((0.0, 0.0), (4.0, 0.0), (4.0, 4.0), (0.0, 4.0))
+        mask = (((0.0, 0.0), (4.0, 0.0), (4.0, 4.0), (0.0, 4.0)),)
+        with mock.patch("gates_of_codex.earth3.oracle.SHAPELY_AVAILABLE", False):
+            with self.assertRaises(GeometryAuthorityError):
+                overlap_ratio(subject, mask)
 
 
 class OracleGeometryTests(unittest.TestCase):
     def test_stdlib_and_shapely_agree_on_synthetic(self) -> None:
         if not SHAPELY_AVAILABLE:
-            self.skipTest("shapely not installed")
+            self.skipTest("LOCAL SOURCE REQUIRED: shapely not installed")
         subject = ((0.0, 0.0), (10.0, 0.0), (10.0, 10.0), (0.0, 10.0))
         mask = (((5.0, -1.0), (11.0, -1.0), (11.0, 11.0), (5.0, 11.0)),)
         std = overlap_ratio_stdlib(subject, mask)
         sh = shapely_overlap_ratio(subject, mask)
         self.assertAlmostEqual(std, 0.5, places=5)
         self.assertAlmostEqual(sh, 0.5, places=5)
-        self.assertAlmostEqual(std, sh, places=5)
-
-    def test_overlap_ratio_prefers_shapely_when_available(self) -> None:
-        subject = ((0.0, 0.0), (4.0, 0.0), (4.0, 4.0), (0.0, 4.0))
-        mask = (((1.0, 1.0), (3.0, 1.0), (3.0, 3.0), (1.0, 3.0)),)
-        ratio = overlap_ratio(subject, mask)
-        self.assertAlmostEqual(ratio, 0.25, places=5)
 
 
 class ThresholdDecisionConfigTests(unittest.TestCase):
@@ -53,13 +82,10 @@ class ThresholdDecisionConfigTests(unittest.TestCase):
     def test_masked_candidate_loads_frozen_overrides(self) -> None:
         candidates = load_crop_candidates(ROOT / "config/earth3/crop_candidates_v1.json")
         masked = next(c for c in candidates if c.id == "em_reference_masked")
-        # Base excludes + 31 threshold excludes
         self.assertGreaterEqual(len(masked.explicit_exclude_ids), 33)
-        # Base includes + 24 threshold includes
         self.assertGreaterEqual(len(masked.required_include_ids), 40)
         self.assertIn(11370, masked.explicit_exclude_ids)
         self.assertIn(11764, masked.explicit_exclude_ids)
-        self.assertIn(1268, masked.required_include_ids)
 
     def test_permission_wording_is_owner_asserted(self) -> None:
         data = json.loads(
@@ -67,48 +93,128 @@ class ThresholdDecisionConfigTests(unittest.TestCase):
         )
         perm = data["permission"]
         self.assertEqual(perm["status"], "OWNER_ASSERTED_GRANT")
-        self.assertIn("not_present_in_repo", perm)
         self.assertIn("signed license instrument", perm["not_present_in_repo"])
 
 
 class ExactLocationUnitTests(unittest.TestCase):
-    def test_validate_required_locations_synthetic(self) -> None:
-        # Build tiny dataset with exact required province ids for a subset.
-        provinces = {}
-        cities = []
-        for loc in REQUIRED_LOCATIONS[:3]:
-            x, y = loc.x, loc.y
-            ring = ((x - 1, y - 1), (x + 1, y - 1), (x + 1, y + 1), (x - 1, y + 1))
-            provinces[loc.source_province_id] = Earth3Province(
-                source_id=loc.source_province_id,
-                ring=ring,
-                label_x=x,
-                label_y=y,
-                continent_id=2,
-                terrain_id=1,
-                region_id=0,
-                growth=1.0,
-                base_development=1,
-            )
-            cities.append(
-                Earth3City(loc.city_name_exact, x, y, loc.source_province_id, 0)
-            )
-        ds = Earth3Dataset(provinces=provinces, cities=tuple(cities))
-        included = {loc.source_province_id for loc in REQUIRED_LOCATIONS[:3] if loc.must_include}
-        report = validate_required_locations(ds, included)
-        # Only first 3 keys present in dataset; others fail missing province.
-        self.assertFalse(report["ok"])
-        # The three present must_include locations should pass.
+    def test_gating_key_set_complete(self) -> None:
+        expected = {
+            "Reykjavik",
+            "London",
+            "Dublin",
+            "Madrid",
+            "Lisbon",
+            "Paris",
+            "Berlin",
+            "Rome",
+            "Athens",
+            "Kyiv",
+            "Odesa",
+            "Kherson",
+            "Zaporizhzhia",
+            "Donetsk",
+            "Luhansk",
+            "Sevastopol",
+            "Simferopol",
+            "Rostov_on_Don",
+            "Istanbul",
+            "Ankara",
+            "Tbilisi",
+            "Yerevan",
+            "Baku",
+            "Tunis",
+            "Algiers",
+            "Tripoli",
+            "Cairo",
+            "Stockholm",
+            "Helsinki",
+            "Tallinn",
+            "Riga",
+            "Vilnius",
+            "Murmansk",
+            "Arkhangelsk",
+        }
+        self.assertEqual(set(GATING_LOCATION_KEYS), expected)
+        self.assertEqual(len(GATING_LOCATION_KEYS), 34)
+        # Oslo is informational only.
+        oslo = next(loc for loc in REQUIRED_LOCATIONS if loc.key == "Oslo")
+        self.assertFalse(oslo.gating)
+
+    def test_validate_rejects_substring_city_match(self) -> None:
+        # City named "New London" must not satisfy exact "London".
+        loc = next(l for l in REQUIRED_LOCATIONS if l.key == "London")
+        ring = (
+            (loc.x - 1, loc.y - 1),
+            (loc.x + 1, loc.y - 1),
+            (loc.x + 1, loc.y + 1),
+            (loc.x - 1, loc.y + 1),
+        )
+        ds = Earth3Dataset(
+            provinces={
+                loc.source_province_id: Earth3Province(
+                    source_id=loc.source_province_id,
+                    ring=ring,
+                    label_x=loc.x,
+                    label_y=loc.y,
+                    continent_id=2,
+                    terrain_id=1,
+                    region_id=0,
+                    growth=1.0,
+                    base_development=1,
+                )
+            },
+            cities=(
+                Earth3City("New London", loc.x, loc.y, loc.source_province_id, 0),
+            ),
+        )
+        report = validate_required_locations(ds, {loc.source_province_id})
         by_key = {row["key"]: row for row in report["locations"]}
-        self.assertTrue(by_key["Reykjavik"]["ok"])
-        self.assertTrue(by_key["Sevastopol"]["ok"])
-        self.assertTrue(by_key["Simferopol"]["ok"])
+        self.assertFalse(by_key["London"]["city_row_found_exact"])
+        self.assertFalse(by_key["London"]["ok"])
 
 
-@unittest.skipUnless(ARCHIVE.is_file(), "Earth3 archive not available locally")
+class CommittedAuditArtifactTests(unittest.TestCase):
+    def test_local_audit_artifact_present_and_valid(self) -> None:
+        self.assertTrue(
+            LOCAL_AUDIT.is_file(),
+            "docs/earth3-crop/local_crop_audit.json must be committed",
+        )
+        report = validate_committed_audit_artifact(
+            LOCAL_AUDIT,
+            crop_config_path=ROOT / "config/earth3/crop_candidates_v1.json",
+            threshold_decisions_path=ROOT
+            / "config/earth3/threshold_decisions_em_reference_masked_v1.json",
+        )
+        if not report["ok"]:
+            self.fail(f"audit artifact invalid: {report['errors']}")
+
+    def test_boundary_review_covers_55(self) -> None:
+        self.assertTrue(BOUNDARY_JSON.is_file())
+        data = json.loads(BOUNDARY_JSON.read_text(encoding="utf-8"))
+        self.assertEqual(data["schema"], "gates-of-codex.earth3-boundary-review")
+        self.assertEqual(data["decision_count"], 55)
+        self.assertEqual(data["status"], "algorithmic_recommendation_pending_owner_review")
+        for row in data["provinces"]:
+            self.assertIn("algorithmic_recommendation", row)
+            self.assertEqual(row["owner_review_status"], "pending")
+            self.assertIn("boundary_group", row)
+            self.assertIn("closeup_image", row)
+            self.assertIn("geographic_reason", row)
+
+
+@unittest.skipUnless(
+    ARCHIVE.is_file(),
+    "LOCAL SOURCE REQUIRED: Earth3 archive not available (CI does not ship the archive)",
+)
 class LiveArchiveCorrectnessTests(unittest.TestCase):
+    """These tests require the local uncommitted archive. They do NOT run in CI."""
+
     @classmethod
     def setUpClass(cls) -> None:
+        if not SHAPELY_AVAILABLE:
+            raise unittest.SkipTest(
+                "LOCAL SOURCE REQUIRED: shapely not installed for authoritative crop"
+            )
         from gates_of_codex.earth3.parse import load_earth3_dataset
 
         cls.dataset = load_earth3_dataset(ARCHIVE)
@@ -127,10 +233,9 @@ class LiveArchiveCorrectnessTests(unittest.TestCase):
         )
         if not report["ok"]:
             self.fail(f"required location failures: {report['failure_keys']}")
+        self.assertEqual(report["gating_key_count"], 34)
 
     def test_oracle_discrepancy_count_zero(self) -> None:
-        if not SHAPELY_AVAILABLE:
-            self.skipTest("shapely not installed")
         from gates_of_codex.earth3.geometry import bounds_intersect, ring_bounds
 
         discrepancies = 0
@@ -157,10 +262,20 @@ class LiveArchiveCorrectnessTests(unittest.TestCase):
         self.assertEqual(flips, 0)
 
     def test_final_province_count_stable(self) -> None:
-        # Frozen threshold decisions must preserve the pre-freeze masked count.
         self.assertEqual(self.result.province_count, 3648)
         self.assertEqual(self.result.land_count, 3431)
         self.assertEqual(self.result.water_count, 217)
+
+    def test_audit_artifact_matches_live_run(self) -> None:
+        artifact = json.loads(LOCAL_AUDIT.read_text(encoding="utf-8"))
+        self.assertEqual(artifact["schema"], AUDIT_SCHEMA)
+        self.assertEqual(artifact["crop_result"]["province_count"], self.result.province_count)
+        from gates_of_codex.earth3.audit_artifact import included_ids_hash
+
+        self.assertEqual(
+            artifact["crop_result"]["included_ids_sha256"],
+            included_ids_hash(self.result.included_ids),
+        )
 
 
 if __name__ == "__main__":

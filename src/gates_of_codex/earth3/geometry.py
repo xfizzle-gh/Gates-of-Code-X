@@ -1,4 +1,9 @@
-"""Deterministic 2D polygon helpers for Earth3 crop masks (stdlib only)."""
+"""Deterministic 2D polygon helpers for Earth3 crop masks.
+
+Authoritative mask-overlap for production crop generation is Shapely-backed
+(``overlap_ratio`` / ``AUTHORITATIVE_GEOMETRY_ENGINE``). The stdlib path is
+oracle/comparison tooling only and never silently becomes production authority.
+"""
 
 from __future__ import annotations
 
@@ -6,6 +11,14 @@ from typing import Sequence
 
 Point = tuple[float, float]
 Ring = tuple[Point, ...]
+
+# Explicit authority selection — never auto-switch based on import success alone.
+AUTHORITATIVE_GEOMETRY_ENGINE = "shapely"
+STDLIB_GEOMETRY_ENGINE = "stdlib_earclip_sh"
+
+
+class GeometryAuthorityError(RuntimeError):
+    """Raised when the authoritative geometry engine is unavailable."""
 
 
 def shoelace_area(ring: Sequence[Point]) -> float:
@@ -74,14 +87,9 @@ def _line_intersection(p1: Point, p2: Point, p3: Point, p4: Point) -> Point | No
 
 
 def sutherland_hodgman(subject: Sequence[Point], clip: Sequence[Point]) -> list[Point]:
-    """Clip subject polygon by convex clip polygon.
-
-    Clip winding must place the interior to the left of each directed edge in
-    the coordinate system used (Earth3 y-down with positive-shoelace rings).
-    """
+    """Clip subject polygon by convex clip polygon (stdlib comparison tooling)."""
     if len(subject) < 3 or len(clip) < 3:
         return []
-    # Normalize clip to positive shoelace winding so left-of-edge == interior.
     clip_pts = list(clip)
     area2 = 0.0
     for i in range(len(clip_pts)):
@@ -121,16 +129,14 @@ def sutherland_hodgman(subject: Sequence[Point], clip: Sequence[Point]) -> list[
 
 
 def ear_clip_triangles(ring: Sequence[Point]) -> list[tuple[Point, Point, Point]]:
-    """Ear-clip a simple polygon into triangles. Deterministic vertex order."""
+    """Ear-clip a simple polygon into triangles (stdlib comparison tooling)."""
     pts = list(ring)
     if len(pts) < 3:
         return []
-    # Remove closing duplicate if present.
     if pts[0] == pts[-1]:
         pts = pts[:-1]
     if len(pts) < 3:
         return []
-    # Force CCW for consistent ear tests.
     area2 = 0.0
     for i in range(len(pts)):
         x1, y1 = pts[i]
@@ -153,8 +159,7 @@ def ear_clip_triangles(ring: Sequence[Point]) -> list[tuple[Point, Point, Point]
             i2 = indices[(i + 1) % n]
             a, b, c = pts[i0], pts[i1], pts[i2]
             if _is_left(a, b, c) <= 1e-12:
-                continue  # not a convex ear at b
-            # No other point inside triangle abc.
+                continue
             inside = False
             for j in indices:
                 if j in (i0, i1, i2):
@@ -181,7 +186,7 @@ def ear_clip_triangles(ring: Sequence[Point]) -> list[tuple[Point, Point, Point]
 
 
 def intersection_area(subject: Sequence[Point], clip_ring: Sequence[Point]) -> float:
-    """Area of subject ∩ clip_ring. Clip may be concave (ear-clipped)."""
+    """Stdlib subject ∩ clip_ring area (comparison tooling only)."""
     if len(subject) < 3 or len(clip_ring) < 3:
         return 0.0
     sb = ring_bounds(subject)
@@ -197,12 +202,12 @@ def intersection_area(subject: Sequence[Point], clip_ring: Sequence[Point]) -> f
 
 
 def union_intersection_area(subject: Sequence[Point], mask_rings: Sequence[Ring]) -> float:
-    """Area of subject ∩ (union of mask rings). Rings must be pairwise non-overlapping."""
+    """Stdlib subject ∩ union(mask) area (comparison tooling only)."""
     return sum(intersection_area(subject, ring) for ring in mask_rings)
 
 
 def overlap_ratio_stdlib(subject: Sequence[Point], mask_rings: Sequence[Ring]) -> float:
-    """Stdlib-only overlap ratio (ear-clip + Sutherland–Hodgman)."""
+    """Stdlib-only overlap ratio — comparison/oracle tooling, not production authority."""
     area = shoelace_area(subject)
     if area <= 1e-9:
         return 0.0
@@ -215,16 +220,33 @@ def overlap_ratio_stdlib(subject: Sequence[Point], mask_rings: Sequence[Ring]) -
     return ratio
 
 
-def overlap_ratio(subject: Sequence[Point], mask_rings: Sequence[Ring]) -> float:
-    """Province∩mask area ratio.
-
-    Prefers Shapely boolean intersection when installed (robust for concave
-    rings / make_valid repairs). Falls back to the deterministic stdlib path.
-    """
+def require_authoritative_geometry_engine() -> str:
+    """Fail clearly when Shapely is unavailable for authoritative crop generation."""
+    if AUTHORITATIVE_GEOMETRY_ENGINE != "shapely":
+        raise GeometryAuthorityError(
+            f"unsupported AUTHORITATIVE_GEOMETRY_ENGINE={AUTHORITATIVE_GEOMETRY_ENGINE!r}"
+        )
     try:
-        from .oracle import SHAPELY_AVAILABLE, shapely_overlap_ratio
-    except Exception:  # pragma: no cover
-        return overlap_ratio_stdlib(subject, mask_rings)
-    if SHAPELY_AVAILABLE:
-        return shapely_overlap_ratio(subject, mask_rings)
-    return overlap_ratio_stdlib(subject, mask_rings)
+        from .oracle import SHAPELY_AVAILABLE
+    except Exception as exc:  # pragma: no cover
+        raise GeometryAuthorityError(
+            "Shapely oracle module failed to import; authoritative crop generation "
+            "requires: pip install 'gates-of-codex[earth3]'"
+        ) from exc
+    if not SHAPELY_AVAILABLE:
+        raise GeometryAuthorityError(
+            "Shapely is required for authoritative Earth3 crop generation "
+            f"(AUTHORITATIVE_GEOMETRY_ENGINE={AUTHORITATIVE_GEOMETRY_ENGINE!r}). "
+            "Install with: pip install 'gates-of-codex[earth3]'. "
+            "The stdlib path is comparison tooling only and will not silently "
+            "become production authority."
+        )
+    return AUTHORITATIVE_GEOMETRY_ENGINE
+
+
+def overlap_ratio(subject: Sequence[Point], mask_rings: Sequence[Ring]) -> float:
+    """Authoritative province∩mask area ratio (Shapely-backed; fails if unavailable)."""
+    require_authoritative_geometry_engine()
+    from .oracle import shapely_overlap_ratio
+
+    return shapely_overlap_ratio(subject, mask_rings)

@@ -1,0 +1,2481 @@
+{
+  "schema": "gates-of-codex.earth3-boundary-review",
+  "schema_version": 1,
+  "candidate_id": "em_reference_masked",
+  "status": "algorithmic_recommendation_pending_owner_review",
+  "note": "Automatic threshold outcomes are algorithmic recommendations only. They are not completed owner boundary review.",
+  "decision_count": 55,
+  "groups": {
+    "Iceland_Atlantic": {
+      "count": 2,
+      "include_count": 0,
+      "exclude_count": 2,
+      "provinces": [
+        {
+          "source_province_id": 956,
+          "overlap_ratio": 0.213221,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "Iceland_Atlantic",
+          "nearest_city": {
+            "name": "Höfn",
+            "source_province_id": 956,
+            "x": 7605.0,
+            "y": 915.0,
+            "distance_px": 26.721336848553797
+          },
+          "is_water": false,
+          "continent_id": 2,
+          "centroid": [
+            7614.518987341772,
+            890.0316455696203
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2132 < 0.35 threshold. Atlantic/Iceland fringe boundary. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 6850,
+          "overlap_ratio": 0.239338,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "Iceland_Atlantic",
+          "nearest_city": {
+            "name": "Bakkafjörður",
+            "source_province_id": 6850,
+            "x": 7622.0,
+            "y": 765.0,
+            "distance_px": 19.706065388658615
+          },
+          "is_water": false,
+          "continent_id": 2,
+          "centroid": [
+            7602.635922330097,
+            761.3446601941747
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2393 < 0.35 threshold. Atlantic/Iceland fringe boundary. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        }
+      ]
+    },
+    "Scandinavia_northern_Russia": {
+      "count": 12,
+      "include_count": 5,
+      "exclude_count": 7,
+      "provinces": [
+        {
+          "source_province_id": 1022,
+          "overlap_ratio": 0.330202,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "Scandinavia_northern_Russia",
+          "nearest_city": {
+            "name": "Dombås",
+            "source_province_id": 1022,
+            "x": 8791.0,
+            "y": 1098.0,
+            "distance_px": 24.142918244964296
+          },
+          "is_water": false,
+          "continent_id": 2,
+          "centroid": [
+            8772.437869822485,
+            1113.4378698224853
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3302 < 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 1024,
+          "overlap_ratio": 0.458904,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "Scandinavia_northern_Russia",
+          "nearest_city": {
+            "name": "Førde",
+            "source_province_id": 1024,
+            "x": 8631.0,
+            "y": 1146.0,
+            "distance_px": 21.285890868994116
+          },
+          "is_water": false,
+          "continent_id": 2,
+          "centroid": [
+            8624.511111111111,
+            1125.7272727272727
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4589 ≥ 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 1028,
+          "overlap_ratio": 0.477077,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "Scandinavia_northern_Russia",
+          "nearest_city": {
+            "name": "Idre",
+            "source_province_id": 1028,
+            "x": 8965.0,
+            "y": 1116.0,
+            "distance_px": 6.875405574514294
+          },
+          "is_water": false,
+          "continent_id": 2,
+          "centroid": [
+            8971.733333333334,
+            1117.3904761904762
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4771 ≥ 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 1044,
+          "overlap_ratio": 0.173157,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "Scandinavia_northern_Russia",
+          "nearest_city": {
+            "name": "Sveg",
+            "source_province_id": 1044,
+            "x": 9047.0,
+            "y": 1100.0,
+            "distance_px": 0.3914805102265318
+          },
+          "is_water": false,
+          "continent_id": 2,
+          "centroid": [
+            9046.689024390244,
+            1099.7621951219512
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1732 < 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 1448,
+          "overlap_ratio": 0.456842,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "Scandinavia_northern_Russia",
+          "nearest_city": {
+            "name": "Sastamala",
+            "source_province_id": 1448,
+            "x": 9463.0,
+            "y": 1157.0,
+            "distance_px": 14.513223839227978
+          },
+          "is_water": false,
+          "continent_id": 2,
+          "centroid": [
+            9476.568181818182,
+            1151.8484848484848
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4568 ≥ 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 1460,
+          "overlap_ratio": 0.202932,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "Scandinavia_northern_Russia",
+          "nearest_city": {
+            "name": "Kouvola",
+            "source_province_id": 1460,
+            "x": 9647.0,
+            "y": 1192.0,
+            "distance_px": 16.648364202196884
+          },
+          "is_water": false,
+          "continent_id": 2,
+          "centroid": [
+            9644.268041237114,
+            1175.5773195876288
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2029 < 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 3003,
+          "overlap_ratio": 0.418355,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "Scandinavia_northern_Russia",
+          "nearest_city": {
+            "name": "Hudiksvall",
+            "source_province_id": 3003,
+            "x": 9177.0,
+            "y": 1124.0,
+            "distance_px": 11.528919674980099
+          },
+          "is_water": false,
+          "continent_id": 2,
+          "centroid": [
+            9165.502304147465,
+            1123.152073732719
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4184 ≥ 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 3736,
+          "overlap_ratio": 0.30503,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "Scandinavia_northern_Russia",
+          "nearest_city": {
+            "name": "Vyborg",
+            "source_province_id": 3736,
+            "x": 9749.0,
+            "y": 1204.0,
+            "distance_px": 9.356062488790675
+          },
+          "is_water": false,
+          "continent_id": 2,
+          "centroid": [
+            9739.682170542636,
+            1204.84496124031
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3050 < 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 4999,
+          "overlap_ratio": 0.25761,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "Scandinavia_northern_Russia",
+          "nearest_city": {
+            "name": "Sastamala",
+            "source_province_id": 1448,
+            "x": 9463.0,
+            "y": 1157.0,
+            "distance_px": 30.913632074721004
+          },
+          "is_water": false,
+          "continent_id": 2,
+          "centroid": [
+            9443.489510489511,
+            1133.020979020979
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2576 < 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 6632,
+          "overlap_ratio": 0.459787,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "Scandinavia_northern_Russia",
+          "nearest_city": {
+            "name": "Engerdal",
+            "source_province_id": 6632,
+            "x": 8929.0,
+            "y": 1127.0,
+            "distance_px": 26.725798260911752
+          },
+          "is_water": false,
+          "continent_id": 2,
+          "centroid": [
+            8903.585365853658,
+            1118.7317073170732
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4598 ≥ 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 6676,
+          "overlap_ratio": 0.168188,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "Scandinavia_northern_Russia",
+          "nearest_city": {
+            "name": "Orivesi",
+            "source_province_id": 1450,
+            "x": 9533.0,
+            "y": 1128.0,
+            "distance_px": 19.75105208014579
+          },
+          "is_water": false,
+          "continent_id": 2,
+          "centroid": [
+            9529.225806451614,
+            1147.3870967741937
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1682 < 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 11355,
+          "overlap_ratio": 0.234072,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "Scandinavia_northern_Russia",
+          "nearest_city": {
+            "name": "Kaduy",
+            "source_province_id": 11355,
+            "x": 10153.0,
+            "y": 1331.0,
+            "distance_px": 28.999513884814625
+          },
+          "is_water": false,
+          "continent_id": 2,
+          "centroid": [
+            10145.608333333334,
+            1302.9583333333333
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2341 < 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        }
+      ]
+    },
+    "eastern_Russia": {
+      "count": 7,
+      "include_count": 5,
+      "exclude_count": 2,
+      "provinces": [
+        {
+          "source_province_id": 6683,
+          "overlap_ratio": 0.312,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "eastern_Russia",
+          "nearest_city": {
+            "name": "Gryazovets",
+            "source_province_id": 6683,
+            "x": 10306.0,
+            "y": 1364.0,
+            "distance_px": 14.564512564963083
+          },
+          "is_water": false,
+          "continent_id": 2,
+          "centroid": [
+            10319.949275362318,
+            1368.1884057971015
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3120 < 0.35 threshold. Eastern Russian depth edge beyond Donbas approaches. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 10857,
+          "overlap_ratio": 0.464787,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "eastern_Russia",
+          "nearest_city": {
+            "name": "Naberezhnye Chelny",
+            "source_province_id": 10857,
+            "x": 10901.0,
+            "y": 1648.0,
+            "distance_px": 34.36464157098955
+          },
+          "is_water": false,
+          "continent_id": 2,
+          "centroid": [
+            10934.132183908046,
+            1657.1206896551723
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4648 ≥ 0.35 threshold. Eastern Russian depth edge beyond Donbas approaches. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 10915,
+          "overlap_ratio": 0.385635,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "eastern_Russia",
+          "nearest_city": {
+            "name": "Morty",
+            "source_province_id": 10915,
+            "x": 10866.0,
+            "y": 1642.0,
+            "distance_px": 27.752406526001103
+          },
+          "is_water": false,
+          "continent_id": 2,
+          "centroid": [
+            10881.744525547445,
+            1619.14598540146
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3856 ≥ 0.35 threshold. Eastern Russian depth edge beyond Donbas approaches. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 11170,
+          "overlap_ratio": 0.391779,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "eastern_Russia",
+          "nearest_city": {
+            "name": "Yaransk",
+            "source_province_id": 11170,
+            "x": 10680.0,
+            "y": 1508.0,
+            "distance_px": 10.251686937689998
+          },
+          "is_water": false,
+          "continent_id": 2,
+          "centroid": [
+            10675.2,
+            1498.9414634146342
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3918 ≥ 0.35 threshold. Eastern Russian depth edge beyond Donbas approaches. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 11323,
+          "overlap_ratio": 0.458783,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "eastern_Russia",
+          "nearest_city": {
+            "name": "Tuymazy",
+            "source_province_id": 11323,
+            "x": 10962.0,
+            "y": 1742.0,
+            "distance_px": 42.87168759954698
+          },
+          "is_water": false,
+          "continent_id": 2,
+          "centroid": [
+            10986.115384615385,
+            1706.553846153846
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4588 ≥ 0.35 threshold. Eastern Russian depth edge beyond Donbas approaches. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 11689,
+          "overlap_ratio": 0.435422,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "eastern_Russia",
+          "nearest_city": {
+            "name": "Galich",
+            "source_province_id": 11689,
+            "x": 10485.0,
+            "y": 1417.0,
+            "distance_px": 32.07117505151597
+          },
+          "is_water": false,
+          "continent_id": 2,
+          "centroid": [
+            10453.012195121952,
+            1414.689024390244
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4354 ≥ 0.35 threshold. Eastern Russian depth edge beyond Donbas approaches. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 11690,
+          "overlap_ratio": 0.278838,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "eastern_Russia",
+          "nearest_city": {
+            "name": "Buy",
+            "source_province_id": 11690,
+            "x": 10369.0,
+            "y": 1399.0,
+            "distance_px": 32.094675724745315
+          },
+          "is_water": false,
+          "continent_id": 2,
+          "centroid": [
+            10385.105555555556,
+            1371.2388888888888
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2788 < 0.35 threshold. Eastern Russian depth edge beyond Donbas approaches. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        }
+      ]
+    },
+    "Caucasus": {
+      "count": 5,
+      "include_count": 1,
+      "exclude_count": 4,
+      "provinces": [
+        {
+          "source_province_id": 10587,
+          "overlap_ratio": 0.306482,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "Caucasus",
+          "nearest_city": {
+            "name": "Turtkul",
+            "source_province_id": 10587,
+            "x": 11319.0,
+            "y": 2701.0,
+            "distance_px": 38.59668887212855
+          },
+          "is_water": false,
+          "continent_id": 1,
+          "centroid": [
+            11316.797297297297,
+            2662.4662162162163
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3065 < 0.35 threshold. Caucasus / SE theatre edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
+        },
+        {
+          "source_province_id": 10851,
+          "overlap_ratio": 0.319198,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "Caucasus",
+          "nearest_city": {
+            "name": "Yasny",
+            "source_province_id": 10851,
+            "x": 11261.0,
+            "y": 2032.0,
+            "distance_px": 13.588718088148418
+          },
+          "is_water": false,
+          "continent_id": 1,
+          "centroid": [
+            11264.617486338799,
+            2018.9016393442623
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3192 < 0.35 threshold. Caucasus / SE theatre edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
+        },
+        {
+          "source_province_id": 10919,
+          "overlap_ratio": 0.498804,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "Caucasus",
+          "nearest_city": {
+            "name": "Orsk",
+            "source_province_id": 10919,
+            "x": 11196.0,
+            "y": 2013.0,
+            "distance_px": 51.473577663990454
+          },
+          "is_water": false,
+          "continent_id": 1,
+          "centroid": [
+            11225.75,
+            1970.9944444444445
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4988 ≥ 0.35 threshold. Caucasus / SE theatre edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
+        },
+        {
+          "source_province_id": 11177,
+          "overlap_ratio": 0.156284,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "Caucasus",
+          "nearest_city": {
+            "name": "Ayteke Bi",
+            "source_province_id": 11177,
+            "x": 11376.0,
+            "y": 2409.0,
+            "distance_px": 33.82403791717659
+          },
+          "is_water": false,
+          "continent_id": 1,
+          "centroid": [
+            11382.710344827587,
+            2375.848275862069
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1563 < 0.35 threshold. Caucasus / SE theatre edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
+        },
+        {
+          "source_province_id": 11180,
+          "overlap_ratio": 0.273596,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "Caucasus",
+          "nearest_city": {
+            "name": "Karabutak",
+            "source_province_id": 11180,
+            "x": 11275.0,
+            "y": 2113.0,
+            "distance_px": 53.56262110682621
+          },
+          "is_water": false,
+          "continent_id": 1,
+          "centroid": [
+            11326.896341463415,
+            2099.743902439024
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2736 < 0.35 threshold. Caucasus / SE theatre edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
+        }
+      ]
+    },
+    "North_Africa": {
+      "count": 14,
+      "include_count": 7,
+      "exclude_count": 7,
+      "provinces": [
+        {
+          "source_province_id": 2693,
+          "overlap_ratio": 0.162704,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "North_Africa",
+          "nearest_city": {
+            "name": "Esna",
+            "source_province_id": 2678,
+            "x": 9930.0,
+            "y": 3688.0,
+            "distance_px": 21.850111369390532
+          },
+          "is_water": false,
+          "continent_id": 6,
+          "centroid": [
+            9949.094488188977,
+            3677.3779527559054
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1627 < 0.35 threshold. North African coastal depth edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        },
+        {
+          "source_province_id": 2698,
+          "overlap_ratio": 0.448186,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "North_Africa",
+          "nearest_city": {
+            "name": "Quseer",
+            "source_province_id": 2698,
+            "x": 10014.0,
+            "y": 3638.0,
+            "distance_px": 17.999825378106657
+          },
+          "is_water": false,
+          "continent_id": 6,
+          "centroid": [
+            9996.869863013699,
+            3643.527397260274
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4482 ≥ 0.35 threshold. North African coastal depth edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        },
+        {
+          "source_province_id": 4347,
+          "overlap_ratio": 0.358378,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "North_Africa",
+          "nearest_city": {
+            "name": "Qatrun",
+            "source_province_id": 4788,
+            "x": 9019.0,
+            "y": 3723.0,
+            "distance_px": 57.09032702137547
+          },
+          "is_water": false,
+          "continent_id": 6,
+          "centroid": [
+            9075.751072961373,
+            3716.785407725322
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3584 ≥ 0.35 threshold. North African coastal depth edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        },
+        {
+          "source_province_id": 4399,
+          "overlap_ratio": 0.444545,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "North_Africa",
+          "nearest_city": {
+            "name": "Miseri",
+            "source_province_id": 4399,
+            "x": 9710.0,
+            "y": 3682.0,
+            "distance_px": 35.75718362573853
+          },
+          "is_water": false,
+          "continent_id": 6,
+          "centroid": [
+            9674.731707317073,
+            3687.8926829268294
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4445 ≥ 0.35 threshold. North African coastal depth edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        },
+        {
+          "source_province_id": 4405,
+          "overlap_ratio": 0.377971,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "North_Africa",
+          "nearest_city": {
+            "name": "Tunaydah",
+            "source_province_id": 4405,
+            "x": 9773.0,
+            "y": 3670.0,
+            "distance_px": 22.63991643815223
+          },
+          "is_water": false,
+          "continent_id": 6,
+          "centroid": [
+            9794.65,
+            3676.6214285714286
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3780 ≥ 0.35 threshold. North African coastal depth edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        },
+        {
+          "source_province_id": 4962,
+          "overlap_ratio": 0.301425,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "North_Africa",
+          "nearest_city": {
+            "name": "Tamdjert",
+            "source_province_id": 4966,
+            "x": 8701.0,
+            "y": 3666.0,
+            "distance_px": 61.98804272608515
+          },
+          "is_water": false,
+          "continent_id": 6,
+          "centroid": [
+            8640.457264957266,
+            3679.3076923076924
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3014 < 0.35 threshold. North African coastal depth edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        },
+        {
+          "source_province_id": 4965,
+          "overlap_ratio": 0.337866,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "North_Africa",
+          "nearest_city": {
+            "name": "Bordj",
+            "source_province_id": 4965,
+            "x": 8757.0,
+            "y": 3706.0,
+            "distance_px": 30.254992188889936
+          },
+          "is_water": false,
+          "continent_id": 6,
+          "centroid": [
+            8777.65243902439,
+            3683.890243902439
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3379 < 0.35 threshold. North African coastal depth edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        },
+        {
+          "source_province_id": 5014,
+          "overlap_ratio": 0.191862,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "North_Africa",
+          "nearest_city": {
+            "name": "Léry",
+            "source_province_id": 5014,
+            "x": 9294.0,
+            "y": 3738.0,
+            "distance_px": 37.296994945237124
+          },
+          "is_water": false,
+          "continent_id": 6,
+          "centroid": [
+            9258.892857142857,
+            3725.408163265306
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1919 < 0.35 threshold. North African coastal depth edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        },
+        {
+          "source_province_id": 5020,
+          "overlap_ratio": 0.191485,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "North_Africa",
+          "nearest_city": {
+            "name": "Léboto",
+            "source_province_id": 5020,
+            "x": 9484.0,
+            "y": 3699.0,
+            "distance_px": 35.54049696132171
+          },
+          "is_water": false,
+          "continent_id": 6,
+          "centroid": [
+            9508.066225165563,
+            3725.1523178807947
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1915 < 0.35 threshold. North African coastal depth edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        },
+        {
+          "source_province_id": 5028,
+          "overlap_ratio": 0.264159,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "North_Africa",
+          "nearest_city": {
+            "name": "Kougo",
+            "source_province_id": 5028,
+            "x": 8195.0,
+            "y": 3585.0,
+            "distance_px": 47.815298404399
+          },
+          "is_water": false,
+          "continent_id": 6,
+          "centroid": [
+            8195.875,
+            3632.8072916666665
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2642 < 0.35 threshold. North African coastal depth edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        },
+        {
+          "source_province_id": 6091,
+          "overlap_ratio": 0.460428,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "North_Africa",
+          "nearest_city": {
+            "name": "Hegra",
+            "source_province_id": 6091,
+            "x": 10196.0,
+            "y": 3573.0,
+            "distance_px": 13.101559538009528
+          },
+          "is_water": false,
+          "continent_id": 1,
+          "centroid": [
+            10209.093023255815,
+            3573.4728682170544
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4604 ≥ 0.35 threshold. North African coastal depth edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        },
+        {
+          "source_province_id": 6162,
+          "overlap_ratio": 0.353909,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "North_Africa",
+          "nearest_city": {
+            "name": "Hail",
+            "source_province_id": 6162,
+            "x": 10379.0,
+            "y": 3535.0,
+            "distance_px": 11.439678563687778
+          },
+          "is_water": false,
+          "continent_id": 1,
+          "centroid": [
+            10372.339805825242,
+            3525.6990291262136
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3539 ≥ 0.35 threshold. North African coastal depth edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        },
+        {
+          "source_province_id": 6163,
+          "overlap_ratio": 0.215619,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "North_Africa",
+          "nearest_city": {
+            "name": "Ash Shamli",
+            "source_province_id": 6163,
+            "x": 10309.0,
+            "y": 3571.0,
+            "distance_px": 11.803089585430989
+          },
+          "is_water": false,
+          "continent_id": 1,
+          "centroid": [
+            10298.647482014389,
+            3565.3309352517986
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2156 < 0.35 threshold. North African coastal depth edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        },
+        {
+          "source_province_id": 11385,
+          "overlap_ratio": 0.480695,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "North_Africa",
+          "nearest_city": {
+            "name": "Corralejo",
+            "source_province_id": 11385,
+            "x": 7664.0,
+            "y": 3502.0,
+            "distance_px": 10.98200548371986
+          },
+          "is_water": false,
+          "continent_id": 6,
+          "centroid": [
+            7654.4,
+            3496.6666666666665
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4807 ≥ 0.35 threshold. North African coastal depth edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        }
+      ]
+    },
+    "eastern_Mediterranean_Levant": {
+      "count": 6,
+      "include_count": 3,
+      "exclude_count": 3,
+      "provinces": [
+        {
+          "source_province_id": 2566,
+          "overlap_ratio": 0.247249,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "eastern_Mediterranean_Levant",
+          "nearest_city": {
+            "name": "Feryak",
+            "source_province_id": 2566,
+            "x": 10797.0,
+            "y": 3266.0,
+            "distance_px": 2.7226060487074966
+          },
+          "is_water": false,
+          "continent_id": 1,
+          "centroid": [
+            10799.567010309278,
+            3266.907216494845
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2472 < 0.35 threshold. E.Med / Levant coastal edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        },
+        {
+          "source_province_id": 2611,
+          "overlap_ratio": 0.209703,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "eastern_Mediterranean_Levant",
+          "nearest_city": {
+            "name": "Sidra",
+            "source_province_id": 2611,
+            "x": 10646.0,
+            "y": 3369.0,
+            "distance_px": 10.774157784513507
+          },
+          "is_water": false,
+          "continent_id": 1,
+          "centroid": [
+            10642.402597402597,
+            3379.155844155844
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2097 < 0.35 threshold. E.Med / Levant coastal edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        },
+        {
+          "source_province_id": 2623,
+          "overlap_ratio": 0.459581,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "eastern_Mediterranean_Levant",
+          "nearest_city": {
+            "name": "Ahvaz",
+            "source_province_id": 2624,
+            "x": 10717.0,
+            "y": 3321.0,
+            "distance_px": 26.414929719965833
+          },
+          "is_water": false,
+          "continent_id": 1,
+          "centroid": [
+            10697.376470588235,
+            3338.6823529411763
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4596 ≥ 0.35 threshold. E.Med / Levant coastal edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        },
+        {
+          "source_province_id": 2624,
+          "overlap_ratio": 0.397191,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "eastern_Mediterranean_Levant",
+          "nearest_city": {
+            "name": "Ahvaz",
+            "source_province_id": 2624,
+            "x": 10717.0,
+            "y": 3321.0,
+            "distance_px": 5.654180465725422
+          },
+          "is_water": false,
+          "continent_id": 1,
+          "centroid": [
+            10722.102564102564,
+            3323.4358974358975
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3972 ≥ 0.35 threshold. E.Med / Levant coastal edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        },
+        {
+          "source_province_id": 3507,
+          "overlap_ratio": 0.196543,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "eastern_Mediterranean_Levant",
+          "nearest_city": {
+            "name": "Anarak",
+            "source_province_id": 3507,
+            "x": 10963.0,
+            "y": 3204.0,
+            "distance_px": 47.33934195883799
+          },
+          "is_water": false,
+          "continent_id": 1,
+          "centroid": [
+            10922.203791469194,
+            3179.9857819905214
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1965 < 0.35 threshold. E.Med / Levant coastal edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        },
+        {
+          "source_province_id": 10577,
+          "overlap_ratio": 0.350714,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "eastern_Mediterranean_Levant",
+          "nearest_city": {
+            "name": "Moalleman",
+            "source_province_id": 10577,
+            "x": 11001.0,
+            "y": 3095.0,
+            "distance_px": 13.966507375865294
+          },
+          "is_water": false,
+          "continent_id": 1,
+          "centroid": [
+            10987.65034965035,
+            3099.104895104895
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3507 ≥ 0.35 threshold. E.Med / Levant coastal edge. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+        }
+      ]
+    },
+    "water_boundary": {
+      "count": 9,
+      "include_count": 3,
+      "exclude_count": 6,
+      "provinces": [
+        {
+          "source_province_id": 12037,
+          "overlap_ratio": 0.323875,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "water_boundary",
+          "nearest_city": {
+            "name": "Pori",
+            "source_province_id": 1443,
+            "x": 9408.0,
+            "y": 1144.0,
+            "distance_px": 23.700956689702693
+          },
+          "is_water": true,
+          "continent_id": 0,
+          "centroid": [
+            9388.741463414633,
+            1130.1853658536586
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3239 < 0.35 threshold. Water/sea province on mask perimeter. Water province. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 12180,
+          "overlap_ratio": 0.402984,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "water_boundary",
+          "nearest_city": {
+            "name": "Førde",
+            "source_province_id": 1024,
+            "x": 8631.0,
+            "y": 1146.0,
+            "distance_px": 2.365714602610881
+          },
+          "is_water": true,
+          "continent_id": 0,
+          "centroid": [
+            8633.271428571428,
+            1146.6612244897958
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4030 ≥ 0.35 threshold. Water/sea province on mask perimeter. Water province. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 12189,
+          "overlap_ratio": 0.241381,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "water_boundary",
+          "nearest_city": {
+            "name": "Hólmavík",
+            "source_province_id": 950,
+            "x": 7286.0,
+            "y": 789.0,
+            "distance_px": 61.17769927406558
+          },
+          "is_water": true,
+          "continent_id": 0,
+          "centroid": [
+            7224.954372623574,
+            793.0177439797212
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2414 < 0.35 threshold. Water/sea province on mask perimeter. Water province. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 12191,
+          "overlap_ratio": 0.29388,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "water_boundary",
+          "nearest_city": {
+            "name": "Höfn",
+            "source_province_id": 956,
+            "x": 7605.0,
+            "y": 915.0,
+            "distance_px": 14.378175458931015
+          },
+          "is_water": true,
+          "continent_id": 0,
+          "centroid": [
+            7590.720698254364,
+            916.6832917705735
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2939 < 0.35 threshold. Water/sea province on mask perimeter. Water province. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 12304,
+          "overlap_ratio": 0.450761,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "water_boundary",
+          "nearest_city": {
+            "name": "Quseer",
+            "source_province_id": 2698,
+            "x": 10014.0,
+            "y": 3638.0,
+            "distance_px": 9.64401550385555
+          },
+          "is_water": true,
+          "continent_id": 0,
+          "centroid": [
+            10023.471074380166,
+            3636.181818181818
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4508 ≥ 0.35 threshold. Water/sea province on mask perimeter. Water province. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 12910,
+          "overlap_ratio": 0.150037,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "water_boundary",
+          "nearest_city": {
+            "name": "Los Llanos",
+            "source_province_id": 11387,
+            "x": 7474.0,
+            "y": 3484.0,
+            "distance_px": 139.95377388098336
+          },
+          "is_water": true,
+          "continent_id": 0,
+          "centroid": [
+            7410.705882352941,
+            3359.176470588235
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1500 < 0.35 threshold. Water/sea province on mask perimeter. Water province. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 13076,
+          "overlap_ratio": 0.243474,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "water_boundary",
+          "nearest_city": {
+            "name": "Sneem",
+            "source_province_id": 6485,
+            "x": 7860.0,
+            "y": 1967.0,
+            "distance_px": 514.3419326911716
+          },
+          "is_water": true,
+          "continent_id": 0,
+          "centroid": [
+            7348.178571428572,
+            1916.142857142857
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2435 < 0.35 threshold. Water/sea province on mask perimeter. Water province. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 13131,
+          "overlap_ratio": 0.162392,
+          "algorithmic_recommendation": "exclude",
+          "owner_review_status": "pending",
+          "boundary_group": "water_boundary",
+          "nearest_city": {
+            "name": "Tórshavn",
+            "source_province_id": 914,
+            "x": 8014.0,
+            "y": 1103.0,
+            "distance_px": 2.002408886232589
+          },
+          "is_water": true,
+          "continent_id": 0,
+          "centroid": [
+            8013.481318681319,
+            1101.065934065934
+          ],
+          "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1624 < 0.35 threshold. Water/sea province on mask perimeter. Water province. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 13151,
+          "overlap_ratio": 0.400647,
+          "algorithmic_recommendation": "include",
+          "owner_review_status": "pending",
+          "boundary_group": "water_boundary",
+          "nearest_city": {
+            "name": "Stornoway",
+            "source_province_id": 897,
+            "x": 8032.0,
+            "y": 1422.0,
+            "distance_px": 308.6753263553659
+          },
+          "is_water": true,
+          "continent_id": 0,
+          "centroid": [
+            7733.615384615385,
+            1342.9615384615386
+          ],
+          "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4006 ≥ 0.35 threshold. Water/sea province on mask perimeter. Water province. Owner review still required.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        }
+      ]
+    }
+  },
+  "provinces": [
+    {
+      "source_province_id": 956,
+      "overlap_ratio": 0.213221,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "Iceland_Atlantic",
+      "nearest_city": {
+        "name": "Höfn",
+        "source_province_id": 956,
+        "x": 7605.0,
+        "y": 915.0,
+        "distance_px": 26.721336848553797
+      },
+      "is_water": false,
+      "continent_id": 2,
+      "centroid": [
+        7614.518987341772,
+        890.0316455696203
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2132 < 0.35 threshold. Atlantic/Iceland fringe boundary. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 1022,
+      "overlap_ratio": 0.330202,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "Scandinavia_northern_Russia",
+      "nearest_city": {
+        "name": "Dombås",
+        "source_province_id": 1022,
+        "x": 8791.0,
+        "y": 1098.0,
+        "distance_px": 24.142918244964296
+      },
+      "is_water": false,
+      "continent_id": 2,
+      "centroid": [
+        8772.437869822485,
+        1113.4378698224853
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3302 < 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 1024,
+      "overlap_ratio": 0.458904,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "Scandinavia_northern_Russia",
+      "nearest_city": {
+        "name": "Førde",
+        "source_province_id": 1024,
+        "x": 8631.0,
+        "y": 1146.0,
+        "distance_px": 21.285890868994116
+      },
+      "is_water": false,
+      "continent_id": 2,
+      "centroid": [
+        8624.511111111111,
+        1125.7272727272727
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4589 ≥ 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 1028,
+      "overlap_ratio": 0.477077,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "Scandinavia_northern_Russia",
+      "nearest_city": {
+        "name": "Idre",
+        "source_province_id": 1028,
+        "x": 8965.0,
+        "y": 1116.0,
+        "distance_px": 6.875405574514294
+      },
+      "is_water": false,
+      "continent_id": 2,
+      "centroid": [
+        8971.733333333334,
+        1117.3904761904762
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4771 ≥ 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 1044,
+      "overlap_ratio": 0.173157,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "Scandinavia_northern_Russia",
+      "nearest_city": {
+        "name": "Sveg",
+        "source_province_id": 1044,
+        "x": 9047.0,
+        "y": 1100.0,
+        "distance_px": 0.3914805102265318
+      },
+      "is_water": false,
+      "continent_id": 2,
+      "centroid": [
+        9046.689024390244,
+        1099.7621951219512
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1732 < 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 1448,
+      "overlap_ratio": 0.456842,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "Scandinavia_northern_Russia",
+      "nearest_city": {
+        "name": "Sastamala",
+        "source_province_id": 1448,
+        "x": 9463.0,
+        "y": 1157.0,
+        "distance_px": 14.513223839227978
+      },
+      "is_water": false,
+      "continent_id": 2,
+      "centroid": [
+        9476.568181818182,
+        1151.8484848484848
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4568 ≥ 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 1460,
+      "overlap_ratio": 0.202932,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "Scandinavia_northern_Russia",
+      "nearest_city": {
+        "name": "Kouvola",
+        "source_province_id": 1460,
+        "x": 9647.0,
+        "y": 1192.0,
+        "distance_px": 16.648364202196884
+      },
+      "is_water": false,
+      "continent_id": 2,
+      "centroid": [
+        9644.268041237114,
+        1175.5773195876288
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2029 < 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 2566,
+      "overlap_ratio": 0.247249,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "eastern_Mediterranean_Levant",
+      "nearest_city": {
+        "name": "Feryak",
+        "source_province_id": 2566,
+        "x": 10797.0,
+        "y": 3266.0,
+        "distance_px": 2.7226060487074966
+      },
+      "is_water": false,
+      "continent_id": 1,
+      "centroid": [
+        10799.567010309278,
+        3266.907216494845
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2472 < 0.35 threshold. E.Med / Levant coastal edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+    },
+    {
+      "source_province_id": 2611,
+      "overlap_ratio": 0.209703,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "eastern_Mediterranean_Levant",
+      "nearest_city": {
+        "name": "Sidra",
+        "source_province_id": 2611,
+        "x": 10646.0,
+        "y": 3369.0,
+        "distance_px": 10.774157784513507
+      },
+      "is_water": false,
+      "continent_id": 1,
+      "centroid": [
+        10642.402597402597,
+        3379.155844155844
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2097 < 0.35 threshold. E.Med / Levant coastal edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+    },
+    {
+      "source_province_id": 2623,
+      "overlap_ratio": 0.459581,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "eastern_Mediterranean_Levant",
+      "nearest_city": {
+        "name": "Ahvaz",
+        "source_province_id": 2624,
+        "x": 10717.0,
+        "y": 3321.0,
+        "distance_px": 26.414929719965833
+      },
+      "is_water": false,
+      "continent_id": 1,
+      "centroid": [
+        10697.376470588235,
+        3338.6823529411763
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4596 ≥ 0.35 threshold. E.Med / Levant coastal edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+    },
+    {
+      "source_province_id": 2624,
+      "overlap_ratio": 0.397191,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "eastern_Mediterranean_Levant",
+      "nearest_city": {
+        "name": "Ahvaz",
+        "source_province_id": 2624,
+        "x": 10717.0,
+        "y": 3321.0,
+        "distance_px": 5.654180465725422
+      },
+      "is_water": false,
+      "continent_id": 1,
+      "centroid": [
+        10722.102564102564,
+        3323.4358974358975
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3972 ≥ 0.35 threshold. E.Med / Levant coastal edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+    },
+    {
+      "source_province_id": 2693,
+      "overlap_ratio": 0.162704,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "North_Africa",
+      "nearest_city": {
+        "name": "Esna",
+        "source_province_id": 2678,
+        "x": 9930.0,
+        "y": 3688.0,
+        "distance_px": 21.850111369390532
+      },
+      "is_water": false,
+      "continent_id": 6,
+      "centroid": [
+        9949.094488188977,
+        3677.3779527559054
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1627 < 0.35 threshold. North African coastal depth edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+    },
+    {
+      "source_province_id": 2698,
+      "overlap_ratio": 0.448186,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "North_Africa",
+      "nearest_city": {
+        "name": "Quseer",
+        "source_province_id": 2698,
+        "x": 10014.0,
+        "y": 3638.0,
+        "distance_px": 17.999825378106657
+      },
+      "is_water": false,
+      "continent_id": 6,
+      "centroid": [
+        9996.869863013699,
+        3643.527397260274
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4482 ≥ 0.35 threshold. North African coastal depth edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+    },
+    {
+      "source_province_id": 3003,
+      "overlap_ratio": 0.418355,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "Scandinavia_northern_Russia",
+      "nearest_city": {
+        "name": "Hudiksvall",
+        "source_province_id": 3003,
+        "x": 9177.0,
+        "y": 1124.0,
+        "distance_px": 11.528919674980099
+      },
+      "is_water": false,
+      "continent_id": 2,
+      "centroid": [
+        9165.502304147465,
+        1123.152073732719
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4184 ≥ 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 3507,
+      "overlap_ratio": 0.196543,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "eastern_Mediterranean_Levant",
+      "nearest_city": {
+        "name": "Anarak",
+        "source_province_id": 3507,
+        "x": 10963.0,
+        "y": 3204.0,
+        "distance_px": 47.33934195883799
+      },
+      "is_water": false,
+      "continent_id": 1,
+      "centroid": [
+        10922.203791469194,
+        3179.9857819905214
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1965 < 0.35 threshold. E.Med / Levant coastal edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+    },
+    {
+      "source_province_id": 3736,
+      "overlap_ratio": 0.30503,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "Scandinavia_northern_Russia",
+      "nearest_city": {
+        "name": "Vyborg",
+        "source_province_id": 3736,
+        "x": 9749.0,
+        "y": 1204.0,
+        "distance_px": 9.356062488790675
+      },
+      "is_water": false,
+      "continent_id": 2,
+      "centroid": [
+        9739.682170542636,
+        1204.84496124031
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3050 < 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 4347,
+      "overlap_ratio": 0.358378,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "North_Africa",
+      "nearest_city": {
+        "name": "Qatrun",
+        "source_province_id": 4788,
+        "x": 9019.0,
+        "y": 3723.0,
+        "distance_px": 57.09032702137547
+      },
+      "is_water": false,
+      "continent_id": 6,
+      "centroid": [
+        9075.751072961373,
+        3716.785407725322
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3584 ≥ 0.35 threshold. North African coastal depth edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+    },
+    {
+      "source_province_id": 4399,
+      "overlap_ratio": 0.444545,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "North_Africa",
+      "nearest_city": {
+        "name": "Miseri",
+        "source_province_id": 4399,
+        "x": 9710.0,
+        "y": 3682.0,
+        "distance_px": 35.75718362573853
+      },
+      "is_water": false,
+      "continent_id": 6,
+      "centroid": [
+        9674.731707317073,
+        3687.8926829268294
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4445 ≥ 0.35 threshold. North African coastal depth edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+    },
+    {
+      "source_province_id": 4405,
+      "overlap_ratio": 0.377971,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "North_Africa",
+      "nearest_city": {
+        "name": "Tunaydah",
+        "source_province_id": 4405,
+        "x": 9773.0,
+        "y": 3670.0,
+        "distance_px": 22.63991643815223
+      },
+      "is_water": false,
+      "continent_id": 6,
+      "centroid": [
+        9794.65,
+        3676.6214285714286
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3780 ≥ 0.35 threshold. North African coastal depth edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+    },
+    {
+      "source_province_id": 4962,
+      "overlap_ratio": 0.301425,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "North_Africa",
+      "nearest_city": {
+        "name": "Tamdjert",
+        "source_province_id": 4966,
+        "x": 8701.0,
+        "y": 3666.0,
+        "distance_px": 61.98804272608515
+      },
+      "is_water": false,
+      "continent_id": 6,
+      "centroid": [
+        8640.457264957266,
+        3679.3076923076924
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3014 < 0.35 threshold. North African coastal depth edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+    },
+    {
+      "source_province_id": 4965,
+      "overlap_ratio": 0.337866,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "North_Africa",
+      "nearest_city": {
+        "name": "Bordj",
+        "source_province_id": 4965,
+        "x": 8757.0,
+        "y": 3706.0,
+        "distance_px": 30.254992188889936
+      },
+      "is_water": false,
+      "continent_id": 6,
+      "centroid": [
+        8777.65243902439,
+        3683.890243902439
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3379 < 0.35 threshold. North African coastal depth edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+    },
+    {
+      "source_province_id": 4999,
+      "overlap_ratio": 0.25761,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "Scandinavia_northern_Russia",
+      "nearest_city": {
+        "name": "Sastamala",
+        "source_province_id": 1448,
+        "x": 9463.0,
+        "y": 1157.0,
+        "distance_px": 30.913632074721004
+      },
+      "is_water": false,
+      "continent_id": 2,
+      "centroid": [
+        9443.489510489511,
+        1133.020979020979
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2576 < 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 5014,
+      "overlap_ratio": 0.191862,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "North_Africa",
+      "nearest_city": {
+        "name": "Léry",
+        "source_province_id": 5014,
+        "x": 9294.0,
+        "y": 3738.0,
+        "distance_px": 37.296994945237124
+      },
+      "is_water": false,
+      "continent_id": 6,
+      "centroid": [
+        9258.892857142857,
+        3725.408163265306
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1919 < 0.35 threshold. North African coastal depth edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+    },
+    {
+      "source_province_id": 5020,
+      "overlap_ratio": 0.191485,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "North_Africa",
+      "nearest_city": {
+        "name": "Léboto",
+        "source_province_id": 5020,
+        "x": 9484.0,
+        "y": 3699.0,
+        "distance_px": 35.54049696132171
+      },
+      "is_water": false,
+      "continent_id": 6,
+      "centroid": [
+        9508.066225165563,
+        3725.1523178807947
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1915 < 0.35 threshold. North African coastal depth edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+    },
+    {
+      "source_province_id": 5028,
+      "overlap_ratio": 0.264159,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "North_Africa",
+      "nearest_city": {
+        "name": "Kougo",
+        "source_province_id": 5028,
+        "x": 8195.0,
+        "y": 3585.0,
+        "distance_px": 47.815298404399
+      },
+      "is_water": false,
+      "continent_id": 6,
+      "centroid": [
+        8195.875,
+        3632.8072916666665
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2642 < 0.35 threshold. North African coastal depth edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+    },
+    {
+      "source_province_id": 6091,
+      "overlap_ratio": 0.460428,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "North_Africa",
+      "nearest_city": {
+        "name": "Hegra",
+        "source_province_id": 6091,
+        "x": 10196.0,
+        "y": 3573.0,
+        "distance_px": 13.101559538009528
+      },
+      "is_water": false,
+      "continent_id": 1,
+      "centroid": [
+        10209.093023255815,
+        3573.4728682170544
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4604 ≥ 0.35 threshold. North African coastal depth edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+    },
+    {
+      "source_province_id": 6162,
+      "overlap_ratio": 0.353909,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "North_Africa",
+      "nearest_city": {
+        "name": "Hail",
+        "source_province_id": 6162,
+        "x": 10379.0,
+        "y": 3535.0,
+        "distance_px": 11.439678563687778
+      },
+      "is_water": false,
+      "continent_id": 1,
+      "centroid": [
+        10372.339805825242,
+        3525.6990291262136
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3539 ≥ 0.35 threshold. North African coastal depth edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+    },
+    {
+      "source_province_id": 6163,
+      "overlap_ratio": 0.215619,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "North_Africa",
+      "nearest_city": {
+        "name": "Ash Shamli",
+        "source_province_id": 6163,
+        "x": 10309.0,
+        "y": 3571.0,
+        "distance_px": 11.803089585430989
+      },
+      "is_water": false,
+      "continent_id": 1,
+      "centroid": [
+        10298.647482014389,
+        3565.3309352517986
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2156 < 0.35 threshold. North African coastal depth edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+    },
+    {
+      "source_province_id": 6632,
+      "overlap_ratio": 0.459787,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "Scandinavia_northern_Russia",
+      "nearest_city": {
+        "name": "Engerdal",
+        "source_province_id": 6632,
+        "x": 8929.0,
+        "y": 1127.0,
+        "distance_px": 26.725798260911752
+      },
+      "is_water": false,
+      "continent_id": 2,
+      "centroid": [
+        8903.585365853658,
+        1118.7317073170732
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4598 ≥ 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 6676,
+      "overlap_ratio": 0.168188,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "Scandinavia_northern_Russia",
+      "nearest_city": {
+        "name": "Orivesi",
+        "source_province_id": 1450,
+        "x": 9533.0,
+        "y": 1128.0,
+        "distance_px": 19.75105208014579
+      },
+      "is_water": false,
+      "continent_id": 2,
+      "centroid": [
+        9529.225806451614,
+        1147.3870967741937
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1682 < 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 6683,
+      "overlap_ratio": 0.312,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "eastern_Russia",
+      "nearest_city": {
+        "name": "Gryazovets",
+        "source_province_id": 6683,
+        "x": 10306.0,
+        "y": 1364.0,
+        "distance_px": 14.564512564963083
+      },
+      "is_water": false,
+      "continent_id": 2,
+      "centroid": [
+        10319.949275362318,
+        1368.1884057971015
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3120 < 0.35 threshold. Eastern Russian depth edge beyond Donbas approaches. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 6850,
+      "overlap_ratio": 0.239338,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "Iceland_Atlantic",
+      "nearest_city": {
+        "name": "Bakkafjörður",
+        "source_province_id": 6850,
+        "x": 7622.0,
+        "y": 765.0,
+        "distance_px": 19.706065388658615
+      },
+      "is_water": false,
+      "continent_id": 2,
+      "centroid": [
+        7602.635922330097,
+        761.3446601941747
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2393 < 0.35 threshold. Atlantic/Iceland fringe boundary. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 10577,
+      "overlap_ratio": 0.350714,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "eastern_Mediterranean_Levant",
+      "nearest_city": {
+        "name": "Moalleman",
+        "source_province_id": 10577,
+        "x": 11001.0,
+        "y": 3095.0,
+        "distance_px": 13.966507375865294
+      },
+      "is_water": false,
+      "continent_id": 1,
+      "centroid": [
+        10987.65034965035,
+        3099.104895104895
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3507 ≥ 0.35 threshold. E.Med / Levant coastal edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+    },
+    {
+      "source_province_id": 10587,
+      "overlap_ratio": 0.306482,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "Caucasus",
+      "nearest_city": {
+        "name": "Turtkul",
+        "source_province_id": 10587,
+        "x": 11319.0,
+        "y": 2701.0,
+        "distance_px": 38.59668887212855
+      },
+      "is_water": false,
+      "continent_id": 1,
+      "centroid": [
+        11316.797297297297,
+        2662.4662162162163
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3065 < 0.35 threshold. Caucasus / SE theatre edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
+    },
+    {
+      "source_province_id": 10851,
+      "overlap_ratio": 0.319198,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "Caucasus",
+      "nearest_city": {
+        "name": "Yasny",
+        "source_province_id": 10851,
+        "x": 11261.0,
+        "y": 2032.0,
+        "distance_px": 13.588718088148418
+      },
+      "is_water": false,
+      "continent_id": 1,
+      "centroid": [
+        11264.617486338799,
+        2018.9016393442623
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3192 < 0.35 threshold. Caucasus / SE theatre edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
+    },
+    {
+      "source_province_id": 10857,
+      "overlap_ratio": 0.464787,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "eastern_Russia",
+      "nearest_city": {
+        "name": "Naberezhnye Chelny",
+        "source_province_id": 10857,
+        "x": 10901.0,
+        "y": 1648.0,
+        "distance_px": 34.36464157098955
+      },
+      "is_water": false,
+      "continent_id": 2,
+      "centroid": [
+        10934.132183908046,
+        1657.1206896551723
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4648 ≥ 0.35 threshold. Eastern Russian depth edge beyond Donbas approaches. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 10915,
+      "overlap_ratio": 0.385635,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "eastern_Russia",
+      "nearest_city": {
+        "name": "Morty",
+        "source_province_id": 10915,
+        "x": 10866.0,
+        "y": 1642.0,
+        "distance_px": 27.752406526001103
+      },
+      "is_water": false,
+      "continent_id": 2,
+      "centroid": [
+        10881.744525547445,
+        1619.14598540146
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3856 ≥ 0.35 threshold. Eastern Russian depth edge beyond Donbas approaches. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 10919,
+      "overlap_ratio": 0.498804,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "Caucasus",
+      "nearest_city": {
+        "name": "Orsk",
+        "source_province_id": 10919,
+        "x": 11196.0,
+        "y": 2013.0,
+        "distance_px": 51.473577663990454
+      },
+      "is_water": false,
+      "continent_id": 1,
+      "centroid": [
+        11225.75,
+        1970.9944444444445
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4988 ≥ 0.35 threshold. Caucasus / SE theatre edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
+    },
+    {
+      "source_province_id": 11170,
+      "overlap_ratio": 0.391779,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "eastern_Russia",
+      "nearest_city": {
+        "name": "Yaransk",
+        "source_province_id": 11170,
+        "x": 10680.0,
+        "y": 1508.0,
+        "distance_px": 10.251686937689998
+      },
+      "is_water": false,
+      "continent_id": 2,
+      "centroid": [
+        10675.2,
+        1498.9414634146342
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.3918 ≥ 0.35 threshold. Eastern Russian depth edge beyond Donbas approaches. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 11177,
+      "overlap_ratio": 0.156284,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "Caucasus",
+      "nearest_city": {
+        "name": "Ayteke Bi",
+        "source_province_id": 11177,
+        "x": 11376.0,
+        "y": 2409.0,
+        "distance_px": 33.82403791717659
+      },
+      "is_water": false,
+      "continent_id": 1,
+      "centroid": [
+        11382.710344827587,
+        2375.848275862069
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1563 < 0.35 threshold. Caucasus / SE theatre edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
+    },
+    {
+      "source_province_id": 11180,
+      "overlap_ratio": 0.273596,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "Caucasus",
+      "nearest_city": {
+        "name": "Karabutak",
+        "source_province_id": 11180,
+        "x": 11275.0,
+        "y": 2113.0,
+        "distance_px": 53.56262110682621
+      },
+      "is_water": false,
+      "continent_id": 1,
+      "centroid": [
+        11326.896341463415,
+        2099.743902439024
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2736 < 0.35 threshold. Caucasus / SE theatre edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
+    },
+    {
+      "source_province_id": 11323,
+      "overlap_ratio": 0.458783,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "eastern_Russia",
+      "nearest_city": {
+        "name": "Tuymazy",
+        "source_province_id": 11323,
+        "x": 10962.0,
+        "y": 1742.0,
+        "distance_px": 42.87168759954698
+      },
+      "is_water": false,
+      "continent_id": 2,
+      "centroid": [
+        10986.115384615385,
+        1706.553846153846
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4588 ≥ 0.35 threshold. Eastern Russian depth edge beyond Donbas approaches. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 11355,
+      "overlap_ratio": 0.234072,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "Scandinavia_northern_Russia",
+      "nearest_city": {
+        "name": "Kaduy",
+        "source_province_id": 11355,
+        "x": 10153.0,
+        "y": 1331.0,
+        "distance_px": 28.999513884814625
+      },
+      "is_water": false,
+      "continent_id": 2,
+      "centroid": [
+        10145.608333333334,
+        1302.9583333333333
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2341 < 0.35 threshold. Northern Scandinavian / N-Russia mask edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 11385,
+      "overlap_ratio": 0.480695,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "North_Africa",
+      "nearest_city": {
+        "name": "Corralejo",
+        "source_province_id": 11385,
+        "x": 7664.0,
+        "y": 3502.0,
+        "distance_px": 10.98200548371986
+      },
+      "is_water": false,
+      "continent_id": 6,
+      "centroid": [
+        7654.4,
+        3496.6666666666665
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4807 ≥ 0.35 threshold. North African coastal depth edge. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+    },
+    {
+      "source_province_id": 11689,
+      "overlap_ratio": 0.435422,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "eastern_Russia",
+      "nearest_city": {
+        "name": "Galich",
+        "source_province_id": 11689,
+        "x": 10485.0,
+        "y": 1417.0,
+        "distance_px": 32.07117505151597
+      },
+      "is_water": false,
+      "continent_id": 2,
+      "centroid": [
+        10453.012195121952,
+        1414.689024390244
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4354 ≥ 0.35 threshold. Eastern Russian depth edge beyond Donbas approaches. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 11690,
+      "overlap_ratio": 0.278838,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "eastern_Russia",
+      "nearest_city": {
+        "name": "Buy",
+        "source_province_id": 11690,
+        "x": 10369.0,
+        "y": 1399.0,
+        "distance_px": 32.094675724745315
+      },
+      "is_water": false,
+      "continent_id": 2,
+      "centroid": [
+        10385.105555555556,
+        1371.2388888888888
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2788 < 0.35 threshold. Eastern Russian depth edge beyond Donbas approaches. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 12037,
+      "overlap_ratio": 0.323875,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "water_boundary",
+      "nearest_city": {
+        "name": "Pori",
+        "source_province_id": 1443,
+        "x": 9408.0,
+        "y": 1144.0,
+        "distance_px": 23.700956689702693
+      },
+      "is_water": true,
+      "continent_id": 0,
+      "centroid": [
+        9388.741463414633,
+        1130.1853658536586
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.3239 < 0.35 threshold. Water/sea province on mask perimeter. Water province. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 12180,
+      "overlap_ratio": 0.402984,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "water_boundary",
+      "nearest_city": {
+        "name": "Førde",
+        "source_province_id": 1024,
+        "x": 8631.0,
+        "y": 1146.0,
+        "distance_px": 2.365714602610881
+      },
+      "is_water": true,
+      "continent_id": 0,
+      "centroid": [
+        8633.271428571428,
+        1146.6612244897958
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4030 ≥ 0.35 threshold. Water/sea province on mask perimeter. Water province. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 12189,
+      "overlap_ratio": 0.241381,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "water_boundary",
+      "nearest_city": {
+        "name": "Hólmavík",
+        "source_province_id": 950,
+        "x": 7286.0,
+        "y": 789.0,
+        "distance_px": 61.17769927406558
+      },
+      "is_water": true,
+      "continent_id": 0,
+      "centroid": [
+        7224.954372623574,
+        793.0177439797212
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2414 < 0.35 threshold. Water/sea province on mask perimeter. Water province. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 12191,
+      "overlap_ratio": 0.29388,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "water_boundary",
+      "nearest_city": {
+        "name": "Höfn",
+        "source_province_id": 956,
+        "x": 7605.0,
+        "y": 915.0,
+        "distance_px": 14.378175458931015
+      },
+      "is_water": true,
+      "continent_id": 0,
+      "centroid": [
+        7590.720698254364,
+        916.6832917705735
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2939 < 0.35 threshold. Water/sea province on mask perimeter. Water province. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 12304,
+      "overlap_ratio": 0.450761,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "water_boundary",
+      "nearest_city": {
+        "name": "Quseer",
+        "source_province_id": 2698,
+        "x": 10014.0,
+        "y": 3638.0,
+        "distance_px": 9.64401550385555
+      },
+      "is_water": true,
+      "continent_id": 0,
+      "centroid": [
+        10023.471074380166,
+        3636.181818181818
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4508 ≥ 0.35 threshold. Water/sea province on mask perimeter. Water province. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 12910,
+      "overlap_ratio": 0.150037,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "water_boundary",
+      "nearest_city": {
+        "name": "Los Llanos",
+        "source_province_id": 11387,
+        "x": 7474.0,
+        "y": 3484.0,
+        "distance_px": 139.95377388098336
+      },
+      "is_water": true,
+      "continent_id": 0,
+      "centroid": [
+        7410.705882352941,
+        3359.176470588235
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1500 < 0.35 threshold. Water/sea province on mask perimeter. Water province. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 13076,
+      "overlap_ratio": 0.243474,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "water_boundary",
+      "nearest_city": {
+        "name": "Sneem",
+        "source_province_id": 6485,
+        "x": 7860.0,
+        "y": 1967.0,
+        "distance_px": 514.3419326911716
+      },
+      "is_water": true,
+      "continent_id": 0,
+      "centroid": [
+        7348.178571428572,
+        1916.142857142857
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.2435 < 0.35 threshold. Water/sea province on mask perimeter. Water province. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 13131,
+      "overlap_ratio": 0.162392,
+      "algorithmic_recommendation": "exclude",
+      "owner_review_status": "pending",
+      "boundary_group": "water_boundary",
+      "nearest_city": {
+        "name": "Tórshavn",
+        "source_province_id": 914,
+        "x": 8014.0,
+        "y": 1103.0,
+        "distance_px": 2.002408886232589
+      },
+      "is_water": true,
+      "continent_id": 0,
+      "centroid": [
+        8013.481318681319,
+        1101.065934065934
+      ],
+      "geographic_reason": "Algorithmic recommendation: exclude because overlap_ratio=0.1624 < 0.35 threshold. Water/sea province on mask perimeter. Water province. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 13151,
+      "overlap_ratio": 0.400647,
+      "algorithmic_recommendation": "include",
+      "owner_review_status": "pending",
+      "boundary_group": "water_boundary",
+      "nearest_city": {
+        "name": "Stornoway",
+        "source_province_id": 897,
+        "x": 8032.0,
+        "y": 1422.0,
+        "distance_px": 308.6753263553659
+      },
+      "is_water": true,
+      "continent_id": 0,
+      "centroid": [
+        7733.615384615385,
+        1342.9615384615386
+      ],
+      "geographic_reason": "Algorithmic recommendation: include because overlap_ratio=0.4006 ≥ 0.35 threshold. Water/sea province on mask perimeter. Water province. Owner review still required.",
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    }
+  ]
+}

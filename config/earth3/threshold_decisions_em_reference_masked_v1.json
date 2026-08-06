@@ -7,7 +7,7 @@
     0.15,
     0.5
   ],
-  "decision_rule": "For each threshold-band province, freeze the automatic outcome: include if ratio>=threshold (or already included), else exclude. Recorded as explicit overrides so the band is empty after apply.",
+  "decision_rule": "Algorithmic recommendation only: freeze automatic threshold outcome (include if ratio>=0.35 else exclude). Explicit overrides clear the band. Owner boundary review is still pending (see BOUNDARY_REVIEW.md).",
   "include_ids": [
     1024,
     1028,
@@ -728,5 +728,6 @@
       "is_water": true,
       "continent_id": 0
     }
-  ]
+  ],
+  "owner_review_status": "pending"
 }

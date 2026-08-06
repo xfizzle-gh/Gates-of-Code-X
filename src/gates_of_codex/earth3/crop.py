@@ -204,6 +204,10 @@ def load_crop_candidates(path: str | Path) -> list[CropCandidate]:
 def apply_crop(dataset: Earth3Dataset, candidate: CropCandidate) -> CropResult:
     """Include whole polygons only. Never clip province rings."""
     if candidate.uses_mask:
+        # Fail closed if Shapely is missing — never silently fall back.
+        from .geometry import require_authoritative_geometry_engine
+
+        require_authoritative_geometry_engine()
         return _apply_mask_overlap_crop(dataset, candidate)
     return _apply_rect_centroid_crop(dataset, candidate)
 
