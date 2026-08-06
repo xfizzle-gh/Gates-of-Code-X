@@ -2,7 +2,7 @@
   "schema": "gates-of-codex.earth3-boundary-review",
   "schema_version": 3,
   "candidate_id": "em_reference_masked",
-  "status": "approved",
+  "status": "pending_owner_visual_approval",
   "note": "Boundary threshold-band provinces carry explicit owner include/exclude decisions. Grouping uses reviewed Earth3 city anchors and basin labels (Turkey/northern Levant is not North Africa; deep Sahara and Madeira water excluded).",
   "decision_count": 49,
   "groups": {
@@ -16,8 +16,8 @@
           "overlap_ratio": 0.302649,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3026; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3026; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "Europe_Scandinavia",
           "nearest_city": {
             "name": "Dombås",
@@ -33,7 +33,7 @@
             8772.437869822485,
             1113.4378698224853
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3026; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3026; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -41,8 +41,8 @@
           "overlap_ratio": 0.349181,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3492; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3492; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "Europe_Scandinavia",
           "nearest_city": {
             "name": "Førde",
@@ -58,7 +58,7 @@
             8624.511111111111,
             1125.7272727272727
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3492; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3492; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -66,8 +66,8 @@
           "overlap_ratio": 0.477077,
           "algorithmic_recommendation": "include",
           "owner_decision": "include",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4771; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4771; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "boundary_group": "Europe_Scandinavia",
           "nearest_city": {
             "name": "Idre",
@@ -83,7 +83,7 @@
             8971.733333333334,
             1117.3904761904762
           ],
-          "geographic_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4771; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4771; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -91,8 +91,8 @@
           "overlap_ratio": 0.173157,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.1732; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.1732; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "Europe_Scandinavia",
           "nearest_city": {
             "name": "Sveg",
@@ -108,7 +108,7 @@
             9046.689024390244,
             1099.7621951219512
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.1732; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.1732; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -116,8 +116,8 @@
           "overlap_ratio": 0.241613,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.2416; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.2416; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "Europe_Scandinavia",
           "nearest_city": {
             "name": "Hämeenlinna",
@@ -133,7 +133,7 @@
             9554.488095238095,
             1179.9166666666667
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.2416; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.2416; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -141,8 +141,8 @@
           "overlap_ratio": 0.362911,
           "algorithmic_recommendation": "include",
           "owner_decision": "include",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3629; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3629; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "boundary_group": "Europe_Scandinavia",
           "nearest_city": {
             "name": "Hudiksvall",
@@ -158,7 +158,7 @@
             9165.502304147465,
             1123.152073732719
           ],
-          "geographic_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3629; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3629; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -166,8 +166,8 @@
           "overlap_ratio": 0.328087,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3281; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3281; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "Europe_Scandinavia",
           "nearest_city": {
             "name": "Volkhov",
@@ -183,7 +183,7 @@
             9896.297101449276,
             1264.5144927536232
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3281; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3281; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -191,8 +191,8 @@
           "overlap_ratio": 0.459787,
           "algorithmic_recommendation": "include",
           "owner_decision": "include",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4598; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4598; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "boundary_group": "Europe_Scandinavia",
           "nearest_city": {
             "name": "Engerdal",
@@ -208,7 +208,7 @@
             8903.585365853658,
             1118.7317073170732
           ],
-          "geographic_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4598; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4598; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         }
       ]
@@ -223,8 +223,8 @@
           "overlap_ratio": 0.283183,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2832; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2832; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "western_Russia",
           "nearest_city": {
             "name": "Novo",
@@ -240,7 +240,7 @@
             10231.320388349515,
             1501.6504854368932
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2832; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2832; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -248,8 +248,8 @@
           "overlap_ratio": 0.430292,
           "algorithmic_recommendation": "include",
           "owner_decision": "include",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved include: boundary province group=western_Russia; raw/threshold ratio=0.4303; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval include: boundary province group=western_Russia; raw/threshold ratio=0.4303; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "boundary_group": "western_Russia",
           "nearest_city": {
             "name": "Gubachevo",
@@ -265,7 +265,7 @@
             10142.373626373626,
             1412.1868131868132
           ],
-          "geographic_reason": "Owner-approved include: boundary province group=western_Russia; raw/threshold ratio=0.4303; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval include: boundary province group=western_Russia; raw/threshold ratio=0.4303; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -273,8 +273,8 @@
           "overlap_ratio": 0.295566,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2956; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2956; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "western_Russia",
           "nearest_city": {
             "name": "Uglich",
@@ -290,7 +290,7 @@
             10206.776470588235,
             1469.2823529411764
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2956; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2956; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -298,8 +298,8 @@
           "overlap_ratio": 0.187533,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.1875; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.1875; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "western_Russia",
           "nearest_city": {
             "name": "Sima",
@@ -315,7 +315,7 @@
             10287.584,
             1561.8
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.1875; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.1875; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -323,8 +323,8 @@
           "overlap_ratio": 0.303062,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.3031; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.3031; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "western_Russia",
           "nearest_city": {
             "name": "Ilovlya",
@@ -340,7 +340,7 @@
             10499.801652892562,
             2140.8512396694214
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.3031; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.3031; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -348,8 +348,8 @@
           "overlap_ratio": 0.33461,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.3346; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.3346; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "western_Russia",
           "nearest_city": {
             "name": "Mirnyy",
@@ -365,7 +365,7 @@
             10536.95,
             2275.3166666666666
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.3346; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.3346; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -373,8 +373,8 @@
           "overlap_ratio": 0.233257,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2333; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2333; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "western_Russia",
           "nearest_city": {
             "name": "Sudogda",
@@ -390,7 +390,7 @@
             10333.166666666666,
             1650.7962962962963
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2333; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2333; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -398,8 +398,8 @@
           "overlap_ratio": 0.27535,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2753; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2753; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "western_Russia",
           "nearest_city": {
             "name": "Arkadak",
@@ -415,7 +415,7 @@
             10448.164835164835,
             1957.4835164835165
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2753; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2753; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -423,8 +423,8 @@
           "overlap_ratio": 0.222925,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2229; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2229; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "western_Russia",
           "nearest_city": {
             "name": "Balashov",
@@ -440,7 +440,7 @@
             10466.184782608696,
             1998.7282608695652
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2229; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2229; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -448,8 +448,8 @@
           "overlap_ratio": 0.294908,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2949; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2949; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "western_Russia",
           "nearest_city": {
             "name": "Kasimov",
@@ -465,7 +465,7 @@
             10356.268041237114,
             1709.979381443299
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2949; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2949; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         }
       ]
@@ -480,8 +480,8 @@
           "overlap_ratio": 0.402385,
           "algorithmic_recommendation": "include",
           "owner_decision": "include",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved include: boundary province group=Caucasus; raw/threshold ratio=0.4024; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval include: boundary province group=Caucasus; raw/threshold ratio=0.4024; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "boundary_group": "Caucasus",
           "nearest_city": {
             "name": "Lagan",
@@ -497,7 +497,7 @@
             10630.239130434782,
             2419.8695652173915
           ],
-          "geographic_reason": "Owner-approved include: boundary province group=Caucasus; raw/threshold ratio=0.4024; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval include: boundary province group=Caucasus; raw/threshold ratio=0.4024; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
         }
       ]
@@ -512,8 +512,8 @@
           "overlap_ratio": 0.352565,
           "algorithmic_recommendation": "include",
           "owner_decision": "include",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.3526; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.3526; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "boundary_group": "Turkey_northern_Levant",
           "nearest_city": {
             "name": "Viranşehir",
@@ -529,7 +529,7 @@
             10270.466666666667,
             2953.141666666667
           ],
-          "geographic_reason": "Owner-approved include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.3526; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.3526; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
@@ -537,8 +537,8 @@
           "overlap_ratio": 0.416138,
           "algorithmic_recommendation": "include",
           "owner_decision": "include",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.4161; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.4161; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "boundary_group": "Turkey_northern_Levant",
           "nearest_city": {
             "name": "Şanliurfa",
@@ -554,7 +554,7 @@
             10230.896,
             2973.472
           ],
-          "geographic_reason": "Owner-approved include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.4161; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.4161; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
@@ -562,8 +562,8 @@
           "overlap_ratio": 0.251231,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.2512; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.2512; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "Turkey_northern_Levant",
           "nearest_city": {
             "name": "Köprübaşi",
@@ -579,7 +579,7 @@
             10338.525925925926,
             2904.0296296296297
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.2512; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.2512; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
@@ -587,8 +587,8 @@
           "overlap_ratio": 0.183715,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.1837; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.1837; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "Turkey_northern_Levant",
           "nearest_city": {
             "name": "Manbij",
@@ -604,7 +604,7 @@
             10200.723214285714,
             3029.839285714286
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.1837; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.1837; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         }
       ]
@@ -619,8 +619,8 @@
           "overlap_ratio": 0.169232,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=Egypt_Sinai; raw/threshold ratio=0.1692; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=Egypt_Sinai; raw/threshold ratio=0.1692; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "Egypt_Sinai",
           "nearest_city": {
             "name": "Faiyum",
@@ -636,7 +636,7 @@
             9852.018181818183,
             3444.418181818182
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=Egypt_Sinai; raw/threshold ratio=0.1692; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=Egypt_Sinai; raw/threshold ratio=0.1692; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
@@ -644,8 +644,8 @@
           "overlap_ratio": 0.444845,
           "algorithmic_recommendation": "include",
           "owner_decision": "include",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.4448; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.4448; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "boundary_group": "Egypt_Sinai",
           "nearest_city": {
             "name": "Adabiya",
@@ -661,7 +661,7 @@
             9919.338983050848,
             3411.406779661017
           ],
-          "geographic_reason": "Owner-approved include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.4448; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.4448; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
@@ -669,8 +669,8 @@
           "overlap_ratio": 0.393929,
           "algorithmic_recommendation": "include",
           "owner_decision": "include",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.3939; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.3939; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "boundary_group": "Egypt_Sinai",
           "nearest_city": {
             "name": "El Qantara",
@@ -686,7 +686,7 @@
             9947.960784313726,
             3373.4313725490197
           ],
-          "geographic_reason": "Owner-approved include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.3939; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.3939; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         }
       ]
@@ -701,8 +701,8 @@
           "overlap_ratio": 0.368744,
           "algorithmic_recommendation": "include",
           "owner_decision": "include",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved include: boundary province group=North_African_coast; raw/threshold ratio=0.3687; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval include: boundary province group=North_African_coast; raw/threshold ratio=0.3687; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "boundary_group": "North_African_coast",
           "nearest_city": {
             "name": "Awjilah",
@@ -718,7 +718,7 @@
             9380.059210526315,
             3419.4736842105262
           ],
-          "geographic_reason": "Owner-approved include: boundary province group=North_African_coast; raw/threshold ratio=0.3687; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval include: boundary province group=North_African_coast; raw/threshold ratio=0.3687; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
@@ -726,8 +726,8 @@
           "overlap_ratio": 0.473793,
           "algorithmic_recommendation": "include",
           "owner_decision": "include",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved include: boundary province group=North_African_coast; raw/threshold ratio=0.4738; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval include: boundary province group=North_African_coast; raw/threshold ratio=0.4738; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "boundary_group": "North_African_coast",
           "nearest_city": {
             "name": "Ash Shwayrif",
@@ -743,7 +743,7 @@
             9010.888235294118,
             3401.1588235294116
           ],
-          "geographic_reason": "Owner-approved include: boundary province group=North_African_coast; raw/threshold ratio=0.4738; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval include: boundary province group=North_African_coast; raw/threshold ratio=0.4738; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
@@ -751,8 +751,8 @@
           "overlap_ratio": 0.311515,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=North_African_coast; raw/threshold ratio=0.3115; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=North_African_coast; raw/threshold ratio=0.3115; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "North_African_coast",
           "nearest_city": {
             "name": "Kernaz",
@@ -768,7 +768,7 @@
             10134.838235294117,
             3075.014705882353
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=North_African_coast; raw/threshold ratio=0.3115; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=North_African_coast; raw/threshold ratio=0.3115; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
@@ -776,8 +776,8 @@
           "overlap_ratio": 0.224209,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=North_African_coast; raw/threshold ratio=0.2242; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=North_African_coast; raw/threshold ratio=0.2242; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "North_African_coast",
           "nearest_city": {
             "name": "Baniyas",
@@ -793,7 +793,7 @@
             10108.333333333334,
             3107.4848484848485
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=North_African_coast; raw/threshold ratio=0.2242; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=North_African_coast; raw/threshold ratio=0.2242; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         }
       ]
@@ -808,8 +808,8 @@
           "overlap_ratio": 0.254655,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2547; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.2547; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "Sahara",
           "nearest_city": {
             "name": "Al Jaghbub",
@@ -825,7 +825,7 @@
             9490.63212435233,
             3442.4300518134714
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2547; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.2547; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
@@ -833,8 +833,8 @@
           "overlap_ratio": 0.192066,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.1921; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.1921; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "Sahara",
           "nearest_city": {
             "name": "Imintanoute",
@@ -850,7 +850,7 @@
             7915.866666666667,
             3337.7185185185185
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.1921; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.1921; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
@@ -858,8 +858,8 @@
           "overlap_ratio": 0.459496,
           "algorithmic_recommendation": "include",
           "owner_decision": "include",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved include: boundary province group=Sahara; raw/threshold ratio=0.4595; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval include: boundary province group=Sahara; raw/threshold ratio=0.4595; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "boundary_group": "Sahara",
           "nearest_city": {
             "name": "El Menia",
@@ -875,7 +875,7 @@
             8501.877551020409,
             3379.1020408163267
           ],
-          "geographic_reason": "Owner-approved include: boundary province group=Sahara; raw/threshold ratio=0.4595; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval include: boundary province group=Sahara; raw/threshold ratio=0.4595; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
@@ -883,8 +883,8 @@
           "overlap_ratio": 0.248763,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "Sahara",
           "nearest_city": {
             "name": "Dirj",
@@ -900,7 +900,7 @@
             8855.029761904761,
             3418.0119047619046
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
@@ -908,8 +908,8 @@
           "overlap_ratio": 0.242655,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2427; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.2427; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "Sahara",
           "nearest_city": {
             "name": "Ouarzazate",
@@ -925,7 +925,7 @@
             7993.073394495413,
             3357.229357798165
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2427; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.2427; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         },
         {
@@ -933,8 +933,8 @@
           "overlap_ratio": 0.189359,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.1894; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.1894; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "Sahara",
           "nearest_city": {
             "name": "Zagora",
@@ -950,7 +950,7 @@
             8046.504854368932,
             3363.9126213592235
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.1894; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.1894; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         }
       ]
@@ -965,8 +965,8 @@
           "overlap_ratio": 0.162109,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=Mediterranean_water; raw/threshold ratio=0.1621; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=Mediterranean_water; raw/threshold ratio=0.1621; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "Mediterranean_water",
           "nearest_city": {
             "name": "Agadir",
@@ -982,7 +982,7 @@
             7858.601351351352,
             3386.027027027027
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=Mediterranean_water; raw/threshold ratio=0.1621; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=Mediterranean_water; raw/threshold ratio=0.1621; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         }
       ]
@@ -997,8 +997,8 @@
           "overlap_ratio": 0.378713,
           "algorithmic_recommendation": "include",
           "owner_decision": "include",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3787; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3787; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "boundary_group": "Atlantic_Nordic_water",
           "nearest_city": {
             "name": "Førde",
@@ -1014,7 +1014,7 @@
             8633.271428571428,
             1146.6612244897958
           ],
-          "geographic_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3787; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3787; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -1022,8 +1022,8 @@
           "overlap_ratio": 0.460228,
           "algorithmic_recommendation": "include",
           "owner_decision": "include",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4602; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4602; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "boundary_group": "Atlantic_Nordic_water",
           "nearest_city": {
             "name": "Brae",
@@ -1039,7 +1039,7 @@
             8267.941176470587,
             1212.4117647058824
           ],
-          "geographic_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4602; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4602; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -1047,8 +1047,8 @@
           "overlap_ratio": 0.385032,
           "algorithmic_recommendation": "include",
           "owner_decision": "include",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3850; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3850; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "boundary_group": "Atlantic_Nordic_water",
           "nearest_city": {
             "name": "Hólmavík",
@@ -1064,7 +1064,7 @@
             7224.954372623574,
             793.0177439797212
           ],
-          "geographic_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3850; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3850; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -1072,8 +1072,8 @@
           "overlap_ratio": 0.422391,
           "algorithmic_recommendation": "include",
           "owner_decision": "include",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4224; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4224; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "boundary_group": "Atlantic_Nordic_water",
           "nearest_city": {
             "name": "Caldas da Rainha",
@@ -1089,7 +1089,7 @@
             7480.375,
             2739.9166666666665
           ],
-          "geographic_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4224; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4224; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -1097,8 +1097,8 @@
           "overlap_ratio": 0.38264,
           "algorithmic_recommendation": "include",
           "owner_decision": "include",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3826; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3826; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "boundary_group": "Atlantic_Nordic_water",
           "nearest_city": {
             "name": "Sneem",
@@ -1114,7 +1114,7 @@
             7430.869565217391,
             2170.608695652174
           ],
-          "geographic_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3826; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3826; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -1122,8 +1122,8 @@
           "overlap_ratio": 0.159619,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.1596; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.1596; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "Atlantic_Nordic_water",
           "nearest_city": {
             "name": "Sneem",
@@ -1139,7 +1139,7 @@
             7348.178571428572,
             1916.142857142857
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.1596; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.1596; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -1147,8 +1147,8 @@
           "overlap_ratio": 0.341999,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3420; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3420; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "Atlantic_Nordic_water",
           "nearest_city": {
             "name": "Stornoway",
@@ -1164,7 +1164,7 @@
             7733.615384615385,
             1342.9615384615386
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3420; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3420; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         }
       ]
@@ -1179,8 +1179,8 @@
           "overlap_ratio": 0.191099,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1911; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1911; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "Atlantic_unrelated_water",
           "nearest_city": {
             "name": "Funchal",
@@ -1196,7 +1196,7 @@
             7682.739130434783,
             3300.7391304347825
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1911; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1911; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
@@ -1204,8 +1204,8 @@
           "overlap_ratio": 0.166486,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1665; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1665; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "Atlantic_unrelated_water",
           "nearest_city": {
             "name": "Funchal",
@@ -1221,7 +1221,7 @@
             7526.923076923077,
             3007.269230769231
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1665; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1665; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         }
       ]
@@ -1236,8 +1236,8 @@
           "overlap_ratio": 0.198636,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=Caspian_water; raw/threshold ratio=0.1986; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=Caspian_water; raw/threshold ratio=0.1986; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "Caspian_water",
           "nearest_city": {
             "name": "Lagan",
@@ -1253,7 +1253,7 @@
             10686.49609375,
             2441.89453125
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=Caspian_water; raw/threshold ratio=0.1986; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=Caspian_water; raw/threshold ratio=0.1986; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
         }
       ]
@@ -1268,8 +1268,8 @@
           "overlap_ratio": 0.339359,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=Red_Sea_water; raw/threshold ratio=0.3394; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=Red_Sea_water; raw/threshold ratio=0.3394; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "Red_Sea_water",
           "nearest_city": {
             "name": "Gaza",
@@ -1285,7 +1285,7 @@
             10002.420454545454,
             3308.2727272727275
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=Red_Sea_water; raw/threshold ratio=0.3394; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=Red_Sea_water; raw/threshold ratio=0.3394; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
         }
       ]
@@ -1300,8 +1300,8 @@
           "overlap_ratio": 0.248766,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "approved",
-          "owner_reason": "Owner-approved exclude: boundary province group=other_water; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "owner_review_status": "pending_owner_visual_approval",
+          "owner_reason": "Recommended for owner approval exclude: boundary province group=other_water; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "boundary_group": "other_water",
           "nearest_city": {
             "name": "Pori",
@@ -1317,7 +1317,7 @@
             9388.741463414633,
             1130.1853658536586
           ],
-          "geographic_reason": "Owner-approved exclude: boundary province group=other_water; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+          "geographic_reason": "Recommended for owner approval exclude: boundary province group=other_water; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
           "closeup_image": "preview_em_reference_masked.png"
         }
       ]
@@ -1329,8 +1329,8 @@
       "overlap_ratio": 0.302649,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3026; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3026; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "Europe_Scandinavia",
       "nearest_city": {
         "name": "Dombås",
@@ -1346,7 +1346,7 @@
         8772.437869822485,
         1113.4378698224853
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3026; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3026; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -1354,8 +1354,8 @@
       "overlap_ratio": 0.349181,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3492; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3492; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "Europe_Scandinavia",
       "nearest_city": {
         "name": "Førde",
@@ -1371,7 +1371,7 @@
         8624.511111111111,
         1125.7272727272727
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3492; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3492; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -1379,8 +1379,8 @@
       "overlap_ratio": 0.477077,
       "algorithmic_recommendation": "include",
       "owner_decision": "include",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4771; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4771; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "boundary_group": "Europe_Scandinavia",
       "nearest_city": {
         "name": "Idre",
@@ -1396,7 +1396,7 @@
         8971.733333333334,
         1117.3904761904762
       ],
-      "geographic_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4771; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4771; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -1404,8 +1404,8 @@
       "overlap_ratio": 0.173157,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.1732; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.1732; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "Europe_Scandinavia",
       "nearest_city": {
         "name": "Sveg",
@@ -1421,7 +1421,7 @@
         9046.689024390244,
         1099.7621951219512
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.1732; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.1732; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -1429,8 +1429,8 @@
       "overlap_ratio": 0.352565,
       "algorithmic_recommendation": "include",
       "owner_decision": "include",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.3526; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.3526; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "boundary_group": "Turkey_northern_Levant",
       "nearest_city": {
         "name": "Viranşehir",
@@ -1446,7 +1446,7 @@
         10270.466666666667,
         2953.141666666667
       ],
-      "geographic_reason": "Owner-approved include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.3526; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.3526; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
@@ -1454,8 +1454,8 @@
       "overlap_ratio": 0.416138,
       "algorithmic_recommendation": "include",
       "owner_decision": "include",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.4161; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.4161; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "boundary_group": "Turkey_northern_Levant",
       "nearest_city": {
         "name": "Şanliurfa",
@@ -1471,7 +1471,7 @@
         10230.896,
         2973.472
       ],
-      "geographic_reason": "Owner-approved include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.4161; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.4161; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
@@ -1479,8 +1479,8 @@
       "overlap_ratio": 0.251231,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.2512; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.2512; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "Turkey_northern_Levant",
       "nearest_city": {
         "name": "Köprübaşi",
@@ -1496,7 +1496,7 @@
         10338.525925925926,
         2904.0296296296297
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.2512; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.2512; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
@@ -1504,8 +1504,8 @@
       "overlap_ratio": 0.368744,
       "algorithmic_recommendation": "include",
       "owner_decision": "include",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved include: boundary province group=North_African_coast; raw/threshold ratio=0.3687; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=North_African_coast; raw/threshold ratio=0.3687; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "boundary_group": "North_African_coast",
       "nearest_city": {
         "name": "Awjilah",
@@ -1521,7 +1521,7 @@
         9380.059210526315,
         3419.4736842105262
       ],
-      "geographic_reason": "Owner-approved include: boundary province group=North_African_coast; raw/threshold ratio=0.3687; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval include: boundary province group=North_African_coast; raw/threshold ratio=0.3687; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
@@ -1529,8 +1529,8 @@
       "overlap_ratio": 0.254655,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2547; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.2547; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "Sahara",
       "nearest_city": {
         "name": "Al Jaghbub",
@@ -1546,7 +1546,7 @@
         9490.63212435233,
         3442.4300518134714
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2547; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.2547; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
@@ -1554,8 +1554,8 @@
       "overlap_ratio": 0.241613,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.2416; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.2416; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "Europe_Scandinavia",
       "nearest_city": {
         "name": "Hämeenlinna",
@@ -1571,7 +1571,7 @@
         9554.488095238095,
         1179.9166666666667
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.2416; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.2416; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -1579,8 +1579,8 @@
       "overlap_ratio": 0.169232,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=Egypt_Sinai; raw/threshold ratio=0.1692; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Egypt_Sinai; raw/threshold ratio=0.1692; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "Egypt_Sinai",
       "nearest_city": {
         "name": "Faiyum",
@@ -1596,7 +1596,7 @@
         9852.018181818183,
         3444.418181818182
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=Egypt_Sinai; raw/threshold ratio=0.1692; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=Egypt_Sinai; raw/threshold ratio=0.1692; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
@@ -1604,8 +1604,8 @@
       "overlap_ratio": 0.444845,
       "algorithmic_recommendation": "include",
       "owner_decision": "include",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.4448; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.4448; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "boundary_group": "Egypt_Sinai",
       "nearest_city": {
         "name": "Adabiya",
@@ -1621,7 +1621,7 @@
         9919.338983050848,
         3411.406779661017
       ],
-      "geographic_reason": "Owner-approved include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.4448; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.4448; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
@@ -1629,8 +1629,8 @@
       "overlap_ratio": 0.362911,
       "algorithmic_recommendation": "include",
       "owner_decision": "include",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3629; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3629; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "boundary_group": "Europe_Scandinavia",
       "nearest_city": {
         "name": "Hudiksvall",
@@ -1646,7 +1646,7 @@
         9165.502304147465,
         1123.152073732719
       ],
-      "geographic_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3629; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3629; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -1654,8 +1654,8 @@
       "overlap_ratio": 0.192066,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.1921; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.1921; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "Sahara",
       "nearest_city": {
         "name": "Imintanoute",
@@ -1671,7 +1671,7 @@
         7915.866666666667,
         3337.7185185185185
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.1921; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.1921; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
@@ -1679,8 +1679,8 @@
       "overlap_ratio": 0.283183,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2832; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2832; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "western_Russia",
       "nearest_city": {
         "name": "Novo",
@@ -1696,7 +1696,7 @@
         10231.320388349515,
         1501.6504854368932
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2832; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2832; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -1704,8 +1704,8 @@
       "overlap_ratio": 0.328087,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3281; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3281; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "Europe_Scandinavia",
       "nearest_city": {
         "name": "Volkhov",
@@ -1721,7 +1721,7 @@
         9896.297101449276,
         1264.5144927536232
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3281; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3281; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -1729,8 +1729,8 @@
       "overlap_ratio": 0.459496,
       "algorithmic_recommendation": "include",
       "owner_decision": "include",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved include: boundary province group=Sahara; raw/threshold ratio=0.4595; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Sahara; raw/threshold ratio=0.4595; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "boundary_group": "Sahara",
       "nearest_city": {
         "name": "El Menia",
@@ -1746,7 +1746,7 @@
         8501.877551020409,
         3379.1020408163267
       ],
-      "geographic_reason": "Owner-approved include: boundary province group=Sahara; raw/threshold ratio=0.4595; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval include: boundary province group=Sahara; raw/threshold ratio=0.4595; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
@@ -1754,8 +1754,8 @@
       "overlap_ratio": 0.473793,
       "algorithmic_recommendation": "include",
       "owner_decision": "include",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved include: boundary province group=North_African_coast; raw/threshold ratio=0.4738; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=North_African_coast; raw/threshold ratio=0.4738; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "boundary_group": "North_African_coast",
       "nearest_city": {
         "name": "Ash Shwayrif",
@@ -1771,7 +1771,7 @@
         9010.888235294118,
         3401.1588235294116
       ],
-      "geographic_reason": "Owner-approved include: boundary province group=North_African_coast; raw/threshold ratio=0.4738; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval include: boundary province group=North_African_coast; raw/threshold ratio=0.4738; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
@@ -1779,8 +1779,8 @@
       "overlap_ratio": 0.248763,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "Sahara",
       "nearest_city": {
         "name": "Dirj",
@@ -1796,7 +1796,7 @@
         8855.029761904761,
         3418.0119047619046
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
@@ -1804,8 +1804,8 @@
       "overlap_ratio": 0.242655,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2427; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.2427; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "Sahara",
       "nearest_city": {
         "name": "Ouarzazate",
@@ -1821,7 +1821,7 @@
         7993.073394495413,
         3357.229357798165
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.2427; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.2427; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
@@ -1829,8 +1829,8 @@
       "overlap_ratio": 0.189359,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.1894; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.1894; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "Sahara",
       "nearest_city": {
         "name": "Zagora",
@@ -1846,7 +1846,7 @@
         8046.504854368932,
         3363.9126213592235
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=Sahara; raw/threshold ratio=0.1894; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.1894; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
@@ -1854,8 +1854,8 @@
       "overlap_ratio": 0.311515,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=North_African_coast; raw/threshold ratio=0.3115; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=North_African_coast; raw/threshold ratio=0.3115; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "North_African_coast",
       "nearest_city": {
         "name": "Kernaz",
@@ -1871,7 +1871,7 @@
         10134.838235294117,
         3075.014705882353
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=North_African_coast; raw/threshold ratio=0.3115; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=North_African_coast; raw/threshold ratio=0.3115; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
@@ -1879,8 +1879,8 @@
       "overlap_ratio": 0.183715,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.1837; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.1837; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "Turkey_northern_Levant",
       "nearest_city": {
         "name": "Manbij",
@@ -1896,7 +1896,7 @@
         10200.723214285714,
         3029.839285714286
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.1837; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.1837; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
@@ -1904,8 +1904,8 @@
       "overlap_ratio": 0.459787,
       "algorithmic_recommendation": "include",
       "owner_decision": "include",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4598; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4598; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "boundary_group": "Europe_Scandinavia",
       "nearest_city": {
         "name": "Engerdal",
@@ -1921,7 +1921,7 @@
         8903.585365853658,
         1118.7317073170732
       ],
-      "geographic_reason": "Owner-approved include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4598; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4598; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -1929,8 +1929,8 @@
       "overlap_ratio": 0.430292,
       "algorithmic_recommendation": "include",
       "owner_decision": "include",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved include: boundary province group=western_Russia; raw/threshold ratio=0.4303; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=western_Russia; raw/threshold ratio=0.4303; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "boundary_group": "western_Russia",
       "nearest_city": {
         "name": "Gubachevo",
@@ -1946,7 +1946,7 @@
         10142.373626373626,
         1412.1868131868132
       ],
-      "geographic_reason": "Owner-approved include: boundary province group=western_Russia; raw/threshold ratio=0.4303; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval include: boundary province group=western_Russia; raw/threshold ratio=0.4303; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -1954,8 +1954,8 @@
       "overlap_ratio": 0.295566,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2956; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2956; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "western_Russia",
       "nearest_city": {
         "name": "Uglich",
@@ -1971,7 +1971,7 @@
         10206.776470588235,
         1469.2823529411764
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2956; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2956; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -1979,8 +1979,8 @@
       "overlap_ratio": 0.187533,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.1875; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.1875; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "western_Russia",
       "nearest_city": {
         "name": "Sima",
@@ -1996,7 +1996,7 @@
         10287.584,
         1561.8
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.1875; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.1875; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -2004,8 +2004,8 @@
       "overlap_ratio": 0.402385,
       "algorithmic_recommendation": "include",
       "owner_decision": "include",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved include: boundary province group=Caucasus; raw/threshold ratio=0.4024; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Caucasus; raw/threshold ratio=0.4024; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "boundary_group": "Caucasus",
       "nearest_city": {
         "name": "Lagan",
@@ -2021,7 +2021,7 @@
         10630.239130434782,
         2419.8695652173915
       ],
-      "geographic_reason": "Owner-approved include: boundary province group=Caucasus; raw/threshold ratio=0.4024; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval include: boundary province group=Caucasus; raw/threshold ratio=0.4024; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
     },
     {
@@ -2029,8 +2029,8 @@
       "overlap_ratio": 0.303062,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.3031; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.3031; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "western_Russia",
       "nearest_city": {
         "name": "Ilovlya",
@@ -2046,7 +2046,7 @@
         10499.801652892562,
         2140.8512396694214
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.3031; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.3031; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -2054,8 +2054,8 @@
       "overlap_ratio": 0.33461,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.3346; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.3346; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "western_Russia",
       "nearest_city": {
         "name": "Mirnyy",
@@ -2071,7 +2071,7 @@
         10536.95,
         2275.3166666666666
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.3346; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.3346; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -2079,8 +2079,8 @@
       "overlap_ratio": 0.233257,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2333; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2333; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "western_Russia",
       "nearest_city": {
         "name": "Sudogda",
@@ -2096,7 +2096,7 @@
         10333.166666666666,
         1650.7962962962963
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2333; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2333; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -2104,8 +2104,8 @@
       "overlap_ratio": 0.27535,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2753; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2753; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "western_Russia",
       "nearest_city": {
         "name": "Arkadak",
@@ -2121,7 +2121,7 @@
         10448.164835164835,
         1957.4835164835165
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2753; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2753; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -2129,8 +2129,8 @@
       "overlap_ratio": 0.222925,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2229; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2229; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "western_Russia",
       "nearest_city": {
         "name": "Balashov",
@@ -2146,7 +2146,7 @@
         10466.184782608696,
         1998.7282608695652
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2229; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2229; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -2154,8 +2154,8 @@
       "overlap_ratio": 0.294908,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2949; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2949; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "western_Russia",
       "nearest_city": {
         "name": "Kasimov",
@@ -2171,7 +2171,7 @@
         10356.268041237114,
         1709.979381443299
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=western_Russia; raw/threshold ratio=0.2949; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2949; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -2179,8 +2179,8 @@
       "overlap_ratio": 0.248766,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=other_water; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=other_water; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "other_water",
       "nearest_city": {
         "name": "Pori",
@@ -2196,7 +2196,7 @@
         9388.741463414633,
         1130.1853658536586
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=other_water; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=other_water; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "preview_em_reference_masked.png"
     },
     {
@@ -2204,8 +2204,8 @@
       "overlap_ratio": 0.339359,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=Red_Sea_water; raw/threshold ratio=0.3394; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Red_Sea_water; raw/threshold ratio=0.3394; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "Red_Sea_water",
       "nearest_city": {
         "name": "Gaza",
@@ -2221,7 +2221,7 @@
         10002.420454545454,
         3308.2727272727275
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=Red_Sea_water; raw/threshold ratio=0.3394; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=Red_Sea_water; raw/threshold ratio=0.3394; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
@@ -2229,8 +2229,8 @@
       "overlap_ratio": 0.378713,
       "algorithmic_recommendation": "include",
       "owner_decision": "include",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3787; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3787; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "boundary_group": "Atlantic_Nordic_water",
       "nearest_city": {
         "name": "Førde",
@@ -2246,7 +2246,7 @@
         8633.271428571428,
         1146.6612244897958
       ],
-      "geographic_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3787; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3787; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -2254,8 +2254,8 @@
       "overlap_ratio": 0.460228,
       "algorithmic_recommendation": "include",
       "owner_decision": "include",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4602; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4602; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "boundary_group": "Atlantic_Nordic_water",
       "nearest_city": {
         "name": "Brae",
@@ -2271,7 +2271,7 @@
         8267.941176470587,
         1212.4117647058824
       ],
-      "geographic_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4602; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4602; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -2279,8 +2279,8 @@
       "overlap_ratio": 0.385032,
       "algorithmic_recommendation": "include",
       "owner_decision": "include",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3850; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3850; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "boundary_group": "Atlantic_Nordic_water",
       "nearest_city": {
         "name": "Hólmavík",
@@ -2296,7 +2296,7 @@
         7224.954372623574,
         793.0177439797212
       ],
-      "geographic_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3850; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3850; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -2304,8 +2304,8 @@
       "overlap_ratio": 0.162109,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=Mediterranean_water; raw/threshold ratio=0.1621; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Mediterranean_water; raw/threshold ratio=0.1621; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "Mediterranean_water",
       "nearest_city": {
         "name": "Agadir",
@@ -2321,7 +2321,7 @@
         7858.601351351352,
         3386.027027027027
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=Mediterranean_water; raw/threshold ratio=0.1621; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=Mediterranean_water; raw/threshold ratio=0.1621; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
@@ -2329,8 +2329,8 @@
       "overlap_ratio": 0.393929,
       "algorithmic_recommendation": "include",
       "owner_decision": "include",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.3939; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.3939; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "boundary_group": "Egypt_Sinai",
       "nearest_city": {
         "name": "El Qantara",
@@ -2346,7 +2346,7 @@
         9947.960784313726,
         3373.4313725490197
       ],
-      "geographic_reason": "Owner-approved include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.3939; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.3939; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
@@ -2354,8 +2354,8 @@
       "overlap_ratio": 0.224209,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=North_African_coast; raw/threshold ratio=0.2242; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=North_African_coast; raw/threshold ratio=0.2242; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "North_African_coast",
       "nearest_city": {
         "name": "Baniyas",
@@ -2371,7 +2371,7 @@
         10108.333333333334,
         3107.4848484848485
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=North_African_coast; raw/threshold ratio=0.2242; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=North_African_coast; raw/threshold ratio=0.2242; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
@@ -2379,8 +2379,8 @@
       "overlap_ratio": 0.191099,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1911; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1911; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "Atlantic_unrelated_water",
       "nearest_city": {
         "name": "Funchal",
@@ -2396,7 +2396,7 @@
         7682.739130434783,
         3300.7391304347825
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1911; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1911; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -2404,8 +2404,8 @@
       "overlap_ratio": 0.166486,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1665; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1665; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "Atlantic_unrelated_water",
       "nearest_city": {
         "name": "Funchal",
@@ -2421,7 +2421,7 @@
         7526.923076923077,
         3007.269230769231
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1665; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1665; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -2429,8 +2429,8 @@
       "overlap_ratio": 0.422391,
       "algorithmic_recommendation": "include",
       "owner_decision": "include",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4224; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4224; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "boundary_group": "Atlantic_Nordic_water",
       "nearest_city": {
         "name": "Caldas da Rainha",
@@ -2446,7 +2446,7 @@
         7480.375,
         2739.9166666666665
       ],
-      "geographic_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4224; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4224; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -2454,8 +2454,8 @@
       "overlap_ratio": 0.38264,
       "algorithmic_recommendation": "include",
       "owner_decision": "include",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3826; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3826; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "boundary_group": "Atlantic_Nordic_water",
       "nearest_city": {
         "name": "Sneem",
@@ -2471,7 +2471,7 @@
         7430.869565217391,
         2170.608695652174
       ],
-      "geographic_reason": "Owner-approved include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3826; whole-polygon rule retained. Retained for coherent theatre framing after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3826; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -2479,8 +2479,8 @@
       "overlap_ratio": 0.159619,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.1596; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.1596; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "Atlantic_Nordic_water",
       "nearest_city": {
         "name": "Sneem",
@@ -2496,7 +2496,7 @@
         7348.178571428572,
         1916.142857142857
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.1596; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.1596; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -2504,8 +2504,8 @@
       "overlap_ratio": 0.341999,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3420; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3420; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "Atlantic_Nordic_water",
       "nearest_city": {
         "name": "Stornoway",
@@ -2521,7 +2521,7 @@
         7733.615384615385,
         1342.9615384615386
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3420; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3420; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
@@ -2529,8 +2529,8 @@
       "overlap_ratio": 0.198636,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "approved",
-      "owner_reason": "Owner-approved exclude: boundary province group=Caspian_water; raw/threshold ratio=0.1986; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Caspian_water; raw/threshold ratio=0.1986; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "boundary_group": "Caspian_water",
       "nearest_city": {
         "name": "Lagan",
@@ -2546,7 +2546,7 @@
         10686.49609375,
         2441.89453125
       ],
-      "geographic_reason": "Owner-approved exclude: boundary province group=Caspian_water; raw/threshold ratio=0.1986; whole-polygon rule retained. Excluded as out-of-scope after owner boundary review.",
+      "geographic_reason": "Recommended for owner approval exclude: boundary province group=Caspian_water; raw/threshold ratio=0.1986; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
       "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
     }
   ]
