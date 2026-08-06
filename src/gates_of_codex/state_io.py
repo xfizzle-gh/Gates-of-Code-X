@@ -242,6 +242,10 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
             exported_save_path=pending_data.get("exported_save_path", ""),
             started=pending_data.get("started", False),
             completed=pending_data.get("completed", False),
+            encounter_node_id=str(pending_data.get("encounter_node_id", "") or ""),
+            encounter_kind=str(pending_data.get("encounter_kind", "") or ""),
+            attacker_formation_id=str(pending_data.get("attacker_formation_id", "") or ""),
+            defender_formation_id=str(pending_data.get("defender_formation_id", "") or ""),
         )
     state = CampaignState(
         campaign_name=data["campaign_name"],

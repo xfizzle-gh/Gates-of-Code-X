@@ -374,6 +374,11 @@ class PendingBattle:
     exported_save_path: str = ""
     started: bool = False
     completed: bool = False
+    # S4 operational contact (empty for legacy province adjacency battles).
+    encounter_node_id: str = ""
+    encounter_kind: str = ""
+    attacker_formation_id: str = ""
+    defender_formation_id: str = ""
 
 
 @dataclass(slots=True)
@@ -539,13 +544,9 @@ class CampaignState:
                     raise ValueError(f"Commander {battalion.commander_id} is not assigned back to battalion {key}")
                 if commander.assigned_strategic_formation_id:
                     raise ValueError(f"Commander {battalion.commander_id} has dual assignment")
-            previous_faction = occupied_factions.setdefault(
-                battalion.province_id, battalion.faction
-            )
-            if previous_faction != battalion.faction:
-                raise ValueError(
-                    f"Province {battalion.province_id} contains battalions from multiple factions"
-                )
+            # Multi-faction province presence is allowed under operational maneuver (S4+):
+            # ownership is separate from temporary presence / node contact.
+            occupied_factions.setdefault(battalion.province_id, battalion.faction)
         if self.strategic_formations:
             orphan_members = set(membership) - set(self.battalions)
             if orphan_members:
