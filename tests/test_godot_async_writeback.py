@@ -11,7 +11,7 @@ GODOT = ROOT / "godot"
 class GodotAsyncWritebackTests(unittest.TestCase):
     def test_command_runner_exists_and_is_threaded(self) -> None:
         src = (GODOT / "scripts/presentation/command_runner.gd").read_text(encoding="utf-8")
-        self.assertIn("class_name FrontendCommandRunner", src)
+        self.assertIn("extends Node", src)
         self.assertIn("Thread", src)
         self.assertIn("OS.execute", src)
         self.assertIn("call_deferred", src)

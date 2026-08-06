@@ -399,7 +399,7 @@ func _draw_command_busy_overlay() -> void:
 	var band := Rect2(0, HEADER_SAFE_TOP, map_width, 28.0)
 	draw_rect(band, Color(0.12, 0.08, 0.02, 0.92))
 	draw_rect(band, Color("ffb14e"), false, 1.0)
-	var label := command_busy_label() if has_method("command_busy_label") else "Backend busy…"
+	var label := command_busy_label() if has_method("command_busy_label") else "Backend busy..."
 	draw_string(
 		ThemeDB.fallback_font,
 		Vector2(16, HEADER_SAFE_TOP + 19.0),
@@ -872,9 +872,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		var key := event as InputEventKey
 		if has_method("is_command_busy") and is_command_busy():
 			if key.keycode in [KEY_E, KEY_A, KEY_H, KEY_R]:
-				status_message = "Busy — wait for %s." % (
-					command_runner.current_op() if command_runner != null else "backend"
-				)
+				var busy_label := "backend"
+				if has_method("command_busy_label"):
+					busy_label = String(command_busy_label())
+				status_message = "Busy - wait for command (%s)." % busy_label
 				queue_redraw()
 				get_viewport().set_input_as_handled()
 				return

@@ -133,7 +133,12 @@ class FrontendWritebackContractTests(unittest.TestCase):
         self.assertIn(".append(battalion)", script)
         self.assertIn("selected_battalion_id", script)
         self.assertIn("FileAccess.file_exists(python_executable)", script)
-        self.assertIn("OS.execute(python_executable, python_args", script)
+        # Async write-back: exact python path is still preferred; OS.execute runs on a worker.
+        self.assertIn("command_runner.try_start", script)
+        self.assertIn("FrontendCommandRunnerScript", script)
+        runner = (root / "godot/scripts/presentation/command_runner.gd").read_text(encoding="utf-8")
+        self.assertIn("OS.execute", runner)
+        self.assertIn("call_deferred", runner)
 
 
 if __name__ == "__main__":

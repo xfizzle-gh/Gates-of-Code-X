@@ -1,4 +1,3 @@
-class_name FrontendCommandRunner
 extends Node
 
 ## Non-blocking frontend apply-frontend runner.

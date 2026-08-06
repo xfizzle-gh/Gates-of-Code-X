@@ -37,7 +37,7 @@ func command_busy_label() -> String:
 	var op := String(command_runner.current_op())
 	if op.is_empty():
 		op = "command"
-	return "Backend busy: %s…" % op
+	return "Backend busy: %s..." % op
 
 
 func _load_snapshot(path: String) -> void:
@@ -197,7 +197,7 @@ func _command_mutates_state(button_id: String) -> bool:
 
 func _handle_button(button_id: String) -> void:
 	if is_command_busy() and _command_mutates_state(button_id):
-		status_message = "Busy — wait for %s to finish." % command_runner.current_op()
+		status_message = "Busy - wait for %s to finish." % command_runner.current_op()
 		queue_redraw()
 		return
 	super._handle_button(button_id)
@@ -205,7 +205,7 @@ func _handle_button(button_id: String) -> void:
 
 func _issue_move(target_province_id: String) -> void:
 	if is_command_busy():
-		status_message = "Busy — move ignored until %s finishes." % command_runner.current_op()
+		status_message = "Busy - move ignored until %s finishes." % command_runner.current_op()
 		queue_redraw()
 		return
 	super._issue_move(target_province_id)
@@ -237,9 +237,9 @@ func _queue_and_apply(commands: Array) -> void:
 	var identity := FrontendCommandRunnerScript.command_identity(commands)
 	if is_command_busy():
 		if identity == command_runner.current_identity():
-			status_message = "Duplicate %s ignored — already in flight." % command_runner.current_op()
+			status_message = "Duplicate %s ignored - already in flight." % command_runner.current_op()
 		else:
-			status_message = "Busy with %s — new command rejected." % command_runner.current_op()
+			status_message = "Busy with %s - new command rejected." % command_runner.current_op()
 		queue_redraw()
 		return
 
@@ -278,7 +278,7 @@ func _queue_and_apply(commands: Array) -> void:
 		args.append_array(PackedStringArray(["-m", "gates_of_codex"]))
 		args.append_array(PackedStringArray(apply_args))
 
-	var start := command_runner.try_start(
+	var start: Dictionary = command_runner.try_start(
 		commands,
 		executable,
 		args,
@@ -287,15 +287,15 @@ func _queue_and_apply(commands: Array) -> void:
 	if not bool(start.get("ok", false)):
 		var reason := String(start.get("reason", "rejected"))
 		if reason == "duplicate_in_flight":
-			status_message = "Duplicate %s ignored — already in flight." % FrontendCommandRunnerScript.primary_op(commands)
+			status_message = "Duplicate %s ignored - already in flight." % FrontendCommandRunnerScript.primary_op(commands)
 		elif reason == "busy":
-			status_message = "Busy — command rejected."
+			status_message = "Busy - command rejected."
 		else:
 			status_message = "Unable to start backend: %s" % reason
 		queue_redraw()
 		return
 
-	_busy_status = "Running %s…" % FrontendCommandRunnerScript.primary_op(commands)
+	_busy_status = "Running %s..." % FrontendCommandRunnerScript.primary_op(commands)
 	status_message = _busy_status
 	set_process(true)
 	queue_redraw()
@@ -333,7 +333,7 @@ func _on_command_finished(
 		if detail.is_empty():
 			detail = "backend exit %s" % exit_code
 		status_message = "Apply failed (%s): %s" % [op, detail.substr(0, 240)]
-		# Preserve current valid snapshot — do not reload.
+		# Preserve current valid snapshot - do not reload.
 		queue_redraw()
 		return
 
@@ -351,6 +351,6 @@ func _on_command_finished(
 	if status_message.is_empty():
 		status_message = "Applied %s." % op
 	if snapshot.get("pending_battle") != null and op != "handoff":
-		status_message += " Pending battle ready — Auto-resolve or Handoff."
+		status_message += " Pending battle ready - Auto-resolve or Handoff."
 	_fit_to_focus(false)
 	queue_redraw()
