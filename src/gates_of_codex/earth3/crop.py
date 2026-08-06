@@ -293,11 +293,9 @@ def _apply_mask_overlap_crop(dataset: Earth3Dataset, candidate: CropCandidate) -
         if not any(bounds_intersect(bounds, ring_bounds(ring)) for ring in mask):
             continue
 
-        # Fast accept: all vertices inside mask → ratio 1.
-        if all(point_in_any_ring(x, y, mask) for x, y in province.ring):
-            ratio = 1.0
-        else:
-            ratio = overlap_ratio(province.ring, mask)
+        # Every broad-phase province uses authoritative Shapely intersection.
+        # No all-vertices-inside fast path (must not skip geometry authority).
+        ratio = overlap_ratio(province.ring, mask)
         ratios[pid] = round(ratio, 6)
 
         if lo <= ratio <= hi:

@@ -18,38 +18,104 @@ BOUNDARY_GROUPS = (
     "water_boundary",
 )
 
+# Reviewed anchors (Earth3 city name + province id) used for grouping, not coords alone.
+_GROUP_CITY_ANCHORS: dict[str, tuple[tuple[str, int], ...]] = {
+    "Iceland_Atlantic": (
+        ("Reykjavík", 951),
+        ("Höfn", 956),
+        ("Bakkafjörður", 6850),
+        ("Akureyri", 963),
+    ),
+    "Scandinavia_northern_Russia": (
+        ("Stockholm", 1049),
+        ("Helsinki", 1461),
+        ("Oslo", 1009),
+        ("Murmansk", 11370),
+        ("Arkhangelsk", 11764),
+    ),
+    "eastern_Russia": (
+        ("Naberezhnye Chelny", 10857),
+        ("Yaransk", 11170),
+        ("Tuymazy", 11323),
+        ("Galich", 11689),
+        ("Orsk", 10919),
+        ("Rostov on Don", 10868),
+    ),
+    "Caucasus": (
+        ("Tbilisi", 10431),
+        ("Yerevan", 10436),
+        ("Baku", 2654),
+        ("Turtkul", 10587),
+        ("Ayteke Bi", 11177),
+        ("Karabutak", 11180),
+    ),
+    "North_Africa": (
+        ("Tunis", 2242),
+        ("Algiers", 1399),
+        ("Tripoli", 1365),
+        ("Cairo", 2669),
+    ),
+    "eastern_Mediterranean_Levant": (
+        ("Istanbul", 1116),
+        ("Ankara", 2207),
+        ("Hail", 6162),
+        ("Hegra", 6091),
+        ("Ash Shamli", 6163),
+        ("Ahvaz", 2624),
+        ("Anarak", 3507),
+        ("Moalleman", 10577),
+    ),
+}
+
 
 def classify_boundary_group(
+    dataset: Earth3Dataset,
     *,
+    pid: int,
     centroid: tuple[float, float],
     is_water: bool,
-    continent_id: int,
 ) -> str:
-    x, y = centroid
-    if is_water or continent_id == 0:
+    if is_water:
         return "water_boundary"
-    # Iceland / far west Atlantic fringe
-    if x < 7800 and y < 1200:
+
+    # Prefer nearest reviewed city-anchor group by province adjacency/id hit.
+    for group, anchors in _GROUP_CITY_ANCHORS.items():
+        for _name, apid in anchors:
+            if pid == apid:
+                return group
+
+    # Nearest reviewed city among dataset cities that match anchor names.
+    cx, cy = centroid
+    best_group = None
+    best_d2 = None
+    name_to_group = {
+        name: group for group, anchors in _GROUP_CITY_ANCHORS.items() for name, _pid in anchors
+    }
+    for city in dataset.cities:
+        group = name_to_group.get(city.name)
+        if group is None:
+            continue
+        d2 = (float(city.x) - cx) ** 2 + (float(city.y) - cy) ** 2
+        if best_d2 is None or d2 < best_d2:
+            best_d2 = d2
+            best_group = group
+    if best_group is not None and best_d2 is not None and best_d2 ** 0.5 < 400:
+        return best_group
+
+    # Residual geometric fallback only after city-anchor attempt.
+    x, y = centroid
+    if x < 7900 and y < 1200:
         return "Iceland_Atlantic"
-    # North Africa
-    if y >= 3300 and x < 10400:
+    if y >= 3300 and x < 10200:
         return "North_Africa"
-    # Eastern Med / Levant / Egypt edge
-    if y >= 3000 and x >= 9800:
+    if y >= 3000:
         return "eastern_Mediterranean_Levant"
-    # Caucasus / far SE land
-    if x >= 10900 and 1800 <= y <= 3200:
+    if x >= 10600 and 1800 <= y <= 3000:
         return "Caucasus"
-    # Eastern Russia approaches
-    if x >= 10300 and y < 1800:
+    if x >= 10300 and y < 2000:
         return "eastern_Russia"
-    # Scandinavia / northern Russia fringe
     if y < 1400:
         return "Scandinavia_northern_Russia"
-    # Deep south export edge land
-    if y >= 3600:
-        return "southern_export_boundary"
-    # Residual southern land near Maghreb/export
     if y >= 3400:
         return "southern_export_boundary"
     return "Scandinavia_northern_Russia"
@@ -86,7 +152,7 @@ def closeup_for_group(group: str) -> str:
     }:
         return "closeups/em_reference_masked_north_africa_east_med.png"
     if group == "water_boundary":
-        return "closeups/em_reference_masked_scandinavia_north_russia.png"
+        return "preview_em_reference_masked.png"
     return "preview_em_reference_masked.png"
 
 
@@ -96,6 +162,7 @@ def geographic_reason(
     decision: str,
     ratio: float,
     is_water: bool,
+    nearest_name: str,
 ) -> str:
     side = "include" if decision == "include" else "exclude"
     base = (
@@ -103,17 +170,18 @@ def geographic_reason(
         f"{'≥' if decision == 'include' else '<'} 0.35 threshold."
     )
     notes = {
-        "Iceland_Atlantic": "Atlantic/Iceland fringe boundary.",
+        "Iceland_Atlantic": "Iceland/Atlantic fringe; full Iceland land component is required-include.",
         "Scandinavia_northern_Russia": "Northern Scandinavian / N-Russia mask edge.",
-        "eastern_Russia": "Eastern Russian depth edge beyond Donbas approaches.",
-        "Caucasus": "Caucasus / SE theatre edge.",
-        "North_Africa": "North African coastal depth edge.",
-        "eastern_Mediterranean_Levant": "E.Med / Levant coastal edge.",
+        "eastern_Russia": "Eastern Russian depth edge; deep-east anchors must stay out.",
+        "Caucasus": "Caucasus edge; keep Tbilisi/Yerevan/Baku, cut Central Asia spill.",
+        "North_Africa": "North African coastal belt edge.",
+        "eastern_Mediterranean_Levant": "E.Med/Levant edge; cut Arabia/Iran interior anchors.",
         "southern_export_boundary": "Southern export/mask depth edge.",
         "water_boundary": "Water/sea province on mask perimeter.",
     }
     water = " Water province." if is_water else ""
-    return f"{base} {notes.get(group, '')}{water} Owner review still required."
+    near = f" Nearest city: {nearest_name}." if nearest_name else ""
+    return f"{base} {notes.get(group, '')}{near}{water} Owner review still required."
 
 
 def build_boundary_review(
@@ -127,13 +195,15 @@ def build_boundary_review(
         province = dataset.provinces[pid]
         cx, cy = province.centroid
         group = classify_boundary_group(
+            dataset,
+            pid=pid,
             centroid=(cx, cy),
             is_water=province.is_water,
-            continent_id=province.continent_id,
         )
         decision = str(item["decision"])
         ratio = float(item["overlap_ratio"])
         nearest = nearest_city_label(dataset, cx, cy)
+        nearest_name = str(nearest["name"]) if nearest else ""
         rows.append(
             {
                 "source_province_id": pid,
@@ -144,12 +214,14 @@ def build_boundary_review(
                 "nearest_city": nearest,
                 "is_water": province.is_water,
                 "continent_id": province.continent_id,
+                "region_id": province.region_id,
                 "centroid": [cx, cy],
                 "geographic_reason": geographic_reason(
                     group=group,
                     decision=decision,
                     ratio=ratio,
                     is_water=province.is_water,
+                    nearest_name=nearest_name,
                 ),
                 "closeup_image": closeup_for_group(group),
             }
@@ -161,12 +233,13 @@ def build_boundary_review(
 
     return {
         "schema": "gates-of-codex.earth3-boundary-review",
-        "schema_version": 1,
+        "schema_version": 2,
         "candidate_id": decisions.get("candidate_id", "em_reference_masked"),
         "status": "algorithmic_recommendation_pending_owner_review",
         "note": (
             "Automatic threshold outcomes are algorithmic recommendations only. "
-            "They are not completed owner boundary review."
+            "They are not completed owner boundary review. Grouping uses reviewed "
+            "Earth3 city/region anchors before residual geometry."
         ),
         "decision_count": len(rows),
         "groups": {
