@@ -912,6 +912,123 @@ class OperationalS6InterceptionTests(unittest.TestCase):
                 self.assertEqual(PositionMode.ON_EDGE.value, winner.position.mode)
                 self.assertEqual(edge, winner.position.edge_id)
 
+    def test_endpoint_overshoot_uses_true_velocity(self) -> None:
+        """Force at 900 with delta 500 meets opposing force using real exit time."""
+        with tempfile.TemporaryDirectory() as temporary:
+            # cost 1000 → delta 1000/tick
+            state = _state(Path(temporary), _graph(ab_cost=1000))
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            edge = stable_edge_id("corridor", na, nb)
+            # NATO at canonical 900 toward B (form prog 900), exits at t=100/1000=0.1
+            # Russia at canonical 1000 toward A (form prog 0 facing A), starts at B end
+            state.strategic_formations["sf-n"].position = FormationOperationalPosition(
+                mode=PositionMode.ON_EDGE.value,
+                edge_id=edge,
+                progress_milli=900,
+                facing_node_id=nb,
+            )
+            state.strategic_formations["sf-r"].position = FormationOperationalPosition(
+                mode=PositionMode.ON_EDGE.value,
+                edge_id=edge,
+                progress_milli=0,
+                facing_node_id=na,
+            )
+            issue_move_order(
+                state, "sf-n", path_node_ids=[na, nb], path_edge_ids=[edge], order_id="n"
+            )
+            issue_move_order(
+                state, "sf-r", path_node_ids=[nb, na], path_edge_ids=[edge], order_id="r"
+            )
+            state.strategic_formations["sf-n"].position = FormationOperationalPosition(
+                mode=PositionMode.ON_EDGE.value,
+                edge_id=edge,
+                progress_milli=900,
+                facing_node_id=nb,
+            )
+            state.strategic_formations["sf-r"].position = FormationOperationalPosition(
+                mode=PositionMode.ON_EDGE.value,
+                edge_id=edge,
+                progress_milli=0,
+                facing_node_id=na,
+            )
+            commit_move_orders(state)
+            activate_committed_orders(state)
+            report = advance_operational_tick(state)
+            # Meet: 900+t*1000 = 1000+t*(-1000) => 900+1000t=1000-1000t => 2000t=100 => t=1/20
+            self.assertEqual(ENCOUNTER_KIND_EDGE_CROSS, report.get("swept_kind"))
+            assert state.pending_battle is not None
+            self.assertEqual(ENCOUNTER_KIND_EDGE_CROSS, state.pending_battle.encounter_kind)
+            # Contact near 950
+            self.assertGreaterEqual(state.pending_battle.encounter_progress_milli, 900)
+            self.assertLessEqual(state.pending_battle.encounter_progress_milli, 1000)
+
+    def test_static_t0_beats_later_edge_contact(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary), _graph(ab_cost=2000))
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            edge = stable_edge_id("corridor", na, nb)
+            # Hostile already sharing node b at t=0
+            state.strategic_formations["sf-n"].position = FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value, node_id=nb, progress_milli=0
+            )
+            state.strategic_formations["sf-n"].province_id = "b"
+            state.battalions["bn-n"].province_id = "b"
+            state.strategic_formations["sf-r"].position = FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value, node_id=nb, progress_milli=0
+            )
+            state.strategic_formations["sf-r"].province_id = "b"
+            state.battalions["bn-r"].province_id = "b"
+            # Unrelated third force would create later edge motion — not needed if t=0 wins.
+            report = advance_operational_tick(state)
+            self.assertIsNotNone(state.pending_battle)
+            assert state.pending_battle is not None
+            self.assertEqual("node_contact", state.pending_battle.encounter_kind)
+            self.assertEqual(nb, state.pending_battle.encounter_node_id)
+
+    def test_empty_string_progress_and_pixel_rejected(self) -> None:
+        from gates_of_codex.state_io import campaign_from_dict
+
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary), _graph(ab_cost=2000))
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            edge = stable_edge_id("corridor", na, nb)
+            for fid, face, prog in (("sf-n", nb, 200), ("sf-r", na, 200)):
+                state.strategic_formations[fid].position = FormationOperationalPosition(
+                    mode=PositionMode.ON_EDGE.value,
+                    edge_id=edge,
+                    progress_milli=prog,
+                    facing_node_id=face,
+                )
+            issue_move_order(
+                state, "sf-n", path_node_ids=[na, nb], path_edge_ids=[edge], order_id="n"
+            )
+            issue_move_order(
+                state, "sf-r", path_node_ids=[nb, na], path_edge_ids=[edge], order_id="r"
+            )
+            for fid, face, prog in (("sf-n", nb, 200), ("sf-r", na, 200)):
+                state.strategic_formations[fid].position = FormationOperationalPosition(
+                    mode=PositionMode.ON_EDGE.value,
+                    edge_id=edge,
+                    progress_milli=prog,
+                    facing_node_id=face,
+                )
+            commit_move_orders(state)
+            activate_committed_orders(state)
+            advance_operational_tick(state)
+            assert state.pending_battle is not None
+            payload = state.to_dict()
+            payload["pending_battle"]["encounter_progress_milli"] = ""
+            with self.assertRaises(ValueError):
+                campaign_from_dict(payload)
+            payload = state.to_dict()
+            payload["pending_battle"]["encounter_pixel"] = ""
+            with self.assertRaises(ValueError):
+                campaign_from_dict(payload)
+            payload = state.to_dict()
+            payload["pending_battle"]["encounter_pixel"] = ["", 1]
+            with self.assertRaises(ValueError):
+                campaign_from_dict(payload)
+
 
 if __name__ == "__main__":
     unittest.main()

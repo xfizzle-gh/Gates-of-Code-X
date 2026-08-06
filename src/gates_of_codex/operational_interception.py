@@ -25,22 +25,38 @@ ENCOUNTER_KIND_NODE_CONTACT = "node_contact"  # existing static/entry
 
 @dataclass(slots=True)
 class MovementInterval:
-    """Intended movement for one formation over one tick (pre-mutation snapshot)."""
+    """Intended movement for one formation over one tick (pre-mutation snapshot).
+
+    Edge motion uses raw signed velocity in canonical A→B space. Endpoint clamping
+    does not stretch velocity over the full tick: exit/arrival times are exact
+    rationals when the formation leaves the edge before t=1.
+    """
 
     formation_id: str
     faction: Faction
     edge_id: str | None
-    # Canonical A→B progress at tick start/end (0..1000). None if not on that edge.
+    # Canonical A→B progress at t=0 on the active edge (None if not edge-active).
     start_canonical: int | None
+    # Raw signed velocity (canonical milli per full tick), before endpoint clamp.
+    velocity_canonical: int
+    # Clamped end position if the force stayed on-edge the whole tick (for apply).
     end_canonical: int | None
-    # +1 moving toward B, -1 toward A, 0 stationary on edge/node
+    # +1 toward B, -1 toward A, 0 stationary
     direction: int
     facing_node_id: str | None
     start_node_id: str | None
     end_node_id: str | None
     arrives_node: bool
+    # Exact rational time on [0,1] when the force exits the edge / arrives at node.
+    # None if it remains on-edge for the full tick (exit_time = 1/1).
+    exit_time_num: int | None
+    exit_time_den: int | None
+    arrival_time_num: int | None
+    arrival_time_den: int | None
     origin_province_id: str
     path_origin_node: str | None  # last legal node before current edge hop
+    # Stationary on a node at tick start (for t=0 static contact).
+    stationary_node_id: str | None = None
 
 
 @dataclass(slots=True)
@@ -102,13 +118,73 @@ def detect_swept_contacts(
     intervals: list[MovementInterval],
     *,
     edges_by_id: dict[str, OperationalRouteEdge],
+    nodes_by_id: dict[str, dict[str, Any]] | None = None,
 ) -> list[ContactCandidate]:
     """Detect hostile swept contacts from intended intervals (order-independent)."""
     contacts: list[ContactCandidate] = []
-    # Edge pairs
+    nodes_by_id = nodes_by_id or {}
+
+    # t=0 static hostile co-location already on nodes.
+    by_node_static: dict[str, list[MovementInterval]] = {}
+    for item in intervals:
+        if item.stationary_node_id:
+            by_node_static.setdefault(item.stationary_node_id, []).append(item)
+    # Also include non-movers already at nodes from state.
+    from .operational_contact import formation_at_node_id, formations_at_node
+
+    occupied_nodes = {
+        nid
+        for force in state.strategic_formations.values()
+        if (nid := formation_at_node_id(force))
+    }
+    for node_id in sorted(occupied_nodes):
+        present = formations_at_node(state, node_id)
+        if len(present) < 2:
+            continue
+        has_hostile = False
+        seed_atk = seed_def = None
+        for i, left in enumerate(present):
+            for right in present[i + 1 :]:
+                if left.faction == right.faction or are_allied(
+                    state, left.faction, right.faction
+                ):
+                    continue
+                has_hostile = True
+                from .operational_contact import choose_static_attacker_defender
+
+                province_id = str(
+                    (nodes_by_id.get(node_id) or {}).get("province_id")
+                    or left.province_id
+                )
+                seed_atk, seed_def = choose_static_attacker_defender(
+                    state, left, right, node_province_id=province_id
+                )
+                break
+            if has_hostile:
+                break
+        if not has_hostile or seed_atk is None or seed_def is None:
+            continue
+        contacts.append(
+            ContactCandidate(
+                kind=ENCOUNTER_KIND_NODE_CONTACT,
+                time_num=0,
+                time_den=1,
+                edge_id="",
+                node_id=node_id,
+                progress_canonical=0,
+                attacker_id=seed_atk.strategic_formation_id,
+                defender_id=seed_def.strategic_formation_id,
+                participant_ids=tuple(
+                    sorted(f.strategic_formation_id for f in present)
+                ),
+            )
+        )
+
+    # Edge pairs — true velocity, before either exits the edge.
+    # Include v=0 on-edge forces (stationary front for catch-up).
     by_edge: dict[str, list[MovementInterval]] = {}
     for item in intervals:
-        if item.edge_id and item.start_canonical is not None and item.end_canonical is not None:
+        if item.edge_id and item.start_canonical is not None:
             by_edge.setdefault(item.edge_id, []).append(item)
     for edge_id in sorted(by_edge):
         group = sorted(by_edge[edge_id], key=lambda value: value.formation_id)
@@ -121,31 +197,85 @@ def detect_swept_contacts(
                 contact = _edge_pair_contact(left, right)
                 if contact is not None:
                     contacts.append(contact)
-    # Simultaneous node arrivals: one candidate per destination containing ALL arrivals.
-    arrivals: dict[str, list[MovementInterval]] = {}
+
+    # Node arrivals grouped by (destination, exact arrival time).
+    arrival_groups: dict[tuple[str, int, int], list[MovementInterval]] = {}
     for item in intervals:
-        if item.arrives_node and item.end_node_id:
-            arrivals.setdefault(item.end_node_id, []).append(item)
-    for node_id in sorted(arrivals):
-        group = sorted(arrivals[node_id], key=lambda value: value.formation_id)
-        if len(group) < 2:
+        if not item.arrives_node or not item.end_node_id:
             continue
-        # Require at least one hostile pair among the full arrival set.
-        has_hostile = False
+        if item.arrival_time_num is None or item.arrival_time_den is None:
+            continue
+        key = (item.end_node_id, item.arrival_time_num, item.arrival_time_den)
+        arrival_groups.setdefault(key, []).append(item)
+
+    for (node_id, t_num, t_den), group in sorted(
+        arrival_groups.items(),
+        key=lambda kv: (kv[0][0], kv[0][1], kv[0][2]),
+    ):
+        group = sorted(group, key=lambda value: value.formation_id)
+        # Occupants already at node (entry contact against existing hostiles).
+        already = {
+            f.strategic_formation_id: f for f in formations_at_node(state, node_id)
+        }
+        # Simultaneous: 2+ arrivals at same exact time with hostile pair among them
+        # or vs already-present hostiles.
+        combined_ids = {item.formation_id for item in group} | set(already)
+        if len(combined_ids) < 2 and len(group) < 1:
+            continue
+
+        # Build seed hostile pair using destination province owner-defends.
+        province_id = str((nodes_by_id.get(node_id) or {}).get("province_id") or "")
+        present_forces: list[StrategicFormation] = []
+        for fid in sorted(combined_ids):
+            force = state.strategic_formations.get(fid)
+            if force is not None:
+                present_forces.append(force)
         seed_atk = seed_def = None
-        for i, left in enumerate(group):
-            for right in group[i + 1 :]:
+        for i, left in enumerate(present_forces):
+            for right in present_forces[i + 1 :]:
                 if left.faction == right.faction or are_allied(
                     state, left.faction, right.faction
                 ):
                     continue
-                has_hostile = True
-                seed_atk, seed_def = _node_attacker_defender(state, left, right, node_id)
+                from .operational_contact import choose_static_attacker_defender
+
+                seed_atk, seed_def = choose_static_attacker_defender(
+                    state, left, right, node_province_id=province_id
+                )
                 break
-            if has_hostile:
+            if seed_atk is not None:
                 break
-        if not has_hostile or seed_atk is None or seed_def is None:
+        if seed_atk is None or seed_def is None:
             continue
+
+        # Classify: all-arrival simultaneous vs entry against occupant.
+        arrival_ids = {item.formation_id for item in group}
+        already_ids = set(already)
+        if len(group) >= 2 and _hostile_in_set(state, group):
+            kind = ENCOUNTER_KIND_NODE_SIMULTANEOUS
+            participants = tuple(sorted(arrival_ids | already_ids))
+        elif already_ids and any(
+            not are_allied(
+                state,
+                state.strategic_formations[aid].faction,
+                state.strategic_formations[bid].faction,
+            )
+            and state.strategic_formations[aid].faction
+            != state.strategic_formations[bid].faction
+            for aid in arrival_ids
+            if aid in state.strategic_formations
+            for bid in already_ids
+            if bid in state.strategic_formations
+        ):
+            kind = ENCOUNTER_KIND_NODE_CONTACT
+            participants = tuple(sorted(arrival_ids | already_ids))
+        elif len(group) >= 2:
+            kind = ENCOUNTER_KIND_NODE_SIMULTANEOUS
+            participants = tuple(sorted(arrival_ids | already_ids))
+        else:
+            kind = ENCOUNTER_KIND_NODE_CONTACT
+            participants = tuple(sorted(arrival_ids | already_ids))
+
         retreat = tuple(
             (item.formation_id, item.path_origin_node or item.start_node_id or "")
             for item in group
@@ -153,19 +283,29 @@ def detect_swept_contacts(
         )
         contacts.append(
             ContactCandidate(
-                kind=ENCOUNTER_KIND_NODE_SIMULTANEOUS,
-                time_num=1,
-                time_den=1,  # end of tick arrival
+                kind=kind,
+                time_num=t_num,
+                time_den=t_den,
                 edge_id="",
                 node_id=node_id,
                 progress_canonical=0,
-                attacker_id=seed_atk.formation_id,
-                defender_id=seed_def.formation_id,
-                participant_ids=tuple(item.formation_id for item in group),
+                attacker_id=seed_atk.strategic_formation_id,
+                defender_id=seed_def.strategic_formation_id,
+                participant_ids=participants,
                 retreat_nodes=tuple((fid, nid) for fid, nid in retreat if nid),
             )
         )
     return contacts
+
+
+def _hostile_in_set(state: CampaignState, group: list[MovementInterval]) -> bool:
+    for i, left in enumerate(group):
+        for right in group[i + 1 :]:
+            if left.faction != right.faction and not are_allied(
+                state, left.faction, right.faction
+            ):
+                return True
+    return False
 
 
 def select_primary_contact(contacts: list[ContactCandidate]) -> ContactCandidate | None:
@@ -281,41 +421,23 @@ def apply_simultaneous_node_arrivals(
     already = {
         f.strategic_formation_id: f for f in formations_at_node(state, node_id)
     }
-    arrivals = [
-        by_id[fid]
-        for fid in sorted(contact.participant_ids)
-        if fid in by_id and by_id[fid].arrives_node
-    ]
-    if len(arrivals) < 2:
+    # Prefer contact-listed arrivals; also accept any interval arriving at this node
+    # (single entry-vs-occupant uses one arrival).
+    arrival_ids = {
+        fid
+        for fid in contact.participant_ids
+        if fid in by_id and by_id[fid].arrives_node and by_id[fid].end_node_id == node_id
+    }
+    for item in intervals:
+        if item.arrives_node and item.end_node_id == node_id:
+            arrival_ids.add(item.formation_id)
+    arrivals = [by_id[fid] for fid in sorted(arrival_ids) if fid in by_id]
+    if not arrivals and not already:
         return False, ()
 
-    accepted: list[MovementInterval] = []
-    rejected: list[MovementInterval] = []
-    tentative: list[tuple[Faction, str]] = []  # (faction, formation_id)
-
-    def _friend_count(faction: Faction) -> int:
-        count = 0
-        for force in already.values():
-            if force.faction == faction or are_allied(state, faction, force.faction):
-                count += 1
-        for other_f, _fid in tentative:
-            if other_f == faction or are_allied(state, faction, other_f):
-                count += 1
-        return count
-
-    cap = max_friendly_formations_per_node(state)
-    for item in sorted(arrivals, key=lambda value: value.formation_id):
-        force = state.strategic_formations.get(item.formation_id)
-        if force is None:
-            continue
-        if item.formation_id in already:
-            accepted.append(item)
-            continue
-        if _friend_count(force.faction) >= cap:
-            rejected.append(item)
-            continue
-        accepted.append(item)
-        tentative.append((force.faction, item.formation_id))
+    accepted, rejected = _partition_arrivals_by_cap(
+        state, arrivals=arrivals, already=already
+    )
 
     present_ids = set(already) | {item.formation_id for item in accepted}
     # Need hostile pair in final group.
@@ -342,6 +464,15 @@ def apply_simultaneous_node_arrivals(
         # No battle — leave everyone unmoved (including rejected).
         return False, ()
 
+    # Capture handoff origin before destination province sync.
+    origin_by_fid = {
+        item.formation_id: item.origin_province_id for item in accepted
+    }
+    battle_origin = (
+        origin_by_fid.get(seed_atk.strategic_formation_id)
+        or seed_atk.province_id
+    )
+
     # Place accepted arrivals at destination.
     for item in accepted:
         force = state.strategic_formations[item.formation_id]
@@ -366,6 +497,102 @@ def apply_simultaneous_node_arrivals(
                 battalion.strategic_formation_id = force.strategic_formation_id
 
     # Rejected arrivals: exact last legal node, blocked, no retry.
+    rejected_ids = _apply_rejected_arrivals(
+        state, rejected, nodes_by_id=nodes_by_id
+    )
+
+    # Snapshot after capacity decisions but before battle — caller may restore.
+    battle = try_create_node_contact_battle(
+        state,
+        seed_atk,
+        seed_def,
+        node_id=node_id,
+        origin_province_id=battle_origin,
+    )
+    if battle is None:
+        # Caller must restore; signal failure with rejected ids for bookkeeping.
+        return False, tuple(sorted(rejected_ids))
+    if contact.kind == ENCOUNTER_KIND_NODE_SIMULTANEOUS:
+        battle.encounter_kind = ENCOUNTER_KIND_NODE_SIMULTANEOUS
+    return True, tuple(sorted(rejected_ids))
+
+
+def reject_overflow_arrivals_at_node(
+    state: CampaignState,
+    *,
+    node_id: str,
+    intervals: list[MovementInterval],
+    nodes_by_id: dict[str, dict[str, Any]],
+) -> tuple[str, ...]:
+    """Snap back + block arrivals that exceed friendly stack cap at ``node_id``.
+
+    Used when an earlier contact (e.g. t=0 static) already opened a battle at the
+    node so later arrivals this tick never enter, but capacity denials still apply.
+    """
+    from .operational_contact import formations_at_node
+
+    already = {
+        f.strategic_formation_id: f for f in formations_at_node(state, node_id)
+    }
+    by_id = {item.formation_id: item for item in intervals}
+    arrivals = [
+        item
+        for item in sorted(intervals, key=lambda value: value.formation_id)
+        if item.arrives_node
+        and item.end_node_id == node_id
+        and item.formation_id not in already
+        and item.formation_id in by_id
+    ]
+    _accepted, rejected = _partition_arrivals_by_cap(
+        state, arrivals=arrivals, already=already
+    )
+    return tuple(sorted(_apply_rejected_arrivals(state, rejected, nodes_by_id=nodes_by_id)))
+
+
+def _partition_arrivals_by_cap(
+    state: CampaignState,
+    *,
+    arrivals: list[MovementInterval],
+    already: dict[str, StrategicFormation],
+) -> tuple[list[MovementInterval], list[MovementInterval]]:
+    from .operational_contact import max_friendly_formations_per_node
+
+    accepted: list[MovementInterval] = []
+    rejected: list[MovementInterval] = []
+    tentative: list[tuple[Faction, str]] = []
+
+    def _friend_count(faction: Faction) -> int:
+        count = 0
+        for force in already.values():
+            if force.faction == faction or are_allied(state, faction, force.faction):
+                count += 1
+        for other_f, _fid in tentative:
+            if other_f == faction or are_allied(state, faction, other_f):
+                count += 1
+        return count
+
+    cap = max_friendly_formations_per_node(state)
+    for item in sorted(arrivals, key=lambda value: value.formation_id):
+        force = state.strategic_formations.get(item.formation_id)
+        if force is None:
+            continue
+        if item.formation_id in already:
+            accepted.append(item)
+            continue
+        if _friend_count(force.faction) >= cap:
+            rejected.append(item)
+            continue
+        accepted.append(item)
+        tentative.append((force.faction, item.formation_id))
+    return accepted, rejected
+
+
+def _apply_rejected_arrivals(
+    state: CampaignState,
+    rejected: list[MovementInterval],
+    *,
+    nodes_by_id: dict[str, dict[str, Any]],
+) -> list[str]:
     rejected_ids: list[str] = []
     for item in rejected:
         force = state.strategic_formations.get(item.formation_id)
@@ -394,18 +621,7 @@ def apply_simultaneous_node_arrivals(
                 force.move_order, status=MoveOrderStatus.BLOCKED.value
             )
         rejected_ids.append(item.formation_id)
-
-    battle = try_create_node_contact_battle(
-        state,
-        seed_atk,
-        seed_def,
-        node_id=node_id,
-        origin_province_id=seed_atk.province_id,
-    )
-    if battle is None:
-        return False, tuple(sorted(rejected_ids))
-    battle.encounter_kind = ENCOUNTER_KIND_NODE_SIMULTANEOUS
-    return True, tuple(sorted(rejected_ids))
+    return rejected_ids
 
 
 def expand_edge_participants_exact(
@@ -486,21 +702,26 @@ def _interval_for_formation(
         return None
     edge_index, desync = _current_edge_index(position, order)
     if desync or edge_index is None:
-        # Completed or blocked path — still record node occupation for simultaneous arrival.
         if position.mode == PositionMode.AT_NODE.value and position.node_id:
             return MovementInterval(
                 formation_id=force.strategic_formation_id,
                 faction=force.faction,
                 edge_id=None,
                 start_canonical=None,
+                velocity_canonical=0,
                 end_canonical=None,
                 direction=0,
                 facing_node_id=None,
                 start_node_id=str(position.node_id),
                 end_node_id=str(position.node_id),
                 arrives_node=False,
+                exit_time_num=None,
+                exit_time_den=None,
+                arrival_time_num=None,
+                arrival_time_den=None,
                 origin_province_id=force.province_id,
                 path_origin_node=str(position.node_id),
+                stationary_node_id=str(position.node_id),
             )
         return None
 
@@ -511,7 +732,6 @@ def _interval_for_formation(
     dest_node = order.path_node_ids[edge_index + 1]
     origin_node = order.path_node_ids[edge_index]
 
-    # Starting placement on edge
     if position.mode == PositionMode.AT_NODE.value:
         if position.node_id != origin_node:
             return None
@@ -529,76 +749,124 @@ def _interval_for_formation(
     base_mp = max(1, int(edge.base_move_points_milli or COST_MILLI_UNITY))
     stance_milli = _stance_speed_milli(order.locked_stance)
     if stance_milli <= 0:
-        delta = 0
+        raw_delta = 0
     else:
-        delta = max(1, (base_mp * stance_milli) // cost)
+        raw_delta = max(1, (base_mp * stance_milli) // cost)
 
-    if direction > 0:
-        end_c = min(PROGRESS_MILLI_MAX, start_c + delta)
+    # Signed velocity in canonical space (full-tick magnitude before clamp).
+    velocity = raw_delta if direction > 0 else (-raw_delta if direction < 0 else 0)
+
+    # Exact exit/arrival time if the force reaches the endpoint before t=1.
+    exit_num = exit_den = None
+    arrival_num = arrival_den = None
+    arrives = False
+    end_node = None
+    if velocity > 0:
+        remaining = PROGRESS_MILLI_MAX - start_c
+        if remaining <= 0:
+            end_c = start_c
+        elif raw_delta >= remaining:
+            # Reaches B at t = remaining/raw_delta
+            exit_num, exit_den = remaining, raw_delta
+            arrival_num, arrival_den = remaining, raw_delta
+            end_c = PROGRESS_MILLI_MAX
+            arrives = True
+            end_node = dest_node
+        else:
+            end_c = start_c + raw_delta
+    elif velocity < 0:
+        remaining = start_c  # distance to A
+        mag = -velocity
+        if remaining <= 0:
+            end_c = start_c
+        elif mag >= remaining:
+            exit_num, exit_den = remaining, mag
+            arrival_num, arrival_den = remaining, mag
+            end_c = 0
+            arrives = True
+            end_node = dest_node
+        else:
+            end_c = start_c - mag
     else:
-        end_c = max(0, start_c - delta)
+        end_c = start_c
 
-    arrives = (direction > 0 and end_c >= PROGRESS_MILLI_MAX) or (
-        direction < 0 and end_c <= 0
-    )
-    end_node = dest_node if arrives else None
     return MovementInterval(
         formation_id=force.strategic_formation_id,
         faction=force.faction,
         edge_id=edge_id,
         start_canonical=start_c,
+        velocity_canonical=velocity,
         end_canonical=end_c,
         direction=direction,
         facing_node_id=facing,
         start_node_id=origin_node if position.mode == PositionMode.AT_NODE.value else None,
         end_node_id=end_node,
         arrives_node=bool(arrives),
+        exit_time_num=exit_num,
+        exit_time_den=exit_den,
+        arrival_time_num=arrival_num,
+        arrival_time_den=arrival_den,
         origin_province_id=force.province_id,
         path_origin_node=origin_node,
+        stationary_node_id=None,
     )
+
+
+def _active_until(item: MovementInterval) -> tuple[int, int]:
+    """Return (num, den) for the latest t the force is still on-edge this tick."""
+    if item.exit_time_num is not None and item.exit_time_den is not None:
+        return item.exit_time_num, item.exit_time_den
+    return 1, 1
+
+
+def _time_le(num: int, den: int, limit_num: int, limit_den: int) -> bool:
+    """num/den <= limit_num/limit_den (non-negative dens)."""
+    return num * limit_den <= limit_num * den
+
+
+def _time_lt(num: int, den: int, limit_num: int, limit_den: int) -> bool:
+    return num * limit_den < limit_num * den
 
 
 def _edge_pair_contact(
     left: MovementInterval, right: MovementInterval
 ) -> ContactCandidate | None:
+    """Edge contact using true velocity; reject meetings after either exits the edge."""
     assert left.edge_id and right.edge_id and left.edge_id == right.edge_id
-    s1, e1, d1 = left.start_canonical, left.end_canonical, left.direction
-    s2, e2, d2 = right.start_canonical, right.end_canonical, right.direction
-    if s1 is None or e1 is None or s2 is None or e2 is None:
+    s1, v1 = left.start_canonical, left.velocity_canonical
+    s2, v2 = right.start_canonical, right.velocity_canonical
+    if s1 is None or s2 is None:
         return None
-    # Opposing directions → possible cross
-    if d1 * d2 < 0:
-        # Normalize so A moves toward B (increasing)
-        if d1 < 0:
-            s1, e1, s2, e2 = s2, e2, s1, e1
+    if v1 == 0 and v2 == 0:
+        return None
+    t1_num, t1_den = _active_until(left)
+    t2_num, t2_den = _active_until(right)
+
+    # Opposing directions (both must be moving)
+    if v1 != 0 and v2 != 0 and v1 * v2 < 0:
+        # Normalize: left increasing, right decreasing
+        if v1 < 0:
+            s1, v1, s2, v2 = s2, v2, s1, v1
             left, right = right, left
-            d1, d2 = -d2, -d1
-        # left increasing s1→e1, right decreasing s2→e2
+            t1_num, t1_den, t2_num, t2_den = t2_num, t2_den, t1_num, t1_den
         if s1 >= s2:
-            return None  # already passed or same point without closing
-        # Meet if end ranges cross: left reaches >= right's end and right reaches <= left's end
-        # Contact time t in [0,1]: s1 + t*(e1-s1) = s2 + t*(e2-s2)
-        den = (e1 - s1) - (e2 - s2)
-        if den <= 0:
             return None
+        # s1 + t*v1 = s2 + t*v2  => t*(v1-v2) = s2-s1
+        den = v1 - v2  # v1>0, v2<0 => den > 0
         num = s2 - s1
-        if num < 0 or num > den:
+        if den <= 0 or num < 0:
             return None
-        progress = s1 + (e1 - s1) * num // den
+        # Require 0 <= t <= 1 and t < exit of each (still on edge)
+        if not _time_le(num, den, 1, 1):
+            return None
+        if not _time_lt(num, den, t1_num, t1_den):
+            return None
+        if not _time_lt(num, den, t2_num, t2_den):
+            return None
+        # progress = s1 + t*v1 = s1 + num*v1/den
+        progress = s1 + v1 * num // den
         progress = max(0, min(PROGRESS_MILLI_MAX, progress))
-        # Attacker: the one that entered the edge more recently is ambiguous;
-        # use formation moving toward the other's start (left as increasing primary).
-        # Spec: opposing cross — choose attacker by sorted formation id for stability
-        # without combat modifier; document owner-less edge.
         ids = sorted((left.formation_id, right.formation_id))
-        retreat = tuple(
-            sorted(
-                {
-                    (left.formation_id, left.path_origin_node or ""),
-                    (right.formation_id, right.path_origin_node or ""),
-                }
-            )
-        )
         return ContactCandidate(
             kind=ENCOUNTER_KIND_EDGE_CROSS,
             time_num=num,
@@ -610,58 +878,43 @@ def _edge_pair_contact(
             defender_id=ids[1],
             participant_ids=tuple(ids),
             retreat_nodes=tuple(
-                (fid, nid) for fid, nid in retreat if nid
+                (fid, nid)
+                for fid, nid in (
+                    (left.formation_id, left.path_origin_node or ""),
+                    (right.formation_id, right.path_origin_node or ""),
+                )
+                if nid
             ),
         )
 
-    # Same direction catch-up
-    if d1 == 0 or d2 == 0 or d1 != d2:
+    # Same-direction catch-up (true velocity); allow stationary front (v=0).
+    if v1 == v2:
         return None
-    # Both increasing
-    if d1 > 0:
-        # Identify rear (smaller start) and front (larger start)
+    if (v1 >= 0 and v2 >= 0) and (v1 > 0 or v2 > 0):
         if s1 < s2:
             rear, front = left, right
-            sr, er, sf, ef = s1, e1, s2, e2
+            sr, vr, sf, vf = s1, v1, s2, v2
         elif s2 < s1:
             rear, front = right, left
-            sr, er, sf, ef = s2, e2, s1, e1
+            sr, vr, sf, vf = s2, v2, s1, v1
         else:
             return None
-        dr, df = er - sr, ef - sf
-        if dr <= df:
-            return None  # rear not faster
-        # Catch if rear ends at/ past front's path: er >= ef and starts behind
-        num = sf - sr
-        den = dr - df
-        if num < 0 or den <= 0 or num > den:
-            # Also allow catch if er >= sf and intervals overlap at end
-            if er < sf:
-                return None
-            # If rear overshoots front start but formula out of range, clamp meeting
-            if er >= ef and sr < sf:
-                progress = ef  # catch at front end position
-                return ContactCandidate(
-                    kind=ENCOUNTER_KIND_EDGE_CATCHUP,
-                    time_num=1,
-                    time_den=1,
-                    edge_id=str(left.edge_id),
-                    node_id="",
-                    progress_canonical=progress,
-                    attacker_id=rear.formation_id,
-                    defender_id=front.formation_id,
-                    participant_ids=tuple(sorted((rear.formation_id, front.formation_id))),
-                    retreat_nodes=tuple(
-                        (fid, nid)
-                        for fid, nid in (
-                            (rear.formation_id, rear.path_origin_node or ""),
-                            (front.formation_id, front.path_origin_node or ""),
-                        )
-                        if nid
-                    ),
-                )
+        if vr <= vf:
             return None
-        progress = sr + dr * num // den
+        # sr + t*vr = sf + t*vf => t = (sf-sr)/(vr-vf)
+        num = sf - sr
+        den = vr - vf
+        if num < 0 or den <= 0:
+            return None
+        if not _time_le(num, den, 1, 1):
+            return None
+        r_num, r_den = _active_until(rear)
+        f_num, f_den = _active_until(front)
+        if not _time_lt(num, den, r_num, r_den):
+            return None
+        if not _time_lt(num, den, f_num, f_den):
+            return None
+        progress = sr + vr * num // den
         progress = max(0, min(PROGRESS_MILLI_MAX, progress))
         return ContactCandidate(
             kind=ENCOUNTER_KIND_EDGE_CATCHUP,
@@ -683,49 +936,57 @@ def _edge_pair_contact(
             ),
         )
 
-    # Both decreasing (toward A): rear has larger start canonical
-    if s1 > s2:
-        rear, front = left, right
-        sr, er, sf, ef = s1, e1, s2, e2
-    elif s2 > s1:
-        rear, front = right, left
-        sr, er, sf, ef = s2, e2, s1, e1
-    else:
-        return None
-    # deltas negative; speed magnitude
-    dr, df = sr - er, sf - ef  # positive magnitudes
-    if dr <= df:
-        return None
-    num = sr - sf
-    den = dr - df
-    if num < 0 or den <= 0 or num > den:
-        if er <= sf and sr > sf:
-            progress = ef
-            return ContactCandidate(
-                kind=ENCOUNTER_KIND_EDGE_CATCHUP,
-                time_num=1,
-                time_den=1,
-                edge_id=str(left.edge_id),
-                node_id="",
-                progress_canonical=progress,
-                attacker_id=rear.formation_id,
-                defender_id=front.formation_id,
-                participant_ids=tuple(sorted((rear.formation_id, front.formation_id))),
-            )
-        return None
-    progress = sr - dr * num // den
-    progress = max(0, min(PROGRESS_MILLI_MAX, progress))
-    return ContactCandidate(
-        kind=ENCOUNTER_KIND_EDGE_CATCHUP,
-        time_num=num,
-        time_den=den,
-        edge_id=str(left.edge_id),
-        node_id="",
-        progress_canonical=progress,
-        attacker_id=rear.formation_id,
-        defender_id=front.formation_id,
-        participant_ids=tuple(sorted((rear.formation_id, front.formation_id))),
-    )
+    # Toward A (both negative, or one negative + stationary front).
+    if (v1 <= 0 and v2 <= 0) and (v1 < 0 or v2 < 0):
+        # Toward A: rear has larger canonical start
+        if s1 > s2:
+            rear, front = left, right
+            sr, vr, sf, vf = s1, v1, s2, v2
+        elif s2 > s1:
+            rear, front = right, left
+            sr, vr, sf, vf = s2, v2, s1, v1
+        else:
+            return None
+        # velocities <= 0; rear faster means more negative (vr < vf)
+        if vr >= vf:
+            return None
+        # sr + t*vr = sf + t*vf => t = (sf-sr)/(vr-vf)
+        num = sf - sr  # negative or zero
+        den = vr - vf  # negative
+        # Flip to positive rationals
+        num, den = -num, -den
+        if num < 0 or den <= 0:
+            return None
+        if not _time_le(num, den, 1, 1):
+            return None
+        r_num, r_den = _active_until(rear)
+        f_num, f_den = _active_until(front)
+        if not _time_lt(num, den, r_num, r_den):
+            return None
+        if not _time_lt(num, den, f_num, f_den):
+            return None
+        progress = sr + rear.velocity_canonical * num // den
+        progress = max(0, min(PROGRESS_MILLI_MAX, progress))
+        return ContactCandidate(
+            kind=ENCOUNTER_KIND_EDGE_CATCHUP,
+            time_num=num,
+            time_den=den,
+            edge_id=str(left.edge_id),
+            node_id="",
+            progress_canonical=progress,
+            attacker_id=rear.formation_id,
+            defender_id=front.formation_id,
+            participant_ids=tuple(sorted((rear.formation_id, front.formation_id))),
+            retreat_nodes=tuple(
+                (fid, nid)
+                for fid, nid in (
+                    (rear.formation_id, rear.path_origin_node or ""),
+                    (front.formation_id, front.path_origin_node or ""),
+                )
+                if nid
+            ),
+        )
+    return None
 
 
 def _node_attacker_defender(

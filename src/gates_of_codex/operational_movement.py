@@ -325,7 +325,9 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
     intervals = compute_movement_intervals(
         state, edges_by_id=edges_by_id, nodes_by_id=nodes_by_id
     )
-    swept = detect_swept_contacts(state, intervals, edges_by_id=edges_by_id)
+    swept = detect_swept_contacts(
+        state, intervals, edges_by_id=edges_by_id, nodes_by_id=nodes_by_id
+    )
     primary = select_primary_contact(swept)
     moved: list[str] = []
     contacts: list[str] = []
@@ -372,10 +374,15 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
         defender = state.strategic_formations.get(primary.defender_id)
         snapshot = _snapshot_formation_locations(state, expanded)
         if attacker is not None and defender is not None:
-            atk_ok = any(bid in state.battalions for bid in attacker.battalion_ids)
-            def_ok = any(bid in state.battalions for bid in defender.battalion_ids)
-            # Preflight coalition rosters without mutating.
-            preflight_ok = atk_ok and def_ok
+            # Preflight every expanded participant has a valid battalion roster.
+            preflight_ok = True
+            for fid in expanded:
+                force = state.strategic_formations.get(fid)
+                if force is None or not any(
+                    bid in state.battalions for bid in force.battalion_ids
+                ):
+                    preflight_ok = False
+                    break
             if preflight_ok:
                 apply_edge_contact_stop(
                     state,
@@ -423,20 +430,72 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
                 else:
                     contacts.extend(expanded)
                     skipped.update(expanded)
-    elif primary is not None and primary.kind == ENCOUNTER_KIND_NODE_SIMULTANEOUS:
-        from .operational_interception import apply_simultaneous_node_arrivals
-
-        created, rejected = apply_simultaneous_node_arrivals(
-            state,
-            primary,
-            intervals,
-            edges_by_id=edges_by_id,
-            nodes_by_id=nodes_by_id,
+    elif primary is not None and primary.kind in {
+        ENCOUNTER_KIND_NODE_SIMULTANEOUS,
+        "node_contact",
+    }:
+        from .operational_interception import (
+            apply_simultaneous_node_arrivals,
+            reject_overflow_arrivals_at_node,
         )
-        if created:
-            contacts.extend(primary.participant_ids)
-            skipped.update(primary.participant_ids)
-            skipped.update(rejected)
+        from .operational_contact import try_create_node_contact_battle
+
+        has_arrivals = any(
+            i.arrives_node
+            and i.end_node_id == primary.node_id
+            and (
+                i.formation_id in primary.participant_ids
+                or primary.kind == ENCOUNTER_KIND_NODE_SIMULTANEOUS
+            )
+            for i in intervals
+        )
+        # Include would-be arrivals at this node in the transactional snapshot.
+        arrival_extra = tuple(
+            i.formation_id
+            for i in intervals
+            if i.arrives_node and i.end_node_id == primary.node_id
+        )
+        snap_ids = tuple(sorted(set(primary.participant_ids) | set(arrival_extra)))
+        node_snapshot = _snapshot_formation_locations(state, snap_ids)
+        if primary.kind == ENCOUNTER_KIND_NODE_SIMULTANEOUS or has_arrivals:
+            created, rejected = apply_simultaneous_node_arrivals(
+                state,
+                primary,
+                intervals,
+                edges_by_id=edges_by_id,
+                nodes_by_id=nodes_by_id,
+            )
+            if created:
+                contacts.extend(primary.participant_ids)
+                skipped.update(primary.participant_ids)
+                skipped.update(rejected)
+            else:
+                _restore_formation_locations(state, node_snapshot)
+        else:
+            # Pure t=0 static co-location — no movement mutations for occupants.
+            atk = state.strategic_formations.get(primary.attacker_id)
+            dfn = state.strategic_formations.get(primary.defender_id)
+            if atk is not None and dfn is not None:
+                battle = try_create_node_contact_battle(
+                    state,
+                    atk,
+                    dfn,
+                    node_id=primary.node_id,
+                    origin_province_id=atk.province_id,
+                )
+                if battle is not None:
+                    contacts.extend(primary.participant_ids)
+                    skipped.update(primary.participant_ids)
+                    # Later same-tick arrivals still suffer stack-cap denial.
+                    rejected = reject_overflow_arrivals_at_node(
+                        state,
+                        node_id=primary.node_id,
+                        intervals=intervals,
+                        nodes_by_id=nodes_by_id,
+                    )
+                    skipped.update(rejected)
+                else:
+                    _restore_formation_locations(state, node_snapshot)
 
     # Remaining movers only when no battle was created this tick.
     if state.pending_battle is None:

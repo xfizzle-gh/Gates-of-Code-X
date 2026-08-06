@@ -322,20 +322,31 @@ def save_campaign(state: CampaignState, path: str | Path) -> Path:
 
 
 def _optional_strict_int(value: Any) -> int | None:
-    if value is None or value == "":
+    # Missing key → None. Explicit empty string is malformed, not absent.
+    if value is None:
         return None
+    if value == "":
+        raise ValueError("encounter_progress_milli must not be an empty string")
     from .operational_schema import require_strict_int
 
     return require_strict_int(value, name="encounter_progress_milli", minimum=0, maximum=1000)
 
 
 def _parse_encounter_pixel(value: Any) -> list[int]:
-    if value is None or value == "" or value == []:
+    # Missing / null → empty. Explicit "" is malformed.
+    if value is None:
+        return []
+    if value == "":
+        raise ValueError("encounter_pixel must not be an empty string")
+    if value == []:
         return []
     if not isinstance(value, list) or len(value) != 2:
         raise ValueError("encounter_pixel must be a list of two strict ints")
     from .operational_schema import require_strict_int
 
+    # Explicit empty strings inside the pair are malformed.
+    if value[0] == "" or value[1] == "":
+        raise ValueError("encounter_pixel coordinates must not be empty strings")
     return [
         require_strict_int(value[0], name="encounter_pixel[0]"),
         require_strict_int(value[1], name="encounter_pixel[1]"),
