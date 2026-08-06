@@ -167,29 +167,45 @@ class CampaignEngine:
         atk_forces = self._formations_for_battalions(attackers)
         def_forces = self._formations_for_battalions(defenders)
         is_op_contact = bool(str(getattr(pending, "encounter_kind", "") or ""))
+        is_edge_contact = bool(str(getattr(pending, "encounter_edge_id", "") or "").strip())
+        edge_progress = getattr(pending, "encounter_progress_milli", None)
+        edge_id = str(getattr(pending, "encounter_edge_id", "") or "")
 
         if winner == pending.attacker_faction:
             for force_id in def_forces:
+                preferred = None
+                hold_node = None
+                if is_edge_contact:
+                    preferred = self._edge_retreat_node(force_id, edge_id)
+                    hold_node = self._edge_retreat_hold_node(force_id)
                 self._resolve_formation_after_battle(
                     force_id,
                     lost=True,
                     exclude_province=target.province_id,
-                    preferred_retreat=None,
+                    preferred_retreat=preferred,
+                    hold_node_id=hold_node,
                 )
             operational_campaign = self._is_operational_campaign()
-            hold_node = self._hold_node_after_battle(
+            hold_node = None if is_edge_contact else self._hold_node_after_battle(
                 pending,
                 is_op_contact=is_op_contact,
                 operational_campaign=operational_campaign,
                 province_id=target.province_id,
             )
             for force_id in atk_forces:
-                self._resolve_formation_after_battle(
-                    force_id,
-                    lost=False,
-                    hold_province=target.province_id,
-                    hold_node_id=hold_node,
-                )
+                if is_edge_contact:
+                    self._hold_formation_on_edge(
+                        force_id,
+                        edge_id=edge_id,
+                        progress_canonical=edge_progress,
+                    )
+                else:
+                    self._resolve_formation_after_battle(
+                        force_id,
+                        lost=False,
+                        hold_province=target.province_id,
+                        hold_node_id=hold_node,
+                    )
             # Operational-capable campaigns never flip ownership from battle wins (S5).
             # Legacy campaigns without operational maneuver retain immediate ownership change.
             if (
@@ -205,20 +221,34 @@ class CampaignEngine:
             # Defenders hold; attackers retreat once per formation.
             for force_id in atk_forces:
                 preferred = None
-                if is_op_contact and force_id == str(getattr(pending, "attacker_formation_id", "") or ""):
+                hold_node = None
+                if is_edge_contact:
+                    preferred = self._edge_retreat_node(force_id, edge_id)
+                    hold_node = self._edge_retreat_hold_node(force_id)
+                elif is_op_contact and force_id == str(
+                    getattr(pending, "attacker_formation_id", "") or ""
+                ):
                     preferred = str(pending.origin_province_id or "") or None
                 self._resolve_formation_after_battle(
                     force_id,
                     lost=True,
                     exclude_province=target.province_id,
                     preferred_retreat=preferred,
+                    hold_node_id=hold_node,
                 )
             for force_id in def_forces:
-                self._resolve_formation_after_battle(
-                    force_id,
-                    lost=False,
-                    hold_province=None,  # stay put
-                )
+                if is_edge_contact:
+                    self._hold_formation_on_edge(
+                        force_id,
+                        edge_id=edge_id,
+                        progress_canonical=edge_progress,
+                    )
+                else:
+                    self._resolve_formation_after_battle(
+                        force_id,
+                        lost=False,
+                        hold_province=None,  # stay put
+                    )
 
         # Entry-contact movers stay blocked for the remainder of the turn.
         if is_op_contact:
@@ -237,6 +267,12 @@ class CampaignEngine:
                     force.move_order = replace(
                         force.move_order, status=MoveOrderStatus.BLOCKED.value
                     )
+
+        # Clear all edge-retreat metadata after op battle finalization (no stale reuse).
+        if is_op_contact:
+            store = self.state.map_metadata.get("operational_edge_retreat_nodes")
+            if isinstance(store, dict):
+                store.clear()
 
         pending.completed = True
         self.state.pending_battle = None
@@ -275,6 +311,132 @@ class CampaignEngine:
         return bool(self.state.map_metadata.get("operational_maneuver_enabled")) or bool(
             str(self.state.map_metadata.get("operational_graph", "") or "").strip()
         )
+
+    def _edge_retreat_node(self, force_id: str, edge_id: str) -> str | None:
+        """Province of the exact previous legal node for edge retreat (not arbitrary neighbor)."""
+        # Prefer exact node recorded at contact stop.
+        store = self.state.map_metadata.get("operational_edge_retreat_nodes")
+        node_id = None
+        if isinstance(store, dict):
+            node_id = store.get(force_id) or store.get(str(force_id))
+        if node_id:
+            from .operational_position import load_operational_graph_for_state
+
+            graph = load_operational_graph_for_state(self.state)
+            if graph:
+                node = next(
+                    (
+                        n
+                        for n in graph.get("nodes") or []
+                        if str(n.get("node_id")) == str(node_id)
+                    ),
+                    None,
+                )
+                if node:
+                    province_id = str(node.get("province_id") or "")
+                    if province_id:
+                        return province_id
+        force = self.state.strategic_formations.get(force_id)
+        if force is None:
+            return None
+        pos = force.position
+        if pos is not None and pos.mode == "on_edge" and pos.facing_node_id:
+            from .operational_position import load_operational_graph_for_state
+
+            graph = load_operational_graph_for_state(self.state)
+            if graph:
+                for edge in graph.get("edges") or []:
+                    if str(edge.get("edge_id")) != edge_id:
+                        continue
+                    a, b = str(edge.get("a")), str(edge.get("b"))
+                    facing = str(pos.facing_node_id)
+                    origin = b if facing == a else a
+                    node = next(
+                        (
+                            n
+                            for n in graph.get("nodes") or []
+                            if str(n.get("node_id")) == origin
+                        ),
+                        None,
+                    )
+                    if node:
+                        return str(node.get("province_id") or "") or None
+        return force.province_id or None
+
+    def _edge_retreat_hold_node(self, force_id: str) -> str | None:
+        """Exact previous legal node ID for post-battle placement."""
+        store = self.state.map_metadata.get("operational_edge_retreat_nodes")
+        if isinstance(store, dict):
+            node_id = store.get(force_id) or store.get(str(force_id))
+            if node_id:
+                return str(node_id)
+        return None
+
+    def _hold_formation_on_edge(
+        self,
+        force_id: str,
+        *,
+        edge_id: str,
+        progress_canonical: int | None,
+    ) -> None:
+        """Keep winners/holders on the encounter edge at canonical progress."""
+        from .operational_interception import _formation_progress_from_canonical
+        from .operational_position import load_operational_graph_for_state
+        from .operational_schema import FormationOperationalPosition, PositionMode
+
+        force = self.state.strategic_formations.get(force_id)
+        if force is None or not edge_id:
+            return
+        graph = load_operational_graph_for_state(self.state)
+        if graph is None:
+            return
+        edge_row = next(
+            (e for e in graph.get("edges") or [] if str(e.get("edge_id")) == edge_id),
+            None,
+        )
+        if edge_row is None:
+            return
+        from .operational_schema import OperationalRouteEdge
+
+        edge = OperationalRouteEdge(
+            edge_id=str(edge_row["edge_id"]),
+            a=str(edge_row["a"]),
+            b=str(edge_row["b"]),
+            kind=str(edge_row["kind"]),
+            authority=str(edge_row["authority"]),
+            length_px=int(edge_row["length_px"]),
+            base_move_points_milli=int(edge_row["base_move_points_milli"]),
+            movement_cost_milli=int(edge_row["movement_cost_milli"]),
+            requires_port=bool(edge_row["requires_port"]),
+            can_be_blockaded=bool(edge_row["can_be_blockaded"]),
+            traversal_enabled=bool(edge_row["traversal_enabled"]),
+            bidirectional=bool(edge_row["bidirectional"]),
+            province_ids=list(edge_row.get("province_ids") or []),
+        )
+        facing = None
+        if force.position and force.position.facing_node_id:
+            facing = str(force.position.facing_node_id)
+        if facing not in {edge.a, edge.b}:
+            facing = edge.b
+        progress = 0 if progress_canonical is None else int(progress_canonical)
+        form_progress = _formation_progress_from_canonical(
+            progress, facing=facing, edge=edge
+        )
+        force.position = FormationOperationalPosition(
+            mode=PositionMode.ON_EDGE.value,
+            edge_id=edge_id,
+            progress_milli=form_progress,
+            facing_node_id=facing,
+        )
+        force.movement_state = "on_route"
+        from .operational_movement import sync_province_from_position
+
+        sync_province_from_position(self.state, force)
+        for battalion_id in force.battalion_ids:
+            battalion = self.state.battalions.get(battalion_id)
+            if battalion is not None:
+                battalion.province_id = force.province_id
+                battalion.strategic_formation_id = force_id
 
     def _hold_node_after_battle(
         self,
@@ -410,7 +572,16 @@ class CampaignEngine:
             if battalion is not None:
                 battalion.province_id = destination
                 battalion.strategic_formation_id = force_id
-        place_formation_at_province_anchor(force, self.state)
+        # Prefer exact previous legal node when recorded (edge retreat).
+        if hold_node_id:
+            force.position = FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value,
+                node_id=hold_node_id,
+                progress_milli=0,
+            )
+            force.movement_state = "at_anchor"
+        else:
+            place_formation_at_province_anchor(force, self.state)
 
     def _hostile_battalion_in(self, province_id: str, faction: Faction) -> bool:
         for battalion in self.state.battalions.values():

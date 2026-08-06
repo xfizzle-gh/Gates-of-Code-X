@@ -208,7 +208,7 @@ class OperationalS3MovementTests(unittest.TestCase):
             self.assertEqual([50, 0], row["display_pixel"])
             self.assertEqual(MoveOrderStatus.ACTIVE.value, row["move_order"]["status"])
             self.assertEqual("a", row["province_id"])
-            self.assertEqual(11, snapshot["schema_version"])
+            self.assertEqual(12, snapshot["schema_version"])
             self.assertEqual(FRONTEND_SCHEMA_VERSION, snapshot["schema_version"])
 
     def test_multi_edge_path(self) -> None:

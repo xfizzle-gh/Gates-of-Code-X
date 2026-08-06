@@ -246,7 +246,13 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
             encounter_kind=str(pending_data.get("encounter_kind", "") or ""),
             attacker_formation_id=str(pending_data.get("attacker_formation_id", "") or ""),
             defender_formation_id=str(pending_data.get("defender_formation_id", "") or ""),
+            encounter_edge_id=str(pending_data.get("encounter_edge_id", "") or ""),
+            encounter_progress_milli=_optional_strict_int(
+                pending_data.get("encounter_progress_milli")
+            ),
+            encounter_pixel=_parse_encounter_pixel(pending_data.get("encounter_pixel")),
         )
+        _validate_encounter_contract(pending)
     state = CampaignState(
         campaign_name=data["campaign_name"],
         turn_number=int(data.get("turn_number", 1)),
@@ -313,3 +319,90 @@ def save_campaign(state: CampaignState, path: str | Path) -> Path:
         temporary_path = Path(temporary.name)
     temporary_path.replace(destination)
     return destination
+
+
+def _optional_strict_int(value: Any) -> int | None:
+    # Missing key → None. Explicit empty string is malformed, not absent.
+    if value is None:
+        return None
+    if value == "":
+        raise ValueError("encounter_progress_milli must not be an empty string")
+    from .operational_schema import require_strict_int
+
+    return require_strict_int(value, name="encounter_progress_milli", minimum=0, maximum=1000)
+
+
+def _parse_encounter_pixel(value: Any) -> list[int]:
+    # Missing / null → empty. Explicit "" is malformed.
+    if value is None:
+        return []
+    if value == "":
+        raise ValueError("encounter_pixel must not be an empty string")
+    if value == []:
+        return []
+    if not isinstance(value, list) or len(value) != 2:
+        raise ValueError("encounter_pixel must be a list of two strict ints")
+    from .operational_schema import require_strict_int
+
+    # Explicit empty strings inside the pair are malformed.
+    if value[0] == "" or value[1] == "":
+        raise ValueError("encounter_pixel coordinates must not be empty strings")
+    return [
+        require_strict_int(value[0], name="encounter_pixel[0]"),
+        require_strict_int(value[1], name="encounter_pixel[1]"),
+    ]
+
+
+def _validate_encounter_contract(pending: PendingBattle) -> None:
+    """Cross-field invariants for operational encounter serialization."""
+    kind = str(pending.encounter_kind or "")
+    node_id = str(pending.encounter_node_id or "")
+    edge_id = str(pending.encounter_edge_id or "")
+    progress = pending.encounter_progress_milli
+    pixel = list(pending.encounter_pixel or [])
+    atk = str(pending.attacker_formation_id or "")
+    dfn = str(pending.defender_formation_id or "")
+
+    edge_kinds = {"edge_cross", "edge_catchup"}
+    node_kinds = {"node_contact", "node_simultaneous"}
+
+    if not kind:
+        # Legacy adjacency battle: operational location fields must be empty.
+        if node_id or edge_id or progress is not None or pixel:
+            raise ValueError(
+                "legacy pending battle must not set operational encounter location fields"
+            )
+        return
+
+    if kind in edge_kinds:
+        if not edge_id.strip():
+            raise ValueError(f"{kind} requires nonempty encounter_edge_id")
+        if node_id:
+            raise ValueError(f"{kind} requires empty encounter_node_id")
+        if progress is None:
+            raise ValueError(f"{kind} requires encounter_progress_milli")
+        from .operational_schema import require_strict_int
+
+        require_strict_int(progress, name="encounter_progress_milli", minimum=0, maximum=1000)
+        if len(pixel) != 2:
+            raise ValueError(f"{kind} requires encounter_pixel [x, y]")
+        require_strict_int(pixel[0], name="encounter_pixel[0]")
+        require_strict_int(pixel[1], name="encounter_pixel[1]")
+        if not atk.strip() or not dfn.strip():
+            raise ValueError(f"{kind} requires primary attacker and defender formation IDs")
+        return
+
+    if kind in node_kinds:
+        if not node_id.strip():
+            raise ValueError(f"{kind} requires nonempty encounter_node_id")
+        if edge_id:
+            raise ValueError(f"{kind} requires empty encounter_edge_id")
+        if progress is not None:
+            raise ValueError(f"{kind} requires empty encounter_progress_milli")
+        if pixel:
+            raise ValueError(f"{kind} requires empty encounter_pixel")
+        if not atk.strip() or not dfn.strip():
+            raise ValueError(f"{kind} requires primary attacker and defender formation IDs")
+        return
+
+    raise ValueError(f"unknown encounter_kind {kind!r}")

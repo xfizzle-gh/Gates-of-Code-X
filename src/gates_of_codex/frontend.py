@@ -20,7 +20,7 @@ from .strategic import (
 from .supply import reachable_supply_provinces
 
 
-FRONTEND_SCHEMA_VERSION = 11
+FRONTEND_SCHEMA_VERSION = 12
 FRONTEND_PYTHON_MODULE = "gates_of_codex"
 
 
@@ -380,6 +380,9 @@ def _pending_battle(state: CampaignState) -> dict | None:
         "encounter_kind": pending.encounter_kind,
         "attacker_formation_id": pending.attacker_formation_id,
         "defender_formation_id": pending.defender_formation_id,
+        "encounter_edge_id": pending.encounter_edge_id,
+        "encounter_progress_milli": pending.encounter_progress_milli,
+        "encounter_pixel": list(pending.encounter_pixel or []),
     }
 
 

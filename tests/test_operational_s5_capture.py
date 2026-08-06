@@ -388,7 +388,7 @@ class OperationalS5CaptureTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             state = _state(Path(temporary))
             snapshot = build_frontend_snapshot(state)
-            self.assertEqual(11, snapshot["schema_version"])
+            self.assertEqual(12, snapshot["schema_version"])
             self.assertEqual(FRONTEND_SCHEMA_VERSION, snapshot["schema_version"])
             rows = snapshot["campaign"]["site_control"]
             self.assertTrue(rows)
