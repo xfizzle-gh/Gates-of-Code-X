@@ -226,13 +226,24 @@ func _test_exit_during_command_safe() -> void:
 	_make_runner()
 
 
+func _missing_executable_path() -> String:
+	## Absolute path that cannot be created on either OS (must yield OS.execute -1).
+	if OS.get_name() == "Windows":
+		return "C:/this/path/does/not/exist/goc-missing-backend.exe"
+	return "/this/path/does/not/exist/goc-missing-backend"
+
+
 func _test_candidate_fallback() -> void:
 	_finished_events.clear()
 	var ok: Dictionary = _fake_executable()
 	var candidates := [
-		{"executable": "Z:/missing/backend-a", "args": ["--help"]},
+		{"executable": _missing_executable_path(), "args": ["--help"]},
 		{"executable": ok.exe, "args": Array(ok.args)},
 	]
+	# Prove first candidate alone cannot launch.
+	var probe_out: Array = []
+	var probe_code := OS.execute(_missing_executable_path(), PackedStringArray(["--help"]), probe_out, true, false)
+	_assert_eq("missing exe probe is -1", probe_code, -1)
 	var start: Dictionary = _runner.try_start_candidates(
 		[{"op": "refresh"}],
 		candidates,
@@ -243,7 +254,14 @@ func _test_candidate_fallback() -> void:
 	_assert_true("not busy after fallback", not _runner.is_busy())
 	_assert_eq("fallback one finished event", _finished_events.size(), 1)
 	if not _finished_events.is_empty():
-		_assert_eq("fallback success", bool(_finished_events[0].get("success")), true)
+		_assert_eq(
+			"fallback success exit=%s out=%s" % [
+				_finished_events[0].get("exit_code"),
+				str(_finished_events[0].get("output_text")).substr(0, 80),
+			],
+			bool(_finished_events[0].get("success")),
+			true
+		)
 
 
 func _wait_until_idle(timeout_sec: float) -> void:

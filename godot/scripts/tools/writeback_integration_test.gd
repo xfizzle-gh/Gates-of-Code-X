@@ -472,9 +472,12 @@ func _test_launch_fallback_second_succeeds() -> void:
 	if OS.get_name() == "Windows":
 		ok_exe = "cmd.exe"
 		ok_args = ["/c", "exit", "0"]
+	var missing := "/this/path/does/not/exist/goc-missing-backend"
+	if OS.get_name() == "Windows":
+		missing = "C:/this/path/does/not/exist/goc-missing-backend.exe"
 	var candidates := [
 		{
-			"executable": "Z:/definitely/missing/backend-fallback-a",
+			"executable": missing,
 			"args": ["--help"],
 		},
 		{
