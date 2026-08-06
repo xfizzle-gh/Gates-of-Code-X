@@ -334,6 +334,12 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
         if static_contacts:
             contacts.extend(static_contacts)
 
+    capture_report: dict[str, Any] = {"advanced": False}
+    if state.pending_battle is None:
+        from .operational_capture import advance_site_capture
+
+        capture_report = advance_site_capture(state)
+
     clock = get_operational_clock(state)
     ticks_n = ticks_per_strategic_turn(state)
     global_tick = int(clock["global_tick"]) + 1
@@ -347,6 +353,7 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
         "contacts": contacts,
         "battle_id": state.pending_battle.battle_id if state.pending_battle else "",
         "static_contact": bool(static_contacts),
+        "capture": capture_report,
     }
 
 

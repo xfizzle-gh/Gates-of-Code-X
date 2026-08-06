@@ -272,12 +272,14 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
         schema_version=max(1, int(data.get("schema_version", 1))),
     )
     from .force_migration import ensure_strategic_formations
+    from .operational_capture import ensure_site_control_state
     from .operational_movement import ensure_move_orders
     from .operational_position import ensure_operational_positions
 
     ensure_strategic_formations(state)
     ensure_operational_positions(state)
     ensure_move_orders(state)
+    ensure_site_control_state(state)
     state.validate()
     return state
 
@@ -289,6 +291,7 @@ def load_campaign(path: str | Path) -> CampaignState:
 
 def save_campaign(state: CampaignState, path: str | Path) -> Path:
     from .force_migration import ensure_strategic_formations
+    from .operational_capture import ensure_site_control_state
     from .operational_movement import ensure_move_orders
     from .operational_position import ensure_operational_positions
     from .strategic import ensure_strategic_layer
@@ -297,6 +300,7 @@ def save_campaign(state: CampaignState, path: str | Path) -> Path:
     ensure_strategic_formations(state)
     ensure_operational_positions(state)
     ensure_move_orders(state)
+    ensure_site_control_state(state)
     state.validate()
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
