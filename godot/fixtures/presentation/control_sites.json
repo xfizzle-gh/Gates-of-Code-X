@@ -1,0 +1,37 @@
+{
+  "schema": "gates-of-codex.presentation-fixture",
+  "schema_version": 1,
+  "id": "control_sites",
+  "description": "Control-site markers and capture-progress rings.",
+  "routes": [],
+  "battles": [],
+  "contacts": [],
+  "control_sites": [
+    {
+      "id": "presentation_site_a",
+      "pixel": [330, 400],
+      "owned": true,
+      "presentation_capture_progress_fp": 1000,
+      "presentation_capture_max_fp": 1000
+    },
+    {
+      "id": "presentation_site_b",
+      "pixel": [390, 430],
+      "owned": false,
+      "presentation_capture_progress_fp": 350,
+      "presentation_capture_max_fp": 1000
+    }
+  ],
+  "operational_nodes": [
+    {"id": "n_a", "pixel": [330, 400]},
+    {"id": "n_b", "pixel": [390, 430]}
+  ],
+  "operational_edges": [
+    {
+      "id": "e_ab",
+      "a_pixel": [330, 400],
+      "b_pixel": [390, 430]
+    }
+  ],
+  "notes": ["presentation-only; replaceable after live site-control adapter exists"]
+}

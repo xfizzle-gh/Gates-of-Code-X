@@ -53,8 +53,117 @@ jobs:
             throw "Workshop deployment did not write its manifest"
           }
 
+  godot-map:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system deps (xvfb for true GL render captures)
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1 libxcursor1 libxinerama1 libxrandr2 libxi6 libx11-6
+      - name: Install Godot 4.7
+        run: |
+          set -euo pipefail
+          GODOT_VERSION=4.7-stable
+          curl -fsSL -o godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip
+          GODOT_BIN="$(find . -maxdepth 1 -type f -name 'Godot_v*_linux.x86_64' | head -n 1)"
+          install -m 755 "$GODOT_BIN" "$HOME/godot"
+          echo "$HOME" >> "$GITHUB_PATH"
+          "$HOME/godot" --version
+      - name: Godot project import
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          # Import can use headless; draw/capture steps require xvfb + real GL.
+          "$HOME/godot" --headless --path . --import --quit-after 1
+      - name: Godot BattleLocation GDScript unit test
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --audio-driver Dummy \
+            -s res://scripts/tools/battle_location_test.gd
+      - name: Godot map CI check (draw path + viewport smoke)
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          # True CanvasItem draw path needs a display (xvfb), not dummy headless.
+          xvfb-run -a -s "-screen 0 1920x1080x24" \
+            "$HOME/godot" --path . --audio-driver Dummy \
+            -s res://scripts/tools/map_ci_check.gd
+      - name: Godot map profiler (committed fixture)
+        run: |
+          set -euo pipefail
+          mkdir -p docs/godot-presentation
+          "$HOME/godot" --headless --path godot -s res://scripts/tools/map_profiler.gd -- \
+            --snapshot=res://fixtures/snapshots/em_theatre_profile.json \
+            --out="$(pwd)/docs/godot-presentation/ci_profile.json"
+          test -s docs/godot-presentation/ci_profile.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path("docs/godot-presentation/ci_profile.json").read_text(encoding="utf-8"))
+          assert data.get("ok") is True, data
+          assert int(data.get("province_count", 0)) >= 300, data
+          print("profiler ok", data.get("map_open_ms"), "ms open")
+          PY
+      - name: Godot true runtime viewport screenshots
+        run: |
+          set -euo pipefail
+          OUT="$(pwd)/docs/godot-presentation/screenshots/runtime"
+          mkdir -p "$OUT"
+          SNAP=res://fixtures/snapshots/em_theatre_profile.json
+          shoot() {
+            local name="$1"; shift
+            xvfb-run -a -s "-screen 0 2560x1440x24" \
+              "$HOME/godot" --path godot --audio-driver Dummy \
+              -s res://scripts/tools/map_screenshot.gd -- \
+              --snapshot="$SNAP" --out="$OUT/$name" "$@"
+            test -s "$OUT/$name"
+          }
+          shoot full_map_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/empty_map.json
+          shoot full_map_1440p.png --width=2560 --height=1440 --fixture=res://fixtures/presentation/empty_map.json
+          shoot selected_hovered_1080p.png --width=1920 --height=1080 --select-first --hover-second --fixture=res://fixtures/presentation/stack_and_selection.json
+          shoot selected_hovered_1440p.png --width=2560 --height=1440 --select-first --hover-second --fixture=res://fixtures/presentation/stack_and_selection.json
+          shoot formation_stack_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/many_counters.json
+          shoot route_line_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/routes_and_battles.json
+          shoot node_edge_battle_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/routes_and_battles.json
+          shoot control_site_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/control_sites.json
+          shoot debug_overlay_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/control_sites.json --debug --select-first
+          # S6 pending-battle location captures (true viewport path)
+          shoot s6_node_contact_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/s6_node_contact.json
+          shoot s6_node_simultaneous_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/s6_node_simultaneous.json
+          shoot s6_edge_cross_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/s6_edge_cross.json
+          shoot s6_edge_catchup_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/s6_edge_catchup.json
+          shoot s6_legacy_midpoint_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/s6_legacy_midpoint.json
+          ls -la "$OUT"
+          python3 - <<'PY'
+          import struct
+          from pathlib import Path
+          root = Path("docs/godot-presentation/screenshots/runtime")
+          files = sorted(root.glob("*.png"))
+          assert files, "no runtime screenshots"
+          for p in files:
+              data = p.read_bytes()
+              assert data[:8] == b"\x89PNG\r\n\x1a\n", p
+              # IHDR width/height
+              w, h = struct.unpack(">II", data[16:24])
+              assert w >= 1280 and h >= 720, (p, w, h)
+              assert p.stat().st_size > 50_000, (p, p.stat().st_size)
+              print("ok", p.name, f"{w}x{h}", p.stat().st_size)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: godot-map-evidence
+          path: |
+            docs/godot-presentation/ci_profile.json
+            docs/godot-presentation/screenshots/runtime/
+
   windows-executable:
-    needs: test
+    needs: [test, godot-map]
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4

@@ -36,7 +36,20 @@ var fitted_once := false
 
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
-	snapshot_source_path = args[0] if not args.is_empty() else DEFAULT_SNAPSHOT
+	snapshot_source_path = DEFAULT_SNAPSHOT
+	for arg in args:
+		var text := String(arg)
+		if text.begins_with("--snapshot="):
+			snapshot_source_path = text.substr(String("--snapshot=").length()).strip_edges()
+			continue
+		if text.begins_with("--"):
+			continue
+		if text.is_empty():
+			continue
+		# Positional snapshot path (non-flag) wins only when --snapshot= was not set.
+		if snapshot_source_path == DEFAULT_SNAPSHOT:
+			snapshot_source_path = text
+			break
 	_load_snapshot(snapshot_source_path)
 	_fit_to_focus(true)
 	queue_redraw()

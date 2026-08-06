@@ -1,0 +1,120 @@
+class_name OperationalGraphView
+extends RefCounted
+
+## Read-only Godot view of operational_graph.json for presentation adapters.
+## Does not own simulation authority.
+
+const EM_FROM_GOE_MANIFEST := "res://assets/maps/europe_mediterranean/from_goe/map_manifest.json"
+const INTERIM_GOE_MANIFEST := "res://assets/maps/europe/interim_goe/map_manifest.json"
+const EM_OPERATIONAL_GRAPH := "res://assets/maps/europe_mediterranean/from_goe/operational/operational_graph.json"
+
+var path := ""
+var error := ""
+var is_ready := false
+var raw: Dictionary = {}
+## Indexed view consumed by BattleLocation:
+## { "nodes": {node_id: {pixel:[x,y], ...}}, "edges": {edge_id: {a,b,...}} }
+var index: Dictionary = {"nodes": {}, "edges": {}}
+
+
+func clear() -> void:
+	path = ""
+	error = ""
+	is_ready = false
+	raw = {}
+	index = {"nodes": {}, "edges": {}}
+
+
+func open(graph_path: String) -> bool:
+	clear()
+	path = graph_path
+	if graph_path.is_empty() or not FileAccess.file_exists(graph_path):
+		error = "operational graph not found: %s" % graph_path
+		return false
+	var file := FileAccess.open(graph_path, FileAccess.READ)
+	if file == null:
+		error = "unable to open operational graph: %s" % graph_path
+		return false
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	if not parsed is Dictionary:
+		error = "operational graph is not a JSON object"
+		return false
+	raw = parsed
+	var nodes_out: Dictionary = {}
+	for row_variant in raw.get("nodes", []):
+		if not row_variant is Dictionary:
+			continue
+		var row := row_variant as Dictionary
+		var node_id := String(row.get("node_id", "")).strip_edges()
+		if node_id.is_empty():
+			continue
+		nodes_out[node_id] = row
+	var edges_out: Dictionary = {}
+	for row_variant in raw.get("edges", []):
+		if not row_variant is Dictionary:
+			continue
+		var erow := row_variant as Dictionary
+		var edge_id := String(erow.get("edge_id", "")).strip_edges()
+		if edge_id.is_empty():
+			continue
+		edges_out[edge_id] = erow
+	index = {"nodes": nodes_out, "edges": edges_out}
+	is_ready = true
+	error = ""
+	return true
+
+
+func resolve_path(map_manifest_path: String, snapshot: Dictionary = {}) -> String:
+	## Resolve operational graph without silently using EM data for unknown maps.
+	## Order:
+	## 1) explicit snapshot.strategic_map.operational_graph_path
+	## 2) campaign.map_metadata.operational_graph (absolute or relative to manifest)
+	## 3) manifest-local operational/operational_graph.json when present
+	## 4) known EM/interim manifests only → committed EM operational graph
+	## else: empty (unresolved)
+	var contract: Dictionary = snapshot.get("strategic_map", {})
+	var exported := String(contract.get("operational_graph_path", "")).strip_edges()
+	if not exported.is_empty() and FileAccess.file_exists(exported):
+		return exported
+
+	var campaign: Dictionary = snapshot.get("campaign", {})
+	var meta: Dictionary = campaign.get("map_metadata", {})
+	var meta_graph := String(meta.get("operational_graph", "")).strip_edges()
+	if not meta_graph.is_empty():
+		if FileAccess.file_exists(meta_graph):
+			return meta_graph
+		if not map_manifest_path.is_empty():
+			var rel := map_manifest_path.get_base_dir().path_join(meta_graph).simplify_path()
+			if FileAccess.file_exists(rel):
+				return rel
+			# Snapshot often lives under godot/; graph path may be assets/... from repo root.
+			var from_res := ("res://" + meta_graph.trim_prefix("./")).simplify_path()
+			if FileAccess.file_exists(from_res):
+				return from_res
+
+	if not map_manifest_path.is_empty():
+		var local := map_manifest_path.get_base_dir().path_join("operational/operational_graph.json").simplify_path()
+		if FileAccess.file_exists(local):
+			return local
+
+	if _is_known_em_or_interim_manifest(map_manifest_path):
+		if FileAccess.file_exists(EM_OPERATIONAL_GRAPH):
+			return EM_OPERATIONAL_GRAPH
+
+	return ""
+
+
+func resolve_default_path(map_manifest_path: String) -> String:
+	## Backward-compatible wrapper without snapshot context.
+	return resolve_path(map_manifest_path, {})
+
+
+func _is_known_em_or_interim_manifest(map_manifest_path: String) -> bool:
+	var path := map_manifest_path.replace("\\", "/").simplify_path()
+	if path.is_empty():
+		return false
+	if path == EM_FROM_GOE_MANIFEST or path.ends_with("/europe_mediterranean/from_goe/map_manifest.json"):
+		return true
+	if path == INTERIM_GOE_MANIFEST or path.ends_with("/europe/interim_goe/map_manifest.json"):
+		return true
+	return false

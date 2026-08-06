@@ -1,0 +1,13 @@
+{
+  "schema": "gates-of-codex.presentation-fixture",
+  "schema_version": 1,
+  "id": "empty_map",
+  "description": "No presentation overlays.",
+  "routes": [],
+  "battles": [],
+  "contacts": [],
+  "control_sites": [],
+  "operational_nodes": [],
+  "operational_edges": [],
+  "notes": ["presentation-only"]
+}

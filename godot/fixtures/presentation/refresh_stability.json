@@ -1,0 +1,18 @@
+{
+  "schema": "gates-of-codex.presentation-fixture",
+  "schema_version": 1,
+  "id": "refresh_stability",
+  "description": "Checklist for repeated snapshot refresh without node leaks.",
+  "refresh_iterations": 10,
+  "expectations": [
+    "counter_count_stable",
+    "no_duplicate_province_nodes",
+    "selection_survives_unrelated_overlay_refresh",
+    "ownership_colors_correct_after_refresh",
+    "hover_does_not_permanently_alter_ownership"
+  ],
+  "notes": [
+    "Godot presentation is immediate-mode CanvasItem drawing; node count should remain the scene root set.",
+    "Texture rebuilds are event-driven via ColorIdMap invalidation."
+  ]
+}

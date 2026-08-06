@@ -1,0 +1,19 @@
+{
+  "schema": "gates-of-codex.presentation-fixture",
+  "schema_version": 1,
+  "id": "stack_and_selection",
+  "description": "Selected/hovered province rings and stack badge placement smoke.",
+  "selected_province_hint": "",
+  "hovered_province_hint": "",
+  "routes": [],
+  "battles": [],
+  "contacts": [],
+  "control_sites": [],
+  "force_stack_badges": [
+    {"pixel": [340, 380], "count": 4},
+    {"pixel": [360, 395], "count": 2}
+  ],
+  "operational_nodes": [],
+  "operational_edges": [],
+  "notes": ["presentation-only stack indicators"]
+}

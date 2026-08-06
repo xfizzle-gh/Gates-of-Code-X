@@ -1,0 +1,39 @@
+{
+	"flipped_province_id": "Baden",
+	"has_background": true,
+	"image_height": 920,
+	"image_width": 817,
+	"label": "godot-strategic-map-profile",
+	"manifest_path": "res://assets/maps/europe_mediterranean/from_goe/map_manifest.json",
+	"map_open_ms": 404.87,
+	"notes": [
+		"Headless CPU timings for map layer rebuilds (not full interactive FPS).",
+		"Default snapshot is the committed fixtures/snapshots/em_theatre_profile.json.",
+		"refresh_snapshot_ms_avg is partial single-province ownership change."
+	],
+	"ok": true,
+	"perf_stats": {
+		"cached_province_runs": 342,
+		"full_owner_rebuilds": 1,
+		"highlight_rebuild_ms_last": 0.206,
+		"highlight_rebuilds": 20,
+		"last_event": "highlight",
+		"owner_rebuild_ms_last": 0.058,
+		"partial_owner_rebuilds": 2,
+		"pixel_index_size": 751640,
+		"pixels_touched_last": 2954,
+		"static_rebuilds_displayed": 0,
+		"static_rebuilds_this_frame": 23
+	},
+	"province_count": 342,
+	"province_pick_ms_avg": 0.0,
+	"refresh_highlights_ms_avg": 0.21,
+	"refresh_highlights_noop_ms_avg": 0.028,
+	"refresh_snapshot_ms_avg": 0.68,
+	"refresh_snapshot_noop_ms_avg": 0.242,
+	"refresh_snapshot_partial_ms": 0.68,
+	"snapshot_battalions": 12,
+	"snapshot_path": "res://fixtures/snapshots/em_theatre_profile.json",
+	"snapshot_provinces": 342,
+	"timestamp_unix": 1786037847.797
+}

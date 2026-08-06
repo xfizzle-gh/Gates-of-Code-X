@@ -1,0 +1,19 @@
+{
+  "schema": "gates-of-codex.presentation-fixture",
+  "schema_version": 1,
+  "id": "s6_edge_cross",
+  "description": "Authoritative edge_cross at progress 500 with encounter_pixel authority preferred when present.",
+  "pending_battle": {
+    "id": "fixture-edge-cross",
+    "origin_province_id": "Baden",
+    "target_province_id": "Franken",
+    "attacker_faction": "nato",
+    "defender_faction": "rusa",
+    "encounter_kind": "edge_cross",
+    "encounter_node_id": "",
+    "encounter_edge_id": "op-edge-corridor-op-node-Baden-anchor__op-node-Franken-anchor",
+    "encounter_progress_milli": 500,
+    "encounter_pixel": [331, 497]
+  },
+  "notes": ["encounter_pixel wins over edge interpolation"]
+}
