@@ -167,6 +167,29 @@ class CropWholePolygonTests(unittest.TestCase):
         self.assertEqual(len(data["candidates"]), 3)
         self.assertTrue(data["rules"]["no_sliver_clipping"])
         self.assertTrue(data["rules"]["not_continent_equals_europe"])
+        self.assertEqual(data["permission"]["status"], "GRANTED")
+        self.assertEqual(
+            data["permission"]["product_shape"],
+            "APPROVED_EXACT_IMPORT_CROPPED_THEATRE",
+        )
+
+    def test_region_coverage_requires_included_city_anchors(self) -> None:
+        from gates_of_codex.earth3.model import Earth3City
+
+        ds = self._dataset()
+        ds.cities = (
+            Earth3City("Kherson", 15, 15, 1, 0),
+            Earth3City("Murmansk", 45, 45, 3, 1),
+        )
+        candidate = CropCandidate(
+            id="t",
+            title="t",
+            description="t",
+            rect=CropRect(0, 0, 25, 25),
+        )
+        result = apply_crop(ds, candidate)
+        self.assertTrue(result.region_coverage["Ukraine_Crimea_Donbas"]["ok"])
+        self.assertTrue(result.region_coverage["Far_north_should_exclude"]["ok"])
 
 
 if __name__ == "__main__":

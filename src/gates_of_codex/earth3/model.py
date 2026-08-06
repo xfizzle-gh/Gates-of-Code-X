@@ -52,10 +52,25 @@ class Earth3Province:
         return sum(xs) / len(xs), sum(ys) / len(ys)
 
 
+@dataclass(frozen=True, slots=True)
+class Earth3City:
+    name: str
+    x: float
+    y: float
+    province_id: int
+    source_index: int
+
+
 @dataclass(slots=True)
 class Earth3Dataset:
     provinces: dict[int, Earth3Province] = field(default_factory=dict)
     adjacency: dict[int, set[int]] = field(default_factory=dict)
+    directed_adjacency: dict[int, set[int]] = field(default_factory=dict)
+    source_directed_edge_count: int = 0
+    undirected_edge_count: int = 0
+    one_way_source_pairs: tuple[tuple[int, int], ...] = ()
+    mutual_source_pairs: tuple[tuple[int, int], ...] = ()
+    cities: tuple[Earth3City, ...] = ()
     background_size: tuple[int, int] = (8, 4)
     background_tile: tuple[int, int] = (2220, 2150)
     num_of_provinces_declared: int = 0

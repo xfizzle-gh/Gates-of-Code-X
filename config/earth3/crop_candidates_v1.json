@@ -53,16 +53,38 @@
     "Italy",
     "Balkans_Greece",
     "Ukraine_Crimea_Donbas",
+    "Rostov_approach",
     "Turkey",
     "Caucasus_edge",
     "North_Africa_coast",
-    "Mediterranean_islands"
+    "Baltic",
+    "Far_north_should_exclude"
   ],
+  "city_anchor_notes": {
+    "Ukraine_Crimea_Donbas": [
+      "Sevastopol p=1268",
+      "Simferopol p=6627",
+      "Kherson p=1271",
+      "Zaporizhzhia p=3782",
+      "Donetsk p=12175",
+      "Luhansk p=10869"
+    ],
+    "Rostov_approach": ["Rostov on Don p=10868"],
+    "Iceland": ["Reykjavik p=951"],
+    "Far_north_should_exclude": ["Murmansk p=11370 must remain outside crop"]
+  },
+  "permission": {
+    "status": "GRANTED",
+    "product_shape": "APPROVED_EXACT_IMPORT_CROPPED_THEATRE",
+    "notes": "Owner confirmed applicable Earth3 geometry/adjacency may be used, converted, modified, and redistributed in Gates of Code:X. Archive and background tiles stay uncommitted."
+  },
   "assumptions": [
     "Earth3 continent id is metadata only; crop uses authored rect + whole-polygon rules.",
     "Far-northern Scandinavia is excluded by min_y, not by deleting Norway/Sweden/Finland entirely.",
     "Iceland remains included because its centroids sit south of the far-north cutoff while still west of the main mass.",
     "No province rings are clipped; boundary spill uses whole-polygon keep when centroid is inside.",
-    "AoH3 background tiles and scenarios are not imported."
+    "AoH3 background tiles and scenarios are not imported.",
+    "Arkhangelsk may still fall inside the northern Russian fringe of em_ref_tight; owner may raise min_y or add exclude IDs if that is too deep.",
+    "Region coverage is validated via Earth3 city anchors, not political ownership."
   ]
 }

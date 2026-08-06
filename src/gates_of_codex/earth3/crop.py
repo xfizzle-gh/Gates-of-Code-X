@@ -67,10 +67,39 @@ class CropResult:
     disconnected_land_components: int = 0
     label_outside_polygon: list[int] = field(default_factory=list)
     source_bounds: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)
+    region_coverage: dict[str, dict[str, object]] = field(default_factory=dict)
+    far_north_excluded_sample: list[int] = field(default_factory=list)
 
     @property
     def province_count(self) -> int:
         return len(self.included_ids)
+
+
+# City-name anchors used only for crop audit coverage (not political ownership).
+_REGION_CITY_ANCHORS: dict[str, tuple[str, ...]] = {
+    "Iceland": ("Reykjav", "Akureyri"),
+    "Britain_Ireland": ("London", "Dublin", "Edinburgh", "Cardiff"),
+    "Iberia": ("Madrid", "Lisbon", "Barcelona"),
+    "France_Benelux_Germany": ("Paris", "Brussels", "Amsterdam", "Berlin", "Munich"),
+    "Italy": ("Rome", "Milan", "Naples", "Palermo"),
+    "Balkans_Greece": ("Athens", "Belgrade", "Sofia", "Bucharest", "Zagreb"),
+    "Ukraine_Crimea_Donbas": (
+        "Kyiv",
+        "Kherson",
+        "Zaporizhzhia",
+        "Donetsk",
+        "Luhansk",
+        "Sevastopol",
+        "Simferopol",
+        "Odesa",
+    ),
+    "Rostov_approach": ("Rostov on Don",),
+    "Turkey": ("Istanbul", "Ankara", "Izmir"),
+    "Caucasus_edge": ("Tbilisi", "Baku", "Yerevan"),
+    "North_Africa_coast": ("Tunis", "Algiers", "Cairo", "Tripoli"),
+    "Baltic": ("Stockholm", "Helsinki", "Riga", "Tallinn", "Vilnius"),
+    "Far_north_should_exclude": ("Murmansk",),
+}
 
 
 def load_crop_candidates(path: str | Path) -> list[CropCandidate]:
@@ -157,6 +186,15 @@ def apply_crop(dataset: Earth3Dataset, candidate: CropCandidate) -> CropResult:
 
     components = _land_components(dataset, included_ids)
     source_bounds = _union_bounds([dataset.provinces[pid] for pid in included_ids])
+    region_coverage = _region_coverage(dataset, included_set)
+    far_north = [
+        pid
+        for pid, province in dataset.provinces.items()
+        if (not province.is_water)
+        and province.centroid[1] < candidate.rect.min_y
+        and candidate.rect.min_x <= province.centroid[0] <= candidate.rect.max_x
+        and pid not in included_set
+    ]
 
     return CropResult(
         candidate=candidate,
@@ -171,7 +209,50 @@ def apply_crop(dataset: Earth3Dataset, candidate: CropCandidate) -> CropResult:
         disconnected_land_components=components,
         label_outside_polygon=label_outside,
         source_bounds=source_bounds,
+        region_coverage=region_coverage,
+        far_north_excluded_sample=sorted(far_north)[:40],
     )
+
+
+def _region_coverage(
+    dataset: Earth3Dataset, included: set[int]
+) -> dict[str, dict[str, object]]:
+    """Map required theatre regions to city-anchor inclusion results."""
+    out: dict[str, dict[str, object]] = {}
+    cities = list(dataset.cities)
+    for region, needles in _REGION_CITY_ANCHORS.items():
+        hits: list[dict[str, object]] = []
+        for needle in needles:
+            needle_l = needle.casefold()
+            matched = False
+            for city in cities:
+                if needle_l not in city.name.casefold():
+                    continue
+                matched = True
+                hits.append(
+                    {
+                        "city": city.name,
+                        "source_province_id": city.province_id,
+                        "included": city.province_id in included,
+                        "x": city.x,
+                        "y": city.y,
+                    }
+                )
+            if not matched:
+                hits.append(
+                    {
+                        "city": needle,
+                        "source_province_id": None,
+                        "included": False,
+                        "missing_from_source_cities": True,
+                    }
+                )
+        if region == "Far_north_should_exclude":
+            ok = all(not bool(h.get("included")) for h in hits if "missing_from_source_cities" not in h)
+        else:
+            ok = any(bool(h.get("included")) for h in hits)
+        out[region] = {"ok": ok, "anchors": hits}
+    return out
 
 
 def _union_bounds(provinces: list[Earth3Province]) -> tuple[float, float, float, float]:

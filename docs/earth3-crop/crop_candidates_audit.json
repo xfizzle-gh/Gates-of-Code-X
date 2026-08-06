@@ -6,6 +6,88 @@
     17760,
     8600
   ],
+  "adjacency_source": {
+    "directed_edge_count": 40933,
+    "undirected_edge_count_after_symmetrize": 40933,
+    "one_way_source_pair_count": 40933,
+    "mutual_source_pair_count": 0,
+    "one_way_storage_is_expected": true,
+    "notes": "Earth3 stores undirected neighbors mostly as single directed pid->wp records. Importer symmetrizes for gameplay adjacency.",
+    "one_way_sample": [
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        3
+      ],
+      [
+        0,
+        2284
+      ],
+      [
+        0,
+        12057
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        1,
+        3
+      ],
+      [
+        1,
+        91
+      ],
+      [
+        1,
+        12057
+      ],
+      [
+        1,
+        12058
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        2,
+        5
+      ],
+      [
+        2,
+        91
+      ],
+      [
+        2,
+        92
+      ],
+      [
+        2,
+        2282
+      ],
+      [
+        3,
+        4
+      ]
+    ],
+    "mutual_sample": []
+  },
+  "city_count": 12111,
+  "permission": {
+    "status": "GRANTED",
+    "scope": "use, convert, modify, and redistribute applicable AoH3 Earth3 province geometry and adjacency data in Gates of Code:X",
+    "excluded": [
+      "original 81MB archive",
+      "AoH3 background tiles",
+      "AoH3 scenarios"
+    ],
+    "product_shape": "APPROVED_EXACT_IMPORT_CROPPED_THEATRE"
+  },
   "recommended_candidate_id": "em_ref_tight",
   "recommendation_rationale": "em_ref_tight best matches the supplied Europe-Mediterranean reference: keeps Iceland, cuts far-northern Scandinavia via min_y, and frames Crimea/Donbas/Turkey/N.Africa without silent continent==Europe selection.",
   "status": "awaiting_owner_crop_approval",
@@ -92,6 +174,611 @@
         5002,
         5004
       ],
+      "far_north_excluded_sample": [
+        974,
+        1054,
+        1055,
+        1077,
+        1440,
+        1464,
+        1465,
+        10969,
+        11019,
+        11023,
+        11024,
+        11025,
+        11026,
+        11117,
+        11118,
+        11119,
+        11120,
+        11121,
+        11122,
+        11124,
+        11168,
+        11366,
+        11367,
+        11368,
+        11369,
+        11370,
+        11371,
+        11374,
+        11375,
+        11654,
+        11655,
+        11656,
+        11766,
+        11768,
+        11769,
+        11813,
+        11814,
+        11815,
+        11835
+      ],
+      "region_coverage": {
+        "Iceland": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Reykjav\u00edk",
+              "source_province_id": 951,
+              "included": true,
+              "x": 7281.0,
+              "y": 930.0
+            },
+            {
+              "city": "Akureyri",
+              "source_province_id": 963,
+              "included": true,
+              "x": 7461.0,
+              "y": 795.0
+            }
+          ]
+        },
+        "Britain_Ireland": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "London",
+              "source_province_id": 825,
+              "included": true,
+              "x": 8337.0,
+              "y": 1992.0
+            },
+            {
+              "city": "East London",
+              "source_province_id": 3252,
+              "included": false,
+              "x": 9701.0,
+              "y": 6887.0
+            },
+            {
+              "city": "New London",
+              "source_province_id": 8725,
+              "included": false,
+              "x": 4798.0,
+              "y": 2738.0
+            },
+            {
+              "city": "London",
+              "source_province_id": 10009,
+              "included": false,
+              "x": 4357.0,
+              "y": 2629.0
+            },
+            {
+              "city": "Dublin",
+              "source_province_id": 920,
+              "included": true,
+              "x": 8040.0,
+              "y": 1844.0
+            },
+            {
+              "city": "Edinburgh",
+              "source_province_id": 891,
+              "included": true,
+              "x": 8189.0,
+              "y": 1627.0
+            },
+            {
+              "city": "Cardiff",
+              "source_province_id": 868,
+              "included": true,
+              "x": 8191.0,
+              "y": 1993.0
+            }
+          ]
+        },
+        "Iberia": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Madrid",
+              "source_province_id": 6561,
+              "included": true,
+              "x": 8165.0,
+              "y": 2774.0
+            },
+            {
+              "city": "Lamadrid",
+              "source_province_id": 9178,
+              "included": false,
+              "x": 3353.0,
+              "y": 3603.0
+            },
+            {
+              "city": "Lisbon",
+              "source_province_id": 11,
+              "included": true,
+              "x": 7898.0,
+              "y": 2879.0
+            },
+            {
+              "city": "Barcelona",
+              "source_province_id": 6548,
+              "included": true,
+              "x": 8449.0,
+              "y": 2711.0
+            }
+          ]
+        },
+        "France_Benelux_Germany": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Paris",
+              "source_province_id": 260,
+              "included": true,
+              "x": 8461.0,
+              "y": 2194.0
+            },
+            {
+              "city": "Paris",
+              "source_province_id": 9228,
+              "included": false,
+              "x": 3663.0,
+              "y": 3214.0
+            },
+            {
+              "city": "Brussels",
+              "source_province_id": 832,
+              "included": true,
+              "x": 8557.0,
+              "y": 2042.0
+            },
+            {
+              "city": "Amsterdam",
+              "source_province_id": 6502,
+              "included": true,
+              "x": 8583.0,
+              "y": 1928.0
+            },
+            {
+              "city": "Berlin",
+              "source_province_id": 592,
+              "included": true,
+              "x": 9000.0,
+              "y": 1913.0
+            },
+            {
+              "city": "Munich",
+              "source_province_id": 716,
+              "included": true,
+              "x": 8911.0,
+              "y": 2250.0
+            }
+          ]
+        },
+        "Italy": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Rome",
+              "source_province_id": 6881,
+              "included": true,
+              "x": 8954.0,
+              "y": 2678.0
+            },
+            {
+              "city": "New Rome",
+              "source_province_id": 7685,
+              "included": false,
+              "x": 6024.0,
+              "y": 5769.0
+            },
+            {
+              "city": "Rome",
+              "source_province_id": 8700,
+              "included": false,
+              "x": 4166.0,
+              "y": 3177.0
+            },
+            {
+              "city": "Rome",
+              "source_province_id": 9533,
+              "included": false,
+              "x": 2582.0,
+              "y": 2643.0
+            },
+            {
+              "city": "Milan",
+              "source_province_id": 151,
+              "included": true,
+              "x": 8793.0,
+              "y": 2438.0
+            },
+            {
+              "city": "Milando",
+              "source_province_id": 4197,
+              "included": false,
+              "x": 9200.0,
+              "y": 5519.0
+            },
+            {
+              "city": "Naples",
+              "source_province_id": 196,
+              "included": true,
+              "x": 9039.0,
+              "y": 2743.0
+            },
+            {
+              "city": "Palermo",
+              "source_province_id": 119,
+              "included": true,
+              "x": 8993.0,
+              "y": 2921.0
+            },
+            {
+              "city": "Palermo",
+              "source_province_id": 8160,
+              "included": false,
+              "x": 4729.0,
+              "y": 5040.0
+            }
+          ]
+        },
+        "Balkans_Greece": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Athens",
+              "source_province_id": 2202,
+              "included": true,
+              "x": 9502.0,
+              "y": 2927.0
+            },
+            {
+              "city": "Athens",
+              "source_province_id": 8703,
+              "included": false,
+              "x": 4256.0,
+              "y": 3196.0
+            },
+            {
+              "city": "Athens",
+              "source_province_id": 9851,
+              "included": false,
+              "x": 4317.0,
+              "y": 2867.0
+            },
+            {
+              "city": "Athens",
+              "source_province_id": 9502,
+              "included": false,
+              "x": 3647.0,
+              "y": 3298.0
+            },
+            {
+              "city": "Belgrade",
+              "source_province_id": 1431,
+              "included": true,
+              "x": 9341.0,
+              "y": 2485.0
+            },
+            {
+              "city": "Sofia",
+              "source_province_id": 3130,
+              "included": true,
+              "x": 9481.0,
+              "y": 2625.0
+            },
+            {
+              "city": "Bucharest",
+              "source_province_id": 473,
+              "included": true,
+              "x": 9617.0,
+              "y": 2507.0
+            },
+            {
+              "city": "Zagreb",
+              "source_province_id": 3107,
+              "included": true,
+              "x": 9124.0,
+              "y": 2413.0
+            }
+          ]
+        },
+        "Ukraine_Crimea_Donbas": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Kyiv",
+              "source_province_id": 3757,
+              "included": true,
+              "x": 9832.0,
+              "y": 2074.0
+            },
+            {
+              "city": "Kherson",
+              "source_province_id": 1271,
+              "included": true,
+              "x": 9932.0,
+              "y": 2352.0
+            },
+            {
+              "city": "Zaporizhzhia",
+              "source_province_id": 3782,
+              "included": true,
+              "x": 10058.0,
+              "y": 2269.0
+            },
+            {
+              "city": "Donetsk",
+              "source_province_id": 12175,
+              "included": true,
+              "x": 10188.0,
+              "y": 2256.0
+            },
+            {
+              "city": "Severodonetsk",
+              "source_province_id": 10882,
+              "included": true,
+              "x": 10221.0,
+              "y": 2187.0
+            },
+            {
+              "city": "Donetsk",
+              "source_province_id": 10895,
+              "included": true,
+              "x": 10295.0,
+              "y": 2229.0
+            },
+            {
+              "city": "Luhansk",
+              "source_province_id": 10869,
+              "included": true,
+              "x": 10261.0,
+              "y": 2216.0
+            },
+            {
+              "city": "Sevastopol",
+              "source_province_id": 1268,
+              "included": true,
+              "x": 9983.0,
+              "y": 2492.0
+            },
+            {
+              "city": "Simferopol",
+              "source_province_id": 6627,
+              "included": true,
+              "x": 10009.0,
+              "y": 2472.0
+            },
+            {
+              "city": "Odesan",
+              "source_province_id": 4316,
+              "included": false,
+              "x": 9610.0,
+              "y": 4667.0
+            },
+            {
+              "city": "Odesa",
+              "source_province_id": 3241,
+              "included": true,
+              "x": 9840.0,
+              "y": 2369.0
+            }
+          ]
+        },
+        "Rostov_approach": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Rostov on Don",
+              "source_province_id": 10868,
+              "included": true,
+              "x": 10278.0,
+              "y": 2309.0
+            }
+          ]
+        },
+        "Turkey": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Istanbul",
+              "source_province_id": 1116,
+              "included": true,
+              "x": 9757.0,
+              "y": 2733.0
+            },
+            {
+              "city": "Ankara",
+              "source_province_id": 2207,
+              "included": true,
+              "x": 9945.0,
+              "y": 2804.0
+            },
+            {
+              "city": "Lankaran",
+              "source_province_id": 1233,
+              "included": true,
+              "x": 10724.0,
+              "y": 2882.0
+            },
+            {
+              "city": "Izmir",
+              "source_province_id": null,
+              "included": false,
+              "missing_from_source_cities": true
+            }
+          ]
+        },
+        "Caucasus_edge": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Tbilisi",
+              "source_province_id": 10431,
+              "included": true,
+              "x": 10531.0,
+              "y": 2689.0
+            },
+            {
+              "city": "Baku",
+              "source_province_id": 2654,
+              "included": true,
+              "x": 10776.0,
+              "y": 2772.0
+            },
+            {
+              "city": "Yerevan",
+              "source_province_id": 10436,
+              "included": true,
+              "x": 10517.0,
+              "y": 2786.0
+            }
+          ]
+        },
+        "North_Africa_coast": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Tunis",
+              "source_province_id": 2242,
+              "included": true,
+              "x": 8845.0,
+              "y": 2974.0
+            },
+            {
+              "city": "Algiers",
+              "source_province_id": 1399,
+              "included": true,
+              "x": 8496.0,
+              "y": 2985.0
+            },
+            {
+              "city": "Cairo",
+              "source_province_id": 2669,
+              "included": true,
+              "x": 9867.0,
+              "y": 3402.0
+            },
+            {
+              "city": "Tripoli",
+              "source_province_id": 2200,
+              "included": true,
+              "x": 9436.0,
+              "y": 2957.0
+            },
+            {
+              "city": "Tripoli",
+              "source_province_id": 1365,
+              "included": true,
+              "x": 8989.0,
+              "y": 3231.0
+            },
+            {
+              "city": "Tripoli",
+              "source_province_id": 4976,
+              "included": true,
+              "x": 10090.0,
+              "y": 3148.0
+            }
+          ]
+        },
+        "Baltic": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Stockholm",
+              "source_province_id": 1049,
+              "included": true,
+              "x": 9225.0,
+              "y": 1315.0
+            },
+            {
+              "city": "Helsinki",
+              "source_province_id": 1461,
+              "included": true,
+              "x": 9560.0,
+              "y": 1240.0
+            },
+            {
+              "city": "Riga",
+              "source_province_id": 504,
+              "included": true,
+              "x": 9528.0,
+              "y": 1532.0
+            },
+            {
+              "city": "Ceerigaabo",
+              "source_province_id": 4378,
+              "included": false,
+              "x": 10653.0,
+              "y": 4495.0
+            },
+            {
+              "city": "Surigao",
+              "source_province_id": 5938,
+              "included": false,
+              "x": 14459.0,
+              "y": 4481.0
+            },
+            {
+              "city": "Dangriga",
+              "source_province_id": 7951,
+              "included": false,
+              "x": 4016.0,
+              "y": 4161.0
+            },
+            {
+              "city": "Rigaud",
+              "source_province_id": 10234,
+              "included": false,
+              "x": 4698.0,
+              "y": 2483.0
+            },
+            {
+              "city": "Tallinn",
+              "source_province_id": 513,
+              "included": true,
+              "x": 9550.0,
+              "y": 1310.0
+            },
+            {
+              "city": "Vilnius",
+              "source_province_id": 442,
+              "included": true,
+              "x": 9579.0,
+              "y": 1737.0
+            }
+          ]
+        },
+        "Far_north_should_exclude": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Murmansk",
+              "source_province_id": 11370,
+              "included": false,
+              "x": 9961.0,
+              "y": 474.0
+            }
+          ]
+        }
+      },
+      "region_coverage_failures": [],
       "notes": "Primary recommendation candidate pending owner review."
     },
     {
@@ -176,6 +863,604 @@
         4954,
         5010
       ],
+      "far_north_excluded_sample": [
+        974,
+        1054,
+        1055,
+        1077,
+        1464,
+        1465,
+        10969,
+        11023,
+        11024,
+        11025,
+        11026,
+        11117,
+        11119,
+        11120,
+        11121,
+        11122,
+        11168,
+        11366,
+        11367,
+        11370,
+        11371,
+        11374,
+        11375,
+        11654,
+        11655,
+        11656,
+        11768,
+        11769,
+        11775,
+        11813,
+        11814,
+        11815
+      ],
+      "region_coverage": {
+        "Iceland": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Reykjav\u00edk",
+              "source_province_id": 951,
+              "included": true,
+              "x": 7281.0,
+              "y": 930.0
+            },
+            {
+              "city": "Akureyri",
+              "source_province_id": 963,
+              "included": true,
+              "x": 7461.0,
+              "y": 795.0
+            }
+          ]
+        },
+        "Britain_Ireland": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "London",
+              "source_province_id": 825,
+              "included": true,
+              "x": 8337.0,
+              "y": 1992.0
+            },
+            {
+              "city": "East London",
+              "source_province_id": 3252,
+              "included": false,
+              "x": 9701.0,
+              "y": 6887.0
+            },
+            {
+              "city": "New London",
+              "source_province_id": 8725,
+              "included": false,
+              "x": 4798.0,
+              "y": 2738.0
+            },
+            {
+              "city": "London",
+              "source_province_id": 10009,
+              "included": false,
+              "x": 4357.0,
+              "y": 2629.0
+            },
+            {
+              "city": "Dublin",
+              "source_province_id": 920,
+              "included": true,
+              "x": 8040.0,
+              "y": 1844.0
+            },
+            {
+              "city": "Edinburgh",
+              "source_province_id": 891,
+              "included": true,
+              "x": 8189.0,
+              "y": 1627.0
+            },
+            {
+              "city": "Cardiff",
+              "source_province_id": 868,
+              "included": true,
+              "x": 8191.0,
+              "y": 1993.0
+            }
+          ]
+        },
+        "Iberia": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Madrid",
+              "source_province_id": 6561,
+              "included": true,
+              "x": 8165.0,
+              "y": 2774.0
+            },
+            {
+              "city": "Lamadrid",
+              "source_province_id": 9178,
+              "included": false,
+              "x": 3353.0,
+              "y": 3603.0
+            },
+            {
+              "city": "Lisbon",
+              "source_province_id": 11,
+              "included": true,
+              "x": 7898.0,
+              "y": 2879.0
+            },
+            {
+              "city": "Barcelona",
+              "source_province_id": 6548,
+              "included": true,
+              "x": 8449.0,
+              "y": 2711.0
+            }
+          ]
+        },
+        "France_Benelux_Germany": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Paris",
+              "source_province_id": 260,
+              "included": true,
+              "x": 8461.0,
+              "y": 2194.0
+            },
+            {
+              "city": "Paris",
+              "source_province_id": 9228,
+              "included": false,
+              "x": 3663.0,
+              "y": 3214.0
+            },
+            {
+              "city": "Brussels",
+              "source_province_id": 832,
+              "included": true,
+              "x": 8557.0,
+              "y": 2042.0
+            },
+            {
+              "city": "Amsterdam",
+              "source_province_id": 6502,
+              "included": true,
+              "x": 8583.0,
+              "y": 1928.0
+            },
+            {
+              "city": "Berlin",
+              "source_province_id": 592,
+              "included": true,
+              "x": 9000.0,
+              "y": 1913.0
+            },
+            {
+              "city": "Munich",
+              "source_province_id": 716,
+              "included": true,
+              "x": 8911.0,
+              "y": 2250.0
+            }
+          ]
+        },
+        "Italy": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Rome",
+              "source_province_id": 6881,
+              "included": true,
+              "x": 8954.0,
+              "y": 2678.0
+            },
+            {
+              "city": "New Rome",
+              "source_province_id": 7685,
+              "included": false,
+              "x": 6024.0,
+              "y": 5769.0
+            },
+            {
+              "city": "Rome",
+              "source_province_id": 8700,
+              "included": false,
+              "x": 4166.0,
+              "y": 3177.0
+            },
+            {
+              "city": "Rome",
+              "source_province_id": 9533,
+              "included": false,
+              "x": 2582.0,
+              "y": 2643.0
+            },
+            {
+              "city": "Milan",
+              "source_province_id": 151,
+              "included": true,
+              "x": 8793.0,
+              "y": 2438.0
+            },
+            {
+              "city": "Milando",
+              "source_province_id": 4197,
+              "included": false,
+              "x": 9200.0,
+              "y": 5519.0
+            },
+            {
+              "city": "Naples",
+              "source_province_id": 196,
+              "included": true,
+              "x": 9039.0,
+              "y": 2743.0
+            },
+            {
+              "city": "Palermo",
+              "source_province_id": 119,
+              "included": true,
+              "x": 8993.0,
+              "y": 2921.0
+            },
+            {
+              "city": "Palermo",
+              "source_province_id": 8160,
+              "included": false,
+              "x": 4729.0,
+              "y": 5040.0
+            }
+          ]
+        },
+        "Balkans_Greece": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Athens",
+              "source_province_id": 2202,
+              "included": true,
+              "x": 9502.0,
+              "y": 2927.0
+            },
+            {
+              "city": "Athens",
+              "source_province_id": 8703,
+              "included": false,
+              "x": 4256.0,
+              "y": 3196.0
+            },
+            {
+              "city": "Athens",
+              "source_province_id": 9851,
+              "included": false,
+              "x": 4317.0,
+              "y": 2867.0
+            },
+            {
+              "city": "Athens",
+              "source_province_id": 9502,
+              "included": false,
+              "x": 3647.0,
+              "y": 3298.0
+            },
+            {
+              "city": "Belgrade",
+              "source_province_id": 1431,
+              "included": true,
+              "x": 9341.0,
+              "y": 2485.0
+            },
+            {
+              "city": "Sofia",
+              "source_province_id": 3130,
+              "included": true,
+              "x": 9481.0,
+              "y": 2625.0
+            },
+            {
+              "city": "Bucharest",
+              "source_province_id": 473,
+              "included": true,
+              "x": 9617.0,
+              "y": 2507.0
+            },
+            {
+              "city": "Zagreb",
+              "source_province_id": 3107,
+              "included": true,
+              "x": 9124.0,
+              "y": 2413.0
+            }
+          ]
+        },
+        "Ukraine_Crimea_Donbas": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Kyiv",
+              "source_province_id": 3757,
+              "included": true,
+              "x": 9832.0,
+              "y": 2074.0
+            },
+            {
+              "city": "Kherson",
+              "source_province_id": 1271,
+              "included": true,
+              "x": 9932.0,
+              "y": 2352.0
+            },
+            {
+              "city": "Zaporizhzhia",
+              "source_province_id": 3782,
+              "included": true,
+              "x": 10058.0,
+              "y": 2269.0
+            },
+            {
+              "city": "Donetsk",
+              "source_province_id": 12175,
+              "included": true,
+              "x": 10188.0,
+              "y": 2256.0
+            },
+            {
+              "city": "Severodonetsk",
+              "source_province_id": 10882,
+              "included": true,
+              "x": 10221.0,
+              "y": 2187.0
+            },
+            {
+              "city": "Donetsk",
+              "source_province_id": 10895,
+              "included": true,
+              "x": 10295.0,
+              "y": 2229.0
+            },
+            {
+              "city": "Luhansk",
+              "source_province_id": 10869,
+              "included": true,
+              "x": 10261.0,
+              "y": 2216.0
+            },
+            {
+              "city": "Sevastopol",
+              "source_province_id": 1268,
+              "included": true,
+              "x": 9983.0,
+              "y": 2492.0
+            },
+            {
+              "city": "Simferopol",
+              "source_province_id": 6627,
+              "included": true,
+              "x": 10009.0,
+              "y": 2472.0
+            },
+            {
+              "city": "Odesan",
+              "source_province_id": 4316,
+              "included": false,
+              "x": 9610.0,
+              "y": 4667.0
+            },
+            {
+              "city": "Odesa",
+              "source_province_id": 3241,
+              "included": true,
+              "x": 9840.0,
+              "y": 2369.0
+            }
+          ]
+        },
+        "Rostov_approach": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Rostov on Don",
+              "source_province_id": 10868,
+              "included": true,
+              "x": 10278.0,
+              "y": 2309.0
+            }
+          ]
+        },
+        "Turkey": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Istanbul",
+              "source_province_id": 1116,
+              "included": true,
+              "x": 9757.0,
+              "y": 2733.0
+            },
+            {
+              "city": "Ankara",
+              "source_province_id": 2207,
+              "included": true,
+              "x": 9945.0,
+              "y": 2804.0
+            },
+            {
+              "city": "Lankaran",
+              "source_province_id": 1233,
+              "included": true,
+              "x": 10724.0,
+              "y": 2882.0
+            },
+            {
+              "city": "Izmir",
+              "source_province_id": null,
+              "included": false,
+              "missing_from_source_cities": true
+            }
+          ]
+        },
+        "Caucasus_edge": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Tbilisi",
+              "source_province_id": 10431,
+              "included": true,
+              "x": 10531.0,
+              "y": 2689.0
+            },
+            {
+              "city": "Baku",
+              "source_province_id": 2654,
+              "included": true,
+              "x": 10776.0,
+              "y": 2772.0
+            },
+            {
+              "city": "Yerevan",
+              "source_province_id": 10436,
+              "included": true,
+              "x": 10517.0,
+              "y": 2786.0
+            }
+          ]
+        },
+        "North_Africa_coast": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Tunis",
+              "source_province_id": 2242,
+              "included": true,
+              "x": 8845.0,
+              "y": 2974.0
+            },
+            {
+              "city": "Algiers",
+              "source_province_id": 1399,
+              "included": true,
+              "x": 8496.0,
+              "y": 2985.0
+            },
+            {
+              "city": "Cairo",
+              "source_province_id": 2669,
+              "included": true,
+              "x": 9867.0,
+              "y": 3402.0
+            },
+            {
+              "city": "Tripoli",
+              "source_province_id": 2200,
+              "included": true,
+              "x": 9436.0,
+              "y": 2957.0
+            },
+            {
+              "city": "Tripoli",
+              "source_province_id": 1365,
+              "included": true,
+              "x": 8989.0,
+              "y": 3231.0
+            },
+            {
+              "city": "Tripoli",
+              "source_province_id": 4976,
+              "included": true,
+              "x": 10090.0,
+              "y": 3148.0
+            }
+          ]
+        },
+        "Baltic": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Stockholm",
+              "source_province_id": 1049,
+              "included": true,
+              "x": 9225.0,
+              "y": 1315.0
+            },
+            {
+              "city": "Helsinki",
+              "source_province_id": 1461,
+              "included": true,
+              "x": 9560.0,
+              "y": 1240.0
+            },
+            {
+              "city": "Riga",
+              "source_province_id": 504,
+              "included": true,
+              "x": 9528.0,
+              "y": 1532.0
+            },
+            {
+              "city": "Ceerigaabo",
+              "source_province_id": 4378,
+              "included": false,
+              "x": 10653.0,
+              "y": 4495.0
+            },
+            {
+              "city": "Surigao",
+              "source_province_id": 5938,
+              "included": false,
+              "x": 14459.0,
+              "y": 4481.0
+            },
+            {
+              "city": "Dangriga",
+              "source_province_id": 7951,
+              "included": false,
+              "x": 4016.0,
+              "y": 4161.0
+            },
+            {
+              "city": "Rigaud",
+              "source_province_id": 10234,
+              "included": false,
+              "x": 4698.0,
+              "y": 2483.0
+            },
+            {
+              "city": "Tallinn",
+              "source_province_id": 513,
+              "included": true,
+              "x": 9550.0,
+              "y": 1310.0
+            },
+            {
+              "city": "Vilnius",
+              "source_province_id": 442,
+              "included": true,
+              "x": 9579.0,
+              "y": 1737.0
+            }
+          ]
+        },
+        "Far_north_should_exclude": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Murmansk",
+              "source_province_id": 11370,
+              "included": false,
+              "x": 9961.0,
+              "y": 474.0
+            }
+          ]
+        }
+      },
+      "region_coverage_failures": [],
       "notes": "Use if Donbas eastern operational depth or Baltic north feels tight."
     },
     {
@@ -260,6 +1545,612 @@
         4751,
         4811
       ],
+      "far_north_excluded_sample": [
+        974,
+        1054,
+        1055,
+        1077,
+        1440,
+        1464,
+        1465,
+        10969,
+        11019,
+        11020,
+        11023,
+        11024,
+        11025,
+        11026,
+        11116,
+        11117,
+        11118,
+        11119,
+        11120,
+        11121,
+        11122,
+        11123,
+        11124,
+        11126,
+        11168,
+        11366,
+        11367,
+        11368,
+        11369,
+        11370,
+        11371,
+        11373,
+        11374,
+        11375,
+        11377,
+        11654,
+        11655,
+        11656,
+        11766,
+        11768
+      ],
+      "region_coverage": {
+        "Iceland": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Reykjav\u00edk",
+              "source_province_id": 951,
+              "included": true,
+              "x": 7281.0,
+              "y": 930.0
+            },
+            {
+              "city": "Akureyri",
+              "source_province_id": 963,
+              "included": true,
+              "x": 7461.0,
+              "y": 795.0
+            }
+          ]
+        },
+        "Britain_Ireland": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "London",
+              "source_province_id": 825,
+              "included": true,
+              "x": 8337.0,
+              "y": 1992.0
+            },
+            {
+              "city": "East London",
+              "source_province_id": 3252,
+              "included": false,
+              "x": 9701.0,
+              "y": 6887.0
+            },
+            {
+              "city": "New London",
+              "source_province_id": 8725,
+              "included": false,
+              "x": 4798.0,
+              "y": 2738.0
+            },
+            {
+              "city": "London",
+              "source_province_id": 10009,
+              "included": false,
+              "x": 4357.0,
+              "y": 2629.0
+            },
+            {
+              "city": "Dublin",
+              "source_province_id": 920,
+              "included": true,
+              "x": 8040.0,
+              "y": 1844.0
+            },
+            {
+              "city": "Edinburgh",
+              "source_province_id": 891,
+              "included": true,
+              "x": 8189.0,
+              "y": 1627.0
+            },
+            {
+              "city": "Cardiff",
+              "source_province_id": 868,
+              "included": true,
+              "x": 8191.0,
+              "y": 1993.0
+            }
+          ]
+        },
+        "Iberia": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Madrid",
+              "source_province_id": 6561,
+              "included": true,
+              "x": 8165.0,
+              "y": 2774.0
+            },
+            {
+              "city": "Lamadrid",
+              "source_province_id": 9178,
+              "included": false,
+              "x": 3353.0,
+              "y": 3603.0
+            },
+            {
+              "city": "Lisbon",
+              "source_province_id": 11,
+              "included": true,
+              "x": 7898.0,
+              "y": 2879.0
+            },
+            {
+              "city": "Barcelona",
+              "source_province_id": 6548,
+              "included": true,
+              "x": 8449.0,
+              "y": 2711.0
+            }
+          ]
+        },
+        "France_Benelux_Germany": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Paris",
+              "source_province_id": 260,
+              "included": true,
+              "x": 8461.0,
+              "y": 2194.0
+            },
+            {
+              "city": "Paris",
+              "source_province_id": 9228,
+              "included": false,
+              "x": 3663.0,
+              "y": 3214.0
+            },
+            {
+              "city": "Brussels",
+              "source_province_id": 832,
+              "included": true,
+              "x": 8557.0,
+              "y": 2042.0
+            },
+            {
+              "city": "Amsterdam",
+              "source_province_id": 6502,
+              "included": true,
+              "x": 8583.0,
+              "y": 1928.0
+            },
+            {
+              "city": "Berlin",
+              "source_province_id": 592,
+              "included": true,
+              "x": 9000.0,
+              "y": 1913.0
+            },
+            {
+              "city": "Munich",
+              "source_province_id": 716,
+              "included": true,
+              "x": 8911.0,
+              "y": 2250.0
+            }
+          ]
+        },
+        "Italy": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Rome",
+              "source_province_id": 6881,
+              "included": true,
+              "x": 8954.0,
+              "y": 2678.0
+            },
+            {
+              "city": "New Rome",
+              "source_province_id": 7685,
+              "included": false,
+              "x": 6024.0,
+              "y": 5769.0
+            },
+            {
+              "city": "Rome",
+              "source_province_id": 8700,
+              "included": false,
+              "x": 4166.0,
+              "y": 3177.0
+            },
+            {
+              "city": "Rome",
+              "source_province_id": 9533,
+              "included": false,
+              "x": 2582.0,
+              "y": 2643.0
+            },
+            {
+              "city": "Milan",
+              "source_province_id": 151,
+              "included": true,
+              "x": 8793.0,
+              "y": 2438.0
+            },
+            {
+              "city": "Milando",
+              "source_province_id": 4197,
+              "included": false,
+              "x": 9200.0,
+              "y": 5519.0
+            },
+            {
+              "city": "Naples",
+              "source_province_id": 196,
+              "included": true,
+              "x": 9039.0,
+              "y": 2743.0
+            },
+            {
+              "city": "Palermo",
+              "source_province_id": 119,
+              "included": true,
+              "x": 8993.0,
+              "y": 2921.0
+            },
+            {
+              "city": "Palermo",
+              "source_province_id": 8160,
+              "included": false,
+              "x": 4729.0,
+              "y": 5040.0
+            }
+          ]
+        },
+        "Balkans_Greece": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Athens",
+              "source_province_id": 2202,
+              "included": true,
+              "x": 9502.0,
+              "y": 2927.0
+            },
+            {
+              "city": "Athens",
+              "source_province_id": 8703,
+              "included": false,
+              "x": 4256.0,
+              "y": 3196.0
+            },
+            {
+              "city": "Athens",
+              "source_province_id": 9851,
+              "included": false,
+              "x": 4317.0,
+              "y": 2867.0
+            },
+            {
+              "city": "Athens",
+              "source_province_id": 9502,
+              "included": false,
+              "x": 3647.0,
+              "y": 3298.0
+            },
+            {
+              "city": "Belgrade",
+              "source_province_id": 1431,
+              "included": true,
+              "x": 9341.0,
+              "y": 2485.0
+            },
+            {
+              "city": "Sofia",
+              "source_province_id": 3130,
+              "included": true,
+              "x": 9481.0,
+              "y": 2625.0
+            },
+            {
+              "city": "Bucharest",
+              "source_province_id": 473,
+              "included": true,
+              "x": 9617.0,
+              "y": 2507.0
+            },
+            {
+              "city": "Zagreb",
+              "source_province_id": 3107,
+              "included": true,
+              "x": 9124.0,
+              "y": 2413.0
+            }
+          ]
+        },
+        "Ukraine_Crimea_Donbas": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Kyiv",
+              "source_province_id": 3757,
+              "included": true,
+              "x": 9832.0,
+              "y": 2074.0
+            },
+            {
+              "city": "Kherson",
+              "source_province_id": 1271,
+              "included": true,
+              "x": 9932.0,
+              "y": 2352.0
+            },
+            {
+              "city": "Zaporizhzhia",
+              "source_province_id": 3782,
+              "included": true,
+              "x": 10058.0,
+              "y": 2269.0
+            },
+            {
+              "city": "Donetsk",
+              "source_province_id": 12175,
+              "included": true,
+              "x": 10188.0,
+              "y": 2256.0
+            },
+            {
+              "city": "Severodonetsk",
+              "source_province_id": 10882,
+              "included": true,
+              "x": 10221.0,
+              "y": 2187.0
+            },
+            {
+              "city": "Donetsk",
+              "source_province_id": 10895,
+              "included": true,
+              "x": 10295.0,
+              "y": 2229.0
+            },
+            {
+              "city": "Luhansk",
+              "source_province_id": 10869,
+              "included": true,
+              "x": 10261.0,
+              "y": 2216.0
+            },
+            {
+              "city": "Sevastopol",
+              "source_province_id": 1268,
+              "included": true,
+              "x": 9983.0,
+              "y": 2492.0
+            },
+            {
+              "city": "Simferopol",
+              "source_province_id": 6627,
+              "included": true,
+              "x": 10009.0,
+              "y": 2472.0
+            },
+            {
+              "city": "Odesan",
+              "source_province_id": 4316,
+              "included": false,
+              "x": 9610.0,
+              "y": 4667.0
+            },
+            {
+              "city": "Odesa",
+              "source_province_id": 3241,
+              "included": true,
+              "x": 9840.0,
+              "y": 2369.0
+            }
+          ]
+        },
+        "Rostov_approach": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Rostov on Don",
+              "source_province_id": 10868,
+              "included": true,
+              "x": 10278.0,
+              "y": 2309.0
+            }
+          ]
+        },
+        "Turkey": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Istanbul",
+              "source_province_id": 1116,
+              "included": true,
+              "x": 9757.0,
+              "y": 2733.0
+            },
+            {
+              "city": "Ankara",
+              "source_province_id": 2207,
+              "included": true,
+              "x": 9945.0,
+              "y": 2804.0
+            },
+            {
+              "city": "Lankaran",
+              "source_province_id": 1233,
+              "included": true,
+              "x": 10724.0,
+              "y": 2882.0
+            },
+            {
+              "city": "Izmir",
+              "source_province_id": null,
+              "included": false,
+              "missing_from_source_cities": true
+            }
+          ]
+        },
+        "Caucasus_edge": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Tbilisi",
+              "source_province_id": 10431,
+              "included": true,
+              "x": 10531.0,
+              "y": 2689.0
+            },
+            {
+              "city": "Baku",
+              "source_province_id": 2654,
+              "included": true,
+              "x": 10776.0,
+              "y": 2772.0
+            },
+            {
+              "city": "Yerevan",
+              "source_province_id": 10436,
+              "included": true,
+              "x": 10517.0,
+              "y": 2786.0
+            }
+          ]
+        },
+        "North_Africa_coast": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Tunis",
+              "source_province_id": 2242,
+              "included": true,
+              "x": 8845.0,
+              "y": 2974.0
+            },
+            {
+              "city": "Algiers",
+              "source_province_id": 1399,
+              "included": true,
+              "x": 8496.0,
+              "y": 2985.0
+            },
+            {
+              "city": "Cairo",
+              "source_province_id": 2669,
+              "included": true,
+              "x": 9867.0,
+              "y": 3402.0
+            },
+            {
+              "city": "Tripoli",
+              "source_province_id": 2200,
+              "included": true,
+              "x": 9436.0,
+              "y": 2957.0
+            },
+            {
+              "city": "Tripoli",
+              "source_province_id": 1365,
+              "included": true,
+              "x": 8989.0,
+              "y": 3231.0
+            },
+            {
+              "city": "Tripoli",
+              "source_province_id": 4976,
+              "included": true,
+              "x": 10090.0,
+              "y": 3148.0
+            }
+          ]
+        },
+        "Baltic": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Stockholm",
+              "source_province_id": 1049,
+              "included": true,
+              "x": 9225.0,
+              "y": 1315.0
+            },
+            {
+              "city": "Helsinki",
+              "source_province_id": 1461,
+              "included": true,
+              "x": 9560.0,
+              "y": 1240.0
+            },
+            {
+              "city": "Riga",
+              "source_province_id": 504,
+              "included": true,
+              "x": 9528.0,
+              "y": 1532.0
+            },
+            {
+              "city": "Ceerigaabo",
+              "source_province_id": 4378,
+              "included": false,
+              "x": 10653.0,
+              "y": 4495.0
+            },
+            {
+              "city": "Surigao",
+              "source_province_id": 5938,
+              "included": false,
+              "x": 14459.0,
+              "y": 4481.0
+            },
+            {
+              "city": "Dangriga",
+              "source_province_id": 7951,
+              "included": false,
+              "x": 4016.0,
+              "y": 4161.0
+            },
+            {
+              "city": "Rigaud",
+              "source_province_id": 10234,
+              "included": false,
+              "x": 4698.0,
+              "y": 2483.0
+            },
+            {
+              "city": "Tallinn",
+              "source_province_id": 513,
+              "included": true,
+              "x": 9550.0,
+              "y": 1310.0
+            },
+            {
+              "city": "Vilnius",
+              "source_province_id": 442,
+              "included": true,
+              "x": 9579.0,
+              "y": 1737.0
+            }
+          ]
+        },
+        "Far_north_should_exclude": {
+          "ok": true,
+          "anchors": [
+            {
+              "city": "Murmansk",
+              "source_province_id": 11370,
+              "included": false,
+              "x": 9961.0,
+              "y": 474.0
+            }
+          ]
+        }
+      },
+      "region_coverage_failures": [],
       "notes": "Use if Maghreb depth or Atlantic islands framing needs more room."
     }
   ],

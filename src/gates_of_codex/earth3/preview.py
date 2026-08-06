@@ -76,22 +76,30 @@ def render_crop_preview(
     c1 = tx(rect.max_x, rect.max_y)
     draw.rectangle([c0, c1], outline=(255, 210, 80, 255), width=3)
 
-    # Orientation labels (approximate anchors in map space).
+    # Orientation labels (approximate anchors in Earth3 map pixels).
     labels = {
-        "Iceland": (7300, 820),
+        "Iceland": (7300, 900),
         "Britain": (7800, 1400),
+        "Ireland": (7600, 1550),
         "Iberia": (7600, 2500),
         "France": (8200, 1900),
         "Germany": (9000, 1600),
         "Italy": (9200, 2400),
         "Balkans": (9800, 2300),
-        "Ukraine": (10400, 1700),
-        "Crimea": (10650, 2100),
-        "Donbas": (10850, 1850),
-        "Turkey": (10500, 2600),
-        "Caucasus": (11200, 2300),
-        "N.Africa": (9000, 3400),
-        "Scandi cut": (9600, rect.min_y + 40),
+        "Greece": (9700, 2700),
+        "Ukraine": (10000, 1900),
+        "Crimea": (10020, 2470),
+        "Kherson": (9935, 2345),
+        "Zaporizhzhia": (10075, 2255),
+        "Donetsk": (10195, 2260),
+        "Luhansk": (10265, 2225),
+        "Rostov": (10280, 2300),
+        "Turkey": (10050, 2850),
+        "Caucasus": (10600, 2650),
+        "N.Africa coast": (9000, 3400),
+        "Levant edge": (10200, 3200),
+        "Scandi N cutoff": (9300, rect.min_y + 50),
+        "E boundary": (rect.max_x - 80, 2000),
     }
     for text, (x, y) in labels.items():
         if not (view[0] <= x <= view[2] and view[1] <= y <= view[3]):
@@ -133,6 +141,29 @@ def write_audit_report(
         "schema_version": 1,
         "source_provinces": len(dataset.provinces),
         "canvas_size": list(dataset.canvas_size),
+        "adjacency_source": {
+            "directed_edge_count": dataset.source_directed_edge_count,
+            "undirected_edge_count_after_symmetrize": dataset.undirected_edge_count,
+            "one_way_source_pair_count": len(dataset.one_way_source_pairs),
+            "mutual_source_pair_count": len(dataset.mutual_source_pairs),
+            "one_way_storage_is_expected": True,
+            "notes": (
+                "Earth3 stores undirected neighbors mostly as single directed "
+                "pid->wp records. Importer symmetrizes for gameplay adjacency."
+            ),
+            "one_way_sample": [list(pair) for pair in dataset.one_way_source_pairs[:15]],
+            "mutual_sample": [list(pair) for pair in dataset.mutual_source_pairs[:15]],
+        },
+        "city_count": len(dataset.cities),
+        "permission": {
+            "status": "GRANTED",
+            "scope": (
+                "use, convert, modify, and redistribute applicable AoH3 Earth3 "
+                "province geometry and adjacency data in Gates of Code:X"
+            ),
+            "excluded": ["original 81MB archive", "AoH3 background tiles", "AoH3 scenarios"],
+            "product_shape": "APPROVED_EXACT_IMPORT_CROPPED_THEATRE",
+        },
         "recommended_candidate_id": recommended_id,
         "recommendation_rationale": (
             "em_ref_tight best matches the supplied Europe-Mediterranean reference: "
@@ -145,6 +176,9 @@ def write_audit_report(
     for result in results:
         est_geom_bytes = result.vertex_count * 16 + result.province_count * 64
         est_snapshot_bytes = result.province_count * 450 + result.adjacency_edges * 24
+        region_fail = sorted(
+            name for name, row in result.region_coverage.items() if not row.get("ok")
+        )
         payload["candidates"].append(
             {
                 "id": result.candidate.id,
@@ -171,6 +205,9 @@ def write_audit_report(
                 "label_outside_polygon_sample": result.label_outside_polygon[:25],
                 "excluded_boundary_touch_count": len(result.excluded_boundary_ids),
                 "excluded_boundary_sample": result.excluded_boundary_ids[:25],
+                "far_north_excluded_sample": result.far_north_excluded_sample,
+                "region_coverage": result.region_coverage,
+                "region_coverage_failures": region_fail,
                 "notes": result.candidate.notes,
             }
         )
