@@ -326,15 +326,26 @@ func _draw_color_id_overlays() -> void:
 			draw_circle(position + Vector2(8, 15), 3.2, Color("7fe7ff"))
 
 		if occupied:
+			# S2: prefer operational display_pixel (node) when present; else province anchor.
+			var counter_pos := position
+			var display_pixel: Variant = battalion.get("display_pixel", null)
+			if display_pixel is Array and (display_pixel as Array).size() >= 2:
+				var px := float((display_pixel as Array)[0])
+				var py := float((display_pixel as Array)[1])
+				counter_pos = _clamp_point_in_rect(
+					_image_to_screen(Vector2(px, py)),
+					overlay_bounds,
+					OVERLAY_EDGE_PAD
+				)
 			if not bool(battalion.get("is_in_supply", true)):
-				draw_arc(position, 22.0, 0.0, TAU, 30, Color("ff6b5f"), 2.4)
+				draw_arc(counter_pos, 22.0, 0.0, TAU, 30, Color("ff6b5f"), 2.4)
 			if int(battalion.get("encircled_turns", 0)) > 0:
-				draw_arc(position, 25.0, 0.0, TAU, 30, Color("ffb14e"), 2.4)
-			_draw_battalion_counter(position, battalion, faction_color, selected)
-			reserved.append(Rect2(position + Vector2(-18, -14), Vector2(36, 28)))
+				draw_arc(counter_pos, 25.0, 0.0, TAU, 30, Color("ffb14e"), 2.4)
+			_draw_battalion_counter(counter_pos, battalion, faction_color, selected)
+			reserved.append(Rect2(counter_pos + Vector2(-18, -14), Vector2(36, 28)))
 			var stack: Array = battalion_stacks_by_province.get(province_id, [])
 			if stack.size() > 1:
-				var badge := _clamp_point_in_rect(position + Vector2(19, -14), overlay_bounds, 12.0)
+				var badge := _clamp_point_in_rect(counter_pos + Vector2(19, -14), overlay_bounds, 12.0)
 				var badge_rect := Rect2(badge - Vector2(11, 9), Vector2(30, 18))
 				draw_rect(badge_rect, Color(0.04, 0.06, 0.09, 0.96))
 				draw_rect(badge_rect, Color.WHITE, false, 1.2)

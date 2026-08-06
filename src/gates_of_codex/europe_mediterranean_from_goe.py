@@ -1227,6 +1227,9 @@ def build_europe_mediterranean_from_goe_campaign(
         **dict(state.map_metadata),
         "strategic_map_id": MAP_ID,
         "strategic_map_manifest": "assets/maps/europe_mediterranean/from_goe/map_manifest.json",
+        "operational_graph": (
+            "assets/maps/europe_mediterranean/from_goe/operational/operational_graph.json"
+        ),
         "strategic_map_provenance": "derived_from_interim_goe_europe_theatre_crop",
         "europe_mediterranean_from_goe": True,
         "canonical": False,

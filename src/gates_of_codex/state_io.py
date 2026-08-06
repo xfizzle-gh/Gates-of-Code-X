@@ -157,6 +157,8 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
             experience=int(value.get("experience", 0)),
             encircled_turns=int(value.get("encircled_turns", 0)),
         )
+    from .operational_position import position_from_dict
+
     strategic_formations = {
         key: StrategicFormation(
             strategic_formation_id=value["strategic_formation_id"],
@@ -179,6 +181,7 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
             supply_summary=int(value.get("supply_summary", 100)),
             experience_summary=int(value.get("experience_summary", 0)),
             is_player_controlled=bool(value.get("is_player_controlled", False)),
+            position=position_from_dict(value.get("position")),
         )
         for key, value in data.get("strategic_formations", {}).items()
     }
@@ -263,8 +266,10 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
         schema_version=max(1, int(data.get("schema_version", 1))),
     )
     from .force_migration import ensure_strategic_formations
+    from .operational_position import ensure_operational_positions
 
     ensure_strategic_formations(state)
+    ensure_operational_positions(state)
     state.validate()
     return state
 
@@ -276,10 +281,12 @@ def load_campaign(path: str | Path) -> CampaignState:
 
 def save_campaign(state: CampaignState, path: str | Path) -> Path:
     from .force_migration import ensure_strategic_formations
+    from .operational_position import ensure_operational_positions
     from .strategic import ensure_strategic_layer
 
     ensure_strategic_layer(state)
     ensure_strategic_formations(state)
+    ensure_operational_positions(state)
     state.validate()
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)

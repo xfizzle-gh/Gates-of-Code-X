@@ -20,7 +20,7 @@ from .strategic import (
 from .supply import reachable_supply_provinces
 
 
-FRONTEND_SCHEMA_VERSION = 8
+FRONTEND_SCHEMA_VERSION = 9
 FRONTEND_PYTHON_MODULE = "gates_of_codex"
 
 
@@ -32,8 +32,14 @@ def build_frontend_snapshot(
 ) -> dict:
     ensure_strategic_layer(state)
     from .force_migration import ensure_strategic_formations
+    from .operational_position import (
+        ensure_operational_positions,
+        position_to_dict,
+        resolve_display_pixel,
+    )
 
     ensure_strategic_formations(state)
+    ensure_operational_positions(state)
     apply_marker_layout(state)
     objectives = update_operational_objectives(state)
     outcome = evaluate_campaign_outcome(state)
@@ -180,6 +186,8 @@ def build_frontend_snapshot(
                 "display_name": force.display_name,
                 "faction": force.faction.value,
                 "province_id": force.province_id,
+                "position": position_to_dict(force.position),
+                "display_pixel": resolve_display_pixel(state, force),
                 "echelon": force.echelon.value,
                 "commander_id": force.commander_id,
                 "commander_display_name": _commander_display_name(state, force.commander_id),
@@ -222,6 +230,7 @@ def build_frontend_snapshot(
                 "commander_display_name": _commander_display_name(state, battalion.commander_id),
                 "faction": battalion.faction.value,
                 "province_id": battalion.province_id,
+                "display_pixel": _battalion_display_pixel(state, battalion),
                 "battalion_type": battalion.battalion_type.value,
                 "unit_count": battalion.unit_count,
                 "authorized_unit_count": battalion.authorized_unit_count,
@@ -324,6 +333,18 @@ def _commander_display_name(state: CampaignState, commander_id: str | None) -> s
     if commander is None or not commander.display_name.strip():
         return "Unassigned Commander"
     return commander.display_name
+
+
+def _battalion_display_pixel(state: CampaignState, battalion) -> list[int] | None:
+    from .operational_position import resolve_display_pixel
+
+    force = state.strategic_formations.get(battalion.strategic_formation_id)
+    if force is None:
+        province = state.provinces.get(battalion.province_id)
+        if province is None:
+            return None
+        return [int(round(province.x)), int(round(province.y))]
+    return resolve_display_pixel(state, force)
 
 
 def _pending_battle(state: CampaignState) -> dict | None:
