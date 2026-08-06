@@ -54,10 +54,19 @@ class ContactCandidate:
     attacker_id: str
     defender_id: str
     participant_ids: tuple[str, ...]
+    # Exact previous legal node for each participant (edge retreat).
+    retreat_nodes: tuple[tuple[str, str], ...] = ()  # (formation_id, node_id)
 
-    def sort_key(self) -> tuple:
+    def time_less_than(self, other: "ContactCandidate") -> bool:
+        """Exact rational comparison: self.time < other.time via cross-multiply."""
+        # a/b < c/d  iff  a*d < c*b  (all non-negative, dens > 0)
+        return self.time_num * other.time_den < other.time_num * self.time_den
+
+    def time_equal(self, other: "ContactCandidate") -> bool:
+        return self.time_num * other.time_den == other.time_num * self.time_den
+
+    def tie_key(self) -> tuple:
         return (
-            self.time_num * 10_000_000 // max(1, self.time_den),  # comparable earliest
             self.edge_id or "",
             self.node_id or "",
             self.progress_canonical,
@@ -141,14 +150,37 @@ def detect_swept_contacts(
                         ),
                     )
                 )
-    contacts.sort(key=lambda item: item.sort_key())
     return contacts
 
 
 def select_primary_contact(contacts: list[ContactCandidate]) -> ContactCandidate | None:
+    """Earliest exact rational time, then stable location/progress/formation ties."""
     if not contacts:
         return None
-    return sorted(contacts, key=lambda item: item.sort_key())[0]
+    best = contacts[0]
+    for item in contacts[1:]:
+        if item.time_less_than(best):
+            best = item
+        elif item.time_equal(best) and item.tie_key() < best.tie_key():
+            best = item
+    return best
+
+
+def formation_canonical_on_edge(
+    force: StrategicFormation,
+    *,
+    edge: OperationalRouteEdge,
+) -> int | None:
+    """Canonical A→B progress for a formation currently on ``edge``, or None."""
+    pos = force.position
+    if pos is None or pos.mode != PositionMode.ON_EDGE.value:
+        return None
+    if str(pos.edge_id) != edge.edge_id:
+        return None
+    facing = str(pos.facing_node_id or "")
+    return _canonical_from_formation_progress(
+        int(pos.progress_milli), facing=facing, edge=edge
+    )
 
 
 def apply_edge_contact_stop(
@@ -158,19 +190,26 @@ def apply_edge_contact_stop(
     *,
     edges_by_id: dict[str, OperationalRouteEdge],
     nodes_by_id: dict[str, dict[str, Any]],
-) -> None:
-    """Stop participating formations at the canonical contact progress on the edge."""
+    participant_ids: tuple[str, ...] | None = None,
+) -> dict[str, str]:
+    """Stop participants at canonical contact progress. Returns retreat node map."""
     by_id = {item.formation_id: item for item in intervals}
     edge = edges_by_id[contact.edge_id]
-    for fid in contact.participant_ids:
+    ids = participant_ids if participant_ids is not None else contact.participant_ids
+    retreat_map: dict[str, str] = dict(contact.retreat_nodes)
+    for fid in ids:
         force = state.strategic_formations.get(fid)
         interval = by_id.get(fid)
-        if force is None or interval is None:
+        if force is None:
             continue
-        facing = interval.facing_node_id
+        if interval is not None:
+            facing = interval.facing_node_id
+            if interval.path_origin_node:
+                retreat_map[fid] = interval.path_origin_node
+        else:
+            facing = force.position.facing_node_id if force.position else None
         if facing not in {edge.a, edge.b}:
-            facing = edge.b if interval.direction >= 0 else edge.a
-        # Convert canonical progress to formation progress (0 at origin endpoint).
+            facing = edge.b if (interval is None or interval.direction >= 0) else edge.a
         progress = _formation_progress_from_canonical(
             contact.progress_canonical, facing=str(facing), edge=edge
         )
@@ -188,6 +227,190 @@ def apply_edge_contact_stop(
         from .operational_movement import sync_province_from_position
 
         sync_province_from_position(state, force)
+        for battalion_id in force.battalion_ids:
+            battalion = state.battalions.get(battalion_id)
+            if battalion is not None:
+                battalion.province_id = force.province_id
+                battalion.strategic_formation_id = force.strategic_formation_id
+    # Persist exact retreat nodes for post-battle resolution.
+    store = state.map_metadata.setdefault("operational_edge_retreat_nodes", {})
+    if isinstance(store, dict):
+        for fid, node_id in retreat_map.items():
+            store[str(fid)] = str(node_id)
+    return retreat_map
+
+
+def apply_simultaneous_node_arrivals(
+    state: CampaignState,
+    contact: ContactCandidate,
+    intervals: list[MovementInterval],
+    *,
+    edges_by_id: dict[str, OperationalRouteEdge],
+    nodes_by_id: dict[str, dict[str, Any]],
+) -> bool:
+    """Atomically place accepted arrivals and open one node_simultaneous battle.
+
+    Capacity is validated from the frozen snapshot (pre-mutation). Returns True
+    if a battle was created.
+    """
+    from .operational_contact import (
+        can_enter_node_friendly_stack,
+        formations_at_node,
+        try_create_node_contact_battle,
+    )
+
+    node_id = contact.node_id
+    by_id = {item.formation_id: item for item in intervals}
+    # Snapshot occupants already at node (not arriving this tick).
+    already = {
+        f.strategic_formation_id: f for f in formations_at_node(state, node_id)
+    }
+    # Group arrivals by coalition for capacity (friendly stack).
+    arrivals = [
+        by_id[fid]
+        for fid in sorted(contact.participant_ids)
+        if fid in by_id and by_id[fid].arrives_node
+    ]
+    if len(arrivals) < 2:
+        return False
+
+    # Validate each arrival against frozen capacity (already + earlier accepted).
+    accepted: list[MovementInterval] = []
+    tentative_friends: dict[str, list[str]] = {}  # faction -> formation ids counted
+
+    def _friend_count(faction: Faction) -> int:
+        count = 0
+        for force in already.values():
+            if force.faction == faction or are_allied(state, faction, force.faction):
+                count += 1
+        for fid in tentative_friends.get(faction.value, []):
+            count += 1
+        # Count allies of faction in tentative under other keys
+        for other_key, fids in tentative_friends.items():
+            if other_key == faction.value:
+                continue
+            try:
+                other_f = Faction(other_key)
+            except ValueError:
+                continue
+            if are_allied(state, faction, other_f):
+                count += len(fids)
+        return count
+
+    from .operational_contact import max_friendly_formations_per_node
+
+    cap = max_friendly_formations_per_node(state)
+    for item in sorted(arrivals, key=lambda value: value.formation_id):
+        force = state.strategic_formations.get(item.formation_id)
+        if force is None:
+            continue
+        # Capacity: how many friendlies would be present if this force enters.
+        friends = _friend_count(force.faction)
+        # If already on node, always ok.
+        if item.formation_id in already:
+            accepted.append(item)
+            continue
+        if friends >= cap:
+            # Reject this arrival — leave for normal movement / block later.
+            continue
+        accepted.append(item)
+        tentative_friends.setdefault(force.faction.value, []).append(item.formation_id)
+
+    # Need at least one hostile pair among accepted + already.
+    present_ids = set(already) | {item.formation_id for item in accepted}
+    if len(present_ids) < 2:
+        return False
+
+    # Place all accepted arrivals together at the destination node.
+    for item in accepted:
+        force = state.strategic_formations[item.formation_id]
+        force.position = FormationOperationalPosition(
+            mode=PositionMode.AT_NODE.value,
+            node_id=node_id,
+            progress_milli=0,
+        )
+        force.movement_state = "at_anchor"
+        province_id = str((nodes_by_id.get(node_id) or {}).get("province_id") or force.province_id)
+        force.province_id = province_id
+        if force.move_order is not None:
+            # Not completed unless final path node — block pending battle.
+            force.move_order = replace(
+                force.move_order, status=MoveOrderStatus.BLOCKED.value
+            )
+        for battalion_id in force.battalion_ids:
+            battalion = state.battalions.get(battalion_id)
+            if battalion is not None:
+                battalion.province_id = province_id
+                battalion.strategic_formation_id = force.strategic_formation_id
+
+    # Owner-defends using destination node province.
+    province_id = str((nodes_by_id.get(node_id) or {}).get("province_id") or "")
+    present_forces = [
+        state.strategic_formations[fid]
+        for fid in sorted(present_ids)
+        if fid in state.strategic_formations
+    ]
+    # Pick hostile pair with owner-defends / stable ID.
+    seed_atk = None
+    seed_def = None
+    for i, left in enumerate(present_forces):
+        for right in present_forces[i + 1 :]:
+            if left.faction == right.faction or are_allied(
+                state, left.faction, right.faction
+            ):
+                continue
+            from .operational_contact import choose_static_attacker_defender
+
+            seed_atk, seed_def = choose_static_attacker_defender(
+                state, left, right, node_province_id=province_id
+            )
+            break
+        if seed_atk is not None:
+            break
+    if seed_atk is None or seed_def is None:
+        return False
+    battle = try_create_node_contact_battle(
+        state,
+        seed_atk,
+        seed_def,
+        node_id=node_id,
+        origin_province_id=seed_atk.province_id,
+    )
+    if battle is None:
+        return False
+    # Tag as simultaneous arrival (not generic node_contact).
+    battle.encounter_kind = ENCOUNTER_KIND_NODE_SIMULTANEOUS
+    return True
+
+
+def expand_edge_participants_exact(
+    state: CampaignState,
+    *,
+    edge: OperationalRouteEdge,
+    progress_canonical: int,
+    seed_ids: tuple[str, ...],
+) -> tuple[str, ...]:
+    """Include seeds plus allies already at the exact edge+canonical progress."""
+    ids = set(seed_ids)
+    for force in state.strategic_formations.values():
+        if force.strategic_formation_id in ids:
+            continue
+        canonical = formation_canonical_on_edge(force, edge=edge)
+        if canonical is None or canonical != progress_canonical:
+            continue
+        # Ally of any seed?
+        seed_forces = [
+            state.strategic_formations[sid]
+            for sid in seed_ids
+            if sid in state.strategic_formations
+        ]
+        for seed in seed_forces:
+            if force.faction == seed.faction or are_allied(
+                state, force.faction, seed.faction
+            ):
+                ids.add(force.strategic_formation_id)
+                break
+    return tuple(sorted(ids))
 
 
 def encounter_pixel_for_edge(
@@ -343,6 +566,14 @@ def _edge_pair_contact(
         # Spec: opposing cross — choose attacker by sorted formation id for stability
         # without combat modifier; document owner-less edge.
         ids = sorted((left.formation_id, right.formation_id))
+        retreat = tuple(
+            sorted(
+                {
+                    (left.formation_id, left.path_origin_node or ""),
+                    (right.formation_id, right.path_origin_node or ""),
+                }
+            )
+        )
         return ContactCandidate(
             kind=ENCOUNTER_KIND_EDGE_CROSS,
             time_num=num,
@@ -353,6 +584,9 @@ def _edge_pair_contact(
             attacker_id=ids[0],
             defender_id=ids[1],
             participant_ids=tuple(ids),
+            retreat_nodes=tuple(
+                (fid, nid) for fid, nid in retreat if nid
+            ),
         )
 
     # Same direction catch-up
@@ -392,6 +626,14 @@ def _edge_pair_contact(
                     attacker_id=rear.formation_id,
                     defender_id=front.formation_id,
                     participant_ids=tuple(sorted((rear.formation_id, front.formation_id))),
+                    retreat_nodes=tuple(
+                        (fid, nid)
+                        for fid, nid in (
+                            (rear.formation_id, rear.path_origin_node or ""),
+                            (front.formation_id, front.path_origin_node or ""),
+                        )
+                        if nid
+                    ),
                 )
             return None
         progress = sr + dr * num // den
@@ -406,6 +648,14 @@ def _edge_pair_contact(
             attacker_id=rear.formation_id,
             defender_id=front.formation_id,
             participant_ids=tuple(sorted((rear.formation_id, front.formation_id))),
+            retreat_nodes=tuple(
+                (fid, nid)
+                for fid, nid in (
+                    (rear.formation_id, rear.path_origin_node or ""),
+                    (front.formation_id, front.path_origin_node or ""),
+                )
+                if nid
+            ),
         )
 
     # Both decreasing (toward A): rear has larger start canonical

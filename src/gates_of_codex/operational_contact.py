@@ -366,45 +366,18 @@ def try_create_edge_contact_battle(
     encounter_pixel: list[int],
     encounter_province_id: str,
     origin_province_id: str | None = None,
+    participant_ids: tuple[str, ...] | None = None,
+    edge: Any = None,
 ) -> PendingBattle | None:
-    """Create cooperative edge-contact battle at a shared canonical progress."""
+    """Create cooperative edge-contact battle at a shared canonical progress.
+
+    Only formations on ``edge_id`` at **exact** ``progress_canonical`` may join.
+    Formations elsewhere on the same edge are excluded. Caller must stop/block
+    every included participant first.
+    """
     if state.pending_battle is not None:
         return None
-    # Participants: formations stopped at this exact edge+progress (+ facing ignored for match).
-    attackers = [attacker]
-    defenders = [defender]
-    for force in sorted(
-        state.strategic_formations.values(),
-        key=lambda value: value.strategic_formation_id,
-    ):
-        if force.strategic_formation_id in {
-            attacker.strategic_formation_id,
-            defender.strategic_formation_id,
-        }:
-            continue
-        pos = force.position
-        if pos is None or pos.mode != PositionMode.ON_EDGE.value:
-            continue
-        if str(pos.edge_id) != edge_id:
-            continue
-        # Exact contact position: same edge; progress compared in formation space is unreliable
-        # across facings — require matching blocked status after stop (caller places them).
-        if force.faction == attacker.faction or are_allied(
-            state, attacker.faction, force.faction
-        ):
-            attackers.append(force)
-        elif force.faction == defender.faction or are_allied(
-            state, defender.faction, force.faction
-        ):
-            defenders.append(force)
-    attackers = sorted(attackers, key=lambda value: value.strategic_formation_id)
-    defenders = sorted(defenders, key=lambda value: value.strategic_formation_id)
-    atk_parts = _participants_for_forces(state, attackers, stage="stage_1")
-    def_parts = _participants_for_forces(state, defenders, stage="stage_2")
-    if not atk_parts or not def_parts:
-        return None
-    _mark_primary(atk_parts, attacker, state)
-    _mark_primary(def_parts, defender, state)
+    from .operational_interception import formation_canonical_on_edge
     from .operational_schema import require_strict_int
 
     progress = require_strict_int(
@@ -416,9 +389,44 @@ def try_create_edge_contact_battle(
         require_strict_int(encounter_pixel[0], name="encounter_pixel[0]"),
         require_strict_int(encounter_pixel[1], name="encounter_pixel[1]"),
     ]
+    if edge is None:
+        return None
+
+    allowed = set(
+        participant_ids
+        or (attacker.strategic_formation_id, defender.strategic_formation_id)
+    )
+    attackers: list[StrategicFormation] = []
+    defenders: list[StrategicFormation] = []
+    for force in sorted(
+        state.strategic_formations.values(),
+        key=lambda value: value.strategic_formation_id,
+    ):
+        if force.strategic_formation_id not in allowed:
+            continue
+        canonical = formation_canonical_on_edge(force, edge=edge)
+        if canonical is None or canonical != progress:
+            continue
+        if force.faction == attacker.faction or are_allied(
+            state, attacker.faction, force.faction
+        ):
+            attackers.append(force)
+        elif force.faction == defender.faction or are_allied(
+            state, defender.faction, force.faction
+        ):
+            defenders.append(force)
+
+    atk_parts = _participants_for_forces(state, attackers, stage="stage_1")
+    def_parts = _participants_for_forces(state, defenders, stage="stage_2")
+    if not atk_parts or not def_parts:
+        return None
+    _mark_primary(atk_parts, attacker, state)
+    _mark_primary(def_parts, defender, state)
     pending = PendingBattle(
         battle_id=f"goc-op-{state.turn_number}-{uuid.uuid4().hex[:10]}",
-        origin_province_id=str(origin_province_id or attacker.province_id or encounter_province_id),
+        origin_province_id=str(
+            origin_province_id or attacker.province_id or encounter_province_id
+        ),
         target_province_id=str(encounter_province_id or defender.province_id),
         attacker_faction=attacker.faction,
         defender_faction=defender.faction,

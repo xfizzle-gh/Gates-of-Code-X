@@ -335,62 +335,93 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
         ENCOUNTER_KIND_EDGE_CROSS,
         ENCOUNTER_KIND_EDGE_CATCHUP,
     }:
-        apply_edge_contact_stop(
+        from .operational_interception import expand_edge_participants_exact
+
+        edge = edges_by_id[primary.edge_id]
+        # Expand seeds with allies already at exact canonical progress (pre-stop).
+        expanded = expand_edge_participants_exact(
+            state,
+            edge=edge,
+            progress_canonical=primary.progress_canonical,
+            seed_ids=primary.participant_ids,
+        )
+        # Also include seeds that will be stopped (they may not be at progress yet).
+        expanded = tuple(sorted(set(expanded) | set(primary.participant_ids)))
+        attacker = state.strategic_formations.get(primary.attacker_id)
+        defender = state.strategic_formations.get(primary.defender_id)
+        if attacker is not None and defender is not None:
+            # Preflight: both seeds must have at least one battalion.
+            atk_ok = any(bid in state.battalions for bid in attacker.battalion_ids)
+            def_ok = any(bid in state.battalions for bid in defender.battalion_ids)
+            if atk_ok and def_ok:
+                apply_edge_contact_stop(
+                    state,
+                    primary,
+                    intervals,
+                    edges_by_id=edges_by_id,
+                    nodes_by_id=nodes_by_id,
+                    participant_ids=expanded,
+                )
+                pixel = encounter_pixel_for_edge(
+                    edge=edge,
+                    nodes_by_id=nodes_by_id,
+                    progress_canonical=primary.progress_canonical,
+                )
+                province_id = encounter_province_for_edge(
+                    edge=edge,
+                    nodes_by_id=nodes_by_id,
+                    progress_canonical=primary.progress_canonical,
+                )
+                atk_interval = next(
+                    (
+                        item
+                        for item in intervals
+                        if item.formation_id == primary.attacker_id
+                    ),
+                    None,
+                )
+                battle = try_create_edge_contact_battle(
+                    state,
+                    attacker=attacker,
+                    defender=defender,
+                    edge_id=primary.edge_id,
+                    progress_canonical=primary.progress_canonical,
+                    encounter_kind=primary.kind,
+                    encounter_pixel=pixel,
+                    encounter_province_id=province_id,
+                    origin_province_id=(
+                        atk_interval.origin_province_id if atk_interval else None
+                    ),
+                    participant_ids=expanded,
+                    edge=edge,
+                )
+                if battle is None:
+                    # Roll back stops — restore is complex; re-block without battle is forbidden.
+                    # Clear blocked orders back to active and leave positions (best-effort abort).
+                    for fid in expanded:
+                        force = state.strategic_formations.get(fid)
+                        if force is None or force.move_order is None:
+                            continue
+                        if force.move_order.status == MoveOrderStatus.BLOCKED.value:
+                            force.move_order = replace(
+                                force.move_order, status=MoveOrderStatus.ACTIVE.value
+                            )
+                else:
+                    contacts.extend(expanded)
+                    skipped.update(expanded)
+    elif primary is not None and primary.kind == ENCOUNTER_KIND_NODE_SIMULTANEOUS:
+        from .operational_interception import apply_simultaneous_node_arrivals
+
+        created = apply_simultaneous_node_arrivals(
             state,
             primary,
             intervals,
             edges_by_id=edges_by_id,
             nodes_by_id=nodes_by_id,
         )
-        attacker = state.strategic_formations[primary.attacker_id]
-        defender = state.strategic_formations[primary.defender_id]
-        edge = edges_by_id[primary.edge_id]
-        pixel = encounter_pixel_for_edge(
-            edge=edge,
-            nodes_by_id=nodes_by_id,
-            progress_canonical=primary.progress_canonical,
-        )
-        province_id = encounter_province_for_edge(
-            edge=edge,
-            nodes_by_id=nodes_by_id,
-            progress_canonical=primary.progress_canonical,
-        )
-        atk_interval = next(
-            item for item in intervals if item.formation_id == primary.attacker_id
-        )
-        battle = try_create_edge_contact_battle(
-            state,
-            attacker=attacker,
-            defender=defender,
-            edge_id=primary.edge_id,
-            progress_canonical=primary.progress_canonical,
-            encounter_kind=primary.kind,
-            encounter_pixel=pixel,
-            encounter_province_id=province_id,
-            origin_province_id=atk_interval.origin_province_id,
-        )
-        if battle is not None:
+        if created:
             contacts.extend(primary.participant_ids)
             skipped.update(primary.participant_ids)
-    elif primary is not None and primary.kind == ENCOUNTER_KIND_NODE_SIMULTANEOUS:
-        # Apply arrivals for participants first, then node contact construction.
-        for item in intervals:
-            if item.formation_id not in primary.participant_ids:
-                continue
-            force = state.strategic_formations.get(item.formation_id)
-            order = force.move_order if force else None
-            if force is None or order is None:
-                continue
-            _advance_formation_one_tick(
-                state,
-                force,
-                order,
-                edges_by_id=edges_by_id,
-                nodes_by_id=nodes_by_id,
-                contacts_out=contacts,
-            )
-            skipped.add(item.formation_id)
-            moved.append(item.formation_id)
 
     # Remaining movers (not stopped by edge contact).
     if state.pending_battle is None:

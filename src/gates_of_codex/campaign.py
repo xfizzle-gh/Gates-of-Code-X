@@ -174,13 +174,16 @@ class CampaignEngine:
         if winner == pending.attacker_faction:
             for force_id in def_forces:
                 preferred = None
+                hold_node = None
                 if is_edge_contact:
                     preferred = self._edge_retreat_node(force_id, edge_id)
+                    hold_node = self._edge_retreat_hold_node(force_id)
                 self._resolve_formation_after_battle(
                     force_id,
                     lost=True,
                     exclude_province=target.province_id,
                     preferred_retreat=preferred,
+                    hold_node_id=hold_node,
                 )
             operational_campaign = self._is_operational_campaign()
             hold_node = None if is_edge_contact else self._hold_node_after_battle(
@@ -218,8 +221,10 @@ class CampaignEngine:
             # Defenders hold; attackers retreat once per formation.
             for force_id in atk_forces:
                 preferred = None
+                hold_node = None
                 if is_edge_contact:
                     preferred = self._edge_retreat_node(force_id, edge_id)
+                    hold_node = self._edge_retreat_hold_node(force_id)
                 elif is_op_contact and force_id == str(
                     getattr(pending, "attacker_formation_id", "") or ""
                 ):
@@ -229,6 +234,7 @@ class CampaignEngine:
                     lost=True,
                     exclude_province=target.province_id,
                     preferred_retreat=preferred,
+                    hold_node_id=hold_node,
                 )
             for force_id in def_forces:
                 if is_edge_contact:
@@ -301,13 +307,34 @@ class CampaignEngine:
         )
 
     def _edge_retreat_node(self, force_id: str, edge_id: str) -> str | None:
-        """Last legal node before the encounter edge (prefer path origin / facing reverse)."""
+        """Province of the exact previous legal node for edge retreat (not arbitrary neighbor)."""
+        # Prefer exact node recorded at contact stop.
+        store = self.state.map_metadata.get("operational_edge_retreat_nodes")
+        node_id = None
+        if isinstance(store, dict):
+            node_id = store.get(force_id) or store.get(str(force_id))
+        if node_id:
+            from .operational_position import load_operational_graph_for_state
+
+            graph = load_operational_graph_for_state(self.state)
+            if graph:
+                node = next(
+                    (
+                        n
+                        for n in graph.get("nodes") or []
+                        if str(n.get("node_id")) == str(node_id)
+                    ),
+                    None,
+                )
+                if node:
+                    province_id = str(node.get("province_id") or "")
+                    if province_id:
+                        return province_id
         force = self.state.strategic_formations.get(force_id)
         if force is None:
             return None
         pos = force.position
         if pos is not None and pos.mode == "on_edge" and pos.facing_node_id:
-            # Origin endpoint is the non-facing endpoint.
             from .operational_position import load_operational_graph_for_state
 
             graph = load_operational_graph_for_state(self.state)
@@ -329,6 +356,15 @@ class CampaignEngine:
                     if node:
                         return str(node.get("province_id") or "") or None
         return force.province_id or None
+
+    def _edge_retreat_hold_node(self, force_id: str) -> str | None:
+        """Exact previous legal node ID for post-battle placement."""
+        store = self.state.map_metadata.get("operational_edge_retreat_nodes")
+        if isinstance(store, dict):
+            node_id = store.get(force_id) or store.get(str(force_id))
+            if node_id:
+                return str(node_id)
+        return None
 
     def _hold_formation_on_edge(
         self,
@@ -530,7 +566,16 @@ class CampaignEngine:
             if battalion is not None:
                 battalion.province_id = destination
                 battalion.strategic_formation_id = force_id
-        place_formation_at_province_anchor(force, self.state)
+        # Prefer exact previous legal node when recorded (edge retreat).
+        if hold_node_id:
+            force.position = FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value,
+                node_id=hold_node_id,
+                progress_milli=0,
+            )
+            force.movement_state = "at_anchor"
+        else:
+            place_formation_at_province_anchor(force, self.state)
 
     def _hostile_battalion_in(self, province_id: str, faction: Faction) -> bool:
         for battalion in self.state.battalions.values():
