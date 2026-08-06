@@ -467,14 +467,19 @@ func _test_launch_fallback_second_succeeds() -> void:
 				"output": output_text,
 			})
 	)
+	var ok_exe := "true"
+	var ok_args: Array = []
+	if OS.get_name() == "Windows":
+		ok_exe = "cmd.exe"
+		ok_args = ["/c", "exit", "0"]
 	var candidates := [
 		{
 			"executable": "Z:/definitely/missing/backend-fallback-a",
 			"args": ["--help"],
 		},
 		{
-			"executable": OS.get_executable_path(),
-			"args": ["--version"],
+			"executable": ok_exe,
+			"args": ok_args,
 		},
 	]
 	var start: Dictionary = runner.try_start_candidates(

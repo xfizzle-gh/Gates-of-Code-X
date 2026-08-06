@@ -102,10 +102,17 @@ func _test_identity_and_op() -> void:
 
 
 func _fake_executable() -> Dictionary:
-	return {
-		"exe": OS.get_executable_path(),
-		"args": PackedStringArray(["--version"]),
-	}
+	## Fast, cross-platform process that exits 0 (Godot --version is unreliable under CI).
+	if OS.get_name() == "Windows":
+		return {"exe": "cmd.exe", "args": PackedStringArray(["/c", "exit", "0"])}
+	return {"exe": "true", "args": PackedStringArray()}
+
+
+func _slow_executable() -> Dictionary:
+	## Deliberately slow process for shutdown-overlap coverage.
+	if OS.get_name() == "Windows":
+		return {"exe": "cmd.exe", "args": PackedStringArray(["/c", "ping", "-n", "2", "127.0.0.1", ">", "nul"])}
+	return {"exe": "sleep", "args": PackedStringArray(["0.4"])}
 
 
 func _test_duplicate_rejection() -> void:
@@ -199,10 +206,11 @@ func _test_stale_callback_ignored() -> void:
 func _test_exit_during_command_safe() -> void:
 	_finished_events.clear()
 	# Prefer a slower command so free overlaps a still-running worker when possible.
+	var slow: Dictionary = _slow_executable()
 	var start: Dictionary = _runner.try_start(
 		[{"op": "end_turn"}],
-		OS.get_executable_path(),
-		PackedStringArray(["--help"]),
+		slow.exe,
+		slow.args,
 		"res://s.json"
 	)
 	_assert_true(
@@ -220,9 +228,10 @@ func _test_exit_during_command_safe() -> void:
 
 func _test_candidate_fallback() -> void:
 	_finished_events.clear()
+	var ok: Dictionary = _fake_executable()
 	var candidates := [
 		{"executable": "Z:/missing/backend-a", "args": ["--help"]},
-		{"executable": OS.get_executable_path(), "args": ["--version"]},
+		{"executable": ok.exe, "args": Array(ok.args)},
 	]
 	var start: Dictionary = _runner.try_start_candidates(
 		[{"op": "refresh"}],
