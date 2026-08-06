@@ -23,7 +23,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install
-        run: python -m pip install -e .
+        run: python -m pip install -e ".[earth3]"
       - name: Test
         run: python -m unittest discover -s tests -v
       - name: Campaign CLI smoke test

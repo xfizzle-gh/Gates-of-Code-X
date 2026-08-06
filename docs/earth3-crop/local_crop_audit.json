@@ -1,0 +1,1276 @@
+{
+  "schema": "gates-of-codex.earth3-local-crop-audit",
+  "schema_version": 3,
+  "candidate_id": "em_reference_masked",
+  "generation": {
+    "source": "tools/earth3/generate_local_audit.py",
+    "commit_sha": "149013de2a95141709380c80b654f01cdd739940",
+    "tool_version": "0.11.0",
+    "authoritative_geometry_engine": "shapely",
+    "comparison_geometry_engine": "stdlib_earclip_sh",
+    "note": "Shapely is mandatory for authoritative crop generation. Stdlib overlap is comparison-only and never silently becomes authority."
+  },
+  "source": {
+    "archive_label": "LOCAL_UNCOMMITTED_EARTH3_ARCHIVE",
+    "archive_sha256": "b88cc599128c73a5711af3add8330f5a42629c9a3e07a5dd7aea8437a97fc760",
+    "source_province_count": 13892,
+    "archive_committed": false
+  },
+  "tracked_inputs": {
+    "crop_config_path": "config/earth3/crop_candidates_v1.json",
+    "crop_config_sha256": "25ff84cbc7b9de419723219ce6d9446471fdacfe58db3d54c2504643413bed7c",
+    "threshold_decisions_path": "config/earth3/threshold_decisions_em_reference_masked_v1.json",
+    "threshold_decisions_sha256": "85fe5cd36d388d09a51d060c557433077af5454749d9b2c372906de58b668412",
+    "hash_normalization": "tracked_text_lf_only_archive_raw_bytes"
+  },
+  "oracle": {
+    "provinces_checked": 3579,
+    "discrepancy_count_abs_gt_1e-3": 0,
+    "classification_flip_count": 0
+  },
+  "crop_result": {
+    "province_count": 3038,
+    "land_province_count": 2843,
+    "water_province_count": 195,
+    "vertex_count": 263522,
+    "adjacency_edge_count": 8856,
+    "disconnected_land_components": 23,
+    "threshold_review_count": 0,
+    "included_ids_sha256": "7effdffbccbcce33ecba364dc8d161ded5053266db2df0deee605a98c36620dc",
+    "required_include_override_count": 51,
+    "explicit_exclude_override_count": 57
+  },
+  "threshold_decisions": {
+    "include_count": 17,
+    "exclude_count": 32,
+    "total_decisions": 49,
+    "include_ids": [
+      1028,
+      1227,
+      1228,
+      1376,
+      2706,
+      3003,
+      4295,
+      4734,
+      6632,
+      6677,
+      10826,
+      12180,
+      12187,
+      12189,
+      12451,
+      12912,
+      12914
+    ],
+    "exclude_ids": [
+      1022,
+      1024,
+      1044,
+      1348,
+      1377,
+      1451,
+      2670,
+      3223,
+      3741,
+      3746,
+      4785,
+      4831,
+      4838,
+      5051,
+      5054,
+      6679,
+      6685,
+      10890,
+      11174,
+      11559,
+      11580,
+      11601,
+      11649,
+      12037,
+      12118,
+      12200,
+      12508,
+      12902,
+      12907,
+      13076,
+      13151,
+      13352
+    ]
+  },
+  "exclusion_anchor_geometry": {
+    "ok": true,
+    "failure_names": [],
+    "requirement": "raw_overlap_ratio < inclusion_threshold OR no mask intersection",
+    "anchors": [
+      {
+        "name": "Naberezhnye Chelny",
+        "source_province_id": 10857,
+        "group": "western_Russia",
+        "x": 10901.0,
+        "y": 1648.0,
+        "broad_phase_intersects": true,
+        "mask_bounds_intersects": false,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "Yaransk",
+        "source_province_id": 11170,
+        "group": "western_Russia",
+        "x": 10680.0,
+        "y": 1508.0,
+        "broad_phase_intersects": true,
+        "mask_bounds_intersects": true,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "Tuymazy",
+        "source_province_id": 11323,
+        "group": "western_Russia",
+        "x": 10962.0,
+        "y": 1742.0,
+        "broad_phase_intersects": true,
+        "mask_bounds_intersects": false,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "Galich",
+        "source_province_id": 11689,
+        "group": "western_Russia",
+        "x": 10485.0,
+        "y": 1417.0,
+        "broad_phase_intersects": true,
+        "mask_bounds_intersects": true,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "Orsk",
+        "source_province_id": 10919,
+        "group": "western_Russia",
+        "x": 11196.0,
+        "y": 2013.0,
+        "broad_phase_intersects": false,
+        "mask_bounds_intersects": false,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "Turtkul",
+        "source_province_id": 10587,
+        "group": "Central_Asia",
+        "x": 11319.0,
+        "y": 2701.0,
+        "broad_phase_intersects": false,
+        "mask_bounds_intersects": false,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "Ayteke Bi",
+        "source_province_id": 11177,
+        "group": "Central_Asia",
+        "x": 11376.0,
+        "y": 2409.0,
+        "broad_phase_intersects": false,
+        "mask_bounds_intersects": false,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "Karabutak",
+        "source_province_id": 11180,
+        "group": "Central_Asia",
+        "x": 11275.0,
+        "y": 2113.0,
+        "broad_phase_intersects": false,
+        "mask_bounds_intersects": false,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "Ahvaz",
+        "source_province_id": 2624,
+        "group": "Iranian_interior",
+        "x": 10717.0,
+        "y": 3321.0,
+        "broad_phase_intersects": true,
+        "mask_bounds_intersects": true,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "Anarak",
+        "source_province_id": 3507,
+        "group": "Iranian_interior",
+        "x": 10963.0,
+        "y": 3204.0,
+        "broad_phase_intersects": true,
+        "mask_bounds_intersects": false,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "Moalleman",
+        "source_province_id": 10577,
+        "group": "Iranian_interior",
+        "x": 11001.0,
+        "y": 3095.0,
+        "broad_phase_intersects": true,
+        "mask_bounds_intersects": false,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "Urmia",
+        "source_province_id": 1194,
+        "group": "northwestern_Iran_fringe",
+        "x": 10542.0,
+        "y": 2954.0,
+        "broad_phase_intersects": true,
+        "mask_bounds_intersects": true,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "Hail",
+        "source_province_id": 6162,
+        "group": "Arabian_interior",
+        "x": 10379.0,
+        "y": 3535.0,
+        "broad_phase_intersects": true,
+        "mask_bounds_intersects": false,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "Hegra",
+        "source_province_id": 6091,
+        "group": "Arabian_interior",
+        "x": 10196.0,
+        "y": 3573.0,
+        "broad_phase_intersects": false,
+        "mask_bounds_intersects": false,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "Ash Shamli",
+        "source_province_id": 6163,
+        "group": "Arabian_interior",
+        "x": 10309.0,
+        "y": 3571.0,
+        "broad_phase_intersects": false,
+        "mask_bounds_intersects": false,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "Turaif",
+        "source_province_id": 6193,
+        "group": "Arabian_interior",
+        "x": 10229.0,
+        "y": 3302.0,
+        "broad_phase_intersects": true,
+        "mask_bounds_intersects": true,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "An Nahidayn",
+        "source_province_id": 6202,
+        "group": "Arabian_interior",
+        "x": 10276.0,
+        "y": 3264.0,
+        "broad_phase_intersects": true,
+        "mask_bounds_intersects": true,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "Dujal",
+        "source_province_id": 4796,
+        "group": "Sahara",
+        "x": 8905.0,
+        "y": 3613.0,
+        "broad_phase_intersects": true,
+        "mask_bounds_intersects": false,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "Ashkda",
+        "source_province_id": 4348,
+        "group": "Sahara",
+        "x": 9038.0,
+        "y": 3513.0,
+        "broad_phase_intersects": true,
+        "mask_bounds_intersects": true,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "Tabelbala",
+        "source_province_id": 4859,
+        "group": "Sahara",
+        "x": 8193.0,
+        "y": 3443.0,
+        "broad_phase_intersects": true,
+        "mask_bounds_intersects": true,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "In Ghar",
+        "source_province_id": 4895,
+        "group": "Sahara",
+        "x": 8432.0,
+        "y": 3491.0,
+        "broad_phase_intersects": true,
+        "mask_bounds_intersects": true,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "Ras Ghareb Red Sea water",
+        "source_province_id": 12307,
+        "group": "Red_Sea_water",
+        "x": 9953.0,
+        "y": 3501.0,
+        "broad_phase_intersects": true,
+        "mask_bounds_intersects": true,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "Funchal Atlantic water",
+        "source_province_id": 12906,
+        "group": "Atlantic_unrelated_water",
+        "x": 7488.0,
+        "y": 3201.0,
+        "broad_phase_intersects": true,
+        "mask_bounds_intersects": true,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "Murmansk",
+        "source_province_id": 11370,
+        "group": "Europe_Scandinavia",
+        "x": 9961.0,
+        "y": 474.0,
+        "broad_phase_intersects": false,
+        "mask_bounds_intersects": false,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      },
+      {
+        "name": "Arkhangelsk",
+        "source_province_id": 11764,
+        "group": "western_Russia",
+        "x": 10325.0,
+        "y": 892.0,
+        "broad_phase_intersects": true,
+        "mask_bounds_intersects": false,
+        "raw_overlap_ratio": 0.0,
+        "automatic_threshold_include": false,
+        "final_included_after_overrides": false,
+        "geometry_ok_raw_below_threshold": true,
+        "final_ok_excluded": true
+      }
+    ]
+  },
+  "iceland": {
+    "ok": true,
+    "expected_ids": [
+      950,
+      951,
+      952,
+      953,
+      954,
+      955,
+      956,
+      957,
+      958,
+      959,
+      960,
+      961,
+      962,
+      963,
+      964,
+      6847,
+      6848,
+      6849,
+      6850,
+      6851
+    ],
+    "expected_count": 20,
+    "included_expected_ids": [
+      950,
+      951,
+      952,
+      953,
+      954,
+      955,
+      956,
+      957,
+      958,
+      959,
+      960,
+      961,
+      962,
+      963,
+      964,
+      6847,
+      6848,
+      6849,
+      6850,
+      6851
+    ],
+    "missing_ids": [],
+    "hofn_included": true,
+    "bakkafjordur_included": true,
+    "connected_components_in_expected_set": 1,
+    "expected_ids_sha256": "0609984e613395e727ee43ca8ef22cd0d4f24068a221c83a3023794d02d30881"
+  },
+  "exact_required_locations": {
+    "ok": true,
+    "failure_keys": [],
+    "gating_key_count": 34,
+    "gating_keys": [
+      "Reykjavik",
+      "London",
+      "Dublin",
+      "Madrid",
+      "Lisbon",
+      "Paris",
+      "Berlin",
+      "Rome",
+      "Athens",
+      "Kyiv",
+      "Odesa",
+      "Kherson",
+      "Zaporizhzhia",
+      "Donetsk",
+      "Luhansk",
+      "Sevastopol",
+      "Simferopol",
+      "Rostov_on_Don",
+      "Istanbul",
+      "Ankara",
+      "Tbilisi",
+      "Yerevan",
+      "Baku",
+      "Tunis",
+      "Algiers",
+      "Tripoli",
+      "Cairo",
+      "Stockholm",
+      "Helsinki",
+      "Tallinn",
+      "Riga",
+      "Vilnius",
+      "Murmansk",
+      "Arkhangelsk"
+    ],
+    "informational": [
+      {
+        "key": "Oslo",
+        "city_name_exact": "Oslo",
+        "source_province_id": 1009,
+        "must_include": true,
+        "gating": false,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          8870.0,
+          1261.0
+        ],
+        "expected_xy": [
+          8870.0,
+          1261.0
+        ],
+        "ok": true
+      }
+    ],
+    "locations": [
+      {
+        "key": "Reykjavik",
+        "city_name_exact": "Reykjavík",
+        "source_province_id": 951,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          7281.0,
+          930.0
+        ],
+        "expected_xy": [
+          7281.0,
+          930.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "London",
+        "city_name_exact": "London",
+        "source_province_id": 825,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          8337.0,
+          1992.0
+        ],
+        "expected_xy": [
+          8337.0,
+          1992.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Dublin",
+        "city_name_exact": "Dublin",
+        "source_province_id": 920,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          8040.0,
+          1844.0
+        ],
+        "expected_xy": [
+          8040.0,
+          1844.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Madrid",
+        "city_name_exact": "Madrid",
+        "source_province_id": 6561,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          8165.0,
+          2774.0
+        ],
+        "expected_xy": [
+          8165.0,
+          2774.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Lisbon",
+        "city_name_exact": "Lisbon",
+        "source_province_id": 11,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          7898.0,
+          2879.0
+        ],
+        "expected_xy": [
+          7898.0,
+          2879.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Paris",
+        "city_name_exact": "Paris",
+        "source_province_id": 260,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          8461.0,
+          2194.0
+        ],
+        "expected_xy": [
+          8461.0,
+          2194.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Berlin",
+        "city_name_exact": "Berlin",
+        "source_province_id": 592,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          9000.0,
+          1913.0
+        ],
+        "expected_xy": [
+          9000.0,
+          1913.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Rome",
+        "city_name_exact": "Rome",
+        "source_province_id": 6881,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          8954.0,
+          2678.0
+        ],
+        "expected_xy": [
+          8954.0,
+          2678.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Athens",
+        "city_name_exact": "Athens",
+        "source_province_id": 2202,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          9502.0,
+          2927.0
+        ],
+        "expected_xy": [
+          9502.0,
+          2927.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Kyiv",
+        "city_name_exact": "Kyiv",
+        "source_province_id": 3757,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          9832.0,
+          2074.0
+        ],
+        "expected_xy": [
+          9832.0,
+          2074.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Odesa",
+        "city_name_exact": "Odesa",
+        "source_province_id": 3241,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          9840.0,
+          2369.0
+        ],
+        "expected_xy": [
+          9840.0,
+          2369.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Kherson",
+        "city_name_exact": "Kherson",
+        "source_province_id": 1271,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          9932.0,
+          2352.0
+        ],
+        "expected_xy": [
+          9932.0,
+          2352.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Zaporizhzhia",
+        "city_name_exact": "Zaporizhzhia",
+        "source_province_id": 3782,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          10058.0,
+          2269.0
+        ],
+        "expected_xy": [
+          10058.0,
+          2269.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Donetsk",
+        "city_name_exact": "Donetsk",
+        "source_province_id": 12175,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          10188.0,
+          2256.0
+        ],
+        "expected_xy": [
+          10188.0,
+          2256.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Luhansk",
+        "city_name_exact": "Luhansk",
+        "source_province_id": 10869,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          10261.0,
+          2216.0
+        ],
+        "expected_xy": [
+          10261.0,
+          2216.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Sevastopol",
+        "city_name_exact": "Sevastopol",
+        "source_province_id": 1268,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          9983.0,
+          2492.0
+        ],
+        "expected_xy": [
+          9983.0,
+          2492.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Simferopol",
+        "city_name_exact": "Simferopol",
+        "source_province_id": 6627,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          10009.0,
+          2472.0
+        ],
+        "expected_xy": [
+          10009.0,
+          2472.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Rostov_on_Don",
+        "city_name_exact": "Rostov on Don",
+        "source_province_id": 10868,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          10278.0,
+          2309.0
+        ],
+        "expected_xy": [
+          10278.0,
+          2309.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Istanbul",
+        "city_name_exact": "Istanbul",
+        "source_province_id": 1116,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          9757.0,
+          2733.0
+        ],
+        "expected_xy": [
+          9757.0,
+          2733.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Ankara",
+        "city_name_exact": "Ankara",
+        "source_province_id": 2207,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          9945.0,
+          2804.0
+        ],
+        "expected_xy": [
+          9945.0,
+          2804.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Tbilisi",
+        "city_name_exact": "Tbilisi",
+        "source_province_id": 10431,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          10531.0,
+          2689.0
+        ],
+        "expected_xy": [
+          10531.0,
+          2689.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Yerevan",
+        "city_name_exact": "Yerevan",
+        "source_province_id": 10436,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          10517.0,
+          2786.0
+        ],
+        "expected_xy": [
+          10517.0,
+          2786.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Baku",
+        "city_name_exact": "Baku",
+        "source_province_id": 2654,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          10776.0,
+          2772.0
+        ],
+        "expected_xy": [
+          10776.0,
+          2772.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Tunis",
+        "city_name_exact": "Tunis",
+        "source_province_id": 2242,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          8845.0,
+          2974.0
+        ],
+        "expected_xy": [
+          8845.0,
+          2974.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Algiers",
+        "city_name_exact": "Algiers",
+        "source_province_id": 1399,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          8496.0,
+          2985.0
+        ],
+        "expected_xy": [
+          8496.0,
+          2985.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Tripoli",
+        "city_name_exact": "Tripoli",
+        "source_province_id": 1365,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          8989.0,
+          3231.0
+        ],
+        "expected_xy": [
+          8989.0,
+          3231.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Cairo",
+        "city_name_exact": "Cairo",
+        "source_province_id": 2669,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          9867.0,
+          3402.0
+        ],
+        "expected_xy": [
+          9867.0,
+          3402.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Stockholm",
+        "city_name_exact": "Stockholm",
+        "source_province_id": 1049,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          9225.0,
+          1315.0
+        ],
+        "expected_xy": [
+          9225.0,
+          1315.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Helsinki",
+        "city_name_exact": "Helsinki",
+        "source_province_id": 1461,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          9560.0,
+          1240.0
+        ],
+        "expected_xy": [
+          9560.0,
+          1240.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Tallinn",
+        "city_name_exact": "Tallinn",
+        "source_province_id": 513,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          9550.0,
+          1310.0
+        ],
+        "expected_xy": [
+          9550.0,
+          1310.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Riga",
+        "city_name_exact": "Riga",
+        "source_province_id": 504,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          9528.0,
+          1532.0
+        ],
+        "expected_xy": [
+          9528.0,
+          1532.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Vilnius",
+        "city_name_exact": "Vilnius",
+        "source_province_id": 442,
+        "must_include": true,
+        "gating": true,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          9579.0,
+          1737.0
+        ],
+        "expected_xy": [
+          9579.0,
+          1737.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Murmansk",
+        "city_name_exact": "Murmansk",
+        "source_province_id": 11370,
+        "must_include": false,
+        "gating": true,
+        "included": false,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          9961.0,
+          474.0
+        ],
+        "expected_xy": [
+          9961.0,
+          474.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Arkhangelsk",
+        "city_name_exact": "Arkhangelsk",
+        "source_province_id": 11764,
+        "must_include": false,
+        "gating": true,
+        "included": false,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          10325.0,
+          892.0
+        ],
+        "expected_xy": [
+          10325.0,
+          892.0
+        ],
+        "ok": true
+      },
+      {
+        "key": "Oslo",
+        "city_name_exact": "Oslo",
+        "source_province_id": 1009,
+        "must_include": true,
+        "gating": false,
+        "included": true,
+        "point_in_province_polygon": true,
+        "city_row_found_exact": true,
+        "city_xy": [
+          8870.0,
+          1261.0
+        ],
+        "expected_xy": [
+          8870.0,
+          1261.0
+        ],
+        "ok": true
+      }
+    ]
+  },
+  "expected_gating_location_keys": [
+    "Reykjavik",
+    "London",
+    "Dublin",
+    "Madrid",
+    "Lisbon",
+    "Paris",
+    "Berlin",
+    "Rome",
+    "Athens",
+    "Kyiv",
+    "Odesa",
+    "Kherson",
+    "Zaporizhzhia",
+    "Donetsk",
+    "Luhansk",
+    "Sevastopol",
+    "Simferopol",
+    "Rostov_on_Don",
+    "Istanbul",
+    "Ankara",
+    "Tbilisi",
+    "Yerevan",
+    "Baku",
+    "Tunis",
+    "Algiers",
+    "Tripoli",
+    "Cairo",
+    "Stockholm",
+    "Helsinki",
+    "Tallinn",
+    "Riga",
+    "Vilnius",
+    "Murmansk",
+    "Arkhangelsk"
+  ]
+}

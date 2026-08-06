@@ -1,0 +1,900 @@
+{
+  "schema": "gates-of-codex.earth3-threshold-decisions",
+  "schema_version": 4,
+  "candidate_id": "em_reference_masked",
+  "inclusion_threshold": 0.35,
+  "review_band": [
+    0.15,
+    0.5
+  ],
+  "decision_rule": "Recommended for owner approval after mask v5 boundary cut. Include/exclude decisions unchanged; visual confirmation still required on #92.",
+  "owner_review_status": "pending_owner_visual_approval",
+  "include_ids": [
+    1028,
+    1227,
+    1228,
+    1376,
+    2706,
+    3003,
+    4295,
+    4734,
+    6632,
+    6677,
+    10826,
+    12180,
+    12187,
+    12189,
+    12451,
+    12912,
+    12914
+  ],
+  "exclude_ids": [
+    1022,
+    1024,
+    1044,
+    1348,
+    1377,
+    1451,
+    2670,
+    3223,
+    3741,
+    3746,
+    4785,
+    4831,
+    4838,
+    5051,
+    5054,
+    6679,
+    6685,
+    10890,
+    11174,
+    11559,
+    11580,
+    11601,
+    11649,
+    12037,
+    12118,
+    12200,
+    12508,
+    12902,
+    12907,
+    13076,
+    13151,
+    13352
+  ],
+  "decisions": [
+    {
+      "source_province_id": 1022,
+      "overlap_ratio": 0.302649,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3026; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "Europe_Scandinavia",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        8772.437869822485,
+        1113.4378698224853
+      ],
+      "is_water": false,
+      "continent_id": 2,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 1024,
+      "overlap_ratio": 0.349181,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3492; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "Europe_Scandinavia",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        8624.511111111111,
+        1125.7272727272727
+      ],
+      "is_water": false,
+      "continent_id": 2,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 1028,
+      "overlap_ratio": 0.477077,
+      "decision": "include",
+      "owner_decision": "include",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4771; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
+      "boundary_group": "Europe_Scandinavia",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        8971.733333333334,
+        1117.3904761904762
+      ],
+      "is_water": false,
+      "continent_id": 2,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 1044,
+      "overlap_ratio": 0.173157,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.1732; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "Europe_Scandinavia",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        9046.689024390244,
+        1099.7621951219512
+      ],
+      "is_water": false,
+      "continent_id": 2,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 1227,
+      "overlap_ratio": 0.352565,
+      "decision": "include",
+      "owner_decision": "include",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.3526; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
+      "boundary_group": "Turkey_northern_Levant",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        10270.466666666667,
+        2953.141666666667
+      ],
+      "is_water": false,
+      "continent_id": 1,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 1228,
+      "overlap_ratio": 0.416138,
+      "decision": "include",
+      "owner_decision": "include",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.4161; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
+      "boundary_group": "Turkey_northern_Levant",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        10230.896,
+        2973.472
+      ],
+      "is_water": false,
+      "continent_id": 1,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 1348,
+      "overlap_ratio": 0.251231,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.2512; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "Turkey_northern_Levant",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        10338.525925925926,
+        2904.0296296296297
+      ],
+      "is_water": false,
+      "continent_id": 1,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 1376,
+      "overlap_ratio": 0.368744,
+      "decision": "include",
+      "owner_decision": "include",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=North_African_coast; raw/threshold ratio=0.3687; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
+      "boundary_group": "North_African_coast",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        9380.059210526315,
+        3419.4736842105262
+      ],
+      "is_water": false,
+      "continent_id": 6,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 1377,
+      "overlap_ratio": 0.254655,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.2547; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "Sahara",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        9490.63212435233,
+        3442.4300518134714
+      ],
+      "is_water": false,
+      "continent_id": 6,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 1451,
+      "overlap_ratio": 0.241613,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.2416; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "Europe_Scandinavia",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        9554.488095238095,
+        1179.9166666666667
+      ],
+      "is_water": false,
+      "continent_id": 2,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 2670,
+      "overlap_ratio": 0.169232,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Egypt_Sinai; raw/threshold ratio=0.1692; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "Egypt_Sinai",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        9852.018181818183,
+        3444.418181818182
+      ],
+      "is_water": false,
+      "continent_id": 6,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 2706,
+      "overlap_ratio": 0.444845,
+      "decision": "include",
+      "owner_decision": "include",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.4448; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
+      "boundary_group": "Egypt_Sinai",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        9919.338983050848,
+        3411.406779661017
+      ],
+      "is_water": false,
+      "continent_id": 6,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 3003,
+      "overlap_ratio": 0.362911,
+      "decision": "include",
+      "owner_decision": "include",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3629; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
+      "boundary_group": "Europe_Scandinavia",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        9165.502304147465,
+        1123.152073732719
+      ],
+      "is_water": false,
+      "continent_id": 2,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 3223,
+      "overlap_ratio": 0.192066,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.1921; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "Sahara",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        7915.866666666667,
+        3337.7185185185185
+      ],
+      "is_water": false,
+      "continent_id": 6,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 3741,
+      "overlap_ratio": 0.283183,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2832; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "western_Russia",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        10231.320388349515,
+        1501.6504854368932
+      ],
+      "is_water": false,
+      "continent_id": 2,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 3746,
+      "overlap_ratio": 0.328087,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.3281; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "Europe_Scandinavia",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        9896.297101449276,
+        1264.5144927536232
+      ],
+      "is_water": false,
+      "continent_id": 2,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 4295,
+      "overlap_ratio": 0.459496,
+      "decision": "include",
+      "owner_decision": "include",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Sahara; raw/threshold ratio=0.4595; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
+      "boundary_group": "Sahara",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        8501.877551020409,
+        3379.1020408163267
+      ],
+      "is_water": false,
+      "continent_id": 6,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 4734,
+      "overlap_ratio": 0.473793,
+      "decision": "include",
+      "owner_decision": "include",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=North_African_coast; raw/threshold ratio=0.4738; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
+      "boundary_group": "North_African_coast",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        9010.888235294118,
+        3401.1588235294116
+      ],
+      "is_water": false,
+      "continent_id": 6,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 4785,
+      "overlap_ratio": 0.248763,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "Sahara",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        8855.029761904761,
+        3418.0119047619046
+      ],
+      "is_water": false,
+      "continent_id": 6,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 4831,
+      "overlap_ratio": 0.242655,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.2427; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "Sahara",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        7993.073394495413,
+        3357.229357798165
+      ],
+      "is_water": false,
+      "continent_id": 6,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 4838,
+      "overlap_ratio": 0.189359,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Sahara; raw/threshold ratio=0.1894; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "Sahara",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        8046.504854368932,
+        3363.9126213592235
+      ],
+      "is_water": false,
+      "continent_id": 6,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 5051,
+      "overlap_ratio": 0.311515,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=North_African_coast; raw/threshold ratio=0.3115; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "North_African_coast",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        10134.838235294117,
+        3075.014705882353
+      ],
+      "is_water": false,
+      "continent_id": 1,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 5054,
+      "overlap_ratio": 0.183715,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Turkey_northern_Levant; raw/threshold ratio=0.1837; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "Turkey_northern_Levant",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        10200.723214285714,
+        3029.839285714286
+      ],
+      "is_water": false,
+      "continent_id": 1,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 6632,
+      "overlap_ratio": 0.459787,
+      "decision": "include",
+      "owner_decision": "include",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Europe_Scandinavia; raw/threshold ratio=0.4598; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
+      "boundary_group": "Europe_Scandinavia",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        8903.585365853658,
+        1118.7317073170732
+      ],
+      "is_water": false,
+      "continent_id": 2,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 6677,
+      "overlap_ratio": 0.430292,
+      "decision": "include",
+      "owner_decision": "include",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=western_Russia; raw/threshold ratio=0.4303; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
+      "boundary_group": "western_Russia",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        10142.373626373626,
+        1412.1868131868132
+      ],
+      "is_water": false,
+      "continent_id": 2,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 6679,
+      "overlap_ratio": 0.295566,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2956; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "western_Russia",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        10206.776470588235,
+        1469.2823529411764
+      ],
+      "is_water": false,
+      "continent_id": 2,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 6685,
+      "overlap_ratio": 0.187533,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.1875; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "western_Russia",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        10287.584,
+        1561.8
+      ],
+      "is_water": false,
+      "continent_id": 2,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 10826,
+      "overlap_ratio": 0.402385,
+      "decision": "include",
+      "owner_decision": "include",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Caucasus; raw/threshold ratio=0.4024; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
+      "boundary_group": "Caucasus",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        10630.239130434782,
+        2419.8695652173915
+      ],
+      "is_water": false,
+      "continent_id": 2,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 10890,
+      "overlap_ratio": 0.303062,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.3031; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "western_Russia",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        10499.801652892562,
+        2140.8512396694214
+      ],
+      "is_water": false,
+      "continent_id": 2,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 11174,
+      "overlap_ratio": 0.33461,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.3346; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "western_Russia",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        10536.95,
+        2275.3166666666666
+      ],
+      "is_water": false,
+      "continent_id": 2,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 11559,
+      "overlap_ratio": 0.233257,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2333; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "western_Russia",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        10333.166666666666,
+        1650.7962962962963
+      ],
+      "is_water": false,
+      "continent_id": 2,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 11580,
+      "overlap_ratio": 0.27535,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2753; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "western_Russia",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        10448.164835164835,
+        1957.4835164835165
+      ],
+      "is_water": false,
+      "continent_id": 2,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 11601,
+      "overlap_ratio": 0.222925,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2229; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "western_Russia",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        10466.184782608696,
+        1998.7282608695652
+      ],
+      "is_water": false,
+      "continent_id": 2,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 11649,
+      "overlap_ratio": 0.294908,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=western_Russia; raw/threshold ratio=0.2949; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "western_Russia",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        10356.268041237114,
+        1709.979381443299
+      ],
+      "is_water": false,
+      "continent_id": 2,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 12037,
+      "overlap_ratio": 0.248766,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=other_water; raw/threshold ratio=0.2488; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "other_water",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        9388.741463414633,
+        1130.1853658536586
+      ],
+      "is_water": true,
+      "continent_id": 0,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 12118,
+      "overlap_ratio": 0.339359,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Red_Sea_water; raw/threshold ratio=0.3394; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "Red_Sea_water",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        10002.420454545454,
+        3308.2727272727275
+      ],
+      "is_water": true,
+      "continent_id": 0,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 12180,
+      "overlap_ratio": 0.378713,
+      "decision": "include",
+      "owner_decision": "include",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3787; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
+      "boundary_group": "Atlantic_Nordic_water",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        8633.271428571428,
+        1146.6612244897958
+      ],
+      "is_water": true,
+      "continent_id": 0,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 12187,
+      "overlap_ratio": 0.460228,
+      "decision": "include",
+      "owner_decision": "include",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4602; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
+      "boundary_group": "Atlantic_Nordic_water",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        8267.941176470587,
+        1212.4117647058824
+      ],
+      "is_water": true,
+      "continent_id": 0,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 12189,
+      "overlap_ratio": 0.385032,
+      "decision": "include",
+      "owner_decision": "include",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3850; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
+      "boundary_group": "Atlantic_Nordic_water",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        7224.954372623574,
+        793.0177439797212
+      ],
+      "is_water": true,
+      "continent_id": 0,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 12200,
+      "overlap_ratio": 0.162109,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Mediterranean_water; raw/threshold ratio=0.1621; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "Mediterranean_water",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        7858.601351351352,
+        3386.027027027027
+      ],
+      "is_water": true,
+      "continent_id": 0,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 12451,
+      "overlap_ratio": 0.393929,
+      "decision": "include",
+      "owner_decision": "include",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Egypt_Sinai; raw/threshold ratio=0.3939; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
+      "boundary_group": "Egypt_Sinai",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        9947.960784313726,
+        3373.4313725490197
+      ],
+      "is_water": false,
+      "continent_id": 1,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 12508,
+      "overlap_ratio": 0.224209,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=North_African_coast; raw/threshold ratio=0.2242; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "North_African_coast",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        10108.333333333334,
+        3107.4848484848485
+      ],
+      "is_water": false,
+      "continent_id": 1,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 12902,
+      "overlap_ratio": 0.191099,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1911; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "Atlantic_unrelated_water",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        7682.739130434783,
+        3300.7391304347825
+      ],
+      "is_water": true,
+      "continent_id": 0,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 12907,
+      "overlap_ratio": 0.166486,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Atlantic_unrelated_water; raw/threshold ratio=0.1665; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "Atlantic_unrelated_water",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        7526.923076923077,
+        3007.269230769231
+      ],
+      "is_water": true,
+      "continent_id": 0,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 12912,
+      "overlap_ratio": 0.422391,
+      "decision": "include",
+      "owner_decision": "include",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.4224; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
+      "boundary_group": "Atlantic_Nordic_water",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        7480.375,
+        2739.9166666666665
+      ],
+      "is_water": true,
+      "continent_id": 0,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 12914,
+      "overlap_ratio": 0.38264,
+      "decision": "include",
+      "owner_decision": "include",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval include: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3826; whole-polygon rule retained. Retained for coherent theatre framing pending owner visual approval.",
+      "boundary_group": "Atlantic_Nordic_water",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        7430.869565217391,
+        2170.608695652174
+      ],
+      "is_water": true,
+      "continent_id": 0,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 13076,
+      "overlap_ratio": 0.159619,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.1596; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "Atlantic_Nordic_water",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        7348.178571428572,
+        1916.142857142857
+      ],
+      "is_water": true,
+      "continent_id": 0,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 13151,
+      "overlap_ratio": 0.341999,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Atlantic_Nordic_water; raw/threshold ratio=0.3420; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "Atlantic_Nordic_water",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        7733.615384615385,
+        1342.9615384615386
+      ],
+      "is_water": true,
+      "continent_id": 0,
+      "region_id": 0
+    },
+    {
+      "source_province_id": 13352,
+      "overlap_ratio": 0.198636,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "pending_owner_visual_approval",
+      "owner_reason": "Recommended for owner approval exclude: boundary province group=Caspian_water; raw/threshold ratio=0.1986; whole-polygon rule retained. Excluded as out-of-scope pending owner visual approval.",
+      "boundary_group": "Caspian_water",
+      "rule": "owner_approved_boundary_decision",
+      "centroid": [
+        10686.49609375,
+        2441.89453125
+      ],
+      "is_water": true,
+      "continent_id": 0,
+      "region_id": 0
+    }
+  ]
+}
