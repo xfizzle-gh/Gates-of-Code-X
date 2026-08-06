@@ -5,6 +5,8 @@ const MapSpaceScript = preload("res://scripts/presentation/map_space.gd")
 const MapMarkersScript = preload("res://scripts/presentation/map_markers.gd")
 const MapDebugScript = preload("res://scripts/presentation/map_debug.gd")
 const MapTextureLayerScript = preload("res://scripts/presentation/map_texture_layer.gd")
+const BattleLocationScript = preload("res://scripts/presentation/battle_location.gd")
+const OperationalGraphViewScript = preload("res://scripts/presentation/operational_graph_view.gd")
 const DEFAULT_MAP_MANIFEST := "res://assets/maps/europe/interim_goe/map_manifest.json"
 const EM_FROM_GOE_MANIFEST := "res://assets/maps/europe_mediterranean/from_goe/map_manifest.json"
 const DEFAULT_PRESENTATION_FIXTURE := "res://fixtures/presentation/empty_map.json"
@@ -18,6 +20,7 @@ const OVERLAY_EDGE_PAD := 18.0
 var color_id_map = ColorIdMapScript.new()
 var map_space = MapSpaceScript.new()
 var map_debug = MapDebugScript.new()
+var operational_graph = OperationalGraphViewScript.new()
 var map_manifest_source_path := DEFAULT_MAP_MANIFEST
 var presentation_fixture: Dictionary = {}
 var presentation_fixture_path := DEFAULT_PRESENTATION_FIXTURE
@@ -158,6 +161,10 @@ func _load_presentation_fixture(path: String) -> void:
 	# Presentation fixtures are Godot-local view models only.
 	if String(presentation_fixture.get("schema", "")) != "gates-of-codex.presentation-fixture":
 		presentation_fixture = {}
+		return
+	# Optional test/screenshot overlay: inject a pending_battle without Python changes.
+	if presentation_fixture.has("pending_battle") and presentation_fixture.get("pending_battle") is Dictionary:
+		snapshot["pending_battle"] = (presentation_fixture.get("pending_battle") as Dictionary).duplicate(true)
 
 
 func _invalidate_overlay_cache() -> void:
@@ -247,6 +254,7 @@ func _open_color_id_map() -> void:
 	var previous_ready: bool = color_id_map != null and bool(color_id_map.is_ready)
 	_invalidate_overlay_cache()
 	_ensure_presentation_layers()
+	_open_operational_graph()
 	if color_id_map.open(map_manifest_source_path, snapshot, FACTION_COLORS):
 		color_id_map.refresh_highlights(selected_province_id, legal_targets)
 		status_message = "Color-ID province renderer active (%s)." % map_manifest_source_path.get_file()
@@ -266,6 +274,19 @@ func _open_color_id_map() -> void:
 			if _identity_layer != null:
 				_identity_layer.visible = false
 	queue_redraw()
+
+
+func _open_operational_graph() -> void:
+	var graph_path := ""
+	var contract: Dictionary = snapshot.get("strategic_map", {})
+	var exported := String(contract.get("operational_graph_path", "")).strip_edges()
+	if not exported.is_empty() and FileAccess.file_exists(exported):
+		graph_path = exported
+	else:
+		graph_path = operational_graph.resolve_default_path(map_manifest_source_path)
+	if not operational_graph.open(graph_path):
+		# Presentation-only; missing graph falls back to legacy midpoint for old battles.
+		pass
 
 
 func _sync_map_space() -> void:
@@ -458,12 +479,32 @@ func _draw_color_id_pending_battle() -> void:
 	var battle := pending as Dictionary
 	var origin_id := String(battle.get("origin_province_id", ""))
 	var target_id := String(battle.get("target_province_id", ""))
-	if not color_id_map.row_by_province.has(origin_id) or not color_id_map.row_by_province.has(target_id):
+	var legacy_origin := Vector2.INF
+	var legacy_target := Vector2.INF
+	if color_id_map.row_by_province.has(origin_id):
+		legacy_origin = color_id_map.anchor_pixel(origin_id)
+	if color_id_map.row_by_province.has(target_id):
+		legacy_target = color_id_map.anchor_pixel(target_id)
+	var graph_index: Dictionary = operational_graph.index if operational_graph.is_ready else {}
+	var resolved: Dictionary = BattleLocationScript.resolve_pending_battle_location(
+		battle,
+		graph_index,
+		legacy_origin,
+		legacy_target
+	)
+	if not bool(resolved.get("ok", false)):
 		return
-	var origin := _image_to_screen(color_id_map.anchor_pixel(origin_id))
-	var target := _image_to_screen(color_id_map.anchor_pixel(target_id))
-	draw_line(origin, target, Color("ff9f43"), 3.0)
-	MapMarkersScript.draw_crossed_swords_battle_marker(self, (origin + target) * 0.5)
+	var map_pixel: Vector2 = resolved.get("map_pixel", Vector2.ZERO)
+	var screen := _image_to_screen(map_pixel)
+	if bool(resolved.get("draw_origin_target_line", false)) \
+	and legacy_origin != Vector2.INF and legacy_target != Vector2.INF:
+		draw_line(_image_to_screen(legacy_origin), _image_to_screen(legacy_target), Color("ff9f43"), 3.0)
+	var kind := String(resolved.get("encounter_kind", battle.get("encounter_kind", "")))
+	MapMarkersScript.draw_crossed_swords_battle_marker(self, screen)
+	if BattleLocationScript.is_edge_encounter_kind(kind):
+		MapMarkersScript.draw_edge_contact_marker(self, screen + Vector2(14, 0))
+	elif BattleLocationScript.is_node_encounter_kind(kind):
+		MapMarkersScript.draw_node_contact_marker(self, screen + Vector2(14, 0))
 
 
 func _draw_presentation_fixture_markers() -> void:

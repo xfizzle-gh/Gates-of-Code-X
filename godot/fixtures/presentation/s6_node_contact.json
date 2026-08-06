@@ -1,0 +1,19 @@
+{
+  "schema": "gates-of-codex.presentation-fixture",
+  "schema_version": 1,
+  "id": "s6_node_contact",
+  "description": "Authoritative node_contact pending battle at operational node pixel.",
+  "pending_battle": {
+    "id": "fixture-node-contact",
+    "origin_province_id": "Baden",
+    "target_province_id": "Franken",
+    "attacker_faction": "nato",
+    "defender_faction": "rusa",
+    "encounter_kind": "node_contact",
+    "encounter_node_id": "op-node-Baden-anchor",
+    "encounter_edge_id": "",
+    "encounter_progress_milli": null,
+    "encounter_pixel": []
+  },
+  "notes": ["presentation/test only — not simulation authority"]
+}

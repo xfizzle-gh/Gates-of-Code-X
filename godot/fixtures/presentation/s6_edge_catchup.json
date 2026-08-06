@@ -1,0 +1,19 @@
+{
+  "schema": "gates-of-codex.presentation-fixture",
+  "schema_version": 1,
+  "id": "s6_edge_catchup",
+  "description": "Authoritative edge_catchup using edge_id + progress_milli only (no pixel).",
+  "pending_battle": {
+    "id": "fixture-edge-catchup",
+    "origin_province_id": "Baden",
+    "target_province_id": "Franken",
+    "attacker_faction": "nato",
+    "defender_faction": "rusa",
+    "encounter_kind": "edge_catchup",
+    "encounter_node_id": "",
+    "encounter_edge_id": "op-edge-corridor-op-node-Baden-anchor__op-node-Franken-anchor",
+    "encounter_progress_milli": 250,
+    "encounter_pixel": []
+  },
+  "notes": ["edge lerp a→b at 250/1000; no origin-target line"]
+}

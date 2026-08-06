@@ -24,6 +24,11 @@ They are **not** production simulation authority and must not be treated as Pyth
 | `rapid_hover.json` | Hover stress marker list |
 | `refresh_stability.json` | Repeated refresh node-stability checklist |
 | `resolutions.json` | Supported resolution checklist |
+| `s6_node_contact.json` | S6 node_contact pending_battle overlay |
+| `s6_node_simultaneous.json` | S6 node_simultaneous pending_battle overlay |
+| `s6_edge_cross.json` | S6 edge_cross with encounter_pixel authority |
+| `s6_edge_catchup.json` | S6 edge_catchup via edge_id + progress_milli |
+| `s6_legacy_midpoint.json` | Legacy battle without operational location |
 
 ## Snapshots
 

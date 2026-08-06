@@ -1,0 +1,19 @@
+{
+  "schema": "gates-of-codex.presentation-fixture",
+  "schema_version": 1,
+  "id": "s6_legacy_midpoint",
+  "description": "Legacy pending battle without operational location fields.",
+  "pending_battle": {
+    "id": "fixture-legacy-battle",
+    "origin_province_id": "Warszawa",
+    "target_province_id": "Bialystok",
+    "attacker_faction": "nato",
+    "defender_faction": "rusa",
+    "encounter_kind": "",
+    "encounter_node_id": "",
+    "encounter_edge_id": "",
+    "encounter_progress_milli": null,
+    "encounter_pixel": []
+  },
+  "notes": ["legacy midpoint + origin-target line"]
+}

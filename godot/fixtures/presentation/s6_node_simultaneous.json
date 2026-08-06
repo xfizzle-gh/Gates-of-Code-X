@@ -1,0 +1,19 @@
+{
+  "schema": "gates-of-codex.presentation-fixture",
+  "schema_version": 1,
+  "id": "s6_node_simultaneous",
+  "description": "Authoritative node_simultaneous pending battle.",
+  "pending_battle": {
+    "id": "fixture-node-simultaneous",
+    "origin_province_id": "Hannover",
+    "target_province_id": "Hessen",
+    "attacker_faction": "nato",
+    "defender_faction": "rusa",
+    "encounter_kind": "node_simultaneous",
+    "encounter_node_id": "op-node-Hannover-anchor",
+    "encounter_edge_id": "",
+    "encounter_progress_milli": null,
+    "encounter_pixel": []
+  },
+  "notes": ["presentation/test only"]
+}
