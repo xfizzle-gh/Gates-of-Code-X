@@ -240,10 +240,15 @@ func _test_candidate_fallback() -> void:
 		{"executable": _missing_executable_path(), "args": ["--help"]},
 		{"executable": ok.exe, "args": Array(ok.args)},
 	]
-	# Prove first candidate alone cannot launch.
+	# Prove first candidate alone cannot launch (Windows -1, Linux shell 127).
 	var probe_out: Array = []
 	var probe_code := OS.execute(_missing_executable_path(), PackedStringArray(["--help"]), probe_out, true, false)
-	_assert_eq("missing exe probe is -1", probe_code, -1)
+	var probe_text := "\n".join(probe_out)
+	_assert_true(
+		"missing exe cannot launch",
+		FrontendCommandRunnerScript.could_not_launch(probe_code, probe_text),
+		"code=%s out=%s" % [probe_code, probe_text.substr(0, 80)]
+	)
 	var start: Dictionary = _runner.try_start_candidates(
 		[{"op": "refresh"}],
 		candidates,

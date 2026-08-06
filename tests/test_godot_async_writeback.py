@@ -20,7 +20,8 @@ class GodotAsyncWritebackTests(unittest.TestCase):
         self.assertIn("_shutting_down", src)
         self.assertIn("generation", src)
         self.assertIn("try_start_candidates", src)
-        self.assertIn("exit_code != -1", src)
+        self.assertIn("could_not_launch", src)
+        self.assertIn("exit_code == 127", src)
         self.assertIn("WORKER THREAD", src)
 
     def test_writeback_transactional_commit_path(self) -> None:

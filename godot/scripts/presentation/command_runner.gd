@@ -161,13 +161,29 @@ func try_start_candidates(
 	return {"ok": true, "reason": "started", "generation": gen}
 
 
+static func could_not_launch(exit_code: int, output_text: String = "") -> bool:
+	## True when the OS could not start the candidate (try next fallback).
+	## Windows: -1. Linux/macOS shell: 127 "command not found".
+	if exit_code == -1 or exit_code == 127:
+		return true
+	var lower := output_text.to_lower()
+	if lower.contains("not found") and (exit_code == 1 or exit_code == 127):
+		return true
+	if lower.contains("is not recognized"):
+		return true
+	return false
+
+
 func _worker_run(payload: Dictionary) -> void:
 	## WORKER THREAD — no Node access beyond call_deferred.
 	var candidates: Array = payload.get("candidates", [])
 	var exit_code := -1
 	var text := ""
 	var launch_path := ""
-	for candidate in candidates:
+	var idx := 0
+	while idx < candidates.size():
+		var candidate: Variant = candidates[idx]
+		idx += 1
 		if not candidate is Dictionary:
 			continue
 		var executable := String((candidate as Dictionary).get("executable", ""))
@@ -180,8 +196,8 @@ func _worker_run(payload: Dictionary) -> void:
 		exit_code = OS.execute(executable, args, output, true, false)
 		text = "\n".join(output)
 		launch_path = executable
-		# -1: process could not be created → try next fallback.
-		if exit_code != -1:
+		# Only advance when the process itself could not start.
+		if not could_not_launch(exit_code, text):
 			break
 	call_deferred(
 		"_on_worker_finished",
