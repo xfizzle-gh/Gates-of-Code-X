@@ -305,19 +305,7 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
 
     from .operational_contact import detect_static_node_contacts
 
-    static_contacts = detect_static_node_contacts(state)
-    if state.pending_battle is not None:
-        clock = get_operational_clock(state)
-        return {
-            "advanced": False,
-            "reason": "static_contact",
-            "moved": [],
-            "contacts": static_contacts,
-            "global_tick": int(clock["global_tick"]),
-            "tick_in_turn": int(clock["tick_in_turn"]),
-            "battle_id": state.pending_battle.battle_id,
-        }
-
+    # Active movers resolve first (stack-cap / entry contact), then residual static contacts.
     _node_ids, _edge_ids, edges_by_id, nodes_by_id = _indexes(graph)
     moved: list[str] = []
     contacts: list[str] = []
@@ -339,6 +327,13 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
             contacts_out=contacts,
         ):
             moved.append(force.strategic_formation_id)
+
+    static_contacts: list[str] = []
+    if state.pending_battle is None:
+        static_contacts = detect_static_node_contacts(state)
+        if static_contacts:
+            contacts.extend(static_contacts)
+
     clock = get_operational_clock(state)
     ticks_n = ticks_per_strategic_turn(state)
     global_tick = int(clock["global_tick"]) + 1
@@ -351,6 +346,7 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
         "moved": moved,
         "contacts": contacts,
         "battle_id": state.pending_battle.battle_id if state.pending_battle else "",
+        "static_contact": bool(static_contacts),
     }
 
 

@@ -252,7 +252,7 @@ class OperationalS4ContactTests(unittest.TestCase):
             for bid in ("bn-nato-a", "bn-nato-b", "bn-ally"):
                 state.battalions[bid].province_id = "b"
             report = advance_operational_tick(state)
-            self.assertEqual("static_contact", report.get("reason"))
+            self.assertTrue(report.get("static_contact") or report.get("battle_id"))
             assert state.pending_battle is not None
             atk_ids = {p.battalion_id for p in state.pending_battle.attacking_participants}
             def_ids = {p.battalion_id for p in state.pending_battle.defending_participants}
@@ -298,7 +298,7 @@ class OperationalS4ContactTests(unittest.TestCase):
             for bid in ("bn-nato-a", "bn-nato-b"):
                 state.battalions[bid].province_id = "b"
             report = advance_operational_tick(state)
-            self.assertEqual("static_contact", report.get("reason"))
+            self.assertTrue(report.get("static_contact") or report.get("battle_id"))
             self.assertIsNotNone(state.pending_battle)
             assert state.pending_battle is not None
             # Owner (Russia) defends; NATO attacks.
@@ -465,6 +465,43 @@ class OperationalS4ContactTests(unittest.TestCase):
                 # Ally was already on b; retreats once to a friendly neighbor (a or c).
                 self.assertIn(ally.province_id, {"a", "c"})
                 self.assertNotEqual("b", ally.province_id)
+
+    def test_stack_cap_blocks_contested_entry_without_joining_battle(self) -> None:
+        """3 friendlies + enemy on B: fourth friendly is snapped back, not in battle."""
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary), with_enemy=True)
+            nb = stable_node_id("b")
+            na = stable_node_id("a")
+            # Three friendly NATO formations already on B with the enemy.
+            for index in range(3):
+                bid = f"bn-hold{index}"
+                fid = f"sf-hold{index}"
+                state.battalions[bid] = _bn(bid, Faction.NATO, "b")
+                state.battalions[bid].strategic_formation_id = fid
+                state.strategic_formations[fid] = _force(fid, Faction.NATO, "b", [bid])
+            edge = stable_edge_id("corridor", na, nb)
+            issue_move_order(
+                state, "sf-nato", path_node_ids=[na, nb], path_edge_ids=[edge]
+            )
+            commit_move_orders(state)
+            activate_committed_orders(state)
+            report = advance_operational_tick(state)
+            self.assertTrue(report["advanced"])
+            nato = state.strategic_formations["sf-nato"]
+            assert nato.position is not None
+            # Fourth friendly denied by cap even though enemies occupy B.
+            self.assertEqual(na, nato.position.node_id)
+            self.assertEqual("a", nato.province_id)
+            assert nato.move_order is not None
+            self.assertEqual(MoveOrderStatus.BLOCKED.value, nato.move_order.status)
+            # Static contact among the three holders + enemy may open a battle afterward.
+            self.assertIsNotNone(state.pending_battle)
+            assert state.pending_battle is not None
+            atk = {p.battalion_id for p in state.pending_battle.attacking_participants}
+            dfn = {p.battalion_id for p in state.pending_battle.defending_participants}
+            self.assertNotIn("bn-nato-a", atk | dfn)
+            self.assertNotIn("bn-nato-b", atk | dfn)
+            self.assertTrue({"bn-hold0", "bn-hold1", "bn-hold2"} & atk)
 
     def test_stale_positions_without_graph_do_not_allow_mixed_presence(self) -> None:
         state = build_goe_europe_campaign()

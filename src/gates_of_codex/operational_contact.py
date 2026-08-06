@@ -255,7 +255,11 @@ def inspect_node_entry(
     force: StrategicFormation,
     node_id: str,
 ) -> dict[str, Any]:
-    """Read-only node entry check (no battle creation)."""
+    """Read-only node entry check (no battle creation).
+
+    Friendly stack cap is enforced even when enemies occupy the node: a fourth
+    friendly cannot enter a contested node that already has three friendlies.
+    """
     enemies = enemy_formations_at_node(
         state,
         node_id,
@@ -269,6 +273,16 @@ def inspect_node_entry(
         excluding_formation_id=force.strategic_formation_id,
     )
     contested = node_is_contested(state, node_id) or bool(enemies)
+    # Cap first: contested nodes still respect max friendly formations per node.
+    if not can_enter_node_friendly_stack(state, force, node_id):
+        return {
+            "ok": False,
+            "reason": "friendly_stack_cap",
+            "battle_id": "",
+            "contested": contested,
+            "enemies": [item.strategic_formation_id for item in enemies],
+            "friendlies": [item.strategic_formation_id for item in friends],
+        }
     if enemies:
         return {
             "ok": False,
@@ -276,15 +290,6 @@ def inspect_node_entry(
             "battle_id": "",
             "contested": True,
             "enemies": [item.strategic_formation_id for item in enemies],
-            "friendlies": [item.strategic_formation_id for item in friends],
-        }
-    if not can_enter_node_friendly_stack(state, force, node_id):
-        return {
-            "ok": False,
-            "reason": "friendly_stack_cap",
-            "battle_id": "",
-            "contested": contested,
-            "enemies": [],
             "friendlies": [item.strategic_formation_id for item in friends],
         }
     return {
