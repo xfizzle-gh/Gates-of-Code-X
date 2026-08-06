@@ -32,7 +32,11 @@ def build_frontend_snapshot(
 ) -> dict:
     ensure_strategic_layer(state)
     from .force_migration import ensure_strategic_formations
-    from .operational_movement import get_operational_clock, move_order_to_dict
+    from .operational_movement import (
+        ensure_move_orders,
+        get_operational_clock,
+        move_order_to_dict,
+    )
     from .operational_position import (
         ensure_operational_positions,
         position_to_dict,
@@ -41,6 +45,7 @@ def build_frontend_snapshot(
 
     ensure_strategic_formations(state)
     ensure_operational_positions(state)
+    ensure_move_orders(state)
     operational_clock = get_operational_clock(state)
     apply_marker_layout(state)
     objectives = update_operational_objectives(state)

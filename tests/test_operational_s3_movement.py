@@ -23,14 +23,18 @@ from gates_of_codex.operational_movement import (
     activate_committed_orders,
     advance_operational_tick,
     advance_operational_ticks,
+    cancel_move_order,
     commit_move_orders,
+    ensure_move_orders,
     issue_move_order,
     resolve_strategic_turn_movement,
 )
 from gates_of_codex.operational_position import ensure_operational_positions, province_anchor_position
 from gates_of_codex.operational_schema import (
     COST_MILLI_UNITY,
+    FormationOperationalPosition,
     MoveOrderStatus,
+    OperationalMoveOrder,
     PositionMode,
     stable_edge_id,
     stable_node_id,
@@ -51,7 +55,14 @@ def _node(province_id: str, *, pixel: list[int], suffix: str = "anchor") -> dict
     }
 
 
-def _edge(a: str, b: str, *, cost: int = COST_MILLI_UNITY, enabled: bool = True) -> dict:
+def _edge(
+    a: str,
+    b: str,
+    *,
+    cost: int = COST_MILLI_UNITY,
+    enabled: bool = True,
+    bidirectional: bool = True,
+) -> dict:
     na = stable_node_id(a, "anchor")
     nb = stable_node_id(b, "anchor")
     return {
@@ -66,7 +77,7 @@ def _edge(a: str, b: str, *, cost: int = COST_MILLI_UNITY, enabled: bool = True)
         "requires_port": False,
         "can_be_blockaded": False,
         "traversal_enabled": enabled,
-        "bidirectional": True,
+        "bidirectional": bidirectional,
         "province_ids": [a, b],
         "legacy_crossing_type": None,
         "metadata": {},
@@ -189,10 +200,14 @@ class OperationalS3MovementTests(unittest.TestCase):
             assert force.position is not None
             self.assertEqual(PositionMode.ON_EDGE.value, force.position.mode)
             self.assertEqual(500, force.position.progress_milli)
+            # Origin province until destination node arrival.
+            self.assertEqual("a", force.province_id)
+            self.assertEqual("a", state.battalions["bn-1"].province_id)
             snapshot = build_frontend_snapshot(state)
             row = next(r for r in snapshot["strategic_formations"] if r["id"] == force_id)
             self.assertEqual([50, 0], row["display_pixel"])
             self.assertEqual(MoveOrderStatus.ACTIVE.value, row["move_order"]["status"])
+            self.assertEqual("a", row["province_id"])
             self.assertEqual(10, snapshot["schema_version"])
             self.assertEqual(FRONTEND_SCHEMA_VERSION, snapshot["schema_version"])
 
@@ -348,6 +363,144 @@ class OperationalS3MovementTests(unittest.TestCase):
             force = reloaded.strategic_formations[force_id]
             assert force.move_order is not None
             self.assertEqual(MoveOrderStatus.DRAFT.value, force.move_order.status)
+
+    def test_committed_orders_are_locked(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state_with_graph(_graph_three_provinces(), Path(temporary))
+            force_id = next(iter(state.strategic_formations))
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            edge = stable_edge_id("corridor", na, nb)
+            issue_move_order(state, force_id, path_node_ids=[na, nb], path_edge_ids=[edge])
+            commit_move_orders(state)
+            with self.assertRaises(ValueError):
+                cancel_move_order(state, force_id)
+            with self.assertRaises(ValueError):
+                issue_move_order(
+                    state, force_id, path_node_ids=[na, nb], path_edge_ids=[edge]
+                )
+            activate_committed_orders(state)
+            with self.assertRaises(ValueError):
+                cancel_move_order(state, force_id)
+            with self.assertRaises(ValueError):
+                issue_move_order(
+                    state, force_id, path_node_ids=[na, nb], path_edge_ids=[edge]
+                )
+
+    def test_desync_blocks_not_completes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state_with_graph(_graph_three_provinces(), Path(temporary))
+            force_id = next(iter(state.strategic_formations))
+            force = state.strategic_formations[force_id]
+            na, nb, nc = stable_node_id("a"), stable_node_id("b"), stable_node_id("c")
+            edge_ab = stable_edge_id("corridor", na, nb)
+            # Order says a→b but formation is at c (desync).
+            force.position = FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value, node_id=nc, progress_milli=0
+            )
+            force.province_id = "c"
+            force.move_order = OperationalMoveOrder(
+                order_id="ord-desync",
+                formation_id=force_id,
+                path_node_ids=[na, nb],
+                path_edge_ids=[edge_ab],
+                status=MoveOrderStatus.ACTIVE.value,
+                committed_turn=1,
+                locked_stance="operational",
+            )
+            advance_operational_tick(state)
+            force = state.strategic_formations[force_id]
+            assert force.move_order is not None
+            self.assertEqual(MoveOrderStatus.BLOCKED.value, force.move_order.status)
+            assert force.position is not None
+            self.assertEqual(nc, force.position.node_id)
+
+    def test_ensure_move_orders_blocks_stale_path(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state_with_graph(_graph_three_provinces(), Path(temporary))
+            force_id = next(iter(state.strategic_formations))
+            force = state.strategic_formations[force_id]
+            force.move_order = OperationalMoveOrder(
+                order_id="ord-stale",
+                formation_id=force_id,
+                path_node_ids=["missing-node", stable_node_id("b")],
+                path_edge_ids=["missing-edge"],
+                status=MoveOrderStatus.DRAFT.value,
+            )
+            report = ensure_move_orders(state)
+            self.assertTrue(report["validated"])
+            self.assertIn(force_id, report["blocked"])
+            assert force.move_order is not None
+            self.assertEqual(MoveOrderStatus.BLOCKED.value, force.move_order.status)
+
+    def test_ensure_move_orders_preserves_when_graph_missing(self) -> None:
+        state = CampaignState(
+            campaign_name="nog",
+            map_id="custom",
+            factions={Faction.NATO.value: FactionState(Faction.NATO, resources=1)},
+            provinces={"a": Province("a", "A", owner=Faction.NATO, neighbors=[], x=0, y=0)},
+            battalions={
+                "bn": Battalion(
+                    battalion_id="bn",
+                    faction=Faction.NATO,
+                    province_id="a",
+                    roster=[BattalionRosterEntry("x", 1)],
+                )
+            },
+            schema_version=6,
+        )
+        ensure_strategic_formations(state)
+        force = next(iter(state.strategic_formations.values()))
+        force.move_order = OperationalMoveOrder(
+            order_id="ord-keep",
+            formation_id=force.strategic_formation_id,
+            path_node_ids=["x", "y"],
+            path_edge_ids=["e"],
+            status=MoveOrderStatus.ACTIVE.value,
+            committed_turn=1,
+            locked_stance="operational",
+        )
+        before = force.move_order
+        report = ensure_move_orders(state)
+        self.assertFalse(report["validated"])
+        self.assertIs(before, force.move_order)
+        self.assertEqual(MoveOrderStatus.ACTIVE.value, force.move_order.status)
+
+    def test_commit_rejects_invalid_stance(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state_with_graph(_graph_three_provinces(), Path(temporary))
+            force_id = next(iter(state.strategic_formations))
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            edge = stable_edge_id("corridor", na, nb)
+            issue_move_order(state, force_id, path_node_ids=[na, nb], path_edge_ids=[edge])
+            with self.assertRaises(ValueError):
+                commit_move_orders(state, locked_stance="standard")
+
+    def test_one_way_edge_enforced(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            g = _graph_three_provinces()
+            # Make a→b one-way only.
+            for edge in g["edges"]:
+                if set(edge["province_ids"]) == {"a", "b"}:
+                    edge["bidirectional"] = False
+                    edge["a"] = stable_node_id("a")
+                    edge["b"] = stable_node_id("b")
+            state = _state_with_graph(g, Path(temporary))
+            force_id = next(iter(state.strategic_formations))
+            # Place at b and try reverse b→a
+            force = state.strategic_formations[force_id]
+            force.position = FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value,
+                node_id=stable_node_id("b"),
+                progress_milli=0,
+            )
+            force.province_id = "b"
+            state.battalions["bn-1"].province_id = "b"
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            edge = stable_edge_id("corridor", na, nb)
+            with self.assertRaises(ValueError):
+                issue_move_order(
+                    state, force_id, path_node_ids=[nb, na], path_edge_ids=[edge]
+                )
 
     def test_without_graph_resolve_skips(self) -> None:
         state = CampaignState(

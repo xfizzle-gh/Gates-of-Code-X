@@ -7,7 +7,6 @@ from typing import Any
 from .models import CampaignState, StrategicFormation
 from .operational_position import (
     load_operational_graph_for_state,
-    position_to_dict,
     province_anchor_position,
 )
 from .operational_schema import (
@@ -24,6 +23,14 @@ from .operational_schema import (
 
 # Campaign clock keys in map_metadata (stable, no schema field required on CampaignState).
 OPERATIONAL_CLOCK_KEY = "operational_clock"
+
+_LOCKED_STATUSES = frozenset(
+    {
+        MoveOrderStatus.COMMITTED.value,
+        MoveOrderStatus.ACTIVE.value,
+    }
+)
+_APPROVED_STANCES = frozenset(item.value for item in FormationStance)
 
 
 def move_order_to_dict(order: OperationalMoveOrder | None) -> dict[str, Any] | None:
@@ -52,6 +59,13 @@ def move_order_from_dict(raw: Any) -> OperationalMoveOrder | None:
     committed = raw.get("committed_turn")
     if committed is not None:
         committed = require_strict_int(committed, name="committed_turn", minimum=0)
+    locked_stance = (
+        None if raw.get("locked_stance") in (None, "") else str(raw.get("locked_stance"))
+    )
+    if locked_stance is not None and locked_stance not in _APPROVED_STANCES:
+        raise ValueError(
+            f"locked_stance must be one of {sorted(_APPROVED_STANCES)}, got {locked_stance!r}"
+        )
     return OperationalMoveOrder(
         order_id=str(raw.get("order_id", "")),
         formation_id=str(raw.get("formation_id", "")),
@@ -65,9 +79,7 @@ def move_order_from_dict(raw: Any) -> OperationalMoveOrder | None:
         issued_tick=require_strict_int(raw.get("issued_tick", 0), name="issued_tick", minimum=0),
         status=str(raw.get("status", MoveOrderStatus.DRAFT.value)),
         committed_turn=committed,
-        locked_stance=(
-            None if raw.get("locked_stance") in (None, "") else str(raw.get("locked_stance"))
-        ),
+        locked_stance=locked_stance,
     )
 
 
@@ -110,8 +122,17 @@ def issue_move_order(
     destination_site_id: str | None = None,
     order_id: str | None = None,
 ) -> OperationalMoveOrder:
-    """Create/replace a draft move order on a strategic formation (S3)."""
+    """Create/replace a draft move order on a strategic formation (S3).
+
+    Committed/active orders are locked and cannot be overwritten.
+    """
     force = _require_formation(state, formation_id)
+    existing = force.move_order
+    if existing is not None and existing.status in _LOCKED_STATUSES:
+        raise ValueError(
+            f"formation {formation_id} has a {existing.status} order; "
+            "committed movement cannot be changed or reversed"
+        )
     graph = load_operational_graph_for_state(state)
     if graph is None:
         raise ValueError("operational graph unavailable; cannot issue graph move orders")
@@ -127,38 +148,43 @@ def issue_move_order(
         issued_tick=int(clock["global_tick"]),
         status=MoveOrderStatus.DRAFT.value,
     )
-    order.validate(
+    _validate_order_against_graph(
+        order,
+        force=force,
         node_ids=node_ids,
         edge_ids=edge_ids,
         site_ids=site_ids,
         edges_by_id=edges_by_id,
+        nodes_by_id=nodes_by_id,
+        require_start_match=True,
     )
-    _assert_path_legal_for_s3(order, edges_by_id=edges_by_id)
-    _assert_order_starts_at_formation(force, order, nodes_by_id=nodes_by_id, edges_by_id=edges_by_id)
     force.move_order = order
     return order
 
 
 def cancel_move_order(state: CampaignState, formation_id: str) -> OperationalMoveOrder | None:
+    """Cancel a draft order only. Committed/active orders are locked."""
     force = _require_formation(state, formation_id)
     order = force.move_order
     if order is None:
         return None
+    if order.status in _LOCKED_STATUSES:
+        raise ValueError(
+            f"formation {formation_id} has a {order.status} order; "
+            "committed movement cannot be cancelled"
+        )
     if order.status in {
         MoveOrderStatus.COMPLETED.value,
         MoveOrderStatus.CANCELLED.value,
+        MoveOrderStatus.BLOCKED.value,
     }:
+        # Terminal / non-planning: clear slot.
         force.move_order = None
         return order
     if order.status == MoveOrderStatus.DRAFT.value:
         force.move_order = None
         return order
-    # committed/active/blocked → cancelled, retain or clear commitment pair together
-    force.move_order = replace(
-        order,
-        status=MoveOrderStatus.CANCELLED.value,
-    )
-    return force.move_order
+    raise ValueError(f"cannot cancel move order in status {order.status}")
 
 
 def commit_move_orders(
@@ -168,6 +194,10 @@ def commit_move_orders(
     locked_stance: str = FormationStance.OPERATIONAL.value,
 ) -> list[str]:
     """Promote draft orders to committed for the current strategic turn."""
+    if locked_stance not in _APPROVED_STANCES:
+        raise ValueError(
+            f"locked_stance must be one of {sorted(_APPROVED_STANCES)}, got {locked_stance!r}"
+        )
     committed_ids: list[str] = []
     turn = int(state.turn_number)
     for force in sorted(
@@ -206,12 +236,57 @@ def activate_committed_orders(state: CampaignState) -> int:
     return count
 
 
+def ensure_move_orders(state: CampaignState) -> dict[str, Any]:
+    """Idempotent graph-aware validation of saved move orders.
+
+    When the graph is available: validate each order (path, traversal, direction,
+    commitment shape). Malformed orders become ``blocked`` (not silently dropped).
+    When the graph is unavailable: leave all orders completely unchanged.
+    """
+    graph = load_operational_graph_for_state(state)
+    if graph is None:
+        return {"validated": False, "reason": "no_graph", "blocked": []}
+    node_ids, edge_ids, edges_by_id, nodes_by_id = _indexes(graph)
+    site_ids = {str(site.get("site_id")) for site in graph.get("sites") or [] if site.get("site_id")}
+    blocked: list[str] = []
+    for force in sorted(
+        state.strategic_formations.values(),
+        key=lambda value: value.strategic_formation_id,
+    ):
+        order = force.move_order
+        if order is None:
+            continue
+        if order.status in {
+            MoveOrderStatus.COMPLETED.value,
+            MoveOrderStatus.CANCELLED.value,
+        }:
+            continue
+        try:
+            _validate_order_against_graph(
+                order,
+                force=force,
+                node_ids=node_ids,
+                edge_ids=edge_ids,
+                site_ids=site_ids,
+                edges_by_id=edges_by_id,
+                nodes_by_id=nodes_by_id,
+                # Mid-path active orders need not start at path[0].
+                require_start_match=order.status == MoveOrderStatus.DRAFT.value,
+            )
+            if order.formation_id and order.formation_id != force.strategic_formation_id:
+                raise ValueError("formation_id mismatch")
+        except (TypeError, ValueError, KeyError):
+            force.move_order = replace(order, status=MoveOrderStatus.BLOCKED.value)
+            blocked.append(force.strategic_formation_id)
+    return {"validated": True, "blocked": blocked}
+
+
 def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
     """Advance all active orders by one operational tick. No capture/intercept."""
     graph = load_operational_graph_for_state(state)
     if graph is None:
         return {"advanced": False, "reason": "no_graph", "moved": []}
-    node_ids, edge_ids, edges_by_id, nodes_by_id = _indexes(graph)
+    _node_ids, _edge_ids, edges_by_id, nodes_by_id = _indexes(graph)
     moved: list[str] = []
     for force in sorted(
         state.strategic_formations.values(),
@@ -256,9 +331,9 @@ def resolve_strategic_turn_movement(state: CampaignState) -> dict[str, Any]:
     graph = load_operational_graph_for_state(state)
     if graph is None:
         return {"resolved": False, "reason": "no_graph"}
+    ensure_move_orders(state)
     committed = commit_move_orders(state)
     activated = activate_committed_orders(state)
-    # Reset tick_in_turn at start of resolution batch.
     clock = get_operational_clock(state)
     set_operational_clock(state, global_tick=int(clock["global_tick"]), tick_in_turn=0)
     batch = advance_operational_ticks(state, ticks_per_strategic_turn(state))
@@ -271,7 +346,11 @@ def resolve_strategic_turn_movement(state: CampaignState) -> dict[str, Any]:
 
 
 def sync_province_from_position(state: CampaignState, force: StrategicFormation) -> None:
-    """Derive province_id from operational position and co-locate battalions."""
+    """Derive province_id from operational position and co-locate battalions.
+
+    On-edge positions keep the **origin** endpoint province until the formation
+    arrives at the destination node.
+    """
     graph = load_operational_graph_for_state(state)
     if graph is None or force.position is None:
         return
@@ -301,24 +380,40 @@ def _advance_formation_one_tick(
     position = force.position
     assert position is not None
 
-    # Find current path index.
-    edge_index = _current_edge_index(position, order)
+    edge_index, desync = _current_edge_index(position, order)
+    if desync:
+        force.move_order = replace(order, status=MoveOrderStatus.BLOCKED.value)
+        return False
     if edge_index is None:
-        # Already at final node or path exhausted.
-        force.move_order = replace(order, status=MoveOrderStatus.COMPLETED.value)
-        force.movement_state = "at_anchor"
-        sync_province_from_position(state, force)
+        # True arrival at final path node only.
+        if (
+            position.mode == PositionMode.AT_NODE.value
+            and order.path_node_ids
+            and str(position.node_id) == order.path_node_ids[-1]
+        ):
+            force.move_order = replace(order, status=MoveOrderStatus.COMPLETED.value)
+            force.movement_state = "at_anchor"
+            sync_province_from_position(state, force)
+            return False
+        force.move_order = replace(order, status=MoveOrderStatus.BLOCKED.value)
         return False
 
     edge_id = order.path_edge_ids[edge_index]
-    edge = edges_by_id[edge_id]
+    edge = edges_by_id.get(edge_id)
+    if edge is None:
+        force.move_order = replace(order, status=MoveOrderStatus.BLOCKED.value)
+        return False
     dest_node = order.path_node_ids[edge_index + 1]
     origin_node = order.path_node_ids[edge_index]
 
     # Enter edge if still at origin node.
     if position.mode == PositionMode.AT_NODE.value:
         if position.node_id != origin_node:
-            # Path desync — block rather than teleport.
+            force.move_order = replace(order, status=MoveOrderStatus.BLOCKED.value)
+            return False
+        try:
+            _assert_edge_direction(edge, origin=origin_node, dest=dest_node)
+        except ValueError:
             force.move_order = replace(order, status=MoveOrderStatus.BLOCKED.value)
             return False
         position = FormationOperationalPosition(
@@ -329,6 +424,8 @@ def _advance_formation_one_tick(
         )
         force.position = position
         force.movement_state = "on_route"
+        # Stay on origin province while on edge (including progress 0).
+        sync_province_from_position(state, force)
 
     if position.mode != PositionMode.ON_EDGE.value or position.edge_id != edge_id:
         force.move_order = replace(order, status=MoveOrderStatus.BLOCKED.value)
@@ -338,13 +435,10 @@ def _advance_formation_one_tick(
     base_mp = max(1, int(edge.base_move_points_milli or COST_MILLI_UNITY))
     stance_milli = _stance_speed_milli(order.locked_stance)
     if stance_milli <= 0:
-        # Entrenched etc.: no progress this tick (order stays active).
         return False
-    # progress += base_mp * stance / cost, in milli-space
     delta = max(1, (base_mp * stance_milli) // cost)
     new_progress = int(position.progress_milli) + delta
     if new_progress >= PROGRESS_MILLI_MAX:
-        # Arrive at destination node of this hop.
         force.position = FormationOperationalPosition(
             mode=PositionMode.AT_NODE.value,
             node_id=dest_node,
@@ -363,6 +457,7 @@ def _advance_formation_one_tick(
         facing_node_id=dest_node,
     )
     force.movement_state = "on_route"
+    # Still origin province until node arrival.
     sync_province_from_position(state, force)
     return True
 
@@ -370,35 +465,68 @@ def _advance_formation_one_tick(
 def _current_edge_index(
     position: FormationOperationalPosition,
     order: OperationalMoveOrder,
-) -> int | None:
-    if not order.path_edge_ids:
-        return None
+) -> tuple[int | None, bool]:
+    """Return (edge_index, desync).
+
+    ``edge_index is None`` and ``desync is False`` means true completion at final node.
+    ``desync is True`` means position/path mismatch → must block, never complete.
+    """
+    if not order.path_edge_ids or not order.path_node_ids:
+        return None, True
     if position.mode == PositionMode.ON_EDGE.value:
         try:
-            return order.path_edge_ids.index(str(position.edge_id))
+            index = order.path_edge_ids.index(str(position.edge_id))
         except ValueError:
-            return None
+            return None, True
+        # Facing should match path destination for this hop.
+        expected_dest = order.path_node_ids[index + 1]
+        if position.facing_node_id and str(position.facing_node_id) != expected_dest:
+            return None, True
+        return index, False
     if position.mode == PositionMode.AT_NODE.value:
         node_id = str(position.node_id)
-        # At final destination.
         if node_id == order.path_node_ids[-1]:
-            return None
+            return None, False
         for index, path_node in enumerate(order.path_node_ids[:-1]):
             if path_node == node_id:
-                return index
-        return None
-    return None
+                return index, False
+        return None, True
+    return None, True
 
 
 def _stance_speed_milli(stance: str | None) -> int:
-    """Speed multiplier in milli (1000 = 1.0x). S3: forced_march faster; others nominal."""
+    """Speed multiplier in milli (1000 = 1.0x)."""
     if stance == FormationStance.FORCED_MARCH.value:
         return 1500
     if stance == FormationStance.ENTRENCHED.value:
-        return 0  # should not move while entrenched; treat as blocked speed
+        return 0
     if stance == FormationStance.REFIT_RESUPPLY.value:
         return 500
     return COST_MILLI_UNITY
+
+
+def _validate_order_against_graph(
+    order: OperationalMoveOrder,
+    *,
+    force: StrategicFormation,
+    node_ids: set[str],
+    edge_ids: set[str],
+    site_ids: set[str],
+    edges_by_id: dict[str, OperationalRouteEdge],
+    nodes_by_id: dict[str, dict[str, Any]],
+    require_start_match: bool,
+) -> None:
+    order.validate(
+        node_ids=node_ids,
+        edge_ids=edge_ids,
+        site_ids=site_ids,
+        edges_by_id=edges_by_id,
+    )
+    _assert_path_legal_for_s3(order, edges_by_id=edges_by_id)
+    if require_start_match:
+        _assert_order_starts_at_formation(
+            force, order, nodes_by_id=nodes_by_id, edges_by_id=edges_by_id
+        )
 
 
 def _assert_path_legal_for_s3(
@@ -406,14 +534,33 @@ def _assert_path_legal_for_s3(
     *,
     edges_by_id: dict[str, OperationalRouteEdge],
 ) -> None:
-    """S3: path edges must be traversal_enabled (authored). Candidates stay non-authoritative."""
-    for edge_id in order.path_edge_ids:
+    """S3: traversal_enabled only; respect one-way edges."""
+    for index, edge_id in enumerate(order.path_edge_ids):
         edge = edges_by_id[edge_id]
         if not edge.traversal_enabled:
             raise ValueError(
                 f"path edge {edge_id} is not traversal_enabled "
                 "(candidate corridors are not gameplay-authoritative in S3)"
             )
+        origin = order.path_node_ids[index]
+        dest = order.path_node_ids[index + 1]
+        _assert_edge_direction(edge, origin=origin, dest=dest)
+
+
+def _assert_edge_direction(
+    edge: OperationalRouteEdge, *, origin: str, dest: str
+) -> None:
+    endpoints = {edge.a, edge.b}
+    if origin not in endpoints or dest not in endpoints or origin == dest:
+        raise ValueError(f"edge {edge.edge_id} does not connect {origin} -> {dest}")
+    if edge.bidirectional:
+        return
+    # One-way: only a → b is legal (canonical authored direction).
+    if not (origin == edge.a and dest == edge.b):
+        raise ValueError(
+            f"edge {edge.edge_id} is one-way ({edge.a} -> {edge.b}); "
+            f"cannot traverse {origin} -> {dest}"
+        )
 
 
 def _assert_order_starts_at_formation(
@@ -436,9 +583,11 @@ def _assert_order_starts_at_formation(
     if pos.mode == PositionMode.ON_EDGE.value:
         edge = edges_by_id.get(str(pos.edge_id))
         if edge is None:
-            return
+            raise ValueError("formation is on unknown edge")
         if start not in {edge.a, edge.b}:
-            raise ValueError("order path must start at an endpoint of the formation's current edge")
+            raise ValueError(
+                "order path must start at an endpoint of the formation's current edge"
+            )
 
 
 def _province_for_position(
@@ -454,14 +603,14 @@ def _province_for_position(
         edge = edges_by_id.get(str(position.edge_id))
         if edge is None:
             return None
-        # Prefer destination (facing) province while on edge.
+        # Remain on origin province until destination node arrival.
         facing = str(position.facing_node_id or "")
-        if facing in nodes_by_id:
-            return str(nodes_by_id[facing].get("province_id") or "") or None
-        for endpoint in (edge.a, edge.b):
-            node = nodes_by_id.get(endpoint)
-            if node is not None:
-                return str(node.get("province_id") or "") or None
+        origin = edge.b if facing == edge.a else edge.a
+        if facing and facing in {edge.a, edge.b}:
+            origin = edge.b if facing == edge.a else edge.a
+        node = nodes_by_id.get(origin)
+        if node is not None:
+            return str(node.get("province_id") or "") or None
     return None
 
 
