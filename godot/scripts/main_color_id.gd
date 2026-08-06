@@ -1,8 +1,12 @@
 extends "res://scripts/main_writeback.gd"
 
 const ColorIdMapScript = preload("res://scripts/color_id_map.gd")
+const MapSpaceScript = preload("res://scripts/presentation/map_space.gd")
+const MapMarkersScript = preload("res://scripts/presentation/map_markers.gd")
+const MapDebugScript = preload("res://scripts/presentation/map_debug.gd")
 const DEFAULT_MAP_MANIFEST := "res://assets/maps/europe/interim_goe/map_manifest.json"
 const EM_FROM_GOE_MANIFEST := "res://assets/maps/europe_mediterranean/from_goe/map_manifest.json"
+const DEFAULT_PRESENTATION_FIXTURE := "res://fixtures/presentation/empty_map.json"
 const HOME_MAP_MARGIN := Vector2(18, 18)
 const HOME_FIT_FILL := 1.06
 # Reserve space so title/diagnostic rows never cover the theatre.
@@ -11,12 +15,19 @@ const FOOTER_SAFE_BOTTOM := 28.0
 const OVERLAY_EDGE_PAD := 18.0
 
 var color_id_map = ColorIdMapScript.new()
+var map_space = MapSpaceScript.new()
+var map_debug = MapDebugScript.new()
 var map_manifest_source_path := DEFAULT_MAP_MANIFEST
+var presentation_fixture: Dictionary = {}
+var presentation_fixture_path := DEFAULT_PRESENTATION_FIXTURE
 var hovered_province_id := ""
 var show_coalition_fronts := false
 var show_crossing_overlay := false
 var _screenshot_path := ""
 var _screenshot_frames_left := -1
+var _overlay_cache_key := ""
+var _cached_label_candidates: Array = []
+var _cached_reserved_rects: Array = []
 
 
 func _ready() -> void:
@@ -27,6 +38,12 @@ func _ready() -> void:
 		if text.begins_with("--screenshot="):
 			_screenshot_path = text.substr(String("--screenshot=").length()).strip_edges()
 			continue
+		if text.begins_with("--fixture="):
+			presentation_fixture_path = text.substr(String("--fixture=").length()).strip_edges()
+			continue
+		if text == "--debug-map":
+			map_debug.enabled = true
+			continue
 		if text == "--crossings" or text == "--screenshot-crossings":
 			show_crossing_overlay = true
 			continue
@@ -36,15 +53,18 @@ func _ready() -> void:
 	super._ready()
 	if filtered.size() <= 1:
 		map_manifest_source_path = _resolve_map_manifest_path()
+	_load_presentation_fixture(presentation_fixture_path)
 	_open_color_id_map()
+	set_process(map_debug.enabled or not _screenshot_path.is_empty())
 	if not _screenshot_path.is_empty():
 		_fit_complete_theatre()
 		_screenshot_frames_left = 18
-		set_process(true)
 		queue_redraw()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	if map_debug.enabled:
+		map_debug.tick_fps(delta)
 	if _screenshot_frames_left < 0:
 		return
 	_screenshot_frames_left -= 1
@@ -52,7 +72,8 @@ func _process(_delta: float) -> void:
 	if _screenshot_frames_left > 0:
 		return
 	_screenshot_frames_left = -1
-	set_process(false)
+	if not map_debug.enabled:
+		set_process(false)
 	call_deferred("_capture_screenshot_and_quit")
 
 
@@ -87,26 +108,56 @@ func _resolve_map_manifest_path() -> String:
 	return DEFAULT_MAP_MANIFEST
 
 
+func _load_presentation_fixture(path: String) -> void:
+	presentation_fixture = {}
+	if path.is_empty() or not FileAccess.file_exists(path):
+		return
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	if not parsed is Dictionary:
+		return
+	presentation_fixture = parsed
+	# Presentation fixtures are Godot-local view models only.
+	if String(presentation_fixture.get("schema", "")) != "gates-of-codex.presentation-fixture":
+		presentation_fixture = {}
+
+
+func _invalidate_overlay_cache() -> void:
+	_overlay_cache_key = ""
+	_cached_label_candidates.clear()
+	_cached_reserved_rects.clear()
+
+
 func _load_snapshot(path: String) -> void:
 	super._load_snapshot(path)
+	_invalidate_overlay_cache()
 	if color_id_map != null and color_id_map.is_ready:
+		if color_id_map.has_method("begin_frame_stats"):
+			color_id_map.begin_frame_stats()
 		color_id_map.refresh_snapshot(snapshot, FACTION_COLORS)
 		color_id_map.refresh_highlights(selected_province_id, legal_targets)
+		map_debug.note_invalidation()
 
 
 func _rebuild_legal_targets() -> void:
 	super._rebuild_legal_targets()
+	_invalidate_overlay_cache()
 	if color_id_map != null and color_id_map.is_ready:
 		color_id_map.refresh_highlights(selected_province_id, legal_targets)
+		map_debug.note_invalidation()
 
 
 func _open_color_id_map() -> void:
 	var previous_ready: bool = color_id_map != null and bool(color_id_map.is_ready)
+	_invalidate_overlay_cache()
 	if color_id_map.open(map_manifest_source_path, snapshot, FACTION_COLORS):
 		color_id_map.refresh_highlights(selected_province_id, legal_targets)
 		status_message = "Color-ID province renderer active (%s)." % map_manifest_source_path.get_file()
 		fitted_once = false
 		_fit_complete_theatre()
+		map_debug.note_invalidation()
 	else:
 		# Keep a previously successful open; only fall back if nothing is ready.
 		if previous_ready:
@@ -116,28 +167,56 @@ func _open_color_id_map() -> void:
 	queue_redraw()
 
 
+func _sync_map_space() -> void:
+	if color_id_map == null or not color_id_map.is_ready:
+		return
+	map_space.configure(color_id_map.image_size(), _map_content_rect(), view_scale, view_offset)
+
+
+func _draw_map_texture(texture: Texture2D, rect: Rect2, filter: CanvasItem.TextureFilter) -> void:
+	if texture == null:
+		return
+	var previous := texture_filter
+	texture_filter = filter
+	draw_texture_rect(texture, rect, false)
+	texture_filter = previous
+
+
 func _draw() -> void:
 	if not color_id_map.is_ready:
 		super._draw()
 		return
+	if color_id_map.has_method("begin_frame_stats"):
+		color_id_map.begin_frame_stats()
+	_sync_map_space()
 	var viewport := get_viewport_rect().size
 	var map_width := viewport.x - PANEL_WIDTH
 	draw_rect(Rect2(0, 0, map_width, viewport.y), Color(0.025, 0.035, 0.047, 1.0))
-	var texture_rect := _map_texture_rect()
-	if color_id_map.background_texture != null:
-		draw_texture_rect(color_id_map.background_texture, texture_rect, false)
-	if color_id_map.owner_texture != null:
-		draw_texture_rect(color_id_map.owner_texture, texture_rect, false)
-	if color_id_map.border_texture != null:
-		draw_texture_rect(color_id_map.border_texture, texture_rect, false)
+	var texture_rect := map_space.texture_rect()
+	# Background: linear filter reduces soft/pixelated upscale of the underlay.
+	# Owner/border/highlight stay nearest so province identity edges do not bleed.
+	_draw_map_texture(color_id_map.background_texture, texture_rect, CanvasItem.TEXTURE_FILTER_LINEAR)
+	_draw_map_texture(color_id_map.owner_texture, texture_rect, CanvasItem.TEXTURE_FILTER_NEAREST)
+	_draw_map_texture(color_id_map.border_texture, texture_rect, CanvasItem.TEXTURE_FILTER_NEAREST)
 	if show_coalition_fronts:
 		_draw_coalition_fronts()
 	if show_crossing_overlay:
 		_draw_crossing_overlay()
-	if color_id_map.highlight_texture != null:
-		draw_texture_rect(color_id_map.highlight_texture, texture_rect, false)
+	_draw_map_texture(color_id_map.highlight_texture, texture_rect, CanvasItem.TEXTURE_FILTER_NEAREST)
 	_draw_color_id_pending_battle()
+	_draw_presentation_fixture_markers()
 	_draw_color_id_overlays()
+	if map_debug.enabled:
+		map_debug.counter_bounds = _cached_reserved_rects.duplicate()
+		map_debug.draw(
+			self,
+			map_space,
+			color_id_map,
+			selected_province_id,
+			hovered_province_id,
+			presentation_fixture,
+			_overlay_clamp_rect()
+		)
 
 	var campaign: Dictionary = snapshot.get("campaign", {})
 	var map_contract: Dictionary = snapshot.get("strategic_map", {})
@@ -179,7 +258,7 @@ func _draw() -> void:
 		Rect2(0, viewport.y - FOOTER_SAFE_BOTTOM, map_width, FOOTER_SAFE_BOTTOM),
 		Color(0.025, 0.035, 0.047, 0.92)
 	)
-	var hint := "Home full  |  F front  |  G fronts  |  C crossings  |  click  |  wheel"
+	var hint := "Home full  |  F front  |  F3 debug  |  G fronts  |  C crossings  |  click  |  wheel"
 	if not status_message.is_empty():
 		hint = status_message
 	draw_string(
@@ -284,20 +363,115 @@ func _draw_color_id_pending_battle() -> void:
 	var target_id := String(battle.get("target_province_id", ""))
 	if not color_id_map.row_by_province.has(origin_id) or not color_id_map.row_by_province.has(target_id):
 		return
-	draw_line(
-		_image_to_screen(color_id_map.anchor_pixel(origin_id)),
-		_image_to_screen(color_id_map.anchor_pixel(target_id)),
-		Color("ff9f43"),
-		3.0
-	)
+	var origin := _image_to_screen(color_id_map.anchor_pixel(origin_id))
+	var target := _image_to_screen(color_id_map.anchor_pixel(target_id))
+	draw_line(origin, target, Color("ff9f43"), 3.0)
+	MapMarkersScript.draw_crossed_swords_battle_marker(self, (origin + target) * 0.5)
+
+
+func _draw_presentation_fixture_markers() -> void:
+	if presentation_fixture.is_empty():
+		return
+	for route: Variant in presentation_fixture.get("routes", []):
+		if not route is Dictionary:
+			continue
+		var points := PackedVector2Array()
+		for px: Variant in (route as Dictionary).get("pixels", []):
+			if px is Array and (px as Array).size() >= 2:
+				points.append(_image_to_screen(Vector2(float(px[0]), float(px[1]))))
+		MapMarkersScript.draw_route_line(self, points)
+	for battle: Variant in presentation_fixture.get("battles", []):
+		if not battle is Dictionary:
+			continue
+		var row := battle as Dictionary
+		var pos := MapMarkersScript.battle_marker_position(row, map_space)
+		if pos == Vector2.ZERO:
+			continue
+		MapMarkersScript.draw_crossed_swords_battle_marker(self, pos)
+		if String(row.get("kind", "")) == "edge":
+			MapMarkersScript.draw_edge_contact_marker(self, pos + Vector2(14, 0))
+	for contact: Variant in presentation_fixture.get("contacts", []):
+		if not contact is Dictionary:
+			continue
+		var crow := contact as Dictionary
+		var cpos := MapMarkersScript.battle_marker_position(crow, map_space)
+		if cpos == Vector2.ZERO:
+			continue
+		if String(crow.get("kind", "")) == "edge":
+			MapMarkersScript.draw_edge_contact_marker(self, cpos)
+		else:
+			MapMarkersScript.draw_node_contact_marker(self, cpos)
+	for site: Variant in presentation_fixture.get("control_sites", []):
+		if not site is Dictionary:
+			continue
+		var srow := site as Dictionary
+		var spos := MapMarkersScript.battle_marker_position(srow, map_space)
+		if spos == Vector2.ZERO and srow.has("pixel"):
+			var px2: Variant = srow.get("pixel")
+			if px2 is Array and (px2 as Array).size() >= 2:
+				spos = _image_to_screen(Vector2(float(px2[0]), float(px2[1])))
+		if spos == Vector2.ZERO:
+			continue
+		MapMarkersScript.draw_control_site_marker(self, spos, bool(srow.get("owned", false)))
+		if int(srow.get("presentation_capture_progress_fp", -1)) >= 0:
+			MapMarkersScript.draw_capture_progress(
+				self,
+				spos + Vector2(18, 0),
+				int(srow.get("presentation_capture_progress_fp", 0)),
+				int(srow.get("presentation_capture_max_fp", 1000))
+			)
+	for counter: Variant in presentation_fixture.get("synthetic_counters", []):
+		if not counter is Dictionary:
+			continue
+		var crow2 := counter as Dictionary
+		var cpx: Variant = crow2.get("pixel", null)
+		if not (cpx is Array and (cpx as Array).size() >= 2):
+			continue
+		var ccenter := _image_to_screen(Vector2(float(cpx[0]), float(cpx[1])))
+		var faction := String(crow2.get("faction", "neutral"))
+		var color: Color = FACTION_COLORS.get(faction, FACTION_COLORS["neutral"])
+		MapMarkersScript.draw_formation_counter(
+			self,
+			ccenter,
+			color,
+			String(crow2.get("glyph", "X")),
+			int(crow2.get("strength", 0)),
+			false
+		)
+		var stack_n := int(crow2.get("stack", 1))
+		if stack_n > 1:
+			MapMarkersScript.draw_stack_badge(self, ccenter + Vector2(19, -14), stack_n)
+	for badge: Variant in presentation_fixture.get("force_stack_badges", []):
+		if not badge is Dictionary:
+			continue
+		var brow := badge as Dictionary
+		var bpx: Variant = brow.get("pixel", null)
+		if bpx is Array and (bpx as Array).size() >= 2:
+			MapMarkersScript.draw_stack_badge(
+				self,
+				_image_to_screen(Vector2(float(bpx[0]), float(bpx[1]))),
+				int(brow.get("count", 1))
+			)
 
 
 func _draw_color_id_overlays() -> void:
 	# Pass 1: facilities + counters (always). Pass 2: priority label declutter.
 	# Counters/labels are clamped inside the map viewport (header/footer safe).
-	var label_candidates: Array = []
-	var reserved: Array = []  # Rect2 obstacles (counters first)
 	var overlay_bounds := _overlay_clamp_rect()
+	var cache_key := "%s|%s|%s|%s|%s" % [
+		selected_province_id,
+		str(legal_targets.keys()),
+		snappedf(view_scale, 0.001),
+		snappedf(view_offset.x, 0.5),
+		snappedf(view_offset.y, 0.5),
+	]
+	var rebuild := cache_key != _overlay_cache_key
+	var label_candidates: Array = []
+	var reserved: Array = []
+	if rebuild:
+		_overlay_cache_key = cache_key
+		_cached_label_candidates.clear()
+		_cached_reserved_rects.clear()
 
 	for province: Dictionary in snapshot.get("provinces", []):
 		var province_id := String(province.get("id", ""))
@@ -312,8 +486,14 @@ func _draw_color_id_overlays() -> void:
 		var target := legal_targets.has(province_id)
 		var owner := String(province.get("owner", "neutral"))
 		var faction_color: Color = FACTION_COLORS.get(owner, FACTION_COLORS["neutral"])
+		var hovered := province_id == hovered_province_id
 
-		if shifted and (occupied or selected or target):
+		if selected:
+			MapMarkersScript.draw_selected_province_ring(self, position)
+		elif hovered:
+			MapMarkersScript.draw_hovered_province_ring(self, position)
+
+		if shifted and (occupied or selected or target or hovered):
 			draw_line(anchor, position, Color(0.85, 0.9, 0.95, 0.55), 1.0)
 			draw_circle(anchor, 2.0, Color(0.85, 0.9, 0.95, 0.7))
 
@@ -326,7 +506,7 @@ func _draw_color_id_overlays() -> void:
 			draw_circle(position + Vector2(8, 15), 3.2, Color("7fe7ff"))
 
 		if occupied:
-			# S2: prefer operational display_pixel (node) when present; else province anchor.
+			# Prefer operational display_pixel (node) when present; else province anchor.
 			var counter_pos := position
 			var display_pixel: Variant = battalion.get("display_pixel", null)
 			if display_pixel is Array and (display_pixel as Array).size() >= 2:
@@ -341,47 +521,42 @@ func _draw_color_id_overlays() -> void:
 				draw_arc(counter_pos, 22.0, 0.0, TAU, 30, Color("ff6b5f"), 2.4)
 			if int(battalion.get("encircled_turns", 0)) > 0:
 				draw_arc(counter_pos, 25.0, 0.0, TAU, 30, Color("ffb14e"), 2.4)
-			_draw_battalion_counter(counter_pos, battalion, faction_color, selected)
-			reserved.append(Rect2(counter_pos + Vector2(-18, -14), Vector2(36, 28)))
+			var counter_rect := MapMarkersScript.draw_formation_counter(
+				self,
+				counter_pos,
+				faction_color,
+				MapMarkersScript.battalion_type_glyph(String(battalion.get("battalion_type", ""))),
+				int(battalion.get("unit_count", 0)),
+				selected,
+				bool(battalion.get("is_in_supply", true)),
+				int(battalion.get("encircled_turns", 0)) > 0
+			)
+			reserved.append(counter_rect)
 			var stack: Array = battalion_stacks_by_province.get(province_id, [])
 			if stack.size() > 1:
 				var badge := _clamp_point_in_rect(counter_pos + Vector2(19, -14), overlay_bounds, 12.0)
-				var badge_rect := Rect2(badge - Vector2(11, 9), Vector2(30, 18))
-				draw_rect(badge_rect, Color(0.04, 0.06, 0.09, 0.96))
-				draw_rect(badge_rect, Color.WHITE, false, 1.2)
-				draw_string(
-					ThemeDB.fallback_font,
-					badge + Vector2(-7, 4),
-					"x%s" % stack.size(),
-					HORIZONTAL_ALIGNMENT_LEFT,
-					-1,
-					11,
-					Color.WHITE
-				)
-				reserved.append(badge_rect)
+				reserved.append(MapMarkersScript.draw_stack_badge(self, badge, stack.size()))
 
+		if not rebuild:
+			continue
 		var label := _province_label(province, province_id)
 		var named := bool(province.get("name_is_human_readable", _is_named_province(label)))
-		var hovered := province_id == hovered_province_id
 		var priority := 0
 		if selected:
 			priority = 100
-		elif hovered:
-			priority = 90
 		elif target:
 			priority = 80
 		elif occupied:
 			priority = 70
 		elif named and view_scale >= 2.4:
 			priority = 40
-		# Full-theatre Home: suppress ambient names (declutter).
+		# Full-theatre Home: suppress ambient names (declutter). Hover labels added live.
 		if priority <= 0:
 			continue
 		var font_size := 12 if priority >= 70 else 11
 		var text_w := float(ThemeDB.fallback_font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x)
 		var raw_text_pos := position + Vector2(13, -9)
 		var text_pos := _clamp_point_in_rect(raw_text_pos, overlay_bounds, OVERLAY_EDGE_PAD)
-		# Keep label fully inside bounds.
 		text_pos.x = minf(text_pos.x, overlay_bounds.position.x + overlay_bounds.size.x - text_w - 4.0)
 		text_pos.y = clampf(text_pos.y, overlay_bounds.position.y + font_size, overlay_bounds.position.y + overlay_bounds.size.y - 4.0)
 		var text_rect := Rect2(text_pos + Vector2(0, -font_size), Vector2(text_w + 4.0, float(font_size) + 4.0))
@@ -392,22 +567,34 @@ func _draw_color_id_overlays() -> void:
 			"rect": text_rect,
 			"font_size": font_size,
 			"color": Color(0.95, 0.96, 0.98, 0.98 if priority >= 70 else 0.78),
-			"must_show": priority >= 90,
+			"must_show": priority >= 100,
+			"province_id": province_id,
 		})
 
-	label_candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		return int(a.get("priority", 0)) > int(b.get("priority", 0))
-	)
-	for candidate: Dictionary in label_candidates:
-		var rect: Rect2 = candidate.get("rect", Rect2())
-		var blocked := false
-		if not bool(candidate.get("must_show", false)):
-			for prior: Variant in reserved:
-				if rect.intersects(prior as Rect2):
-					blocked = true
-					break
-		if blocked:
-			continue
+	if rebuild:
+		label_candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+			return int(a.get("priority", 0)) > int(b.get("priority", 0))
+		)
+		var accepted: Array = []
+		var occupied_rects: Array = reserved.duplicate()
+		for candidate: Dictionary in label_candidates:
+			var rect: Rect2 = candidate.get("rect", Rect2())
+			var blocked := false
+			if not bool(candidate.get("must_show", false)):
+				for prior: Variant in occupied_rects:
+					if rect.intersects(prior as Rect2):
+						blocked = true
+						break
+			if blocked:
+				continue
+			accepted.append(candidate)
+			occupied_rects.append(rect)
+		_cached_label_candidates = accepted
+		_cached_reserved_rects = reserved.duplicate()
+	else:
+		reserved = _cached_reserved_rects.duplicate()
+
+	for candidate: Dictionary in _cached_label_candidates:
 		draw_string(
 			ThemeDB.fallback_font,
 			candidate.get("pos", Vector2.ZERO),
@@ -417,20 +604,36 @@ func _draw_color_id_overlays() -> void:
 			int(candidate.get("font_size", 11)),
 			candidate.get("color", Color.WHITE)
 		)
-		reserved.append(rect)
+	# Hover label is cheap and not cached into selection layout.
+	if not hovered_province_id.is_empty() and color_id_map.row_by_province.has(hovered_province_id):
+		var hprov: Dictionary = provinces_by_id.get(hovered_province_id, {})
+		if not hprov.is_empty():
+			var hlabel := _province_label(hprov, hovered_province_id)
+			var hpos := _image_to_screen(color_id_map.anchor_pixel(hovered_province_id)) + Vector2(13, -9)
+			hpos = _clamp_point_in_rect(hpos, overlay_bounds, OVERLAY_EDGE_PAD)
+			draw_string(
+				ThemeDB.fallback_font,
+				hpos,
+				hlabel,
+				HORIZONTAL_ALIGNMENT_LEFT,
+				-1,
+				12,
+				Color(1.0, 1.0, 1.0, 0.95)
+			)
 
 
 func _province_at(screen_position: Vector2) -> String:
 	if not color_id_map.is_ready:
 		return super._province_at(screen_position)
-	var rect := _map_texture_rect()
+	_sync_map_space()
+	var rect := map_space.texture_rect()
 	if not rect.has_point(screen_position):
 		return ""
-	var normalized := (screen_position - rect.position) / rect.size
+	var pixel := map_space.screen_to_pixel(screen_position)
 	var size := color_id_map.image_size()
-	var pixel := Vector2i(
-		clampi(floori(normalized.x * size.x), 0, int(size.x) - 1),
-		clampi(floori(normalized.y * size.y), 0, int(size.y) - 1)
+	pixel = Vector2i(
+		clampi(pixel.x, 0, int(size.x) - 1),
+		clampi(pixel.y, 0, int(size.y) - 1)
 	)
 	return color_id_map.province_at_pixel(pixel)
 
@@ -442,8 +645,8 @@ func _map_to_screen(province: Dictionary) -> Vector2:
 
 
 func _image_to_screen(pixel: Vector2) -> Vector2:
-	var rect := _map_texture_rect()
-	return rect.position + (pixel / color_id_map.image_size()) * rect.size
+	_sync_map_space()
+	return map_space.image_to_screen(pixel)
 
 
 func _map_content_rect() -> Rect2:
@@ -460,12 +663,8 @@ func _map_content_rect() -> Rect2:
 
 
 func _map_texture_rect() -> Rect2:
-	var content := _map_content_rect()
-	var image_size := color_id_map.image_size()
-	var fit_scale := minf(content.size.x / image_size.x, content.size.y / image_size.y)
-	var rendered_size := image_size * fit_scale * view_scale
-	var origin := content.position + (content.size - rendered_size) * 0.5 + view_offset
-	return Rect2(origin, rendered_size)
+	_sync_map_space()
+	return map_space.texture_rect()
 
 
 func _overlay_clamp_rect() -> Rect2:
@@ -510,6 +709,17 @@ func _is_named_province(label: String) -> bool:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		var key := event as InputEventKey
+		if key.keycode == KEY_F3:
+			map_debug.toggle()
+			set_process(map_debug.enabled or _screenshot_frames_left >= 0)
+			status_message = (
+				"Map debug ON (F3). Boundaries/IDs/FPS/invalidation. Disabled in ordinary play."
+				if map_debug.enabled
+				else "Map debug OFF."
+			)
+			queue_redraw()
+			get_viewport().set_input_as_handled()
+			return
 		if key.keycode == KEY_G:
 			show_coalition_fronts = not show_coalition_fronts
 			status_message = (
@@ -544,6 +754,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		var next_hover := ""
 		if motion.position.x < map_width:
 			next_hover = _province_at(motion.position)
+			if map_debug.enabled:
+				map_debug.last_screen_pos = motion.position
+				map_debug.last_map_pixel = map_space.screen_to_pixel(motion.position)
+		# Hover never rebuilds ownership/highlight textures — canvas redraw only.
 		if next_hover != hovered_province_id:
 			hovered_province_id = next_hover
 			queue_redraw()
@@ -551,6 +765,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _fit_complete_theatre() -> void:
+	_invalidate_overlay_cache()
 	if color_id_map == null or not color_id_map.is_ready:
 		view_scale = HOME_FIT_FILL
 		view_offset = Vector2.ZERO
@@ -580,6 +795,7 @@ func _fit_to_focus(force: bool) -> void:
 		return
 	if fitted_once and not force:
 		return
+	_invalidate_overlay_cache()
 	var ids: Dictionary = {}
 	for id: Variant in focus_province_ids.keys():
 		ids[String(id)] = true
