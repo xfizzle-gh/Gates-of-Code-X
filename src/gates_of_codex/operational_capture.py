@@ -145,6 +145,12 @@ def ensure_site_control_state(state: CampaignState) -> dict[str, Any]:
             site.get("control_weight_milli", COST_MILLI_UNITY),
             name=f"site[{site_id}].control_weight_milli",
         )
+        # Validate authored capture threshold while graph is available.
+        if "capture_threshold_milli" in site and site.get("capture_threshold_milli") is not None:
+            _strict_positive_milli(
+                site.get("capture_threshold_milli"),
+                name=f"site[{site_id}].capture_threshold_milli",
+            )
         prior = existing.get(site_id)
         if prior is None:
             control[site_id] = {

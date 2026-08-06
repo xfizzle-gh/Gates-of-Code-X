@@ -176,17 +176,22 @@ class CampaignEngine:
                     exclude_province=target.province_id,
                     preferred_retreat=None,
                 )
+            operational_campaign = self._is_operational_campaign()
+            hold_node = self._hold_node_after_battle(
+                pending,
+                is_op_contact=is_op_contact,
+                operational_campaign=operational_campaign,
+                province_id=target.province_id,
+            )
             for force_id in atk_forces:
                 self._resolve_formation_after_battle(
                     force_id,
                     lost=False,
                     hold_province=target.province_id,
+                    hold_node_id=hold_node,
                 )
             # Operational-capable campaigns never flip ownership from battle wins (S5).
             # Legacy campaigns without operational maneuver retain immediate ownership change.
-            operational_campaign = bool(
-                self.state.map_metadata.get("operational_maneuver_enabled")
-            ) or bool(str(self.state.map_metadata.get("operational_graph", "") or "").strip())
             if (
                 not operational_campaign
                 and not is_op_contact
@@ -266,6 +271,50 @@ class CampaignEngine:
             force_ids.append(force_id)
         return sorted(force_ids)
 
+    def _is_operational_campaign(self) -> bool:
+        return bool(self.state.map_metadata.get("operational_maneuver_enabled")) or bool(
+            str(self.state.map_metadata.get("operational_graph", "") or "").strip()
+        )
+
+    def _hold_node_after_battle(
+        self,
+        pending,
+        *,
+        is_op_contact: bool,
+        operational_campaign: bool,
+        province_id: str,
+    ) -> str | None:
+        """Node winners must remain on for post-battle site capture."""
+        if is_op_contact:
+            node_id = str(getattr(pending, "encounter_node_id", "") or "").strip()
+            return node_id or None
+        if operational_campaign:
+            return self._control_site_node_for_province(province_id)
+        return None
+
+    def _control_site_node_for_province(self, province_id: str) -> str | None:
+        """Deterministic control-site node for a province (highest weight, then site_id)."""
+        from .operational_capture import list_control_sites
+
+        candidates = [
+            site
+            for site in list_control_sites(self.state)
+            if str(site.get("province_id") or "") == province_id
+            and str(site.get("route_node_id") or "").strip()
+        ]
+        if not candidates:
+            return None
+
+        def sort_key(site: dict) -> tuple:
+            try:
+                weight = -int(site.get("control_weight_milli") or 0)
+            except (TypeError, ValueError):
+                weight = 0
+            return (weight, str(site.get("site_id") or ""))
+
+        best = sorted(candidates, key=sort_key)[0]
+        return str(best["route_node_id"])
+
     def _resolve_formation_after_battle(
         self,
         force_id: str,
@@ -274,9 +323,11 @@ class CampaignEngine:
         exclude_province: str | None = None,
         preferred_retreat: str | None = None,
         hold_province: str | None = None,
+        hold_node_id: str | None = None,
     ) -> None:
         """Once-per-formation post-battle placement. Keeps all survivors co-located."""
         from .operational_position import place_formation_at_province_anchor
+        from .operational_schema import FormationOperationalPosition, PositionMode
 
         force = self.state.strategic_formations.get(force_id)
         if force is None:
@@ -299,13 +350,22 @@ class CampaignEngine:
         if not lost:
             if hold_province:
                 force.province_id = hold_province
-            # Co-locate all surviving members and snap operational anchor when graph exists.
             for battalion_id in force.battalion_ids:
                 battalion = self.state.battalions.get(battalion_id)
                 if battalion is not None:
                     battalion.province_id = force.province_id
                     battalion.strategic_formation_id = force_id
-            place_formation_at_province_anchor(force, self.state)
+            if hold_node_id:
+                # Stay on the encounter/control-site node so capture ticks can begin.
+                force.position = FormationOperationalPosition(
+                    mode=PositionMode.AT_NODE.value,
+                    node_id=hold_node_id,
+                    progress_milli=0,
+                )
+                force.movement_state = "at_anchor"
+            elif hold_province:
+                place_formation_at_province_anchor(force, self.state)
+            # else: keep existing operational position (holding defenders).
             return
 
         # Lost: retreat once.

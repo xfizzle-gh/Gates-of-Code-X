@@ -433,42 +433,141 @@ class OperationalS5CaptureTests(unittest.TestCase):
             self.assertEqual(1, len(authored))
             self.assertEqual(1, len(synthetic))
 
-    def test_operational_battle_win_does_not_flip_province(self) -> None:
+    def test_operational_battle_win_stays_on_site_then_capture_flips(self) -> None:
+        """Winner remains on encounter/site node; two capture ticks flip ownership."""
         with tempfile.TemporaryDirectory() as temporary:
-            state = _state(Path(temporary))
-            # Enemy on b; NATO enters and wins contact battle.
-            state.battalions["bn-rusa"] = _bn("bn-rusa", Faction.RUSSIA, "b", force_id="sf-rusa")
+            # Site node distinct from province anchor.
+            root = Path(temporary)
+            na = stable_node_id("a")
+            nb_anchor = stable_node_id("b", "anchor")
+            nb_hub = stable_node_id("b", "hub")
+            site_b = stable_site_id("b", "objective", "hub")
+            graph = {
+                "schema": "gates-of-codex.operational-graph",
+                "schema_version": 2,
+                "map_id": "s5_test",
+                "rules": {
+                    "ticks_per_strategic_turn": 10,
+                    "capture_hold_ticks": 2,
+                    "max_friendly_formations_per_node": 3,
+                },
+                "sites": [
+                    {
+                        "site_id": site_b,
+                        "display_name": "B hub",
+                        "kind": "objective",
+                        "province_id": "b",
+                        "pixel": [120, 0],
+                        "route_node_id": nb_hub,
+                        "control_weight_milli": COST_MILLI_UNITY,
+                        "capture_threshold_milli": COST_MILLI_UNITY,
+                        "owner_faction": "rusa",
+                        "metadata": {},
+                    }
+                ],
+                "nodes": [
+                    {
+                        "node_id": na,
+                        "display_name": "a",
+                        "pixel": [0, 0],
+                        "province_id": "a",
+                        "site_id": None,
+                        "kind": "anchor",
+                        "terrain": "plain",
+                        "metadata": {},
+                    },
+                    {
+                        "node_id": nb_anchor,
+                        "display_name": "b anchor",
+                        "pixel": [100, 0],
+                        "province_id": "b",
+                        "site_id": None,
+                        "kind": "anchor",
+                        "terrain": "plain",
+                        "metadata": {},
+                    },
+                    {
+                        "node_id": nb_hub,
+                        "display_name": "b hub",
+                        "pixel": [120, 0],
+                        "province_id": "b",
+                        "site_id": site_b,
+                        "kind": "site",
+                        "terrain": "urban",
+                        "metadata": {},
+                    },
+                ],
+                "edges": [
+                    {
+                        "edge_id": stable_edge_id("corridor", na, nb_hub),
+                        "a": na,
+                        "b": nb_hub,
+                        "kind": "corridor",
+                        "authority": "authored",
+                        "length_px": 100,
+                        "base_move_points_milli": COST_MILLI_UNITY,
+                        "movement_cost_milli": COST_MILLI_UNITY,
+                        "requires_port": False,
+                        "can_be_blockaded": False,
+                        "traversal_enabled": True,
+                        "bidirectional": True,
+                        "province_ids": ["a", "b"],
+                        "legacy_crossing_type": None,
+                        "metadata": {},
+                    }
+                ],
+                "metadata": {},
+            }
+            state = _state(root)
+            path = root / "operational_graph_site_hub.json"
+            path.write_text(json.dumps(graph), encoding="utf-8")
+            state.map_metadata["operational_graph"] = str(path.resolve())
+            clear_operational_graph_cache()
+            state.battalions["bn-rusa"] = _bn(
+                "bn-rusa", Faction.RUSSIA, "b", force_id="sf-rusa"
+            )
             state.strategic_formations["sf-rusa"] = _force(
                 "sf-rusa", Faction.RUSSIA, "b", ["bn-rusa"]
             )
-            na, nb = stable_node_id("a"), stable_node_id("b")
-            edge = stable_edge_id("corridor", na, nb)
+            # Enemy holds the distinct hub/site node.
+            state.strategic_formations["sf-rusa"].position = FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value, node_id=nb_hub, progress_milli=0
+            )
+            edge = stable_edge_id("corridor", na, nb_hub)
             issue_move_order(
-                state, "sf-nato", path_node_ids=[na, nb], path_edge_ids=[edge]
+                state, "sf-nato", path_node_ids=[na, nb_hub], path_edge_ids=[edge]
             )
             commit_move_orders(state)
             activate_committed_orders(state)
             advance_operational_tick(state)
             self.assertIsNotNone(state.pending_battle)
             assert state.pending_battle is not None
-            self.assertEqual(ENCOUNTER_KIND_NODE_CONTACT, state.pending_battle.encounter_kind)
+            self.assertEqual(nb_hub, state.pending_battle.encounter_node_id)
             CampaignEngine(state, random_seed=1).apply_battle_result(Faction.NATO)
-            # Attacker may occupy b, but ownership stays with defender until capture ticks.
             self.assertEqual(Faction.RUSSIA, state.provinces["b"].owner)
-            # Two capture ticks while holding the site node complete ownership.
-            if "sf-nato" in state.strategic_formations:
-                force = state.strategic_formations["sf-nato"]
-                force.position = FormationOperationalPosition(
-                    mode=PositionMode.AT_NODE.value, node_id=nb, progress_milli=0
-                )
-                force.province_id = "b"
-                for bid in force.battalion_ids:
-                    if bid in state.battalions:
-                        state.battalions[bid].province_id = "b"
+            force = state.strategic_formations["sf-nato"]
+            assert force.position is not None
+            # Must remain on the authored site node, not the province anchor.
+            self.assertEqual(nb_hub, force.position.node_id)
+            self.assertNotEqual(nb_anchor, force.position.node_id)
+            self.assertEqual("b", force.province_id)
+            # Ordinary capture ticks — no manual position correction.
             advance_site_capture(state)
             self.assertEqual(Faction.RUSSIA, state.provinces["b"].owner)
             advance_site_capture(state)
             self.assertEqual(Faction.NATO, state.provinces["b"].owner)
+
+    def test_authored_capture_threshold_validated_on_ensure(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary))
+            graph = _graph_with_site()
+            graph["sites"][0]["capture_threshold_milli"] = "1000"
+            path = Path(temporary) / "bad_threshold.json"
+            path.write_text(json.dumps(graph), encoding="utf-8")
+            state.map_metadata["operational_graph"] = str(path.resolve())
+            clear_operational_graph_cache()
+            with self.assertRaises(ValueError):
+                ensure_site_control_state(state)
 
     def test_ensure_idempotent_and_graph_missing_preserves(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
