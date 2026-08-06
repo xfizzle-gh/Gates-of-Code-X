@@ -555,11 +555,12 @@ class OperationalS6InterceptionTests(unittest.TestCase):
 
     def test_faster_rear_does_not_reach_no_battle(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            # Both slow enough that rear cannot catch front this tick.
+            # Genuinely faster rear (forced march) still cannot close the gap this tick.
+            # cost 5000 → operational delta 200, forced-march delta 300.
+            # rear@0 v=300, front@600 v=200 → catch t=600/100=6 > 1.
             state = _state(Path(temporary), _graph(ab_cost=5000))
             na, nb = stable_node_id("a"), stable_node_id("b")
             edge = stable_edge_id("corridor", na, nb)
-            # rear at 0 delta 200; front at 600 delta 200 → ends 200 and 800, no catch
             for fid, prog in (("sf-n", 0), ("sf-r", 600)):
                 state.strategic_formations[fid].position = FormationOperationalPosition(
                     mode=PositionMode.ON_EDGE.value,
@@ -580,10 +581,23 @@ class OperationalS6InterceptionTests(unittest.TestCase):
                     progress_milli=prog,
                     facing_node_id=nb,
                 )
-            commit_move_orders(state)
+            commit_move_orders(
+                state, faction="nato", locked_stance=FormationStance.FORCED_MARCH.value
+            )
+            commit_move_orders(
+                state, faction="rusa", locked_stance=FormationStance.OPERATIONAL.value
+            )
             activate_committed_orders(state)
             advance_operational_tick(state)
             self.assertIsNone(state.pending_battle)
+            # Rear advanced farther than front but did not meet.
+            n_pos = state.strategic_formations["sf-n"].position
+            r_pos = state.strategic_formations["sf-r"].position
+            assert n_pos is not None and r_pos is not None
+            self.assertEqual(PositionMode.ON_EDGE.value, n_pos.mode)
+            self.assertEqual(PositionMode.ON_EDGE.value, r_pos.mode)
+            self.assertGreater(n_pos.progress_milli, 0)
+            self.assertLess(n_pos.progress_milli, r_pos.progress_milli)
 
     def test_exact_progress_ally_joins_edge_battle(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -1282,7 +1296,8 @@ class OperationalS6InterceptionTests(unittest.TestCase):
             self.assertEqual(ENCOUNTER_KIND_NODE_SIMULTANEOUS, p1.kind)
             self.assertEqual(p1.kind, p2.kind)
             self.assertEqual(set(p1.participant_ids), set(p2.participant_ids))
-            self.assertEqual({p1.time_num, p1.time_den}, {1, 2})
+            self.assertEqual((p1.time_num, p1.time_den), (1, 2))
+            self.assertEqual((p2.time_num, p2.time_den), (1, 2))
             report = advance_operational_tick(state)
             self.assertEqual(ENCOUNTER_KIND_NODE_SIMULTANEOUS, report.get("swept_kind"))
             assert state.pending_battle is not None
@@ -1331,17 +1346,171 @@ class OperationalS6InterceptionTests(unittest.TestCase):
             defender_id="sf-d",
             participant_ids=("sf-c", "sf-d"),
         )
-        # Empty edge_id must not auto-prefer every node contact.
-        self.assertNotEqual(edge_c.location_key()[0], node_c.location_key()[0])
-        # location keys are comparable non-empty prefixes e: / n:
-        self.assertTrue(edge_c.location_key().startswith("e:"))
-        self.assertTrue(node_c.location_key().startswith("n:"))
+        # Raw IDs only (already type-qualified); no e:/n: prefix bias.
+        self.assertEqual(edge, edge_c.location_key())
+        self.assertEqual(node, node_c.location_key())
+        # Lexicographic: "op-edge-z" < "op-node-m" → edge contact wins.
+        self.assertLess(edge_c.location_key(), node_c.location_key())
+        expected = edge_c
         primary_ab = select_primary_contact([edge_c, node_c])
         primary_ba = select_primary_contact([node_c, edge_c])
         self.assertIsNotNone(primary_ab)
-        self.assertEqual(primary_ab.tie_key(), primary_ba.tie_key())
-        self.assertEqual(primary_ab.kind, primary_ba.kind)
-        self.assertEqual(primary_ab.location_key(), primary_ba.location_key())
+        self.assertEqual(expected.tie_key(), primary_ab.tie_key())
+        self.assertEqual(expected.tie_key(), primary_ba.tie_key())
+        self.assertEqual(ENCOUNTER_KIND_EDGE_CROSS, primary_ab.kind)
+        self.assertEqual(ENCOUNTER_KIND_EDGE_CROSS, primary_ba.kind)
+        self.assertEqual(edge, primary_ab.location_key())
+        self.assertEqual(edge, primary_ba.location_key())
+
+    def test_moving_hostile_catches_stationary_on_edge_no_order(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary), _graph(ab_cost=1000))
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            edge = stable_edge_id("corridor", na, nb)
+            # Stationary Russia on edge at 600 with no move order.
+            state.strategic_formations["sf-r"].position = FormationOperationalPosition(
+                mode=PositionMode.ON_EDGE.value,
+                edge_id=edge,
+                progress_milli=600,
+                facing_node_id=nb,
+            )
+            state.strategic_formations["sf-r"].move_order = None
+            state.strategic_formations["sf-r"].province_id = "a"
+            state.battalions["bn-r"].province_id = "a"
+            # Moving NATO from 0 catches at t=0.6
+            state.strategic_formations["sf-n"].position = FormationOperationalPosition(
+                mode=PositionMode.ON_EDGE.value,
+                edge_id=edge,
+                progress_milli=0,
+                facing_node_id=nb,
+            )
+            issue_move_order(
+                state, "sf-n", path_node_ids=[na, nb], path_edge_ids=[edge], order_id="n"
+            )
+            state.strategic_formations["sf-n"].position = FormationOperationalPosition(
+                mode=PositionMode.ON_EDGE.value,
+                edge_id=edge,
+                progress_milli=0,
+                facing_node_id=nb,
+            )
+            # Keep Russia stationary after issue side-effects.
+            state.strategic_formations["sf-r"].position = FormationOperationalPosition(
+                mode=PositionMode.ON_EDGE.value,
+                edge_id=edge,
+                progress_milli=600,
+                facing_node_id=nb,
+            )
+            state.strategic_formations["sf-r"].move_order = None
+            commit_move_orders(state, faction="nato")
+            activate_committed_orders(state)
+            state.strategic_formations["sf-r"].move_order = None
+            state.strategic_formations["sf-r"].position = FormationOperationalPosition(
+                mode=PositionMode.ON_EDGE.value,
+                edge_id=edge,
+                progress_milli=600,
+                facing_node_id=nb,
+            )
+            report = advance_operational_tick(state)
+            self.assertEqual(ENCOUNTER_KIND_EDGE_CATCHUP, report.get("swept_kind"))
+            assert state.pending_battle is not None
+            self.assertEqual(ENCOUNTER_KIND_EDGE_CATCHUP, state.pending_battle.encounter_kind)
+            self.assertEqual(edge, state.pending_battle.encounter_edge_id)
+            self.assertEqual(600, state.pending_battle.encounter_progress_milli)
+            ids = {
+                p.battalion_id for p in state.pending_battle.attacking_participants
+            } | {
+                p.battalion_id for p in state.pending_battle.defending_participants
+            }
+            self.assertEqual({"bn-n", "bn-r"}, ids)
+            # Stationary force never moved before stop.
+            r_pos = state.strategic_formations["sf-r"].position
+            assert r_pos is not None
+            self.assertEqual(PositionMode.ON_EDGE.value, r_pos.mode)
+            self.assertEqual(600, r_pos.progress_milli)
+
+    def test_moving_hostile_catches_stationary_on_edge_blocked_order(self) -> None:
+        from dataclasses import replace as dc_replace
+
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary), _graph(ab_cost=1000))
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            edge = stable_edge_id("corridor", na, nb)
+            # Russia mid-edge with a blocked order (not active).
+            state.strategic_formations["sf-r"].position = FormationOperationalPosition(
+                mode=PositionMode.ON_EDGE.value,
+                edge_id=edge,
+                progress_milli=600,
+                facing_node_id=nb,
+            )
+            issue_move_order(
+                state, "sf-r", path_node_ids=[na, nb], path_edge_ids=[edge], order_id="r"
+            )
+            commit_move_orders(state, faction="rusa")
+            activate_committed_orders(state)
+            r_order = state.strategic_formations["sf-r"].move_order
+            assert r_order is not None
+            state.strategic_formations["sf-r"].move_order = dc_replace(
+                r_order, status=MoveOrderStatus.BLOCKED.value
+            )
+            state.strategic_formations["sf-r"].position = FormationOperationalPosition(
+                mode=PositionMode.ON_EDGE.value,
+                edge_id=edge,
+                progress_milli=600,
+                facing_node_id=nb,
+            )
+            # Moving NATO from 0.
+            state.strategic_formations["sf-n"].position = FormationOperationalPosition(
+                mode=PositionMode.ON_EDGE.value,
+                edge_id=edge,
+                progress_milli=0,
+                facing_node_id=nb,
+            )
+            issue_move_order(
+                state, "sf-n", path_node_ids=[na, nb], path_edge_ids=[edge], order_id="n"
+            )
+            state.strategic_formations["sf-n"].position = FormationOperationalPosition(
+                mode=PositionMode.ON_EDGE.value,
+                edge_id=edge,
+                progress_milli=0,
+                facing_node_id=nb,
+            )
+            # Re-assert Russia stays blocked + stationary after NATO issue.
+            state.strategic_formations["sf-r"].move_order = dc_replace(
+                state.strategic_formations["sf-r"].move_order,
+                status=MoveOrderStatus.BLOCKED.value,
+            )
+            state.strategic_formations["sf-r"].position = FormationOperationalPosition(
+                mode=PositionMode.ON_EDGE.value,
+                edge_id=edge,
+                progress_milli=600,
+                facing_node_id=nb,
+            )
+            commit_move_orders(state, faction="nato")
+            activate_committed_orders(state)
+            state.strategic_formations["sf-r"].move_order = dc_replace(
+                state.strategic_formations["sf-r"].move_order,
+                status=MoveOrderStatus.BLOCKED.value,
+            )
+            state.strategic_formations["sf-r"].position = FormationOperationalPosition(
+                mode=PositionMode.ON_EDGE.value,
+                edge_id=edge,
+                progress_milli=600,
+                facing_node_id=nb,
+            )
+            report = advance_operational_tick(state)
+            self.assertEqual(ENCOUNTER_KIND_EDGE_CATCHUP, report.get("swept_kind"))
+            assert state.pending_battle is not None
+            self.assertEqual(ENCOUNTER_KIND_EDGE_CATCHUP, state.pending_battle.encounter_kind)
+            self.assertEqual(600, state.pending_battle.encounter_progress_milli)
+            ids = {
+                p.battalion_id for p in state.pending_battle.attacking_participants
+            } | {
+                p.battalion_id for p in state.pending_battle.defending_participants
+            }
+            self.assertEqual({"bn-n", "bn-r"}, ids)
+            r_order = state.strategic_formations["sf-r"].move_order
+            assert r_order is not None
+            self.assertEqual(MoveOrderStatus.BLOCKED.value, r_order.status)
 
     def test_empty_string_progress_and_pixel_rejected(self) -> None:
         from gates_of_codex.state_io import campaign_from_dict

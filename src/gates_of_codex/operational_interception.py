@@ -83,12 +83,8 @@ class ContactCandidate:
         return self.time_num * other.time_den == other.time_num * self.time_den
 
     def location_key(self) -> str:
-        """Single canonical location id — edge or node, never empty-string bias."""
-        if self.edge_id:
-            return f"e:{self.edge_id}"
-        if self.node_id:
-            return f"n:{self.node_id}"
-        return ""
+        """Raw edge_id or node_id (IDs are already type-qualified)."""
+        return self.edge_id or self.node_id or ""
 
     def tie_key(self) -> tuple:
         return (
@@ -105,8 +101,15 @@ def compute_movement_intervals(
     edges_by_id: dict[str, OperationalRouteEdge],
     nodes_by_id: dict[str, dict[str, Any]],
 ) -> list[MovementInterval]:
-    """Compute intended intervals from a frozen snapshot of active movers."""
+    """Compute intended intervals from a frozen snapshot.
+
+    Active movers emit velocity-bearing intervals. Every valid ON_EDGE formation
+    without an active order also emits a zero-velocity interval so stationary
+    hostiles participate in edge cross/catch-up detection (they never move in
+    the normal application phase).
+    """
     intervals: list[MovementInterval] = []
+    active_ids: set[str] = set()
     for force in sorted(
         state.strategic_formations.values(),
         key=lambda value: value.strategic_formation_id,
@@ -119,7 +122,66 @@ def compute_movement_intervals(
         )
         if interval is not None:
             intervals.append(interval)
+            active_ids.add(force.strategic_formation_id)
+    for force in sorted(
+        state.strategic_formations.values(),
+        key=lambda value: value.strategic_formation_id,
+    ):
+        if force.strategic_formation_id in active_ids:
+            continue
+        stationary = _stationary_on_edge_interval(
+            force, edges_by_id=edges_by_id
+        )
+        if stationary is not None:
+            intervals.append(stationary)
     return intervals
+
+
+def _stationary_on_edge_interval(
+    force: StrategicFormation,
+    *,
+    edges_by_id: dict[str, OperationalRouteEdge],
+) -> MovementInterval | None:
+    """Zero-velocity interval for a formation already on an edge (any order state)."""
+    position = force.position
+    if position is None or position.mode != PositionMode.ON_EDGE.value:
+        return None
+    edge_id = str(position.edge_id or "")
+    if not edge_id:
+        return None
+    edge = edges_by_id.get(edge_id)
+    if edge is None:
+        return None
+    facing = str(position.facing_node_id or "")
+    if facing not in {edge.a, edge.b}:
+        # Infer facing toward B when missing/invalid so progress is still canonical.
+        facing = edge.b
+    start_c = _canonical_from_formation_progress(
+        int(position.progress_milli), facing=facing, edge=edge
+    )
+    # Previous legal node: the endpoint they are not facing (entry/origin side).
+    path_origin = edge.a if facing == edge.b else edge.b
+    direction = 1 if facing == edge.b else -1
+    return MovementInterval(
+        formation_id=force.strategic_formation_id,
+        faction=force.faction,
+        edge_id=edge_id,
+        start_canonical=start_c,
+        velocity_canonical=0,
+        end_canonical=start_c,
+        direction=direction,
+        facing_node_id=facing,
+        start_node_id=None,
+        end_node_id=None,
+        arrives_node=False,
+        exit_time_num=None,
+        exit_time_den=None,
+        arrival_time_num=None,
+        arrival_time_den=None,
+        origin_province_id=force.province_id,
+        path_origin_node=path_origin,
+        stationary_node_id=None,
+    )
 
 
 def detect_swept_contacts(
