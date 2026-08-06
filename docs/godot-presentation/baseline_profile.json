@@ -1,0 +1,20 @@
+{
+	"has_background": true,
+	"image_height": 920,
+	"image_width": 817,
+	"label": "godot-strategic-map-profile",
+	"map_open_ms": 1093.39,
+	"notes": [
+		"Headless CPU timings for map layer rebuilds (not full interactive FPS).",
+		"Idle/hover frame times require interactive capture when available."
+	],
+	"ok": true,
+	"perf_stats": {},
+	"province_count": 342,
+	"province_pick_ms_avg": 0.001,
+	"refresh_highlights_ms_avg": 267.07,
+	"refresh_snapshot_ms_avg": 321.58,
+	"snapshot_battalions": 12,
+	"snapshot_provinces": 342,
+	"timestamp_unix": 1786027561.21
+}
