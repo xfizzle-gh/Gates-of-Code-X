@@ -374,6 +374,11 @@ class PendingBattle:
     exported_save_path: str = ""
     started: bool = False
     completed: bool = False
+    # S4 operational contact (empty for legacy province adjacency battles).
+    encounter_node_id: str = ""
+    encounter_kind: str = ""
+    attacker_formation_id: str = ""
+    defender_formation_id: str = ""
 
 
 @dataclass(slots=True)
@@ -542,7 +547,7 @@ class CampaignState:
             previous_faction = occupied_factions.setdefault(
                 battalion.province_id, battalion.faction
             )
-            if previous_faction != battalion.faction:
+            if previous_faction != battalion.faction and not self._allows_mixed_province_presence():
                 raise ValueError(
                     f"Province {battalion.province_id} contains battalions from multiple factions"
                 )
@@ -561,6 +566,36 @@ class CampaignState:
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+    def _allows_mixed_province_presence(self) -> bool:
+        """Hostile co-presence only with explicit operational capability or contact.
+
+        A stale/non-null formation ``position`` alone is not sufficient.
+        """
+        pending = self.pending_battle
+        if pending is not None and str(getattr(pending, "encounter_kind", "") or ""):
+            return True
+        if bool(self.map_metadata.get("operational_maneuver_enabled")):
+            return True
+        # Resolvable operational graph path (must exist as a file, not merely be declared).
+        configured = str(self.map_metadata.get("operational_graph", "") or "").strip()
+        if configured:
+            from pathlib import Path
+
+            path = Path(configured).expanduser()
+            if path.is_file():
+                return True
+            # Relative assets next to cwd / godot (same contract as operational_position).
+            for candidate in (
+                Path.cwd() / configured,
+                Path.cwd() / "godot" / configured,
+            ):
+                try:
+                    if candidate.is_file():
+                        return True
+                except OSError:
+                    continue
+        return False
 
 
 def _validate_position_shape(position: FormationOperationalPosition, *, force_id: str) -> None:

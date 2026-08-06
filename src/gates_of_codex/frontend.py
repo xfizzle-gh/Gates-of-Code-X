@@ -372,6 +372,10 @@ def _pending_battle(state: CampaignState) -> dict | None:
         "completed": pending.completed,
         "attacking_battalions": [value.battalion_id for value in pending.attacking_participants],
         "defending_battalions": [value.battalion_id for value in pending.defending_participants],
+        "encounter_node_id": pending.encounter_node_id,
+        "encounter_kind": pending.encounter_kind,
+        "attacker_formation_id": pending.attacker_formation_id,
+        "defender_formation_id": pending.defender_formation_id,
     }
 
 

@@ -287,16 +287,34 @@ def ensure_move_orders(state: CampaignState) -> dict[str, Any]:
 
 
 def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
-    """Advance all active orders by one operational tick. No capture/intercept."""
+    """Advance all active orders by one operational tick.
+
+    S4: enemy node contact stops movement and may create a pending battle.
+    Friendly stack caps block entry. Full edge interception is out of scope.
+    """
+    if state.pending_battle is not None:
+        return {
+            "advanced": False,
+            "reason": "pending_battle",
+            "moved": [],
+            "contacts": [],
+        }
     graph = load_operational_graph_for_state(state)
     if graph is None:
-        return {"advanced": False, "reason": "no_graph", "moved": []}
+        return {"advanced": False, "reason": "no_graph", "moved": [], "contacts": []}
+
+    from .operational_contact import detect_static_node_contacts
+
+    # Active movers resolve first (stack-cap / entry contact), then residual static contacts.
     _node_ids, _edge_ids, edges_by_id, nodes_by_id = _indexes(graph)
     moved: list[str] = []
+    contacts: list[str] = []
     for force in sorted(
         state.strategic_formations.values(),
         key=lambda value: value.strategic_formation_id,
     ):
+        if state.pending_battle is not None:
+            break
         order = force.move_order
         if order is None or order.status != MoveOrderStatus.ACTIVE.value:
             continue
@@ -306,8 +324,16 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
             order,
             edges_by_id=edges_by_id,
             nodes_by_id=nodes_by_id,
+            contacts_out=contacts,
         ):
             moved.append(force.strategic_formation_id)
+
+    static_contacts: list[str] = []
+    if state.pending_battle is None:
+        static_contacts = detect_static_node_contacts(state)
+        if static_contacts:
+            contacts.extend(static_contacts)
+
     clock = get_operational_clock(state)
     ticks_n = ticks_per_strategic_turn(state)
     global_tick = int(clock["global_tick"]) + 1
@@ -318,13 +344,27 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
         "global_tick": global_tick,
         "tick_in_turn": tick_in_turn,
         "moved": moved,
+        "contacts": contacts,
+        "battle_id": state.pending_battle.battle_id if state.pending_battle else "",
+        "static_contact": bool(static_contacts),
     }
 
 
 def advance_operational_ticks(state: CampaignState, count: int | None = None) -> dict[str, Any]:
     n = ticks_per_strategic_turn(state) if count is None else max(0, int(count))
-    reports = [advance_operational_tick(state) for _ in range(n)]
-    return {"ticks": n, "reports": reports}
+    reports: list[dict[str, Any]] = []
+    for _ in range(n):
+        report = advance_operational_tick(state)
+        reports.append(report)
+        if state.pending_battle is not None:
+            break
+        if not report.get("advanced") and report.get("reason") in {
+            "no_graph",
+            "pending_battle",
+            "static_contact",
+        }:
+            break
+    return {"ticks": len(reports), "reports": reports}
 
 
 def resolve_strategic_turn_movement(state: CampaignState) -> dict[str, Any]:
@@ -379,7 +419,10 @@ def _advance_formation_one_tick(
     *,
     edges_by_id: dict[str, OperationalRouteEdge],
     nodes_by_id: dict[str, dict[str, Any]],
+    contacts_out: list[str] | None = None,
 ) -> bool:
+    from .operational_contact import inspect_node_entry, resolve_node_entry_contact
+
     if force.position is None:
         force.position = province_anchor_position(force.province_id)
     position = force.position
@@ -444,6 +487,21 @@ def _advance_formation_one_tick(
     delta = max(1, (base_mp * stance_milli) // cost)
     new_progress = int(position.progress_milli) + delta
     if new_progress >= PROGRESS_MILLI_MAX:
+        # Capture pre-entry province before destination sync (handoff/reporting).
+        origin_province_id = force.province_id
+        # Pre-check stack only (no battle yet) before committing to the node.
+        pre = inspect_node_entry(state, force, dest_node)
+        if pre["reason"] == "friendly_stack_cap":
+            # Deterministic snap back to last legal node (this hop's origin).
+            force.position = FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value,
+                node_id=origin_node,
+                progress_milli=0,
+            )
+            force.movement_state = "at_anchor"
+            force.move_order = _as_blocked(order)
+            sync_province_from_position(state, force)
+            return False
         force.position = FormationOperationalPosition(
             mode=PositionMode.AT_NODE.value,
             node_id=dest_node,
@@ -451,6 +509,30 @@ def _advance_formation_one_tick(
         )
         force.movement_state = "at_anchor"
         sync_province_from_position(state, force)
+        contact = resolve_node_entry_contact(
+            state,
+            force,
+            dest_node,
+            create_battle=True,
+            origin_province_id=origin_province_id,
+        )
+        if contact["reason"] == "enemy_contact":
+            force.move_order = _as_blocked(order)
+            if contacts_out is not None:
+                contacts_out.append(force.strategic_formation_id)
+                contacts_out.extend(contact.get("enemies") or [])
+            return True
+        if contact["reason"] == "invalid_contact_roster":
+            # Empty/invalid enemy roster: refuse co-location deadlock — snap back.
+            force.position = FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value,
+                node_id=origin_node,
+                progress_milli=0,
+            )
+            force.movement_state = "at_anchor"
+            force.move_order = _as_blocked(order)
+            sync_province_from_position(state, force)
+            return False
         if edge_index + 1 >= len(order.path_edge_ids):
             force.move_order = replace(order, status=MoveOrderStatus.COMPLETED.value)
         return True

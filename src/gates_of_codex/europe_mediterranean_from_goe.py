@@ -1230,6 +1230,7 @@ def build_europe_mediterranean_from_goe_campaign(
         "operational_graph": (
             "assets/maps/europe_mediterranean/from_goe/operational/operational_graph.json"
         ),
+        "operational_maneuver_enabled": True,
         "strategic_map_provenance": "derived_from_interim_goe_europe_theatre_crop",
         "europe_mediterranean_from_goe": True,
         "canonical": False,
