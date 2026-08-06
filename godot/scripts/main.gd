@@ -39,12 +39,17 @@ func _ready() -> void:
 	snapshot_source_path = DEFAULT_SNAPSHOT
 	for arg in args:
 		var text := String(arg)
+		if text.begins_with("--snapshot="):
+			snapshot_source_path = text.substr(String("--snapshot=").length()).strip_edges()
+			continue
 		if text.begins_with("--"):
 			continue
 		if text.is_empty():
 			continue
-		snapshot_source_path = text
-		break
+		# Positional snapshot path (non-flag) wins only when --snapshot= was not set.
+		if snapshot_source_path == DEFAULT_SNAPSHOT:
+			snapshot_source_path = text
+			break
 	_load_snapshot(snapshot_source_path)
 	_fit_to_focus(true)
 	queue_redraw()

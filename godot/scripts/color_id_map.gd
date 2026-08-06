@@ -48,6 +48,8 @@ var stat_pixels_touched_last := 0
 var stat_owner_rebuild_usec_last := 0
 var stat_highlight_rebuild_usec_last := 0
 var stat_static_rebuilds_this_frame := 0
+var stat_static_rebuilds_displayed := 0
+var stat_last_event := "none"
 
 
 func open(path: String, snapshot: Dictionary, faction_colors: Dictionary) -> bool:
@@ -177,8 +179,7 @@ func _load_background(manifest_file_path: String) -> void:
 		image.resize(_width, _height, Image.INTERPOLATE_BILINEAR)
 	image.convert(Image.FORMAT_RGBA8)
 	background_texture = ImageTexture.create_from_image(image)
-	# Linear filtering softens low-res underlay without affecting ID sampling authority.
-	background_texture.set_meta("goc_filter", "linear")
+	# Filtering is applied by dedicated CanvasItem layers (linear background node).
 	has_background = true
 	var status := String(bg.get("asset_status", "project_procedural"))
 	if status in ["project_procedural", "project_owned_procedural"] or rel.ends_with("background_procedural.png"):
@@ -247,9 +248,9 @@ func _rebuild_owner_full(ownership: Dictionary, faction_colors: Dictionary) -> v
 		owner_texture = ImageTexture.create_from_image(_owner_image)
 	else:
 		owner_texture.update(_owner_image)
-	owner_texture.set_meta("goc_filter", "nearest")
 	stat_full_owner_rebuilds += 1
 	stat_owner_rebuild_usec_last = Time.get_ticks_usec() - t0
+	stat_last_event = "owner_full"
 
 
 func _rebuild_owner_partial(changed_ids: Array, ownership: Dictionary, faction_colors: Dictionary) -> void:
@@ -276,6 +277,7 @@ func _rebuild_owner_partial(changed_ids: Array, ownership: Dictionary, faction_c
 		owner_texture.update(_owner_image)
 	stat_partial_owner_rebuilds += 1
 	stat_owner_rebuild_usec_last = Time.get_ticks_usec() - t0
+	stat_last_event = "owner_partial"
 
 
 func refresh_highlights(selected_province_id: String, legal_targets: Dictionary) -> void:
@@ -317,13 +319,13 @@ func refresh_highlights(selected_province_id: String, legal_targets: Dictionary)
 		highlight_texture = ImageTexture.create_from_image(_highlight_image)
 	else:
 		highlight_texture.update(_highlight_image)
-	highlight_texture.set_meta("goc_filter", "nearest")
 	_last_selected_id = selected_province_id
 	_last_target_ids = target_ids.duplicate()
 	_highlight_dirty = false
 	stat_highlight_rebuilds += 1
 	stat_highlight_rebuild_usec_last = Time.get_ticks_usec() - t0
 	stat_static_rebuilds_this_frame += 1
+	stat_last_event = "highlight"
 
 
 func _fill_province_pixels(province_id: String, color: Color) -> void:
@@ -400,12 +402,21 @@ func get_perf_stats() -> Dictionary:
 		"owner_rebuild_ms_last": snappedf(stat_owner_rebuild_usec_last / 1000.0, 0.001),
 		"highlight_rebuild_ms_last": snappedf(stat_highlight_rebuild_usec_last / 1000.0, 0.001),
 		"static_rebuilds_this_frame": stat_static_rebuilds_this_frame,
+		"static_rebuilds_displayed": stat_static_rebuilds_displayed,
+		"last_event": stat_last_event,
 		"cached_province_runs": _province_pixel_runs.size(),
 		"pixel_index_size": _pixel_province_index.size(),
 	}
 
 
 func begin_frame_stats() -> void:
+	# Prefer end_frame_stats() after the debug overlay reads counters.
+	stat_static_rebuilds_this_frame = 0
+
+
+func end_frame_stats() -> void:
+	# Snapshot then clear so the next invalidation window accumulates cleanly.
+	stat_static_rebuilds_displayed = stat_static_rebuilds_this_frame
 	stat_static_rebuilds_this_frame = 0
 
 
@@ -443,7 +454,6 @@ func _rebuild_border_texture() -> void:
 					if existing_up.a <= 0.0:
 						output.set_pixel(x, y - 1, border_soft)
 	border_texture = ImageTexture.create_from_image(output)
-	border_texture.set_meta("goc_filter", "nearest")
 
 
 func _compute_anchor_bounds() -> void:

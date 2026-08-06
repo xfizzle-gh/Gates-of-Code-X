@@ -22,6 +22,8 @@ var last_hover_id := ""
 var last_selected_id := ""
 var last_map_pixel := Vector2i.ZERO
 var last_screen_pos := Vector2.ZERO
+var last_event := "none"
+var last_perf: Dictionary = {}
 var counter_bounds: Array = []
 var label_bounds: Array = []
 var _fps_frames := 0
@@ -37,9 +39,16 @@ func note_redraw() -> void:
 		redraw_count += 1
 
 
-func note_invalidation() -> void:
+func note_invalidation(event := "invalidate") -> void:
 	if enabled:
 		invalidation_count += 1
+		last_event = event
+
+
+func capture_perf(stats: Dictionary) -> void:
+	last_perf = stats.duplicate()
+	if not String(stats.get("last_event", "")).is_empty():
+		last_event = String(stats.get("last_event", last_event))
 
 
 func tick_fps(delta: float) -> void:
@@ -107,6 +116,10 @@ func draw(
 			var row := site as Dictionary
 			var pos := MapMarkers.battle_marker_position(row, map_space)
 			if pos == Vector2.ZERO and row.has("pixel"):
+				var px: Variant = row.get("pixel")
+				if px is Array and (px as Array).size() >= 2:
+					pos = map_space.image_to_screen(Vector2(float(px[0]), float(px[1])))
+			if pos == Vector2.ZERO:
 				continue
 			MapMarkers.draw_control_site_marker(canvas, pos, bool(row.get("owned", false)))
 			if int(row.get("presentation_capture_progress_fp", -1)) >= 0:
@@ -123,8 +136,11 @@ func draw(
 			lines.append("FPS %s  frame %sms" % [snappedf(fps_value, 0.1), snappedf(frame_ms, 0.01)])
 		if show_invalidation:
 			lines.append("redraws %s  invalidations %s" % [redraw_count, invalidation_count])
-			if color_id_map != null and color_id_map.has_method("get_perf_stats"):
-				var stats: Dictionary = color_id_map.get_perf_stats()
+			lines.append("last_event %s" % last_event)
+			var stats: Dictionary = last_perf
+			if stats.is_empty() and color_id_map != null and color_id_map.has_method("get_perf_stats"):
+				stats = color_id_map.get_perf_stats()
+			if not stats.is_empty():
 				lines.append(
 					"owner full/partial %s/%s  hl %s  px %s" % [
 						stats.get("full_owner_rebuilds", 0),
@@ -133,7 +149,15 @@ func draw(
 						stats.get("pixels_touched_last", 0),
 					]
 				)
-				lines.append("static rebuilds this frame %s" % stats.get("static_rebuilds_this_frame", 0))
+				lines.append(
+					"rebuilds pending %s  displayed %s  owner_ms %s  hl_ms %s" % [
+						stats.get("static_rebuilds_this_frame", 0),
+						stats.get("static_rebuilds_displayed", 0),
+						stats.get("owner_rebuild_ms_last", 0),
+						stats.get("highlight_rebuild_ms_last", 0),
+					]
+				)
+			lines.append("counters %s  labels %s" % [counter_bounds.size(), label_bounds.size()])
 		if show_coords:
 			lines.append("hover %s  selected %s" % [hovered_id, selected_id])
 			lines.append("screen %s  map_px %s" % [last_screen_pos, last_map_pixel])

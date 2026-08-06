@@ -1,13 +1,13 @@
 extends SceneTree
 
-## Headless strategic-map presentation profiler.
+## Headless strategic-map presentation profiler (clean-checkout reproducible).
 ## Usage:
-##   Godot.exe --headless --path godot -s res://scripts/tools/map_profiler.gd
-## Optional user args:
-##   --out=<path>  write JSON metrics
+##   Godot.exe --headless --path godot -s res://scripts/tools/map_profiler.gd -- \
+##     --snapshot=res://fixtures/snapshots/em_theatre_profile.json \
+##     --out=../docs/godot-presentation/after_profile.json
 
 const ColorIdMapScript = preload("res://scripts/color_id_map.gd")
-const DEFAULT_SNAPSHOT := "res://campaign_snapshot.json"
+const DEFAULT_SNAPSHOT := "res://fixtures/snapshots/em_theatre_profile.json"
 const DEFAULT_MANIFEST := "res://assets/maps/europe_mediterranean/from_goe/map_manifest.json"
 const FACTION_COLORS := {
 	"nato": Color("4f8fd8"),
@@ -20,44 +20,61 @@ const FACTION_COLORS := {
 
 func _initialize() -> void:
 	var out_path := ""
+	var snapshot_path := DEFAULT_SNAPSHOT
+	var manifest_path := DEFAULT_MANIFEST
 	for arg in OS.get_cmdline_user_args():
 		var text := String(arg)
 		if text.begins_with("--out="):
 			out_path = text.substr(String("--out=").length()).strip_edges()
-	var metrics := _run_profile()
+		elif text.begins_with("--snapshot="):
+			snapshot_path = text.substr(String("--snapshot=").length()).strip_edges()
+		elif text.begins_with("--manifest="):
+			manifest_path = text.substr(String("--manifest=").length()).strip_edges()
+	var metrics := _run_profile(snapshot_path, manifest_path)
 	var encoded := JSON.stringify(metrics, "\t")
 	print(encoded)
 	if not out_path.is_empty():
+		var base := out_path.get_base_dir()
+		if not base.is_empty() and not DirAccess.dir_exists_absolute(base):
+			DirAccess.make_dir_recursive_absolute(base)
 		var file := FileAccess.open(out_path, FileAccess.WRITE)
 		if file != null:
 			file.store_string(encoded)
 			file.close()
-	quit()
+	quit(0 if bool(metrics.get("ok", false)) else 1)
 
 
-func _run_profile() -> Dictionary:
-	var snapshot := _load_json(DEFAULT_SNAPSHOT)
+func _run_profile(snapshot_path: String, manifest_path: String) -> Dictionary:
+	if not FileAccess.file_exists(snapshot_path):
+		return {
+			"ok": false,
+			"error": "snapshot not found: %s" % snapshot_path,
+			"snapshot_path": snapshot_path,
+		}
+	var snapshot := _load_json(snapshot_path)
+	if snapshot.is_empty():
+		return {"ok": false, "error": "snapshot invalid JSON", "snapshot_path": snapshot_path}
 	var color_map = ColorIdMapScript.new()
 	var t0 := Time.get_ticks_usec()
-	var opened: bool = color_map.open(DEFAULT_MANIFEST, snapshot, FACTION_COLORS)
+	var opened: bool = color_map.open(manifest_path, snapshot, FACTION_COLORS)
 	var open_ms := (Time.get_ticks_usec() - t0) / 1000.0
 	if not opened:
 		return {
 			"ok": false,
 			"error": color_map.error,
-			"open_ms": open_ms,
+			"map_open_ms": open_ms,
+			"snapshot_path": snapshot_path,
+			"manifest_path": manifest_path,
 		}
 
 	var selected := _pick_selected(snapshot)
 	var legal := _pick_legal_targets(snapshot, selected)
 
-	# Unchanged ownership should be a no-op after open.
 	t0 = Time.get_ticks_usec()
 	for _i in range(20):
 		color_map.refresh_snapshot(snapshot, FACTION_COLORS)
 	var refresh_snapshot_noop_ms := (Time.get_ticks_usec() - t0) / 1000.0 / 20.0
 
-	# Force a single-province ownership flip and measure partial rebuild.
 	var mutated := snapshot.duplicate(true)
 	var provinces: Array = mutated.get("provinces", [])
 	var flipped_id := ""
@@ -71,7 +88,6 @@ func _run_profile() -> Dictionary:
 	t0 = Time.get_ticks_usec()
 	color_map.refresh_snapshot(mutated, FACTION_COLORS)
 	var refresh_snapshot_partial_ms := (Time.get_ticks_usec() - t0) / 1000.0
-	# Restore
 	color_map.refresh_snapshot(snapshot, FACTION_COLORS)
 
 	t0 = Time.get_ticks_usec()
@@ -87,7 +103,6 @@ func _run_profile() -> Dictionary:
 			break
 	t0 = Time.get_ticks_usec()
 	for _i in range(20):
-		# Alternate selection so cache cannot skip work.
 		var use_id := selected if (_i % 2) == 0 else alt_selected
 		color_map.refresh_highlights(use_id, legal)
 	var refresh_highlights_ms := (Time.get_ticks_usec() - t0) / 1000.0 / 20.0
@@ -106,6 +121,8 @@ func _run_profile() -> Dictionary:
 		"ok": true,
 		"label": "godot-strategic-map-profile",
 		"timestamp_unix": Time.get_unix_time_from_system(),
+		"snapshot_path": snapshot_path,
+		"manifest_path": manifest_path,
 		"map_open_ms": snappedf(open_ms, 0.01),
 		"refresh_snapshot_ms_avg": snappedf(refresh_snapshot_partial_ms, 0.01),
 		"refresh_snapshot_noop_ms_avg": snappedf(refresh_snapshot_noop_ms, 0.001),
@@ -123,8 +140,8 @@ func _run_profile() -> Dictionary:
 		"perf_stats": ownership_stats,
 		"notes": [
 			"Headless CPU timings for map layer rebuilds (not full interactive FPS).",
+			"Default snapshot is the committed fixtures/snapshots/em_theatre_profile.json.",
 			"refresh_snapshot_ms_avg is partial single-province ownership change.",
-			"Idle/hover frame times require interactive capture when available.",
 		],
 	}
 

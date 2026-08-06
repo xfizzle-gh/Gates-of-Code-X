@@ -24,3 +24,9 @@ They are **not** production simulation authority and must not be treated as Pyth
 | `rapid_hover.json` | Hover stress marker list |
 | `refresh_stability.json` | Repeated refresh node-stability checklist |
 | `resolutions.json` | Supported resolution checklist |
+
+## Snapshots
+
+| File | Covers |
+|---|---|
+| `../snapshots/em_theatre_profile.json` | Committed deterministic 342-province frontend snapshot for profiler/CI/screenshots (write-back disabled) |

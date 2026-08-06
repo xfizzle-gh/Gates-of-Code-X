@@ -4,9 +4,11 @@ const ColorIdMapScript = preload("res://scripts/color_id_map.gd")
 const MapSpaceScript = preload("res://scripts/presentation/map_space.gd")
 const MapMarkersScript = preload("res://scripts/presentation/map_markers.gd")
 const MapDebugScript = preload("res://scripts/presentation/map_debug.gd")
+const MapTextureLayerScript = preload("res://scripts/presentation/map_texture_layer.gd")
 const DEFAULT_MAP_MANIFEST := "res://assets/maps/europe/interim_goe/map_manifest.json"
 const EM_FROM_GOE_MANIFEST := "res://assets/maps/europe_mediterranean/from_goe/map_manifest.json"
 const DEFAULT_PRESENTATION_FIXTURE := "res://fixtures/presentation/empty_map.json"
+const DEFAULT_PROFILE_SNAPSHOT := "res://fixtures/snapshots/em_theatre_profile.json"
 const HOME_MAP_MARGIN := Vector2(18, 18)
 const HOME_FIT_FILL := 1.06
 # Reserve space so title/diagnostic rows never cover the theatre.
@@ -28,6 +30,12 @@ var _screenshot_frames_left := -1
 var _overlay_cache_key := ""
 var _cached_label_candidates: Array = []
 var _cached_reserved_rects: Array = []
+var _cached_label_bounds: Array = []
+# Separate CanvasItem layers: filtering is per-node in Godot 4.
+var _bg_layer: Node2D
+var _identity_layer: Node2D
+var _layers_dirty := true
+var _last_layer_rect := Rect2()
 
 
 func _ready() -> void:
@@ -41,6 +49,9 @@ func _ready() -> void:
 		if text.begins_with("--fixture="):
 			presentation_fixture_path = text.substr(String("--fixture=").length()).strip_edges()
 			continue
+		if text.begins_with("--snapshot="):
+			# Handled by main.gd; keep parsing other flags here.
+			continue
 		if text == "--debug-map":
 			map_debug.enabled = true
 			continue
@@ -51,14 +62,25 @@ func _ready() -> void:
 	if filtered.size() > 1:
 		map_manifest_source_path = String(filtered[1])
 	super._ready()
+	# Clean checkout fallback when ignored campaign_snapshot.json is absent.
+	if (
+		(snapshot.is_empty() or not load_error.is_empty())
+		and FileAccess.file_exists(DEFAULT_PROFILE_SNAPSHOT)
+	):
+		snapshot_source_path = DEFAULT_PROFILE_SNAPSHOT
+		load_error = ""
+		_load_snapshot(DEFAULT_PROFILE_SNAPSHOT)
 	if filtered.size() <= 1:
 		map_manifest_source_path = _resolve_map_manifest_path()
+	_ensure_presentation_layers()
 	_load_presentation_fixture(presentation_fixture_path)
 	_open_color_id_map()
 	set_process(map_debug.enabled or not _screenshot_path.is_empty())
 	if not _screenshot_path.is_empty():
 		_fit_complete_theatre()
-		_screenshot_frames_left = 18
+		_layers_dirty = true
+		_sync_presentation_layers()
+		_screenshot_frames_left = 12
 		queue_redraw()
 
 
@@ -68,6 +90,8 @@ func _process(delta: float) -> void:
 	if _screenshot_frames_left < 0:
 		return
 	_screenshot_frames_left -= 1
+	_layers_dirty = true
+	_sync_presentation_layers()
 	queue_redraw()
 	if _screenshot_frames_left > 0:
 		return
@@ -82,12 +106,19 @@ func _capture_screenshot_and_quit() -> void:
 		return
 	var image := get_viewport().get_texture().get_image()
 	if image != null and not image.is_empty():
-		image.save_png(_screenshot_path)
-		status_message = "Saved screenshot err=0 path=%s ready=%s" % [
+		var base := _screenshot_path.get_base_dir()
+		if not base.is_empty() and not DirAccess.dir_exists_absolute(base):
+			DirAccess.make_dir_recursive_absolute(base)
+		var err := image.save_png(_screenshot_path)
+		status_message = "Saved screenshot err=%s path=%s ready=%s" % [
+			err,
 			_screenshot_path,
 			str(color_id_map.is_ready),
 		]
-	get_tree().quit()
+		print(status_message)
+	else:
+		print("screenshot failed: empty viewport image path=%s" % _screenshot_path)
+	get_tree().quit(0)
 
 
 func _resolve_map_manifest_path() -> String:
@@ -128,42 +159,107 @@ func _invalidate_overlay_cache() -> void:
 	_overlay_cache_key = ""
 	_cached_label_candidates.clear()
 	_cached_reserved_rects.clear()
+	_cached_label_bounds.clear()
+
+
+func _ensure_presentation_layers() -> void:
+	if _bg_layer != null and _identity_layer != null:
+		return
+	_bg_layer = MapTextureLayerScript.new()
+	_bg_layer.name = "MapBackgroundLayer"
+	_bg_layer.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	_bg_layer.z_index = -20
+	add_child(_bg_layer)
+
+	_identity_layer = MapTextureLayerScript.new()
+	_identity_layer.name = "MapIdentityLayer"
+	_identity_layer.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_identity_layer.z_index = -10
+	add_child(_identity_layer)
+
+
+func _sync_presentation_layers() -> void:
+	_ensure_presentation_layers()
+	if color_id_map == null or not color_id_map.is_ready:
+		if _bg_layer != null:
+			_bg_layer.set_draw_items([])
+			_bg_layer.refresh()
+		if _identity_layer != null:
+			_identity_layer.set_draw_items([])
+			_identity_layer.refresh()
+		_layers_dirty = false
+		return
+	_sync_map_space()
+	var viewport := get_viewport_rect().size
+	var map_width := viewport.x - PANEL_WIDTH
+	var texture_rect := map_space.texture_rect()
+	if not _layers_dirty and texture_rect == _last_layer_rect:
+		return
+	_last_layer_rect = texture_rect
+	_layers_dirty = false
+	# Linear-filtered visual background underlay (never authoritative).
+	var bg_items: Array = []
+	if color_id_map.background_texture != null:
+		bg_items.append({"texture": color_id_map.background_texture, "rect": texture_rect})
+	_bg_layer.set_clear(Rect2(0, 0, map_width, viewport.y), Color(0.025, 0.035, 0.047, 1.0))
+	_bg_layer.set_draw_items(bg_items)
+	_bg_layer.refresh()
+	# Nearest-filtered owner / border / highlight identity presentation layers.
+	var id_items: Array = []
+	if color_id_map.owner_texture != null:
+		id_items.append({"texture": color_id_map.owner_texture, "rect": texture_rect})
+	if color_id_map.border_texture != null:
+		id_items.append({"texture": color_id_map.border_texture, "rect": texture_rect})
+	if color_id_map.highlight_texture != null:
+		id_items.append({"texture": color_id_map.highlight_texture, "rect": texture_rect})
+	_identity_layer.set_clear(Rect2(), Color(0, 0, 0, 0))
+	_identity_layer.set_draw_items(id_items)
+	_identity_layer.refresh()
 
 
 func _load_snapshot(path: String) -> void:
 	super._load_snapshot(path)
 	_invalidate_overlay_cache()
+	_layers_dirty = true
 	if color_id_map != null and color_id_map.is_ready:
-		if color_id_map.has_method("begin_frame_stats"):
-			color_id_map.begin_frame_stats()
 		color_id_map.refresh_snapshot(snapshot, FACTION_COLORS)
 		color_id_map.refresh_highlights(selected_province_id, legal_targets)
-		map_debug.note_invalidation()
+		map_debug.note_invalidation("snapshot_refresh")
+		_sync_presentation_layers()
 
 
 func _rebuild_legal_targets() -> void:
 	super._rebuild_legal_targets()
 	_invalidate_overlay_cache()
+	_layers_dirty = true
 	if color_id_map != null and color_id_map.is_ready:
 		color_id_map.refresh_highlights(selected_province_id, legal_targets)
-		map_debug.note_invalidation()
+		map_debug.note_invalidation("highlight_refresh")
+		_sync_presentation_layers()
 
 
 func _open_color_id_map() -> void:
 	var previous_ready: bool = color_id_map != null and bool(color_id_map.is_ready)
 	_invalidate_overlay_cache()
+	_ensure_presentation_layers()
 	if color_id_map.open(map_manifest_source_path, snapshot, FACTION_COLORS):
 		color_id_map.refresh_highlights(selected_province_id, legal_targets)
 		status_message = "Color-ID province renderer active (%s)." % map_manifest_source_path.get_file()
 		fitted_once = false
+		_layers_dirty = true
 		_fit_complete_theatre()
-		map_debug.note_invalidation()
+		map_debug.note_invalidation("map_open")
+		_sync_presentation_layers()
 	else:
 		# Keep a previously successful open; only fall back if nothing is ready.
 		if previous_ready:
 			status_message = "%s Kept previous color-ID map." % color_id_map.error
 		else:
 			status_message = "%s Marker fallback remains non-authoritative." % color_id_map.error
+			if _bg_layer != null:
+				_bg_layer.visible = false
+			if _identity_layer != null:
+				_identity_layer.visible = false
 	queue_redraw()
 
 
@@ -173,41 +269,35 @@ func _sync_map_space() -> void:
 	map_space.configure(color_id_map.image_size(), _map_content_rect(), view_scale, view_offset)
 
 
-func _draw_map_texture(texture: Texture2D, rect: Rect2, filter: CanvasItem.TextureFilter) -> void:
-	if texture == null:
-		return
-	var previous := texture_filter
-	texture_filter = filter
-	draw_texture_rect(texture, rect, false)
-	texture_filter = previous
-
-
 func _draw() -> void:
 	if not color_id_map.is_ready:
+		if _bg_layer != null:
+			_bg_layer.visible = false
+		if _identity_layer != null:
+			_identity_layer.visible = false
 		super._draw()
 		return
-	if color_id_map.has_method("begin_frame_stats"):
-		color_id_map.begin_frame_stats()
-	_sync_map_space()
+	if _bg_layer != null:
+		_bg_layer.visible = true
+	if _identity_layer != null:
+		_identity_layer.visible = true
+	# Capture rebuild counters BEFORE any end-of-frame clear so F3 can report them.
+	if map_debug.enabled and color_id_map.has_method("get_perf_stats"):
+		map_debug.capture_perf(color_id_map.get_perf_stats())
+	_sync_presentation_layers()
 	var viewport := get_viewport_rect().size
 	var map_width := viewport.x - PANEL_WIDTH
-	draw_rect(Rect2(0, 0, map_width, viewport.y), Color(0.025, 0.035, 0.047, 1.0))
-	var texture_rect := map_space.texture_rect()
-	# Background: linear filter reduces soft/pixelated upscale of the underlay.
-	# Owner/border/highlight stay nearest so province identity edges do not bleed.
-	_draw_map_texture(color_id_map.background_texture, texture_rect, CanvasItem.TEXTURE_FILTER_LINEAR)
-	_draw_map_texture(color_id_map.owner_texture, texture_rect, CanvasItem.TEXTURE_FILTER_NEAREST)
-	_draw_map_texture(color_id_map.border_texture, texture_rect, CanvasItem.TEXTURE_FILTER_NEAREST)
+	# Texture layers are separate CanvasItems. This node draws dynamic overlays + UI only.
 	if show_coalition_fronts:
 		_draw_coalition_fronts()
 	if show_crossing_overlay:
 		_draw_crossing_overlay()
-	_draw_map_texture(color_id_map.highlight_texture, texture_rect, CanvasItem.TEXTURE_FILTER_NEAREST)
 	_draw_color_id_pending_battle()
 	_draw_presentation_fixture_markers()
 	_draw_color_id_overlays()
 	if map_debug.enabled:
 		map_debug.counter_bounds = _cached_reserved_rects.duplicate()
+		map_debug.label_bounds = _cached_label_bounds.duplicate()
 		map_debug.draw(
 			self,
 			map_space,
@@ -217,6 +307,8 @@ func _draw() -> void:
 			presentation_fixture,
 			_overlay_clamp_rect()
 		)
+	if color_id_map.has_method("end_frame_stats"):
+		color_id_map.end_frame_stats()
 
 	var campaign: Dictionary = snapshot.get("campaign", {})
 	var map_contract: Dictionary = snapshot.get("strategic_map", {})
@@ -576,6 +668,7 @@ func _draw_color_id_overlays() -> void:
 			return int(a.get("priority", 0)) > int(b.get("priority", 0))
 		)
 		var accepted: Array = []
+		var accepted_bounds: Array = []
 		var occupied_rects: Array = reserved.duplicate()
 		for candidate: Dictionary in label_candidates:
 			var rect: Rect2 = candidate.get("rect", Rect2())
@@ -588,8 +681,10 @@ func _draw_color_id_overlays() -> void:
 			if blocked:
 				continue
 			accepted.append(candidate)
+			accepted_bounds.append(rect)
 			occupied_rects.append(rect)
 		_cached_label_candidates = accepted
+		_cached_label_bounds = accepted_bounds
 		_cached_reserved_rects = reserved.duplicate()
 	else:
 		reserved = _cached_reserved_rects.duplicate()
@@ -766,6 +861,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _fit_complete_theatre() -> void:
 	_invalidate_overlay_cache()
+	_layers_dirty = true
 	if color_id_map == null or not color_id_map.is_ready:
 		view_scale = HOME_FIT_FILL
 		view_offset = Vector2.ZERO

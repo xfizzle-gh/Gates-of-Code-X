@@ -137,7 +137,8 @@ Note: interactive Godot window capture hung in this agent environment; composite
 - Source art resolution still 817×920; true smooth vector borders are out of scope
 - Interactive FPS / draw-call GPU counters not captured in headless mode
 - Stack panel UI performance is unchanged except shared map-layer gains
-- `campaign_snapshot.json` used for local profiling is a generated runtime artifact (not required in git)
+- **Synchronous `OS.execute()` write-back still blocks the Godot main thread** during commands — tracked in follow-up **#91** (async backend, busy state, duplicate-click protection)
+- Clean-checkout profiling uses committed `godot/fixtures/snapshots/em_theatre_profile.json` (not ignored `campaign_snapshot.json`)
 
 ## Regressions covered
 

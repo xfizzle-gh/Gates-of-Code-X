@@ -29,10 +29,14 @@ Default snapshot: `res://campaign_snapshot.json`. Optional first non-flag user a
 ### CLI helpers
 
 ```text
-Godot.exe --path godot -- --fixture=res://fixtures/presentation/routes_and_battles.json
+Godot.exe --path godot -- --snapshot=res://fixtures/snapshots/em_theatre_profile.json --fixture=res://fixtures/presentation/routes_and_battles.json
 Godot.exe --path godot -- --debug-map
-Godot.exe --headless --path godot -s res://scripts/tools/map_profiler.gd -- --out=../docs/godot-presentation/after_profile.json
+Godot.exe --headless --path godot -s res://scripts/tools/map_ci_check.gd
+Godot.exe --headless --path godot -s res://scripts/tools/map_profiler.gd -- --snapshot=res://fixtures/snapshots/em_theatre_profile.json --out=../docs/godot-presentation/after_profile.json
+Godot.exe --headless --path godot -s res://scripts/tools/map_screenshot.gd -- --snapshot=res://fixtures/snapshots/em_theatre_profile.json --out=../docs/godot-presentation/screenshots/runtime/full_map_1080p.png --width=1920 --height=1080
 ```
+
+Write-back remains synchronous (`OS.execute`) and can block the UI — see issue #91.
 
 ### Presentation fixtures
 

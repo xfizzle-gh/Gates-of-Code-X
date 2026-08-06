@@ -4,32 +4,36 @@
 	"image_height": 920,
 	"image_width": 817,
 	"label": "godot-strategic-map-profile",
-	"map_open_ms": 394.07,
+	"manifest_path": "res://assets/maps/europe_mediterranean/from_goe/map_manifest.json",
+	"map_open_ms": 425.19,
 	"notes": [
 		"Headless CPU timings for map layer rebuilds (not full interactive FPS).",
-		"refresh_snapshot_ms_avg is partial single-province ownership change.",
-		"Idle/hover frame times require interactive capture when available."
+		"Default snapshot is the committed fixtures/snapshots/em_theatre_profile.json.",
+		"refresh_snapshot_ms_avg is partial single-province ownership change."
 	],
 	"ok": true,
 	"perf_stats": {
 		"cached_province_runs": 342,
 		"full_owner_rebuilds": 1,
-		"highlight_rebuild_ms_last": 0.212,
+		"highlight_rebuild_ms_last": 0.209,
 		"highlight_rebuilds": 20,
-		"owner_rebuild_ms_last": 0.057,
+		"last_event": "highlight",
+		"owner_rebuild_ms_last": 0.058,
 		"partial_owner_rebuilds": 2,
 		"pixel_index_size": 751640,
 		"pixels_touched_last": 2954,
+		"static_rebuilds_displayed": 0,
 		"static_rebuilds_this_frame": 23
 	},
 	"province_count": 342,
 	"province_pick_ms_avg": 0.0,
 	"refresh_highlights_ms_avg": 0.22,
-	"refresh_highlights_noop_ms_avg": 0.027,
-	"refresh_snapshot_ms_avg": 0.79,
-	"refresh_snapshot_noop_ms_avg": 0.242,
-	"refresh_snapshot_partial_ms": 0.79,
+	"refresh_highlights_noop_ms_avg": 0.031,
+	"refresh_snapshot_ms_avg": 0.77,
+	"refresh_snapshot_noop_ms_avg": 0.329,
+	"refresh_snapshot_partial_ms": 0.77,
 	"snapshot_battalions": 12,
+	"snapshot_path": "res://fixtures/snapshots/em_theatre_profile.json",
 	"snapshot_provinces": 342,
-	"timestamp_unix": 1786030270.688
+	"timestamp_unix": 1786033180.318
 }

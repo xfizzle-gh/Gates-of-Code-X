@@ -17,15 +17,27 @@ class GodotPresentationPerformanceTests(unittest.TestCase):
         self.assertIn("_rebuild_owner_partial", layer)
         self.assertIn("_rebuild_owner_full", layer)
         self.assertIn("get_perf_stats", layer)
-        self.assertIn("begin_frame_stats", layer)
+        self.assertIn("end_frame_stats", layer)
         self.assertIn("owner_texture.update", layer)
         self.assertIn("highlight_texture.update", layer)
+        self.assertNotIn('set_meta("goc_filter"', layer)
         # Full-image highlight scans must not remain the only path.
         self.assertIn("_fill_province_pixels", layer)
         self.assertNotIn(
             "for y in range(id_image.get_height()):\n\t\tfor x in range(id_image.get_width()):\n\t\t\tvar province_id: String = province_by_color.get(_rgb_key(id_image.get_pixel(x, y)), \"\")\n\t\t\tif province_id == selected_province_id",
             layer,
         )
+
+    def test_separate_canvasitem_filter_layers(self) -> None:
+        main = (GODOT / "scripts/main_color_id.gd").read_text(encoding="utf-8")
+        layer = (GODOT / "scripts/presentation/map_texture_layer.gd").read_text(encoding="utf-8")
+        self.assertIn("MapBackgroundLayer", main)
+        self.assertIn("MapIdentityLayer", main)
+        self.assertIn("TEXTURE_FILTER_LINEAR", main)
+        self.assertIn("TEXTURE_FILTER_NEAREST", main)
+        self.assertIn("_sync_presentation_layers", main)
+        self.assertNotIn("texture_filter = filter", main)
+        self.assertIn("draw_texture_rect", layer)
 
     def test_map_space_centralizes_transforms(self) -> None:
         space = (GODOT / "scripts/presentation/map_space.gd").read_text(encoding="utf-8")
@@ -113,6 +125,32 @@ class GodotPresentationPerformanceTests(unittest.TestCase):
         self.assertIn("refresh_snapshot_ms_avg", profiler)
         self.assertIn("refresh_highlights_ms_avg", profiler)
         self.assertIn("map_open_ms", profiler)
+        self.assertIn("--snapshot=", profiler)
+        self.assertIn("fixtures/snapshots/em_theatre_profile.json", profiler)
+        snapshot = GODOT / "fixtures/snapshots/em_theatre_profile.json"
+        self.assertTrue(snapshot.is_file())
+        data = json.loads(snapshot.read_text(encoding="utf-8"))
+        self.assertGreaterEqual(len(data.get("provinces", [])), 300)
+        ci = (GODOT / "scripts/tools/map_ci_check.gd").read_text(encoding="utf-8")
+        self.assertIn("map_ci_check", ci)
+        self.assertIn("main.tscn", ci)
+        workflow = (ROOT / ".github/workflows/gates-of-codex.yml").read_text(encoding="utf-8")
+        self.assertIn("godot-map:", workflow)
+        self.assertIn("map_ci_check.gd", workflow)
+        self.assertIn("map_profiler.gd", workflow)
+        self.assertIn("map_screenshot.gd", workflow)
+
+    def test_debug_stats_not_cleared_before_overlay(self) -> None:
+        main = (GODOT / "scripts/main_color_id.gd").read_text(encoding="utf-8")
+        debug = (GODOT / "scripts/presentation/map_debug.gd").read_text(encoding="utf-8")
+        self.assertIn("capture_perf", main)
+        self.assertIn("end_frame_stats", main)
+        # capture must appear before end_frame_stats in _draw
+        self.assertLess(main.index("capture_perf"), main.index("end_frame_stats"))
+        self.assertIn("_cached_label_bounds", main)
+        self.assertIn("label_bounds", debug)
+        self.assertIn("last_event", debug)
+        self.assertIn("static_rebuilds_displayed", debug)
 
     def test_edge_marker_interpolation_is_fixed_point(self) -> None:
         markers = (GODOT / "scripts/presentation/map_markers.gd").read_text(encoding="utf-8")
