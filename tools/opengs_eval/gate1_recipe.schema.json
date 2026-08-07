@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gates-of-codex.invalid/schemas/opengs-recipe-v1.json",
+  "title": "Gates of CodeX OpenGS deterministic recipe",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "recipe_id", "root_seed", "inputs", "counts", "options"],
+  "properties": {
+    "schema": {"const": "gates-of-codex.opengs-recipe"},
+    "schema_version": {"const": 1},
+    "recipe_id": {"type": "string", "pattern": "^[a-z0-9_-]+$"},
+    "root_seed": {"type": "integer", "minimum": 0, "maximum": 9223372036854775807},
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["land", "boundary", "density", "terrain"],
+      "properties": {
+        "land": {"$ref": "#/$defs/input"},
+        "boundary": {"$ref": "#/$defs/input"},
+        "density": {"$ref": "#/$defs/input"},
+        "terrain": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/input"}]}
+      }
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["land_territories", "ocean_territories", "land_provinces", "ocean_provinces"],
+      "properties": {
+        "land_territories": {"type": "integer", "minimum": 1},
+        "ocean_territories": {"type": "integer", "minimum": 0},
+        "land_provinces": {"type": "integer", "minimum": 1},
+        "ocean_provinces": {"type": "integer", "minimum": 0}
+      }
+    },
+    "options": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lloyd_iterations", "density_strength", "exclude_ocean_density", "jagged_land", "jagged_ocean", "jagged_amplitude"],
+      "properties": {
+        "lloyd_iterations": {"type": "integer", "minimum": 0},
+        "density_strength": {"type": "number", "minimum": 0},
+        "exclude_ocean_density": {"type": "boolean"},
+        "jagged_land": {"type": "boolean"},
+        "jagged_ocean": {"type": "boolean"},
+        "jagged_amplitude": {"type": "number", "minimum": 0}
+      }
+    }
+  },
+  "$defs": {
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  }
+}
