@@ -1,14 +1,16 @@
 # earth3_europe_mediterranean
 
-Approved Earth3 Europe–Mediterranean launch theatre (crop `em_reference_masked`).
+Earth3 Europe–Mediterranean launch theatre (crop `em_reference_masked` **mask v6**).
+
+**Owner visual approval pending** for Africa–Levant corridor + full Scandinavia correction.
 
 | Field | Value |
 |------|------:|
-| Provinces | 3038 |
-| Land | 2843 |
-| Water | 195 |
+| Provinces | 3345 |
+| Land | 3133 |
+| Water | 212 |
 | Renderer | `polygon_mesh` |
-| Approved source-ID hash | `7effdffbccbcce33ecba364dc8d161ded5053266db2df0deee605a98c36620dc` |
+| Source-ID hash (provisional) | `4fe9d98bbf40d2588286d3d4ec5513ffa3a8f0b7b2ae5689373217b4cb569a1b` |
 
 ## Files
 

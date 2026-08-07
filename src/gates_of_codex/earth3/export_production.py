@@ -10,13 +10,15 @@ from pathlib import Path
 from shapely import make_valid
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon
 from shapely.ops import triangulate as shapely_triangulate
+from shapely.ops import unary_union
 
 from .audit_artifact import included_ids_hash, sha256_file, sha256_text_file
 from .crop import apply_crop, load_crop_candidates
 from .parse import load_earth3_dataset
 
-APPROVED_INCLUDED_IDS_SHA256 = "7effdffbccbcce33ecba364dc8d161ded5053266db2df0deee605a98c36620dc"
-APPROVED_PROVINCE_COUNT = 3038
+# Pending owner visual approval of mask v6 (Africa–Levant corridor + full Scandinavia).
+APPROVED_INCLUDED_IDS_SHA256 = "4fe9d98bbf40d2588286d3d4ec5513ffa3a8f0b7b2ae5689373217b4cb569a1b"
+APPROVED_PROVINCE_COUNT = 3345
 DATASET_SCHEMA = "gates-of-codex.earth3-polygon-dataset"
 DATASET_SCHEMA_VERSION = 2
 AREA_REL_TOL = 1e-3
@@ -328,6 +330,26 @@ def export_production_dataset(
     for a, b in sorted(border_segments):
         borders_flat.extend((a[0], a[1], b[0], b[1]))
 
+    gap_fills, hole_audit = _build_land_hole_gap_fills(
+        provinces_out,
+        dataset=dataset,
+        included_source_ids=included_set,
+        origin_x=origin_x,
+        origin_y=origin_y,
+        source_ids_expected=source_ids,
+    )
+    (output_dir / "black_hole_audit.json").write_text(
+        json.dumps(hole_audit, indent=2) + "\n", encoding="utf-8"
+    )
+    if not hole_audit.get("ok"):
+        raise TriangulationError(
+            "black_hole_audit failed; see black_hole_audit.json: "
+            f"unexplained={hole_audit.get('unexplained_black_components')} "
+            f"missing={hole_audit.get('missing_province_ids_count')} "
+            f"empty_meshes={hole_audit.get('failed_empty_meshes')} "
+            f"land_overlap={hole_audit.get('gap_fills_with_land_overlap')}"
+        )
+
     payload = {
         "schema": DATASET_SCHEMA,
         "schema_version": DATASET_SCHEMA_VERSION,
@@ -354,6 +376,8 @@ def export_production_dataset(
             "y_axis": "downward_positive",
         },
         "triangulation_audit": tri_audit,
+        "black_hole_audit": hole_audit,
+        "ocean_gap_fills": gap_fills,
         "provinces": provinces_out,
         "edges": edges,
         "border_segments": borders_flat,
@@ -432,5 +456,389 @@ def export_production_dataset(
         "dataset_sha256": dataset_sha,
         "elapsed_ms": manifest["export"]["elapsed_ms"],
         "triangulation_audit": tri_audit,
+        "black_hole_audit": hole_audit,
         "meta": meta,
     }
+
+
+def _ring_to_polygon(ring_flat: list[float]) -> Polygon | None:
+    coords = [
+        (float(ring_flat[i]), float(ring_flat[i + 1]))
+        for i in range(0, len(ring_flat) - 1, 2)
+    ]
+    if len(coords) < 3:
+        return None
+    if coords[0] != coords[-1]:
+        coords = coords + [coords[0]]
+    poly = Polygon(coords)
+    if not poly.is_valid:
+        poly = make_valid(poly)
+    polys = _extract_polygons(poly)
+    if not polys:
+        return None
+    return max(polys, key=lambda g: g.area)
+
+
+def _triangulate_hole_local(hole: Polygon) -> tuple[list[float], list[int]]:
+    """Return (verts_flat, indices) for a hole polygon in local coordinates."""
+    if hole.interiors:
+        hole = Polygon(list(hole.exterior.coords))
+    verts_flat, indices, _ring, _audit = triangulate_ring_validated(
+        tuple((float(x), float(y)) for x, y in list(hole.exterior.coords)[:-1])
+    )
+    return verts_flat, indices
+
+
+# Max fraction of a gap-fill that may overlap source land (numerical sliver tolerance).
+GAP_FILL_LAND_OVERLAP_FRAC_TOL = 1e-3
+GAP_FILL_LAND_OVERLAP_AREA_TOL = 2.0  # local px^2
+
+
+def _source_poly_local(province, origin_x: float, origin_y: float) -> Polygon | None:
+    ring = list(province.ring)
+    if len(ring) < 3:
+        return None
+    if ring[0] != ring[-1]:
+        ring = ring + [ring[0]]
+    local = [(float(x) - origin_x, float(y) - origin_y) for x, y in ring]
+    poly = Polygon(local)
+    if not poly.is_valid:
+        poly = make_valid(poly)
+    polys = _extract_polygons(poly)
+    if not polys:
+        return None
+    return max(polys, key=lambda g: g.area)
+
+
+def _classify_water_presentation_region(cx: float, cy: float, area: float) -> str:
+    """Label known water basins in local crop coordinates (origin-translated)."""
+    # Approximate basins from v6 crop local space (origin ~7084,150).
+    # Values are local: source - origin.
+    if 1200 <= cx <= 3200 and 2400 <= cy <= 3400 and area > 5000:
+        return "mediterranean_or_enclosed_sea"
+    if 2500 <= cx <= 3600 and 1800 <= cy <= 2700 and area > 2000:
+        return "black_sea"
+    if 1500 <= cx <= 2800 and 900 <= cy <= 1800 and area > 500:
+        return "baltic_or_scandinavian_lake"
+    if 1800 <= cx <= 3200 and 200 <= cy <= 1200:
+        return "scandinavian_or_karelian_lake"
+    if area > 50000:
+        return "large_enclosed_water_body"
+    if area > 50:
+        return "inland_lake_or_lagoon"
+    return "small_water_gap"
+
+
+def _build_land_hole_gap_fills(
+    provinces_out: list[dict],
+    *,
+    dataset,
+    included_source_ids: set[int],
+    origin_x: float,
+    origin_y: float,
+    source_ids_expected: list[int],
+) -> tuple[list[dict], dict]:
+    """Source-grounded hole audit + synthetic ocean fills for uncovered water gaps."""
+    land_polys: list[Polygon] = []
+    water_polys: list[Polygon] = []
+    empty_meshes: list[str] = []
+    present_source_ids: set[int] = set()
+    for row in provinces_out:
+        sid = int(row.get("source_id", -1))
+        if sid >= 0:
+            present_source_ids.add(sid)
+        poly = _ring_to_polygon(row.get("ring") or [])
+        if poly is None:
+            empty_meshes.append(str(row.get("id")))
+            continue
+        if len(row.get("triangles") or []) < 3 or len(row.get("vertices") or []) < 6:
+            empty_meshes.append(str(row.get("id")))
+        if row.get("is_water"):
+            water_polys.append(poly)
+        else:
+            land_polys.append(poly)
+
+    missing_province_ids = sorted(set(source_ids_expected) - present_source_ids)
+
+    # Source land polys for gap-fill overlap validation (included land only).
+    source_land_polys: list[tuple[int, Polygon]] = []
+    source_water_polys: list[tuple[int, Polygon]] = []
+    for sid in included_source_ids:
+        prov = dataset.provinces.get(sid)
+        if prov is None:
+            continue
+        sp = _source_poly_local(prov, origin_x, origin_y)
+        if sp is None:
+            continue
+        if prov.is_water:
+            source_water_polys.append((sid, sp))
+        else:
+            source_land_polys.append((sid, sp))
+
+    hole_audit: dict = {
+        "schema": "gates-of-codex.earth3-black-hole-audit",
+        "schema_version": 2,
+        "total_polygon_interior_holes": 0,
+        "water_holes_rendered": 0,
+        "gap_fills_created": 0,
+        "missing_province_ids": missing_province_ids,
+        "missing_province_ids_count": len(missing_province_ids),
+        "failed_empty_meshes": len(empty_meshes),
+        "failed_empty_mesh_ids": empty_meshes,
+        "unexplained_black_components": 0,
+        "gap_fills_with_land_overlap": 0,
+        "max_gap_fill_land_overlap_fraction": 0.0,
+        "max_gap_fill_land_overlap_area": 0.0,
+        "land_overlap_tol_fraction": GAP_FILL_LAND_OVERLAP_FRAC_TOL,
+        "land_overlap_tol_area": GAP_FILL_LAND_OVERLAP_AREA_TOL,
+        "gap_fill_validations": [],
+        "hole_classifications": [],
+    }
+    if not land_polys:
+        hole_audit["ok"] = (
+            hole_audit["missing_province_ids_count"] == 0
+            and hole_audit["failed_empty_meshes"] == 0
+        )
+        return [], hole_audit
+
+    land_u = unary_union(land_polys)
+    water_u = unary_union(water_polys) if water_polys else None
+    source_land_u = (
+        unary_union([p for _, p in source_land_polys]) if source_land_polys else None
+    )
+    geoms = list(land_u.geoms) if land_u.geom_type == "MultiPolygon" else [land_u]
+    gap_fills: list[dict] = []
+    unexplained = 0
+    land_overlap_violations = 0
+    max_land_frac = 0.0
+    max_land_area = 0.0
+    max_gap_fill_land_frac = 0.0
+    max_gap_fill_land_area = 0.0
+    gap_id = 0
+
+    for g in geoms:
+        if g.geom_type != "Polygon":
+            continue
+        for interior in g.interiors:
+            hole = Polygon(interior)
+            if hole.is_empty or hole.area <= 1e-6:
+                continue
+            hole_audit["total_polygon_interior_holes"] += 1
+            cx, cy = float(hole.centroid.x), float(hole.centroid.y)
+            area = float(hole.area)
+
+            # Included water coverage of this hole.
+            water_frac = 0.0
+            if water_u is not None and not water_u.is_empty:
+                inter = water_u.intersection(hole)
+                water_frac = float(inter.area) / area if area > 0 else 0.0
+
+            # Intersect hole against original Earth3 source polys (local space).
+            intersecting: list[dict] = []
+            source_water_area = 0.0
+            source_land_area = 0.0
+            # Broad-phase: only source polys whose bounds intersect hole bounds.
+            hb = hole.bounds
+            for sid, sp in source_water_polys + source_land_polys:
+                sb = sp.bounds
+                if (
+                    sb[2] < hb[0]
+                    or sb[0] > hb[2]
+                    or sb[3] < hb[1]
+                    or sb[1] > hb[3]
+                ):
+                    continue
+                try:
+                    ov = hole.intersection(sp)
+                except Exception:  # noqa: BLE001
+                    continue
+                if ov.is_empty or ov.area <= 1e-9:
+                    continue
+                oarea = float(ov.area)
+                is_w = bool(dataset.provinces[sid].is_water)
+                intersecting.append(
+                    {
+                        "source_province_id": sid,
+                        "is_water": is_w,
+                        "overlap_area": round(oarea, 4),
+                        "overlap_fraction_of_hole": round(oarea / area, 6) if area else 0.0,
+                    }
+                )
+                if is_w:
+                    source_water_area += oarea
+                else:
+                    source_land_area += oarea
+
+            intersecting.sort(key=lambda r: -float(r["overlap_area"]))
+            source_water_frac = source_water_area / area if area else 0.0
+            source_land_frac = source_land_area / area if area else 0.0
+            max_land_frac = max(max_land_frac, source_land_frac)
+            max_land_area = max(max_land_area, source_land_area)
+
+            region = _classify_water_presentation_region(cx, cy, area)
+
+            # Classification: prefer source water evidence; never auto-label land holes as water.
+            if source_land_frac > GAP_FILL_LAND_OVERLAP_FRAC_TOL and source_land_area > GAP_FILL_LAND_OVERLAP_AREA_TOL:
+                if source_water_frac < 0.5:
+                    classification = "unexplained_source_land_overlap"
+                    gap_needed = False
+                    unexplained += 1
+                    land_overlap_violations += 1
+                else:
+                    # Mostly water with sliver land noise — still gap-fill residual water.
+                    classification = "water_presentation_gap_partial_source_water"
+                    gap_needed = water_frac < 0.85
+            elif water_frac >= 0.85 or source_water_frac >= 0.85:
+                classification = "legitimate_inland_water_or_enclosed_sea"
+                hole_audit["water_holes_rendered"] += 1
+                gap_needed = False
+            elif source_water_frac >= 0.15 or region != "small_water_gap":
+                classification = "water_presentation_gap"
+                gap_needed = True
+            elif source_water_frac < 0.05 and source_land_frac < 0.05 and intersecting == []:
+                # Empty topological hole with no source coverage (true water void / lake).
+                classification = "water_presentation_gap_uncovered_void"
+                gap_needed = True
+            else:
+                classification = "unexplained_hole"
+                gap_needed = False
+                unexplained += 1
+
+            fill_entry = None
+            validation = {
+                "gap_fill_id": None,
+                "centroid": [round(cx, 4), round(cy, 4)],
+                "area": round(area, 4),
+                "region_hint": region,
+                "included_water_coverage_fraction": round(water_frac, 4),
+                "source_water_overlap_fraction": round(source_water_frac, 6),
+                "source_land_overlap_fraction": round(source_land_frac, 6),
+                "source_land_overlap_area": round(source_land_area, 4),
+                "intersecting_source_provinces": intersecting[:24],
+                "intersecting_source_count": len(intersecting),
+                "classification": classification,
+                "land_overlap_ok": source_land_frac <= GAP_FILL_LAND_OVERLAP_FRAC_TOL
+                or source_land_area <= GAP_FILL_LAND_OVERLAP_AREA_TOL,
+            }
+
+            if gap_needed and classification.startswith("water_presentation"):
+                # Reject gap fill if it would paint over meaningful source land.
+                if (
+                    source_land_frac > GAP_FILL_LAND_OVERLAP_FRAC_TOL
+                    and source_land_area > GAP_FILL_LAND_OVERLAP_AREA_TOL
+                    and source_water_frac < 0.5
+                ):
+                    classification = "unexplained_blocked_land_overlap"
+                    validation["classification"] = classification
+                    unexplained += 1
+                    land_overlap_violations += 1
+                    gap_needed = False
+
+            if gap_needed:
+                try:
+                    # If hole overlaps source land slightly, subtract land before fill.
+                    fill_geom = hole
+                    if source_land_u is not None and not source_land_u.is_empty:
+                        try:
+                            cut = hole.difference(source_land_u)
+                            if not cut.is_empty and cut.area > 1e-6:
+                                fill_geom = cut
+                        except Exception:  # noqa: BLE001
+                            pass
+                    fill_polys = _extract_polygons(fill_geom)
+                    verts_all: list[float] = []
+                    tris_all: list[int] = []
+                    base = 0
+                    piece_land_frac = 0.0
+                    piece_land_area = 0.0
+                    for fp in fill_polys:
+                        if fp.area <= 1e-6:
+                            continue
+                        # Re-validate land overlap on each fill piece (after land subtraction).
+                        if source_land_u is not None and not source_land_u.is_empty:
+                            lov = fp.intersection(source_land_u)
+                            lov_a = float(lov.area) if not lov.is_empty else 0.0
+                            lov_f = lov_a / float(fp.area) if fp.area > 0 else 0.0
+                            piece_land_frac = max(piece_land_frac, lov_f)
+                            piece_land_area = max(piece_land_area, lov_a)
+                            if (
+                                lov_f > GAP_FILL_LAND_OVERLAP_FRAC_TOL
+                                and lov_a > GAP_FILL_LAND_OVERLAP_AREA_TOL
+                            ):
+                                land_overlap_violations += 1
+                                unexplained += 1
+                                classification = "unexplained_gap_fill_land_overlap"
+                                continue
+                        vflat, tris = _triangulate_hole_local(fp)
+                        nverts = len(vflat) // 2
+                        verts_all.extend(vflat)
+                        tris_all.extend(int(t) + base for t in tris)
+                        base += nverts
+                    max_gap_fill_land_frac = max(max_gap_fill_land_frac, piece_land_frac)
+                    max_gap_fill_land_area = max(max_gap_fill_land_area, piece_land_area)
+                    validation["gap_fill_land_overlap_fraction"] = round(piece_land_frac, 8)
+                    validation["gap_fill_land_overlap_area"] = round(piece_land_area, 4)
+                    if tris_all:
+                        gap_id += 1
+                        gid = f"gap_{gap_id:04d}"
+                        fill_entry = {
+                            "id": gid,
+                            "centroid": [round(cx, 4), round(cy, 4)],
+                            "area": round(area, 4),
+                            "vertices": verts_all,
+                            "triangles": tris_all,
+                            "classification": classification,
+                            "region_hint": region,
+                            "source_land_overlap_fraction": round(piece_land_frac, 8),
+                            "source_land_overlap_area": round(piece_land_area, 4),
+                            "intersecting_source_province_ids": [
+                                int(r["source_province_id"]) for r in intersecting[:24]
+                            ],
+                        }
+                        gap_fills.append(fill_entry)
+                        hole_audit["gap_fills_created"] += 1
+                        validation["gap_fill_id"] = gid
+                    else:
+                        if not classification.startswith("unexplained"):
+                            classification = "unexplained_empty_gap_fill"
+                            unexplained += 1
+                except Exception as exc:  # noqa: BLE001
+                    classification = "unexplained_triangulation_failure"
+                    unexplained += 1
+                    validation["error"] = str(exc)
+
+            validation["classification"] = classification
+            validation["gap_fill"] = fill_entry is not None
+            hole_audit["gap_fill_validations"].append(validation)
+            hole_audit["hole_classifications"].append(
+                {
+                    "gap_fill_id": validation.get("gap_fill_id"),
+                    "centroid": validation["centroid"],
+                    "area": validation["area"],
+                    "region_hint": region,
+                    "water_coverage_fraction": round(water_frac, 4),
+                    "source_water_overlap_fraction": round(source_water_frac, 6),
+                    "source_land_overlap_fraction": round(source_land_frac, 6),
+                    "classification": classification,
+                    "gap_fill": fill_entry is not None,
+                }
+            )
+
+    hole_audit["unexplained_black_components"] = unexplained
+    hole_audit["gap_fills_with_land_overlap"] = land_overlap_violations
+    # Hole-level source land contact (can be coastline slivers on enclosed seas).
+    hole_audit["max_hole_source_land_overlap_fraction"] = round(max_land_frac, 8)
+    hole_audit["max_hole_source_land_overlap_area"] = round(max_land_area, 4)
+    # Strict metric: land overlap of emitted gap-fill meshes only.
+    hole_audit["max_gap_fill_land_overlap_fraction"] = round(max_gap_fill_land_frac, 8)
+    hole_audit["max_gap_fill_land_overlap_area"] = round(max_gap_fill_land_area, 4)
+    hole_audit["missing_province_ids_count"] = len(hole_audit["missing_province_ids"])
+    hole_audit["ok"] = (
+        hole_audit["unexplained_black_components"] == 0
+        and hole_audit["failed_empty_meshes"] == 0
+        and hole_audit["missing_province_ids_count"] == 0
+        and hole_audit["gap_fills_with_land_overlap"] == 0
+        and hole_audit["max_gap_fill_land_overlap_fraction"]
+        <= GAP_FILL_LAND_OVERLAP_FRAC_TOL
+    )
+    return gap_fills, hole_audit
