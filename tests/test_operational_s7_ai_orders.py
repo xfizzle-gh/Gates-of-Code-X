@@ -802,15 +802,21 @@ class OperationalS7AIOrdersTests(unittest.TestCase):
             self.assertEqual(MoveOrderStatus.COMPLETED.value, force.move_order.status)
 
     def test_on_edge_ai_continues_current_edge_not_branch_from_origin(self) -> None:
-        """ON_EDGE at 250 facing B: must keep A-B first; may not branch via A to D."""
+        """ON_EDGE @250 facing B: reject B-A-D; commit exact A-B-C; 250→750."""
         with tempfile.TemporaryDirectory() as temporary:
-            g = _graph(ab_cost=1000, include_disabled_ac=False)
+            # cost 2000 → delta 500/tick so 250+500=750 stays on edge.
+            g = _graph(ab_cost=2000, include_disabled_ac=False)
             na, nb, nc = stable_node_id("a"), stable_node_id("b"), stable_node_id("c")
             nd = stable_node_id("d")
             edge_ab = stable_edge_id("corridor", na, nb)
+            edge_bc = stable_edge_id("corridor", nb, nc)
+            edge_ad = stable_edge_id("corridor", na, nd)
             g["nodes"].append(_node("d", pixel=[0, 1000]))
             g["sites"].append(_site("d"))
+            # D reachable only from A (so only via reverse B→A→D after prefix).
             g["edges"].append(_edge("a", "d", cost=500, enabled=True))
+            # Make D highest priority: contested/hostile weight via owner neutral
+            # and control weight — c is lower-priority NATO objective.
             state = _state(Path(temporary), g)
             state.provinces["d"] = Province(
                 "d", "D", owner=Faction.NEUTRAL, neighbors=["a"], x=0, y=100
@@ -819,7 +825,13 @@ class OperationalS7AIOrdersTests(unittest.TestCase):
             del state.strategic_formations["sf-n"]
             del state.battalions["bn-n"]
             state.provinces["c"].owner = Faction.NATO
-            # Attractive short objective d via A, and objective beyond B (c).
+            state.provinces["b"].owner = Faction.RUSSIA
+            # Prefer D over C by making D the only neutral (priority hostile site)
+            # and C already russia-owned so not a goal — wait, need C as legal forward.
+            # C NATO = hostile site reachable B-C. D neutral only via A.
+            # Ranked goals: both priority 0; path to D from facing B is B-A-D forbidden;
+            # path to C is B-C legal → A-B-C.
+            state.provinces["c"].owner = Faction.NATO
             state.strategic_formations["sf-r"].position = FormationOperationalPosition(
                 mode=PositionMode.ON_EDGE.value,
                 edge_id=edge_ab,
@@ -830,32 +842,33 @@ class OperationalS7AIOrdersTests(unittest.TestCase):
             order = state.strategic_formations["sf-r"].move_order
             assert order is not None, actions
             self.assertEqual(MoveOrderStatus.COMMITTED.value, order.status)
-            self.assertEqual(edge_ab, order.path_edge_ids[0])
-            self.assertEqual([na, nb], order.path_node_ids[:2])
-            # Must not start with a-d branch.
-            edge_ad = stable_edge_id("corridor", na, nd)
-            self.assertNotEqual(edge_ad, order.path_edge_ids[0])
-            self.assertNotIn(nd, order.path_node_ids[:2])
-            # Progress preserved before resolution.
+            # Exact forward route A-B-C.
+            self.assertEqual([na, nb, nc], order.path_node_ids)
+            self.assertEqual([edge_ab, edge_bc], order.path_edge_ids)
+            self.assertEqual(1, order.path_node_ids.count(na))
+            self.assertEqual(0, order.path_node_ids.index(na))
+            self.assertEqual(1, order.path_edge_ids.count(edge_ab))
+            self.assertEqual(len(order.path_node_ids), len(set(order.path_node_ids)))
+            self.assertEqual(len(order.path_edge_ids), len(set(order.path_edge_ids)))
+            self.assertNotIn(nd, order.path_node_ids)
+            self.assertNotIn(edge_ad, order.path_edge_ids)
+            # Progress exactly 250 before resolution.
             pos = state.strategic_formations["sf-r"].position
             assert pos is not None
             self.assertEqual(250, pos.progress_milli)
             self.assertEqual(PositionMode.ON_EDGE.value, pos.mode)
             self.assertEqual(edge_ab, pos.edge_id)
             activate_committed_orders(state)
-            # One tick from 250 with cost 1000 → progress 250+1000 clamped/arrive.
             report = advance_operational_tick(state)
             self.assertTrue(report["advanced"])
             force = state.strategic_formations["sf-r"]
             assert force.move_order is not None
             self.assertNotEqual(MoveOrderStatus.BLOCKED.value, force.move_order.status)
-            # Advanced from 250: either still on edge past 250 or arrived at B.
             assert force.position is not None
-            if force.position.mode == PositionMode.ON_EDGE.value:
-                self.assertGreater(force.position.progress_milli, 250)
-            else:
-                self.assertEqual(PositionMode.AT_NODE.value, force.position.mode)
-                self.assertEqual(nb, force.position.node_id)
+            self.assertEqual(PositionMode.ON_EDGE.value, force.position.mode)
+            self.assertEqual(750, force.position.progress_milli)
+            self.assertEqual(edge_ab, force.position.edge_id)
+            self.assertEqual(nb, force.position.facing_node_id)
 
     def test_on_edge_no_valid_forward_continuation_holds(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -930,6 +943,36 @@ class OperationalS7AIOrdersTests(unittest.TestCase):
                     order_id="branch-skip",
                 )
             self.assertIn(str(ctx.exception), {"on_edge_desync", "invalid_path"})
+
+    def test_manual_on_edge_tail_reversal_rejected(self) -> None:
+        """[A,B,A,D] / [AB,AB,AD] rejected as on_edge_reverse."""
+        with tempfile.TemporaryDirectory() as temporary:
+            g = _graph(include_disabled_ac=False, ab_cost=2000)
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            nd = stable_node_id("d")
+            edge_ab = stable_edge_id("corridor", na, nb)
+            edge_ad = stable_edge_id("corridor", na, nd)
+            g["nodes"].append(_node("d", pixel=[0, 1000]))
+            g["edges"].append(_edge("a", "d", enabled=True))
+            state = _state(Path(temporary), g)
+            state.provinces["d"] = Province(
+                "d", "D", owner=Faction.NEUTRAL, neighbors=["a"], x=0, y=100
+            )
+            state.strategic_formations["sf-r"].position = FormationOperationalPosition(
+                mode=PositionMode.ON_EDGE.value,
+                edge_id=edge_ab,
+                progress_milli=250,
+                facing_node_id=nb,
+            )
+            with self.assertRaises(ValueError) as ctx:
+                issue_move_order(
+                    state,
+                    "sf-r",
+                    path_node_ids=[na, nb, na, nd],
+                    path_edge_ids=[edge_ab, edge_ab, edge_ad],
+                    order_id="reverse-tail",
+                )
+            self.assertEqual("on_edge_reverse", str(ctx.exception))
 
     def test_two_phase_commit_invalid_draft_does_not_consume_capacity(self) -> None:
         """cap=1: valid lower-ID commits; invalid higher-ID rejected for legality."""

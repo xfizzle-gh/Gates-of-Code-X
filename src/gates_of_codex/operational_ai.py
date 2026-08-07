@@ -122,8 +122,20 @@ def find_operational_path(
     start_node: str,
     goal_node: str,
     adjacency: dict[str, list[_Hop]],
+    forbidden_nodes: set[str] | frozenset[str] | None = None,
+    forbidden_edges: set[str] | frozenset[str] | None = None,
 ) -> _Path | None:
-    """Deterministic least-cost path. Ties broken by edge_id path then node path."""
+    """Deterministic least-cost path. Ties broken by edge_id path then node path.
+
+    ``forbidden_nodes`` / ``forbidden_edges`` are never entered (used for ON_EDGE
+    tails so the planner cannot reverse back through the occupied prefix).
+    """
+    blocked_nodes = set(forbidden_nodes or ())
+    blocked_edges = set(forbidden_edges or ())
+    if start_node in blocked_nodes:
+        return None
+    if goal_node in blocked_nodes:
+        return None
     if start_node == goal_node:
         return _Path(node_ids=(start_node,), edge_ids=(), cost=0)
     # heap: (cost, edge_ids_key, node_ids_key, node)
@@ -142,7 +154,11 @@ def find_operational_path(
         if node == goal_node:
             return _reconstruct_path(came_from, start_node, goal_node, cost)
         for hop in adjacency.get(node, ()):
+            if hop.edge_id in blocked_edges:
+                continue
             nxt = hop.dest
+            if nxt in blocked_nodes:
+                continue
             new_cost = cost + hop.cost
             new_edge_key = edge_key + (hop.edge_id,)
             new_node_key = node_key + (nxt,)
@@ -407,8 +423,13 @@ def _build_route_for_goal(
     if goal_node == origin:
         # Reversal not allowed while ON_EDGE.
         return None
+    # Tail must not return to origin, reuse the occupied edge, or revisit prefix.
     tail = find_operational_path(
-        start_node=facing, goal_node=goal_node, adjacency=adjacency
+        start_node=facing,
+        goal_node=goal_node,
+        adjacency=adjacency,
+        forbidden_nodes={origin},
+        forbidden_edges={first_edge},
     )
     if tail is None:
         return None
@@ -416,6 +437,13 @@ def _build_route_for_goal(
     nodes = [origin, facing] + list(tail.node_ids[1:])
     edges = [first_edge] + list(tail.edge_ids)
     if not edges:
+        return None
+    # Defensive: no repeated nodes/edges, origin only at index 0.
+    if len(nodes) != len(set(nodes)) or len(edges) != len(set(edges)):
+        return None
+    if origin in nodes[1:]:
+        return None
+    if first_edge in edges[1:]:
         return None
     return nodes, edges
 

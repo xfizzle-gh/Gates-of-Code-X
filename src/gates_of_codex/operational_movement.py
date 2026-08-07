@@ -407,6 +407,7 @@ def classify_commit_rejection(exc: BaseException) -> str:
         "no_draft_order",
         "empty_path",
         "on_edge_desync",
+        "on_edge_reverse",
     }:
         return msg
     lower = msg.lower()
@@ -420,6 +421,8 @@ def classify_commit_rejection(exc: BaseException) -> str:
         return "metadata_blocked"
     if "one-way" in lower or "one_way" in lower:
         return "one_way_reverse"
+    if "on_edge_reverse" in lower:
+        return "on_edge_reverse"
     if "on_edge" in lower or "facing" in lower or "current edge" in lower:
         return "on_edge_desync"
     return "invalid_path"
@@ -1358,7 +1361,11 @@ def assert_on_edge_order_continuation(
     *,
     edges_by_id: dict[str, OperationalRouteEdge],
 ) -> None:
-    """ON_EDGE drafts must keep the current edge as hop 0 in facing direction."""
+    """ON_EDGE drafts must keep the current edge as hop 0 in facing direction.
+
+    The tail after the facing node must not reverse to the origin, reuse the
+    occupied edge, or repeat any prefix node/edge.
+    """
     pos = force.position
     if pos is None or pos.mode != PositionMode.ON_EDGE.value:
         raise ValueError("on_edge_desync")
@@ -1380,6 +1387,41 @@ def assert_on_edge_order_continuation(
         raise ValueError("on_edge_desync")
     # Direction of first hop must match facing.
     assert_edge_hop_legal(edge, origin=origin, dest=facing)
+    assert_on_edge_tail_no_reverse(
+        order, origin=origin, facing=facing, occupied_edge_id=edge_id
+    )
+
+
+def assert_on_edge_tail_no_reverse(
+    order: OperationalMoveOrder,
+    *,
+    origin: str,
+    facing: str,
+    occupied_edge_id: str,
+) -> None:
+    """Reject tails that reverse through the ON_EDGE prefix (stable token)."""
+    nodes = [str(n) for n in order.path_node_ids]
+    edges = [str(e) for e in order.path_edge_ids]
+    if len(nodes) != len(edges) + 1:
+        raise ValueError("invalid_path")
+    # No repeated nodes or edges anywhere on the route.
+    if len(nodes) != len(set(nodes)):
+        raise ValueError("on_edge_reverse")
+    if len(edges) != len(set(edges)):
+        raise ValueError("on_edge_reverse")
+    # Origin only at index 0; occupied edge only at hop 0.
+    if origin in nodes[1:]:
+        raise ValueError("on_edge_reverse")
+    if occupied_edge_id in edges[1:]:
+        raise ValueError("on_edge_reverse")
+    # Immediate reversal facing → origin.
+    if len(nodes) >= 3 and nodes[2] == origin:
+        raise ValueError("on_edge_reverse")
+    # Any hop that re-enters the occupied edge endpoints against facing.
+    for index in range(1, len(edges)):
+        a, b = nodes[index], nodes[index + 1]
+        if {a, b} == {origin, facing}:
+            raise ValueError("on_edge_reverse")
 
 
 def _province_for_position(
