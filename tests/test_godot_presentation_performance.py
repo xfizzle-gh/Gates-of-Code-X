@@ -144,6 +144,60 @@ class GodotPresentationPerformanceTests(unittest.TestCase):
         self.assertIn("ObjectDB instances were leaked", workflow)
         self.assertIn('RID of type "CanvasItem" was leaked', workflow)
 
+    def test_earth3_interactive_baseline_harness_and_report(self) -> None:
+        harness = (GODOT / "scripts/tools/map_interactive_profiler.gd").read_text(encoding="utf-8")
+        self.assertIn("earth3_operational.json", harness)
+        self.assertIn("e3_operational.json", harness)
+        self.assertIn("idle_full_theatre", harness)
+        self.assertIn("continuous_pan", harness)
+        self.assertIn("continuous_zoom", harness)
+        self.assertIn("province_hover_select", harness)
+        self.assertIn("legal_target_rebuild", harness)
+        self.assertIn("ownership_recolor", harness)
+        self.assertIn("overlay_routes_sites_counters", harness)
+        self.assertIn("pending_battle_presentation", harness)
+        self.assertIn("frame_time_ms", harness)
+        self.assertIn("RENDER_TOTAL_DRAW_CALLS_IN_FRAME", harness)
+        self.assertIn("_cleanup_and_quit", harness)
+        baseline = ROOT / "docs/godot-presentation/earth3_interactive_baseline.json"
+        self.assertTrue(baseline.is_file(), "committed interactive baseline JSON missing")
+        report = ROOT / "docs/godot-presentation/earth3_interactive_baseline.md"
+        self.assertTrue(report.is_file(), "committed interactive baseline report missing")
+        data = json.loads(baseline.read_text(encoding="utf-8"))
+        self.assertTrue(data.get("ok"))
+        self.assertEqual(int(data.get("map", {}).get("province_count", 0)), 3512)
+        self.assertEqual(
+            data.get("authority", {}).get("included_ids_sha256"),
+            "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7",
+        )
+        scenarios = data.get("scenarios", {})
+        for key in (
+            "idle_full_theatre",
+            "continuous_pan",
+            "continuous_zoom",
+            "province_hover_select",
+            "legal_target_rebuild",
+            "ownership_recolor",
+            "overlay_routes_sites_counters",
+            "pending_battle_presentation",
+        ):
+            self.assertIn(key, scenarios)
+            ft = scenarios[key]["frame_time_ms"]
+            for stat in ("avg", "p95", "p99"):
+                self.assertIn(stat, ft)
+                self.assertGreater(float(ft[stat]), 0.0)
+        ops = data.get("discrete_ops_ms", {})
+        for key in ("ownership_refresh_ms", "hit_test_ms", "legal_target_rebuild_ms"):
+            self.assertIn(key, ops)
+        workflow = (ROOT / ".github/workflows/gates-of-codex.yml").read_text(encoding="utf-8")
+        self.assertIn("map_interactive_profiler.gd", workflow)
+        self.assertIn("ci_earth3_interactive_baseline.json", workflow)
+        backend = ROOT / "docs/godot-presentation/earth3_operational_backend_profile.json"
+        self.assertTrue(backend.is_file())
+        backend_data = json.loads(backend.read_text(encoding="utf-8"))
+        self.assertTrue(backend_data.get("ok"))
+        self.assertEqual(int(backend_data.get("province_count", 0)), 3512)
+
     def test_debug_stats_not_cleared_before_overlay(self) -> None:
         main = (GODOT / "scripts/main_color_id.gd").read_text(encoding="utf-8")
         debug = (GODOT / "scripts/presentation/map_debug.gd").read_text(encoding="utf-8")
