@@ -7,7 +7,8 @@ extends RefCounted
 ## v1 water policy: water IDs are import metadata only — not normally selectable.
 
 const SCHEMA := "gates-of-codex.earth3-polygon-dataset"
-const CHUNK := 256
+# Larger chunks cut MeshInstance2D count (draw setup) while keeping geometry immutable.
+const CHUNK := 1024
 const OWNERSHIP_SHADER_PATH := "res://shaders/province_ownership.gdshader"
 const OCEAN_COLOR := Color(0.09, 0.15, 0.24, 1.0)
 const COAST_COLOR := Color(0.05, 0.07, 0.1, 0.96)
@@ -61,11 +62,13 @@ var _ownership_image: Image = null
 var _ownership_tex: ImageTexture = null
 var _ownership_shader: Shader = null
 var _fill_material: ShaderMaterial = null
+var _terrain_noise_tex: ImageTexture = null
 var _tex_width := 1
 var _geometry_built := false
 var _view_scale := 1.0
 var _border_base_modulate := Color(1, 1, 1, 1)
 var _suppress_border_keys: Dictionary = {}
+var _last_faction_colors_sig := ""
 
 
 func open(manifest_path: String, snapshot: Dictionary, faction_colors: Dictionary) -> bool:
@@ -357,14 +360,27 @@ func refresh_snapshot(snapshot: Dictionary, faction_colors: Dictionary) -> void:
 	var owner_by_id: Dictionary = {}
 	for p: Dictionary in snapshot.get("provinces", []):
 		owner_by_id[String(p.get("id", ""))] = String(p.get("owner", "neutral"))
+	var colors_sig := str(faction_colors)
+	var colors_changed := colors_sig != _last_faction_colors_sig
+	_last_faction_colors_sig = colors_sig
+	var changed := PackedInt32Array()
 	for i in province_count:
 		var pid := province_by_index[i]
 		var water := is_water[i] == 1
 		var owner := String(owner_by_id.get(pid, "neutral"))
 		if water:
 			owner = "water"
-		owners[i] = owner
-	_write_all_ownership_colors()
+		if owners[i] != owner:
+			owners[i] = owner
+			changed.append(i)
+	if changed.is_empty() and not colors_changed:
+		# No-op refresh: skip full ownership texture rewrite (proven ~3ms cost).
+		refresh_ms = float(Time.get_ticks_msec() - t0)
+		return
+	if colors_changed or changed.size() * 8 >= province_count:
+		_write_all_ownership_colors()
+	else:
+		_write_ownership_colors_partial(changed)
 	refresh_ms = float(Time.get_ticks_msec() - t0)
 
 
@@ -464,7 +480,40 @@ func debug_lines() -> PackedStringArray:
 	return lines
 
 
+func _ensure_terrain_noise_texture() -> void:
+	if _terrain_noise_tex != null:
+		return
+	# Small smooth noise field (CPU once). Linear filter + repeat => organic, no square cells.
+	const N := 64
+	var img := Image.create(N, N, false, Image.FORMAT_RGBA8)
+	for y in N:
+		for x in N:
+			var fx := float(x)
+			var fy := float(y)
+			# Multi-frequency sin blend (smooth, non-grid).
+			var v := 0.5
+			v += 0.25 * sin(fx * 0.41 + fy * 0.17)
+			v += 0.15 * sin(fx * 0.19 - fy * 0.33 + 1.7)
+			v += 0.10 * sin((fx + fy) * 0.27 - 0.9)
+			v = clampf(v * 0.5 + 0.25 * sin(fx * 0.09) * cos(fy * 0.11), 0.0, 1.0)
+			img.set_pixel(x, y, Color(v, v, v, 1.0))
+	# Soft blur pass for extra smoothness.
+	var blur := Image.create(N, N, false, Image.FORMAT_RGBA8)
+	for y2 in N:
+		for x2 in N:
+			var acc := 0.0
+			for oy in range(-1, 2):
+				for ox in range(-1, 2):
+					var xx := (x2 + ox + N) % N
+					var yy := (y2 + oy + N) % N
+					acc += img.get_pixel(xx, yy).r
+			var vv := acc / 9.0
+			blur.set_pixel(x2, y2, Color(vv, vv, vv, 1.0))
+	_terrain_noise_tex = ImageTexture.create_from_image(blur)
+
+
 func _ensure_ownership_material() -> void:
+	_ensure_terrain_noise_texture()
 	if _ownership_shader == null:
 		if ResourceLoader.exists(OWNERSHIP_SHADER_PATH):
 			_ownership_shader = load(OWNERSHIP_SHADER_PATH) as Shader
@@ -473,10 +522,12 @@ func _ensure_ownership_material() -> void:
 			_ownership_shader.code = """
 shader_type canvas_item;
 uniform sampler2D ownership_colors : filter_nearest, repeat_disable;
+uniform sampler2D terrain_noise : filter_linear, repeat_enable;
 uniform float ownership_mix = 0.46;
 void fragment() {
 	vec4 own = texture(ownership_colors, UV);
-	vec3 terrain = vec3(0.42, 0.46, 0.38);
+	float n = texture(terrain_noise, VERTEX.xy * 0.0045).r;
+	vec3 terrain = mix(vec3(0.38, 0.43, 0.34), vec3(0.50, 0.48, 0.40), n);
 	COLOR = vec4(mix(terrain, own.rgb, ownership_mix), 1.0);
 }
 """
@@ -486,7 +537,12 @@ void fragment() {
 		_fill_material.set_shader_parameter("ownership_mix", OWNERSHIP_MIX_DEFAULT)
 		_fill_material.set_shader_parameter("terrain_low", Vector3(0.38, 0.43, 0.34))
 		_fill_material.set_shader_parameter("terrain_high", Vector3(0.50, 0.48, 0.40))
-		_fill_material.set_shader_parameter("terrain_contrast", 0.22)
+		_fill_material.set_shader_parameter("terrain_contrast", 0.18)
+		_fill_material.set_shader_parameter("terrain_noise_scale", Vector2(0.0045, 0.0045))
+		_fill_material.set_shader_parameter("terrain_noise_transform_x", Vector2(0.92, 0.38))
+		_fill_material.set_shader_parameter("terrain_noise_transform_y", Vector2(-0.31, 0.88))
+	if _terrain_noise_tex != null:
+		_fill_material.set_shader_parameter("terrain_noise", _terrain_noise_tex)
 	if _ownership_tex != null:
 		_fill_material.set_shader_parameter("ownership_colors", _ownership_tex)
 		owner_texture = _ownership_tex
@@ -499,6 +555,22 @@ func _write_all_ownership_colors() -> void:
 		var water := is_water[i] == 1
 		var color := _color_for_owner(owners[i], water)
 		_ownership_image.set_pixel(i, 0, color)
+	_upload_ownership_texture()
+
+
+func _write_ownership_colors_partial(indices: PackedInt32Array) -> void:
+	if _ownership_image == null:
+		return
+	for j in indices.size():
+		var i := int(indices[j])
+		if i < 0 or i >= province_count:
+			continue
+		var water := is_water[i] == 1
+		_ownership_image.set_pixel(i, 0, _color_for_owner(owners[i], water))
+	_upload_ownership_texture()
+
+
+func _upload_ownership_texture() -> void:
 	if _ownership_tex == null:
 		_ownership_tex = ImageTexture.create_from_image(_ownership_image)
 	else:

@@ -1,0 +1,43 @@
+{
+	"flipped_province_id": "e3_0000",
+	"geometry_immutable": true,
+	"has_background": false,
+	"image_height": 3449,
+	"image_width": 4306,
+	"label": "godot-strategic-map-profile",
+	"manifest_path": "res://assets/maps/earth3_europe_mediterranean/map_manifest.json",
+	"map_open_ms": 1273.54,
+	"mesh_count": 13,
+	"notes": [
+		"Headless CPU timings for map layer rebuilds (not full interactive FPS).",
+		"Polygon backend: ownership refresh updates lookup texture only (geometry immutable).",
+		"refresh_snapshot_ms_avg is partial single-province ownership change."
+	],
+	"ok": true,
+	"perf_stats": {
+		"geometry_immutable": true,
+		"land_province_count": 3299,
+		"last_event": "polygon_map",
+		"load_ms": 1231.0,
+		"mesh_count": 13,
+		"province_count": 3514,
+		"refresh_ms": 4.0,
+		"renderer": "polygon_mesh",
+		"visible_province_count": 3299,
+		"water_fill": false,
+		"water_internal_borders": false,
+		"water_province_count": 215
+	},
+	"province_count": 3514,
+	"province_pick_ms_avg": 0.034,
+	"refresh_highlights_ms_avg": 0.0,
+	"refresh_highlights_noop_ms_avg": 0.002,
+	"refresh_snapshot_ms_avg": 4.25,
+	"refresh_snapshot_noop_ms_avg": 3.68,
+	"refresh_snapshot_partial_ms": 4.25,
+	"renderer": "polygon_mesh",
+	"snapshot_battalions": 3,
+	"snapshot_path": "res://fixtures/snapshots/earth3_operational.json",
+	"snapshot_provinces": 3514,
+	"timestamp_unix": 1786141865.172
+}

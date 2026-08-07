@@ -40,6 +40,11 @@ var _overlay_cache_key := ""
 var _cached_label_candidates: Array = []
 var _cached_reserved_rects: Array = []
 var _cached_label_bounds: Array = []
+var _snap_by_id: Dictionary = {}
+var _snap_by_id_src: Variant = null
+## Province IDs with supply_hub / command_post / air_base in the current snapshot.
+## Must stay in the overlay active set even when unoccupied (PR C regression fix).
+var _infra_province_ids: Dictionary = {}
 # Separate CanvasItem layers: filtering is per-node in Godot 4.
 var _bg_layer: Node2D
 var _identity_layer: Node2D
@@ -386,6 +391,115 @@ func _loaded_province_count() -> int:
 	if color_id_map != null and color_id_map.is_ready and color_id_map.row_by_province is Dictionary:
 		return int(color_id_map.row_by_province.size())
 	return 0
+
+
+func _ensure_snapshot_overlay_indexes() -> void:
+	# Rebuild when snapshot identity changes (writeback replaces the dict).
+	if _snap_by_id_src == snapshot:
+		return
+	_snap_by_id_src = snapshot
+	_snap_by_id.clear()
+	_infra_province_ids.clear()
+	for prow: Dictionary in snapshot.get("provinces", []):
+		var pid := String(prow.get("id", ""))
+		if pid.is_empty():
+			continue
+		_snap_by_id[pid] = prow
+		var infra: Dictionary = prow.get("infrastructure", {})
+		if (
+			int(infra.get("supply_hub", 0)) > 0
+			or int(infra.get("command_post", 0)) > 0
+			or int(infra.get("air_base", 0)) > 0
+		):
+			_infra_province_ids[pid] = true
+
+
+func _build_overlay_active_ids() -> Dictionary:
+	var active_ids: Dictionary = {}
+	for pid_occ: Variant in battalions_by_province.keys():
+		active_ids[String(pid_occ)] = true
+	if not selected_province_id.is_empty():
+		active_ids[selected_province_id] = true
+	if not hovered_province_id.is_empty():
+		active_ids[hovered_province_id] = true
+	for tid: Variant in legal_targets.keys():
+		active_ids[String(tid)] = true
+	# Unoccupied infrastructure must remain visible at every zoom (PR B behavior).
+	for pid_infra: Variant in _infra_province_ids.keys():
+		active_ids[String(pid_infra)] = true
+	return active_ids
+
+
+func get_overlay_infrastructure_province_ids() -> PackedStringArray:
+	_ensure_snapshot_overlay_indexes()
+	var out := PackedStringArray()
+	for pid: Variant in _infra_province_ids.keys():
+		out.append(String(pid))
+	return out
+
+
+func get_overlay_active_province_ids_for_test() -> PackedStringArray:
+	_ensure_snapshot_overlay_indexes()
+	var active := _build_overlay_active_ids()
+	var out := PackedStringArray()
+	for pid: Variant in active.keys():
+		out.append(String(pid))
+	return out
+
+
+func ensure_unoccupied_infrastructure_markers_for_test() -> Dictionary:
+	## Inject three unoccupied infrastructure provinces into the live snapshot for
+	## profiler / regression checks. Returns {supply_hub, command_post, air_base} IDs.
+	_ensure_snapshot_overlay_indexes()
+	var occupied: Dictionary = {}
+	for pid_occ: Variant in battalions_by_province.keys():
+		occupied[String(pid_occ)] = true
+	var picks := {"supply_hub": "", "command_post": "", "air_base": ""}
+	var kinds := ["supply_hub", "command_post", "air_base"]
+	# Prefer central land provinces so zoomed screenshots show markers clearly.
+	var candidates: Array = []
+	var am = _active_map()
+	var center := Vector2(2150, 1700)
+	if am != null and am.has_method("image_size"):
+		var isz: Vector2 = am.image_size()
+		center = isz * 0.5
+	for prow: Dictionary in snapshot.get("provinces", []):
+		var pid := String(prow.get("id", ""))
+		if pid.is_empty() or occupied.has(pid):
+			continue
+		if am != null and not am.row_by_province.has(pid):
+			continue
+		if am != null and "is_water" in am and am.index_by_province.has(pid):
+			var idx := int(am.index_by_province[pid])
+			if idx >= 0 and idx < am.is_water.size() and int(am.is_water[idx]) == 1:
+				continue
+		var anchor := Vector2(center)
+		if am != null and am.has_method("anchor_pixel"):
+			anchor = am.anchor_pixel(pid)
+		candidates.append({"row": prow, "pid": pid, "d": anchor.distance_to(center)})
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return float(a["d"]) < float(b["d"])
+	)
+	for ki in kinds.size():
+		if ki >= candidates.size():
+			break
+		var kind := String(kinds[ki])
+		var prow2: Dictionary = candidates[ki]["row"]
+		var pid2 := String(candidates[ki]["pid"])
+		var infra: Dictionary = prow2.get("infrastructure", {})
+		if typeof(infra) != TYPE_DICTIONARY:
+			infra = {}
+		else:
+			infra = infra.duplicate(true)
+		infra["supply_hub"] = 1 if kind == "supply_hub" else 0
+		infra["command_post"] = 1 if kind == "command_post" else 0
+		infra["air_base"] = 1 if kind == "air_base" else 0
+		prow2["infrastructure"] = infra
+		picks[kind] = pid2
+	# Force index rebuild after mutation.
+	_snap_by_id_src = null
+	_ensure_snapshot_overlay_indexes()
+	return picks
 
 
 func _sync_map_space() -> void:
@@ -801,20 +915,49 @@ func _draw_color_id_overlays() -> void:
 		_cached_label_candidates.clear()
 		_cached_reserved_rects.clear()
 
-	for province: Dictionary in snapshot.get("provinces", []):
+	# PR C: avoid scanning all ~3.5k snapshot provinces every frame when idle.
+	# Active set = occupied + selected/hovered/targets + infrastructure sites
+	# (+ all provinces only when rebuilding ambient labels at high zoom).
+	_ensure_snapshot_overlay_indexes()
+	var active_ids: Dictionary = _build_overlay_active_ids()
+	var scan_all := rebuild and view_scale >= 2.4
+	var province_iter: Array = []
+	if scan_all:
+		province_iter = snapshot.get("provinces", [])
+	else:
+		var am_rows = _active_map().row_by_province if _active_map() != null else {}
+		for pid_key: Variant in active_ids.keys():
+			var pid_s := String(pid_key)
+			if am_rows is Dictionary and not am_rows.has(pid_s):
+				continue
+			if _snap_by_id.has(pid_s):
+				province_iter.append(_snap_by_id[pid_s])
+			else:
+				province_iter.append({"id": pid_s, "owner": "neutral", "infrastructure": {}})
+
+	for province: Dictionary in province_iter:
 		var province_id := String(province.get("id", ""))
 		if not _active_map().row_by_province.has(province_id):
 			continue
-		var anchor := _image_to_screen(_active_map().anchor_pixel(province_id))
-		var position := _clamp_point_in_rect(anchor, overlay_bounds, OVERLAY_EDGE_PAD)
-		var shifted := position.distance_to(anchor) > 0.5
 		var battalion: Dictionary = battalions_by_province.get(province_id, {})
 		var occupied := not battalion.is_empty()
 		var selected := province_id == selected_province_id
 		var target := legal_targets.has(province_id)
+		var hovered := province_id == hovered_province_id
+		var infrastructure: Dictionary = province.get("infrastructure", {})
+		var has_infra := (
+			int(infrastructure.get("supply_hub", 0)) > 0
+			or int(infrastructure.get("command_post", 0)) > 0
+			or int(infrastructure.get("air_base", 0)) > 0
+		)
+		# Skip empty ambient provinces during non-label frames (infra always kept via active set).
+		if not scan_all and not occupied and not selected and not hovered and not target and not has_infra:
+			continue
+		var anchor := _image_to_screen(_active_map().anchor_pixel(province_id))
+		var position := _clamp_point_in_rect(anchor, overlay_bounds, OVERLAY_EDGE_PAD)
+		var shifted := position.distance_to(anchor) > 0.5
 		var owner := String(province.get("owner", "neutral"))
 		var faction_color: Color = FACTION_COLORS.get(owner, FACTION_COLORS["neutral"])
-		var hovered := province_id == hovered_province_id
 
 		if selected:
 			MapMarkersScript.draw_selected_province_ring(self, position)
@@ -825,7 +968,7 @@ func _draw_color_id_overlays() -> void:
 			draw_line(anchor, position, Color(0.85, 0.9, 0.95, 0.55), 1.0)
 			draw_circle(anchor, 2.0, Color(0.85, 0.9, 0.95, 0.7))
 
-		var infrastructure: Dictionary = province.get("infrastructure", {})
+		# Infrastructure icons: every zoom level (same as PR B).
 		if int(infrastructure.get("supply_hub", 0)) > 0:
 			draw_rect(Rect2(position + Vector2(-13, 12), Vector2(6, 6)), Color("63d69f"))
 		if int(infrastructure.get("command_post", 0)) > 0:
