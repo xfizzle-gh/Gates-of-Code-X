@@ -13,8 +13,17 @@ Approved Earth3 Europe–Mediterranean launch theatre (crop `em_reference_masked
 ## Files
 
 - `map_manifest.json` — strategic-map contract (`renderer: polygon_mesh`)
-- `polygon_dataset.json` — Gates IDs, source provenance, rings, triangulation, adjacency
+- `polygon_dataset.json` — Gates IDs, source provenance, rings, triangulation, adjacency, border segments
 - `dataset_meta.json` — compact counts/hashes for tests without loading full geometry
+- `triangulation_audit.json` — zero-failure Shapely clipped-Delaunay audit (no fan fallback)
+
+## Runtime contract
+
+- Geometry is immutable after load (chunked `ArrayMesh` + province-index UVs).
+- Ownership recolor updates a 1×N lookup `ImageTexture` sampled by `shaders/province_ownership.gdshader`.
+- Borders are a separate line mesh from shared-edge segments.
+- Hit-test uses ring point-in-polygon + spatial grid.
+- GoE Color-ID theatre remains explicit fallback only.
 
 ## Regenerate (local archive required)
 

@@ -7,7 +7,7 @@
   "asset_status": "production_theatre",
   "polygon_dataset": {
     "path": "polygon_dataset.json",
-    "sha256": "c64faf85d66a1d97bdad4d005ff69a47b8b49b2d5e52ca80a5a268ffde2a2486",
+    "sha256": "5c8652bd9537dde7e9a9641bb5883d737b04e26b9b79441bbafe495e49732289",
     "province_count": 3038
   },
   "province_count": 3038,
@@ -31,12 +31,14 @@
   "runtime_contract": {
     "gameplay_key": "province_id",
     "hit_test": "point_in_polygon_spatial_index",
-    "ownership_update": "event_driven_recolor"
+    "ownership_update": "immutable_geometry_shader_lookup"
   },
   "approved_included_ids_sha256": "7effdffbccbcce33ecba364dc8d161ded5053266db2df0deee605a98c36620dc",
   "export": {
     "archive_sha256": "b88cc599128c73a5711af3add8330f5a42629c9a3e07a5dd7aea8437a97fc760",
     "crop_config_sha256": "25ff84cbc7b9de419723219ce6d9446471fdacfe58db3d54c2504643413bed7c",
-    "elapsed_ms": 8383
+    "elapsed_ms": 24694,
+    "triangulation_ok": true,
+    "max_tri_area_error": 7.424446545085129e-16
   }
 }

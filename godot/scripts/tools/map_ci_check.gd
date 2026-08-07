@@ -107,9 +107,31 @@ func _run() -> void:
 		if hit != sample_id:
 			_fail("Earth3 hit test expected %s got %s" % [sample_id, hit])
 			return
-		pmap.refresh_snapshot(esnap, FACTION_COLORS)
-		print("map_ci_check: earth3 polygon ok provinces=%s load_ms=%s meshes=%s" % [
-			pmap.province_count, pmap.load_ms, pmap.mesh_count
+		var mesh_before: int = int(pmap.mesh_count)
+		var first_mesh: Variant = null
+		if pmap._meshes.size() > 0:
+			first_mesh = pmap._meshes[0]
+		var mutated_e: Dictionary = esnap.duplicate(true)
+		var eprovs: Array = mutated_e.get("provinces", [])
+		if not eprovs.is_empty():
+			var erow: Dictionary = eprovs[0]
+			var eowner := String(erow.get("owner", "neutral"))
+			erow["owner"] = "nato" if eowner != "nato" else "rusa"
+			eprovs[0] = erow
+			mutated_e["provinces"] = eprovs
+		pmap.refresh_snapshot(mutated_e, FACTION_COLORS)
+		if int(pmap.mesh_count) != mesh_before:
+			_fail("Earth3 refresh rebuilt meshes (%s -> %s)" % [mesh_before, pmap.mesh_count])
+			return
+		if first_mesh != null and pmap._meshes[0] != first_mesh:
+			_fail("Earth3 refresh replaced mesh geometry (must be immutable)")
+			return
+		var perf: Dictionary = pmap.get_perf_stats()
+		if not bool(perf.get("geometry_immutable", false)):
+			_fail("Earth3 perf stats missing geometry_immutable")
+			return
+		print("map_ci_check: earth3 polygon ok provinces=%s load_ms=%s refresh_ms=%s meshes=%s" % [
+			pmap.province_count, pmap.load_ms, pmap.refresh_ms, pmap.mesh_count
 		])
 
 	DisplayServer.window_set_size(Vector2i(1280, 720))
