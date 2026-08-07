@@ -1,9 +1,17 @@
 {
 	"authority": {
-		"included_ids_sha256": "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7",
-		"land_water": "3297/215",
-		"production_merge": "7182f8c6002e48f7235ba5ce6b7dd57ee20f4f68",
-		"provinces": 3512
+		"provinces": 3510,
+		"land_water": "3295/215",
+		"included_ids_sha256": "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3",
+		"dataset_sha256": "31c899b803db38291334f99c84f3f19247575785b87a603415059a2f25acfc9b",
+		"production_merge": "b5b4c14a58e54effb5875a35348576057c27ce80",
+		"test_repair_merge": "f60e715afb2a0a2b197351422edf5fa84a28da70",
+		"historical_pra_baseline": {
+			"provinces": 3512,
+			"land_water": "3297/215",
+			"included_ids_sha256": "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7",
+			"note": "PR A pre-topology measurement only"
+		}
 	},
 	"build": "windows-editor-debug-post-topology-3510",
 	"discrete_ops_ms": {
@@ -66,7 +74,7 @@
 		"timestamp": 0
 	},
 	"issue": 74,
-	"label": "earth3-interactive-baseline",
+	"label": "earth3-interactive-baseline-post-topology-3510",
 	"manifest_path": "res://assets/maps/earth3_europe_mediterranean/map_manifest.json",
 	"map": {
 		"geometry_immutable": true,
@@ -82,7 +90,7 @@
 		"Frame times are wall-clock ms around force_draw + one process tick (interactive path).",
 		"script_cpu_ms uses Performance.TIME_PROCESS; render counters from Performance.RENDER_*.",
 		"GPU time is only present when the backend exposes it; otherwise null.",
-		"No renderer rewrite in PR A — baseline measurement only.",
+		"No renderer rewrite in PR A \u2014 baseline measurement only.",
 		"Do not change Earth3 crop/IDs/adjacency/water geometry."
 	],
 	"ok": true,

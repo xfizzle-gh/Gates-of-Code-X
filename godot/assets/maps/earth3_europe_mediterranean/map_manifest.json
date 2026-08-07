@@ -7,7 +7,7 @@
   "asset_status": "production_theatre",
   "polygon_dataset": {
     "path": "polygon_dataset.json",
-    "sha256": "1734291ebc37ce0fc08154d6d8e937d1bd39b154b88f6030fdf02fde41810f37",
+    "sha256": "31c899b803db38291334f99c84f3f19247575785b87a603415059a2f25acfc9b",
     "province_count": 3510
   },
   "province_count": 3510,
@@ -48,6 +48,7 @@
       "e3_2888"
     ],
     "triangulation_ok": true,
-    "empty_meshes": 0
+    "empty_meshes": 0,
+    "max_tri_area_error": 1.6326528714912734e-09
   }
 }

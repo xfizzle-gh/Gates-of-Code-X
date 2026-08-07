@@ -10,7 +10,7 @@
   "source_water_metadata_count": 215,
   "included_ids_sha256": "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3",
   "pre_sanitize_included_ids_sha256": "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7",
-  "dataset_sha256": "1734291ebc37ce0fc08154d6d8e937d1bd39b154b88f6030fdf02fde41810f37",
+  "dataset_sha256": "31c899b803db38291334f99c84f3f19247575785b87a603415059a2f25acfc9b",
   "excluded_source_ids": [
     10920,
     11031
@@ -40,5 +40,7 @@
     "Production authority after owner-approved eastern spill exclusions.",
     "e3_2830 and e3_2888 are permanent unused gaps; never recycle.",
     "Island coastline reconstruction remains #121."
-  ]
+  ],
+  "production_merge": "b5b4c14a58e54effb5875a35348576057c27ce80",
+  "test_repair_merge": "f60e715afb2a0a2b197351422edf5fa84a28da70"
 }
