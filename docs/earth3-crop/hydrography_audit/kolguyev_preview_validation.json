@@ -9,6 +9,289 @@
     "dataset_sha256": "81c8e2a6de89d56117ae9a810edc62b3d9a8ebb52c2aef2d0ff0d038e276b005"
   },
   "checks": {
+    "province_count_checked": 3511,
+    "land_count_checked": 3296,
+    "water_count_checked": 215,
+    "failed_triangulations": 0,
+    "empty_land_meshes": 0,
+    "dangling_adjacency": 0,
+    "retained_stable_id_mismatches": 0,
+    "source_11836_count": 1,
+    "e3_3512_count": 1,
+    "e3_2830_count": 0,
+    "e3_2888_count": 0,
+    "production_dataset_unchanged": true,
+    "composition": {
+      "baseline_production_provinces": 3510,
+      "added_kolguyev": 1,
+      "assembled_preview": 3511,
+      "note": "composed from proven 3510 production + isolated Kolguyev triangulation"
+    }
+  },
+  "all_pass": true,
+  "failed_triangulation_details": [],
+  "dangling_details": [],
+  "stable_id_mismatch_details": [],
+  "adjacency": {
+    "gates_id": "e3_3512",
+    "source_id": 11836,
+    "direct_land_neighbors": [],
+    "preview_province_neighbors_field": [],
+    "method": "exact_source_ring_boundary_distance",
+    "not_centroid_radius": true,
+    "source_water_bordering_or_near": [],
+    "source_water_nearest": [
+      {
+        "source_id": 13366,
+        "min_boundary_distance_px": 126.716,
+        "intersects_or_touches": false,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": false,
+        "area_px2": 125478.0
+      },
+      {
+        "source_id": 13360,
+        "min_boundary_distance_px": 185.715,
+        "intersects_or_touches": false,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": false,
+        "area_px2": 146417.0
+      },
+      {
+        "source_id": 13368,
+        "min_boundary_distance_px": 273.805,
+        "intersects_or_touches": false,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": false,
+        "area_px2": 113378.5
+      },
+      {
+        "source_id": 13358,
+        "min_boundary_distance_px": 274.643,
+        "intersects_or_touches": false,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": false,
+        "area_px2": 32040.08
+      },
+      {
+        "source_id": 13359,
+        "min_boundary_distance_px": 518.282,
+        "intersects_or_touches": false,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": false,
+        "area_px2": 38044.0
+      },
+      {
+        "source_id": 13372,
+        "min_boundary_distance_px": 661.043,
+        "intersects_or_touches": false,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": false,
+        "area_px2": 108933.0
+      }
+    ],
+    "closest_mainland_land_by_boundary": [
+      {
+        "source_id": 11809,
+        "min_boundary_distance_px": 0.0,
+        "intersects_or_touches": true,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": true,
+        "area_px2": 25295.0,
+        "note": "distance 0 may be shared boundary polyline under source packing"
+      },
+      {
+        "source_id": 11810,
+        "min_boundary_distance_px": 0.0,
+        "intersects_or_touches": true,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": true,
+        "area_px2": 18000.0,
+        "note": "distance 0 may be shared boundary polyline under source packing"
+      },
+      {
+        "source_id": 11811,
+        "min_boundary_distance_px": 0.0,
+        "intersects_or_touches": true,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": true,
+        "area_px2": 26579.5,
+        "note": "distance 0 may be shared boundary polyline under source packing"
+      },
+      {
+        "source_id": 11813,
+        "min_boundary_distance_px": 0.0,
+        "intersects_or_touches": true,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": true,
+        "area_px2": 50330.5,
+        "note": "distance 0 may be shared boundary polyline under source packing"
+      },
+      {
+        "source_id": 11814,
+        "min_boundary_distance_px": 0.0,
+        "intersects_or_touches": true,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": true,
+        "area_px2": 32522.0,
+        "note": "distance 0 may be shared boundary polyline under source packing"
+      },
+      {
+        "source_id": 11835,
+        "min_boundary_distance_px": 0.0,
+        "intersects_or_touches": true,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": true,
+        "area_px2": 16553.5,
+        "note": "distance 0 may be shared boundary polyline under source packing"
+      },
+      {
+        "source_id": 11837,
+        "min_boundary_distance_px": 0.0,
+        "intersects_or_touches": true,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": true,
+        "area_px2": 23109.5,
+        "note": "distance 0 may be shared boundary polyline under source packing"
+      },
+      {
+        "source_id": 11838,
+        "min_boundary_distance_px": 0.0,
+        "intersects_or_touches": true,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": true,
+        "area_px2": 17965.5,
+        "note": "distance 0 may be shared boundary polyline under source packing"
+      },
+      {
+        "source_id": 11951,
+        "min_boundary_distance_px": 83.6,
+        "intersects_or_touches": false,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": false,
+        "area_px2": 15463.0,
+        "note": "distance 0 may be shared boundary polyline under source packing"
+      },
+      {
+        "source_id": 11775,
+        "min_boundary_distance_px": 86.371,
+        "intersects_or_touches": false,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": false,
+        "area_px2": 30507.0,
+        "note": "distance 0 may be shared boundary polyline under source packing"
+      },
+      {
+        "source_id": 11952,
+        "min_boundary_distance_px": 91.548,
+        "intersects_or_touches": false,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": false,
+        "area_px2": 13408.5,
+        "note": "distance 0 may be shared boundary polyline under source packing"
+      },
+      {
+        "source_id": 11776,
+        "min_boundary_distance_px": 92.005,
+        "intersects_or_touches": false,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": false,
+        "area_px2": 37357.5,
+        "note": "distance 0 may be shared boundary polyline under source packing"
+      }
+    ],
+    "source_geometry_land_boundary_touches": [
+      {
+        "source_id": 11809,
+        "min_boundary_distance_px": 0.0,
+        "intersects_or_touches": true,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": true,
+        "area_px2": 25295.0,
+        "note": "distance 0 may be shared boundary polyline under source packing"
+      },
+      {
+        "source_id": 11810,
+        "min_boundary_distance_px": 0.0,
+        "intersects_or_touches": true,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": true,
+        "area_px2": 18000.0,
+        "note": "distance 0 may be shared boundary polyline under source packing"
+      },
+      {
+        "source_id": 11811,
+        "min_boundary_distance_px": 0.0,
+        "intersects_or_touches": true,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": true,
+        "area_px2": 26579.5,
+        "note": "distance 0 may be shared boundary polyline under source packing"
+      },
+      {
+        "source_id": 11813,
+        "min_boundary_distance_px": 0.0,
+        "intersects_or_touches": true,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": true,
+        "area_px2": 50330.5,
+        "note": "distance 0 may be shared boundary polyline under source packing"
+      },
+      {
+        "source_id": 11814,
+        "min_boundary_distance_px": 0.0,
+        "intersects_or_touches": true,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": true,
+        "area_px2": 32522.0,
+        "note": "distance 0 may be shared boundary polyline under source packing"
+      },
+      {
+        "source_id": 11835,
+        "min_boundary_distance_px": 0.0,
+        "intersects_or_touches": true,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": true,
+        "area_px2": 16553.5,
+        "note": "distance 0 may be shared boundary polyline under source packing"
+      },
+      {
+        "source_id": 11837,
+        "min_boundary_distance_px": 0.0,
+        "intersects_or_touches": true,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": true,
+        "area_px2": 23109.5,
+        "note": "distance 0 may be shared boundary polyline under source packing"
+      },
+      {
+        "source_id": 11838,
+        "min_boundary_distance_px": 0.0,
+        "intersects_or_touches": true,
+        "intersection_area_px2": 0.0,
+        "shared_boundary_only": true,
+        "area_px2": 17965.5,
+        "note": "distance 0 may be shared boundary polyline under source packing"
+      }
+    ],
+    "source_geometry_land_touch_note": "AoH3 source ring shares boundary polylines (intersection area 0) with packed nearby land provinces. Preview does NOT copy those into Gates neighbors.",
+    "confirmation_no_mainland_land_adjacency_invented": true,
+    "confirmation_preview_neighbors_empty": true,
+    "production_water_near_by_boundary": [
+      {
+        "gates_id": "e3_3509",
+        "source_id": 13368,
+        "min_boundary_distance_local_px": 273.805,
+        "intersects_or_borders": false
+      }
+    ],
+    "border_segments": "island outer ring only; sea links deferred",
+    "proposed_future_sea_link_nodes": [
+      "author ferry/naval links separately \u2014 not auto-derived"
+    ],
+    "no_automatic_sea_or_ferry_adjacency": true
+  },
+  "checks_bool": {
     "empty_land_meshes": true,
     "dangling_neighbors": true,
     "source_11836_once": true,
@@ -17,17 +300,8 @@
     "stable_retained_mappings": true,
     "no_invented_land_adjacency": true,
     "production_still_3510": true,
-    "tri_ok": true
-  },
-  "adjacency": {
-    "gates_id": "e3_3512",
-    "source_id": 11836,
-    "direct_land_neighbors": [],
-    "surrounding_source_water_ids": [],
-    "border_segments": "island outer ring only",
-    "proposed_future_sea_link_nodes": [
-      "author ferry/naval links separately"
-    ],
-    "confirmation_no_mainland_land_adjacency_invented": true
+    "tri_ok": true,
+    "full_3511_audit_pass": true,
+    "topology_not_centroid_radius": true
   }
 }

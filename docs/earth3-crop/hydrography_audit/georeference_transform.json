@@ -1,8 +1,9 @@
 {
   "schema": "gates-of-codex.earth3-georeference-transform",
-  "schema_version": 5,
+  "schema_version": 6,
   "selected_method": "piecewise_regional_affine_with_loo",
   "kolguyev_is_control_point": false,
+  "metric_projection": "lambert_azimuthal_equal_area_local_m",
   "regions": {
     "west_europe": {
       "affine_3x2": [
@@ -643,8 +644,11 @@
   },
   "high_confidence_polygon_iou_threshold": 0.15,
   "high_confidence_coverage_threshold": 0.25,
+  "reconstruction_area_relative_tolerance": 0.0001,
   "notes": [
-    "Kolguyev is NOT a georef control point."
+    "Kolguyev is NOT a georef control point.",
+    "Polygon IoU/area use local LAEA meters, never raw lon/lat degree area.",
+    "Rendered geometry = emitted triangle union only."
   ],
   "kolguyev_holdout_not_control": {
     "is_control_point": false,

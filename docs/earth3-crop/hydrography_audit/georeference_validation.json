@@ -580,5 +580,18 @@
     "Arkhangelsk": 60.0,
     "Kem": 60.0,
     "Onega_town": 60.0
+  },
+  "kolguyev_holdout_not_control": {
+    "is_control_point": false,
+    "true_wgs84": [
+      49.0,
+      69.1
+    ],
+    "predicted": [
+      61.305,
+      65.9111
+    ],
+    "error_km": 630.531,
+    "note": "Arctic source placement is east-biased vs true Kolguyev; identity uses archive src 11836."
   }
 }
