@@ -1,0 +1,17 @@
+{
+  "schema": "gates-of-codex.opengs-upstream-pin",
+  "schema_version": 1,
+  "repository": "Thomas-Holtvedt/opengs-maptool",
+  "commit": "06e7ec8517bd45872cf44d77cb8784e5ffca49bb",
+  "version": "0.3",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2025 Thomas Holtvedt AKA Good Solution Interactive",
+  "required_files_for_gate0_benchmark": [
+    "config.py",
+    "logic/numb_gen.py",
+    "logic/utils.py"
+  ],
+  "gate0_policy": "benchmark pinned upstream generation logic without integrating it into production runtime",
+  "full_opengs_runtime_integration": false,
+  "production_map_replacement_authorized": false
+}
