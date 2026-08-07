@@ -1,11 +1,16 @@
 {
   "schema": "gates-of-codex.opengs-gate0-provisional-benchmark",
   "schema_version": 1,
-  "status": "provisional_not_gate0_exit_evidence",
+  "status": "superseded_reconstruction_evidence",
+  "superseded_by": [
+    "docs/research/opengs-evaluation/gate_0_exact_ci_benchmark.md",
+    "docs/research/opengs-evaluation/gate_0_exact_ci_summary.json",
+    "GitHub Actions run 31223766220"
+  ],
   "run_date": "2026-08-07",
   "source_repository": "Thomas-Holtvedt/opengs-maptool",
   "source_commit": "06e7ec8517bd45872cf44d77cb8784e5ffca49bb",
-  "method": "Pinned core algorithms were reconstructed from connected GitHub source files because the execution sandbox could not clone github.com. The committed benchmark harness must be rerun against an exact Git checkout before Gate 0 approval.",
+  "method": "Pinned core algorithms were reconstructed from connected GitHub source files because the execution sandbox could not clone github.com. Exact pinned Linux and Windows CI later confirmed the scale and nondeterminism findings.",
   "synthetic_inputs": true,
   "geographic_quality_evaluated": false,
   "production_replacement_authorized": false,
@@ -19,121 +24,20 @@
     "psutil": "7.2.2"
   },
   "limitations": [
-    "This is not an exact upstream working-tree execution.",
-    "Synthetic geometry does not measure Europe-Mediterranean visual quality.",
-    "The initial memory measurements used process-level ru_maxrss and are not isolated per case.",
+    "This was not an exact upstream working-tree execution.",
+    "Synthetic geometry did not measure Europe-Mediterranean visual quality.",
+    "The initial memory measurements were not isolated per case.",
     "No legal geographic input files were downloaded or benchmarked.",
     "No Gates polygon conversion, triangulation, adjacency, or Godot runtime work was performed."
   ],
-  "scale_results": [
-    {
-      "case": "sanity_440",
-      "width": 700,
-      "height": 460,
-      "territories": 48,
-      "provinces": 440,
-      "wall_seconds": 0.9786398420001206,
-      "cpu_seconds": 0.978032089,
-      "tracemalloc_peak_bytes": 25143474,
-      "ru_maxrss_kib": 173028,
-      "error": null
-    },
-    {
-      "case": "scale_1000",
-      "width": 900,
-      "height": 600,
-      "territories": 80,
-      "provinces": 1000,
-      "wall_seconds": 1.6503392069998881,
-      "cpu_seconds": 1.6501863229999998,
-      "tracemalloc_peak_bytes": 42178357,
-      "ru_maxrss_kib": 193400,
-      "error": null
-    },
-    {
-      "case": "scale_2000",
-      "width": 1050,
-      "height": 700,
-      "territories": 104,
-      "provinces": 2000,
-      "wall_seconds": 2.6589198709998527,
-      "cpu_seconds": 2.658813489,
-      "tracemalloc_peak_bytes": 55782129,
-      "ru_maxrss_kib": 213996,
-      "error": null
-    },
-    {
-      "case": "earth3_count_3514",
-      "width": 1200,
-      "height": 800,
-      "territories": 140,
-      "provinces": 3514,
-      "wall_seconds": 4.07676784799969,
-      "cpu_seconds": 4.07654281,
-      "tracemalloc_peak_bytes": 70611266,
-      "ru_maxrss_kib": 232428,
-      "error": null
-    }
-  ],
-  "repeat_results_3514": [
-    {
-      "run": 1,
-      "wall_seconds": 4.365160925000055,
-      "cpu_seconds": 4.360980562,
-      "tracemalloc_peak_bytes": 72517065,
-      "ru_maxrss_kib": 231940,
-      "province_label_sha256": "c1a500763295d8a9bdeaa2a5b22b5d7336cc210ac9898546925a379fe5c0e242"
-    },
-    {
-      "run": 2,
-      "wall_seconds": 4.0298668149998775,
-      "cpu_seconds": 4.029381535,
-      "tracemalloc_peak_bytes": 67677721,
-      "ru_maxrss_kib": 232160,
-      "province_label_sha256": "b40435a8d592ebc1c27cfc570b025493f421f021a1850607bd8a6372c4c35db2"
-    },
-    {
-      "run": 3,
-      "wall_seconds": 4.059782327999983,
-      "cpu_seconds": 4.054747203,
-      "tracemalloc_peak_bytes": 73298768,
-      "ru_maxrss_kib": 236684,
-      "province_label_sha256": "ea750ba460885836d8112bd0e5c44c7cbd5a5fa6ebff5f5816e2868e2946075a"
-    }
-  ],
-  "repeat_analysis": {
-    "run_count": 3,
-    "unique_label_hash_count": 3,
-    "nondeterministic_observed": true,
-    "cause_supported_by_source": "create_region_map calls random_seeds without an explicit rng_seed, and random_seeds constructs default_rng(None)"
+  "reconstruction_findings": {
+    "earth3_count_3514_wall_seconds": 4.07676784799969,
+    "earth3_count_3514_provinces": 3514,
+    "earth3_repeat_unique_hashes": 3,
+    "earth3_repeat_runs": 3,
+    "earth3_jagged_wall_seconds": 19.571833135999896,
+    "stress_5000_wall_seconds": 6.309873659000004,
+    "stress_5000_provinces": 5000
   },
-  "jagged_result_3514": {
-    "territories": 140,
-    "provinces": 3514,
-    "wall_seconds": 19.571833135999896,
-    "cpu_seconds": 19.551612205999998,
-    "tracemalloc_peak_bytes": 97250099,
-    "ru_maxrss_kib": 259068,
-    "province_label_sha256": "81f4118e07ac936444a0e6fd540c65d0b85e8808d94c27f93737bb623bb78907",
-    "error": null
-  },
-  "stress_result_5000": {
-    "width": 1400,
-    "height": 900,
-    "territories": 185,
-    "provinces": 5000,
-    "wall_seconds": 6.309873659000004,
-    "cpu_seconds": 6.2992052680000015,
-    "tracemalloc_peak_bytes": 98391718,
-    "ru_maxrss_kib": 276360,
-    "province_label_sha256": "daad264721ee7c83f65fcc3d4f73cf17878567bdc354bbea09102d70b02d163f",
-    "error": null
-  },
-  "provisional_findings": [
-    "The pinned algorithm shape can complete a synthetic 3514-province run at 1200x800 in this environment.",
-    "Three repeated 3514 runs generated three different label hashes, confirming nondeterminism without explicit seed plumbing.",
-    "Jagged generation was approximately 4.8 times slower than the non-jagged 3514 run in this provisional environment.",
-    "A synthetic 5000-province stress run completed without an exception.",
-    "These results justify an exact-checkout benchmark, but they do not complete Gate 0."
-  ]
+  "audit_note": "Retained only to document the pre-CI reasoning path. Do not use these values as the current Gate 0 benchmark authority."
 }
