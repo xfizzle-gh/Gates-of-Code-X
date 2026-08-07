@@ -9,9 +9,14 @@
   "required_files_for_gate0_benchmark": [
     "config.py",
     "logic/numb_gen.py",
-    "logic/utils.py"
+    "logic/utils.py",
+    "logic/territory_generator.py",
+    "logic/province_generator.py"
   ],
   "gate0_policy": "benchmark pinned upstream generation logic without integrating it into production runtime",
   "full_opengs_runtime_integration": false,
-  "production_map_replacement_authorized": false
+  "jfa_compute_integration": false,
+  "production_map_replacement_authorized": false,
+  "earth3_production_map_modified": false,
+  "pr_128_modified": false
 }
