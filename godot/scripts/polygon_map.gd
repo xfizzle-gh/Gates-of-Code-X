@@ -3,7 +3,8 @@ extends RefCounted
 
 ## Polygon-mesh strategic map for Earth3 production theatre.
 ## Land geometry is immutable after open(); ownership recolor updates a 1D lookup texture only.
-## Water is a continuous ocean underlay (no per-water-province fills); water IDs remain hittable.
+## Water is a continuous ocean underlay (no per-water-province fills).
+## v1 water policy: water IDs are import metadata only — not normally selectable.
 
 const SCHEMA := "gates-of-codex.earth3-polygon-dataset"
 const CHUNK := 256
@@ -348,28 +349,21 @@ func province_at_image_pos(pos: Vector2) -> String:
 	var cy := int(floor(pos.y / _grid_cell))
 	var best_land := ""
 	var best_land_area := INF
-	var best_water := ""
-	var best_water_area := INF
 	for oy in range(-1, 2):
 		for ox in range(-1, 2):
 			var k2 := "%d:%d" % [cx + ox, cy + oy]
 			var arr: PackedInt32Array = _grid.get(k2, PackedInt32Array())
 			for idx in arr:
+				# v1: water is never a normal selectable hit target.
+				if is_water[idx] == 1:
+					continue
 				if not _point_in_province(pos, idx):
 					continue
 				var area := _approx_area(idx)
-				if is_water[idx] == 1:
-					if area < best_water_area:
-						best_water_area = area
-						best_water = province_by_index[idx]
-				else:
-					if area < best_land_area:
-						best_land_area = area
-						best_land = province_by_index[idx]
-	# Prefer land when both hit (coastline clicks).
-	if not best_land.is_empty():
-		return best_land
-	return best_water
+				if area < best_land_area:
+					best_land_area = area
+					best_land = province_by_index[idx]
+	return best_land
 
 
 func province_at_pixel(pixel: Vector2i) -> String:
@@ -390,12 +384,13 @@ func anchor_pixel(province_id: String) -> Vector2:
 func draw_overlays(canvas: CanvasItem, map_space) -> void:
 	if not is_ready:
 		return
-	# Water outlines only while hovered/selected (no standing water borders).
-	if _hover_index >= 0:
+	# Land-only hover/selection outlines (water never selectable in v1).
+	if _hover_index >= 0 and is_water[_hover_index] != 1:
 		_draw_province_outline(canvas, map_space, _hover_index, Color(1, 1, 0.2, 0.95), 2.0)
 	if not _selected_id.is_empty() and index_by_province.has(_selected_id):
 		var si := int(index_by_province[_selected_id])
-		_draw_province_outline(canvas, map_space, si, Color(1, 1, 1, 1), 2.5)
+		if is_water[si] != 1:
+			_draw_province_outline(canvas, map_space, si, Color(1, 1, 1, 1), 2.5)
 	for tid in _legal_targets.keys():
 		if index_by_province.has(String(tid)):
 			var li := int(index_by_province[String(tid)])
