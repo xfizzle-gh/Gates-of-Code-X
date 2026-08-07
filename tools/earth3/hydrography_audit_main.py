@@ -1708,9 +1708,14 @@ def main(argv=None) -> int:
     (OUT / "geometry_reconstruction_report.json").write_text(json.dumps(recon_report, indent=2) + "\n", encoding="utf-8")
     (OUT / "stale_evidence_removed.json").write_text(json.dumps(removed, indent=2) + "\n", encoding="utf-8")
 
-    preview_val = build_src11836_diagnostic_preview(prod, archive, ox, oy)
-    write_owner_review(rows, georef, comparison, src_report, kol_search, preview_val, removed)
-    write_tests()
+    # Do not ship a gameplay alternate map for unresolved src11836.
+    if SRC11836_DIR.exists():
+        shutil.rmtree(SRC11836_DIR)
+        removed.append(str(SRC11836_DIR.relative_to(ROOT)).replace("\\", "/"))
+    if OLD_KOL_DIR.exists():
+        shutil.rmtree(OLD_KOL_DIR)
+        removed.append(str(OLD_KOL_DIR.relative_to(ROOT)).replace("\\", "/"))
+    write_owner_review(rows, georef, comparison, src_report, kol_search, {"all_pass": None, "checks": {}, "adjacency": {}}, removed)
     write_readme()
     supersede_old_builders()
     print(
@@ -1726,8 +1731,9 @@ def main(argv=None) -> int:
                 },
                 "true_kolguyev_search": kol_search["result"],
                 "accepted_kolguyev_source_id": kol_search["accepted_kolguyev_source_id"],
-                "preview_all_pass": preview_val.get("all_pass"),
+                "preview_asset_removed": True,
                 "removed_stale": removed,
+                "owner_circle_trace": "run tools/earth3/owner_circle_render_trace.py",
             },
             indent=2,
         )

@@ -1,6 +1,6 @@
 {
   "schema": "gates-of-codex.earth3-hydrography-marked-features",
-  "schema_version": 7,
+  "schema_version": 8,
   "production_authority": {
     "provinces": 3510,
     "land": 3295,
@@ -51,17 +51,17 @@
   },
   "features": [
     {
-      "review_label": "NE01_source11836_Fion_northern_Urals",
+      "review_label": "NE01_northern_outline",
       "map_local_xy": [
-        4255.28,
-        626.7
+        4220.0,
+        660.0
       ],
       "source_map_xy": [
-        11331.28,
-        768.7
+        11296.0,
+        802.0
       ],
-      "wgs84_lon": 61.305,
-      "wgs84_lat": 65.9111,
+      "wgs84_lon": 60.5836,
+      "wgs84_lat": 65.5348,
       "georef_region": "ne_russia_north",
       "georef_uncertainty_km_loo_region": 13.498,
       "nearest_cities": [
@@ -209,17 +209,37 @@
         "adjust mask / split boundary-straddling polygons"
       ],
       "gap_fill_id": null,
-      "geographic_classification": "UNRESOLVED_MISSING_MAINLAND_OR_CROP_BOUNDARY_DEFECT",
+      "geographic_classification": "CROP_EDGE_PRESENTATION_ARTIFACT",
       "exact_feature_identity": "UNRESOLVED",
       "confidence": "high",
-      "evidence": "Archive land src 11836 city Fion. Transformed ~61.3E/65.9N (northern Urals / Komi\u2013Yamal mainland). Shares land boundaries; no bordering source-water. NOT the Barents island near 49.25E/69.08N. Omitted by v7 Europe\u2013Asia mask (overlap 0). geometry=emitted_triangle_union.",
+      "evidence": "Archive mainland src11836 (Fion) is inside image bounds but outside v7 mask (mask_overlap=0). Continuous ocean shows; not meshed. NOT Kolguyev (~624.3 km from 49.25E/69.08N).",
       "overlay": "docs/earth3-crop/hydrography_audit/evidence/overlay_NE01_source11836_Fion_northern_Urals.png",
       "geographic_reference": {
         "path": "docs/earth3-crop/hydrography_audit/reference/ne_10m_lakes_europe_subset.json",
         "provenance": "docs/earth3-crop/hydrography_audit/reference/PROVENANCE.json",
         "license": "Natural Earth public domain"
       },
-      "production_change_allowed": false
+      "production_change_allowed": false,
+      "render_trace": {
+        "pixel_classification": "continuous_water_background",
+        "final_classification": "CROP_EDGE_PRESENTATION_ARTIFACT",
+        "recommendation": "no_production_change_document_crop_edge_presentation",
+        "final_note": "Archive mainland src11836 (Fion) is inside image bounds but outside v7 mask (mask_overlap=0). Continuous ocean shows; not meshed. NOT Kolguyev (~624.3 km from 49.25E/69.08N).",
+        "archive_land_at_point": {
+          "source_id": 11836,
+          "is_water": false,
+          "cities": [
+            "Fion"
+          ]
+        },
+        "explicit_exclude": {
+          "is_explicit_exclude": false,
+          "source_id": 11836,
+          "listed_in": "config/earth3/crop_candidates_v1.json em_reference_masked.explicit_exclude_ids"
+        },
+        "ocean_gap_fill": null,
+        "interior_exclusion_reason": "archive_land_exists_but_omitted_from_3510_crop_ocean_underlay"
+      }
     },
     {
       "review_label": "NE02_Ladoga",
@@ -386,7 +406,39 @@
         "provenance": "docs/earth3-crop/hydrography_audit/reference/PROVENANCE.json",
         "license": "Natural Earth public domain"
       },
-      "production_change_allowed": false
+      "production_change_allowed": false,
+      "render_trace": {
+        "pixel_classification": "gap_fill_metadata_ocean_shows_through",
+        "final_classification": "REAL_WATER_KEEP",
+        "recommendation": "keep",
+        "final_note": "exact gap-fill LAEA match Lake Ladoga iou=0.8328",
+        "archive_land_at_point": null,
+        "explicit_exclude": {
+          "is_explicit_exclude": false
+        },
+        "ocean_gap_fill": {
+          "id": "gap_0012",
+          "classification": "water_presentation_gap",
+          "region_hint": "scandinavian_or_karelian_lake",
+          "area": 10703.5,
+          "centroid": [
+            2803.026,
+            1051.7214
+          ],
+          "geometry_meta": {
+            "ok": true,
+            "vertex_count": 380,
+            "triangle_count": 378,
+            "committed_area": 10703.5,
+            "reconstructed_area": 10703.500001,
+            "reconstruction_relative_error": 9.342741519463315e-11,
+            "geometry_source": "emitted_triangle_union"
+          },
+          "godot_meshed": false,
+          "note": "gap-fill tris exist in dataset only; Godot shows continuous ocean through land holes"
+        },
+        "interior_exclusion_reason": "no_land_fill_gap_fill_metadata_ocean_underlay"
+      }
     },
     {
       "review_label": "NE03_Onega",
@@ -553,7 +605,39 @@
         "provenance": "docs/earth3-crop/hydrography_audit/reference/PROVENANCE.json",
         "license": "Natural Earth public domain"
       },
-      "production_change_allowed": false
+      "production_change_allowed": false,
+      "render_trace": {
+        "pixel_classification": "gap_fill_metadata_ocean_shows_through",
+        "final_classification": "REAL_WATER_KEEP",
+        "recommendation": "keep",
+        "final_note": "exact gap-fill LAEA match Lake Onega iou=0.6217",
+        "archive_land_at_point": null,
+        "explicit_exclude": {
+          "is_explicit_exclude": false
+        },
+        "ocean_gap_fill": {
+          "id": "gap_0027",
+          "classification": "water_presentation_gap",
+          "region_hint": "scandinavian_or_karelian_lake",
+          "area": 6239.0,
+          "centroid": [
+            2995.6704,
+            978.0429
+          ],
+          "geometry_meta": {
+            "ok": true,
+            "vertex_count": 608,
+            "triangle_count": 606,
+            "committed_area": 6239.0,
+            "reconstructed_area": 6239.0,
+            "reconstruction_relative_error": 0.0,
+            "geometry_source": "emitted_triangle_union"
+          },
+          "godot_meshed": false,
+          "note": "gap-fill tris exist in dataset only; Godot shows continuous ocean through land holes"
+        },
+        "interior_exclusion_reason": "no_land_fill_gap_fill_metadata_ocean_underlay"
+      }
     },
     {
       "review_label": "NE04_WhiteSea_SE_large_hole",
@@ -709,23 +793,61 @@
         }
       ],
       "candidate_identities": [
-        "merged lakes/wetlands",
-        "exaggerated hydrography",
-        "false hole",
-        "missing land"
+        "explicitly excluded archive land src 11790",
+        "Koynas"
       ],
       "gap_fill_id": "gap_0039",
-      "geographic_classification": "UNRESOLVED_REQUIRES_GEOGRAPHIC_MATCH",
+      "geographic_classification": "SOURCE_GEOMETRY_DEFECT",
       "exact_feature_identity": "UNRESOLVED",
-      "confidence": "low",
-      "evidence": "matches=[{'name': '(unnamed)', 'projection': 'LAEA_local_m lon0=48.1973 lat0=65.2129 R=6371008.8', 'metric_units': 'meters_laea', 'iou': 0.0, 'earth3_coverage_by_ref': 0.0, 'ref_coverage_by_earth3': 0.0, 'earth3_area_km2': 27156.177, 'ref_area_km2': 323.181, 'intersection_area_km2': 0.0, 'union_area_km2': 27479.358, 'area_ratio_e3_over_ref': 84.0277, 'centroid_separation_km': 638.2, 'hausdorff_km': 711.36, 'boundary_mean_distance_km': 616.601, 'score': -1.2764}, {'name': '(unnamed)', 'projection': 'LAEA_local_m lon0=48.1973 lat0=65.2129 R=6371008.8', 'metric_units': 'meters_laea', 'iou': 0.0, 'earth3_coverage_by_ref': 0.0, 'ref_coverage_by_earth3': 0.0, 'earth3_area_km2': 27156.177, 'ref_area_km2': 321.496, 'intersection_area_km2': 0.0, 'union_area_km2': 27477.673, 'area_ratio_e3_over_ref': 84.4682, 'centroid_separation_km': 639.44, 'hausdorff_km': 716.634, 'boundary_mean_distance_km': 622.155, 'score': -1.2789}, {'name': 'Umbozero Lake', 'projection': 'LAEA_local_m lon0=48.1973 lat0=65.2129 R=6371008.8', 'metric_units': 'meters_laea', 'iou': 0.0, 'earth3_coverage_by_ref': 0.0, 'ref_coverage_by_earth3': 0.0, 'earth3_area_km2': 27156.177, 'ref_area_km2': 303.381, 'intersection_area_km2': 0.0, 'union_area_km2': 27459.558, 'area_ratio_e3_over_ref': 89.5119, 'centroid_separation_km': 670.16, 'hausdorff_km': 759.278, 'boundary_mean_distance_km': 647.169, 'score': -1.3403}]",
+      "confidence": "high",
+      "evidence": "Owner circle is gap-fill gap_0039 over explicitly excluded archive land src 11790 (Koynas). Not confirmed real water at this scale. nearest NE lake '(unnamed)' iou=0.0 sep_km=638.2 Godot draws continuous ocean (gap-fill not meshed).",
       "overlay": "docs/earth3-crop/hydrography_audit/evidence/overlay_NE04_WhiteSea_SE_large_hole.png",
       "geographic_reference": {
         "path": "docs/earth3-crop/hydrography_audit/reference/ne_10m_lakes_europe_subset.json",
         "provenance": "docs/earth3-crop/hydrography_audit/reference/PROVENANCE.json",
         "license": "Natural Earth public domain"
       },
-      "production_change_allowed": false
+      "production_change_allowed": false,
+      "render_trace": {
+        "pixel_classification": "gap_fill_metadata_ocean_shows_through",
+        "final_classification": "SOURCE_GEOMETRY_DEFECT",
+        "recommendation": "owner_ruling_restore_excluded_land_or_accept_water_gap_presentation",
+        "final_note": "Owner circle is gap-fill gap_0039 over explicitly excluded archive land src 11790 (Koynas). Not confirmed real water at this scale. nearest NE lake '(unnamed)' iou=0.0 sep_km=638.2 Godot draws continuous ocean (gap-fill not meshed).",
+        "archive_land_at_point": {
+          "source_id": 11790,
+          "is_water": false,
+          "cities": [
+            "Koynas"
+          ]
+        },
+        "explicit_exclude": {
+          "is_explicit_exclude": true,
+          "source_id": 11790,
+          "listed_in": "config/earth3/crop_candidates_v1.json em_reference_masked.explicit_exclude_ids"
+        },
+        "ocean_gap_fill": {
+          "id": "gap_0039",
+          "classification": "water_presentation_gap",
+          "region_hint": "inland_lake_or_lagoon",
+          "area": 22707.5,
+          "centroid": [
+            3617.5748,
+            684.5133
+          ],
+          "geometry_meta": {
+            "ok": true,
+            "vertex_count": 129,
+            "triangle_count": 127,
+            "committed_area": 22707.5,
+            "reconstructed_area": 22707.5,
+            "reconstruction_relative_error": 0.0,
+            "geometry_source": "emitted_triangle_union"
+          },
+          "godot_meshed": false,
+          "note": "gap-fill tris exist in dataset only; Godot shows continuous ocean through land holes"
+        },
+        "interior_exclusion_reason": "no_land_fill_gap_fill_metadata_ocean_underlay"
+      }
     },
     {
       "review_label": "NE05_Rybinsk",
@@ -892,7 +1014,39 @@
         "provenance": "docs/earth3-crop/hydrography_audit/reference/PROVENANCE.json",
         "license": "Natural Earth public domain"
       },
-      "production_change_allowed": false
+      "production_change_allowed": false,
+      "render_trace": {
+        "pixel_classification": "gap_fill_metadata_ocean_shows_through",
+        "final_classification": "REAL_WATER_KEEP",
+        "recommendation": "keep",
+        "final_note": "exact gap-fill LAEA match Rybinsk Reservoir iou=0.5584",
+        "archive_land_at_point": null,
+        "explicit_exclude": {
+          "is_explicit_exclude": false
+        },
+        "ocean_gap_fill": {
+          "id": "gap_0025",
+          "classification": "water_presentation_gap",
+          "region_hint": "inland_lake_or_lagoon",
+          "area": 2751.0,
+          "centroid": [
+            3133.0914,
+            1254.5197
+          ],
+          "geometry_meta": {
+            "ok": true,
+            "vertex_count": 325,
+            "triangle_count": 323,
+            "committed_area": 2751.0,
+            "reconstructed_area": 2751.0,
+            "reconstruction_relative_error": 0.0,
+            "geometry_source": "emitted_triangle_union"
+          },
+          "godot_meshed": false,
+          "note": "gap-fill tris exist in dataset only; Godot shows continuous ocean through land holes"
+        },
+        "interior_exclusion_reason": "no_land_fill_gap_fill_metadata_ocean_underlay"
+      }
     },
     {
       "review_label": "NE06_Lake_Galichskoye",
@@ -1048,21 +1202,61 @@
         }
       ],
       "candidate_identities": [
-        "Lake Galichskoye",
-        "other Kostroma lakes"
+        "explicitly excluded archive land src 11689",
+        "Galich"
       ],
       "gap_fill_id": "gap_0038",
-      "geographic_classification": "UNRESOLVED_REQUIRES_GEOGRAPHIC_MATCH",
+      "geographic_classification": "SOURCE_GEOMETRY_DEFECT",
       "exact_feature_identity": "UNRESOLVED",
-      "confidence": "medium",
-      "evidence": "Primary candidate Lake Galichskoye. top={'name': 'Gorky Reservoir', 'projection': 'LAEA_local_m lon0=43.0087 lat0=58.4364 R=6371008.8', 'metric_units': 'meters_laea', 'iou': 0.0, 'earth3_coverage_by_ref': 0.0, 'ref_coverage_by_earth3': 0.0, 'earth3_area_km2': 12684.322, 'ref_area_km2': 1247.499, 'intersection_area_km2': 0.0, 'union_area_km2': 13931.821, 'area_ratio_e3_over_ref': 10.1678, 'centroid_separation_km': 142.52, 'hausdorff_km': 149.728, 'boundary_mean_distance_km': 97.636, 'score': -0.285}",
+      "confidence": "high",
+      "evidence": "Owner circle is gap-fill gap_0038 over explicitly excluded archive land src 11689 (Galich). Not confirmed real water at this scale. nearest NE lake 'Gorky Reservoir' iou=0.0 sep_km=142.52 Godot draws continuous ocean (gap-fill not meshed).",
       "overlay": "docs/earth3-crop/hydrography_audit/evidence/overlay_NE06_Lake_Galichskoye.png",
       "geographic_reference": {
         "path": "docs/earth3-crop/hydrography_audit/reference/ne_10m_lakes_europe_subset.json",
         "provenance": "docs/earth3-crop/hydrography_audit/reference/PROVENANCE.json",
         "license": "Natural Earth public domain"
       },
-      "production_change_allowed": false
+      "production_change_allowed": false,
+      "render_trace": {
+        "pixel_classification": "gap_fill_metadata_ocean_shows_through",
+        "final_classification": "SOURCE_GEOMETRY_DEFECT",
+        "recommendation": "owner_ruling_restore_excluded_land_or_accept_water_gap_presentation",
+        "final_note": "Owner circle is gap-fill gap_0038 over explicitly excluded archive land src 11689 (Galich). Not confirmed real water at this scale. nearest NE lake 'Gorky Reservoir' iou=0.0 sep_km=142.52 Godot draws continuous ocean (gap-fill not meshed).",
+        "archive_land_at_point": {
+          "source_id": 11689,
+          "is_water": false,
+          "cities": [
+            "Galich"
+          ]
+        },
+        "explicit_exclude": {
+          "is_explicit_exclude": true,
+          "source_id": 11689,
+          "listed_in": "config/earth3/crop_candidates_v1.json em_reference_masked.explicit_exclude_ids"
+        },
+        "ocean_gap_fill": {
+          "id": "gap_0038",
+          "classification": "water_presentation_gap",
+          "region_hint": "inland_lake_or_lagoon",
+          "area": 7771.5,
+          "centroid": [
+            3376.3791,
+            1273.0437
+          ],
+          "geometry_meta": {
+            "ok": true,
+            "vertex_count": 164,
+            "triangle_count": 162,
+            "committed_area": 7771.5,
+            "reconstructed_area": 7771.5,
+            "reconstruction_relative_error": 0.0,
+            "geometry_source": "emitted_triangle_union"
+          },
+          "godot_meshed": false,
+          "note": "gap-fill tris exist in dataset only; Godot shows continuous ocean through land holes"
+        },
+        "interior_exclusion_reason": "no_land_fill_gap_fill_metadata_ocean_underlay"
+      }
     },
     {
       "review_label": "NE07_east_volga_candidate",
@@ -1218,22 +1412,61 @@
         }
       ],
       "candidate_identities": [
-        "Cheboksary Reservoir",
-        "local lakes near Yaransk/Shakhunya/Yoshkar-Ola",
-        "merged gap-fill"
+        "explicitly excluded archive land src 11170",
+        "Yaransk"
       ],
       "gap_fill_id": "gap_0045",
-      "geographic_classification": "UNRESOLVED_REQUIRES_GEOGRAPHIC_MATCH",
+      "geographic_classification": "SOURCE_GEOMETRY_DEFECT",
       "exact_feature_identity": "UNRESOLVED",
-      "confidence": "low",
-      "evidence": "matches=[{'name': 'Cheboksary Reservoir', 'projection': 'LAEA_local_m lon0=47.4908 lat0=57.5239 R=6371008.8', 'metric_units': 'meters_laea', 'iou': 0.0, 'earth3_coverage_by_ref': 0.0, 'ref_coverage_by_earth3': 0.0, 'earth3_area_km2': 10443.991, 'ref_area_km2': 1255.295, 'intersection_area_km2': 0.0, 'union_area_km2': 11699.286, 'area_ratio_e3_over_ref': 8.3199, 'centroid_separation_km': 158.17, 'hausdorff_km': 218.511, 'boundary_mean_distance_km': 136.256, 'score': -0.3163}, {'name': 'Gorky Reservoir', 'projection': 'LAEA_local_m lon0=47.4908 lat0=57.5239 R=6371008.8', 'metric_units': 'meters_laea', 'iou': 0.0, 'earth3_coverage_by_ref': 0.0, 'ref_coverage_by_earth3': 0.0, 'earth3_area_km2': 10443.991, 'ref_area_km2': 1247.495, 'intersection_area_km2': 0.0, 'union_area_km2': 11691.486, 'area_ratio_e3_over_ref': 8.372, 'centroid_separation_km': 262.15, 'hausdorff_km': 300.688, 'boundary_mean_distance_km': 233.054, 'score': -0.5243}, {'name': 'Samara Reservoir', 'projection': 'LAEA_local_m lon0=47.4908 lat0=57.5239 R=6371008.8', 'metric_units': 'meters_laea', 'iou': 0.0, 'earth3_coverage_by_ref': 0.0, 'ref_coverage_by_earth3': 0.0, 'earth3_area_km2': 10443.991, 'ref_area_km2': 5792.797, 'intersection_area_km2': 0.0, 'union_area_km2': 16236.787, 'area_ratio_e3_over_ref': 1.8029, 'centroid_separation_km': 342.5, 'hausdorff_km': 418.784, 'boundary_mean_distance_km': 248.225, 'score': -0.685}] cities=['Yaransk', 'Shakhunya', 'Yoshkar Ola']",
+      "confidence": "high",
+      "evidence": "Owner circle is gap-fill gap_0045 over explicitly excluded archive land src 11170 (Yaransk). Not confirmed real water at this scale. nearest NE lake 'Cheboksary Reservoir' iou=0.0 sep_km=158.17 Godot draws continuous ocean (gap-fill not meshed).",
       "overlay": "docs/earth3-crop/hydrography_audit/evidence/overlay_NE07_east_volga_candidate.png",
       "geographic_reference": {
         "path": "docs/earth3-crop/hydrography_audit/reference/ne_10m_lakes_europe_subset.json",
         "provenance": "docs/earth3-crop/hydrography_audit/reference/PROVENANCE.json",
         "license": "Natural Earth public domain"
       },
-      "production_change_allowed": false
+      "production_change_allowed": false,
+      "render_trace": {
+        "pixel_classification": "gap_fill_metadata_ocean_shows_through",
+        "final_classification": "SOURCE_GEOMETRY_DEFECT",
+        "recommendation": "owner_ruling_restore_excluded_land_or_accept_water_gap_presentation",
+        "final_note": "Owner circle is gap-fill gap_0045 over explicitly excluded archive land src 11170 (Yaransk). Not confirmed real water at this scale. nearest NE lake 'Cheboksary Reservoir' iou=0.0 sep_km=158.17 Godot draws continuous ocean (gap-fill not meshed).",
+        "archive_land_at_point": {
+          "source_id": 11170,
+          "is_water": false,
+          "cities": [
+            "Yaransk"
+          ]
+        },
+        "explicit_exclude": {
+          "is_explicit_exclude": true,
+          "source_id": 11170,
+          "listed_in": "config/earth3/crop_candidates_v1.json em_reference_masked.explicit_exclude_ids"
+        },
+        "ocean_gap_fill": {
+          "id": "gap_0045",
+          "classification": "water_presentation_gap",
+          "region_hint": "inland_lake_or_lagoon",
+          "area": 6238.0,
+          "centroid": [
+            3596.9035,
+            1356.0801
+          ],
+          "geometry_meta": {
+            "ok": true,
+            "vertex_count": 205,
+            "triangle_count": 203,
+            "committed_area": 6238.0,
+            "reconstructed_area": 6238.0,
+            "reconstruction_relative_error": 0.0,
+            "geometry_source": "emitted_triangle_union"
+          },
+          "godot_meshed": false,
+          "note": "gap-fill tris exist in dataset only; Godot shows continuous ocean through land holes"
+        },
+        "interior_exclusion_reason": "no_land_fill_gap_fill_metadata_ocean_underlay"
+      }
     },
     {
       "review_label": "NE08_kama_volga_candidate",
@@ -1389,23 +1622,61 @@
         }
       ],
       "candidate_identities": [
-        "Nizhnekamsk Reservoir",
-        "Kuybyshev Reservoir",
-        "Kama arms",
-        "merged gap-fill"
+        "explicitly excluded archive land src 11323",
+        "Tuymazy"
       ],
       "gap_fill_id": "gap_0044",
-      "geographic_classification": "UNRESOLVED_REQUIRES_GEOGRAPHIC_MATCH",
+      "geographic_classification": "SOURCE_GEOMETRY_DEFECT",
       "exact_feature_identity": "UNRESOLVED",
-      "confidence": "low",
-      "evidence": "matches=[{'name': 'Nizhnekamsk Reservoir', 'projection': 'LAEA_local_m lon0=53.4814 lat0=55.3128 R=6371008.8', 'metric_units': 'meters_laea', 'iou': 0.0448, 'earth3_coverage_by_ref': 0.045, 'ref_coverage_by_earth3': 0.9161, 'earth3_area_km2': 19822.705, 'ref_area_km2': 974.418, 'intersection_area_km2': 892.676, 'union_area_km2': 19904.446, 'area_ratio_e3_over_ref': 20.3431, 'centroid_separation_km': 71.45, 'hausdorff_km': 139.995, 'boundary_mean_distance_km': 54.888, 'score': 0.9079}, {'name': 'Votkinsk Reservoir', 'projection': 'LAEA_local_m lon0=53.4814 lat0=55.3128 R=6371008.8', 'metric_units': 'meters_laea', 'iou': 0.0, 'earth3_coverage_by_ref': 0.0, 'ref_coverage_by_earth3': 0.0, 'earth3_area_km2': 19822.705, 'ref_area_km2': 1137.338, 'intersection_area_km2': 0.0, 'union_area_km2': 20960.043, 'area_ratio_e3_over_ref': 17.429, 'centroid_separation_km': 230.16, 'hausdorff_km': 254.682, 'boundary_mean_distance_km': 170.118, 'score': -0.4603}, {'name': 'Samara Reservoir', 'projection': 'LAEA_local_m lon0=53.4814 lat0=55.3128 R=6371008.8', 'metric_units': 'meters_laea', 'iou': 0.0004, 'earth3_coverage_by_ref': 0.0006, 'ref_coverage_by_earth3': 0.0019, 'earth3_area_km2': 19822.705, 'ref_area_km2': 5792.721, 'intersection_area_km2': 11.244, 'union_area_km2': 25604.182, 'area_ratio_e3_over_ref': 3.422, 'centroid_separation_km': 272.11, 'hausdorff_km': 306.317, 'boundary_mean_distance_km': 101.611, 'score': -0.5408}] cities=['Tuymazy', 'Oktyabrsky', 'Bugulma']",
+      "confidence": "high",
+      "evidence": "Owner circle is gap-fill gap_0044 over explicitly excluded archive land src 11323 (Tuymazy). Not confirmed real water at this scale. nearest NE lake 'Nizhnekamsk Reservoir' iou=0.0448 sep_km=71.45 Godot draws continuous ocean (gap-fill not meshed).",
       "overlay": "docs/earth3-crop/hydrography_audit/evidence/overlay_NE08_kama_volga_candidate.png",
       "geographic_reference": {
         "path": "docs/earth3-crop/hydrography_audit/reference/ne_10m_lakes_europe_subset.json",
         "provenance": "docs/earth3-crop/hydrography_audit/reference/PROVENANCE.json",
         "license": "Natural Earth public domain"
       },
-      "production_change_allowed": false
+      "production_change_allowed": false,
+      "render_trace": {
+        "pixel_classification": "gap_fill_metadata_ocean_shows_through",
+        "final_classification": "SOURCE_GEOMETRY_DEFECT",
+        "recommendation": "owner_ruling_restore_excluded_land_or_accept_water_gap_presentation",
+        "final_note": "Owner circle is gap-fill gap_0044 over explicitly excluded archive land src 11323 (Tuymazy). Not confirmed real water at this scale. nearest NE lake 'Nizhnekamsk Reservoir' iou=0.0448 sep_km=71.45 Godot draws continuous ocean (gap-fill not meshed).",
+        "archive_land_at_point": {
+          "source_id": 11323,
+          "is_water": false,
+          "cities": [
+            "Tuymazy"
+          ]
+        },
+        "explicit_exclude": {
+          "is_explicit_exclude": true,
+          "source_id": 11323,
+          "listed_in": "config/earth3/crop_candidates_v1.json em_reference_masked.explicit_exclude_ids"
+        },
+        "ocean_gap_fill": {
+          "id": "gap_0044",
+          "classification": "water_presentation_gap",
+          "region_hint": "inland_lake_or_lagoon",
+          "area": 11171.0,
+          "centroid": [
+            3889.8173,
+            1546.2724
+          ],
+          "geometry_meta": {
+            "ok": true,
+            "vertex_count": 221,
+            "triangle_count": 219,
+            "committed_area": 11171.0,
+            "reconstructed_area": 11171.0,
+            "reconstruction_relative_error": 0.0,
+            "geometry_source": "emitted_triangle_union"
+          },
+          "godot_meshed": false,
+          "note": "gap-fill tris exist in dataset only; Godot shows continuous ocean through land holes"
+        },
+        "interior_exclusion_reason": "no_land_fill_gap_fill_metadata_ocean_underlay"
+      }
     },
     {
       "review_label": "MED01_Ibiza",
@@ -3863,10 +4134,19 @@
   "source_11836_identity": "docs/earth3-crop/hydrography_audit/source_11836_identity_report.json",
   "true_kolguyev_search": "docs/earth3-crop/hydrography_audit/kolguyev_true_island_search.json",
   "summary": {
+    "CROP_EDGE_PRESENTATION_ARTIFACT": [
+      "NE01_northern_outline"
+    ],
     "CONFIRMED_REAL_WATER_KEEP": [
       "NE02_Ladoga",
       "NE03_Onega",
       "NE05_Rybinsk"
+    ],
+    "SOURCE_GEOMETRY_DEFECT": [
+      "NE04_WhiteSea_SE_large_hole",
+      "NE06_Lake_Galichskoye",
+      "NE07_east_volga_candidate",
+      "NE08_kama_volga_candidate"
     ],
     "CONFIRMED_REAL_ISLAND_SIMPLIFIED_GEOMETRY_KEEP": [
       "MED01_Ibiza",
@@ -3876,16 +4156,14 @@
     ],
     "CONFIRMED_REAL_SALT_BASIN_KEEP_OR_DEFER": [
       "NA01_Chott_complex"
-    ],
-    "UNRESOLVED_MISSING_MAINLAND_OR_CROP_BOUNDARY_DEFECT": [
-      "NE01_source11836_Fion_northern_Urals"
-    ],
-    "UNRESOLVED_REQUIRES_GEOGRAPHIC_MATCH": [
-      "NE04_WhiteSea_SE_large_hole",
-      "NE06_Lake_Galichskoye",
-      "NE07_east_volga_candidate",
-      "NE08_kama_volga_candidate"
     ]
   },
-  "removed_stale_evidence": []
+  "removed_stale_evidence": [],
+  "owner_circle_render_trace": "docs/earth3-crop/hydrography_audit/owner_circle_render_trace.json",
+  "notes": [
+    "Source 11836 is NOT Kolguyev; NE01 is crop-edge presentation of excluded mainland Fion.",
+    "Actual Kolguyev source polygon not found in archive.",
+    "NE04/06/07/08 are gap-fills over crop explicit_exclude_ids land, not confirmed real water at gap scale.",
+    "No gameplay map preview asset retained for src11836."
+  ]
 }

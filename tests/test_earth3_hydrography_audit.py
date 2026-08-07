@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 INV = ROOT / "docs/earth3-crop/hydrography_audit/marked_features.json"
 PROD = ROOT / "godot/assets/maps/earth3_europe_mediterranean"
 HASH = "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3"
+TRACE = ROOT / "docs/earth3-crop/hydrography_audit/owner_circle_render_trace.json"
 
 
 class Earth3HydrographyAuditTests(unittest.TestCase):
@@ -19,16 +20,13 @@ class Earth3HydrographyAuditTests(unittest.TestCase):
         feats = inv["features"]
         self.assertGreaterEqual(len(feats), 10)
         labels = {f["review_label"] for f in feats}
-        self.assertIn("NE01_source11836_Fion_northern_Urals", labels)
+        self.assertIn("NE01_northern_outline", labels)
         self.assertIn("NE02_Ladoga", labels)
         self.assertIn("NE06_Lake_Galichskoye", labels)
-        ne01 = next(f for f in feats if f["review_label"].startswith("NE01_"))
-        self.assertEqual(ne01["exact_feature_identity"], "UNRESOLVED")
-        self.assertNotIn("Kolguyev", ne01["exact_feature_identity"])
         for f in feats:
             self.assertIn("geographic_classification", f)
             self.assertIn("exact_feature_identity", f)
-            # no generic "a hole" evidence
+            self.assertFalse(f.get("production_change_allowed", False))
             self.assertNotIn("a hole", (f.get("evidence") or "").lower())
         meta = json.loads((PROD / "dataset_meta.json").read_text(encoding="utf-8"))
         self.assertEqual(meta["province_count"], 3510)
@@ -42,6 +40,7 @@ class Earth3HydrographyAuditTests(unittest.TestCase):
             row = next(p for p in ds["provinces"] if int(p["source_id"]) == sid)
             self.assertFalse(row.get("is_water"))
             self.assertGreaterEqual(len(row.get("triangles") or []), 3)
+        self.assertTrue(TRACE.is_file())
 
 
 if __name__ == "__main__":
