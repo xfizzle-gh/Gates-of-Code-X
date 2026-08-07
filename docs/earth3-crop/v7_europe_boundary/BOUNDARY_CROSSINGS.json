@@ -1,0 +1,3729 @@
+{
+  "schema": "gates-of-codex.earth3-v7-europe-boundary-preview",
+  "schema_version": 1,
+  "status": "pending_owner_visual_approval",
+  "production_authority_unchanged_until_approval": true,
+  "conventional_boundary": {
+    "description": "Kara Sea / northern Ural → Ural Mountains → Ural River → NW Caspian",
+    "polyline_earth3_xy": [
+      [
+        10920,
+        380
+      ],
+      [
+        11040,
+        520
+      ],
+      [
+        11120,
+        700
+      ],
+      [
+        11160,
+        900
+      ],
+      [
+        11200,
+        1100
+      ],
+      [
+        11220,
+        1300
+      ],
+      [
+        11240,
+        1450
+      ],
+      [
+        11250,
+        1550
+      ],
+      [
+        11240,
+        1700
+      ],
+      [
+        11200,
+        1850
+      ],
+      [
+        11140,
+        1950
+      ],
+      [
+        11080,
+        2020
+      ],
+      [
+        11020,
+        2100
+      ],
+      [
+        10940,
+        2200
+      ],
+      [
+        10870,
+        2280
+      ],
+      [
+        10820,
+        2360
+      ],
+      [
+        10740,
+        2420
+      ],
+      [
+        10690,
+        2480
+      ]
+    ]
+  },
+  "preview_crop": {
+    "id": "em_v7_europe_boundary",
+    "province_count": 3512,
+    "land_count": 3297,
+    "water_count": 215,
+    "included_ids_sha256": "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7",
+    "bounds": [
+      7084.0,
+      150.0,
+      11374.0,
+      3583.0
+    ]
+  },
+  "required_city_status": {
+    "Arkhangelsk": {
+      "source_id": 11764,
+      "included": true
+    },
+    "Syktyvkar": {
+      "source_id": 11756,
+      "included": true
+    },
+    "Perm": {
+      "source_id": 10866,
+      "included": true
+    },
+    "Kazan": {
+      "source_id": 10854,
+      "included": true
+    },
+    "Ufa": {
+      "source_id": 11326,
+      "included": true
+    },
+    "Samara": {
+      "source_id": 10837,
+      "included": true
+    },
+    "Saratov": {
+      "source_id": 10888,
+      "included": true
+    },
+    "Volgograd": {
+      "source_id": 10805,
+      "included": true
+    },
+    "Astrakhan": {
+      "source_id": 10825,
+      "included": true
+    },
+    "Orenburg": {
+      "source_id": 11331,
+      "included": true
+    },
+    "Yekaterinburg": {
+      "source_id": 11345,
+      "included": false
+    },
+    "Chelyabinsk": {
+      "source_id": 10934,
+      "included": false
+    },
+    "Atyrau": {
+      "source_id": 10809,
+      "included": false
+    },
+    "Vorkuta": {
+      "source_id": 11835,
+      "included": false
+    },
+    "Salekhard": {
+      "source_id": 11776,
+      "included": false
+    },
+    "Uralsk": {
+      "source_id": 10829,
+      "included": true
+    },
+    "Nizhny_Tagil": {
+      "source_id": 11348,
+      "included": false
+    }
+  },
+  "boundary_crossing_provinces": [
+    {
+      "source_province_id": 3752,
+      "name": "Syzran",
+      "centroid": [
+        10730.07,
+        1850.37
+      ],
+      "bounds": [
+        10677.0,
+        1810.0,
+        10793.0,
+        1892.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11199.78,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 3753,
+      "name": "Ulyanovsk",
+      "centroid": [
+        10698.22,
+        1782.7
+      ],
+      "bounds": [
+        10664.0,
+        1730.0,
+        10732.0,
+        1828.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11217.95,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 3754,
+      "name": "Dimitrovgrad",
+      "centroid": [
+        10750.31,
+        1770.95
+      ],
+      "bounds": [
+        10707.0,
+        1718.0,
+        10794.0,
+        1809.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11221.08,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10455,
+      "name": "Aktau",
+      "centroid": [
+        10837.97,
+        2537.27
+      ],
+      "bounds": [
+        10794.0,
+        2496.0,
+        10876.0,
+        2582.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": false,
+      "recommend": "exclude_whole_polygon_despite_west_centroid"
+    },
+    {
+      "source_province_id": 10456,
+      "name": "Shebir",
+      "centroid": [
+        10862.38,
+        2481.56
+      ],
+      "bounds": [
+        10832.0,
+        2441.0,
+        10896.0,
+        2516.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": false,
+      "recommend": "exclude_whole_polygon_despite_west_centroid"
+    },
+    {
+      "source_province_id": 10459,
+      "name": "Zhanaozen",
+      "centroid": [
+        10892.63,
+        2585.47
+      ],
+      "bounds": [
+        10844.0,
+        2538.0,
+        10943.0,
+        2620.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": false,
+      "recommend": "exclude_whole_polygon_despite_west_centroid"
+    },
+    {
+      "source_province_id": 10460,
+      "name": "Aksu",
+      "centroid": [
+        10939.92,
+        2631.17
+      ],
+      "bounds": [
+        10900.0,
+        2588.0,
+        11004.0,
+        2687.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10462,
+      "name": "Tazhen",
+      "centroid": [
+        11008.78,
+        2591.87
+      ],
+      "bounds": [
+        10954.0,
+        2525.0,
+        11074.0,
+        2643.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10463,
+      "name": "Kyrkkyz",
+      "centroid": [
+        11126.9,
+        2638.43
+      ],
+      "bounds": [
+        11074.0,
+        2568.0,
+        11170.0,
+        2721.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10464,
+      "name": "Kungirot",
+      "centroid": [
+        11171.88,
+        2603.43
+      ],
+      "bounds": [
+        11114.0,
+        2555.0,
+        11225.0,
+        2646.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10578,
+      "name": "Say Otes",
+      "centroid": [
+        10950.94,
+        2541.97
+      ],
+      "bounds": [
+        10914.0,
+        2506.0,
+        10995.0,
+        2595.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10579,
+      "name": "Karakalpakia",
+      "centroid": [
+        11121.51,
+        2540.17
+      ],
+      "bounds": [
+        11074.0,
+        2453.0,
+        11151.0,
+        2602.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10580,
+      "name": "Jasliq",
+      "centroid": [
+        11171.93,
+        2544.16
+      ],
+      "bounds": [
+        11131.0,
+        2508.0,
+        11203.0,
+        2579.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10581,
+      "name": "Kabanbay",
+      "centroid": [
+        11170.8,
+        2482.67
+      ],
+      "bounds": [
+        11127.0,
+        2428.0,
+        11203.0,
+        2526.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10582,
+      "name": "Moynaq",
+      "centroid": [
+        11230.74,
+        2564.37
+      ],
+      "bounds": [
+        11195.0,
+        2534.0,
+        11276.0,
+        2598.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10583,
+      "name": "Kantubek",
+      "centroid": [
+        11221.43,
+        2499.47
+      ],
+      "bounds": [
+        11185.0,
+        2435.0,
+        11264.0,
+        2546.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10584,
+      "name": "Nukus",
+      "centroid": [
+        11254.13,
+        2624.81
+      ],
+      "bounds": [
+        11208.0,
+        2582.0,
+        11295.0,
+        2662.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10585,
+      "name": "Chimbay",
+      "centroid": [
+        11278.09,
+        2559.45
+      ],
+      "bounds": [
+        11242.0,
+        2470.0,
+        11341.0,
+        2620.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10802,
+      "name": "Zhetikara",
+      "centroid": [
+        11325.16,
+        1967.06
+      ],
+      "bounds": [
+        11268.0,
+        1924.0,
+        11367.0,
+        2009.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11125.38,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10806,
+      "name": "Prorva",
+      "centroid": [
+        10958.51,
+        2411.21
+      ],
+      "bounds": [
+        10933.0,
+        2378.0,
+        10985.0,
+        2437.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10751.73,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10807,
+      "name": "Matay",
+      "centroid": [
+        11149.13,
+        2397.48
+      ],
+      "bounds": [
+        11091.0,
+        2363.0,
+        11208.0,
+        2459.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10770.03,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10808,
+      "name": "Dossor",
+      "centroid": [
+        10931.82,
+        2319.11
+      ],
+      "bounds": [
+        10897.0,
+        2286.0,
+        10970.0,
+        2348.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10845.55,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10809,
+      "name": "Atyrau",
+      "centroid": [
+        10877.99,
+        2322.64
+      ],
+      "bounds": [
+        10845.0,
+        2274.0,
+        10911.0,
+        2348.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10843.35,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10810,
+      "name": "Ganyushkino",
+      "centroid": [
+        10757.92,
+        2346.73
+      ],
+      "bounds": [
+        10708.0,
+        2284.0,
+        10798.0,
+        2388.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10828.3,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10817,
+      "name": "Suyindik",
+      "centroid": [
+        10695.92,
+        2242.27
+      ],
+      "bounds": [
+        10611.0,
+        2196.0,
+        10773.0,
+        2301.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10903.01,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10818,
+      "name": "Kaztalovka",
+      "centroid": [
+        10688.73,
+        2149.95
+      ],
+      "bounds": [
+        10622.0,
+        2074.0,
+        10745.0,
+        2221.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10980.04,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10819,
+      "name": "Makhambet",
+      "centroid": [
+        10809.83,
+        2261.91
+      ],
+      "bounds": [
+        10732.0,
+        2199.0,
+        10871.0,
+        2309.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10885.83,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10820,
+      "name": "Akkystau",
+      "centroid": [
+        10813.75,
+        2322.56
+      ],
+      "bounds": [
+        10776.0,
+        2293.0,
+        10853.0,
+        2350.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10843.4,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10821,
+      "name": "Kulsary",
+      "centroid": [
+        10964.99,
+        2350.22
+      ],
+      "bounds": [
+        10934.0,
+        2306.0,
+        11001.0,
+        2384.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10826.11,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10822,
+      "name": "Zhanaqala",
+      "centroid": [
+        10791.97,
+        2170.6
+      ],
+      "bounds": [
+        10716.0,
+        2115.0,
+        10878.0,
+        2241.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10963.52,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10823,
+      "name": "Kharabali",
+      "centroid": [
+        10685.75,
+        2325.1
+      ],
+      "bounds": [
+        10624.0,
+        2270.0,
+        10734.0,
+        2372.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10841.81,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10824,
+      "name": "Kamyzyak",
+      "centroid": [
+        10705.69,
+        2410.91
+      ],
+      "bounds": [
+        10661.0,
+        2365.0,
+        10751.0,
+        2440.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10752.11,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10825,
+      "name": "Astrakhan",
+      "centroid": [
+        10664.24,
+        2371.81
+      ],
+      "bounds": [
+        10635.0,
+        2324.0,
+        10703.0,
+        2414.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10804.25,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10829,
+      "name": "Uralsk",
+      "centroid": [
+        10824.19,
+        2008.17
+      ],
+      "bounds": [
+        10769.0,
+        1973.0,
+        10863.0,
+        2046.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11090.14,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10837,
+      "name": "Samara",
+      "centroid": [
+        10786.17,
+        1827.54
+      ],
+      "bounds": [
+        10734.0,
+        1786.0,
+        10840.0,
+        1875.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11205.99,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10838,
+      "name": "Aksay",
+      "centroid": [
+        10927.46,
+        2027.81
+      ],
+      "bounds": [
+        10855.0,
+        1973.0,
+        11003.0,
+        2084.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11074.14,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10839,
+      "name": "Shapai",
+      "centroid": [
+        10860.58,
+        2098.23
+      ],
+      "bounds": [
+        10799.0,
+        2034.0,
+        10922.0,
+        2155.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11021.33,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10840,
+      "name": "Chapayevsk",
+      "centroid": [
+        10757.06,
+        1890.32
+      ],
+      "bounds": [
+        10703.0,
+        1857.0,
+        10820.0,
+        1928.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11175.81,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10841,
+      "name": "Novouzensk",
+      "centroid": [
+        10692.47,
+        2058.86
+      ],
+      "bounds": [
+        10629.0,
+        2001.0,
+        10755.0,
+        2124.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11050.85,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10843,
+      "name": "Khvalynsk",
+      "centroid": [
+        10652.77,
+        1926.58
+      ],
+      "bounds": [
+        10598.0,
+        1890.0,
+        10704.0,
+        1976.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11154.05,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10844,
+      "name": "Pugachyov",
+      "centroid": [
+        10720.67,
+        1934.16
+      ],
+      "bounds": [
+        10684.0,
+        1901.0,
+        10750.0,
+        1976.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11149.51,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10845,
+      "name": "Modin",
+      "centroid": [
+        10779.84,
+        1964.76
+      ],
+      "bounds": [
+        10712.0,
+        1909.0,
+        10851.0,
+        2028.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11127.35,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10846,
+      "name": "Zhympity",
+      "centroid": [
+        10968.13,
+        2106.01
+      ],
+      "bounds": [
+        10889.0,
+        2065.0,
+        11043.0,
+        2147.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11015.2,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10847,
+      "name": "Taipaq",
+      "centroid": [
+        10906.03,
+        2168.04
+      ],
+      "bounds": [
+        10846.0,
+        2114.0,
+        10963.0,
+        2220.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10965.57,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10848,
+      "name": "Miyaly",
+      "centroid": [
+        11008.54,
+        2163.66
+      ],
+      "bounds": [
+        10946.0,
+        2119.0,
+        11061.0,
+        2206.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10969.07,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10849,
+      "name": "Kobda",
+      "centroid": [
+        11056.08,
+        2074.37
+      ],
+      "bounds": [
+        10988.0,
+        2027.0,
+        11120.0,
+        2132.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11039.22,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10850,
+      "name": "Aktobe",
+      "centroid": [
+        11169.16,
+        2061.84
+      ],
+      "bounds": [
+        11103.0,
+        2019.0,
+        11248.0,
+        2115.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11048.62,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10851,
+      "name": "Yasny",
+      "centroid": [
+        11264.62,
+        2018.9
+      ],
+      "bounds": [
+        11198.0,
+        1963.0,
+        11351.0,
+        2072.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11080.94,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10852,
+      "name": "Bolgar",
+      "centroid": [
+        10786.37,
+        1715.56
+      ],
+      "bounds": [
+        10731.0,
+        1675.0,
+        10846.0,
+        1766.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11235.85,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10853,
+      "name": "Nizhnekamsk",
+      "centroid": [
+        10852.23,
+        1689.01
+      ],
+      "bounds": [
+        10803.0,
+        1647.0,
+        10899.0,
+        1741.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11240.73,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10854,
+      "name": "Kazan",
+      "centroid": [
+        10748.66,
+        1641.7
+      ],
+      "bounds": [
+        10704.0,
+        1589.0,
+        10781.0,
+        1687.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11243.89,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10855,
+      "name": "Buinsk",
+      "centroid": [
+        10704.81,
+        1717.32
+      ],
+      "bounds": [
+        10670.0,
+        1688.0,
+        10739.0,
+        1741.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11235.38,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10856,
+      "name": "Arsk",
+      "centroid": [
+        10808.5,
+        1639.04
+      ],
+      "bounds": [
+        10763.0,
+        1591.0,
+        10858.0,
+        1678.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11244.06,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10857,
+      "name": "Naberezhnye Chelny",
+      "centroid": [
+        10934.13,
+        1657.12
+      ],
+      "bounds": [
+        10885.0,
+        1634.0,
+        10989.0,
+        1701.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11242.86,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": false,
+      "recommend": "exclude_whole_polygon_despite_west_centroid"
+    },
+    {
+      "source_province_id": 10858,
+      "name": "Bugulma",
+      "centroid": [
+        10931.88,
+        1744.65
+      ],
+      "bounds": [
+        10902.0,
+        1695.0,
+        10959.0,
+        1795.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11228.09,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10859,
+      "name": "Sukhodol",
+      "centroid": [
+        10859.59,
+        1778.06
+      ],
+      "bounds": [
+        10786.0,
+        1736.0,
+        10935.0,
+        1840.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11219.19,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10860,
+      "name": "Buzuluk",
+      "centroid": [
+        10899.41,
+        1888.31
+      ],
+      "bounds": [
+        10851.0,
+        1844.0,
+        10954.0,
+        1935.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11177.01,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10861,
+      "name": "Sorochinsk",
+      "centroid": [
+        10894.99,
+        1955.07
+      ],
+      "bounds": [
+        10822.0,
+        1900.0,
+        10970.0,
+        1999.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11135.65,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10862,
+      "name": "Ilek",
+      "centroid": [
+        10980.13,
+        1993.66
+      ],
+      "bounds": [
+        10934.0,
+        1924.0,
+        11014.0,
+        2069.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11102.58,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10863,
+      "name": "Chaykovsky",
+      "centroid": [
+        11015.43,
+        1569.1
+      ],
+      "bounds": [
+        10965.0,
+        1526.0,
+        11059.0,
+        1605.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11248.73,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10864,
+      "name": "Neftekamsk",
+      "centroid": [
+        11018.91,
+        1625.92
+      ],
+      "bounds": [
+        10955.0,
+        1575.0,
+        11087.0,
+        1666.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11244.94,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10866,
+      "name": "Perm",
+      "centroid": [
+        11090.85,
+        1462.22
+      ],
+      "bounds": [
+        11035.0,
+        1417.0,
+        11137.0,
+        1504.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11241.22,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10867,
+      "name": "Chernushka",
+      "centroid": [
+        11096.85,
+        1544.53
+      ],
+      "bounds": [
+        11025.0,
+        1484.0,
+        11161.0,
+        1613.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11249.45,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10911,
+      "name": "Cheboksary",
+      "centroid": [
+        10641.25,
+        1625.67
+      ],
+      "bounds": [
+        10585.0,
+        1593.0,
+        10695.0,
+        1657.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11244.95,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10914,
+      "name": "Yoshkar Ola",
+      "centroid": [
+        10690.81,
+        1553.34
+      ],
+      "bounds": [
+        10647.0,
+        1520.0,
+        10728.0,
+        1589.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11249.78,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10915,
+      "name": "Morty",
+      "centroid": [
+        10881.74,
+        1619.15
+      ],
+      "bounds": [
+        10841.0,
+        1581.0,
+        10922.0,
+        1660.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11245.39,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10916,
+      "name": "Sarapul",
+      "centroid": [
+        10939.04,
+        1598.22
+      ],
+      "bounds": [
+        10903.0,
+        1550.0,
+        10987.0,
+        1636.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11246.79,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10917,
+      "name": "Izhevsk",
+      "centroid": [
+        10986.19,
+        1499.68
+      ],
+      "bounds": [
+        10921.0,
+        1446.0,
+        11054.0,
+        1559.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11244.97,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10918,
+      "name": "Krasnokamsk",
+      "centroid": [
+        11033.59,
+        1417.38
+      ],
+      "bounds": [
+        10963.0,
+        1385.0,
+        11097.0,
+        1462.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11235.65,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10919,
+      "name": "Orsk",
+      "centroid": [
+        11225.75,
+        1970.99
+      ],
+      "bounds": [
+        11174.0,
+        1915.0,
+        11279.0,
+        2028.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11122.0,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10920,
+      "name": "Kartaly",
+      "centroid": [
+        11284.79,
+        1889.36
+      ],
+      "bounds": [
+        11209.0,
+        1844.0,
+        11374.0,
+        1956.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11176.38,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": true,
+      "recommend": "include_whole_polygon_despite_east_centroid"
+    },
+    {
+      "source_province_id": 10921,
+      "name": "Magnitogorsk",
+      "centroid": [
+        11273.51,
+        1814.77
+      ],
+      "bounds": [
+        11210.0,
+        1752.0,
+        11346.0,
+        1864.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11209.4,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 10932,
+      "name": "Kukmor",
+      "centroid": [
+        10801.66,
+        1587.4
+      ],
+      "bounds": [
+        10752.0,
+        1544.0,
+        10848.0,
+        1623.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11247.51,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10933,
+      "name": "Urzhum",
+      "centroid": [
+        10750.21,
+        1514.83
+      ],
+      "bounds": [
+        10697.0,
+        1478.0,
+        10806.0,
+        1557.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11246.48,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 10969,
+      "name": "Krasino",
+      "centroid": [
+        10989.23,
+        179.15
+      ],
+      "bounds": [
+        10853.0,
+        0.0,
+        11152.0,
+        300.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11029,
+      "name": "Karabau",
+      "centroid": [
+        10941.82,
+        2225.48
+      ],
+      "bounds": [
+        10899.0,
+        2179.0,
+        10988.0,
+        2271.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10917.7,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11030,
+      "name": "Asgil",
+      "centroid": [
+        11044.41,
+        2346.7
+      ],
+      "bounds": [
+        10992.0,
+        2296.0,
+        11102.0,
+        2390.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10828.31,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11031,
+      "name": "Kulakshi",
+      "centroid": [
+        11107.75,
+        2321.85
+      ],
+      "bounds": [
+        11030.0,
+        2271.0,
+        11173.0,
+        2379.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10843.84,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": true,
+      "recommend": "include_whole_polygon_despite_east_centroid"
+    },
+    {
+      "source_province_id": 11032,
+      "name": "Sagiz",
+      "centroid": [
+        10994.84,
+        2258.94
+      ],
+      "bounds": [
+        10931.0,
+        2193.0,
+        11047.0,
+        2314.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10888.43,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11033,
+      "name": "Bozoy",
+      "centroid": [
+        11204.21,
+        2349.42
+      ],
+      "bounds": [
+        11157.0,
+        2279.0,
+        11256.0,
+        2412.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10826.61,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11034,
+      "name": "Kazaly",
+      "centroid": [
+        11263.38,
+        2399.65
+      ],
+      "bounds": [
+        11211.0,
+        2335.0,
+        11314.0,
+        2453.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10767.14,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11035,
+      "name": "Kaukey",
+      "centroid": [
+        11324.91,
+        2434.66
+      ],
+      "bounds": [
+        11266.0,
+        2377.0,
+        11368.0,
+        2514.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10727.78,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11170,
+      "name": "Yaransk",
+      "centroid": [
+        10675.2,
+        1498.94
+      ],
+      "bounds": [
+        10621.0,
+        1441.0,
+        10737.0,
+        1554.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11244.89,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": false,
+      "recommend": "exclude_whole_polygon_despite_west_centroid"
+    },
+    {
+      "source_province_id": 11178,
+      "name": "Aral",
+      "centroid": [
+        11328.76,
+        2333.44
+      ],
+      "bounds": [
+        11264.0,
+        2267.0,
+        11409.0,
+        2371.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10836.6,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11179,
+      "name": "Shalkar",
+      "centroid": [
+        11264.59,
+        2294.83
+      ],
+      "bounds": [
+        11200.0,
+        2252.0,
+        11332.0,
+        2347.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10860.73,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11180,
+      "name": "Karabutak",
+      "centroid": [
+        11326.9,
+        2099.74
+      ],
+      "bounds": [
+        11248.0,
+        2044.0,
+        11408.0,
+        2154.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11020.19,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11193,
+      "name": "Altyndy",
+      "centroid": [
+        11271.07,
+        2199.34
+      ],
+      "bounds": [
+        11192.0,
+        2126.0,
+        11345.0,
+        2270.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10940.52,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11194,
+      "name": "Berchogur",
+      "centroid": [
+        11194.52,
+        2253.78
+      ],
+      "bounds": [
+        11127.0,
+        2198.0,
+        11269.0,
+        2311.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10892.94,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11195,
+      "name": "Embi",
+      "centroid": [
+        11195.1,
+        2128.05
+      ],
+      "bounds": [
+        11128.0,
+        2069.0,
+        11260.0,
+        2206.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10997.56,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11196,
+      "name": "Bayganin",
+      "centroid": [
+        11061.42,
+        2230.98
+      ],
+      "bounds": [
+        11018.0,
+        2165.0,
+        11113.0,
+        2290.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10912.89,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11197,
+      "name": "Shubarshi",
+      "centroid": [
+        11127.55,
+        2218.78
+      ],
+      "bounds": [
+        11073.0,
+        2175.0,
+        11183.0,
+        2276.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10923.56,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11198,
+      "name": "Kandyagash",
+      "centroid": [
+        11101.46,
+        2152.67
+      ],
+      "bounds": [
+        11043.0,
+        2104.0,
+        11155.0,
+        2199.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10977.86,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11323,
+      "name": "Tuymazy",
+      "centroid": [
+        10986.12,
+        1706.55
+      ],
+      "bounds": [
+        10936.0,
+        1659.0,
+        11040.0,
+        1754.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11238.25,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": false,
+      "recommend": "exclude_whole_polygon_despite_west_centroid"
+    },
+    {
+      "source_province_id": 11324,
+      "name": "Abdulino",
+      "centroid": [
+        10934.1,
+        1827.64
+      ],
+      "bounds": [
+        10883.0,
+        1778.0,
+        10985.0,
+        1873.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11205.96,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11325,
+      "name": "Oktyabrsky",
+      "centroid": [
+        11000.52,
+        1785.98
+      ],
+      "bounds": [
+        10946.0,
+        1740.0,
+        11048.0,
+        1833.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11217.07,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11326,
+      "name": "Ufa",
+      "centroid": [
+        11070.38,
+        1742.42
+      ],
+      "bounds": [
+        11025.0,
+        1699.0,
+        11116.0,
+        1781.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11228.69,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11327,
+      "name": "Birsk",
+      "centroid": [
+        11077.99,
+        1676.13
+      ],
+      "bounds": [
+        11006.0,
+        1639.0,
+        11144.0,
+        1712.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11241.59,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11328,
+      "name": "Akbulak",
+      "centroid": [
+        11053.29,
+        2026.15
+      ],
+      "bounds": [
+        11007.0,
+        1987.0,
+        11099.0,
+        2068.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11075.38,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11329,
+      "name": "Sharlyk",
+      "centroid": [
+        10997.97,
+        1881.88
+      ],
+      "bounds": [
+        10943.0,
+        1823.0,
+        11047.0,
+        1934.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11180.87,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11330,
+      "name": "Kuvandyk",
+      "centroid": [
+        11139.57,
+        2004.06
+      ],
+      "bounds": [
+        11079.0,
+        1962.0,
+        11186.0,
+        2043.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11093.66,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11331,
+      "name": "Orenburg",
+      "centroid": [
+        11039.24,
+        1963.02
+      ],
+      "bounds": [
+        10994.0,
+        1912.0,
+        11092.0,
+        2006.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11128.84,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11332,
+      "name": "Askino",
+      "centroid": [
+        11133.21,
+        1623.69
+      ],
+      "bounds": [
+        11054.0,
+        1575.0,
+        11219.0,
+        1683.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11245.09,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11333,
+      "name": "Arti",
+      "centroid": [
+        11192.17,
+        1555.18
+      ],
+      "bounds": [
+        11134.0,
+        1479.0,
+        11253.0,
+        1616.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11249.65,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11334,
+      "name": "Polevskoy",
+      "centroid": [
+        11271.29,
+        1617.12
+      ],
+      "bounds": [
+        11212.0,
+        1558.0,
+        11327.0,
+        1673.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11245.52,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11335,
+      "name": "Zlatoust",
+      "centroid": [
+        11219.48,
+        1679.91
+      ],
+      "bounds": [
+        11169.0,
+        1633.0,
+        11272.0,
+        1713.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11241.34,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11336,
+      "name": "Asha",
+      "centroid": [
+        11149.22,
+        1722.26
+      ],
+      "bounds": [
+        11089.0,
+        1677.0,
+        11200.0,
+        1776.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11234.06,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11337,
+      "name": "Miass",
+      "centroid": [
+        11255.46,
+        1719.3
+      ],
+      "bounds": [
+        11190.0,
+        1665.0,
+        11310.0,
+        1763.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11234.85,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11338,
+      "name": "Sibay",
+      "centroid": [
+        11183.95,
+        1922.18
+      ],
+      "bounds": [
+        11136.0,
+        1865.0,
+        11220.0,
+        1974.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11156.69,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11339,
+      "name": "Sterlitamak",
+      "centroid": [
+        11080.45,
+        1807.58
+      ],
+      "bounds": [
+        11025.0,
+        1758.0,
+        11132.0,
+        1861.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11211.31,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11340,
+      "name": "Kumertau",
+      "centroid": [
+        11059.0,
+        1890.83
+      ],
+      "bounds": [
+        11018.0,
+        1843.0,
+        11098.0,
+        1941.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11175.5,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11341,
+      "name": "Saraktash",
+      "centroid": [
+        11109.42,
+        1931.52
+      ],
+      "bounds": [
+        11068.0,
+        1873.0,
+        11161.0,
+        1991.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11151.09,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11342,
+      "name": "Temyasovo",
+      "centroid": [
+        11131.58,
+        1852.19
+      ],
+      "bounds": [
+        11083.0,
+        1789.0,
+        11180.0,
+        1908.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11198.69,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11343,
+      "name": "Beloretsk",
+      "centroid": [
+        11193.46,
+        1801.51
+      ],
+      "bounds": [
+        11119.0,
+        1744.0,
+        11259.0,
+        1873.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11212.93,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11344,
+      "name": "Kungur",
+      "centroid": [
+        11162.72,
+        1466.59
+      ],
+      "bounds": [
+        11105.0,
+        1402.0,
+        11215.0,
+        1536.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11241.66,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11345,
+      "name": "Yekaterinburg",
+      "centroid": [
+        11294.73,
+        1541.07
+      ],
+      "bounds": [
+        11241.0,
+        1487.0,
+        11344.0,
+        1593.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11249.11,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11348,
+      "name": "Nizhny Tagil",
+      "centroid": [
+        11264.09,
+        1426.43
+      ],
+      "bounds": [
+        11200.0,
+        1332.0,
+        11336.0,
+        1512.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11236.86,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11349,
+      "name": "Dobryanka",
+      "centroid": [
+        11113.17,
+        1369.67
+      ],
+      "bounds": [
+        11080.0,
+        1313.0,
+        11163.0,
+        1432.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11229.29,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11350,
+      "name": "Kizel",
+      "centroid": [
+        11194.36,
+        1362.38
+      ],
+      "bounds": [
+        11150.0,
+        1289.0,
+        11244.0,
+        1422.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11228.32,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11351,
+      "name": "Mozhga",
+      "centroid": [
+        10878.22,
+        1558.88
+      ],
+      "bounds": [
+        10820.0,
+        1504.0,
+        10940.0,
+        1604.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11249.41,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11352,
+      "name": "Igra",
+      "centroid": [
+        10860.99,
+        1498.77
+      ],
+      "bounds": [
+        10779.0,
+        1439.0,
+        10954.0,
+        1574.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11244.88,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11353,
+      "name": "Glazov",
+      "centroid": [
+        10924.62,
+        1430.99
+      ],
+      "bounds": [
+        10865.0,
+        1393.0,
+        10982.0,
+        1467.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11237.47,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11354,
+      "name": "Kudymkar",
+      "centroid": [
+        11029.79,
+        1351.73
+      ],
+      "bounds": [
+        10942.0,
+        1292.0,
+        11086.0,
+        1399.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11226.9,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11516,
+      "name": "Neftegorsk",
+      "centroid": [
+        10850.86,
+        1875.98
+      ],
+      "bounds": [
+        10815.0,
+        1814.0,
+        10888.0,
+        1935.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11184.41,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11529,
+      "name": "Inderbor",
+      "centroid": [
+        10892.77,
+        2250.41
+      ],
+      "bounds": [
+        10848.0,
+        2203.0,
+        10938.0,
+        2292.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10895.89,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11531,
+      "name": "Akshimrau",
+      "centroid": [
+        10928.4,
+        2477.43
+      ],
+      "bounds": [
+        10886.0,
+        2448.0,
+        10967.0,
+        2514.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10692.14,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11532,
+      "name": "Shetpe",
+      "centroid": [
+        10893.0,
+        2522.84
+      ],
+      "bounds": [
+        10853.0,
+        2490.0,
+        10926.0,
+        2557.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": false,
+      "recommend": "exclude_whole_polygon_despite_west_centroid"
+    },
+    {
+      "source_province_id": 11533,
+      "name": "Beyneu",
+      "centroid": [
+        11032.19,
+        2414.48
+      ],
+      "bounds": [
+        10976.0,
+        2371.0,
+        11108.0,
+        2471.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10747.36,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11534,
+      "name": "Usturt",
+      "centroid": [
+        11006.61,
+        2487.93
+      ],
+      "bounds": [
+        10949.0,
+        2439.0,
+        11074.0,
+        2556.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11563,
+      "name": "Almetyevsk",
+      "centroid": [
+        10890.4,
+        1725.38
+      ],
+      "bounds": [
+        10858.0,
+        1688.0,
+        10920.0,
+        1765.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11233.23,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11565,
+      "name": "Taldykuduk",
+      "centroid": [
+        10778.58,
+        2080.44
+      ],
+      "bounds": [
+        10713.0,
+        2024.0,
+        10840.0,
+        2131.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11034.67,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11566,
+      "name": "Yershov",
+      "centroid": [
+        10685.12,
+        1979.75
+      ],
+      "bounds": [
+        10643.0,
+        1938.0,
+        10723.0,
+        2020.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11114.5,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11577,
+      "name": "Novospasskoye",
+      "centroid": [
+        10662.12,
+        1877.48
+      ],
+      "bounds": [
+        10626.0,
+        1838.0,
+        10695.0,
+        1911.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11183.51,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11578,
+      "name": "Barysh",
+      "centroid": [
+        10643.35,
+        1812.18
+      ],
+      "bounds": [
+        10581.0,
+        1770.0,
+        10702.0,
+        1856.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11210.09,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11592,
+      "name": "Zvenigovo",
+      "centroid": [
+        10704.12,
+        1601.14
+      ],
+      "bounds": [
+        10657.0,
+        1575.0,
+        10743.0,
+        1637.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11246.59,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11593,
+      "name": "Sernur",
+      "centroid": [
+        10746.16,
+        1553.42
+      ],
+      "bounds": [
+        10712.0,
+        1515.0,
+        10788.0,
+        1593.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11249.77,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11661,
+      "name": "Innopolis",
+      "centroid": [
+        10708.83,
+        1674.19
+      ],
+      "bounds": [
+        10667.0,
+        1631.0,
+        10750.0,
+        1701.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11241.72,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11684,
+      "name": "Orichi",
+      "centroid": [
+        10764.53,
+        1443.3
+      ],
+      "bounds": [
+        10698.0,
+        1383.0,
+        10830.0,
+        1501.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11239.11,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11685,
+      "name": "Kirov",
+      "centroid": [
+        10821.78,
+        1387.85
+      ],
+      "bounds": [
+        10744.0,
+        1329.0,
+        10895.0,
+        1452.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11231.71,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11686,
+      "name": "Omutninsk",
+      "centroid": [
+        10929.45,
+        1370.08
+      ],
+      "bounds": [
+        10874.0,
+        1322.0,
+        10974.0,
+        1408.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11229.34,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11692,
+      "name": "Orlov",
+      "centroid": [
+        10669.0,
+        1400.68
+      ],
+      "bounds": [
+        10603.0,
+        1338.0,
+        10734.0,
+        1451.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11233.42,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11700,
+      "name": "Murashi",
+      "centroid": [
+        10713.93,
+        1332.63
+      ],
+      "bounds": [
+        10646.0,
+        1281.0,
+        10770.0,
+        1389.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11224.35,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11701,
+      "name": "Oparino",
+      "centroid": [
+        10662.99,
+        1248.03
+      ],
+      "bounds": [
+        10603.0,
+        1178.0,
+        10723.0,
+        1318.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11214.8,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11702,
+      "name": "Kirs",
+      "centroid": [
+        10895.22,
+        1301.07
+      ],
+      "bounds": [
+        10836.0,
+        1235.0,
+        10962.0,
+        1380.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11220.14,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11703,
+      "name": "Antipyata",
+      "centroid": [
+        10820.57,
+        1300.08
+      ],
+      "bounds": [
+        10756.0,
+        1253.0,
+        10892.0,
+        1355.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11220.01,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11704,
+      "name": "Obyachevo",
+      "centroid": [
+        10764.49,
+        1239.53
+      ],
+      "bounds": [
+        10705.0,
+        1161.0,
+        10832.0,
+        1322.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11213.95,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11705,
+      "name": "Cherdyn",
+      "centroid": [
+        11055.1,
+        1248.37
+      ],
+      "bounds": [
+        10947.0,
+        1162.0,
+        11143.0,
+        1335.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11214.84,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11755,
+      "name": "Yarensk",
+      "centroid": [
+        10704.38,
+        1120.87
+      ],
+      "bounds": [
+        10632.0,
+        1036.0,
+        10764.0,
+        1195.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11202.09,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11756,
+      "name": "Syktyvkar",
+      "centroid": [
+        10814.74,
+        1127.81
+      ],
+      "bounds": [
+        10745.0,
+        1045.0,
+        10897.0,
+        1210.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11202.78,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11757,
+      "name": "Kazhym",
+      "centroid": [
+        10910.47,
+        1220.8
+      ],
+      "bounds": [
+        10820.0,
+        1162.0,
+        11011.0,
+        1265.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11212.08,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11758,
+      "name": "Pomozdino",
+      "centroid": [
+        10975.73,
+        1138.36
+      ],
+      "bounds": [
+        10870.0,
+        1067.0,
+        11069.0,
+        1195.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11203.84,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11768,
+      "name": "Indiga",
+      "centroid": [
+        10734.52,
+        574.74
+      ],
+      "bounds": [
+        10599.0,
+        419.0,
+        10854.0,
+        761.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11064.33,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11769,
+      "name": "Kamenka",
+      "centroid": [
+        10923.92,
+        567.64
+      ],
+      "bounds": [
+        10751.0,
+        473.0,
+        11005.0,
+        745.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11061.17,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11788,
+      "name": "Berezniki",
+      "centroid": [
+        11162.8,
+        1258.53
+      ],
+      "bounds": [
+        11096.0,
+        1188.0,
+        11244.0,
+        1334.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11215.85,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": false,
+      "recommend": "exclude_whole_polygon_despite_west_centroid"
+    },
+    {
+      "source_province_id": 11789,
+      "name": "Chim",
+      "centroid": [
+        10656.2,
+        994.2
+      ],
+      "bounds": [
+        10576.0,
+        873.0,
+        10737.0,
+        1105.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11178.84,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11790,
+      "name": "Koynas",
+      "centroid": [
+        10680.49,
+        821.65
+      ],
+      "bounds": [
+        10592.0,
+        729.0,
+        10796.0,
+        917.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11144.33,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": false,
+      "recommend": "exclude_whole_polygon_despite_west_centroid"
+    },
+    {
+      "source_province_id": 11807,
+      "name": "Talovo",
+      "centroid": [
+        11205.42,
+        1138.85
+      ],
+      "bounds": [
+        11128.0,
+        1058.0,
+        11252.0,
+        1206.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11203.89,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11808,
+      "name": "Yaksha",
+      "centroid": [
+        11101.22,
+        1102.9
+      ],
+      "bounds": [
+        11005.0,
+        1006.0,
+        11190.0,
+        1202.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11200.29,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11809,
+      "name": "Dutovo",
+      "centroid": [
+        11186.06,
+        972.36
+      ],
+      "bounds": [
+        11062.0,
+        865.0,
+        11263.0,
+        1089.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11174.47,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": true,
+      "recommend": "include_whole_polygon_despite_east_centroid"
+    },
+    {
+      "source_province_id": 11810,
+      "name": "Shchekurya",
+      "centroid": [
+        11327.3,
+        883.75
+      ],
+      "bounds": [
+        11247.0,
+        789.0,
+        11410.0,
+        971.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11156.75,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11813,
+      "name": "Karatayka",
+      "centroid": [
+        11328.1,
+        442.36
+      ],
+      "bounds": [
+        11193.0,
+        316.0,
+        11545.0,
+        661.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 10973.45,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11814,
+      "name": "Khorey Ver",
+      "centroid": [
+        11214.74,
+        549.19
+      ],
+      "bounds": [
+        11105.0,
+        434.0,
+        11328.0,
+        705.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11052.97,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11815,
+      "name": "Kharyaginskii",
+      "centroid": [
+        11040.23,
+        608.89
+      ],
+      "bounds": [
+        10918.0,
+        509.0,
+        11158.0,
+        741.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11079.51,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11836,
+      "name": "Fion",
+      "centroid": [
+        11331.28,
+        768.7
+      ],
+      "bounds": [
+        11228.0,
+        633.0,
+        11434.0,
+        871.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11133.74,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11837,
+      "name": "Usinsk",
+      "centroid": [
+        11174.92,
+        756.34
+      ],
+      "bounds": [
+        11043.0,
+        687.0,
+        11288.0,
+        848.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11131.27,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11838,
+      "name": "Pechora",
+      "centroid": [
+        11131.29,
+        856.11
+      ],
+      "bounds": [
+        11040.0,
+        772.0,
+        11236.0,
+        932.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11151.22,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11839,
+      "name": "Medvezhka",
+      "centroid": [
+        10845.72,
+        758.03
+      ],
+      "bounds": [
+        10727.0,
+        707.0,
+        10943.0,
+        832.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11131.61,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11840,
+      "name": "Puzla",
+      "centroid": [
+        11001.24,
+        1015.44
+      ],
+      "bounds": [
+        10939.0,
+        944.0,
+        11068.0,
+        1084.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11183.09,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11841,
+      "name": "Izhma",
+      "centroid": [
+        11024.54,
+        899.13
+      ],
+      "bounds": [
+        10948.0,
+        820.0,
+        11103.0,
+        977.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11159.83,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11842,
+      "name": "Kipiyevo",
+      "centroid": [
+        10984.24,
+        783.98
+      ],
+      "bounds": [
+        10903.0,
+        714.0,
+        11075.0,
+        849.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11136.8,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11843,
+      "name": "Sindor",
+      "centroid": [
+        10885.14,
+        1013.69
+      ],
+      "bounds": [
+        10806.0,
+        933.0,
+        10961.0,
+        1084.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11182.74,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11844,
+      "name": "Tom",
+      "centroid": [
+        10894.72,
+        880.83
+      ],
+      "bounds": [
+        10774.0,
+        801.0,
+        10982.0,
+        967.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11156.17,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11845,
+      "name": "Zerzyayb",
+      "centroid": [
+        10797.7,
+        961.37
+      ],
+      "bounds": [
+        10714.0,
+        858.0,
+        10874.0,
+        1058.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11172.27,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 11951,
+      "name": "Pripolyarnyi",
+      "centroid": [
+        11300.56,
+        1010.74
+      ],
+      "bounds": [
+        11230.0,
+        938.0,
+        11391.0,
+        1075.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11182.15,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11955,
+      "name": "Serov",
+      "centroid": [
+        11261.35,
+        1269.35
+      ],
+      "bounds": [
+        11191.0,
+        1162.0,
+        11339.0,
+        1361.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11216.94,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 11959,
+      "name": "Vizhai",
+      "centroid": [
+        11303.22,
+        1151.69
+      ],
+      "bounds": [
+        11236.0,
+        1063.0,
+        11384.0,
+        1243.0
+      ],
+      "is_water": false,
+      "boundary_x_at_centroid_y": 11205.17,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 13349,
+      "name": "province_13349",
+      "centroid": [
+        10713.71,
+        2669.85
+      ],
+      "bounds": [
+        10670.0,
+        2588.0,
+        10824.0,
+        2728.0
+      ],
+      "is_water": true,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 13350,
+      "name": "province_13350",
+      "centroid": [
+        10856.77,
+        2597.93
+      ],
+      "bounds": [
+        10735.0,
+        2512.0,
+        10916.0,
+        2712.0
+      ],
+      "is_water": true,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 13351,
+      "name": "province_13351",
+      "centroid": [
+        10666.48,
+        2551.68
+      ],
+      "bounds": [
+        10633.0,
+        2494.0,
+        10757.0,
+        2615.0
+      ],
+      "is_water": true,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 13352,
+      "name": "province_13352",
+      "centroid": [
+        10686.5,
+        2441.89
+      ],
+      "bounds": [
+        10625.0,
+        2392.0,
+        10792.0,
+        2509.0
+      ],
+      "is_water": true,
+      "boundary_x_at_centroid_y": 10721.75,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 13353,
+      "name": "province_13353",
+      "centroid": [
+        10799.36,
+        2361.08
+      ],
+      "bounds": [
+        10742.0,
+        2323.0,
+        10882.0,
+        2432.0
+      ],
+      "is_water": true,
+      "boundary_x_at_centroid_y": 10818.56,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": false,
+      "recommend": "exclude_whole_polygon_despite_west_centroid"
+    },
+    {
+      "source_province_id": 13354,
+      "name": "province_13354",
+      "centroid": [
+        10960.59,
+        2463.38
+      ],
+      "bounds": [
+        10906.0,
+        2410.0,
+        11024.0,
+        2528.0
+      ],
+      "is_water": true,
+      "boundary_x_at_centroid_y": 10703.85,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 13355,
+      "name": "province_13355",
+      "centroid": [
+        10842.1,
+        2476.6
+      ],
+      "bounds": [
+        10731.0,
+        2389.0,
+        10919.0,
+        2517.0
+      ],
+      "is_water": true,
+      "boundary_x_at_centroid_y": 10692.83,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 13356,
+      "name": "province_13356",
+      "centroid": [
+        10913.78,
+        2356.27
+      ],
+      "bounds": [
+        10872.0,
+        2328.0,
+        10948.0,
+        2431.0
+      ],
+      "is_water": true,
+      "boundary_x_at_centroid_y": 10822.33,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 13366,
+      "name": "province_13366",
+      "centroid": [
+        11180.37,
+        345.63
+      ],
+      "bounds": [
+        11038.0,
+        0.0,
+        11338.0,
+        542.0
+      ],
+      "is_water": true,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "east_asia",
+      "included_in_preview_crop": false,
+      "recommend": "exclude"
+    },
+    {
+      "source_province_id": 13368,
+      "name": "province_13368",
+      "centroid": [
+        10908.47,
+        426.99
+      ],
+      "bounds": [
+        10666.0,
+        159.0,
+        11074.0,
+        592.0
+      ],
+      "is_water": true,
+      "boundary_x_at_centroid_y": 10960.28,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 13369,
+      "name": "province_13369",
+      "centroid": [
+        10613.58,
+        601.28
+      ],
+      "bounds": [
+        10319.0,
+        340.0,
+        10737.0,
+        688.0
+      ],
+      "is_water": true,
+      "boundary_x_at_centroid_y": 11076.12,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": true,
+      "recommend": "include"
+    },
+    {
+      "source_province_id": 13372,
+      "name": "province_13372",
+      "centroid": [
+        10883.52,
+        81.08
+      ],
+      "bounds": [
+        10487.0,
+        0.0,
+        10956.0,
+        369.0
+      ],
+      "is_water": true,
+      "boundary_x_at_centroid_y": 10920,
+      "centroid_side": "west_europe",
+      "included_in_preview_crop": false,
+      "recommend": "exclude_whole_polygon_despite_west_centroid"
+    }
+  ],
+  "boundary_crossing_count": 187,
+  "notes": [
+    "Whole Earth3 polygons only — no sliver clips.",
+    "Provinces straddling the conventional line are listed with include/exclude recommendation.",
+    "Yekaterinburg is conventionally on/east of the crest; preview forces exclude.",
+    "Chelyabinsk, Atyrau, Vorkuta, Salekhard forced exclude.",
+    "Await owner approval before replacing production theatre."
+  ]
+}
