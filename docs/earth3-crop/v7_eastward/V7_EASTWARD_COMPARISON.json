@@ -1,0 +1,103 @@
+{
+  "schema": "gates-of-codex.earth3-v7-eastward-preview",
+  "schema_version": 1,
+  "status": "pending_owner_visual_approval",
+  "production_authority_unchanged": {
+    "map_id": "earth3_europe_mediterranean",
+    "province_count": 3345,
+    "land_water": [
+      3133,
+      212
+    ],
+    "included_ids_sha256": "4fe9d98bbf40d2588286d3d4ec5513ffa3a8f0b7b2ae5689373217b4cb569a1b",
+    "merge": "b8768c9fce9a577ade7094e15a282d44219472c6"
+  },
+  "shared_camera": [
+    6700.0,
+    120.0,
+    12200.0,
+    4300.0
+  ],
+  "candidates": [
+    {
+      "id": "em_v7_volga",
+      "title": "V7 Candidate A \u2014 Volga expansion",
+      "province_count": 3467,
+      "land_count": 3252,
+      "water_count": 215,
+      "included_ids_sha256": "5c05ba0b80fb23bcd4343d24a527b3d7d616f5a66ff705c420544d8f3bdd7fda",
+      "vertex_count": 338143,
+      "triangle_count_estimate": 350466,
+      "bounds": {
+        "source_min_xy": [
+          7084.0,
+          150.0
+        ],
+        "source_max_xy": [
+          11011.0,
+          3583.0
+        ],
+        "width": 3927.0,
+        "height": 3433.0
+      },
+      "crop_apply_ms": 1747,
+      "estimated_godot_load_ms": 1088,
+      "estimated_snapshot_kb": 846,
+      "delta_vs_v6_provinces": 122
+    },
+    {
+      "id": "em_v7_urals",
+      "title": "V7 Candidate B \u2014 European Russia to Urals",
+      "province_count": 3523,
+      "land_count": 3307,
+      "water_count": 216,
+      "included_ids_sha256": "e8dd0dd16ac06d035398e079f0736a97c2fe39bbb4434cc6c6c119067b490dda",
+      "vertex_count": 347003,
+      "triangle_count_estimate": 315982,
+      "bounds": {
+        "source_min_xy": [
+          7084.0,
+          150.0
+        ],
+        "source_max_xy": [
+          11374.0,
+          3583.0
+        ],
+        "width": 4290.0,
+        "height": 3433.0
+      },
+      "crop_apply_ms": 2145,
+      "estimated_godot_load_ms": 1105,
+      "estimated_snapshot_kb": 860,
+      "delta_vs_v6_provinces": 178
+    }
+  ],
+  "recommendation": {
+    "preferred": "em_v7_volga",
+    "rationale": [
+      "Candidate A adds the operationally meaningful Volga axis (Arkhangelsk\u2013Kazan\u2013Samara\u2013Volgograd\u2013Astrakhan) and White Sea approach without committing to the full Ural industrial belt.",
+      "Smaller province delta and load/snapshot cost while still answering the eastward-extent question for European Russia\u2019s core river corridor.",
+      "Candidate B is the natural max-east European-Russia option if the Urals should be a permanent hard boundary (Perm/Bashkortostan/Orenburg depth).",
+      "Neither candidate is approved; production remains v6 until owner visual sign-off."
+    ]
+  },
+  "federal_subjects_metadata_note": {
+    "principle": "Playable cells remain Earth3 provinces (e3_*). Russian federal subjects are grouping metadata / overlay only \u2014 never replace province geometry.",
+    "examples": [
+      {
+        "subject": "Moscow (federal city)",
+        "vs": "Moscow Oblast",
+        "representation": "subject_id on provinces + optional boundary overlay; city provinces tagged federal_city=true"
+      },
+      {
+        "subject": "Saint Petersburg (federal city)",
+        "vs": "Leningrad Oblast",
+        "representation": "same pattern; do not merge oblast into city cell"
+      },
+      {
+        "subject": "Other oblasts/krais/republics",
+        "representation": "province.properties.federal_subject_id + name table; UI can tint/label without changing adjacency"
+      }
+    ]
+  }
+}
