@@ -161,6 +161,48 @@ jobs:
           assert data.get("renderer") in ("polygon_mesh", "polygon"), data
           print("earth3 profiler ok", data)
           PY
+      - name: Godot Earth3 interactive baseline profiler (#74 PR A)
+        run: |
+          set -euo pipefail
+          mkdir -p docs/godot-presentation
+          OUT="$(pwd)/docs/godot-presentation/ci_earth3_interactive_baseline.json"
+          # Interactive path needs a display (xvfb). Measurement-only; no renderer rewrite.
+          xvfb-run -a -s "-screen 0 1920x1080x24" \
+            "$HOME/godot" --path godot --audio-driver Dummy \
+            -s res://scripts/tools/map_interactive_profiler.gd -- \
+            --snapshot=res://fixtures/snapshots/earth3_operational.json \
+            --fixture=res://fixtures/presentation/e3_operational.json \
+            --manifest=res://assets/maps/earth3_europe_mediterranean/map_manifest.json \
+            --width=1920 --height=1080 --frames=24 \
+            --build=ci-ubuntu-xvfb \
+            --out="$OUT"
+          test -s "$OUT"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path("docs/godot-presentation/ci_earth3_interactive_baseline.json").read_text(encoding="utf-8"))
+          assert data.get("ok") is True, data
+          assert int(data.get("map", {}).get("province_count", 0)) == 3512, data.get("map")
+          scenarios = data.get("scenarios", {})
+          required = [
+              "idle_full_theatre",
+              "continuous_pan",
+              "continuous_zoom",
+              "province_hover_select",
+              "legal_target_rebuild",
+              "ownership_recolor",
+              "overlay_routes_sites_counters",
+              "pending_battle_presentation",
+          ]
+          for key in required:
+              assert key in scenarios, key
+              ft = scenarios[key].get("frame_time_ms", {})
+              assert float(ft.get("avg", 0)) > 0.0, (key, ft)
+          ops = data.get("discrete_ops_ms", {})
+          for key in ("ownership_refresh_ms", "hit_test_ms", "legal_target_rebuild_ms"):
+              assert key in ops, key
+          print("earth3 interactive baseline ok", {k: scenarios[k]["frame_time_ms"]["avg"] for k in required})
+          PY
       - name: Godot true runtime viewport screenshots
         run: |
           set -euo pipefail

@@ -1,0 +1,732 @@
+{
+	"authority": {
+		"included_ids_sha256": "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7",
+		"land_water": "3297/215",
+		"production_merge": "7182f8c6002e48f7235ba5ce6b7dd57ee20f4f68",
+		"provinces": 3512
+	},
+	"build": "windows-editor-debug",
+	"discrete_ops_ms": {
+		"highlight_refresh_ms": {
+			"avg": 0.001,
+			"count": 20,
+			"max": 0.006,
+			"min": 0.0,
+			"p50": 0.001,
+			"p95": 0.002,
+			"p99": 0.002
+		},
+		"hit_test_ms": {
+			"avg": 0.034,
+			"count": 100,
+			"max": 0.06,
+			"min": 0.033,
+			"p50": 0.034,
+			"p95": 0.034,
+			"p99": 0.047
+		},
+		"legal_target_rebuild_ms": {
+			"avg": 0.009,
+			"count": 20,
+			"max": 0.056,
+			"min": 0.004,
+			"p50": 0.006,
+			"p95": 0.009,
+			"p99": 0.009
+		},
+		"overlay_invalidate_sync_ms": {
+			"avg": 0.004,
+			"count": 20,
+			"max": 0.011,
+			"min": 0.003,
+			"p50": 0.003,
+			"p95": 0.004,
+			"p99": 0.004
+		},
+		"ownership_refresh_ms": {
+			"avg": 3.196,
+			"count": 20,
+			"max": 5.35,
+			"min": 2.683,
+			"p50": 2.893,
+			"p95": 4.109,
+			"p99": 4.109
+		}
+	},
+	"fixture_path": "res://fixtures/presentation/e3_operational.json",
+	"godot_version": {
+		"build": "official",
+		"hash": "5b4e0cb0fd279832bbdd69fed5354d4e5ad26f88",
+		"hex": 263936,
+		"major": 4,
+		"minor": 7,
+		"patch": 0,
+		"status": "stable",
+		"string": "4.7-stable (official)",
+		"timestamp": 0
+	},
+	"issue": 74,
+	"label": "earth3-interactive-baseline",
+	"manifest_path": "res://assets/maps/earth3_europe_mediterranean/map_manifest.json",
+	"map": {
+		"geometry_immutable": true,
+		"image_height": 3449,
+		"image_width": 4306,
+		"load_ms": 1115.0,
+		"map_id": "earth3_europe_mediterranean",
+		"mesh_count": 13,
+		"province_count": 3512,
+		"renderer": "polygon_mesh"
+	},
+	"notes": [
+		"Frame times are wall-clock ms around force_draw + one process tick (interactive path).",
+		"script_cpu_ms uses Performance.TIME_PROCESS; render counters from Performance.RENDER_*.",
+		"GPU time is only present when the backend exposes it; otherwise null.",
+		"No renderer rewrite in PR A — baseline measurement only.",
+		"Do not change Earth3 crop/IDs/adjacency/water geometry."
+	],
+	"ok": true,
+	"os": "Windows",
+	"pr_phase": "A",
+	"process_snapshot": {
+		"buffer_mem_bytes": 34086824,
+		"draw_calls": 3781,
+		"fps": 13.0,
+		"gpu_ms": null,
+		"node_count": 21,
+		"object_count": 1622,
+		"primitives": 700364,
+		"resource_count": 17,
+		"script_cpu_ms": 83.209,
+		"static_memory_bytes": 135732053,
+		"texture_mem_bytes": 17420579,
+		"video_mem_bytes": 51507403
+	},
+	"scenario_frames": 48,
+	"scenarios": {
+		"continuous_pan": {
+			"draw_calls": {
+				"avg": 3784.0,
+				"count": 48,
+				"max": 3784,
+				"min": 3784,
+				"p50": 3784,
+				"p95": 3784,
+				"p99": 3784
+			},
+			"frame_time_ms": {
+				"avg": 77.952,
+				"count": 48,
+				"max": 83.53,
+				"min": 73.96,
+				"p50": 77.376,
+				"p95": 82.707,
+				"p99": 83.41
+			},
+			"frames": 48,
+			"gpu_ms": null,
+			"node_count": {
+				"avg": 21.0,
+				"count": 48,
+				"max": 21,
+				"min": 21,
+				"p50": 21,
+				"p95": 21,
+				"p99": 21
+			},
+			"object_count": {
+				"avg": 1622.0,
+				"count": 48,
+				"max": 1622,
+				"min": 1622,
+				"p50": 1622,
+				"p95": 1622,
+				"p99": 1622
+			},
+			"primitives": {
+				"avg": 700484.38,
+				"count": 48,
+				"max": 700486,
+				"min": 700484,
+				"p50": 700484,
+				"p95": 700486,
+				"p99": 700486
+			},
+			"rendering_cpu_ms_note": "Godot Performance monadic has no stable RENDER_CPU_ms; wall frame_time_ms includes draw.",
+			"script_cpu_ms": {
+				"avg": 82.974,
+				"count": 48,
+				"max": 83.575,
+				"min": 80.622,
+				"p50": 83.532,
+				"p95": 83.575,
+				"p99": 83.575
+			},
+			"texture_mem_bytes": {
+				"avg": 17436959.0,
+				"count": 48,
+				"max": 17436959,
+				"min": 17436959,
+				"p50": 17436959,
+				"p95": 17436959,
+				"p99": 17436959
+			},
+			"video_mem_bytes": {
+				"avg": 51528871.0,
+				"count": 48,
+				"max": 51528871,
+				"min": 51528871,
+				"p50": 51528871,
+				"p95": 51528871,
+				"p99": 51528871
+			}
+		},
+		"continuous_zoom": {
+			"draw_calls": {
+				"avg": 3786.85,
+				"count": 48,
+				"max": 3791,
+				"min": 3784,
+				"p50": 3786,
+				"p95": 3791,
+				"p99": 3791
+			},
+			"frame_time_ms": {
+				"avg": 76.521,
+				"count": 48,
+				"max": 81.137,
+				"min": 73.966,
+				"p50": 75.927,
+				"p95": 79.303,
+				"p99": 80.961
+			},
+			"frames": 48,
+			"gpu_ms": null,
+			"node_count": {
+				"avg": 21.0,
+				"count": 48,
+				"max": 21,
+				"min": 21,
+				"p50": 21,
+				"p95": 21,
+				"p99": 21
+			},
+			"object_count": {
+				"avg": 1622.0,
+				"count": 48,
+				"max": 1622,
+				"min": 1622,
+				"p50": 1622,
+				"p95": 1622,
+				"p99": 1622
+			},
+			"primitives": {
+				"avg": 700579.04,
+				"count": 48,
+				"max": 700706,
+				"min": 700486,
+				"p50": 700552,
+				"p95": 700706,
+				"p99": 700706
+			},
+			"rendering_cpu_ms_note": "Godot Performance monadic has no stable RENDER_CPU_ms; wall frame_time_ms includes draw.",
+			"script_cpu_ms": {
+				"avg": 79.426,
+				"count": 48,
+				"max": 82.34,
+				"min": 77.778,
+				"p50": 79.163,
+				"p95": 82.34,
+				"p99": 82.34
+			},
+			"texture_mem_bytes": {
+				"avg": 17436959.0,
+				"count": 48,
+				"max": 17436959,
+				"min": 17436959,
+				"p50": 17436959,
+				"p95": 17436959,
+				"p99": 17436959
+			},
+			"video_mem_bytes": {
+				"avg": 51530678.0,
+				"count": 48,
+				"max": 51532999,
+				"min": 51528871,
+				"p50": 51530167,
+				"p95": 51532999,
+				"p99": 51532999
+			}
+		},
+		"idle_full_theatre": {
+			"draw_calls": {
+				"avg": 3784.0,
+				"count": 48,
+				"max": 3784,
+				"min": 3784,
+				"p50": 3784,
+				"p95": 3784,
+				"p99": 3784
+			},
+			"frame_time_ms": {
+				"avg": 70.998,
+				"count": 48,
+				"max": 80.696,
+				"min": 64.236,
+				"p50": 70.29,
+				"p95": 77.046,
+				"p99": 80.561
+			},
+			"frames": 48,
+			"gpu_ms": null,
+			"node_count": {
+				"avg": 21.0,
+				"count": 48,
+				"max": 21,
+				"min": 21,
+				"p50": 21,
+				"p95": 21,
+				"p99": 21
+			},
+			"object_count": {
+				"avg": 1622.0,
+				"count": 48,
+				"max": 1622,
+				"min": 1622,
+				"p50": 1622,
+				"p95": 1622,
+				"p99": 1622
+			},
+			"primitives": {
+				"avg": 700484.0,
+				"count": 48,
+				"max": 700484,
+				"min": 700484,
+				"p50": 700484,
+				"p95": 700484,
+				"p99": 700484
+			},
+			"rendering_cpu_ms_note": "Godot Performance monadic has no stable RENDER_CPU_ms; wall frame_time_ms includes draw.",
+			"script_cpu_ms": {
+				"avg": 75.557,
+				"count": 48,
+				"max": 80.622,
+				"min": 68.13,
+				"p50": 76.891,
+				"p95": 77.276,
+				"p99": 80.622
+			},
+			"texture_mem_bytes": {
+				"avg": 17436959.0,
+				"count": 48,
+				"max": 17436959,
+				"min": 17436959,
+				"p50": 17436959,
+				"p95": 17436959,
+				"p99": 17436959
+			},
+			"video_mem_bytes": {
+				"avg": 51528871.0,
+				"count": 48,
+				"max": 51528871,
+				"min": 51528871,
+				"p50": 51528871,
+				"p95": 51528871,
+				"p99": 51528871
+			}
+		},
+		"legal_target_rebuild": {
+			"draw_calls": {
+				"avg": 3788.5,
+				"count": 48,
+				"max": 3790,
+				"min": 3787,
+				"p50": 3787,
+				"p95": 3790,
+				"p99": 3790
+			},
+			"frame_time_ms": {
+				"avg": 76.175,
+				"count": 48,
+				"max": 87.633,
+				"min": 74.089,
+				"p50": 75.557,
+				"p95": 78.899,
+				"p99": 80.137
+			},
+			"frames": 48,
+			"gpu_ms": null,
+			"node_count": {
+				"avg": 21.0,
+				"count": 48,
+				"max": 21,
+				"min": 21,
+				"p50": 21,
+				"p95": 21,
+				"p99": 21
+			},
+			"object_count": {
+				"avg": 1622.0,
+				"count": 48,
+				"max": 1622,
+				"min": 1622,
+				"p50": 1622,
+				"p95": 1622,
+				"p99": 1622
+			},
+			"primitives": {
+				"avg": 700639.83,
+				"count": 48,
+				"max": 700716,
+				"min": 700562,
+				"p50": 700564,
+				"p95": 700716,
+				"p99": 700716
+			},
+			"rendering_cpu_ms_note": "Godot Performance monadic has no stable RENDER_CPU_ms; wall frame_time_ms includes draw.",
+			"script_cpu_ms": {
+				"avg": 80.975,
+				"count": 48,
+				"max": 87.675,
+				"min": 76.666,
+				"p50": 79.576,
+				"p95": 87.675,
+				"p99": 87.675
+			},
+			"texture_mem_bytes": {
+				"avg": 17436959.0,
+				"count": 48,
+				"max": 17436959,
+				"min": 17436959,
+				"p50": 17436959,
+				"p95": 17436959,
+				"p99": 17436959
+			},
+			"video_mem_bytes": {
+				"avg": 51530239.0,
+				"count": 48,
+				"max": 51532807,
+				"min": 51527671,
+				"p50": 51527671,
+				"p95": 51532807,
+				"p99": 51532807
+			}
+		},
+		"overlay_routes_sites_counters": {
+			"draw_calls": {
+				"avg": 3786.67,
+				"count": 48,
+				"max": 3787,
+				"min": 3783,
+				"p50": 3787,
+				"p95": 3787,
+				"p99": 3787
+			},
+			"frame_time_ms": {
+				"avg": 78.142,
+				"count": 48,
+				"max": 88.057,
+				"min": 74.439,
+				"p50": 76.763,
+				"p95": 82.95,
+				"p99": 83.36
+			},
+			"frames": 48,
+			"gpu_ms": null,
+			"node_count": {
+				"avg": 21.0,
+				"count": 48,
+				"max": 21,
+				"min": 21,
+				"p50": 21,
+				"p95": 21,
+				"p99": 21
+			},
+			"object_count": {
+				"avg": 1622.0,
+				"count": 48,
+				"max": 1622,
+				"min": 1622,
+				"p50": 1622,
+				"p95": 1622,
+				"p99": 1622
+			},
+			"primitives": {
+				"avg": 700552.83,
+				"count": 48,
+				"max": 700564,
+				"min": 700430,
+				"p50": 700564,
+				"p95": 700564,
+				"p99": 700564
+			},
+			"rendering_cpu_ms_note": "Godot Performance monadic has no stable RENDER_CPU_ms; wall frame_time_ms includes draw.",
+			"script_cpu_ms": {
+				"avg": 85.805,
+				"count": 48,
+				"max": 90.812,
+				"min": 82.461,
+				"p50": 83.353,
+				"p95": 90.812,
+				"p99": 90.812
+			},
+			"texture_mem_bytes": {
+				"avg": 17420579.0,
+				"count": 48,
+				"max": 17420579,
+				"min": 17420579,
+				"p50": 17420579,
+				"p95": 17420579,
+				"p99": 17420579
+			},
+			"video_mem_bytes": {
+				"avg": 51511071.0,
+				"count": 48,
+				"max": 51511291,
+				"min": 51508651,
+				"p50": 51511291,
+				"p95": 51511291,
+				"p99": 51511291
+			}
+		},
+		"ownership_recolor": {
+			"draw_calls": {
+				"avg": 3787.0,
+				"count": 48,
+				"max": 3787,
+				"min": 3787,
+				"p50": 3787,
+				"p95": 3787,
+				"p99": 3787
+			},
+			"frame_time_ms": {
+				"avg": 77.667,
+				"count": 48,
+				"max": 85.558,
+				"min": 75.152,
+				"p50": 77.322,
+				"p95": 80.324,
+				"p99": 82.546
+			},
+			"frames": 48,
+			"gpu_ms": null,
+			"node_count": {
+				"avg": 21.0,
+				"count": 48,
+				"max": 21,
+				"min": 21,
+				"p50": 21,
+				"p95": 21,
+				"p99": 21
+			},
+			"object_count": {
+				"avg": 1622.0,
+				"count": 48,
+				"max": 1622,
+				"min": 1622,
+				"p50": 1622,
+				"p95": 1622,
+				"p99": 1622
+			},
+			"primitives": {
+				"avg": 700563.75,
+				"count": 48,
+				"max": 700564,
+				"min": 700562,
+				"p50": 700564,
+				"p95": 700564,
+				"p99": 700564
+			},
+			"rendering_cpu_ms_note": "Godot Performance monadic has no stable RENDER_CPU_ms; wall frame_time_ms includes draw.",
+			"script_cpu_ms": {
+				"avg": 85.591,
+				"count": 48,
+				"max": 87.811,
+				"min": 80.184,
+				"p50": 85.44,
+				"p95": 87.811,
+				"p99": 87.811
+			},
+			"texture_mem_bytes": {
+				"avg": 17420579.0,
+				"count": 48,
+				"max": 17420579,
+				"min": 17420579,
+				"p50": 17420579,
+				"p95": 17420579,
+				"p99": 17420579
+			},
+			"video_mem_bytes": {
+				"avg": 51511291.0,
+				"count": 48,
+				"max": 51511291,
+				"min": 51511291,
+				"p50": 51511291,
+				"p95": 51511291,
+				"p99": 51511291
+			}
+		},
+		"pending_battle_presentation": {
+			"draw_calls": {
+				"avg": 3786.38,
+				"count": 48,
+				"max": 3787,
+				"min": 3783,
+				"p50": 3787,
+				"p95": 3787,
+				"p99": 3787
+			},
+			"frame_time_ms": {
+				"avg": 78.589,
+				"count": 48,
+				"max": 89.475,
+				"min": 74.781,
+				"p50": 77.809,
+				"p95": 84.431,
+				"p99": 88.813
+			},
+			"frames": 48,
+			"gpu_ms": null,
+			"node_count": {
+				"avg": 21.0,
+				"count": 48,
+				"max": 21,
+				"min": 21,
+				"p50": 21,
+				"p95": 21,
+				"p99": 21
+			},
+			"object_count": {
+				"avg": 1622.0,
+				"count": 48,
+				"max": 1622,
+				"min": 1622,
+				"p50": 1622,
+				"p95": 1622,
+				"p99": 1622
+			},
+			"primitives": {
+				"avg": 700543.13,
+				"count": 48,
+				"max": 700564,
+				"min": 700432,
+				"p50": 700564,
+				"p95": 700564,
+				"p99": 700564
+			},
+			"rendering_cpu_ms_note": "Godot Performance monadic has no stable RENDER_CPU_ms; wall frame_time_ms includes draw.",
+			"script_cpu_ms": {
+				"avg": 84.133,
+				"count": 48,
+				"max": 89.483,
+				"min": 79.786,
+				"p50": 81.649,
+				"p95": 89.483,
+				"p99": 89.483
+			},
+			"texture_mem_bytes": {
+				"avg": 17420579.0,
+				"count": 48,
+				"max": 17420579,
+				"min": 17420579,
+				"p50": 17420579,
+				"p95": 17420579,
+				"p99": 17420579
+			},
+			"video_mem_bytes": {
+				"avg": 51510886.0,
+				"count": 48,
+				"max": 51511291,
+				"min": 51508699,
+				"p50": 51511291,
+				"p95": 51511291,
+				"p99": 51511291
+			}
+		},
+		"province_hover_select": {
+			"draw_calls": {
+				"avg": 3786.33,
+				"count": 48,
+				"max": 3787,
+				"min": 3783,
+				"p50": 3787,
+				"p95": 3787,
+				"p99": 3787
+			},
+			"frame_time_ms": {
+				"avg": 72.083,
+				"count": 48,
+				"max": 99.618,
+				"min": 68.745,
+				"p50": 70.225,
+				"p95": 76.686,
+				"p99": 79.37
+			},
+			"frames": 48,
+			"gpu_ms": null,
+			"node_count": {
+				"avg": 21.0,
+				"count": 48,
+				"max": 21,
+				"min": 21,
+				"p50": 21,
+				"p95": 21,
+				"p99": 21
+			},
+			"object_count": {
+				"avg": 1622.0,
+				"count": 48,
+				"max": 1622,
+				"min": 1622,
+				"p50": 1622,
+				"p95": 1622,
+				"p99": 1622
+			},
+			"primitives": {
+				"avg": 700491.92,
+				"count": 48,
+				"max": 700534,
+				"min": 700362,
+				"p50": 700496,
+				"p95": 700534,
+				"p99": 700534
+			},
+			"rendering_cpu_ms_note": "Godot Performance monadic has no stable RENDER_CPU_ms; wall frame_time_ms includes draw.",
+			"script_cpu_ms": {
+				"avg": 85.044,
+				"count": 48,
+				"max": 99.655,
+				"min": 76.666,
+				"p50": 81.126,
+				"p95": 99.655,
+				"p99": 99.655
+			},
+			"texture_mem_bytes": {
+				"avg": 17436959.0,
+				"count": 48,
+				"max": 17436959,
+				"min": 17436959,
+				"p50": 17436959,
+				"p95": 17436959,
+				"p99": 17436959
+			},
+			"video_mem_bytes": {
+				"avg": 51526079.0,
+				"count": 48,
+				"max": 51526951,
+				"min": 51523447,
+				"p50": 51526087,
+				"p95": 51526951,
+				"p99": 51526951
+			}
+		}
+	},
+	"snapshot_path": "res://fixtures/snapshots/earth3_operational.json",
+	"timestamp_unix": 1786114455.659,
+	"video_adapter": "NVIDIA GeForce RTX 4080 SUPER",
+	"viewport": {
+		"height": 1080,
+		"width": 1920
+	},
+	"warmup_frames": 8
+}
