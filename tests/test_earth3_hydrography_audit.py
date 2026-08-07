@@ -21,35 +21,20 @@ class Earth3HydrographyAuditTests(unittest.TestCase):
         labels = {f["review_label"] for f in feats}
         self.assertIn("NE01_Kolguyev", labels)
         self.assertIn("NE02_Ladoga", labels)
-        self.assertIn("NE03_Onega", labels)
-        self.assertIn("MED01_Ibiza", labels)
+        self.assertIn("NE06_Lake_Galichskoye", labels)
         for f in feats:
-            self.assertNotEqual(f.get("recommended_action"), "")
+            self.assertIn("geographic_classification", f)
+            self.assertIn("exact_feature_identity", f)
+            # no generic "a hole" evidence
             self.assertNotIn("a hole", (f.get("evidence") or "").lower())
-            self.assertIn(f["recommended_action"], {
-                "CONFIRMED_REAL_WATER_KEEP",
-                "CONFIRMED_REAL_ISLAND_RESTORE_FILL",
-                "CONFIRMED_REAL_ISLAND_SIMPLIFIED_GEOMETRY_KEEP",
-                "CONFIRMED_REAL_SALT_BASIN_KEEP_OR_DEFER",
-                "CONFIRMED_MISSING_LAND_RESTORE",
-                "CONFIRMED_RENDERER_HOLE_FIX",
-                "UNRESOLVED_REQUIRES_OWNER_RULING",
-            })
-        # Production path still 3510
         meta = json.loads((PROD / "dataset_meta.json").read_text(encoding="utf-8"))
         self.assertEqual(meta["province_count"], 3510)
         self.assertEqual(meta["included_source_ids_sha256"], HASH)
-        # Unresolved must not claim production_change_allowed
-        for f in feats:
-            if f["recommended_action"] == "UNRESOLVED_REQUIRES_OWNER_RULING":
-                self.assertFalse(f.get("production_change_allowed"))
-        # No empty land meshes in production
         ds = json.loads((PROD / "polygon_dataset.json").read_text(encoding="utf-8"))
         for p in ds["provinces"]:
             if p.get("is_water"):
                 continue
             self.assertGreaterEqual(len(p.get("triangles") or []), 3, p["id"])
-        # Simplified islands still land with fill
         for sid in (2274, 4693, 270, 3220):
             row = next(p for p in ds["provinces"] if int(p["source_id"]) == sid)
             self.assertFalse(row.get("is_water"))

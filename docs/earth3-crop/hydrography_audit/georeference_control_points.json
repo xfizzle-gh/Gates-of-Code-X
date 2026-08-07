@@ -1,0 +1,186 @@
+{
+  "control_points": [
+    {
+      "label": "Reykjavik",
+      "source_x": 7281.0,
+      "source_y": 930.0,
+      "wgs84_lon": -21.8277,
+      "wgs84_lat": 64.1283
+    },
+    {
+      "label": "Dublin",
+      "source_x": 8040.0,
+      "source_y": 1844.0,
+      "wgs84_lon": -6.2603,
+      "wgs84_lat": 53.3498
+    },
+    {
+      "label": "London",
+      "source_x": 8337.0,
+      "source_y": 1992.0,
+      "wgs84_lon": -0.1276,
+      "wgs84_lat": 51.5074
+    },
+    {
+      "label": "Lisbon",
+      "source_x": 7898.0,
+      "source_y": 2879.0,
+      "wgs84_lon": -9.1393,
+      "wgs84_lat": 38.7223
+    },
+    {
+      "label": "Madrid",
+      "source_x": 8165.0,
+      "source_y": 2774.0,
+      "wgs84_lon": -3.7038,
+      "wgs84_lat": 40.4168
+    },
+    {
+      "label": "Rome",
+      "source_x": 8954.0,
+      "source_y": 2678.0,
+      "wgs84_lon": 12.4964,
+      "wgs84_lat": 41.9028
+    },
+    {
+      "label": "Valletta",
+      "source_x": 9050.0,
+      "source_y": 3053.0,
+      "wgs84_lon": 14.5146,
+      "wgs84_lat": 35.8989
+    },
+    {
+      "label": "Ibiza",
+      "source_x": 8415.0,
+      "source_y": 2866.0,
+      "wgs84_lon": 1.4326,
+      "wgs84_lat": 38.9067
+    },
+    {
+      "label": "Pantelleria",
+      "source_x": 8928.0,
+      "source_y": 2999.0,
+      "wgs84_lon": 11.9426,
+      "wgs84_lat": 36.785
+    },
+    {
+      "label": "Athens",
+      "source_x": 9502.0,
+      "source_y": 2927.0,
+      "wgs84_lon": 23.7275,
+      "wgs84_lat": 37.9838
+    },
+    {
+      "label": "Myrina_Lemnos",
+      "source_x": 9570.0,
+      "source_y": 2808.0,
+      "wgs84_lon": 25.0633,
+      "wgs84_lat": 39.8747
+    },
+    {
+      "label": "Warsaw",
+      "source_x": 9369.0,
+      "source_y": 1936.0,
+      "wgs84_lon": 21.0122,
+      "wgs84_lat": 52.2297
+    },
+    {
+      "label": "St_Petersburg",
+      "source_x": 9826.0,
+      "source_y": 1264.0,
+      "wgs84_lon": 30.3351,
+      "wgs84_lat": 59.9343
+    },
+    {
+      "label": "Petrozavodsk",
+      "source_x": 10019.0,
+      "source_y": 1124.0,
+      "wgs84_lon": 34.3469,
+      "wgs84_lat": 61.7849
+    },
+    {
+      "label": "Moscow",
+      "source_x": 10178.0,
+      "source_y": 1643.0,
+      "wgs84_lon": 37.6173,
+      "wgs84_lat": 55.7558
+    },
+    {
+      "label": "Galich",
+      "source_x": 10485.0,
+      "source_y": 1417.0,
+      "wgs84_lon": 42.3475,
+      "wgs84_lat": 58.3813
+    },
+    {
+      "label": "Rybinsk",
+      "source_x": 10236.0,
+      "source_y": 1441.0,
+      "wgs84_lon": 38.8333,
+      "wgs84_lat": 58.05
+    },
+    {
+      "label": "Kazan",
+      "source_x": 10742.0,
+      "source_y": 1641.0,
+      "wgs84_lon": 49.1221,
+      "wgs84_lat": 55.7887
+    },
+    {
+      "label": "Naberezhnye_Chelny",
+      "source_x": 10901.0,
+      "source_y": 1648.0,
+      "wgs84_lon": 52.407,
+      "wgs84_lat": 55.7431
+    },
+    {
+      "label": "Arkhangelsk",
+      "source_x": 10325.0,
+      "source_y": 892.0,
+      "wgs84_lon": 40.5433,
+      "wgs84_lat": 64.5399
+    },
+    {
+      "label": "Astrakhan",
+      "source_x": 10687.0,
+      "source_y": 2374.0,
+      "wgs84_lon": 48.0408,
+      "wgs84_lat": 46.3497
+    },
+    {
+      "label": "Tozeur",
+      "source_x": 8741.0,
+      "source_y": 3163.0,
+      "wgs84_lon": 8.1336,
+      "wgs84_lat": 33.9197
+    },
+    {
+      "label": "Cheboksary",
+      "source_x": 10648.0,
+      "source_y": 1615.0,
+      "wgs84_lon": 47.2481,
+      "wgs84_lat": 56.1439
+    },
+    {
+      "label": "Nizhny_Novgorod",
+      "source_x": 10491.0,
+      "source_y": 1597.0,
+      "wgs84_lon": 44.002,
+      "wgs84_lat": 56.2965
+    },
+    {
+      "label": "Samara",
+      "source_x": 10793.0,
+      "source_y": 1858.0,
+      "wgs84_lon": 50.15,
+      "wgs84_lat": 53.2
+    },
+    {
+      "label": "Kolguyev",
+      "source_x": 11331.284518828452,
+      "source_y": 768.7029288702929,
+      "wgs84_lon": 49.0,
+      "wgs84_lat": 69.1
+    }
+  ]
+}

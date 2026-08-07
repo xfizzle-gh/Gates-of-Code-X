@@ -1,0 +1,357 @@
+{
+  "rms_km": 18.818,
+  "max_km": 73.242,
+  "mean_km": 11.71,
+  "residuals": [
+    {
+      "label": "Reykjavik",
+      "region": "west_europe",
+      "error_km": 0.749,
+      "predicted": [
+        -21.8305,
+        64.1349
+      ],
+      "wgs84": [
+        -21.8277,
+        64.1283
+      ]
+    },
+    {
+      "label": "Dublin",
+      "region": "west_europe",
+      "error_km": 5.182,
+      "predicted": [
+        -6.2411,
+        53.3046
+      ],
+      "wgs84": [
+        -6.2603,
+        53.3498
+      ]
+    },
+    {
+      "label": "London",
+      "region": "west_europe",
+      "error_km": 5.149,
+      "predicted": [
+        -0.1466,
+        51.5522
+      ],
+      "wgs84": [
+        -0.1276,
+        51.5074
+      ]
+    },
+    {
+      "label": "Lisbon",
+      "region": "mediterranean_na",
+      "error_km": 4.995,
+      "predicted": [
+        -9.1484,
+        38.678
+      ],
+      "wgs84": [
+        -9.1393,
+        38.7223
+      ]
+    },
+    {
+      "label": "Madrid",
+      "region": "mediterranean_na",
+      "error_km": 1.881,
+      "predicted": [
+        -3.6884,
+        40.4046
+      ],
+      "wgs84": [
+        -3.7038,
+        40.4168
+      ]
+    },
+    {
+      "label": "Rome",
+      "region": "mediterranean_na",
+      "error_km": 10.56,
+      "predicted": [
+        12.4665,
+        41.9951
+      ],
+      "wgs84": [
+        12.4964,
+        41.9028
+      ]
+    },
+    {
+      "label": "Valletta",
+      "region": "mediterranean_na",
+      "error_km": 6.732,
+      "predicted": [
+        14.4685,
+        35.8513
+      ],
+      "wgs84": [
+        14.5146,
+        35.8989
+      ]
+    },
+    {
+      "label": "Ibiza",
+      "region": "mediterranean_na",
+      "error_km": 0.945,
+      "predicted": [
+        1.4419,
+        38.9022
+      ],
+      "wgs84": [
+        1.4326,
+        38.9067
+      ]
+    },
+    {
+      "label": "Pantelleria",
+      "region": "mediterranean_na",
+      "error_km": 6.021,
+      "predicted": [
+        11.964,
+        36.7336
+      ],
+      "wgs84": [
+        11.9426,
+        36.785
+      ]
+    },
+    {
+      "label": "Athens",
+      "region": "mediterranean_na",
+      "error_km": 6.483,
+      "predicted": [
+        23.7166,
+        37.9261
+      ],
+      "wgs84": [
+        23.7275,
+        37.9838
+      ]
+    },
+    {
+      "label": "Myrina_Lemnos",
+      "region": "mediterranean_na",
+      "error_km": 3.022,
+      "predicted": [
+        25.0985,
+        39.8779
+      ],
+      "wgs84": [
+        25.0633,
+        39.8747
+      ]
+    },
+    {
+      "label": "Warsaw",
+      "region": "west_europe",
+      "error_km": 0.715,
+      "predicted": [
+        21.0148,
+        52.2235
+      ],
+      "wgs84": [
+        21.0122,
+        52.2297
+      ]
+    },
+    {
+      "label": "St_Petersburg",
+      "region": "east_europe_russia",
+      "error_km": 18.492,
+      "predicted": [
+        30.1893,
+        60.0838
+      ],
+      "wgs84": [
+        30.3351,
+        59.9343
+      ]
+    },
+    {
+      "label": "Petrozavodsk",
+      "region": "ne_russia_north",
+      "error_km": 0.0,
+      "predicted": [
+        34.3469,
+        61.7849
+      ],
+      "wgs84": [
+        34.3469,
+        61.7849
+      ]
+    },
+    {
+      "label": "Moscow",
+      "region": "east_europe_russia",
+      "error_km": 31.546,
+      "predicted": [
+        37.5356,
+        55.4759
+      ],
+      "wgs84": [
+        37.6173,
+        55.7558
+      ]
+    },
+    {
+      "label": "Galich",
+      "region": "east_europe_russia",
+      "error_km": 73.242,
+      "predicted": [
+        43.5837,
+        58.505
+      ],
+      "wgs84": [
+        42.3475,
+        58.3813
+      ]
+    },
+    {
+      "label": "Rybinsk",
+      "region": "east_europe_russia",
+      "error_km": 15.264,
+      "predicted": [
+        38.5755,
+        58.0655
+      ],
+      "wgs84": [
+        38.8333,
+        58.05
+      ]
+    },
+    {
+      "label": "Kazan",
+      "region": "east_europe_russia",
+      "error_km": 13.225,
+      "predicted": [
+        48.9134,
+        55.8082
+      ],
+      "wgs84": [
+        49.1221,
+        55.7887
+      ]
+    },
+    {
+      "label": "Naberezhnye_Chelny",
+      "region": "east_europe_russia",
+      "error_km": 18.93,
+      "predicted": [
+        52.1258,
+        55.8061
+      ],
+      "wgs84": [
+        52.407,
+        55.7431
+      ]
+    },
+    {
+      "label": "Arkhangelsk",
+      "region": "ne_russia_north",
+      "error_km": 0.0,
+      "predicted": [
+        40.5433,
+        64.5399
+      ],
+      "wgs84": [
+        40.5433,
+        64.5399
+      ]
+    },
+    {
+      "label": "Astrakhan",
+      "region": "east_europe_russia",
+      "error_km": 24.301,
+      "predicted": [
+        48.2765,
+        46.4958
+      ],
+      "wgs84": [
+        48.0408,
+        46.3497
+      ]
+    },
+    {
+      "label": "Tozeur",
+      "region": "mediterranean_na",
+      "error_km": 13.641,
+      "predicted": [
+        8.1484,
+        34.0418
+      ],
+      "wgs84": [
+        8.1336,
+        33.9197
+      ]
+    },
+    {
+      "label": "Cheboksary",
+      "region": "east_europe_russia",
+      "error_km": 16.656,
+      "predicted": [
+        47.0001,
+        56.0863
+      ],
+      "wgs84": [
+        47.2481,
+        56.1439
+      ]
+    },
+    {
+      "label": "Nizhny_Novgorod",
+      "region": "east_europe_russia",
+      "error_km": 13.482,
+      "predicted": [
+        43.8209,
+        56.2288
+      ],
+      "wgs84": [
+        44.002,
+        56.2965
+      ]
+    },
+    {
+      "label": "Samara",
+      "region": "east_europe_russia",
+      "error_km": 13.251,
+      "predicted": [
+        50.0823,
+        53.088
+      ],
+      "wgs84": [
+        50.15,
+        53.2
+      ]
+    },
+    {
+      "label": "Kolguyev",
+      "region": "ne_russia_north",
+      "error_km": 0.0,
+      "predicted": [
+        49.0,
+        69.1
+      ],
+      "wgs84": [
+        49.0,
+        69.1
+      ]
+    }
+  ],
+  "critical_point_errors_km": {
+    "Valletta": 6.732,
+    "Ibiza": 0.945,
+    "Pantelleria": 6.021,
+    "Myrina_Lemnos": 3.022,
+    "Petrozavodsk": 0.0,
+    "Galich": 73.242,
+    "Rybinsk": 15.264,
+    "Kazan": 13.225,
+    "Naberezhnye_Chelny": 18.93,
+    "Kolguyev": 0.0
+  }
+}

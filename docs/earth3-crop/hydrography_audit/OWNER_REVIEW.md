@@ -1,122 +1,101 @@
-# Earth3 hydrography owner review
+# Earth3 hydrography owner review (corrected georeference)
 
-Audit only — **production F5 unchanged** (3510 / `a849b381…`).
+Production **unchanged**: 3510 / `a849b381…`.
 
-Geographic reference: Natural Earth 110m/50m cultural+physical (conceptual comparison) + AoH3 Earth3 city labels
-License: Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.
-
-## Summary counts
-
-- **CONFIRMED_REAL_WATER_KEEP**: 6 — NE02_Ladoga, NE03_Onega, NE05_Rybinsk, NE06_Volga_mid_reservoir, NE07_Cheboksary_system, NE08_Kuybyshev_Samara_arm
-- **CONFIRMED_REAL_ISLAND_RESTORE_FILL**: 0 — —
-- **CONFIRMED_REAL_ISLAND_SIMPLIFIED_GEOMETRY_KEEP**: 4 — MED01_Ibiza, MED02_Pantelleria, MED03_Malta, MED04_Lemnos
-- **CONFIRMED_REAL_SALT_BASIN_KEEP_OR_DEFER**: 1 — NA01_Chott_or_basin
-- **CONFIRMED_MISSING_LAND_RESTORE**: 1 — NE01_Kolguyev
-- **CONFIRMED_RENDERER_HOLE_FIX**: 0 — —
-- **UNRESOLVED_REQUIRES_OWNER_RULING**: 1 — NE04_WhiteSea_SE_large_hole
+Transform: **piecewise_regional_affine** · RMS **18.818 km** · max **73.242 km**
+Reference: Natural Earth 10m lakes (public domain) + curated AoH3 city control georeference (Natural Earth data is public domain. AoH3 archive used locally for analysis only; not redistributed.)
 
 ## Feature table
 
-| Label | Hypothesis | Nearest name | Type | Action | Confidence |
+| Label | geo_class | exact_identity | conf | WGS84 | NE top candidate |
 |---|---|---|---|---|---|
-| NE01_Kolguyev | Kolguyev Island | Fion | omitted_source_land_province | `CONFIRMED_MISSING_LAND_RESTORE` | high |
-| NE02_Ladoga | Lake Ladoga | Kokkorevo | gap_fill_interior_hole | `CONFIRMED_REAL_WATER_KEEP` | high |
-| NE03_Onega | Lake Onega | Petrozavodsk | gap_fill_interior_hole | `CONFIRMED_REAL_WATER_KEEP` | high |
-| NE04_WhiteSea_SE_large_hole | Large hole SE of White Sea / Mezen basin (possible Lacha-Kenozero region or exaggerated hole) | Koynas | gap_fill_interior_hole | `UNRESOLVED_REQUIRES_OWNER_RULING` | medium |
-| NE05_Rybinsk | Rybinsk Reservoir | Breitovo | gap_fill_interior_hole | `CONFIRMED_REAL_WATER_KEEP` | high |
-| NE06_Volga_mid_reservoir | Volga mid reservoir / Kostroma-Galich lake cluster | Galich | gap_fill_interior_hole | `CONFIRMED_REAL_WATER_KEEP` | high |
-| NE07_Cheboksary_system | Cheboksary / Volga reservoir system | Yaransk | gap_fill_interior_hole | `CONFIRMED_REAL_WATER_KEEP` | high |
-| NE08_Kuybyshev_Samara_arm | Kuybyshev (Samara) Reservoir arm | Tuymazy | gap_fill_interior_hole | `CONFIRMED_REAL_WATER_KEEP` | high |
-| MED01_Ibiza | Ibiza | Ibiza | province_polygon | `CONFIRMED_REAL_ISLAND_SIMPLIFIED_GEOMETRY_KEEP` | high |
-| MED02_Pantelleria | Pantelleria | Pantelleria | province_polygon | `CONFIRMED_REAL_ISLAND_SIMPLIFIED_GEOMETRY_KEEP` | high |
-| MED03_Malta | Malta / Valletta | Valletta | province_polygon | `CONFIRMED_REAL_ISLAND_SIMPLIFIED_GEOMETRY_KEEP` | high |
-| MED04_Lemnos | Lemnos / Myrina | Myrina | province_polygon | `CONFIRMED_REAL_ISLAND_SIMPLIFIED_GEOMETRY_KEEP` | high |
-| NA01_Chott_or_basin | North African chott / salt basin (Chott el Jerid region) | Tozeur | gap_fill_interior_hole | `CONFIRMED_REAL_SALT_BASIN_KEEP_OR_DEFER` | high |
+| NE01_Kolguyev | `CONFIRMED_MISSING_LAND_RESTORE` | Kolguyev Island | high | 48.1268,68.7242 | — (? km) |
+| NE02_Ladoga | `CONFIRMED_REAL_WATER_KEEP` | Lake Ladoga | high | 32.1911,60.7808 | Lake Ladoga (40.36 km) |
+| NE03_Onega | `CONFIRMED_REAL_WATER_KEEP` | Lake Onega | high | 34.744,62.0064 | Lake Onega (41.35 km) |
+| NE04_WhiteSea_SE_large_hole | `UNRESOLVED_REQUIRES_GEOGRAPHIC_MATCH` | UNRESOLVED | low | 44.02,66.3533 | — (? km) |
+| NE05_Rybinsk | `CONFIRMED_REAL_WATER_KEEP` | Rybinsk Reservoir | high | 38.0041,58.6144 | Rybinsk Reservoir (12.76 km) |
+| NE06_Lake_Galichskoye | `UNRESOLVED_REQUIRES_GEOGRAPHIC_MATCH` | UNRESOLVED | medium | 42.9247,58.5125 | — (? km) |
+| NE07_east_volga_candidate | `UNRESOLVED_REQUIRES_GEOGRAPHIC_MATCH` | UNRESOLVED | low | 47.4271,57.5802 | — (? km) |
+| NE08_kama_volga_candidate | `UNRESOLVED_REQUIRES_GEOGRAPHIC_MATCH` | UNRESOLVED | low | 53.4429,55.3344 | Nizhnekamsk Reservoir (68.16 km) |
+| MED01_Ibiza | `CONFIRMED_REAL_ISLAND_SIMPLIFIED_GEOMETRY_KEEP` | Ibiza | high | 1.463,38.8039 | — (? km) |
+| MED02_Pantelleria | `CONFIRMED_REAL_ISLAND_SIMPLIFIED_GEOMETRY_KEEP` | Pantelleria | high | 12.0053,36.6845 | — (? km) |
+| MED03_Malta | `CONFIRMED_REAL_ISLAND_SIMPLIFIED_GEOMETRY_KEEP` | Malta | high | 14.3866,35.8348 | — (? km) |
+| MED04_Lemnos | `CONFIRMED_REAL_ISLAND_SIMPLIFIED_GEOMETRY_KEEP` | Lemnos | high | 25.0586,39.6812 | — (? km) |
+| NA01_Chott_complex | `CONFIRMED_REAL_SALT_BASIN_KEEP_OR_DEFER` | Chott el Jerid complex (provisional) | medium | 8.5797,33.8619 | — (? km) |
 
-## Evidence notes
+## Details
 
 ### NE01_Kolguyev
 
-Archive source_id=11836 is land (terrain_id=5, ring_verts=239, area≈24725) centered near Kolguyev; ABSENT from production included set. Visual outline likely residual water/coast geometry without land mesh.
-
-- local xy: `[4220.0, 660.0]` source xy: `[11296.0, 802.0]` approx lon/lat: `48.973, 69.1465`
+Archive land source 11836 (ring_verts=239, area≈24725) is Kolguyev and is ABSENT from production crop. Transformed centroid ~(48.127,68.724).
 
 ### NE02_Ladoga
 
-Matches ocean_gap_fills gap_0012 area=10704 classification=water_presentation_gap region_hint=scandinavian_or_karelian_lake. Nearest cities Kokkorevo, Pitkyaranta, Priozersk. Continuous-ocean renderer correctly shows interior water (non-selectable).
-
-- local xy: `[2803.0, 1052.0]` source xy: `[9879.0, 1194.0]` approx lon/lat: `20.25, 61.3977`
+gap_0012 area=10704 class=water_presentation_gap hint=scandinavian_or_karelian_lake at ~(32.191,60.781); nearest cities ['Kokkorevo', 'Pitkyaranta', 'Priozersk']; NE top=[{'name': 'Lake Ladoga', 'centroid_lonlat': [31.4604, 60.8501], 'centroid_separation_km': 40.36, 'contains_point': True, 'area_deg2': 2.922682}]
 
 ### NE03_Onega
 
-Matches ocean_gap_fills gap_0027 area=6239 classification=water_presentation_gap region_hint=scandinavian_or_karelian_lake. Nearest cities Petrozavodsk, Pudozh, Oshta. Continuous-ocean renderer correctly shows interior water (non-selectable).
-
-- local xy: `[2996.0, 978.0]` source xy: `[10072.0, 1120.0]` approx lon/lat: `24.1622, 62.8605`
+gap_0027 area=6239 class=water_presentation_gap hint=scandinavian_or_karelian_lake at ~(34.744,62.006); nearest cities ['Petrozavodsk', 'Pudozh', 'Oshta']; NE top=[{'name': 'Lake Onega', 'centroid_lonlat': [35.383, 61.7881], 'centroid_separation_km': 41.35, 'contains_point': True, 'area_deg2': 1.706569}, {'name': '(unnamed NE lake)', 'centroid_lonlat': [36.9105, 62.3285], 'centroid_separation_km': 118.03, 'contains_point': False, 'area_deg2': 0.056002}]
 
 ### NE04_WhiteSea_SE_large_hole
 
-gap_0039 area=22708 near Koynas (Arkhangelsk/Mezen hinterland). May be merged/exaggerated hydrography rather than a single named great lake; not proven false. Do not fill without stronger proof.
-
-- local xy: `[3618.0, 685.0]` source xy: `[10694.0, 827.0]` approx lon/lat: `36.7703, 68.6523`
+gap_0039 area=22708 near Koynas/Mezen hinterland ~(44.020,66.353). NE candidates []. Could be merged lakes, wetlands, or exaggerated hole.
 
 ### NE05_Rybinsk
 
-Matches ocean_gap_fills gap_0025 area=2751 classification=water_presentation_gap region_hint=inland_lake_or_lagoon. Nearest cities Breitovo, Poshekhonye, Rybinsk. Continuous-ocean renderer correctly shows interior water (non-selectable).
+gap_0025 area=2751 class=water_presentation_gap hint=inland_lake_or_lagoon at ~(38.004,58.614); nearest cities ['Breitovo', 'Poshekhonye', 'Vesyegonsk']; NE top=[{'name': 'Rybinsk Reservoir', 'centroid_lonlat': [38.1998, 58.5618], 'centroid_separation_km': 12.76, 'contains_point': False, 'area_deg2': 0.750606}, {'name': 'Ozero Kubenskoye', 'centroid_lonlat': [39.4694, 59.6533], 'centroid_separation_km': 142.59, 'contains_point': False, 'area_deg2': 0.071155}]
 
-- local xy: `[3133.0, 1255.0]` source xy: `[10209.0, 1397.0]` approx lon/lat: `26.9392, 57.3849`
+### NE06_Lake_Galichskoye
 
-### NE06_Volga_mid_reservoir
+gap_0038 area=7772 class=water_presentation_gap hint=inland_lake_or_lagoon at ~(42.925,58.513); nearest cities ['Galich', 'Kadyi', 'Chukhloma']; NE top=[]
 
-Matches ocean_gap_fills gap_0038 area=7772 classification=water_presentation_gap region_hint=inland_lake_or_lagoon. Nearest cities Galich, Kadyi, Chukhloma. Continuous-ocean renderer correctly shows interior water (non-selectable).
+### NE07_east_volga_candidate
 
-- local xy: `[3376.0, 1273.0]` source xy: `[10452.0, 1415.0]` approx lon/lat: `31.8649, 57.0291`
+gap gap_0045 area=6238 at ~(47.427,57.580); cities ['Yaransk', 'Shakhunya', 'Yoshkar Ola']; NE candidates []. Not high-confidence named without stronger polygon overlap.
 
-### NE07_Cheboksary_system
+### NE08_kama_volga_candidate
 
-Matches ocean_gap_fills gap_0045 area=6238 classification=water_presentation_gap region_hint=inland_lake_or_lagoon. Nearest cities Yaransk, Shakhunya, Yoshkar Ola. Continuous-ocean renderer correctly shows interior water (non-selectable).
-
-- local xy: `[3597.0, 1356.0]` source xy: `[10673.0, 1498.0]` approx lon/lat: `36.3446, 55.3884`
-
-### NE08_Kuybyshev_Samara_arm
-
-Matches ocean_gap_fills gap_0044 area=11171 classification=water_presentation_gap region_hint=inland_lake_or_lagoon. Nearest cities Tuymazy, Oktyabrsky, Naberezhnye Chelny. Continuous-ocean renderer correctly shows interior water (non-selectable).
-
-- local xy: `[3889.0, 1546.0]` source xy: `[10965.0, 1688.0]` approx lon/lat: `42.2635, 51.6326`
+gap gap_0044 area=11171 at ~(53.443,55.334); cities ['Tuymazy', 'Oktyabrsky', 'Naberezhnye Chelny']; NE candidates ['Nizhnekamsk Reservoir']. Not high-confidence named without stronger polygon overlap.
 
 ### MED01_Ibiza
 
-Production land e3_1439 source_id=2274 area=891.0 ring_verts=4 triangles=2. City anchor supports Ibiza. Rectangular/low-vert rings are simplified real islands — KEEP IDs; coastline work is #121.
-
-- local xy: `[1340.0, 2730.0]` source xy: `[8416.0, 2872.0]` approx lon/lat: `-9.4054, 28.2279`
+Production land e3_1439 source 2274 present with 2 triangles; simplified ring kept. Coastline=#121.
 
 ### MED02_Pantelleria
 
-Production land e3_1978 source_id=4693 area=506.0 ring_verts=4 triangles=2. City anchor supports Pantelleria. Rectangular/low-vert rings are simplified real islands — KEEP IDs; coastline work is #121.
-
-- local xy: `[1854.0, 2860.0]` source xy: `[8930.0, 3002.0]` approx lon/lat: `1.0135, 25.6581`
+Production land e3_1978 source 4693 present with 2 triangles; simplified ring kept. Coastline=#121.
 
 ### MED03_Malta
 
-Production land e3_0270 source_id=270 area=1287.0 ring_verts=4 triangles=2. City anchor supports Malta / Valletta. Rectangular/low-vert rings are simplified real islands — KEEP IDs; coastline work is #121.
-
-- local xy: `[1970.0, 2912.0]` source xy: `[9046.0, 3054.0]` approx lon/lat: `3.3649, 24.6302`
+Production land e3_0270 source 270 present with 2 triangles; simplified ring kept. Coastline=#121.
 
 ### MED04_Lemnos
 
-Production land e3_1738 source_id=3220 area=465.0 ring_verts=28 triangles=11. City anchor supports Lemnos / Myrina. Rectangular/low-vert rings are simplified real islands — KEEP IDs; coastline work is #121.
+Production land e3_1738 source 3220 present with 11 triangles; simplified ring kept. Coastline=#121.
 
-- local xy: `[2492.0, 2678.0]` source xy: `[9568.0, 2820.0]` approx lon/lat: `13.9459, 29.2558`
+### NA01_Chott_complex
 
-### NA01_Chott_or_basin
+gap_0008 near Tozeur/Gafsa/Gabes ~(8.580,33.862). Consistent with Tunisian chott/salt-basin complex; exact basin outline needs OSM/NE overlay review.
 
-gap_0008 area=1629 near Tozeur/Gafsa/Gabes — consistent with Chott el Jerid / Tunisian salt-basin complex. Keep as water presentation; terrain styling deferred to PR B / visual hierarchy.
+## Notes
 
-- local xy: `[1686.0, 3032.0]` source xy: `[8762.0, 3174.0]` approx lon/lat: `-2.3919, 22.2581`
+- `geographic_classification` vs `exact_feature_identity` are separate fields.
+- HIGH confidence exact names require low residual + NE proximity/containment.
+- Kolguyev restore is preview-only until owner approval.
+- Square islands unchanged; coastline work is #121.
+- Do not begin #74 PR B until this package is accepted.
 
-## Production policy
+## NE07 candidate list
+- Cheboksary Reservoir
+- local lakes/wetlands near Yaransk / Shakhunya / Yoshkar-Ola
+- merged or exaggerated gap-fill
 
-- Do **not** change production for UNRESOLVED items.
-- CONFIRMED_REAL_WATER_KEEP / SIMPLIFIED_ISLAND_KEEP / SALT_BASIN: no production geometry change.
-- CONFIRMED_MISSING_LAND_RESTORE (Kolguyev): requires separate owner-approved crop inclusion PR; not auto-applied.
-- Island coastline reconstruction remains **#121**.
-- Do not begin #74 PR B until owner accepts this package.
+## NE08 candidate list
+- Nizhnekamsk Reservoir (nearest NE named water in subset)
+- Kuybyshev Reservoir
+- Kama River reservoir arms
+- malformed merged gap-fill
+
+## NE06
+Test first against **Lake Galichskoye** (not "Volga mid reservoir"). Currently exact identity UNRESOLVED pending closer NE polygon match (Galich control residual elevated).
+
