@@ -1,11 +1,11 @@
 {
   "schema": "gates-of-codex.strategic-map",
-  "map_id": "earth3_europe_mediterranean_kolguyev_preview",
+  "map_id": "earth3_europe_mediterranean_src11836_preview",
   "renderer": "polygon_mesh",
-  "asset_status": "preview_only_not_production",
+  "asset_status": "diagnostic_preview_only_not_production",
   "polygon_dataset": {
     "path": "polygon_dataset.json",
-    "sha256": "81c8e2a6de89d56117ae9a810edc62b3d9a8ebb52c2aef2d0ff0d038e276b005",
+    "sha256": "70e7d9b24a8cd5e03e07350902e05416f5bc0518b411a2f89604d4c88ea3c89a",
     "province_count": 3511
   },
   "province_count": 3511,

@@ -1,0 +1,22 @@
+{
+  "map_id": "earth3_europe_mediterranean_src11836_preview",
+  "asset_status": "diagnostic_preview_only_not_production",
+  "not_reserved_for_production": true,
+  "not_kolguyev": true,
+  "province_count": 3511,
+  "land_count": 3296,
+  "water_count": 215,
+  "included_source_ids_sha256": "45f7d226e7bb87747192af8f0b67b454bfefb635410984c583ac97b54809837e",
+  "dataset_sha256": "70e7d9b24a8cd5e03e07350902e05416f5bc0518b411a2f89604d4c88ea3c89a",
+  "added": {
+    "gates_id": "e3_3512",
+    "source_id": 11836,
+    "identity": "Fion_northern_Urals_mainland"
+  },
+  "production_baseline_hash": "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3",
+  "unused_gaps": [
+    "e3_2830",
+    "e3_2888"
+  ],
+  "note": "Diagnostic only. e3_3512 is NOT reserved/promoted for production."
+}

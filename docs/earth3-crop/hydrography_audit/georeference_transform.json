@@ -1,8 +1,9 @@
 {
   "schema": "gates-of-codex.earth3-georeference-transform",
-  "schema_version": 6,
+  "schema_version": 7,
   "selected_method": "piecewise_regional_affine_with_loo",
-  "kolguyev_is_control_point": false,
+  "source_11836_is_not_kolguyev": true,
+  "source_11836_is_georef_control": false,
   "metric_projection": "lambert_azimuthal_equal_area_local_m",
   "regions": {
     "west_europe": {
@@ -646,21 +647,8 @@
   "high_confidence_coverage_threshold": 0.25,
   "reconstruction_area_relative_tolerance": 0.0001,
   "notes": [
-    "Kolguyev is NOT a georef control point.",
+    "Source 11836 is NOT the real-world Kolguyev island.",
     "Polygon IoU/area use local LAEA meters, never raw lon/lat degree area.",
     "Rendered geometry = emitted triangle union only."
-  ],
-  "kolguyev_holdout_not_control": {
-    "is_control_point": false,
-    "true_wgs84": [
-      49.0,
-      69.1
-    ],
-    "predicted": [
-      61.305,
-      65.9111
-    ],
-    "error_km": 630.531,
-    "note": "Arctic source placement is east-biased vs true Kolguyev; identity uses archive src 11836."
-  }
+  ]
 }

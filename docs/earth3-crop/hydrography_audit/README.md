@@ -9,9 +9,10 @@ python tools/earth3/hydrography_audit_main.py --archive %GATES_EARTH3_ARCHIVE%
 
 **Authoritative entry:** `tools/earth3/hydrography_audit_main.py`
 
-- Geometry: emitted **triangle union** only (no convex hull / synthetic circle)
-- Metrics: local **Lambert azimuthal equal-area** meters
+- Geometry: emitted **triangle union** only
+- Metrics: local **LAEA meters**
+- Source **11836 is NOT Kolguyev** (mainland Fion / northern Urals)
+- Actual Kolguyev island source remains a separate search (`kolguyev_true_island_search.json`)
 - Production path is never modified
-- Kolguyev preview is not production
 
-Superseded: `build_hydrography_audit.py`, `build_hydrography_audit_v2.py`, `build_hydrography_georef.py`
+Diagnostic preview (not production): `godot/assets/maps/earth3_europe_mediterranean_src11836_preview/`

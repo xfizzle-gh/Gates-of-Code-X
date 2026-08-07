@@ -5,13 +5,6 @@
     "download_name": "ne_10m_lakes.zip",
     "subset_file": "ne_10m_lakes_europe_subset.json",
     "subset_sha256": "a59e1cc69c777bf76517692bcfa3173bfc535f1bb75e91cc485c85904cba20ec",
-    "subset_bytes": 208217,
-    "generation": "Europe/NA bbox + named majors + area filter; simplify 0.02 deg",
-    "fields": [
-      "name",
-      "bounds",
-      "centroid",
-      "geojson"
-    ]
+    "subset_bytes": 208217
   }
 }

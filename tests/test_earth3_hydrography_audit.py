@@ -19,9 +19,12 @@ class Earth3HydrographyAuditTests(unittest.TestCase):
         feats = inv["features"]
         self.assertGreaterEqual(len(feats), 10)
         labels = {f["review_label"] for f in feats}
-        self.assertIn("NE01_Kolguyev", labels)
+        self.assertIn("NE01_source11836_Fion_northern_Urals", labels)
         self.assertIn("NE02_Ladoga", labels)
         self.assertIn("NE06_Lake_Galichskoye", labels)
+        ne01 = next(f for f in feats if f["review_label"].startswith("NE01_"))
+        self.assertEqual(ne01["exact_feature_identity"], "UNRESOLVED")
+        self.assertNotIn("Kolguyev", ne01["exact_feature_identity"])
         for f in feats:
             self.assertIn("geographic_classification", f)
             self.assertIn("exact_feature_identity", f)

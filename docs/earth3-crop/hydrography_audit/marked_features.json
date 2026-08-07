@@ -1,6 +1,6 @@
 {
   "schema": "gates-of-codex.earth3-hydrography-marked-features",
-  "schema_version": 6,
+  "schema_version": 7,
   "production_authority": {
     "provinces": 3510,
     "land": 3295,
@@ -47,11 +47,11 @@
     },
     "metric_projection": "lambert_azimuthal_equal_area_local_m",
     "geometry_policy": "emitted_triangle_union_only",
-    "note": "In-sample n<=3 zero RMS is not validation; LOO is authoritative. Kolguyev not a control."
+    "source_11836_is_not_kolguyev": true
   },
   "features": [
     {
-      "review_label": "NE01_Kolguyev",
+      "review_label": "NE01_source11836_Fion_northern_Urals",
       "map_local_xy": [
         4255.28,
         626.7
@@ -203,19 +203,23 @@
           "score": -2.4556
         }
       ],
-      "candidate_identities": [],
+      "candidate_identities": [
+        "include source 11836 if boundary revised west of Ural crest",
+        "keep excluded as east-of-boundary mainland",
+        "adjust mask / split boundary-straddling polygons"
+      ],
       "gap_fill_id": null,
-      "geographic_classification": "CONFIRMED_MISSING_LAND_RESTORE",
-      "exact_feature_identity": "Kolguyev Island",
+      "geographic_classification": "UNRESOLVED_MISSING_MAINLAND_OR_CROP_BOUNDARY_DEFECT",
+      "exact_feature_identity": "UNRESOLVED",
       "confidence": "high",
-      "evidence": "Archive land src 11836 (city Fion) absent from production crop. Identity is archive topology, not WGS84. Not a georef control. Holdout residual vs ~49E/69.1N: 630.531 km (predicted [61.305, 65.9111]). geometry=emitted_triangle_union.",
-      "overlay": "docs/earth3-crop/hydrography_audit/evidence/overlay_NE01_Kolguyev.png",
+      "evidence": "Archive land src 11836 city Fion. Transformed ~61.3E/65.9N (northern Urals / Komi\u2013Yamal mainland). Shares land boundaries; no bordering source-water. NOT the Barents island near 49.25E/69.08N. Omitted by v7 Europe\u2013Asia mask (overlap 0). geometry=emitted_triangle_union.",
+      "overlay": "docs/earth3-crop/hydrography_audit/evidence/overlay_NE01_source11836_Fion_northern_Urals.png",
       "geographic_reference": {
         "path": "docs/earth3-crop/hydrography_audit/reference/ne_10m_lakes_europe_subset.json",
         "provenance": "docs/earth3-crop/hydrography_audit/reference/PROVENANCE.json",
         "license": "Natural Earth public domain"
       },
-      "production_change_allowed": true
+      "production_change_allowed": false
     },
     {
       "review_label": "NE02_Ladoga",
@@ -2244,7 +2248,7 @@
   ],
   "polygon_match_table": [
     {
-      "review_label": "NE01_Kolguyev",
+      "review_label": "NE01_source11836_Fion_northern_Urals",
       "wgs84": [
         61.305,
         65.9111
@@ -3856,14 +3860,13 @@
       ]
     }
   ],
+  "source_11836_identity": "docs/earth3-crop/hydrography_audit/source_11836_identity_report.json",
+  "true_kolguyev_search": "docs/earth3-crop/hydrography_audit/kolguyev_true_island_search.json",
   "summary": {
     "CONFIRMED_REAL_WATER_KEEP": [
       "NE02_Ladoga",
       "NE03_Onega",
       "NE05_Rybinsk"
-    ],
-    "CONFIRMED_MISSING_LAND_RESTORE": [
-      "NE01_Kolguyev"
     ],
     "CONFIRMED_REAL_ISLAND_SIMPLIFIED_GEOMETRY_KEEP": [
       "MED01_Ibiza",
@@ -3874,11 +3877,15 @@
     "CONFIRMED_REAL_SALT_BASIN_KEEP_OR_DEFER": [
       "NA01_Chott_complex"
     ],
+    "UNRESOLVED_MISSING_MAINLAND_OR_CROP_BOUNDARY_DEFECT": [
+      "NE01_source11836_Fion_northern_Urals"
+    ],
     "UNRESOLVED_REQUIRES_GEOGRAPHIC_MATCH": [
       "NE04_WhiteSea_SE_large_hole",
       "NE06_Lake_Galichskoye",
       "NE07_east_volga_candidate",
       "NE08_kama_volga_candidate"
     ]
-  }
+  },
+  "removed_stale_evidence": []
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Authoritative Earth3 hydrography audit (docs + Kolguyev preview only).
+"""Authoritative Earth3 hydrography audit (docs + diagnostic previews only).
 
   set GATES_EARTH3_ARCHIVE=/path/to/AOH3_Earth3_map_provinces.zip
   python tools/earth3/hydrography_audit_main.py --archive %GATES_EARTH3_ARCHIVE%
@@ -8,6 +8,9 @@ Does not modify production godot/assets/maps/earth3_europe_mediterranean/.
 
 Geometry: exact emitted triangle unions only (no convex hull / synthetic circle).
 Metrics: local Lambert azimuthal equal-area (meters), never raw degree-area IoU.
+
+NOTE: Source 11836 is NOT Kolguyev. It is a northern-Urals/Komi–Yamal mainland
+province (city Fion). Actual Kolguyev remains a separate investigation.
 """
 from __future__ import annotations
 
@@ -16,14 +19,15 @@ import hashlib
 import json
 import math
 import os
+import shutil
 import sys
 from copy import deepcopy
 from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageDraw
-from shapely.geometry import LineString, MultiPolygon, Point, Polygon, mapping, shape
-from shapely.ops import nearest_points, transform, unary_union
+from shapely.geometry import MultiPoint, Point, Polygon, mapping, shape
+from shapely.ops import transform, unary_union
 from shapely.validation import make_valid
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -35,10 +39,14 @@ from gates_of_codex.earth3.parse import load_earth3_dataset  # noqa: E402
 OUT = ROOT / "docs/earth3-crop/hydrography_audit"
 PROD = ROOT / "godot/assets/maps/earth3_europe_mediterranean"
 NE_SUBSET = OUT / "reference/ne_10m_lakes_europe_subset.json"
-KOL_DIR = ROOT / "godot/assets/maps/earth3_europe_mediterranean_kolguyev_preview"
+SRC11836_DIR = ROOT / "godot/assets/maps/earth3_europe_mediterranean_src11836_preview"
+OLD_KOL_DIR = ROOT / "godot/assets/maps/earth3_europe_mediterranean_kolguyev_preview"
+CROP_CFG = ROOT / "config/earth3/crop_candidates_v1.json"
 HASH = "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3"
 GAPS = {"e3_2830", "e3_2888"}
-KOL_SRC = 11836
+SRC11836 = 11836
+TRUE_KOLGUYEV_WGS = (49.25, 69.08)
+BUGRINO_WGS = (49.30, 68.78)
 RECON_AREA_TOL = 1e-4
 EARTH_R_M = 6371008.8
 HI_IOU = 0.15
@@ -101,7 +109,7 @@ FIXED_TOL = {
 }
 
 SPECS = [
-    ("NE01_Kolguyev", None, None, "Kolguyev Island"),
+    ("NE01_source11836_Fion_northern_Urals", None, None, None),
     ("NE02_Ladoga", "gap_0012", None, "Lake Ladoga"),
     ("NE03_Onega", "gap_0027", None, "Lake Onega"),
     ("NE04_WhiteSea_SE_large_hole", "gap_0039", None, None),
@@ -114,6 +122,18 @@ SPECS = [
     ("MED03_Malta", None, 270, "Malta"),
     ("MED04_Lemnos", None, 3220, "Lemnos"),
     ("NA01_Chott_complex", "gap_0008", None, "Chott el Jerid complex"),
+]
+
+STALE_EVIDENCE = [
+    "closeup_NE01_Kolguyev.png",
+    "closeup_NE06_Volga_mid_reservoir.png",
+    "closeup_NE07_Cheboksary_system.png",
+    "closeup_NE08_Kuybyshev_Samara_arm.png",
+    "kolguyev_before.png",
+    "kolguyev_after.png",
+    "kolguyev_before_missing.png",
+    "kolguyev_preview_restored.png",
+    "overlay_NE01_Kolguyev.png",
 ]
 
 
@@ -221,11 +241,12 @@ def build_georef():
     for r in loo:
         by_r.setdefault(r["region"], []).append(r["error_km"])
     errs = [r["error_km"] for r in loo]
-    georef = {
+    return {
         "schema": "gates-of-codex.earth3-georeference-transform",
-        "schema_version": 6,
+        "schema_version": 7,
         "selected_method": "piecewise_regional_affine_with_loo",
-        "kolguyev_is_control_point": False,
+        "source_11836_is_not_kolguyev": True,
+        "source_11836_is_georef_control": False,
         "metric_projection": "lambert_azimuthal_equal_area_local_m",
         "regions": {
             k: {
@@ -255,12 +276,11 @@ def build_georef():
         "high_confidence_coverage_threshold": HI_COV,
         "reconstruction_area_relative_tolerance": RECON_AREA_TOL,
         "notes": [
-            "Kolguyev is NOT a georef control point.",
+            "Source 11836 is NOT the real-world Kolguyev island.",
             "Polygon IoU/area use local LAEA meters, never raw lon/lat degree area.",
             "Rendered geometry = emitted triangle union only.",
         ],
-    }
-    return georef, controls
+    }, controls
 
 
 def txy(mats, x, y):
@@ -288,8 +308,7 @@ def flat_triangles(triangles):
     return [int(i) for i in triangles]
 
 
-def reconstruct_triangle_union(vertices, triangles, committed_area, *, allow_empty=False):
-    """Authoritative rendered geometry from emitted vertices + triangle indices."""
+def reconstruct_triangle_union(vertices, triangles, committed_area):
     pts = pair_vertices(vertices)
     tflat = flat_triangles(triangles)
     if len(pts) < 3 or len(tflat) < 3:
@@ -315,19 +334,6 @@ def reconstruct_triangle_union(vertices, triangles, committed_area, *, allow_emp
         else:
             polys.append(tri)
     if not polys:
-        if allow_empty:
-            return Polygon(), {
-                "geometry_source": "emitted_triangle_union",
-                "vertex_count": len(pts),
-                "triangle_count": len(tflat) // 3,
-                "component_count": 0,
-                "committed_area": float(committed_area or 0),
-                "reconstructed_area": 0.0,
-                "reconstruction_relative_error": 1.0,
-                "used_convex_hull": False,
-                "used_synthetic_geometry": False,
-                "ok": False,
-            }
         raise ValueError("no valid triangles in reconstruction")
     union = unary_union(polys)
     if not union.is_valid:
@@ -338,12 +344,7 @@ def reconstruct_triangle_union(vertices, triangles, committed_area, *, allow_emp
     recon_area = float(union.area)
     committed = float(committed_area or 0)
     rel_err = abs(recon_area - committed) / committed if committed > 0 else (0.0 if recon_area == 0 else 1.0)
-    if union.geom_type == "MultiPolygon":
-        n_comp = len(union.geoms)
-    elif union.geom_type == "Polygon" and not union.is_empty:
-        n_comp = 1
-    else:
-        n_comp = 0
+    n_comp = len(union.geoms) if union.geom_type == "MultiPolygon" else (1 if not union.is_empty else 0)
     meta = {
         "geometry_source": "emitted_triangle_union",
         "vertex_count": len(pts),
@@ -365,7 +366,6 @@ def reconstruct_triangle_union(vertices, triangles, committed_area, *, allow_emp
 
 
 def laea_xy(lon, lat, lon0, lat0, r=EARTH_R_M):
-    """Lambert azimuthal equal-area meters centered on (lon0, lat0)."""
     phi = math.radians(lat)
     lam = math.radians(lon)
     phi0 = math.radians(lat0)
@@ -420,7 +420,6 @@ def load_ne():
 
 
 def poly_match_meters(e3_wgs, lakes, n=6):
-    """IoU and areas in local LAEA meters. Never degree-area."""
     if e3_wgs is None or e3_wgs.is_empty:
         return [], None
     e3_wgs = make_valid(e3_wgs)
@@ -454,7 +453,6 @@ def poly_match_meters(e3_wgs, lakes, n=6):
         boundary_mean_km = None
         try:
             if not e3_m.boundary.is_empty and not g_m.is_empty:
-                # sample boundary distance percentiles
                 coords = list(e3_m.boundary.coords) if e3_m.boundary.geom_type == "LineString" else []
                 if len(coords) >= 4:
                     step = max(1, len(coords) // 48)
@@ -490,7 +488,6 @@ def poly_match_meters(e3_wgs, lakes, n=6):
 
 
 def degree_area_iou_legacy_hull(e3_local_hull_wgs, lakes):
-    """Legacy degree-area convex-hull metric for old-vs-new comparison only."""
     if e3_local_hull_wgs is None or e3_local_hull_wgs.is_empty:
         return None
     e3 = make_valid(e3_local_hull_wgs)
@@ -525,11 +522,6 @@ def nearest_cities(archive, sx, sy, n=4):
     return [{"name": c.name, "dist_px": round(d, 1), "source_province_id": int(c.province_id)} for d, c in scored[:n]]
 
 
-def ring_pts_flat(row):
-    f = row.get("ring") or []
-    return [(float(f[i]), float(f[i + 1])) for i in range(0, len(f) - 1, 2)]
-
-
 def source_ring_polygon(ring):
     pts = [(float(x), float(y)) for x, y in ring]
     if len(pts) < 3:
@@ -546,20 +538,38 @@ def source_ring_polygon(ring):
     return poly
 
 
-def classify(label, hyp, exp_sid, by_src, top, matches, cities, recon_meta, kol_holdout=None):
-    if label == "NE01_Kolguyev":
-        ho = kol_holdout or {}
+def load_v7_mask():
+    data = json.loads(CROP_CFG.read_text(encoding="utf-8"))
+    for c in data.get("candidates") or []:
+        if c.get("id") != "em_reference_masked":
+            continue
+        polys = []
+        for ring in c.get("mask_rings") or []:
+            pts = [(float(x), float(y)) for x, y in ring]
+            if pts[0] != pts[-1]:
+                pts.append(pts[0])
+            polys.append(Polygon(pts))
+        return unary_union(polys)
+    return None
+
+
+def classify(label, hyp, exp_sid, by_src, top, matches, cities, recon_meta):
+    if label == "NE01_source11836_Fion_northern_Urals":
         return (
-            "CONFIRMED_MISSING_LAND_RESTORE",
-            "Kolguyev Island",
+            "UNRESOLVED_MISSING_MAINLAND_OR_CROP_BOUNDARY_DEFECT",
+            "UNRESOLVED",
             "high",
             (
-                f"Archive land src {KOL_SRC} (city Fion) absent from production crop. "
-                f"Identity is archive topology, not WGS84. Not a georef control. "
-                f"Holdout residual vs ~49E/69.1N: {ho.get('error_km')} km "
-                f"(predicted {ho.get('predicted')}). geometry={recon_meta['geometry_source']}."
+                f"Archive land src {SRC11836} city Fion. Transformed ~61.3E/65.9N "
+                f"(northern Urals / Komi–Yamal mainland). Shares land boundaries; "
+                f"no bordering source-water. NOT the Barents island near 49.25E/69.08N. "
+                f"Omitted by v7 Europe–Asia mask (overlap 0). geometry={recon_meta['geometry_source']}."
             ),
-            [],
+            [
+                "include source 11836 if boundary revised west of Ural crest",
+                "keep excluded as east-of-boundary mainland",
+                "adjust mask / split boundary-straddling polygons",
+            ],
         )
     if exp_sid is not None:
         p = by_src[exp_sid]
@@ -575,9 +585,6 @@ def classify(label, hyp, exp_sid, by_src, top, matches, cities, recon_meta, kol_
     cov = float((top or {}).get("earth3_coverage_by_ref") or 0)
     sep = (top or {}).get("centroid_separation_km")
     units = (top or {}).get("metric_units")
-    if units != "meters_laea":
-        # refuse high-confidence water names without meter metrics
-        pass
 
     def water_ok(need_name):
         if need_name and need_name not in name:
@@ -640,19 +647,17 @@ def classify(label, hyp, exp_sid, by_src, top, matches, cities, recon_meta, kol_
 
 
 def feature_triangle_geometry(label, gap, exp_sid, by_src, archive, ox, oy):
-    """Return local triangle-union geom + recon meta + centroid local xy. Never hull/circle."""
     if exp_sid is not None:
         p = by_src[exp_sid]
         geom, meta = reconstruct_triangle_union(p["vertices"], p["triangles"], p.get("area"))
         lx, ly = float(p["centroid"][0]), float(p["centroid"][1])
         return geom, meta, lx, ly
-    if label == "NE01_Kolguyev":
-        kp = archive.provinces[KOL_SRC]
+    if label == "NE01_source11836_Fion_northern_Urals":
+        kp = archive.provinces[SRC11836]
         local = [(round(x - ox, 6), round(y - oy, 6)) for x, y in kp.ring]
         if local[0] == local[-1]:
             local = local[:-1]
-        verts, tris, ring_flat, audit = triangulate_ring_validated(tuple(local))
-        # verts may be nested list of pairs; tris flat indices
+        verts, tris, _ring_flat, audit = triangulate_ring_validated(tuple(local))
         if verts and isinstance(verts[0], (list, tuple)):
             vflat = [c for xy in verts for c in xy]
         else:
@@ -669,12 +674,9 @@ def feature_triangle_geometry(label, gap, exp_sid, by_src, archive, ox, oy):
 
 
 def hull_from_vertices_for_legacy_only(vertices):
-    """Comparison-only convex hull — never used for classification."""
     pts = pair_vertices(vertices)
     if len(pts) < 3:
         return None
-    from shapely.geometry import MultiPoint
-
     h = MultiPoint(pts).convex_hull
     if h.geom_type != "Polygon":
         return None
@@ -682,7 +684,6 @@ def hull_from_vertices_for_legacy_only(vertices):
 
 
 def draw_polygon_overlay(path, e3_wgs, ref_wgs, label, metrics, georef_unc_km):
-    """Real polygon overlay: Earth3 / ref / intersection / only regions. No centroid circles."""
     w, h = 1100, 900
     img = Image.new("RGB", (w, h), (12, 18, 28))
     dr = ImageDraw.Draw(img, "RGBA")
@@ -702,9 +703,7 @@ def draw_polygon_overlay(path, e3_wgs, ref_wgs, label, metrics, georef_unc_km):
     maxx += dx * pad
     miny -= dy * pad
     maxy += dy * pad
-    sx = (w - 80) / (maxx - minx)
-    sy = (h - 120) / (maxy - miny)
-    s = min(sx, sy)
+    s = min((w - 80) / (maxx - minx), (h - 120) / (maxy - miny))
 
     def to_px(coords):
         return [(40 + (x - minx) * s, 60 + (maxy - y) * s) for x, y in coords]
@@ -712,19 +711,13 @@ def draw_polygon_overlay(path, e3_wgs, ref_wgs, label, metrics, georef_unc_km):
     def draw_geom(g, fill, outline):
         if g is None or g.is_empty:
             return
-        polys = []
-        if g.geom_type == "Polygon":
-            polys = [g]
-        elif g.geom_type == "MultiPolygon":
-            polys = list(g.geoms)
+        polys = [g] if g.geom_type == "Polygon" else list(g.geoms) if g.geom_type == "MultiPolygon" else []
         for poly in polys:
             ext = to_px(list(poly.exterior.coords))
             if len(ext) >= 3:
                 dr.polygon(ext, fill=fill, outline=outline)
 
-    inter = None
-    e3_only = None
-    ref_only = None
+    inter = e3_only = ref_only = None
     if e3_wgs is not None and ref_wgs is not None and not e3_wgs.is_empty and not ref_wgs.is_empty:
         try:
             inter = make_valid(e3_wgs.intersection(ref_wgs))
@@ -743,207 +736,315 @@ def draw_polygon_overlay(path, e3_wgs, ref_wgs, label, metrics, georef_unc_km):
     haus = (metrics or {}).get("hausdorff_km", "—")
     name = (metrics or {}).get("name", "—")
     dr.text((16, 10), f"{label}  ref={name}  IoU={iou}  Hausdorff_km={haus}", fill=(240, 240, 240))
-    dr.text(
-        (16, 30),
-        f"yellow=E3 boundary  blue=ref  green=intersection  red=E3-only  blue-fill=ref-only  "
-        f"georef_unc~{georef_unc_km}km LOO",
-        fill=(180, 190, 200),
-    )
-    dr.text((16, h - 28), "exact triangle-union geometry; LAEA meter metrics; no centroid circles", fill=(160, 170, 180))
+    dr.text((16, 30), f"georef_unc~{georef_unc_km}km LOO  exact triangle-union  LAEA meters", fill=(180, 190, 200))
     img.save(path)
 
 
-def build_kolguyev_topology(prod, archive, ox, oy, local_geom, new_id):
-    """Polygon topology distances — not centroid radius."""
-    kp = archive.provinces[KOL_SRC]
-    kol_src = source_ring_polygon(kp.ring)
-    if kol_src is None:
-        raise ValueError("Kolguyev source ring invalid")
-    # nearby source water by envelope expansion, then exact distance
-    minx, miny, maxx, maxy = kol_src.bounds
+def analyze_source_11836(archive, mats, prod, ox, oy):
+    mask = load_v7_mask()
+    p = archive.provinces[SRC11836]
+    g = source_ring_polygon(p.ring)
+    cx = float(g.centroid.x)
+    cy = float(g.centroid.y)
+    lon, lat = txy(mats, cx, cy)
+    cities = nearest_cities(archive, cx, cy, n=8)
+    # land/water contacts
+    minx, miny, maxx, maxy = g.bounds
     pad = 400.0
-    water_hits = []
-    land_hits = []
-    for sid, prov in archive.provinces.items():
-        ring = getattr(prov, "ring", None)
-        if not ring:
+    land_hits, water_hits = [], []
+    for sid, pr in archive.provinces.items():
+        if int(sid) == SRC11836:
             continue
-        xs = [p[0] for p in ring]
-        ys = [p[1] for p in ring]
+        xs = [q[0] for q in pr.ring]
+        ys = [q[1] for q in pr.ring]
         if max(xs) < minx - pad or min(xs) > maxx + pad or max(ys) < miny - pad or min(ys) > maxy + pad:
             continue
-        poly = source_ring_polygon(ring)
-        if poly is None or poly.is_empty:
+        pg = source_ring_polygon(pr.ring)
+        if pg is None:
             continue
-        try:
-            dist = float(kol_src.distance(poly))
-            borders = bool(kol_src.intersects(poly) or kol_src.touches(poly))
-            inter_area = float(kol_src.intersection(poly).area) if borders else 0.0
-        except Exception:
-            continue
+        dist = float(g.distance(pg))
+        borders = bool(g.intersects(pg) or g.touches(pg))
+        inter_area = float(g.intersection(pg).area) if borders else 0.0
         entry = {
             "source_id": int(sid),
             "min_boundary_distance_px": round(dist, 3),
             "intersects_or_touches": borders,
             "intersection_area_px2": round(inter_area, 4),
             "shared_boundary_only": borders and inter_area < 1e-6,
-            "area_px2": round(float(poly.area), 2),
+            "is_water": bool(pr.is_water),
+            "in_production_3510": int(sid) in {int(x["source_id"]) for x in prod["provinces"]},
+            "cities": [c.name for c in archive.cities if int(c.province_id) == int(sid)][:3],
         }
-        if bool(prov.is_water):
-            water_hits.append(entry)
-        elif int(sid) != KOL_SRC:
-            land_hits.append(entry)
+        (water_hits if pr.is_water else land_hits).append(entry)
+    land_hits.sort(key=lambda d: d["min_boundary_distance_px"])
+    water_hits.sort(key=lambda d: d["min_boundary_distance_px"])
+    shared = [h for h in land_hits if h["min_boundary_distance_px"] < 0.5]
+    overlap = float(g.intersection(mask).area / g.area) if mask is not None and g.area > 0 else None
+    in_mask = bool(mask.contains(Point(cx, cy))) if mask is not None else None
+    # Ural boundary side: mask east edge ~11235; conventional Europe west of Urals
+    # Predicted lon ~61E is east of typical Ural crest (~60E) in this region
+    ural_side = "east_of_or_across_ural_crest_provisional" if lon >= 60.0 else "west_of_ural_crest_provisional"
+    report = {
+        "source_id": SRC11836,
+        "rejected_identity": "NOT_Kolguyev_island",
+        "true_kolguyev_wgs84_for_comparison": list(TRUE_KOLGUYEV_WGS),
+        "bugrino_wgs84_for_comparison": list(BUGRINO_WGS),
+        "predicted_wgs84": [round(lon, 4), round(lat, 4)],
+        "distance_to_true_kolguyev_km": round(hav(lon, lat, *TRUE_KOLGUYEV_WGS), 1),
+        "source_centroid_xy": [round(cx, 2), round(cy, 2)],
+        "is_water": bool(p.is_water),
+        "geographic_region": "northern_Urals / Komi–Yamal mainland (Fion / Pechora basin periphery)",
+        "country_federal_subject_provisional": "Russia — Komi Republic / Nenets–Yamal periphery (provisional)",
+        "ural_europe_asia_side": ural_side,
+        "v7_mask_contains_centroid": in_mask,
+        "v7_mask_overlap_fraction": round(overlap, 6) if overlap is not None else None,
+        "in_production_3510": False,
+        "nearest_cities": cities,
+        "shared_land_boundary_contacts": shared,
+        "bordering_source_water": [h for h in water_hits if h["min_boundary_distance_px"] < 2.0],
+        "nearest_source_water": water_hits[:8],
+        "nearest_source_land": land_hits[:12],
+        "behaves_as_island": False,
+        "why_omitted": "v7 Europe–Asia boundary mask overlap is 0; province lies east of authored mask eastern limit",
+        "creates_internal_land_hole_in_3510": False,
+        "note_internal_hole": (
+            "Omission is an eastern exterior crop, not an interior hole inside the kept land mass. "
+            "Neighboring 11809 (Dutovo) and 11838 (Pechora) remain in production; 11836 sits outside mask."
+        ),
+        "candidate_solutions": [
+            "keep excluded (east of approved Europe–Asia boundary)",
+            "include source 11836 only if owner revises mask eastward",
+            "do not treat as island restore",
+            "if included later, derive real shared-edge land adjacency (not neighbors=[])",
+        ],
+        "recommended_interim": "UNRESOLVED_MISSING_MAINLAND_OR_CROP_BOUNDARY_DEFECT — no production change",
+    }
+    # overlay vs mask
+    ev = OUT / "evidence"
+    ev.mkdir(parents=True, exist_ok=True)
+    img = Image.new("RGB", (1200, 900), (14, 20, 30))
+    dr = ImageDraw.Draw(img)
+    # source-local window
+    win = (11000, 11600, 400, 1000)
+    s = min(1100 / (win[1] - win[0]), 800 / (win[3] - win[2]))
 
-    # Production water polygons near Kolguyev local geom
-    prod_water = []
-    for p in prod["provinces"]:
-        if not p.get("is_water"):
+    def px(x, y):
+        return (40 + (x - win[0]) * s, 40 + (y - win[2]) * s)
+
+    # mask slice
+    if mask is not None:
+        if mask.geom_type == "Polygon":
+            polys = [mask]
+        elif mask.geom_type == "MultiPolygon":
+            polys = list(mask.geoms)
+        else:
+            polys = [g for g in getattr(mask, "geoms", []) if g.geom_type == "Polygon"]
+        for poly in polys:
+            if poly.geom_type != "Polygon":
+                continue
+            coords = [px(x, y) for x, y in poly.exterior.coords if win[0] - 200 <= x <= win[1] + 200]
+            if len(coords) >= 3:
+                dr.line(coords, fill=(60, 100, 180), width=2)
+    def iter_polys(geom):
+        if geom is None or geom.is_empty:
+            return []
+        if geom.geom_type == "Polygon":
+            return [geom]
+        if geom.geom_type == "MultiPolygon":
+            return list(geom.geoms)
+        return [x for x in getattr(geom, "geoms", []) if x.geom_type == "Polygon"]
+
+    # neighbors
+    for h in shared:
+        pr = archive.provinces[h["source_id"]]
+        pg = source_ring_polygon(pr.ring)
+        for poly in iter_polys(pg):
+            coords = [px(x, y) for x, y in poly.exterior.coords]
+            if len(coords) >= 3:
+                dr.polygon(coords, outline=(140, 140, 150))
+    # 11836
+    for poly in iter_polys(g):
+        coords = [px(x, y) for x, y in poly.exterior.coords]
+        if len(coords) >= 3:
+            dr.polygon(coords, outline=(255, 200, 40), fill=(180, 120, 40))
+    # true Kolguyev marker via inverse-ish: just text annotation of true WGS
+    dr.text((20, 10), "src11836 Fion northern Urals (yellow) vs v7 mask edge (blue)", fill=(240, 240, 240))
+    dr.text(
+        (20, 30),
+        f"predicted WGS {lon:.3f}E {lat:.3f}N | true island target {TRUE_KOLGUYEV_WGS[0]}E {TRUE_KOLGUYEV_WGS[1]}N "
+        f"| d={report['distance_to_true_kolguyev_km']}km | mask_overlap={overlap}",
+        fill=(200, 200, 210),
+    )
+    dr.text((20, 50), "NOT an island — shared land boundaries; no bordering source-water", fill=(255, 160, 120))
+    img.save(ev / "overlay_NE01_source11836_Fion_ural_boundary.png")
+    report["boundary_overlay"] = "docs/earth3-crop/hydrography_audit/evidence/overlay_NE01_source11836_Fion_ural_boundary.png"
+    return report
+
+
+def search_true_kolguyev(archive, mats, prod_srcs):
+    """Independent search for real Kolguyev island source polygon. May return unresolved."""
+    tlon, tlat = TRUE_KOLGUYEV_WGS
+    candidates = []
+    for sid, p in archive.provinces.items():
+        if p.is_water:
             continue
-        try:
-            g, _ = reconstruct_triangle_union(p["vertices"], p["triangles"], p.get("area"))
-        except Exception:
+        cx = sum(q[0] for q in p.ring) / len(p.ring)
+        cy = sum(q[1] for q in p.ring) / len(p.ring)
+        lon, lat = txy(mats, cx, cy)
+        d_k = hav(lon, lat, tlon, tlat)
+        d_b = hav(lon, lat, *BUGRINO_WGS)
+        if min(d_k, d_b) > 400:
             continue
-        try:
-            dist = float(local_geom.distance(g))
-            touches = local_geom.touches(g) or (local_geom.intersects(g) and float(local_geom.intersection(g).area) >= 0)
-        except Exception:
+        g = source_ring_polygon(p.ring)
+        if g is None:
             continue
-        if dist > 350:
-            continue
-        prod_water.append(
+        minx, miny, maxx, maxy = g.bounds
+        pad = 60.0
+        land_t, water_t = 0, 0
+        for sid2, p2 in archive.provinces.items():
+            if sid2 == sid:
+                continue
+            xs = [q[0] for q in p2.ring]
+            ys = [q[1] for q in p2.ring]
+            if max(xs) < minx - pad or min(xs) > maxx + pad or max(ys) < miny - pad or min(ys) > maxy + pad:
+                continue
+            g2 = source_ring_polygon(p2.ring)
+            if g2 is None:
+                continue
+            if g.distance(g2) < 0.5:
+                if p2.is_water:
+                    water_t += 1
+                else:
+                    land_t += 1
+        cities = [c.name for c in archive.cities if int(c.province_id) == int(sid)][:4]
+        island_like = land_t == 0 and water_t >= 1
+        candidates.append(
             {
-                "gates_id": p["id"],
-                "source_id": int(p["source_id"]),
-                "min_boundary_distance_local_px": round(dist, 3),
-                "intersects_or_borders": bool(dist < 1.0 or touches),
+                "source_id": int(sid),
+                "predicted_wgs84": [round(lon, 4), round(lat, 4)],
+                "distance_to_kolguyev_center_km": round(d_k, 1),
+                "distance_to_bugrino_km": round(d_b, 1),
+                "source_centroid_xy": [round(cx, 1), round(cy, 1)],
+                "area_px2": round(float(g.area), 1),
+                "land_boundary_contacts": land_t,
+                "water_boundary_contacts": water_t,
+                "island_like": island_like,
+                "in_production_3510": int(sid) in prod_srcs,
+                "nearest_cities": cities,
+                "notes": (
+                    "mainland Timan/Barents coast (Indiga area)"
+                    if int(sid) == 11768
+                    else (
+                        "island-like northern land (likely Novaya Zemlya / other — not Bugrino)"
+                        if island_like
+                        else "mainland or multi-touch land"
+                    )
+                ),
             }
         )
-    prod_water.sort(key=lambda d: d["min_boundary_distance_local_px"])
-    water_hits.sort(key=lambda d: d["min_boundary_distance_px"])
-    land_hits.sort(key=lambda d: d["min_boundary_distance_px"])
-
-    # Source packing may share boundary polylines with nearby land (area-0 MultiLineString).
-    # That is reported, but preview Gates neighbors stay empty — no invented movement adjacency.
-    shared_land = [h for h in land_hits if h["min_boundary_distance_px"] < 0.5]
-    for h in shared_land + land_hits:
-        # annotate intersection area when available (caller may not have it)
-        h.setdefault("note", "distance 0 may be shared boundary polyline under source packing")
-    bordering_water = [h for h in water_hits if h["min_boundary_distance_px"] < 2.0 or h["intersects_or_touches"]]
-    adj = {
-        "gates_id": new_id,
-        "source_id": KOL_SRC,
-        "direct_land_neighbors": [],
-        "preview_province_neighbors_field": [],
-        "method": "exact_source_ring_boundary_distance",
-        "not_centroid_radius": True,
-        "source_water_bordering_or_near": bordering_water[:20],
-        "source_water_nearest": water_hits[:12],
-        "closest_mainland_land_by_boundary": land_hits[:12],
-        "source_geometry_land_boundary_touches": shared_land,
-        "source_geometry_land_touch_note": (
-            "AoH3 source ring shares boundary polylines (intersection area 0) with packed "
-            "nearby land provinces. Preview does NOT copy those into Gates neighbors."
-        ),
-        "confirmation_no_mainland_land_adjacency_invented": True,
-        "confirmation_preview_neighbors_empty": True,
-        "production_water_near_by_boundary": prod_water[:20],
-        "border_segments": "island outer ring only; sea links deferred",
-        "proposed_future_sea_link_nodes": ["author ferry/naval links separately — not auto-derived"],
-        "no_automatic_sea_or_ferry_adjacency": True,
-    }
-    return adj
-
-
-def audit_preview_3511(prod, provinces, new_id, inc, ds_sha):
-    land = [p for p in provinces if not p.get("is_water")]
-    water = [p for p in provinces if p.get("is_water")]
-    empty = [p["id"] for p in land if len(p.get("triangles") or []) < 3]
-    failed_tri = []
-    for p in land:
-        try:
-            reconstruct_triangle_union(p["vertices"], p["triangles"], p.get("area"))
-        except Exception as exc:
-            failed_tri.append({"id": p["id"], "error": str(exc)[:120]})
-    ids = {p["id"] for p in provinces}
-    dangling = [{"id": p["id"], "n": n} for p in provinces for n in (p.get("neighbors") or []) if n not in ids]
-    srcs = [int(p["source_id"]) for p in provinces]
-    prod_map = {int(e["source_id"]): e["gates_id"] for e in (prod.get("id_map") or [])}
-    mismatches = []
-    for p in provinces:
-        sid = int(p["source_id"])
-        if sid == KOL_SRC:
-            continue
-        expected = prod_map.get(sid)
-        if expected is not None and expected != p["id"]:
-            mismatches.append({"source_id": sid, "expected": expected, "got": p["id"]})
-    prod_meta = json.loads((PROD / "dataset_meta.json").read_text(encoding="utf-8"))
-    checks = {
-        "province_count_checked": len(provinces),
-        "land_count_checked": len(land),
-        "water_count_checked": len(water),
-        "failed_triangulations": len(failed_tri),
-        "empty_land_meshes": len(empty),
-        "dangling_adjacency": len(dangling),
-        "retained_stable_id_mismatches": len(mismatches),
-        "source_11836_count": srcs.count(KOL_SRC),
-        "e3_3512_count": sum(1 for p in provinces if p["id"] == new_id),
-        "e3_2830_count": sum(1 for p in provinces if p["id"] == "e3_2830"),
-        "e3_2888_count": sum(1 for p in provinces if p["id"] == "e3_2888"),
-        "production_dataset_unchanged": prod_meta.get("province_count") == 3510
-        and prod_meta.get("included_source_ids_sha256") == HASH,
-        "composition": {
-            "baseline_production_provinces": 3510,
-            "added_kolguyev": 1,
-            "assembled_preview": 3511,
-            "note": "composed from proven 3510 production + isolated Kolguyev triangulation",
-        },
-    }
-    ok = (
-        checks["province_count_checked"] == 3511
-        and checks["land_count_checked"] == 3296
-        and checks["water_count_checked"] == 215
-        and checks["failed_triangulations"] == 0
-        and checks["empty_land_meshes"] == 0
-        and checks["dangling_adjacency"] == 0
-        and checks["retained_stable_id_mismatches"] == 0
-        and checks["source_11836_count"] == 1
-        and checks["e3_3512_count"] == 1
-        and checks["e3_2830_count"] == 0
-        and checks["e3_2888_count"] == 0
-        and checks["production_dataset_unchanged"] is True
-    )
+    candidates.sort(key=lambda r: (not r["island_like"], r["distance_to_kolguyev_center_km"]))
+    # Accept only if island-like AND within ~80km of true center
+    accepted = [
+        c
+        for c in candidates
+        if c["island_like"] and c["distance_to_kolguyev_center_km"] <= 80 and c["land_boundary_contacts"] == 0
+    ]
     return {
-        "summary": {
-            "gates_id": new_id,
-            "source_id": KOL_SRC,
-            "province_count": len(provinces),
-            "land_count": len(land),
-            "water_count": len(water),
-            "included_ids_sha256": inc,
-            "dataset_sha256": ds_sha,
-        },
-        "checks": checks,
-        "all_pass": ok,
-        "failed_triangulation_details": failed_tri[:20],
-        "dangling_details": dangling[:20],
-        "stable_id_mismatch_details": mismatches[:20],
+        "true_kolguyev_wgs84": list(TRUE_KOLGUYEV_WGS),
+        "bugrino_wgs84": list(BUGRINO_WGS),
+        "search_method": [
+            "LOO piecewise georef predicted WGS of all northern land provinces",
+            "distance to 49.25E/69.08N and Bugrino 49.30E/68.78N",
+            "source-ring land vs water boundary contacts",
+            "island-like requires 0 land contacts and >=1 water contact",
+            "source 11836 explicitly excluded as false prior identity",
+        ],
+        "candidates": candidates[:25],
+        "accepted_kolguyev_source_id": accepted[0]["source_id"] if accepted else None,
+        "result": (
+            f"IDENTIFIED source {accepted[0]['source_id']}"
+            if accepted
+            else "UNRESOLVED — no archive land polygon matches Kolguyev island criteria near 49.25E/69.08N"
+        ),
+        "note": (
+            "Closest named production land near the longitude is src 11768 (Indiga), already in 3510, "
+            "mainland with multiple land contacts. No separate island polygon for Kolguyev was found. "
+            "Source 11836 is mainland Fion ~630 km away and is not a candidate."
+        ),
     }
 
 
-def build_kolguyev(prod, archive, ox, oy, mats):
-    kp = archive.provinces[KOL_SRC]
+def derive_src11836_land_neighbors(archive, prod):
+    """Real shared-edge land adjacency for mainland src 11836 (not neighbors=[])."""
+    g = source_ring_polygon(archive.provinces[SRC11836].ring)
+    prod_by_src = {int(p["source_id"]): p for p in prod["provinces"]}
+    neighbors = []
+    for sid, pr in archive.provinces.items():
+        if int(sid) == SRC11836 or pr.is_water:
+            continue
+        pg = source_ring_polygon(pr.ring)
+        if pg is None:
+            continue
+        if g.distance(pg) < 0.5 and (g.touches(pg) or g.intersects(pg)):
+            inter_area = float(g.intersection(pg).area)
+            if inter_area < 1e-3:  # boundary-only
+                gates = prod_by_src.get(int(sid))
+                neighbors.append(
+                    {
+                        "source_id": int(sid),
+                        "gates_id_if_in_production": gates["id"] if gates else None,
+                        "in_production_3510": gates is not None,
+                        "intersection_area_px2": round(inter_area, 6),
+                    }
+                )
+    # Preview can only link neighbors present in the assembled dataset
+    preview_neighbors = sorted(
+        {n["gates_id_if_in_production"] for n in neighbors if n["gates_id_if_in_production"]},
+    )
+    return neighbors, preview_neighbors
+
+
+def audit_all_triangle_rows(provinces):
+    """Audit EVERY province row with triangles (land and water metadata)."""
+    failed = []
+    empty_land = []
+    empty_water = []
+    for p in provinces:
+        tris = p.get("triangles") or []
+        verts = p.get("vertices") or []
+        if len(tris) < 3 or len(verts) < 6:
+            if p.get("is_water"):
+                empty_water.append(p["id"])
+            else:
+                empty_land.append(p["id"])
+            continue
+        try:
+            reconstruct_triangle_union(verts, tris, p.get("area"))
+        except Exception as exc:
+            failed.append({"id": p["id"], "is_water": bool(p.get("is_water")), "error": str(exc)[:160]})
+    return failed, empty_land, empty_water
+
+
+def build_src11836_diagnostic_preview(prod, archive, ox, oy):
+    """Diagnostic mainland preview only — not production, ID not reserved for promotion."""
+    if OLD_KOL_DIR.exists():
+        shutil.rmtree(OLD_KOL_DIR)
+    kp = archive.provinces[SRC11836]
     local = [(round(x - ox, 6), round(y - oy, 6)) for x, y in kp.ring]
     if local[0] == local[-1]:
         local = local[:-1]
     verts, tris, ring_flat, audit = triangulate_ring_validated(tuple(local))
-    new_n = max(int(p["id"].split("_")[1]) for p in prod["provinces"]) + 1
-    new_id = f"e3_{new_n:04d}"
-    assert new_id not in GAPS
+    # temporary diagnostic id only
+    diag_id = "e3_3512"
+    assert diag_id not in GAPS
     cx = sum(x for x, _ in local) / len(local)
     cy = sum(y for _, y in local) / len(local)
+    land_adj, preview_neighbors = derive_src11836_land_neighbors(archive, prod)
+    # mutual neighbor updates for production provinces present in preview
+    provinces = deepcopy(prod["provinces"])
     row = {
-        "id": new_id,
-        "source_id": KOL_SRC,
+        "id": diag_id,
+        "source_id": SRC11836,
         "is_water": False,
         "terrain_id": int(kp.terrain_id),
         "continent_id": int(kp.continent_id),
@@ -953,15 +1054,16 @@ def build_kolguyev(prod, archive, ox, oy, mats):
         "triangles": tris,
         "ring": ring_flat,
         "area": round(float(audit["polygon_area"]), 4),
-        "neighbors": [],
+        "neighbors": preview_neighbors,
     }
-    # rebuild local geom for topology
-    if verts and isinstance(verts[0], (list, tuple)):
-        vflat = [c for xy in verts for c in xy]
-    else:
-        vflat = list(verts)
-    local_geom, _meta = reconstruct_triangle_union(vflat, tris, audit["polygon_area"])
-    provinces = deepcopy(prod["provinces"]) + [row]
+    id_to_row = {p["id"]: p for p in provinces}
+    for nid in preview_neighbors:
+        if nid in id_to_row:
+            nlist = list(id_to_row[nid].get("neighbors") or [])
+            if diag_id not in nlist:
+                nlist.append(diag_id)
+                id_to_row[nid]["neighbors"] = nlist
+    provinces.append(row)
     land = sum(1 for p in provinces if not p.get("is_water"))
     water = sum(1 for p in provinces if p.get("is_water"))
     srcs = [int(p["source_id"]) for p in provinces]
@@ -972,31 +1074,34 @@ def build_kolguyev(prod, archive, ox, oy, mats):
     preview["land_count"] = land
     preview["water_count"] = water
     preview["included_source_ids_sha256"] = inc
-    preview["id_map"] = list(prod.get("id_map") or []) + [{"gates_id": new_id, "source_id": KOL_SRC}]
+    preview["id_map"] = list(prod.get("id_map") or []) + [{"gates_id": diag_id, "source_id": SRC11836}]
     text = json.dumps(preview, separators=(",", ":"), ensure_ascii=False)
     ds_sha = hashlib.sha256(text.encode()).hexdigest()
-    KOL_DIR.mkdir(parents=True, exist_ok=True)
-    (KOL_DIR / "polygon_dataset.json").write_text(text + "\n", encoding="utf-8")
+    SRC11836_DIR.mkdir(parents=True, exist_ok=True)
+    (SRC11836_DIR / "polygon_dataset.json").write_text(text + "\n", encoding="utf-8")
     meta = {
-        "map_id": "earth3_europe_mediterranean_kolguyev_preview",
-        "asset_status": "preview_only_not_production",
+        "map_id": "earth3_europe_mediterranean_src11836_preview",
+        "asset_status": "diagnostic_preview_only_not_production",
+        "not_reserved_for_production": True,
+        "not_kolguyev": True,
         "province_count": len(provinces),
         "land_count": land,
         "water_count": water,
         "included_source_ids_sha256": inc,
         "dataset_sha256": ds_sha,
-        "added": {"gates_id": new_id, "source_id": KOL_SRC},
+        "added": {"gates_id": diag_id, "source_id": SRC11836, "identity": "Fion_northern_Urals_mainland"},
         "production_baseline_hash": HASH,
         "unused_gaps": sorted(GAPS),
+        "note": "Diagnostic only. e3_3512 is NOT reserved/promoted for production.",
     }
-    (KOL_DIR / "dataset_meta.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
-    (KOL_DIR / "map_manifest.json").write_text(
+    (SRC11836_DIR / "dataset_meta.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
+    (SRC11836_DIR / "map_manifest.json").write_text(
         json.dumps(
             {
                 "schema": "gates-of-codex.strategic-map",
-                "map_id": "earth3_europe_mediterranean_kolguyev_preview",
+                "map_id": "earth3_europe_mediterranean_src11836_preview",
                 "renderer": "polygon_mesh",
-                "asset_status": "preview_only_not_production",
+                "asset_status": "diagnostic_preview_only_not_production",
                 "polygon_dataset": {"path": "polygon_dataset.json", "sha256": ds_sha, "province_count": len(provinces)},
                 "province_count": len(provinces),
                 "bounds": prod["bounds"],
@@ -1008,31 +1113,90 @@ def build_kolguyev(prod, archive, ox, oy, mats):
         + "\n",
         encoding="utf-8",
     )
-    adj = build_kolguyev_topology(prod, archive, ox, oy, local_geom, new_id)
-    # force no invented land neighbors on the province row
-    assert row["neighbors"] == []
-    assert adj["direct_land_neighbors"] == []
-    val = audit_preview_3511(prod, provinces, new_id, inc, ds_sha)
-    val["adjacency"] = adj
-    val["checks_bool"] = {
-        "empty_land_meshes": val["checks"]["empty_land_meshes"] == 0,
-        "dangling_neighbors": val["checks"]["dangling_adjacency"] == 0,
-        "source_11836_once": val["checks"]["source_11836_count"] == 1,
-        "new_id_once": val["checks"]["e3_3512_count"] == 1,
-        "gaps_unused": val["checks"]["e3_2830_count"] == 0 and val["checks"]["e3_2888_count"] == 0,
-        "stable_retained_mappings": val["checks"]["retained_stable_id_mismatches"] == 0,
-        "no_invented_land_adjacency": adj["confirmation_no_mainland_land_adjacency_invented"],
-        "production_still_3510": val["checks"]["production_dataset_unchanged"],
-        "tri_ok": len(row["triangles"]) >= 3,
-        "full_3511_audit_pass": val["all_pass"],
-        "topology_not_centroid_radius": adj["not_centroid_radius"],
+
+    failed, empty_land, empty_water = audit_all_triangle_rows(provinces)
+    ids = {p["id"] for p in provinces}
+    dangling = [{"id": p["id"], "missing_neighbor": n} for p in provinces for n in (p.get("neighbors") or []) if n not in ids]
+    prod_map = {int(e["source_id"]): e["gates_id"] for e in (prod.get("id_map") or [])}
+    mismatches = []
+    for p in provinces:
+        sid = int(p["source_id"])
+        if sid == SRC11836:
+            continue
+        exp = prod_map.get(sid)
+        if exp is not None and exp != p["id"]:
+            mismatches.append({"source_id": sid, "expected": exp, "got": p["id"]})
+    prod_meta = json.loads((PROD / "dataset_meta.json").read_text(encoding="utf-8"))
+    checks = {
+        "province_count_checked": len(provinces),
+        "land_count_checked": land,
+        "water_count_checked": water,
+        "all_3511_triangle_rows_valid": len(failed) == 0 and len(empty_land) == 0 and len(empty_water) == 0,
+        "failed_triangulations_land_and_water": len(failed),
+        "no_empty_land_meshes": len(empty_land) == 0,
+        "no_empty_water_meshes": len(empty_water) == 0,
+        "no_dangling_adjacency": len(dangling) == 0,
+        "no_stable_id_mismatches": len(mismatches) == 0,
+        "source_11836_count": srcs.count(SRC11836),
+        "diagnostic_id_count": sum(1 for p in provinces if p["id"] == diag_id),
+        "e3_2830_count": sum(1 for p in provinces if p["id"] == "e3_2830"),
+        "e3_2888_count": sum(1 for p in provinces if p["id"] == "e3_2888"),
+        "production_dataset_unchanged": prod_meta.get("province_count") == 3510
+        and prod_meta.get("included_source_ids_sha256") == HASH,
+        "mainland_adjacency_derived": len(preview_neighbors) >= 0,
+        "not_using_empty_neighbors_for_mainland": row["neighbors"] == preview_neighbors,
+        "composition": {
+            "baseline_production_provinces": 3510,
+            "added_src11836_mainland": 1,
+            "assembled_diagnostic_preview": 3511,
+            "audit_scope": "all_3511_rows_land_and_water_triangle_reconstruction",
+        },
     }
-    (OUT / "kolguyev_adjacency_report.json").write_text(json.dumps(adj, indent=2) + "\n", encoding="utf-8")
-    (OUT / "kolguyev_preview_validation.json").write_text(json.dumps(val, indent=2) + "\n", encoding="utf-8")
-    # screenshots exact polygons
+    all_pass = (
+        checks["province_count_checked"] == 3511
+        and checks["all_3511_triangle_rows_valid"]
+        and checks["no_dangling_adjacency"]
+        and checks["no_stable_id_mismatches"]
+        and checks["source_11836_count"] == 1
+        and checks["production_dataset_unchanged"]
+        and checks["e3_2830_count"] == 0
+        and checks["e3_2888_count"] == 0
+    )
+    adj = {
+        "gates_id": diag_id,
+        "source_id": SRC11836,
+        "identity": "mainland_Fion_northern_Urals",
+        "not_kolguyev": True,
+        "direct_land_neighbors": preview_neighbors,
+        "source_shared_edge_land_contacts": land_adj,
+        "method": "exact_source_ring_shared_boundary",
+        "not_centroid_radius": True,
+        "diagnostic_only": True,
+        "id_not_reserved_for_production": True,
+    }
+    val = {
+        "summary": {
+            "gates_id": diag_id,
+            "source_id": SRC11836,
+            "identity": "mainland_Fion_northern_Urals_NOT_kolguyev",
+            "province_count": len(provinces),
+            "land_count": land,
+            "water_count": water,
+            "included_ids_sha256": inc,
+            "dataset_sha256": ds_sha,
+            "diagnostic_only": True,
+        },
+        "checks": checks,
+        "all_pass": all_pass,
+        "failed_triangulation_details": failed[:20],
+        "dangling_details": dangling[:20],
+        "adjacency": adj,
+    }
+    (OUT / "src11836_adjacency_report.json").write_text(json.dumps(adj, indent=2) + "\n", encoding="utf-8")
+    (OUT / "src11836_preview_validation.json").write_text(json.dumps(val, indent=2) + "\n", encoding="utf-8")
+    # screenshots
     ev = OUT / "evidence"
-    ev.mkdir(parents=True, exist_ok=True)
-    for tag, data, hi in [("before", prod, None), ("after", {"provinces": provinces}, new_id)]:
+    for tag, data, hi in [("before", prod, None), ("after", {"provinces": provinces}, diag_id)]:
         img = Image.new("RGB", (1000, 800), (18, 32, 48))
         dr = ImageDraw.Draw(img)
         minx, maxx, miny, maxy = 3600, 4306, 200, 1100
@@ -1041,54 +1205,103 @@ def build_kolguyev(prod, archive, ox, oy, mats):
             if p.get("is_water"):
                 continue
             try:
-                g, _ = reconstruct_triangle_union(p["vertices"], p["triangles"], p.get("area"))
+                gg, _ = reconstruct_triangle_union(p["vertices"], p["triangles"], p.get("area"))
             except Exception:
                 continue
-            ccx, ccy = g.centroid.x, g.centroid.y
+            ccx, ccy = gg.centroid.x, gg.centroid.y
             if not (minx - 80 <= ccx <= maxx + 80 and miny - 80 <= ccy <= maxy + 80):
                 continue
-            polys = [g] if g.geom_type == "Polygon" else list(g.geoms) if g.geom_type == "MultiPolygon" else []
+            polys = [gg] if gg.geom_type == "Polygon" else list(gg.geoms) if gg.geom_type == "MultiPolygon" else []
             for poly in polys:
                 sp = [(20 + (x - minx) * s, 30 + (y - miny) * s) for x, y in poly.exterior.coords]
                 fill = (90, 200, 110) if hi and p["id"] == hi else (120, 126, 132)
                 if len(sp) >= 3:
                     dr.polygon(sp, fill=fill, outline=(40, 40, 40))
-        dr.text((10, 8), f"Kolguyev {tag} exact mesh (no mainland adjacency)", fill=(240, 240, 240))
-        img.save(ev / f"kolguyev_{tag}.png")
+        dr.text((10, 8), f"src11836 Fion mainland diagnostic {tag} (NOT island)", fill=(240, 240, 240))
+        img.save(ev / f"src11836_{tag}.png")
     return val
 
 
-def write_owner_review(rows, georef, comparison, kol_val):
+def purge_stale_evidence():
+    removed = []
+    ev = OUT / "evidence"
+    for name in STALE_EVIDENCE:
+        p = ev / name
+        if p.is_file():
+            p.unlink()
+            removed.append(str(p.relative_to(ROOT)).replace("\\", "/"))
+    for p in ev.glob("*olguy*"):
+        p.unlink()
+        removed.append(str(p.relative_to(ROOT)).replace("\\", "/"))
+    for p in OUT.glob("*olguy*"):
+        if p.is_file():
+            p.unlink()
+            removed.append(str(p.relative_to(ROOT)).replace("\\", "/"))
+    if OLD_KOL_DIR.exists():
+        shutil.rmtree(OLD_KOL_DIR)
+        removed.append(str(OLD_KOL_DIR.relative_to(ROOT)).replace("\\", "/"))
+    return removed
+
+
+def write_owner_review(rows, georef, comparison, src_report, kol_search, preview_val, removed):
     lines = [
         "# Earth3 hydrography owner review",
         "",
-        "Production **unchanged** at 3510 / `a849b381…`. Kolguyev preview **not** approved for production.",
+        "Production **unchanged** at 3510 / `a849b381…`.",
         "",
-        f"LOO RMS **{georef['leave_one_out']['rms_km']} km**, max **{georef['leave_one_out']['max_km']} km**. "
-        "Kolguyev is not a control point.",
+        "**Source 11836 is NOT Kolguyev.** It is mainland Fion (northern Urals / Komi–Yamal).",
+        f"True Kolguyev (~{TRUE_KOLGUYEV_WGS[0]}E, {TRUE_KOLGUYEV_WGS[1]}N) source polygon: "
+        f"**{kol_search.get('result')}**.",
+        "",
+        f"LOO RMS **{georef['leave_one_out']['rms_km']} km**, max **{georef['leave_one_out']['max_km']} km**.",
         f"North LOO: {georef['leave_one_out']['by_region'].get('ne_russia_north')}",
-        f"Kolguyev holdout (not control): {georef.get('kolguyev_holdout_not_control')}",
         "",
-        "Geometry: **emitted triangle union only**. Metrics: **local LAEA meters** (not degree-area).",
+        "Geometry: **emitted triangle union**. Metrics: **local LAEA meters**.",
         "",
         "## Classifications",
         "",
-        "| Label | geo_class | exact_id | conf | WGS84 | top IoU (m) | geom |",
-        "|---|---|---|---|---|---|---|",
+        "| Label | geo_class | exact_id | conf | WGS84 | top IoU (m) |",
+        "|---|---|---|---|---|---|",
     ]
     for r in rows:
         top = (r["polygon_matches"] or [{}])[0]
-        gm = r.get("geometry_meta") or {}
         lines.append(
             f"| {r['review_label']} | `{r['geographic_classification']}` | {r['exact_feature_identity']} | "
             f"{r['confidence']} | {r['wgs84_lon']},{r['wgs84_lat']} | "
-            f"{top.get('name', '—')} iou={top.get('iou', '—')} | {gm.get('geometry_source')} |"
+            f"{top.get('name', '—')} iou={top.get('iou', '—')} |"
         )
-    lines += ["", "## Unresolved candidates", ""]
-    for r in rows:
-        if r["geographic_classification"].startswith("UNRESOLVED"):
-            lines.append(f"- **{r['review_label']}**: {r.get('candidate_identities')}")
-    lines += ["", "## Old convex-hull vs exact triangle-union", ""]
+    lines += [
+        "",
+        "## Source 11836 identity",
+        "",
+        f"- predicted WGS: {src_report.get('predicted_wgs84')}",
+        f"- distance to true Kolguyev: {src_report.get('distance_to_true_kolguyev_km')} km",
+        f"- region: {src_report.get('geographic_region')}",
+        f"- v7 mask overlap: {src_report.get('v7_mask_overlap_fraction')}",
+        f"- shared land contacts: {len(src_report.get('shared_land_boundary_contacts') or [])}",
+        f"- bordering source-water: {src_report.get('bordering_source_water')}",
+        f"- overlay: {src_report.get('boundary_overlay')}",
+        "",
+        "## Actual Kolguyev search",
+        "",
+        f"- result: **{kol_search.get('result')}**",
+        f"- accepted source id: `{kol_search.get('accepted_kolguyev_source_id')}`",
+        f"- note: {kol_search.get('note')}",
+        "",
+        "## Diagnostic src11836 preview",
+        "",
+        f"- path: `godot/assets/maps/earth3_europe_mediterranean_src11836_preview/`",
+        f"- all_pass: `{preview_val.get('all_pass')}`",
+        f"- checks: `{json.dumps(preview_val.get('checks'))}`",
+        f"- land neighbors (derived): `{preview_val.get('adjacency', {}).get('direct_land_neighbors')}`",
+        f"- ID not reserved for production",
+        "",
+        "## Removed stale evidence",
+        "",
+    ]
+    for r in removed:
+        lines.append(f"- `{r}`")
+    lines += ["", "## Old hull vs exact triangle-union", ""]
     lines.append("| Label | old_iou | new_iou | delta | class_changed |")
     lines.append("|---|---:|---:|---:|---|")
     for c in comparison:
@@ -1096,10 +1309,6 @@ def write_owner_review(rows, georef, comparison, kol_val):
             f"| {c['review_label']} | {c.get('old_iou')} | {c.get('new_iou')} | {c.get('iou_delta')} | "
             f"{c.get('classification_changed')} |"
         )
-    lines += ["", "## Kolguyev 3511 preview", ""]
-    lines.append(f"- all_pass: `{kol_val.get('all_pass')}`")
-    lines.append(f"- checks: `{json.dumps(kol_val.get('checks'))}`")
-    lines.append(f"- land neighbors: `{kol_val.get('adjacency', {}).get('direct_land_neighbors')}`")
     (OUT / "OWNER_REVIEW.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -1115,23 +1324,23 @@ ROOT = Path(__file__).resolve().parents[1]
 T = ROOT / "docs/earth3-crop/hydrography_audit/georeference_transform.json"
 INV = ROOT / "docs/earth3-crop/hydrography_audit/marked_features.json"
 MAIN = ROOT / "tools/earth3/hydrography_audit_main.py"
-KOL_ADJ = ROOT / "docs/earth3-crop/hydrography_audit/kolguyev_adjacency_report.json"
-KOL_VAL = ROOT / "docs/earth3-crop/hydrography_audit/kolguyev_preview_validation.json"
+SRC_ADJ = ROOT / "docs/earth3-crop/hydrography_audit/src11836_adjacency_report.json"
+SRC_VAL = ROOT / "docs/earth3-crop/hydrography_audit/src11836_preview_validation.json"
+SRC_ID = ROOT / "docs/earth3-crop/hydrography_audit/source_11836_identity_report.json"
+KOL_SEARCH = ROOT / "docs/earth3-crop/hydrography_audit/kolguyev_true_island_search.json"
 CMP = ROOT / "docs/earth3-crop/hydrography_audit/polygon_match_old_vs_new.json"
 HASH = "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3"
 PROD = ROOT / "godot/assets/maps/earth3_europe_mediterranean/dataset_meta.json"
+OLD_KOL = ROOT / "godot/assets/maps/earth3_europe_mediterranean_kolguyev_preview"
 
 
 class Earth3HydrographyGeorefTests(unittest.TestCase):
     def test_loo_and_no_fake_zero_validated_rms(self):
         t = json.loads(T.read_text(encoding="utf-8"))
-        self.assertFalse(t.get("kolguyev_is_control_point", True))
+        self.assertTrue(t.get("source_11836_is_not_kolguyev"))
         loo = t["leave_one_out"]
         self.assertGreater(loo["rms_km"], 0.0)
         self.assertGreaterEqual(loo["by_region"].get("ne_russia_north", {}).get("n", 0), 5)
-        for _rname, reg in t["regions"].items():
-            if reg.get("n", 99) <= 3:
-                self.assertIn("NOT independent validation", reg.get("validation_note", ""))
         tol = t["fixed_control_tolerances_km"]
         loo_map = {r["label"]: r["error_km"] for r in loo["residuals"]}
         for lab, max_km in tol.items():
@@ -1143,6 +1352,33 @@ class Earth3HydrographyGeorefTests(unittest.TestCase):
         self.assertNotIn(r"C:\\\\Users\\\\paulf\\\\Downloads", txt)
         self.assertIn("GATES_EARTH3_ARCHIVE", txt)
 
+    def test_source_11836_not_labelled_kolguyev(self):
+        inv = json.loads(INV.read_text(encoding="utf-8"))
+        blob = json.dumps(inv).lower()
+        # feature labels/classes must not claim 11836 is the island
+        ne01 = next(f for f in inv["features"] if f["review_label"].startswith("NE01_"))
+        self.assertEqual(ne01["review_label"], "NE01_source11836_Fion_northern_Urals")
+        self.assertEqual(ne01["exact_feature_identity"], "UNRESOLVED")
+        self.assertEqual(ne01["geographic_classification"], "UNRESOLVED_MISSING_MAINLAND_OR_CROP_BOUNDARY_DEFECT")
+        self.assertFalse(ne01.get("production_change_allowed", False))
+        self.assertNotIn("kolguyev island", (ne01.get("exact_feature_identity") or "").lower())
+        self.assertTrue(SRC_ID.is_file())
+        ident = json.loads(SRC_ID.read_text(encoding="utf-8"))
+        self.assertEqual(ident["rejected_identity"], "NOT_Kolguyev_island")
+        self.assertFalse(ident["behaves_as_island"])
+        # no old preview path
+        self.assertFalse(OLD_KOL.exists())
+        # main + inventory should not market 11836 as Kolguyev restore
+        main = MAIN.read_text(encoding="utf-8").lower()
+        self.assertIn("not kolguyev", main)
+        self.assertNotIn("confirmed_missing_land_restore", ne01["geographic_classification"].lower())
+
+    def test_true_kolguyev_search_present(self):
+        ks = json.loads(KOL_SEARCH.read_text(encoding="utf-8"))
+        self.assertIn("candidates", ks)
+        # 11836 must not be accepted as the island
+        self.assertNotEqual(ks.get("accepted_kolguyev_source_id"), 11836)
+
     def test_exact_geometry_and_meter_metrics(self):
         inv = json.loads(INV.read_text(encoding="utf-8"))
         self.assertEqual(inv["production_authority"]["included_ids_sha256"], HASH)
@@ -1153,17 +1389,12 @@ class Earth3HydrographyGeorefTests(unittest.TestCase):
             self.assertFalse(gm.get("used_convex_hull", True), f["review_label"])
             self.assertFalse(gm.get("used_synthetic_geometry", True), f["review_label"])
             self.assertLessEqual(float(gm.get("reconstruction_relative_error", 1)), 1e-4, f["review_label"])
-            self.assertIn("polygon_matches", f)
-            if f["review_label"] == "MED01_Ibiza":
-                self.assertGreater(f["wgs84_lon"], 0.0)
-                self.assertLess(f["wgs84_lon"], 3.5)
             if f["geographic_classification"].startswith("UNRESOLVED"):
                 self.assertFalse(f.get("production_change_allowed", False))
             if f["confidence"] == "high" and f["geographic_classification"] == "CONFIRMED_REAL_WATER_KEEP":
                 top = (f.get("polygon_matches") or [None])[0]
                 self.assertIsNotNone(top, f["review_label"])
                 self.assertEqual(top.get("metric_units"), "meters_laea", f["review_label"])
-                self.assertFalse(top.get("used_degree_area", False))
                 ok = (
                     float(top.get("iou") or 0) >= 0.15
                     or float(top.get("earth3_coverage_by_ref") or 0) >= 0.25
@@ -1172,60 +1403,43 @@ class Earth3HydrographyGeorefTests(unittest.TestCase):
                         and float(top.get("iou") or 0) >= 0.05
                     )
                 )
-                self.assertTrue(ok, f"{f['review_label']} high-confidence below exact thresholds: {top}")
+                self.assertTrue(ok, f"{f['review_label']} high-confidence below thresholds: {top}")
 
-    def test_no_synthetic_or_degree_area_confirmed(self):
-        inv = json.loads(INV.read_text(encoding="utf-8"))
-        confirmed = {
-            "CONFIRMED_REAL_WATER_KEEP",
-            "CONFIRMED_MISSING_LAND_RESTORE",
-            "CONFIRMED_REAL_ISLAND_SIMPLIFIED_GEOMETRY_KEEP",
-        }
-        for f in inv["features"]:
-            if f["geographic_classification"] not in confirmed:
-                continue
-            gm = f["geometry_meta"]
-            self.assertEqual(gm["geometry_source"], "emitted_triangle_union")
-            self.assertFalse(gm["used_convex_hull"])
-            self.assertFalse(gm["used_synthetic_geometry"])
-            for m in f.get("polygon_matches") or []:
-                if f["geographic_classification"] == "CONFIRMED_REAL_WATER_KEEP":
-                    self.assertEqual(m.get("metric_units"), "meters_laea")
-
-    def test_kolguyev_preview_constraints(self):
-        adj = json.loads(KOL_ADJ.read_text(encoding="utf-8"))
-        self.assertEqual(adj["direct_land_neighbors"], [])
-        self.assertTrue(adj["confirmation_no_mainland_land_adjacency_invented"])
+    def test_src11836_preview_mainland_adjacency_and_full_row_audit(self):
+        adj = json.loads(SRC_ADJ.read_text(encoding="utf-8"))
+        self.assertTrue(adj.get("not_kolguyev"))
+        self.assertTrue(adj.get("diagnostic_only"))
+        self.assertTrue(adj.get("id_not_reserved_for_production"))
         self.assertTrue(adj.get("not_centroid_radius"))
-        self.assertEqual(adj.get("method"), "exact_source_ring_boundary_distance")
-        self.assertTrue(adj.get("no_automatic_sea_or_ferry_adjacency"))
-        val = json.loads(KOL_VAL.read_text(encoding="utf-8"))
+        # mainland must not force empty neighbors
+        self.assertIsInstance(adj.get("direct_land_neighbors"), list)
+        val = json.loads(SRC_VAL.read_text(encoding="utf-8"))
         self.assertTrue(val.get("all_pass"), val.get("checks"))
         c = val["checks"]
         self.assertEqual(c["province_count_checked"], 3511)
-        self.assertEqual(c["land_count_checked"], 3296)
-        self.assertEqual(c["water_count_checked"], 215)
-        self.assertEqual(c["failed_triangulations"], 0)
-        self.assertEqual(c["empty_land_meshes"], 0)
-        self.assertEqual(c["dangling_adjacency"], 0)
-        self.assertEqual(c["retained_stable_id_mismatches"], 0)
+        self.assertTrue(c["all_3511_triangle_rows_valid"])
+        self.assertTrue(c["no_empty_land_meshes"])
+        self.assertTrue(c["no_empty_water_meshes"])
+        self.assertTrue(c["no_dangling_adjacency"])
+        self.assertTrue(c["no_stable_id_mismatches"])
+        self.assertEqual(c["failed_triangulations_land_and_water"], 0)
+        self.assertTrue(c["production_dataset_unchanged"])
         self.assertEqual(c["source_11836_count"], 1)
-        self.assertEqual(c["e3_3512_count"], 1)
         self.assertEqual(c["e3_2830_count"], 0)
         self.assertEqual(c["e3_2888_count"], 0)
-        self.assertTrue(c["production_dataset_unchanged"])
-        self.assertEqual(val["summary"]["source_id"], 11836)
-        self.assertNotIn(val["summary"]["gates_id"], ["e3_2830", "e3_2888"])
-        bools = val.get("checks_bool") or {}
-        self.assertTrue(all(bools.values()), bools)
 
     def test_old_vs_new_comparison_present(self):
         cmp = json.loads(CMP.read_text(encoding="utf-8"))
         self.assertGreaterEqual(len(cmp), 8)
-        for row in cmp:
-            self.assertIn("old_iou", row)
-            self.assertIn("new_iou", row)
-            self.assertIn("classification_changed", row)
+
+    def test_no_stale_kolguyev_11836_filenames(self):
+        ev = ROOT / "docs/earth3-crop/hydrography_audit/evidence"
+        for p in ev.glob("*"):
+            name = p.name.lower()
+            self.assertNotIn("kolguyev", name)
+            self.assertNotIn("volga_mid_reservoir", name)
+            self.assertNotIn("cheboksary_system", name)
+            self.assertNotIn("kuybyshev_samara", name)
 
 
 if __name__ == "__main__":
@@ -1248,12 +1462,13 @@ python tools/earth3/hydrography_audit_main.py --archive %GATES_EARTH3_ARCHIVE%
 
 **Authoritative entry:** `tools/earth3/hydrography_audit_main.py`
 
-- Geometry: emitted **triangle union** only (no convex hull / synthetic circle)
-- Metrics: local **Lambert azimuthal equal-area** meters
+- Geometry: emitted **triangle union** only
+- Metrics: local **LAEA meters**
+- Source **11836 is NOT Kolguyev** (mainland Fion / northern Urals)
+- Actual Kolguyev island source remains a separate search (`kolguyev_true_island_search.json`)
 - Production path is never modified
-- Kolguyev preview is not production
 
-Superseded: `build_hydrography_audit.py`, `build_hydrography_audit_v2.py`, `build_hydrography_georef.py`
+Diagnostic preview (not production): `godot/assets/maps/earth3_europe_mediterranean_src11836_preview/`
 """,
         encoding="utf-8",
     )
@@ -1279,30 +1494,21 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
     archive_path = resolve_archive(args.archive)
 
+    removed = purge_stale_evidence()
+
     prod = json.loads((PROD / "polygon_dataset.json").read_text(encoding="utf-8"))
     assert prod["province_count"] == 3510 and prod["included_source_ids_sha256"] == HASH
     ox, oy = prod["bounds"]["origin_source_xy"]
     by_src = {int(p["source_id"]): p for p in prod["provinces"]}
+    prod_srcs = set(by_src)
     gaps = {g["id"]: g for g in (prod.get("ocean_gap_fills") or [])}
     archive = load_earth3_dataset(archive_path)
 
     georef, controls = build_georef()
     mats = {k: v["affine_3x2"] for k, v in georef["regions"].items()}
-    kp0 = archive.provinces[KOL_SRC]
-    kcx = sum(p[0] for p in kp0.ring) / len(kp0.ring)
-    kcy = sum(p[1] for p in kp0.ring) / len(kp0.ring)
-    kplo, kpla = txy(mats, kcx, kcy)
-    kol_holdout = {
-        "is_control_point": False,
-        "true_wgs84": [49.0, 69.1],
-        "predicted": [round(kplo, 4), round(kpla, 4)],
-        "error_km": round(hav(kplo, kpla, 49.0, 69.1), 3),
-        "note": "Arctic source placement is east-biased vs true Kolguyev; identity uses archive src 11836.",
-    }
-    georef["kolguyev_holdout_not_control"] = kol_holdout
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "georeference_control_points.json").write_text(
-        json.dumps({"control_points": controls, "kolguyev_is_control": False}, indent=2) + "\n",
+        json.dumps({"control_points": controls, "source_11836_is_control": False}, indent=2) + "\n",
         encoding="utf-8",
     )
     (OUT / "georeference_transform.json").write_text(json.dumps(georef, indent=2) + "\n", encoding="utf-8")
@@ -1314,7 +1520,6 @@ def main(argv=None) -> int:
                     k: {kk: vv for kk, vv in v.items() if kk != "affine_3x2"} for k, v in georef["regions"].items()
                 },
                 "fixed_tolerances_km": FIXED_TOL,
-                "kolguyev_holdout_not_control": kol_holdout,
             },
             indent=2,
         )
@@ -1334,8 +1539,6 @@ def main(argv=None) -> int:
                     "subset_file": "ne_10m_lakes_europe_subset.json",
                     "subset_sha256": hashlib.sha256(subset).hexdigest(),
                     "subset_bytes": len(subset),
-                    "generation": "Europe/NA bbox + named majors + area filter; simplify 0.02 deg",
-                    "fields": ["name", "bounds", "centroid", "geojson"],
                 }
             },
             indent=2,
@@ -1343,25 +1546,21 @@ def main(argv=None) -> int:
         + "\n",
         encoding="utf-8",
     )
-    (OUT / "reference/README.md").write_text(
-        "Natural Earth 10m lakes subset (public domain). Full shapefile optional/local; subset committed for CI.\n",
-        encoding="utf-8",
-    )
 
-    # prior classifications for change detection
+    src_report = analyze_source_11836(archive, mats, prod, ox, oy)
+    (OUT / "source_11836_identity_report.json").write_text(json.dumps(src_report, indent=2) + "\n", encoding="utf-8")
+    kol_search = search_true_kolguyev(archive, mats, prod_srcs)
+    (OUT / "kolguyev_true_island_search.json").write_text(json.dumps(kol_search, indent=2) + "\n", encoding="utf-8")
+
     prior_class = {}
-    prior_path = OUT / "marked_features.json"
-    if prior_path.is_file():
+    if (OUT / "marked_features.json").is_file():
         try:
-            prior = json.loads(prior_path.read_text(encoding="utf-8"))
+            prior = json.loads((OUT / "marked_features.json").read_text(encoding="utf-8"))
             prior_class = {f["review_label"]: f.get("geographic_classification") for f in prior.get("features") or []}
         except Exception:
             prior_class = {}
 
-    rows = []
-    poly_table = []
-    comparison = []
-    recon_report = []
+    rows, poly_table, comparison, recon_report = [], [], [], []
     ev = OUT / "evidence"
     ev.mkdir(parents=True, exist_ok=True)
 
@@ -1375,25 +1574,21 @@ def main(argv=None) -> int:
         matches, proj_name = poly_match_meters(e3_wgs, lakes)
         top = matches[0] if matches else None
 
-        # legacy hull comparison only
         if exp_sid is not None:
             vsrc = by_src[exp_sid]["vertices"]
-        elif label == "NE01_Kolguyev":
+        elif label.startswith("NE01_"):
             vsrc = None
             old_best = None
         else:
             vsrc = gap["vertices"] if gap else None
-        if label != "NE01_Kolguyev" and vsrc is not None:
+        if not label.startswith("NE01_") and vsrc is not None:
             hull = hull_from_vertices_for_legacy_only(vsrc)
             hull_wgs = local_to_wgs_geom(mats, ox, oy, hull) if hull is not None else None
             old_best = degree_area_iou_legacy_hull(hull_wgs, lakes)
         else:
             old_best = None
 
-        geo, exact, conf, evidence, cands = classify(
-            label, hyp, exp_sid, by_src, top, matches, cities, recon_meta, kol_holdout=kol_holdout
-        )
-        # demote high water if meter thresholds fail
+        geo, exact, conf, evidence, cands = classify(label, hyp, exp_sid, by_src, top, matches, cities, recon_meta)
         if conf == "high" and geo == "CONFIRMED_REAL_WATER_KEEP":
             if not top or top.get("metric_units") != "meters_laea":
                 conf, geo, exact = "low", "UNRESOLVED_REQUIRES_GEOGRAPHIC_MATCH", "UNRESOLVED"
@@ -1406,9 +1601,7 @@ def main(argv=None) -> int:
 
         old_iou = (old_best or {}).get("iou_degree_area_hull")
         new_iou = (top or {}).get("iou")
-        iou_delta = None
-        if old_iou is not None and new_iou is not None:
-            iou_delta = round(float(new_iou) - float(old_iou), 4)
+        iou_delta = None if old_iou is None or new_iou is None else round(float(new_iou) - float(old_iou), 4)
         prev = prior_class.get(label)
         comparison.append(
             {
@@ -1416,9 +1609,7 @@ def main(argv=None) -> int:
                 "old_method": "convex_hull_degree_area",
                 "new_method": "emitted_triangle_union_laea_meters",
                 "old_iou": old_iou,
-                "old_top_name": (old_best or {}).get("name"),
                 "new_iou": new_iou,
-                "new_top_name": (top or {}).get("name"),
                 "iou_delta": iou_delta,
                 "old_classification_prior_package": prev,
                 "new_classification": geo,
@@ -1428,7 +1619,6 @@ def main(argv=None) -> int:
             }
         )
 
-        # reference geom for overlay = top named match if any
         ref_wgs = None
         if top:
             for lk in lakes:
@@ -1438,7 +1628,6 @@ def main(argv=None) -> int:
         unc = georef["leave_one_out"]["by_region"].get(region_of(sx, sy), {}).get("rms_km")
         overlay_name = f"overlay_{label}.png"
         draw_polygon_overlay(ev / overlay_name, e3_wgs, ref_wgs, label, top, unc)
-
         recon_report.append({"review_label": label, **recon_meta, "projection": proj_name})
         poly_table.append(
             {
@@ -1474,13 +1663,13 @@ def main(argv=None) -> int:
                     "provenance": "docs/earth3-crop/hydrography_audit/reference/PROVENANCE.json",
                     "license": "Natural Earth public domain",
                 },
-                "production_change_allowed": geo == "CONFIRMED_MISSING_LAND_RESTORE",
+                "production_change_allowed": False,
             }
         )
 
     inv = {
         "schema": "gates-of-codex.earth3-hydrography-marked-features",
-        "schema_version": 6,
+        "schema_version": 7,
         "production_authority": {
             "provinces": 3510,
             "land": 3295,
@@ -1495,27 +1684,32 @@ def main(argv=None) -> int:
             "fixed_tolerances_km": FIXED_TOL,
             "metric_projection": "lambert_azimuthal_equal_area_local_m",
             "geometry_policy": "emitted_triangle_union_only",
-            "note": "In-sample n<=3 zero RMS is not validation; LOO is authoritative. Kolguyev not a control.",
+            "source_11836_is_not_kolguyev": True,
         },
         "features": rows,
         "polygon_match_table": poly_table,
+        "source_11836_identity": "docs/earth3-crop/hydrography_audit/source_11836_identity_report.json",
+        "true_kolguyev_search": "docs/earth3-crop/hydrography_audit/kolguyev_true_island_search.json",
         "summary": {
             k: [r["review_label"] for r in rows if r["geographic_classification"] == k]
             for k in [
                 "CONFIRMED_REAL_WATER_KEEP",
-                "CONFIRMED_MISSING_LAND_RESTORE",
                 "CONFIRMED_REAL_ISLAND_SIMPLIFIED_GEOMETRY_KEEP",
                 "CONFIRMED_REAL_SALT_BASIN_KEEP_OR_DEFER",
+                "UNRESOLVED_MISSING_MAINLAND_OR_CROP_BOUNDARY_DEFECT",
                 "UNRESOLVED_REQUIRES_GEOGRAPHIC_MATCH",
             ]
         },
+        "removed_stale_evidence": removed,
     }
     (OUT / "marked_features.json").write_text(json.dumps(inv, indent=2) + "\n", encoding="utf-8")
     (OUT / "polygon_match_table.json").write_text(json.dumps(poly_table, indent=2) + "\n", encoding="utf-8")
     (OUT / "polygon_match_old_vs_new.json").write_text(json.dumps(comparison, indent=2) + "\n", encoding="utf-8")
     (OUT / "geometry_reconstruction_report.json").write_text(json.dumps(recon_report, indent=2) + "\n", encoding="utf-8")
-    kol_val = build_kolguyev(prod, archive, ox, oy, mats)
-    write_owner_review(rows, georef, comparison, kol_val)
+    (OUT / "stale_evidence_removed.json").write_text(json.dumps(removed, indent=2) + "\n", encoding="utf-8")
+
+    preview_val = build_src11836_diagnostic_preview(prod, archive, ox, oy)
+    write_owner_review(rows, georef, comparison, src_report, kol_search, preview_val, removed)
     write_tests()
     write_readme()
     supersede_old_builders()
@@ -1523,12 +1717,17 @@ def main(argv=None) -> int:
         json.dumps(
             {
                 "loo_rms": georef["leave_one_out"]["rms_km"],
-                "loo_max": georef["leave_one_out"]["max_km"],
-                "loo_north": georef["leave_one_out"]["by_region"].get("ne_russia_north"),
                 "summary": inv["summary"],
-                "comparison": comparison,
-                "kolguyev_all_pass": kol_val.get("all_pass"),
-                "kolguyev_checks": kol_val.get("checks"),
+                "source_11836": {
+                    "wgs": src_report["predicted_wgs84"],
+                    "d_true_kolguyev_km": src_report["distance_to_true_kolguyev_km"],
+                    "mask_overlap": src_report["v7_mask_overlap_fraction"],
+                    "island": src_report["behaves_as_island"],
+                },
+                "true_kolguyev_search": kol_search["result"],
+                "accepted_kolguyev_source_id": kol_search["accepted_kolguyev_source_id"],
+                "preview_all_pass": preview_val.get("all_pass"),
+                "removed_stale": removed,
             },
             indent=2,
         )

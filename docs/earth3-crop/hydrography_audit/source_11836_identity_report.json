@@ -1,0 +1,389 @@
+{
+  "source_id": 11836,
+  "rejected_identity": "NOT_Kolguyev_island",
+  "true_kolguyev_wgs84_for_comparison": [
+    49.25,
+    69.08
+  ],
+  "bugrino_wgs84_for_comparison": [
+    49.3,
+    68.78
+  ],
+  "predicted_wgs84": [
+    61.3733,
+    66.1381
+  ],
+  "distance_to_true_kolguyev_km": 607.3,
+  "source_centroid_xy": [
+    11334.73,
+    748.49
+  ],
+  "is_water": false,
+  "geographic_region": "northern_Urals / Komi\u2013Yamal mainland (Fion / Pechora basin periphery)",
+  "country_federal_subject_provisional": "Russia \u2014 Komi Republic / Nenets\u2013Yamal periphery (provisional)",
+  "ural_europe_asia_side": "east_of_or_across_ural_crest_provisional",
+  "v7_mask_contains_centroid": false,
+  "v7_mask_overlap_fraction": 0.0,
+  "in_production_3510": false,
+  "nearest_cities": [
+    {
+      "name": "Fion",
+      "dist_px": 44.0,
+      "source_province_id": 11836
+    },
+    {
+      "name": "Shchekurya",
+      "dist_px": 170.7,
+      "source_province_id": 11810
+    },
+    {
+      "name": "Ovgort",
+      "dist_px": 179.5,
+      "source_province_id": 11811
+    },
+    {
+      "name": "Vorkuta",
+      "dist_px": 183.1,
+      "source_province_id": 11835
+    },
+    {
+      "name": "Usinsk",
+      "dist_px": 186.2,
+      "source_province_id": 11837
+    },
+    {
+      "name": "Khorey Ver",
+      "dist_px": 198.7,
+      "source_province_id": 11814
+    },
+    {
+      "name": "Pechora",
+      "dist_px": 218.9,
+      "source_province_id": 11838
+    },
+    {
+      "name": "Kharp",
+      "dist_px": 226.8,
+      "source_province_id": 11775
+    }
+  ],
+  "shared_land_boundary_contacts": [
+    {
+      "source_id": 11809,
+      "min_boundary_distance_px": 0.0,
+      "intersects_or_touches": true,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": true,
+      "is_water": false,
+      "in_production_3510": true,
+      "cities": [
+        "Dutovo"
+      ]
+    },
+    {
+      "source_id": 11810,
+      "min_boundary_distance_px": 0.0,
+      "intersects_or_touches": true,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": true,
+      "is_water": false,
+      "in_production_3510": false,
+      "cities": [
+        "Shchekurya"
+      ]
+    },
+    {
+      "source_id": 11811,
+      "min_boundary_distance_px": 0.0,
+      "intersects_or_touches": true,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": true,
+      "is_water": false,
+      "in_production_3510": false,
+      "cities": [
+        "Ovgort"
+      ]
+    },
+    {
+      "source_id": 11813,
+      "min_boundary_distance_px": 0.0,
+      "intersects_or_touches": true,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": true,
+      "is_water": false,
+      "in_production_3510": false,
+      "cities": [
+        "Karatayka"
+      ]
+    },
+    {
+      "source_id": 11814,
+      "min_boundary_distance_px": 0.0,
+      "intersects_or_touches": true,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": true,
+      "is_water": false,
+      "in_production_3510": false,
+      "cities": [
+        "Khorey Ver"
+      ]
+    },
+    {
+      "source_id": 11835,
+      "min_boundary_distance_px": 0.0,
+      "intersects_or_touches": true,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": true,
+      "is_water": false,
+      "in_production_3510": false,
+      "cities": [
+        "Vorkuta"
+      ]
+    },
+    {
+      "source_id": 11837,
+      "min_boundary_distance_px": 0.0,
+      "intersects_or_touches": true,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": true,
+      "is_water": false,
+      "in_production_3510": false,
+      "cities": [
+        "Usinsk"
+      ]
+    },
+    {
+      "source_id": 11838,
+      "min_boundary_distance_px": 0.0,
+      "intersects_or_touches": true,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": true,
+      "is_water": false,
+      "in_production_3510": true,
+      "cities": [
+        "Pechora"
+      ]
+    }
+  ],
+  "bordering_source_water": [],
+  "nearest_source_water": [
+    {
+      "source_id": 13366,
+      "min_boundary_distance_px": 126.716,
+      "intersects_or_touches": false,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": false,
+      "is_water": true,
+      "in_production_3510": false,
+      "cities": []
+    },
+    {
+      "source_id": 13360,
+      "min_boundary_distance_px": 185.715,
+      "intersects_or_touches": false,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": false,
+      "is_water": true,
+      "in_production_3510": false,
+      "cities": []
+    },
+    {
+      "source_id": 13368,
+      "min_boundary_distance_px": 273.805,
+      "intersects_or_touches": false,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": false,
+      "is_water": true,
+      "in_production_3510": true,
+      "cities": []
+    },
+    {
+      "source_id": 13358,
+      "min_boundary_distance_px": 274.643,
+      "intersects_or_touches": false,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": false,
+      "is_water": true,
+      "in_production_3510": false,
+      "cities": []
+    },
+    {
+      "source_id": 13359,
+      "min_boundary_distance_px": 518.282,
+      "intersects_or_touches": false,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": false,
+      "is_water": true,
+      "in_production_3510": false,
+      "cities": []
+    },
+    {
+      "source_id": 13372,
+      "min_boundary_distance_px": 661.043,
+      "intersects_or_touches": false,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": false,
+      "is_water": true,
+      "in_production_3510": false,
+      "cities": []
+    }
+  ],
+  "nearest_source_land": [
+    {
+      "source_id": 11809,
+      "min_boundary_distance_px": 0.0,
+      "intersects_or_touches": true,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": true,
+      "is_water": false,
+      "in_production_3510": true,
+      "cities": [
+        "Dutovo"
+      ]
+    },
+    {
+      "source_id": 11810,
+      "min_boundary_distance_px": 0.0,
+      "intersects_or_touches": true,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": true,
+      "is_water": false,
+      "in_production_3510": false,
+      "cities": [
+        "Shchekurya"
+      ]
+    },
+    {
+      "source_id": 11811,
+      "min_boundary_distance_px": 0.0,
+      "intersects_or_touches": true,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": true,
+      "is_water": false,
+      "in_production_3510": false,
+      "cities": [
+        "Ovgort"
+      ]
+    },
+    {
+      "source_id": 11813,
+      "min_boundary_distance_px": 0.0,
+      "intersects_or_touches": true,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": true,
+      "is_water": false,
+      "in_production_3510": false,
+      "cities": [
+        "Karatayka"
+      ]
+    },
+    {
+      "source_id": 11814,
+      "min_boundary_distance_px": 0.0,
+      "intersects_or_touches": true,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": true,
+      "is_water": false,
+      "in_production_3510": false,
+      "cities": [
+        "Khorey Ver"
+      ]
+    },
+    {
+      "source_id": 11835,
+      "min_boundary_distance_px": 0.0,
+      "intersects_or_touches": true,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": true,
+      "is_water": false,
+      "in_production_3510": false,
+      "cities": [
+        "Vorkuta"
+      ]
+    },
+    {
+      "source_id": 11837,
+      "min_boundary_distance_px": 0.0,
+      "intersects_or_touches": true,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": true,
+      "is_water": false,
+      "in_production_3510": false,
+      "cities": [
+        "Usinsk"
+      ]
+    },
+    {
+      "source_id": 11838,
+      "min_boundary_distance_px": 0.0,
+      "intersects_or_touches": true,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": true,
+      "is_water": false,
+      "in_production_3510": true,
+      "cities": [
+        "Pechora"
+      ]
+    },
+    {
+      "source_id": 11951,
+      "min_boundary_distance_px": 83.6,
+      "intersects_or_touches": false,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": false,
+      "is_water": false,
+      "in_production_3510": false,
+      "cities": [
+        "Pripolyarnyi"
+      ]
+    },
+    {
+      "source_id": 11775,
+      "min_boundary_distance_px": 86.371,
+      "intersects_or_touches": false,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": false,
+      "is_water": false,
+      "in_production_3510": false,
+      "cities": [
+        "Kharp"
+      ]
+    },
+    {
+      "source_id": 11952,
+      "min_boundary_distance_px": 91.548,
+      "intersects_or_touches": false,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": false,
+      "is_water": false,
+      "in_production_3510": false,
+      "cities": [
+        "Igrim"
+      ]
+    },
+    {
+      "source_id": 11776,
+      "min_boundary_distance_px": 92.005,
+      "intersects_or_touches": false,
+      "intersection_area_px2": 0.0,
+      "shared_boundary_only": false,
+      "is_water": false,
+      "in_production_3510": false,
+      "cities": [
+        "Salekhard"
+      ]
+    }
+  ],
+  "behaves_as_island": false,
+  "why_omitted": "v7 Europe\u2013Asia boundary mask overlap is 0; province lies east of authored mask eastern limit",
+  "creates_internal_land_hole_in_3510": false,
+  "note_internal_hole": "Omission is an eastern exterior crop, not an interior hole inside the kept land mass. Neighboring 11809 (Dutovo) and 11838 (Pechora) remain in production; 11836 sits outside mask.",
+  "candidate_solutions": [
+    "keep excluded (east of approved Europe\u2013Asia boundary)",
+    "include source 11836 only if owner revises mask eastward",
+    "do not treat as island restore",
+    "if included later, derive real shared-edge land adjacency (not neighbors=[])"
+  ],
+  "recommended_interim": "UNRESOLVED_MISSING_MAINLAND_OR_CROP_BOUNDARY_DEFECT \u2014 no production change",
+  "boundary_overlay": "docs/earth3-crop/hydrography_audit/evidence/overlay_NE01_source11836_Fion_ural_boundary.png"
+}

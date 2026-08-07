@@ -1,0 +1,64 @@
+{
+  "gates_id": "e3_3512",
+  "source_id": 11836,
+  "identity": "mainland_Fion_northern_Urals",
+  "not_kolguyev": true,
+  "direct_land_neighbors": [
+    "e3_3178",
+    "e3_3180"
+  ],
+  "source_shared_edge_land_contacts": [
+    {
+      "source_id": 11809,
+      "gates_id_if_in_production": "e3_3178",
+      "in_production_3510": true,
+      "intersection_area_px2": 0.0
+    },
+    {
+      "source_id": 11810,
+      "gates_id_if_in_production": null,
+      "in_production_3510": false,
+      "intersection_area_px2": 0.0
+    },
+    {
+      "source_id": 11811,
+      "gates_id_if_in_production": null,
+      "in_production_3510": false,
+      "intersection_area_px2": 0.0
+    },
+    {
+      "source_id": 11813,
+      "gates_id_if_in_production": null,
+      "in_production_3510": false,
+      "intersection_area_px2": 0.0
+    },
+    {
+      "source_id": 11814,
+      "gates_id_if_in_production": null,
+      "in_production_3510": false,
+      "intersection_area_px2": 0.0
+    },
+    {
+      "source_id": 11835,
+      "gates_id_if_in_production": null,
+      "in_production_3510": false,
+      "intersection_area_px2": 0.0
+    },
+    {
+      "source_id": 11837,
+      "gates_id_if_in_production": null,
+      "in_production_3510": false,
+      "intersection_area_px2": 0.0
+    },
+    {
+      "source_id": 11838,
+      "gates_id_if_in_production": "e3_3180",
+      "in_production_3510": true,
+      "intersection_area_px2": 0.0
+    }
+  ],
+  "method": "exact_source_ring_shared_boundary",
+  "not_centroid_radius": true,
+  "diagnostic_only": true,
+  "id_not_reserved_for_production": true
+}
