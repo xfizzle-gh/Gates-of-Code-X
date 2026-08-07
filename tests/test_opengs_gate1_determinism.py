@@ -11,6 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 GEN = ROOT / "tools" / "opengs_eval" / "gate1_generator.py"
 FIXTURE = ROOT / "tools" / "opengs_eval" / "make_gate1_fixture.py"
+OPTIONAL_MODULES = ("numpy", "PIL", "scipy")
 
 
 def load_generator():
@@ -27,6 +28,12 @@ def load_generator():
 class Gate1DeterminismTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        missing = [name for name in OPTIONAL_MODULES if importlib.util.find_spec(name) is None]
+        if missing:
+            raise unittest.SkipTest(
+                "optional OpenGS evaluation dependencies are not installed: "
+                + ", ".join(missing)
+            )
         cls.g = load_generator()
 
     def make_fixture(self, root: Path) -> Path:
