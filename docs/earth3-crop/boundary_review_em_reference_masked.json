@@ -2,1179 +2,259 @@
   "schema": "gates-of-codex.earth3-boundary-review",
   "schema_version": 3,
   "candidate_id": "em_reference_masked",
-  "status": "pending_owner_visual_approval",
+  "status": "owner_approved_v7_europe_boundary",
   "note": "Boundary threshold-band provinces carry explicit owner include/exclude decisions. Grouping uses reviewed Earth3 city anchors and basin labels (Turkey/northern Levant is not North Africa; deep Sahara and Madeira water excluded).",
-  "decision_count": 43,
+  "decision_count": 9,
   "groups": {
-    "Europe_Scandinavia": {
-      "count": 1,
-      "include_count": 0,
-      "exclude_count": 1,
-      "provinces": [
-        {
-          "source_province_id": 11368,
-          "overlap_ratio": 0.194098,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1941; group=Europe_Scandinavia. Awaiting owner visual approval.",
-          "boundary_group": "Europe_Scandinavia",
-          "nearest_city": {
-            "name": "Varzuga",
-            "source_province_id": 11368,
-            "x": 10129.0,
-            "y": 727.0,
-            "distance_px": 64.54915365131664
-          },
-          "is_water": false,
-          "continent_id": 2,
-          "region_id": 0,
-          "centroid": [
-            10147.58256880734,
-            665.183486238532
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1941; group=Europe_Scandinavia. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-        }
-      ]
-    },
     "western_Russia": {
-      "count": 10,
-      "include_count": 6,
+      "count": 5,
+      "include_count": 1,
       "exclude_count": 4,
       "provinces": [
         {
-          "source_province_id": 6683,
-          "overlap_ratio": 0.355784,
-          "algorithmic_recommendation": "include",
-          "owner_decision": "include",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.3558; group=western_Russia. Awaiting owner visual approval.",
-          "boundary_group": "western_Russia",
-          "nearest_city": {
-            "name": "Gryazovets",
-            "source_province_id": 6683,
-            "x": 10306.0,
-            "y": 1364.0,
-            "distance_px": 14.564512564963083
-          },
-          "is_water": false,
-          "continent_id": 2,
-          "region_id": 0,
-          "centroid": [
-            10319.949275362318,
-            1368.1884057971015
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.3558; group=western_Russia. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-        },
-        {
-          "source_province_id": 10835,
-          "overlap_ratio": 0.44477,
-          "algorithmic_recommendation": "include",
-          "owner_decision": "include",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4448; group=western_Russia. Awaiting owner visual approval.",
-          "boundary_group": "western_Russia",
-          "nearest_city": {
-            "name": "Akhtubinsk",
-            "source_province_id": 10835,
-            "x": 10598.0,
-            "y": 2236.0,
-            "distance_px": 5.643772711047306
-          },
-          "is_water": false,
-          "continent_id": 2,
-          "region_id": 0,
-          "centroid": [
-            10599.00709219858,
-            2241.553191489362
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.4448; group=western_Russia. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-        },
-        {
-          "source_province_id": 10929,
-          "overlap_ratio": 0.340179,
+          "source_province_id": 10849,
+          "overlap_ratio": 0.184676,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3402; group=western_Russia. Awaiting owner visual approval.",
+          "owner_review_status": "owner_approved_v7_europe_boundary",
+          "owner_reason": "v7 Europe-Asia boundary freeze (exclude); ratio=0.1847; group=western_Russia.",
           "boundary_group": "western_Russia",
           "nearest_city": {
-            "name": "Shuya",
-            "source_province_id": 10929,
-            "x": 10362.0,
-            "y": 1547.0,
-            "distance_px": 24.946360373556686
-          },
-          "is_water": false,
-          "continent_id": 2,
-          "region_id": 0,
-          "centroid": [
-            10382.083916083917,
-            1561.7972027972028
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3402; group=western_Russia. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-        },
-        {
-          "source_province_id": 11407,
-          "overlap_ratio": 0.282106,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2821; group=western_Russia. Awaiting owner visual approval.",
-          "boundary_group": "western_Russia",
-          "nearest_city": {
-            "name": "Umet",
-            "source_province_id": 11407,
-            "x": 10431.0,
-            "y": 1780.0,
-            "distance_px": 23.469280157497625
-          },
-          "is_water": false,
-          "continent_id": 2,
-          "region_id": 0,
-          "centroid": [
-            10441.946666666667,
-            1759.24
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2821; group=western_Russia. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-        },
-        {
-          "source_province_id": 11528,
-          "overlap_ratio": 0.287209,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2872; group=western_Russia. Awaiting owner visual approval.",
-          "boundary_group": "western_Russia",
-          "nearest_city": {
-            "name": "El ton",
-            "source_province_id": 11528,
-            "x": 10631.0,
-            "y": 2174.0,
-            "distance_px": 49.6425397350213
-          },
-          "is_water": false,
-          "continent_id": 2,
-          "region_id": 0,
-          "centroid": [
-            10581.961165048544,
-            2181.7184466019417
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2872; group=western_Russia. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-        },
-        {
-          "source_province_id": 11560,
-          "overlap_ratio": 0.389297,
-          "algorithmic_recommendation": "include",
-          "owner_decision": "include",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.3893; group=western_Russia. Awaiting owner visual approval.",
-          "boundary_group": "western_Russia",
-          "nearest_city": {
-            "name": "Kovrov",
-            "source_province_id": 11560,
-            "x": 10359.0,
-            "y": 1591.0,
-            "distance_px": 32.070404496745965
-          },
-          "is_water": false,
-          "continent_id": 2,
-          "region_id": 0,
-          "centroid": [
-            10388.601694915254,
-            1603.3389830508474
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.3893; group=western_Russia. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-        },
-        {
-          "source_province_id": 11591,
-          "overlap_ratio": 0.16053,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1605; group=western_Russia. Awaiting owner visual approval.",
-          "boundary_group": "western_Russia",
-          "nearest_city": {
-            "name": "Vyksa",
-            "source_province_id": 11591,
-            "x": 10400.0,
-            "y": 1681.0,
-            "distance_px": 22.800201665382897
-          },
-          "is_water": false,
-          "continent_id": 2,
-          "region_id": 0,
-          "centroid": [
-            10422.577181208053,
-            1684.1812080536913
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1605; group=western_Russia. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-        },
-        {
-          "source_province_id": 11602,
-          "overlap_ratio": 0.455942,
-          "algorithmic_recommendation": "include",
-          "owner_decision": "include",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4559; group=western_Russia. Awaiting owner visual approval.",
-          "boundary_group": "western_Russia",
-          "nearest_city": {
-            "name": "Serdobsk",
-            "source_province_id": 11602,
-            "x": 10502.0,
-            "y": 1919.0,
-            "distance_px": 36.932756087546
-          },
-          "is_water": false,
-          "continent_id": 2,
-          "region_id": 0,
-          "centroid": [
-            10471.441666666668,
-            1898.2583333333334
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.4559; group=western_Russia. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-        },
-        {
-          "source_province_id": 11763,
-          "overlap_ratio": 0.379713,
-          "algorithmic_recommendation": "include",
-          "owner_decision": "include",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.3797; group=western_Russia. Awaiting owner visual approval.",
-          "boundary_group": "western_Russia",
-          "nearest_city": {
-            "name": "Onega",
-            "source_province_id": 11763,
-            "x": 10203.0,
-            "y": 946.0,
-            "distance_px": 24.170832169809955
-          },
-          "is_water": false,
-          "continent_id": 2,
-          "region_id": 0,
-          "centroid": [
-            10192.181405895692,
-            924.3854875283447
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.3797; group=western_Russia. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-        },
-        {
-          "source_province_id": 11770,
-          "overlap_ratio": 0.489542,
-          "algorithmic_recommendation": "include",
-          "owner_decision": "include",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4895; group=western_Russia. Awaiting owner visual approval.",
-          "boundary_group": "western_Russia",
-          "nearest_city": {
-            "name": "Shishkina",
-            "source_province_id": 11770,
-            "x": 10213.0,
-            "y": 1093.0,
-            "distance_px": 35.60096166586366
-          },
-          "is_water": false,
-          "continent_id": 2,
-          "region_id": 0,
-          "centroid": [
-            10217.519083969466,
-            1057.6870229007634
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.4895; group=western_Russia. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-        }
-      ]
-    },
-    "Caucasus": {
-      "count": 6,
-      "include_count": 3,
-      "exclude_count": 3,
-      "provinces": [
-        {
-          "source_province_id": 1190,
-          "overlap_ratio": 0.327448,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3274; group=Caucasus. Awaiting owner visual approval.",
-          "boundary_group": "Caucasus",
-          "nearest_city": {
-            "name": "Igdir",
-            "source_province_id": 1190,
-            "x": 10492.0,
-            "y": 2805.0,
-            "distance_px": 4.020235146013881
+            "name": "Kobda",
+            "source_province_id": 10849,
+            "x": 11060.0,
+            "y": 2099.0,
+            "distance_px": 24.937318860061072
           },
           "is_water": false,
           "continent_id": 1,
           "region_id": 0,
           "centroid": [
-            10490.22340425532,
-            2808.6063829787236
+            11056.081632653062,
+            2074.372448979592
           ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3274; group=Caucasus. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
+          "geographic_reason": "v7 Europe-Asia boundary freeze (exclude); ratio=0.1847; group=western_Russia.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
-          "source_province_id": 1192,
-          "overlap_ratio": 0.428655,
-          "algorithmic_recommendation": "include",
-          "owner_decision": "include",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4287; group=Caucasus. Awaiting owner visual approval.",
-          "boundary_group": "Caucasus",
+          "source_province_id": 11337,
+          "overlap_ratio": 0.179225,
+          "algorithmic_recommendation": "exclude",
+          "owner_decision": "exclude",
+          "owner_review_status": "owner_approved_v7_europe_boundary",
+          "owner_reason": "v7 Europe-Asia boundary freeze (exclude); ratio=0.1792; group=western_Russia.",
+          "boundary_group": "western_Russia",
           "nearest_city": {
-            "name": "Agri",
-            "source_province_id": 1192,
-            "x": 10442.0,
-            "y": 2817.0,
-            "distance_px": 2.1864403175035494
+            "name": "Zlatoust",
+            "source_province_id": 11335,
+            "x": 11252.0,
+            "y": 1695.0,
+            "distance_px": 24.545980386667832
           },
           "is_water": false,
           "continent_id": 1,
           "region_id": 0,
           "centroid": [
-            10443.962962962964,
-            2817.962962962963
+            11255.4578313253,
+            1719.301204819277
           ],
-          "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.4287; group=Caucasus. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
-        },
-        {
-          "source_province_id": 2655,
-          "overlap_ratio": 0.365287,
-          "algorithmic_recommendation": "include",
-          "owner_decision": "include",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.3653; group=Caucasus. Awaiting owner visual approval.",
-          "boundary_group": "Caucasus",
-          "nearest_city": {
-            "name": "Sumqayit",
-            "source_province_id": 2655,
-            "x": 10762.0,
-            "y": 2764.0,
-            "distance_px": 23.103601712391505
-          },
-          "is_water": false,
-          "continent_id": 1,
-          "region_id": 0,
-          "centroid": [
-            10741.746575342466,
-            2752.8835616438355
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.3653; group=Caucasus. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
-        },
-        {
-          "source_province_id": 10434,
-          "overlap_ratio": 0.200372,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2004; group=Caucasus. Awaiting owner visual approval.",
-          "boundary_group": "Caucasus",
-          "nearest_city": {
-            "name": "Artashat",
-            "source_province_id": 10434,
-            "x": 10519.0,
-            "y": 2806.0,
-            "distance_px": 6.903830049220652
-          },
-          "is_water": false,
-          "continent_id": 1,
-          "region_id": 0,
-          "centroid": [
-            10525.0,
-            2802.5849056603774
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2004; group=Caucasus. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
-        },
-        {
-          "source_province_id": 10437,
-          "overlap_ratio": 0.432411,
-          "algorithmic_recommendation": "include",
-          "owner_decision": "include",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4324; group=Caucasus. Awaiting owner visual approval.",
-          "boundary_group": "Caucasus",
-          "nearest_city": {
-            "name": "Vardenis",
-            "source_province_id": 10437,
-            "x": 10573.0,
-            "y": 2787.0,
-            "distance_px": 16.563037949543983
-          },
-          "is_water": false,
-          "continent_id": 1,
-          "region_id": 0,
-          "centroid": [
-            10556.549549549549,
-            2785.072072072072
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.4324; group=Caucasus. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
-        },
-        {
-          "source_province_id": 11541,
-          "overlap_ratio": 0.181447,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1814; group=Caucasus. Awaiting owner visual approval.",
-          "boundary_group": "Caucasus",
-          "nearest_city": {
-            "name": "Goychay",
-            "source_province_id": 11541,
-            "x": 10673.0,
-            "y": 2761.0,
-            "distance_px": 21.417224411375546
-          },
-          "is_water": false,
-          "continent_id": 1,
-          "region_id": 0,
-          "centroid": [
-            10682.621951219513,
-            2780.1341463414633
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1814; group=Caucasus. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
-        }
-      ]
-    },
-    "Turkey_northern_Levant": {
-      "count": 1,
-      "include_count": 1,
-      "exclude_count": 0,
-      "provinces": [
-        {
-          "source_province_id": 5054,
-          "overlap_ratio": 0.420541,
-          "algorithmic_recommendation": "include",
-          "owner_decision": "include",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4205; group=Turkey_northern_Levant. Awaiting owner visual approval.",
-          "boundary_group": "Turkey_northern_Levant",
-          "nearest_city": {
-            "name": "Manbij",
-            "source_province_id": 5054,
-            "x": 10194.0,
-            "y": 3017.0,
-            "distance_px": 14.49306275376908
-          },
-          "is_water": false,
-          "continent_id": 1,
-          "region_id": 0,
-          "centroid": [
-            10200.723214285714,
-            3029.839285714286
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.4205; group=Turkey_northern_Levant. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-        }
-      ]
-    },
-    "Egypt_Sinai": {
-      "count": 3,
-      "include_count": 1,
-      "exclude_count": 2,
-      "provinces": [
-        {
-          "source_province_id": 1379,
-          "overlap_ratio": 0.233989,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2340; group=Egypt_Sinai. Awaiting owner visual approval.",
-          "boundary_group": "Egypt_Sinai",
-          "nearest_city": {
-            "name": "Siwa Oasis",
-            "source_province_id": 1379,
-            "x": 9588.0,
-            "y": 3450.0,
-            "distance_px": 89.94085990944247
-          },
-          "is_water": false,
-          "continent_id": 6,
-          "region_id": 0,
-          "centroid": [
-            9627.275,
-            3530.9125
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2340; group=Egypt_Sinai. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-        },
-        {
-          "source_province_id": 2703,
-          "overlap_ratio": 0.320472,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3205; group=Egypt_Sinai. Awaiting owner visual approval.",
-          "boundary_group": "Egypt_Sinai",
-          "nearest_city": {
-            "name": "Marakib Sag",
-            "source_province_id": 2703,
-            "x": 9886.0,
-            "y": 3564.0,
-            "distance_px": 33.54483014674593
-          },
-          "is_water": false,
-          "continent_id": 6,
-          "region_id": 0,
-          "centroid": [
-            9917.746575342466,
-            3553.1643835616437
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3205; group=Egypt_Sinai. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-        },
-        {
-          "source_province_id": 4409,
-          "overlap_ratio": 0.480511,
-          "algorithmic_recommendation": "include",
-          "owner_decision": "include",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4805; group=Egypt_Sinai. Awaiting owner visual approval.",
-          "boundary_group": "Egypt_Sinai",
-          "nearest_city": {
-            "name": "Bawiti",
-            "source_province_id": 4409,
-            "x": 9750.0,
-            "y": 3500.0,
-            "distance_px": 28.98535233617284
-          },
-          "is_water": false,
-          "continent_id": 6,
-          "region_id": 0,
-          "centroid": [
-            9721.031055900621,
-            3500.9751552795033
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.4805; group=Egypt_Sinai. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-        }
-      ]
-    },
-    "Arabian_interior": {
-      "count": 1,
-      "include_count": 1,
-      "exclude_count": 0,
-      "provinces": [
-        {
-          "source_province_id": 6071,
-          "overlap_ratio": 0.443765,
-          "algorithmic_recommendation": "include",
-          "owner_decision": "include",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4438; group=Arabian_interior. Awaiting owner visual approval.",
-          "boundary_group": "Arabian_interior",
-          "nearest_city": {
-            "name": "Sharma",
-            "source_province_id": 6071,
-            "x": 10066.0,
-            "y": 3509.0,
-            "distance_px": 7.706365106347453
-          },
-          "is_water": false,
-          "continent_id": 1,
-          "region_id": 0,
-          "centroid": [
-            10060.350574712644,
-            3503.7586206896553
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.4438; group=Arabian_interior. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-        }
-      ]
-    },
-    "Sahara": {
-      "count": 7,
-      "include_count": 0,
-      "exclude_count": 7,
-      "provinces": [
-        {
-          "source_province_id": 1369,
-          "overlap_ratio": 0.195261,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1953; group=Sahara. Awaiting owner visual approval.",
-          "boundary_group": "Sahara",
-          "nearest_city": {
-            "name": "Sibele",
-            "source_province_id": 1369,
-            "x": 9536.0,
-            "y": 3485.0,
-            "distance_px": 27.97116122211282
-          },
-          "is_water": false,
-          "continent_id": 6,
-          "region_id": 0,
-          "centroid": [
-            9533.330434782609,
-            3512.8434782608697
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1953; group=Sahara. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-        },
-        {
-          "source_province_id": 3223,
-          "overlap_ratio": 0.192066,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1921; group=Sahara. Awaiting owner visual approval.",
-          "boundary_group": "Sahara",
-          "nearest_city": {
-            "name": "Imintanoute",
-            "source_province_id": 3223,
-            "x": 7914.0,
-            "y": 3335.0,
-            "distance_px": 3.2976942520453645
-          },
-          "is_water": false,
-          "continent_id": 6,
-          "region_id": 0,
-          "centroid": [
-            7915.866666666667,
-            3337.7185185185185
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1921; group=Sahara. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-        },
-        {
-          "source_province_id": 4736,
-          "overlap_ratio": 0.204287,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2043; group=Sahara. Awaiting owner visual approval.",
-          "boundary_group": "Sahara",
-          "nearest_city": {
-            "name": "Sawknah",
-            "source_province_id": 4736,
-            "x": 9114.0,
-            "y": 3461.0,
-            "distance_px": 12.555074071603881
-          },
-          "is_water": false,
-          "continent_id": 6,
-          "region_id": 0,
-          "centroid": [
-            9104.61971830986,
-            3469.345070422535
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2043; group=Sahara. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-        },
-        {
-          "source_province_id": 4787,
-          "overlap_ratio": 0.346905,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3469; group=Sahara. Awaiting owner visual approval.",
-          "boundary_group": "Sahara",
-          "nearest_city": {
-            "name": "Tabaqah",
-            "source_province_id": 4787,
-            "x": 8972.0,
-            "y": 3457.0,
-            "distance_px": 37.71193352469285
-          },
-          "is_water": false,
-          "continent_id": 6,
-          "region_id": 0,
-          "centroid": [
-            8936.289340101523,
-            3444.8781725888325
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3469; group=Sahara. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-        },
-        {
-          "source_province_id": 4831,
-          "overlap_ratio": 0.242655,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2427; group=Sahara. Awaiting owner visual approval.",
-          "boundary_group": "Sahara",
-          "nearest_city": {
-            "name": "Ouarzazate",
-            "source_province_id": 4831,
-            "x": 8007.0,
-            "y": 3348.0,
-            "distance_px": 16.707225570002652
-          },
-          "is_water": false,
-          "continent_id": 6,
-          "region_id": 0,
-          "centroid": [
-            7993.073394495413,
-            3357.229357798165
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2427; group=Sahara. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-        },
-        {
-          "source_province_id": 4838,
-          "overlap_ratio": 0.189359,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1894; group=Sahara. Awaiting owner visual approval.",
-          "boundary_group": "Sahara",
-          "nearest_city": {
-            "name": "Zagora",
-            "source_province_id": 4838,
-            "x": 8060.0,
-            "y": 3384.0,
-            "distance_px": 24.19962264709231
-          },
-          "is_water": false,
-          "continent_id": 6,
-          "region_id": 0,
-          "centroid": [
-            8046.504854368932,
-            3363.9126213592235
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1894; group=Sahara. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-        },
-        {
-          "source_province_id": 4961,
-          "overlap_ratio": 0.257919,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2579; group=Sahara. Awaiting owner visual approval.",
-          "boundary_group": "Sahara",
-          "nearest_city": {
-            "name": "Debdeb",
-            "source_province_id": 4961,
-            "x": 8800.0,
-            "y": 3409.0,
-            "distance_px": 38.47125907810434
-          },
-          "is_water": false,
-          "continent_id": 6,
-          "region_id": 0,
-          "centroid": [
-            8784.686131386861,
-            3444.29197080292
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2579; group=Sahara. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-        }
-      ]
-    },
-    "Mediterranean_water": {
-      "count": 1,
-      "include_count": 0,
-      "exclude_count": 1,
-      "provinces": [
-        {
-          "source_province_id": 12200,
-          "overlap_ratio": 0.162109,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1621; group=Mediterranean_water. Awaiting owner visual approval.",
-          "boundary_group": "Mediterranean_water",
-          "nearest_city": {
-            "name": "Agadir",
-            "source_province_id": 2924,
-            "x": 7879.0,
-            "y": 3379.0,
-            "distance_px": 21.57507764828601
-          },
-          "is_water": true,
-          "continent_id": 0,
-          "region_id": 0,
-          "centroid": [
-            7858.601351351352,
-            3386.027027027027
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1621; group=Mediterranean_water. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-        }
-      ]
-    },
-    "Atlantic_Nordic_water": {
-      "count": 6,
-      "include_count": 3,
-      "exclude_count": 3,
-      "provinces": [
-        {
-          "source_province_id": 12189,
-          "overlap_ratio": 0.385032,
-          "algorithmic_recommendation": "include",
-          "owner_decision": "include",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.3850; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
-          "boundary_group": "Atlantic_Nordic_water",
-          "nearest_city": {
-            "name": "Hólmavík",
-            "source_province_id": 950,
-            "x": 7286.0,
-            "y": 789.0,
-            "distance_px": 61.17769927406558
-          },
-          "is_water": true,
-          "continent_id": 0,
-          "region_id": 0,
-          "centroid": [
-            7224.954372623574,
-            793.0177439797212
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.3850; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
+          "geographic_reason": "v7 Europe-Asia boundary freeze (exclude); ratio=0.1792; group=western_Russia.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
-          "source_province_id": 12912,
-          "overlap_ratio": 0.431559,
+          "source_province_id": 11807,
+          "overlap_ratio": 0.305568,
+          "algorithmic_recommendation": "exclude",
+          "owner_decision": "exclude",
+          "owner_review_status": "owner_approved_v7_europe_boundary",
+          "owner_reason": "v7 Europe-Asia boundary freeze (exclude); ratio=0.3056; group=western_Russia.",
+          "boundary_group": "western_Russia",
+          "nearest_city": {
+            "name": "Talovo",
+            "source_province_id": 11807,
+            "x": 11181.0,
+            "y": 1156.0,
+            "distance_px": 29.84464985554308
+          },
+          "is_water": false,
+          "continent_id": 2,
+          "region_id": 0,
+          "centroid": [
+            11205.425,
+            1138.85
+          ],
+          "geographic_reason": "v7 Europe-Asia boundary freeze (exclude); ratio=0.3056; group=western_Russia.",
+          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+        },
+        {
+          "source_province_id": 11809,
+          "overlap_ratio": 0.400807,
           "algorithmic_recommendation": "include",
           "owner_decision": "include",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4316; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
-          "boundary_group": "Atlantic_Nordic_water",
+          "owner_review_status": "owner_approved_v7_europe_boundary",
+          "owner_reason": "v7 Europe-Asia boundary freeze (include); ratio=0.4008; group=western_Russia.",
+          "boundary_group": "western_Russia",
           "nearest_city": {
-            "name": "Caldas da Rainha",
-            "source_province_id": 18,
-            "x": 7901.0,
-            "y": 2838.0,
-            "distance_px": 431.909401266953
+            "name": "Pripolyarnyi",
+            "source_province_id": 11951,
+            "x": 11258.0,
+            "y": 1006.0,
+            "distance_px": 79.41704355731679
           },
-          "is_water": true,
-          "continent_id": 0,
+          "is_water": false,
+          "continent_id": 2,
           "region_id": 0,
           "centroid": [
-            7480.375,
-            2739.9166666666665
+            11186.060836501902,
+            972.3574144486691
           ],
-          "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.4316; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
+          "geographic_reason": "v7 Europe-Asia boundary freeze (include); ratio=0.4008; group=western_Russia.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         },
         {
-          "source_province_id": 12914,
-          "overlap_ratio": 0.38264,
-          "algorithmic_recommendation": "include",
-          "owner_decision": "include",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.3826; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
-          "boundary_group": "Atlantic_Nordic_water",
-          "nearest_city": {
-            "name": "Sneem",
-            "source_province_id": 6485,
-            "x": 7860.0,
-            "y": 1967.0,
-            "distance_px": 474.98361129821166
-          },
-          "is_water": true,
-          "continent_id": 0,
-          "region_id": 0,
-          "centroid": [
-            7430.869565217391,
-            2170.608695652174
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.3826; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-        },
-        {
-          "source_province_id": 13076,
-          "overlap_ratio": 0.159619,
+          "source_province_id": 11837,
+          "overlap_ratio": 0.184231,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1596; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
-          "boundary_group": "Atlantic_Nordic_water",
+          "owner_review_status": "owner_approved_v7_europe_boundary",
+          "owner_reason": "v7 Europe-Asia boundary freeze (exclude); ratio=0.1842; group=western_Russia.",
+          "boundary_group": "western_Russia",
           "nearest_city": {
-            "name": "Sneem",
-            "source_province_id": 6485,
-            "x": 7860.0,
-            "y": 1967.0,
-            "distance_px": 514.3419326911716
+            "name": "Usinsk",
+            "source_province_id": 11837,
+            "x": 11149.0,
+            "y": 761.0,
+            "distance_px": 26.338377700032417
           },
-          "is_water": true,
-          "continent_id": 0,
+          "is_water": false,
+          "continent_id": 2,
           "region_id": 0,
           "centroid": [
-            7348.178571428572,
-            1916.142857142857
+            11174.922279792747,
+            756.3367875647668
           ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1596; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-        },
-        {
-          "source_province_id": 13131,
-          "overlap_ratio": 0.15444,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1544; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
-          "boundary_group": "Atlantic_Nordic_water",
-          "nearest_city": {
-            "name": "Tórshavn",
-            "source_province_id": 914,
-            "x": 8014.0,
-            "y": 1103.0,
-            "distance_px": 2.002408886232589
-          },
-          "is_water": true,
-          "continent_id": 0,
-          "region_id": 0,
-          "centroid": [
-            8013.481318681319,
-            1101.065934065934
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1544; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-        },
-        {
-          "source_province_id": 13151,
-          "overlap_ratio": 0.341999,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3420; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
-          "boundary_group": "Atlantic_Nordic_water",
-          "nearest_city": {
-            "name": "Stornoway",
-            "source_province_id": 897,
-            "x": 8032.0,
-            "y": 1422.0,
-            "distance_px": 308.6753263553659
-          },
-          "is_water": true,
-          "continent_id": 0,
-          "region_id": 0,
-          "centroid": [
-            7733.615384615385,
-            1342.9615384615386
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3420; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-        }
-      ]
-    },
-    "Atlantic_unrelated_water": {
-      "count": 2,
-      "include_count": 0,
-      "exclude_count": 2,
-      "provinces": [
-        {
-          "source_province_id": 12902,
-          "overlap_ratio": 0.191292,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1913; group=Atlantic_unrelated_water. Awaiting owner visual approval.",
-          "boundary_group": "Atlantic_unrelated_water",
-          "nearest_city": {
-            "name": "Funchal",
-            "source_province_id": 10022,
-            "x": 7519.0,
-            "y": 3237.0,
-            "distance_px": 175.70765374371456
-          },
-          "is_water": true,
-          "continent_id": 0,
-          "region_id": 0,
-          "centroid": [
-            7682.739130434783,
-            3300.7391304347825
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1913; group=Atlantic_unrelated_water. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-        },
-        {
-          "source_province_id": 12907,
-          "overlap_ratio": 0.207611,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2076; group=Atlantic_unrelated_water. Awaiting owner visual approval.",
-          "boundary_group": "Atlantic_unrelated_water",
-          "nearest_city": {
-            "name": "Funchal",
-            "source_province_id": 10022,
-            "x": 7519.0,
-            "y": 3237.0,
-            "distance_px": 229.8673562715895
-          },
-          "is_water": true,
-          "continent_id": 0,
-          "region_id": 0,
-          "centroid": [
-            7526.923076923077,
-            3007.269230769231
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2076; group=Atlantic_unrelated_water. Awaiting owner visual approval.",
+          "geographic_reason": "v7 Europe-Asia boundary freeze (exclude); ratio=0.1842; group=western_Russia.",
           "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
         }
       ]
     },
     "Caspian_water": {
-      "count": 2,
-      "include_count": 1,
-      "exclude_count": 1,
-      "provinces": [
-        {
-          "source_province_id": 13346,
-          "overlap_ratio": 0.27913,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2791; group=Caspian_water. Awaiting owner visual approval.",
-          "boundary_group": "Caspian_water",
-          "nearest_city": {
-            "name": "Baku",
-            "source_province_id": 2654,
-            "x": 10776.0,
-            "y": 2772.0,
-            "distance_px": 9.283082258387145
-          },
-          "is_water": true,
-          "continent_id": 0,
-          "region_id": 0,
-          "centroid": [
-            10771.496732026144,
-            2780.1176470588234
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2791; group=Caspian_water. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
-        },
-        {
-          "source_province_id": 13355,
-          "overlap_ratio": 0.413578,
-          "algorithmic_recommendation": "include",
-          "owner_decision": "include",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4136; group=Caspian_water. Awaiting owner visual approval.",
-          "boundary_group": "Caspian_water",
-          "nearest_city": {
-            "name": "Shebir",
-            "source_province_id": 10456,
-            "x": 10883.0,
-            "y": 2484.0,
-            "distance_px": 41.564239881414146
-          },
-          "is_water": true,
-          "continent_id": 0,
-          "region_id": 0,
-          "centroid": [
-            10842.099290780141,
-            2476.6028368794327
-          ],
-          "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.4136; group=Caspian_water. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
-        }
-      ]
-    },
-    "Red_Sea_water": {
       "count": 1,
       "include_count": 1,
       "exclude_count": 0,
       "provinces": [
         {
-          "source_province_id": 12306,
-          "overlap_ratio": 0.433662,
+          "source_province_id": 13352,
+          "overlap_ratio": 0.401494,
           "algorithmic_recommendation": "include",
           "owner_decision": "include",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4337; group=Red_Sea_water. Awaiting owner visual approval.",
-          "boundary_group": "Red_Sea_water",
+          "owner_review_status": "owner_approved_v7_europe_boundary",
+          "owner_reason": "v7 Europe-Asia boundary freeze (include); ratio=0.4015; group=Caspian_water.",
+          "boundary_group": "Caspian_water",
           "nearest_city": {
-            "name": "Sharma",
-            "source_province_id": 6071,
-            "x": 10066.0,
-            "y": 3509.0,
-            "distance_px": 21.85662751854199
+            "name": "Lagan",
+            "source_province_id": 10826,
+            "x": 10650.0,
+            "y": 2442.0,
+            "distance_px": 36.49624614485736
           },
           "is_water": true,
           "continent_id": 0,
           "region_id": 0,
           "centroid": [
-            10046.605504587156,
-            3498.922018348624
+            10686.49609375,
+            2441.89453125
           ],
-          "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.4337; group=Red_Sea_water. Awaiting owner visual approval.",
-          "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
+          "geographic_reason": "v7 Europe-Asia boundary freeze (include); ratio=0.4015; group=Caspian_water.",
+          "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
         }
       ]
     },
     "other_water": {
-      "count": 1,
-      "include_count": 0,
+      "count": 2,
+      "include_count": 1,
       "exclude_count": 1,
       "provinces": [
         {
-          "source_province_id": 12198,
-          "overlap_ratio": 0.242827,
+          "source_province_id": 13367,
+          "overlap_ratio": 0.307507,
           "algorithmic_recommendation": "exclude",
           "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2428; group=other_water. Awaiting owner visual approval.",
+          "owner_review_status": "owner_approved_v7_europe_boundary",
+          "owner_reason": "v7 Europe-Asia boundary freeze (exclude); ratio=0.3075; group=other_water.",
           "boundary_group": "other_water",
           "nearest_city": {
-            "name": "Mehamn",
-            "source_province_id": 1055,
-            "x": 9704.0,
-            "y": 255.0,
-            "distance_px": 85.96863259237895
+            "name": "Tumanny",
+            "source_province_id": 11367,
+            "x": 10086.0,
+            "y": 485.0,
+            "distance_px": 37.08635640928448
           },
           "is_water": true,
           "continent_id": 0,
           "region_id": 0,
           "centroid": [
-            9759.453097345133,
-            320.6929203539823
+            10057.952380952382,
+            460.7362637362637
           ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2428; group=other_water. Awaiting owner visual approval.",
+          "geographic_reason": "v7 Europe-Asia boundary freeze (exclude); ratio=0.3075; group=other_water.",
+          "closeup_image": "preview_em_reference_masked.png"
+        },
+        {
+          "source_province_id": 13368,
+          "overlap_ratio": 0.360776,
+          "algorithmic_recommendation": "include",
+          "owner_decision": "include",
+          "owner_review_status": "owner_approved_v7_europe_boundary",
+          "owner_reason": "v7 Europe-Asia boundary freeze (include); ratio=0.3608; group=other_water.",
+          "boundary_group": "other_water",
+          "nearest_city": {
+            "name": "Krasino",
+            "source_province_id": 10969,
+            "x": 10997.0,
+            "y": 267.0,
+            "distance_px": 182.85457831562744
+          },
+          "is_water": true,
+          "continent_id": 0,
+          "region_id": 0,
+          "centroid": [
+            10908.46599690881,
+            426.9922720247295
+          ],
+          "geographic_reason": "v7 Europe-Asia boundary freeze (include); ratio=0.3608; group=other_water.",
           "closeup_image": "preview_em_reference_masked.png"
         }
       ]
     },
     "other_land": {
       "count": 1,
-      "include_count": 0,
-      "exclude_count": 1,
+      "include_count": 1,
+      "exclude_count": 0,
       "provinces": [
         {
-          "source_province_id": 10891,
-          "overlap_ratio": 0.329707,
-          "algorithmic_recommendation": "exclude",
-          "owner_decision": "exclude",
-          "owner_review_status": "pending_owner_visual_approval",
-          "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3297; group=other_land. Awaiting owner visual approval.",
+          "source_province_id": 11529,
+          "overlap_ratio": 0.404544,
+          "algorithmic_recommendation": "include",
+          "owner_decision": "include",
+          "owner_review_status": "owner_approved_v7_europe_boundary",
+          "owner_reason": "v7 Europe-Asia boundary freeze (include); ratio=0.4045; group=other_land.",
           "boundary_group": "other_land",
           "nearest_city": {
-            "name": "Kamyshin",
-            "source_province_id": 10891,
-            "x": 10554.0,
-            "y": 2104.0,
-            "distance_px": 47.59789107401553
+            "name": "Inderbor",
+            "source_province_id": 11529,
+            "x": 10868.0,
+            "y": 2217.0,
+            "distance_px": 41.59300529962774
           },
           "is_water": false,
           "continent_id": 2,
           "region_id": 0,
           "centroid": [
-            10530.564285714287,
-            2062.5714285714284
+            10892.770992366412,
+            2250.412213740458
           ],
-          "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3297; group=other_land. Awaiting owner visual approval.",
+          "geographic_reason": "v7 Europe-Asia boundary freeze (include); ratio=0.4045; group=other_land.",
           "closeup_image": "preview_em_reference_masked.png"
         }
       ]
@@ -1182,1079 +262,229 @@
   },
   "provinces": [
     {
-      "source_province_id": 1190,
-      "overlap_ratio": 0.327448,
+      "source_province_id": 10849,
+      "overlap_ratio": 0.184676,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3274; group=Caucasus. Awaiting owner visual approval.",
-      "boundary_group": "Caucasus",
-      "nearest_city": {
-        "name": "Igdir",
-        "source_province_id": 1190,
-        "x": 10492.0,
-        "y": 2805.0,
-        "distance_px": 4.020235146013881
-      },
-      "is_water": false,
-      "continent_id": 1,
-      "region_id": 0,
-      "centroid": [
-        10490.22340425532,
-        2808.6063829787236
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3274; group=Caucasus. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
-    },
-    {
-      "source_province_id": 1192,
-      "overlap_ratio": 0.428655,
-      "algorithmic_recommendation": "include",
-      "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4287; group=Caucasus. Awaiting owner visual approval.",
-      "boundary_group": "Caucasus",
-      "nearest_city": {
-        "name": "Agri",
-        "source_province_id": 1192,
-        "x": 10442.0,
-        "y": 2817.0,
-        "distance_px": 2.1864403175035494
-      },
-      "is_water": false,
-      "continent_id": 1,
-      "region_id": 0,
-      "centroid": [
-        10443.962962962964,
-        2817.962962962963
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.4287; group=Caucasus. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
-    },
-    {
-      "source_province_id": 1369,
-      "overlap_ratio": 0.195261,
-      "algorithmic_recommendation": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1953; group=Sahara. Awaiting owner visual approval.",
-      "boundary_group": "Sahara",
-      "nearest_city": {
-        "name": "Sibele",
-        "source_province_id": 1369,
-        "x": 9536.0,
-        "y": 3485.0,
-        "distance_px": 27.97116122211282
-      },
-      "is_water": false,
-      "continent_id": 6,
-      "region_id": 0,
-      "centroid": [
-        9533.330434782609,
-        3512.8434782608697
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1953; group=Sahara. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-    },
-    {
-      "source_province_id": 1379,
-      "overlap_ratio": 0.233989,
-      "algorithmic_recommendation": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2340; group=Egypt_Sinai. Awaiting owner visual approval.",
-      "boundary_group": "Egypt_Sinai",
-      "nearest_city": {
-        "name": "Siwa Oasis",
-        "source_province_id": 1379,
-        "x": 9588.0,
-        "y": 3450.0,
-        "distance_px": 89.94085990944247
-      },
-      "is_water": false,
-      "continent_id": 6,
-      "region_id": 0,
-      "centroid": [
-        9627.275,
-        3530.9125
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2340; group=Egypt_Sinai. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-    },
-    {
-      "source_province_id": 2655,
-      "overlap_ratio": 0.365287,
-      "algorithmic_recommendation": "include",
-      "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.3653; group=Caucasus. Awaiting owner visual approval.",
-      "boundary_group": "Caucasus",
-      "nearest_city": {
-        "name": "Sumqayit",
-        "source_province_id": 2655,
-        "x": 10762.0,
-        "y": 2764.0,
-        "distance_px": 23.103601712391505
-      },
-      "is_water": false,
-      "continent_id": 1,
-      "region_id": 0,
-      "centroid": [
-        10741.746575342466,
-        2752.8835616438355
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.3653; group=Caucasus. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
-    },
-    {
-      "source_province_id": 2703,
-      "overlap_ratio": 0.320472,
-      "algorithmic_recommendation": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3205; group=Egypt_Sinai. Awaiting owner visual approval.",
-      "boundary_group": "Egypt_Sinai",
-      "nearest_city": {
-        "name": "Marakib Sag",
-        "source_province_id": 2703,
-        "x": 9886.0,
-        "y": 3564.0,
-        "distance_px": 33.54483014674593
-      },
-      "is_water": false,
-      "continent_id": 6,
-      "region_id": 0,
-      "centroid": [
-        9917.746575342466,
-        3553.1643835616437
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3205; group=Egypt_Sinai. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-    },
-    {
-      "source_province_id": 3223,
-      "overlap_ratio": 0.192066,
-      "algorithmic_recommendation": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1921; group=Sahara. Awaiting owner visual approval.",
-      "boundary_group": "Sahara",
-      "nearest_city": {
-        "name": "Imintanoute",
-        "source_province_id": 3223,
-        "x": 7914.0,
-        "y": 3335.0,
-        "distance_px": 3.2976942520453645
-      },
-      "is_water": false,
-      "continent_id": 6,
-      "region_id": 0,
-      "centroid": [
-        7915.866666666667,
-        3337.7185185185185
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1921; group=Sahara. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-    },
-    {
-      "source_province_id": 4409,
-      "overlap_ratio": 0.480511,
-      "algorithmic_recommendation": "include",
-      "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4805; group=Egypt_Sinai. Awaiting owner visual approval.",
-      "boundary_group": "Egypt_Sinai",
-      "nearest_city": {
-        "name": "Bawiti",
-        "source_province_id": 4409,
-        "x": 9750.0,
-        "y": 3500.0,
-        "distance_px": 28.98535233617284
-      },
-      "is_water": false,
-      "continent_id": 6,
-      "region_id": 0,
-      "centroid": [
-        9721.031055900621,
-        3500.9751552795033
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.4805; group=Egypt_Sinai. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-    },
-    {
-      "source_province_id": 4736,
-      "overlap_ratio": 0.204287,
-      "algorithmic_recommendation": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2043; group=Sahara. Awaiting owner visual approval.",
-      "boundary_group": "Sahara",
-      "nearest_city": {
-        "name": "Sawknah",
-        "source_province_id": 4736,
-        "x": 9114.0,
-        "y": 3461.0,
-        "distance_px": 12.555074071603881
-      },
-      "is_water": false,
-      "continent_id": 6,
-      "region_id": 0,
-      "centroid": [
-        9104.61971830986,
-        3469.345070422535
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2043; group=Sahara. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-    },
-    {
-      "source_province_id": 4787,
-      "overlap_ratio": 0.346905,
-      "algorithmic_recommendation": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3469; group=Sahara. Awaiting owner visual approval.",
-      "boundary_group": "Sahara",
-      "nearest_city": {
-        "name": "Tabaqah",
-        "source_province_id": 4787,
-        "x": 8972.0,
-        "y": 3457.0,
-        "distance_px": 37.71193352469285
-      },
-      "is_water": false,
-      "continent_id": 6,
-      "region_id": 0,
-      "centroid": [
-        8936.289340101523,
-        3444.8781725888325
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3469; group=Sahara. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-    },
-    {
-      "source_province_id": 4831,
-      "overlap_ratio": 0.242655,
-      "algorithmic_recommendation": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2427; group=Sahara. Awaiting owner visual approval.",
-      "boundary_group": "Sahara",
-      "nearest_city": {
-        "name": "Ouarzazate",
-        "source_province_id": 4831,
-        "x": 8007.0,
-        "y": 3348.0,
-        "distance_px": 16.707225570002652
-      },
-      "is_water": false,
-      "continent_id": 6,
-      "region_id": 0,
-      "centroid": [
-        7993.073394495413,
-        3357.229357798165
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2427; group=Sahara. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-    },
-    {
-      "source_province_id": 4838,
-      "overlap_ratio": 0.189359,
-      "algorithmic_recommendation": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1894; group=Sahara. Awaiting owner visual approval.",
-      "boundary_group": "Sahara",
-      "nearest_city": {
-        "name": "Zagora",
-        "source_province_id": 4838,
-        "x": 8060.0,
-        "y": 3384.0,
-        "distance_px": 24.19962264709231
-      },
-      "is_water": false,
-      "continent_id": 6,
-      "region_id": 0,
-      "centroid": [
-        8046.504854368932,
-        3363.9126213592235
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1894; group=Sahara. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-    },
-    {
-      "source_province_id": 4961,
-      "overlap_ratio": 0.257919,
-      "algorithmic_recommendation": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2579; group=Sahara. Awaiting owner visual approval.",
-      "boundary_group": "Sahara",
-      "nearest_city": {
-        "name": "Debdeb",
-        "source_province_id": 4961,
-        "x": 8800.0,
-        "y": 3409.0,
-        "distance_px": 38.47125907810434
-      },
-      "is_water": false,
-      "continent_id": 6,
-      "region_id": 0,
-      "centroid": [
-        8784.686131386861,
-        3444.29197080292
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2579; group=Sahara. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-    },
-    {
-      "source_province_id": 5054,
-      "overlap_ratio": 0.420541,
-      "algorithmic_recommendation": "include",
-      "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4205; group=Turkey_northern_Levant. Awaiting owner visual approval.",
-      "boundary_group": "Turkey_northern_Levant",
-      "nearest_city": {
-        "name": "Manbij",
-        "source_province_id": 5054,
-        "x": 10194.0,
-        "y": 3017.0,
-        "distance_px": 14.49306275376908
-      },
-      "is_water": false,
-      "continent_id": 1,
-      "region_id": 0,
-      "centroid": [
-        10200.723214285714,
-        3029.839285714286
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.4205; group=Turkey_northern_Levant. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-    },
-    {
-      "source_province_id": 6071,
-      "overlap_ratio": 0.443765,
-      "algorithmic_recommendation": "include",
-      "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4438; group=Arabian_interior. Awaiting owner visual approval.",
-      "boundary_group": "Arabian_interior",
-      "nearest_city": {
-        "name": "Sharma",
-        "source_province_id": 6071,
-        "x": 10066.0,
-        "y": 3509.0,
-        "distance_px": 7.706365106347453
-      },
-      "is_water": false,
-      "continent_id": 1,
-      "region_id": 0,
-      "centroid": [
-        10060.350574712644,
-        3503.7586206896553
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.4438; group=Arabian_interior. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-    },
-    {
-      "source_province_id": 6683,
-      "overlap_ratio": 0.355784,
-      "algorithmic_recommendation": "include",
-      "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.3558; group=western_Russia. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_europe_boundary",
+      "owner_reason": "v7 Europe-Asia boundary freeze (exclude); ratio=0.1847; group=western_Russia.",
       "boundary_group": "western_Russia",
       "nearest_city": {
-        "name": "Gryazovets",
-        "source_province_id": 6683,
-        "x": 10306.0,
-        "y": 1364.0,
-        "distance_px": 14.564512564963083
+        "name": "Kobda",
+        "source_province_id": 10849,
+        "x": 11060.0,
+        "y": 2099.0,
+        "distance_px": 24.937318860061072
       },
       "is_water": false,
-      "continent_id": 2,
+      "continent_id": 1,
       "region_id": 0,
       "centroid": [
-        10319.949275362318,
-        1368.1884057971015
+        11056.081632653062,
+        2074.372448979592
       ],
-      "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.3558; group=western_Russia. Awaiting owner visual approval.",
+      "geographic_reason": "v7 Europe-Asia boundary freeze (exclude); ratio=0.1847; group=western_Russia.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
-      "source_province_id": 10434,
-      "overlap_ratio": 0.200372,
+      "source_province_id": 11337,
+      "overlap_ratio": 0.179225,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2004; group=Caucasus. Awaiting owner visual approval.",
-      "boundary_group": "Caucasus",
-      "nearest_city": {
-        "name": "Artashat",
-        "source_province_id": 10434,
-        "x": 10519.0,
-        "y": 2806.0,
-        "distance_px": 6.903830049220652
-      },
-      "is_water": false,
-      "continent_id": 1,
-      "region_id": 0,
-      "centroid": [
-        10525.0,
-        2802.5849056603774
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2004; group=Caucasus. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
-    },
-    {
-      "source_province_id": 10437,
-      "overlap_ratio": 0.432411,
-      "algorithmic_recommendation": "include",
-      "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4324; group=Caucasus. Awaiting owner visual approval.",
-      "boundary_group": "Caucasus",
-      "nearest_city": {
-        "name": "Vardenis",
-        "source_province_id": 10437,
-        "x": 10573.0,
-        "y": 2787.0,
-        "distance_px": 16.563037949543983
-      },
-      "is_water": false,
-      "continent_id": 1,
-      "region_id": 0,
-      "centroid": [
-        10556.549549549549,
-        2785.072072072072
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.4324; group=Caucasus. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
-    },
-    {
-      "source_province_id": 10835,
-      "overlap_ratio": 0.44477,
-      "algorithmic_recommendation": "include",
-      "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4448; group=western_Russia. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_europe_boundary",
+      "owner_reason": "v7 Europe-Asia boundary freeze (exclude); ratio=0.1792; group=western_Russia.",
       "boundary_group": "western_Russia",
       "nearest_city": {
-        "name": "Akhtubinsk",
-        "source_province_id": 10835,
-        "x": 10598.0,
-        "y": 2236.0,
-        "distance_px": 5.643772711047306
+        "name": "Zlatoust",
+        "source_province_id": 11335,
+        "x": 11252.0,
+        "y": 1695.0,
+        "distance_px": 24.545980386667832
       },
       "is_water": false,
-      "continent_id": 2,
+      "continent_id": 1,
       "region_id": 0,
       "centroid": [
-        10599.00709219858,
-        2241.553191489362
+        11255.4578313253,
+        1719.301204819277
       ],
-      "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.4448; group=western_Russia. Awaiting owner visual approval.",
+      "geographic_reason": "v7 Europe-Asia boundary freeze (exclude); ratio=0.1792; group=western_Russia.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
-      "source_province_id": 10891,
-      "overlap_ratio": 0.329707,
-      "algorithmic_recommendation": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3297; group=other_land. Awaiting owner visual approval.",
+      "source_province_id": 11529,
+      "overlap_ratio": 0.404544,
+      "algorithmic_recommendation": "include",
+      "owner_decision": "include",
+      "owner_review_status": "owner_approved_v7_europe_boundary",
+      "owner_reason": "v7 Europe-Asia boundary freeze (include); ratio=0.4045; group=other_land.",
       "boundary_group": "other_land",
       "nearest_city": {
-        "name": "Kamyshin",
-        "source_province_id": 10891,
-        "x": 10554.0,
-        "y": 2104.0,
-        "distance_px": 47.59789107401553
+        "name": "Inderbor",
+        "source_province_id": 11529,
+        "x": 10868.0,
+        "y": 2217.0,
+        "distance_px": 41.59300529962774
       },
       "is_water": false,
       "continent_id": 2,
       "region_id": 0,
       "centroid": [
-        10530.564285714287,
-        2062.5714285714284
+        10892.770992366412,
+        2250.412213740458
       ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3297; group=other_land. Awaiting owner visual approval.",
+      "geographic_reason": "v7 Europe-Asia boundary freeze (include); ratio=0.4045; group=other_land.",
       "closeup_image": "preview_em_reference_masked.png"
     },
     {
-      "source_province_id": 10929,
-      "overlap_ratio": 0.340179,
+      "source_province_id": 11807,
+      "overlap_ratio": 0.305568,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3402; group=western_Russia. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_europe_boundary",
+      "owner_reason": "v7 Europe-Asia boundary freeze (exclude); ratio=0.3056; group=western_Russia.",
       "boundary_group": "western_Russia",
       "nearest_city": {
-        "name": "Shuya",
-        "source_province_id": 10929,
-        "x": 10362.0,
-        "y": 1547.0,
-        "distance_px": 24.946360373556686
+        "name": "Talovo",
+        "source_province_id": 11807,
+        "x": 11181.0,
+        "y": 1156.0,
+        "distance_px": 29.84464985554308
       },
       "is_water": false,
       "continent_id": 2,
       "region_id": 0,
       "centroid": [
-        10382.083916083917,
-        1561.7972027972028
+        11205.425,
+        1138.85
       ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3402; group=western_Russia. Awaiting owner visual approval.",
+      "geographic_reason": "v7 Europe-Asia boundary freeze (exclude); ratio=0.3056; group=western_Russia.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
-      "source_province_id": 11368,
-      "overlap_ratio": 0.194098,
-      "algorithmic_recommendation": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1941; group=Europe_Scandinavia. Awaiting owner visual approval.",
-      "boundary_group": "Europe_Scandinavia",
-      "nearest_city": {
-        "name": "Varzuga",
-        "source_province_id": 11368,
-        "x": 10129.0,
-        "y": 727.0,
-        "distance_px": 64.54915365131664
-      },
-      "is_water": false,
-      "continent_id": 2,
-      "region_id": 0,
-      "centroid": [
-        10147.58256880734,
-        665.183486238532
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1941; group=Europe_Scandinavia. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-    },
-    {
-      "source_province_id": 11407,
-      "overlap_ratio": 0.282106,
-      "algorithmic_recommendation": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2821; group=western_Russia. Awaiting owner visual approval.",
-      "boundary_group": "western_Russia",
-      "nearest_city": {
-        "name": "Umet",
-        "source_province_id": 11407,
-        "x": 10431.0,
-        "y": 1780.0,
-        "distance_px": 23.469280157497625
-      },
-      "is_water": false,
-      "continent_id": 2,
-      "region_id": 0,
-      "centroid": [
-        10441.946666666667,
-        1759.24
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2821; group=western_Russia. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-    },
-    {
-      "source_province_id": 11528,
-      "overlap_ratio": 0.287209,
-      "algorithmic_recommendation": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2872; group=western_Russia. Awaiting owner visual approval.",
-      "boundary_group": "western_Russia",
-      "nearest_city": {
-        "name": "El ton",
-        "source_province_id": 11528,
-        "x": 10631.0,
-        "y": 2174.0,
-        "distance_px": 49.6425397350213
-      },
-      "is_water": false,
-      "continent_id": 2,
-      "region_id": 0,
-      "centroid": [
-        10581.961165048544,
-        2181.7184466019417
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2872; group=western_Russia. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-    },
-    {
-      "source_province_id": 11541,
-      "overlap_ratio": 0.181447,
-      "algorithmic_recommendation": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1814; group=Caucasus. Awaiting owner visual approval.",
-      "boundary_group": "Caucasus",
-      "nearest_city": {
-        "name": "Goychay",
-        "source_province_id": 11541,
-        "x": 10673.0,
-        "y": 2761.0,
-        "distance_px": 21.417224411375546
-      },
-      "is_water": false,
-      "continent_id": 1,
-      "region_id": 0,
-      "centroid": [
-        10682.621951219513,
-        2780.1341463414633
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1814; group=Caucasus. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
-    },
-    {
-      "source_province_id": 11560,
-      "overlap_ratio": 0.389297,
+      "source_province_id": 11809,
+      "overlap_ratio": 0.400807,
       "algorithmic_recommendation": "include",
       "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.3893; group=western_Russia. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_europe_boundary",
+      "owner_reason": "v7 Europe-Asia boundary freeze (include); ratio=0.4008; group=western_Russia.",
       "boundary_group": "western_Russia",
       "nearest_city": {
-        "name": "Kovrov",
-        "source_province_id": 11560,
-        "x": 10359.0,
-        "y": 1591.0,
-        "distance_px": 32.070404496745965
+        "name": "Pripolyarnyi",
+        "source_province_id": 11951,
+        "x": 11258.0,
+        "y": 1006.0,
+        "distance_px": 79.41704355731679
       },
       "is_water": false,
       "continent_id": 2,
       "region_id": 0,
       "centroid": [
-        10388.601694915254,
-        1603.3389830508474
+        11186.060836501902,
+        972.3574144486691
       ],
-      "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.3893; group=western_Russia. Awaiting owner visual approval.",
+      "geographic_reason": "v7 Europe-Asia boundary freeze (include); ratio=0.4008; group=western_Russia.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
-      "source_province_id": 11591,
-      "overlap_ratio": 0.16053,
+      "source_province_id": 11837,
+      "overlap_ratio": 0.184231,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1605; group=western_Russia. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_europe_boundary",
+      "owner_reason": "v7 Europe-Asia boundary freeze (exclude); ratio=0.1842; group=western_Russia.",
       "boundary_group": "western_Russia",
       "nearest_city": {
-        "name": "Vyksa",
-        "source_province_id": 11591,
-        "x": 10400.0,
-        "y": 1681.0,
-        "distance_px": 22.800201665382897
+        "name": "Usinsk",
+        "source_province_id": 11837,
+        "x": 11149.0,
+        "y": 761.0,
+        "distance_px": 26.338377700032417
       },
       "is_water": false,
       "continent_id": 2,
       "region_id": 0,
       "centroid": [
-        10422.577181208053,
-        1684.1812080536913
+        11174.922279792747,
+        756.3367875647668
       ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1605; group=western_Russia. Awaiting owner visual approval.",
+      "geographic_reason": "v7 Europe-Asia boundary freeze (exclude); ratio=0.1842; group=western_Russia.",
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
-      "source_province_id": 11602,
-      "overlap_ratio": 0.455942,
+      "source_province_id": 13352,
+      "overlap_ratio": 0.401494,
       "algorithmic_recommendation": "include",
       "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4559; group=western_Russia. Awaiting owner visual approval.",
-      "boundary_group": "western_Russia",
+      "owner_review_status": "owner_approved_v7_europe_boundary",
+      "owner_reason": "v7 Europe-Asia boundary freeze (include); ratio=0.4015; group=Caspian_water.",
+      "boundary_group": "Caspian_water",
       "nearest_city": {
-        "name": "Serdobsk",
-        "source_province_id": 11602,
-        "x": 10502.0,
-        "y": 1919.0,
-        "distance_px": 36.932756087546
-      },
-      "is_water": false,
-      "continent_id": 2,
-      "region_id": 0,
-      "centroid": [
-        10471.441666666668,
-        1898.2583333333334
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.4559; group=western_Russia. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-    },
-    {
-      "source_province_id": 11763,
-      "overlap_ratio": 0.379713,
-      "algorithmic_recommendation": "include",
-      "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.3797; group=western_Russia. Awaiting owner visual approval.",
-      "boundary_group": "western_Russia",
-      "nearest_city": {
-        "name": "Onega",
-        "source_province_id": 11763,
-        "x": 10203.0,
-        "y": 946.0,
-        "distance_px": 24.170832169809955
-      },
-      "is_water": false,
-      "continent_id": 2,
-      "region_id": 0,
-      "centroid": [
-        10192.181405895692,
-        924.3854875283447
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.3797; group=western_Russia. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-    },
-    {
-      "source_province_id": 11770,
-      "overlap_ratio": 0.489542,
-      "algorithmic_recommendation": "include",
-      "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4895; group=western_Russia. Awaiting owner visual approval.",
-      "boundary_group": "western_Russia",
-      "nearest_city": {
-        "name": "Shishkina",
-        "source_province_id": 11770,
-        "x": 10213.0,
-        "y": 1093.0,
-        "distance_px": 35.60096166586366
-      },
-      "is_water": false,
-      "continent_id": 2,
-      "region_id": 0,
-      "centroid": [
-        10217.519083969466,
-        1057.6870229007634
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.4895; group=western_Russia. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-    },
-    {
-      "source_province_id": 12189,
-      "overlap_ratio": 0.385032,
-      "algorithmic_recommendation": "include",
-      "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.3850; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
-      "boundary_group": "Atlantic_Nordic_water",
-      "nearest_city": {
-        "name": "Hólmavík",
-        "source_province_id": 950,
-        "x": 7286.0,
-        "y": 789.0,
-        "distance_px": 61.17769927406558
+        "name": "Lagan",
+        "source_province_id": 10826,
+        "x": 10650.0,
+        "y": 2442.0,
+        "distance_px": 36.49624614485736
       },
       "is_water": true,
       "continent_id": 0,
       "region_id": 0,
       "centroid": [
-        7224.954372623574,
-        793.0177439797212
+        10686.49609375,
+        2441.89453125
       ],
-      "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.3850; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+      "geographic_reason": "v7 Europe-Asia boundary freeze (include); ratio=0.4015; group=Caspian_water.",
+      "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
     },
     {
-      "source_province_id": 12198,
-      "overlap_ratio": 0.242827,
+      "source_province_id": 13367,
+      "overlap_ratio": 0.307507,
       "algorithmic_recommendation": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2428; group=other_water. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_europe_boundary",
+      "owner_reason": "v7 Europe-Asia boundary freeze (exclude); ratio=0.3075; group=other_water.",
       "boundary_group": "other_water",
       "nearest_city": {
-        "name": "Mehamn",
-        "source_province_id": 1055,
-        "x": 9704.0,
-        "y": 255.0,
-        "distance_px": 85.96863259237895
+        "name": "Tumanny",
+        "source_province_id": 11367,
+        "x": 10086.0,
+        "y": 485.0,
+        "distance_px": 37.08635640928448
       },
       "is_water": true,
       "continent_id": 0,
       "region_id": 0,
       "centroid": [
-        9759.453097345133,
-        320.6929203539823
+        10057.952380952382,
+        460.7362637362637
       ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2428; group=other_water. Awaiting owner visual approval.",
+      "geographic_reason": "v7 Europe-Asia boundary freeze (exclude); ratio=0.3075; group=other_water.",
       "closeup_image": "preview_em_reference_masked.png"
     },
     {
-      "source_province_id": 12200,
-      "overlap_ratio": 0.162109,
-      "algorithmic_recommendation": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1621; group=Mediterranean_water. Awaiting owner visual approval.",
-      "boundary_group": "Mediterranean_water",
-      "nearest_city": {
-        "name": "Agadir",
-        "source_province_id": 2924,
-        "x": 7879.0,
-        "y": 3379.0,
-        "distance_px": 21.57507764828601
-      },
-      "is_water": true,
-      "continent_id": 0,
-      "region_id": 0,
-      "centroid": [
-        7858.601351351352,
-        3386.027027027027
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1621; group=Mediterranean_water. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-    },
-    {
-      "source_province_id": 12306,
-      "overlap_ratio": 0.433662,
+      "source_province_id": 13368,
+      "overlap_ratio": 0.360776,
       "algorithmic_recommendation": "include",
       "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4337; group=Red_Sea_water. Awaiting owner visual approval.",
-      "boundary_group": "Red_Sea_water",
+      "owner_review_status": "owner_approved_v7_europe_boundary",
+      "owner_reason": "v7 Europe-Asia boundary freeze (include); ratio=0.3608; group=other_water.",
+      "boundary_group": "other_water",
       "nearest_city": {
-        "name": "Sharma",
-        "source_province_id": 6071,
-        "x": 10066.0,
-        "y": 3509.0,
-        "distance_px": 21.85662751854199
+        "name": "Krasino",
+        "source_province_id": 10969,
+        "x": 10997.0,
+        "y": 267.0,
+        "distance_px": 182.85457831562744
       },
       "is_water": true,
       "continent_id": 0,
       "region_id": 0,
       "centroid": [
-        10046.605504587156,
-        3498.922018348624
+        10908.46599690881,
+        426.9922720247295
       ],
-      "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.4337; group=Red_Sea_water. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
-    },
-    {
-      "source_province_id": 12902,
-      "overlap_ratio": 0.191292,
-      "algorithmic_recommendation": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1913; group=Atlantic_unrelated_water. Awaiting owner visual approval.",
-      "boundary_group": "Atlantic_unrelated_water",
-      "nearest_city": {
-        "name": "Funchal",
-        "source_province_id": 10022,
-        "x": 7519.0,
-        "y": 3237.0,
-        "distance_px": 175.70765374371456
-      },
-      "is_water": true,
-      "continent_id": 0,
-      "region_id": 0,
-      "centroid": [
-        7682.739130434783,
-        3300.7391304347825
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1913; group=Atlantic_unrelated_water. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-    },
-    {
-      "source_province_id": 12907,
-      "overlap_ratio": 0.207611,
-      "algorithmic_recommendation": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2076; group=Atlantic_unrelated_water. Awaiting owner visual approval.",
-      "boundary_group": "Atlantic_unrelated_water",
-      "nearest_city": {
-        "name": "Funchal",
-        "source_province_id": 10022,
-        "x": 7519.0,
-        "y": 3237.0,
-        "distance_px": 229.8673562715895
-      },
-      "is_water": true,
-      "continent_id": 0,
-      "region_id": 0,
-      "centroid": [
-        7526.923076923077,
-        3007.269230769231
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2076; group=Atlantic_unrelated_water. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-    },
-    {
-      "source_province_id": 12912,
-      "overlap_ratio": 0.431559,
-      "algorithmic_recommendation": "include",
-      "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4316; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
-      "boundary_group": "Atlantic_Nordic_water",
-      "nearest_city": {
-        "name": "Caldas da Rainha",
-        "source_province_id": 18,
-        "x": 7901.0,
-        "y": 2838.0,
-        "distance_px": 431.909401266953
-      },
-      "is_water": true,
-      "continent_id": 0,
-      "region_id": 0,
-      "centroid": [
-        7480.375,
-        2739.9166666666665
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.4316; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-    },
-    {
-      "source_province_id": 12914,
-      "overlap_ratio": 0.38264,
-      "algorithmic_recommendation": "include",
-      "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.3826; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
-      "boundary_group": "Atlantic_Nordic_water",
-      "nearest_city": {
-        "name": "Sneem",
-        "source_province_id": 6485,
-        "x": 7860.0,
-        "y": 1967.0,
-        "distance_px": 474.98361129821166
-      },
-      "is_water": true,
-      "continent_id": 0,
-      "region_id": 0,
-      "centroid": [
-        7430.869565217391,
-        2170.608695652174
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.3826; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-    },
-    {
-      "source_province_id": 13076,
-      "overlap_ratio": 0.159619,
-      "algorithmic_recommendation": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1596; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
-      "boundary_group": "Atlantic_Nordic_water",
-      "nearest_city": {
-        "name": "Sneem",
-        "source_province_id": 6485,
-        "x": 7860.0,
-        "y": 1967.0,
-        "distance_px": 514.3419326911716
-      },
-      "is_water": true,
-      "continent_id": 0,
-      "region_id": 0,
-      "centroid": [
-        7348.178571428572,
-        1916.142857142857
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1596; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-    },
-    {
-      "source_province_id": 13131,
-      "overlap_ratio": 0.15444,
-      "algorithmic_recommendation": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1544; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
-      "boundary_group": "Atlantic_Nordic_water",
-      "nearest_city": {
-        "name": "Tórshavn",
-        "source_province_id": 914,
-        "x": 8014.0,
-        "y": 1103.0,
-        "distance_px": 2.002408886232589
-      },
-      "is_water": true,
-      "continent_id": 0,
-      "region_id": 0,
-      "centroid": [
-        8013.481318681319,
-        1101.065934065934
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1544; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-    },
-    {
-      "source_province_id": 13151,
-      "overlap_ratio": 0.341999,
-      "algorithmic_recommendation": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3420; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
-      "boundary_group": "Atlantic_Nordic_water",
-      "nearest_city": {
-        "name": "Stornoway",
-        "source_province_id": 897,
-        "x": 8032.0,
-        "y": 1422.0,
-        "distance_px": 308.6753263553659
-      },
-      "is_water": true,
-      "continent_id": 0,
-      "region_id": 0,
-      "centroid": [
-        7733.615384615385,
-        1342.9615384615386
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3420; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-    },
-    {
-      "source_province_id": 13346,
-      "overlap_ratio": 0.27913,
-      "algorithmic_recommendation": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2791; group=Caspian_water. Awaiting owner visual approval.",
-      "boundary_group": "Caspian_water",
-      "nearest_city": {
-        "name": "Baku",
-        "source_province_id": 2654,
-        "x": 10776.0,
-        "y": 2772.0,
-        "distance_px": 9.283082258387145
-      },
-      "is_water": true,
-      "continent_id": 0,
-      "region_id": 0,
-      "centroid": [
-        10771.496732026144,
-        2780.1176470588234
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2791; group=Caspian_water. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
-    },
-    {
-      "source_province_id": 13355,
-      "overlap_ratio": 0.413578,
-      "algorithmic_recommendation": "include",
-      "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4136; group=Caspian_water. Awaiting owner visual approval.",
-      "boundary_group": "Caspian_water",
-      "nearest_city": {
-        "name": "Shebir",
-        "source_province_id": 10456,
-        "x": 10883.0,
-        "y": 2484.0,
-        "distance_px": 41.564239881414146
-      },
-      "is_water": true,
-      "continent_id": 0,
-      "region_id": 0,
-      "centroid": [
-        10842.099290780141,
-        2476.6028368794327
-      ],
-      "geographic_reason": "Provisional mask-v6 band decision (include); ratio=0.4136; group=Caspian_water. Awaiting owner visual approval.",
-      "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
+      "geographic_reason": "v7 Europe-Asia boundary freeze (include); ratio=0.3608; group=other_water.",
+      "closeup_image": "preview_em_reference_masked.png"
     }
   ]
 }

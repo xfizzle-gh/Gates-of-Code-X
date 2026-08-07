@@ -74,8 +74,22 @@ REQUIRED_LOCATIONS: tuple[RequiredLocation, ...] = (
     RequiredLocation("Narvik_northern_Norway", "Narvik", 1464, True, 9197.0, 531.0),
     RequiredLocation("Kiruna_northern_Sweden", "Kiruna", 11120, True, 9332.0, 587.0),
     RequiredLocation("Rovaniemi_northern_Finland", "Rovaniemi", 1458, True, 9599.0, 717.0),
-    # Must exclude (deep Arctic Russia — not Kola approach)
-    RequiredLocation("Arkhangelsk", "Arkhangelsk", 11764, False, 10325.0, 892.0),
+    # v7 Europe-Asia boundary production includes
+    RequiredLocation("Arkhangelsk", "Arkhangelsk", 11764, True, 10325.0, 892.0),
+    RequiredLocation("Syktyvkar", "Syktyvkar", 11756, True, 10820.0, 1135.0),
+    RequiredLocation("Perm", "Perm", 10866, True, 11087.0, 1447.0),
+    RequiredLocation("Kazan", "Kazan", 10854, True, 10742.0, 1641.0),
+    RequiredLocation("Ufa", "Ufa", 11326, True, 11072.0, 1731.0),
+    RequiredLocation("Samara", "Samara", 10837, True, 10793.0, 1858.0),
+    RequiredLocation("Saratov", "Saratov", 10888, True, 10586.0, 1988.0),
+    RequiredLocation("Volgograd", "Volgograd", 10805, True, 10514.0, 2206.0),
+    RequiredLocation("Astrakhan", "Astrakhan", 10825, True, 10687.0, 2374.0),
+    RequiredLocation("Orenburg", "Orenburg", 11331, True, 11029.0, 1973.0),
+    # Must exclude east of Urals / Kazakhstan
+    RequiredLocation("Chelyabinsk_east_urals", "Chelyabinsk", 10934, False, 11339.0, 1693.0),
+    RequiredLocation("Yekaterinburg_east_urals", "Yekaterinburg", 11345, False, 11302.0, 1549.0),
+    RequiredLocation("Atyrau_kazakhstan", "Atyrau", 10809, False, 10878.0, 2323.0),
+    RequiredLocation("Vorkuta_siberia", "Vorkuta", 11835, False, 11468.0, 623.0),
     # Informational only (non-gating)
     RequiredLocation("Oslo", "Oslo", 1009, True, 8870.0, 1261.0, gating=False),
     RequiredLocation("Murmansk_kola_approach", "Murmansk", 11370, True, 9961.0, 474.0, gating=False),
