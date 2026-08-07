@@ -1,0 +1,9 @@
+{
+  "excluded_gates": [
+    "e3_2830",
+    "e3_2888"
+  ],
+  "gameplay_or_catalog_hits_after_rebuild": [],
+  "ok": true,
+  "note": "Catalog+gameplay fixtures rebuilt for 3510; excluded IDs must be absent."
+}

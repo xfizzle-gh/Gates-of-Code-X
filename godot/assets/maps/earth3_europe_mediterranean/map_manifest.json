@@ -3,14 +3,14 @@
   "schema_version": 1,
   "map_id": "earth3_europe_mediterranean",
   "renderer": "polygon_mesh",
-  "provenance": "earth3_em_reference_masked_approved",
+  "provenance": "earth3_v7_europe_asia_boundary_minus_eastern_spill",
   "asset_status": "production_theatre",
   "polygon_dataset": {
     "path": "polygon_dataset.json",
-    "sha256": "19a47a9e0dd991f8a3d299decd757287a3fd75b3a4496a4ef82ea4ca3f20bb17",
-    "province_count": 3512
+    "sha256": "1734291ebc37ce0fc08154d6d8e937d1bd39b154b88f6030fdf02fde41810f37",
+    "province_count": 3510
   },
-  "province_count": 3512,
+  "province_count": 3510,
   "bounds": {
     "origin_source_xy": [
       7076.0,
@@ -33,12 +33,21 @@
     "hit_test": "point_in_polygon_spatial_index",
     "ownership_update": "immutable_geometry_shader_lookup"
   },
-  "approved_included_ids_sha256": "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7",
+  "pre_sanitize_included_ids_sha256": "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7",
+  "included_source_ids_sha256": "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3",
+  "approved_included_ids_sha256": "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3",
+  "stable_id_policy": "retain_production_e3_ids_with_gaps",
+  "water_policy": "water_not_normally_selectable",
   "export": {
-    "archive_sha256": "b88cc599128c73a5711af3add8330f5a42629c9a3e07a5dd7aea8437a97fc760",
-    "crop_config_sha256": "b58bc7d69a12aa906b1667ad79fa46e8c498669773abf835f5dc251366db739e",
-    "elapsed_ms": 37193,
+    "excluded_source_ids": [
+      10920,
+      11031
+    ],
+    "excluded_gates_ids": [
+      "e3_2830",
+      "e3_2888"
+    ],
     "triangulation_ok": true,
-    "max_tri_area_error": 7.424446545085129e-16
+    "empty_meshes": 0
   }
 }

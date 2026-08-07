@@ -84,7 +84,7 @@ def _ring_points(row: dict) -> list[tuple[float, float]]:
 
 def main() -> int:
     data = json.loads(DATASET.read_text(encoding="utf-8"))
-    assert int(data["province_count"]) == 3512, data["province_count"]
+    assert int(data["province_count"]) == 3510, data["province_count"]
     ox, oy = data["bounds"]["origin_source_xy"]
     width = float(data["bounds"]["width"])
     height = float(data["bounds"]["height"])
