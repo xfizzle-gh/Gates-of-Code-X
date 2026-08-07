@@ -187,6 +187,10 @@ func _run() -> void:
 		if _scene.has_method("_invalidate_overlay_cache"):
 			_scene.call("_invalidate_overlay_cache")
 	)
+	# Ensure unoccupied infrastructure markers exist and stay in the overlay active set.
+	var infra_picks: Dictionary = {}
+	if _scene.has_method("ensure_unoccupied_infrastructure_markers_for_test"):
+		infra_picks = _scene.call("ensure_unoccupied_infrastructure_markers_for_test")
 	scenarios["overlay_routes_sites_counters"] = await _measure_scenario("overlay_routes_sites_counters", _frames, func(i: int) -> void:
 		# Force overlay cache invalidation + pan jitter so markers re-layout.
 		if _scene.has_method("_invalidate_overlay_cache"):
@@ -195,7 +199,30 @@ func _run() -> void:
 			_scene.view_offset = Vector2(float(i % 7) * 3.0, float(i % 5) * -2.0)
 		if _scene.get("hovered_province_id") != null:
 			_scene.hovered_province_id = String(hover_ids[i % hover_ids.size()])
+		# Exercise full-theatre zoom where ambient counters hide but infra must remain.
+		if _scene.get("view_scale") != null and (i % 5) == 0:
+			_scene.view_scale = 0.85
 	)
+	# Verify infrastructure IDs remain in the overlay active set after the scenario.
+	var infra_ok := true
+	var infra_detail := {}
+	if _scene.has_method("get_overlay_active_province_ids_for_test") and not infra_picks.is_empty():
+		var active_ids: PackedStringArray = _scene.call("get_overlay_active_province_ids_for_test")
+		var active_set: Dictionary = {}
+		for pid: String in active_ids:
+			active_set[pid] = true
+		for kind: Variant in infra_picks.keys():
+			var pid2 := String(infra_picks[kind])
+			var present := active_set.has(pid2) and not pid2.is_empty()
+			infra_detail[String(kind)] = {"province_id": pid2, "in_active_set": present}
+			if not present:
+				infra_ok = false
+	scenarios["overlay_routes_sites_counters"]["infrastructure_markers"] = {
+		"ok": infra_ok,
+		"markers": infra_detail,
+	}
+	if not infra_ok:
+		push_error("overlay_routes_sites_counters missing unoccupied infrastructure in active set: %s" % str(infra_detail))
 	scenarios["pending_battle_presentation"] = await _measure_scenario("pending_battle_presentation", _frames, func(i: int) -> void:
 		# Keep pending battle visible; mild zoom around eastern contact.
 		if _scene.get("view_scale") != null:
@@ -217,10 +244,10 @@ func _run() -> void:
 	var process_snapshot := _sample_performance()
 
 	var result := {
-		"ok": true,
+		"ok": infra_ok,
 		"label": "earth3-interactive-baseline",
 		"issue": 74,
-		"pr_phase": "A",
+		"pr_phase": "C",
 		"build": _build_label,
 		"timestamp_unix": Time.get_unix_time_from_system(),
 		"godot_version": Engine.get_version_info(),
@@ -243,10 +270,9 @@ func _run() -> void:
 			"geometry_immutable": true,
 		},
 		"authority": {
-			"provinces": 3512,
-			"land_water": "3297/215",
-			"included_ids_sha256": "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7",
-			"production_merge": "7182f8c6002e48f7235ba5ce6b7dd57ee20f4f68",
+			"provinces": 3514,
+			"land_water": "3299/215",
+			"included_ids_sha256": "f3931d2e34558e451d02a7c49270b2071a79a628668c49228f5ff607a75315b8",
 		},
 		"scenarios": scenarios,
 		"discrete_ops_ms": op_timings,
@@ -255,7 +281,7 @@ func _run() -> void:
 			"Frame times are wall-clock ms around force_draw + one process tick (interactive path).",
 			"script_cpu_ms uses Performance.TIME_PROCESS; render counters from Performance.RENDER_*.",
 			"GPU time is only present when the backend exposes it; otherwise null.",
-			"No renderer rewrite in PR A — baseline measurement only.",
+			"Draw-call count remains ~3.7k (remaining bottleneck); primary wins are frame-time.",
 			"Do not change Earth3 crop/IDs/adjacency/water geometry.",
 		],
 	}
@@ -263,6 +289,10 @@ func _run() -> void:
 	_write_json(_out_path, result)
 	if not _report_path.is_empty():
 		_write_report(_report_path, result)
+	if not infra_ok:
+		print("map_interactive_profiler: FAIL infrastructure active-set check out=%s" % _out_path)
+		_cleanup_and_quit(2)
+		return
 	print("map_interactive_profiler: PASS out=%s" % _out_path)
 	if not _report_path.is_empty():
 		print("map_interactive_profiler: report=%s" % _report_path)

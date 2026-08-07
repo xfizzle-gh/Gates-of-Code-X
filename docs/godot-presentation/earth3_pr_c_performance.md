@@ -61,11 +61,22 @@ Files: `pr_c_before_interactive.json`, `pr_c_before_backend_profile.json`
 
 Files: `pr_c_after_interactive.json`, `pr_c_after_backend_profile.json`
 
+## Overlay infrastructure regression fix
+
+Active set now includes snapshot provinces with `supply_hub` / `command_post` / `air_base`, even when unoccupied. Cached on snapshot identity change. Profiler scenario `overlay_routes_sites_counters` injects three unoccupied infra markers and asserts they remain in the active set.
+
 ## Notes
 
-- Draw-call count remains ~3.7k (Compatibility renderer counter; not reduced materially by chunking alone). Primary win is **frame time** on idle/pan/zoom.
+- **Draw-call count remains ~3.7k** and is **not** claimed solved. This is a **substantial frame-time** improvement with a **remaining draw-call bottleneck**.
 - Ownership recolor scenario still pays LUT update when owners flip (expected).
-- Further PR C candidates if needed: border primitive reduction, MultiMesh counters, GPU timers on Vulkan.
+- Further candidates (not in this PR): border primitive reduction, MultiMesh counters, GPU timers on Vulkan.
+
+## Screenshots (PR B vs PR C)
+
+| | PR B | PR C |
+|---|---|---|
+| Full map | `screenshots/earth3/pr_b_full_theatre_1080p.png` | `screenshots/earth3/pr_c_full_map_1080p.png` |
+| Zoomed ops | `screenshots/earth3/pr_b_ops_zoom_1080p.png` | `screenshots/earth3/pr_c_zoom_ops_1080p.png` |
 
 ## Run
 
