@@ -83,7 +83,7 @@ def main() -> int:
         },
     }
     recipe_path = out / "recipe.json"
-    recipe_path.write_text(json.dumps(recipe, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
+    recipe_path.write_bytes((json.dumps(recipe, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8"))
     print(recipe_path)
     return 0
 
