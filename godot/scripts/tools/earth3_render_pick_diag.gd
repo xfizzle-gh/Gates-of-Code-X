@@ -61,6 +61,9 @@ func _run() -> void:
 		scene.snapshot_source_path = _snapshot_path
 	if scene.has_method("_load_snapshot"):
 		scene.call("_load_snapshot", _snapshot_path)
+	# Force Earth3 polygon manifest (do not fall back to GoE EM).
+	if scene.get("map_manifest_source_path") != null:
+		scene.map_manifest_source_path = "res://assets/maps/earth3_europe_mediterranean/map_manifest.json"
 	if scene.has_method("_open_color_id_map"):
 		scene.call("_open_color_id_map")
 	for _i in RENDER_FRAMES:
@@ -87,13 +90,25 @@ func _run() -> void:
 	for item in defaults:
 		samples.append(_sample(scene, item))
 
+	var am_meta := {}
+	if scene.has_method("_active_map"):
+		var am0 = scene.call("_active_map")
+		if am0 != null:
+			am_meta = {
+				"class": String(am0.get_class()) if am0.has_method("get_class") else typeof(am0),
+				"image_size": [am0.image_size().x, am0.image_size().y] if am0.has_method("image_size") else [],
+				"province_count": am0.get("province_count") if am0.get("province_count") != null else null,
+				"has_province_at_image_pos": am0.has_method("province_at_image_pos"),
+			}
 	var payload := {
 		"schema": "gates-of-codex.earth3-owner-circle-render-trace-godot",
 		"schema_version": 1,
 		"viewport": [_width, _height],
 		"snapshot": _snapshot_path,
+		"active_map": am_meta,
 		"samples": samples,
-		"note": "Live Godot hit-test. Gap-fill membership requires dataset side probe (not meshed in PolygonMap).",
+		"note": "Live Godot land hit-test via province_at_image_pos. Empty hit expected over ocean/gap (water not selectable). Gap-fill IDs from Python owner_circle_render_trace.json.",
+		"authoritative_gap_and_archive_trace": "docs/earth3-crop/hydrography_audit/owner_circle_render_trace.json",
 	}
 	var abs_out := _out_path
 	if abs_out.begins_with("res://") or abs_out.begins_with("user://"):
@@ -130,21 +145,21 @@ func _sample(scene: Node, item: Dictionary) -> Dictionary:
 					tr.position.y + map_local.y / img_sz.y * tr.size.y
 				)
 
-	var hit := ""
-	if scene.has_method("_province_at") and screen.x >= 0.0:
-		hit = String(scene.call("_province_at", screen))
-
 	var origin := Vector2(7076.0, 142.0)
 	var am = null
 	if scene.has_method("_active_map"):
 		am = scene.call("_active_map")
+	var hit := ""
+	# Prefer image-space hit on PolygonMap (avoids broken screen mapping).
+	if am != null and am.has_method("province_at_image_pos") and map_local.x >= 0.0:
+		hit = String(am.call("province_at_image_pos", map_local))
+	elif scene.has_method("_province_at") and screen.x >= 0.0:
+		hit = String(scene.call("_province_at", screen))
 	var backend := "unknown"
 	var is_water_hit := false
 	var source_id = null
 	var row := {}
 	if am != null:
-		if am.has_method("get") or true:
-			pass
 		if am.get("row_by_province") != null and hit != "":
 			var rbp: Dictionary = am.row_by_province
 			if rbp.has(hit):
