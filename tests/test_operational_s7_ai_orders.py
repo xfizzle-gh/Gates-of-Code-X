@@ -27,11 +27,16 @@ from gates_of_codex.operational_ai import (
     plan_and_issue_operational_orders,
     _build_graph_indexes,
 )
-from gates_of_codex.operational_capture import advance_site_capture, ensure_site_control_state
+from gates_of_codex.operational_capture import (
+    advance_site_capture,
+    ensure_site_control_state,
+    get_site_control_state,
+)
 from gates_of_codex.operational_movement import (
     activate_committed_orders,
     advance_operational_tick,
     advance_operational_ticks,
+    commit_formation_move_order,
     commit_move_orders,
     issue_move_order,
     resolve_strategic_turn_movement,
@@ -324,45 +329,77 @@ class OperationalS7AIOrdersTests(unittest.TestCase):
 
     def test_crossing_edge_used_when_legal(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            g = _graph(ab_kind="strait", include_disabled_ac=False)
-            # Fix edge kind to authored strait
+            g = _graph(include_disabled_ac=False)
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            strait_id = stable_edge_id("strait", na, nb)
             for edge in g["edges"]:
-                if edge["a"] == stable_node_id("a"):
+                if edge["a"] == na and edge["b"] == nb:
                     edge["kind"] = "strait"
                     edge["authority"] = "authored"
                     edge["legacy_crossing_type"] = "strait"
-                    edge["edge_id"] = stable_edge_id(
-                        "strait", stable_node_id("a"), stable_node_id("b")
-                    )
+                    edge["edge_id"] = strait_id
             state = _state(Path(temporary), g)
             plan_and_issue_operational_orders(state, Faction.RUSSIA, seed=0)
             order = state.strategic_formations["sf-r"].move_order
             assert order is not None
-            self.assertTrue(
-                any("strait" in eid or eid for eid in order.path_edge_ids)
-            )
-            self.assertEqual(stable_node_id("a"), order.path_node_ids[0])
+            self.assertEqual([strait_id], order.path_edge_ids[:1])
+            self.assertEqual(na, order.path_node_ids[0])
+            self.assertEqual(nb, order.path_node_ids[1])
 
     def test_crossing_edge_rejected_when_metadata_blocks(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            g = _graph(
-                ab_kind="strait",
-                ab_meta={"blockaded": True},
-                include_disabled_ac=False,
-            )
+            g = _graph(include_disabled_ac=False)
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            strait_id = stable_edge_id("strait", na, nb)
             for edge in g["edges"]:
-                if edge["a"] == stable_node_id("a"):
+                if edge["a"] == na and edge["b"] == nb:
                     edge["kind"] = "strait"
                     edge["authority"] = "authored"
                     edge["legacy_crossing_type"] = "strait"
                     edge["metadata"] = {"blockaded": True}
-                    edge["edge_id"] = stable_edge_id(
-                        "strait", stable_node_id("a"), stable_node_id("b")
-                    )
+                    edge["edge_id"] = strait_id
             state = _state(Path(temporary), g)
             actions = plan_and_issue_operational_orders(state, Faction.RUSSIA, seed=0)
             self.assertIsNone(state.strategic_formations["sf-r"].move_order)
-            self.assertTrue(any(a.details.get("reason") == "no_valid_route" for a in actions))
+            self.assertEqual("no_valid_route", actions[0].details.get("reason"))
+
+    def test_manual_issue_rejects_enabled_candidate_edge(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            g = _graph(include_disabled_ac=False)
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            # Accidentally enabled candidate corridor.
+            edge_id = stable_edge_id("corridor", na, nb)
+            for edge in g["edges"]:
+                if edge["edge_id"] == edge_id:
+                    edge["authority"] = "candidate"
+                    edge["kind"] = "corridor"
+                    edge["traversal_enabled"] = True
+            state = _state(Path(temporary), g)
+            with self.assertRaises(ValueError) as ctx:
+                issue_move_order(
+                    state,
+                    "sf-r",
+                    path_node_ids=[na, nb],
+                    path_edge_ids=[edge_id],
+                    order_id="manual-cand",
+                )
+            self.assertIn("candidate", str(ctx.exception))
+
+    def test_manual_issue_rejects_metadata_blocked_edge(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            g = _graph(ab_meta={"blocked": True}, include_disabled_ac=False)
+            state = _state(Path(temporary), g)
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            edge_id = stable_edge_id("corridor", na, nb)
+            with self.assertRaises(ValueError) as ctx:
+                issue_move_order(
+                    state,
+                    "sf-r",
+                    path_node_ids=[na, nb],
+                    path_edge_ids=[edge_id],
+                    order_id="manual-block",
+                )
+            self.assertIn("blocked", str(ctx.exception))
 
     def test_entrenched_holds(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -381,10 +418,58 @@ class OperationalS7AIOrdersTests(unittest.TestCase):
             self.assertIsNone(state.strategic_formations["sf-r"].move_order)
             self.assertEqual("stance_hold", actions[0].details["reason"])
 
-    def test_forced_march_avoids_enemy_destination(self) -> None:
+    def test_forced_march_rejects_hostile_intermediate_node(self) -> None:
+        """Enemy on intermediate b; farther c is hostile objective — FM must hold."""
         with tempfile.TemporaryDirectory() as temporary:
-            state = _state(Path(temporary))
-            # Enemy NATO on b; Russia forced march from a should not pick b if enemy there.
+            state = _state(Path(temporary), _graph(include_disabled_ac=False))
+            na, nb, nc = stable_node_id("a"), stable_node_id("b"), stable_node_id("c")
+            # Enemy on intermediate node b.
+            state.strategic_formations["sf-n"].position = FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value, node_id=nb, progress_milli=0
+            )
+            state.strategic_formations["sf-n"].province_id = "b"
+            state.battalions["bn-n"].province_id = "b"
+            state.provinces["b"].owner = Faction.NATO
+            state.provinces["c"].owner = Faction.NATO
+            state.strategic_formations["sf-r"].stance = FormationStance.FORCED_MARCH.value
+            actions = plan_and_issue_operational_orders(state, Faction.RUSSIA, seed=0)
+            order = state.strategic_formations["sf-r"].move_order
+            # No legal non-hostile path through b → hold or reject without hostile nodes.
+            if order is None:
+                self.assertIn(actions[0].action, {"hold", "reject"})
+                self.assertIn(
+                    actions[0].details.get("reason"),
+                    {"no_valid_route", "forced_march_hostile_path"},
+                )
+            else:
+                self.assertEqual(FormationStance.FORCED_MARCH.value, order.locked_stance)
+                for node_id in order.path_node_ids[1:]:
+                    self.assertNotEqual(nb, node_id)
+                    self.assertFalse(
+                        any(
+                            f.faction == Faction.NATO
+                            for f in state.strategic_formations.values()
+                            if f.position
+                            and f.position.mode == PositionMode.AT_NODE.value
+                            and f.position.node_id == node_id
+                        )
+                    )
+
+    def test_forced_march_takes_safe_route_not_hostile_branch(self) -> None:
+        """With a safe alternate destination, FM commits a path with zero hostiles."""
+        with tempfile.TemporaryDirectory() as temporary:
+            # Graph: a-b (enemy on b), a-d safe friendly frontier-ish empty.
+            g = _graph(include_disabled_ac=False)
+            nd = stable_node_id("d")
+            g["nodes"].append(_node("d", pixel=[0, 1000]))
+            g["sites"].append(_site("d"))
+            g["edges"].append(_edge("a", "d", cost=COST_MILLI_UNITY, enabled=True))
+            state = _state(Path(temporary), g)
+            state.provinces["d"] = Province(
+                "d", "D", owner=Faction.NEUTRAL, neighbors=["a"], x=0, y=100
+            )
+            state.provinces["a"].neighbors = ["b", "d"]
+            # Enemy on b blocks a→b→c forced-march attack path.
             state.strategic_formations["sf-n"].position = FormationOperationalPosition(
                 mode=PositionMode.AT_NODE.value,
                 node_id=stable_node_id("b"),
@@ -392,38 +477,84 @@ class OperationalS7AIOrdersTests(unittest.TestCase):
             )
             state.strategic_formations["sf-n"].province_id = "b"
             state.battalions["bn-n"].province_id = "b"
-            state.strategic_formations["sf-r"].stance = FormationStance.FORCED_MARCH.value
-            plan_and_issue_operational_orders(state, Faction.RUSSIA, seed=0)
-            order = state.strategic_formations["sf-r"].move_order
-            if order is not None:
-                self.assertNotEqual(stable_node_id("b"), order.path_node_ids[-1])
-                self.assertEqual(
-                    FormationStance.FORCED_MARCH.value, order.locked_stance
-                )
-
-    def test_destination_capacity_rejects_before_commitment(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            state = _state(Path(temporary), _graph(include_disabled_ac=False))
-            # Fill b with 3 friendly Russia formations.
-            for i in range(3):
-                bid, fid = f"bn-hold{i}", f"sf-hold{i}"
-                state.battalions[bid] = _bn(bid, Faction.RUSSIA, "b", fid)
-                state.strategic_formations[fid] = _force(fid, Faction.RUSSIA, "b", bid)
-                state.strategic_formations[fid].position = FormationOperationalPosition(
-                    mode=PositionMode.AT_NODE.value,
-                    node_id=stable_node_id("b"),
-                    progress_milli=0,
-                )
-            # Make c hostile empty so only path goals may be full.
+            state.provinces["b"].owner = Faction.NATO
             state.provinces["c"].owner = Faction.NATO
+            state.strategic_formations["sf-r"].stance = FormationStance.FORCED_MARCH.value
             actions = plan_and_issue_operational_orders(state, Faction.RUSSIA, seed=0)
             order = state.strategic_formations["sf-r"].move_order
-            if order is not None:
-                self.assertNotEqual(stable_node_id("b"), order.path_node_ids[-1])
-            # Capacity full node never accepted as destination for the mover.
-            for a in actions:
-                if a.action == "operational_move":
-                    self.assertNotEqual(stable_node_id("b"), a.details.get("goal_node"))
+            assert order is not None
+            self.assertEqual(FormationStance.FORCED_MARCH.value, order.locked_stance)
+            self.assertEqual("operational_move", actions[0].action)
+            self.assertNotIn(stable_node_id("b"), order.path_node_ids[1:])
+            self.assertEqual(nd, order.path_node_ids[-1])
+            # Player commit path agrees: cannot commit a→b with FM.
+            edge_ab = stable_edge_id(
+                "corridor", stable_node_id("a"), stable_node_id("b")
+            )
+            # Clear and try illegal FM path via shared commit validator.
+            state.strategic_formations["sf-r"].move_order = None
+            issue_move_order(
+                state,
+                "sf-r",
+                path_node_ids=[stable_node_id("a"), stable_node_id("b")],
+                path_edge_ids=[edge_ab],
+                order_id="fm-illegal",
+            )
+            with self.assertRaises(ValueError) as ctx:
+                commit_formation_move_order(
+                    state,
+                    "sf-r",
+                    locked_stance=FormationStance.FORCED_MARCH.value,
+                )
+            self.assertEqual("forced_march_hostile_path", str(ctx.exception))
+
+    def test_destination_capacity_reservations_stable_reject(self) -> None:
+        """Four movers target one empty node with cap 3: exactly 3 commit, 1 rejects."""
+        with tempfile.TemporaryDirectory() as temporary:
+            # Single legal hop a→b only (no alternate destination).
+            g = _graph(include_disabled_ac=False)
+            nb, nc = stable_node_id("b"), stable_node_id("c")
+            g["edges"] = [
+                e
+                for e in g["edges"]
+                if not (
+                    {e["a"], e["b"]} == {nb, nc}
+                )
+            ]
+            state = _state(Path(temporary), g)
+            del state.strategic_formations["sf-n"]
+            del state.battalions["bn-n"]
+            # Three more Russia formations at a, all operational.
+            for i in range(3):
+                bid, fid = f"bn-m{i}", f"sf-m{i}"
+                state.battalions[bid] = _bn(bid, Faction.RUSSIA, "a", fid)
+                state.strategic_formations[fid] = _force(fid, Faction.RUSSIA, "a", bid)
+                state.strategic_formations[fid].position = FormationOperationalPosition(
+                    mode=PositionMode.AT_NODE.value,
+                    node_id=stable_node_id("a"),
+                    progress_milli=0,
+                )
+            actions = plan_and_issue_operational_orders(state, Faction.RUSSIA, seed=0)
+            committed = [
+                a
+                for a in actions
+                if a.action == "operational_move" and a.details.get("goal_node") == nb
+            ]
+            rejected = [
+                a for a in actions if a.details.get("reason") == "destination_capacity"
+            ]
+            self.assertEqual(3, len(committed), msg=[(a.action, a.details) for a in actions])
+            self.assertEqual(1, len(rejected), msg=[(a.action, a.details) for a in actions])
+            self.assertEqual("destination_capacity", rejected[0].details["reason"])
+            claiming = [
+                f
+                for f in state.strategic_formations.values()
+                if f.move_order is not None
+                and f.move_order.status == MoveOrderStatus.COMMITTED.value
+                and f.move_order.path_node_ids
+                and f.move_order.path_node_ids[-1] == nb
+            ]
+            self.assertEqual(3, len(claiming))
 
     def test_enemy_node_entry_creates_pending_battle(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -451,69 +582,69 @@ class OperationalS7AIOrdersTests(unittest.TestCase):
             state = _state(Path(temporary), _graph(ab_cost=2000, include_disabled_ac=False))
             na, nb = stable_node_id("a"), stable_node_id("b")
             edge = stable_edge_id("corridor", na, nb)
-            # Place both on edge opposing after AI commits Russia toward b.
-            plan_and_issue_operational_orders(state, Faction.RUSSIA, seed=0)
-            # NATO manual order toward a on same edge.
-            state.strategic_formations["sf-n"].position = FormationOperationalPosition(
-                mode=PositionMode.ON_EDGE.value,
-                edge_id=edge,
-                progress_milli=0,
-                facing_node_id=na,
-            )
-            issue_move_order(
-                state, "sf-n", path_node_ids=[nb, na], path_edge_ids=[edge], order_id="n-manual"
-            )
-            state.strategic_formations["sf-n"].position = FormationOperationalPosition(
-                mode=PositionMode.ON_EDGE.value,
-                edge_id=edge,
-                progress_milli=0,
-                facing_node_id=na,
-            )
-            # Russia also on edge for cross
-            r_order = state.strategic_formations["sf-r"].move_order
-            assert r_order is not None
-            state.strategic_formations["sf-r"].position = FormationOperationalPosition(
-                mode=PositionMode.ON_EDGE.value,
-                edge_id=edge,
-                progress_milli=0,
-                facing_node_id=nb,
-            )
-            commit_move_orders(state, faction="nato")
+            # Exact opposing intervals on the edge (manual orders; S6 path).
+            for fid, face, prog, path_nodes in (
+                ("sf-r", nb, 200, [na, nb]),
+                ("sf-n", na, 200, [nb, na]),
+            ):
+                state.strategic_formations[fid].position = FormationOperationalPosition(
+                    mode=PositionMode.ON_EDGE.value,
+                    edge_id=edge,
+                    progress_milli=prog,
+                    facing_node_id=face,
+                )
+                issue_move_order(
+                    state,
+                    fid,
+                    path_node_ids=path_nodes,
+                    path_edge_ids=[edge],
+                    order_id=f"ord-{fid}",
+                )
+                state.strategic_formations[fid].position = FormationOperationalPosition(
+                    mode=PositionMode.ON_EDGE.value,
+                    edge_id=edge,
+                    progress_milli=prog,
+                    facing_node_id=face,
+                )
+            commit_move_orders(state)
             activate_committed_orders(state)
             report = advance_operational_tick(state)
-            self.assertIn(report.get("swept_kind"), {"edge_cross", "edge_catchup", "node_contact", ""})
-            # If they meet on edge, battle pending via S6.
-            if report.get("swept_kind") in {"edge_cross", "edge_catchup"}:
-                self.assertIsNotNone(state.pending_battle)
+            self.assertEqual("edge_cross", report.get("swept_kind"))
+            self.assertIsNotNone(state.pending_battle)
+            assert state.pending_battle is not None
+            self.assertEqual("edge_cross", state.pending_battle.encounter_kind)
+            self.assertEqual(edge, state.pending_battle.encounter_edge_id)
 
     def test_control_site_capture_two_uncontested_ticks(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             state = _state(Path(temporary), _graph(ab_cost=1000, include_disabled_ac=False))
-            # Remove NATO force so Russia can capture b alone.
             del state.strategic_formations["sf-n"]
             del state.battalions["bn-n"]
+            # Only goal is empty neutral b (c is friendly-owned so not hostile).
+            state.provinces["c"].owner = Faction.RUSSIA
+            site_id = stable_site_id("b", "control", "anchor")
+            ensure_site_control_state(state)
+            initial_controller = get_site_control_state(state)[site_id]["controller_faction"]
             plan_and_issue_operational_orders(state, Faction.RUSSIA, seed=0)
+            order = state.strategic_formations["sf-r"].move_order
+            assert order is not None
+            self.assertEqual(stable_node_id("b"), order.path_node_ids[-1])
             activate_committed_orders(state)
-            advance_operational_tick(state)  # arrive b
+            # Arrival tick also runs one capture advance (tick 1 of 2).
+            advance_operational_tick(state)
             self.assertIsNone(state.pending_battle)
             force = state.strategic_formations["sf-r"]
             assert force.position is not None
-            # May need second hop if goal was c; ensure on a site node.
-            if force.position.node_id != stable_node_id("b"):
-                # Force place on b for capture proof of rule still active.
-                force.position = FormationOperationalPosition(
-                    mode=PositionMode.AT_NODE.value,
-                    node_id=stable_node_id("b"),
-                    progress_milli=0,
-                )
-                force.province_id = "b"
-                state.battalions["bn-r"].province_id = "b"
-            ensure_site_control_state(state)
-            r1 = advance_site_capture(state)
-            r2 = advance_site_capture(state)
-            self.assertTrue(r1.get("advanced") or r2.get("advanced") or True)
-            # After 2 uncontested ticks ownership may flip — rule path exercised.
-            self.assertIsNone(state.pending_battle)
+            self.assertEqual(PositionMode.AT_NODE.value, force.position.mode)
+            self.assertEqual(stable_node_id("b"), force.position.node_id)
+            after_tick1 = get_site_control_state(state)[site_id]
+            self.assertEqual(initial_controller, after_tick1["controller_faction"])
+            self.assertEqual(1, int(after_tick1["progress_ticks"]))
+            # Second uncontested capture tick flips controller.
+            advance_site_capture(state)
+            after_tick2 = get_site_control_state(state)[site_id]
+            self.assertEqual(Faction.RUSSIA.value, after_tick2["controller_faction"])
+            self.assertNotEqual(initial_controller, after_tick2["controller_faction"])
 
     def test_no_route_means_hold(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -574,16 +705,28 @@ class OperationalS7AIOrdersTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             state = _state(Path(temporary))
             self.assertTrue(operational_graph_authority_present(state))
-            before = state.strategic_formations["sf-r"].province_id
-            ai = StrategicAI(state, random_seed=0)
-            actions = ai.take_turn(Faction.RUSSIA)
+            before_r = state.strategic_formations["sf-r"].province_id
+            before_bn = state.battalions["bn-r"].province_id
+            actions = StrategicAI(state, random_seed=0).take_turn(Faction.RUSSIA)
+            legacy = {"move", "capture", "attack"}
+            self.assertFalse(any(a.action in legacy for a in actions))
             self.assertTrue(
-                all(a.action != "move" or a.details.get("formation_id") for a in actions)
-                or any(a.action in {"operational_move", "hold", "hold_locked_order"} for a in actions)
+                all(
+                    a.action
+                    in {
+                        "operational_move",
+                        "hold",
+                        "hold_locked_order",
+                        "reject",
+                        "hold_pending_battle",
+                        "economy",
+                        "construct",
+                    }
+                    for a in actions
+                )
             )
-            # Province only changes via tick resolution, not take_turn.
-            self.assertEqual(before, state.strategic_formations["sf-r"].province_id)
-            self.assertFalse(any(a.action == "capture" for a in actions))
+            self.assertEqual(before_r, state.strategic_formations["sf-r"].province_id)
+            self.assertEqual(before_bn, state.battalions["bn-r"].province_id)
 
     def test_legacy_ai_without_graph(self) -> None:
         state = CampaignState(
@@ -639,12 +782,30 @@ class OperationalS7AIOrdersTests(unittest.TestCase):
             state = _state(Path(temporary), _graph(ab_cost=1000, include_disabled_ac=False))
             del state.strategic_formations["sf-n"]
             del state.battalions["bn-n"]
+            state.provinces["c"].owner = Faction.RUSSIA
             StrategicAI(state, random_seed=0).take_turn(Faction.RUSSIA)
+            order = state.strategic_formations["sf-r"].move_order
+            assert order is not None
+            self.assertEqual(MoveOrderStatus.COMMITTED.value, order.status)
+            self.assertEqual(stable_node_id("b"), order.path_node_ids[-1])
             report = resolve_strategic_turn_movement(state)
-            self.assertTrue(report.get("activated", 0) >= 0)
+            self.assertEqual(1, report.get("activated"))
             force = state.strategic_formations["sf-r"]
-            # After full resolve, force should have moved or completed.
-            self.assertIsNotNone(force.position)
+            assert force.position is not None
+            self.assertEqual(PositionMode.AT_NODE.value, force.position.mode)
+            self.assertEqual(stable_node_id("b"), force.position.node_id)
+            self.assertEqual(0, force.position.progress_milli)
+            self.assertEqual("b", force.province_id)
+            self.assertEqual("b", state.battalions["bn-r"].province_id)
+            if force.move_order is not None:
+                self.assertIn(
+                    force.move_order.status,
+                    {
+                        MoveOrderStatus.COMPLETED.value,
+                        MoveOrderStatus.ACTIVE.value,
+                        MoveOrderStatus.BLOCKED.value,
+                    },
+                )
 
 
 if __name__ == "__main__":

@@ -9,17 +9,24 @@ from .diplomacy import are_allied, is_friendly_owner
 from .models import CampaignState, Faction, StrategicFormation
 from .operational_capture import list_control_sites
 from .operational_contact import (
-    can_enter_node_friendly_stack,
     enemy_formations_at_node,
     formation_at_node_id,
     formations_at_node,
     node_is_contested,
 )
-from .operational_movement import commit_move_orders, issue_move_order
+from .operational_movement import (
+    assert_stance_route_legal,
+    can_reserve_destination,
+    cancel_move_order,
+    commit_formation_move_order,
+    edge_is_traversable,
+    issue_move_order,
+)
 from .operational_position import load_operational_graph_for_state
 from .operational_schema import (
     FormationStance,
     MoveOrderStatus,
+    OperationalMoveOrder,
     OperationalRouteEdge,
     PositionMode,
 )
@@ -88,6 +95,7 @@ def plan_and_issue_operational_orders(
 
     edges_by_id, nodes_by_id, adjacency = _build_graph_indexes(graph)
     actions: list[StrategicAction] = []
+    batch_reservations: dict[str, int] = {}
     forces = sorted(
         (
             force
@@ -103,6 +111,7 @@ def plan_and_issue_operational_orders(
             edges_by_id=edges_by_id,
             nodes_by_id=nodes_by_id,
             adjacency=adjacency,
+            batch_reservations=batch_reservations,
         )
         actions.append(action)
     return actions
@@ -154,10 +163,16 @@ def _plan_one_formation(
     edges_by_id: dict[str, OperationalRouteEdge],
     nodes_by_id: dict[str, dict[str, Any]],
     adjacency: dict[str, list[_Hop]],
+    batch_reservations: dict[str, int],
 ) -> StrategicAction:
     fid = force.strategic_formation_id
     bn = force.battalion_ids[0] if force.battalion_ids else ""
     stance = _effective_stance(force)
+    locked = (
+        stance
+        if stance in {item.value for item in FormationStance}
+        else FormationStance.OPERATIONAL.value
+    )
 
     if force.move_order is not None and force.move_order.status in _LOCKED_ORDER:
         return StrategicAction(
@@ -200,22 +215,35 @@ def _plan_one_formation(
         nodes_by_id=nodes_by_id,
         stance=stance,
     )
+    last_reject_reason = "no_valid_route"
     for priority, goal_node, goal_kind in goals:
         if goal_node == start:
             continue
-        if not can_enter_node_friendly_stack(state, force, goal_node):
-            # Destination full for friendlies — stable reject, try next goal.
+        if not can_reserve_destination(
+            state, force, goal_node, batch_reservations=batch_reservations
+        ):
+            last_reject_reason = "destination_capacity"
             continue
-        if stance == FormationStance.FORCED_MARCH.value:
-            # Existing contract: forced march does not deliberately attack.
-            if enemy_formations_at_node(
-                state, goal_node, faction=force.faction, excluding_formation_id=fid
-            ):
-                continue
         path = find_operational_path(
             start_node=start, goal_node=goal_node, adjacency=adjacency
         )
         if path is None or not path.edge_ids:
+            continue
+        # Pre-check stance on the full path before issuing.
+        probe = OperationalMoveOrder(
+            order_id="probe",
+            formation_id=fid,
+            path_node_ids=list(path.node_ids),
+            path_edge_ids=list(path.edge_ids),
+            issued_tick=0,
+            status=MoveOrderStatus.DRAFT.value,
+        )
+        try:
+            assert_stance_route_legal(
+                state, force, probe, locked_stance=locked
+            )
+        except ValueError as exc:
+            last_reject_reason = str(exc) or "forced_march_hostile_path"
             continue
         try:
             order = issue_move_order(
@@ -225,7 +253,37 @@ def _plan_one_formation(
                 path_edge_ids=list(path.edge_ids),
                 order_id=_stable_order_id(state, fid, goal_node),
             )
+            commit_formation_move_order(
+                state,
+                fid,
+                locked_stance=locked,
+                batch_reservations=batch_reservations,
+            )
         except ValueError as exc:
+            reason = str(exc)
+            if reason in {
+                "destination_capacity",
+                "forced_march_hostile_path",
+                "no_draft_order",
+            } or "forced_march" in reason or "capacity" in reason:
+                last_reject_reason = (
+                    "destination_capacity"
+                    if "capacity" in reason
+                    else (
+                        "forced_march_hostile_path"
+                        if "forced_march" in reason
+                        else reason
+                    )
+                )
+                try:
+                    cancel_move_order(state, fid)
+                except ValueError:
+                    force.move_order = None
+                continue
+            try:
+                cancel_move_order(state, fid)
+            except ValueError:
+                force.move_order = None
             return StrategicAction(
                 battalion_id=bn,
                 action="reject",
@@ -236,18 +294,11 @@ def _plan_one_formation(
                 details={
                     "formation_id": fid,
                     "reason": "issue_rejected",
-                    "error": str(exc),
+                    "error": reason,
                     "goal_node": goal_node,
                     "goal_kind": goal_kind,
                 },
             )
-        commit_move_orders(
-            state,
-            faction=force.faction.value,
-            locked_stance=stance
-            if stance in {item.value for item in FormationStance}
-            else FormationStance.OPERATIONAL.value,
-        )
         dest_province = str(
             (nodes_by_id.get(goal_node) or {}).get("province_id") or force.province_id
         )
@@ -264,17 +315,15 @@ def _plan_one_formation(
                 "path_node_ids": list(path.node_ids),
                 "path_edge_ids": list(path.edge_ids),
                 "order_id": order.order_id,
-                "locked_stance": stance
-                if stance in {item.value for item in FormationStance}
-                else FormationStance.OPERATIONAL.value,
+                "locked_stance": locked,
             },
         )
 
     return StrategicAction(
         battalion_id=bn,
-        action="hold",
+        action="hold" if last_reject_reason == "no_valid_route" else "reject",
         origin_province_id=force.province_id,
-        details={"formation_id": fid, "reason": "no_valid_route"},
+        details={"formation_id": fid, "reason": last_reject_reason},
     )
 
 
@@ -330,10 +379,10 @@ def _build_graph_indexes(
     adjacency: dict[str, list[_Hop]] = defaultdict(list)
     for edge_id in sorted(edges_by_id):
         edge = edges_by_id[edge_id]
-        if not _edge_legally_usable(edge):
+        if not edge_is_traversable(edge):
             continue
         cost = max(1, int(edge.movement_cost_milli))
-        # Bidirectional or one-way a→b only.
+        # Bidirectional or one-way a→b only (direction enforced at hop use).
         adjacency[edge.a].append(_Hop(edge_id=edge.edge_id, dest=edge.b, cost=cost))
         if edge.bidirectional:
             adjacency[edge.b].append(_Hop(edge_id=edge.edge_id, dest=edge.a, cost=cost))
@@ -343,20 +392,6 @@ def _build_graph_indexes(
             adjacency[node_id], key=lambda hop: (hop.edge_id, hop.dest)
         )
     return edges_by_id, nodes_by_id, dict(adjacency)
-
-
-def _edge_legally_usable(edge: OperationalRouteEdge) -> bool:
-    """Authored-enabled edges only; honor existing block metadata."""
-    if not edge.traversal_enabled:
-        return False
-    meta = edge.metadata or {}
-    for key in ("blocked", "blockaded", "closed", "disabled"):
-        if bool(meta.get(key)):
-            return False
-    # Candidate corridors must never be treated as authority.
-    if str(edge.authority) == "candidate":
-        return False
-    return True
 
 
 def _ranked_goals(
