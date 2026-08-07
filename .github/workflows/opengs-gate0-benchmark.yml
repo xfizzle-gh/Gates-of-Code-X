@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   benchmark:
-    name: ${{ matrix.os }} pinned benchmark
+    name: ${{ matrix.os }} pinned synthetic benchmark
     strategy:
       fail-fast: false
       matrix:
@@ -52,15 +52,95 @@ jobs:
       - name: Verify Gate 0 contracts
         run: python -m unittest tests.test_opengs_gate0_contract -v
 
-      - name: Run pinned upstream benchmark
+      - name: Compile Gate 0 scripts
+        run: >-
+          python -m py_compile
+          tools/opengs_eval/benchmark_upstream.py
+          tools/opengs_eval/benchmark_natural_earth.py
+          tools/opengs_eval/build_natural_earth_inputs.py
+
+      - name: Run pinned upstream synthetic benchmark
         run: >-
           python tools/opengs_eval/benchmark_upstream.py
           --upstream-root build/upstream/opengs-maptool
           --output build/opengs_eval/gate0_benchmark.json
 
-      - name: Upload benchmark result
+      - name: Upload synthetic benchmark result
         uses: actions/upload-artifact@v4
         with:
           name: opengs-gate0-${{ runner.os }}
           path: build/opengs_eval/gate0_benchmark.json
+          if-no-files-found: error
+
+  natural-earth:
+    name: Linux pinned Natural Earth benchmark
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout Gates of CodeX
+        uses: actions/checkout@v4
+
+      - name: Checkout pinned OpenGS Map Tool
+        uses: actions/checkout@v4
+        with:
+          repository: Thomas-Holtvedt/opengs-maptool
+          ref: 06e7ec8517bd45872cf44d77cb8784e5ffca49bb
+          path: build/upstream/opengs-maptool
+
+      - name: Checkout pinned Natural Earth vectors
+        uses: actions/checkout@v4
+        with:
+          repository: nvkelso/natural-earth-vector
+          ref: v5.1.2
+          path: build/upstream/natural-earth-vector
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install real-input dependencies
+        run: >-
+          python -m pip install
+          numpy==2.3.5
+          pillow==12.0.0
+          scipy==1.16.3
+          psutil
+          shapely==2.1.2
+          pyproj==3.7.2
+
+      - name: Verify Gate 0 contracts
+        run: python -m unittest tests.test_opengs_gate0_contract -v
+
+      - name: Compile Gate 0 scripts
+        run: >-
+          python -m py_compile
+          tools/opengs_eval/benchmark_natural_earth.py
+          tools/opengs_eval/build_natural_earth_inputs.py
+
+      - name: Build projection-aligned Natural Earth inputs
+        run: >-
+          python tools/opengs_eval/build_natural_earth_inputs.py
+          --natural-earth-root build/upstream/natural-earth-vector
+          --output build/opengs_eval/natural_earth_inputs
+          --width 2048
+          --height 1536
+
+      - name: Run pinned upstream Natural Earth benchmark
+        run: >-
+          python tools/opengs_eval/benchmark_natural_earth.py
+          --upstream-root build/upstream/opengs-maptool
+          --input-root build/opengs_eval/natural_earth_inputs
+          --scenarios tools/opengs_eval/natural_earth_scenarios.json
+          --output build/opengs_eval/natural_earth_benchmark.json
+
+      - name: Upload real-input benchmark evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: opengs-gate0-natural-earth-Linux
+          path: |
+            build/opengs_eval/natural_earth_inputs/
+            build/opengs_eval/natural_earth_benchmark.json
           if-no-files-found: error
