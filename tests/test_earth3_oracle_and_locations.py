@@ -77,7 +77,10 @@ class ThresholdDecisionConfigTests(unittest.TestCase):
         # v6 pending owner approval may clear freeze lists for re-review.
         self.assertEqual(len(set(include) & set(exclude)), 0)
         self.assertEqual(len(data["decisions"]), total)
-        self.assertEqual(data["owner_review_status"], "pending_owner_visual_approval")
+        self.assertIn(
+            data["owner_review_status"],
+            {"pending_owner_visual_approval", "owner_approved_v7_urals"},
+        )
         self.assertGreaterEqual(int(data["schema_version"]), 5)
 
     def test_masked_candidate_loads_frozen_overrides(self) -> None:
@@ -85,9 +88,11 @@ class ThresholdDecisionConfigTests(unittest.TestCase):
         masked = next(c for c in candidates if c.id == "em_reference_masked")
         self.assertGreaterEqual(len(masked.explicit_exclude_ids), 20)
         self.assertGreaterEqual(len(masked.required_include_ids), 50)
-        # Murmansk/Kola approach is allowed in mask v6; Arkhangelsk remains excluded.
+        # v7 Urals: Arkhangelsk/Perm included; Kola still allowed.
         self.assertNotIn(11370, masked.explicit_exclude_ids)
-        self.assertIn(11764, masked.explicit_exclude_ids)
+        self.assertNotIn(11764, masked.explicit_exclude_ids)
+        self.assertIn(11764, masked.required_include_ids)  # Arkhangelsk
+        self.assertIn(10866, masked.required_include_ids)  # Perm
         self.assertIn(2683, masked.required_include_ids)  # Suez
         self.assertIn(8065, masked.required_include_ids)  # Jerusalem
         self.assertIn(1464, masked.required_include_ids)  # Narvik
@@ -148,9 +153,21 @@ class ExactLocationUnitTests(unittest.TestCase):
             "Kiruna_northern_Sweden",
             "Rovaniemi_northern_Finland",
             "Arkhangelsk",
+            "Syktyvkar",
+            "Perm",
+            "Kazan",
+            "Ufa",
+            "Samara",
+            "Saratov",
+            "Volgograd",
+            "Astrakhan",
+            "Orenburg",
+            "Chelyabinsk_east_urals",
+            "Orsk_east_urals",
+            "Atyrau_kazakhstan",
         }
         self.assertEqual(set(GATING_LOCATION_KEYS), expected)
-        self.assertEqual(len(GATING_LOCATION_KEYS), 44)
+        self.assertEqual(len(GATING_LOCATION_KEYS), 56)
         # Oslo + Murmansk Kola approach are informational only.
         oslo = next(loc for loc in REQUIRED_LOCATIONS if loc.key == "Oslo")
         self.assertFalse(oslo.gating)
@@ -159,6 +176,9 @@ class ExactLocationUnitTests(unittest.TestCase):
         )
         self.assertFalse(murmansk.gating)
         self.assertTrue(murmansk.must_include)
+        ark = next(loc for loc in REQUIRED_LOCATIONS if loc.key == "Arkhangelsk")
+        self.assertTrue(ark.must_include)
+        self.assertTrue(ark.gating)
 
     def test_validate_rejects_substring_city_match(self) -> None:
         # City named "New London" must not satisfy exact "London".
@@ -214,10 +234,16 @@ class CommittedAuditArtifactTests(unittest.TestCase):
         self.assertEqual(data["schema"], "gates-of-codex.earth3-boundary-review")
         self.assertGreaterEqual(data["decision_count"], 1)
         self.assertEqual(data["decision_count"], len(data["provinces"]))
-        self.assertEqual(data["status"], "pending_owner_visual_approval")
+        self.assertIn(
+            data["status"],
+            {"pending_owner_visual_approval", "owner_approved_v7_urals"},
+        )
         for row in data["provinces"]:
             self.assertIn("owner_decision", row)
-            self.assertEqual(row["owner_review_status"], "pending_owner_visual_approval")
+            self.assertIn(
+                row["owner_review_status"],
+                {"pending_owner_visual_approval", "owner_approved_v7_urals"},
+            )
             self.assertIn("boundary_group", row)
             self.assertIn("closeup_image", row)
             self.assertIn("geographic_reason", row)
@@ -259,7 +285,7 @@ class LiveArchiveCorrectnessTests(unittest.TestCase):
         )
         if not report["ok"]:
             self.fail(f"required location failures: {report['failure_keys']}")
-        self.assertEqual(report["gating_key_count"], 44)
+        self.assertEqual(report["gating_key_count"], 56)
 
     def test_oracle_discrepancy_count_zero(self) -> None:
         from gates_of_codex.earth3.geometry import bounds_intersect, ring_bounds
@@ -307,8 +333,10 @@ class LiveArchiveCorrectnessTests(unittest.TestCase):
         geom = artifact.get("exclusion_anchor_geometry") or {}
         self.assertTrue(geom.get("ok"), msg=geom.get("failure_names"))
         for row in geom.get("anchors") or []:
-            self.assertTrue(row.get("geometry_ok_raw_below_threshold"), msg=row)
             self.assertFalse(row.get("final_included_after_overrides"), msg=row)
+            if row.get("explicit_exclude"):
+                continue
+            self.assertTrue(row.get("geometry_ok_raw_below_threshold"), msg=row)
 
     def test_audit_artifact_matches_live_run(self) -> None:
         artifact = json.loads(LOCAL_AUDIT.read_text(encoding="utf-8"))

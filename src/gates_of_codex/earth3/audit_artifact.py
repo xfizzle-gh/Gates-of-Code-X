@@ -224,6 +224,8 @@ def _exclusion_anchor_geometry(
         auto_include = raw_ratio + 1e-12 >= thr
         final_included = pid in included
         geometry_ok = (raw_ratio < thr) or (not mask_hit) or (not broad_hit)
+        # Fail-closed explicit excludes may sit on the mask edge; final exclusion is required.
+        explicit = pid in set(candidate.explicit_exclude_ids)
         row = {
             "name": anchor["name"],
             "source_province_id": pid,
@@ -236,10 +238,13 @@ def _exclusion_anchor_geometry(
             "automatic_threshold_include": auto_include,
             "final_included_after_overrides": final_included,
             "geometry_ok_raw_below_threshold": geometry_ok,
+            "explicit_exclude": explicit,
             "final_ok_excluded": not final_included,
         }
         rows.append(row)
-        if not geometry_ok or final_included:
+        if final_included:
+            failures.append(str(anchor["name"]))
+        elif not geometry_ok and not explicit:
             failures.append(str(anchor["name"]))
     return {
         "ok": not failures,
@@ -396,13 +401,18 @@ def validate_committed_audit_artifact(
     if not geom.get("ok"):
         errors.append(f"exclusion_anchor_geometry failed: {geom.get('failure_names')}")
     for row in geom.get("anchors") or []:
-        if not row.get("geometry_ok_raw_below_threshold", False):
-            errors.append(
-                f"anchor raw overlap not below threshold: {row.get('name')} "
-                f"ratio={row.get('raw_overlap_ratio')}"
-            )
         if row.get("final_included_after_overrides"):
             errors.append(f"anchor still included after overrides: {row.get('name')}")
+            continue
+        if row.get("geometry_ok_raw_below_threshold", False):
+            continue
+        # Explicit fail-closed excludes may intersect the mask edge.
+        if row.get("explicit_exclude"):
+            continue
+        errors.append(
+            f"anchor raw overlap not below threshold: {row.get('name')} "
+            f"ratio={row.get('raw_overlap_ratio')}"
+        )
 
     iceland = payload.get("iceland") or {}
     if not iceland.get("ok"):

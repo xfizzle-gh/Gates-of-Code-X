@@ -1,0 +1,43 @@
+{
+  "map_id": "earth3_europe_mediterranean",
+  "candidate": "em_reference_masked_v7_urals",
+  "province_count": 3523,
+  "land_count": 3307,
+  "water_count": 216,
+  "included_ids_sha256": "e8dd0dd16ac06d035398e079f0736a97c2fe39bbb4434cc6c6c119067b490dda",
+  "triangle_count": 325592,
+  "vertex_count": 332638,
+  "dataset_bytes": 18952294,
+  "snapshot_bytes": 877471,
+  "bounds": {
+    "origin_source_xy": [
+      7076.0,
+      142.0
+    ],
+    "width": 4306.0,
+    "height": 3449.0,
+    "source_min_xy": [
+      7084.0,
+      150.0
+    ],
+    "source_max_xy": [
+      11374.0,
+      3583.0
+    ]
+  },
+  "black_hole_audit": {
+    "ok": true,
+    "gap_fills_created": 50,
+    "max_gap_fill_land_overlap_fraction": 0.0,
+    "missing_province_ids_count": 0,
+    "failed_empty_meshes": 0,
+    "unexplained_black_components": 0
+  },
+  "perf": {
+    "map_open_ms": 1523.01,
+    "refresh_snapshot_partial_ms": 6.85,
+    "province_pick_ms_avg": 0.049,
+    "image_width": 4306,
+    "image_height": 3449
+  }
+}

@@ -1,11 +1,11 @@
 {
   "ok": true,
-  "province_count_checked": 3345,
+  "province_count_checked": 3523,
   "failed_count": 0,
   "failed_province_ids": [],
   "max_area_error": 7.424446545085129e-16,
-  "total_polygon_area": 8178157.5,
-  "total_triangle_area": 8178157.5,
+  "total_polygon_area": 9395340.0,
+  "total_triangle_area": 9395340.0,
   "triangulator": "shapely_delaunay_clipped_interior",
   "area_rel_tol": 0.001,
   "no_fan_fallback": true

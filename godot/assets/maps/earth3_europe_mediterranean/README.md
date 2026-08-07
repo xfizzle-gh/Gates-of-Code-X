@@ -1,39 +1,28 @@
 # earth3_europe_mediterranean
 
-Earth3 Europe–Mediterranean launch theatre (crop `em_reference_masked` **mask v6**).
+Earth3 Europe–Mediterranean production theatre (crop em_reference_masked **mask v7 Urals**).
 
-**Owner visual approval pending** for Africa–Levant corridor + full Scandinavia correction.
+Owner-approved Candidate B on issue #109 (PR production follow-up).
 
 | Field | Value |
 |------|------:|
-| Provinces | 3345 |
-| Land | 3133 |
-| Water | 212 |
-| Renderer | `polygon_mesh` |
-| Source-ID hash (provisional) | `4fe9d98bbf40d2588286d3d4ec5513ffa3a8f0b7b2ae5689373217b4cb569a1b` |
+| Provinces | 3523 |
+| Land | 3307 |
+| Water | 216 |
+| Renderer | polygon_mesh |
+| Source-ID hash | e8dd0dd16ac06d035398e079f0736a97c2fe39bbb4434cc6c6c119067b490dda |
 
 ## Files
 
-- `map_manifest.json` — strategic-map contract (`renderer: polygon_mesh`)
-- `polygon_dataset.json` — Gates IDs, source provenance, rings, triangulation, adjacency, border segments
-- `dataset_meta.json` — compact counts/hashes for tests without loading full geometry
-- `triangulation_audit.json` — zero-failure Shapely clipped-Delaunay audit (no fan fallback)
+- map_manifest.json — strategic-map contract (
+enderer: polygon_mesh)
+- polygon_dataset.json — Gates IDs, rings, triangulation, adjacency, gap fills
+- dataset_meta.json — compact counts/hashes
+- 	riangulation_audit.json / lack_hole_audit.json
 
 ## Runtime contract
 
-- Geometry is immutable after load (chunked `ArrayMesh` + province-index UVs).
-- Ownership recolor updates a 1×N lookup `ImageTexture` sampled by `shaders/province_ownership.gdshader`.
-- Borders are a separate line mesh from shared-edge segments.
-- Hit-test uses ring point-in-polygon + spatial grid.
-- GoE Color-ID theatre remains explicit fallback only.
-
-## Regenerate (local archive required)
-
-```powershell
-python tools/earth3/export_godot_dataset.py --archive "C:\path\to\AOH3_Earth3_map_provinces.zip"
-python tools/earth3/build_earth3_snapshot.py
-```
-
-## Fallback
-
-`fallback_map_id`: `europe_mediterranean_from_goe` (Color-ID theatre).
+- Geometry immutable after load
+- Continuous ocean underlay + water fills + gap fills
+- Ownership recolor via lookup texture
+- GoE Color-ID is explicit fallback only

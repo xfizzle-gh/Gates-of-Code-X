@@ -8,20 +8,20 @@ ROOT = Path(__file__).resolve().parents[1]
 META = ROOT / "godot/assets/maps/earth3_europe_mediterranean/dataset_meta.json"
 MANIFEST = ROOT / "godot/assets/maps/earth3_europe_mediterranean/map_manifest.json"
 DATASET = ROOT / "godot/assets/maps/earth3_europe_mediterranean/polygon_dataset.json"
-# Mask v6 provisional (pending owner visual approval).
-PROVISIONAL_HASH = "4fe9d98bbf40d2588286d3d4ec5513ffa3a8f0b7b2ae5689373217b4cb569a1b"
-PROVISIONAL_COUNT = 3345
+# Owner-approved mask v7 Urals (issue #109 Candidate B).
+APPROVED_HASH = "e8dd0dd16ac06d035398e079f0736a97c2fe39bbb4434cc6c6c119067b490dda"
+APPROVED_COUNT = 3523
 
 
 @unittest.skipUnless(META.is_file(), "Earth3 production dataset meta missing")
 class Earth3ProductionDatasetTests(unittest.TestCase):
     def test_counts_and_approved_hash(self) -> None:
         meta = json.loads(META.read_text(encoding="utf-8"))
-        self.assertEqual(meta["province_count"], PROVISIONAL_COUNT)
-        self.assertEqual(meta["land_count"], 3133)
-        self.assertEqual(meta["water_count"], 212)
-        self.assertEqual(meta["approved_included_ids_sha256"], PROVISIONAL_HASH)
-        self.assertEqual(meta["included_source_ids_sha256"], PROVISIONAL_HASH)
+        self.assertEqual(meta["province_count"], APPROVED_COUNT)
+        self.assertEqual(meta["land_count"], 3307)
+        self.assertEqual(meta["water_count"], 216)
+        self.assertEqual(meta["approved_included_ids_sha256"], APPROVED_HASH)
+        self.assertEqual(meta["included_source_ids_sha256"], APPROVED_HASH)
         self.assertGreater(meta["triangle_count"], 100000)
         self.assertGreater(meta["edge_count"], 1000)
 
@@ -31,14 +31,14 @@ class Earth3ProductionDatasetTests(unittest.TestCase):
         self.assertEqual(man["renderer"], "polygon_mesh")
         self.assertEqual(man["map_id"], "earth3_europe_mediterranean")
         self.assertEqual(man["fallback_map_id"], "europe_mediterranean_from_goe")
-        self.assertEqual(man["province_count"], PROVISIONAL_COUNT)
+        self.assertEqual(man["province_count"], APPROVED_COUNT)
 
     @unittest.skipUnless(DATASET.is_file(), "full polygon dataset missing")
     def test_dataset_adjacency_and_ids(self) -> None:
         data = json.loads(DATASET.read_text(encoding="utf-8"))
-        self.assertEqual(data["province_count"], PROVISIONAL_COUNT)
+        self.assertEqual(data["province_count"], APPROVED_COUNT)
         ids = {p["id"] for p in data["provinces"]}
-        self.assertEqual(len(ids), PROVISIONAL_COUNT)
+        self.assertEqual(len(ids), APPROVED_COUNT)
         for p in data["provinces"]:
             self.assertTrue(p["id"].startswith("e3_"))
             self.assertIn("source_id", p)

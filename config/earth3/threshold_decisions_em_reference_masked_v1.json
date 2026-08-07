@@ -1,32 +1,27 @@
 {
   "schema": "gates-of-codex.earth3-threshold-decisions",
-  "schema_version": 5,
+  "schema_version": 6,
   "candidate_id": "em_reference_masked",
   "inclusion_threshold": 0.35,
   "review_band": [
     0.15,
     0.5
   ],
-  "decision_rule": "Provisional mask-v6 threshold-band freeze from automatic inclusion after Africa-Levant + Scandinavia expansion. Owner visual approval required.",
-  "owner_review_status": "pending_owner_visual_approval",
+  "decision_rule": "Owner-approved v7 Urals production threshold-band freeze (issue #109 Candidate B).",
+  "owner_review_status": "owner_approved_v7_urals",
   "include_ids": [
     1192,
     2655,
     4409,
     5054,
     6071,
-    6683,
     10437,
-    10835,
-    11560,
-    11602,
-    11763,
-    11770,
+    10920,
+    11031,
     12189,
     12306,
     12912,
-    12914,
-    13355
+    12914
   ],
   "exclude_ids": [
     1190,
@@ -40,13 +35,14 @@
     4838,
     4961,
     10434,
-    10891,
-    10929,
-    11368,
-    11407,
-    11528,
+    10459,
+    10851,
+    11348,
+    11367,
+    11533,
     11541,
-    11591,
+    11788,
+    11790,
     12198,
     12200,
     12902,
@@ -62,10 +58,10 @@
       "overlap_ratio": 0.327448,
       "decision": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3274; group=Caucasus. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.3274; group=Caucasus.",
       "boundary_group": "Caucasus",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         10490.22340425532,
         2808.6063829787236
@@ -85,10 +81,10 @@
       "overlap_ratio": 0.428655,
       "decision": "include",
       "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4287; group=Caucasus. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (include); ratio=0.4287; group=Caucasus.",
       "boundary_group": "Caucasus",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         10443.962962962964,
         2817.962962962963
@@ -108,10 +104,10 @@
       "overlap_ratio": 0.195261,
       "decision": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1953; group=Sahara. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.1953; group=Sahara.",
       "boundary_group": "Sahara",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         9533.330434782609,
         3512.8434782608697
@@ -131,10 +127,10 @@
       "overlap_ratio": 0.233989,
       "decision": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2340; group=Egypt_Sinai. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.2340; group=Egypt_Sinai.",
       "boundary_group": "Egypt_Sinai",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         9627.275,
         3530.9125
@@ -154,10 +150,10 @@
       "overlap_ratio": 0.365287,
       "decision": "include",
       "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.3653; group=Caucasus. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (include); ratio=0.3653; group=Caucasus.",
       "boundary_group": "Caucasus",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         10741.746575342466,
         2752.8835616438355
@@ -177,10 +173,10 @@
       "overlap_ratio": 0.320472,
       "decision": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3205; group=Egypt_Sinai. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.3205; group=Egypt_Sinai.",
       "boundary_group": "Egypt_Sinai",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         9917.746575342466,
         3553.1643835616437
@@ -200,10 +196,10 @@
       "overlap_ratio": 0.192066,
       "decision": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1921; group=Sahara. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.1921; group=Sahara.",
       "boundary_group": "Sahara",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         7915.866666666667,
         3337.7185185185185
@@ -223,10 +219,10 @@
       "overlap_ratio": 0.480511,
       "decision": "include",
       "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4805; group=Egypt_Sinai. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (include); ratio=0.4805; group=Egypt_Sinai.",
       "boundary_group": "Egypt_Sinai",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         9721.031055900621,
         3500.9751552795033
@@ -246,10 +242,10 @@
       "overlap_ratio": 0.204287,
       "decision": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2043; group=Sahara. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.2043; group=Sahara.",
       "boundary_group": "Sahara",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         9104.61971830986,
         3469.345070422535
@@ -269,10 +265,10 @@
       "overlap_ratio": 0.346905,
       "decision": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3469; group=Sahara. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.3469; group=Sahara.",
       "boundary_group": "Sahara",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         8936.289340101523,
         3444.8781725888325
@@ -292,10 +288,10 @@
       "overlap_ratio": 0.242655,
       "decision": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2427; group=Sahara. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.2427; group=Sahara.",
       "boundary_group": "Sahara",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         7993.073394495413,
         3357.229357798165
@@ -315,10 +311,10 @@
       "overlap_ratio": 0.189359,
       "decision": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1894; group=Sahara. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.1894; group=Sahara.",
       "boundary_group": "Sahara",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         8046.504854368932,
         3363.9126213592235
@@ -338,10 +334,10 @@
       "overlap_ratio": 0.257919,
       "decision": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2579; group=Sahara. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.2579; group=Sahara.",
       "boundary_group": "Sahara",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         8784.686131386861,
         3444.29197080292
@@ -361,10 +357,10 @@
       "overlap_ratio": 0.420541,
       "decision": "include",
       "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4205; group=Turkey_northern_Levant. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (include); ratio=0.4205; group=Turkey_northern_Levant.",
       "boundary_group": "Turkey_northern_Levant",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         10200.723214285714,
         3029.839285714286
@@ -384,10 +380,10 @@
       "overlap_ratio": 0.443765,
       "decision": "include",
       "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4438; group=Arabian_interior. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (include); ratio=0.4438; group=Arabian_interior.",
       "boundary_group": "Arabian_interior",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         10060.350574712644,
         3503.7586206896553
@@ -403,37 +399,14 @@
       "closeup_image": "closeups/em_reference_masked_north_africa_east_med.png"
     },
     {
-      "source_province_id": 6683,
-      "overlap_ratio": 0.355784,
-      "decision": "include",
-      "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.3558; group=western_Russia. Awaiting owner visual approval.",
-      "boundary_group": "western_Russia",
-      "rule": "provisional_threshold_band_v6",
-      "centroid": [
-        10319.949275362318,
-        1368.1884057971015
-      ],
-      "is_water": false,
-      "nearest_city": {
-        "name": "Gryazovets",
-        "source_province_id": 6683,
-        "x": 10306.0,
-        "y": 1364.0,
-        "distance_px": 14.564512564963083
-      },
-      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-    },
-    {
       "source_province_id": 10434,
       "overlap_ratio": 0.200372,
       "decision": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2004; group=Caucasus. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.2004; group=Caucasus.",
       "boundary_group": "Caucasus",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         10525.0,
         2802.5849056603774
@@ -453,10 +426,10 @@
       "overlap_ratio": 0.432411,
       "decision": "include",
       "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4324; group=Caucasus. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (include); ratio=0.4324; group=Caucasus.",
       "boundary_group": "Caucasus",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         10556.549549549549,
         2785.072072072072
@@ -472,152 +445,175 @@
       "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
     },
     {
-      "source_province_id": 10835,
-      "overlap_ratio": 0.44477,
+      "source_province_id": 10459,
+      "overlap_ratio": 0.231721,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.2317; group=Caucasus.",
+      "boundary_group": "Caucasus",
+      "rule": "owner_approved_v7_urals_threshold_band",
+      "centroid": [
+        10892.63492063492,
+        2585.468253968254
+      ],
+      "is_water": false,
+      "nearest_city": {
+        "name": "Zhanaozen",
+        "source_province_id": 10459,
+        "x": 10921.0,
+        "y": 2582.0,
+        "distance_px": 28.576327842736703
+      },
+      "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
+    },
+    {
+      "source_province_id": 10851,
+      "overlap_ratio": 0.200003,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.2000; group=western_Russia.",
+      "boundary_group": "western_Russia",
+      "rule": "owner_approved_v7_urals_threshold_band",
+      "centroid": [
+        11264.617486338799,
+        2018.9016393442623
+      ],
+      "is_water": false,
+      "nearest_city": {
+        "name": "Yasny",
+        "source_province_id": 10851,
+        "x": 11261.0,
+        "y": 2032.0,
+        "distance_px": 13.588718088148418
+      },
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 10920,
+      "overlap_ratio": 0.434752,
       "decision": "include",
       "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4448; group=western_Russia. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (include); ratio=0.4348; group=western_Russia.",
       "boundary_group": "western_Russia",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
-        10599.00709219858,
-        2241.553191489362
+        11284.7903930131,
+        1889.3624454148471
       ],
       "is_water": false,
       "nearest_city": {
-        "name": "Akhtubinsk",
-        "source_province_id": 10835,
-        "x": 10598.0,
-        "y": 2236.0,
-        "distance_px": 5.643772711047306
+        "name": "Kartaly",
+        "source_province_id": 10920,
+        "x": 11299.0,
+        "y": 1871.0,
+        "distance_px": 23.218361964949345
       },
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
-      "source_province_id": 10891,
-      "overlap_ratio": 0.329707,
-      "decision": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3297; group=other_land. Awaiting owner visual approval.",
-      "boundary_group": "other_land",
-      "rule": "provisional_threshold_band_v6",
+      "source_province_id": 11031,
+      "overlap_ratio": 0.384137,
+      "decision": "include",
+      "owner_decision": "include",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (include); ratio=0.3841; group=western_Russia.",
+      "boundary_group": "western_Russia",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
-        10530.564285714287,
-        2062.5714285714284
+        11107.75,
+        2321.85
       ],
       "is_water": false,
       "nearest_city": {
-        "name": "Kamyshin",
-        "source_province_id": 10891,
-        "x": 10554.0,
-        "y": 2104.0,
-        "distance_px": 47.59789107401553
+        "name": "Kulakshi",
+        "source_province_id": 11031,
+        "x": 11059.0,
+        "y": 2315.0,
+        "distance_px": 49.22890411130435
+      },
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 11348,
+      "overlap_ratio": 0.167579,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.1676; group=western_Russia.",
+      "boundary_group": "western_Russia",
+      "rule": "owner_approved_v7_urals_threshold_band",
+      "centroid": [
+        11264.094736842106,
+        1426.4263157894736
+      ],
+      "is_water": false,
+      "nearest_city": {
+        "name": "Nizhny Tagil",
+        "source_province_id": 11348,
+        "x": 11270.0,
+        "y": 1451.0,
+        "distance_px": 25.273268261992893
+      },
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 11367,
+      "overlap_ratio": 0.309715,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.3097; group=Europe_Scandinavia.",
+      "boundary_group": "Europe_Scandinavia",
+      "rule": "owner_approved_v7_urals_threshold_band",
+      "centroid": [
+        10133.849462365592,
+        529.8064516129032
+      ],
+      "is_water": false,
+      "nearest_city": {
+        "name": "Tumanny",
+        "source_province_id": 11367,
+        "x": 10086.0,
+        "y": 485.0,
+        "distance_px": 65.55294924574785
+      },
+      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
+    },
+    {
+      "source_province_id": 11533,
+      "overlap_ratio": 0.333012,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.3330; group=other_land.",
+      "boundary_group": "other_land",
+      "rule": "owner_approved_v7_urals_threshold_band",
+      "centroid": [
+        11032.186567164179,
+        2414.4776119402986
+      ],
+      "is_water": false,
+      "nearest_city": {
+        "name": "Beyneu",
+        "source_province_id": 11533,
+        "x": 11035.0,
+        "y": 2447.0,
+        "distance_px": 32.64385285819494
       },
       "closeup_image": "preview_em_reference_masked.png"
-    },
-    {
-      "source_province_id": 10929,
-      "overlap_ratio": 0.340179,
-      "decision": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3402; group=western_Russia. Awaiting owner visual approval.",
-      "boundary_group": "western_Russia",
-      "rule": "provisional_threshold_band_v6",
-      "centroid": [
-        10382.083916083917,
-        1561.7972027972028
-      ],
-      "is_water": false,
-      "nearest_city": {
-        "name": "Shuya",
-        "source_province_id": 10929,
-        "x": 10362.0,
-        "y": 1547.0,
-        "distance_px": 24.946360373556686
-      },
-      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-    },
-    {
-      "source_province_id": 11368,
-      "overlap_ratio": 0.194098,
-      "decision": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1941; group=Europe_Scandinavia. Awaiting owner visual approval.",
-      "boundary_group": "Europe_Scandinavia",
-      "rule": "provisional_threshold_band_v6",
-      "centroid": [
-        10147.58256880734,
-        665.183486238532
-      ],
-      "is_water": false,
-      "nearest_city": {
-        "name": "Varzuga",
-        "source_province_id": 11368,
-        "x": 10129.0,
-        "y": 727.0,
-        "distance_px": 64.54915365131664
-      },
-      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-    },
-    {
-      "source_province_id": 11407,
-      "overlap_ratio": 0.282106,
-      "decision": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2821; group=western_Russia. Awaiting owner visual approval.",
-      "boundary_group": "western_Russia",
-      "rule": "provisional_threshold_band_v6",
-      "centroid": [
-        10441.946666666667,
-        1759.24
-      ],
-      "is_water": false,
-      "nearest_city": {
-        "name": "Umet",
-        "source_province_id": 11407,
-        "x": 10431.0,
-        "y": 1780.0,
-        "distance_px": 23.469280157497625
-      },
-      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-    },
-    {
-      "source_province_id": 11528,
-      "overlap_ratio": 0.287209,
-      "decision": "exclude",
-      "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2872; group=western_Russia. Awaiting owner visual approval.",
-      "boundary_group": "western_Russia",
-      "rule": "provisional_threshold_band_v6",
-      "centroid": [
-        10581.961165048544,
-        2181.7184466019417
-      ],
-      "is_water": false,
-      "nearest_city": {
-        "name": "El ton",
-        "source_province_id": 11528,
-        "x": 10631.0,
-        "y": 2174.0,
-        "distance_px": 49.6425397350213
-      },
-      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
       "source_province_id": 11541,
       "overlap_ratio": 0.181447,
       "decision": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1814; group=Caucasus. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.1814; group=Caucasus.",
       "boundary_group": "Caucasus",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         10682.621951219513,
         2780.1341463414633
@@ -633,117 +629,48 @@
       "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
     },
     {
-      "source_province_id": 11560,
-      "overlap_ratio": 0.389297,
-      "decision": "include",
-      "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.3893; group=western_Russia. Awaiting owner visual approval.",
-      "boundary_group": "western_Russia",
-      "rule": "provisional_threshold_band_v6",
-      "centroid": [
-        10388.601694915254,
-        1603.3389830508474
-      ],
-      "is_water": false,
-      "nearest_city": {
-        "name": "Kovrov",
-        "source_province_id": 11560,
-        "x": 10359.0,
-        "y": 1591.0,
-        "distance_px": 32.070404496745965
-      },
-      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-    },
-    {
-      "source_province_id": 11591,
-      "overlap_ratio": 0.16053,
+      "source_province_id": 11788,
+      "overlap_ratio": 0.343866,
       "decision": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1605; group=western_Russia. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.3439; group=western_Russia.",
       "boundary_group": "western_Russia",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
-        10422.577181208053,
-        1684.1812080536913
+        11162.803468208092,
+        1258.5317919075144
       ],
       "is_water": false,
       "nearest_city": {
-        "name": "Vyksa",
-        "source_province_id": 11591,
-        "x": 10400.0,
-        "y": 1681.0,
-        "distance_px": 22.800201665382897
+        "name": "Berezniki",
+        "source_province_id": 11788,
+        "x": 11115.0,
+        "y": 1310.0,
+        "distance_px": 70.24349092245849
       },
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
     {
-      "source_province_id": 11602,
-      "overlap_ratio": 0.455942,
-      "decision": "include",
-      "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4559; group=western_Russia. Awaiting owner visual approval.",
+      "source_province_id": 11790,
+      "overlap_ratio": 0.252673,
+      "decision": "exclude",
+      "owner_decision": "exclude",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.2527; group=western_Russia.",
       "boundary_group": "western_Russia",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
-        10471.441666666668,
-        1898.2583333333334
+        10680.488372093023,
+        821.6511627906976
       ],
       "is_water": false,
       "nearest_city": {
-        "name": "Serdobsk",
-        "source_province_id": 11602,
-        "x": 10502.0,
-        "y": 1919.0,
-        "distance_px": 36.932756087546
-      },
-      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-    },
-    {
-      "source_province_id": 11763,
-      "overlap_ratio": 0.379713,
-      "decision": "include",
-      "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.3797; group=western_Russia. Awaiting owner visual approval.",
-      "boundary_group": "western_Russia",
-      "rule": "provisional_threshold_band_v6",
-      "centroid": [
-        10192.181405895692,
-        924.3854875283447
-      ],
-      "is_water": false,
-      "nearest_city": {
-        "name": "Onega",
-        "source_province_id": 11763,
-        "x": 10203.0,
-        "y": 946.0,
-        "distance_px": 24.170832169809955
-      },
-      "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
-    },
-    {
-      "source_province_id": 11770,
-      "overlap_ratio": 0.489542,
-      "decision": "include",
-      "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4895; group=western_Russia. Awaiting owner visual approval.",
-      "boundary_group": "western_Russia",
-      "rule": "provisional_threshold_band_v6",
-      "centroid": [
-        10217.519083969466,
-        1057.6870229007634
-      ],
-      "is_water": false,
-      "nearest_city": {
-        "name": "Shishkina",
-        "source_province_id": 11770,
-        "x": 10213.0,
-        "y": 1093.0,
-        "distance_px": 35.60096166586366
+        "name": "Koynas",
+        "source_province_id": 11790,
+        "x": 10663.0,
+        "y": 876.0,
+        "distance_px": 57.093250603440616
       },
       "closeup_image": "closeups/em_reference_masked_scandinavia_north_russia.png"
     },
@@ -752,10 +679,10 @@
       "overlap_ratio": 0.385032,
       "decision": "include",
       "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.3850; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (include); ratio=0.3850; group=Atlantic_Nordic_water.",
       "boundary_group": "Atlantic_Nordic_water",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         7224.954372623574,
         793.0177439797212
@@ -775,10 +702,10 @@
       "overlap_ratio": 0.242827,
       "decision": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2428; group=other_water. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.2428; group=other_water.",
       "boundary_group": "other_water",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         9759.453097345133,
         320.6929203539823
@@ -798,10 +725,10 @@
       "overlap_ratio": 0.162109,
       "decision": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1621; group=Mediterranean_water. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.1621; group=Mediterranean_water.",
       "boundary_group": "Mediterranean_water",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         7858.601351351352,
         3386.027027027027
@@ -821,10 +748,10 @@
       "overlap_ratio": 0.433662,
       "decision": "include",
       "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4337; group=Red_Sea_water. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (include); ratio=0.4337; group=Red_Sea_water.",
       "boundary_group": "Red_Sea_water",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         10046.605504587156,
         3498.922018348624
@@ -844,10 +771,10 @@
       "overlap_ratio": 0.191292,
       "decision": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1913; group=Atlantic_unrelated_water. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.1913; group=Atlantic_unrelated_water.",
       "boundary_group": "Atlantic_unrelated_water",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         7682.739130434783,
         3300.7391304347825
@@ -867,10 +794,10 @@
       "overlap_ratio": 0.207611,
       "decision": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2076; group=Atlantic_unrelated_water. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.2076; group=Atlantic_unrelated_water.",
       "boundary_group": "Atlantic_unrelated_water",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         7526.923076923077,
         3007.269230769231
@@ -890,10 +817,10 @@
       "overlap_ratio": 0.431559,
       "decision": "include",
       "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4316; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (include); ratio=0.4316; group=Atlantic_Nordic_water.",
       "boundary_group": "Atlantic_Nordic_water",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         7480.375,
         2739.9166666666665
@@ -913,10 +840,10 @@
       "overlap_ratio": 0.38264,
       "decision": "include",
       "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.3826; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (include); ratio=0.3826; group=Atlantic_Nordic_water.",
       "boundary_group": "Atlantic_Nordic_water",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         7430.869565217391,
         2170.608695652174
@@ -936,10 +863,10 @@
       "overlap_ratio": 0.159619,
       "decision": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1596; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.1596; group=Atlantic_Nordic_water.",
       "boundary_group": "Atlantic_Nordic_water",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         7348.178571428572,
         1916.142857142857
@@ -959,10 +886,10 @@
       "overlap_ratio": 0.15444,
       "decision": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.1544; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.1544; group=Atlantic_Nordic_water.",
       "boundary_group": "Atlantic_Nordic_water",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         8013.481318681319,
         1101.065934065934
@@ -982,10 +909,10 @@
       "overlap_ratio": 0.341999,
       "decision": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.3420; group=Atlantic_Nordic_water. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.3420; group=Atlantic_Nordic_water.",
       "boundary_group": "Atlantic_Nordic_water",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         7733.615384615385,
         1342.9615384615386
@@ -1005,10 +932,10 @@
       "overlap_ratio": 0.27913,
       "decision": "exclude",
       "owner_decision": "exclude",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (exclude); ratio=0.2791; group=Caspian_water. Awaiting owner visual approval.",
+      "owner_review_status": "owner_approved_v7_urals",
+      "owner_reason": "v7 Urals freeze (exclude); ratio=0.2791; group=Caspian_water.",
       "boundary_group": "Caspian_water",
-      "rule": "provisional_threshold_band_v6",
+      "rule": "owner_approved_v7_urals_threshold_band",
       "centroid": [
         10771.496732026144,
         2780.1176470588234
@@ -1020,29 +947,6 @@
         "x": 10776.0,
         "y": 2772.0,
         "distance_px": 9.283082258387145
-      },
-      "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
-    },
-    {
-      "source_province_id": 13355,
-      "overlap_ratio": 0.413578,
-      "decision": "include",
-      "owner_decision": "include",
-      "owner_review_status": "pending_owner_visual_approval",
-      "owner_reason": "Provisional mask-v6 band decision (include); ratio=0.4136; group=Caspian_water. Awaiting owner visual approval.",
-      "boundary_group": "Caspian_water",
-      "rule": "provisional_threshold_band_v6",
-      "centroid": [
-        10842.099290780141,
-        2476.6028368794327
-      ],
-      "is_water": true,
-      "nearest_city": {
-        "name": "Shebir",
-        "source_province_id": 10456,
-        "x": 10883.0,
-        "y": 2484.0,
-        "distance_px": 41.564239881414146
       },
       "closeup_image": "closeups/em_reference_masked_ukraine_donbas_caucasus.png"
     }

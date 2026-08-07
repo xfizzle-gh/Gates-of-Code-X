@@ -23,81 +23,341 @@
   "mask_defaults": {
     "inclusion_threshold": 0.35,
     "review_band_low": 0.15,
-    "review_band_high": 0.50,
+    "review_band_high": 0.5,
     "notes": "Include whole province when overlap_ratio >= 0.35. Flag review when 0.15 <= ratio <= 0.50. Iceland full land component is required-include regardless of ratio."
   },
   "shared_comparison_view": {
     "min_x": 6700,
     "min_y": 120,
-    "max_x": 11800,
+    "max_x": 12200,
     "max_y": 4300,
-    "notes": "Identical camera for all four candidate overview previews (v6 includes full Scandinavia + Egypt/Levant)."
+    "notes": "Shared camera includes Ural eastern face for v7."
   },
   "reference_extent_outline": [
-    [7140, 740],
-    [7680, 740],
-    [7680, 1050],
-    [8200, 1180],
-    [8600, 500],
-    [9000, 280],
-    [9400, 230],
-    [9800, 280],
-    [10020, 450],
-    [10140, 800],
-    [10260, 1200],
-    [10380, 1600],
-    [10500, 2000],
-    [10640, 2300],
-    [10840, 2500],
-    [10880, 2680],
-    [10820, 2740],
-    [10600, 2780],
-    [10320, 2860],
-    [10180, 2980],
-    [10240, 3160],
-    [10250, 3280],
-    [10140, 3400],
-    [10040, 3540],
-    [9920, 3540],
-    [9600, 3480],
-    [9000, 3440],
-    [8400, 3400],
-    [7800, 3300],
-    [7500, 2700],
-    [7460, 2300],
-    [7480, 1900],
-    [7540, 1600],
-    [7720, 1400],
-    [7200, 1040]
+    [
+      7480.0,
+      1900.0
+    ],
+    [
+      7500.0,
+      2700.0
+    ],
+    [
+      7650.0,
+      3180.0
+    ],
+    [
+      8100.0,
+      3360.0
+    ],
+    [
+      8700.0,
+      3420.0
+    ],
+    [
+      9300.0,
+      3460.0
+    ],
+    [
+      9750.0,
+      3500.0
+    ],
+    [
+      9920.0,
+      3540.0
+    ],
+    [
+      10040.0,
+      3540.0
+    ],
+    [
+      10100.0,
+      3420.0
+    ],
+    [
+      10180.0,
+      3360.0
+    ],
+    [
+      10250.0,
+      3280.0
+    ],
+    [
+      10240.0,
+      3160.0
+    ],
+    [
+      10200.0,
+      3040.0
+    ],
+    [
+      10240.0,
+      2920.0
+    ],
+    [
+      10420.0,
+      2820.0
+    ],
+    [
+      10600.0,
+      2780.0
+    ],
+    [
+      10820.0,
+      2740.0
+    ],
+    [
+      10880.0,
+      2620.0
+    ],
+    [
+      10940,
+      2480
+    ],
+    [
+      11080,
+      2350
+    ],
+    [
+      11200,
+      2150
+    ],
+    [
+      11260,
+      1950
+    ],
+    [
+      11280,
+      1750
+    ],
+    [
+      11260,
+      1550
+    ],
+    [
+      11200,
+      1350
+    ],
+    [
+      11060,
+      1150
+    ],
+    [
+      10880,
+      950
+    ],
+    [
+      10620,
+      840
+    ],
+    [
+      10400,
+      780
+    ],
+    [
+      10200,
+      640
+    ],
+    [
+      10060,
+      460
+    ],
+    [
+      9940.0,
+      350.0
+    ],
+    [
+      9600.0,
+      240.0
+    ],
+    [
+      9200.0,
+      250.0
+    ],
+    [
+      8800.0,
+      380.0
+    ],
+    [
+      8550.0,
+      650.0
+    ],
+    [
+      8420.0,
+      950.0
+    ],
+    [
+      8200.0,
+      1180.0
+    ],
+    [
+      7720.0,
+      1400.0
+    ]
   ],
   "exclusion_city_anchors": [
-    {"name": "Naberezhnye Chelny", "source_province_id": 10857, "x": 10901.0, "y": 1648.0, "group": "western_Russia"},
-    {"name": "Yaransk", "source_province_id": 11170, "x": 10680.0, "y": 1508.0, "group": "western_Russia"},
-    {"name": "Tuymazy", "source_province_id": 11323, "x": 10962.0, "y": 1742.0, "group": "western_Russia"},
-    {"name": "Galich", "source_province_id": 11689, "x": 10485.0, "y": 1417.0, "group": "western_Russia"},
-    {"name": "Orsk", "source_province_id": 10919, "x": 11196.0, "y": 2013.0, "group": "western_Russia"},
-    {"name": "Turtkul", "source_province_id": 10587, "x": 11319.0, "y": 2701.0, "group": "Central_Asia"},
-    {"name": "Ayteke Bi", "source_province_id": 11177, "x": 11376.0, "y": 2409.0, "group": "Central_Asia"},
-    {"name": "Karabutak", "source_province_id": 11180, "x": 11275.0, "y": 2113.0, "group": "Central_Asia"},
-    {"name": "Ahvaz", "source_province_id": 2624, "x": 10717.0, "y": 3321.0, "group": "Iranian_interior"},
-    {"name": "Anarak", "source_province_id": 3507, "x": 10963.0, "y": 3204.0, "group": "Iranian_interior"},
-    {"name": "Moalleman", "source_province_id": 10577, "x": 11001.0, "y": 3095.0, "group": "Iranian_interior"},
-    {"name": "Urmia", "source_province_id": 1194, "x": 10542.0, "y": 2954.0, "group": "northwestern_Iran_fringe"},
-    {"name": "Hail", "source_province_id": 6162, "x": 10379.0, "y": 3535.0, "group": "Arabian_interior"},
-    {"name": "Hegra", "source_province_id": 6091, "x": 10196.0, "y": 3573.0, "group": "Arabian_interior"},
-    {"name": "Ash Shamli", "source_province_id": 6163, "x": 10309.0, "y": 3571.0, "group": "Arabian_interior"},
-    {"name": "Turaif", "source_province_id": 6193, "x": 10229.0, "y": 3302.0, "group": "Arabian_interior"},
-    {"name": "An Nahidayn", "source_province_id": 6202, "x": 10276.0, "y": 3264.0, "group": "Arabian_interior"},
-    {"name": "Dujal", "source_province_id": 4796, "x": 8905.0, "y": 3613.0, "group": "Sahara"},
-    {"name": "Ashkda", "source_province_id": 4348, "x": 9038.0, "y": 3513.0, "group": "Sahara"},
-    {"name": "Tabelbala", "source_province_id": 4859, "x": 8193.0, "y": 3443.0, "group": "Sahara"},
-    {"name": "In Ghar", "source_province_id": 4895, "x": 8432.0, "y": 3491.0, "group": "Sahara"},
-    {"name": "Funchal Atlantic water", "source_province_id": 12906, "x": 7488.0, "y": 3201.0, "group": "Atlantic_unrelated_water"},
-    {"name": "Arkhangelsk", "source_province_id": 11764, "x": 10325.0, "y": 892.0, "group": "western_Russia"}
+    {
+      "name": "Orsk",
+      "source_province_id": 10919,
+      "x": 11196.0,
+      "y": 2013.0,
+      "group": "western_Russia"
+    },
+    {
+      "name": "Turtkul",
+      "source_province_id": 10587,
+      "x": 11319.0,
+      "y": 2701.0,
+      "group": "Central_Asia"
+    },
+    {
+      "name": "Ayteke Bi",
+      "source_province_id": 11177,
+      "x": 11376.0,
+      "y": 2409.0,
+      "group": "Central_Asia"
+    },
+    {
+      "name": "Karabutak",
+      "source_province_id": 11180,
+      "x": 11275.0,
+      "y": 2113.0,
+      "group": "Central_Asia"
+    },
+    {
+      "name": "Ahvaz",
+      "source_province_id": 2624,
+      "x": 10717.0,
+      "y": 3321.0,
+      "group": "Iranian_interior"
+    },
+    {
+      "name": "Anarak",
+      "source_province_id": 3507,
+      "x": 10963.0,
+      "y": 3204.0,
+      "group": "Iranian_interior"
+    },
+    {
+      "name": "Moalleman",
+      "source_province_id": 10577,
+      "x": 11001.0,
+      "y": 3095.0,
+      "group": "Iranian_interior"
+    },
+    {
+      "name": "Urmia",
+      "source_province_id": 1194,
+      "x": 10542.0,
+      "y": 2954.0,
+      "group": "northwestern_Iran_fringe"
+    },
+    {
+      "name": "Hail",
+      "source_province_id": 6162,
+      "x": 10379.0,
+      "y": 3535.0,
+      "group": "Arabian_interior"
+    },
+    {
+      "name": "Hegra",
+      "source_province_id": 6091,
+      "x": 10196.0,
+      "y": 3573.0,
+      "group": "Arabian_interior"
+    },
+    {
+      "name": "Ash Shamli",
+      "source_province_id": 6163,
+      "x": 10309.0,
+      "y": 3571.0,
+      "group": "Arabian_interior"
+    },
+    {
+      "name": "Turaif",
+      "source_province_id": 6193,
+      "x": 10229.0,
+      "y": 3302.0,
+      "group": "Arabian_interior"
+    },
+    {
+      "name": "An Nahidayn",
+      "source_province_id": 6202,
+      "x": 10276.0,
+      "y": 3264.0,
+      "group": "Arabian_interior"
+    },
+    {
+      "name": "Dujal",
+      "source_province_id": 4796,
+      "x": 8905.0,
+      "y": 3613.0,
+      "group": "Sahara"
+    },
+    {
+      "name": "Ashkda",
+      "source_province_id": 4348,
+      "x": 9038.0,
+      "y": 3513.0,
+      "group": "Sahara"
+    },
+    {
+      "name": "Tabelbala",
+      "source_province_id": 4859,
+      "x": 8193.0,
+      "y": 3443.0,
+      "group": "Sahara"
+    },
+    {
+      "name": "In Ghar",
+      "source_province_id": 4895,
+      "x": 8432.0,
+      "y": 3491.0,
+      "group": "Sahara"
+    },
+    {
+      "name": "Funchal Atlantic water",
+      "source_province_id": 12906,
+      "x": 7488.0,
+      "y": 3201.0,
+      "group": "Atlantic_unrelated_water"
+    },
+    {
+      "name": "Chelyabinsk",
+      "source_province_id": 10934,
+      "x": 11339.0,
+      "y": 1693.0,
+      "group": "east_urals"
+    },
+    {
+      "name": "Atyrau",
+      "source_province_id": 10809,
+      "x": 10878.0,
+      "y": 2323.0,
+      "group": "kazakhstan"
+    }
   ],
   "iceland_expected_land_province_ids": [
-    950, 951, 952, 953, 954, 955, 956, 957, 958, 959, 960, 961, 962, 963, 964,
-    6847, 6848, 6849, 6850, 6851
+    950,
+    951,
+    952,
+    953,
+    954,
+    955,
+    956,
+    957,
+    958,
+    959,
+    960,
+    961,
+    962,
+    963,
+    964,
+    6847,
+    6848,
+    6849,
+    6850,
+    6851
   ],
   "candidates": [
     {
@@ -105,7 +365,12 @@
       "title": "EM reference-tight (rect)",
       "description": "Axis-aligned rect candidate retained for comparison. Centroid/full-contain selection.",
       "selection_mode": "rect_centroid",
-      "rect": {"min_x": 6850, "min_y": 680, "max_x": 11550, "max_y": 3950},
+      "rect": {
+        "min_x": 6850,
+        "min_y": 680,
+        "max_x": 11550,
+        "max_y": 3950
+      },
       "required_include_ids": [],
       "explicit_exclude_ids": [],
       "notes": "Rectangular baseline for comparison only."
@@ -115,7 +380,12 @@
       "title": "EM + slight N/E expand (rect)",
       "description": "Rectangular N/E expand retained for comparison.",
       "selection_mode": "rect_centroid",
-      "rect": {"min_x": 6820, "min_y": 620, "max_x": 11680, "max_y": 4000},
+      "rect": {
+        "min_x": 6820,
+        "min_y": 620,
+        "max_x": 11680,
+        "max_y": 4000
+      },
       "required_include_ids": [],
       "explicit_exclude_ids": [],
       "notes": "Rectangular comparison only."
@@ -125,119 +395,479 @@
       "title": "EM + slight S/W expand (rect)",
       "description": "Rectangular S/W expand retained for comparison.",
       "selection_mode": "rect_centroid",
-      "rect": {"min_x": 6780, "min_y": 700, "max_x": 11520, "max_y": 4150},
+      "rect": {
+        "min_x": 6780,
+        "min_y": 700,
+        "max_x": 11520,
+        "max_y": 4150
+      },
       "required_include_ids": [],
       "explicit_exclude_ids": [],
       "notes": "Rectangular comparison only."
     },
     {
       "id": "em_reference_masked",
-      "title": "EM reference-masked (authored polygon mask v6)",
-      "description": "Authored multi-ring theatre mask v6. Restores Africa–Levant land corridor (Egypt, Nile Delta, Sinai, Israel/Palestine, Lebanon, western Syria, Jordan edge, southern Turkey) and full Scandinavia (Norway/Sweden/Finland to natural northern coasts, Kola approach). Iceland full land set. Still cuts deep Sahara, Madeira/Funchal Atlantic water, Arabian interior, Arkhangelsk/deep Russia/Central Asia/Iran via geometry.",
+      "title": "EM reference-masked (authored polygon mask v7 Urals)",
+      "description": "Authored multi-ring theatre mask v7 (owner-approved Candidate B). Preserves v6 west/Scandinavia/Africa/Levant/Turkey/Caucasus/Iceland. Extends to full European Russia to the Urals: Arkhangelsk/White Sea, Komi, Perm, Tatarstan, Bashkortostan, Volga corridor, Orenburg, European Ural face and Ural River corridor to the Caspian. Excludes Siberia east of the Urals, Kazakhstan interior, Central Asia, and unnecessary Iranian/Arabian expansion.",
       "selection_mode": "mask_overlap",
       "inclusion_threshold": 0.35,
       "review_band_low": 0.15,
-      "review_band_high": 0.50,
-      "rect": {"min_x": 7000, "min_y": 180, "max_x": 11200, "max_y": 3700},
+      "review_band_high": 0.5,
+      "rect": {
+        "min_x": 7040.0,
+        "min_y": 130.0,
+        "max_x": 11400,
+        "max_y": 3660.0
+      },
       "mask_rings": [
         [
-          [7140, 740],
-          [7680, 740],
-          [7680, 1050],
-          [7140, 1050]
+          [
+            7140.0,
+            740.0
+          ],
+          [
+            7680.0,
+            740.0
+          ],
+          [
+            7680.0,
+            1050.0
+          ],
+          [
+            7140.0,
+            1050.0
+          ]
         ],
         [
-          [7480, 1900],
-          [7460, 2300],
-          [7500, 2700],
-          [7580, 3000],
-          [7650, 3180],
-          [7800, 3300],
-          [8100, 3360],
-          [8400, 3400],
-          [8700, 3420],
-          [9000, 3440],
-          [9300, 3460],
-          [9600, 3480],
-          [9750, 3500],
-          [9850, 3520],
-          [9920, 3540],
-          [9980, 3560],
-          [10040, 3540],
-          [10080, 3480],
-          [10100, 3420],
-          [10140, 3400],
-          [10180, 3360],
-          [10220, 3320],
-          [10250, 3280],
-          [10260, 3220],
-          [10240, 3160],
-          [10220, 3100],
-          [10200, 3040],
-          [10180, 2980],
-          [10240, 2920],
-          [10320, 2860],
-          [10420, 2820],
-          [10500, 2800],
-          [10600, 2780],
-          [10720, 2760],
-          [10820, 2740],
-          [10860, 2680],
-          [10880, 2620],
-          [10840, 2500],
-          [10740, 2400],
-          [10640, 2300],
-          [10560, 2180],
-          [10500, 2000],
-          [10440, 1800],
-          [10380, 1600],
-          [10320, 1400],
-          [10260, 1200],
-          [10200, 1000],
-          [10140, 800],
-          [10080, 600],
-          [10020, 450],
-          [9940, 350],
-          [9800, 280],
-          [9600, 240],
-          [9400, 230],
-          [9200, 250],
-          [9000, 300],
-          [8800, 380],
-          [8650, 500],
-          [8550, 650],
-          [8480, 800],
-          [8420, 950],
-          [8360, 1100],
-          [8200, 1180],
-          [8000, 1280],
-          [7720, 1400],
-          [7540, 1600],
-          [7480, 1900]
+          [
+            7480.0,
+            1900.0
+          ],
+          [
+            7460.0,
+            2300.0
+          ],
+          [
+            7500.0,
+            2700.0
+          ],
+          [
+            7580.0,
+            3000.0
+          ],
+          [
+            7650.0,
+            3180.0
+          ],
+          [
+            7800.0,
+            3300.0
+          ],
+          [
+            8100.0,
+            3360.0
+          ],
+          [
+            8400.0,
+            3400.0
+          ],
+          [
+            8700.0,
+            3420.0
+          ],
+          [
+            9000.0,
+            3440.0
+          ],
+          [
+            9300.0,
+            3460.0
+          ],
+          [
+            9600.0,
+            3480.0
+          ],
+          [
+            9750.0,
+            3500.0
+          ],
+          [
+            9850.0,
+            3520.0
+          ],
+          [
+            9920.0,
+            3540.0
+          ],
+          [
+            9980.0,
+            3560.0
+          ],
+          [
+            10040.0,
+            3540.0
+          ],
+          [
+            10080.0,
+            3480.0
+          ],
+          [
+            10100.0,
+            3420.0
+          ],
+          [
+            10140.0,
+            3400.0
+          ],
+          [
+            10180.0,
+            3360.0
+          ],
+          [
+            10220.0,
+            3320.0
+          ],
+          [
+            10250.0,
+            3280.0
+          ],
+          [
+            10260.0,
+            3220.0
+          ],
+          [
+            10240.0,
+            3160.0
+          ],
+          [
+            10220.0,
+            3100.0
+          ],
+          [
+            10200.0,
+            3040.0
+          ],
+          [
+            10180.0,
+            2980.0
+          ],
+          [
+            10240.0,
+            2920.0
+          ],
+          [
+            10320.0,
+            2860.0
+          ],
+          [
+            10420.0,
+            2820.0
+          ],
+          [
+            10500.0,
+            2800.0
+          ],
+          [
+            10600.0,
+            2780.0
+          ],
+          [
+            10720.0,
+            2760.0
+          ],
+          [
+            10820.0,
+            2740.0
+          ],
+          [
+            10860.0,
+            2680.0
+          ],
+          [
+            10880.0,
+            2620.0
+          ],
+          [
+            10880,
+            2550
+          ],
+          [
+            10940,
+            2480
+          ],
+          [
+            11020,
+            2420
+          ],
+          [
+            11080,
+            2350
+          ],
+          [
+            11140,
+            2250
+          ],
+          [
+            11200,
+            2150
+          ],
+          [
+            11240,
+            2050
+          ],
+          [
+            11260,
+            1950
+          ],
+          [
+            11280,
+            1850
+          ],
+          [
+            11280,
+            1750
+          ],
+          [
+            11280,
+            1650
+          ],
+          [
+            11260,
+            1550
+          ],
+          [
+            11240,
+            1450
+          ],
+          [
+            11200,
+            1350
+          ],
+          [
+            11140,
+            1250
+          ],
+          [
+            11060,
+            1150
+          ],
+          [
+            10980,
+            1050
+          ],
+          [
+            10880,
+            950
+          ],
+          [
+            10760,
+            880
+          ],
+          [
+            10620,
+            840
+          ],
+          [
+            10500,
+            820
+          ],
+          [
+            10400,
+            780
+          ],
+          [
+            10300,
+            720
+          ],
+          [
+            10200,
+            640
+          ],
+          [
+            10120,
+            540
+          ],
+          [
+            10060,
+            460
+          ],
+          [
+            10020.0,
+            450.0
+          ],
+          [
+            9940.0,
+            350.0
+          ],
+          [
+            9800.0,
+            280.0
+          ],
+          [
+            9600.0,
+            240.0
+          ],
+          [
+            9400.0,
+            230.0
+          ],
+          [
+            9200.0,
+            250.0
+          ],
+          [
+            9000.0,
+            300.0
+          ],
+          [
+            8800.0,
+            380.0
+          ],
+          [
+            8650.0,
+            500.0
+          ],
+          [
+            8550.0,
+            650.0
+          ],
+          [
+            8480.0,
+            800.0
+          ],
+          [
+            8420.0,
+            950.0
+          ],
+          [
+            8360.0,
+            1100.0
+          ],
+          [
+            8200.0,
+            1180.0
+          ],
+          [
+            8000.0,
+            1280.0
+          ],
+          [
+            7720.0,
+            1400.0
+          ],
+          [
+            7540.0,
+            1600.0
+          ],
+          [
+            7480.0,
+            1900.0
+          ]
         ]
       ],
       "required_include_ids": [
-        950, 951, 952, 953, 954, 955, 956, 957, 958, 959, 960, 961, 962, 963, 964,
-        6847, 6848, 6849, 6850, 6851,
-        1268, 1271, 3782, 6627, 10868, 10869, 12175,
-        10431, 10436, 2654,
-        1116, 2207,
-        2669, 1365,
-        2662, 2666, 2683, 2707, 2668, 3723,
-        8065, 12580, 4686, 8066, 6087, 3719, 6085, 5052, 1096,
-        1464, 11120, 1458, 1077, 1054, 11656
+        950,
+        951,
+        952,
+        953,
+        954,
+        955,
+        956,
+        957,
+        958,
+        959,
+        960,
+        961,
+        962,
+        963,
+        964,
+        6847,
+        6848,
+        6849,
+        6850,
+        6851,
+        1268,
+        1271,
+        3782,
+        6627,
+        10868,
+        10869,
+        12175,
+        10431,
+        10436,
+        2654,
+        1116,
+        2207,
+        2669,
+        1365,
+        2662,
+        2666,
+        2683,
+        2707,
+        2668,
+        3723,
+        8065,
+        12580,
+        4686,
+        8066,
+        6087,
+        3719,
+        6085,
+        5052,
+        1096,
+        1464,
+        11120,
+        1458,
+        1077,
+        1054,
+        11656,
+        11764,
+        3751,
+        11685,
+        10854,
+        3753,
+        10837,
+        10888,
+        10805,
+        10825,
+        10866,
+        11326,
+        11331,
+        11756,
+        11345
       ],
       "explicit_exclude_ids": [
-        11764,
-        10857, 11170, 11323, 11689, 10919,
-        10587, 11177, 11180,
-        2624, 3507, 10577, 1194,
-        6162, 6091, 6163, 6193, 6202,
-        4796, 12307, 4348, 4859, 4895, 12906,
-        6065, 6160, 6192
+        10857,
+        11170,
+        11323,
+        11689,
+        10919,
+        10587,
+        11177,
+        11180,
+        2624,
+        3507,
+        10577,
+        1194,
+        6162,
+        6091,
+        6163,
+        6193,
+        6202,
+        4796,
+        12307,
+        4348,
+        4859,
+        4895,
+        12906,
+        6065,
+        6160,
+        6192,
+        10809,
+        10934
       ],
       "threshold_decisions_file": "threshold_decisions_em_reference_masked_v1.json",
-      "notes": "Mask v6 restores Egypt–Sinai–Levant land corridor and complete Scandinavia (incl. Kola approach / Murmansk). Arkhangelsk and deep Russia/Arabia/Sahara remain excluded. Iceland required-include is the full 20-province connected land set. Pending owner visual approval — province count/hash will change from v5."
+      "notes": "Mask v7 Urals \u2014 owner approved on issue #109 (Candidate B). Production authority: 3523 provinces, hash e8dd0dd1\u2026. Whole polygons only."
     }
   ],
   "required_region_checks": [
@@ -253,7 +883,7 @@
     "Caucasus_edge",
     "North_Africa_coast",
     "Baltic",
-    "Far_north_should_exclude",
+    "East_urals_kazakhstan_should_exclude",
     "Named_deep_east_should_exclude"
   ],
   "permission": {

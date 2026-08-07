@@ -16,9 +16,9 @@ from .audit_artifact import included_ids_hash, sha256_file, sha256_text_file
 from .crop import apply_crop, load_crop_candidates
 from .parse import load_earth3_dataset
 
-# Pending owner visual approval of mask v6 (Africa–Levant corridor + full Scandinavia).
-APPROVED_INCLUDED_IDS_SHA256 = "4fe9d98bbf40d2588286d3d4ec5513ffa3a8f0b7b2ae5689373217b4cb569a1b"
-APPROVED_PROVINCE_COUNT = 3345
+# Owner-approved mask v7 Urals (issue #109 Candidate B).
+APPROVED_INCLUDED_IDS_SHA256 = "e8dd0dd16ac06d035398e079f0736a97c2fe39bbb4434cc6c6c119067b490dda"
+APPROVED_PROVINCE_COUNT = 3523
 DATASET_SCHEMA = "gates-of-codex.earth3-polygon-dataset"
 DATASET_SCHEMA_VERSION = 2
 AREA_REL_TOL = 1e-3
