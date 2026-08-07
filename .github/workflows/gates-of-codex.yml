@@ -111,6 +111,12 @@ jobs:
           set -euo pipefail
           "$HOME/godot" --headless --path . --audio-driver Dummy \
             -s res://scripts/tools/earth3_polygon_smoke.gd
+      - name: Godot Earth3 operational fixture validate (e3_* only)
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --audio-driver Dummy \
+            -s res://scripts/tools/earth3_fixture_validate.gd
       - name: Godot map profiler (committed fixture)
         run: |
           set -euo pipefail
@@ -195,27 +201,43 @@ jobs:
           set -euo pipefail
           OUT="$(pwd)/docs/godot-presentation/screenshots/earth3"
           mkdir -p "$OUT"
-          SNAP=res://fixtures/snapshots/earth3_theatre.json
+          SNAP_READ=res://fixtures/snapshots/earth3_theatre.json
+          SNAP_OP=res://fixtures/snapshots/earth3_operational.json
           shoot() {
             local name="$1"; shift
             xvfb-run -a -s "-screen 0 2560x1440x24" \
               "$HOME/godot" --path godot --audio-driver Dummy \
               -s res://scripts/tools/map_screenshot.gd -- \
-              --snapshot="$SNAP" --out="$OUT/$name" "$@"
+              --out="$OUT/$name" "$@"
             test -s "$OUT/$name"
           }
-          shoot full_map_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/empty_map.json
-          shoot full_map_1440p.png --width=2560 --height=1440 --fixture=res://fixtures/presentation/empty_map.json
-          shoot selected_hovered_1080p.png --width=1920 --height=1080 --select-first --hover-second --fixture=res://fixtures/presentation/empty_map.json
-          shoot debug_overlay_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/empty_map.json --debug --select-first
+          # Readability / extent proof (3512 theatre)
+          shoot full_map_1080p.png --snapshot="$SNAP_READ" --width=1920 --height=1080 --fixture=res://fixtures/presentation/empty_map.json
+          shoot full_map_1440p.png --snapshot="$SNAP_READ" --width=2560 --height=1440 --fixture=res://fixtures/presentation/empty_map.json
+          shoot v7_extent_proof_1080p.png --snapshot="$SNAP_READ" --width=1920 --height=1080 --fixture=res://fixtures/presentation/e3_v7_extent_proof.json
+          # Earth3-native operational fixture (#98)
+          shoot e3_ops_ownership_formations_1080p.png --snapshot="$SNAP_OP" --width=1920 --height=1080 --fixture=res://fixtures/presentation/e3_operational.json
+          shoot e3_ops_routes_sites_1080p.png --snapshot="$SNAP_OP" --width=1920 --height=1080 --fixture=res://fixtures/presentation/e3_operational.json
+          shoot e3_ops_selected_targets_1080p.png --snapshot="$SNAP_OP" --width=1920 --height=1080 --fixture=res://fixtures/presentation/e3_operational.json
+          shoot e3_ops_pending_battle_1080p.png --snapshot="$SNAP_OP" --width=1920 --height=1080 --fixture=res://fixtures/presentation/e3_operational.json
+          shoot e3_ops_debug_panel_1080p.png --snapshot="$SNAP_OP" --width=1920 --height=1080 --fixture=res://fixtures/presentation/e3_operational.json --debug
           ls -la "$OUT"
           python3 - <<'PY'
           import struct
           from pathlib import Path
           root = Path("docs/godot-presentation/screenshots/earth3")
-          files = sorted(root.glob("*.png"))
-          assert len(files) >= 4, files
-          for p in files:
+          required = [
+              "full_map_1080p.png",
+              "v7_extent_proof_1080p.png",
+              "e3_ops_ownership_formations_1080p.png",
+              "e3_ops_routes_sites_1080p.png",
+              "e3_ops_selected_targets_1080p.png",
+              "e3_ops_pending_battle_1080p.png",
+              "e3_ops_debug_panel_1080p.png",
+          ]
+          for name in required:
+              p = root / name
+              assert p.is_file(), name
               data = p.read_bytes()
               assert data[:8] == b"\x89PNG\r\n\x1a\n", p
               w, h = struct.unpack(">II", data[16:24])

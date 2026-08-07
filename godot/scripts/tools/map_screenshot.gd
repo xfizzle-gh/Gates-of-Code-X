@@ -109,6 +109,14 @@ func _run_capture() -> void:
 		scene.map_debug.enabled = true
 		if scene.has_method("set_process"):
 			scene.set_process(true)
+	# Fixture may set selected_province_id; ensure legal targets rebuild after map open.
+	if scene.get("presentation_fixture") != null and scene.presentation_fixture is Dictionary:
+		var pf: Dictionary = scene.presentation_fixture
+		var sp := String(pf.get("selected_province_id", ""))
+		if not sp.is_empty() and scene.get("selected_province_id") != null:
+			scene.selected_province_id = sp
+			if scene.has_method("_rebuild_legal_targets"):
+				scene.call("_rebuild_legal_targets")
 	_apply_selection_hover(scene)
 	if scene.has_method("_fit_complete_theatre"):
 		scene.call("_fit_complete_theatre")
