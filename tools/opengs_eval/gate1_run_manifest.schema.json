@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gates-of-codex.invalid/schemas/opengs-run-manifest-v1.json",
+  "title": "Gates of CodeX OpenGS deterministic run manifest",
+  "type": "object",
+  "required": ["schema", "schema_version", "generator_version", "upstream_commit", "recipe", "inputs", "derived_seeds", "counts", "dimensions", "outputs", "determinism", "manifest_payload_sha256"],
+  "properties": {
+    "schema": {"const": "gates-of-codex.opengs-run-manifest"},
+    "schema_version": {"const": 1},
+    "generator_version": {"const": 1},
+    "upstream_commit": {"const": "06e7ec8517bd45872cf44d77cb8784e5ffca49bb"},
+    "derived_seeds": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+    "outputs": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
+    "manifest_payload_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}
