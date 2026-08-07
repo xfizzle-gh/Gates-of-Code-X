@@ -40,6 +40,8 @@ var _overlay_cache_key := ""
 var _cached_label_candidates: Array = []
 var _cached_reserved_rects: Array = []
 var _cached_label_bounds: Array = []
+var _snap_by_id: Dictionary = {}
+var _snap_by_id_src: Variant = null
 # Separate CanvasItem layers: filtering is per-node in Godot 4.
 var _bg_layer: Node2D
 var _identity_layer: Node2D
@@ -801,20 +803,60 @@ func _draw_color_id_overlays() -> void:
 		_cached_label_candidates.clear()
 		_cached_reserved_rects.clear()
 
-	for province: Dictionary in snapshot.get("provinces", []):
+	# PR C: avoid scanning all ~3.5k snapshot provinces every frame when idle.
+	# Active set = occupied + selected/hovered/targets (+ all provinces only when rebuilding ambient labels at high zoom).
+	if _snap_by_id_src != snapshot:
+		_snap_by_id_src = snapshot
+		_snap_by_id.clear()
+		for prow: Dictionary in snapshot.get("provinces", []):
+			_snap_by_id[String(prow.get("id", ""))] = prow
+	var active_ids: Dictionary = {}
+	for pid_occ: Variant in battalions_by_province.keys():
+		active_ids[String(pid_occ)] = true
+	if not selected_province_id.is_empty():
+		active_ids[selected_province_id] = true
+	if not hovered_province_id.is_empty():
+		active_ids[hovered_province_id] = true
+	for tid: Variant in legal_targets.keys():
+		active_ids[String(tid)] = true
+	var scan_all := rebuild and view_scale >= 2.4
+	var province_iter: Array = []
+	if scan_all:
+		province_iter = snapshot.get("provinces", [])
+	else:
+		var am_rows = _active_map().row_by_province if _active_map() != null else {}
+		for pid_key: Variant in active_ids.keys():
+			var pid_s := String(pid_key)
+			if am_rows is Dictionary and not am_rows.has(pid_s):
+				continue
+			if _snap_by_id.has(pid_s):
+				province_iter.append(_snap_by_id[pid_s])
+			else:
+				province_iter.append({"id": pid_s, "owner": "neutral", "infrastructure": {}})
+
+	for province: Dictionary in province_iter:
 		var province_id := String(province.get("id", ""))
 		if not _active_map().row_by_province.has(province_id):
 			continue
-		var anchor := _image_to_screen(_active_map().anchor_pixel(province_id))
-		var position := _clamp_point_in_rect(anchor, overlay_bounds, OVERLAY_EDGE_PAD)
-		var shifted := position.distance_to(anchor) > 0.5
 		var battalion: Dictionary = battalions_by_province.get(province_id, {})
 		var occupied := not battalion.is_empty()
 		var selected := province_id == selected_province_id
 		var target := legal_targets.has(province_id)
+		var hovered := province_id == hovered_province_id
+		# Skip empty ambient provinces during non-label frames.
+		if not scan_all and not occupied and not selected and not hovered and not target:
+			var infra0: Dictionary = province.get("infrastructure", {})
+			if (
+				int(infra0.get("supply_hub", 0)) <= 0
+				and int(infra0.get("command_post", 0)) <= 0
+				and int(infra0.get("air_base", 0)) <= 0
+			):
+				continue
+		var anchor := _image_to_screen(_active_map().anchor_pixel(province_id))
+		var position := _clamp_point_in_rect(anchor, overlay_bounds, OVERLAY_EDGE_PAD)
+		var shifted := position.distance_to(anchor) > 0.5
 		var owner := String(province.get("owner", "neutral"))
 		var faction_color: Color = FACTION_COLORS.get(owner, FACTION_COLORS["neutral"])
-		var hovered := province_id == hovered_province_id
 
 		if selected:
 			MapMarkersScript.draw_selected_province_ring(self, position)
