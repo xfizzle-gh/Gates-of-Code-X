@@ -24,6 +24,7 @@ class StrategicAction:
 class StrategicAI:
     def __init__(self, state: CampaignState, *, random_seed: int = 0) -> None:
         self.state = state
+        self.random_seed = int(random_seed)
         self.engine = CampaignEngine(state, random_seed=random_seed)
 
     def take_turn(self, faction: Faction) -> list[StrategicAction]:
@@ -53,6 +54,21 @@ class StrategicAI:
                     details=construction,
                 )
             )
+        # Operational authority: graph-native orders only (no province teleport).
+        from .operational_ai import (
+            operational_graph_authority_present,
+            plan_and_issue_operational_orders,
+        )
+
+        if operational_graph_authority_present(self.state):
+            actions.extend(
+                plan_and_issue_operational_orders(
+                    self.state, faction, seed=self.random_seed
+                )
+            )
+            return actions
+
+        # Legacy province-adjacency AI when no operational graph is loadable.
         battalion_ids = sorted(
             battalion.battalion_id
             for battalion in self.state.battalions.values()

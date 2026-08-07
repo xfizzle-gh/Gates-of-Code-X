@@ -192,14 +192,47 @@ def commit_move_orders(
     *,
     faction: str | None = None,
     locked_stance: str = FormationStance.OPERATIONAL.value,
+    rejections_out: list[dict[str, str]] | None = None,
 ) -> list[str]:
-    """Promote draft orders to committed for the current strategic turn."""
+    """Promote draft orders to committed (two-phase).
+
+    Phase A — legality (graph/path/direction/authority/metadata/stance) for all
+    drafts in stable formation-id order. Invalid drafts are blocked and never
+    consume destination capacity.
+
+    Phase B — destination capacity among only Phase-A-valid candidates, counting
+    existing allied committed/active reservations plus this pass's commits.
+
+    Optional ``rejections_out`` receives ``{formation_id, reason}`` rows with
+    stable reason tokens. Return value remains the committed formation id list.
+    """
+    report = commit_move_orders_detailed(
+        state, faction=faction, locked_stance=locked_stance
+    )
+    if rejections_out is not None:
+        rejections_out.extend(report["rejected"])
+    return list(report["committed"])
+
+
+def commit_move_orders_detailed(
+    state: CampaignState,
+    *,
+    faction: str | None = None,
+    locked_stance: str = FormationStance.OPERATIONAL.value,
+) -> dict[str, Any]:
+    """Two-phase bulk commit with stable rejection reasons.
+
+    Returns ``{"committed": [formation_id, ...], "rejected": [{"formation_id", "reason"}, ...]}``.
+    """
     if locked_stance not in _APPROVED_STANCES:
         raise ValueError(
             f"locked_stance must be one of {sorted(_APPROVED_STANCES)}, got {locked_stance!r}"
         )
-    committed_ids: list[str] = []
+    locked = str(locked_stance)
     turn = int(state.turn_number)
+    rejected: list[dict[str, str]] = []
+    # Phase A — legality only (no capacity).
+    valid: list[tuple[StrategicFormation, OperationalMoveOrder]] = []
     for force in sorted(
         state.strategic_formations.values(),
         key=lambda value: value.strategic_formation_id,
@@ -209,14 +242,190 @@ def commit_move_orders(
         order = force.move_order
         if order is None or order.status != MoveOrderStatus.DRAFT.value:
             continue
+        try:
+            validate_order_legality_for_commit(
+                state, force, order, locked_stance=locked
+            )
+        except ValueError as exc:
+            reason = classify_commit_rejection(exc)
+            force.move_order = _as_blocked(order)
+            rejected.append(
+                {"formation_id": force.strategic_formation_id, "reason": reason}
+            )
+            continue
+        valid.append((force, order))
+
+    # Phase B — capacity among valid candidates only. Each successful commit
+    # becomes a live committed reservation for the next candidate (no batch
+    # double-count). Invalid drafts were already removed in Phase A.
+    committed_ids: list[str] = []
+    for force, order in valid:
+        dest = str(order.path_node_ids[-1]) if order.path_node_ids else ""
+        if not dest or not can_reserve_destination(
+            state,
+            force,
+            dest,
+            include_drafts=False,
+        ):
+            force.move_order = _as_blocked(order)
+            rejected.append(
+                {
+                    "formation_id": force.strategic_formation_id,
+                    "reason": "destination_capacity",
+                }
+            )
+            continue
         force.move_order = replace(
             order,
             status=MoveOrderStatus.COMMITTED.value,
             committed_turn=turn,
-            locked_stance=str(locked_stance),
+            locked_stance=locked,
         )
         committed_ids.append(force.strategic_formation_id)
-    return committed_ids
+    return {"committed": committed_ids, "rejected": rejected}
+
+
+def commit_formation_move_order(
+    state: CampaignState,
+    formation_id: str,
+    *,
+    locked_stance: str = FormationStance.OPERATIONAL.value,
+    batch_reservations: dict[str, int] | None = None,
+) -> None:
+    """Commit one formation's draft after shared validation.
+
+    Raises ``ValueError`` with a stable reason token on rejection.
+    """
+    if locked_stance not in _APPROVED_STANCES:
+        raise ValueError(
+            f"locked_stance must be one of {sorted(_APPROVED_STANCES)}, got {locked_stance!r}"
+        )
+    force = _require_formation(state, formation_id)
+    order = force.move_order
+    if order is None or order.status != MoveOrderStatus.DRAFT.value:
+        raise ValueError("no_draft_order")
+    locked = str(locked_stance)
+    validate_order_legality_for_commit(
+        state, force, order, locked_stance=locked
+    )
+    reservations = batch_reservations if batch_reservations is not None else {}
+    if not order.path_node_ids:
+        raise ValueError("invalid_path")
+    dest = str(order.path_node_ids[-1])
+    if not can_reserve_destination(
+        state,
+        force,
+        dest,
+        batch_reservations=reservations,
+        include_drafts=False,
+    ):
+        raise ValueError("destination_capacity")
+    force.move_order = replace(
+        order,
+        status=MoveOrderStatus.COMMITTED.value,
+        committed_turn=int(state.turn_number),
+        locked_stance=locked,
+    )
+    # Committed order is live in state; callers must not also bump batch_reservations.
+
+
+def validate_order_legality_for_commit(
+    state: CampaignState,
+    force: StrategicFormation,
+    order: OperationalMoveOrder,
+    *,
+    locked_stance: str,
+) -> None:
+    """Phase-A gates: path legality + stance (no capacity)."""
+    if locked_stance not in _APPROVED_STANCES:
+        raise ValueError(
+            f"locked_stance must be one of {sorted(_APPROVED_STANCES)}, got {locked_stance!r}"
+        )
+    graph = load_operational_graph_for_state(state)
+    if graph is None:
+        raise ValueError("no_graph")
+    node_ids, edge_ids, edges_by_id, nodes_by_id = _indexes(graph)
+    site_ids = {
+        str(site.get("site_id"))
+        for site in graph.get("sites") or []
+        if site.get("site_id")
+    }
+    try:
+        _validate_order_against_graph(
+            order,
+            force=force,
+            node_ids=node_ids,
+            edge_ids=edge_ids,
+            site_ids=site_ids,
+            edges_by_id=edges_by_id,
+            nodes_by_id=nodes_by_id,
+            require_start_match=True,
+        )
+    except ValueError as exc:
+        raise ValueError(classify_commit_rejection(exc)) from exc
+    assert_stance_route_legal(
+        state, force, order, locked_stance=str(locked_stance)
+    )
+    if not order.path_node_ids or not order.path_edge_ids:
+        raise ValueError("invalid_path")
+
+
+def validate_order_for_commit(
+    state: CampaignState,
+    force: StrategicFormation,
+    order: OperationalMoveOrder,
+    *,
+    locked_stance: str,
+    batch_reservations: dict[str, int] | None = None,
+) -> None:
+    """Full pre-commit gates (legality + capacity). Raises stable reason tokens."""
+    validate_order_legality_for_commit(
+        state, force, order, locked_stance=locked_stance
+    )
+    dest = str(order.path_node_ids[-1])
+    if not can_reserve_destination(
+        state,
+        force,
+        dest,
+        batch_reservations=batch_reservations,
+        include_drafts=False,
+    ):
+        raise ValueError("destination_capacity")
+
+
+def classify_commit_rejection(exc: BaseException) -> str:
+    """Map validator errors to stable bulk-commit reason tokens."""
+    msg = str(exc)
+    if msg in {
+        "destination_capacity",
+        "forced_march_hostile_path",
+        "candidate_edge",
+        "metadata_blocked",
+        "one_way_reverse",
+        "invalid_path",
+        "no_graph",
+        "no_draft_order",
+        "empty_path",
+        "on_edge_desync",
+        "on_edge_reverse",
+    }:
+        return msg
+    lower = msg.lower()
+    if "forced_march" in lower:
+        return "forced_march_hostile_path"
+    if "destination_capacity" in lower or "capacity" in lower:
+        return "destination_capacity"
+    if "candidate" in lower:
+        return "candidate_edge"
+    if any(k in lower for k in ("blocked", "blockaded", "closed", "disabled")):
+        return "metadata_blocked"
+    if "one-way" in lower or "one_way" in lower:
+        return "one_way_reverse"
+    if "on_edge_reverse" in lower:
+        return "on_edge_reverse"
+    if "on_edge" in lower or "facing" in lower or "current edge" in lower:
+        return "on_edge_desync"
+    return "invalid_path"
 
 
 def activate_committed_orders(state: CampaignState) -> int:
@@ -753,6 +962,12 @@ def _advance_formation_one_tick(
         return False
     dest_node = order.path_node_ids[edge_index + 1]
     origin_node = order.path_node_ids[edge_index]
+    # Tick-time safety: same traversal authority as issue/commit.
+    try:
+        assert_edge_hop_legal(edge, origin=origin_node, dest=dest_node)
+    except ValueError:
+        force.move_order = _as_blocked(order)
+        return False
 
     # Enter edge if still at origin node.
     if position.mode == PositionMode.AT_NODE.value:
@@ -906,6 +1121,168 @@ def _stance_speed_milli(stance: str | None) -> int:
     return COST_MILLI_UNITY
 
 
+_BLOCK_METADATA_KEYS = ("blocked", "blockaded", "closed", "disabled")
+
+
+def edge_is_traversable(edge: OperationalRouteEdge) -> bool:
+    """True when an edge may be used by player or AI movement authority."""
+    try:
+        assert_edge_traversable(edge)
+    except ValueError:
+        return False
+    return True
+
+
+def assert_edge_traversable(edge: OperationalRouteEdge) -> None:
+    """Shared edge gate: enabled, non-candidate, not metadata-blocked."""
+    if not edge.traversal_enabled:
+        raise ValueError("invalid_path")
+    if str(edge.authority) == "candidate":
+        raise ValueError("candidate_edge")
+    meta = edge.metadata or {}
+    for key in _BLOCK_METADATA_KEYS:
+        if bool(meta.get(key)):
+            raise ValueError("metadata_blocked")
+
+
+def assert_edge_hop_legal(
+    edge: OperationalRouteEdge, *, origin: str, dest: str
+) -> None:
+    """Shared hop gate: traversable + direction."""
+    assert_edge_traversable(edge)
+    _assert_edge_direction(edge, origin=origin, dest=dest)
+
+
+def assert_path_edges_legal(
+    order: OperationalMoveOrder,
+    *,
+    edges_by_id: dict[str, OperationalRouteEdge],
+) -> None:
+    """Validate every hop on an order path under shared traversal authority."""
+    for index, edge_id in enumerate(order.path_edge_ids):
+        edge = edges_by_id[edge_id]
+        origin = order.path_node_ids[index]
+        dest = order.path_node_ids[index + 1]
+        assert_edge_hop_legal(edge, origin=origin, dest=dest)
+
+
+def assert_stance_route_legal(
+    state: CampaignState,
+    force: StrategicFormation,
+    order: OperationalMoveOrder,
+    *,
+    locked_stance: str,
+) -> None:
+    """Stance-aware route gates shared by player commit and AI planning."""
+    if locked_stance != FormationStance.FORCED_MARCH.value:
+        return
+    from .operational_contact import enemy_formations_at_node
+
+    # Forced March must not deliberately initiate contact: every node after
+    # the route origin must be free of known hostiles.
+    for node_id in order.path_node_ids[1:]:
+        enemies = enemy_formations_at_node(
+            state,
+            str(node_id),
+            faction=force.faction,
+            excluding_formation_id=force.strategic_formation_id,
+        )
+        if enemies:
+            raise ValueError("forced_march_hostile_path")
+
+
+def destination_reservation_count(
+    state: CampaignState,
+    node_id: str,
+    *,
+    faction,
+    excluding_formation_id: str | None = None,
+    batch_reservations: dict[str, int] | None = None,
+    include_drafts: bool = False,
+) -> int:
+    """Friendly occupants + allied destination claims.
+
+    By default only committed/active orders reserve capacity (drafts that later
+    fail legality must not consume slots). Set ``include_drafts=True`` only for
+    advisory previews.
+    """
+    from .diplomacy import are_allied
+    from .operational_contact import (
+        formation_at_node_id,
+        friendly_formations_at_node,
+    )
+
+    node = str(node_id)
+    friends = friendly_formations_at_node(
+        state,
+        node,
+        faction=faction,
+        excluding_formation_id=excluding_formation_id,
+    )
+    count = len(friends)
+    reserving_statuses = {
+        MoveOrderStatus.COMMITTED.value,
+        MoveOrderStatus.ACTIVE.value,
+    }
+    if include_drafts:
+        reserving_statuses.add(MoveOrderStatus.DRAFT.value)
+    claimed: set[str] = {f.strategic_formation_id for f in friends}
+    for other in sorted(
+        state.strategic_formations.values(),
+        key=lambda value: value.strategic_formation_id,
+    ):
+        oid = other.strategic_formation_id
+        if excluding_formation_id and oid == excluding_formation_id:
+            continue
+        if oid in claimed:
+            continue
+        if other.faction != faction and not are_allied(state, faction, other.faction):
+            continue
+        # Already occupying destination counted above.
+        if formation_at_node_id(other) == node:
+            continue
+        order = other.move_order
+        if order is None or order.status not in reserving_statuses:
+            continue
+        if not order.path_node_ids:
+            continue
+        if str(order.path_node_ids[-1]) != node:
+            continue
+        claimed.add(oid)
+        count += 1
+    if batch_reservations:
+        count += int(batch_reservations.get(node, 0))
+    return count
+
+
+def can_reserve_destination(
+    state: CampaignState,
+    force: StrategicFormation,
+    node_id: str,
+    *,
+    batch_reservations: dict[str, int] | None = None,
+    include_drafts: bool = False,
+) -> bool:
+    """True if force may claim destination without exceeding friendly capacity."""
+    from .operational_contact import (
+        formation_at_node_id,
+        max_friendly_formations_per_node,
+    )
+
+    node = str(node_id)
+    if formation_at_node_id(force) == node:
+        return True
+    used = destination_reservation_count(
+        state,
+        node,
+        faction=force.faction,
+        excluding_formation_id=force.strategic_formation_id,
+        batch_reservations=batch_reservations,
+        include_drafts=include_drafts,
+    )
+    return used < max_friendly_formations_per_node(state)
+
+
 def _validate_order_against_graph(
     order: OperationalMoveOrder,
     *,
@@ -923,7 +1300,7 @@ def _validate_order_against_graph(
         site_ids=site_ids,
         edges_by_id=edges_by_id,
     )
-    _assert_path_legal_for_s3(order, edges_by_id=edges_by_id)
+    assert_path_edges_legal(order, edges_by_id=edges_by_id)
     if require_start_match:
         _assert_order_starts_at_formation(
             force, order, nodes_by_id=nodes_by_id, edges_by_id=edges_by_id
@@ -935,17 +1312,8 @@ def _assert_path_legal_for_s3(
     *,
     edges_by_id: dict[str, OperationalRouteEdge],
 ) -> None:
-    """S3: traversal_enabled only; respect one-way edges."""
-    for index, edge_id in enumerate(order.path_edge_ids):
-        edge = edges_by_id[edge_id]
-        if not edge.traversal_enabled:
-            raise ValueError(
-                f"path edge {edge_id} is not traversal_enabled "
-                "(candidate corridors are not gameplay-authoritative in S3)"
-            )
-        origin = order.path_node_ids[index]
-        dest = order.path_node_ids[index + 1]
-        _assert_edge_direction(edge, origin=origin, dest=dest)
+    """Backward-compatible alias for shared path edge legality."""
+    assert_path_edges_legal(order, edges_by_id=edges_by_id)
 
 
 def _assert_edge_direction(
@@ -958,10 +1326,7 @@ def _assert_edge_direction(
         return
     # One-way: only a → b is legal (canonical authored direction).
     if not (origin == edge.a and dest == edge.b):
-        raise ValueError(
-            f"edge {edge.edge_id} is one-way ({edge.a} -> {edge.b}); "
-            f"cannot traverse {origin} -> {dest}"
-        )
+        raise ValueError("one_way_reverse")
 
 
 def _assert_order_starts_at_formation(
@@ -973,22 +1338,90 @@ def _assert_order_starts_at_formation(
 ) -> None:
     if force.position is None:
         return
+    if not order.path_node_ids:
+        raise ValueError("invalid_path")
     start = order.path_node_ids[0]
     pos = force.position
     if pos.mode == PositionMode.AT_NODE.value:
         if pos.node_id != start:
-            raise ValueError(
-                f"order path must start at formation node {pos.node_id}, got {start}"
-            )
+            raise ValueError("invalid_path")
         return
     if pos.mode == PositionMode.ON_EDGE.value:
-        edge = edges_by_id.get(str(pos.edge_id))
-        if edge is None:
-            raise ValueError("formation is on unknown edge")
-        if start not in {edge.a, edge.b}:
-            raise ValueError(
-                "order path must start at an endpoint of the formation's current edge"
-            )
+        # Mandatory continuation of the occupied edge in facing direction.
+        assert_on_edge_order_continuation(
+            force, order, edges_by_id=edges_by_id
+        )
+        return
+    raise ValueError("invalid_path")
+
+
+def assert_on_edge_order_continuation(
+    force: StrategicFormation,
+    order: OperationalMoveOrder,
+    *,
+    edges_by_id: dict[str, OperationalRouteEdge],
+) -> None:
+    """ON_EDGE drafts must keep the current edge as hop 0 in facing direction.
+
+    The tail after the facing node must not reverse to the origin, reuse the
+    occupied edge, or repeat any prefix node/edge.
+    """
+    pos = force.position
+    if pos is None or pos.mode != PositionMode.ON_EDGE.value:
+        raise ValueError("on_edge_desync")
+    edge_id = str(pos.edge_id or "")
+    edge = edges_by_id.get(edge_id)
+    if edge is None:
+        raise ValueError("on_edge_desync")
+    facing = str(pos.facing_node_id or "")
+    if facing not in {edge.a, edge.b}:
+        raise ValueError("on_edge_desync")
+    origin = edge.b if facing == edge.a else edge.a
+    if not order.path_node_ids or not order.path_edge_ids:
+        raise ValueError("on_edge_desync")
+    if str(order.path_edge_ids[0]) != edge_id:
+        raise ValueError("on_edge_desync")
+    if str(order.path_node_ids[0]) != origin:
+        raise ValueError("on_edge_desync")
+    if len(order.path_node_ids) < 2 or str(order.path_node_ids[1]) != facing:
+        raise ValueError("on_edge_desync")
+    # Direction of first hop must match facing.
+    assert_edge_hop_legal(edge, origin=origin, dest=facing)
+    assert_on_edge_tail_no_reverse(
+        order, origin=origin, facing=facing, occupied_edge_id=edge_id
+    )
+
+
+def assert_on_edge_tail_no_reverse(
+    order: OperationalMoveOrder,
+    *,
+    origin: str,
+    facing: str,
+    occupied_edge_id: str,
+) -> None:
+    """Reject tails that reverse through the ON_EDGE prefix (stable token)."""
+    nodes = [str(n) for n in order.path_node_ids]
+    edges = [str(e) for e in order.path_edge_ids]
+    if len(nodes) != len(edges) + 1:
+        raise ValueError("invalid_path")
+    # No repeated nodes or edges anywhere on the route.
+    if len(nodes) != len(set(nodes)):
+        raise ValueError("on_edge_reverse")
+    if len(edges) != len(set(edges)):
+        raise ValueError("on_edge_reverse")
+    # Origin only at index 0; occupied edge only at hop 0.
+    if origin in nodes[1:]:
+        raise ValueError("on_edge_reverse")
+    if occupied_edge_id in edges[1:]:
+        raise ValueError("on_edge_reverse")
+    # Immediate reversal facing → origin.
+    if len(nodes) >= 3 and nodes[2] == origin:
+        raise ValueError("on_edge_reverse")
+    # Any hop that re-enters the occupied edge endpoints against facing.
+    for index in range(1, len(edges)):
+        a, b = nodes[index], nodes[index + 1]
+        if {a, b} == {origin, facing}:
+            raise ValueError("on_edge_reverse")
 
 
 def _province_for_position(
