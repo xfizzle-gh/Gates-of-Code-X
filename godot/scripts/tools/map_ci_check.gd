@@ -112,11 +112,26 @@ func _run() -> void:
 		if int(pmap.province_count) < 3000:
 			_fail("Earth3 province_count expected >=3000 got %s" % pmap.province_count)
 			return
-		var sample_id := String(pmap.province_by_index[10])
-		var hit := pmap.province_at_image_pos(pmap.centroids[10])
+		var sample_idx := 10
+		while sample_idx < int(pmap.province_count) and int(pmap.is_water[sample_idx]) == 1:
+			sample_idx += 1
+		if sample_idx >= int(pmap.province_count):
+			_fail("Earth3 hit test: no land province found for sample")
+			return
+		var sample_id := String(pmap.province_by_index[sample_idx])
+		var hit := pmap.province_at_image_pos(pmap.centroids[sample_idx])
 		if hit != sample_id:
 			_fail("Earth3 hit test expected %s got %s" % [sample_id, hit])
 			return
+		for wi in range(mini(int(pmap.province_count), 64)):
+			if int(pmap.is_water[wi]) != 1:
+				continue
+			var wh := pmap.province_at_image_pos(pmap.centroids[wi])
+			if not String(wh).is_empty():
+				var widx := int(pmap.index_by_province.get(wh, -1))
+				if widx >= 0 and int(pmap.is_water[widx]) == 1:
+					_fail("Earth3 water hit-test leaked province %s at water idx %s" % [wh, wi])
+					return
 		var mesh_before: int = int(pmap.mesh_count)
 		var first_mesh: Variant = null
 		if pmap._meshes.size() > 0:

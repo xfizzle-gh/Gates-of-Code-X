@@ -1,0 +1,22 @@
+﻿{
+  "schema": "gates-of-codex.earth3-production-authority",
+  "schema_version": 1,
+  "status": "production",
+  "map_id": "earth3_europe_mediterranean",
+  "province_count": 3512,
+  "land_count": 3297,
+  "water_count": 215,
+  "selectable_province_count": 3297,
+  "source_water_metadata_count": 215,
+  "included_ids_sha256": "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7",
+  "water_policy": {
+    "v1": "water_not_normally_selectable",
+    "accepted": true,
+    "normal_click_returns": "no_province",
+    "source_water_ids": "import_metadata_only",
+    "sea_movement": "authored_operational_nodes_edges"
+  },
+  "topology_sanitize": {
+    "land_exclusions_accepted": false
+  }
+}

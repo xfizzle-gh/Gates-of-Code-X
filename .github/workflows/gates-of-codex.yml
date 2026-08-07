@@ -127,6 +127,32 @@ jobs:
           set -euo pipefail
           "$HOME/godot" --headless --path . --audio-driver Dummy \
             -s res://scripts/tools/earth3_fixture_validate.gd
+      - name: Godot Earth3 water policy (non-selectable water)
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --audio-driver Dummy \
+            -s res://scripts/tools/earth3_water_policy_test.gd
+      - name: Earth3 production authority exact
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          auth = json.loads(Path("config/earth3/production_authority.json").read_text(encoding="utf-8"))
+          meta = json.loads(Path("godot/assets/maps/earth3_europe_mediterranean/dataset_meta.json").read_text(encoding="utf-8"))
+          assert auth["province_count"] == 3512
+          assert auth["land_count"] == 3297
+          assert auth["water_count"] == 215
+          assert auth["included_ids_sha256"] == "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7"
+          assert meta["province_count"] == auth["province_count"]
+          assert meta["land_count"] == auth["land_count"]
+          assert meta["water_count"] == auth["water_count"]
+          assert meta["included_source_ids_sha256"] == auth["included_ids_sha256"]
+          assert auth.get("water_policy", {}).get("accepted") is True
+          assert auth.get("topology_sanitize", {}).get("land_exclusions_accepted") is False
+          print("authority ok", auth["province_count"])
+          PY
       - name: Godot map profiler (committed fixture)
         run: |
           set -euo pipefail
