@@ -1,0 +1,37 @@
+{
+  "schema": "gates-of-codex.opengs-natural-earth-benchmark-suite",
+  "schema_version": 1,
+  "input_policy": "Natural Earth v5.1.2 aligned Gate 0 research rasters",
+  "scenarios": [
+    {
+      "id": "natural_earth_naive_3514",
+      "land_territories": 120,
+      "ocean_territories": 20,
+      "land_provinces": 3299,
+      "ocean_provinces": 215,
+      "territory_density_strength": 2.0,
+      "province_density_strength": 2.0,
+      "territory_exclude_ocean_density": true,
+      "province_exclude_ocean_density": true,
+      "jagged_land": false,
+      "jagged_ocean": false,
+      "repeats": 3,
+      "expectation": "OpenGS adds every connected lake as an additional province, so actual count may exceed 3514."
+    },
+    {
+      "id": "natural_earth_jagged_3514",
+      "land_territories": 120,
+      "ocean_territories": 20,
+      "land_provinces": 3299,
+      "ocean_provinces": 215,
+      "territory_density_strength": 2.0,
+      "province_density_strength": 2.0,
+      "territory_exclude_ocean_density": true,
+      "province_exclude_ocean_density": true,
+      "jagged_land": true,
+      "jagged_ocean": false,
+      "repeats": 1,
+      "expectation": "Measure real-theatre jagged land cost and multipart cleanup behavior without treating the output as Gates geometry."
+    }
+  ]
+}
