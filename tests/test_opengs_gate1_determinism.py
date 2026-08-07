@@ -65,7 +65,7 @@ class Gate1DeterminismTest(unittest.TestCase):
             self.g.generate(recipe, left)
             payload = json.loads(recipe.read_text())
             payload["root_seed"] += 1
-            recipe.write_text(json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
+            recipe.write_bytes((json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8"))
             self.g.generate(recipe, right)
             comparison = self.g.compare_runs(left, right)
             self.assertFalse(comparison["identical"])
@@ -76,7 +76,7 @@ class Gate1DeterminismTest(unittest.TestCase):
             recipe = self.make_fixture(base / "inputs")
             payload = json.loads(recipe.read_text())
             payload["inputs"]["density"]["sha256"] = "0" * 64
-            recipe.write_text(json.dumps(payload), encoding="utf-8")
+            recipe.write_bytes(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8"))
             with self.assertRaises(self.g.Gate1Error):
                 self.g.load_recipe(recipe)
 
