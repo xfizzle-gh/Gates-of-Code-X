@@ -129,7 +129,7 @@ _REGION_CITY_ANCHORS: dict[str, tuple[str, ...]] = {
     "Caucasus_edge": ("Tbilisi", "Baku", "Yerevan"),
     "North_Africa_coast": ("Tunis", "Algiers", "Cairo", "Tripoli"),
     "Baltic": ("Stockholm", "Helsinki", "Riga", "Tallinn", "Vilnius"),
-    "Far_north_should_exclude": ("Arkhangelsk",),
+    "East_urals_kazakhstan_should_exclude": ("Chelyabinsk", "Atyrau", "Vorkuta"),
 }
 
 
@@ -445,7 +445,7 @@ def _region_coverage(
                         "missing_from_source_cities": True,
                     }
                 )
-        if region == "Far_north_should_exclude":
+        if region.endswith("_should_exclude"):
             ok = all(
                 not bool(h.get("included"))
                 for h in hits

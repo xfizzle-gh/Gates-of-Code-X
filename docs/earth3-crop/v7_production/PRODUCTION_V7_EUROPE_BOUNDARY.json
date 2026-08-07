@@ -1,0 +1,40 @@
+{
+  "province_count": 3512,
+  "land_count": 3297,
+  "water_count": 215,
+  "hash": "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7",
+  "triangle_count": 326203,
+  "vertex_count": 333227,
+  "dataset_bytes": 19007176,
+  "snapshot_bytes": 874713,
+  "bounds": {
+    "origin_source_xy": [
+      7076.0,
+      142.0
+    ],
+    "width": 4306.0,
+    "height": 3449.0,
+    "source_min_xy": [
+      7084.0,
+      150.0
+    ],
+    "source_max_xy": [
+      11374.0,
+      3583.0
+    ]
+  },
+  "audit": {
+    "ok": true,
+    "gap_fills_created": 51,
+    "max_gap_fill_land_overlap_fraction": 0.0,
+    "missing_province_ids_count": 0,
+    "failed_empty_meshes": 0,
+    "unexplained_black_components": 0
+  },
+  "perf": {
+    "map_open_ms": 1141.22,
+    "refresh_snapshot_partial_ms": 5.64,
+    "province_pick_ms_avg": 0.047,
+    "note": "Headless profiler: load/refresh/pick. Interactive avg/p95 frame time requires display capture; not in headless map_profiler."
+  }
+}
