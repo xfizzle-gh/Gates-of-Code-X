@@ -10,8 +10,8 @@ MANIFEST = ROOT / "godot/assets/maps/earth3_europe_mediterranean/map_manifest.js
 DATASET = ROOT / "godot/assets/maps/earth3_europe_mediterranean/polygon_dataset.json"
 AUTH = ROOT / "config/earth3/production_authority.json"
 PRE_HASH = "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7"
-APPROVED_HASH = "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3"
-APPROVED_COUNT = 3510
+APPROVED_HASH = "f3931d2e34558e451d02a7c49270b2071a79a628668c49228f5ff607a75315b8"
+APPROVED_COUNT = 3514
 EXCLUDE_GATES = {"e3_2830", "e3_2888"}
 
 
@@ -20,7 +20,7 @@ class Earth3ProductionDatasetTests(unittest.TestCase):
     def test_counts_and_approved_hash(self) -> None:
         meta = json.loads(META.read_text(encoding="utf-8"))
         self.assertEqual(meta["province_count"], APPROVED_COUNT)
-        self.assertEqual(meta["land_count"], 3295)
+        self.assertEqual(meta["land_count"], 3299)
         self.assertEqual(meta["water_count"], 215)
         self.assertEqual(meta["included_source_ids_sha256"], APPROVED_HASH)
         self.assertEqual(meta.get("pre_sanitize_included_ids_sha256"), PRE_HASH)

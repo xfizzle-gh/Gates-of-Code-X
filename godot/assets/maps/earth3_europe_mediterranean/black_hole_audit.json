@@ -1,9 +1,9 @@
 {
   "schema": "gates-of-codex.earth3-black-hole-audit",
   "schema_version": 2,
-  "total_polygon_interior_holes": 55,
+  "total_polygon_interior_holes": 52,
   "water_holes_rendered": 3,
-  "gap_fills_created": 51,
+  "gap_fills_created": 48,
   "missing_province_ids": [],
   "missing_province_ids_count": 0,
   "failed_empty_meshes": 0,
@@ -614,6 +614,26 @@
     {
       "gap_fill_id": "gap_0012",
       "centroid": [
+        2795.8037,
+        1277.0118
+      ],
+      "area": 608.0,
+      "region_hint": "baltic_or_scandinavian_lake",
+      "included_water_coverage_fraction": 0.0,
+      "source_water_overlap_fraction": 0.0,
+      "source_land_overlap_fraction": 0.0,
+      "source_land_overlap_area": 0.0,
+      "intersecting_source_provinces": [],
+      "intersecting_source_count": 0,
+      "classification": "water_presentation_gap",
+      "land_overlap_ok": true,
+      "gap_fill_land_overlap_fraction": 0.0,
+      "gap_fill_land_overlap_area": 0.0,
+      "gap_fill": true
+    },
+    {
+      "gap_fill_id": "gap_0013",
+      "centroid": [
         2803.026,
         1051.7214
       ],
@@ -632,7 +652,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0013",
+      "gap_fill_id": "gap_0014",
       "centroid": [
         2831.0307,
         651.9614
@@ -652,7 +672,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0014",
+      "gap_fill_id": "gap_0015",
       "centroid": [
         2294.6203,
         1555.5845
@@ -672,7 +692,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0015",
+      "gap_fill_id": "gap_0016",
       "centroid": [
         2134.1658,
         2199.0915
@@ -692,7 +712,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0016",
+      "gap_fill_id": "gap_0017",
       "centroid": [
         2245.22,
         1601.4442
@@ -712,7 +732,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0017",
+      "gap_fill_id": "gap_0018",
       "centroid": [
         2550.3655,
         981.6506
@@ -732,32 +752,12 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0018",
+      "gap_fill_id": "gap_0019",
       "centroid": [
         2530.6432,
         889.3416
       ],
       "area": 383.0,
-      "region_hint": "scandinavian_or_karelian_lake",
-      "included_water_coverage_fraction": 0.0,
-      "source_water_overlap_fraction": 0.0,
-      "source_land_overlap_fraction": 0.0,
-      "source_land_overlap_area": 0.0,
-      "intersecting_source_provinces": [],
-      "intersecting_source_count": 0,
-      "classification": "water_presentation_gap",
-      "land_overlap_ok": true,
-      "gap_fill_land_overlap_fraction": 0.0,
-      "gap_fill_land_overlap_area": 0.0,
-      "gap_fill": true
-    },
-    {
-      "gap_fill_id": "gap_0019",
-      "centroid": [
-        2615.0324,
-        438.0888
-      ],
-      "area": 360.5,
       "region_hint": "scandinavian_or_karelian_lake",
       "included_water_coverage_fraction": 0.0,
       "source_water_overlap_fraction": 0.0,
@@ -814,6 +814,26 @@
     {
       "gap_fill_id": "gap_0022",
       "centroid": [
+        2615.0324,
+        438.0888
+      ],
+      "area": 360.5,
+      "region_hint": "scandinavian_or_karelian_lake",
+      "included_water_coverage_fraction": 0.0,
+      "source_water_overlap_fraction": 0.0,
+      "source_land_overlap_fraction": 0.0,
+      "source_land_overlap_area": 0.0,
+      "intersecting_source_provinces": [],
+      "intersecting_source_count": 0,
+      "classification": "water_presentation_gap",
+      "land_overlap_ok": true,
+      "gap_fill_land_overlap_fraction": 0.0,
+      "gap_fill_land_overlap_area": 0.0,
+      "gap_fill": true
+    },
+    {
+      "gap_fill_id": "gap_0023",
+      "centroid": [
         2539.5436,
         1276.4053
       ],
@@ -832,7 +852,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0023",
+      "gap_fill_id": "gap_0024",
       "centroid": [
         2612.3031,
         1251.5014
@@ -852,7 +872,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0024",
+      "gap_fill_id": "gap_0025",
       "centroid": [
         2804.3603,
         707.1427
@@ -872,7 +892,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0025",
+      "gap_fill_id": "gap_0026",
       "centroid": [
         3133.0914,
         1254.5197
@@ -892,7 +912,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0026",
+      "gap_fill_id": "gap_0027",
       "centroid": [
         2958.6409,
         2151.4544
@@ -912,7 +932,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0027",
+      "gap_fill_id": "gap_0028",
       "centroid": [
         2995.6704,
         978.0429
@@ -932,7 +952,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0028",
+      "gap_fill_id": "gap_0029",
       "centroid": [
         2961.8956,
         831.2462
@@ -952,7 +972,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0029",
+      "gap_fill_id": "gap_0030",
       "centroid": [
         2860.8802,
         2019.7934
@@ -972,33 +992,13 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0030",
-      "centroid": [
-        2801.0428,
-        1972.7858
-      ],
-      "area": 124.5,
-      "region_hint": "inland_lake_or_lagoon",
-      "included_water_coverage_fraction": 0.0,
-      "source_water_overlap_fraction": 0.0,
-      "source_land_overlap_fraction": 0.0,
-      "source_land_overlap_area": 0.0,
-      "intersecting_source_provinces": [],
-      "intersecting_source_count": 0,
-      "classification": "water_presentation_gap",
-      "land_overlap_ok": true,
-      "gap_fill_land_overlap_fraction": 0.0,
-      "gap_fill_land_overlap_area": 0.0,
-      "gap_fill": true
-    },
-    {
       "gap_fill_id": "gap_0031",
       "centroid": [
-        2795.8037,
-        1277.0118
+        2755.6097,
+        1888.1951
       ],
-      "area": 608.0,
-      "region_hint": "baltic_or_scandinavian_lake",
+      "area": 219.5,
+      "region_hint": "inland_lake_or_lagoon",
       "included_water_coverage_fraction": 0.0,
       "source_water_overlap_fraction": 0.0,
       "source_land_overlap_fraction": 0.0,
@@ -1014,10 +1014,10 @@
     {
       "gap_fill_id": "gap_0032",
       "centroid": [
-        2755.6097,
-        1888.1951
+        2801.0428,
+        1972.7858
       ],
-      "area": 219.5,
+      "area": 124.5,
       "region_hint": "inland_lake_or_lagoon",
       "included_water_coverage_fraction": 0.0,
       "source_water_overlap_fraction": 0.0,
@@ -1054,6 +1054,26 @@
     {
       "gap_fill_id": "gap_0034",
       "centroid": [
+        3173.0024,
+        2731.5144
+      ],
+      "area": 208.0,
+      "region_hint": "inland_lake_or_lagoon",
+      "included_water_coverage_fraction": 0.0,
+      "source_water_overlap_fraction": 0.0,
+      "source_land_overlap_fraction": 0.0,
+      "source_land_overlap_area": 0.0,
+      "intersecting_source_provinces": [],
+      "intersecting_source_count": 0,
+      "classification": "water_presentation_gap",
+      "land_overlap_ok": true,
+      "gap_fill_land_overlap_fraction": 0.0,
+      "gap_fill_land_overlap_area": 0.0,
+      "gap_fill": true
+    },
+    {
+      "gap_fill_id": "gap_0035",
+      "centroid": [
         2805.5529,
         2798.4018
       ],
@@ -1072,32 +1092,12 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0035",
+      "gap_fill_id": "gap_0036",
       "centroid": [
         2999.2769,
         3169.3885
       ],
       "area": 133.0,
-      "region_hint": "inland_lake_or_lagoon",
-      "included_water_coverage_fraction": 0.0,
-      "source_water_overlap_fraction": 0.0,
-      "source_land_overlap_fraction": 0.0,
-      "source_land_overlap_area": 0.0,
-      "intersecting_source_provinces": [],
-      "intersecting_source_count": 0,
-      "classification": "water_presentation_gap",
-      "land_overlap_ok": true,
-      "gap_fill_land_overlap_fraction": 0.0,
-      "gap_fill_land_overlap_area": 0.0,
-      "gap_fill": true
-    },
-    {
-      "gap_fill_id": "gap_0036",
-      "centroid": [
-        3173.0024,
-        2731.5144
-      ],
-      "area": 208.0,
       "region_hint": "inland_lake_or_lagoon",
       "included_water_coverage_fraction": 0.0,
       "source_water_overlap_fraction": 0.0,
@@ -1134,46 +1134,6 @@
     {
       "gap_fill_id": "gap_0038",
       "centroid": [
-        3376.3791,
-        1273.0437
-      ],
-      "area": 7771.5,
-      "region_hint": "inland_lake_or_lagoon",
-      "included_water_coverage_fraction": 0.0,
-      "source_water_overlap_fraction": 0.0,
-      "source_land_overlap_fraction": 0.0,
-      "source_land_overlap_area": 0.0,
-      "intersecting_source_provinces": [],
-      "intersecting_source_count": 0,
-      "classification": "water_presentation_gap",
-      "land_overlap_ok": true,
-      "gap_fill_land_overlap_fraction": 0.0,
-      "gap_fill_land_overlap_area": 0.0,
-      "gap_fill": true
-    },
-    {
-      "gap_fill_id": "gap_0039",
-      "centroid": [
-        3617.5748,
-        684.5133
-      ],
-      "area": 22707.5,
-      "region_hint": "inland_lake_or_lagoon",
-      "included_water_coverage_fraction": 0.0,
-      "source_water_overlap_fraction": 0.0,
-      "source_land_overlap_fraction": 0.0,
-      "source_land_overlap_area": 0.0,
-      "intersecting_source_provinces": [],
-      "intersecting_source_count": 0,
-      "classification": "water_presentation_gap",
-      "land_overlap_ok": true,
-      "gap_fill_land_overlap_fraction": 0.0,
-      "gap_fill_land_overlap_area": 0.0,
-      "gap_fill": true
-    },
-    {
-      "gap_fill_id": "gap_0040",
-      "centroid": [
         3375.6914,
         1383.2626
       ],
@@ -1192,7 +1152,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0041",
+      "gap_fill_id": "gap_0039",
       "centroid": [
         3253.5108,
         1312.9856
@@ -1212,7 +1172,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0042",
+      "gap_fill_id": "gap_0040",
       "centroid": [
         3352.9891,
         2120.9314
@@ -1232,7 +1192,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0043",
+      "gap_fill_id": "gap_0041",
       "centroid": [
         3377.6557,
         2592.8535
@@ -1252,12 +1212,12 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0044",
+      "gap_fill_id": "gap_0042",
       "centroid": [
-        3889.8173,
-        1546.2724
+        3856.9164,
+        1519.7369
       ],
-      "area": 11171.0,
+      "area": 4943.5,
       "region_hint": "inland_lake_or_lagoon",
       "included_water_coverage_fraction": 0.0,
       "source_water_overlap_fraction": 0.0,
@@ -1272,27 +1232,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0045",
-      "centroid": [
-        3596.9035,
-        1356.0801
-      ],
-      "area": 6238.0,
-      "region_hint": "inland_lake_or_lagoon",
-      "included_water_coverage_fraction": 0.0,
-      "source_water_overlap_fraction": 0.0,
-      "source_land_overlap_fraction": 0.0,
-      "source_land_overlap_area": 0.0,
-      "intersecting_source_provinces": [],
-      "intersecting_source_count": 0,
-      "classification": "water_presentation_gap",
-      "land_overlap_ok": true,
-      "gap_fill_land_overlap_fraction": 0.0,
-      "gap_fill_land_overlap_area": 0.0,
-      "gap_fill": true
-    },
-    {
-      "gap_fill_id": "gap_0046",
+      "gap_fill_id": "gap_0043",
       "centroid": [
         4007.7906,
         1228.7309
@@ -1312,7 +1252,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0047",
+      "gap_fill_id": "gap_0044",
       "centroid": [
         3976.3333,
         1343.6667
@@ -1332,7 +1272,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0048",
+      "gap_fill_id": "gap_0045",
       "centroid": [
         3665.6585,
         1599.2845
@@ -1352,7 +1292,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0049",
+      "gap_fill_id": "gap_0046",
       "centroid": [
         3643.1685,
         1731.8979
@@ -1372,7 +1312,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0050",
+      "gap_fill_id": "gap_0047",
       "centroid": [
         3548.8476,
         2600.1534
@@ -1392,7 +1332,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0051",
+      "gap_fill_id": "gap_0048",
       "centroid": [
         3478.7781,
         2637.0217
@@ -1626,6 +1566,20 @@
     {
       "gap_fill_id": "gap_0012",
       "centroid": [
+        2795.8037,
+        1277.0118
+      ],
+      "area": 608.0,
+      "region_hint": "baltic_or_scandinavian_lake",
+      "water_coverage_fraction": 0.0,
+      "source_water_overlap_fraction": 0.0,
+      "source_land_overlap_fraction": 0.0,
+      "classification": "water_presentation_gap",
+      "gap_fill": true
+    },
+    {
+      "gap_fill_id": "gap_0013",
+      "centroid": [
         2803.026,
         1051.7214
       ],
@@ -1638,7 +1592,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0013",
+      "gap_fill_id": "gap_0014",
       "centroid": [
         2831.0307,
         651.9614
@@ -1652,7 +1606,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0014",
+      "gap_fill_id": "gap_0015",
       "centroid": [
         2294.6203,
         1555.5845
@@ -1666,7 +1620,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0015",
+      "gap_fill_id": "gap_0016",
       "centroid": [
         2134.1658,
         2199.0915
@@ -1680,7 +1634,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0016",
+      "gap_fill_id": "gap_0017",
       "centroid": [
         2245.22,
         1601.4442
@@ -1694,7 +1648,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0017",
+      "gap_fill_id": "gap_0018",
       "centroid": [
         2550.3655,
         981.6506
@@ -1708,26 +1662,12 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0018",
+      "gap_fill_id": "gap_0019",
       "centroid": [
         2530.6432,
         889.3416
       ],
       "area": 383.0,
-      "region_hint": "scandinavian_or_karelian_lake",
-      "water_coverage_fraction": 0.0,
-      "source_water_overlap_fraction": 0.0,
-      "source_land_overlap_fraction": 0.0,
-      "classification": "water_presentation_gap",
-      "gap_fill": true
-    },
-    {
-      "gap_fill_id": "gap_0019",
-      "centroid": [
-        2615.0324,
-        438.0888
-      ],
-      "area": 360.5,
       "region_hint": "scandinavian_or_karelian_lake",
       "water_coverage_fraction": 0.0,
       "source_water_overlap_fraction": 0.0,
@@ -1766,6 +1706,20 @@
     {
       "gap_fill_id": "gap_0022",
       "centroid": [
+        2615.0324,
+        438.0888
+      ],
+      "area": 360.5,
+      "region_hint": "scandinavian_or_karelian_lake",
+      "water_coverage_fraction": 0.0,
+      "source_water_overlap_fraction": 0.0,
+      "source_land_overlap_fraction": 0.0,
+      "classification": "water_presentation_gap",
+      "gap_fill": true
+    },
+    {
+      "gap_fill_id": "gap_0023",
+      "centroid": [
         2539.5436,
         1276.4053
       ],
@@ -1778,7 +1732,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0023",
+      "gap_fill_id": "gap_0024",
       "centroid": [
         2612.3031,
         1251.5014
@@ -1792,7 +1746,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0024",
+      "gap_fill_id": "gap_0025",
       "centroid": [
         2804.3603,
         707.1427
@@ -1806,7 +1760,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0025",
+      "gap_fill_id": "gap_0026",
       "centroid": [
         3133.0914,
         1254.5197
@@ -1820,7 +1774,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0026",
+      "gap_fill_id": "gap_0027",
       "centroid": [
         2958.6409,
         2151.4544
@@ -1834,7 +1788,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0027",
+      "gap_fill_id": "gap_0028",
       "centroid": [
         2995.6704,
         978.0429
@@ -1848,7 +1802,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0028",
+      "gap_fill_id": "gap_0029",
       "centroid": [
         2961.8956,
         831.2462
@@ -1862,7 +1816,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0029",
+      "gap_fill_id": "gap_0030",
       "centroid": [
         2860.8802,
         2019.7934
@@ -1876,27 +1830,13 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0030",
-      "centroid": [
-        2801.0428,
-        1972.7858
-      ],
-      "area": 124.5,
-      "region_hint": "inland_lake_or_lagoon",
-      "water_coverage_fraction": 0.0,
-      "source_water_overlap_fraction": 0.0,
-      "source_land_overlap_fraction": 0.0,
-      "classification": "water_presentation_gap",
-      "gap_fill": true
-    },
-    {
       "gap_fill_id": "gap_0031",
       "centroid": [
-        2795.8037,
-        1277.0118
+        2755.6097,
+        1888.1951
       ],
-      "area": 608.0,
-      "region_hint": "baltic_or_scandinavian_lake",
+      "area": 219.5,
+      "region_hint": "inland_lake_or_lagoon",
       "water_coverage_fraction": 0.0,
       "source_water_overlap_fraction": 0.0,
       "source_land_overlap_fraction": 0.0,
@@ -1906,10 +1846,10 @@
     {
       "gap_fill_id": "gap_0032",
       "centroid": [
-        2755.6097,
-        1888.1951
+        2801.0428,
+        1972.7858
       ],
-      "area": 219.5,
+      "area": 124.5,
       "region_hint": "inland_lake_or_lagoon",
       "water_coverage_fraction": 0.0,
       "source_water_overlap_fraction": 0.0,
@@ -1934,6 +1874,20 @@
     {
       "gap_fill_id": "gap_0034",
       "centroid": [
+        3173.0024,
+        2731.5144
+      ],
+      "area": 208.0,
+      "region_hint": "inland_lake_or_lagoon",
+      "water_coverage_fraction": 0.0,
+      "source_water_overlap_fraction": 0.0,
+      "source_land_overlap_fraction": 0.0,
+      "classification": "water_presentation_gap",
+      "gap_fill": true
+    },
+    {
+      "gap_fill_id": "gap_0035",
+      "centroid": [
         2805.5529,
         2798.4018
       ],
@@ -1946,26 +1900,12 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0035",
+      "gap_fill_id": "gap_0036",
       "centroid": [
         2999.2769,
         3169.3885
       ],
       "area": 133.0,
-      "region_hint": "inland_lake_or_lagoon",
-      "water_coverage_fraction": 0.0,
-      "source_water_overlap_fraction": 0.0,
-      "source_land_overlap_fraction": 0.0,
-      "classification": "water_presentation_gap",
-      "gap_fill": true
-    },
-    {
-      "gap_fill_id": "gap_0036",
-      "centroid": [
-        3173.0024,
-        2731.5144
-      ],
-      "area": 208.0,
       "region_hint": "inland_lake_or_lagoon",
       "water_coverage_fraction": 0.0,
       "source_water_overlap_fraction": 0.0,
@@ -1990,34 +1930,6 @@
     {
       "gap_fill_id": "gap_0038",
       "centroid": [
-        3376.3791,
-        1273.0437
-      ],
-      "area": 7771.5,
-      "region_hint": "inland_lake_or_lagoon",
-      "water_coverage_fraction": 0.0,
-      "source_water_overlap_fraction": 0.0,
-      "source_land_overlap_fraction": 0.0,
-      "classification": "water_presentation_gap",
-      "gap_fill": true
-    },
-    {
-      "gap_fill_id": "gap_0039",
-      "centroid": [
-        3617.5748,
-        684.5133
-      ],
-      "area": 22707.5,
-      "region_hint": "inland_lake_or_lagoon",
-      "water_coverage_fraction": 0.0,
-      "source_water_overlap_fraction": 0.0,
-      "source_land_overlap_fraction": 0.0,
-      "classification": "water_presentation_gap",
-      "gap_fill": true
-    },
-    {
-      "gap_fill_id": "gap_0040",
-      "centroid": [
         3375.6914,
         1383.2626
       ],
@@ -2030,7 +1942,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0041",
+      "gap_fill_id": "gap_0039",
       "centroid": [
         3253.5108,
         1312.9856
@@ -2044,7 +1956,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0042",
+      "gap_fill_id": "gap_0040",
       "centroid": [
         3352.9891,
         2120.9314
@@ -2058,7 +1970,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0043",
+      "gap_fill_id": "gap_0041",
       "centroid": [
         3377.6557,
         2592.8535
@@ -2072,12 +1984,12 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0044",
+      "gap_fill_id": "gap_0042",
       "centroid": [
-        3889.8173,
-        1546.2724
+        3856.9164,
+        1519.7369
       ],
-      "area": 11171.0,
+      "area": 4943.5,
       "region_hint": "inland_lake_or_lagoon",
       "water_coverage_fraction": 0.0,
       "source_water_overlap_fraction": 0.0,
@@ -2086,21 +1998,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0045",
-      "centroid": [
-        3596.9035,
-        1356.0801
-      ],
-      "area": 6238.0,
-      "region_hint": "inland_lake_or_lagoon",
-      "water_coverage_fraction": 0.0,
-      "source_water_overlap_fraction": 0.0,
-      "source_land_overlap_fraction": 0.0,
-      "classification": "water_presentation_gap",
-      "gap_fill": true
-    },
-    {
-      "gap_fill_id": "gap_0046",
+      "gap_fill_id": "gap_0043",
       "centroid": [
         4007.7906,
         1228.7309
@@ -2114,7 +2012,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0047",
+      "gap_fill_id": "gap_0044",
       "centroid": [
         3976.3333,
         1343.6667
@@ -2128,7 +2026,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0048",
+      "gap_fill_id": "gap_0045",
       "centroid": [
         3665.6585,
         1599.2845
@@ -2142,7 +2040,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0049",
+      "gap_fill_id": "gap_0046",
       "centroid": [
         3643.1685,
         1731.8979
@@ -2156,7 +2054,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0050",
+      "gap_fill_id": "gap_0047",
       "centroid": [
         3548.8476,
         2600.1534
@@ -2170,7 +2068,7 @@
       "gap_fill": true
     },
     {
-      "gap_fill_id": "gap_0051",
+      "gap_fill_id": "gap_0048",
       "centroid": [
         3478.7781,
         2637.0217
@@ -2186,12 +2084,5 @@
   ],
   "max_hole_source_land_overlap_fraction": 0.05206721,
   "max_hole_source_land_overlap_area": 40246.0,
-  "ok": true,
-  "production_province_count": 3510,
-  "production_included_ids_sha256": "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3",
-  "excluded_gates_absent": [
-    "e3_2830",
-    "e3_2888"
-  ],
-  "revalidated_after_eastern_spill_exclusion": true
+  "ok": true
 }

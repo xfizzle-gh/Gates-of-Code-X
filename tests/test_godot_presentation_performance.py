@@ -165,7 +165,7 @@ class GodotPresentationPerformanceTests(unittest.TestCase):
         self.assertTrue(report.is_file(), "committed interactive baseline report missing")
         data = json.loads(baseline.read_text(encoding="utf-8"))
         self.assertTrue(data.get("ok"))
-        self.assertEqual(int(data.get("map", {}).get("province_count", 0)), 3512)
+        self.assertEqual(int(data.get("map", {}).get("province_count", 0)), 3514)
         self.assertEqual(
             data.get("authority", {}).get("included_ids_sha256"),
             "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7",

@@ -1,4 +1,4 @@
-"""Regenerate production triangulation_audit.json from the live 3510 dataset."""
+"""Regenerate production triangulation_audit.json from the live 3514 dataset."""
 
 from __future__ import annotations
 
@@ -11,8 +11,8 @@ PROD = ROOT / "godot/assets/maps/earth3_europe_mediterranean"
 HIST = ROOT / "docs/earth3-crop/topology_sanitize/historical"
 AREA_REL_TOL = 1e-3
 EXCLUDE = {"e3_2830", "e3_2888"}
-EXPECTED_COUNT = 3510
-EXPECTED_HASH = "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3"
+EXPECTED_COUNT = 3514
+EXPECTED_HASH = "f3931d2e34558e451d02a7c49270b2071a79a628668c49228f5ff607a75315b8"
 
 
 def shoelace(ring_flat: list[float]) -> float:
@@ -110,7 +110,7 @@ def main() -> int:
         "empty_mesh_count": len(empty),
         "excluded_gates_absent": sorted(EXCLUDE),
         "included_source_ids_sha256": EXPECTED_HASH,
-        "regenerated_for_production_3510": True,
+        "regenerated_for_production_3514": True,
         "production_merge": "b5b4c14a58e54effb5875a35348576057c27ce80",
     }
     old_audit_path.write_text(json.dumps(audit, indent=2) + "\n", encoding="utf-8")
@@ -120,7 +120,7 @@ def main() -> int:
     meta = json.loads(meta_path.read_text(encoding="utf-8"))
     meta["triangulation_audit"] = audit
     meta["province_count"] = EXPECTED_COUNT
-    meta["land_count"] = 3295
+    meta["land_count"] = 3299
     meta["water_count"] = 215
     meta["included_source_ids_sha256"] = EXPECTED_HASH
     meta_path.write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
@@ -153,9 +153,9 @@ def main() -> int:
     auth_path = ROOT / "config/earth3/production_authority.json"
     auth = json.loads(auth_path.read_text(encoding="utf-8"))
     auth["province_count"] = EXPECTED_COUNT
-    auth["land_count"] = 3295
+    auth["land_count"] = 3299
     auth["water_count"] = 215
-    auth["selectable_province_count"] = 3295
+    auth["selectable_province_count"] = 3299
     auth["included_ids_sha256"] = EXPECTED_HASH
     auth["dataset_sha256"] = ds_sha
     auth["excluded_gates_ids"] = sorted(EXCLUDE)
