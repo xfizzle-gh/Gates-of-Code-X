@@ -368,6 +368,26 @@ func _open_operational_graph() -> void:
 		operational_graph.clear()
 
 
+func _loaded_province_count() -> int:
+	# HUD must report the opened map backend count (polygon dataset / color-id map),
+	# never a stale snapshot/fixture province list length.
+	if map_backend_is_polygon and polygon_map != null and polygon_map.is_ready:
+		var pn := int(polygon_map.province_count)
+		if pn > 0:
+			return pn
+	var am = _active_map()
+	if am != null and am.is_ready:
+		if "province_count" in am and int(am.province_count) > 0:
+			return int(am.province_count)
+		if "row_by_province" in am and am.row_by_province is Dictionary:
+			var rn := int(am.row_by_province.size())
+			if rn > 0:
+				return rn
+	if color_id_map != null and color_id_map.is_ready and color_id_map.row_by_province is Dictionary:
+		return int(color_id_map.row_by_province.size())
+	return 0
+
+
 func _sync_map_space() -> void:
 	var am = _active_map()
 	if am == null or not am.is_ready:
@@ -447,7 +467,7 @@ func _draw() -> void:
 	var cross_mode := "crossings:on" if show_crossing_overlay else "crossings:off"
 	var diag := "Map: %s  |  Provinces: %s  |  %s  |  %s  |  %s" % [
 		String(map_contract.get("map_id", campaign.get("map_id", ""))),
-		int(snapshot.get("provinces", []).size()),
+		_loaded_province_count(),
 		"polygon" if map_backend_is_polygon else color_id_map.background_status(),
 		front_mode,
 		cross_mode,
@@ -1107,7 +1127,7 @@ func _fit_complete_theatre() -> void:
 		fitted_once = true
 		var map_contract0: Dictionary = snapshot.get("strategic_map", {})
 		var mid0 := String(map_contract0.get("map_id", "earth3_europe_mediterranean"))
-		var pcount0 := int(am.province_count) if "province_count" in am else int(snapshot.get("provinces", []).size())
+		var pcount0 := _loaded_province_count()
 		status_message = "Fitted Earth3 home frame map %s (%s provinces). Home=frame  F=front." % [mid0, pcount0]
 		queue_redraw()
 		return
@@ -1116,9 +1136,7 @@ func _fit_complete_theatre() -> void:
 	view_offset = Vector2.ZERO
 	fitted_once = true
 	var map_contract: Dictionary = snapshot.get("strategic_map", {})
-	var pcount := int(am.province_count) if "province_count" in am else int(snapshot.get("provinces", []).size())
-	if pcount <= 0:
-		pcount = int(snapshot.get("provinces", []).size())
+	var pcount := _loaded_province_count()
 	status_message = "Fitted complete theatre (%s provinces). Home=full  F=front." % [pcount]
 	var mid := String(map_contract.get("map_id", ""))
 	if mid.is_empty() and map_backend_is_polygon:

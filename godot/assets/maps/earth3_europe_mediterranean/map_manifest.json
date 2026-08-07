@@ -7,7 +7,7 @@
   "asset_status": "production_theatre",
   "polygon_dataset": {
     "path": "polygon_dataset.json",
-    "sha256": "59211c529b1f316a335ca2737a972ad62b55cc023da8205fe357ff25f311bb87",
+    "sha256": "f96c75535ea1aafad8c882908d949c1f0a52958cc70dcc48ff7f8e431e0fdceb",
     "province_count": 3514
   },
   "province_count": 3514,
