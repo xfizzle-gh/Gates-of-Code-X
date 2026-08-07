@@ -184,6 +184,31 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
             is_player_controlled=bool(value.get("is_player_controlled", False)),
             position=position_from_dict(value.get("position")),
             move_order=move_order_from_dict(value.get("move_order")),
+            supplied=_strict_supply_bool(value.get("supplied", True), name="supplied"),
+            cut_off=_strict_supply_bool(value.get("cut_off", False), name="cut_off"),
+            source_hub_id=(
+                None
+                if value.get("source_hub_id") is None
+                else str(value.get("source_hub_id"))
+            ),
+            route_cost=_optional_supply_int(value.get("route_cost"), name="route_cost"),
+            grace_ticks_remaining=_required_supply_int(
+                value.get("grace_ticks_remaining", 0),
+                name="grace_ticks_remaining",
+                maximum=1,
+            ),
+            last_supply_refresh_tick=_optional_supply_int(
+                value.get("last_supply_refresh_tick"),
+                name="last_supply_refresh_tick",
+            ),
+            last_supply_refresh_turn=_optional_supply_int(
+                value.get("last_supply_refresh_turn"),
+                name="last_supply_refresh_turn",
+            ),
+            last_grace_consuming_tick=_optional_supply_int(
+                value.get("last_grace_consuming_tick"),
+                name="last_grace_consuming_tick",
+            ),
         )
         for key, value in data.get("strategic_formations", {}).items()
     }
@@ -330,6 +355,26 @@ def _optional_strict_int(value: Any) -> int | None:
     from .operational_schema import require_strict_int
 
     return require_strict_int(value, name="encounter_progress_milli", minimum=0, maximum=1000)
+
+
+def _strict_supply_bool(value: Any, *, name: str) -> bool:
+    if not isinstance(value, bool):
+        raise ValueError(f"{name} must be bool")
+    return value
+
+
+def _required_supply_int(
+    value: Any, *, name: str, maximum: int | None = None
+) -> int:
+    from .operational_schema import require_strict_int
+
+    return require_strict_int(value, name=name, minimum=0, maximum=maximum)
+
+
+def _optional_supply_int(value: Any, *, name: str) -> int | None:
+    if value is None:
+        return None
+    return _required_supply_int(value, name=name)
 
 
 def _parse_encounter_pixel(value: Any) -> list[int]:
