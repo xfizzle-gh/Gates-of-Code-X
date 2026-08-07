@@ -1,0 +1,152 @@
+{
+  "schema": "gates-of-codex.opengs-gate0-natural-earth-summary",
+  "schema_version": 1,
+  "status": "exact_real_input_benchmark_complete",
+  "workflow_run_id": 31224683315,
+  "benchmark_head_sha": "cab603ad02211b67395a2efafc6a2197b4c77a63",
+  "artifact": {
+    "id": 9011772386,
+    "name": "opengs-gate0-natural-earth-Linux",
+    "digest": "sha256:eb814a87dac3bcc65a315291b5167c8587aa8858dfa9a002d17b786d227865ea",
+    "size_bytes": 205484,
+    "expires_at": "2026-11-05T22:41:23Z"
+  },
+  "generator": {
+    "repository": "Thomas-Holtvedt/opengs-maptool",
+    "commit": "06e7ec8517bd45872cf44d77cb8784e5ffca49bb",
+    "modified": false
+  },
+  "natural_earth": {
+    "repository": "nvkelso/natural-earth-vector",
+    "ref": "v5.1.2",
+    "commit": "f1890d9f152c896d250a77557a5751a93d494776",
+    "license": "public_domain",
+    "files": [
+      {
+        "role": "land",
+        "path": "geojson/ne_10m_land.geojson",
+        "git_blob_sha1": "2d76878175b8054acd9c5a52917ee9ea59a36fc5",
+        "sha256": "1ac90796408bc6ad6911d69448485d3c4dbf2190370080368a09976e1c9f7416",
+        "size_bytes": 10157965
+      },
+      {
+        "role": "lakes",
+        "path": "geojson/ne_10m_lakes.geojson",
+        "git_blob_sha1": "e48ec603e0943b62f8c81960fb990bb6bab4a4a8",
+        "sha256": "2d036f53dedec578001c5c30c2959ee7d4eebc1306900fa4367c49929ec8f2d9",
+        "size_bytes": 5043554
+      },
+      {
+        "role": "national_boundaries",
+        "path": "geojson/ne_10m_admin_0_boundary_lines_land.geojson",
+        "git_blob_sha1": "a4e4090820e0d95c23d55aefa6b5f1721552cc71",
+        "sha256": "74d9c16229c095fde65943a9919e337682f044bcebccb120764f38edf3b70f4a",
+        "size_bytes": 2284669
+      },
+      {
+        "role": "populated_places",
+        "path": "geojson/ne_10m_populated_places_simple.geojson",
+        "git_blob_sha1": "4da9c6b27b5cd41d7c930ea9cd0c1f84548b65fb",
+        "sha256": "fd3fa867a320cbd5c5b6bb5bc550afeec2939fb2cef688e508007282a55ac42f",
+        "size_bytes": 4932147
+      },
+      {
+        "role": "rivers_reference_only",
+        "path": "geojson/ne_10m_rivers_lake_centerlines.geojson",
+        "git_blob_sha1": "61a0d7137a6ff1113cc259525e7479c63d5fec86",
+        "sha256": "bb854a900ecbd3b408df46d5e16e3e0f974ba55993f9d8b5c26e855273c0905a",
+        "size_bytes": 7307743
+      }
+    ]
+  },
+  "input": {
+    "projection": "+proj=laea +lat_0=45 +lon_0=20 +datum=WGS84 +units=m +no_defs",
+    "lon_lat_bounds": [-25.0, 20.0, 60.0, 75.0],
+    "projected_bounds": [-4581171.797133031, -2751345.1647090893, 4117493.8366636895, 3711047.1132866414],
+    "width": 2048,
+    "height": 1536,
+    "input_manifest_sha256": "8efd28b1d30a657495920d3525f0690c448ab08c45f5da8de267403266dab6b4",
+    "pixel_counts": {
+      "land": 1173339,
+      "ocean": 1957073,
+      "lake": 15316,
+      "lake_connected_components": 281
+    },
+    "feature_counts": {
+      "land_features": 9,
+      "land_polygon_parts": 1530,
+      "lake_features": 268,
+      "lake_polygon_parts": 272,
+      "boundary_features": 214,
+      "boundary_line_parts": 2373,
+      "populated_places": 1601
+    },
+    "output_hashes": {
+      "land.png": "0f0bb9f538c91980a81d2a423d38188d8fc4bff934cbdcd5f2c42c6b71d9a000",
+      "boundary.png": "51b5cee0e7d1599b17109b86111c2483f3a793259cb39b6b15264585d19e01fe",
+      "density.png": "d84566cbff70b30bb9e73a48a690abee13d8658ff4191d4918d4459da2ae4005"
+    }
+  },
+  "non_jagged_runs": [
+    {
+      "run": 1,
+      "wall_seconds": 50.23386993399998,
+      "cpu_seconds": 50.818609125,
+      "peak_rss_bytes": 417296384,
+      "tracemalloc_peak_bytes": 276167116,
+      "province_image_sha256": "0e3620611c30d8ba8856b5de507bb55e5915ca902462dd4e1d215ee71852cd39",
+      "province_metadata_sha256": "a61e9993c45f3db77a40c1af70850a38b11cbace0c477c010b548d868d926ce4"
+    },
+    {
+      "run": 2,
+      "wall_seconds": 50.85092019799998,
+      "cpu_seconds": 51.50054737,
+      "peak_rss_bytes": 410271744,
+      "tracemalloc_peak_bytes": 261678533,
+      "province_image_sha256": "0e4ffbc2e01e04c778a6463730508d4f77c63876e3540e1f556e10ff0e345828",
+      "province_metadata_sha256": "c905ae62e7cd5ce6afd6f5c4b3e5d1c47a81280046af09c5bff397bee3253bc8"
+    },
+    {
+      "run": 3,
+      "wall_seconds": 51.53011066100004,
+      "cpu_seconds": 52.178704103,
+      "peak_rss_bytes": 417214464,
+      "tracemalloc_peak_bytes": 276149018,
+      "province_image_sha256": "d7cdf65b9347ca2607091c0cd47b38f49b96e5b6b2e0f73db50149a1a6f2af17",
+      "province_metadata_sha256": "93894b6b723fd92039efc65cbe205476391340ca3807bf2eae1aa0713777224d"
+    }
+  ],
+  "jagged_run": {
+    "wall_seconds": 122.26397533200003,
+    "cpu_seconds": 122.893410963,
+    "peak_rss_bytes": 514088960,
+    "tracemalloc_peak_bytes": 353124831,
+    "province_image_sha256": "aa415eb1458d5f5601505f92d4a34c916e61ebdc01e7b953a4e663cf9b31ad31",
+    "province_metadata_sha256": "7ef261fbc7ec27a8e2c00341d1b9f09bed0d15c5a8914f23d33690abbcbbd2c4"
+  },
+  "counts": {
+    "requested_land": 3299,
+    "requested_ocean": 215,
+    "requested_base_total": 3514,
+    "actual_land": 3299,
+    "actual_ocean": 215,
+    "actual_lake": 281,
+    "actual_total": 3795,
+    "lake_overage": 281,
+    "territories": 140,
+    "unique_province_colors": 3795,
+    "missing_lake_parents": 0
+  },
+  "benchmark_result_sha256": "c034b518c0ca4167b350a3fd42082c3b0b0dd557d7a69cbf5b1fbe3d2c31eadd",
+  "benchmark_file_sha256": "a1464051731ccba4f81e9d6625346a998572ec3d8842560149214c2e8a70ad16",
+  "findings": [
+    "The exact pinned generator completed all real-input runs without exceptions.",
+    "Three identical non-jagged runs produced three different province image and metadata hashes.",
+    "OpenGS added all 281 connected lakes as additional provinces, producing 3795 records from a nominal 3514 request.",
+    "The direct OpenGS lake policy cannot satisfy Gates 3299 land plus 215 total water metadata without filtering, merging, or converting lake handling in the adapter.",
+    "Jagged generation was approximately 2.39 times slower than the average non-jagged run and increased peak RSS to approximately 514 MB.",
+    "Generated territories remain procedural distribution containers only and were not interpreted as operational, supply, air, political, or command regions."
+  ],
+  "production_map_replacement_authorized": false,
+  "gate1_started": false
+}
