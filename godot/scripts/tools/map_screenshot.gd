@@ -85,7 +85,14 @@ func _run_capture() -> void:
 		quit(2)
 		return
 	if scene.get("map_manifest_source_path") != null:
-		scene.map_manifest_source_path = DEFAULT_MANIFEST
+		# Prefer snapshot/map_id resolution; only fall back to EM GoE default.
+		var resolved := ""
+		if scene.has_method("_resolve_map_manifest_path"):
+			resolved = String(scene.call("_resolve_map_manifest_path"))
+		if resolved.is_empty() or not FileAccess.file_exists(resolved):
+			resolved = DEFAULT_MANIFEST
+		scene.map_manifest_source_path = resolved
+		print("map_screenshot: manifest=%s" % resolved)
 	if scene.has_method("_load_presentation_fixture"):
 		scene.call("_load_presentation_fixture", _fixture_path)
 	if scene.has_method("_open_color_id_map"):
@@ -104,27 +111,49 @@ func _run_capture() -> void:
 	if scene.has_method("queue_redraw"):
 		scene.queue_redraw()
 
-	if scene.get("color_id_map") == null or not bool(scene.color_id_map.is_ready):
+	var am = null
+	if scene.has_method("_active_map"):
+		am = scene.call("_active_map")
+	elif scene.get("color_id_map") != null:
+		am = scene.color_id_map
+	if am == null or not bool(am.is_ready):
 		var err := ""
-		if scene.get("color_id_map") != null:
-			err = str(scene.color_id_map.error)
-		push_error("map_screenshot: color_id_map not ready: %s" % err)
+		if am != null:
+			err = str(am.error)
+		push_error("map_screenshot: map backend not ready: %s" % err)
 		quit(2)
 		return
+	var is_polygon := bool(scene.get("map_backend_is_polygon"))
 	var bg := scene.find_child("MapBackgroundLayer", true, false)
 	var identity := scene.find_child("MapIdentityLayer", true, false)
-	if bg == null or identity == null:
-		push_error("map_screenshot: missing MapBackgroundLayer/MapIdentityLayer")
+	if bg == null:
+		push_error("map_screenshot: missing MapBackgroundLayer")
 		quit(2)
 		return
-	if int(bg.texture_filter) != int(CanvasItem.TEXTURE_FILTER_LINEAR):
-		push_error("map_screenshot: background filter must be LINEAR (got %s)" % bg.texture_filter)
-		quit(2)
-		return
-	if int(identity.texture_filter) != int(CanvasItem.TEXTURE_FILTER_NEAREST):
-		push_error("map_screenshot: identity filter must be NEAREST (got %s)" % identity.texture_filter)
-		quit(2)
-		return
+	if not is_polygon:
+		if identity == null:
+			push_error("map_screenshot: missing MapIdentityLayer")
+			quit(2)
+			return
+		if int(bg.texture_filter) != int(CanvasItem.TEXTURE_FILTER_LINEAR):
+			push_error("map_screenshot: background filter must be LINEAR (got %s)" % bg.texture_filter)
+			quit(2)
+			return
+		if int(identity.texture_filter) != int(CanvasItem.TEXTURE_FILTER_NEAREST):
+			push_error("map_screenshot: identity filter must be NEAREST (got %s)" % identity.texture_filter)
+			quit(2)
+			return
+	else:
+		var poly_root := scene.find_child("Earth3PolygonRoot", true, false)
+		if poly_root == null:
+			push_error("map_screenshot: Earth3PolygonRoot missing for polygon backend")
+			quit(2)
+			return
+		print("map_screenshot: polygon backend provinces=%s meshes=%s load_ms=%s" % [
+			am.province_count,
+			am.mesh_count,
+			am.load_ms,
+		])
 
 	print("map_screenshot: rendering frames via live CanvasItems")
 	for i in range(RENDER_FRAMES):
@@ -165,8 +194,11 @@ func _run_capture() -> void:
 		push_error("map_screenshot: center pixel nearly black — draw path likely skipped")
 		quit(5)
 		return
+	var id_filter := -1
+	if identity != null:
+		id_filter = identity.texture_filter
 	print(
-		"screenshot ok path=%s size=%sx%s frames=%s center=(%s,%s,%s) filters=bg:%s id:%s" % [
+		"screenshot ok path=%s size=%sx%s frames=%s center=(%s,%s,%s) filters=bg:%s id:%s polygon=%s" % [
 			_out_path,
 			image.get_width(),
 			image.get_height(),
@@ -175,17 +207,23 @@ func _run_capture() -> void:
 			snappedf(sample.g, 0.01),
 			snappedf(sample.b, 0.01),
 			bg.texture_filter,
-			identity.texture_filter,
+			id_filter,
+			is_polygon,
 		]
 	)
 	quit(0)
 
 
 func _apply_selection_hover(scene: Node) -> void:
-	if scene.get("color_id_map") == null or not bool(scene.color_id_map.is_ready):
+	var am = null
+	if scene.has_method("_active_map"):
+		am = scene.call("_active_map")
+	elif scene.get("color_id_map") != null:
+		am = scene.color_id_map
+	if am == null or not bool(am.is_ready):
 		return
 	var ids: Array = []
-	for pid: Variant in scene.color_id_map.row_by_province.keys():
+	for pid: Variant in am.row_by_province.keys():
 		ids.append(String(pid))
 		if ids.size() >= 3:
 			break

@@ -11,7 +11,10 @@ extends SceneTree
 
 const DEFAULT_SNAPSHOT := "res://fixtures/snapshots/em_theatre_profile.json"
 const DEFAULT_MANIFEST := "res://assets/maps/europe_mediterranean/from_goe/map_manifest.json"
+const EARTH3_SNAPSHOT := "res://fixtures/snapshots/earth3_theatre.json"
+const EARTH3_MANIFEST := "res://assets/maps/earth3_europe_mediterranean/map_manifest.json"
 const DEFAULT_FIXTURE := "res://fixtures/presentation/routes_and_battles.json"
+const PolygonMapScript = preload("res://scripts/polygon_map.gd")
 const ColorIdMapScript = preload("res://scripts/color_id_map.gd")
 const MapTextureLayerScript = preload("res://scripts/presentation/map_texture_layer.gd")
 const MapSpaceScript = preload("res://scripts/presentation/map_space.gd")
@@ -88,6 +91,48 @@ func _run() -> void:
 		mutated["provinces"] = provinces
 		color_map.refresh_snapshot(mutated, FACTION_COLORS)
 	print("map_ci_check: color_id refresh ok provinces=%s" % color_map.row_by_province.size())
+
+	# Earth3 polygon backend gate (when assets committed).
+	if FileAccess.file_exists(EARTH3_MANIFEST) and FileAccess.file_exists(EARTH3_SNAPSHOT):
+		var esnap := _load_json(EARTH3_SNAPSHOT)
+		var pmap = PolygonMapScript.new()
+		if not pmap.open(EARTH3_MANIFEST, esnap, FACTION_COLORS):
+			_fail("PolygonMap.open failed: %s" % pmap.error)
+			return
+		if int(pmap.province_count) != 3038:
+			_fail("Earth3 province_count expected 3038 got %s" % pmap.province_count)
+			return
+		var sample_id := String(pmap.province_by_index[10])
+		var hit := pmap.province_at_image_pos(pmap.centroids[10])
+		if hit != sample_id:
+			_fail("Earth3 hit test expected %s got %s" % [sample_id, hit])
+			return
+		var mesh_before: int = int(pmap.mesh_count)
+		var first_mesh: Variant = null
+		if pmap._meshes.size() > 0:
+			first_mesh = pmap._meshes[0]
+		var mutated_e: Dictionary = esnap.duplicate(true)
+		var eprovs: Array = mutated_e.get("provinces", [])
+		if not eprovs.is_empty():
+			var erow: Dictionary = eprovs[0]
+			var eowner := String(erow.get("owner", "neutral"))
+			erow["owner"] = "nato" if eowner != "nato" else "rusa"
+			eprovs[0] = erow
+			mutated_e["provinces"] = eprovs
+		pmap.refresh_snapshot(mutated_e, FACTION_COLORS)
+		if int(pmap.mesh_count) != mesh_before:
+			_fail("Earth3 refresh rebuilt meshes (%s -> %s)" % [mesh_before, pmap.mesh_count])
+			return
+		if first_mesh != null and pmap._meshes[0] != first_mesh:
+			_fail("Earth3 refresh replaced mesh geometry (must be immutable)")
+			return
+		var perf: Dictionary = pmap.get_perf_stats()
+		if not bool(perf.get("geometry_immutable", false)):
+			_fail("Earth3 perf stats missing geometry_immutable")
+			return
+		print("map_ci_check: earth3 polygon ok provinces=%s load_ms=%s refresh_ms=%s meshes=%s" % [
+			pmap.province_count, pmap.load_ms, pmap.refresh_ms, pmap.mesh_count
+		])
 
 	DisplayServer.window_set_size(Vector2i(1280, 720))
 	if root is Window:

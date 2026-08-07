@@ -1,6 +1,7 @@
 extends "res://scripts/main_writeback.gd"
 
 const ColorIdMapScript = preload("res://scripts/color_id_map.gd")
+const PolygonMapScript = preload("res://scripts/polygon_map.gd")
 const MapSpaceScript = preload("res://scripts/presentation/map_space.gd")
 const MapMarkersScript = preload("res://scripts/presentation/map_markers.gd")
 const MapDebugScript = preload("res://scripts/presentation/map_debug.gd")
@@ -9,7 +10,11 @@ const BattleLocationScript = preload("res://scripts/presentation/battle_location
 const OperationalGraphViewScript = preload("res://scripts/presentation/operational_graph_view.gd")
 const DEFAULT_MAP_MANIFEST := "res://assets/maps/europe/interim_goe/map_manifest.json"
 const EM_FROM_GOE_MANIFEST := "res://assets/maps/europe_mediterranean/from_goe/map_manifest.json"
+const EARTH3_EM_MANIFEST := "res://assets/maps/earth3_europe_mediterranean/map_manifest.json"
 const DEFAULT_PRESENTATION_FIXTURE := "res://fixtures/presentation/empty_map.json"
+## Temporary feature flag: prefer Earth3 polygon theatre when assets exist.
+const USE_EARTH3_POLYGON_MAP := true
+const FALLBACK_GOE_ON_EARTH3_FAIL := true
 const HOME_MAP_MARGIN := Vector2(18, 18)
 const HOME_FIT_FILL := 1.06
 # Reserve space so title/diagnostic rows never cover the theatre.
@@ -18,6 +23,8 @@ const FOOTER_SAFE_BOTTOM := 28.0
 const OVERLAY_EDGE_PAD := 18.0
 
 var color_id_map = ColorIdMapScript.new()
+var polygon_map = PolygonMapScript.new()
+var map_backend_is_polygon := false
 var map_space = MapSpaceScript.new()
 var map_debug = MapDebugScript.new()
 var operational_graph = OperationalGraphViewScript.new()
@@ -122,10 +129,12 @@ func _capture_screenshot_and_quit() -> void:
 		push_error("screenshot save_png failed err=%s path=%s" % [err, _screenshot_path])
 		get_tree().quit(4)
 		return
-	status_message = "Saved screenshot err=%s path=%s ready=%s" % [
+	status_message = "Saved screenshot err=%s path=%s ready=%s backend=%s provinces=%s" % [
 		err,
 		_screenshot_path,
-		str(color_id_map.is_ready),
+		str(_active_map() != null and _active_map().is_ready),
+		("polygon" if map_backend_is_polygon else "color_id"),
+		str(_active_map().province_count) if _active_map() != null and "province_count" in _active_map() else "?",
 	]
 	print(status_message)
 	get_tree().quit(0)
@@ -137,16 +146,38 @@ func _resolve_map_manifest_path() -> String:
 	if not exported.is_empty() and FileAccess.file_exists(exported):
 		return exported
 	var map_id := String(contract.get("map_id", ""))
-	if map_id == "europe_mediterranean_from_goe" and FileAccess.file_exists(EM_FROM_GOE_MANIFEST):
-		return EM_FROM_GOE_MANIFEST
 	var campaign: Dictionary = snapshot.get("campaign", {})
 	var meta: Dictionary = campaign.get("map_metadata", {})
 	var configured := String(meta.get("strategic_map_id", ""))
+	# Prefer approved Earth3 polygon theatre when enabled and assets exist.
+	if USE_EARTH3_POLYGON_MAP and FileAccess.file_exists(EARTH3_EM_MANIFEST):
+		if map_id.is_empty() or map_id == "earth3_europe_mediterranean" or configured == "earth3_europe_mediterranean" or map_id == "europe_mediterranean_from_goe" or configured.is_empty():
+			return EARTH3_EM_MANIFEST
+	if map_id == "earth3_europe_mediterranean" and FileAccess.file_exists(EARTH3_EM_MANIFEST):
+		return EARTH3_EM_MANIFEST
+	if map_id == "europe_mediterranean_from_goe" and FileAccess.file_exists(EM_FROM_GOE_MANIFEST):
+		return EM_FROM_GOE_MANIFEST
 	if configured == "europe_mediterranean_from_goe" and FileAccess.file_exists(EM_FROM_GOE_MANIFEST):
 		return EM_FROM_GOE_MANIFEST
 	if FileAccess.file_exists(DEFAULT_MAP_MANIFEST):
 		return DEFAULT_MAP_MANIFEST
 	return DEFAULT_MAP_MANIFEST
+
+
+func _active_map():
+	if map_backend_is_polygon and polygon_map != null and polygon_map.is_ready:
+		return polygon_map
+	return color_id_map
+
+
+func _manifest_is_polygon(path: String) -> bool:
+	if not FileAccess.file_exists(path):
+		return false
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return false
+	var txt := f.get_as_text()
+	return txt.find("polygon_mesh") >= 0
 
 
 func _load_presentation_fixture(path: String) -> void:
@@ -194,7 +225,8 @@ func _ensure_presentation_layers() -> void:
 
 func _sync_presentation_layers() -> void:
 	_ensure_presentation_layers()
-	if color_id_map == null or not color_id_map.is_ready:
+	var am = _active_map()
+	if am == null or not am.is_ready:
 		if _bg_layer != null:
 			_bg_layer.set_draw_items([])
 			_bg_layer.refresh()
@@ -204,28 +236,38 @@ func _sync_presentation_layers() -> void:
 		_layers_dirty = false
 		return
 	_sync_map_space()
+	if map_backend_is_polygon and polygon_map != null:
+		polygon_map.sync_transform_from_map_space(map_space)
 	var viewport := get_viewport_rect().size
 	var map_width := viewport.x - PANEL_WIDTH
 	var texture_rect := map_space.texture_rect()
-	if not _layers_dirty and texture_rect == _last_layer_rect:
+	if not _layers_dirty and texture_rect == _last_layer_rect and not map_backend_is_polygon:
 		return
 	_last_layer_rect = texture_rect
 	_layers_dirty = false
 	# Linear-filtered visual background underlay (never authoritative).
 	var bg_items: Array = []
-	if color_id_map.background_texture != null:
-		bg_items.append({"texture": color_id_map.background_texture, "rect": texture_rect})
+	if am.background_texture != null:
+		bg_items.append({"texture": am.background_texture, "rect": texture_rect})
 	_bg_layer.set_clear(Rect2(0, 0, map_width, viewport.y), Color(0.025, 0.035, 0.047, 1.0))
 	_bg_layer.set_draw_items(bg_items)
 	_bg_layer.refresh()
+	if map_backend_is_polygon:
+		if _identity_layer != null:
+			_identity_layer.visible = false
+			_identity_layer.set_draw_items([])
+			_identity_layer.refresh()
+		return
 	# Nearest-filtered owner / border / highlight identity presentation layers.
+	if _identity_layer != null:
+		_identity_layer.visible = true
 	var id_items: Array = []
-	if color_id_map.owner_texture != null:
-		id_items.append({"texture": color_id_map.owner_texture, "rect": texture_rect})
-	if color_id_map.border_texture != null:
-		id_items.append({"texture": color_id_map.border_texture, "rect": texture_rect})
-	if color_id_map.highlight_texture != null:
-		id_items.append({"texture": color_id_map.highlight_texture, "rect": texture_rect})
+	if am.owner_texture != null:
+		id_items.append({"texture": am.owner_texture, "rect": texture_rect})
+	if am.border_texture != null:
+		id_items.append({"texture": am.border_texture, "rect": texture_rect})
+	if am.highlight_texture != null:
+		id_items.append({"texture": am.highlight_texture, "rect": texture_rect})
 	_identity_layer.set_clear(Rect2(), Color(0, 0, 0, 0))
 	_identity_layer.set_draw_items(id_items)
 	_identity_layer.refresh()
@@ -235,9 +277,10 @@ func _load_snapshot(path: String) -> void:
 	super._load_snapshot(path)
 	_invalidate_overlay_cache()
 	_layers_dirty = true
-	if color_id_map != null and color_id_map.is_ready:
-		color_id_map.refresh_snapshot(snapshot, FACTION_COLORS)
-		color_id_map.refresh_highlights(selected_province_id, legal_targets)
+	var am = _active_map()
+	if am != null and am.is_ready:
+		am.refresh_snapshot(snapshot, FACTION_COLORS)
+		am.refresh_highlights(selected_province_id, legal_targets)
 		map_debug.note_invalidation("snapshot_refresh")
 		_sync_presentation_layers()
 
@@ -246,35 +289,64 @@ func _rebuild_legal_targets() -> void:
 	super._rebuild_legal_targets()
 	_invalidate_overlay_cache()
 	_layers_dirty = true
-	if color_id_map != null and color_id_map.is_ready:
-		color_id_map.refresh_highlights(selected_province_id, legal_targets)
+	var am = _active_map()
+	if am != null and am.is_ready:
+		am.refresh_highlights(selected_province_id, legal_targets)
 		map_debug.note_invalidation("highlight_refresh")
 		_sync_presentation_layers()
 
 
 func _open_color_id_map() -> void:
-	var previous_ready: bool = color_id_map != null and bool(color_id_map.is_ready)
+	var previous_ready: bool = _active_map() != null and bool(_active_map().is_ready)
 	_invalidate_overlay_cache()
 	_ensure_presentation_layers()
 	_open_operational_graph()
-	if color_id_map.open(map_manifest_source_path, snapshot, FACTION_COLORS):
-		color_id_map.refresh_highlights(selected_province_id, legal_targets)
-		status_message = "Color-ID province renderer active (%s)." % map_manifest_source_path.get_file()
+	map_backend_is_polygon = false
+	var opened := false
+	if _manifest_is_polygon(map_manifest_source_path):
+		if polygon_map.open(map_manifest_source_path, snapshot, FACTION_COLORS):
+			map_backend_is_polygon = true
+			polygon_map.attach_to(self)
+			polygon_map.refresh_highlights(selected_province_id, legal_targets)
+			# Hide color-id texture layers; polygon meshes draw underneath overlays.
+			if _bg_layer != null:
+				_bg_layer.visible = true
+				_bg_layer.set_draw_items([])
+				var viewport := get_viewport_rect().size
+				_bg_layer.set_clear(Rect2(0, 0, viewport.x - PANEL_WIDTH, viewport.y), Color(0.05, 0.08, 0.12, 1.0))
+				_bg_layer.refresh()
+			if _identity_layer != null:
+				_identity_layer.visible = false
+			status_message = "Earth3 polygon renderer active (%d provinces, load %.0f ms)." % [
+				polygon_map.province_count,
+				polygon_map.load_ms,
+			]
+			opened = true
+		elif FALLBACK_GOE_ON_EARTH3_FAIL and FileAccess.file_exists(EM_FROM_GOE_MANIFEST):
+			map_manifest_source_path = EM_FROM_GOE_MANIFEST
+			status_message = "Earth3 open failed (%s); falling back to GoE." % polygon_map.error
+	if not opened:
+		if color_id_map.open(map_manifest_source_path, snapshot, FACTION_COLORS):
+			color_id_map.refresh_highlights(selected_province_id, legal_targets)
+			status_message = "Color-ID province renderer active (%s)." % map_manifest_source_path.get_file()
+			if _identity_layer != null:
+				_identity_layer.visible = true
+			opened = true
+		else:
+			if previous_ready:
+				status_message = "%s Kept previous map." % color_id_map.error
+			else:
+				status_message = "%s Marker fallback remains non-authoritative." % color_id_map.error
+				if _bg_layer != null:
+					_bg_layer.visible = false
+				if _identity_layer != null:
+					_identity_layer.visible = false
+	if opened:
 		fitted_once = false
 		_layers_dirty = true
 		_fit_complete_theatre()
 		map_debug.note_invalidation("map_open")
 		_sync_presentation_layers()
-	else:
-		# Keep a previously successful open; only fall back if nothing is ready.
-		if previous_ready:
-			status_message = "%s Kept previous color-ID map." % color_id_map.error
-		else:
-			status_message = "%s Marker fallback remains non-authoritative." % color_id_map.error
-			if _bg_layer != null:
-				_bg_layer.visible = false
-			if _identity_layer != null:
-				_identity_layer.visible = false
 	queue_redraw()
 
 
@@ -289,13 +361,15 @@ func _open_operational_graph() -> void:
 
 
 func _sync_map_space() -> void:
-	if color_id_map == null or not color_id_map.is_ready:
+	var am = _active_map()
+	if am == null or not am.is_ready:
 		return
-	map_space.configure(color_id_map.image_size(), _map_content_rect(), view_scale, view_offset)
+	map_space.configure(am.image_size(), _map_content_rect(), view_scale, view_offset)
 
 
 func _draw() -> void:
-	if not color_id_map.is_ready:
+	var am = _active_map()
+	if am == null or not am.is_ready:
 		if _bg_layer != null:
 			_bg_layer.visible = false
 		if _identity_layer != null:
@@ -305,14 +379,16 @@ func _draw() -> void:
 	if _bg_layer != null:
 		_bg_layer.visible = true
 	if _identity_layer != null:
-		_identity_layer.visible = true
+		_identity_layer.visible = not map_backend_is_polygon
 	# Capture rebuild counters BEFORE any end-of-frame clear so F3 can report them.
-	if map_debug.enabled and color_id_map.has_method("get_perf_stats"):
-		map_debug.capture_perf(color_id_map.get_perf_stats())
+	if map_debug.enabled and am.has_method("get_perf_stats"):
+		map_debug.capture_perf(am.get_perf_stats())
 	_sync_presentation_layers()
 	var viewport := get_viewport_rect().size
 	var map_width := viewport.x - PANEL_WIDTH
 	# Texture layers are separate CanvasItems. This node draws dynamic overlays + UI only.
+	if map_backend_is_polygon and polygon_map != null:
+		polygon_map.draw_overlays(self, map_space)
 	if show_coalition_fronts:
 		_draw_coalition_fronts()
 	if show_crossing_overlay:
@@ -326,14 +402,20 @@ func _draw() -> void:
 		map_debug.draw(
 			self,
 			map_space,
-			color_id_map,
+			am,
 			selected_province_id,
 			hovered_province_id,
 			presentation_fixture,
 			_overlay_clamp_rect()
 		)
-	if color_id_map.has_method("end_frame_stats"):
-		color_id_map.end_frame_stats()
+		# Extra polygon debug lines.
+		if map_backend_is_polygon and polygon_map != null:
+			var y := 92.0
+			for line in polygon_map.debug_lines():
+				draw_string(ThemeDB.fallback_font, Vector2(20, y), String(line), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(0.9, 0.95, 0.7, 1))
+				y += 16.0
+	if am.has_method("end_frame_stats"):
+		am.end_frame_stats()
 
 	var campaign: Dictionary = snapshot.get("campaign", {})
 	var map_contract: Dictionary = snapshot.get("strategic_map", {})
@@ -358,7 +440,7 @@ func _draw() -> void:
 	var diag := "Map: %s  |  Provinces: %s  |  %s  |  %s  |  %s" % [
 		String(map_contract.get("map_id", campaign.get("map_id", ""))),
 		int(snapshot.get("provinces", []).size()),
-		color_id_map.background_status(),
+		"polygon" if map_backend_is_polygon else color_id_map.background_status(),
 		front_mode,
 		cross_mode,
 	]
@@ -425,8 +507,8 @@ func _draw_coalition_fronts() -> void:
 		if String(left.get("owner", "neutral")) == String(right.get("owner", "neutral")):
 			continue
 		draw_line(
-			_image_to_screen(color_id_map.anchor_pixel(left_id)),
-			_image_to_screen(color_id_map.anchor_pixel(right_id)),
+			_image_to_screen(_active_map().anchor_pixel(left_id)),
+			_image_to_screen(_active_map().anchor_pixel(right_id)),
 			Color(1.0, 0.76, 0.31, 0.35),
 			1.0
 		)
@@ -435,23 +517,23 @@ func _draw_coalition_fronts() -> void:
 func _draw_crossing_overlay() -> void:
 	# Debug topology: land / strait / ferry / sea-lane edges from manifest edge_types.
 	var drawn: Dictionary = {}
-	for province_id: Variant in color_id_map.row_by_province.keys():
+	for province_id: Variant in _active_map().row_by_province.keys():
 		var pid := String(province_id)
-		var row: Dictionary = color_id_map.row_by_province.get(pid, {})
+		var row: Dictionary = _active_map().row_by_province.get(pid, {})
 		var edge_types: Dictionary = row.get("edge_types", {})
 		if edge_types.is_empty():
 			continue
-		var origin := _image_to_screen(color_id_map.anchor_pixel(pid))
+		var origin := _image_to_screen(_active_map().anchor_pixel(pid))
 		for neighbor_id: Variant in edge_types.keys():
 			var nid := String(neighbor_id)
-			if not color_id_map.row_by_province.has(nid):
+			if not _active_map().row_by_province.has(nid):
 				continue
 			var key := pid + "|" + nid if pid < nid else nid + "|" + pid
 			if drawn.has(key):
 				continue
 			drawn[key] = true
 			var etype := String(edge_types.get(nid, "land"))
-			var target := _image_to_screen(color_id_map.anchor_pixel(nid))
+			var target := _image_to_screen(_active_map().anchor_pixel(nid))
 			var color := Color(0.55, 0.58, 0.62, 0.22)
 			var width := 1.0
 			var label := ""
@@ -501,10 +583,10 @@ func _draw_color_id_pending_battle() -> void:
 	var target_id := String(battle.get("target_province_id", ""))
 	var legacy_origin := Vector2.INF
 	var legacy_target := Vector2.INF
-	if color_id_map.row_by_province.has(origin_id):
-		legacy_origin = color_id_map.anchor_pixel(origin_id)
-	if color_id_map.row_by_province.has(target_id):
-		legacy_target = color_id_map.anchor_pixel(target_id)
+	if _active_map().row_by_province.has(origin_id):
+		legacy_origin = _active_map().anchor_pixel(origin_id)
+	if _active_map().row_by_province.has(target_id):
+		legacy_target = _active_map().anchor_pixel(target_id)
 	var graph_index: Dictionary = operational_graph.index if operational_graph.is_ready else {}
 	var resolved: Dictionary = BattleLocationScript.resolve_pending_battle_location(
 		battle,
@@ -633,9 +715,9 @@ func _draw_color_id_overlays() -> void:
 
 	for province: Dictionary in snapshot.get("provinces", []):
 		var province_id := String(province.get("id", ""))
-		if not color_id_map.row_by_province.has(province_id):
+		if not _active_map().row_by_province.has(province_id):
 			continue
-		var anchor := _image_to_screen(color_id_map.anchor_pixel(province_id))
+		var anchor := _image_to_screen(_active_map().anchor_pixel(province_id))
 		var position := _clamp_point_in_rect(anchor, overlay_bounds, OVERLAY_EDGE_PAD)
 		var shifted := position.distance_to(anchor) > 0.5
 		var battalion: Dictionary = battalions_by_province.get(province_id, {})
@@ -766,11 +848,11 @@ func _draw_color_id_overlays() -> void:
 			candidate.get("color", Color.WHITE)
 		)
 	# Hover label is cheap and not cached into selection layout.
-	if not hovered_province_id.is_empty() and color_id_map.row_by_province.has(hovered_province_id):
+	if not hovered_province_id.is_empty() and _active_map().row_by_province.has(hovered_province_id):
 		var hprov: Dictionary = provinces_by_id.get(hovered_province_id, {})
 		if not hprov.is_empty():
 			var hlabel := _province_label(hprov, hovered_province_id)
-			var hpos := _image_to_screen(color_id_map.anchor_pixel(hovered_province_id)) + Vector2(13, -9)
+			var hpos := _image_to_screen(_active_map().anchor_pixel(hovered_province_id)) + Vector2(13, -9)
 			hpos = _clamp_point_in_rect(hpos, overlay_bounds, OVERLAY_EDGE_PAD)
 			draw_string(
 				ThemeDB.fallback_font,
@@ -784,24 +866,26 @@ func _draw_color_id_overlays() -> void:
 
 
 func _province_at(screen_position: Vector2) -> String:
-	if not color_id_map.is_ready:
+	var am = _active_map()
+	if am == null or not am.is_ready:
 		return super._province_at(screen_position)
 	_sync_map_space()
 	var rect := map_space.texture_rect()
 	if not rect.has_point(screen_position):
 		return ""
 	var pixel := map_space.screen_to_pixel(screen_position)
-	var size := color_id_map.image_size()
+	var size: Vector2 = am.image_size()
 	pixel = Vector2i(
 		clampi(pixel.x, 0, int(size.x) - 1),
 		clampi(pixel.y, 0, int(size.y) - 1)
 	)
-	return color_id_map.province_at_pixel(pixel)
+	return am.province_at_pixel(pixel)
 
 
 func _map_to_screen(province: Dictionary) -> Vector2:
-	if color_id_map != null and color_id_map.is_ready:
-		return _image_to_screen(color_id_map.anchor_pixel(String(province.get("id", ""))))
+	var am = _active_map()
+	if am != null and am.is_ready:
+		return _image_to_screen(am.anchor_pixel(String(province.get("id", ""))))
 	return super._map_to_screen(province)
 
 
@@ -850,8 +934,8 @@ func _province_label(province: Dictionary, province_id: String) -> String:
 	if label.is_empty():
 		return province_id
 	# Prefer manifest source name when campaign still has a generic label.
-	if not _is_named_province(label) and color_id_map != null and color_id_map.row_by_province.has(province_id):
-		var row: Dictionary = color_id_map.row_by_province[province_id]
+	if not _is_named_province(label) and color_id_map != null and _active_map().row_by_province.has(province_id):
+		var row: Dictionary = _active_map().row_by_province[province_id]
 		var source_label := String(row.get("display_name", "")).strip_edges()
 		if _is_named_province(source_label):
 			return source_label
@@ -918,7 +1002,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_fit_to_focus(true)
 			get_viewport().set_input_as_handled()
 			return
-	if event is InputEventMouseMotion and color_id_map != null and color_id_map.is_ready:
+	if event is InputEventMouseMotion and _active_map() != null and _active_map().is_ready:
 		var motion := event as InputEventMouseMotion
 		var map_width := get_viewport_rect().size.x - PANEL_WIDTH
 		var next_hover := ""
@@ -937,7 +1021,8 @@ func _unhandled_input(event: InputEvent) -> void:
 func _fit_complete_theatre() -> void:
 	_invalidate_overlay_cache()
 	_layers_dirty = true
-	if color_id_map == null or not color_id_map.is_ready:
+	var am = _active_map()
+	if am == null or not am.is_ready:
 		view_scale = HOME_FIT_FILL
 		view_offset = Vector2.ZERO
 		fitted_once = true
@@ -949,19 +1034,20 @@ func _fit_complete_theatre() -> void:
 	view_offset = Vector2.ZERO
 	fitted_once = true
 	var map_contract: Dictionary = snapshot.get("strategic_map", {})
-	status_message = "Fitted complete theatre (%s provinces). Home=full  F=front." % [
-		int(snapshot.get("provinces", []).size())
-	]
-	if not String(map_contract.get("map_id", "")).is_empty():
-		status_message = "Fitted complete theatre map %s (%s provinces)." % [
-			String(map_contract.get("map_id", "")),
-			int(snapshot.get("provinces", []).size()),
-		]
+	var pcount := int(am.province_count) if "province_count" in am else int(snapshot.get("provinces", []).size())
+	if pcount <= 0:
+		pcount = int(snapshot.get("provinces", []).size())
+	status_message = "Fitted complete theatre (%s provinces). Home=full  F=front." % [pcount]
+	var mid := String(map_contract.get("map_id", ""))
+	if mid.is_empty() and map_backend_is_polygon:
+		mid = "earth3_europe_mediterranean"
+	if not mid.is_empty():
+		status_message = "Fitted complete theatre map %s (%s provinces)." % [mid, pcount]
 	queue_redraw()
 
 
 func _fit_to_focus(force: bool) -> void:
-	if color_id_map == null or not color_id_map.is_ready:
+	if color_id_map == null or _active_map() == null or not _active_map().is_ready:
 		super._fit_to_focus(force)
 		return
 	if fitted_once and not force:
@@ -991,9 +1077,9 @@ func _fit_to_focus(force: bool) -> void:
 	var count := 0
 	for id: Variant in ids.keys():
 		var province_id := String(id)
-		if province_id.is_empty() or not color_id_map.row_by_province.has(province_id):
+		if province_id.is_empty() or not _active_map().row_by_province.has(province_id):
 			continue
-		var anchor := color_id_map.anchor_pixel(province_id)
+		var anchor := _active_map().anchor_pixel(province_id)
 		min_x = minf(min_x, anchor.x)
 		max_x = maxf(max_x, anchor.x)
 		min_y = minf(min_y, anchor.y)
@@ -1003,7 +1089,7 @@ func _fit_to_focus(force: bool) -> void:
 		_fit_complete_theatre()
 		status_message = "Fit Front had <4 nodes; fell back to complete theatre."
 		return
-	var image_size := color_id_map.image_size()
+	var image_size := _active_map().image_size()
 	var span := Vector2(maxf(max_x - min_x, 48.0), maxf(max_y - min_y, 48.0))
 	var padding := 1.45
 	view_scale = clampf(minf(image_size.x / (span.x * padding), image_size.y / (span.y * padding)), 1.0, 4.5)

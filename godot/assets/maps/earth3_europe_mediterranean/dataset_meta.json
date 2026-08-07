@@ -1,0 +1,55 @@
+{
+  "map_id": "earth3_europe_mediterranean",
+  "province_count": 3038,
+  "land_count": 2843,
+  "water_count": 195,
+  "vertex_count": 256111,
+  "triangle_count": 250035,
+  "edge_count": 8856,
+  "border_segment_count": 137559,
+  "approved_included_ids_sha256": "7effdffbccbcce33ecba364dc8d161ded5053266db2df0deee605a98c36620dc",
+  "included_source_ids_sha256": "7effdffbccbcce33ecba364dc8d161ded5053266db2df0deee605a98c36620dc",
+  "dataset_sha256": "5c8652bd9537dde7e9a9641bb5883d737b04e26b9b79441bbafe495e49732289",
+  "bounds": {
+    "origin_source_xy": [
+      7076.0,
+      640.0
+    ],
+    "width": 3787.0,
+    "height": 2867.0,
+    "source_min_xy": [
+      7084.0,
+      648.0
+    ],
+    "source_max_xy": [
+      10855.0,
+      3499.0
+    ]
+  },
+  "triangulation_audit": {
+    "ok": true,
+    "province_count_checked": 3038,
+    "failed_count": 0,
+    "failed_province_ids": [],
+    "max_area_error": 7.424446545085129e-16,
+    "total_polygon_area": 6427877.5,
+    "total_triangle_area": 6427877.5,
+    "triangulator": "shapely_delaunay_clipped_interior",
+    "area_rel_tol": 0.001,
+    "no_fan_fallback": true
+  },
+  "sample_province_ids": [
+    "e3_0000",
+    "e3_0001",
+    "e3_0002",
+    "e3_0003",
+    "e3_0004"
+  ],
+  "sample_source_ids": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ]
+}

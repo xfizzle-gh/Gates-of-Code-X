@@ -105,6 +105,12 @@ jobs:
           xvfb-run -a -s "-screen 0 1920x1080x24" \
             "$HOME/godot" --path . --audio-driver Dummy \
             -s res://scripts/tools/map_ci_check.gd
+      - name: Godot Earth3 polygon smoke
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --audio-driver Dummy \
+            -s res://scripts/tools/earth3_polygon_smoke.gd
       - name: Godot map profiler (committed fixture)
         run: |
           set -euo pipefail
@@ -120,6 +126,24 @@ jobs:
           assert data.get("ok") is True, data
           assert int(data.get("province_count", 0)) >= 300, data
           print("profiler ok", data.get("map_open_ms"), "ms open")
+          PY
+      - name: Godot Earth3 polygon profiler
+        run: |
+          set -euo pipefail
+          mkdir -p docs/godot-presentation
+          "$HOME/godot" --headless --path godot -s res://scripts/tools/map_profiler.gd -- \
+            --snapshot=res://fixtures/snapshots/earth3_theatre.json \
+            --manifest=res://assets/maps/earth3_europe_mediterranean/map_manifest.json \
+            --out="$(pwd)/docs/godot-presentation/ci_profile_earth3.json"
+          test -s docs/godot-presentation/ci_profile_earth3.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path("docs/godot-presentation/ci_profile_earth3.json").read_text(encoding="utf-8"))
+          assert data.get("ok") is True, data
+          assert int(data.get("province_count", 0)) == 3038, data
+          assert data.get("renderer") in ("polygon_mesh", "polygon"), data
+          print("earth3 profiler ok", data)
           PY
       - name: Godot true runtime viewport screenshots
         run: |
@@ -166,13 +190,48 @@ jobs:
               assert p.stat().st_size > 50_000, (p, p.stat().st_size)
               print("ok", p.name, f"{w}x{h}", p.stat().st_size)
           PY
+      - name: Godot Earth3 theatre screenshots
+        run: |
+          set -euo pipefail
+          OUT="$(pwd)/docs/godot-presentation/screenshots/earth3"
+          mkdir -p "$OUT"
+          SNAP=res://fixtures/snapshots/earth3_theatre.json
+          shoot() {
+            local name="$1"; shift
+            xvfb-run -a -s "-screen 0 2560x1440x24" \
+              "$HOME/godot" --path godot --audio-driver Dummy \
+              -s res://scripts/tools/map_screenshot.gd -- \
+              --snapshot="$SNAP" --out="$OUT/$name" "$@"
+            test -s "$OUT/$name"
+          }
+          shoot full_map_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/empty_map.json
+          shoot full_map_1440p.png --width=2560 --height=1440 --fixture=res://fixtures/presentation/empty_map.json
+          shoot selected_hovered_1080p.png --width=1920 --height=1080 --select-first --hover-second --fixture=res://fixtures/presentation/empty_map.json
+          shoot debug_overlay_1080p.png --width=1920 --height=1080 --fixture=res://fixtures/presentation/empty_map.json --debug --select-first
+          ls -la "$OUT"
+          python3 - <<'PY'
+          import struct
+          from pathlib import Path
+          root = Path("docs/godot-presentation/screenshots/earth3")
+          files = sorted(root.glob("*.png"))
+          assert len(files) >= 4, files
+          for p in files:
+              data = p.read_bytes()
+              assert data[:8] == b"\x89PNG\r\n\x1a\n", p
+              w, h = struct.unpack(">II", data[16:24])
+              assert w >= 1280 and h >= 720, (p, w, h)
+              assert p.stat().st_size > 50_000, (p, p.stat().st_size)
+              print("ok", p.name, f"{w}x{h}", p.stat().st_size)
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: godot-map-evidence
           path: |
             docs/godot-presentation/ci_profile.json
+            docs/godot-presentation/ci_profile_earth3.json
             docs/godot-presentation/screenshots/runtime/
+            docs/godot-presentation/screenshots/earth3/
 
   windows-executable:
     needs: [test, godot-map]

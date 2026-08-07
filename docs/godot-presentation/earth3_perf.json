@@ -1,0 +1,17 @@
+﻿{
+  "map_id": "earth3_europe_mediterranean",
+  "province_count": 3038,
+  "renderer": "polygon_mesh",
+  "load_ms_avg": 420,
+  "refresh_snapshot_partial_ms": 4.17,
+  "refresh_snapshot_noop_ms_avg": 3.38,
+  "province_pick_ms_avg": 0.036,
+  "mesh_count": 12,
+  "triangle_count": 250035,
+  "border_segment_count": 137559,
+  "geometry_immutable": true,
+  "triangulation": "shapely_delaunay_clipped_interior",
+  "max_tri_area_error": 7.42e-16,
+  "screenshot_center_rgb": [201, 92, 92],
+  "notes": "Load via polygon open on RTX 4080 SUPER / Godot 4.7 Compatibility. Ownership refresh updates 1D lookup texture only (no mesh rebuild)."
+}
