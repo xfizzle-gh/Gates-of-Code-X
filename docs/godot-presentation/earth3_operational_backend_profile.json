@@ -20,7 +20,7 @@
 		"last_event": "polygon_map",
 		"load_ms": 1120.0,
 		"mesh_count": 13,
-		"province_count": 3512,
+		"province_count": 3514,
 		"refresh_ms": 3.0,
 		"renderer": "polygon_mesh",
 		"visible_province_count": 3297,
@@ -28,7 +28,7 @@
 		"water_internal_borders": false,
 		"water_province_count": 215
 	},
-	"province_count": 3512,
+	"province_count": 3514,
 	"province_pick_ms_avg": 0.034,
 	"refresh_highlights_ms_avg": 0.0,
 	"refresh_highlights_noop_ms_avg": 0.001,

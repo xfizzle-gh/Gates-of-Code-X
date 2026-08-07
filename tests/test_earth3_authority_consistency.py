@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PROD = ROOT / "godot/assets/maps/earth3_europe_mediterranean"
 AUTH = ROOT / "config/earth3/production_authority.json"
-HASH = "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3"
+HASH = "f3931d2e34558e451d02a7c49270b2071a79a628668c49228f5ff607a75315b8"
 PRE = "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7"
 GAPS = {"e3_2830", "e3_2888"}
 
@@ -27,26 +27,26 @@ class Earth3AuthorityConsistencyTests(unittest.TestCase):
         ds_sha = hashlib.sha256(body.encode("utf-8")).hexdigest()
         ids = {p["id"] for p in ds["provinces"]}
 
-        self.assertEqual(ds["province_count"], 3510)
-        self.assertEqual(len(ds["provinces"]), 3510)
-        self.assertEqual(ds["land_count"], 3295)
+        self.assertEqual(ds["province_count"], 3514)
+        self.assertEqual(len(ds["provinces"]), 3514)
+        self.assertEqual(ds["land_count"], 3299)
         self.assertEqual(ds["water_count"], 215)
         self.assertEqual(ds["included_source_ids_sha256"], HASH)
         self.assertEqual(ds.get("pre_sanitize_included_ids_sha256"), PRE)
 
         for obj, label in ((auth, "auth"), (meta, "meta"), (man, "manifest")):
-            self.assertEqual(int(obj.get("province_count") or obj.get("polygon_dataset", {}).get("province_count", 0) or obj["province_count"]), 3510, label)
+            self.assertEqual(int(obj.get("province_count") or obj.get("polygon_dataset", {}).get("province_count", 0) or obj["province_count"]), 3514, label)
         self.assertEqual(auth["included_ids_sha256"], HASH)
         self.assertEqual(meta["included_source_ids_sha256"], HASH)
         self.assertEqual(man["included_source_ids_sha256"], HASH)
-        self.assertEqual(auth["land_count"], 3295)
+        self.assertEqual(auth["land_count"], 3299)
         self.assertEqual(auth["water_count"], 215)
-        self.assertEqual(auth["selectable_province_count"], 3295)
+        self.assertEqual(auth["selectable_province_count"], 3299)
         self.assertEqual(auth["dataset_sha256"], ds_sha)
         self.assertEqual(meta["dataset_sha256"], ds_sha)
         self.assertEqual(man["polygon_dataset"]["sha256"], ds_sha)
 
-        self.assertEqual(tri["province_count_checked"], 3510)
+        self.assertEqual(tri["province_count_checked"], 3514)
         self.assertEqual(tri["failed_count"], 0)
         self.assertTrue(tri.get("ok"))
         self.assertEqual(tri.get("empty_mesh_count", 0), 0)
@@ -61,9 +61,9 @@ class Earth3AuthorityConsistencyTests(unittest.TestCase):
             for gap in GAPS:
                 self.assertNotIn(gap, text, f"{path} still references {gap}")
 
-        # profiler post-topology report must claim 3510 authority
+        # profiler post-topology report must claim 3514 authority
         rep = (ROOT / "docs/godot-presentation/earth3_interactive_baseline_post_topology.md").read_text(encoding="utf-8")
-        self.assertIn("**3510**", rep)
+        self.assertIn("**3514**", rep)
         self.assertIn(HASH, rep)
         self.assertIn("Historical comparison authority", rep)
         # must not claim measured authority is 3512

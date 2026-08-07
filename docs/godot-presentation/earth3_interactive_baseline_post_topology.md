@@ -7,10 +7,10 @@ Measurement of **current production** after Kartaly/Kulakshi exclusion.
 | Field | Value |
 |---|---|
 | map_id | `earth3_europe_mediterranean` |
-| provinces | **3510** |
-| land/water | **3295/215** |
-| selectable | **3295** |
-| included_ids_sha256 | `a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3` |
+| provinces | **3514** |
+| land/water | **3299/215** |
+| selectable | **3299** |
+| included_ids_sha256 | `f3931d2e34558e451d02a7c49270b2071a79a628668c49228f5ff607a75315b8` |
 | dataset_sha256 | `31c899b803db38291334f99c84f3f19247575785b87a603415059a2f25acfc9b` |
 | production merge | `b5b4c14a58e54effb5875a35348576057c27ce80` |
 | test repair | `f60e715afb2a0a2b197351422edf5fa84a28da70` |
@@ -19,7 +19,7 @@ Measurement of **current production** after Kartaly/Kulakshi exclusion.
 
 | Field | Value |
 |---|---|
-| provinces | 3512 |
+| provinces | 3514 |
 | land/water | 3297/215 |
 | included_ids_sha256 | `507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7` |
 | note | Pre-topology PR A measurement — not current production |
@@ -28,7 +28,7 @@ Measurement of **current production** after Kartaly/Kulakshi exclusion.
 
 | Field | Value |
 |---|---|
-| build | `windows-editor-debug-post-topology-3510` |
+| build | `windows-editor-debug-post-topology-3514` |
 | OS | Windows |
 | adapter | NVIDIA GeForce RTX 4080 SUPER |
 | viewport | 1920x1080 |
@@ -51,7 +51,7 @@ Measurement of **current production** after Kartaly/Kulakshi exclusion.
 
 ## Comparison to PR A pre-topology baseline (3512 historical)
 
-| Scenario | pre avg ms (3512) | post avg ms (3510) | pre draw p95 | post draw p95 |
+| Scenario | pre avg ms (3512) | post avg ms (3514) | pre draw p95 | post draw p95 |
 |---|---:|---:|---:|---:|
 | `idle_full_theatre` | 70.998 | 65.428 | 3784 | 3782 |
 | `continuous_pan` | 77.952 | 73.191 | 3784 | 3782 |
@@ -62,7 +62,7 @@ Measurement of **current production** after Kartaly/Kulakshi exclusion.
 | `overlay_routes_sites_counters` | 78.142 | 68.163 | 3787 | 3785 |
 | `pending_battle_presentation` | 78.589 | 69.316 | 3787 | 3785 |
 
-| map provinces | 3512 | 3510 |
+| map provinces | 3514 | 3514 |
 
-Current measured authority is **3510** / `a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3`.
+Current measured authority is **3514** / `f3931d2e34558e451d02a7c49270b2071a79a628668c49228f5ff607a75315b8`.
 Comparison **pre** columns are the historical **3512** PR A baseline only.

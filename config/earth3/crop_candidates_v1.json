@@ -807,13 +807,14 @@
         12189,
         12306,
         12912,
-        12914
-      ],
-      "explicit_exclude_ids": [
-        10857,
+        12914,
         11170,
         11323,
         11689,
+        11790
+      ],
+      "explicit_exclude_ids": [
+        10857,
         10919,
         10587,
         11177,
@@ -856,7 +857,6 @@
         11533,
         11541,
         11788,
-        11790,
         12198,
         12200,
         12902,
@@ -870,7 +870,7 @@
         11776
       ],
       "threshold_decisions_file": "threshold_decisions_em_reference_masked_v1.json",
-      "notes": "Mask v7 Europe\u2013Asia boundary \u2014 owner approved. Production authority 3512 / 507b0069\u2026"
+      "notes": "Mask v7 Europe\u2013Asia boundary \u2014 owner approved. Production authority 3512 / 507b0069\u2026 Owner restore (#125): include 11170/11323/11689/11790 land provinces."
     }
   ],
   "required_region_checks": [

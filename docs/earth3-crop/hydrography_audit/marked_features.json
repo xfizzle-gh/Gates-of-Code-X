@@ -2,10 +2,10 @@
   "schema": "gates-of-codex.earth3-hydrography-marked-features",
   "schema_version": 8,
   "production_authority": {
-    "provinces": 3510,
-    "land": 3295,
+    "provinces": 3514,
+    "land": 3299,
     "water_metadata": 215,
-    "included_ids_sha256": "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3"
+    "included_ids_sha256": "f3931d2e34558e451d02a7c49270b2071a79a628668c49228f5ff607a75315b8"
   },
   "georeference": {
     "method": "piecewise_regional_affine_with_loo",

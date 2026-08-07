@@ -131,8 +131,8 @@ func open(manifest_path: String, snapshot: Dictionary, faction_colors: Dictionar
 	var st := SurfaceTool.new()
 	var in_chunk := 0
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	# edge_key -> bitflags: 1=touches land, 2=touches water
-	var edge_flags: Dictionary = {}
+	# edge_key -> [land_registration_count, water_registration_count]
+	var edge_counts: Dictionary = {}
 
 	for i in province_count:
 		var row: Dictionary = provinces[i]
@@ -165,7 +165,7 @@ func open(manifest_path: String, snapshot: Dictionary, faction_colors: Dictionar
 			min_v = min_v.min(rp)
 			max_v = max_v.max(rp)
 		rings[i] = ring_pts
-		_register_ring_edges(edge_flags, ring_pts, water)
+		_register_ring_edges(edge_counts, ring_pts, water)
 
 		# Water: keep IDs/rings/hit-test only — no filled polygon blocks.
 		if not water:
@@ -208,7 +208,7 @@ func open(manifest_path: String, snapshot: Dictionary, faction_colors: Dictionar
 		mesh_count = _meshes.size()
 
 	_build_ocean_mesh()
-	_build_border_mesh_from_edges(edge_flags)
+	_build_border_mesh_from_edges(edge_counts)
 	_write_all_ownership_colors()
 	_build_spatial_grid()
 	_geometry_built = true
@@ -469,18 +469,23 @@ func _build_ocean_mesh() -> void:
 	_ocean_mesh = st.commit()
 
 
-func _register_ring_edges(edge_flags: Dictionary, ring: PackedVector2Array, water: bool) -> void:
+func _register_ring_edges(edge_counts: Dictionary, ring: PackedVector2Array, water: bool) -> void:
+	# edge_counts[key] = [land_n, water_n]
 	var n := ring.size()
 	if n < 2:
 		return
-	var flag := 2 if water else 1
 	for i in n:
 		var a: Vector2 = ring[i]
 		var b: Vector2 = ring[(i + 1) % n]
 		var key := _edge_key(a, b)
 		if key.is_empty():
 			continue
-		edge_flags[key] = int(edge_flags.get(key, 0)) | flag
+		var counts: Array = edge_counts.get(key, [0, 0])
+		if water:
+			counts[1] = int(counts[1]) + 1
+		else:
+			counts[0] = int(counts[0]) + 1
+		edge_counts[key] = counts
 
 
 func _edge_key(a: Vector2, b: Vector2) -> String:
@@ -495,19 +500,23 @@ func _edge_key(a: Vector2, b: Vector2) -> String:
 	return "%s:%s|%s:%s" % [bx, by, ax, ay]
 
 
-func _build_border_mesh_from_edges(edge_flags: Dictionary) -> void:
+func _build_border_mesh_from_edges(edge_counts: Dictionary) -> void:
 	_border_mesh = null
-	if edge_flags.is_empty():
+	if edge_counts.is_empty():
 		return
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_LINES)
 	var any := false
-	for key in edge_flags.keys():
-		var flags: int = int(edge_flags[key])
-		var touches_land := (flags & 1) != 0
-		var touches_water := (flags & 2) != 0
-		# Suppress pure water–water internals; keep coast (land–water) and land–land.
-		if not touches_land:
+	for key in edge_counts.keys():
+		var counts: Array = edge_counts[key]
+		var land_n := int(counts[0]) if counts.size() > 0 else 0
+		var water_n := int(counts[1]) if counts.size() > 1 else 0
+		# Pure water–water: skip.
+		if land_n <= 0:
+			continue
+		# Singleton land edge with no included opposite (exterior / excluded outside crop):
+		# do not draw an outlined empty pseudo-province (e.g. src 11836 crop-edge artifact).
+		if land_n == 1 and water_n == 0:
 			continue
 		var parts: PackedStringArray = String(key).split("|")
 		if parts.size() != 2:
@@ -518,7 +527,7 @@ func _build_border_mesh_from_edges(edge_flags: Dictionary) -> void:
 			continue
 		var a := Vector3(float(a_parts[0]), float(a_parts[1]), 0.0)
 		var b := Vector3(float(b_parts[0]), float(b_parts[1]), 0.0)
-		var col := COAST_COLOR if touches_water else LAND_BORDER_COLOR
+		var col := COAST_COLOR if water_n > 0 else LAND_BORDER_COLOR
 		st.set_color(col)
 		st.add_vertex(a)
 		st.set_color(col)

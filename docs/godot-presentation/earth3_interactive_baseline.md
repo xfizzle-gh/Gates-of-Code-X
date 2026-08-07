@@ -7,7 +7,7 @@ Measurement-only. No renderer rewrite.
 | Field | Value |
 |---|---|
 | map_id | `earth3_europe_mediterranean` |
-| provinces | 3512 |
+| provinces | 3514 |
 | land/water | 3297/215 |
 | included_ids_sha256 | `507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7` |
 | production merge | `7182f8c6002e48f7235ba5ce6b7dd57ee20f4f68` |

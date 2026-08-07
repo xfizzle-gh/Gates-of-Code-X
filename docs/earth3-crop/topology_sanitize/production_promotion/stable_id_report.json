@@ -1,8 +1,8 @@
 {
   "schema": "gates-of-codex.earth3-stable-id-validation",
   "pre_hash": "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7",
-  "production_hash": "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3",
-  "province_count": 3510,
+  "production_hash": "f3931d2e34558e451d02a7c49270b2071a79a628668c49228f5ff607a75315b8",
+  "province_count": 3514,
   "land_count": 3295,
   "water_count": 215,
   "removed": [
@@ -26,5 +26,6 @@
     "fixtures_no_excluded_gameplay_refs": true
   },
   "fixture_gameplay_refs_to_excluded": [],
-  "fixture_missing_retained_refs": []
+  "fixture_missing_retained_refs": [],
+  "note_restore": "After restore of 11170/11323/11689/11790 as e3_3512..e3_3515; permanent gaps retained; no global renumber."
 }

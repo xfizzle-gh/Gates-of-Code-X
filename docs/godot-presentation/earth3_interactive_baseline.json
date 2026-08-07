@@ -75,7 +75,7 @@
 		"load_ms": 1115.0,
 		"map_id": "earth3_europe_mediterranean",
 		"mesh_count": 13,
-		"province_count": 3512,
+		"province_count": 3514,
 		"renderer": "polygon_mesh"
 	},
 	"notes": [

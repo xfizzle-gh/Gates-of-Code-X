@@ -12,7 +12,7 @@ TRACE = ROOT / "docs/earth3-crop/hydrography_audit/owner_circle_render_trace.jso
 SRC_ID = ROOT / "docs/earth3-crop/hydrography_audit/source_11836_identity_report.json"
 KOL_SEARCH = ROOT / "docs/earth3-crop/hydrography_audit/kolguyev_true_island_search.json"
 CMP = ROOT / "docs/earth3-crop/hydrography_audit/polygon_match_old_vs_new.json"
-HASH = "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3"
+HASH = "f3931d2e34558e451d02a7c49270b2071a79a628668c49228f5ff607a75315b8"
 PROD = ROOT / "godot/assets/maps/earth3_europe_mediterranean/dataset_meta.json"
 OLD_KOL = ROOT / "godot/assets/maps/earth3_europe_mediterranean_kolguyev_preview"
 SRC_PREV = ROOT / "godot/assets/maps/earth3_europe_mediterranean_src11836_preview"
@@ -75,7 +75,7 @@ class Earth3HydrographyGeorefTests(unittest.TestCase):
     def test_exact_geometry_and_meter_metrics(self):
         inv = json.loads(INV.read_text(encoding="utf-8"))
         self.assertEqual(inv["production_authority"]["included_ids_sha256"], HASH)
-        self.assertEqual(json.loads(PROD.read_text(encoding="utf-8"))["province_count"], 3510)
+        self.assertEqual(json.loads(PROD.read_text(encoding="utf-8"))["province_count"], 3514)
         for f in inv["features"]:
             self.assertFalse(f.get("production_change_allowed", False))
             if f.get("geometry_meta"):

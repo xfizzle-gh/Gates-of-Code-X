@@ -4,7 +4,7 @@
   "candidate_id": "em_reference_masked",
   "generation": {
     "source": "tools/earth3/generate_local_audit.py",
-    "commit_sha": "b8768c9fce9a577ade7094e15a282d44219472c6",
+    "commit_sha": "f8918ec35b67da1c818084074c438df2b59ff58b",
     "tool_version": "0.11.0",
     "authoritative_geometry_engine": "shapely",
     "comparison_geometry_engine": "stdlib_earclip_sh",
@@ -18,7 +18,7 @@
   },
   "tracked_inputs": {
     "crop_config_path": "config/earth3/crop_candidates_v1.json",
-    "crop_config_sha256": "b58bc7d69a12aa906b1667ad79fa46e8c498669773abf835f5dc251366db739e",
+    "crop_config_sha256": "eacefff0d1656e3402c0f92b2f1788ae051e92bdd8a5c716f2c51de8372a7897",
     "threshold_decisions_path": "config/earth3/threshold_decisions_em_reference_masked_v1.json",
     "threshold_decisions_sha256": "30ec6633374b5f54f6a4c85f7f035bc00a8404ec8e52a693853bf2bd36533aec",
     "hash_normalization": "tracked_text_lf_only_archive_raw_bytes"
@@ -29,16 +29,16 @@
     "classification_flip_count": 0
   },
   "crop_result": {
-    "province_count": 3512,
-    "land_province_count": 3297,
+    "province_count": 3516,
+    "land_province_count": 3301,
     "water_province_count": 215,
-    "vertex_count": 348511,
-    "adjacency_edge_count": 10224,
+    "vertex_count": 349139,
+    "adjacency_edge_count": 10250,
     "disconnected_land_components": 23,
     "threshold_review_count": 0,
-    "included_ids_sha256": "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7",
-    "required_include_override_count": 84,
-    "explicit_exclude_override_count": 63
+    "included_ids_sha256": "4b5e5c908295c70a145f9a3452206d92de858ab38b925c59ae5f396fc8b3ba75",
+    "required_include_override_count": 88,
+    "explicit_exclude_override_count": 59
   },
   "threshold_decisions": {
     "include_count": 4,

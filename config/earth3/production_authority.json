@@ -1,16 +1,17 @@
 {
   "schema": "gates-of-codex.earth3-production-authority",
-  "schema_version": 2,
+  "schema_version": 3,
   "status": "production",
   "map_id": "earth3_europe_mediterranean",
-  "province_count": 3510,
-  "land_count": 3295,
+  "province_count": 3514,
+  "land_count": 3299,
   "water_count": 215,
-  "selectable_province_count": 3295,
+  "selectable_province_count": 3299,
   "source_water_metadata_count": 215,
-  "included_ids_sha256": "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3",
+  "included_ids_sha256": "f3931d2e34558e451d02a7c49270b2071a79a628668c49228f5ff607a75315b8",
   "pre_sanitize_included_ids_sha256": "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7",
-  "dataset_sha256": "31c899b803db38291334f99c84f3f19247575785b87a603415059a2f25acfc9b",
+  "baseline_before_restore_sha256": "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3",
+  "dataset_sha256": "59211c529b1f316a335ca2737a972ad62b55cc023da8205fe357ff25f311bb87",
   "excluded_source_ids": [
     10920,
     11031
@@ -19,7 +20,19 @@
     "e3_2830",
     "e3_2888"
   ],
-  "stable_id_policy": "retain_e3_ids_with_permanent_gaps",
+  "restored_source_ids": [
+    11170,
+    11323,
+    11689,
+    11790
+  ],
+  "restored_gates_ids": [
+    "e3_3512",
+    "e3_3513",
+    "e3_3514",
+    "e3_3515"
+  ],
+  "stable_id_policy": "retain_e3_ids_with_permanent_gaps_append_restores",
   "water_policy": {
     "v1": "water_not_normally_selectable",
     "accepted": true,
@@ -37,10 +50,9 @@
     "issue": 117
   },
   "notes": [
-    "Production authority after owner-approved eastern spill exclusions.",
-    "e3_2830 and e3_2888 are permanent unused gaps; never recycle.",
+    "Restored owner-approved land provinces 11170/11323/11689/11790 (NE04/06/07/08 holes).",
+    "e3_2830 and e3_2888 remain permanent unused gaps; never recycle.",
+    "Source 11836 not restored (outside approved Europe crop).",
     "Island coastline reconstruction remains #121."
-  ],
-  "production_merge": "b5b4c14a58e54effb5875a35348576057c27ce80",
-  "test_repair_merge": "f60e715afb2a0a2b197351422edf5fa84a28da70"
+  ]
 }
