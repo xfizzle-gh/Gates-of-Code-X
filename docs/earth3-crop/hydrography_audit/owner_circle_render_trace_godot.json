@@ -1,0 +1,172 @@
+{
+	"active_map": {
+		"class": "RefCounted",
+		"has_province_at_image_pos": true,
+		"image_size": [
+			4306.0,
+			3449.0
+		],
+		"province_count": 3510
+	},
+	"authoritative_gap_and_archive_trace": "docs/earth3-crop/hydrography_audit/owner_circle_render_trace.json",
+	"note": "Live Godot land hit-test via province_at_image_pos. Empty hit expected over ocean/gap (water not selectable). Gap-fill IDs from Python owner_circle_render_trace.json.",
+	"samples": [
+		{
+			"backend": "polygon",
+			"gap_fill_note": "ocean_gap_fills not loaded by PolygonMap; see Python owner_circle_render_trace.json",
+			"label": "NE01_northern_outline",
+			"land_fill_mesh_membership": false,
+			"map_local_xy": [
+				4220.0,
+				660.0
+			],
+			"ocean_gap_fill_id": null,
+			"pixel_classification": "continuous_water_background",
+			"province_hit_test": "",
+			"province_is_water": false,
+			"source_id": null,
+			"source_map_xy": [
+				11296.0,
+				802.0
+			],
+			"view_scale": 1.15005001667222,
+			"viewport_pixel": [
+				1416.14672851563,
+				221.673233032227
+			],
+			"viewport_rgba": [
+				0.109803922474384,
+				0.180392161011696,
+				0.278431385755539,
+				1.0
+			]
+		},
+		{
+			"backend": "polygon",
+			"gap_fill_note": "ocean_gap_fills not loaded by PolygonMap; see Python owner_circle_render_trace.json",
+			"label": "NE04_WhiteSea_SE_large_hole",
+			"land_fill_mesh_membership": false,
+			"map_local_xy": [
+				3618.0,
+				685.0
+			],
+			"ocean_gap_fill_id": null,
+			"pixel_classification": "continuous_water_background",
+			"province_hit_test": "",
+			"province_is_water": false,
+			"source_id": null,
+			"source_map_xy": [
+				10694.0,
+				827.0
+			],
+			"view_scale": 1.15005001667222,
+			"viewport_pixel": [
+				1225.04833984375,
+				229.609222412109
+			],
+			"viewport_rgba": [
+				0.109803922474384,
+				0.180392161011696,
+				0.278431385755539,
+				1.0
+			]
+		},
+		{
+			"backend": "polygon",
+			"gap_fill_note": "ocean_gap_fills not loaded by PolygonMap; see Python owner_circle_render_trace.json",
+			"label": "NE06_Galich_area",
+			"land_fill_mesh_membership": false,
+			"map_local_xy": [
+				3376.0,
+				1273.0
+			],
+			"ocean_gap_fill_id": null,
+			"pixel_classification": "continuous_water_background",
+			"province_hit_test": "",
+			"province_is_water": false,
+			"source_id": null,
+			"source_map_xy": [
+				10452.0,
+				1415.0
+			],
+			"view_scale": 1.15005001667222,
+			"viewport_pixel": [
+				1148.22802734375,
+				416.263458251953
+			],
+			"viewport_rgba": [
+				0.109803922474384,
+				0.180392161011696,
+				0.278431385755539,
+				1.0
+			]
+		},
+		{
+			"backend": "polygon",
+			"gap_fill_note": "ocean_gap_fills not loaded by PolygonMap; see Python owner_circle_render_trace.json",
+			"label": "NE07_east_volga",
+			"land_fill_mesh_membership": false,
+			"map_local_xy": [
+				3597.0,
+				1356.0
+			],
+			"ocean_gap_fill_id": null,
+			"pixel_classification": "continuous_water_background",
+			"province_hit_test": "",
+			"province_is_water": false,
+			"source_id": null,
+			"source_map_xy": [
+				10673.0,
+				1498.0
+			],
+			"view_scale": 1.15005001667222,
+			"viewport_pixel": [
+				1218.38220214844,
+				442.610870361328
+			],
+			"viewport_rgba": [
+				0.109803922474384,
+				0.180392161011696,
+				0.278431385755539,
+				1.0
+			]
+		},
+		{
+			"backend": "polygon",
+			"gap_fill_note": "ocean_gap_fills not loaded by PolygonMap; see Python owner_circle_render_trace.json",
+			"label": "NE08_kama_volga",
+			"land_fill_mesh_membership": false,
+			"map_local_xy": [
+				3890.0,
+				1546.0
+			],
+			"ocean_gap_fill_id": null,
+			"pixel_classification": "continuous_water_background",
+			"province_hit_test": "",
+			"province_is_water": false,
+			"source_id": null,
+			"source_map_xy": [
+				10966.0,
+				1688.0
+			],
+			"view_scale": 1.15005001667222,
+			"viewport_pixel": [
+				1311.39184570313,
+				502.924346923828
+			],
+			"viewport_rgba": [
+				0.109803922474384,
+				0.180392161011696,
+				0.278431385755539,
+				1.0
+			]
+		}
+	],
+	"schema": "gates-of-codex.earth3-owner-circle-render-trace-godot",
+	"schema_version": 1,
+	"snapshot": "res://fixtures/snapshots/earth3_theatre.json",
+	"viewport": [
+		1920,
+		1080
+	]
+}

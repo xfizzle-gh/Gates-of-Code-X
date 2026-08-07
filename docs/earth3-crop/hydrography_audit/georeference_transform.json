@@ -1,0 +1,654 @@
+{
+  "schema": "gates-of-codex.earth3-georeference-transform",
+  "schema_version": 7,
+  "selected_method": "piecewise_regional_affine_with_loo",
+  "source_11836_is_not_kolguyev": true,
+  "source_11836_is_georef_control": false,
+  "metric_projection": "lambert_azimuthal_equal_area_local_m",
+  "regions": {
+    "west_europe": {
+      "affine_3x2": [
+        [
+          0.020506750602715083,
+          7.177184496877128e-06
+        ],
+        [
+          2.709586878399536e-05,
+          -0.011855300728006354
+        ],
+        [
+          -171.16536216711532,
+          75.1080961516801
+        ]
+      ],
+      "n": 4,
+      "in_sample_rms_km": 3.689,
+      "in_sample_max_km": 5.182,
+      "validation_note": "Use LOO metrics for validated accuracy.",
+      "loo_rms_km": 52.439,
+      "loo_max_km": 76.248
+    },
+    "mediterranean_na": {
+      "affine_3x2": [
+        [
+          0.02048658936056128,
+          2.1738361101389242e-05
+        ],
+        [
+          9.39500706705026e-05,
+          -0.01638914519323924
+        ],
+        [
+          -171.22200904550758,
+          85.69061124289897
+        ]
+      ],
+      "n": 9,
+      "in_sample_rms_km": 7.147,
+      "in_sample_max_km": 13.641,
+      "validation_note": "Use LOO metrics for validated accuracy.",
+      "loo_rms_km": 12.428,
+      "loo_max_km": 26.913
+    },
+    "east_europe_russia": {
+      "affine_3x2": [
+        [
+          0.020148795367199556,
+          0.0005699038567740647
+        ],
+        [
+          0.0004665636221474202,
+          -0.012503109001389795
+        ],
+        [
+          -168.25431523215565,
+          70.17204100555527
+        ]
+      ],
+      "n": 12,
+      "in_sample_rms_km": 29.349,
+      "in_sample_max_km": 77.057,
+      "validation_note": "Use LOO metrics for validated accuracy.",
+      "loo_rms_km": 49.007,
+      "loo_max_km": 122.532
+    },
+    "ne_russia_north": {
+      "affine_3x2": [
+        [
+          0.020565797964655706,
+          7.784754706072225e-05
+        ],
+        [
+          0.0001264937298283628,
+          -0.011217822647048705
+        ],
+        [
+          -171.8291341661866,
+          73.65214256195112
+        ]
+      ],
+      "n": 14,
+      "in_sample_rms_km": 9.403,
+      "in_sample_max_km": 16.884,
+      "validation_note": "Use LOO metrics for validated accuracy.",
+      "loo_rms_km": 13.498,
+      "loo_max_km": 33.925
+    }
+  },
+  "leave_one_out": {
+    "residuals": [
+      {
+        "label": "Reykjavik",
+        "region": "west_europe",
+        "predicted": [
+          -22.0923,
+          64.7515
+        ],
+        "wgs84": [
+          -21.8277,
+          64.1283
+        ],
+        "error_km": 70.451
+      },
+      {
+        "label": "Dublin",
+        "region": "west_europe",
+        "predicted": [
+          -6.2215,
+          53.2584
+        ],
+        "wgs84": [
+          -6.2603,
+          53.3498
+        ],
+        "error_km": 10.483
+      },
+      {
+        "label": "London",
+        "region": "west_europe",
+        "predicted": [
+          -0.1667,
+          51.5996
+        ],
+        "wgs84": [
+          -0.1276,
+          51.5074
+        ],
+        "error_km": 10.603
+      },
+      {
+        "label": "Lisbon",
+        "region": "mediterranean_na",
+        "predicted": [
+          -9.1554,
+          38.6443
+        ],
+        "wgs84": [
+          -9.1393,
+          38.7223
+        ],
+        "error_km": 8.782
+      },
+      {
+        "label": "Madrid",
+        "region": "mediterranean_na",
+        "predicted": [
+          -3.6802,
+          40.3982
+        ],
+        "wgs84": [
+          -3.7038,
+          40.4168
+        ],
+        "error_km": 2.877
+      },
+      {
+        "label": "Rome",
+        "region": "mediterranean_na",
+        "predicted": [
+          12.4447,
+          42.0625
+        ],
+        "wgs84": [
+          12.4964,
+          41.9028
+        ],
+        "error_km": 18.263
+      },
+      {
+        "label": "Valletta",
+        "region": "mediterranean_na",
+        "predicted": [
+          14.4532,
+          35.8355
+        ],
+        "wgs84": [
+          14.5146,
+          35.8989
+        ],
+        "error_km": 8.964
+      },
+      {
+        "label": "Ibiza",
+        "region": "mediterranean_na",
+        "predicted": [
+          1.4439,
+          38.9013
+        ],
+        "wgs84": [
+          1.4326,
+          38.9067
+        ],
+        "error_km": 1.145
+      },
+      {
+        "label": "Pantelleria",
+        "region": "mediterranean_na",
+        "predicted": [
+          11.9682,
+          36.7236
+        ],
+        "wgs84": [
+          11.9426,
+          36.785
+        ],
+        "error_km": 7.201
+      },
+      {
+        "label": "Athens",
+        "region": "mediterranean_na",
+        "predicted": [
+          23.7118,
+          37.9011
+        ],
+        "wgs84": [
+          23.7275,
+          37.9838
+        ],
+        "error_km": 9.296
+      },
+      {
+        "label": "Myrina_Lemnos",
+        "region": "mediterranean_na",
+        "predicted": [
+          25.1236,
+          39.8802
+        ],
+        "wgs84": [
+          25.0633,
+          39.8747
+        ],
+        "error_km": 5.185
+      },
+      {
+        "label": "Tozeur",
+        "region": "mediterranean_na",
+        "predicted": [
+          8.1629,
+          34.1605
+        ],
+        "wgs84": [
+          8.1336,
+          33.9197
+        ],
+        "error_km": 26.913
+      },
+      {
+        "label": "Warsaw",
+        "region": "west_europe",
+        "predicted": [
+          21.2938,
+          51.5664
+        ],
+        "wgs84": [
+          21.0122,
+          52.2297
+        ],
+        "error_km": 76.248
+      },
+      {
+        "label": "St_Petersburg",
+        "region": "east_europe_russia",
+        "predicted": [
+          30.3042,
+          59.9934
+        ],
+        "wgs84": [
+          30.3351,
+          59.9343
+        ],
+        "error_km": 6.793
+      },
+      {
+        "label": "Moscow",
+        "region": "east_europe_russia",
+        "predicted": [
+          37.5776,
+          55.3332
+        ],
+        "wgs84": [
+          37.6173,
+          55.7558
+        ],
+        "error_km": 47.056
+      },
+      {
+        "label": "Galich",
+        "region": "east_europe_russia",
+        "predicted": [
+          43.8814,
+          58.4386
+        ],
+        "wgs84": [
+          42.3475,
+          58.3813
+        ],
+        "error_km": 89.574
+      },
+      {
+        "label": "Rybinsk",
+        "region": "east_europe_russia",
+        "predicted": [
+          38.6368,
+          57.98
+        ],
+        "wgs84": [
+          38.8333,
+          58.05
+        ],
+        "error_km": 13.948
+      },
+      {
+        "label": "Kazan",
+        "region": "east_europe_russia",
+        "predicted": [
+          48.9113,
+          55.7736
+        ],
+        "wgs84": [
+          49.1221,
+          55.7887
+        ],
+        "error_km": 13.289
+      },
+      {
+        "label": "Naberezhnye_Chelny",
+        "region": "east_europe_russia",
+        "predicted": [
+          52.0309,
+          55.7977
+        ],
+        "wgs84": [
+          52.407,
+          55.7431
+        ],
+        "error_km": 24.292
+      },
+      {
+        "label": "Cheboksary",
+        "region": "east_europe_russia",
+        "predicted": [
+          47.0128,
+          56.0334
+        ],
+        "wgs84": [
+          47.2481,
+          56.1439
+        ],
+        "error_km": 19.083
+      },
+      {
+        "label": "Nizhny_Novgorod",
+        "region": "east_europe_russia",
+        "predicted": [
+          43.8597,
+          56.1729
+        ],
+        "wgs84": [
+          44.002,
+          56.2965
+        ],
+        "error_km": 16.314
+      },
+      {
+        "label": "Samara",
+        "region": "east_europe_russia",
+        "predicted": [
+          50.0616,
+          53.0667
+        ],
+        "wgs84": [
+          50.15,
+          53.2
+        ],
+        "error_km": 15.954
+      },
+      {
+        "label": "Astrakhan",
+        "region": "east_europe_russia",
+        "predicted": [
+          48.6689,
+          47.3645
+        ],
+        "wgs84": [
+          48.0408,
+          46.3497
+        ],
+        "error_km": 122.532
+      },
+      {
+        "label": "Vologda",
+        "region": "east_europe_russia",
+        "predicted": [
+          39.6193,
+          59.4369
+        ],
+        "wgs84": [
+          39.884,
+          59.2205
+        ],
+        "error_km": 28.367
+      },
+      {
+        "label": "Murmansk",
+        "region": "ne_russia_north",
+        "predicted": [
+          33.0908,
+          69.2636
+        ],
+        "wgs84": [
+          33.0827,
+          68.9585
+        ],
+        "error_km": 33.925
+      },
+      {
+        "label": "Apatity",
+        "region": "ne_russia_north",
+        "predicted": [
+          33.3629,
+          67.5148
+        ],
+        "wgs84": [
+          33.393,
+          67.5641
+        ],
+        "error_km": 5.629
+      },
+      {
+        "label": "Kem",
+        "region": "ne_russia_north",
+        "predicted": [
+          34.5742,
+          64.8012
+        ],
+        "wgs84": [
+          34.579,
+          64.9555
+        ],
+        "error_km": 17.164
+      },
+      {
+        "label": "Onega_town",
+        "region": "ne_russia_north",
+        "predicted": [
+          38.1268,
+          63.8278
+        ],
+        "wgs84": [
+          38.0867,
+          63.9041
+        ],
+        "error_km": 8.706
+      },
+      {
+        "label": "Arkhangelsk",
+        "region": "ne_russia_north",
+        "predicted": [
+          40.6321,
+          64.4425
+        ],
+        "wgs84": [
+          40.5433,
+          64.5399
+        ],
+        "error_km": 11.638
+      },
+      {
+        "label": "Petrozavodsk",
+        "region": "ne_russia_north",
+        "predicted": [
+          34.3651,
+          61.832
+        ],
+        "wgs84": [
+          34.3469,
+          61.7849
+        ],
+        "error_km": 5.32
+      },
+      {
+        "label": "Medvezhyegorsk",
+        "region": "ne_russia_north",
+        "predicted": [
+          34.4048,
+          62.8593
+        ],
+        "wgs84": [
+          34.4566,
+          62.9153
+        ],
+        "error_km": 6.753
+      },
+      {
+        "label": "Pudozh",
+        "region": "ne_russia_north",
+        "predicted": [
+          36.5683,
+          61.9171
+        ],
+        "wgs84": [
+          36.5283,
+          61.8092
+        ],
+        "error_km": 12.177
+      },
+      {
+        "label": "Vytegra",
+        "region": "east_europe_russia",
+        "predicted": [
+          36.2043,
+          61.2443
+        ],
+        "wgs84": [
+          36.4481,
+          61.0064
+        ],
+        "error_km": 29.517
+      },
+      {
+        "label": "Syktyvkar",
+        "region": "ne_russia_north",
+        "predicted": [
+          50.8363,
+          61.7962
+        ],
+        "wgs84": [
+          50.8366,
+          61.6688
+        ],
+        "error_km": 14.163
+      },
+      {
+        "label": "Sortavala",
+        "region": "ne_russia_north",
+        "predicted": [
+          30.6741,
+          61.8099
+        ],
+        "wgs84": [
+          30.7042,
+          61.7055
+        ],
+        "error_km": 11.717
+      },
+      {
+        "label": "Koynas",
+        "region": "ne_russia_north",
+        "predicted": [
+          47.5674,
+          64.6462
+        ],
+        "wgs84": [
+          47.65,
+          64.75
+        ],
+        "error_km": 12.193
+      },
+      {
+        "label": "Usinsk",
+        "region": "ne_russia_north",
+        "predicted": [
+          57.5547,
+          65.9802
+        ],
+        "wgs84": [
+          57.557,
+          65.9939
+        ],
+        "error_km": 1.522
+      },
+      {
+        "label": "Pechora",
+        "region": "ne_russia_north",
+        "predicted": [
+          57.2682,
+          65.1106
+        ],
+        "wgs84": [
+          57.3094,
+          65.1472
+        ],
+        "error_km": 4.5
+      },
+      {
+        "label": "Vorkuta",
+        "region": "ne_russia_north",
+        "predicted": [
+          64.1216,
+          67.5986
+        ],
+        "wgs84": [
+          64.0661,
+          67.4978
+        ],
+        "error_km": 11.449
+      }
+    ],
+    "rms_km": 33.497,
+    "max_km": 122.532,
+    "mean_km": 21.538,
+    "by_region": {
+      "west_europe": {
+        "n": 4,
+        "rms_km": 52.439,
+        "max_km": 76.248
+      },
+      "mediterranean_na": {
+        "n": 9,
+        "rms_km": 12.428,
+        "max_km": 26.913
+      },
+      "east_europe_russia": {
+        "n": 12,
+        "rms_km": 49.007,
+        "max_km": 122.532
+      },
+      "ne_russia_north": {
+        "n": 14,
+        "rms_km": 13.498,
+        "max_km": 33.925
+      }
+    }
+  },
+  "fixed_control_tolerances_km": {
+    "Ibiza": 25.0,
+    "Valletta": 25.0,
+    "Pantelleria": 25.0,
+    "Myrina_Lemnos": 40.0,
+    "Petrozavodsk": 50.0,
+    "Rybinsk": 50.0,
+    "Murmansk": 60.0,
+    "Arkhangelsk": 60.0,
+    "Kem": 60.0,
+    "Onega_town": 60.0
+  },
+  "high_confidence_polygon_iou_threshold": 0.15,
+  "high_confidence_coverage_threshold": 0.25,
+  "reconstruction_area_relative_tolerance": 0.0001,
+  "notes": [
+    "Source 11836 is NOT the real-world Kolguyev island.",
+    "Polygon IoU/area use local LAEA meters, never raw lon/lat degree area.",
+    "Rendered geometry = emitted triangle union only."
+  ]
+}

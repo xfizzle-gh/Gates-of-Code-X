@@ -1,0 +1,198 @@
+{
+  "true_kolguyev_wgs84": [
+    49.25,
+    69.08
+  ],
+  "bugrino_wgs84": [
+    49.3,
+    68.78
+  ],
+  "search_method": [
+    "LOO piecewise georef predicted WGS of all northern land provinces",
+    "distance to 49.25E/69.08N and Bugrino 49.30E/68.78N",
+    "source-ring land vs water boundary contacts",
+    "island-like requires 0 land contacts and >=1 water contact",
+    "source 11836 explicitly excluded as false prior identity"
+  ],
+  "candidates": [
+    {
+      "source_id": 11768,
+      "predicted_wgs84": [
+        49.0076,
+        68.0404
+      ],
+      "distance_to_kolguyev_center_km": 116.0,
+      "distance_to_bugrino_km": 83.1,
+      "source_centroid_xy": [
+        10734.5,
+        574.7
+      ],
+      "area_px2": 30671.0,
+      "land_boundary_contacts": 4,
+      "water_boundary_contacts": 2,
+      "island_like": false,
+      "in_production_3510": true,
+      "nearest_cities": [
+        "Indiga"
+      ],
+      "notes": "mainland Timan/Barents coast (Indiga area)"
+    },
+    {
+      "source_id": 11769,
+      "predicted_wgs84": [
+        52.9017,
+        68.1349
+      ],
+      "distance_to_kolguyev_center_km": 181.6,
+      "distance_to_bugrino_km": 163.6,
+      "source_centroid_xy": [
+        10923.9,
+        567.6
+      ],
+      "area_px2": 28136.0,
+      "land_boundary_contacts": 3,
+      "water_boundary_contacts": 1,
+      "island_like": false,
+      "in_production_3510": true,
+      "nearest_cities": [
+        "Kamenka"
+      ],
+      "notes": "mainland or multi-touch land"
+    },
+    {
+      "source_id": 11766,
+      "predicted_wgs84": [
+        44.9093,
+        67.0634
+      ],
+      "distance_to_kolguyev_center_km": 287.6,
+      "distance_to_bugrino_km": 264.7,
+      "source_centroid_xy": [
+        10534.7,
+        660.5
+      ],
+      "area_px2": 30981.0,
+      "land_boundary_contacts": 4,
+      "water_boundary_contacts": 2,
+      "island_like": false,
+      "in_production_3510": true,
+      "nearest_cities": [
+        "Nes"
+      ],
+      "notes": "mainland or multi-touch land"
+    },
+    {
+      "source_id": 11815,
+      "predicted_wgs84": [
+        55.2991,
+        67.6812
+      ],
+      "distance_to_kolguyev_center_km": 292.4,
+      "distance_to_bugrino_km": 275.8,
+      "source_centroid_xy": [
+        11040.2,
+        608.9
+      ],
+      "area_px2": 34235.5,
+      "land_boundary_contacts": 5,
+      "water_boundary_contacts": 2,
+      "island_like": false,
+      "in_production_3510": true,
+      "nearest_cities": [
+        "Kharyaginskii"
+      ],
+      "notes": "mainland or multi-touch land"
+    },
+    {
+      "source_id": 11839,
+      "predicted_wgs84": [
+        51.3176,
+        65.993
+      ],
+      "distance_to_kolguyev_center_km": 354.3,
+      "distance_to_bugrino_km": 321.6,
+      "source_centroid_xy": [
+        10845.7,
+        758.0
+      ],
+      "area_px2": 16708.5,
+      "land_boundary_contacts": 6,
+      "water_boundary_contacts": 0,
+      "island_like": false,
+      "in_production_3510": true,
+      "nearest_cities": [
+        "Medvezhka"
+      ],
+      "notes": "mainland or multi-touch land"
+    },
+    {
+      "source_id": 11814,
+      "predicted_wgs84": [
+        58.8804,
+        68.3645
+      ],
+      "distance_to_kolguyev_center_km": 396.2,
+      "distance_to_bugrino_km": 391.5,
+      "source_centroid_xy": [
+        11214.7,
+        549.2
+      ],
+      "area_px2": 32522.0,
+      "land_boundary_contacts": 4,
+      "water_boundary_contacts": 1,
+      "island_like": false,
+      "in_production_3510": false,
+      "nearest_cities": [
+        "Khorey Ver"
+      ],
+      "notes": "mainland or multi-touch land"
+    },
+    {
+      "source_id": 11790,
+      "predicted_wgs84": [
+        47.9276,
+        65.2665
+      ],
+      "distance_to_kolguyev_center_km": 427.8,
+      "distance_to_bugrino_km": 395.2,
+      "source_centroid_xy": [
+        10680.5,
+        821.7
+      ],
+      "area_px2": 22707.5,
+      "land_boundary_contacts": 7,
+      "water_boundary_contacts": 0,
+      "island_like": false,
+      "in_production_3510": false,
+      "nearest_cities": [
+        "Koynas"
+      ],
+      "notes": "mainland or multi-touch land"
+    },
+    {
+      "source_id": 11842,
+      "predicted_wgs84": [
+        54.1697,
+        65.7127
+      ],
+      "distance_to_kolguyev_center_km": 429.1,
+      "distance_to_bugrino_km": 400.0,
+      "source_centroid_xy": [
+        10984.2,
+        784.0
+      ],
+      "area_px2": 15054.0,
+      "land_boundary_contacts": 6,
+      "water_boundary_contacts": 0,
+      "island_like": false,
+      "in_production_3510": true,
+      "nearest_cities": [
+        "Kipiyevo"
+      ],
+      "notes": "mainland or multi-touch land"
+    }
+  ],
+  "accepted_kolguyev_source_id": null,
+  "result": "UNRESOLVED \u2014 no archive land polygon matches Kolguyev island criteria near 49.25E/69.08N",
+  "note": "Closest named production land near the longitude is src 11768 (Indiga), already in 3510, mainland with multiple land contacts. No separate island polygon for Kolguyev was found. Source 11836 is mainland Fion ~630 km away and is not a candidate."
+}
