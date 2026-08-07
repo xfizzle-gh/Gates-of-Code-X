@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from collections import defaultdict, deque
-from dataclasses import dataclass
+from collections import defaultdict
+from dataclasses import dataclass, replace as dc_replace
 from heapq import heappop, heappush
 from typing import Any
 
@@ -198,8 +198,15 @@ def _plan_one_formation(
             },
         )
 
-    start = _formation_start_node(force, edges_by_id=edges_by_id)
-    if start is None:
+    edge_prefix = _on_edge_route_prefix(force, edges_by_id=edges_by_id)
+    if edge_prefix is not None:
+        # Must finish the occupied edge in facing direction before any branch.
+        search_start = edge_prefix["facing"]
+        progress_before = int(edge_prefix["progress"])
+    else:
+        search_start = _formation_start_node(force, edges_by_id=edges_by_id)
+        progress_before = 0
+    if search_start is None:
         return StrategicAction(
             battalion_id=bn,
             action="hold",
@@ -210,31 +217,50 @@ def _plan_one_formation(
     goals = _ranked_goals(
         state,
         force,
-        start_node=start,
+        start_node=search_start,
         adjacency=adjacency,
         nodes_by_id=nodes_by_id,
         stance=stance,
     )
-    last_reject_reason = "no_valid_route"
+    # Completing the current edge (destination = facing) is always a candidate
+    # when already ON_EDGE, even if facing is not a ranked objective site.
+    if edge_prefix is not None:
+        facing = edge_prefix["facing"]
+        if not any(g[1] == facing for g in goals):
+            goals = [(3, facing, "edge_continuation")] + list(goals)
+            goals = sorted(goals, key=lambda row: (row[0], row[1]))
+
+    last_reject_reason = (
+        "no_valid_forward_continuation"
+        if edge_prefix is not None
+        else "no_valid_route"
+    )
     for priority, goal_node, goal_kind in goals:
-        if goal_node == start:
+        built = _build_route_for_goal(
+            start_search=search_start,
+            goal_node=goal_node,
+            adjacency=adjacency,
+            edge_prefix=edge_prefix,
+        )
+        if built is None:
+            continue
+        path_nodes, path_edges = built
+        if len(path_edges) < 1:
             continue
         if not can_reserve_destination(
-            state, force, goal_node, batch_reservations=batch_reservations
+            state,
+            force,
+            path_nodes[-1],
+            batch_reservations=batch_reservations,
+            include_drafts=False,
         ):
             last_reject_reason = "destination_capacity"
             continue
-        path = find_operational_path(
-            start_node=start, goal_node=goal_node, adjacency=adjacency
-        )
-        if path is None or not path.edge_ids:
-            continue
-        # Pre-check stance on the full path before issuing.
         probe = OperationalMoveOrder(
             order_id="probe",
             formation_id=fid,
-            path_node_ids=list(path.node_ids),
-            path_edge_ids=list(path.edge_ids),
+            path_node_ids=list(path_nodes),
+            path_edge_ids=list(path_edges),
             issued_tick=0,
             status=MoveOrderStatus.DRAFT.value,
         )
@@ -249,10 +275,15 @@ def _plan_one_formation(
             order = issue_move_order(
                 state,
                 fid,
-                path_node_ids=list(path.node_ids),
-                path_edge_ids=list(path.edge_ids),
+                path_node_ids=list(path_nodes),
+                path_edge_ids=list(path_edges),
                 order_id=_stable_order_id(state, fid, goal_node),
             )
+            # Preserve ON_EDGE progress — issue must not reset position.
+            if edge_prefix is not None and force.position is not None:
+                force.position = dc_replace(
+                    force.position, progress_milli=progress_before
+                )
             commit_formation_move_order(
                 state,
                 fid,
@@ -260,30 +291,21 @@ def _plan_one_formation(
                 batch_reservations=batch_reservations,
             )
         except ValueError as exc:
-            reason = str(exc)
-            if reason in {
-                "destination_capacity",
-                "forced_march_hostile_path",
-                "no_draft_order",
-            } or "forced_march" in reason or "capacity" in reason:
-                last_reject_reason = (
-                    "destination_capacity"
-                    if "capacity" in reason
-                    else (
-                        "forced_march_hostile_path"
-                        if "forced_march" in reason
-                        else reason
-                    )
-                )
-                try:
-                    cancel_move_order(state, fid)
-                except ValueError:
-                    force.move_order = None
-                continue
+            from .operational_movement import classify_commit_rejection
+
+            reason = classify_commit_rejection(exc)
+            last_reject_reason = reason
             try:
                 cancel_move_order(state, fid)
             except ValueError:
                 force.move_order = None
+            if reason in {
+                "destination_capacity",
+                "forced_march_hostile_path",
+                "on_edge_desync",
+                "no_valid_forward_continuation",
+            }:
+                continue
             return StrategicAction(
                 battalion_id=bn,
                 action="reject",
@@ -293,14 +315,17 @@ def _plan_one_formation(
                 ),
                 details={
                     "formation_id": fid,
-                    "reason": "issue_rejected",
-                    "error": reason,
+                    "reason": reason,
                     "goal_node": goal_node,
                     "goal_kind": goal_kind,
                 },
             )
+        # Re-assert progress after commit (commit must not touch position).
+        if edge_prefix is not None and force.position is not None:
+            assert force.position.progress_milli == progress_before
         dest_province = str(
-            (nodes_by_id.get(goal_node) or {}).get("province_id") or force.province_id
+            (nodes_by_id.get(path_nodes[-1]) or {}).get("province_id")
+            or force.province_id
         )
         return StrategicAction(
             battalion_id=bn,
@@ -309,22 +334,90 @@ def _plan_one_formation(
             target_province_id=dest_province,
             details={
                 "formation_id": fid,
-                "goal_node": goal_node,
+                "goal_node": path_nodes[-1],
                 "goal_kind": goal_kind,
                 "priority": priority,
-                "path_node_ids": list(path.node_ids),
-                "path_edge_ids": list(path.edge_ids),
+                "path_node_ids": list(path_nodes),
+                "path_edge_ids": list(path_edges),
                 "order_id": order.order_id,
                 "locked_stance": locked,
+                "progress_milli": progress_before,
             },
         )
 
     return StrategicAction(
         battalion_id=bn,
-        action="hold" if last_reject_reason == "no_valid_route" else "reject",
+        action="hold"
+        if last_reject_reason
+        in {"no_valid_route", "no_valid_forward_continuation"}
+        else "reject",
         origin_province_id=force.province_id,
         details={"formation_id": fid, "reason": last_reject_reason},
     )
+
+
+def _on_edge_route_prefix(
+    force: StrategicFormation,
+    *,
+    edges_by_id: dict[str, OperationalRouteEdge],
+) -> dict[str, Any] | None:
+    """If ON_EDGE, return mandatory first-hop prefix in facing direction."""
+    pos = force.position
+    if pos is None or pos.mode != PositionMode.ON_EDGE.value:
+        return None
+    edge_id = str(pos.edge_id or "")
+    edge = edges_by_id.get(edge_id)
+    if edge is None:
+        return None
+    facing = str(pos.facing_node_id or "")
+    if facing not in {edge.a, edge.b}:
+        return None
+    origin = edge.b if facing == edge.a else edge.a
+    return {
+        "edge_id": edge_id,
+        "origin": origin,
+        "facing": facing,
+        "progress": int(pos.progress_milli),
+    }
+
+
+def _build_route_for_goal(
+    *,
+    start_search: str,
+    goal_node: str,
+    adjacency: dict[str, list[_Hop]],
+    edge_prefix: dict[str, Any] | None,
+) -> tuple[list[str], list[str]] | None:
+    """Build full path_node_ids / path_edge_ids, honoring ON_EDGE prefix."""
+    if edge_prefix is None:
+        if goal_node == start_search:
+            return None
+        path = find_operational_path(
+            start_node=start_search, goal_node=goal_node, adjacency=adjacency
+        )
+        if path is None or not path.edge_ids:
+            return None
+        return list(path.node_ids), list(path.edge_ids)
+
+    origin = str(edge_prefix["origin"])
+    facing = str(edge_prefix["facing"])
+    first_edge = str(edge_prefix["edge_id"])
+    if goal_node == facing:
+        return [origin, facing], [first_edge]
+    if goal_node == origin:
+        # Reversal not allowed while ON_EDGE.
+        return None
+    tail = find_operational_path(
+        start_node=facing, goal_node=goal_node, adjacency=adjacency
+    )
+    if tail is None:
+        return None
+    # facing + tail nodes after facing; edges = first + tail edges
+    nodes = [origin, facing] + list(tail.node_ids[1:])
+    edges = [first_edge] + list(tail.edge_ids)
+    if not edges:
+        return None
+    return nodes, edges
 
 
 def _effective_stance(force: StrategicFormation) -> str:
@@ -349,20 +442,12 @@ def _formation_start_node(
     *,
     edges_by_id: dict[str, OperationalRouteEdge],
 ) -> str | None:
+    """Search start for AT_NODE forces. ON_EDGE uses ``_on_edge_route_prefix``."""
     pos = force.position
     if pos is None:
         return None
     if pos.mode == PositionMode.AT_NODE.value and pos.node_id:
         return str(pos.node_id)
-    if pos.mode == PositionMode.ON_EDGE.value and pos.edge_id:
-        edge = edges_by_id.get(str(pos.edge_id))
-        if edge is None:
-            return None
-        facing = str(pos.facing_node_id or "")
-        if facing in {edge.a, edge.b}:
-            # Path must start at an endpoint; prefer the origin side (not facing).
-            return edge.b if facing == edge.a else edge.a
-        return edge.a
     return None
 
 

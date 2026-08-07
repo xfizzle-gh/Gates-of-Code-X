@@ -38,6 +38,7 @@ from gates_of_codex.operational_movement import (
     advance_operational_ticks,
     commit_formation_move_order,
     commit_move_orders,
+    commit_move_orders_detailed,
     issue_move_order,
     resolve_strategic_turn_movement,
 )
@@ -797,15 +798,240 @@ class OperationalS7AIOrdersTests(unittest.TestCase):
             self.assertEqual(0, force.position.progress_milli)
             self.assertEqual("b", force.province_id)
             self.assertEqual("b", state.battalions["bn-r"].province_id)
-            if force.move_order is not None:
-                self.assertIn(
-                    force.move_order.status,
-                    {
-                        MoveOrderStatus.COMPLETED.value,
-                        MoveOrderStatus.ACTIVE.value,
-                        MoveOrderStatus.BLOCKED.value,
-                    },
+            assert force.move_order is not None
+            self.assertEqual(MoveOrderStatus.COMPLETED.value, force.move_order.status)
+
+    def test_on_edge_ai_continues_current_edge_not_branch_from_origin(self) -> None:
+        """ON_EDGE at 250 facing B: must keep A-B first; may not branch via A to D."""
+        with tempfile.TemporaryDirectory() as temporary:
+            g = _graph(ab_cost=1000, include_disabled_ac=False)
+            na, nb, nc = stable_node_id("a"), stable_node_id("b"), stable_node_id("c")
+            nd = stable_node_id("d")
+            edge_ab = stable_edge_id("corridor", na, nb)
+            g["nodes"].append(_node("d", pixel=[0, 1000]))
+            g["sites"].append(_site("d"))
+            g["edges"].append(_edge("a", "d", cost=500, enabled=True))
+            state = _state(Path(temporary), g)
+            state.provinces["d"] = Province(
+                "d", "D", owner=Faction.NEUTRAL, neighbors=["a"], x=0, y=100
+            )
+            state.provinces["a"].neighbors = ["b", "d"]
+            del state.strategic_formations["sf-n"]
+            del state.battalions["bn-n"]
+            state.provinces["c"].owner = Faction.NATO
+            # Attractive short objective d via A, and objective beyond B (c).
+            state.strategic_formations["sf-r"].position = FormationOperationalPosition(
+                mode=PositionMode.ON_EDGE.value,
+                edge_id=edge_ab,
+                progress_milli=250,
+                facing_node_id=nb,
+            )
+            actions = plan_and_issue_operational_orders(state, Faction.RUSSIA, seed=0)
+            order = state.strategic_formations["sf-r"].move_order
+            assert order is not None, actions
+            self.assertEqual(MoveOrderStatus.COMMITTED.value, order.status)
+            self.assertEqual(edge_ab, order.path_edge_ids[0])
+            self.assertEqual([na, nb], order.path_node_ids[:2])
+            # Must not start with a-d branch.
+            edge_ad = stable_edge_id("corridor", na, nd)
+            self.assertNotEqual(edge_ad, order.path_edge_ids[0])
+            self.assertNotIn(nd, order.path_node_ids[:2])
+            # Progress preserved before resolution.
+            pos = state.strategic_formations["sf-r"].position
+            assert pos is not None
+            self.assertEqual(250, pos.progress_milli)
+            self.assertEqual(PositionMode.ON_EDGE.value, pos.mode)
+            self.assertEqual(edge_ab, pos.edge_id)
+            activate_committed_orders(state)
+            # One tick from 250 with cost 1000 → progress 250+1000 clamped/arrive.
+            report = advance_operational_tick(state)
+            self.assertTrue(report["advanced"])
+            force = state.strategic_formations["sf-r"]
+            assert force.move_order is not None
+            self.assertNotEqual(MoveOrderStatus.BLOCKED.value, force.move_order.status)
+            # Advanced from 250: either still on edge past 250 or arrived at B.
+            assert force.position is not None
+            if force.position.mode == PositionMode.ON_EDGE.value:
+                self.assertGreater(force.position.progress_milli, 250)
+            else:
+                self.assertEqual(PositionMode.AT_NODE.value, force.position.mode)
+                self.assertEqual(nb, force.position.node_id)
+
+    def test_on_edge_no_valid_forward_continuation_holds(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            # One-way edge already traversed direction exhausted: facing B but
+            # B has no outbound edges and is already owned friendly with no goals.
+            g = _graph(ab_bidirectional=False, include_disabled_ac=False, ab_cost=1000)
+            # Remove b-c so nothing beyond B.
+            nb, nc = stable_node_id("b"), stable_node_id("c")
+            g["edges"] = [
+                e for e in g["edges"] if {e["a"], e["b"]} != {nb, nc}
+            ]
+            state = _state(Path(temporary), g)
+            del state.strategic_formations["sf-n"]
+            del state.battalions["bn-n"]
+            state.provinces["b"].owner = Faction.RUSSIA
+            state.provinces["c"].owner = Faction.RUSSIA
+            na = stable_node_id("a")
+            edge_ab = stable_edge_id("corridor", na, nb)
+            state.strategic_formations["sf-r"].position = FormationOperationalPosition(
+                mode=PositionMode.ON_EDGE.value,
+                edge_id=edge_ab,
+                progress_milli=250,
+                facing_node_id=nb,
+            )
+            # Completing edge to friendly B is still a valid continuation.
+            # Block that by making facing reverse (illegal one-way) — use facing
+            # that cannot hop: put force facing A on one-way a→b (reverse illegal).
+            state.strategic_formations["sf-r"].position = FormationOperationalPosition(
+                mode=PositionMode.ON_EDGE.value,
+                edge_id=edge_ab,
+                progress_milli=250,
+                facing_node_id=na,  # reverse of one-way
+            )
+            actions = plan_and_issue_operational_orders(state, Faction.RUSSIA, seed=0)
+            self.assertIsNone(state.strategic_formations["sf-r"].move_order)
+            self.assertIn(
+                actions[0].details.get("reason"),
+                {
+                    "no_valid_forward_continuation",
+                    "no_valid_route",
+                    "on_edge_desync",
+                    "one_way_reverse",
+                },
+            )
+            self.assertEqual(250, state.strategic_formations["sf-r"].position.progress_milli)
+
+    def test_manual_on_edge_draft_must_include_current_edge(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            g = _graph(include_disabled_ac=False)
+            na, nb, nc = stable_node_id("a"), stable_node_id("b"), stable_node_id("c")
+            nd = stable_node_id("d")
+            edge_ab = stable_edge_id("corridor", na, nb)
+            g["nodes"].append(_node("d", pixel=[0, 1000]))
+            g["edges"].append(_edge("a", "d", enabled=True))
+            state = _state(Path(temporary), g)
+            state.provinces["d"] = Province(
+                "d", "D", owner=Faction.NEUTRAL, neighbors=["a"], x=0, y=100
+            )
+            state.strategic_formations["sf-r"].position = FormationOperationalPosition(
+                mode=PositionMode.ON_EDGE.value,
+                edge_id=edge_ab,
+                progress_milli=250,
+                facing_node_id=nb,
+            )
+            edge_ad = stable_edge_id("corridor", na, nd)
+            with self.assertRaises(ValueError) as ctx:
+                issue_move_order(
+                    state,
+                    "sf-r",
+                    path_node_ids=[na, nd],
+                    path_edge_ids=[edge_ad],
+                    order_id="branch-skip",
                 )
+            self.assertIn(str(ctx.exception), {"on_edge_desync", "invalid_path"})
+
+    def test_two_phase_commit_invalid_draft_does_not_consume_capacity(self) -> None:
+        """cap=1: valid lower-ID commits; invalid higher-ID rejected for legality."""
+        with tempfile.TemporaryDirectory() as temporary:
+            g = _graph(include_disabled_ac=False)
+            g["rules"]["max_friendly_formations_per_node"] = 1
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            edge_ab = stable_edge_id("corridor", na, nb)
+            # Enabled candidate edge for invalid draft (same endpoints, different id).
+            bad_edge = {
+                "edge_id": "op-edge-bad-candidate",
+                "a": na,
+                "b": nb,
+                "kind": "corridor",
+                "authority": "candidate",
+                "length_px": 100,
+                "base_move_points_milli": COST_MILLI_UNITY,
+                "movement_cost_milli": COST_MILLI_UNITY,
+                "requires_port": False,
+                "can_be_blockaded": False,
+                "traversal_enabled": True,
+                "bidirectional": True,
+                "province_ids": ["a", "b"],
+                "legacy_crossing_type": None,
+                "metadata": {},
+            }
+            g["edges"].append(bad_edge)
+            state = _state(Path(temporary), g)
+            del state.strategic_formations["sf-n"]
+            del state.battalions["bn-n"]
+            # sf-a valid (lower id), sf-z invalid candidate path (higher id).
+            state.battalions["bn-a"] = _bn("bn-a", Faction.RUSSIA, "a", "sf-a")
+            state.strategic_formations["sf-a"] = _force("sf-a", Faction.RUSSIA, "a", "bn-a")
+            state.battalions["bn-z"] = _bn("bn-z", Faction.RUSSIA, "a", "sf-z")
+            state.strategic_formations["sf-z"] = _force("sf-z", Faction.RUSSIA, "a", "bn-z")
+            for fid in ("sf-a", "sf-z", "sf-r"):
+                state.strategic_formations[fid].position = FormationOperationalPosition(
+                    mode=PositionMode.AT_NODE.value, node_id=na, progress_milli=0
+                )
+            # Remove sf-r from contention.
+            del state.strategic_formations["sf-r"]
+            del state.battalions["bn-r"]
+            issue_move_order(
+                state, "sf-a", path_node_ids=[na, nb], path_edge_ids=[edge_ab], order_id="ok"
+            )
+            # Bypass issue validation by planting an illegal draft directly.
+            from gates_of_codex.operational_schema import OperationalMoveOrder
+
+            state.strategic_formations["sf-z"].move_order = OperationalMoveOrder(
+                order_id="bad",
+                formation_id="sf-z",
+                path_node_ids=[na, nb],
+                path_edge_ids=["op-edge-bad-candidate"],
+                issued_tick=0,
+                status=MoveOrderStatus.DRAFT.value,
+            )
+            # Reverse insertion order of dict.
+            items = list(state.strategic_formations.items())
+            state.strategic_formations = dict(reversed(items))
+            report = commit_move_orders_detailed(state, faction="rusa")
+            self.assertEqual(["sf-a"], report["committed"])
+            reasons = {r["formation_id"]: r["reason"] for r in report["rejected"]}
+            self.assertEqual("candidate_edge", reasons.get("sf-z"))
+            self.assertEqual(
+                MoveOrderStatus.COMMITTED.value,
+                state.strategic_formations["sf-a"].move_order.status,
+            )
+            self.assertEqual(
+                MoveOrderStatus.BLOCKED.value,
+                state.strategic_formations["sf-z"].move_order.status,
+            )
+            # Insertion order independence.
+            state2 = _state(Path(temporary) / "b", g)
+            del state2.strategic_formations["sf-n"]
+            del state2.battalions["bn-n"]
+            state2.battalions["bn-a"] = _bn("bn-a", Faction.RUSSIA, "a", "sf-a")
+            state2.strategic_formations["sf-a"] = _force("sf-a", Faction.RUSSIA, "a", "bn-a")
+            state2.battalions["bn-z"] = _bn("bn-z", Faction.RUSSIA, "a", "sf-z")
+            state2.strategic_formations["sf-z"] = _force("sf-z", Faction.RUSSIA, "a", "bn-z")
+            del state2.strategic_formations["sf-r"]
+            del state2.battalions["bn-r"]
+            for fid in ("sf-a", "sf-z"):
+                state2.strategic_formations[fid].position = FormationOperationalPosition(
+                    mode=PositionMode.AT_NODE.value, node_id=na, progress_milli=0
+                )
+            issue_move_order(
+                state2, "sf-a", path_node_ids=[na, nb], path_edge_ids=[edge_ab], order_id="ok"
+            )
+            state2.strategic_formations["sf-z"].move_order = OperationalMoveOrder(
+                order_id="bad",
+                formation_id="sf-z",
+                path_node_ids=[na, nb],
+                path_edge_ids=["op-edge-bad-candidate"],
+                issued_tick=0,
+                status=MoveOrderStatus.DRAFT.value,
+            )
+            report2 = commit_move_orders_detailed(state2, faction="rusa")
+            self.assertEqual(report["committed"], report2["committed"])
+            self.assertEqual(
+                {r["formation_id"]: r["reason"] for r in report["rejected"]},
+                {r["formation_id"]: r["reason"] for r in report2["rejected"]},
+            )
 
 
 if __name__ == "__main__":
