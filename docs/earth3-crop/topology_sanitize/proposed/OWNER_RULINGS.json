@@ -1,0 +1,126 @@
+{
+  "schema": "gates-of-codex.earth3-owner-rulings",
+  "schema_version": 1,
+  "issue": 117,
+  "parent_issue": 74,
+  "water_policy": {
+    "accepted": true,
+    "rules": [
+      "continuous water presentation",
+      "normal water clicks return no province",
+      "no water selection/hover/targets/counters/sites/ownership",
+      "sea movement through authored operational nodes and edges",
+      "source water polygons retained as metadata"
+    ]
+  },
+  "keep_components": {
+    "L002_ireland": {
+      "keep_all_members": true,
+      "count": 56,
+      "note": "confirmed Ireland"
+    },
+    "mainland_britain_iceland_islands": {
+      "keep": true,
+      "note": "all previously restored legitimate components"
+    }
+  },
+  "keep_identity_correct_visual_geometry": [
+    {
+      "gates_id": "e3_1436",
+      "source_id": 2271,
+      "name": "Mallorca / Manacor"
+    },
+    {
+      "gates_id": "e3_1437",
+      "source_id": 2272,
+      "name": "Mallorca / Palma"
+    },
+    {
+      "gates_id": "e3_1438",
+      "source_id": 2273,
+      "name": "Menorca / Mahon"
+    },
+    {
+      "gates_id": "e3_1439",
+      "source_id": 2274,
+      "name": "Ibiza"
+    },
+    {
+      "gates_id": "e3_2219",
+      "source_id": 6574,
+      "name": "Mallorca / Alcudia"
+    },
+    {
+      "gates_id": "e3_0258",
+      "source_id": 258,
+      "name": "Jersey / St Helier"
+    },
+    {
+      "gates_id": "e3_0259",
+      "source_id": 259,
+      "name": "Guernsey area / Les Martins"
+    },
+    {
+      "gates_id": "e3_0270",
+      "source_id": 270,
+      "name": "Malta / Valletta"
+    },
+    {
+      "gates_id": "e3_0882",
+      "source_id": 882,
+      "name": "Isle of Man / Douglas"
+    },
+    {
+      "gates_id": "e3_0913",
+      "source_id": 913,
+      "name": "Shetland / Brae"
+    },
+    {
+      "gates_id": "e3_0969",
+      "source_id": 992,
+      "name": "Bornholm / Ronne"
+    },
+    {
+      "gates_id": "e3_1033",
+      "source_id": 1056,
+      "name": "Aland / Mariehamn"
+    },
+    {
+      "gates_id": "e3_1130",
+      "source_id": 1154,
+      "name": "Samothrace"
+    },
+    {
+      "gates_id": "e3_1650",
+      "source_id": 3132,
+      "name": "Losinj"
+    },
+    {
+      "gates_id": "e3_1738",
+      "source_id": 3220,
+      "name": "Lemnos / Myrina"
+    },
+    {
+      "gates_id": "e3_1978",
+      "source_id": 4693,
+      "name": "Pantelleria"
+    }
+  ],
+  "proposed_exclude_source_ids": [
+    {
+      "source_id": 10920,
+      "gates_id": "e3_2830",
+      "reason": "Kartaly eastern crop spill"
+    },
+    {
+      "source_id": 11031,
+      "gates_id": "e3_2888",
+      "reason": "Kulakshi detached eastern spill"
+    }
+  ],
+  "notes": [
+    "Do not exclude real islands because polygons are rectangular/simplified.",
+    "Visual geometry overrides retain source ID and gameplay identity.",
+    "Stable Gates IDs: retained source IDs keep e3_* mapping; removed IDs become gaps."
+  ]
+}
