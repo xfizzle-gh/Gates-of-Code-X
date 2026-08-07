@@ -1,19 +1,28 @@
-# Earth3 interactive performance baseline (PR A / #74)
+# Earth3 interactive performance baseline (post-topology production)
 
-Measurement-only. No renderer rewrite.
+Measurement of **current production** after Kartaly/Kulakshi exclusion.
 
-## Authority
+## Measured authority (current production)
 
 | Field | Value |
 |---|---|
 | map_id | `earth3_europe_mediterranean` |
+| provinces | **3510** |
+| land/water | **3295/215** |
+| selectable | **3295** |
+| included_ids_sha256 | `a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3` |
+| dataset_sha256 | `31c899b803db38291334f99c84f3f19247575785b87a603415059a2f25acfc9b` |
+| production merge | `b5b4c14a58e54effb5875a35348576057c27ce80` |
+| test repair | `f60e715afb2a0a2b197351422edf5fa84a28da70` |
+
+## Historical comparison authority (PR A baseline only)
+
+| Field | Value |
+|---|---|
 | provinces | 3512 |
 | land/water | 3297/215 |
 | included_ids_sha256 | `507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7` |
-| production merge | `7182f8c6002e48f7235ba5ce6b7dd57ee20f4f68` |
-| mesh_count | 13 |
-| image | 4306x3449 |
-| map open | 1202.0 ms |
+| note | Pre-topology PR A measurement — not current production |
 
 ## Run
 
@@ -40,59 +49,20 @@ Measurement-only. No renderer rewrite.
 | `overlay_routes_sites_counters` | 68.163 | 68.369 | 70.735 | 70.85 | 71.504 | 3785 | 21 | 17420579 |
 | `pending_battle_presentation` | 69.316 | 69.497 | 71.488 | 71.855 | 72.628 | 3785 | 21 | 17420579 |
 
-## Discrete operation timings (ms)
+## Comparison to PR A pre-topology baseline (3512 historical)
 
-| Op | avg | p95 | p99 | max |
+| Scenario | pre avg ms (3512) | post avg ms (3510) | pre draw p95 | post draw p95 |
 |---|---:|---:|---:|---:|
-| `ownership_refresh_ms` | 2.793 | 2.964 | 2.964 | 4.894 |
-| `highlight_refresh_ms` | 0.001 | 0.001 | 0.001 | 0.005 |
-| `legal_target_rebuild_ms` | 0.008 | 0.008 | 0.008 | 0.047 |
-| `hit_test_ms` | 0.033 | 0.034 | 0.05 | 0.05 |
-| `overlay_invalidate_sync_ms` | 0.004 | 0.004 | 0.004 | 0.007 |
-
-## Process snapshot (end of run)
-
-| Metric | Value |
-|---|---:|
-| script_cpu_ms | 71.813 |
-| fps | 15.0 |
-| draw_calls | 3779 |
-| primitives | 699470 |
-| node_count | 21 |
-| object_count | 1624 |
-| resource_count | 17 |
-| texture_mem_bytes | 17420579 |
-| video_mem_bytes | 51469455 |
-| buffer_mem_bytes | 34048876 |
-| static_memory_bytes | 136026570 |
-| gpu_ms | <null> |
-
-## Notes
-
-- Frame times are wall-clock ms around force_draw + one process tick (interactive path).
-- script_cpu_ms uses Performance.TIME_PROCESS; render counters from Performance.RENDER_*.
-- GPU time is only present when the backend exposes it; otherwise null.
-- No renderer rewrite in PR A — baseline measurement only.
-- Do not change Earth3 crop/IDs/adjacency/water geometry.
-
-## Release export
-
-Release-export capture is optional in PR A when export templates are unavailable on the runner.
-Windows editor-debug results above are the committed authority baseline.
-
-## Comparison to PR A pre-topology baseline (3512)
-
-| Scenario | pre avg ms | post avg ms | pre draw p95 | post draw p95 |
-|---|---:|---:|---:|---:|
-| continuous_pan | 77.952 | 73.191 | 3784 | 3782 |
-| continuous_zoom | 76.521 | 76.811 | 3791 | 3789 |
-| idle_full_theatre | 70.998 | 65.428 | 3784 | 3782 |
-| legal_target_rebuild | 76.175 | 66.054 | 3790 | 3788 |
-| overlay_routes_sites_counters | 78.142 | 68.163 | 3787 | 3785 |
-| ownership_recolor | 77.667 | 66.69 | 3787 | 3785 |
-| pending_battle_presentation | 78.589 | 69.316 | 3787 | 3785 |
-| province_hover_select | 72.083 | 63.447 | 3787 | 3785 |
+| `idle_full_theatre` | 70.998 | 65.428 | 3784 | 3782 |
+| `continuous_pan` | 77.952 | 73.191 | 3784 | 3782 |
+| `continuous_zoom` | 76.521 | 76.811 | 3791 | 3789 |
+| `province_hover_select` | 72.083 | 63.447 | 3787 | 3785 |
+| `legal_target_rebuild` | 76.175 | 66.054 | 3790 | 3788 |
+| `ownership_recolor` | 77.667 | 66.69 | 3787 | 3785 |
+| `overlay_routes_sites_counters` | 78.142 | 68.163 | 3787 | 3785 |
+| `pending_battle_presentation` | 78.589 | 69.316 | 3787 | 3785 |
 
 | map provinces | 3512 | 3510 |
 
-Post-topology production: 3510 provinces after Kartaly/Kulakshi exclusion. Water non-select retained.
+Current measured authority is **3510** / `a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3`.
+Comparison **pre** columns are the historical **3512** PR A baseline only.

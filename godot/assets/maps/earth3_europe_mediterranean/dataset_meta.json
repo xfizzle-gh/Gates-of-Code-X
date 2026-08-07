@@ -12,7 +12,7 @@
   "pre_sanitize_included_ids_sha256": "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7",
   "included_source_ids_sha256": "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3",
   "approved_included_ids_sha256": "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3",
-  "dataset_sha256": "1734291ebc37ce0fc08154d6d8e937d1bd39b154b88f6030fdf02fde41810f37",
+  "dataset_sha256": "31c899b803db38291334f99c84f3f19247575785b87a603415059a2f25acfc9b",
   "bounds": {
     "origin_source_xy": [
       7076.0,
@@ -31,28 +31,23 @@
   },
   "triangulation_audit": {
     "ok": true,
-    "province_count_checked": 3512,
+    "province_count_checked": 3510,
     "failed_count": 0,
     "failed_province_ids": [],
-    "max_area_error": 7.424446545085129e-16,
-    "total_polygon_area": 9735812.5,
-    "total_triangle_area": 9735812.5,
-    "triangulator": "shapely_delaunay_clipped_interior",
+    "max_area_error": 1.6326528714912734e-09,
+    "total_polygon_area": 9718003.0,
+    "total_triangle_area": 9718002.999995548,
+    "triangulator": "production_dataset_mesh_revalidation",
     "area_rel_tol": 0.001,
     "no_fan_fallback": true,
-    "promotion": {
-      "excluded_source_ids": [
-        10920,
-        11031
-      ],
-      "excluded_gates_ids": [
-        "e3_2830",
-        "e3_2888"
-      ],
-      "stable_ids": true,
-      "island_geometry_unchanged": true,
-      "empty_mesh_count": 0
-    }
+    "empty_mesh_count": 0,
+    "excluded_gates_absent": [
+      "e3_2830",
+      "e3_2888"
+    ],
+    "included_source_ids_sha256": "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3",
+    "regenerated_for_production_3510": true,
+    "production_merge": "b5b4c14a58e54effb5875a35348576057c27ce80"
   },
   "sanitization": {
     "enabled": true,

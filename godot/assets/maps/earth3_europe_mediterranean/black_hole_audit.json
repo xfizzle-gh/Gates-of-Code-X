@@ -2186,5 +2186,12 @@
   ],
   "max_hole_source_land_overlap_fraction": 0.05206721,
   "max_hole_source_land_overlap_area": 40246.0,
-  "ok": true
+  "ok": true,
+  "production_province_count": 3510,
+  "production_included_ids_sha256": "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3",
+  "excluded_gates_absent": [
+    "e3_2830",
+    "e3_2888"
+  ],
+  "revalidated_after_eastern_spill_exclusion": true
 }

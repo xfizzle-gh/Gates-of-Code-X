@@ -1,0 +1,27 @@
+{
+  "ok": true,
+  "province_count_checked": 3512,
+  "failed_count": 0,
+  "failed_province_ids": [],
+  "max_area_error": 7.424446545085129e-16,
+  "total_polygon_area": 9735812.5,
+  "total_triangle_area": 9735812.5,
+  "triangulator": "shapely_delaunay_clipped_interior",
+  "area_rel_tol": 0.001,
+  "no_fan_fallback": true,
+  "promotion": {
+    "excluded_source_ids": [
+      10920,
+      11031
+    ],
+    "excluded_gates_ids": [
+      "e3_2830",
+      "e3_2888"
+    ],
+    "stable_ids": true,
+    "island_geometry_unchanged": true,
+    "empty_mesh_count": 0
+  },
+  "historical_note": "Pre-exclusion triangulation audit for the 3512-province dataset (hash 507b0069\u2026). Not production authority after Kartaly/Kulakshi removal.",
+  "superseded_by": "godot/assets/maps/earth3_europe_mediterranean/triangulation_audit.json"
+}

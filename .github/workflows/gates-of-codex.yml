@@ -152,6 +152,24 @@ jobs:
           assert auth.get("water_policy", {}).get("accepted") is True
           assert auth.get("topology_sanitize", {}).get("land_exclusions_accepted") is True
           print("authority ok", auth["province_count"])
+          # Exact multi-file consistency (no >= approximations)
+          from hashlib import sha256
+          body = Path('godot/assets/maps/earth3_europe_mediterranean/polygon_dataset.json').read_text(encoding='utf-8')
+          if body.endswith('\n'):
+              body = body[:-1]
+          ds = __import__('json').loads(body)
+          ds_sha = sha256(body.encode('utf-8')).hexdigest()
+          meta = __import__('json').loads(Path('godot/assets/maps/earth3_europe_mediterranean/dataset_meta.json').read_text(encoding='utf-8'))
+          man = __import__('json').loads(Path('godot/assets/maps/earth3_europe_mediterranean/map_manifest.json').read_text(encoding='utf-8'))
+          tri = __import__('json').loads(Path('godot/assets/maps/earth3_europe_mediterranean/triangulation_audit.json').read_text(encoding='utf-8'))
+          assert ds['province_count'] == 3510 and len(ds['provinces']) == 3510
+          assert ds['land_count'] == 3295 and ds['water_count'] == 215
+          assert ds['included_source_ids_sha256'] == auth['included_ids_sha256'] == 'a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3'
+          assert meta['dataset_sha256'] == man['polygon_dataset']['sha256'] == auth['dataset_sha256'] == ds_sha
+          assert tri['province_count_checked'] == 3510 and tri['failed_count'] == 0 and tri.get('ok') is True
+          ids = {p['id'] for p in ds['provinces']}
+          assert 'e3_2830' not in ids and 'e3_2888' not in ids
+          print('authority consistency ok', ds_sha[:16])
           PY
       - name: Godot map profiler (committed fixture)
         run: |

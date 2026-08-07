@@ -1,0 +1,29 @@
+{
+  "schema": "gates-of-codex.earth3-authority-consistency",
+  "ok": true,
+  "checks": {
+    "ds_count_3510": true,
+    "land_water": true,
+    "hash_match": true,
+    "auth_match": true,
+    "meta_match": true,
+    "manifest_match": true,
+    "tri_3510": true,
+    "gaps_absent": true,
+    "bh_ok": true,
+    "dataset_sha_auth": true,
+    "dataset_sha_aligned": true
+  },
+  "values": {
+    "province_count": 3510,
+    "land_count": 3295,
+    "water_count": 215,
+    "included_ids_sha256": "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3",
+    "dataset_sha256_meta": "31c899b803db38291334f99c84f3f19247575785b87a603415059a2f25acfc9b",
+    "dataset_sha256_manifest": "31c899b803db38291334f99c84f3f19247575785b87a603415059a2f25acfc9b",
+    "dataset_sha256_authority": "31c899b803db38291334f99c84f3f19247575785b87a603415059a2f25acfc9b",
+    "triangulation_checked": 3510,
+    "triangulation_failed": 0,
+    "dataset_sha256_aligned": "31c899b803db38291334f99c84f3f19247575785b87a603415059a2f25acfc9b"
+  }
+}
