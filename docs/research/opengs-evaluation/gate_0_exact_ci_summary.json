@@ -1,0 +1,119 @@
+{
+  "schema": "gates-of-codex.opengs-gate0-ci-summary",
+  "schema_version": 1,
+  "status": "exact_pinned_synthetic_benchmark_complete",
+  "workflow_run_id": 31223766220,
+  "head_sha": "5ccb354154e34484803ef0fc7793f19b3c4e5cb9",
+  "source_repository": "Thomas-Holtvedt/opengs-maptool",
+  "source_commit": "06e7ec8517bd45872cf44d77cb8784e5ffca49bb",
+  "suite": "tools/opengs_eval/benchmark_scenarios.json",
+  "synthetic_inputs": true,
+  "geographic_quality_evaluated": false,
+  "gate0_complete": false,
+  "jobs": {
+    "linux": {
+      "conclusion": "success",
+      "environment": {
+        "python": "3.11.15",
+        "platform": "Linux-6.17.0-1020-azure-x86_64-with-glibc2.39",
+        "machine": "x86_64"
+      },
+      "artifact": {
+        "id": 9011353399,
+        "name": "opengs-gate0-Linux",
+        "digest": "sha256:4ce31f8e07220dc47088b050821d057501549c45a0e085275632f73672286f58",
+        "result_sha256": "c8a97303e9cfe8adfb40e77130cf9cc80dca3561cfb8bd35656db4948521b725"
+      },
+      "earth3_count_3514": {
+        "run_count": 3,
+        "unique_label_hash_count": 3,
+        "nondeterministic_observed": true,
+        "wall_seconds": [
+          6.980280053999991,
+          6.923219364000005,
+          6.874368775999997
+        ],
+        "peak_rss_bytes": [
+          184975360,
+          184528896,
+          176566272
+        ],
+        "label_hashes": [
+          "fba0d08c81b30288dc0171130999518c9e4b6640c9c20c10a24617f703dd654a",
+          "d75848b07099c7ed703408ffa93dd0a099c970dbe7ddee2d6403706c75386968",
+          "21bba50057b0e2957cce233f7f13315b73e4fb78328e5c7004c96cecdac18dca"
+        ]
+      },
+      "earth3_count_3514_jagged": {
+        "wall_seconds": 24.907274411000003,
+        "peak_rss_bytes": 200896512,
+        "province_count": 3514
+      },
+      "stress_5000": {
+        "wall_seconds": 9.650287563999996,
+        "peak_rss_bytes": 202252288,
+        "province_count": 5000
+      }
+    },
+    "windows": {
+      "conclusion": "success",
+      "environment": {
+        "python": "3.11.9",
+        "platform": "Windows-10-10.0.26100-SP0",
+        "machine": "AMD64"
+      },
+      "artifact": {
+        "id": 9011373965,
+        "name": "opengs-gate0-Windows",
+        "digest": "sha256:ce8340ebd737db40ac76866cc095eff1dac8f60367010ad319475d6148f64b92",
+        "result_sha256": "534683c5bc6bfada554973f88a5a7c8bef2d41dc2ce4f163183f01632b22ee91"
+      },
+      "earth3_count_3514": {
+        "run_count": 3,
+        "unique_label_hash_count": 3,
+        "nondeterministic_observed": true,
+        "wall_seconds": [
+          9.868925899999994,
+          9.834529900000007,
+          9.876203000000004
+        ],
+        "final_rss_bytes": [
+          77234176,
+          77205504,
+          77357056
+        ],
+        "rss_notice": "Windows reports final RSS through psutil, not process peak RSS.",
+        "label_hashes": [
+          "e6c4dbb540e86f28d77da4db06c5eb6e530f4db3cc4714ee757c1f4acd01189a",
+          "3bb3ff45dbb67f5068322f05e2850af958df6d78f22dfafcdebd62575f372aa6",
+          "e20ff8ba1e3b86203afcf647aca016a76ab3e585594fa1d2c804b32aac81f427"
+        ]
+      },
+      "earth3_count_3514_jagged": {
+        "wall_seconds": 32.74680620000001,
+        "final_rss_bytes": 77283328,
+        "tracemalloc_peak_bytes": 119200129,
+        "province_count": 3514
+      },
+      "stress_5000": {
+        "wall_seconds": 13.891983600000003,
+        "final_rss_bytes": 80797696,
+        "tracemalloc_peak_bytes": 99175871,
+        "province_count": 5000
+      }
+    }
+  },
+  "findings": [
+    "The exact pinned source completes the synthetic 3514-province suite on Linux and Windows.",
+    "Both platforms produced three unique label hashes across three identical 3514 runs.",
+    "Jagged generation is materially slower than non-jagged generation on both platforms.",
+    "The exact pinned source completed the synthetic 5000-province stress case on both platforms.",
+    "These results establish generator-scale feasibility only and do not establish real-input, polygon-adapter, geographic-quality, or production-runtime feasibility."
+  ],
+  "remaining_gate0_work": [
+    "Pin exact geographic source releases and checksums.",
+    "Build aligned real theatre inputs from approved sources.",
+    "Benchmark the exact real input dimensions and failure behavior.",
+    "Complete the Gate 0 feasibility recommendation and stop for owner review."
+  ]
+}

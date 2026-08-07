@@ -1,0 +1,73 @@
+{
+  "schema": "gates-of-codex.opengs-gate0-benchmark-suite",
+  "schema_version": 1,
+  "synthetic_input_notice": "These scenarios measure pinned generator behavior only. They do not evaluate geographic quality or authorize any input dataset.",
+  "scenarios": [
+    {
+      "id": "sanity_440",
+      "width": 700,
+      "height": 460,
+      "land_territories": 40,
+      "ocean_territories": 8,
+      "land_provinces": 400,
+      "ocean_provinces": 40,
+      "jagged": false,
+      "repeats": 1
+    },
+    {
+      "id": "scale_1000",
+      "width": 900,
+      "height": 600,
+      "land_territories": 70,
+      "ocean_territories": 10,
+      "land_provinces": 930,
+      "ocean_provinces": 70,
+      "jagged": false,
+      "repeats": 1
+    },
+    {
+      "id": "scale_2000",
+      "width": 1050,
+      "height": 700,
+      "land_territories": 90,
+      "ocean_territories": 14,
+      "land_provinces": 1880,
+      "ocean_provinces": 120,
+      "jagged": false,
+      "repeats": 1
+    },
+    {
+      "id": "earth3_count_3514",
+      "width": 1200,
+      "height": 800,
+      "land_territories": 120,
+      "ocean_territories": 20,
+      "land_provinces": 3299,
+      "ocean_provinces": 215,
+      "jagged": false,
+      "repeats": 3
+    },
+    {
+      "id": "earth3_count_3514_jagged",
+      "width": 1200,
+      "height": 800,
+      "land_territories": 120,
+      "ocean_territories": 20,
+      "land_provinces": 3299,
+      "ocean_provinces": 215,
+      "jagged": true,
+      "repeats": 1
+    },
+    {
+      "id": "stress_5000",
+      "width": 1400,
+      "height": 900,
+      "land_territories": 160,
+      "ocean_territories": 25,
+      "land_provinces": 4700,
+      "ocean_provinces": 300,
+      "jagged": false,
+      "repeats": 1
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "schema": "gates-of-codex.natural-earth-pin",
+  "schema_version": 1,
+  "repository": "nvkelso/natural-earth-vector",
+  "ref": "v5.1.2",
+  "license": "public_domain",
+  "terms_url": "https://www.naturalearthdata.com/about/terms-of-use/",
+  "redistribution_policy": "CI research inputs and generated Gate 0 artifacts only until owner review",
+  "files": [
+    {
+      "role": "land",
+      "path": "geojson/ne_10m_land.geojson",
+      "git_blob_sha1": "2d76878175b8054acd9c5a52917ee9ea59a36fc5"
+    },
+    {
+      "role": "lakes",
+      "path": "geojson/ne_10m_lakes.geojson",
+      "git_blob_sha1": "e48ec603e0943b62f8c81960fb990bb6bab4a4a8"
+    },
+    {
+      "role": "national_boundaries",
+      "path": "geojson/ne_10m_admin_0_boundary_lines_land.geojson",
+      "git_blob_sha1": "a4e4090820e0d95c23d55aefa6b5f1721552cc71"
+    },
+    {
+      "role": "populated_places",
+      "path": "geojson/ne_10m_populated_places_simple.geojson",
+      "git_blob_sha1": "4da9c6b27b5cd41d7c930ea9cd0c1f84548b65fb"
+    },
+    {
+      "role": "rivers_reference_only",
+      "path": "geojson/ne_10m_rivers_lake_centerlines.geojson",
+      "git_blob_sha1": "61a0d7137a6ff1113cc259525e7479c63d5fec86"
+    }
+  ],
+  "projection": {
+    "name": "Lambert Azimuthal Equal Area",
+    "proj": "+proj=laea +lat_0=45 +lon_0=20 +datum=WGS84 +units=m +no_defs"
+  },
+  "theatre_lon_lat_bounds": [-25.0, 20.0, 60.0, 75.0],
+  "production_authority_changed": false
+}
