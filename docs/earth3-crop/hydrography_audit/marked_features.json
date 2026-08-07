@@ -1,0 +1,2190 @@
+{
+  "schema": "gates-of-codex.earth3-hydrography-marked-features",
+  "schema_version": 1,
+  "production_authority": {
+    "provinces": 3510,
+    "land": 3295,
+    "water_metadata": 215,
+    "included_ids_sha256": "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3"
+  },
+  "geographic_reference": {
+    "name": "Natural Earth 110m/50m cultural+physical (conceptual comparison) + AoH3 Earth3 city labels",
+    "license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+    "note": "No Google Maps tiles committed. Coordinates cross-checked via archive city anchors and known hydrography."
+  },
+  "feature_count": 13,
+  "features": [
+    {
+      "review_label": "NE01_Kolguyev",
+      "screenshot": "northeast_full",
+      "hypothesis": "Kolguyev Island",
+      "screenshot_pixel_coordinate": null,
+      "map_local_xy": [
+        4220.0,
+        660.0
+      ],
+      "source_map_xy": [
+        11296.0,
+        802.0
+      ],
+      "approx_longitude": 48.973,
+      "approx_latitude": 69.1465,
+      "nearest_named_geographic_feature": "Fion",
+      "nearest_cities": [
+        {
+          "name": "Fion",
+          "dist_px": 109.8,
+          "source_province_id": 11836,
+          "x": 11356.0,
+          "y": 710.0
+        },
+        {
+          "name": "Shchekurya",
+          "dist_px": 117.5,
+          "source_province_id": 11810,
+          "x": 11315.0,
+          "y": 918.0
+        },
+        {
+          "name": "Usinsk",
+          "dist_px": 152.6,
+          "source_province_id": 11837,
+          "x": 11149.0,
+          "y": 761.0
+        },
+        {
+          "name": "Pechora",
+          "dist_px": 165.0,
+          "source_province_id": 11838,
+          "x": 11135.0,
+          "y": 838.0
+        }
+      ],
+      "gates_province_ids_touching_or_surrounding": [],
+      "touching_detail": [],
+      "source_is_water_values": [],
+      "rendered_classification": "coastline_outline_or_water_without_land_fill",
+      "polygon_or_ring_type": "omitted_source_land_province",
+      "gap_fill_id": null,
+      "gap_fill": null,
+      "archive_kolguyev_source_id": 11836,
+      "archive_kolguyev_in_production": false,
+      "recommended_action": "CONFIRMED_MISSING_LAND_RESTORE",
+      "confidence": "high",
+      "evidence": "Archive source_id=11836 is land (terrain_id=5, ring_verts=239, area\u224824725) centered near Kolguyev; ABSENT from production included set. Visual outline likely residual water/coast geometry without land mesh.",
+      "renderer_defect": {
+        "kind": "crop_omission_or_boundary_exclusion",
+        "archive_source_id": 11836,
+        "in_production": false,
+        "pipeline_stage": "crop_inclusion"
+      },
+      "geographic_reference": {
+        "name": "Natural Earth 110m/50m cultural+physical (conceptual comparison) + AoH3 Earth3 city labels",
+        "license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+        "note": "No Google Maps tiles committed. Coordinates cross-checked via archive city anchors and known hydrography."
+      },
+      "reference_license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+      "production_change_allowed": true
+    },
+    {
+      "review_label": "NE02_Ladoga",
+      "screenshot": "northeast_full",
+      "hypothesis": "Lake Ladoga",
+      "screenshot_pixel_coordinate": null,
+      "map_local_xy": [
+        2803.0,
+        1052.0
+      ],
+      "source_map_xy": [
+        9879.0,
+        1194.0
+      ],
+      "approx_longitude": 20.25,
+      "approx_latitude": 61.3977,
+      "nearest_named_geographic_feature": "Kokkorevo",
+      "nearest_cities": [
+        {
+          "name": "Kokkorevo",
+          "dist_px": 61.7,
+          "source_province_id": 6674,
+          "x": 9858.0,
+          "y": 1252.0
+        },
+        {
+          "name": "Pitkyaranta",
+          "dist_px": 63.0,
+          "source_province_id": 10993,
+          "x": 9879.0,
+          "y": 1131.0
+        },
+        {
+          "name": "Priozersk",
+          "dist_px": 66.7,
+          "source_province_id": 3739,
+          "x": 9814.0,
+          "y": 1179.0
+        },
+        {
+          "name": "Losevo",
+          "dist_px": 71.2,
+          "source_province_id": 6675,
+          "x": 9809.0,
+          "y": 1207.0
+        }
+      ],
+      "gates_province_ids_touching_or_surrounding": [
+        {
+          "gates_id": "e3_1833",
+          "source_id": 3653,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1918",
+          "source_id": 3738,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1919",
+          "source_id": 3739,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1925",
+          "source_id": 3745,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1926",
+          "source_id": 3746,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1927",
+          "source_id": 3747,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2053",
+          "source_id": 4993,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2054",
+          "source_id": 4994,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2316",
+          "source_id": 6674,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2317",
+          "source_id": 6675,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2844",
+          "source_id": 10985,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2851",
+          "source_id": 10992,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2852",
+          "source_id": 10993,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2854",
+          "source_id": 10995,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2855",
+          "source_id": 10996,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2856",
+          "source_id": 10997,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2860",
+          "source_id": 11001,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3004",
+          "source_id": 11522,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3030",
+          "source_id": 11556,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3125",
+          "source_id": 11652,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3371",
+          "source_id": 12165,
+          "is_water": false
+        }
+      ],
+      "touching_detail": [],
+      "source_is_water_values": [],
+      "rendered_classification": "water_presentation_gap_fill",
+      "polygon_or_ring_type": "gap_fill_interior_hole",
+      "gap_fill_id": "gap_0012",
+      "gap_fill": {
+        "id": "gap_0012",
+        "area": 10703.5,
+        "centroid": [
+          2803.026,
+          1051.7214
+        ],
+        "classification": "water_presentation_gap",
+        "region_hint": "scandinavian_or_karelian_lake"
+      },
+      "archive_kolguyev_source_id": null,
+      "archive_kolguyev_in_production": null,
+      "recommended_action": "CONFIRMED_REAL_WATER_KEEP",
+      "confidence": "high",
+      "evidence": "Matches ocean_gap_fills gap_0012 area=10704 classification=water_presentation_gap region_hint=scandinavian_or_karelian_lake. Nearest cities Kokkorevo, Pitkyaranta, Priozersk. Continuous-ocean renderer correctly shows interior water (non-selectable).",
+      "renderer_defect": null,
+      "geographic_reference": {
+        "name": "Natural Earth 110m/50m cultural+physical (conceptual comparison) + AoH3 Earth3 city labels",
+        "license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+        "note": "No Google Maps tiles committed. Coordinates cross-checked via archive city anchors and known hydrography."
+      },
+      "reference_license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+      "production_change_allowed": false
+    },
+    {
+      "review_label": "NE03_Onega",
+      "screenshot": "northeast_full",
+      "hypothesis": "Lake Onega",
+      "screenshot_pixel_coordinate": null,
+      "map_local_xy": [
+        2996.0,
+        978.0
+      ],
+      "source_map_xy": [
+        10072.0,
+        1120.0
+      ],
+      "approx_longitude": 24.1622,
+      "approx_latitude": 62.8605,
+      "nearest_named_geographic_feature": "Petrozavodsk",
+      "nearest_cities": [
+        {
+          "name": "Petrozavodsk",
+          "dist_px": 53.2,
+          "source_province_id": 10998,
+          "x": 10019.0,
+          "y": 1124.0
+        },
+        {
+          "name": "Pudozh",
+          "dist_px": 54.0,
+          "source_province_id": 11356,
+          "x": 10126.0,
+          "y": 1118.0
+        },
+        {
+          "name": "Oshta",
+          "dist_px": 72.7,
+          "source_province_id": 11548,
+          "x": 10082.0,
+          "y": 1192.0
+        },
+        {
+          "name": "Vytegra",
+          "dist_px": 78.7,
+          "source_province_id": 11358,
+          "x": 10123.0,
+          "y": 1180.0
+        }
+      ],
+      "gates_province_ids_touching_or_surrounding": [
+        {
+          "gates_id": "e3_2855",
+          "source_id": 10996,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2856",
+          "source_id": 10997,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2857",
+          "source_id": 10998,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2858",
+          "source_id": 10999,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2859",
+          "source_id": 11000,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2962",
+          "source_id": 11356,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2964",
+          "source_id": 11358,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2965",
+          "source_id": 11359,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3021",
+          "source_id": 11547,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3022",
+          "source_id": 11548,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3126",
+          "source_id": 11653,
+          "is_water": false
+        }
+      ],
+      "touching_detail": [],
+      "source_is_water_values": [],
+      "rendered_classification": "water_presentation_gap_fill",
+      "polygon_or_ring_type": "gap_fill_interior_hole",
+      "gap_fill_id": "gap_0027",
+      "gap_fill": {
+        "id": "gap_0027",
+        "area": 6239.0,
+        "centroid": [
+          2995.6704,
+          978.0429
+        ],
+        "classification": "water_presentation_gap",
+        "region_hint": "scandinavian_or_karelian_lake"
+      },
+      "archive_kolguyev_source_id": null,
+      "archive_kolguyev_in_production": null,
+      "recommended_action": "CONFIRMED_REAL_WATER_KEEP",
+      "confidence": "high",
+      "evidence": "Matches ocean_gap_fills gap_0027 area=6239 classification=water_presentation_gap region_hint=scandinavian_or_karelian_lake. Nearest cities Petrozavodsk, Pudozh, Oshta. Continuous-ocean renderer correctly shows interior water (non-selectable).",
+      "renderer_defect": null,
+      "geographic_reference": {
+        "name": "Natural Earth 110m/50m cultural+physical (conceptual comparison) + AoH3 Earth3 city labels",
+        "license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+        "note": "No Google Maps tiles committed. Coordinates cross-checked via archive city anchors and known hydrography."
+      },
+      "reference_license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+      "production_change_allowed": false
+    },
+    {
+      "review_label": "NE04_WhiteSea_SE_large_hole",
+      "screenshot": "northeast_full",
+      "hypothesis": "Large hole SE of White Sea / Mezen basin (possible Lacha-Kenozero region or exaggerated hole)",
+      "screenshot_pixel_coordinate": null,
+      "map_local_xy": [
+        3618.0,
+        685.0
+      ],
+      "source_map_xy": [
+        10694.0,
+        827.0
+      ],
+      "approx_longitude": 36.7703,
+      "approx_latitude": 68.6523,
+      "nearest_named_geographic_feature": "Koynas",
+      "nearest_cities": [
+        {
+          "name": "Koynas",
+          "dist_px": 58.0,
+          "source_province_id": 11790,
+          "x": 10663.0,
+          "y": 876.0
+        },
+        {
+          "name": "Zerzyayb",
+          "dist_px": 142.5,
+          "source_province_id": 11845,
+          "x": 10750.0,
+          "y": 958.0
+        },
+        {
+          "name": "Chim",
+          "dist_px": 163.0,
+          "source_province_id": 11789,
+          "x": 10694.0,
+          "y": 990.0
+        },
+        {
+          "name": "Nes",
+          "dist_px": 206.9,
+          "source_province_id": 11766,
+          "x": 10524.0,
+          "y": 709.0
+        }
+      ],
+      "gates_province_ids_touching_or_surrounding": [],
+      "touching_detail": [],
+      "source_is_water_values": [],
+      "rendered_classification": "water_presentation_gap_fill",
+      "polygon_or_ring_type": "gap_fill_interior_hole",
+      "gap_fill_id": "gap_0039",
+      "gap_fill": {
+        "id": "gap_0039",
+        "area": 22707.5,
+        "centroid": [
+          3617.5748,
+          684.5133
+        ],
+        "classification": "water_presentation_gap",
+        "region_hint": "inland_lake_or_lagoon"
+      },
+      "archive_kolguyev_source_id": null,
+      "archive_kolguyev_in_production": null,
+      "recommended_action": "UNRESOLVED_REQUIRES_OWNER_RULING",
+      "confidence": "medium",
+      "evidence": "gap_0039 area=22708 near Koynas (Arkhangelsk/Mezen hinterland). May be merged/exaggerated hydrography rather than a single named great lake; not proven false. Do not fill without stronger proof.",
+      "renderer_defect": null,
+      "geographic_reference": {
+        "name": "Natural Earth 110m/50m cultural+physical (conceptual comparison) + AoH3 Earth3 city labels",
+        "license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+        "note": "No Google Maps tiles committed. Coordinates cross-checked via archive city anchors and known hydrography."
+      },
+      "reference_license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+      "production_change_allowed": false
+    },
+    {
+      "review_label": "NE05_Rybinsk",
+      "screenshot": "northeast_full",
+      "hypothesis": "Rybinsk Reservoir",
+      "screenshot_pixel_coordinate": null,
+      "map_local_xy": [
+        3133.0,
+        1255.0
+      ],
+      "source_map_xy": [
+        10209.0,
+        1397.0
+      ],
+      "approx_longitude": 26.9392,
+      "approx_latitude": 57.3849,
+      "nearest_named_geographic_feature": "Breitovo",
+      "nearest_cities": [
+        {
+          "name": "Breitovo",
+          "dist_px": 28.4,
+          "source_province_id": 3731,
+          "x": 10187.0,
+          "y": 1415.0
+        },
+        {
+          "name": "Poshekhonye",
+          "dist_px": 42.0,
+          "source_province_id": 3744,
+          "x": 10251.0,
+          "y": 1399.0
+        },
+        {
+          "name": "Rybinsk",
+          "dist_px": 51.6,
+          "source_province_id": 3727,
+          "x": 10236.0,
+          "y": 1441.0
+        },
+        {
+          "name": "Vesyegonsk",
+          "dist_px": 51.9,
+          "source_province_id": 3735,
+          "x": 10159.0,
+          "y": 1383.0
+        }
+      ],
+      "gates_province_ids_touching_or_surrounding": [
+        {
+          "gates_id": "e3_1907",
+          "source_id": 3727,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1908",
+          "source_id": 3728,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1909",
+          "source_id": 3729,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1910",
+          "source_id": 3730,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1911",
+          "source_id": 3731,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1914",
+          "source_id": 3734,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1915",
+          "source_id": 3735,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1921",
+          "source_id": 3741,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1924",
+          "source_id": 3744,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1930",
+          "source_id": 3750,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1931",
+          "source_id": 3751,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2319",
+          "source_id": 6677,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2320",
+          "source_id": 6678,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2321",
+          "source_id": 6679,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2323",
+          "source_id": 6681,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2324",
+          "source_id": 6682,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2325",
+          "source_id": 6683,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2886",
+          "source_id": 11027,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2961",
+          "source_id": 11355,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2989",
+          "source_id": 11405,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3008",
+          "source_id": 11526,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3020",
+          "source_id": 11546,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3140",
+          "source_id": 11687,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3147",
+          "source_id": 11695,
+          "is_water": false
+        }
+      ],
+      "touching_detail": [
+        {
+          "gates_id": "e3_1911",
+          "source_id": 3731,
+          "is_water": false,
+          "area": 1689.0,
+          "triangle_count": 122,
+          "vertex_count": 124,
+          "neighbors": [
+            "e3_1907",
+            "e3_1915",
+            "e3_2319",
+            "e3_2320",
+            "e3_2321",
+            "e3_2324"
+          ]
+        }
+      ],
+      "source_is_water_values": [
+        false
+      ],
+      "rendered_classification": "water_presentation_gap_fill",
+      "polygon_or_ring_type": "gap_fill_interior_hole",
+      "gap_fill_id": "gap_0025",
+      "gap_fill": {
+        "id": "gap_0025",
+        "area": 2751.0,
+        "centroid": [
+          3133.0914,
+          1254.5197
+        ],
+        "classification": "water_presentation_gap",
+        "region_hint": "inland_lake_or_lagoon"
+      },
+      "archive_kolguyev_source_id": null,
+      "archive_kolguyev_in_production": null,
+      "recommended_action": "CONFIRMED_REAL_WATER_KEEP",
+      "confidence": "high",
+      "evidence": "Matches ocean_gap_fills gap_0025 area=2751 classification=water_presentation_gap region_hint=inland_lake_or_lagoon. Nearest cities Breitovo, Poshekhonye, Rybinsk. Continuous-ocean renderer correctly shows interior water (non-selectable).",
+      "renderer_defect": null,
+      "geographic_reference": {
+        "name": "Natural Earth 110m/50m cultural+physical (conceptual comparison) + AoH3 Earth3 city labels",
+        "license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+        "note": "No Google Maps tiles committed. Coordinates cross-checked via archive city anchors and known hydrography."
+      },
+      "reference_license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+      "production_change_allowed": false
+    },
+    {
+      "review_label": "NE06_Volga_mid_reservoir",
+      "screenshot": "northeast_full",
+      "hypothesis": "Volga mid reservoir / Kostroma-Galich lake cluster",
+      "screenshot_pixel_coordinate": null,
+      "map_local_xy": [
+        3376.0,
+        1273.0
+      ],
+      "source_map_xy": [
+        10452.0,
+        1415.0
+      ],
+      "approx_longitude": 31.8649,
+      "approx_latitude": 57.0291,
+      "nearest_named_geographic_feature": "Galich",
+      "nearest_cities": [
+        {
+          "name": "Galich",
+          "dist_px": 33.1,
+          "source_province_id": 11689,
+          "x": 10485.0,
+          "y": 1417.0
+        },
+        {
+          "name": "Kadyi",
+          "dist_px": 43.4,
+          "source_province_id": 11600,
+          "x": 10458.0,
+          "y": 1458.0
+        },
+        {
+          "name": "Chukhloma",
+          "dist_px": 47.0,
+          "source_province_id": 11691,
+          "x": 10429.0,
+          "y": 1374.0
+        },
+        {
+          "name": "Ostrovskoe",
+          "dist_px": 73.6,
+          "source_province_id": 11558,
+          "x": 10398.0,
+          "y": 1465.0
+        }
+      ],
+      "gates_province_ids_touching_or_surrounding": [
+        {
+          "gates_id": "e3_2821",
+          "source_id": 10910,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2833",
+          "source_id": 10928,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3032",
+          "source_id": 11558,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3070",
+          "source_id": 11597,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3073",
+          "source_id": 11600,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3142",
+          "source_id": 11690,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3143",
+          "source_id": 11691,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3146",
+          "source_id": 11694,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3382",
+          "source_id": 12177,
+          "is_water": false
+        }
+      ],
+      "touching_detail": [],
+      "source_is_water_values": [],
+      "rendered_classification": "water_presentation_gap_fill",
+      "polygon_or_ring_type": "gap_fill_interior_hole",
+      "gap_fill_id": "gap_0038",
+      "gap_fill": {
+        "id": "gap_0038",
+        "area": 7771.5,
+        "centroid": [
+          3376.3791,
+          1273.0437
+        ],
+        "classification": "water_presentation_gap",
+        "region_hint": "inland_lake_or_lagoon"
+      },
+      "archive_kolguyev_source_id": null,
+      "archive_kolguyev_in_production": null,
+      "recommended_action": "CONFIRMED_REAL_WATER_KEEP",
+      "confidence": "high",
+      "evidence": "Matches ocean_gap_fills gap_0038 area=7772 classification=water_presentation_gap region_hint=inland_lake_or_lagoon. Nearest cities Galich, Kadyi, Chukhloma. Continuous-ocean renderer correctly shows interior water (non-selectable).",
+      "renderer_defect": null,
+      "geographic_reference": {
+        "name": "Natural Earth 110m/50m cultural+physical (conceptual comparison) + AoH3 Earth3 city labels",
+        "license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+        "note": "No Google Maps tiles committed. Coordinates cross-checked via archive city anchors and known hydrography."
+      },
+      "reference_license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+      "production_change_allowed": false
+    },
+    {
+      "review_label": "NE07_Cheboksary_system",
+      "screenshot": "northeast_full",
+      "hypothesis": "Cheboksary / Volga reservoir system",
+      "screenshot_pixel_coordinate": null,
+      "map_local_xy": [
+        3597.0,
+        1356.0
+      ],
+      "source_map_xy": [
+        10673.0,
+        1498.0
+      ],
+      "approx_longitude": 36.3446,
+      "approx_latitude": 55.3884,
+      "nearest_named_geographic_feature": "Yaransk",
+      "nearest_cities": [
+        {
+          "name": "Yaransk",
+          "dist_px": 12.2,
+          "source_province_id": 11170,
+          "x": 10680.0,
+          "y": 1508.0
+        },
+        {
+          "name": "Shakhunya",
+          "dist_px": 60.2,
+          "source_province_id": 11598,
+          "x": 10617.0,
+          "y": 1476.0
+        },
+        {
+          "name": "Yoshkar Ola",
+          "dist_px": 69.3,
+          "source_province_id": 10914,
+          "x": 10679.0,
+          "y": 1567.0
+        },
+        {
+          "name": "Sernur",
+          "dist_px": 81.3,
+          "source_province_id": 11593,
+          "x": 10742.0,
+          "y": 1541.0
+        }
+      ],
+      "gates_province_ids_touching_or_surrounding": [
+        {
+          "gates_id": "e3_2824",
+          "source_id": 10913,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2825",
+          "source_id": 10914,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2838",
+          "source_id": 10933,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3065",
+          "source_id": 11592,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3066",
+          "source_id": 11593,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3071",
+          "source_id": 11598,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3072",
+          "source_id": 11599,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3137",
+          "source_id": 11684,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3144",
+          "source_id": 11692,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3145",
+          "source_id": 11693,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3383",
+          "source_id": 12178,
+          "is_water": false
+        }
+      ],
+      "touching_detail": [],
+      "source_is_water_values": [],
+      "rendered_classification": "water_presentation_gap_fill",
+      "polygon_or_ring_type": "gap_fill_interior_hole",
+      "gap_fill_id": "gap_0045",
+      "gap_fill": {
+        "id": "gap_0045",
+        "area": 6238.0,
+        "centroid": [
+          3596.9035,
+          1356.0801
+        ],
+        "classification": "water_presentation_gap",
+        "region_hint": "inland_lake_or_lagoon"
+      },
+      "archive_kolguyev_source_id": null,
+      "archive_kolguyev_in_production": null,
+      "recommended_action": "CONFIRMED_REAL_WATER_KEEP",
+      "confidence": "high",
+      "evidence": "Matches ocean_gap_fills gap_0045 area=6238 classification=water_presentation_gap region_hint=inland_lake_or_lagoon. Nearest cities Yaransk, Shakhunya, Yoshkar Ola. Continuous-ocean renderer correctly shows interior water (non-selectable).",
+      "renderer_defect": null,
+      "geographic_reference": {
+        "name": "Natural Earth 110m/50m cultural+physical (conceptual comparison) + AoH3 Earth3 city labels",
+        "license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+        "note": "No Google Maps tiles committed. Coordinates cross-checked via archive city anchors and known hydrography."
+      },
+      "reference_license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+      "production_change_allowed": false
+    },
+    {
+      "review_label": "NE08_Kuybyshev_Samara_arm",
+      "screenshot": "northeast_full",
+      "hypothesis": "Kuybyshev (Samara) Reservoir arm",
+      "screenshot_pixel_coordinate": null,
+      "map_local_xy": [
+        3889.0,
+        1546.0
+      ],
+      "source_map_xy": [
+        10965.0,
+        1688.0
+      ],
+      "approx_longitude": 42.2635,
+      "approx_latitude": 51.6326,
+      "nearest_named_geographic_feature": "Tuymazy",
+      "nearest_cities": [
+        {
+          "name": "Tuymazy",
+          "dist_px": 54.1,
+          "source_province_id": 11323,
+          "x": 10962.0,
+          "y": 1742.0
+        },
+        {
+          "name": "Oktyabrsky",
+          "dist_px": 66.9,
+          "source_province_id": 11325,
+          "x": 10954.0,
+          "y": 1754.0
+        },
+        {
+          "name": "Naberezhnye Chelny",
+          "dist_px": 75.5,
+          "source_province_id": 10857,
+          "x": 10901.0,
+          "y": 1648.0
+        },
+        {
+          "name": "Bugulma",
+          "dist_px": 75.6,
+          "source_province_id": 10858,
+          "x": 10919.0,
+          "y": 1748.0
+        }
+      ],
+      "gates_province_ids_touching_or_surrounding": [
+        {
+          "gates_id": "e3_2780",
+          "source_id": 10853,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2784",
+          "source_id": 10858,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2785",
+          "source_id": 10859,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2789",
+          "source_id": 10863,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2790",
+          "source_id": 10864,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2826",
+          "source_id": 10915,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2827",
+          "source_id": 10916,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2939",
+          "source_id": 11325,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2940",
+          "source_id": 11326,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2941",
+          "source_id": 11327,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2949",
+          "source_id": 11339,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3037",
+          "source_id": 11563,
+          "is_water": false
+        }
+      ],
+      "touching_detail": [],
+      "source_is_water_values": [],
+      "rendered_classification": "water_presentation_gap_fill",
+      "polygon_or_ring_type": "gap_fill_interior_hole",
+      "gap_fill_id": "gap_0044",
+      "gap_fill": {
+        "id": "gap_0044",
+        "area": 11171.0,
+        "centroid": [
+          3889.8173,
+          1546.2724
+        ],
+        "classification": "water_presentation_gap",
+        "region_hint": "inland_lake_or_lagoon"
+      },
+      "archive_kolguyev_source_id": null,
+      "archive_kolguyev_in_production": null,
+      "recommended_action": "CONFIRMED_REAL_WATER_KEEP",
+      "confidence": "high",
+      "evidence": "Matches ocean_gap_fills gap_0044 area=11171 classification=water_presentation_gap region_hint=inland_lake_or_lagoon. Nearest cities Tuymazy, Oktyabrsky, Naberezhnye Chelny. Continuous-ocean renderer correctly shows interior water (non-selectable).",
+      "renderer_defect": null,
+      "geographic_reference": {
+        "name": "Natural Earth 110m/50m cultural+physical (conceptual comparison) + AoH3 Earth3 city labels",
+        "license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+        "note": "No Google Maps tiles committed. Coordinates cross-checked via archive city anchors and known hydrography."
+      },
+      "reference_license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+      "production_change_allowed": false
+    },
+    {
+      "review_label": "MED01_Ibiza",
+      "screenshot": "mediterranean",
+      "hypothesis": "Ibiza",
+      "screenshot_pixel_coordinate": null,
+      "map_local_xy": [
+        1340.0,
+        2730.0
+      ],
+      "source_map_xy": [
+        8416.0,
+        2872.0
+      ],
+      "approx_longitude": -9.4054,
+      "approx_latitude": 28.2279,
+      "nearest_named_geographic_feature": "Ibiza",
+      "nearest_cities": [
+        {
+          "name": "Ibiza",
+          "dist_px": 6.1,
+          "source_province_id": 2274,
+          "x": 8415.0,
+          "y": 2866.0
+        },
+        {
+          "name": "Palma",
+          "dist_px": 76.7,
+          "source_province_id": 2272,
+          "x": 8475.0,
+          "y": 2823.0
+        },
+        {
+          "name": "Manacor",
+          "dist_px": 91.7,
+          "source_province_id": 2271,
+          "x": 8497.0,
+          "y": 2829.0
+        },
+        {
+          "name": "Alcoi",
+          "dist_px": 94.0,
+          "source_province_id": 75,
+          "x": 8322.0,
+          "y": 2875.0
+        }
+      ],
+      "gates_province_ids_touching_or_surrounding": [
+        {
+          "gates_id": "e3_0073",
+          "source_id": 73,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_0074",
+          "source_id": 74,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_0075",
+          "source_id": 75,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_0077",
+          "source_id": 77,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_0078",
+          "source_id": 78,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_0079",
+          "source_id": 79,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_0080",
+          "source_id": 80,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1297",
+          "source_id": 1409,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1436",
+          "source_id": 2271,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1437",
+          "source_id": 2272,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1439",
+          "source_id": 2274,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2194",
+          "source_id": 6549,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2219",
+          "source_id": 6574,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2601",
+          "source_id": 7380,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3269",
+          "source_id": 12063,
+          "is_water": true
+        },
+        {
+          "gates_id": "e3_3271",
+          "source_id": 12065,
+          "is_water": true
+        },
+        {
+          "gates_id": "e3_3289",
+          "source_id": 12083,
+          "is_water": true
+        },
+        {
+          "gates_id": "e3_3290",
+          "source_id": 12084,
+          "is_water": true
+        },
+        {
+          "gates_id": "e3_3306",
+          "source_id": 12100,
+          "is_water": true
+        }
+      ],
+      "touching_detail": [
+        {
+          "gates_id": "e3_1439",
+          "source_id": 2274,
+          "is_water": false,
+          "area": 891.0,
+          "triangle_count": 2,
+          "vertex_count": 4,
+          "neighbors": [
+            "e3_1437",
+            "e3_3306"
+          ]
+        },
+        {
+          "gates_id": "e3_3306",
+          "source_id": 12100,
+          "is_water": true,
+          "area": 11052.5,
+          "triangle_count": 41,
+          "vertex_count": 43,
+          "neighbors": [
+            "e3_1436",
+            "e3_1437",
+            "e3_1439",
+            "e3_3269",
+            "e3_3270",
+            "e3_3271",
+            "e3_3289",
+            "e3_3290"
+          ]
+        }
+      ],
+      "source_is_water_values": [
+        false,
+        true
+      ],
+      "rendered_classification": "land_province_fill_present",
+      "polygon_or_ring_type": "province_polygon",
+      "gap_fill_id": null,
+      "gap_fill": null,
+      "archive_kolguyev_source_id": null,
+      "archive_kolguyev_in_production": null,
+      "recommended_action": "CONFIRMED_REAL_ISLAND_SIMPLIFIED_GEOMETRY_KEEP",
+      "confidence": "high",
+      "evidence": "Production land e3_1439 source_id=2274 area=891.0 ring_verts=4 triangles=2. City anchor supports Ibiza. Rectangular/low-vert rings are simplified real islands \u2014 KEEP IDs; coastline work is #121.",
+      "renderer_defect": null,
+      "geographic_reference": {
+        "name": "Natural Earth 110m/50m cultural+physical (conceptual comparison) + AoH3 Earth3 city labels",
+        "license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+        "note": "No Google Maps tiles committed. Coordinates cross-checked via archive city anchors and known hydrography."
+      },
+      "reference_license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+      "production_change_allowed": false
+    },
+    {
+      "review_label": "MED02_Pantelleria",
+      "screenshot": "mediterranean",
+      "hypothesis": "Pantelleria",
+      "screenshot_pixel_coordinate": null,
+      "map_local_xy": [
+        1854.0,
+        2860.0
+      ],
+      "source_map_xy": [
+        8930.0,
+        3002.0
+      ],
+      "approx_longitude": 1.0135,
+      "approx_latitude": 25.6581,
+      "nearest_named_geographic_feature": "Pantelleria",
+      "nearest_cities": [
+        {
+          "name": "Pantelleria",
+          "dist_px": 3.6,
+          "source_province_id": 4693,
+          "x": 8928.0,
+          "y": 2999.0
+        },
+        {
+          "name": "Kelibia",
+          "dist_px": 54.2,
+          "source_province_id": 6927,
+          "x": 8883.0,
+          "y": 2975.0
+        },
+        {
+          "name": "Hammamet",
+          "dist_px": 67.0,
+          "source_province_id": 2243,
+          "x": 8863.0,
+          "y": 3003.0
+        },
+        {
+          "name": "Marsala",
+          "dist_px": 71.5,
+          "source_province_id": 2196,
+          "x": 8955.0,
+          "y": 2935.0
+        }
+      ],
+      "gates_province_ids_touching_or_surrounding": [
+        {
+          "gates_id": "e3_0118",
+          "source_id": 118,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_0119",
+          "source_id": 119,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_0122",
+          "source_id": 122,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_0270",
+          "source_id": 270,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1362",
+          "source_id": 2196,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1402",
+          "source_id": 2236,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1403",
+          "source_id": 2237,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1405",
+          "source_id": 2239,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1407",
+          "source_id": 2241,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1408",
+          "source_id": 2242,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1409",
+          "source_id": 2243,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1410",
+          "source_id": 2244,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1452",
+          "source_id": 2287,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1454",
+          "source_id": 2289,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1977",
+          "source_id": 4692,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1978",
+          "source_id": 4693,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2446",
+          "source_id": 6927,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2530",
+          "source_id": 7299,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2680",
+          "source_id": 7459,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2681",
+          "source_id": 7460,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2682",
+          "source_id": 7461,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2684",
+          "source_id": 7463,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3284",
+          "source_id": 12078,
+          "is_water": true
+        },
+        {
+          "gates_id": "e3_3303",
+          "source_id": 12097,
+          "is_water": true
+        }
+      ],
+      "touching_detail": [
+        {
+          "gates_id": "e3_1978",
+          "source_id": 4693,
+          "is_water": false,
+          "area": 506.0,
+          "triangle_count": 2,
+          "vertex_count": 4,
+          "neighbors": [
+            "e3_3303"
+          ]
+        },
+        {
+          "gates_id": "e3_3303",
+          "source_id": 12097,
+          "is_water": true,
+          "area": 10677.0,
+          "triangle_count": 131,
+          "vertex_count": 170,
+          "neighbors": [
+            "e3_1402",
+            "e3_1405",
+            "e3_1409",
+            "e3_1977",
+            "e3_1978",
+            "e3_2446",
+            "e3_3284",
+            "e3_3304",
+            "e3_3305",
+            "e3_3313"
+          ]
+        }
+      ],
+      "source_is_water_values": [
+        false,
+        true
+      ],
+      "rendered_classification": "land_province_fill_present",
+      "polygon_or_ring_type": "province_polygon",
+      "gap_fill_id": null,
+      "gap_fill": null,
+      "archive_kolguyev_source_id": null,
+      "archive_kolguyev_in_production": null,
+      "recommended_action": "CONFIRMED_REAL_ISLAND_SIMPLIFIED_GEOMETRY_KEEP",
+      "confidence": "high",
+      "evidence": "Production land e3_1978 source_id=4693 area=506.0 ring_verts=4 triangles=2. City anchor supports Pantelleria. Rectangular/low-vert rings are simplified real islands \u2014 KEEP IDs; coastline work is #121.",
+      "renderer_defect": null,
+      "geographic_reference": {
+        "name": "Natural Earth 110m/50m cultural+physical (conceptual comparison) + AoH3 Earth3 city labels",
+        "license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+        "note": "No Google Maps tiles committed. Coordinates cross-checked via archive city anchors and known hydrography."
+      },
+      "reference_license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+      "production_change_allowed": false
+    },
+    {
+      "review_label": "MED03_Malta",
+      "screenshot": "mediterranean",
+      "hypothesis": "Malta / Valletta",
+      "screenshot_pixel_coordinate": null,
+      "map_local_xy": [
+        1970.0,
+        2912.0
+      ],
+      "source_map_xy": [
+        9046.0,
+        3054.0
+      ],
+      "approx_longitude": 3.3649,
+      "approx_latitude": 24.6302,
+      "nearest_named_geographic_feature": "Valletta",
+      "nearest_cities": [
+        {
+          "name": "Valletta",
+          "dist_px": 4.1,
+          "source_province_id": 270,
+          "x": 9050.0,
+          "y": 3053.0
+        },
+        {
+          "name": "Ragusa",
+          "dist_px": 65.7,
+          "source_province_id": 117,
+          "x": 9061.0,
+          "y": 2990.0
+        },
+        {
+          "name": "Gela",
+          "dist_px": 75.3,
+          "source_province_id": 2287,
+          "x": 9039.0,
+          "y": 2979.0
+        },
+        {
+          "name": "Syracuse",
+          "dist_px": 81.5,
+          "source_province_id": 116,
+          "x": 9086.0,
+          "y": 2983.0
+        }
+      ],
+      "gates_province_ids_touching_or_surrounding": [
+        {
+          "gates_id": "e3_0116",
+          "source_id": 116,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_0117",
+          "source_id": 117,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_0118",
+          "source_id": 118,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_0120",
+          "source_id": 120,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_0270",
+          "source_id": 270,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1452",
+          "source_id": 2287,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1453",
+          "source_id": 2288,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1454",
+          "source_id": 2289,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1978",
+          "source_id": 4693,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_3305",
+          "source_id": 12099,
+          "is_water": true
+        },
+        {
+          "gates_id": "e3_3310",
+          "source_id": 12104,
+          "is_water": true
+        },
+        {
+          "gates_id": "e3_3313",
+          "source_id": 12107,
+          "is_water": true
+        },
+        {
+          "gates_id": "e3_3346",
+          "source_id": 12140,
+          "is_water": false
+        }
+      ],
+      "touching_detail": [
+        {
+          "gates_id": "e3_0270",
+          "source_id": 270,
+          "is_water": false,
+          "area": 1287.0,
+          "triangle_count": 2,
+          "vertex_count": 4,
+          "neighbors": [
+            "e3_3313"
+          ]
+        },
+        {
+          "gates_id": "e3_3313",
+          "source_id": 12107,
+          "is_water": true,
+          "area": 18760.0,
+          "triangle_count": 13,
+          "vertex_count": 15,
+          "neighbors": [
+            "e3_0270",
+            "e3_3303",
+            "e3_3304",
+            "e3_3305",
+            "e3_3308",
+            "e3_3310",
+            "e3_3316"
+          ]
+        }
+      ],
+      "source_is_water_values": [
+        false,
+        true
+      ],
+      "rendered_classification": "land_province_fill_present",
+      "polygon_or_ring_type": "province_polygon",
+      "gap_fill_id": null,
+      "gap_fill": null,
+      "archive_kolguyev_source_id": null,
+      "archive_kolguyev_in_production": null,
+      "recommended_action": "CONFIRMED_REAL_ISLAND_SIMPLIFIED_GEOMETRY_KEEP",
+      "confidence": "high",
+      "evidence": "Production land e3_0270 source_id=270 area=1287.0 ring_verts=4 triangles=2. City anchor supports Malta / Valletta. Rectangular/low-vert rings are simplified real islands \u2014 KEEP IDs; coastline work is #121.",
+      "renderer_defect": null,
+      "geographic_reference": {
+        "name": "Natural Earth 110m/50m cultural+physical (conceptual comparison) + AoH3 Earth3 city labels",
+        "license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+        "note": "No Google Maps tiles committed. Coordinates cross-checked via archive city anchors and known hydrography."
+      },
+      "reference_license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+      "production_change_allowed": false
+    },
+    {
+      "review_label": "MED04_Lemnos",
+      "screenshot": "mediterranean",
+      "hypothesis": "Lemnos / Myrina",
+      "screenshot_pixel_coordinate": null,
+      "map_local_xy": [
+        2492.0,
+        2678.0
+      ],
+      "source_map_xy": [
+        9568.0,
+        2820.0
+      ],
+      "approx_longitude": 13.9459,
+      "approx_latitude": 29.2558,
+      "nearest_named_geographic_feature": "Myrina",
+      "nearest_cities": [
+        {
+          "name": "Myrina",
+          "dist_px": 12.2,
+          "source_province_id": 3220,
+          "x": 9570.0,
+          "y": 2808.0
+        },
+        {
+          "name": "Samothrace",
+          "dist_px": 53.7,
+          "source_province_id": 1154,
+          "x": 9590.0,
+          "y": 2771.0
+        },
+        {
+          "name": "Eresos",
+          "dist_px": 58.2,
+          "source_province_id": 3216,
+          "x": 9616.0,
+          "y": 2853.0
+        },
+        {
+          "name": "Ayvacik",
+          "dist_px": 65.2,
+          "source_province_id": 2221,
+          "x": 9633.0,
+          "y": 2825.0
+        }
+      ],
+      "gates_province_ids_touching_or_surrounding": [
+        {
+          "gates_id": "e3_1062",
+          "source_id": 1085,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1094",
+          "source_id": 1118,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1095",
+          "source_id": 1119,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1101",
+          "source_id": 1125,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1130",
+          "source_id": 1154,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1131",
+          "source_id": 1155,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1243",
+          "source_id": 1341,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1368",
+          "source_id": 2202,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1369",
+          "source_id": 2203,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1370",
+          "source_id": 2204,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1372",
+          "source_id": 2206,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1378",
+          "source_id": 2212,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1381",
+          "source_id": 2215,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1382",
+          "source_id": 2216,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1384",
+          "source_id": 2218,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1387",
+          "source_id": 2221,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1390",
+          "source_id": 2224,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1391",
+          "source_id": 2225,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1392",
+          "source_id": 2226,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1429",
+          "source_id": 2264,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1669",
+          "source_id": 3151,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1670",
+          "source_id": 3152,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1715",
+          "source_id": 3197,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1716",
+          "source_id": 3198,
+          "is_water": false
+        }
+      ],
+      "touching_detail": [
+        {
+          "gates_id": "e3_1738",
+          "source_id": 3220,
+          "is_water": false,
+          "area": 465.0,
+          "triangle_count": 11,
+          "vertex_count": 28,
+          "neighbors": [
+            "e3_3336",
+            "e3_3434",
+            "e3_3435"
+          ]
+        },
+        {
+          "gates_id": "e3_3434",
+          "source_id": 12513,
+          "is_water": true,
+          "area": 3571.5,
+          "triangle_count": 109,
+          "vertex_count": 139,
+          "neighbors": [
+            "e3_1062",
+            "e3_1372",
+            "e3_1387",
+            "e3_1738",
+            "e3_3334",
+            "e3_3335",
+            "e3_3336",
+            "e3_3337",
+            "e3_3435"
+          ]
+        }
+      ],
+      "source_is_water_values": [
+        false,
+        true
+      ],
+      "rendered_classification": "land_province_fill_present",
+      "polygon_or_ring_type": "province_polygon",
+      "gap_fill_id": null,
+      "gap_fill": null,
+      "archive_kolguyev_source_id": null,
+      "archive_kolguyev_in_production": null,
+      "recommended_action": "CONFIRMED_REAL_ISLAND_SIMPLIFIED_GEOMETRY_KEEP",
+      "confidence": "high",
+      "evidence": "Production land e3_1738 source_id=3220 area=465.0 ring_verts=28 triangles=11. City anchor supports Lemnos / Myrina. Rectangular/low-vert rings are simplified real islands \u2014 KEEP IDs; coastline work is #121.",
+      "renderer_defect": null,
+      "geographic_reference": {
+        "name": "Natural Earth 110m/50m cultural+physical (conceptual comparison) + AoH3 Earth3 city labels",
+        "license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+        "note": "No Google Maps tiles committed. Coordinates cross-checked via archive city anchors and known hydrography."
+      },
+      "reference_license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+      "production_change_allowed": false
+    },
+    {
+      "review_label": "NA01_Chott_or_basin",
+      "screenshot": "mediterranean",
+      "hypothesis": "North African chott / salt basin (Chott el Jerid region)",
+      "screenshot_pixel_coordinate": null,
+      "map_local_xy": [
+        1686.0,
+        3032.0
+      ],
+      "source_map_xy": [
+        8762.0,
+        3174.0
+      ],
+      "approx_longitude": -2.3919,
+      "approx_latitude": 22.2581,
+      "nearest_named_geographic_feature": "Tozeur",
+      "nearest_cities": [
+        {
+          "name": "Tozeur",
+          "dist_px": 23.7,
+          "source_province_id": 1408,
+          "x": 8741.0,
+          "y": 3163.0
+        },
+        {
+          "name": "Douz",
+          "dist_px": 29.2,
+          "source_province_id": 4774,
+          "x": 8785.0,
+          "y": 3192.0
+        },
+        {
+          "name": "Rjim Maatoug",
+          "dist_px": 38.2,
+          "source_province_id": 1404,
+          "x": 8735.0,
+          "y": 3201.0
+        },
+        {
+          "name": "Gafsa",
+          "dist_px": 44.4,
+          "source_province_id": 4775,
+          "x": 8773.0,
+          "y": 3131.0
+        }
+      ],
+      "gates_province_ids_touching_or_surrounding": [
+        {
+          "gates_id": "e3_1286",
+          "source_id": 1398,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1290",
+          "source_id": 1402,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1291",
+          "source_id": 1403,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1292",
+          "source_id": 1404,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1294",
+          "source_id": 1406,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1296",
+          "source_id": 1408,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1303",
+          "source_id": 1415,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1305",
+          "source_id": 1417,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1401",
+          "source_id": 2235,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1402",
+          "source_id": 2236,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1405",
+          "source_id": 2239,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1407",
+          "source_id": 2241,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1516",
+          "source_id": 2734,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1557",
+          "source_id": 3015,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1980",
+          "source_id": 4732,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1981",
+          "source_id": 4733,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1986",
+          "source_id": 4772,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1987",
+          "source_id": 4773,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1988",
+          "source_id": 4774,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_1989",
+          "source_id": 4775,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2012",
+          "source_id": 4846,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2309",
+          "source_id": 6667,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2535",
+          "source_id": 7304,
+          "is_water": false
+        },
+        {
+          "gates_id": "e3_2680",
+          "source_id": 7459,
+          "is_water": false
+        }
+      ],
+      "touching_detail": [
+        {
+          "gates_id": "e3_1291",
+          "source_id": 1403,
+          "is_water": false,
+          "area": 737.0,
+          "triangle_count": 60,
+          "vertex_count": 62,
+          "neighbors": [
+            "e3_1294",
+            "e3_1296",
+            "e3_1401",
+            "e3_1989"
+          ]
+        },
+        {
+          "gates_id": "e3_1292",
+          "source_id": 1404,
+          "is_water": false,
+          "area": 1724.5,
+          "triangle_count": 110,
+          "vertex_count": 112,
+          "neighbors": [
+            "e3_1290",
+            "e3_1296",
+            "e3_1516",
+            "e3_1557",
+            "e3_1988",
+            "e3_2012"
+          ]
+        },
+        {
+          "gates_id": "e3_1296",
+          "source_id": 1408,
+          "is_water": false,
+          "area": 1161.0,
+          "triangle_count": 83,
+          "vertex_count": 85,
+          "neighbors": [
+            "e3_1290",
+            "e3_1291",
+            "e3_1292",
+            "e3_1989"
+          ]
+        },
+        {
+          "gates_id": "e3_1988",
+          "source_id": 4774,
+          "is_water": false,
+          "area": 1531.5,
+          "triangle_count": 129,
+          "vertex_count": 130,
+          "neighbors": [
+            "e3_1292",
+            "e3_1294",
+            "e3_1557"
+          ]
+        }
+      ],
+      "source_is_water_values": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "rendered_classification": "water_presentation_gap_fill",
+      "polygon_or_ring_type": "gap_fill_interior_hole",
+      "gap_fill_id": "gap_0008",
+      "gap_fill": {
+        "id": "gap_0008",
+        "area": 1629.0,
+        "centroid": [
+          1686.4939,
+          3032.4161
+        ],
+        "classification": "water_presentation_gap",
+        "region_hint": "inland_lake_or_lagoon"
+      },
+      "archive_kolguyev_source_id": null,
+      "archive_kolguyev_in_production": null,
+      "recommended_action": "CONFIRMED_REAL_SALT_BASIN_KEEP_OR_DEFER",
+      "confidence": "high",
+      "evidence": "gap_0008 area=1629 near Tozeur/Gafsa/Gabes \u2014 consistent with Chott el Jerid / Tunisian salt-basin complex. Keep as water presentation; terrain styling deferred to PR B / visual hierarchy.",
+      "renderer_defect": null,
+      "geographic_reference": {
+        "name": "Natural Earth 110m/50m cultural+physical (conceptual comparison) + AoH3 Earth3 city labels",
+        "license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+        "note": "No Google Maps tiles committed. Coordinates cross-checked via archive city anchors and known hydrography."
+      },
+      "reference_license": "Natural Earth: public domain. AoH3 archive: local analysis only, not redistributed.",
+      "production_change_allowed": false
+    }
+  ],
+  "summary": {
+    "CONFIRMED_REAL_WATER_KEEP": [
+      "NE02_Ladoga",
+      "NE03_Onega",
+      "NE05_Rybinsk",
+      "NE06_Volga_mid_reservoir",
+      "NE07_Cheboksary_system",
+      "NE08_Kuybyshev_Samara_arm"
+    ],
+    "CONFIRMED_REAL_ISLAND_RESTORE_FILL": [],
+    "CONFIRMED_REAL_ISLAND_SIMPLIFIED_GEOMETRY_KEEP": [
+      "MED01_Ibiza",
+      "MED02_Pantelleria",
+      "MED03_Malta",
+      "MED04_Lemnos"
+    ],
+    "CONFIRMED_REAL_SALT_BASIN_KEEP_OR_DEFER": [
+      "NA01_Chott_or_basin"
+    ],
+    "CONFIRMED_MISSING_LAND_RESTORE": [
+      "NE01_Kolguyev"
+    ],
+    "CONFIRMED_RENDERER_HOLE_FIX": [],
+    "UNRESOLVED_REQUIRES_OWNER_RULING": [
+      "NE04_WhiteSea_SE_large_hole"
+    ]
+  },
+  "renderer_notes": [
+    "Water provinces and ocean_gap_fills render as continuous ocean (no land fill) under v1 water policy.",
+    "Interior lakes that are gap_fills are intentional water presentation, not missing land meshes.",
+    "All production land provinces have non-empty triangle meshes (empty land mesh count = 0).",
+    "Kolguyev archive land source 11836 is outside the current included crop set.",
+    "Simplified rectangular islands retain land fills; coastline quality is #121."
+  ]
+}
