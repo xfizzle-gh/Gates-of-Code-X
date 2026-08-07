@@ -1,0 +1,33 @@
+{
+  "summary": {
+    "gates_id": "e3_3512",
+    "source_id": 11836,
+    "province_count": 3511,
+    "land_count": 3296,
+    "water_count": 215,
+    "included_ids_sha256": "45f7d226e7bb87747192af8f0b67b454bfefb635410984c583ac97b54809837e",
+    "dataset_sha256": "81c8e2a6de89d56117ae9a810edc62b3d9a8ebb52c2aef2d0ff0d038e276b005"
+  },
+  "checks": {
+    "empty_land_meshes": true,
+    "dangling_neighbors": true,
+    "source_11836_once": true,
+    "new_id_once": true,
+    "gaps_unused": true,
+    "stable_retained_mappings": true,
+    "no_invented_land_adjacency": true,
+    "production_still_3510": true,
+    "tri_ok": true
+  },
+  "adjacency": {
+    "gates_id": "e3_3512",
+    "source_id": 11836,
+    "direct_land_neighbors": [],
+    "surrounding_source_water_ids": [],
+    "border_segments": "island outer ring only",
+    "proposed_future_sea_link_nodes": [
+      "author ferry/naval links separately"
+    ],
+    "confirmation_no_mainland_land_adjacency_invented": true
+  }
+}

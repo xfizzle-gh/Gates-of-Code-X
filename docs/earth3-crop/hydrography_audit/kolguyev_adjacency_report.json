@@ -1,0 +1,11 @@
+{
+  "gates_id": "e3_3512",
+  "source_id": 11836,
+  "direct_land_neighbors": [],
+  "surrounding_source_water_ids": [],
+  "border_segments": "island outer ring only",
+  "proposed_future_sea_link_nodes": [
+    "author ferry/naval links separately"
+  ],
+  "confirmation_no_mainland_land_adjacency_invented": true
+}

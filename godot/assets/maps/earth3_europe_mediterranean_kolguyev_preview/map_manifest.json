@@ -5,7 +5,7 @@
   "asset_status": "preview_only_not_production",
   "polygon_dataset": {
     "path": "polygon_dataset.json",
-    "sha256": "a8c492665445d9f3d6557b29b5a857e615cbfb4723a04ea7061895cb11ee6502",
+    "sha256": "81c8e2a6de89d56117ae9a810edc62b3d9a8ebb52c2aef2d0ff0d038e276b005",
     "province_count": 3511
   },
   "province_count": 3511,
@@ -25,5 +25,6 @@
       3583.0
     ]
   },
-  "fallback_map_id": "earth3_europe_mediterranean"
+  "fallback_map_id": "earth3_europe_mediterranean",
+  "water_policy": "water_not_normally_selectable"
 }

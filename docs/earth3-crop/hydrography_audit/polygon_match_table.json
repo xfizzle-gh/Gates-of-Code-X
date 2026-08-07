@@ -1,0 +1,899 @@
+[
+  {
+    "review_label": "NE01_Kolguyev",
+    "wgs84": [
+      61.305,
+      65.9111
+    ],
+    "matches": [
+      {
+        "name": "Kama Reservoir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 859.13,
+        "hausdorff_deg": 9.76289,
+        "area_ratio_e3_over_ref": 17.2154,
+        "score": -1.7183
+      },
+      {
+        "name": "Votkinsk Reservoir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1046.81,
+        "hausdorff_deg": 12.09896,
+        "area_ratio_e3_over_ref": 33.5692,
+        "score": -2.0936
+      },
+      {
+        "name": "Serebryanskoe Reservoir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1134.99,
+        "hausdorff_deg": 27.76952,
+        "area_ratio_e3_over_ref": 63.502,
+        "score": -2.27
+      },
+      {
+        "name": "Umbozero Lake",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1179.38,
+        "hausdorff_deg": 28.82877,
+        "area_ratio_e3_over_ref": 88.2871,
+        "score": -2.3588
+      },
+      {
+        "name": "(unnamed)",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1224.88,
+        "hausdorff_deg": 24.9448,
+        "area_ratio_e3_over_ref": 104.7638,
+        "score": -2.4498
+      },
+      {
+        "name": "Nizhnekamsk Reservoir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1227.82,
+        "hausdorff_deg": 14.61076,
+        "area_ratio_e3_over_ref": 40.6163,
+        "score": -2.4556
+      }
+    ]
+  },
+  {
+    "review_label": "NE02_Ladoga",
+    "wgs84": [
+      31.3531,
+      60.8769
+    ],
+    "matches": [
+      {
+        "name": "Lake Ladoga",
+        "iou": 0.7674,
+        "earth3_coverage_by_ref": 0.7974,
+        "ref_coverage_by_earth3": 0.9533,
+        "centroid_separation_km": 10.09,
+        "hausdorff_deg": 0.42196,
+        "area_ratio_e3_over_ref": 1.1955,
+        "score": 3.2653
+      },
+      {
+        "name": "(unnamed)",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 128.76,
+        "hausdorff_deg": 2.85012,
+        "area_ratio_e3_over_ref": 59.0143,
+        "score": -0.2575
+      },
+      {
+        "name": "Lake Saimaa",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 197.11,
+        "hausdorff_deg": 3.73032,
+        "area_ratio_e3_over_ref": 2.184,
+        "score": -0.3942
+      },
+      {
+        "name": "Rikkavesi",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 232.18,
+        "hausdorff_deg": 3.61457,
+        "area_ratio_e3_over_ref": 56.4075,
+        "score": -0.4644
+      },
+      {
+        "name": "Lake Onega",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 239.95,
+        "hausdorff_deg": 4.38029,
+        "area_ratio_e3_over_ref": 2.0474,
+        "score": -0.4799
+      },
+      {
+        "name": "(unnamed)",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 249.45,
+        "hausdorff_deg": 5.88347,
+        "area_ratio_e3_over_ref": 63.3243,
+        "score": -0.4989
+      }
+    ]
+  },
+  {
+    "review_label": "NE03_Onega",
+    "wgs84": [
+      35.4445,
+      61.8718
+    ],
+    "matches": [
+      {
+        "name": "Lake Onega",
+        "iou": 0.4891,
+        "earth3_coverage_by_ref": 0.5327,
+        "ref_coverage_by_earth3": 0.8567,
+        "centroid_separation_km": 21.95,
+        "hausdorff_deg": 0.6758,
+        "area_ratio_e3_over_ref": 1.6081,
+        "score": 2.3237
+      },
+      {
+        "name": "(unnamed)",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 95.95,
+        "hausdorff_deg": 2.82995,
+        "area_ratio_e3_over_ref": 49.0035,
+        "score": -0.1919
+      },
+      {
+        "name": "Lake Segozerskoye",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 168.96,
+        "hausdorff_deg": 2.83347,
+        "area_ratio_e3_over_ref": 17.7391,
+        "score": -0.3379
+      },
+      {
+        "name": "Lake Vygozero",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 176.22,
+        "hausdorff_deg": 2.14099,
+        "area_ratio_e3_over_ref": 11.1112,
+        "score": -0.3524
+      },
+      {
+        "name": "(unnamed)",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 200.71,
+        "hausdorff_deg": 4.85732,
+        "area_ratio_e3_over_ref": 50.4004,
+        "score": -0.4014
+      },
+      {
+        "name": "Lake Ladoga",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 236.07,
+        "hausdorff_deg": 4.32055,
+        "area_ratio_e3_over_ref": 0.939,
+        "score": -0.4721
+      }
+    ]
+  },
+  {
+    "review_label": "NE04_WhiteSea_SE_large_hole",
+    "wgs84": [
+      48.1973,
+      65.2129
+    ],
+    "matches": [
+      {
+        "name": "(unnamed)",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 636.69,
+        "hausdorff_deg": 11.92663,
+        "area_ratio_e3_over_ref": 113.8885,
+        "score": -1.2734
+      },
+      {
+        "name": "(unnamed)",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 637.31,
+        "hausdorff_deg": 13.51548,
+        "area_ratio_e3_over_ref": 110.732,
+        "score": -1.2746
+      },
+      {
+        "name": "Umbozero Lake",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 666.95,
+        "hausdorff_deg": 15.88175,
+        "area_ratio_e3_over_ref": 95.9767,
+        "score": -1.3339
+      },
+      {
+        "name": "Lake Vygozero",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 668.1,
+        "hausdorff_deg": 14.91438,
+        "area_ratio_e3_over_ref": 25.1078,
+        "score": -1.3362
+      },
+      {
+        "name": "Serebryanskoe Reservoir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 668.27,
+        "hausdorff_deg": 14.99387,
+        "area_ratio_e3_over_ref": 69.0329,
+        "score": -1.3365
+      },
+      {
+        "name": "Engozero",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 674.98,
+        "hausdorff_deg": 16.36819,
+        "area_ratio_e3_over_ref": 74.5835,
+        "score": -1.35
+      }
+    ]
+  },
+  {
+    "review_label": "NE05_Rybinsk",
+    "wgs84": [
+      38.0981,
+      58.5294
+    ],
+    "matches": [
+      {
+        "name": "Rybinsk Reservoir",
+        "iou": 0.4874,
+        "earth3_coverage_by_ref": 0.508,
+        "ref_coverage_by_earth3": 0.9229,
+        "centroid_separation_km": 13.58,
+        "hausdorff_deg": 0.40467,
+        "area_ratio_e3_over_ref": 1.8166,
+        "score": 2.3785
+      },
+      {
+        "name": "Ozero Kubenskoye",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 146.02,
+        "hausdorff_deg": 2.32059,
+        "area_ratio_e3_over_ref": 19.1636,
+        "score": -0.292
+      },
+      {
+        "name": "Lake Beloye",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 179.73,
+        "hausdorff_deg": 2.17056,
+        "area_ratio_e3_over_ref": 8.2225,
+        "score": -0.3595
+      },
+      {
+        "name": "Kostroma Reservoir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 185.31,
+        "hausdorff_deg": 3.25319,
+        "area_ratio_e3_over_ref": 15.0685,
+        "score": -0.3706
+      },
+      {
+        "name": "Ivankovo Reservoir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 225.64,
+        "hausdorff_deg": 2.47843,
+        "area_ratio_e3_over_ref": 26.2538,
+        "score": -0.4513
+      },
+      {
+        "name": "(unnamed)",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 233.3,
+        "hausdorff_deg": 2.58406,
+        "area_ratio_e3_over_ref": 18.8651,
+        "score": -0.4666
+      }
+    ]
+  },
+  {
+    "review_label": "NE06_Lake_Galichskoye",
+    "wgs84": [
+      43.0087,
+      58.4364
+    ],
+    "matches": [
+      {
+        "name": "Gorky Reservoir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 145.55,
+        "hausdorff_deg": 1.43008,
+        "area_ratio_e3_over_ref": 12.8091,
+        "score": -0.2911
+      },
+      {
+        "name": "Kostroma Reservoir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 156.49,
+        "hausdorff_deg": 3.32231,
+        "area_ratio_e3_over_ref": 26.3247,
+        "score": -0.313
+      },
+      {
+        "name": "Ozero Kubenskoye",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 243.09,
+        "hausdorff_deg": 4.77354,
+        "area_ratio_e3_over_ref": 33.4787,
+        "score": -0.4862
+      },
+      {
+        "name": "Rybinsk Reservoir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 281.2,
+        "hausdorff_deg": 5.41315,
+        "area_ratio_e3_over_ref": 3.1737,
+        "score": -0.5624
+      },
+      {
+        "name": "Cheboksary Reservoir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 318.62,
+        "hausdorff_deg": 4.23074,
+        "area_ratio_e3_over_ref": 13.0368,
+        "score": -0.6372
+      },
+      {
+        "name": "(unnamed)",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 328.59,
+        "hausdorff_deg": 5.62818,
+        "area_ratio_e3_over_ref": 32.9573,
+        "score": -0.6572
+      }
+    ]
+  },
+  {
+    "review_label": "NE07_east_volga_candidate",
+    "wgs84": [
+      47.4908,
+      57.5239
+    ],
+    "matches": [
+      {
+        "name": "Cheboksary Reservoir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 160.88,
+        "hausdorff_deg": 2.17018,
+        "area_ratio_e3_over_ref": 11.685,
+        "score": -0.3218
+      },
+      {
+        "name": "Gorky Reservoir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 264.5,
+        "hausdorff_deg": 5.0681,
+        "area_ratio_e3_over_ref": 11.4809,
+        "score": -0.529
+      },
+      {
+        "name": "Samara Reservoir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 343.62,
+        "hausdorff_deg": 4.16253,
+        "area_ratio_e3_over_ref": 2.6387,
+        "score": -0.6872
+      },
+      {
+        "name": "Nizhnekamsk Reservoir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 377.07,
+        "hausdorff_deg": 6.05386,
+        "area_ratio_e3_over_ref": 15.2027,
+        "score": -0.7541
+      },
+      {
+        "name": "Kostroma Reservoir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 405.33,
+        "hausdorff_deg": 7.43656,
+        "area_ratio_e3_over_ref": 23.5949,
+        "score": -0.8107
+      },
+      {
+        "name": "Votkinsk Reservoir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 443.78,
+        "hausdorff_deg": 7.65642,
+        "area_ratio_e3_over_ref": 12.565,
+        "score": -0.8876
+      }
+    ]
+  },
+  {
+    "review_label": "NE08_kama_volga_candidate",
+    "wgs84": [
+      53.4814,
+      55.3128
+    ],
+    "matches": [
+      {
+        "name": "Nizhnekamsk Reservoir",
+        "iou": 0.0416,
+        "earth3_coverage_by_ref": 0.0416,
+        "ref_coverage_by_earth3": 1.0,
+        "centroid_separation_km": 70.24,
+        "hausdorff_deg": 1.62089,
+        "area_ratio_e3_over_ref": 24.0165,
+        "score": 0.9844
+      },
+      {
+        "name": "Votkinsk Reservoir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 232.26,
+        "hausdorff_deg": 2.5245,
+        "area_ratio_e3_over_ref": 19.8496,
+        "score": -0.4645
+      },
+      {
+        "name": "Samara Reservoir",
+        "iou": 0.0004,
+        "earth3_coverage_by_ref": 0.0005,
+        "ref_coverage_by_earth3": 0.0022,
+        "centroid_separation_km": 268.28,
+        "hausdorff_deg": 3.89453,
+        "area_ratio_e3_over_ref": 4.1685,
+        "score": -0.533
+      },
+      {
+        "name": "Kama Reservoir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 423.22,
+        "hausdorff_deg": 4.74645,
+        "area_ratio_e3_over_ref": 10.1795,
+        "score": -0.8464
+      },
+      {
+        "name": "Cheboksary Reservoir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 452.11,
+        "hausdorff_deg": 7.59052,
+        "area_ratio_e3_over_ref": 18.4594,
+        "score": -0.9042
+      },
+      {
+        "name": "Saratov Reservoir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 453.46,
+        "hausdorff_deg": 6.62986,
+        "area_ratio_e3_over_ref": 21.1049,
+        "score": -0.9069
+      }
+    ]
+  },
+  {
+    "review_label": "MED01_Ibiza",
+    "wgs84": [
+      1.4528,
+      38.7957
+    ],
+    "matches": [
+      {
+        "name": "Lake Geneva",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 944.39,
+        "hausdorff_deg": 9.1397,
+        "area_ratio_e3_over_ref": 5.3377,
+        "score": -1.8888
+      },
+      {
+        "name": "Bodensee",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1172.38,
+        "hausdorff_deg": 12.15242,
+        "area_ratio_e3_over_ref": 5.6308,
+        "score": -2.3448
+      },
+      {
+        "name": "IJsselmeer",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1572.2,
+        "hausdorff_deg": 14.47673,
+        "area_ratio_e3_over_ref": 1.1268,
+        "score": -3.1444
+      },
+      {
+        "name": "Lake Balaton",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1599.69,
+        "hausdorff_deg": 18.26083,
+        "area_ratio_e3_over_ref": 4.5106,
+        "score": -3.1994
+      },
+      {
+        "name": "Lough Neagh",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1855.29,
+        "hausdorff_deg": 17.8969,
+        "area_ratio_e3_over_ref": 5.7421,
+        "score": -3.7106
+      },
+      {
+        "name": "Kaliningradskiy Zaliv",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 2244.61,
+        "hausdorff_deg": 24.5468,
+        "area_ratio_e3_over_ref": 5.6063,
+        "score": -4.4892
+      }
+    ]
+  },
+  {
+    "review_label": "MED02_Pantelleria",
+    "wgs84": [
+      12.0052,
+      36.6927
+    ],
+    "matches": [
+      {
+        "name": "Lake Geneva",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1173.75,
+        "hausdorff_deg": 11.2441,
+        "area_ratio_e3_over_ref": 3.0313,
+        "score": -2.3475
+      },
+      {
+        "name": "Lake Balaton",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1227.43,
+        "hausdorff_deg": 11.74452,
+        "area_ratio_e3_over_ref": 2.5616,
+        "score": -2.4549
+      },
+      {
+        "name": "Bodensee",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1232.61,
+        "hausdorff_deg": 11.29272,
+        "area_ratio_e3_over_ref": 3.1977,
+        "score": -2.4652
+      },
+      {
+        "name": "Bey\u015fehir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1727.61,
+        "hausdorff_deg": 19.59124,
+        "area_ratio_e3_over_ref": 2.5742,
+        "score": -3.4552
+      },
+      {
+        "name": "IJsselmeer",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1851.91,
+        "hausdorff_deg": 17.41701,
+        "area_ratio_e3_over_ref": 0.6399,
+        "score": -3.7038
+      },
+      {
+        "name": "Lake Tuz",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1891.76,
+        "hausdorff_deg": 21.58494,
+        "area_ratio_e3_over_ref": 1.0618,
+        "score": -3.7835
+      }
+    ]
+  },
+  {
+    "review_label": "MED03_Malta",
+    "wgs84": [
+      14.3764,
+      35.8266
+    ],
+    "matches": [
+      {
+        "name": "Lake Balaton",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1259.81,
+        "hausdorff_deg": 11.64423,
+        "area_ratio_e3_over_ref": 6.5153,
+        "score": -2.5196
+      },
+      {
+        "name": "Lake Geneva",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1348.06,
+        "hausdorff_deg": 13.40071,
+        "area_ratio_e3_over_ref": 7.71,
+        "score": -2.6961
+      },
+      {
+        "name": "Bodensee",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1372.88,
+        "hausdorff_deg": 12.97887,
+        "area_ratio_e3_over_ref": 8.1334,
+        "score": -2.7458
+      },
+      {
+        "name": "Bey\u015fehir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1538.49,
+        "hausdorff_deg": 17.50483,
+        "area_ratio_e3_over_ref": 6.5475,
+        "score": -3.077
+      },
+      {
+        "name": "Lake Tuz",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1711.47,
+        "hausdorff_deg": 19.42251,
+        "area_ratio_e3_over_ref": 2.7008,
+        "score": -3.4229
+      },
+      {
+        "name": "IJsselmeer",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 2003.46,
+        "hausdorff_deg": 19.09776,
+        "area_ratio_e3_over_ref": 1.6277,
+        "score": -4.0069
+      }
+    ]
+  },
+  {
+    "review_label": "MED04_Lemnos",
+    "wgs84": [
+      25.0689,
+      39.6806
+    ],
+    "matches": [
+      {
+        "name": "Bey\u015fehir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 595.59,
+        "hausdorff_deg": 6.72293,
+        "area_ratio_e3_over_ref": 2.5284,
+        "score": -1.1912
+      },
+      {
+        "name": "Lake Tuz",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 718.58,
+        "hausdorff_deg": 8.39193,
+        "area_ratio_e3_over_ref": 1.043,
+        "score": -1.4372
+      },
+      {
+        "name": "Lake Balaton",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 981.38,
+        "hausdorff_deg": 10.22764,
+        "area_ratio_e3_over_ref": 2.516,
+        "score": -1.9628
+      },
+      {
+        "name": "Syvash",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1016.41,
+        "hausdorff_deg": 11.28624,
+        "area_ratio_e3_over_ref": 0.6219,
+        "score": -2.0328
+      },
+      {
+        "name": "Kakhovka Reservoir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1125.61,
+        "hausdorff_deg": 12.41986,
+        "area_ratio_e3_over_ref": 0.6679,
+        "score": -2.2512
+      },
+      {
+        "name": "Ataturk Barajt",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1191.28,
+        "hausdorff_deg": 13.70269,
+        "area_ratio_e3_over_ref": 2.3729,
+        "score": -2.3826
+      }
+    ]
+  },
+  {
+    "review_label": "NA01_Chott_complex",
+    "wgs84": [
+      8.5898,
+      33.8551
+    ],
+    "matches": [
+      {
+        "name": "Lake Geneva",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1408.5,
+        "hausdorff_deg": 12.98103,
+        "area_ratio_e3_over_ref": 15.429,
+        "score": -2.817
+      },
+      {
+        "name": "Bodensee",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1528.91,
+        "hausdorff_deg": 14.04919,
+        "area_ratio_e3_over_ref": 16.2762,
+        "score": -3.0578
+      },
+      {
+        "name": "Lake Balaton",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 1632.73,
+        "hausdorff_deg": 15.98286,
+        "area_ratio_e3_over_ref": 13.0382,
+        "score": -3.2655
+      },
+      {
+        "name": "Bey\u015fehir",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 2093.32,
+        "hausdorff_deg": 23.89738,
+        "area_ratio_e3_over_ref": 13.1027,
+        "score": -4.1866
+      },
+      {
+        "name": "IJsselmeer",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 2108.42,
+        "hausdorff_deg": 19.18287,
+        "area_ratio_e3_over_ref": 3.2572,
+        "score": -4.2168
+      },
+      {
+        "name": "Lake Tuz",
+        "iou": 0.0,
+        "earth3_coverage_by_ref": 0.0,
+        "ref_coverage_by_earth3": 0.0,
+        "centroid_separation_km": 2269.01,
+        "hausdorff_deg": 25.82777,
+        "area_ratio_e3_over_ref": 5.4047,
+        "score": -4.538
+      }
+    ]
+  }
+]

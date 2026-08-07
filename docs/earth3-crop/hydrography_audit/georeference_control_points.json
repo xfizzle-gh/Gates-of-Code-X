@@ -78,6 +78,13 @@
       "wgs84_lat": 39.8747
     },
     {
+      "label": "Tozeur",
+      "source_x": 8741.0,
+      "source_y": 3163.0,
+      "wgs84_lon": 8.1336,
+      "wgs84_lat": 33.9197
+    },
+    {
       "label": "Warsaw",
       "source_x": 9369.0,
       "source_y": 1936.0,
@@ -90,13 +97,6 @@
       "source_y": 1264.0,
       "wgs84_lon": 30.3351,
       "wgs84_lat": 59.9343
-    },
-    {
-      "label": "Petrozavodsk",
-      "source_x": 10019.0,
-      "source_y": 1124.0,
-      "wgs84_lon": 34.3469,
-      "wgs84_lat": 61.7849
     },
     {
       "label": "Moscow",
@@ -134,27 +134,6 @@
       "wgs84_lat": 55.7431
     },
     {
-      "label": "Arkhangelsk",
-      "source_x": 10325.0,
-      "source_y": 892.0,
-      "wgs84_lon": 40.5433,
-      "wgs84_lat": 64.5399
-    },
-    {
-      "label": "Astrakhan",
-      "source_x": 10687.0,
-      "source_y": 2374.0,
-      "wgs84_lon": 48.0408,
-      "wgs84_lat": 46.3497
-    },
-    {
-      "label": "Tozeur",
-      "source_x": 8741.0,
-      "source_y": 3163.0,
-      "wgs84_lon": 8.1336,
-      "wgs84_lat": 33.9197
-    },
-    {
       "label": "Cheboksary",
       "source_x": 10648.0,
       "source_y": 1615.0,
@@ -176,11 +155,124 @@
       "wgs84_lat": 53.2
     },
     {
-      "label": "Kolguyev",
-      "source_x": 11331.284518828452,
-      "source_y": 768.7029288702929,
-      "wgs84_lon": 49.0,
-      "wgs84_lat": 69.1
+      "label": "Astrakhan",
+      "source_x": 10687.0,
+      "source_y": 2374.0,
+      "wgs84_lon": 48.0408,
+      "wgs84_lat": 46.3497
+    },
+    {
+      "label": "Vologda",
+      "source_x": 10288.0,
+      "source_y": 1330.0,
+      "wgs84_lon": 39.884,
+      "wgs84_lat": 59.2205
+    },
+    {
+      "label": "Murmansk",
+      "source_x": 9961.0,
+      "source_y": 474.0,
+      "wgs84_lon": 33.0827,
+      "wgs84_lat": 68.9585
+    },
+    {
+      "label": "Apatity",
+      "source_x": 9974.0,
+      "source_y": 615.0,
+      "wgs84_lon": 33.393,
+      "wgs84_lat": 67.5641
+    },
+    {
+      "label": "Kem",
+      "source_x": 10031.0,
+      "source_y": 857.0,
+      "wgs84_lon": 34.579,
+      "wgs84_lat": 64.9555
+    },
+    {
+      "label": "Onega_town",
+      "source_x": 10203.0,
+      "source_y": 946.0,
+      "wgs84_lon": 38.0867,
+      "wgs84_lat": 63.9041
+    },
+    {
+      "label": "Arkhangelsk",
+      "source_x": 10325.0,
+      "source_y": 892.0,
+      "wgs84_lon": 40.5433,
+      "wgs84_lat": 64.5399
+    },
+    {
+      "label": "Petrozavodsk",
+      "source_x": 10019.0,
+      "source_y": 1124.0,
+      "wgs84_lon": 34.3469,
+      "wgs84_lat": 61.7849
+    },
+    {
+      "label": "Medvezhyegorsk",
+      "source_x": 10022.0,
+      "source_y": 1031.0,
+      "wgs84_lon": 34.4566,
+      "wgs84_lat": 62.9153
+    },
+    {
+      "label": "Pudozh",
+      "source_x": 10126.0,
+      "source_y": 1118.0,
+      "wgs84_lon": 36.5283,
+      "wgs84_lat": 61.8092
+    },
+    {
+      "label": "Vytegra",
+      "source_x": 10123.0,
+      "source_y": 1180.0,
+      "wgs84_lon": 36.4481,
+      "wgs84_lat": 61.0064
+    },
+    {
+      "label": "Syktyvkar",
+      "source_x": 10820.0,
+      "source_y": 1135.0,
+      "wgs84_lon": 50.8366,
+      "wgs84_lat": 61.6688
+    },
+    {
+      "label": "Sortavala",
+      "source_x": 9840.0,
+      "source_y": 1126.0,
+      "wgs84_lon": 30.7042,
+      "wgs84_lat": 61.7055
+    },
+    {
+      "label": "Koynas",
+      "source_x": 10663.0,
+      "source_y": 876.0,
+      "wgs84_lon": 47.65,
+      "wgs84_lat": 64.75
+    },
+    {
+      "label": "Usinsk",
+      "source_x": 11149.0,
+      "source_y": 761.0,
+      "wgs84_lon": 57.557,
+      "wgs84_lat": 65.9939
+    },
+    {
+      "label": "Pechora",
+      "source_x": 11135.0,
+      "source_y": 838.0,
+      "wgs84_lon": 57.3094,
+      "wgs84_lat": 65.1472
+    },
+    {
+      "label": "Vorkuta",
+      "source_x": 11468.0,
+      "source_y": 623.0,
+      "wgs84_lon": 64.0661,
+      "wgs84_lat": 67.4978
     }
-  ]
+  ],
+  "kolguyev_is_control": false
 }
