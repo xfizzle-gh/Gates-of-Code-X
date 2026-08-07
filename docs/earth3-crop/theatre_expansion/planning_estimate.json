@@ -1,0 +1,46 @@
+{
+  "status": "preview_only_not_production",
+  "current": {
+    "provinces": 3514,
+    "land": 3299,
+    "water": 215,
+    "hash": "f3931d2e34558e451d02a7c49270b2071a79a628668c49228f5ff607a75315b8",
+    "gaps": [
+      "e3_2830",
+      "e3_2888"
+    ],
+    "max_id": "e3_3515"
+  },
+  "proposal_a": {
+    "title": "recommended_minimum",
+    "added_land": 247,
+    "added_water": 10,
+    "added_total": 257,
+    "new_provinces": 3771,
+    "new_land": 3546,
+    "new_water": 225,
+    "new_gates": "e3_3516..e3_3772",
+    "north_adds_source_ids": [
+      10969,
+      11367
+    ],
+    "north_note": "Few excluded Kola/Karelia scraps west of Pechora; most northern theatre already in 3514. Designer incomplete-north may also mean mask/jagged edge polish.",
+    "levant_turkey_adds_land": 245,
+    "levant_turkey_adds_water": 5,
+    "chunks_now": 13,
+    "chunks_after": 14
+  },
+  "proposal_b": {
+    "title": "broader_reference_not_recommended",
+    "added_land": 1267,
+    "added_water": 63,
+    "added_total": 1330,
+    "new_provinces": 4844,
+    "new_land": 4566,
+    "new_water": 278,
+    "new_gates": "e3_3516..e3_4845",
+    "chunks_after": 18
+  },
+  "stable_id_policy": "append only; retain 3514; never recycle e3_2830/e3_2888",
+  "method": "archive centroid georef/source-band planning estimate \u2014 not an authored mask"
+}
