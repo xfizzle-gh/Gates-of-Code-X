@@ -1,7 +1,7 @@
 {
   "schema": "gates-of-codex.opengs-provenance-inventory",
   "schema_version": 1,
-  "status": "gate0_candidate_inventory",
+  "status": "gate0_inventory_with_pinned_natural_earth",
   "reviewed_on": "2026-08-07",
   "legal_disclaimer": "This inventory records published source terms for engineering review and is not legal advice. Every exact downloaded artifact must be pinned and re-reviewed before repository distribution.",
   "generator": {
@@ -33,11 +33,18 @@
       "derivative_works": "allowed",
       "attribution": "not required; Made with Natural Earth is encouraged",
       "share_alike": false,
-      "approval_status": "preferred_gate3_baseline_candidate",
+      "approval_status": "approved_for_gate0_real_input_benchmark",
+      "exact_pin": {
+        "repository": "nvkelso/natural-earth-vector",
+        "ref": "v5.1.2",
+        "commit": "f1890d9f152c896d250a77557a5751a93d494776",
+        "pin_file": "tools/opengs_eval/natural_earth_pin.json",
+        "evidence": "docs/research/opengs-evaluation/gate_0_natural_earth_summary.json"
+      },
       "open_questions": [
-        "Confirm exact release/version and archive checksums.",
-        "Confirm 1:10m detail is adequate for the target theatre and island policy.",
-        "Record all transformations and projection parameters."
+        "Confirm 1:10m detail is sufficient for the Gate 3 island and coastline policy.",
+        "Decide whether Natural Earth lakes remain sufficient or require an additional attributed source.",
+        "Keep all operational, supply, air, political, and command assignments separate from these physical layers."
       ]
     },
     {
@@ -56,9 +63,9 @@
       "share_alike": false,
       "approval_status": "candidate_for_evaluation",
       "open_questions": [
-        "Choose and pin either WorldCover 2020 v100 or 2021 v200.",
+        "Choose and pin either WorldCover 2020 v100 or 2021 v200 before Gate 3.",
         "Record exact tiles, checksums, mosaicking, reprojection, and resampling.",
-        "Confirm the final game credits wording before distribution."
+        "Confirm final game credits wording before distribution."
       ]
     },
     {
@@ -77,8 +84,8 @@
       "share_alike": false,
       "approval_status": "candidate_for_evaluation",
       "open_questions": [
-        "Determine whether Natural Earth lakes are sufficient before adding this much larger source.",
-        "Pin the exact HydroLAKES release and checksum.",
+        "Determine whether Natural Earth lakes are sufficient before adding this larger source.",
+        "Pin the exact HydroLAKES release and checksum if selected.",
         "Define the minimum retained lake size and Gates non-selectable-water treatment."
       ]
     },
@@ -98,7 +105,7 @@
       "share_alike": false,
       "approval_status": "candidate_for_evaluation",
       "open_questions": [
-        "Choose the exact release and disputed-boundary worldview.",
+        "Choose the exact release and disputed-boundary worldview if selected.",
         "Do not treat modern administrative boundaries as operational-region authority.",
         "Record any manual selection or simplification."
       ]
@@ -120,8 +127,8 @@
       "share_alike": false,
       "approval_status": "candidate_for_evaluation",
       "open_questions": [
-        "Use the general gazetteer/cities files, not postal-code files with additional third-party restrictions.",
-        "Pin the dated dump and checksum.",
+        "Use general gazetteer or cities files, not postal-code files with additional restrictions.",
+        "Pin the dated dump and checksum if selected.",
         "Define population thresholds and deterministic de-duplication."
       ]
     },
@@ -171,11 +178,11 @@
     }
   ],
   "minimum_viable_legal_path": {
-    "coastline_lakes_rivers_boundaries_cities": "Natural Earth public-domain layers",
-    "terrain": "ESA WorldCover CC BY 4.0",
+    "coastline_lakes_rivers_boundaries_cities": "Pinned Natural Earth v5.1.2 public-domain layers",
+    "terrain": "ESA WorldCover CC BY 4.0 candidate, exact release required before Gate 3",
     "optional_city_density": "GeoNames CC BY 4.0",
     "optional_lake_validation": "HydroLAKES CC BY 4.0",
-    "status": "plausible_for_evaluation_pending_exact_download_pins"
+    "status": "gate0_physical_baseline_pinned"
   },
   "rejected_assumptions": [
     "The generator's MIT license does not license geographic input data.",
