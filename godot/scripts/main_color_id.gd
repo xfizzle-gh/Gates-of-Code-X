@@ -198,6 +198,12 @@ func _load_presentation_fixture(path: String) -> void:
 	# Optional test/screenshot overlay: inject a pending_battle without Python changes.
 	if presentation_fixture.has("pending_battle") and presentation_fixture.get("pending_battle") is Dictionary:
 		snapshot["pending_battle"] = (presentation_fixture.get("pending_battle") as Dictionary).duplicate(true)
+	# Optional selection hints for Earth3 operational screenshots.
+	if presentation_fixture.has("selected_province_id"):
+		var sp := String(presentation_fixture.get("selected_province_id", ""))
+		if not sp.is_empty() and provinces_by_id.has(sp):
+			selected_province_id = sp
+			_rebuild_legal_targets()
 
 
 func _invalidate_overlay_cache() -> void:
@@ -694,6 +700,62 @@ func _draw_presentation_fixture_markers() -> void:
 				_image_to_screen(Vector2(float(bpx[0]), float(bpx[1]))),
 				int(brow.get("count", 1))
 			)
+	_draw_presentation_proof_overlays()
+
+
+func _draw_presentation_proof_overlays() -> void:
+	# Temporary presentation-only: eastern extent labels, Europe-Asia boundary, federal outlines.
+	if presentation_fixture.is_empty():
+		return
+	# Federal subject outlines (behind labels).
+	for subj: Variant in presentation_fixture.get("federal_subject_outlines", []):
+		if not subj is Dictionary:
+			continue
+		var srow := subj as Dictionary
+		var outline := PackedVector2Array()
+		for px: Variant in srow.get("outline_pixels", []):
+			if px is Array and (px as Array).size() >= 2:
+				outline.append(_image_to_screen(Vector2(float(px[0]), float(px[1]))))
+		if outline.size() >= 3:
+			outline.append(outline[0])
+			var col := Color(0.95, 0.75, 0.2, 0.55)
+			var sid := String(srow.get("id", ""))
+			if sid.ends_with("-city"):
+				col = Color(1.0, 0.45, 0.35, 0.75)
+			elif sid.find("oblast") >= 0 or sid.ends_with("-oblast"):
+				col = Color(0.35, 0.85, 1.0, 0.55)
+			draw_polyline(outline, col, 2.0, true)
+	# Conventional Europe-Asia boundary.
+	var bpts := PackedVector2Array()
+	for px2: Variant in presentation_fixture.get("europe_asia_boundary_pixels", []):
+		if px2 is Array and (px2 as Array).size() >= 2:
+			bpts.append(_image_to_screen(Vector2(float(px2[0]), float(px2[1]))))
+	if bpts.size() >= 2:
+		draw_polyline(bpts, Color(1.0, 0.75, 0.1, 0.95), 3.0, true)
+		draw_polyline(bpts, Color(1.0, 0.35, 0.05, 0.85), 1.5, true)
+	# Eastern city proof labels.
+	for lab: Variant in presentation_fixture.get("proof_labels", []):
+		if not lab is Dictionary:
+			continue
+		var lrow := lab as Dictionary
+		var lp: Variant = lrow.get("pixel", null)
+		if not (lp is Array and (lp as Array).size() >= 2):
+			continue
+		var pos := _image_to_screen(Vector2(float(lp[0]), float(lp[1])))
+		draw_circle(pos, 5.0, Color(1.0, 0.95, 0.3, 1.0))
+		draw_arc(pos, 9.0, 0.0, TAU, 24, Color(1.0, 0.4, 0.15, 0.95), 2.0)
+		var text := String(lrow.get("label", ""))
+		if text.is_empty():
+			continue
+		draw_string(
+			ThemeDB.fallback_font,
+			pos + Vector2(12, -6),
+			text,
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			14,
+			Color(1.0, 0.95, 0.75, 1.0)
+		)
 
 
 func _draw_color_id_overlays() -> void:
@@ -1031,6 +1093,15 @@ func _fit_complete_theatre() -> void:
 		status_message = "Fitted full theatre."
 		queue_redraw()
 		return
+	# Earth3: prefer a tighter home framing (less empty ocean) while remaining fully pannable/zoomable.
+	if map_backend_is_polygon and _apply_earth3_home_framing(am):
+		fitted_once = true
+		var map_contract0: Dictionary = snapshot.get("strategic_map", {})
+		var mid0 := String(map_contract0.get("map_id", "earth3_europe_mediterranean"))
+		var pcount0 := int(am.province_count) if "province_count" in am else int(snapshot.get("provinces", []).size())
+		status_message = "Fitted Earth3 home frame map %s (%s provinces). Home=frame  F=front." % [mid0, pcount0]
+		queue_redraw()
+		return
 	# Fill more of the map panel while keeping aspect ratio; panel stays clear.
 	view_scale = HOME_FIT_FILL
 	view_offset = Vector2.ZERO
@@ -1046,6 +1117,42 @@ func _fit_complete_theatre() -> void:
 	if not mid.is_empty():
 		status_message = "Fitted complete theatre map %s (%s provinces)." % [mid, pcount]
 	queue_redraw()
+
+
+func _apply_earth3_home_framing(am) -> bool:
+	var rect_d: Dictionary = {}
+	if presentation_fixture.has("home_image_rect") and presentation_fixture.get("home_image_rect") is Dictionary:
+		rect_d = presentation_fixture.get("home_image_rect")
+	else:
+		var sm: Dictionary = snapshot.get("strategic_map", {})
+		if sm.has("home_image_rect") and sm.get("home_image_rect") is Dictionary:
+			rect_d = sm.get("home_image_rect")
+	if rect_d.is_empty():
+		# Default tighter frame for Earth3 full theatre (image space).
+		var img: Vector2 = am.image_size()
+		rect_d = {"x": 20.0, "y": 220.0, "w": maxf(img.x - 40.0, 1.0), "h": maxf(img.y - 450.0, 1.0)}
+	var rx := float(rect_d.get("x", 0.0))
+	var ry := float(rect_d.get("y", 0.0))
+	var rw := float(rect_d.get("w", 0.0))
+	var rh := float(rect_d.get("h", 0.0))
+	if rw <= 1.0 or rh <= 1.0:
+		return false
+	var img_size: Vector2 = am.image_size()
+	var content := _map_content_rect()
+	var fit_full := minf(content.size.x / maxf(img_size.x, 1.0), content.size.y / maxf(img_size.y, 1.0))
+	if fit_full <= 0.0:
+		return false
+	var fit_home := minf(content.size.x / rw, content.size.y / rh)
+	view_scale = clampf(fit_home / fit_full, 0.85, 3.5)
+	# Center the home rect in the map panel.
+	_sync_map_space()
+	var home_center := Vector2(rx + rw * 0.5, ry + rh * 0.5)
+	var map_center := Vector2(content.position.x + content.size.x * 0.5, content.position.y + content.size.y * 0.5)
+	view_offset = Vector2.ZERO
+	_sync_map_space()
+	var screen_pt: Vector2 = map_space.image_to_screen(home_center)
+	view_offset = map_center - screen_pt
+	return true
 
 
 func _fit_to_focus(force: bool) -> void:
