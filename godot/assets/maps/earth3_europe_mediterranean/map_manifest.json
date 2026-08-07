@@ -7,7 +7,11 @@
   "asset_status": "production_theatre",
   "polygon_dataset": {
     "path": "polygon_dataset.json",
+<<<<<<< HEAD
     "sha256": "6e26eb8938195aa5a41952afac9e337a6552ce335d9b426f86d46cb45cedc758",
+=======
+    "sha256": "a5e725de20c00ccff9513ec0e923406e1c8ee91a33bdcf8681f5c356ad9c684a",
+>>>>>>> 9534c67 (feat(earth3): production theatre — mask v6 + continuous water)
     "province_count": 3345
   },
   "province_count": 3345,
@@ -37,7 +41,11 @@
   "export": {
     "archive_sha256": "b88cc599128c73a5711af3add8330f5a42629c9a3e07a5dd7aea8437a97fc760",
     "crop_config_sha256": "c330980aba6f4be05d8b424afa95b759c858f9facf0b4f04dc89575838faa4af",
+<<<<<<< HEAD
     "elapsed_ms": 28055,
+=======
+    "elapsed_ms": 32864,
+>>>>>>> 9534c67 (feat(earth3): production theatre — mask v6 + continuous water)
     "triangulation_ok": true,
     "max_tri_area_error": 7.424446545085129e-16
   }
