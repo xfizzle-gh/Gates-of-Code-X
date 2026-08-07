@@ -10,6 +10,7 @@ from pathlib import Path
 from shapely import make_valid
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon
 from shapely.ops import triangulate as shapely_triangulate
+from shapely.ops import unary_union
 
 from .audit_artifact import included_ids_hash, sha256_file, sha256_text_file
 from .crop import apply_crop, load_crop_candidates
@@ -329,6 +330,23 @@ def export_production_dataset(
     for a, b in sorted(border_segments):
         borders_flat.extend((a[0], a[1], b[0], b[1]))
 
+    gap_fills, hole_audit = _build_land_hole_gap_fills(provinces_out)
+    (output_dir / "black_hole_audit.json").write_text(
+        json.dumps(hole_audit, indent=2) + "\n", encoding="utf-8"
+    )
+    if int(hole_audit.get("unexplained_black_components", -1)) != 0:
+        raise TriangulationError(
+            "black_hole_audit has unexplained components; see black_hole_audit.json"
+        )
+    if int(hole_audit.get("failed_empty_meshes", -1)) != 0:
+        raise TriangulationError(
+            "black_hole_audit reports failed/empty meshes; see black_hole_audit.json"
+        )
+    if int(hole_audit.get("missing_province_ids_count", -1)) != 0:
+        raise TriangulationError(
+            "black_hole_audit reports missing province ids; see black_hole_audit.json"
+        )
+
     payload = {
         "schema": DATASET_SCHEMA,
         "schema_version": DATASET_SCHEMA_VERSION,
@@ -355,6 +373,8 @@ def export_production_dataset(
             "y_axis": "downward_positive",
         },
         "triangulation_audit": tri_audit,
+        "black_hole_audit": hole_audit,
+        "ocean_gap_fills": gap_fills,
         "provinces": provinces_out,
         "edges": edges,
         "border_segments": borders_flat,
@@ -433,5 +453,143 @@ def export_production_dataset(
         "dataset_sha256": dataset_sha,
         "elapsed_ms": manifest["export"]["elapsed_ms"],
         "triangulation_audit": tri_audit,
+        "black_hole_audit": hole_audit,
         "meta": meta,
     }
+
+
+def _ring_to_polygon(ring_flat: list[float]) -> Polygon | None:
+    coords = [
+        (float(ring_flat[i]), float(ring_flat[i + 1]))
+        for i in range(0, len(ring_flat) - 1, 2)
+    ]
+    if len(coords) < 3:
+        return None
+    if coords[0] != coords[-1]:
+        coords = coords + [coords[0]]
+    poly = Polygon(coords)
+    if not poly.is_valid:
+        poly = make_valid(poly)
+    polys = _extract_polygons(poly)
+    if not polys:
+        return None
+    return max(polys, key=lambda g: g.area)
+
+
+def _triangulate_hole_local(hole: Polygon) -> tuple[list[float], list[int]]:
+    """Return (verts_flat, indices) for a hole polygon in local coordinates."""
+    if hole.interiors:
+        hole = Polygon(list(hole.exterior.coords))
+    verts_flat, indices, _ring, _audit = triangulate_ring_validated(
+        tuple((float(x), float(y)) for x, y in list(hole.exterior.coords)[:-1])
+    )
+    return verts_flat, indices
+
+
+def _build_land_hole_gap_fills(provinces_out: list[dict]) -> tuple[list[dict], dict]:
+    """Fill land-union interior holes lacking water coverage (inland lakes / enclosed seas)."""
+    land_polys: list[Polygon] = []
+    water_polys: list[Polygon] = []
+    empty_meshes: list[str] = []
+    for row in provinces_out:
+        poly = _ring_to_polygon(row.get("ring") or [])
+        if poly is None:
+            empty_meshes.append(str(row.get("id")))
+            continue
+        if len(row.get("triangles") or []) < 3 or len(row.get("vertices") or []) < 6:
+            empty_meshes.append(str(row.get("id")))
+        if row.get("is_water"):
+            water_polys.append(poly)
+        else:
+            land_polys.append(poly)
+
+    hole_audit: dict = {
+        "schema": "gates-of-codex.earth3-black-hole-audit",
+        "schema_version": 1,
+        "total_polygon_interior_holes": 0,
+        "water_holes_rendered": 0,
+        "gap_fills_created": 0,
+        "missing_province_ids": [],
+        "missing_province_ids_count": 0,
+        "failed_empty_meshes": len(empty_meshes),
+        "failed_empty_mesh_ids": empty_meshes,
+        "unexplained_black_components": 0,
+        "hole_classifications": [],
+    }
+    if not land_polys:
+        return [], hole_audit
+
+    land_u = unary_union(land_polys)
+    water_u = unary_union(water_polys) if water_polys else None
+    geoms = list(land_u.geoms) if land_u.geom_type == "MultiPolygon" else [land_u]
+    gap_fills: list[dict] = []
+    unexplained = 0
+
+    for g in geoms:
+        if g.geom_type != "Polygon":
+            continue
+        for interior in g.interiors:
+            hole = Polygon(interior)
+            if hole.is_empty or hole.area <= 1e-6:
+                continue
+            hole_audit["total_polygon_interior_holes"] += 1
+            cx, cy = float(hole.centroid.x), float(hole.centroid.y)
+            water_frac = 0.0
+            if water_u is not None and not water_u.is_empty:
+                inter = water_u.intersection(hole)
+                water_frac = float(inter.area) / float(hole.area) if hole.area > 0 else 0.0
+
+            if water_frac >= 0.85:
+                classification = "legitimate_inland_water_or_enclosed_sea"
+                hole_audit["water_holes_rendered"] += 1
+                # Covered by included water province meshes + ocean underlay.
+                gap_needed = False
+            elif water_frac <= 0.05:
+                # No water province coverage: synthetic ocean fill (lake/sea gap).
+                classification = "omitted_water_gap_fill"
+                gap_needed = True
+            else:
+                classification = "partial_water_coverage_gap_fill"
+                gap_needed = True
+
+            fill_entry = None
+            if gap_needed:
+                try:
+                    verts, tris = _triangulate_hole_local(hole)
+                    fill_entry = {
+                        "centroid": [round(cx, 4), round(cy, 4)],
+                        "area": round(float(hole.area), 4),
+                        "vertices": verts,
+                        "triangles": tris,
+                        "classification": classification,
+                    }
+                    gap_fills.append(fill_entry)
+                    hole_audit["gap_fills_created"] += 1
+                    if classification.startswith("omitted") or classification.startswith(
+                        "partial"
+                    ):
+                        # Explained via gap fill — not unexplained.
+                        pass
+                except Exception as exc:  # noqa: BLE001
+                    classification = "unexplained_triangulation_failure"
+                    unexplained += 1
+                    fill_entry = {"error": str(exc), "centroid": [cx, cy]}
+
+            hole_audit["hole_classifications"].append(
+                {
+                    "centroid": [round(cx, 4), round(cy, 4)],
+                    "area": round(float(hole.area), 4),
+                    "water_coverage_fraction": round(water_frac, 4),
+                    "classification": classification,
+                    "gap_fill": fill_entry is not None and "vertices" in (fill_entry or {}),
+                }
+            )
+
+    hole_audit["unexplained_black_components"] = unexplained
+    hole_audit["missing_province_ids_count"] = len(hole_audit["missing_province_ids"])
+    hole_audit["ok"] = (
+        hole_audit["unexplained_black_components"] == 0
+        and hole_audit["failed_empty_meshes"] == 0
+        and hole_audit["missing_province_ids_count"] == 0
+    )
+    return gap_fills, hole_audit

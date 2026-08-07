@@ -249,7 +249,8 @@ func _sync_presentation_layers() -> void:
 	var bg_items: Array = []
 	if am.background_texture != null:
 		bg_items.append({"texture": am.background_texture, "rect": texture_rect})
-	_bg_layer.set_clear(Rect2(0, 0, map_width, viewport.y), Color(0.025, 0.035, 0.047, 1.0))
+	var clear_col := Color(0.18, 0.32, 0.45, 1.0) if map_backend_is_polygon else Color(0.025, 0.035, 0.047, 1.0)
+	_bg_layer.set_clear(Rect2(0, 0, map_width, viewport.y), clear_col)
 	_bg_layer.set_draw_items(bg_items)
 	_bg_layer.refresh()
 	if map_backend_is_polygon:
@@ -313,7 +314,8 @@ func _open_color_id_map() -> void:
 				_bg_layer.visible = true
 				_bg_layer.set_draw_items([])
 				var viewport := get_viewport_rect().size
-				_bg_layer.set_clear(Rect2(0, 0, viewport.x - PANEL_WIDTH, viewport.y), Color(0.05, 0.08, 0.12, 1.0))
+				# Continuous muted ocean behind land polygons (not per-water fills).
+				_bg_layer.set_clear(Rect2(0, 0, viewport.x - PANEL_WIDTH, viewport.y), Color(0.18, 0.32, 0.45, 1.0))
 				_bg_layer.refresh()
 			if _identity_layer != null:
 				_identity_layer.visible = false

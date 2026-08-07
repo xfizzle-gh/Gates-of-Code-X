@@ -23,6 +23,8 @@ var _height := 1080
 var _debug := false
 var _select_first := false
 var _hover_second := false
+var _focus_image := Vector2(-1, -1)
+var _view_scale := -1.0
 
 
 func _initialize() -> void:
@@ -38,6 +40,12 @@ func _initialize() -> void:
 			_width = maxi(int(text.substr(8)), 640)
 		elif text.begins_with("--height="):
 			_height = maxi(int(text.substr(9)), 480)
+		elif text.begins_with("--focus-image="):
+			var parts := text.substr(String("--focus-image=").length()).split(",")
+			if parts.size() >= 2:
+				_focus_image = Vector2(float(parts[0]), float(parts[1]))
+		elif text.begins_with("--view-scale="):
+			_view_scale = maxf(float(text.substr(String("--view-scale=").length())), 0.55)
 		elif text == "--debug":
 			_debug = true
 		elif text == "--select-first":
@@ -104,6 +112,21 @@ func _run_capture() -> void:
 	_apply_selection_hover(scene)
 	if scene.has_method("_fit_complete_theatre"):
 		scene.call("_fit_complete_theatre")
+	if _view_scale > 0.0 and scene.get("view_scale") != null:
+		scene.view_scale = _view_scale
+	if _focus_image.x >= 0.0 and scene.get("view_offset") != null:
+		# Reconfigure map space then center the requested image point.
+		if scene.has_method("_sync_presentation_layers"):
+			scene.call("_sync_presentation_layers")
+		if scene.get("map_space") != null and scene.map_space != null:
+			var map_center := Vector2(float(_width) * 0.5, float(_height) * 0.5)
+			if scene.get("PANEL_WIDTH") != null:
+				map_center.x = (float(_width) - float(scene.PANEL_WIDTH)) * 0.5
+			var screen_pt: Vector2 = scene.map_space.image_to_screen(_focus_image)
+			scene.view_offset = map_center - screen_pt + scene.view_offset
+			print("map_screenshot: focus-image=%s view_scale=%s offset=%s" % [
+				_focus_image, scene.view_scale, scene.view_offset
+			])
 	if scene.get("_layers_dirty") != null:
 		scene._layers_dirty = true
 	if scene.has_method("_sync_presentation_layers"):
