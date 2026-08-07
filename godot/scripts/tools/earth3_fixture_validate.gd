@@ -6,7 +6,7 @@ extends SceneTree
 const DATASET := "res://assets/maps/earth3_europe_mediterranean/polygon_dataset.json"
 const SNAPSHOT := "res://fixtures/snapshots/earth3_operational.json"
 const FIXTURE := "res://fixtures/presentation/e3_operational.json"
-const EXPECT_COUNT := 3512
+const EXPECT_COUNT := 3510
 
 
 func _initialize() -> void:

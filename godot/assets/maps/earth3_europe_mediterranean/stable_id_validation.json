@@ -1,0 +1,30 @@
+{
+  "schema": "gates-of-codex.earth3-stable-id-validation",
+  "pre_hash": "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7",
+  "production_hash": "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3",
+  "province_count": 3510,
+  "land_count": 3295,
+  "water_count": 215,
+  "removed": [
+    {
+      "gates_id": "e3_2830",
+      "source_id": 10920
+    },
+    {
+      "gates_id": "e3_2888",
+      "source_id": 11031
+    }
+  ],
+  "retained_mapping_count": 3510,
+  "checks": {
+    "retained_source_ids_keep_same_gates_id": true,
+    "removed_ids_are_permanent_gaps": true,
+    "no_global_renumber": true,
+    "adjacency_resolved": true,
+    "empty_meshes": 0,
+    "island_geometry_unchanged": true,
+    "fixtures_no_excluded_gameplay_refs": true
+  },
+  "fixture_gameplay_refs_to_excluded": [],
+  "fixture_missing_retained_refs": []
+}

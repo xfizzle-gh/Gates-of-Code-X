@@ -1,14 +1,25 @@
 {
   "schema": "gates-of-codex.earth3-production-authority",
-  "schema_version": 1,
+  "schema_version": 2,
   "status": "production",
   "map_id": "earth3_europe_mediterranean",
-  "province_count": 3512,
-  "land_count": 3297,
+  "province_count": 3510,
+  "land_count": 3295,
   "water_count": 215,
-  "selectable_province_count": 3297,
+  "selectable_province_count": 3295,
   "source_water_metadata_count": 215,
-  "included_ids_sha256": "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7",
+  "included_ids_sha256": "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3",
+  "pre_sanitize_included_ids_sha256": "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7",
+  "dataset_sha256": "1734291ebc37ce0fc08154d6d8e937d1bd39b154b88f6030fdf02fde41810f37",
+  "excluded_source_ids": [
+    10920,
+    11031
+  ],
+  "excluded_gates_ids": [
+    "e3_2830",
+    "e3_2888"
+  ],
+  "stable_id_policy": "retain_e3_ids_with_permanent_gaps",
   "water_policy": {
     "v1": "water_not_normally_selectable",
     "accepted": true,
@@ -17,6 +28,17 @@
     "sea_movement": "authored_operational_nodes_edges"
   },
   "topology_sanitize": {
-    "land_exclusions_accepted": false
-  }
+    "land_exclusions_accepted": true,
+    "approved_exclusions": [
+      10920,
+      11031
+    ],
+    "island_geometry": "unchanged",
+    "issue": 117
+  },
+  "notes": [
+    "Production authority after owner-approved eastern spill exclusions.",
+    "e3_2830 and e3_2888 are permanent unused gaps; never recycle.",
+    "Island coastline reconstruction remains #121."
+  ]
 }

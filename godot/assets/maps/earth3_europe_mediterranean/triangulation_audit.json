@@ -8,5 +8,18 @@
   "total_triangle_area": 9735812.5,
   "triangulator": "shapely_delaunay_clipped_interior",
   "area_rel_tol": 0.001,
-  "no_fan_fallback": true
+  "no_fan_fallback": true,
+  "promotion": {
+    "excluded_source_ids": [
+      10920,
+      11031
+    ],
+    "excluded_gates_ids": [
+      "e3_2830",
+      "e3_2888"
+    ],
+    "stable_ids": true,
+    "island_geometry_unchanged": true,
+    "empty_mesh_count": 0
+  }
 }

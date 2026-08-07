@@ -141,16 +141,16 @@ jobs:
           from pathlib import Path
           auth = json.loads(Path("config/earth3/production_authority.json").read_text(encoding="utf-8"))
           meta = json.loads(Path("godot/assets/maps/earth3_europe_mediterranean/dataset_meta.json").read_text(encoding="utf-8"))
-          assert auth["province_count"] == 3512
-          assert auth["land_count"] == 3297
+          assert auth["province_count"] == 3510
+          assert auth["land_count"] == 3295
           assert auth["water_count"] == 215
-          assert auth["included_ids_sha256"] == "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7"
+          assert auth["included_ids_sha256"] == "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3"
           assert meta["province_count"] == auth["province_count"]
           assert meta["land_count"] == auth["land_count"]
           assert meta["water_count"] == auth["water_count"]
           assert meta["included_source_ids_sha256"] == auth["included_ids_sha256"]
           assert auth.get("water_policy", {}).get("accepted") is True
-          assert auth.get("topology_sanitize", {}).get("land_exclusions_accepted") is False
+          assert auth.get("topology_sanitize", {}).get("land_exclusions_accepted") is True
           print("authority ok", auth["province_count"])
           PY
       - name: Godot map profiler (committed fixture)
@@ -208,7 +208,7 @@ jobs:
           from pathlib import Path
           data = json.loads(Path("docs/godot-presentation/ci_earth3_interactive_baseline.json").read_text(encoding="utf-8"))
           assert data.get("ok") is True, data
-          assert int(data.get("map", {}).get("province_count", 0)) == 3512, data.get("map")
+          assert int(data.get("map", {}).get("province_count", 0)) == 3510, data.get("map")
           scenarios = data.get("scenarios", {})
           required = [
               "idle_full_theatre",
