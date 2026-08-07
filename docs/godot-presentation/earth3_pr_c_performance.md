@@ -32,34 +32,38 @@ Files: `pr_c_before_interactive.json`, `pr_c_before_backend_profile.json`
 
 | Optimization | Rationale |
 |---|---|
-| Cheaper terrain shader (1 hash + ridge vs multi-octave noise) | Fragment cost on full land fill |
+| Terrain via **precomputed 64×64 smooth noise texture** (linear filter, skewed UVs) | Organic land variation without square cells; cheaper than 3-octave PR B noise |
 | Ownership texture: skip rewrite when owners+faction colors unchanged; partial pixel updates when few change | No-op path was ~3ms rewriting all 3514 LUT entries |
 | Land mesh `CHUNK` 256→1024 | Fewer MeshInstance2D (13→4) |
-| Overlay draw: idle path only visits active provinces (forces/selection/hover/targets), not full 3514 snapshot | Idle frame CPU |
+| Overlay draw: idle path only visits active provinces (forces/selection/hover/targets/**infrastructure**), not full 3514 snapshot | Idle frame CPU |
 
 **Not changed:** geography, crop, IDs, adjacency, water policy, island geometry, selection rules, LOD thresholds from PR B.
 
-## After
+### Terrain visual fix (post-review)
 
-| Scenario | avg frame ms | Δ vs before | draw_calls p95 |
+Replaced `floor(VERTEX.xy * 0.07)` single-hash (visible checkerboard) with a CPU-built smooth noise texture sampled in the fragment shader. Palette and ownership mix unchanged.
+
+## After (smooth terrain texture + infra active-set fix)
+
+Re-profile after terrain visual correction (`pr_c_after_smooth_terrain_interactive.json`):
+
+| Scenario | PR B baseline avg ms | PR C final avg ms | Δ |
 |---|---:|---:|---:|
-| idle_full_theatre | **47.76** | **−24.3 ms** | 3777 |
-| continuous_pan | **51.02** | **−24.6 ms** | 3777 |
-| continuous_zoom | **62.21** | **−14.6 ms** | 3784 |
-| province_hover_select | **58.55** | **−15.6 ms** | 3781 |
-| ownership_recolor | 75.27 | −1.3 ms | 3780 |
-| legal_target_rebuild | 74.69 | −2.6 ms | 3786 |
-| overlay_routes_sites_counters | 75.19 | +0.5 ms | 3780 |
-| pending_battle_presentation | 62.57 | −8.8 ms | 3783 |
+| idle_full_theatre | 72.1 | **52.4** | **−19.7** |
+| continuous_pan | 75.6 | **50.3** | **−25.3** |
+| continuous_zoom | 76.8 | **65.6** | **−11.2** |
+| province_hover_select | 74.1 | **59.2** | **−14.9** |
+| ownership_recolor | 76.6 | 74.1 | −2.5 |
+| overlay_routes_sites_counters | 74.6 | **50.4** | **−24.2** |
+| pending_battle_presentation | 71.4 | **61.6** | **−9.8** |
 
-| Discrete / backend | before | after |
+| Discrete / backend | PR B / before | PR C final |
 |---|---:|---:|
-| ownership_refresh avg ms | 2.99 | 2.84 |
-| backend noop rewrite ms | 3.68 | **2.18** |
+| backend noop ownership rewrite ms | 3.68 | **~2.2–2.8** |
 | mesh_count | 13 | **4** |
-| process draw_calls | 3783 | 3775 |
+| process draw_calls | ~3783 | **~3778** (not solved) |
 
-Files: `pr_c_after_interactive.json`, `pr_c_after_backend_profile.json`
+Most of the PR C frame-time gain is retained after the smooth-terrain fix.
 
 ## Overlay infrastructure regression fix
 
@@ -71,12 +75,14 @@ Active set now includes snapshot provinces with `supply_hub` / `command_post` / 
 - Ownership recolor scenario still pays LUT update when owners flip (expected).
 - Further candidates (not in this PR): border primitive reduction, MultiMesh counters, GPU timers on Vulkan.
 
-## Screenshots (PR B vs PR C)
+## Screenshots
 
-| | PR B | PR C |
-|---|---|---|
-| Full map | `screenshots/earth3/pr_b_full_theatre_1080p.png` | `screenshots/earth3/pr_c_full_map_1080p.png` |
-| Zoomed ops | `screenshots/earth3/pr_b_ops_zoom_1080p.png` | `screenshots/earth3/pr_c_zoom_ops_1080p.png` |
+| | Path |
+|---|---|
+| Full map (smooth terrain) | `screenshots/earth3/pr_c_full_map_smooth_1080p.png` |
+| Zoomed ops | `screenshots/earth3/pr_c_zoom_ops_1080p.png` |
+| Unoccupied infra (supply / CP / air) | `screenshots/earth3/pr_c_infra_zoom_1080p.png` |
+| PR B full (compare) | `screenshots/earth3/pr_b_full_theatre_1080p.png` |
 
 ## Run
 

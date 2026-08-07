@@ -62,6 +62,7 @@ var _ownership_image: Image = null
 var _ownership_tex: ImageTexture = null
 var _ownership_shader: Shader = null
 var _fill_material: ShaderMaterial = null
+var _terrain_noise_tex: ImageTexture = null
 var _tex_width := 1
 var _geometry_built := false
 var _view_scale := 1.0
@@ -479,7 +480,40 @@ func debug_lines() -> PackedStringArray:
 	return lines
 
 
+func _ensure_terrain_noise_texture() -> void:
+	if _terrain_noise_tex != null:
+		return
+	# Small smooth noise field (CPU once). Linear filter + repeat => organic, no square cells.
+	const N := 64
+	var img := Image.create(N, N, false, Image.FORMAT_RGBA8)
+	for y in N:
+		for x in N:
+			var fx := float(x)
+			var fy := float(y)
+			# Multi-frequency sin blend (smooth, non-grid).
+			var v := 0.5
+			v += 0.25 * sin(fx * 0.41 + fy * 0.17)
+			v += 0.15 * sin(fx * 0.19 - fy * 0.33 + 1.7)
+			v += 0.10 * sin((fx + fy) * 0.27 - 0.9)
+			v = clampf(v * 0.5 + 0.25 * sin(fx * 0.09) * cos(fy * 0.11), 0.0, 1.0)
+			img.set_pixel(x, y, Color(v, v, v, 1.0))
+	# Soft blur pass for extra smoothness.
+	var blur := Image.create(N, N, false, Image.FORMAT_RGBA8)
+	for y2 in N:
+		for x2 in N:
+			var acc := 0.0
+			for oy in range(-1, 2):
+				for ox in range(-1, 2):
+					var xx := (x2 + ox + N) % N
+					var yy := (y2 + oy + N) % N
+					acc += img.get_pixel(xx, yy).r
+			var vv := acc / 9.0
+			blur.set_pixel(x2, y2, Color(vv, vv, vv, 1.0))
+	_terrain_noise_tex = ImageTexture.create_from_image(blur)
+
+
 func _ensure_ownership_material() -> void:
+	_ensure_terrain_noise_texture()
 	if _ownership_shader == null:
 		if ResourceLoader.exists(OWNERSHIP_SHADER_PATH):
 			_ownership_shader = load(OWNERSHIP_SHADER_PATH) as Shader
@@ -488,10 +522,12 @@ func _ensure_ownership_material() -> void:
 			_ownership_shader.code = """
 shader_type canvas_item;
 uniform sampler2D ownership_colors : filter_nearest, repeat_disable;
+uniform sampler2D terrain_noise : filter_linear, repeat_enable;
 uniform float ownership_mix = 0.46;
 void fragment() {
 	vec4 own = texture(ownership_colors, UV);
-	vec3 terrain = vec3(0.42, 0.46, 0.38);
+	float n = texture(terrain_noise, VERTEX.xy * 0.0045).r;
+	vec3 terrain = mix(vec3(0.38, 0.43, 0.34), vec3(0.50, 0.48, 0.40), n);
 	COLOR = vec4(mix(terrain, own.rgb, ownership_mix), 1.0);
 }
 """
@@ -501,7 +537,12 @@ void fragment() {
 		_fill_material.set_shader_parameter("ownership_mix", OWNERSHIP_MIX_DEFAULT)
 		_fill_material.set_shader_parameter("terrain_low", Vector3(0.38, 0.43, 0.34))
 		_fill_material.set_shader_parameter("terrain_high", Vector3(0.50, 0.48, 0.40))
-		_fill_material.set_shader_parameter("terrain_contrast", 0.22)
+		_fill_material.set_shader_parameter("terrain_contrast", 0.18)
+		_fill_material.set_shader_parameter("terrain_noise_scale", Vector2(0.0045, 0.0045))
+		_fill_material.set_shader_parameter("terrain_noise_transform_x", Vector2(0.92, 0.38))
+		_fill_material.set_shader_parameter("terrain_noise_transform_y", Vector2(-0.31, 0.88))
+	if _terrain_noise_tex != null:
+		_fill_material.set_shader_parameter("terrain_noise", _terrain_noise_tex)
 	if _ownership_tex != null:
 		_fill_material.set_shader_parameter("ownership_colors", _ownership_tex)
 		owner_texture = _ownership_tex

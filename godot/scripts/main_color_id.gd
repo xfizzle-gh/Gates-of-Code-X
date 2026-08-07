@@ -456,34 +456,46 @@ func ensure_unoccupied_infrastructure_markers_for_test() -> Dictionary:
 		occupied[String(pid_occ)] = true
 	var picks := {"supply_hub": "", "command_post": "", "air_base": ""}
 	var kinds := ["supply_hub", "command_post", "air_base"]
-	var ki := 0
+	# Prefer central land provinces so zoomed screenshots show markers clearly.
+	var candidates: Array = []
+	var am = _active_map()
+	var center := Vector2(2150, 1700)
+	if am != null and am.has_method("image_size"):
+		var isz: Vector2 = am.image_size()
+		center = isz * 0.5
 	for prow: Dictionary in snapshot.get("provinces", []):
-		if ki >= kinds.size():
-			break
 		var pid := String(prow.get("id", ""))
 		if pid.is_empty() or occupied.has(pid):
 			continue
-		if _active_map() != null and not _active_map().row_by_province.has(pid):
+		if am != null and not am.row_by_province.has(pid):
 			continue
+		if am != null and "is_water" in am and am.index_by_province.has(pid):
+			var idx := int(am.index_by_province[pid])
+			if idx >= 0 and idx < am.is_water.size() and int(am.is_water[idx]) == 1:
+				continue
+		var anchor := Vector2(center)
+		if am != null and am.has_method("anchor_pixel"):
+			anchor = am.anchor_pixel(pid)
+		candidates.append({"row": prow, "pid": pid, "d": anchor.distance_to(center)})
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return float(a["d"]) < float(b["d"])
+	)
+	for ki in kinds.size():
+		if ki >= candidates.size():
+			break
 		var kind := String(kinds[ki])
-		var infra: Dictionary = prow.get("infrastructure", {})
+		var prow2: Dictionary = candidates[ki]["row"]
+		var pid2 := String(candidates[ki]["pid"])
+		var infra: Dictionary = prow2.get("infrastructure", {})
 		if typeof(infra) != TYPE_DICTIONARY:
 			infra = {}
 		else:
 			infra = infra.duplicate(true)
-		infra["supply_hub"] = 1 if kind == "supply_hub" else int(infra.get("supply_hub", 0))
-		infra["command_post"] = 1 if kind == "command_post" else int(infra.get("command_post", 0))
-		infra["air_base"] = 1 if kind == "air_base" else int(infra.get("air_base", 0))
-		# Clear other kinds on this row so each marker is distinct.
-		if kind != "supply_hub":
-			infra["supply_hub"] = 0
-		if kind != "command_post":
-			infra["command_post"] = 0
-		if kind != "air_base":
-			infra["air_base"] = 0
-		prow["infrastructure"] = infra
-		picks[kind] = pid
-		ki += 1
+		infra["supply_hub"] = 1 if kind == "supply_hub" else 0
+		infra["command_post"] = 1 if kind == "command_post" else 0
+		infra["air_base"] = 1 if kind == "air_base" else 0
+		prow2["infrastructure"] = infra
+		picks[kind] = pid2
 	# Force index rebuild after mutation.
 	_snap_by_id_src = null
 	_ensure_snapshot_overlay_indexes()
