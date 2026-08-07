@@ -1,0 +1,43 @@
+{
+  "schema": "gates-of-codex.opengs-gate0-provisional-benchmark",
+  "schema_version": 1,
+  "status": "superseded_reconstruction_evidence",
+  "superseded_by": [
+    "docs/research/opengs-evaluation/gate_0_exact_ci_benchmark.md",
+    "docs/research/opengs-evaluation/gate_0_exact_ci_summary.json",
+    "GitHub Actions run 31223766220"
+  ],
+  "run_date": "2026-08-07",
+  "source_repository": "Thomas-Holtvedt/opengs-maptool",
+  "source_commit": "06e7ec8517bd45872cf44d77cb8784e5ffca49bb",
+  "method": "Pinned core algorithms were reconstructed from connected GitHub source files because the execution sandbox could not clone github.com. Exact pinned Linux and Windows CI later confirmed the scale and nondeterminism findings.",
+  "synthetic_inputs": true,
+  "geographic_quality_evaluated": false,
+  "production_replacement_authorized": false,
+  "environment": {
+    "python": "3.13.5",
+    "platform": "Linux-6.18.35-x86_64-with-glibc2.41",
+    "machine": "x86_64",
+    "numpy": "2.3.5",
+    "scipy": "1.17.0",
+    "pillow": "12.3.0",
+    "psutil": "7.2.2"
+  },
+  "limitations": [
+    "This was not an exact upstream working-tree execution.",
+    "Synthetic geometry did not measure Europe-Mediterranean visual quality.",
+    "The initial memory measurements were not isolated per case.",
+    "No legal geographic input files were downloaded or benchmarked.",
+    "No Gates polygon conversion, triangulation, adjacency, or Godot runtime work was performed."
+  ],
+  "reconstruction_findings": {
+    "earth3_count_3514_wall_seconds": 4.07676784799969,
+    "earth3_count_3514_provinces": 3514,
+    "earth3_repeat_unique_hashes": 3,
+    "earth3_repeat_runs": 3,
+    "earth3_jagged_wall_seconds": 19.571833135999896,
+    "stress_5000_wall_seconds": 6.309873659000004,
+    "stress_5000_provinces": 5000
+  },
+  "audit_note": "Retained only to document the pre-CI reasoning path. Do not use these values as the current Gate 0 benchmark authority."
+}

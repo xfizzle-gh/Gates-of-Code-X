@@ -1,0 +1,193 @@
+{
+  "schema": "gates-of-codex.opengs-provenance-inventory",
+  "schema_version": 1,
+  "status": "gate0_inventory_with_pinned_natural_earth",
+  "reviewed_on": "2026-08-07",
+  "legal_disclaimer": "This inventory records published source terms for engineering review and is not legal advice. Every exact downloaded artifact must be pinned and re-reviewed before repository distribution.",
+  "generator": {
+    "name": "OpenGS Map Tool",
+    "repository": "Thomas-Holtvedt/opengs-maptool",
+    "commit": "06e7ec8517bd45872cf44d77cb8784e5ffca49bb",
+    "license": "MIT",
+    "attribution_required": true,
+    "license_file": "tools/opengs_eval/LICENSE.opengs-maptool",
+    "approval_status": "approved_for_gate0_evaluation_only"
+  },
+  "sources": [
+    {
+      "id": "natural_earth",
+      "publisher": "Natural Earth / NACIS",
+      "official_url": "https://www.naturalearthdata.com/about/terms-of-use/",
+      "candidate_roles": [
+        "coastline",
+        "land polygons",
+        "lakes",
+        "rivers",
+        "national boundaries",
+        "populated places",
+        "baseline projection-aligned physical layers"
+      ],
+      "published_license": "Public domain",
+      "commercial_use": "allowed",
+      "redistribution": "allowed",
+      "derivative_works": "allowed",
+      "attribution": "not required; Made with Natural Earth is encouraged",
+      "share_alike": false,
+      "approval_status": "approved_for_gate0_real_input_benchmark",
+      "exact_pin": {
+        "repository": "nvkelso/natural-earth-vector",
+        "ref": "v5.1.2",
+        "commit": "f1890d9f152c896d250a77557a5751a93d494776",
+        "pin_file": "tools/opengs_eval/natural_earth_pin.json",
+        "evidence": "docs/research/opengs-evaluation/gate_0_natural_earth_summary.json"
+      },
+      "open_questions": [
+        "Confirm 1:10m detail is sufficient for the Gate 3 island and coastline policy.",
+        "Decide whether Natural Earth lakes remain sufficient or require an additional attributed source.",
+        "Keep all operational, supply, air, political, and command assignments separate from these physical layers."
+      ]
+    },
+    {
+      "id": "esa_worldcover",
+      "publisher": "ESA WorldCover consortium",
+      "official_url": "https://esa-worldcover.org/en/data-access",
+      "candidate_roles": [
+        "terrain classification",
+        "land-cover percentages"
+      ],
+      "published_license": "Creative Commons Attribution 4.0 International",
+      "commercial_use": "allowed under published CC BY 4.0 terms",
+      "redistribution": "allowed with attribution under published terms",
+      "derivative_works": "allowed with attribution under published terms",
+      "attribution": "Required dataset acknowledgement and citation",
+      "share_alike": false,
+      "approval_status": "candidate_for_evaluation",
+      "open_questions": [
+        "Choose and pin either WorldCover 2020 v100 or 2021 v200 before Gate 3.",
+        "Record exact tiles, checksums, mosaicking, reprojection, and resampling.",
+        "Confirm final game credits wording before distribution."
+      ]
+    },
+    {
+      "id": "hydrolakes",
+      "publisher": "HydroSHEDS / HydroLAKES",
+      "official_url": "https://www.hydrosheds.org/products/hydrolakes",
+      "candidate_roles": [
+        "lake polygons",
+        "lake validation"
+      ],
+      "published_license": "Creative Commons Attribution 4.0 International",
+      "commercial_use": "allowed under published CC BY 4.0 terms",
+      "redistribution": "allowed with attribution under published terms",
+      "derivative_works": "allowed with attribution under published terms",
+      "attribution": "Required",
+      "share_alike": false,
+      "approval_status": "candidate_for_evaluation",
+      "open_questions": [
+        "Determine whether Natural Earth lakes are sufficient before adding this larger source.",
+        "Pin the exact HydroLAKES release and checksum if selected.",
+        "Define the minimum retained lake size and Gates non-selectable-water treatment."
+      ]
+    },
+    {
+      "id": "geoboundaries",
+      "publisher": "William & Mary geoLab",
+      "official_url": "https://www.geoboundaries.org/",
+      "candidate_roles": [
+        "administrative boundary comparison",
+        "authored boundary reference"
+      ],
+      "published_license": "Creative Commons Attribution 4.0 International",
+      "commercial_use": "allowed under published CC BY 4.0 terms",
+      "redistribution": "allowed with attribution under published terms",
+      "derivative_works": "allowed with attribution under published terms",
+      "attribution": "Required acknowledgement and recommended citation",
+      "share_alike": false,
+      "approval_status": "candidate_for_evaluation",
+      "open_questions": [
+        "Choose the exact release and disputed-boundary worldview if selected.",
+        "Do not treat modern administrative boundaries as operational-region authority.",
+        "Record any manual selection or simplification."
+      ]
+    },
+    {
+      "id": "geonames",
+      "publisher": "GeoNames / Unxos GmbH",
+      "official_url": "https://download.geonames.org/export/dump/",
+      "candidate_roles": [
+        "city and populated-place points",
+        "density weighting",
+        "label candidates"
+      ],
+      "published_license": "Creative Commons Attribution 4.0 International",
+      "commercial_use": "allowed",
+      "redistribution": "allowed with attribution under published terms",
+      "derivative_works": "allowed with attribution under published terms",
+      "attribution": "Required",
+      "share_alike": false,
+      "approval_status": "candidate_for_evaluation",
+      "open_questions": [
+        "Use general gazetteer or cities files, not postal-code files with additional restrictions.",
+        "Pin the dated dump and checksum if selected.",
+        "Define population thresholds and deterministic de-duplication."
+      ]
+    },
+    {
+      "id": "openstreetmap",
+      "publisher": "OpenStreetMap Foundation and contributors",
+      "official_url": "https://www.openstreetmap.org/copyright",
+      "candidate_roles": [
+        "roads",
+        "rail",
+        "fine-grained cities",
+        "fine-grained rivers"
+      ],
+      "published_license": "Open Data Commons Open Database License 1.0",
+      "commercial_use": "allowed subject to ODbL",
+      "redistribution": "conditional",
+      "derivative_works": "conditional; derivative-database obligations may apply",
+      "attribution": "Required",
+      "share_alike": true,
+      "approval_status": "conditional_not_preferred_for_initial_prototype",
+      "open_questions": [
+        "Obtain explicit project legal review before distributing derived map databases.",
+        "Determine whether generated province geometry would be a Produced Work, Derivative Database, or both.",
+        "Prefer simpler public-domain or CC BY sources for the first prototype where adequate."
+      ]
+    },
+    {
+      "id": "copernicus_dem",
+      "publisher": "European Union / ESA / DLR / Airbus",
+      "official_url": "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM",
+      "candidate_roles": [
+        "elevation-derived terrain",
+        "mountain and slope classification"
+      ],
+      "published_license": "Product-specific Copernicus DEM license with source notices",
+      "commercial_use": "requires product-license confirmation",
+      "redistribution": "requires product-license confirmation and notices",
+      "derivative_works": "allowed only under applicable product terms and notices",
+      "attribution": "Required product-specific notice",
+      "share_alike": false,
+      "approval_status": "conditional_pending_exact_product_review",
+      "open_questions": [
+        "Choose GLO-90 or GLO-30 and review the exact current license annex.",
+        "Account for current access-registration requirements.",
+        "Natural Earth relief or a simpler source may be preferable if elevation is not required."
+      ]
+    }
+  ],
+  "minimum_viable_legal_path": {
+    "coastline_lakes_rivers_boundaries_cities": "Pinned Natural Earth v5.1.2 public-domain layers",
+    "terrain": "ESA WorldCover CC BY 4.0 candidate, exact release required before Gate 3",
+    "optional_city_density": "GeoNames CC BY 4.0",
+    "optional_lake_validation": "HydroLAKES CC BY 4.0",
+    "status": "gate0_physical_baseline_pinned"
+  },
+  "rejected_assumptions": [
+    "The generator's MIT license does not license geographic input data.",
+    "A downloadable dataset is not automatically redistributable in a commercial game.",
+    "Generated territories are not automatically operational, supply, air, political, or command regions.",
+    "Current web terms are not a substitute for pinning the exact downloaded release and its bundled license."
+  ]
+}
