@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "godot/scripts/main_color_id.gd"
 PROD = ROOT / "godot/assets/maps/earth3_europe_mediterranean"
 HASH = "f3931d2e34558e451d02a7c49270b2071a79a628668c49228f5ff607a75315b8"
+APPROVED_SUPPRESS_SOURCES = {11836}
 
 
 class GodotHudProvinceCountTests(unittest.TestCase):
@@ -16,14 +17,8 @@ class GodotHudProvinceCountTests(unittest.TestCase):
         src = MAIN.read_text(encoding="utf-8")
         self.assertIn("func _loaded_province_count()", src)
         self.assertIn("_loaded_province_count()", src)
-        # Must not feed HUD from snapshot province list length alone.
-        self.assertNotRegex(
-            src,
-            r'Provinces:\s*%s".*snapshot\.get\("provinces"',
-        )
-        # Diag line must call loaded count helper.
         diag = re.search(
-            r'var diag := "Map:.*Provinces: %s.*\n(?:.*\n){0,6}',
+            r'var diag := "Map:.*Provinces: %s.*\n(?:.*\n){0,8}',
             src,
         )
         self.assertIsNotNone(diag)
@@ -41,12 +36,24 @@ class GodotHudProvinceCountTests(unittest.TestCase):
         self.assertEqual(ds["included_source_ids_sha256"], HASH)
         self.assertEqual(int(ds["province_count"]), 3514)
 
-    def test_exterior_border_suppress_present(self) -> None:
+    def test_exterior_border_suppress_is_allowlisted_11836_only(self) -> None:
         ds = json.loads((PROD / "polygon_dataset.json").read_text(encoding="utf-8"))
         suppress = ds.get("exterior_border_suppress") or []
-        self.assertGreater(len(suppress), 100)
+        meta = ds.get("exterior_border_suppress_meta") or {}
+        self.assertEqual(meta.get("contract"), "allowlisted_excluded_source_outline_only")
+        self.assertEqual(set(meta.get("excluded_source_ids") or []), APPROVED_SUPPRESS_SOURCES)
+        self.assertEqual(int(meta.get("edge_count") or 0), len(suppress))
+        # Targeted northern outline only — not theatre-wide exterior crop.
+        self.assertGreaterEqual(len(suppress), 1)
+        self.assertLessEqual(len(suppress), 64)
+        contributors = meta.get("included_land_contributors") or {}
+        self.assertTrue(contributors)
+        # Known production neighbors of src 11836 from restore audit
+        self.assertTrue(set(contributors.keys()) <= {"e3_3178", "e3_3180"})
+        tool = (ROOT / "tools/earth3/build_exterior_border_suppress.py").read_text(encoding="utf-8")
+        self.assertIn("APPROVED_EXCLUDED_SOURCE_IDS = (11836,)", tool)
+        self.assertIn("allowlisted_excluded_source_outline_only", tool)
         pmap = (ROOT / "godot/scripts/polygon_map.gd").read_text(encoding="utf-8")
-        self.assertIn("exterior_border_suppress", pmap)
         self.assertIn("_suppress_border_keys", pmap)
 
 

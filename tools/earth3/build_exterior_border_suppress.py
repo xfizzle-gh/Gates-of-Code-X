@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Inject exterior_border_suppress into production polygon_dataset.
+"""Targeted exterior border suppress for the northern src-11836 pseudo-outline only.
 
-Edges shared between included land rings and excluded exterior land (e.g. src 11836)
-must not render as province/coast borders — they outline empty crop-edge holes.
-
-Does not restore excluded provinces or change rings/triangles.
+Contract:
+  - allowlisted excluded source IDs only (default: 11836)
+  - suppress only undirected local-space edges shared between those excluded rings
+    and currently included land rings
+  - do NOT suppress merely because an opposite province is outside the crop
+  - does not change geometry, included IDs, adjacency, or province_count
 """
 from __future__ import annotations
 
@@ -22,6 +24,8 @@ from gates_of_codex.earth3.parse import load_earth3_dataset  # noqa: E402
 PROD = ROOT / "godot/assets/maps/earth3_europe_mediterranean"
 AUTH = ROOT / "config/earth3/production_authority.json"
 SNAP = 0.01
+# Explicit allowlist — only reviewed northern pseudo-outline (Fion / src 11836).
+APPROVED_EXCLUDED_SOURCE_IDS = (11836,)
 
 
 def _edge_key(a, b, snap=SNAP):
@@ -44,32 +48,45 @@ def _resolve_archive(path: str | None) -> Path:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--archive", default=None)
+    ap.add_argument(
+        "--excluded-source-ids",
+        default=",".join(str(x) for x in APPROVED_EXCLUDED_SOURCE_IDS),
+        help="Comma-separated allowlist of excluded source IDs (default: 11836 only)",
+    )
     args = ap.parse_args(argv)
-    archive = load_earth3_dataset(_resolve_archive(args.archive))
+    allow = tuple(int(x.strip()) for x in str(args.excluded_source_ids).split(",") if x.strip())
+    if not allow:
+        raise SystemExit("empty --excluded-source-ids allowlist")
 
+    archive = load_earth3_dataset(_resolve_archive(args.archive))
     ds_path = PROD / "polygon_dataset.json"
     body = ds_path.read_text(encoding="utf-8")
-    if body.endswith("\n"):
-        raw = body[:-1]
-    else:
-        raw = body
+    raw = body[:-1] if body.endswith("\n") else body
     ds = json.loads(raw)
     ox, oy = ds["bounds"]["origin_source_xy"]
     inc = {int(p["source_id"]) for p in ds["provinces"]}
 
-    ex_edges: set[tuple] = set()
-    for sid, pr in archive.provinces.items():
-        if int(sid) in inc or pr.is_water:
-            continue
+    for sid in allow:
+        if sid in inc:
+            raise SystemExit(f"allowlisted source {sid} is included in production — refuse")
+        if sid not in archive.provinces:
+            raise SystemExit(f"allowlisted source {sid} missing from archive")
+        if archive.provinces[sid].is_water:
+            raise SystemExit(f"allowlisted source {sid} is water — refuse")
+
+    target_edges: set[tuple] = set()
+    for sid in allow:
+        pr = archive.provinces[sid]
         pts = [(round(float(x) - ox, 6), round(float(y) - oy, 6)) for x, y in pr.ring]
         if pts and pts[0] == pts[-1]:
             pts = pts[:-1]
         n = len(pts)
         for i in range(n):
-            ex_edges.add(_edge_key(pts[i], pts[(i + 1) % n]))
+            target_edges.add(_edge_key(pts[i], pts[(i + 1) % n]))
 
     suppress = []
     seen = set()
+    contributors: dict[str, int] = {}
     for p in ds["provinces"]:
         if p.get("is_water"):
             continue
@@ -78,22 +95,40 @@ def main(argv=None) -> int:
         if pts and pts[0] == pts[-1]:
             pts = pts[:-1]
         n = len(pts)
+        hit = 0
         for i in range(n):
             k = _edge_key(pts[i], pts[(i + 1) % n])
-            if k not in ex_edges:
+            if k not in target_edges:
                 continue
             flat = [k[0][0], k[0][1], k[1][0], k[1][1]]
             t = tuple(flat)
-            if t in seen:
-                continue
-            seen.add(t)
-            suppress.append(flat)
+            if t not in seen:
+                seen.add(t)
+                suppress.append(flat)
+            hit += 1
+        if hit:
+            contributors[p["id"]] = hit
+
+    # Hard cap: allowlisted feature only — fail if suppress set explodes
+    if len(suppress) > 64:
+        raise SystemExit(f"suppress set too large for targeted contract: {len(suppress)}")
+    if len(suppress) < 1:
+        raise SystemExit("suppress set empty — reviewed outline edges not found")
 
     ds["exterior_border_suppress"] = suppress
-    ds["exterior_border_suppress_note"] = (
-        "Local-space undirected edges shared with excluded exterior land; "
-        "Godot skips these so crop-edge holes (e.g. src 11836) are not outlined."
-    )
+    ds["exterior_border_suppress_meta"] = {
+        "contract": "allowlisted_excluded_source_outline_only",
+        "excluded_source_ids": list(allow),
+        "edge_count": len(suppress),
+        "included_land_contributors": contributors,
+        "note": (
+            "Only edges shared with allowlisted excluded land rings. "
+            "Does not suppress general crop-exterior boundaries."
+        ),
+    }
+    # drop stale broad note if present
+    ds.pop("exterior_border_suppress_note", None)
+
     text = json.dumps(ds, separators=(",", ":"), ensure_ascii=False)
     ds_sha = hashlib.sha256(text.encode("utf-8")).hexdigest()
     ds_path.write_text(text + "\n", encoding="utf-8")
@@ -115,7 +150,9 @@ def main(argv=None) -> int:
     print(
         json.dumps(
             {
+                "allowlisted_excluded_source_ids": list(allow),
                 "suppress_edge_count": len(suppress),
+                "contributors": contributors,
                 "dataset_sha256": ds_sha,
                 "province_count": ds["province_count"],
                 "included_ids_sha256": ds["included_source_ids_sha256"],

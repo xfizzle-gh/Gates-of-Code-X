@@ -115,7 +115,8 @@ func open(manifest_path: String, snapshot: Dictionary, faction_colors: Dictionar
 	bounds_max = PackedVector2Array()
 	rings.clear()
 	_suppress_border_keys.clear()
-	# Edges shared with excluded exterior land (e.g. src 11836) — never draw as borders.
+	# Allowlisted excluded-outline edges only (meta.contract=allowlisted_excluded_source_outline_only).
+	# Default: src 11836 northern pseudo-outline — not general crop-exterior borders.
 	for seg: Variant in data.get("exterior_border_suppress", []):
 		if not (seg is Array and (seg as Array).size() >= 4):
 			continue
