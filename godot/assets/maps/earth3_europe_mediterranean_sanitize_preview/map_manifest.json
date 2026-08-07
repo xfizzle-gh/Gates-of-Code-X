@@ -1,0 +1,34 @@
+{
+  "schema": "gates-of-codex.strategic-map",
+  "schema_version": 1,
+  "map_id": "earth3_europe_mediterranean_sanitize_preview",
+  "renderer": "polygon_mesh",
+  "asset_status": "sanitize_preview_not_production",
+  "polygon_dataset": {
+    "path": "polygon_dataset.json",
+    "sha256": "0e661e502558b97ba8e9d0131bce9178ce21e665c5f4e8c3cc76f00628a1824a",
+    "province_count": 3510
+  },
+  "province_count": 3510,
+  "bounds": {
+    "origin_source_xy": [
+      7076.0,
+      142.0
+    ],
+    "width": 4306.0,
+    "height": 3449.0,
+    "source_min_xy": [
+      7084.0,
+      150.0
+    ],
+    "source_max_xy": [
+      11374.0,
+      3583.0
+    ]
+  },
+  "fallback_map_id": "earth3_europe_mediterranean",
+  "pre_sanitize_included_ids_sha256": "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7",
+  "included_source_ids_sha256": "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3",
+  "stable_id_policy": "retain_production_e3_ids_with_gaps",
+  "water_policy": "water_not_normally_selectable"
+}

@@ -1,0 +1,7 @@
+{
+  "gameplay_province_ref_count": 144,
+  "refs_to_excluded_ids": [],
+  "missing_retained_refs": [],
+  "ok": true,
+  "note": "Province catalog rows may list water IDs as metadata; gameplay keys (selected/formation/site/route/encounter/handoff) must not use excluded IDs."
+}

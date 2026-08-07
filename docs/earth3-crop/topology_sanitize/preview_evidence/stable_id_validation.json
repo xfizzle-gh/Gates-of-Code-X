@@ -1,0 +1,79 @@
+{
+  "schema": "gates-of-codex.earth3-stable-id-validation",
+  "production_hash": "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7",
+  "preview_hash": "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3",
+  "production_province_count": 3512,
+  "preview_province_count": 3510,
+  "preview_land_count": 3295,
+  "preview_water_count": 215,
+  "removed": [
+    {
+      "gates_id": "e3_2830",
+      "source_id": 10920
+    },
+    {
+      "gates_id": "e3_2888",
+      "source_id": 11031
+    }
+  ],
+  "retained_mapping_count": 3510,
+  "checks": {
+    "all_retained_source_ids_keep_same_gates_id": true,
+    "removed_ids_are_gaps_not_recycled": true,
+    "no_global_renumber": true,
+    "island_geometry_unchanged": true,
+    "no_visual_geometry_overrides": true,
+    "adjacency_resolved": true,
+    "fixtures_ok": true
+  },
+  "adjacency_broken": [],
+  "fixture_validation": {
+    "gameplay_province_ref_count": 144,
+    "refs_to_excluded_ids": [],
+    "missing_retained_refs": [],
+    "ok": true,
+    "note": "Province catalog rows may list water IDs as metadata; gameplay keys (selected/formation/site/route/encounter/handoff) must not use excluded IDs."
+  },
+  "sample_retained": [
+    {
+      "gates_id": "e3_0000",
+      "source_id": 0
+    },
+    {
+      "gates_id": "e3_0001",
+      "source_id": 1
+    },
+    {
+      "gates_id": "e3_0002",
+      "source_id": 2
+    },
+    {
+      "gates_id": "e3_0003",
+      "source_id": 3
+    },
+    {
+      "gates_id": "e3_0004",
+      "source_id": 4
+    },
+    {
+      "gates_id": "e3_3507",
+      "source_id": 13364
+    },
+    {
+      "gates_id": "e3_3508",
+      "source_id": 13365
+    },
+    {
+      "gates_id": "e3_3509",
+      "source_id": 13368
+    },
+    {
+      "gates_id": "e3_3510",
+      "source_id": 13369
+    },
+    {
+      "gates_id": "e3_3511",
+      "source_id": 13886
+    }
+  ]
+}

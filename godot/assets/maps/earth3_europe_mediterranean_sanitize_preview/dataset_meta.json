@@ -1,0 +1,25 @@
+{
+  "map_id": "earth3_europe_mediterranean_sanitize_preview",
+  "asset_status": "sanitize_preview_not_production",
+  "province_count": 3510,
+  "land_count": 3295,
+  "water_count": 215,
+  "selectable_province_count": 3295,
+  "source_water_metadata_count": 215,
+  "included_source_ids_sha256": "a849b3817d98d34e1687c7f7d4899c21f54925fa458cde8b5fe425f6b05206f3",
+  "pre_sanitize_included_ids_sha256": "507b0069a9572e915059ff6d21bd9f13a68cf62a26770c94a90c0b0e6a900be7",
+  "dataset_sha256": "0e661e502558b97ba8e9d0131bce9178ce21e665c5f4e8c3cc76f00628a1824a",
+  "vertex_count": 332838,
+  "triangle_count": 325818,
+  "edge_count": 10223,
+  "excluded_source_ids": [
+    10920,
+    11031
+  ],
+  "excluded_gates_ids": [
+    "e3_2830",
+    "e3_2888"
+  ],
+  "visual_geometry_overrides": [],
+  "stable_ids": true
+}
