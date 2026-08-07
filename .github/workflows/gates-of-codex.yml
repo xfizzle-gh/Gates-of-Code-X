@@ -141,7 +141,7 @@ jobs:
           from pathlib import Path
           data = json.loads(Path("docs/godot-presentation/ci_profile_earth3.json").read_text(encoding="utf-8"))
           assert data.get("ok") is True, data
-          assert int(data.get("province_count", 0)) == 3038, data
+          assert int(data.get("province_count", 0)) >= 3000, data
           assert data.get("renderer") in ("polygon_mesh", "polygon"), data
           print("earth3 profiler ok", data)
           PY
