@@ -1,0 +1,38 @@
+{
+  "schema": "gates-of-codex.opengs-gate1-upstream-modules",
+  "schema_version": 1,
+  "repository": "Thomas-Holtvedt/opengs-maptool",
+  "commit": "06e7ec8517bd45872cf44d77cb8784e5ffca49bb",
+  "version": "0.3",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2025 Thomas Holtvedt AKA Good Solution Interactive",
+  "adaptation": "Required generation algorithms were adapted into tools/opengs_eval/gate1_generator.py. No PyQt, file dialog, GUI, Godot runtime, or JFA compute code was copied.",
+  "source_git_blobs": {
+    "config.py": "c5c3e5683e72e652c63f3708f7f1b15a0d807377",
+    "logic/numb_gen.py": "8857729e2ea57c49a8539ca347b2755e52325f7d",
+    "logic/utils.py": "44d3ad2ad84004347a06e328ad96a8e44ada977d",
+    "logic/territory_generator.py": "770f6a7167446bde1697ac18deaabc61706caf25",
+    "logic/province_generator.py": "10fd5557ba5f52d2c84908815180e4bb75e01acd"
+  },
+  "included_concepts": [
+    "mask extraction",
+    "density-weighted seed placement",
+    "Lloyd relaxation",
+    "territory and province Voronoi assignment",
+    "jagged border displacement",
+    "enclave cleanup",
+    "lake component generation",
+    "center-sampled terrain classification",
+    "raster and metadata export"
+  ],
+  "excluded": [
+    "PyQt",
+    "GUI layouts",
+    "file dialogs",
+    "OpenGS Godot runtime",
+    "JFA RenderingDevice compute",
+    "map-mode textures",
+    "label runtime",
+    "editor UX runtime"
+  ]
+}
