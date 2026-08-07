@@ -9,10 +9,12 @@ extends RefCounted
 const SCHEMA := "gates-of-codex.earth3-polygon-dataset"
 const CHUNK := 256
 const OWNERSHIP_SHADER_PATH := "res://shaders/province_ownership.gdshader"
-const OCEAN_COLOR := Color(0.11, 0.18, 0.28, 1.0)
-const COAST_COLOR := Color(0.06, 0.08, 0.1, 0.92)
-const LAND_BORDER_COLOR := Color(0.1, 0.12, 0.14, 0.75)
-const NEUTRAL_LAND_COLOR := Color(0.58, 0.6, 0.54, 1.0)
+const OCEAN_COLOR := Color(0.09, 0.15, 0.24, 1.0)
+const COAST_COLOR := Color(0.05, 0.07, 0.1, 0.96)
+const LAND_BORDER_COLOR := Color(0.14, 0.16, 0.18, 0.55)
+const FEDERAL_BORDER_COLOR := Color(0.22, 0.2, 0.16, 0.35)
+const NEUTRAL_LAND_COLOR := Color(0.55, 0.57, 0.5, 1.0)
+const OWNERSHIP_MIX_DEFAULT := 0.46
 
 var is_ready := false
 var error := ""
@@ -61,6 +63,9 @@ var _ownership_shader: Shader = null
 var _fill_material: ShaderMaterial = null
 var _tex_width := 1
 var _geometry_built := false
+var _view_scale := 1.0
+var _border_base_modulate := Color(1, 1, 1, 1)
+var _suppress_border_keys: Dictionary = {}
 
 
 func open(manifest_path: String, snapshot: Dictionary, faction_colors: Dictionary) -> bool:
@@ -109,6 +114,19 @@ func open(manifest_path: String, snapshot: Dictionary, faction_colors: Dictionar
 	bounds_min = PackedVector2Array()
 	bounds_max = PackedVector2Array()
 	rings.clear()
+	_suppress_border_keys.clear()
+	# Allowlisted excluded-outline edges only (meta.contract=allowlisted_excluded_source_outline_only).
+	# Default: src 11836 northern pseudo-outline — not general crop-exterior borders.
+	for seg: Variant in data.get("exterior_border_suppress", []):
+		if not (seg is Array and (seg as Array).size() >= 4):
+			continue
+		var s: Array = seg
+		var key := _edge_key(
+			Vector2(float(s[0]), float(s[1])),
+			Vector2(float(s[2]), float(s[3]))
+		)
+		if not key.is_empty():
+			_suppress_border_keys[key] = true
 	province_by_index.resize(province_count)
 	owners.resize(province_count)
 	is_water.resize(province_count)
@@ -293,6 +311,7 @@ func attach_to(host: Node2D) -> void:
 		_border_instance.mesh = _border_mesh
 		_border_instance.z_index = 1
 		holder.add_child(_border_instance)
+		_apply_border_visual_weight()
 	sync_transform_from_map_space(null)
 
 
@@ -307,6 +326,27 @@ func sync_transform_from_map_space(map_space) -> void:
 	var sy := rect.size.y / maxf(image_size_v.y, 1.0)
 	holder.position = rect.position
 	holder.scale = Vector2(sx, sy)
+	if map_space.get("view_scale") != null:
+		set_view_scale(float(map_space.view_scale))
+
+
+func set_view_scale(scale: float) -> void:
+	_view_scale = clampf(scale, 0.4, 12.0)
+	_apply_border_visual_weight()
+	if _fill_material != null:
+		# Slightly stronger ownership tint when zoomed in for faction readability.
+		var mix := OWNERSHIP_MIX_DEFAULT + clampf((_view_scale - 1.0) * 0.04, -0.08, 0.12)
+		_fill_material.set_shader_parameter("ownership_mix", mix)
+
+
+func _apply_border_visual_weight() -> void:
+	if not is_instance_valid(_border_instance):
+		return
+	# Zoom-dependent province borders: quieter at full theatre, stronger when close.
+	# Coast edges already use darker COAST_COLOR in the mesh; modulate scales overall weight.
+	var a := clampf(0.35 + (_view_scale - 0.7) * 0.28, 0.28, 1.0)
+	_border_base_modulate = Color(1, 1, 1, a)
+	_border_instance.modulate = _border_base_modulate
 
 
 func refresh_snapshot(snapshot: Dictionary, faction_colors: Dictionary) -> void:
@@ -384,19 +424,22 @@ func anchor_pixel(province_id: String) -> Vector2:
 func draw_overlays(canvas: CanvasItem, map_space) -> void:
 	if not is_ready:
 		return
-	# Land-only hover/selection outlines (water never selectable in v1).
+	# Visual hierarchy weights: selection > legal targets > hover (land only).
+	var w_sel := clampf(2.2 + _view_scale * 0.35, 2.2, 4.0)
+	var w_tgt := clampf(1.4 + _view_scale * 0.25, 1.4, 2.8)
+	var w_hov := clampf(1.6 + _view_scale * 0.2, 1.6, 3.0)
 	if _hover_index >= 0 and is_water[_hover_index] != 1:
-		_draw_province_outline(canvas, map_space, _hover_index, Color(1, 1, 0.2, 0.95), 2.0)
+		_draw_province_outline(canvas, map_space, _hover_index, Color(1.0, 0.95, 0.35, 0.92), w_hov)
 	if not _selected_id.is_empty() and index_by_province.has(_selected_id):
 		var si := int(index_by_province[_selected_id])
 		if is_water[si] != 1:
-			_draw_province_outline(canvas, map_space, si, Color(1, 1, 1, 1), 2.5)
+			_draw_province_outline(canvas, map_space, si, Color(0.95, 0.98, 1.0, 1.0), w_sel)
 	for tid in _legal_targets.keys():
 		if index_by_province.has(String(tid)):
 			var li := int(index_by_province[String(tid)])
 			if is_water[li] == 1:
 				continue
-			_draw_province_outline(canvas, map_space, li, Color(0.3, 1.0, 0.45, 0.9), 1.5)
+			_draw_province_outline(canvas, map_space, li, Color(0.35, 0.95, 0.5, 0.92), w_tgt)
 
 
 func debug_lines() -> PackedStringArray:
@@ -410,7 +453,14 @@ func debug_lines() -> PackedStringArray:
 		"load_ms=%.1f refresh_ms=%.2f hover=%s selected=%s"
 		% [load_ms, refresh_ms, str(_hover_index), _selected_id]
 	)
-	lines.append("ocean_underlay=true water_fill=false water_water_borders=false")
+	lines.append(
+		"ocean_underlay=true terrain_tint=true ownership_mix~%.2f view_scale=%.2f border_a=%.2f"
+		% [OWNERSHIP_MIX_DEFAULT, _view_scale, _border_base_modulate.a]
+	)
+	lines.append(
+		"water_fill=false water_water_borders=false exterior_singleton_borders=false suppress_edges=%d"
+		% _suppress_border_keys.size()
+	)
 	return lines
 
 
@@ -423,13 +473,20 @@ func _ensure_ownership_material() -> void:
 			_ownership_shader.code = """
 shader_type canvas_item;
 uniform sampler2D ownership_colors : filter_nearest, repeat_disable;
+uniform float ownership_mix = 0.46;
 void fragment() {
-	COLOR = texture(ownership_colors, UV);
+	vec4 own = texture(ownership_colors, UV);
+	vec3 terrain = vec3(0.42, 0.46, 0.38);
+	COLOR = vec4(mix(terrain, own.rgb, ownership_mix), 1.0);
 }
 """
 	if _fill_material == null:
 		_fill_material = ShaderMaterial.new()
 		_fill_material.shader = _ownership_shader
+		_fill_material.set_shader_parameter("ownership_mix", OWNERSHIP_MIX_DEFAULT)
+		_fill_material.set_shader_parameter("terrain_low", Vector3(0.38, 0.43, 0.34))
+		_fill_material.set_shader_parameter("terrain_high", Vector3(0.50, 0.48, 0.40))
+		_fill_material.set_shader_parameter("terrain_contrast", 0.22)
 	if _ownership_tex != null:
 		_fill_material.set_shader_parameter("ownership_colors", _ownership_tex)
 		owner_texture = _ownership_tex
@@ -514,10 +571,16 @@ func _build_border_mesh_from_edges(edge_counts: Dictionary) -> void:
 		# Pure water–water: skip.
 		if land_n <= 0:
 			continue
+		# Dataset-authored suppress list: edges shared with excluded exterior land (not restored).
+		if _suppress_border_keys.has(String(key)):
+			continue
 		# Singleton land edge with no included opposite (exterior / excluded outside crop):
 		# do not draw an outlined empty pseudo-province (e.g. src 11836 crop-edge artifact).
 		if land_n == 1 and water_n == 0:
 			continue
+		# Singleton land against water that is also on the exterior-suppress list already handled.
+		# Additional guard: singleton land+water where land has no second land peer stays coast only
+		# when not suppressed — real coastline. Exterior hole outlines are in suppress set.
 		var parts: PackedStringArray = String(key).split("|")
 		if parts.size() != 2:
 			continue
@@ -601,6 +664,7 @@ func _approx_area(idx: int) -> float:
 
 func _color_for_owner(owner: String, water: bool) -> Color:
 	# Water is not filled via mesh; lookup entry unused for draws but kept stable.
+	# Land: saturated faction colors; shader mixes with procedural terrain (translucent tint).
 	if water or owner == "water":
 		return OCEAN_COLOR
 	if _owner_colors.has(owner):

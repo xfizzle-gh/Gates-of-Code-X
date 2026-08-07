@@ -368,6 +368,26 @@ func _open_operational_graph() -> void:
 		operational_graph.clear()
 
 
+func _loaded_province_count() -> int:
+	# HUD must report the opened map backend count (polygon dataset / color-id map),
+	# never a stale snapshot/fixture province list length.
+	if map_backend_is_polygon and polygon_map != null and polygon_map.is_ready:
+		var pn := int(polygon_map.province_count)
+		if pn > 0:
+			return pn
+	var am = _active_map()
+	if am != null and am.is_ready:
+		if "province_count" in am and int(am.province_count) > 0:
+			return int(am.province_count)
+		if "row_by_province" in am and am.row_by_province is Dictionary:
+			var rn := int(am.row_by_province.size())
+			if rn > 0:
+				return rn
+	if color_id_map != null and color_id_map.is_ready and color_id_map.row_by_province is Dictionary:
+		return int(color_id_map.row_by_province.size())
+	return 0
+
+
 func _sync_map_space() -> void:
 	var am = _active_map()
 	if am == null or not am.is_ready:
@@ -447,7 +467,7 @@ func _draw() -> void:
 	var cross_mode := "crossings:on" if show_crossing_overlay else "crossings:off"
 	var diag := "Map: %s  |  Provinces: %s  |  %s  |  %s  |  %s" % [
 		String(map_contract.get("map_id", campaign.get("map_id", ""))),
-		int(snapshot.get("provinces", []).size()),
+		_loaded_province_count(),
 		"polygon" if map_backend_is_polygon else color_id_map.background_status(),
 		front_mode,
 		cross_mode,
@@ -707,7 +727,11 @@ func _draw_presentation_proof_overlays() -> void:
 	# Temporary presentation-only: eastern extent labels, Europe-Asia boundary, federal outlines.
 	if presentation_fixture.is_empty():
 		return
-	# Federal subject outlines (behind labels).
+	# Federal subject outlines (behind labels). Quieter at full theatre; stronger when zoomed.
+	var fed_w := clampf(1.2 + view_scale * 0.35, 1.2, 2.6)
+	var fed_a := clampf(0.28 + view_scale * 0.12, 0.28, 0.7)
+	if view_scale < 0.9:
+		fed_a *= 0.55
 	for subj: Variant in presentation_fixture.get("federal_subject_outlines", []):
 		if not subj is Dictionary:
 			continue
@@ -718,13 +742,13 @@ func _draw_presentation_proof_overlays() -> void:
 				outline.append(_image_to_screen(Vector2(float(px[0]), float(px[1]))))
 		if outline.size() >= 3:
 			outline.append(outline[0])
-			var col := Color(0.95, 0.75, 0.2, 0.55)
+			var col := Color(0.95, 0.75, 0.2, fed_a)
 			var sid := String(srow.get("id", ""))
 			if sid.ends_with("-city"):
-				col = Color(1.0, 0.45, 0.35, 0.75)
+				col = Color(1.0, 0.45, 0.35, minf(0.85, fed_a + 0.15))
 			elif sid.find("oblast") >= 0 or sid.ends_with("-oblast"):
-				col = Color(0.35, 0.85, 1.0, 0.55)
-			draw_polyline(outline, col, 2.0, true)
+				col = Color(0.35, 0.85, 1.0, fed_a)
+			draw_polyline(outline, col, fed_w, true)
 	# Conventional Europe-Asia boundary.
 	var bpts := PackedVector2Array()
 	for px2: Variant in presentation_fixture.get("europe_asia_boundary_pixels", []):
@@ -810,36 +834,39 @@ func _draw_color_id_overlays() -> void:
 			draw_circle(position + Vector2(8, 15), 3.2, Color("7fe7ff"))
 
 		if occupied:
-			# Prefer operational display_pixel (node) when present; else province anchor.
-			var counter_pos := position
-			var display_pixel: Variant = battalion.get("display_pixel", null)
-			if display_pixel is Array and (display_pixel as Array).size() >= 2:
-				var px := float((display_pixel as Array)[0])
-				var py := float((display_pixel as Array)[1])
-				counter_pos = _clamp_point_in_rect(
-					_image_to_screen(Vector2(px, py)),
-					overlay_bounds,
-					OVERLAY_EDGE_PAD
+			# LOD: full-theatre hides ambient counters; keep selected/hovered/target stacks.
+			var show_counter := view_scale >= 0.95 or selected or hovered or target
+			if show_counter:
+				# Prefer operational display_pixel (node) when present; else province anchor.
+				var counter_pos := position
+				var display_pixel: Variant = battalion.get("display_pixel", null)
+				if display_pixel is Array and (display_pixel as Array).size() >= 2:
+					var px := float((display_pixel as Array)[0])
+					var py := float((display_pixel as Array)[1])
+					counter_pos = _clamp_point_in_rect(
+						_image_to_screen(Vector2(px, py)),
+						overlay_bounds,
+						OVERLAY_EDGE_PAD
+					)
+				if not bool(battalion.get("is_in_supply", true)):
+					draw_arc(counter_pos, 22.0, 0.0, TAU, 30, Color("ff6b5f"), 2.4)
+				if int(battalion.get("encircled_turns", 0)) > 0:
+					draw_arc(counter_pos, 25.0, 0.0, TAU, 30, Color("ffb14e"), 2.4)
+				var counter_rect := MapMarkersScript.draw_formation_counter(
+					self,
+					counter_pos,
+					faction_color,
+					MapMarkersScript.battalion_type_glyph(String(battalion.get("battalion_type", ""))),
+					int(battalion.get("unit_count", 0)),
+					selected,
+					bool(battalion.get("is_in_supply", true)),
+					int(battalion.get("encircled_turns", 0)) > 0
 				)
-			if not bool(battalion.get("is_in_supply", true)):
-				draw_arc(counter_pos, 22.0, 0.0, TAU, 30, Color("ff6b5f"), 2.4)
-			if int(battalion.get("encircled_turns", 0)) > 0:
-				draw_arc(counter_pos, 25.0, 0.0, TAU, 30, Color("ffb14e"), 2.4)
-			var counter_rect := MapMarkersScript.draw_formation_counter(
-				self,
-				counter_pos,
-				faction_color,
-				MapMarkersScript.battalion_type_glyph(String(battalion.get("battalion_type", ""))),
-				int(battalion.get("unit_count", 0)),
-				selected,
-				bool(battalion.get("is_in_supply", true)),
-				int(battalion.get("encircled_turns", 0)) > 0
-			)
-			reserved.append(counter_rect)
-			var stack: Array = battalion_stacks_by_province.get(province_id, [])
-			if stack.size() > 1:
-				var badge := _clamp_point_in_rect(counter_pos + Vector2(19, -14), overlay_bounds, 12.0)
-				reserved.append(MapMarkersScript.draw_stack_badge(self, badge, stack.size()))
+				reserved.append(counter_rect)
+				var stack: Array = battalion_stacks_by_province.get(province_id, [])
+				if stack.size() > 1 and view_scale >= 1.15:
+					var badge := _clamp_point_in_rect(counter_pos + Vector2(19, -14), overlay_bounds, 12.0)
+					reserved.append(MapMarkersScript.draw_stack_badge(self, badge, stack.size()))
 
 		if not rebuild:
 			continue
@@ -850,10 +877,12 @@ func _draw_color_id_overlays() -> void:
 			priority = 100
 		elif target:
 			priority = 80
-		elif occupied:
+		elif occupied and view_scale >= 1.05:
 			priority = 70
 		elif named and view_scale >= 2.4:
 			priority = 40
+		elif hovered and view_scale >= 1.3:
+			priority = 60
 		# Full-theatre Home: suppress ambient names (declutter). Hover labels added live.
 		if priority <= 0:
 			continue
@@ -1098,7 +1127,7 @@ func _fit_complete_theatre() -> void:
 		fitted_once = true
 		var map_contract0: Dictionary = snapshot.get("strategic_map", {})
 		var mid0 := String(map_contract0.get("map_id", "earth3_europe_mediterranean"))
-		var pcount0 := int(am.province_count) if "province_count" in am else int(snapshot.get("provinces", []).size())
+		var pcount0 := _loaded_province_count()
 		status_message = "Fitted Earth3 home frame map %s (%s provinces). Home=frame  F=front." % [mid0, pcount0]
 		queue_redraw()
 		return
@@ -1107,9 +1136,7 @@ func _fit_complete_theatre() -> void:
 	view_offset = Vector2.ZERO
 	fitted_once = true
 	var map_contract: Dictionary = snapshot.get("strategic_map", {})
-	var pcount := int(am.province_count) if "province_count" in am else int(snapshot.get("provinces", []).size())
-	if pcount <= 0:
-		pcount = int(snapshot.get("provinces", []).size())
+	var pcount := _loaded_province_count()
 	status_message = "Fitted complete theatre (%s provinces). Home=full  F=front." % [pcount]
 	var mid := String(map_contract.get("map_id", ""))
 	if mid.is_empty() and map_backend_is_polygon:
