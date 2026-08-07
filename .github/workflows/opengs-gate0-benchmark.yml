@@ -94,6 +94,13 @@ jobs:
           repository: nvkelso/natural-earth-vector
           ref: v5.1.2
           path: build/upstream/natural-earth-vector
+          sparse-checkout: |
+            geojson/ne_10m_land.geojson
+            geojson/ne_10m_lakes.geojson
+            geojson/ne_10m_admin_0_boundary_lines_land.geojson
+            geojson/ne_10m_populated_places_simple.geojson
+            geojson/ne_10m_rivers_lake_centerlines.geojson
+          sparse-checkout-cone-mode: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
