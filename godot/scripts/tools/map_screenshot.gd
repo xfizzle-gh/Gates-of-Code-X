@@ -242,6 +242,11 @@ func _run_capture() -> void:
 			is_polygon,
 		]
 	)
+	if is_instance_valid(scene):
+		var parent := scene.get_parent()
+		if parent != null:
+			parent.remove_child(scene)
+		scene.free()
 	quit(0)
 
 

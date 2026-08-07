@@ -102,9 +102,19 @@ jobs:
         run: |
           set -euo pipefail
           # True CanvasItem draw path needs a display (xvfb), not dummy headless.
+          # Fail on CanvasItem/ObjectDB/resource exit leaks (#97).
+          log="$(mktemp)"
+          set +e
           xvfb-run -a -s "-screen 0 1920x1080x24" \
             "$HOME/godot" --path . --audio-driver Dummy \
-            -s res://scripts/tools/map_ci_check.gd
+            -s res://scripts/tools/map_ci_check.gd 2>&1 | tee "$log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if grep -E 'RID of type "CanvasItem" was leaked|ObjectDB instances were leaked|resources still in use at exit' "$log"; then
+            echo "map_ci_check: Godot exit leak detected"
+            exit 1
+          fi
+          exit "$code"
       - name: Godot Earth3 polygon smoke
         working-directory: godot
         run: |

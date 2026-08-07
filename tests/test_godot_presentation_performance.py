@@ -134,11 +134,15 @@ class GodotPresentationPerformanceTests(unittest.TestCase):
         ci = (GODOT / "scripts/tools/map_ci_check.gd").read_text(encoding="utf-8")
         self.assertIn("map_ci_check", ci)
         self.assertIn("main.tscn", ci)
+        self.assertIn("layer.free()", ci)
+        self.assertIn("_cleanup_and_quit", ci)
         workflow = (ROOT / ".github/workflows/gates-of-codex.yml").read_text(encoding="utf-8")
         self.assertIn("godot-map:", workflow)
         self.assertIn("map_ci_check.gd", workflow)
         self.assertIn("map_profiler.gd", workflow)
         self.assertIn("map_screenshot.gd", workflow)
+        self.assertIn("ObjectDB instances were leaked", workflow)
+        self.assertIn('RID of type "CanvasItem" was leaked', workflow)
 
     def test_debug_stats_not_cleared_before_overlay(self) -> None:
         main = (GODOT / "scripts/main_color_id.gd").read_text(encoding="utf-8")

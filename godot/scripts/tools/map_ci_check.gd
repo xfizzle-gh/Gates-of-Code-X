@@ -30,6 +30,8 @@ const FACTION_COLORS := {
 const RENDER_FRAMES := 12
 const SMOKE_SHOT := "user://map_ci_render_smoke.png"
 
+var _scene: Node = null
+
 
 func _initialize() -> void:
 	print("map_ci_check: start")
@@ -41,8 +43,15 @@ func _run() -> void:
 	var space = MapSpaceScript.new()
 	var debug = MapDebugScript.new()
 	if layer == null or space == null or debug == null or MapMarkersScript == null:
+		if layer != null and is_instance_valid(layer):
+			layer.free()
 		_fail("presentation script instantiation failed")
 		return
+	# MapTextureLayer is a Node2D/CanvasItem — free the orphan immediately after smoke.
+	layer.free()
+	layer = null
+	space = null
+	debug = null
 
 	if not FileAccess.file_exists(DEFAULT_SNAPSHOT):
 		_fail("missing committed snapshot fixture: %s" % DEFAULT_SNAPSHOT)
@@ -91,6 +100,7 @@ func _run() -> void:
 		mutated["provinces"] = provinces
 		color_map.refresh_snapshot(mutated, FACTION_COLORS)
 	print("map_ci_check: color_id refresh ok provinces=%s" % color_map.row_by_province.size())
+	color_map = null
 
 	# Earth3 polygon backend gate (when assets committed).
 	if FileAccess.file_exists(EARTH3_MANIFEST) and FileAccess.file_exists(EARTH3_SNAPSHOT):
@@ -133,6 +143,7 @@ func _run() -> void:
 		print("map_ci_check: earth3 polygon ok provinces=%s load_ms=%s refresh_ms=%s meshes=%s" % [
 			pmap.province_count, pmap.load_ms, pmap.refresh_ms, pmap.mesh_count
 		])
+		pmap = null
 
 	DisplayServer.window_set_size(Vector2i(1280, 720))
 	if root is Window:
@@ -143,50 +154,50 @@ func _run() -> void:
 	if packed == null:
 		_fail("failed to load res://main.tscn")
 		return
-	var scene: Node = packed.instantiate()
-	if scene == null:
+	_scene = packed.instantiate()
+	if _scene == null:
 		_fail("failed to instantiate main scene")
 		return
-	root.add_child(scene)
+	root.add_child(_scene)
 
-	if scene.get("snapshot_source_path") != null:
-		scene.snapshot_source_path = DEFAULT_SNAPSHOT
-	if scene.has_method("_load_snapshot"):
-		scene.call("_load_snapshot", DEFAULT_SNAPSHOT)
-	if not str(scene.get("load_error") if scene.get("load_error") != null else "").is_empty():
-		_fail("snapshot load_error=%s" % scene.load_error)
+	if _scene.get("snapshot_source_path") != null:
+		_scene.snapshot_source_path = DEFAULT_SNAPSHOT
+	if _scene.has_method("_load_snapshot"):
+		_scene.call("_load_snapshot", DEFAULT_SNAPSHOT)
+	if not str(_scene.get("load_error") if _scene.get("load_error") != null else "").is_empty():
+		_fail("snapshot load_error=%s" % _scene.load_error)
 		return
-	if scene.get("map_manifest_source_path") != null:
-		scene.map_manifest_source_path = DEFAULT_MANIFEST
-	if scene.has_method("_load_presentation_fixture"):
-		scene.call("_load_presentation_fixture", DEFAULT_FIXTURE)
-	if scene.has_method("_open_color_id_map"):
-		scene.call("_open_color_id_map")
-	if scene.get("map_debug") != null:
-		scene.map_debug.enabled = true
-		if scene.has_method("set_process"):
-			scene.set_process(true)
-	if scene.has_method("_fit_complete_theatre"):
-		scene.call("_fit_complete_theatre")
-	if not alt.is_empty() and scene.get("selected_province_id") != null:
-		scene.selected_province_id = alt
-		if scene.has_method("_rebuild_legal_targets"):
-			scene.call("_rebuild_legal_targets")
-	if scene.get("_layers_dirty") != null:
-		scene._layers_dirty = true
-	if scene.has_method("_sync_presentation_layers"):
-		scene.call("_sync_presentation_layers")
-	if scene.has_method("queue_redraw"):
-		scene.queue_redraw()
+	if _scene.get("map_manifest_source_path") != null:
+		_scene.map_manifest_source_path = DEFAULT_MANIFEST
+	if _scene.has_method("_load_presentation_fixture"):
+		_scene.call("_load_presentation_fixture", DEFAULT_FIXTURE)
+	if _scene.has_method("_open_color_id_map"):
+		_scene.call("_open_color_id_map")
+	if _scene.get("map_debug") != null:
+		_scene.map_debug.enabled = true
+		if _scene.has_method("set_process"):
+			_scene.set_process(true)
+	if _scene.has_method("_fit_complete_theatre"):
+		_scene.call("_fit_complete_theatre")
+	if not alt.is_empty() and _scene.get("selected_province_id") != null:
+		_scene.selected_province_id = alt
+		if _scene.has_method("_rebuild_legal_targets"):
+			_scene.call("_rebuild_legal_targets")
+	if _scene.get("_layers_dirty") != null:
+		_scene._layers_dirty = true
+	if _scene.has_method("_sync_presentation_layers"):
+		_scene.call("_sync_presentation_layers")
+	if _scene.has_method("queue_redraw"):
+		_scene.queue_redraw()
 
-	if scene.get("color_id_map") == null or not bool(scene.color_id_map.is_ready):
+	if _scene.get("color_id_map") == null or not bool(_scene.color_id_map.is_ready):
 		var err := ""
-		if scene.get("color_id_map") != null:
-			err = str(scene.color_id_map.error)
+		if _scene.get("color_id_map") != null:
+			err = str(_scene.color_id_map.error)
 		_fail("main scene color_id_map not ready: %s" % err)
 		return
-	var bg := scene.find_child("MapBackgroundLayer", true, false)
-	var identity := scene.find_child("MapIdentityLayer", true, false)
+	var bg := _scene.find_child("MapBackgroundLayer", true, false)
+	var identity := _scene.find_child("MapIdentityLayer", true, false)
 	if bg == null or identity == null:
 		_fail("expected MapBackgroundLayer and MapIdentityLayer children")
 		return
@@ -199,12 +210,12 @@ func _run() -> void:
 	print("map_ci_check: layers ok; rendering frames")
 
 	for _i in range(RENDER_FRAMES):
-		if scene.get("_layers_dirty") != null:
-			scene._layers_dirty = true
-		if scene.has_method("_sync_presentation_layers"):
-			scene.call("_sync_presentation_layers")
-		if scene.has_method("queue_redraw"):
-			scene.queue_redraw()
+		if _scene.get("_layers_dirty") != null:
+			_scene._layers_dirty = true
+		if _scene.has_method("_sync_presentation_layers"):
+			_scene.call("_sync_presentation_layers")
+		if _scene.has_method("queue_redraw"):
+			_scene.queue_redraw()
 		RenderingServer.force_draw(false, 0.0)
 		await create_timer(0.04).timeout
 
@@ -235,13 +246,23 @@ func _run() -> void:
 		]
 	)
 	print("map_ci_check: PASS")
-	quit(0)
+	_cleanup_and_quit(0)
+
+
+func _cleanup_and_quit(code: int) -> void:
+	if _scene != null and is_instance_valid(_scene):
+		var parent := _scene.get_parent()
+		if parent != null:
+			parent.remove_child(_scene)
+		_scene.free()
+	_scene = null
+	quit(code)
 
 
 func _fail(reason: String) -> void:
 	push_error("map_ci_check FAIL: %s" % reason)
 	print("map_ci_check: FAIL %s" % reason)
-	quit(1)
+	_cleanup_and_quit(1)
 
 
 func _load_json(path: String) -> Dictionary:
