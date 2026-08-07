@@ -58,16 +58,27 @@ REQUIRED_LOCATIONS: tuple[RequiredLocation, ...] = (
     RequiredLocation("Algiers", "Algiers", 1399, True, 8496.0, 2985.0),
     RequiredLocation("Tripoli", "Tripoli", 1365, True, 8989.0, 3231.0),
     RequiredLocation("Cairo", "Cairo", 2669, True, 9867.0, 3402.0),
+    RequiredLocation("Alexandria", "Alexandria", 2662, True, 9806.0, 3333.0),
+    RequiredLocation("Port_Said", "Port Said", 2666, True, 9919.0, 3332.0),
+    RequiredLocation("Suez", "Suez", 2683, True, 9931.0, 3398.0),
+    RequiredLocation("Arish_Sinai", "Arish", 3723, True, 9995.0, 3334.0),
+    RequiredLocation("Jerusalem", "Jerusalem", 8065, True, 10061.0, 3296.0),
+    RequiredLocation("Beirut", "Beirut", 6087, True, 10079.0, 3176.0),
+    RequiredLocation("Damascus", "Damascus", 3719, True, 10115.0, 3196.0),
+    RequiredLocation("Adana_southern_Turkey", "Adana", 1096, True, 10067.0, 2987.0),
     RequiredLocation("Stockholm", "Stockholm", 1049, True, 9225.0, 1315.0),
     RequiredLocation("Helsinki", "Helsinki", 1461, True, 9560.0, 1240.0),
     RequiredLocation("Tallinn", "Tallinn", 513, True, 9550.0, 1310.0),
     RequiredLocation("Riga", "Riga", 504, True, 9528.0, 1532.0),
     RequiredLocation("Vilnius", "Vilnius", 442, True, 9579.0, 1737.0),
-    # Must exclude
-    RequiredLocation("Murmansk", "Murmansk", 11370, False, 9961.0, 474.0),
+    RequiredLocation("Narvik_northern_Norway", "Narvik", 1464, True, 9197.0, 531.0),
+    RequiredLocation("Kiruna_northern_Sweden", "Kiruna", 11120, True, 9332.0, 587.0),
+    RequiredLocation("Rovaniemi_northern_Finland", "Rovaniemi", 1458, True, 9599.0, 717.0),
+    # Must exclude (deep Arctic Russia — not Kola approach)
     RequiredLocation("Arkhangelsk", "Arkhangelsk", 11764, False, 10325.0, 892.0),
     # Informational only (non-gating)
     RequiredLocation("Oslo", "Oslo", 1009, True, 8870.0, 1261.0, gating=False),
+    RequiredLocation("Murmansk_kola_approach", "Murmansk", 11370, True, 9961.0, 474.0, gating=False),
 )
 
 GATING_LOCATION_KEYS: tuple[str, ...] = tuple(

@@ -1,39 +1,39 @@
 {
   "map_id": "earth3_europe_mediterranean",
-  "province_count": 3038,
-  "land_count": 2843,
-  "water_count": 195,
-  "vertex_count": 256111,
-  "triangle_count": 250035,
-  "edge_count": 8856,
-  "border_segment_count": 137559,
-  "approved_included_ids_sha256": "7effdffbccbcce33ecba364dc8d161ded5053266db2df0deee605a98c36620dc",
-  "included_source_ids_sha256": "7effdffbccbcce33ecba364dc8d161ded5053266db2df0deee605a98c36620dc",
-  "dataset_sha256": "5c8652bd9537dde7e9a9641bb5883d737b04e26b9b79441bbafe495e49732289",
+  "province_count": 3345,
+  "land_count": 3133,
+  "water_count": 212,
+  "vertex_count": 305899,
+  "triangle_count": 299209,
+  "edge_count": 9756,
+  "border_segment_count": 168100,
+  "approved_included_ids_sha256": "4fe9d98bbf40d2588286d3d4ec5513ffa3a8f0b7b2ae5689373217b4cb569a1b",
+  "included_source_ids_sha256": "4fe9d98bbf40d2588286d3d4ec5513ffa3a8f0b7b2ae5689373217b4cb569a1b",
+  "dataset_sha256": "6e26eb8938195aa5a41952afac9e337a6552ce335d9b426f86d46cb45cedc758",
   "bounds": {
     "origin_source_xy": [
       7076.0,
-      640.0
+      142.0
     ],
-    "width": 3787.0,
-    "height": 2867.0,
+    "width": 3851.0,
+    "height": 3449.0,
     "source_min_xy": [
       7084.0,
-      648.0
+      150.0
     ],
     "source_max_xy": [
-      10855.0,
-      3499.0
+      10919.0,
+      3583.0
     ]
   },
   "triangulation_audit": {
     "ok": true,
-    "province_count_checked": 3038,
+    "province_count_checked": 3345,
     "failed_count": 0,
     "failed_province_ids": [],
     "max_area_error": 7.424446545085129e-16,
-    "total_polygon_area": 6427877.5,
-    "total_triangle_area": 6427877.5,
+    "total_polygon_area": 8178157.5,
+    "total_triangle_area": 8178157.5,
     "triangulator": "shapely_delaunay_clipped_interior",
     "area_rel_tol": 0.001,
     "no_fan_fallback": true

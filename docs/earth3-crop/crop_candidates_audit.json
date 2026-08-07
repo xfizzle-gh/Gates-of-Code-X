@@ -747,13 +747,6 @@
           "ok": false,
           "anchors": [
             {
-              "city": "Murmansk",
-              "source_province_id": 11370,
-              "included": false,
-              "x": 9961.0,
-              "y": 474.0
-            },
-            {
               "city": "Arkhangelsk",
               "source_province_id": 11764,
               "included": true,
@@ -788,9 +781,11 @@
       "exact_required_locations": {
         "ok": false,
         "failure_keys": [
+          "Narvik_northern_Norway",
+          "Kiruna_northern_Sweden",
           "Arkhangelsk"
         ],
-        "gating_key_count": 34,
+        "gating_key_count": 44,
         "gating_keys": [
           "Reykjavik",
           "London",
@@ -819,12 +814,22 @@
           "Algiers",
           "Tripoli",
           "Cairo",
+          "Alexandria",
+          "Port_Said",
+          "Suez",
+          "Arish_Sinai",
+          "Jerusalem",
+          "Beirut",
+          "Damascus",
+          "Adana_southern_Turkey",
           "Stockholm",
           "Helsinki",
           "Tallinn",
           "Riga",
           "Vilnius",
-          "Murmansk",
+          "Narvik_northern_Norway",
+          "Kiruna_northern_Sweden",
+          "Rovaniemi_northern_Finland",
           "Arkhangelsk"
         ],
         "informational": [
@@ -846,6 +851,25 @@
               1261.0
             ],
             "ok": true
+          },
+          {
+            "key": "Murmansk_kola_approach",
+            "city_name_exact": "Murmansk",
+            "source_province_id": 11370,
+            "must_include": true,
+            "gating": false,
+            "included": false,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9961.0,
+              474.0
+            ],
+            "expected_xy": [
+              9961.0,
+              474.0
+            ],
+            "ok": false
           }
         ],
         "locations": [
@@ -1363,6 +1387,158 @@
             "ok": true
           },
           {
+            "key": "Alexandria",
+            "city_name_exact": "Alexandria",
+            "source_province_id": 2662,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9806.0,
+              3333.0
+            ],
+            "expected_xy": [
+              9806.0,
+              3333.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Port_Said",
+            "city_name_exact": "Port Said",
+            "source_province_id": 2666,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9919.0,
+              3332.0
+            ],
+            "expected_xy": [
+              9919.0,
+              3332.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Suez",
+            "city_name_exact": "Suez",
+            "source_province_id": 2683,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9931.0,
+              3398.0
+            ],
+            "expected_xy": [
+              9931.0,
+              3398.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Arish_Sinai",
+            "city_name_exact": "Arish",
+            "source_province_id": 3723,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9995.0,
+              3334.0
+            ],
+            "expected_xy": [
+              9995.0,
+              3334.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Jerusalem",
+            "city_name_exact": "Jerusalem",
+            "source_province_id": 8065,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              10061.0,
+              3296.0
+            ],
+            "expected_xy": [
+              10061.0,
+              3296.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Beirut",
+            "city_name_exact": "Beirut",
+            "source_province_id": 6087,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              10079.0,
+              3176.0
+            ],
+            "expected_xy": [
+              10079.0,
+              3176.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Damascus",
+            "city_name_exact": "Damascus",
+            "source_province_id": 3719,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              10115.0,
+              3196.0
+            ],
+            "expected_xy": [
+              10115.0,
+              3196.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Adana_southern_Turkey",
+            "city_name_exact": "Adana",
+            "source_province_id": 1096,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              10067.0,
+              2987.0
+            ],
+            "expected_xy": [
+              10067.0,
+              2987.0
+            ],
+            "ok": true
+          },
+          {
             "key": "Stockholm",
             "city_name_exact": "Stockholm",
             "source_province_id": 1049,
@@ -1458,21 +1634,59 @@
             "ok": true
           },
           {
-            "key": "Murmansk",
-            "city_name_exact": "Murmansk",
-            "source_province_id": 11370,
-            "must_include": false,
+            "key": "Narvik_northern_Norway",
+            "city_name_exact": "Narvik",
+            "source_province_id": 1464,
+            "must_include": true,
             "gating": true,
             "included": false,
             "point_in_province_polygon": true,
             "city_row_found_exact": true,
             "city_xy": [
-              9961.0,
-              474.0
+              9197.0,
+              531.0
             ],
             "expected_xy": [
-              9961.0,
-              474.0
+              9197.0,
+              531.0
+            ],
+            "ok": false
+          },
+          {
+            "key": "Kiruna_northern_Sweden",
+            "city_name_exact": "Kiruna",
+            "source_province_id": 11120,
+            "must_include": true,
+            "gating": true,
+            "included": false,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9332.0,
+              587.0
+            ],
+            "expected_xy": [
+              9332.0,
+              587.0
+            ],
+            "ok": false
+          },
+          {
+            "key": "Rovaniemi_northern_Finland",
+            "city_name_exact": "Rovaniemi",
+            "source_province_id": 1458,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9599.0,
+              717.0
+            ],
+            "expected_xy": [
+              9599.0,
+              717.0
             ],
             "ok": true
           },
@@ -1513,6 +1727,25 @@
               1261.0
             ],
             "ok": true
+          },
+          {
+            "key": "Murmansk_kola_approach",
+            "city_name_exact": "Murmansk",
+            "source_province_id": 11370,
+            "must_include": true,
+            "gating": false,
+            "included": false,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9961.0,
+              474.0
+            ],
+            "expected_xy": [
+              9961.0,
+              474.0
+            ],
+            "ok": false
           }
         ]
       }
@@ -2219,13 +2452,6 @@
           "ok": false,
           "anchors": [
             {
-              "city": "Murmansk",
-              "source_province_id": 11370,
-              "included": false,
-              "x": 9961.0,
-              "y": 474.0
-            },
-            {
               "city": "Arkhangelsk",
               "source_province_id": 11764,
               "included": true,
@@ -2317,9 +2543,11 @@
       "exact_required_locations": {
         "ok": false,
         "failure_keys": [
+          "Narvik_northern_Norway",
+          "Kiruna_northern_Sweden",
           "Arkhangelsk"
         ],
-        "gating_key_count": 34,
+        "gating_key_count": 44,
         "gating_keys": [
           "Reykjavik",
           "London",
@@ -2348,12 +2576,22 @@
           "Algiers",
           "Tripoli",
           "Cairo",
+          "Alexandria",
+          "Port_Said",
+          "Suez",
+          "Arish_Sinai",
+          "Jerusalem",
+          "Beirut",
+          "Damascus",
+          "Adana_southern_Turkey",
           "Stockholm",
           "Helsinki",
           "Tallinn",
           "Riga",
           "Vilnius",
-          "Murmansk",
+          "Narvik_northern_Norway",
+          "Kiruna_northern_Sweden",
+          "Rovaniemi_northern_Finland",
           "Arkhangelsk"
         ],
         "informational": [
@@ -2375,6 +2613,25 @@
               1261.0
             ],
             "ok": true
+          },
+          {
+            "key": "Murmansk_kola_approach",
+            "city_name_exact": "Murmansk",
+            "source_province_id": 11370,
+            "must_include": true,
+            "gating": false,
+            "included": false,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9961.0,
+              474.0
+            ],
+            "expected_xy": [
+              9961.0,
+              474.0
+            ],
+            "ok": false
           }
         ],
         "locations": [
@@ -2892,6 +3149,158 @@
             "ok": true
           },
           {
+            "key": "Alexandria",
+            "city_name_exact": "Alexandria",
+            "source_province_id": 2662,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9806.0,
+              3333.0
+            ],
+            "expected_xy": [
+              9806.0,
+              3333.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Port_Said",
+            "city_name_exact": "Port Said",
+            "source_province_id": 2666,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9919.0,
+              3332.0
+            ],
+            "expected_xy": [
+              9919.0,
+              3332.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Suez",
+            "city_name_exact": "Suez",
+            "source_province_id": 2683,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9931.0,
+              3398.0
+            ],
+            "expected_xy": [
+              9931.0,
+              3398.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Arish_Sinai",
+            "city_name_exact": "Arish",
+            "source_province_id": 3723,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9995.0,
+              3334.0
+            ],
+            "expected_xy": [
+              9995.0,
+              3334.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Jerusalem",
+            "city_name_exact": "Jerusalem",
+            "source_province_id": 8065,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              10061.0,
+              3296.0
+            ],
+            "expected_xy": [
+              10061.0,
+              3296.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Beirut",
+            "city_name_exact": "Beirut",
+            "source_province_id": 6087,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              10079.0,
+              3176.0
+            ],
+            "expected_xy": [
+              10079.0,
+              3176.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Damascus",
+            "city_name_exact": "Damascus",
+            "source_province_id": 3719,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              10115.0,
+              3196.0
+            ],
+            "expected_xy": [
+              10115.0,
+              3196.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Adana_southern_Turkey",
+            "city_name_exact": "Adana",
+            "source_province_id": 1096,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              10067.0,
+              2987.0
+            ],
+            "expected_xy": [
+              10067.0,
+              2987.0
+            ],
+            "ok": true
+          },
+          {
             "key": "Stockholm",
             "city_name_exact": "Stockholm",
             "source_province_id": 1049,
@@ -2987,21 +3396,59 @@
             "ok": true
           },
           {
-            "key": "Murmansk",
-            "city_name_exact": "Murmansk",
-            "source_province_id": 11370,
-            "must_include": false,
+            "key": "Narvik_northern_Norway",
+            "city_name_exact": "Narvik",
+            "source_province_id": 1464,
+            "must_include": true,
             "gating": true,
             "included": false,
             "point_in_province_polygon": true,
             "city_row_found_exact": true,
             "city_xy": [
-              9961.0,
-              474.0
+              9197.0,
+              531.0
             ],
             "expected_xy": [
-              9961.0,
-              474.0
+              9197.0,
+              531.0
+            ],
+            "ok": false
+          },
+          {
+            "key": "Kiruna_northern_Sweden",
+            "city_name_exact": "Kiruna",
+            "source_province_id": 11120,
+            "must_include": true,
+            "gating": true,
+            "included": false,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9332.0,
+              587.0
+            ],
+            "expected_xy": [
+              9332.0,
+              587.0
+            ],
+            "ok": false
+          },
+          {
+            "key": "Rovaniemi_northern_Finland",
+            "city_name_exact": "Rovaniemi",
+            "source_province_id": 1458,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9599.0,
+              717.0
+            ],
+            "expected_xy": [
+              9599.0,
+              717.0
             ],
             "ok": true
           },
@@ -3042,6 +3489,25 @@
               1261.0
             ],
             "ok": true
+          },
+          {
+            "key": "Murmansk_kola_approach",
+            "city_name_exact": "Murmansk",
+            "source_province_id": 11370,
+            "must_include": true,
+            "gating": false,
+            "included": false,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9961.0,
+              474.0
+            ],
+            "expected_xy": [
+              9961.0,
+              474.0
+            ],
+            "ok": false
           }
         ]
       }
@@ -3756,13 +4222,6 @@
           "ok": false,
           "anchors": [
             {
-              "city": "Murmansk",
-              "source_province_id": 11370,
-              "included": false,
-              "x": 9961.0,
-              "y": 474.0
-            },
-            {
               "city": "Arkhangelsk",
               "source_province_id": 11764,
               "included": true,
@@ -3877,9 +4336,11 @@
       "exact_required_locations": {
         "ok": false,
         "failure_keys": [
+          "Narvik_northern_Norway",
+          "Kiruna_northern_Sweden",
           "Arkhangelsk"
         ],
-        "gating_key_count": 34,
+        "gating_key_count": 44,
         "gating_keys": [
           "Reykjavik",
           "London",
@@ -3908,12 +4369,22 @@
           "Algiers",
           "Tripoli",
           "Cairo",
+          "Alexandria",
+          "Port_Said",
+          "Suez",
+          "Arish_Sinai",
+          "Jerusalem",
+          "Beirut",
+          "Damascus",
+          "Adana_southern_Turkey",
           "Stockholm",
           "Helsinki",
           "Tallinn",
           "Riga",
           "Vilnius",
-          "Murmansk",
+          "Narvik_northern_Norway",
+          "Kiruna_northern_Sweden",
+          "Rovaniemi_northern_Finland",
           "Arkhangelsk"
         ],
         "informational": [
@@ -3935,6 +4406,25 @@
               1261.0
             ],
             "ok": true
+          },
+          {
+            "key": "Murmansk_kola_approach",
+            "city_name_exact": "Murmansk",
+            "source_province_id": 11370,
+            "must_include": true,
+            "gating": false,
+            "included": false,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9961.0,
+              474.0
+            ],
+            "expected_xy": [
+              9961.0,
+              474.0
+            ],
+            "ok": false
           }
         ],
         "locations": [
@@ -4452,6 +4942,158 @@
             "ok": true
           },
           {
+            "key": "Alexandria",
+            "city_name_exact": "Alexandria",
+            "source_province_id": 2662,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9806.0,
+              3333.0
+            ],
+            "expected_xy": [
+              9806.0,
+              3333.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Port_Said",
+            "city_name_exact": "Port Said",
+            "source_province_id": 2666,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9919.0,
+              3332.0
+            ],
+            "expected_xy": [
+              9919.0,
+              3332.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Suez",
+            "city_name_exact": "Suez",
+            "source_province_id": 2683,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9931.0,
+              3398.0
+            ],
+            "expected_xy": [
+              9931.0,
+              3398.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Arish_Sinai",
+            "city_name_exact": "Arish",
+            "source_province_id": 3723,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9995.0,
+              3334.0
+            ],
+            "expected_xy": [
+              9995.0,
+              3334.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Jerusalem",
+            "city_name_exact": "Jerusalem",
+            "source_province_id": 8065,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              10061.0,
+              3296.0
+            ],
+            "expected_xy": [
+              10061.0,
+              3296.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Beirut",
+            "city_name_exact": "Beirut",
+            "source_province_id": 6087,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              10079.0,
+              3176.0
+            ],
+            "expected_xy": [
+              10079.0,
+              3176.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Damascus",
+            "city_name_exact": "Damascus",
+            "source_province_id": 3719,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              10115.0,
+              3196.0
+            ],
+            "expected_xy": [
+              10115.0,
+              3196.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Adana_southern_Turkey",
+            "city_name_exact": "Adana",
+            "source_province_id": 1096,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              10067.0,
+              2987.0
+            ],
+            "expected_xy": [
+              10067.0,
+              2987.0
+            ],
+            "ok": true
+          },
+          {
             "key": "Stockholm",
             "city_name_exact": "Stockholm",
             "source_province_id": 1049,
@@ -4547,21 +5189,59 @@
             "ok": true
           },
           {
-            "key": "Murmansk",
-            "city_name_exact": "Murmansk",
-            "source_province_id": 11370,
-            "must_include": false,
+            "key": "Narvik_northern_Norway",
+            "city_name_exact": "Narvik",
+            "source_province_id": 1464,
+            "must_include": true,
             "gating": true,
             "included": false,
             "point_in_province_polygon": true,
             "city_row_found_exact": true,
             "city_xy": [
-              9961.0,
-              474.0
+              9197.0,
+              531.0
             ],
             "expected_xy": [
-              9961.0,
-              474.0
+              9197.0,
+              531.0
+            ],
+            "ok": false
+          },
+          {
+            "key": "Kiruna_northern_Sweden",
+            "city_name_exact": "Kiruna",
+            "source_province_id": 11120,
+            "must_include": true,
+            "gating": true,
+            "included": false,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9332.0,
+              587.0
+            ],
+            "expected_xy": [
+              9332.0,
+              587.0
+            ],
+            "ok": false
+          },
+          {
+            "key": "Rovaniemi_northern_Finland",
+            "city_name_exact": "Rovaniemi",
+            "source_province_id": 1458,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9599.0,
+              717.0
+            ],
+            "expected_xy": [
+              9599.0,
+              717.0
             ],
             "ok": true
           },
@@ -4602,47 +5282,66 @@
               1261.0
             ],
             "ok": true
+          },
+          {
+            "key": "Murmansk_kola_approach",
+            "city_name_exact": "Murmansk",
+            "source_province_id": 11370,
+            "must_include": true,
+            "gating": false,
+            "included": false,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9961.0,
+              474.0
+            ],
+            "expected_xy": [
+              9961.0,
+              474.0
+            ],
+            "ok": false
           }
         ]
       }
     },
     {
       "id": "em_reference_masked",
-      "title": "EM reference-masked (authored polygon mask v5)",
-      "description": "Authored multi-ring theatre mask. Iceland full land set. Cuts deep Sahara (incl. Tabelbala/In Ghar/Ashkda), Madeira/Funchal Atlantic water, Arabian interior, deep Russia/Central Asia/Iran via geometry.",
+      "title": "EM reference-masked (authored polygon mask v6)",
+      "description": "Authored multi-ring theatre mask v6. Restores Africa\u2013Levant land corridor (Egypt, Nile Delta, Sinai, Israel/Palestine, Lebanon, western Syria, Jordan edge, southern Turkey) and full Scandinavia (Norway/Sweden/Finland to natural northern coasts, Kola approach). Iceland full land set. Still cuts deep Sahara, Madeira/Funchal Atlantic water, Arabian interior, Arkhangelsk/deep Russia/Central Asia/Iran via geometry.",
       "selection_mode": "mask_overlap",
       "inclusion_threshold": 0.35,
       "review_band": [
         0.15,
         0.5
       ],
-      "province_count": 3038,
-      "land_province_count": 2843,
-      "water_or_ocean_continent_count": 195,
-      "polygon_count": 3038,
-      "total_vertices": 263522,
-      "adjacency_edge_count": 8856,
+      "province_count": 3345,
+      "land_province_count": 3133,
+      "water_or_ocean_continent_count": 212,
+      "polygon_count": 3345,
+      "total_vertices": 320116,
+      "adjacency_edge_count": 9756,
       "source_bounds": [
         7084.0,
-        648.0,
-        10855.0,
-        3499.0
+        150.0,
+        10919.0,
+        3583.0
       ],
       "query_rect": {
-        "min_x": 7100.0,
-        "min_y": 700.0,
-        "max_x": 11000.0,
-        "max_y": 3520.0
+        "min_x": 7000.0,
+        "min_y": 180.0,
+        "max_x": 11200.0,
+        "max_y": 3700.0
       },
       "export_rect": {
         "min_x": 7064.0,
-        "min_y": 628.0,
-        "max_x": 10875.0,
-        "max_y": 3519.0
+        "min_y": 130.0,
+        "max_x": 10939.0,
+        "max_y": 3603.0
       },
       "mask_ring_count": 2,
-      "estimated_runtime_geometry_bytes": 4410784,
-      "estimated_frontend_snapshot_bytes": 1579644,
+      "estimated_runtime_geometry_bytes": 5335936,
+      "estimated_frontend_snapshot_bytes": 1739394,
       "disconnected_land_components": 23,
       "missing_required_ids": [],
       "required_include_ids": [
@@ -4680,26 +5379,29 @@
         2207,
         2669,
         1365,
-        1028,
-        1227,
-        1228,
-        1376,
-        2706,
-        3003,
-        4295,
-        4734,
-        6632,
-        6677,
-        10826,
-        12180,
-        12187,
-        12189,
-        12451,
-        12912,
-        12914
+        2662,
+        2666,
+        2683,
+        2707,
+        2668,
+        3723,
+        8065,
+        12580,
+        4686,
+        8066,
+        6087,
+        3719,
+        6085,
+        5052,
+        1096,
+        1464,
+        11120,
+        1458,
+        1077,
+        1054,
+        11656
       ],
       "explicit_exclude_ids": [
-        11370,
         11764,
         10857,
         11170,
@@ -4724,43 +5426,59 @@
         4859,
         4895,
         12906,
-        1022,
-        1024,
-        1044,
-        1348,
-        1377,
-        1451,
-        2670,
+        6065,
+        6160,
+        6192
+      ],
+      "threshold_review_count": 43,
+      "threshold_review_ids": [
+        1190,
+        1192,
+        1369,
+        1379,
+        2655,
+        2703,
         3223,
-        3741,
-        3746,
-        4785,
+        4409,
+        4736,
+        4787,
         4831,
         4838,
-        5051,
+        4961,
         5054,
-        6679,
-        6685,
-        10890,
-        11174,
-        11559,
-        11580,
-        11601,
-        11649,
-        12037,
-        12118,
+        6071,
+        6683,
+        10434,
+        10437,
+        10835,
+        10891,
+        10929,
+        11368,
+        11407,
+        11528,
+        11541,
+        11560,
+        11591,
+        11602,
+        11763,
+        11770,
+        12189,
+        12198,
         12200,
-        12508,
+        12306,
         12902,
         12907,
+        12912,
+        12914,
         13076,
+        13131,
         13151,
-        13352
+        13346,
+        13355
       ],
-      "threshold_review_count": 0,
-      "threshold_review_ids": [],
-      "label_outside_polygon_count": 20,
+      "label_outside_polygon_count": 24,
       "label_outside_polygon_sample": [
+        3735,
         6881,
         10805,
         11989,
@@ -4777,95 +5495,78 @@
         12180,
         12184,
         12189,
+        12196,
+        12197,
         12233,
+        12306,
         12510,
         12515,
         12584
       ],
-      "excluded_boundary_touch_count": 43,
+      "excluded_boundary_touch_count": 68,
       "excluded_boundary_sample": [
-        1027,
-        1094,
-        1189,
-        1212,
-        1306,
-        1370,
-        1372,
-        1374,
+        1190,
+        1206,
+        1207,
+        1228,
+        1347,
+        1369,
         1379,
-        1448,
-        1459,
-        2683,
-        2705,
-        3731,
-        4410,
+        2685,
+        2703,
+        3223,
+        4407,
+        4736,
         4787,
+        4807,
+        4809,
+        4831,
+        4838,
         4851,
         4857,
+        4858,
         4860,
+        4894,
+        4942,
         4961,
-        4994,
-        4999,
-        5055,
-        5342,
-        6089,
-        6674,
-        7471,
-        10931,
-        11001,
-        11002,
-        11027,
-        11028,
-        11520,
-        11648,
-        12165,
-        12192,
-        12193,
-        13130,
-        13131,
-        13138
+        4972,
+        4973,
+        5056,
+        6194,
+        6207,
+        10434,
+        10438,
+        10456,
+        10459,
+        10823,
+        10836,
+        10889,
+        10891,
+        10910,
+        10928,
+        10929
       ],
       "far_north_excluded_sample": [
-        914,
-        994,
-        995,
-        1022,
-        1024,
-        1025,
-        1026,
-        1027,
-        1032,
-        1033,
-        1034,
-        1035,
-        1036,
-        1037,
-        1038,
-        1039,
-        1040,
-        1041,
-        1044,
-        1045,
-        1046,
-        1047,
-        1048,
-        1054,
-        1055,
-        1076,
-        1077,
-        1082,
-        1440,
-        1441,
-        1442,
-        1443,
-        1444,
-        1445,
-        1446,
-        1447,
-        1448,
-        1449,
-        1450,
-        1451
+        974,
+        10969,
+        11365,
+        11366,
+        11367,
+        11368,
+        11764,
+        11765,
+        11766,
+        11767,
+        11768,
+        11769,
+        11790,
+        11815,
+        11837,
+        11838,
+        11839,
+        11841,
+        11842,
+        11844
       ],
       "region_coverage": {
         "Iceland": {
@@ -5343,7 +6044,7 @@
             {
               "city": "Tripoli",
               "source_province_id": 4976,
-              "included": false,
+              "included": true,
               "x": 10090.0,
               "y": 3148.0
             }
@@ -5421,13 +6122,6 @@
           "ok": true,
           "anchors": [
             {
-              "city": "Murmansk",
-              "source_province_id": 11370,
-              "included": false,
-              "x": 9961.0,
-              "y": 474.0
-            },
-            {
               "city": "Arkhangelsk",
               "source_province_id": 11764,
               "included": false,
@@ -5438,37 +6132,44 @@
         }
       },
       "region_coverage_failures": [],
-      "notes": "Mask geometry is primary exclusion tool for deep Russia/Central Asia/Iran/Arabia/Sahara. Explicit excludes mirror named anchors as fail-closed safety. Iceland required-include is the full 20-province connected land set (includes H\u00f6fn and Bakkafj\u00f6r\u00f0ur).",
+      "notes": "Mask v6 restores Egypt\u2013Sinai\u2013Levant land corridor and complete Scandinavia (incl. Kola approach / Murmansk). Arkhangelsk and deep Russia/Arabia/Sahara remain excluded. Iceland required-include is the full 20-province connected land set. Pending owner visual approval \u2014 province count/hash will change from v5.",
       "diff_vs_em_ref_tight": {
-        "added_count": 0,
-        "removed_count": 1333,
-        "added_sample": [],
+        "added_count": 30,
+        "removed_count": 1056,
+        "added_sample": [
+          1054,
+          1055,
+          1077,
+          1440,
+          1464,
+          1465,
+          11019,
+          11023,
+          11024,
+          11025,
+          11026,
+          11117,
+          11118,
+          11119,
+          11120,
+          11121,
+          11122,
+          11124,
+          11168,
+          11369,
+          11370,
+          11371,
+          11374,
+          11375,
+          11654,
+          11655,
+          11656,
+          12196,
+          12197,
+          13133
+        ],
         "removed_sample": [
           914,
-          994,
-          995,
-          1022,
-          1024,
-          1025,
-          1026,
-          1027,
-          1032,
-          1033,
-          1034,
-          1035,
-          1036,
-          1037,
-          1038,
-          1039,
-          1040,
-          1041,
-          1044,
-          1045,
-          1046,
-          1047,
-          1048,
-          1076,
-          1082,
           1094,
           1182,
           1183,
@@ -5478,9 +6179,14 @@
           1187,
           1188,
           1189,
+          1190,
+          1191,
+          1193,
           1194,
           1195,
           1196,
+          1206,
+          1207,
           1210,
           1211,
           1212,
@@ -5493,17 +6199,36 @@
           1222,
           1223,
           1224,
-          1225
+          1225,
+          1226,
+          1227,
+          1228,
+          1229,
+          1231,
+          1232,
+          1233,
+          1234,
+          1261,
+          1262,
+          1288,
+          1290,
+          1291,
+          1295,
+          1296,
+          1297,
+          1298,
+          1299,
+          1300
         ]
       },
       "forced_far_north_city_status": [
         {
           "city": "Murmansk",
           "source_province_id": 11370,
-          "included": false,
+          "included": true,
           "x": 9961.0,
           "y": 474.0,
-          "overlap_ratio": null
+          "overlap_ratio": 0.730129
         },
         {
           "city": "Arkhangelsk",
@@ -5517,7 +6242,7 @@
       "exact_required_locations": {
         "ok": true,
         "failure_keys": [],
-        "gating_key_count": 34,
+        "gating_key_count": 44,
         "gating_keys": [
           "Reykjavik",
           "London",
@@ -5546,12 +6271,22 @@
           "Algiers",
           "Tripoli",
           "Cairo",
+          "Alexandria",
+          "Port_Said",
+          "Suez",
+          "Arish_Sinai",
+          "Jerusalem",
+          "Beirut",
+          "Damascus",
+          "Adana_southern_Turkey",
           "Stockholm",
           "Helsinki",
           "Tallinn",
           "Riga",
           "Vilnius",
-          "Murmansk",
+          "Narvik_northern_Norway",
+          "Kiruna_northern_Sweden",
+          "Rovaniemi_northern_Finland",
           "Arkhangelsk"
         ],
         "informational": [
@@ -5571,6 +6306,25 @@
             "expected_xy": [
               8870.0,
               1261.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Murmansk_kola_approach",
+            "city_name_exact": "Murmansk",
+            "source_province_id": 11370,
+            "must_include": true,
+            "gating": false,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9961.0,
+              474.0
+            ],
+            "expected_xy": [
+              9961.0,
+              474.0
             ],
             "ok": true
           }
@@ -6090,6 +6844,158 @@
             "ok": true
           },
           {
+            "key": "Alexandria",
+            "city_name_exact": "Alexandria",
+            "source_province_id": 2662,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9806.0,
+              3333.0
+            ],
+            "expected_xy": [
+              9806.0,
+              3333.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Port_Said",
+            "city_name_exact": "Port Said",
+            "source_province_id": 2666,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9919.0,
+              3332.0
+            ],
+            "expected_xy": [
+              9919.0,
+              3332.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Suez",
+            "city_name_exact": "Suez",
+            "source_province_id": 2683,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9931.0,
+              3398.0
+            ],
+            "expected_xy": [
+              9931.0,
+              3398.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Arish_Sinai",
+            "city_name_exact": "Arish",
+            "source_province_id": 3723,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9995.0,
+              3334.0
+            ],
+            "expected_xy": [
+              9995.0,
+              3334.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Jerusalem",
+            "city_name_exact": "Jerusalem",
+            "source_province_id": 8065,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              10061.0,
+              3296.0
+            ],
+            "expected_xy": [
+              10061.0,
+              3296.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Beirut",
+            "city_name_exact": "Beirut",
+            "source_province_id": 6087,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              10079.0,
+              3176.0
+            ],
+            "expected_xy": [
+              10079.0,
+              3176.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Damascus",
+            "city_name_exact": "Damascus",
+            "source_province_id": 3719,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              10115.0,
+              3196.0
+            ],
+            "expected_xy": [
+              10115.0,
+              3196.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Adana_southern_Turkey",
+            "city_name_exact": "Adana",
+            "source_province_id": 1096,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              10067.0,
+              2987.0
+            ],
+            "expected_xy": [
+              10067.0,
+              2987.0
+            ],
+            "ok": true
+          },
+          {
             "key": "Stockholm",
             "city_name_exact": "Stockholm",
             "source_province_id": 1049,
@@ -6185,21 +7091,59 @@
             "ok": true
           },
           {
-            "key": "Murmansk",
-            "city_name_exact": "Murmansk",
-            "source_province_id": 11370,
-            "must_include": false,
+            "key": "Narvik_northern_Norway",
+            "city_name_exact": "Narvik",
+            "source_province_id": 1464,
+            "must_include": true,
             "gating": true,
-            "included": false,
+            "included": true,
             "point_in_province_polygon": true,
             "city_row_found_exact": true,
             "city_xy": [
-              9961.0,
-              474.0
+              9197.0,
+              531.0
             ],
             "expected_xy": [
-              9961.0,
-              474.0
+              9197.0,
+              531.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Kiruna_northern_Sweden",
+            "city_name_exact": "Kiruna",
+            "source_province_id": 11120,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9332.0,
+              587.0
+            ],
+            "expected_xy": [
+              9332.0,
+              587.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Rovaniemi_northern_Finland",
+            "city_name_exact": "Rovaniemi",
+            "source_province_id": 1458,
+            "must_include": true,
+            "gating": true,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9599.0,
+              717.0
+            ],
+            "expected_xy": [
+              9599.0,
+              717.0
             ],
             "ok": true
           },
@@ -6238,6 +7182,25 @@
             "expected_xy": [
               8870.0,
               1261.0
+            ],
+            "ok": true
+          },
+          {
+            "key": "Murmansk_kola_approach",
+            "city_name_exact": "Murmansk",
+            "source_province_id": 11370,
+            "must_include": true,
+            "gating": false,
+            "included": true,
+            "point_in_province_polygon": true,
+            "city_row_found_exact": true,
+            "city_xy": [
+              9961.0,
+              474.0
+            ],
+            "expected_xy": [
+              9961.0,
+              474.0
             ],
             "ok": true
           }
@@ -6381,34 +7344,10 @@
       ]
     },
     "em_ref_tight_vs_em_reference_masked": {
-      "only_in_first_count": 1333,
-      "only_in_second_count": 0,
+      "only_in_first_count": 1056,
+      "only_in_second_count": 30,
       "only_in_first_sample": [
         914,
-        994,
-        995,
-        1022,
-        1024,
-        1025,
-        1026,
-        1027,
-        1032,
-        1033,
-        1034,
-        1035,
-        1036,
-        1037,
-        1038,
-        1039,
-        1040,
-        1041,
-        1044,
-        1045,
-        1046,
-        1047,
-        1048,
-        1076,
-        1082,
         1094,
         1182,
         1183,
@@ -6418,14 +7357,69 @@
         1187,
         1188,
         1189,
+        1190,
+        1191,
+        1193,
         1194,
         1195,
         1196,
+        1206,
+        1207,
         1210,
         1211,
-        1212
+        1212,
+        1216,
+        1217,
+        1218,
+        1219,
+        1220,
+        1221,
+        1222,
+        1223,
+        1224,
+        1225,
+        1226,
+        1227,
+        1228,
+        1229,
+        1231,
+        1232,
+        1233,
+        1234,
+        1261
       ],
-      "only_in_second_sample": []
+      "only_in_second_sample": [
+        1054,
+        1055,
+        1077,
+        1440,
+        1464,
+        1465,
+        11019,
+        11023,
+        11024,
+        11025,
+        11026,
+        11117,
+        11118,
+        11119,
+        11120,
+        11121,
+        11122,
+        11124,
+        11168,
+        11369,
+        11370,
+        11371,
+        11374,
+        11375,
+        11654,
+        11655,
+        11656,
+        12196,
+        12197,
+        13133
+      ]
     },
     "em_north_east_expand_vs_em_south_west_expand": {
       "only_in_first_count": 105,
@@ -6516,34 +7510,10 @@
       ]
     },
     "em_north_east_expand_vs_em_reference_masked": {
-      "only_in_first_count": 1454,
-      "only_in_second_count": 0,
+      "only_in_first_count": 1172,
+      "only_in_second_count": 25,
       "only_in_first_sample": [
         914,
-        994,
-        995,
-        1022,
-        1024,
-        1025,
-        1026,
-        1027,
-        1032,
-        1033,
-        1034,
-        1035,
-        1036,
-        1037,
-        1038,
-        1039,
-        1040,
-        1041,
-        1044,
-        1045,
-        1046,
-        1047,
-        1048,
-        1076,
-        1082,
         1094,
         1182,
         1183,
@@ -6553,44 +7523,70 @@
         1187,
         1188,
         1189,
+        1190,
+        1191,
+        1193,
         1194,
         1195,
         1196,
+        1206,
+        1207,
         1210,
         1211,
-        1212
+        1212,
+        1216,
+        1217,
+        1218,
+        1219,
+        1220,
+        1221,
+        1222,
+        1223,
+        1224,
+        1225,
+        1226,
+        1227,
+        1228,
+        1229,
+        1231,
+        1232,
+        1233,
+        1234,
+        1261
       ],
-      "only_in_second_sample": []
+      "only_in_second_sample": [
+        1054,
+        1055,
+        1077,
+        1464,
+        1465,
+        11023,
+        11024,
+        11025,
+        11026,
+        11117,
+        11119,
+        11120,
+        11121,
+        11122,
+        11168,
+        11370,
+        11371,
+        11374,
+        11375,
+        11654,
+        11655,
+        11656,
+        12196,
+        12197,
+        13133
+      ]
     },
     "em_south_west_expand_vs_em_reference_masked": {
-      "only_in_first_count": 1459,
-      "only_in_second_count": 0,
+      "only_in_first_count": 1188,
+      "only_in_second_count": 36,
       "only_in_first_sample": [
         914,
-        994,
-        995,
-        1022,
-        1024,
-        1025,
-        1026,
-        1027,
-        1032,
-        1033,
-        1034,
-        1035,
-        1036,
-        1037,
-        1038,
-        1039,
-        1040,
-        1041,
-        1044,
-        1045,
-        1046,
-        1047,
-        1048,
-        1076,
-        1082,
         1094,
         1182,
         1183,
@@ -6600,14 +7596,75 @@
         1187,
         1188,
         1189,
+        1190,
+        1191,
+        1193,
         1194,
         1195,
         1196,
+        1206,
+        1207,
         1210,
         1211,
-        1212
+        1212,
+        1216,
+        1217,
+        1218,
+        1219,
+        1220,
+        1221,
+        1222,
+        1223,
+        1224,
+        1225,
+        1226,
+        1227,
+        1228,
+        1229,
+        1231,
+        1232,
+        1233,
+        1234,
+        1261
       ],
-      "only_in_second_sample": []
+      "only_in_second_sample": [
+        1054,
+        1055,
+        1077,
+        1440,
+        1464,
+        1465,
+        11019,
+        11020,
+        11023,
+        11024,
+        11025,
+        11026,
+        11116,
+        11117,
+        11118,
+        11119,
+        11120,
+        11121,
+        11122,
+        11123,
+        11124,
+        11126,
+        11168,
+        11369,
+        11370,
+        11371,
+        11373,
+        11374,
+        11375,
+        11377,
+        11654,
+        11655,
+        11656,
+        12196,
+        12197,
+        13133
+      ]
     }
   },
   "assumptions": [

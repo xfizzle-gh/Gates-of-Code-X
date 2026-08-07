@@ -129,7 +129,7 @@ _REGION_CITY_ANCHORS: dict[str, tuple[str, ...]] = {
     "Caucasus_edge": ("Tbilisi", "Baku", "Yerevan"),
     "North_Africa_coast": ("Tunis", "Algiers", "Cairo", "Tripoli"),
     "Baltic": ("Stockholm", "Helsinki", "Riga", "Tallinn", "Vilnius"),
-    "Far_north_should_exclude": ("Murmansk", "Arkhangelsk"),
+    "Far_north_should_exclude": ("Arkhangelsk",),
 }
 
 

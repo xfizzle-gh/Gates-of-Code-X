@@ -16,12 +16,16 @@ except ImportError as exc:  # pragma: no cover
 
 
 # Shared camera for overview comparison (Earth3 pixels).
-DEFAULT_COMPARISON_VIEW = (6700.0, 500.0, 11800.0, 4300.0)
+DEFAULT_COMPARISON_VIEW = (6700.0, 120.0, 11800.0, 4300.0)
 
 CLOSEUPS = {
-    "scandinavia_north_russia": (8200.0, 700.0, 11200.0, 1800.0),
+    "scandinavia_full": (8400.0, 180.0, 10300.0, 1600.0),
+    "scandinavia_north_russia": (8200.0, 200.0, 11200.0, 1600.0),
     "ukraine_donbas_caucasus": (9600.0, 1700.0, 11450.0, 3100.0),
     "north_africa_east_med": (7800.0, 2800.0, 10800.0, 3900.0),
+    "egypt_sinai_levant": (9600.0, 2900.0, 10550.0, 3650.0),
+    "turkey_east_med": (9400.0, 2500.0, 10850.0, 3300.0),
+    "black_sea_caucasus": (9800.0, 2000.0, 11200.0, 3000.0),
 }
 
 KEY_LABELS = {
@@ -44,6 +48,16 @@ KEY_LABELS = {
     "Turkey": (10050, 2850),
     "Caucasus": (10600, 2650),
     "N.Africa coast": (9000, 3400),
+    "Cairo": (9867, 3402),
+    "Alexandria": (9806, 3333),
+    "Suez": (9931, 3398),
+    "Sinai": (9995, 3334),
+    "Jerusalem": (10061, 3296),
+    "Beirut": (10079, 3176),
+    "Damascus": (10115, 3196),
+    "Narvik": (9197, 531),
+    "Kiruna": (9332, 587),
+    "Rovaniemi": (9599, 717),
     "Levant edge": (10200, 3200),
     "Murmansk": (9999, 474),
     "Arkhangelsk": (10325, 927),
