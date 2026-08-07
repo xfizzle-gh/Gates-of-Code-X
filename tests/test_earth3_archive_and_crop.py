@@ -219,7 +219,7 @@ class CropWholePolygonTests(unittest.TestCase):
         masked = next(c for c in data["candidates"] if c["id"] == "em_reference_masked")
         self.assertEqual(masked["selection_mode"], "mask_overlap")
         self.assertGreaterEqual(len(masked["mask_rings"]), 2)
-        self.assertIn(11370, masked["explicit_exclude_ids"])
+        self.assertNotIn(11370, masked["explicit_exclude_ids"])  # Kola approach allowed in v6
         self.assertIn(11764, masked["explicit_exclude_ids"])
         self.assertIn(956, masked["required_include_ids"])  # Höfn
         self.assertIn(6850, masked["required_include_ids"])  # Bakkafjörður

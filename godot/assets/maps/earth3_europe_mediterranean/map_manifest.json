@@ -7,24 +7,24 @@
   "asset_status": "production_theatre",
   "polygon_dataset": {
     "path": "polygon_dataset.json",
-    "sha256": "5c8652bd9537dde7e9a9641bb5883d737b04e26b9b79441bbafe495e49732289",
-    "province_count": 3038
+    "sha256": "6e26eb8938195aa5a41952afac9e337a6552ce335d9b426f86d46cb45cedc758",
+    "province_count": 3345
   },
-  "province_count": 3038,
+  "province_count": 3345,
   "bounds": {
     "origin_source_xy": [
       7076.0,
-      640.0
+      142.0
     ],
-    "width": 3787.0,
-    "height": 2867.0,
+    "width": 3851.0,
+    "height": 3449.0,
     "source_min_xy": [
       7084.0,
-      648.0
+      150.0
     ],
     "source_max_xy": [
-      10855.0,
-      3499.0
+      10919.0,
+      3583.0
     ]
   },
   "fallback_map_id": "europe_mediterranean_from_goe",
@@ -33,11 +33,11 @@
     "hit_test": "point_in_polygon_spatial_index",
     "ownership_update": "immutable_geometry_shader_lookup"
   },
-  "approved_included_ids_sha256": "7effdffbccbcce33ecba364dc8d161ded5053266db2df0deee605a98c36620dc",
+  "approved_included_ids_sha256": "4fe9d98bbf40d2588286d3d4ec5513ffa3a8f0b7b2ae5689373217b4cb569a1b",
   "export": {
     "archive_sha256": "b88cc599128c73a5711af3add8330f5a42629c9a3e07a5dd7aea8437a97fc760",
-    "crop_config_sha256": "25ff84cbc7b9de419723219ce6d9446471fdacfe58db3d54c2504643413bed7c",
-    "elapsed_ms": 24694,
+    "crop_config_sha256": "c330980aba6f4be05d8b424afa95b759c858f9facf0b4f04dc89575838faa4af",
+    "elapsed_ms": 28055,
     "triangulation_ok": true,
     "max_tri_area_error": 7.424446545085129e-16
   }

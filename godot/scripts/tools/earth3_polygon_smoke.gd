@@ -10,6 +10,9 @@ func _run():
 		"nato": Color("4f8fd8"), "ukr": Color("e2c84a"), "rusa": Color("c95b5b"), "prc": Color("d08a3f"), "neutral": Color("707780")
 	})
 	print("open_ok=", ok, " err=", pm.error, " count=", pm.province_count, " load_ms=", pm.load_ms, " meshes=", pm.mesh_count)
+	if ok and pm.province_count < 3000:
+		print("FAIL province_count too small")
+		quit(2)
 	if ok:
 		var hit = pm.province_at_image_pos(pm.centroids[10])
 		print("hit_test=", hit, " expected=", pm.province_by_index[10])
