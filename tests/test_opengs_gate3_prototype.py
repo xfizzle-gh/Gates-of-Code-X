@@ -192,8 +192,6 @@ class Gate3CandidateContractTests(unittest.TestCase):
         self.assertEqual(self.g._split_self_touching_rings([ring]), [ring])
 
     def test_figure_eight_pinch_splits_without_changing_boundary_edges(self):
-        import gate1_to_gate2_adapter as gate2
-
         ring = [
             (0, 0), (2, 0), (2, 2), (0, 2),
             (0, 0), (-2, 0), (-2, -2), (0, -2),
@@ -202,7 +200,22 @@ class Gate3CandidateContractTests(unittest.TestCase):
         self.assertEqual(len(split), 2)
         self.assertEqual(self.g._ring_edge_counter([ring]), self.g._ring_edge_counter(split))
         self.assertTrue(all(len(part) == len(set(part)) for part in split))
-        components = gate2.build_components(split, "fixture")
+
+    @unittest.skipUnless(
+        importlib.util.find_spec("PIL") is not None
+        and importlib.util.find_spec("shapely") is not None,
+        "optional Gate 2 geometry dependencies are not installed",
+    )
+    def test_pinch_split_builds_accepted_gate2_components(self):
+        import gate1_to_gate2_adapter as gate2
+
+        ring = [
+            (0, 0), (2, 0), (2, 2), (0, 2),
+            (0, 0), (-2, 0), (-2, -2), (0, -2),
+        ]
+        components = gate2.build_components(
+            self.g._split_self_touching_rings([ring]), "fixture"
+        )
         self.assertEqual(len(components), 2)
         self.assertEqual(sum(component.area for component in components), 8.0)
 
