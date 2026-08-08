@@ -17,7 +17,7 @@ $venv = "E:\Steam\steamapps\workshop\content\400750\Gates-of-Code-X-wrapper-test
 Set-Location $root
 
 git fetch origin
-git switch $branch
+git switch -C $branch "origin/$branch"
 
 git merge-base --is-ancestor $expected HEAD
 if ($LASTEXITCODE -ne 0) {
