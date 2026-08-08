@@ -1,0 +1,47 @@
+name: Temporary S10 GDScript parse diagnostic
+
+on:
+  push:
+    branches:
+      - feat/s10-operational-resolution-presentation
+    paths:
+      - .github/workflows/tmp-s10-parse-diagnostic.yml
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/s10-operational-resolution-presentation
+
+      - name: Install Godot 4.7
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL -o godot.zip https://github.com/godotengine/godot/releases/download/4.7-stable/Godot_v4.7-stable_linux.x86_64.zip
+          unzip -q godot.zip
+          GODOT_BIN="$(find . -maxdepth 1 -type f -name 'Godot_v*_linux.x86_64' | head -n 1)"
+          install -m 755 "$GODOT_BIN" "$HOME/godot"
+
+      - name: Diagnose changed script chain
+        working-directory: godot
+        shell: bash
+        run: |
+          set +e
+          for script in \
+            res://scripts/presentation/map_markers.gd \
+            res://scripts/main_color_id.gd \
+            res://scripts/main_map_contract.gd \
+            res://scripts/main_stack_panel.gd \
+            res://scripts/tools/operational_presentation_scene_test.gd
+          do
+            echo "===== CHECK $script ====="
+            "$HOME/godot" --headless --path . --audio-driver Dummy --check-only --script "$script"
+            echo "===== EXIT $? $script ====="
+          done
+          exit 0
