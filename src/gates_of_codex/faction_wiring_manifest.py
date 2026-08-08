@@ -28,19 +28,108 @@ def load_faction_manifest(path: str | Path | None = None) -> dict[str, Any]:
 def _expand_manifest_files(payload: dict[str, Any], base: Any) -> dict[str, Any]:
     if "components_file" not in payload and "actors_file" not in payload:
         return payload
-    allowed = {"schema", "schema_version", "source_policy", "components_file", "actors_file"}
+    allowed = {
+        "schema",
+        "schema_version",
+        "source_policy",
+        "components_file",
+        "actors_file",
+        "audit_adjustments_file",
+    }
     unknown = set(payload) - allowed
     if unknown:
         raise FactionWiringError(f"Manifest index has unknown fields: {sorted(unknown)}")
     if not payload.get("components_file") or not payload.get("actors_file"):
         raise FactionWiringError("Manifest index requires components_file and actors_file")
+
+    components = json.loads(base.joinpath(payload["components_file"]).read_text(encoding="utf-8"))
+    actors = json.loads(base.joinpath(payload["actors_file"]).read_text(encoding="utf-8"))
+    adjustments_file = payload.get("audit_adjustments_file")
+    if adjustments_file:
+        adjustments = json.loads(base.joinpath(adjustments_file).read_text(encoding="utf-8"))
+        _apply_audit_adjustments(components, actors, adjustments)
+
     return {
         "schema": payload["schema"],
         "schema_version": payload["schema_version"],
         "source_policy": payload["source_policy"],
-        "components": json.loads(base.joinpath(payload["components_file"]).read_text(encoding="utf-8")),
-        "actors": json.loads(base.joinpath(payload["actors_file"]).read_text(encoding="utf-8")),
+        "components": components,
+        "actors": actors,
     }
+
+
+def _apply_audit_adjustments(
+    components: dict[str, Any],
+    actors: list[dict[str, Any]],
+    adjustments: Mapping[str, Any],
+) -> None:
+    allowed = {
+        "component_exact_unit_additions",
+        "actor_component_removals",
+        "actor_note_additions",
+    }
+    unknown = set(adjustments) - allowed
+    if unknown:
+        raise FactionWiringError(f"Audit adjustments have unknown fields: {sorted(unknown)}")
+
+    actor_by_id = {actor.get("actor_id"): actor for actor in actors}
+
+    for adjustment in adjustments.get("component_exact_unit_additions", []):
+        required = {"component_id", "selector_index", "units", "reason"}
+        if set(adjustment) != required:
+            raise FactionWiringError("Component audit adjustment has invalid fields")
+        component_id = adjustment["component_id"]
+        component = components.get(component_id)
+        if component is None:
+            raise FactionWiringError(f"Audit adjustment references unknown component {component_id}")
+        selector_index = int(adjustment["selector_index"])
+        selectors = component.get("selectors", [])
+        if selector_index < 0 or selector_index >= len(selectors):
+            raise FactionWiringError(
+                f"Audit adjustment selector index is invalid for {component_id}: {selector_index}"
+            )
+        selector = selectors[selector_index]
+        if selector.get("kind") != "exact":
+            raise FactionWiringError(
+                f"Audit adjustment for {component_id} must target an exact selector"
+            )
+        units = adjustment["units"]
+        if not isinstance(units, list) or not units or not all(isinstance(unit, str) and unit for unit in units):
+            raise FactionWiringError(f"Audit adjustment for {component_id} has invalid units")
+        selector["units"] = list(dict.fromkeys([*selector.get("units", []), *units]))
+
+    for adjustment in adjustments.get("actor_component_removals", []):
+        required = {"actor_id", "components", "reason"}
+        if set(adjustment) != required:
+            raise FactionWiringError("Actor component-removal adjustment has invalid fields")
+        actor_id = adjustment["actor_id"]
+        actor = actor_by_id.get(actor_id)
+        if actor is None:
+            raise FactionWiringError(f"Audit adjustment references unknown actor {actor_id}")
+        removals = set(adjustment["components"])
+        missing = removals - set(actor.get("components", []))
+        if missing:
+            raise FactionWiringError(
+                f"Audit adjustment cannot remove absent components from {actor_id}: {sorted(missing)}"
+            )
+        actor["components"] = [
+            component_id
+            for component_id in actor["components"]
+            if component_id not in removals
+        ]
+        if not actor["components"]:
+            raise FactionWiringError(f"Audit adjustment removed every component from {actor_id}")
+
+    note_additions = adjustments.get("actor_note_additions", {})
+    if not isinstance(note_additions, dict):
+        raise FactionWiringError("actor_note_additions must be an object")
+    for actor_id, notes in note_additions.items():
+        actor = actor_by_id.get(actor_id)
+        if actor is None:
+            raise FactionWiringError(f"Audit note references unknown actor {actor_id}")
+        if not isinstance(notes, list) or not all(isinstance(note, str) and note for note in notes):
+            raise FactionWiringError(f"Audit notes are invalid for actor {actor_id}")
+        actor["notes"] = list(dict.fromkeys([*actor.get("notes", []), *notes]))
 
 
 def validate_faction_manifest(manifest: Mapping[str, Any]) -> None:

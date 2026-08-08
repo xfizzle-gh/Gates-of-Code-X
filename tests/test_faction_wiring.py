@@ -81,6 +81,31 @@ class FactionWiringCompilerTest(unittest.TestCase):
         self.assertEqual(payload["error_count"], 1)
         self.assertIn("does_not_exist", payload["problems"][0]["message"])
 
+    def test_source_unit_missing_breed_is_a_resolution_error(self) -> None:
+        missing = self.codex / "resource/set/breed/mp/nato/2022s/test_rifleman.set"
+        missing.unlink()
+        payload = FactionWiringCompiler([self.west, self.codex], manifest=self._manifest()).compile()
+        self.assertGreaterEqual(payload["error_count"], 1)
+        self.assertTrue(any("missing nato breeds: test_rifleman" in item["message"] for item in payload["problems"]))
+
+    def test_source_unit_invalid_breed_definition_is_a_resolution_error(self) -> None:
+        self._write(
+            self.codex / "resource/set/breed/mp/nato/2022s/test_rifleman.set",
+            '{breed {inventory {item ""}}}\n',
+        )
+        payload = FactionWiringCompiler([self.west, self.codex], manifest=self._manifest()).compile()
+        self.assertGreaterEqual(payload["error_count"], 1)
+        self.assertTrue(any("empty inventory item" in item["message"] for item in payload["problems"]))
+
+    def test_source_unit_missing_vehicle_is_a_resolution_error(self) -> None:
+        self._write(
+            self.codex / "resource/set/registry/unit.reg",
+            '{"test_apc"}\n',
+        )
+        payload = FactionWiringCompiler([self.west, self.codex], manifest=self._manifest()).compile()
+        self.assertGreaterEqual(payload["error_count"], 1)
+        self.assertTrue(any("missing vehicle/entity IDs: test_tank" in item["message"] for item in payload["problems"]))
+
     def test_filtered_branch_reparents_prerequisites_without_cycles(self) -> None:
         manifest = self._manifest()
         manifest["components"]["native"]["selectors"][0]["exclude_regex"] = "test_apc"
@@ -167,11 +192,18 @@ class FactionWiringCompilerTest(unittest.TestCase):
             '{"test_tank" requires "test_apc" costs 4 position 3 0}\n',
         )
         self._write(
+            codex_resource / "set/registry/unit.reg",
+            '{"test_apc"}\n{"test_tank"}\n',
+        )
+        self._write(codex_resource / "set/breed/mp/nato/2022s/test_lead.set", '{breed}\n')
+        self._write(codex_resource / "set/breed/mp/nato/2022s/test_rifleman.set", '{breed}\n')
+        self._write(
             west_resource / "set/multiplayer/units/conquest/units_sov_era1960.set",
             '{"legacy_tank" {vehicle "legacy_tank"}}\n',
         )
-        self._write(codex_resource / "set/breed/mp/ukr/2022s/vol_lead.set", '{breed "vol_lead"}\n')
-        self._write(codex_resource / "set/breed/mp/ukr/2022s/vol_rifle.set", '{breed "vol_rifle"}\n')
+        self._write(west_resource / "set/registry/unit.reg", '{"legacy_tank"}\n')
+        self._write(codex_resource / "set/breed/mp/ukr/2022s/vol_lead.set", '{breed}\n')
+        self._write(codex_resource / "set/breed/mp/ukr/2022s/vol_rifle.set", '{breed}\n')
 
     @staticmethod
     def _write(path: Path, content: str) -> None:

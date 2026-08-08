@@ -1,0 +1,77 @@
+; Gates of Code:X purchase-ready squad wrappers.
+; These entries reference existing Code:X breed assets and add no copied art, models, weapons, or sounds.
+
+{"goc_ildu_rifle(ukr)"
+    ("squad_with9types_conquest" side(ukr) period(2022s) min_stage(1) max_stage(99)
+        c1(nato_squadlead:1) c2(nato_seniorrifleman:1) c3(nato_rifleman:3)
+        c4(nato_rifleman1:1) c5(nato_rifleman2:1) c6(nato_grenadier:1)
+        c7(nato_mg:1) c8(nato_mgassist:1) c9(nato_medic:1))
+}
+
+{"goc_ildu_at(ukr)"
+    ("squad_with4types_conquest" side(ukr) period(2022s) min_stage(1) max_stage(99)
+        c1(nato_squadlead:1) c2(nato_antitank:2) c3(nato_antitank_pzf3:1) c4(nato_atassist:2))
+}
+
+{"goc_ildu_javelin(ukr)"
+    ("squad_with2types_conquest" side(ukr) period(2022s) min_stage(1) max_stage(99)
+        c1(nato_javelin:2) c2(nato_atassist:2))
+}
+
+{"goc_ildu_recon(ukr)"
+    ("squad_with3types_conquest" side(ukr) period(2022s) min_stage(1) max_stage(99)
+        c1(nato_sniper:1) c2(nato_spotter:1) c3(nato_rifleman1:2))
+}
+
+{"goc_ildu_engineer(ukr)"
+    ("squad_with2types_conquest" side(ukr) period(2022s) min_stage(1) max_stage(99)
+        c1(nato_eng:4) c2(nato_rifleman2:2))
+}
+
+{"goc_ildu_manpads(ukr)"
+    ("squad_with2types_conquest" side(ukr) period(2022s) min_stage(1) max_stage(99)
+        c1(nato_manpad_operator:2) c2(nato_manpad_supporter:2))
+}
+
+{"goc_sparta_rifle(rusa)"
+    ("squad_with8types_conquest" side(rusa) period(2022s) min_stage(1) max_stage(99)
+        c1(spd_squadlead:1) c2(spd_seniorrifleman:1) c3(spd_rifleman:4) c4(spd_mg:1)
+        c5(spd_mgunasst:1) c6(spd_antitank:1) c7(spd_antitankasst:1) c8(spd_medic:1))
+}
+
+{"goc_sparta_recon(rusa)"
+    ("squad_with5types_conquest" side(rusa) period(2022s) min_stage(1) max_stage(99)
+        c1(spd_squadlead:1) c2(spd_sniper:1) c3(spd_spotter:1) c4(spd_uav:1) c5(spd_fpv:1))
+}
+
+{"goc_vostok_rifle(rusa)"
+    ("squad_with8types_conquest" side(rusa) period(2022s) min_stage(1) max_stage(99)
+        c1(vostok_squadlead:1) c2(vostok_seniorrifleman:1) c3(vostok_rifleman:4) c4(vostok_mg:1)
+        c5(vostok_mgunasst:1) c6(vostok_antitank:1) c7(vostok_antitankasst:1) c8(vostok_medic:1))
+}
+
+{"goc_vostok_mortar(rusa)"
+    ("squad_with1types_conquest" side(rusa) period(2022s) min_stage(1) max_stage(99)
+        c1(vostok_2b14crew:2))
+}
+
+{"goc_vostok_spg9(rusa)"
+    ("squad_with1types_conquest" side(rusa) period(2022s) min_stage(1) max_stage(99)
+        c1(vostok_spg9crew:2))
+}
+
+{"goc_serb_rifle(rusa)"
+    ("squad_with6types_conquest" side(rusa) period(2022s) min_stage(1) max_stage(99)
+        c1(Serb_squadlead:1) c2(Serb_rifleman:4) c3(Serb_rifleman2:2)
+        c4(Serb_mg:1) c5(Serb_antitank:1) c6(Serb_medic:1))
+}
+
+{"goc_serb_at(rusa)"
+    ("squad_with3types_conquest" side(rusa) period(2022s) min_stage(1) max_stage(99)
+        c1(Serb_squadlead:1) c2(Serb_antitank:3) c3(Serb_rifleman2:2))
+}
+
+{"goc_serb_recon(rusa)"
+    ("squad_with3types_conquest" side(rusa) period(2022s) min_stage(1) max_stage(99)
+        c1(Serb_squadlead:1) c2(Serb_marksman:2) c3(Serb_rifleman:2))
+}
