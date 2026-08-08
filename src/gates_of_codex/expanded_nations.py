@@ -7,6 +7,7 @@ from typing import Any, Iterable, Mapping, Sequence
 from .faction_wiring_compiler import FactionWiringCompiler
 from .launcher import launch_game
 from .modstack import load_stack_config, normalize_stack
+from .expanded_nations_compile import clean_compile_source_view
 from .expanded_nations_models import (
     ACTIVATION_SCHEMA,
     ACTIVATION_VERSION,
@@ -60,7 +61,10 @@ __all__ = [
 
 def compile_resolved_factions(stack_config: str | Path) -> tuple[list[Path], dict[str, Any]]:
     roots = load_stack_config(stack_config)
-    payload = FactionWiringCompiler(roots).compile()
+    if not roots:
+        raise ExpandedNationsError("Expanded Nations compilation requires an ordered mod stack")
+    with clean_compile_source_view(roots[-1]):
+        payload = FactionWiringCompiler(roots).compile()
     validate_payload(payload)
     return roots, payload
 
