@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .diplomacy import are_allied, is_friendly_owner
-from .models import CampaignState, StrategicFormation
+from .models import CampaignState, Faction, StrategicFormation
 from .operational_position import load_operational_graph_for_state
 from .operational_schema import (
     PROGRESS_MILLI_MAX,
@@ -15,6 +15,27 @@ from .operational_schema import (
 
 RETREAT_ORIGIN_NODES_KEY = "operational_edge_retreat_nodes"
 TRAPPED_NO_LEGAL_RETREAT = "trapped_no_legal_retreat"
+
+
+class OperationalRetreatAuthorityUnavailable(RuntimeError):
+    """Raised when graph-authoritative retreat cannot be evaluated safely."""
+
+
+def require_operational_retreat_graph(state: CampaignState) -> dict:
+    """Load retreat graph authority or fail without inventing a trapped result."""
+    try:
+        graph = load_operational_graph_for_state(state)
+    except (OSError, UnicodeError, ValueError) as exc:
+        raise OperationalRetreatAuthorityUnavailable(
+            "Operational retreat graph authority is unavailable"
+        ) from exc
+    if graph is None or not isinstance(graph, dict):
+        raise OperationalRetreatAuthorityUnavailable(
+            "Operational retreat graph authority is unavailable"
+        )
+    return graph
+
+
 _UNRESOLVED_RETREAT_EDGE_KINDS = frozenset(
     {
         EdgeKind.FERRY.value,
@@ -104,9 +125,7 @@ def resolve_operational_retreat(
     force = state.strategic_formations.get(str(formation_id))
     if force is None:
         raise KeyError(f"Unknown strategic formation: {formation_id}")
-    graph = load_operational_graph_for_state(state)
-    if graph is None:
-        return _trapped(force)
+    graph = require_operational_retreat_graph(state)
 
     from .operational_movement import _indexes
 
@@ -330,10 +349,11 @@ def _node_is_eligible(
 
     province_id = str(node.get("province_id") or "").strip()
     province = state.provinces.get(province_id)
-    if province is None or not is_friendly_owner(
+    if province is None or not _node_control_is_friendly(
         state,
-        force.faction,
-        province.owner,
+        force,
+        node_id=node_id,
+        province_owner=province.owner,
     ):
         return False
     if enemy_formations_at_node(
@@ -352,6 +372,43 @@ def _node_is_eligible(
         )
     )
     return friendly_count < max_friendly_formations_per_node(state)
+
+
+def _node_control_is_friendly(
+    state: CampaignState,
+    force: StrategicFormation,
+    *,
+    node_id: str,
+    province_owner: Faction,
+) -> bool:
+    """Use S5 route-node control when persisted; otherwise use province ownership."""
+    from .operational_capture import get_site_control_state
+
+    matching_rows = [
+        (site_id, row)
+        for site_id, row in sorted(get_site_control_state(state, strict=True).items())
+        if str(row.get("route_node_id") or "").strip() == node_id
+    ]
+    if not matching_rows:
+        return is_friendly_owner(state, force.faction, province_owner)
+
+    # A route node with persisted site-control authority is eligible only when
+    # every site bound to that node is currently controlled by a friendly faction.
+    # Missing/neutral or conflicting hostile control fails closed.
+    for site_id, row in matching_rows:
+        raw_controller = row.get("controller_faction")
+        if raw_controller in (None, ""):
+            return False
+        try:
+            controller = Faction(str(raw_controller))
+        except ValueError as exc:
+            raise ValueError(
+                f"operational_site_control[{site_id!r}].controller_faction "
+                f"is invalid: {raw_controller!r}"
+            ) from exc
+        if not is_friendly_owner(state, force.faction, controller):
+            return False
+    return True
 
 
 def _supplied_node_ids(

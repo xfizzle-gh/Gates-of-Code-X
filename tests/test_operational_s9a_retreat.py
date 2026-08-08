@@ -21,14 +21,17 @@ from gates_of_codex.models import (
     StrategicFormation,
 )
 from gates_of_codex.campaign import CampaignEngine
+from gates_of_codex.operational_capture import SITE_CONTROL_KEY
 from gates_of_codex.operational_movement import (
     activate_committed_orders,
     advance_operational_tick,
     commit_move_orders,
     issue_move_order,
 )
+from gates_of_codex.operational_position import clear_operational_graph_cache
 from gates_of_codex.operational_retreat import (
     RETREAT_ORIGIN_NODES_KEY,
+    OperationalRetreatAuthorityUnavailable,
     TRAPPED_NO_LEGAL_RETREAT,
     clear_retreat_origin_node,
     clear_retreat_origin_nodes,
@@ -515,6 +518,42 @@ class OperationalS9ARankingTests(unittest.TestCase):
 
             self.assertEqual(TRAPPED_NO_LEGAL_RETREAT, result.reason)
 
+    def test_hostile_site_control_rejects_node_in_friendly_owned_province(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(
+                Path(temporary),
+                graph=_graph(edges=[_edge("b", "a")]),
+            )
+            state.provinces["a"].owner = Faction.NATO
+            state.map_metadata[SITE_CONTROL_KEY] = {
+                "site-a": {
+                    "route_node_id": stable_node_id("a"),
+                    "controller_faction": Faction.RUSSIA.value,
+                }
+            }
+
+            result = self._resolve_node(state)
+
+            self.assertEqual(TRAPPED_NO_LEGAL_RETREAT, result.reason)
+
+    def test_friendly_site_control_accepts_node_in_hostile_owned_province(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(
+                Path(temporary),
+                graph=_graph(edges=[_edge("b", "a")]),
+            )
+            state.provinces["a"].owner = Faction.RUSSIA
+            state.map_metadata[SITE_CONTROL_KEY] = {
+                "site-a": {
+                    "route_node_id": stable_node_id("a"),
+                    "controller_faction": Faction.NATO.value,
+                }
+            }
+
+            result = self._resolve_node(state)
+
+            self.assertEqual(stable_node_id("a"), result.destination_node_id)
+
     def test_hostile_occupation_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             state = _state(Path(temporary))
@@ -604,6 +643,24 @@ class OperationalS9AFinalizationTests(unittest.TestCase):
             self.assertEqual(stable_node_id("a"), outcome.destination_node_id)
             self.assertEqual("a", state.strategic_formations["sf-nato"].province_id)
             self.assertIsNone(state.pending_battle)
+
+    def test_graph_unavailable_aborts_finalization_without_mutation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary))
+            self._node_battle(state)
+            engine = CampaignEngine(state, random_seed=0)
+            graph_path = Path(str(state.map_metadata["operational_graph"]))
+            graph_path.unlink()
+            clear_operational_graph_cache()
+            before = json.dumps(state.to_dict(), sort_keys=True)
+
+            with self.assertRaises(OperationalRetreatAuthorityUnavailable):
+                engine.apply_battle_result(Faction.RUSSIA)
+
+            self.assertEqual(before, json.dumps(state.to_dict(), sort_keys=True))
+            self.assertIn("sf-nato", state.strategic_formations)
+            self.assertIn("bn-nato", state.battalions)
+            self.assertIsNotNone(state.pending_battle)
 
     def test_multi_battalion_formation_retreats_once_and_colocates(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

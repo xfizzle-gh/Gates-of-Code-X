@@ -4,7 +4,7 @@ S9A centralizes mandatory post-battle retreat for campaigns using the authoritat
 
 ## Eligibility and priority
 
-A valid recorded pre-contact origin has absolute priority when it remains friendly-accessible, under stack capacity, free of hostile occupancy, and otherwise legal. The exact recorded endpoint rollback from an edge encounter may ignore ordinary reverse-direction restrictions because it restores the last legal position; this exception applies nowhere else.
+A valid recorded pre-contact origin has absolute priority when it remains friendly-accessible, under stack capacity, free of hostile occupancy, and otherwise legal. Route-node control comes from persisted S5 site-control rows matching the destination `route_node_id`; aggregate province ownership is used only when no site-control authority exists for that node. The exact recorded endpoint rollback from an edge encounter may ignore ordinary reverse-direction restrictions because it restores the last legal position; this exception applies nowhere else.
 
 Without a valid recorded origin, only nodes adjacent to the encounter are considered. Candidates are excluded before ranking when they are hostile-controlled, hostile-occupied, stack-full, reachable only through a candidate, disabled, metadata-blocked, directionally illegal, ferry, sea-lane, or otherwise unresolved edge, or would create another contact.
 
@@ -18,7 +18,9 @@ Retreat resolves once per losing strategic formation. All surviving member batta
 
 A losing Forced March or Entrenched formation resets to `operational` when displaced. A victorious Entrenched formation remains Entrenched at its position.
 
-When no legal retreat exists, the established synchronized removal path eliminates the formation with reason `trapped_no_legal_retreat`. Formation and battalion commander assignments, battalion membership, move-order state, operational position, and recorded origin metadata are cleaned as one finalization operation.
+When a successfully loaded operational graph proves that no legal retreat exists, the established synchronized removal path eliminates the formation with reason `trapped_no_legal_retreat`. Formation and battalion commander assignments, battalion membership, move-order state, operational position, and recorded origin metadata are cleaned as one finalization operation.
+
+If operational graph authority cannot be loaded or read, battle finalization aborts before casualty, placement, pending-battle, or retreat-origin mutation. Graph unavailability never produces a trapped outcome and the pending battle remains available for retry after authority is restored.
 
 Campaigns without an operational graph retain the existing province-authoritative retreat behavior.
 

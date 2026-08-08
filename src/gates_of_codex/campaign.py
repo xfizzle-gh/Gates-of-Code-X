@@ -85,6 +85,7 @@ class CampaignEngine:
         return winner
 
     def apply_external_battle_result(self, winner: Faction, survivors: dict[str, list]):
+        self._require_operational_battle_finalization_authority()
         for battalion_id, roster in survivors.items():
             battalion = self.state.battalions.get(battalion_id)
             if battalion is not None:
@@ -95,6 +96,7 @@ class CampaignEngine:
         return self._finalize_positions(winner)
 
     def apply_battle_result(self, winner: Faction):
+        self._require_operational_battle_finalization_authority()
         pending = self._require_pending_battle()
         attackers = self._participants_battalions(pending.attacking_participants)
         defenders = self._participants_battalions(pending.defending_participants)
@@ -148,6 +150,15 @@ class CampaignEngine:
             evaluate_campaign_outcome(self.state, advance_hold=True)
         self.state.current_faction = next_faction
         return next_faction
+
+    def _require_operational_battle_finalization_authority(self) -> None:
+        """Abort operational battle finalization before mutation if graph authority is missing."""
+        pending = self._require_pending_battle()
+        if not str(getattr(pending, "encounter_kind", "") or "").strip():
+            return
+        from .operational_retreat import require_operational_retreat_graph
+
+        require_operational_retreat_graph(self.state)
 
     def _finalize_positions(self, winner: Faction):
         """Apply post-battle placement once per strategic formation."""
