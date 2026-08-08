@@ -6,6 +6,14 @@ This audit-only branch descends from exact accepted implementation commit:
 
 It adds no gameplay or wrapper implementation changes.
 
+Validated audit-runner head:
+
+`e7d0d3d540807db3a001bd8ac61be2444d75697d`
+
+Dedicated preflight run:
+
+`31276317796`
+
 ## Prepare and launch
 
 From the independent audit worktree:
