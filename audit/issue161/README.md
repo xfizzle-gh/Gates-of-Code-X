@@ -14,10 +14,12 @@ From the independent audit worktree:
 cd "E:\Steam\steamapps\workshop\content\400750\Gates-of-Code-X-faction-audit"
 git fetch origin
 git switch -C audit/161-wrapper-engine-acceptance origin/audit/161-wrapper-engine-acceptance
-& ".\audit\issue161\prepare-wrapper-test.ps1"
+& ".\audit\issue161\prepare-wrapper-test.ps1" `
+  -ProfileDirectory "C:\Users\paulf\AppData\Local\digitalmindsoft\gates of hell\profiles" `
+  -InstallDirectory "C:\Users\paulf\AppData\Local\digitalmindsoft\gates of hell\profiles\46383268\campaign"
 ```
 
-The script validates the exact audit ancestry and file scope, installs the Python 3.11.9 environment, validates the five-layer stack, validates all 14 wrapper definitions, installs two disposable Conquest saves, prints their exact visible names, and launches GoH.
+The script validates the exact audit ancestry and file scope, installs the Python 3.11.9 environment, validates the five-layer stack, validates all 14 exact native wrapper definitions, migrates the bundled legacy campaign to the same deterministic strategic-formation layer used by `CampaignEngine`, installs two disposable Conquest saves, prints their exact visible names, and launches GoH.
 
 Load the Ukraine-player save first, then the Russia-player save. Take screenshots covering ILDU, Sparta, Vostok, and Serbia.
 
