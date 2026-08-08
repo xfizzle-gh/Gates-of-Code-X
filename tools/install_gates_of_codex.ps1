@@ -2,7 +2,7 @@ param(
     [string]$Python = "",
     [switch]$BuildExecutable,
     [switch]$NoPythonInstall,
-    [string]$WorkshopTestTarget = "E:\Steam\steamapps\workshop\content\400750\3700832981",
+    [string]$WorkshopTestTarget = $env:GATES_CODEX_DEPLOY_ROOT,
     [switch]$NoWorkshopDeploy
 )
 
@@ -168,6 +168,9 @@ if ($BuildExecutable) {
 }
 
 if (-not $NoWorkshopDeploy) {
+    if ([string]::IsNullOrWhiteSpace($WorkshopTestTarget)) {
+        throw "A dedicated Workshop test target is required. Pass -WorkshopTestTarget, set GATES_CODEX_DEPLOY_ROOT, or use -NoWorkshopDeploy."
+    }
     $DeployScript = Join-Path $PSScriptRoot "deploy_workshop_test.ps1"
     if (-not (Test-Path -LiteralPath $DeployScript -PathType Leaf)) {
         throw "Workshop deployment script not found: $DeployScript"

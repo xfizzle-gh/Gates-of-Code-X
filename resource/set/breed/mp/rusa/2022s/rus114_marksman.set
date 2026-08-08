@@ -1,0 +1,32 @@
+{breed
+	{behaviour soldier}
+	{skin "114th3"}
+	{portrait "rec_rus"}
+	{icon autorifle}
+	{icon_priority 2}
+	{nationality rus}
+	{armors
+		{body rus_6b45_body_05}
+		{head rus_opscore_helmet_2}
+	}
+	{perks
+		(include "ability.inc")
+		("skill_rank_4")
+		("114dv")
+		("sniper_vision")
+		("stealth")
+	}
+	{veterancy
+		(include "ability.inc")
+		("veterancy_lvl_2")
+	}
+	{inventory
+		{item "svdk_v2" filled}
+		{item "rgd5 grenade" 2}
+		{item "rdg2 grenade" 2}
+		{item "bandage_rus" 4.5 0.5}
+		{item "shovel_rus"}
+		{item "svd ammo" 120}
+		{in_hands 0}
+	}
+}

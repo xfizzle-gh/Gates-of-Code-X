@@ -1,0 +1,39 @@
+{breed
+    {tags "soldier"}
+	{behaviour soldier}
+	{skin "usmc_desert_1"}
+	{portrait "usmc_rec"}
+	{icon "autorifle"}
+	{icon_priority 2}
+	{nationality usa}
+	{armors
+		{head usmc_desert_panama_1}
+		{body usmc_desert_armor_8}
+	}
+	{perks
+		(include "ability.inc")
+		("skill_rank_5")
+		("seals")
+		("binocular_vision")
+	}
+	{veterancy
+		(include "ability.inc")
+		("veterancy_lvl_5")
+	}
+	{inventory
+		{item "m4a1_block_ii_v1" filled}
+		{item "m16a2 ammo" 220}
+		{item "shovel_csa"}
+		{item "at4cs_v1 weapon" 1 filled}
+		{item "m26 grenade" 2 0.5}
+		{item "anm8_smoke grenade" 0.25 0.5}
+		{item "m84 grenade" 2}
+		{item "bandage_usa" 3.5 0.5}
+		{item "binocular"}
+		{item "drone_recon_ammo" 1}
+		{item "drone_fpv_ammo" filled}
+		{item "usmc_mask_2"}
+		{item "usmc_desert_glasses_2"}
+		{in_hands 0}
+	}
+}
