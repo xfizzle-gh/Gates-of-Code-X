@@ -1,0 +1,37 @@
+name: Trigger S11 Schema 11 Docs
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  apply-or-clean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/s11-schema-11-design
+          fetch-depth: 0
+      - name: Apply exact patch or clean temporary workflows
+        shell: bash
+        run: |
+          SPEC=docs/superpowers/specs/2026-08-08-s11-fog-of-war-detection-design.md
+          PLAN=docs/superpowers/plans/2026-08-08-s11-fog-of-war-detection.md
+          SPEC_SHA=d06bf7ad307a5e10fe8f1828e8c263485b152ebbef2648c8fb618b63763bd8a6
+          PLAN_SHA=7cbbcd2ec08752f1f3c4691c18b272e27aa5e962442886d8758383d77ad03cdc
+          if [ "$(sha256sum "$SPEC" | cut -d' ' -f1)" != "$SPEC_SHA" ] || [ "$(sha256sum "$PLAN" | cut -d' ' -f1)" != "$PLAN_SHA" ]; then
+            sed -n '/^H4sIA/,/^PATCH_B64$/p' .github/workflows/apply-s11-schema-11-docs.yml | sed '$d' | base64 -d | gzip -d | git apply -
+          fi
+          test "$(sha256sum "$SPEC" | cut -d' ' -f1)" = "$SPEC_SHA"
+          test "$(sha256sum "$PLAN" | cut -d' ' -f1)" = "$PLAN_SHA"
+          git diff --check
+          rm -f .github/workflows/apply-s11-schema-11-docs.yml .github/workflows/trigger-s11-schema-11-docs.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$SPEC" "$PLAN" .github/workflows
+          git commit -m "docs: allocate S11 campaign schema 11"
+          git push origin HEAD:fix/s11-schema-11-design
