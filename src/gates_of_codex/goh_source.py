@@ -117,7 +117,11 @@ def scan_source_entries(text: str, source: str) -> SourceScanResult:
                 else None
             )
             if malformed_header is not None:
-                recovery = _find_recovery(text, index + 1)
+                newline = text.find("\n", index + 1)
+                recovery = _find_recovery(
+                    text,
+                    len(text) if newline < 0 else newline + 1,
+                )
                 failure_index = recovery if recovery < len(text) else len(text)
                 diagnostics.append(
                     _diagnostic(
@@ -439,7 +443,12 @@ def _malformed_close(
             paren_depth=paren_depth,
             brace_depth=brace_depth,
         ),
-    ), _find_recovery(text, end)
+    ), _find_recovery(
+        text,
+        end,
+        paren_depth=max(0, paren_depth),
+        brace_depth=max(0, brace_depth),
+    )
 
 
 def _diagnostic(
@@ -712,19 +721,53 @@ def _unterminated_header_form(text: str, index: int) -> str | None:
     return form if end is None else None
 
 
-def _find_recovery(text: str, index: int) -> int:
+def _find_recovery(
+    text: str,
+    index: int,
+    *,
+    paren_depth: int = 0,
+    brace_depth: int = 0,
+    in_quote: bool = False,
+    in_comment: bool = False,
+) -> int:
     cursor = index
-    if cursor > 0 and text[cursor - 1] != "\n":
-        newline = text.find("\n", cursor)
-        cursor = len(text) if newline < 0 else newline + 1
+    escaped = False
     while cursor < len(text):
-        candidate = cursor
-        while candidate < len(text) and text[candidate] in " \t\r":
-            candidate += 1
-        if _recovery_definition_form(text, candidate) is not None:
-            return candidate
-        newline = text.find("\n", candidate)
-        cursor = len(text) if newline < 0 else newline + 1
+        char = text[cursor]
+        if in_comment:
+            if char == "\n":
+                in_comment = False
+            cursor += 1
+            continue
+        if in_quote:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_quote = False
+            cursor += 1
+            continue
+        if char == ";" or text.startswith("//", cursor):
+            in_comment = True
+            cursor += 1
+            continue
+        if char == '"':
+            in_quote = True
+            cursor += 1
+            continue
+        if paren_depth == 0 and brace_depth == 0:
+            if _definition_form(text, cursor) is not None:
+                return cursor
+        if char == "(":
+            paren_depth += 1
+        elif char == ")":
+            paren_depth = max(0, paren_depth - 1)
+        elif char == "{":
+            brace_depth += 1
+        elif char == "}":
+            brace_depth = max(0, brace_depth - 1)
+        cursor += 1
     return len(text)
 
 

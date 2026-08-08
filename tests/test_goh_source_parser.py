@@ -299,6 +299,24 @@ wrapper(
         self.assertEqual(first.diagnostics, second.diagnostics)
         self.assertEqual(first.entries, second.entries)
 
+    def test_unexpected_closer_recovery_skips_declarations_nested_in_wrapper(self):
+        text = '''("broken" name(unit)
+})
+wrapper(
+("nested_macro" name(nested_macro))
+{"nested_block" {vehicle "nested_entity"}}
+)
+{"valid" {vehicle "valid_entity"}}
+'''
+
+        first = scan_source_entries(text, "closer-recovery.set")
+        second = scan_source_entries(text, "closer-recovery.set")
+
+        self.assertEqual(["unexpected_closer"], [item.code for item in first.diagnostics])
+        self.assertEqual(["valid"], [entry.name for entry in first.entries])
+        self.assertEqual(first.diagnostics, second.diagnostics)
+        self.assertEqual(first.entries, second.entries)
+
 
 if __name__ == "__main__":
     unittest.main()
