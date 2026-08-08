@@ -157,7 +157,7 @@ class Gate3CandidateContractTests(unittest.TestCase):
         self.assertFalse(np.any(masks["sea_mask"] & outside))
         self.assertTrue(masks["land_mask"][1, 1] and masks["sea_mask"][1, 2])
 
-    @unittest.skipUnless(importlib.util.find_spec("scipy.ndimage") is not None, "optional Gate 3 SciPy dependency is not installed")
+    @unittest.skipUnless(importlib.util.find_spec("scipy") is not None, "optional Gate 3 SciPy dependency is not installed")
     def test_ocean_component_authority_retains_edge_and_anchor_but_fills_unanchored_cavity(self):
         inside = np.ones((9, 9), dtype=bool)
         inside[[0, -1], :] = False
