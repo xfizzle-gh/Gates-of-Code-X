@@ -54,13 +54,20 @@ jobs:
     steps:
       - name: Checkout Gates of CodeX
         uses: actions/checkout@v4
-      - name: Checkout pinned Natural Earth
+      - name: Checkout pinned Natural Earth authority files
         uses: actions/checkout@v4
         with:
           repository: nvkelso/natural-earth-vector
           ref: f1890d9f152c896d250a77557a5751a93d494776
           path: build/natural-earth
           fetch-depth: 1
+          sparse-checkout: |
+            geojson/ne_10m_land.geojson
+            geojson/ne_10m_lakes.geojson
+            geojson/ne_10m_admin_0_boundary_lines_land.geojson
+            geojson/ne_10m_populated_places_simple.geojson
+            geojson/ne_10m_rivers_lake_centerlines.geojson
+          sparse-checkout-cone-mode: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11.9"
