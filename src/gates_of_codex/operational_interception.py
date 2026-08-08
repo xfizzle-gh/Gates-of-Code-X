@@ -201,7 +201,11 @@ def detect_swept_contacts(
         if item.stationary_node_id:
             by_node_static.setdefault(item.stationary_node_id, []).append(item)
     # Also include non-movers already at nodes from state.
-    from .operational_contact import formation_at_node_id, formations_at_node
+    from .operational_contact import (
+        formation_at_node_id,
+        formation_is_combat_capable,
+        formations_at_node,
+    )
 
     occupied_nodes = {
         nid
@@ -209,7 +213,11 @@ def detect_swept_contacts(
         if (nid := formation_at_node_id(force))
     }
     for node_id in sorted(occupied_nodes):
-        present = formations_at_node(state, node_id)
+        present = [
+            force
+            for force in formations_at_node(state, node_id)
+            if formation_is_combat_capable(state, force)
+        ]
         if len(present) < 2:
             continue
         has_hostile = False
@@ -285,14 +293,24 @@ def detect_swept_contacts(
         key=lambda kv: (kv[0][0], kv[0][1], kv[0][2]),
     ):
         group = sorted(group, key=lambda value: value.formation_id)
+        combat_arrivals = [
+            item
+            for item in group
+            if (
+                force := state.strategic_formations.get(item.formation_id)
+            ) is not None
+            and formation_is_combat_capable(state, force)
+        ]
         # Occupants already at node (entry contact against existing hostiles).
         already = {
-            f.strategic_formation_id: f for f in formations_at_node(state, node_id)
+            f.strategic_formation_id: f
+            for f in formations_at_node(state, node_id)
+            if formation_is_combat_capable(state, f)
         }
         # Simultaneous: 2+ arrivals at same exact time with hostile pair among them
         # or vs already-present hostiles.
-        combined_ids = {item.formation_id for item in group} | set(already)
-        if len(combined_ids) < 2 and len(group) < 1:
+        combined_ids = {item.formation_id for item in combat_arrivals} | set(already)
+        if len(combined_ids) < 2 and len(combat_arrivals) < 1:
             continue
 
         # Build seed hostile pair using destination province owner-defends.
@@ -321,9 +339,9 @@ def detect_swept_contacts(
             continue
 
         # Classify: all-arrival simultaneous vs entry against occupant.
-        arrival_ids = {item.formation_id for item in group}
+        arrival_ids = {item.formation_id for item in combat_arrivals}
         already_ids = set(already)
-        if len(group) >= 2 and _hostile_in_set(state, group):
+        if len(combat_arrivals) >= 2 and _hostile_in_set(state, combat_arrivals):
             kind = ENCOUNTER_KIND_NODE_SIMULTANEOUS
             participants = tuple(sorted(arrival_ids | already_ids))
         elif already_ids and any(
@@ -341,7 +359,7 @@ def detect_swept_contacts(
         ):
             kind = ENCOUNTER_KIND_NODE_CONTACT
             participants = tuple(sorted(arrival_ids | already_ids))
-        elif len(group) >= 2:
+        elif len(combat_arrivals) >= 2:
             kind = ENCOUNTER_KIND_NODE_SIMULTANEOUS
             participants = tuple(sorted(arrival_ids | already_ids))
         else:
