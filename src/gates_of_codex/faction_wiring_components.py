@@ -9,7 +9,6 @@ from .faction_wiring_models import FactionWiringError, ResolutionProblem, _Resol
 from .faction_wiring_types import CATEGORY_COSTS, SourceUnit, _copy_unit, _merge_unit
 
 
-_BARE_QUOTED_BLOCK_RE = re.compile(r'^\s*\{\s*"[A-Za-z0-9_.-]+"\s*\}\s*$')
 _JUNK_AFTER_BRACE_RE = re.compile(r'\}\s*[A-Za-z0-9_]+\s*$')
 _REGISTRY_UNIT_RE = re.compile(r'\{\s*"([^"]+)"')
 
@@ -226,8 +225,6 @@ class FactionComponentMixin:
         for line_number, line in enumerate(text.splitlines(), start=1):
             if _JUNK_AFTER_BRACE_RE.search(line):
                 return f"junk after closing brace on line {line_number}"
-            if _BARE_QUOTED_BLOCK_RE.match(line):
-                return f"malformed bare quoted block on line {line_number}"
         return ""
 
     def _vehicle_exists(self, vehicle: str) -> bool:
