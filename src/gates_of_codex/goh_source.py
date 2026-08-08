@@ -7,6 +7,7 @@ from typing import Sequence
 
 MAX_ENTRY_CHARS = 1_000_000
 MAX_NESTING_DEPTH = 256
+MAX_CALLS_PER_ENTRY = 4096
 
 
 @dataclass(frozen=True, slots=True)
@@ -17,11 +18,22 @@ class SourceLocation:
 
 
 @dataclass(frozen=True, slots=True)
+class SourceParserState:
+    form: str = ""
+    phase: str = ""
+    paren_depth: int = 0
+    brace_depth: int = 0
+    in_quote: bool = False
+    in_comment: bool = False
+
+
+@dataclass(frozen=True, slots=True)
 class SourceDiagnostic:
     code: str
     message: str
     location: SourceLocation
     captured: str
+    state: SourceParserState = SourceParserState()
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,6 +59,13 @@ class SourceEntry:
 class SourceScanResult:
     entries: Sequence[SourceEntry]
     diagnostics: Sequence[SourceDiagnostic]
+
+
+@dataclass(frozen=True, slots=True)
+class _CallFailure:
+    code: str
+    message: str
+    offset: int
 
 
 def scan_source_entries(text: str, source: str) -> SourceScanResult:
@@ -92,6 +111,37 @@ def scan_source_entries(text: str, source: str) -> SourceScanResult:
             else None
         )
         if form is None:
+            malformed_header = (
+                _unterminated_header_form(text, index)
+                if paren_depth == 0 and brace_depth == 0
+                else None
+            )
+            if malformed_header is not None:
+                recovery = _find_recovery(text, index + 1)
+                failure_index = recovery if recovery < len(text) else len(text)
+                diagnostics.append(
+                    _diagnostic(
+                        "unterminated_declaration_header",
+                        "declaration header contains an unterminated quoted name",
+                        text,
+                        source,
+                        index,
+                        line_starts,
+                        capture_end=recovery,
+                        location_index=failure_index,
+                        state=SourceParserState(
+                            form=malformed_header,
+                            phase="header",
+                            paren_depth=1 if malformed_header == "macro" else 0,
+                            brace_depth=1 if malformed_header == "block" else 0,
+                            in_quote=True,
+                        ),
+                    )
+                )
+                index = recovery
+                paren_depth = 0
+                brace_depth = 0
+                continue
             if char == "(":
                 paren_depth += 1
             elif char == ")":
@@ -121,7 +171,28 @@ def scan_source_entries(text: str, source: str) -> SourceScanResult:
             continue
 
         raw = text[index:end]
-        calls = _parse_calls(raw, source, index, form, line_starts)
+        calls, call_failure = _parse_calls(raw, source, index, form, line_starts)
+        if call_failure is not None:
+            diagnostics.append(
+                _diagnostic(
+                    call_failure.code,
+                    call_failure.message,
+                    text,
+                    source,
+                    index,
+                    line_starts,
+                    capture_end=end,
+                    location_index=index + call_failure.offset,
+                    state=SourceParserState(
+                        form=form,
+                        phase="calls",
+                        paren_depth=1 if form == "macro" else 0,
+                        brace_depth=1 if form == "block" else 0,
+                    ),
+                )
+            )
+            index = end
+            continue
         if form == "macro":
             macro_kind = _macro_kind(raw)
             name = next(
@@ -159,10 +230,11 @@ def _capture_entry(
     escaped = False
     comment = False
     index = start + 1
+    recovery_candidates: list[int] = []
 
     while index < len(text):
         if index - start >= MAX_ENTRY_CHARS:
-            recovery = _find_recovery(text, index)
+            recovery = recovery_candidates[0] if recovery_candidates else _find_recovery(text, index)
             return index, _diagnostic(
                 "entry_too_large",
                 f"entry exceeded {MAX_ENTRY_CHARS} characters",
@@ -170,6 +242,15 @@ def _capture_entry(
                 source,
                 start,
                 line_starts,
+                location_index=index,
+                state=SourceParserState(
+                    form=form,
+                    phase="capture",
+                    paren_depth=paren_depth,
+                    brace_depth=brace_depth,
+                    in_quote=quote,
+                    in_comment=comment,
+                ),
             ), recovery
 
         char = text[index]
@@ -196,21 +277,56 @@ def _capture_entry(
             index += 1
             continue
 
+        at_root_depth = (
+            (form == "macro" and paren_depth == 1 and brace_depth == 0)
+            or (form == "block" and brace_depth == 1 and paren_depth == 0)
+        )
+        if (
+            at_root_depth
+            and _at_line_content_start(text, index)
+            and _recovery_definition_form(text, index) is not None
+        ):
+            recovery_candidates.append(index)
+
         if char == "(":
             paren_depth += 1
         elif char == ")":
             paren_depth -= 1
             if paren_depth < 0:
-                return _malformed_close(text, source, start, index, line_starts, "parenthesis")
+                return _malformed_close(
+                    text,
+                    source,
+                    start,
+                    index,
+                    line_starts,
+                    form,
+                    paren_depth,
+                    brace_depth,
+                    "parenthesis",
+                )
         elif char == "{":
             brace_depth += 1
         elif char == "}":
             brace_depth -= 1
             if brace_depth < 0:
-                return _malformed_close(text, source, start, index, line_starts, "block")
+                return _malformed_close(
+                    text,
+                    source,
+                    start,
+                    index,
+                    line_starts,
+                    form,
+                    paren_depth,
+                    brace_depth,
+                    "block",
+                )
 
         if paren_depth + brace_depth > MAX_NESTING_DEPTH:
-            recovery = _find_recovery(text, index + 1)
+            recovery = (
+                recovery_candidates[0]
+                if recovery_candidates
+                else _find_recovery(text, index + 1)
+            )
             return index + 1, _diagnostic(
                 "nesting_depth_exceeded",
                 f"entry exceeded nesting depth {MAX_NESTING_DEPTH}",
@@ -219,6 +335,13 @@ def _capture_entry(
                 start,
                 line_starts,
                 capture_end=index + 1,
+                location_index=index,
+                state=SourceParserState(
+                    form=form,
+                    phase="capture",
+                    paren_depth=paren_depth,
+                    brace_depth=brace_depth,
+                ),
             ), recovery
 
         index += 1
@@ -237,6 +360,13 @@ def _capture_entry(
                 start,
                 line_starts,
                 capture_end=index,
+                location_index=index - 1,
+                state=SourceParserState(
+                    form=form,
+                    phase="capture",
+                    paren_depth=paren_depth,
+                    brace_depth=brace_depth,
+                ),
             ), index
         if form == "block" and paren_depth:
             return index, _diagnostic(
@@ -247,10 +377,17 @@ def _capture_entry(
                 start,
                 line_starts,
                 capture_end=index,
+                location_index=index - 1,
+                state=SourceParserState(
+                    form=form,
+                    phase="capture",
+                    paren_depth=paren_depth,
+                    brace_depth=brace_depth,
+                ),
             ), index
         return index, None, index
 
-    recovery = _find_recovery(text, start + 1)
+    recovery = recovery_candidates[0] if recovery_candidates else len(text)
     return len(text), _diagnostic(
         "unterminated_entry",
         (
@@ -263,6 +400,15 @@ def _capture_entry(
         start,
         line_starts,
         capture_end=recovery,
+        location_index=recovery,
+        state=SourceParserState(
+            form=form,
+            phase="capture",
+            paren_depth=paren_depth,
+            brace_depth=brace_depth,
+            in_quote=quote,
+            in_comment=comment,
+        ),
     ), recovery
 
 
@@ -272,6 +418,9 @@ def _malformed_close(
     start: int,
     index: int,
     line_starts: Sequence[int],
+    form: str,
+    paren_depth: int,
+    brace_depth: int,
     delimiter: str,
 ) -> tuple[int, SourceDiagnostic, int]:
     end = index + 1
@@ -283,6 +432,13 @@ def _malformed_close(
         start,
         line_starts,
         capture_end=end,
+        location_index=index,
+        state=SourceParserState(
+            form=form,
+            phase="capture",
+            paren_depth=paren_depth,
+            brace_depth=brace_depth,
+        ),
     ), _find_recovery(text, end)
 
 
@@ -295,14 +451,21 @@ def _diagnostic(
     line_starts: Sequence[int],
     *,
     capture_end: int | None = None,
+    location_index: int | None = None,
+    state: SourceParserState = SourceParserState(),
 ) -> SourceDiagnostic:
     end = len(text) if capture_end is None else capture_end
     captured = text[start : min(end, start + MAX_ENTRY_CHARS)]
     return SourceDiagnostic(
         code=code,
         message=message,
-        location=_location(source, start, line_starts),
+        location=_location(
+            source,
+            start if location_index is None else location_index,
+            line_starts,
+        ),
         captured=captured,
+        state=state,
     )
 
 
@@ -312,7 +475,7 @@ def _parse_calls(
     source_start: int,
     form: str,
     line_starts: Sequence[int],
-) -> list[MacroCall]:
+) -> tuple[list[MacroCall], _CallFailure | None]:
     if form == "block":
         return _parse_block_calls(raw, source, source_start, line_starts)
     return _parse_macro_calls(raw, source, source_start, line_starts)
@@ -323,8 +486,10 @@ def _parse_macro_calls(
     source: str,
     source_start: int,
     line_starts: Sequence[int],
-) -> list[MacroCall]:
+) -> tuple[list[MacroCall], _CallFailure | None]:
     calls: list[MacroCall] = []
+    seen: set[tuple[str, str]] = set()
+    recognized_calls = 0
     paren_depth = 1
     brace_depth = 0
     index = 1
@@ -383,22 +548,45 @@ def _parse_macro_calls(
             if call_open < len(raw) and raw[call_open] == "(":
                 call_end = _matching_parenthesis(raw, call_open)
                 if call_end is not None:
-                    value = _clean_value(raw[call_open + 1 : call_end])
-                    family, ordinal = _call_parts(name)
-                    calls.append(
-                        MacroCall(
-                            name=name,
-                            family=family,
-                            ordinal=ordinal,
-                            value=value,
-                            location=_location(source, source_start + name_start, line_starts),
+                    recognized_calls += 1
+                    if recognized_calls > MAX_CALLS_PER_ENTRY:
+                        return calls, _CallFailure(
+                            code="call_limit_exceeded",
+                            message=(
+                                f"entry exceeded {MAX_CALLS_PER_ENTRY} recognized calls"
+                            ),
+                            offset=name_start,
                         )
-                    )
+                    value = _clean_value(raw[call_open + 1 : call_end])
+                    call_parts = _call_parts(name)
+                    if call_parts is None:
+                        return calls, _CallFailure(
+                            code="invalid_ordinal",
+                            message="call ordinal suffix is too long to parse safely",
+                            offset=name_start,
+                        )
+                    family, ordinal = call_parts
+                    semantic_key = (family, value)
+                    if semantic_key not in seen:
+                        seen.add(semantic_key)
+                        calls.append(
+                            MacroCall(
+                                name=name,
+                                family=family,
+                                ordinal=ordinal,
+                                value=value,
+                                location=_location(
+                                    source,
+                                    source_start + name_start,
+                                    line_starts,
+                                ),
+                            )
+                        )
                     index = call_end + 1
                     continue
             continue
         index += 1
-    return calls
+    return calls, None
 
 
 def _parse_block_calls(
@@ -406,8 +594,10 @@ def _parse_block_calls(
     source: str,
     source_start: int,
     line_starts: Sequence[int],
-) -> list[MacroCall]:
+) -> tuple[list[MacroCall], _CallFailure | None]:
     calls: list[MacroCall] = []
+    seen: set[tuple[str, str]] = set()
+    recognized_calls = 0
     depth = 1
     index = 1
     quote = False
@@ -456,20 +646,39 @@ def _parse_block_calls(
         name_end = name_start + 1
         while name_end < len(raw) and _is_identifier_part(raw[name_end]):
             name_end += 1
+        recognized_calls += 1
+        if recognized_calls > MAX_CALLS_PER_ENTRY:
+            return calls, _CallFailure(
+                code="call_limit_exceeded",
+                message=f"entry exceeded {MAX_CALLS_PER_ENTRY} recognized calls",
+                offset=name_start,
+            )
         value_start = _skip_space_and_comments(raw, name_end)
         value, _ = _block_value(raw, value_start)
-        family, ordinal = _call_parts(raw[name_start:name_end])
-        calls.append(
-            MacroCall(
-                name=raw[name_start:name_end],
-                family=family,
-                ordinal=ordinal,
-                value=value,
-                location=_location(source, source_start + name_start, line_starts),
+        name = raw[name_start:name_end]
+        call_parts = _call_parts(name)
+        if call_parts is None:
+            return calls, _CallFailure(
+                code="invalid_ordinal",
+                message="call ordinal suffix is too long to parse safely",
+                offset=name_start,
             )
-        )
+        family, ordinal = call_parts
+        value = _clean_value(value)
+        semantic_key = (family, value)
+        if semantic_key not in seen:
+            seen.add(semantic_key)
+            calls.append(
+                MacroCall(
+                    name=name,
+                    family=family,
+                    ordinal=ordinal,
+                    value=value,
+                    location=_location(source, source_start + name_start, line_starts),
+                )
+            )
         index = name_end
-    return calls
+    return calls, None
 
 
 def _definition_form(text: str, index: int) -> str | None:
@@ -480,7 +689,7 @@ def _definition_form(text: str, index: int) -> str | None:
         if token_start >= len(text):
             return None
         if text[token_start] == '"':
-            value, end = _quoted_value(text, token_start)
+            value, end = _header_quoted_value(text, token_start)
             return "block" if end is not None and value else None
         return "block" if _is_name_char(text[token_start]) else None
     if text[index] != "(":
@@ -488,8 +697,19 @@ def _definition_form(text: str, index: int) -> str | None:
     kind_start = _skip_space_and_comments(text, index + 1)
     if kind_start >= len(text) or text[kind_start] != '"':
         return None
-    value, end = _quoted_value(text, kind_start)
+    value, end = _header_quoted_value(text, kind_start)
     return "macro" if end is not None and value else None
+
+
+def _unterminated_header_form(text: str, index: int) -> str | None:
+    if index >= len(text) or text[index] not in "({":
+        return None
+    form = "macro" if text[index] == "(" else "block"
+    token_start = _skip_space_and_comments(text, index + 1)
+    if token_start >= len(text) or text[token_start] != '"':
+        return None
+    _, end = _header_quoted_value(text, token_start)
+    return form if end is None else None
 
 
 def _find_recovery(text: str, index: int) -> int:
@@ -514,6 +734,11 @@ def _recovery_definition_form(text: str, index: int) -> str | None:
         return form
     token_start = _skip_space_and_comments(text, index + 1)
     return form if token_start < len(text) and text[token_start] == '"' else None
+
+
+def _at_line_content_start(text: str, index: int) -> bool:
+    line_start = text.rfind("\n", 0, index) + 1
+    return not text[line_start:index].strip(" \t\r")
 
 
 def _macro_kind(raw: str) -> str:
@@ -572,12 +797,78 @@ def _matching_parenthesis(text: str, open_index: int) -> int | None:
 
 
 def _clean_value(value: str) -> str:
-    cleaned = value.strip()
+    cleaned = _strip_comments_outside_quotes(value).strip()
     if cleaned.startswith('"'):
         unquoted, end = _quoted_value(cleaned, 0)
         if end == len(cleaned):
             return unquoted
-    return cleaned
+    return _collapse_space_outside_quotes(cleaned)
+
+
+def _strip_comments_outside_quotes(value: str) -> str:
+    chars: list[str] = []
+    index = 0
+    quote = False
+    escaped = False
+    while index < len(value):
+        char = value[index]
+        if quote:
+            chars.append(char)
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                quote = False
+            index += 1
+            continue
+        if char == '"':
+            quote = True
+            chars.append(char)
+            index += 1
+            continue
+        if char == ";" or value.startswith("//", index):
+            newline = value.find("\n", index)
+            if newline < 0:
+                break
+            chars.append(" ")
+            index = newline + 1
+            continue
+        chars.append(char)
+        index += 1
+    return "".join(chars)
+
+
+def _collapse_space_outside_quotes(value: str) -> str:
+    chars: list[str] = []
+    quote = False
+    escaped = False
+    pending_space = False
+    for char in value:
+        if quote:
+            chars.append(char)
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                quote = False
+            continue
+        if char == '"':
+            if pending_space and chars:
+                chars.append(" ")
+            pending_space = False
+            quote = True
+            chars.append(char)
+            continue
+        if char.isspace():
+            pending_space = True
+            continue
+        if pending_space and chars:
+            chars.append(" ")
+        pending_space = False
+        chars.append(char)
+    return "".join(chars)
 
 
 def _block_value(text: str, start: int) -> tuple[str, int]:
@@ -613,12 +904,26 @@ def _quoted_value(text: str, start: int) -> tuple[str, int | None]:
     return "".join(chars), None
 
 
-def _call_parts(name: str) -> tuple[str, int | None]:
+def _header_quoted_value(text: str, start: int) -> tuple[str, int | None]:
+    value, end = _quoted_value(text, start)
+    newline = text.find("\n", start + 1)
+    if newline >= 0 and (end is None or newline < end):
+        return text[start + 1 : newline], None
+    return value, end
+
+
+def _call_parts(name: str) -> tuple[str, int | None] | None:
     split = len(name)
     while split > 0 and name[split - 1].isdigit():
         split -= 1
     family = name[:split].lower()
-    ordinal = int(name[split:]) if split < len(name) else None
+    suffix = name[split:]
+    if len(suffix) > 9:
+        return None
+    try:
+        ordinal = int(suffix) if suffix else None
+    except ValueError:
+        return None
     return family, ordinal
 
 

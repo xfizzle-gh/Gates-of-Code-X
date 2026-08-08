@@ -3,8 +3,11 @@ from __future__ import annotations
 import unittest
 
 from gates_of_codex.goh_source import (
+    MAX_CALLS_PER_ENTRY,
     MAX_ENTRY_CHARS,
     MAX_NESTING_DEPTH,
+    SourceDiagnostic,
+    SourceLocation,
     scan_source_entries,
 )
 
@@ -115,7 +118,7 @@ c1(kor_lead:1) c2(kor_rifle:7) note("ignore ( { )"))
         result = scan_source_entries(text, "broken.set")
 
         self.assertEqual("unterminated_entry", result.diagnostics[0].code)
-        self.assertEqual((1, 1), (
+        self.assertEqual((2, 1), (
             result.diagnostics[0].location.line,
             result.diagnostics[0].location.column,
         ))
@@ -149,8 +152,152 @@ c1(kor_lead:1) c2(kor_rifle:7) note("ignore ( { )"))
 
         result = scan_source_entries(text, "deep.set")
 
-        self.assertEqual("nesting_depth_exceeded", result.diagnostics[0].code)
-        self.assertLessEqual(len(result.diagnostics[0].captured), MAX_ENTRY_CHARS)
+        diagnostic = result.diagnostics[0]
+        self.assertEqual("nesting_depth_exceeded", diagnostic.code)
+        self.assertEqual((1, text.rfind("(") + 1), (
+            diagnostic.location.line,
+            diagnostic.location.column,
+        ))
+        self.assertGreater(
+            diagnostic.state.paren_depth + diagnostic.state.brace_depth,
+            MAX_NESTING_DEPTH,
+        )
+        self.assertLessEqual(len(diagnostic.captured), MAX_ENTRY_CHARS)
+
+    def test_call_count_is_bounded_at_the_4097th_recognized_call(self):
+        calls = " ".join(
+            f"vehicle{ordinal}(tank{ordinal})"
+            for ordinal in range(1, MAX_CALLS_PER_ENTRY + 2)
+        )
+        text = f'("many" {calls})\n{{"valid" {{entity "radar"}}}}\n'
+        failure_index = text.index(f"vehicle{MAX_CALLS_PER_ENTRY + 1}(")
+
+        result = scan_source_entries(text, "many.set")
+
+        self.assertEqual(["call_limit_exceeded"], [item.code for item in result.diagnostics])
+        self.assertEqual((1, failure_index + 1), (
+            result.diagnostics[0].location.line,
+            result.diagnostics[0].location.column,
+        ))
+        self.assertEqual("calls", result.diagnostics[0].state.phase)
+        self.assertEqual(["valid"], [entry.name for entry in result.entries])
+
+    def test_arbitrarily_long_numeric_suffix_is_diagnosed_without_crashing(self):
+        macro_name = "vehicle" + ("9" * 5_000)
+        text = f'("bad_ordinal" name(unit) {macro_name}(tank))\n'
+        failure_index = text.index(macro_name)
+
+        result = scan_source_entries(text, "ordinal.set")
+
+        self.assertEqual(["invalid_ordinal"], [item.code for item in result.diagnostics])
+        self.assertEqual(failure_index + 1, result.diagnostics[0].location.column)
+        self.assertEqual("calls", result.diagnostics[0].state.phase)
+
+    def test_semantic_duplicate_calls_collapse_to_first_source_evidence(self):
+        text = '''("duplicates" name(unit)
+vehicle(tank) vehicle1( "tank" ) vehicle2(tank ; comment
+)
+entity(radar) entity1("radar"))
+'''
+
+        result = scan_source_entries(text, "duplicates.set")
+        references = [
+            call
+            for call in result.entries[0].calls
+            if call.family in {"vehicle", "entity"}
+        ]
+
+        self.assertEqual([], result.diagnostics)
+        self.assertEqual(
+            [("vehicle", "tank"), ("entity", "radar")],
+            [(call.name, call.value) for call in references],
+        )
+        self.assertEqual([None, None], [call.ordinal for call in references])
+
+    def test_comments_are_removed_from_unquoted_call_values(self):
+        text = '''("comments" name(unit)
+vehicle(tank ; explanation
+)
+entity(radar // explanation
+))
+'''
+
+        entry = scan_source_entries(text, "call-comments.set").entries[0]
+
+        self.assertEqual(
+            ["tank", "radar"],
+            [
+                call.value
+                for call in entry.calls
+                if call.family in {"vehicle", "entity"}
+            ],
+        )
+
+    def test_diagnostic_state_defaults_and_exact_unexpected_closer_location(self):
+        defaulted = SourceDiagnostic(
+            code="example",
+            message="example",
+            location=SourceLocation("example.set", 1, 1),
+            captured="",
+        )
+        result = scan_source_entries('("kind"\n})\n', "closer.set")
+        diagnostic = result.diagnostics[0]
+
+        self.assertEqual("", defaulted.state.form)
+        self.assertEqual("unexpected_closer", diagnostic.code)
+        self.assertEqual((2, 1), (diagnostic.location.line, diagnostic.location.column))
+        self.assertEqual("macro", diagnostic.state.form)
+        self.assertEqual("capture", diagnostic.state.phase)
+        self.assertEqual(-1, diagnostic.state.brace_depth)
+
+    def test_unterminated_entry_at_eof_reports_eof_and_parser_state(self):
+        text = '("kind"\n name(unit)'
+
+        diagnostic = scan_source_entries(text, "eof.set").diagnostics[0]
+
+        self.assertEqual("unterminated_entry", diagnostic.code)
+        self.assertEqual((2, len(" name(unit)") + 1), (
+            diagnostic.location.line,
+            diagnostic.location.column,
+        ))
+        self.assertEqual("macro", diagnostic.state.form)
+        self.assertEqual(1, diagnostic.state.paren_depth)
+
+    def test_unterminated_quoted_declaration_header_is_diagnosed(self):
+        text = '("broken'
+
+        diagnostic = scan_source_entries(text, "header.set").diagnostics[0]
+
+        self.assertEqual("unterminated_declaration_header", diagnostic.code)
+        self.assertEqual((1, len(text) + 1), (
+            diagnostic.location.line,
+            diagnostic.location.column,
+        ))
+        self.assertEqual("header", diagnostic.state.phase)
+        self.assertTrue(diagnostic.state.in_quote)
+
+    def test_recovery_ignores_definition_shaped_lines_at_nested_depth(self):
+        text = '''("broken" name(broken)
+wrapper(
+{"nested" {vehicle "nested_entity"}}
+)
+{"valid" {vehicle "valid_entity"}}
+'''
+
+        result = scan_source_entries(text, "recovery.set")
+
+        self.assertEqual(["unterminated_entry"], [item.code for item in result.diagnostics])
+        self.assertEqual(["valid"], [entry.name for entry in result.entries])
+        self.assertNotIn("valid_entity", result.diagnostics[0].captured)
+
+    def test_malformed_diagnostics_are_deterministic(self):
+        text = '("broken" name(unit)\n{"valid" {vehicle "tank"}}\n'
+
+        first = scan_source_entries(text, "deterministic.set")
+        second = scan_source_entries(text, "deterministic.set")
+
+        self.assertEqual(first.diagnostics, second.diagnostics)
+        self.assertEqual(first.entries, second.entries)
 
 
 if __name__ == "__main__":
