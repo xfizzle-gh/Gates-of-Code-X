@@ -56,7 +56,7 @@ func _run_all() -> void:
 	var modal: Dictionary = scene.pending_battle_modal_model()
 	_check_eq(modal.get("contact_label", ""), "Edge Crossing Contact", "modal uses direct contact-kind label")
 	_check_eq(modal.get("attacker_names", []), ["Alpha"], "modal names attacking formation")
-	_check_eq(modal.get("defender_names", []), ["Red"], "modal names defending formation")
+	_check_eq(modal.get("defender_names", []), ["Red", "Red Two"], "modal names every defending formation")
 	_check_eq(modal.get("ambush_lines", []), ["Red: Ambush +15%"], "modal shows only triggered Ambush metadata")
 
 	var before_bytes := JSON.stringify(scene.snapshot)

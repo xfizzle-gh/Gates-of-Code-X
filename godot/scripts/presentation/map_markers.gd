@@ -35,6 +35,7 @@ static func draw_formation_counter(
 		type_glyph,
 		strength,
 		presentation_overlay,
+		false,
 		formation_id
 	)
 	if not bool(style.get("visible", true)):
