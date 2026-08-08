@@ -2,7 +2,7 @@
 
 ## Status and authority
 
-Issue #107, issue #77, owner authorization comment `5227987788`, independent review `4889696294`, and compatibility review `4889771055` lock this design. S11 adds deterministic observer-scoped knowledge and presentation filtering around the existing authoritative campaign state. It does not create a second simulation state and does not alter operational movement, contact, Ambush, retreat, supply, economy, or tactical battle authority.
+Issue #107, issue #77, owner authorization comment `5227987788`, independent review `4889696294`, compatibility review `4889771055`, and exact-base schema collision finding `5228280212` govern this design. S11 adds deterministic observer-scoped knowledge and presentation filtering around the existing authoritative campaign state. It does not create a second simulation state and does not alter operational movement, contact, Ambush, retreat, supply, economy, or tactical battle authority.
 
 The design starts from S10 merge commit `cbef4db96f04d26f4127278041f717691712d7eb`. Delivery remains a reviewed chain:
 
@@ -22,7 +22,7 @@ Fog of War: On / Off
 
 Fog of War is opt-in and defaults Off. Fog Off preserves the current perfect-information campaign behavior.
 
-Fog On is supported only for single-player campaigns with exactly one `FactionState.is_human_controlled == true`. Campaign creation, schema-6 migration, load validation, and any command that enables Fog must reject zero or multiple human-controlled factions with `fog_of_war_requires_single_human_faction`.
+Fog On is supported only for single-player campaigns with exactly one `FactionState.is_human_controlled == true`. Campaign creation, schema-11 migration, load validation, and any command that enables Fog must reject zero or multiple human-controlled factions with `fog_of_war_requires_single_human_faction`.
 
 Hotseat and remote multiplayer remain available only with Fog Off. PR B and PR C add no seat-transfer protocol, arbitrary observer switch, or retained-client-state purge. A Fog-on human-facing snapshot is bound to the sole human faction and cannot request another faction's observer picture.
 
@@ -157,7 +157,7 @@ ukr-air-assault
 rusa-vdv
 ```
 
-Every other migrated formation defaults `false`. Custom schema-6 scenarios may explicitly persist either boolean. Schema-6 loads preserve the persisted value and never recompute it.
+Every other migrated formation defaults `false`. Custom schema-11 scenarios may explicitly persist either boolean. Schema-11-and-later loads preserve the persisted value and never recompute it.
 
 ## Exact eligible site authority
 
@@ -233,9 +233,17 @@ When Fog On is explicitly selected without an operational graph:
 - no pixel line of sight is introduced;
 - records use province IDs instead of node/edge fields.
 
-## Campaign schema 6 and migration contract
+## Campaign schema 11 and migration contract
 
-Current pre-S11 `main` already writes campaign schema 5. S11 therefore allocates campaign schema 6.
+Exact-base inspection after PR #167 merged proved that campaign schema values 6 through 10 are already allocated before S11:
+
+- strategic formations: schema 6;
+- operational positions: schema 7;
+- operational supply: schema 8;
+- strategic actors: schema 9;
+- actor-scoped economy/content: schema 10.
+
+S11 therefore allocates the next unused monotonic campaign schema: **11**. Schema 6 cannot identify S11 and must remain valid pre-S11 state.
 
 PR B introduces:
 
@@ -243,7 +251,7 @@ PR B introduces:
 - `CampaignState.fog_of_war_enabled: bool`;
 - `CampaignState.knowledge_by_observer: dict[str, dict[str, KnowledgeRecord]]`.
 
-The S11 field set is:
+The complete S11 field set is:
 
 - top-level `fog_of_war_enabled`;
 - top-level `knowledge_by_observer`;
@@ -251,30 +259,24 @@ The S11 field set is:
 
 Migration is exact:
 
-### Schema 4 and earlier to schema 6
+### Any pre-S11 schema 10 or earlier to schema 11
+
+A campaign at schema 10 or earlier with the complete S11 field set absent is valid pre-S11 state. This includes legacy schemas 4 and 5 and already-shipped schemas 6, 7, 8, 9, and 10.
+
+Migration must:
 
 - set `fog_of_war_enabled = false`;
 - set `knowledge_by_observer = {}`;
 - set recon capability through the exact four-template whitelist;
-- preserve all existing Fog-off campaign behavior and authoritative state;
-- write schema 6 only at the normal atomic migration/save boundary.
+- preserve every existing authoritative field and Fog-off behavior;
+- preserve overlapping-alliance compatibility while Fog is Off, knowledge is empty, and no observer scope is requested;
+- write schema 11 only at the normal atomic migration/save boundary.
 
-### Existing pre-S11 schema 5 to schema 6
+No schema 10-or-earlier value is interpreted as S11. If any S11 field is present before schema 11, the file fails with `unexpected_s11_fields_in_pre_s11_schema`; partial and complete pre-release field sets are both rejected rather than normalized.
 
-A schema-5 save with the S11 field set absent is a valid legacy pre-S11 save, not malformed schema 6.
+### Schema 11 and later validation
 
-It migrates exactly like schema 4 and earlier:
-
-- Fog defaults Off;
-- knowledge defaults empty;
-- recon capability uses the exact whitelist;
-- existing campaign state and Fog-off behavior remain unchanged.
-
-Schema 5 is never interpreted as an S11 schema. A schema-5 file containing a partial or complete pre-release S11 field set fails with `unexpected_s11_fields_in_schema5`; it is not silently treated as schema 6.
-
-### Schema 6 validation
-
-Schema 6 requires all S11 fields with their exact types. Missing schema-6 S11 fields are malformed. Records are strictly validated for observer/key/subject linkage, tier-appropriate fields, opaque digest, and sorted unique sources.
+Schema 11 and later require the complete S11 field set with exact types. Missing S11 fields are malformed. Records are strictly validated for observer/key/subject linkage, tier-appropriate fields, opaque digest, and sorted unique sources. A future schema greater than 11 may add fields but may not omit or reinterpret the S11 set.
 
 Alliance ambiguity validation is conditional:
 
@@ -283,7 +285,7 @@ Alliance ambiguity validation is conditional:
 - overlapping membership fails when any S11 knowledge record exists;
 - overlapping membership fails whenever observer scope or an observer projection is requested.
 
-Both migration paths default Fog Off. Neither migration silently enables filtering or creates knowledge. Serialization is stable by observer scope and record key, and deterministic save/load round trips are byte-stable.
+All pre-S11 migration paths default Fog Off. No migration silently enables filtering or creates knowledge. Serialization is stable by observer scope and record key, and deterministic save/load round trips are byte-stable.
 
 ## Persisted refresh and pure projections
 
@@ -399,11 +401,11 @@ PR B must test:
 - every source-table row, deduplication, ordering, and assessed cap;
 - Ambush concealment;
 - coalition sharing;
-- schema-4 to schema-6 migration;
-- existing pre-S11 schema-5 to schema-6 migration with absent S11 fields;
-- Fog Off by default on both migration paths;
-- missing S11 fields in schema 5 accepted as valid legacy state;
-- missing required S11 fields in schema 6 rejected;
+- schema-4, schema-5, schema-6, schema-7, schema-8, schema-9, and schema-10 migrations to schema 11;
+- every schema 10-or-earlier campaign with the complete S11 set absent accepted as valid pre-S11 state;
+- Fog Off and empty knowledge by default on all pre-S11 migration paths;
+- any S11 field in schema 10 or earlier rejected with `unexpected_s11_fields_in_pre_s11_schema`;
+- missing required S11 fields in schema 11 or later rejected;
 - Fog-off overlapping-alliance compatibility;
 - Fog-on overlapping-alliance rejection;
 - S11-knowledge overlapping-alliance rejection;
