@@ -32,6 +32,7 @@ from gates_of_codex.operational_supply import (
     route_for_formation,
 )
 from gates_of_codex.state_io import campaign_from_dict
+from gates_of_codex.supply import refresh_supply_for_faction
 
 
 def _state() -> CampaignState:
@@ -883,6 +884,55 @@ class OperationalS8SupplyTests(unittest.TestCase):
         self.assertEqual(["capture", "supply"], events)
         self.assertEqual(1, refresh.call_count)
         self.assertEqual({"authoritative": True}, report["supply"])
+
+    def test_cut_off_formation_uses_existing_supply_drain_once(self) -> None:
+        state, graph = _lifecycle_state(connected=False)
+        force = _only_force(state)
+        force.supplied = False
+        force.cut_off = True
+        battalion = state.battalions["nato-route"]
+        battalion.supply = 100
+
+        with mock.patch(
+            "gates_of_codex.supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            refresh_supply_for_faction(state, Faction.NATO)
+
+        self.assertEqual(75, battalion.supply)
+        self.assertEqual(1, battalion.encircled_turns)
+
+    def test_grace_formation_uses_existing_supply_restore_once(self) -> None:
+        state, graph = _lifecycle_state(connected=False)
+        force = _only_force(state)
+        force.supplied = True
+        force.cut_off = False
+        force.grace_ticks_remaining = 1
+        battalion = state.battalions["nato-route"]
+        battalion.supply = 50
+
+        with mock.patch(
+            "gates_of_codex.supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            refresh_supply_for_faction(state, Faction.NATO)
+
+        self.assertEqual(70, battalion.supply)
+        self.assertEqual(0, battalion.encircled_turns)
+
+    def test_no_graph_supply_report_and_serialization_are_unchanged(self) -> None:
+        expected = _state()
+        actual = _state()
+        expected_payload = expected.to_dict()
+        expected_report = refresh_supply_for_faction(expected, Faction.NATO)
+
+        ensure_operational_supply_state(actual)
+        actual_report = refresh_supply_for_faction(actual, Faction.NATO)
+
+        self.assertEqual(expected_report, actual_report)
+        self.assertEqual(
+            expected_payload["schema_version"], actual.to_dict()["schema_version"]
+        )
 
 
 if __name__ == "__main__":

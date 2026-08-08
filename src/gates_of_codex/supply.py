@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from .diplomacy import allied_factions, is_friendly_owner
 from .models import Battalion, CampaignState, Faction
+from .operational_position import load_operational_graph_for_state
 
 
 DEFAULT_SUPPLY_SOURCES: dict[Faction, tuple[str, ...]] = {
@@ -76,7 +77,15 @@ def refresh_supply_for_faction(state: CampaignState, faction: Faction) -> Supply
         (value for value in state.battalions.values() if value.faction == faction),
         key=lambda value: value.battalion_id,
     ):
-        if battalion.province_id in reachable:
+        operational_supplied = formation_supplied_for_battalion(
+            state, battalion
+        )
+        is_supplied = (
+            battalion.province_id in reachable
+            if operational_supplied is None
+            else operational_supplied
+        )
+        if is_supplied:
             battalion.supply = min(100, battalion.supply + SUPPLY_RESTORE)
             battalion.encircled_turns = 0
             supplied.append(battalion.battalion_id)
@@ -114,6 +123,30 @@ def refresh_all_supply(state: CampaignState) -> list[SupplyReport]:
         for faction in (Faction.NATO, Faction.UKRAINE, Faction.RUSSIA, Faction.PRC)
         if faction.value in state.factions and not state.factions[faction.value].is_eliminated
     ]
+
+
+def formation_supplied_for_battalion(
+    state: CampaignState, battalion: Battalion
+) -> bool | None:
+    """Return S8 formation authority, or None for legacy no-graph campaigns."""
+    if load_operational_graph_for_state(state) is None:
+        return None
+    force = state.strategic_formations.get(
+        battalion.strategic_formation_id
+    )
+    if force is None:
+        force = next(
+            (
+                item
+                for item in sorted(
+                    state.strategic_formations.values(),
+                    key=lambda value: value.strategic_formation_id,
+                )
+                if battalion.battalion_id in item.battalion_ids
+            ),
+            None,
+        )
+    return False if force is None else force.supplied
 
 
 def _eligible_sources(state: CampaignState, faction: Faction) -> list[str]:
