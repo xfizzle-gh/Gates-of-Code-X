@@ -27,6 +27,8 @@ _SEA_SUPPLY_OPT_IN_KINDS = frozenset(
     }
 )
 _SOURCE_TAGS = frozenset({"supply_source", "supply_hub"})
+OPERATIONAL_SUPPLY_SCHEMA_VERSION = 8
+MIGRATION_RECORD_KEY = "operational_supply_migration"
 
 
 @dataclass(frozen=True, slots=True)
@@ -62,6 +64,150 @@ class OperationalSupplyRoute:
             self.edge_id_path,
             self.source_hub_id,
         )
+
+
+@dataclass(frozen=True, slots=True)
+class OperationalSupplyReport:
+    authoritative: bool
+    connected: tuple[str, ...] = ()
+    grace: tuple[str, ...] = ()
+    cut_off: tuple[str, ...] = ()
+    diagnostics: tuple[OperationalSupplyDiagnostic, ...] = ()
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "authoritative": self.authoritative,
+            "connected": list(self.connected),
+            "grace": list(self.grace),
+            "cut_off": list(self.cut_off),
+            "diagnostics": [
+                {
+                    "source_hub_id": item.source_hub_id,
+                    "province_id": item.province_id,
+                    "reason": item.reason,
+                }
+                for item in self.diagnostics
+            ],
+        }
+
+
+def ensure_operational_supply_state(state: CampaignState) -> dict[str, Any]:
+    """Version S8 state only when an operational graph is authoritative."""
+    incoming_schema = int(state.schema_version)
+    graph = load_operational_graph_for_state(state)
+    if graph is None:
+        return {
+            "schema_version": incoming_schema,
+            "map_id": state.map_id,
+            "graph_loaded": False,
+            "skipped": True,
+        }
+
+    state.schema_version = max(
+        state.schema_version, OPERATIONAL_SUPPLY_SCHEMA_VERSION
+    )
+    if MIGRATION_RECORD_KEY not in state.map_metadata:
+        state.map_metadata[MIGRATION_RECORD_KEY] = {
+            "schema_version": OPERATIONAL_SUPPLY_SCHEMA_VERSION,
+            "migrated_from_schema": min(
+                incoming_schema, OPERATIONAL_SUPPLY_SCHEMA_VERSION
+            ),
+            "map_id": state.map_id,
+            "graph_loaded": True,
+            "source_identity": "logical-source-id-separate-from-routing-node",
+            "grace_state": "one-disconnected-operational-tick",
+        }
+    return state.map_metadata[MIGRATION_RECORD_KEY]
+
+
+def refresh_operational_supply(
+    state: CampaignState,
+    *,
+    consume_grace: bool,
+    completed_tick: int | None = None,
+) -> OperationalSupplyReport:
+    """Refresh graph connectivity and optionally advance persisted grace once."""
+    if load_operational_graph_for_state(state) is None:
+        return OperationalSupplyReport(authoritative=False)
+    ensure_operational_supply_state(state)
+    if consume_grace:
+        completed_tick = require_strict_int(
+            completed_tick,
+            name="completed_tick",
+            minimum=0,
+        )
+
+    from .operational_movement import get_operational_clock
+
+    refresh_tick = (
+        completed_tick
+        if completed_tick is not None
+        else int(get_operational_clock(state)["global_tick"])
+    )
+    connected_ids: list[str] = []
+    grace_ids: list[str] = []
+    cut_off_ids: list[str] = []
+    diagnostics: set[OperationalSupplyDiagnostic] = set()
+    routes_by_faction: dict[str, dict[str, OperationalSupplyRoute]] = {}
+
+    for force in sorted(
+        state.strategic_formations.values(),
+        key=lambda item: item.strategic_formation_id,
+    ):
+        faction_key = force.faction.value
+        routes = routes_by_faction.get(faction_key)
+        if routes is None:
+            sources, source_diagnostics = resolve_operational_supply_sources(
+                state, force.faction
+            )
+            diagnostics.update(source_diagnostics)
+            routes = compute_operational_supply_routes(
+                state, force.faction, sources
+            )
+            routes_by_faction[faction_key] = routes
+        route = route_for_formation(state, force, routes)
+        force.last_supply_refresh_tick = refresh_tick
+        force.last_supply_refresh_turn = int(state.turn_number)
+        if route is not None:
+            force.supplied = True
+            force.cut_off = False
+            force.source_hub_id = route.source_hub_id
+            force.route_cost = route.route_cost
+            force.grace_ticks_remaining = 0
+            if consume_grace:
+                force.last_grace_consuming_tick = completed_tick
+            connected_ids.append(force.strategic_formation_id)
+            continue
+
+        force.source_hub_id = None
+        force.route_cost = None
+        if (
+            consume_grace
+            and force.last_grace_consuming_tick != completed_tick
+        ):
+            if force.grace_ticks_remaining == 1:
+                force.supplied = False
+                force.cut_off = True
+                force.grace_ticks_remaining = 0
+            elif force.cut_off:
+                force.supplied = False
+            else:
+                force.supplied = True
+                force.cut_off = False
+                force.grace_ticks_remaining = 1
+            force.last_grace_consuming_tick = completed_tick
+        if force.cut_off:
+            cut_off_ids.append(force.strategic_formation_id)
+        elif force.grace_ticks_remaining == 1:
+            grace_ids.append(force.strategic_formation_id)
+
+    return OperationalSupplyReport(
+        authoritative=True,
+        connected=tuple(connected_ids),
+        grace=tuple(grace_ids),
+        cut_off=tuple(cut_off_ids),
+        diagnostics=tuple(sorted(diagnostics, key=_diagnostic_sort_key)),
+    )
 
 
 def resolve_operational_supply_sources(

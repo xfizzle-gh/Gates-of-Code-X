@@ -25,7 +25,9 @@ from gates_of_codex.operational_supply import (
     OperationalSupplySource,
     assert_supply_edge_hop_legal,
     compute_operational_supply_routes,
+    ensure_operational_supply_state,
     on_edge_attachment_cost,
+    refresh_operational_supply,
     resolve_operational_supply_sources,
     route_for_formation,
 )
@@ -161,6 +163,27 @@ def _source(source_id: str, node_id: str) -> OperationalSupplySource:
         eligible_factions=("nato",),
         source_kind="test",
     )
+
+
+def _lifecycle_state(*, connected: bool) -> tuple[CampaignState, dict]:
+    state = _routing_state(["formation", "source"])
+    state.provinces["p-source"].metadata["static_supply_source_for"] = [
+        "nato"
+    ]
+    graph = _routing_graph(
+        ["formation", "source"],
+        [
+            _edge_row(
+                "route",
+                "formation",
+                "source",
+                enabled=connected,
+            )
+        ],
+    )
+    graph["nodes"][1]["node_id"] = stable_node_id("p-source", "anchor")
+    graph["edges"][0]["b"] = stable_node_id("p-source", "anchor")
+    return state, graph
 
 
 def _source_by_id(sources, source_hub_id: str):
@@ -718,6 +741,148 @@ class OperationalS8SupplyTests(unittest.TestCase):
             route = route_for_formation(state, _only_force(state), routes)
 
         self.assertIsNone(route)
+
+    def test_first_disconnected_tick_enters_persisted_grace(self) -> None:
+        state, graph = _lifecycle_state(connected=True)
+        with mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            refresh_operational_supply(state, consume_grace=False)
+            graph["edges"][0]["traversal_enabled"] = False
+            refresh_operational_supply(
+                state, consume_grace=True, completed_tick=1
+            )
+
+        force = _only_force(state)
+        self.assertTrue(force.supplied)
+        self.assertFalse(force.cut_off)
+        self.assertIsNone(force.source_hub_id)
+        self.assertIsNone(force.route_cost)
+        self.assertEqual(1, force.grace_ticks_remaining)
+        self.assertEqual(1, force.last_grace_consuming_tick)
+
+    def test_next_disconnected_tick_becomes_cut_off(self) -> None:
+        state, graph = _lifecycle_state(connected=False)
+        force = _only_force(state)
+        force.grace_ticks_remaining = 1
+        force.last_grace_consuming_tick = 1
+        with mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            refresh_operational_supply(
+                state, consume_grace=True, completed_tick=2
+            )
+
+        self.assertFalse(force.supplied)
+        self.assertTrue(force.cut_off)
+        self.assertEqual(0, force.grace_ticks_remaining)
+        self.assertEqual(2, force.last_grace_consuming_tick)
+
+    def test_duplicate_tick_refresh_does_not_consume_grace_twice(self) -> None:
+        state, graph = _lifecycle_state(connected=False)
+        with mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            refresh_operational_supply(
+                state, consume_grace=True, completed_tick=4
+            )
+            refresh_operational_supply(
+                state, consume_grace=True, completed_tick=4
+            )
+
+        force = _only_force(state)
+        self.assertTrue(force.supplied)
+        self.assertFalse(force.cut_off)
+        self.assertEqual(1, force.grace_ticks_remaining)
+
+    def test_post_load_recompute_preserves_grace(self) -> None:
+        state, graph = _lifecycle_state(connected=False)
+        state.schema_version = 8
+        force = _only_force(state)
+        force.supplied = True
+        force.cut_off = False
+        force.grace_ticks_remaining = 1
+        force.last_grace_consuming_tick = 7
+        with mock.patch(
+            "gates_of_codex.operational_position.load_operational_graph_for_state",
+            return_value=graph,
+        ), mock.patch(
+            "gates_of_codex.operational_capture.load_operational_graph_for_state",
+            return_value=graph,
+        ), mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            loaded = campaign_from_dict(state.to_dict())
+
+        restored = _only_force(loaded)
+        self.assertTrue(restored.supplied)
+        self.assertFalse(restored.cut_off)
+        self.assertEqual(1, restored.grace_ticks_remaining)
+        self.assertEqual(7, restored.last_grace_consuming_tick)
+
+    def test_restored_route_clears_cutoff_and_grace_immediately(self) -> None:
+        state, graph = _lifecycle_state(connected=True)
+        force = _only_force(state)
+        force.supplied = False
+        force.cut_off = True
+        force.grace_ticks_remaining = 0
+        with mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            refresh_operational_supply(state, consume_grace=False)
+
+        self.assertTrue(force.supplied)
+        self.assertFalse(force.cut_off)
+        self.assertEqual(0, force.grace_ticks_remaining)
+        self.assertEqual("province-supply-source:p-source", force.source_hub_id)
+
+    def test_no_graph_supply_state_is_not_migrated(self) -> None:
+        state = _state()
+        before_schema = state.schema_version
+        before_metadata = dict(state.map_metadata)
+
+        result = ensure_operational_supply_state(state)
+
+        self.assertFalse(result["graph_loaded"])
+        self.assertEqual(before_schema, state.schema_version)
+        self.assertEqual(before_metadata, state.map_metadata)
+
+    def test_operational_tick_refreshes_once_after_capture(self) -> None:
+        from gates_of_codex.operational_movement import advance_operational_tick
+
+        state, graph = _lifecycle_state(connected=False)
+        events: list[str] = []
+
+        def capture_side_effect(_state):
+            events.append("capture")
+            return {"advanced": True}
+
+        def supply_side_effect(_state, *, consume_grace, completed_tick):
+            self.assertTrue(consume_grace)
+            self.assertEqual(1, completed_tick)
+            events.append("supply")
+            return mock.Mock(to_dict=lambda: {"authoritative": True})
+
+        with mock.patch(
+            "gates_of_codex.operational_movement.load_operational_graph_for_state",
+            return_value=graph,
+        ), mock.patch(
+            "gates_of_codex.operational_capture.advance_site_capture",
+            side_effect=capture_side_effect,
+        ), mock.patch(
+            "gates_of_codex.operational_supply.refresh_operational_supply",
+            side_effect=supply_side_effect,
+        ) as refresh:
+            report = advance_operational_tick(state)
+
+        self.assertEqual(["capture", "supply"], events)
+        self.assertEqual(1, refresh.call_count)
+        self.assertEqual({"authoritative": True}, report["supply"])
 
 
 if __name__ == "__main__":

@@ -761,6 +761,13 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
     global_tick = int(clock["global_tick"]) + 1
     tick_in_turn = (int(clock["tick_in_turn"]) + 1) % ticks_n
     set_operational_clock(state, global_tick=global_tick, tick_in_turn=tick_in_turn)
+    from .operational_supply import refresh_operational_supply
+
+    supply_report = refresh_operational_supply(
+        state,
+        consume_grace=True,
+        completed_tick=global_tick,
+    )
     return {
         "advanced": True,
         "global_tick": global_tick,
@@ -770,6 +777,7 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
         "battle_id": state.pending_battle.battle_id if state.pending_battle else "",
         "static_contact": bool(static_contacts),
         "capture": capture_report,
+        "supply": supply_report.to_dict(),
         "swept_kind": primary.kind if primary else "",
     }
 

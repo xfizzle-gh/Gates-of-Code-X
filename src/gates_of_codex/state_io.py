@@ -306,11 +306,13 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
     from .operational_capture import ensure_site_control_state
     from .operational_movement import ensure_move_orders
     from .operational_position import ensure_operational_positions
+    from .operational_supply import refresh_operational_supply
 
     ensure_strategic_formations(state)
     ensure_operational_positions(state)
     ensure_move_orders(state)
     ensure_site_control_state(state)
+    refresh_operational_supply(state, consume_grace=False)
     state.validate()
     return state
 
@@ -325,6 +327,7 @@ def save_campaign(state: CampaignState, path: str | Path) -> Path:
     from .operational_capture import ensure_site_control_state
     from .operational_movement import ensure_move_orders
     from .operational_position import ensure_operational_positions
+    from .operational_supply import refresh_operational_supply
     from .strategic import ensure_strategic_layer
 
     ensure_strategic_layer(state)
@@ -332,6 +335,7 @@ def save_campaign(state: CampaignState, path: str | Path) -> Path:
     ensure_operational_positions(state)
     ensure_move_orders(state)
     ensure_site_control_state(state)
+    refresh_operational_supply(state, consume_grace=False)
     state.validate()
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
