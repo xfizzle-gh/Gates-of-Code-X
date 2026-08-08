@@ -95,7 +95,8 @@ jobs:
           GODOT_BIN="$(find . -maxdepth 1 -type f -name 'Godot_v*_linux.x86_64' | head -n 1)"
           install -m 755 "$GODOT_BIN" "$HOME/godot"
       - name: Import Godot project
-        run: "$HOME/godot" --headless --path godot --import --quit-after 1
+        run: >-
+          "$HOME/godot" --headless --path godot --import --quit-after 1
       - name: Open generated fixture through existing PolygonMap
         run: >-
           "$HOME/godot" --headless --path godot --audio-driver Dummy
