@@ -9,6 +9,9 @@ $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
 $ManifestName = ".goc-deployment-manifest.json"
+$DevelopmentOnlyPrefixes = @(
+    "dev/"
+)
 
 function Resolve-Directory {
     param(
@@ -41,6 +44,18 @@ function Test-SafeRelativePath {
     return $true
 }
 
+function Test-DevelopmentOnlyPath {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    $normalized = $Path.Replace('\', '/')
+    foreach ($prefix in $DevelopmentOnlyPrefixes) {
+        if ($normalized.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+            return $true
+        }
+    }
+    return $false
+}
+
 $Source = Resolve-Directory -Path $SourceRoot
 $Target = Resolve-Directory -Path $TargetRoot -Create
 
@@ -58,14 +73,21 @@ if ($null -eq $git) {
     throw "Git is required to enumerate tracked deployment files."
 }
 
-# Only tracked files are deployed. Untracked runtime state such as .venv, live,
-# backups, dist, build, and local logs is never copied.
-$tracked = @(& $git.Source -C $Source ls-files 2>$null | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
-if ($LASTEXITCODE -ne 0 -or $tracked.Count -eq 0) {
+# Only tracked, shippable files are deployed. Untracked runtime state such as
+# .venv, live, backups, dist, build, local logs, and ignored editor addons is
+# never copied. Tracked development-only integrations under dev/ are also
+# excluded from the Workshop payload by explicit policy.
+$trackedAll = @(& $git.Source -C $Source ls-files 2>$null | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+if ($LASTEXITCODE -ne 0 -or $trackedAll.Count -eq 0) {
     throw "The source repository contains no tracked files."
 }
 
-$tracked = @($tracked | Sort-Object -Unique)
+$excludedDevelopment = @($trackedAll | Where-Object { Test-DevelopmentOnlyPath -Path $_ })
+$tracked = @($trackedAll | Where-Object { -not (Test-DevelopmentOnlyPath -Path $_) } | Sort-Object -Unique)
+if ($tracked.Count -eq 0) {
+    throw "The deployment filter removed every tracked file."
+}
+
 foreach ($relative in $tracked) {
     if (-not (Test-SafeRelativePath -Path $relative)) {
         throw "Unsafe tracked path returned by git: $relative"
@@ -166,6 +188,7 @@ $result = [ordered]@{
     commit = $commit
     copied_files = $copied
     removed_stale_files = $removed
+    excluded_development_files = $excludedDevelopment.Count
     manifest = $manifestPath
 }
 $result | ConvertTo-Json -Depth 3
