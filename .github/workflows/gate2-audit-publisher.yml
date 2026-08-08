@@ -1,21 +1,21 @@
-name: Temporary Gate 2 audit correction publisher
+name: Temporary Gate 2 guarded correction publisher
 
 on:
-  push:
-    branches:
-      - agent/opengs-gate2-geometry-adapter
+  pull_request:
     paths:
-      - .github/workflows/gate2-audit-publisher.yml
+      - ".github/workflows/gate2-audit-publisher.yml"
+      - ".gate2-audit/**"
 
 permissions:
   contents: write
 
 jobs:
-  publish:
+  publish-correction:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
@@ -25,7 +25,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat .gate2-audit/part00 .gate2-audit/part01 .gate2-audit/part02 .gate2-audit/part03 .gate2-audit/part04 .gate2-audit/part05 | base64 --decode > /tmp/gate2-fix.tar.gz
+          cat \
+            .gate2-audit/part00 \
+            .gate2-audit/part01 \
+            .gate2-audit/part02 \
+            .gate2-audit/part03 \
+            .gate2-audit/repl04a \
+            .gate2-audit/repl04b \
+            .gate2-audit/repl04c \
+            .gate2-audit/repl04d \
+            .gate2-audit/repl05 \
+            | base64 --decode > /tmp/gate2-fix.tar.gz
           echo "ca73c7c1d6f747b3e5aa2b4d5fdb06a143a0ff0f68024f734b087780023f4a36  /tmp/gate2-fix.tar.gz" | sha256sum --check --strict
           tar -tzf /tmp/gate2-fix.tar.gz
           tar -xzf /tmp/gate2-fix.tar.gz -C .
@@ -52,4 +62,4 @@ jobs:
           git add tools/opengs_eval/gate1_to_gate2_adapter.py tests/test_opengs_gate1_to_gate2_adapter.py docs/research/opengs-evaluation/gate_2_geometry_adapter.md
           git rm -r .gate2-audit
           git commit -m "fix: authenticate Gate 2 publication and Gate 1 authority"
-          git push origin HEAD:agent/opengs-gate2-geometry-adapter
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
