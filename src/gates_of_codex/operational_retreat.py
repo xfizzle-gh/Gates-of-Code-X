@@ -106,7 +106,7 @@ def resolve_operational_retreat(
     from .operational_movement import _indexes
 
     _node_ids, _edge_ids, edges, nodes = _indexes(graph)
-    supplied_nodes: set[str] = set()
+    supplied_nodes = _supplied_node_ids(state, force)
     participant_ids = _pending_participant_formation_ids(state)
     recorded = retreat_origin_node(state, force.strategic_formation_id)
 
@@ -182,7 +182,7 @@ def resolve_operational_retreat(
     reduced = _reduce_parallel_candidates(candidates)
     if not reduced:
         return _trapped(force)
-    return _resolution(force, min(reduced, key=lambda item: item.node_id))
+    return _resolution(force, min(reduced, key=lambda item: item.rank_key))
 
 
 def _recorded_origin_candidate(
@@ -299,7 +299,10 @@ def _candidate_for_hop(
         node_id=destination_node_id,
         province_id=province_id,
         edge_id=edge.edge_id,
-        supplied=False,
+        supplied=(
+            destination_node_id in supplied_nodes
+            or _same_faction_supplied_occupant(state, force, destination_node_id)
+        ),
         movement_cost=require_strict_int(
             movement_cost,
             name="retreat_movement_cost",
