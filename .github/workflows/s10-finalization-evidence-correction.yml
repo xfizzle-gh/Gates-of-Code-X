@@ -1,0 +1,232 @@
+name: S10 finalization evidence correction
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact accepted S10 head
+        uses: actions/checkout@v4
+        with:
+          ref: d8cce0e3a4618d55c2530e88b10be51273c8b73b
+          path: source
+          fetch-depth: 1
+
+      - name: Verify protected source state
+        working-directory: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "d8cce0e3a4618d55c2530e88b10be51273c8b73b"
+          test "$(git status --porcelain)" = ""
+
+      - name: Install rendering dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1 libxcursor1 libxinerama1 libxrandr2 libxi6 libx11-6
+
+      - name: Install Godot 4.7
+        run: |
+          set -euo pipefail
+          GODOT_VERSION=4.7-stable
+          curl -fsSL -o godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip
+          GODOT_BIN="$(find . -maxdepth 1 -type f -name 'Godot_v*_linux.x86_64' | head -n 1)"
+          install -m 755 "$GODOT_BIN" "$HOME/godot"
+          "$HOME/godot" --version
+
+      - name: Import exact-head Godot project
+        working-directory: source/godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --import --quit-after 1
+
+      - name: Derive genuine post-finalization snapshot
+        working-directory: source
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          source = Path("godot/fixtures/snapshots/earth3_operational.json")
+          target = Path("godot/fixtures/snapshots/_s10_post_finalization.json")
+          data = json.loads(source.read_text(encoding="utf-8"))
+          assert isinstance(data.get("pending_battle"), dict), "source snapshot must contain the pre-finalization pending battle"
+          data.pop("pending_battle")
+          assert "pending_battle" not in data
+          target.write_text(json.dumps(data, separators=(",", ":")) + "\n", encoding="utf-8")
+          print(f"derived {target} without pending_battle")
+          PY
+
+      - name: Verify corrected state model
+        working-directory: source
+        run: |
+          set -euo pipefail
+          cat > godot/_s10_finalization_evidence_check.gd <<'GD'
+          extends SceneTree
+
+          const MainScript = preload("res://scripts/main_stack_panel.gd")
+          const SNAPSHOT_PATH = "res://fixtures/snapshots/_s10_post_finalization.json"
+          const CASES = [
+            {
+              "fixture": "res://fixtures/presentation/s10_retreat.json",
+              "expected_reason": "",
+              "expected_destination": "op-node-Minsk-anchor",
+            },
+            {
+              "fixture": "res://fixtures/presentation/s10_trapped.json",
+              "expected_reason": "trapped_no_legal_retreat",
+              "expected_destination": "",
+            },
+          ]
+
+          func _initialize() -> void:
+            var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(SNAPSHOT_PATH))
+            if not parsed is Dictionary:
+              push_error("invalid derived snapshot")
+              quit(1)
+              return
+            var base_snapshot := parsed as Dictionary
+            if base_snapshot.has("pending_battle"):
+              push_error("derived snapshot still contains pending_battle")
+              quit(1)
+              return
+            for case_variant: Variant in CASES:
+              var case := case_variant as Dictionary
+              var scene = MainScript.new()
+              scene.snapshot = base_snapshot.duplicate(true)
+              scene._ensure_operational_presenter()
+              scene.operational_presenter.begin_session(scene.snapshot, {})
+              scene._load_presentation_fixture(String(case.get("fixture", "")))
+              if scene.is_pending_battle_modal_active():
+                push_error("pending-battle modal remains active for %s" % case.get("fixture", ""))
+                scene.free()
+                quit(1)
+                return
+              if scene.is_map_interaction_blocked():
+                push_error("resolved battle still blocks operational controls")
+                scene.free()
+                quit(1)
+                return
+              var actions: Array = Array(scene.enabled_action_button_ids())
+              for forbidden: String in ["auto_resolve", "handoff", "import_battle"]:
+                if actions.has(forbidden):
+                  push_error("resolved battle exposes forbidden action %s" % forbidden)
+                  scene.free()
+                  quit(1)
+                  return
+              var outcome: Dictionary = scene.operational_presenter.transient_outcome()
+              var rows: Array = outcome.get("retreat_outcomes", [])
+              if rows.size() != 1:
+                push_error("missing authoritative finalization outcome")
+                scene.free()
+                quit(1)
+                return
+              var row := rows[0] as Dictionary
+              if String(row.get("reason", "")) != String(case.get("expected_reason", "")):
+                push_error("finalization reason mismatch")
+                scene.free()
+                quit(1)
+                return
+              var expected_destination := String(case.get("expected_destination", ""))
+              var actual_destination := "" if row.get("destination_node_id", null) == null else String(row.get("destination_node_id", ""))
+              if actual_destination != expected_destination:
+                push_error("finalization destination mismatch")
+                scene.free()
+                quit(1)
+                return
+              scene.free()
+            print("s10_finalization_evidence_check: PASS")
+            quit(0)
+          GD
+          "$HOME/godot" --headless --path godot --audio-driver Dummy \
+            -s res://_s10_finalization_evidence_check.gd
+
+      - name: Generate only corrected finalization captures
+        working-directory: source
+        run: |
+          set -euo pipefail
+          OUT="$(pwd)/s10-finalization-evidence-correction"
+          mkdir -p "$OUT"
+          SNAP=res://fixtures/snapshots/_s10_post_finalization.json
+          shoot() {
+            local name="$1"; shift
+            xvfb-run -a -s "-screen 0 1920x1080x24" \
+              "$HOME/godot" --path godot --audio-driver Dummy \
+              -s res://scripts/tools/map_screenshot.gd -- \
+              --snapshot="$SNAP" --width=1920 --height=1080 \
+              --out="$OUT/$name" "$@"
+            test -s "$OUT/$name"
+          }
+          shoot successful_retreat.png \
+            --fixture=res://fixtures/presentation/s10_retreat.json \
+            --focus-image=2400,1700 --view-scale=0.8
+          shoot trapped_no_legal_retreat.png \
+            --fixture=res://fixtures/presentation/s10_trapped.json \
+            --focus-image=2400,1700 --view-scale=0.8
+
+      - name: Build replacement manifest
+        working-directory: source
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import struct
+          from pathlib import Path
+
+          root = Path("s10-finalization-evidence-correction")
+          fixture_by_file = {
+              "successful_retreat.png": "godot/fixtures/presentation/s10_retreat.json",
+              "trapped_no_legal_retreat.png": "godot/fixtures/presentation/s10_trapped.json",
+          }
+          files = []
+          for name, fixture in fixture_by_file.items():
+              path = root / name
+              data = path.read_bytes()
+              assert data[:8] == b"\x89PNG\r\n\x1a\n", name
+              width, height = struct.unpack(">II", data[16:24])
+              assert (width, height) == (1920, 1080), (name, width, height)
+              files.append({
+                  "filename": name,
+                  "fixture": fixture,
+                  "width": width,
+                  "height": height,
+                  "bytes": len(data),
+                  "sha256": hashlib.sha256(data).hexdigest(),
+              })
+          manifest = {
+              "schema": "gates-of-codex.s10-finalization-evidence-correction",
+              "classification": "evidence_fixture_invocation_only",
+              "source_commit": "d8cce0e3a4618d55c2530e88b10be51273c8b73b",
+              "integrated_main": "14d784de63d58ddbf993d71f95d9f31b8a370cb2",
+              "runtime_scene": "godot/main.tscn",
+              "godot_version": "4.7.stable.official.5b4e0cb0f",
+              "base_snapshot": "godot/fixtures/snapshots/earth3_operational.json",
+              "derived_snapshot": "godot/fixtures/snapshots/_s10_post_finalization.json",
+              "derived_snapshot_change": "removed pending_battle to represent the committed post-finalization state",
+              "replacement_capture_count": 2,
+              "files": files,
+          }
+          (root / "manifest.json").write_text(
+              json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(manifest, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload replacement finalization evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: s10-finalization-evidence-correction-d8cce0e
+          path: source/s10-finalization-evidence-correction/
+          if-no-files-found: error
+          compression-level: 6
