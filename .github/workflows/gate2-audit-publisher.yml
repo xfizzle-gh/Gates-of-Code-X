@@ -1,3 +1,4 @@
+# Retry after verified chunked payload repair.
 name: Gate 2 audit correction publisher
 
 on:
