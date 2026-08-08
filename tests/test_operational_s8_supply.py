@@ -16,12 +16,18 @@ from gates_of_codex.models import (
 from gates_of_codex.operational_schema import (
     EdgeAuthority,
     EdgeKind,
+    FormationOperationalPosition,
     OperationalRouteEdge,
+    PositionMode,
     stable_node_id,
 )
 from gates_of_codex.operational_supply import (
+    OperationalSupplySource,
     assert_supply_edge_hop_legal,
+    compute_operational_supply_routes,
+    on_edge_attachment_cost,
     resolve_operational_supply_sources,
+    route_for_formation,
 )
 from gates_of_codex.state_io import campaign_from_dict
 
@@ -77,6 +83,84 @@ def _graph(*, nodes: list[dict], sites: list[dict] | None = None) -> dict:
         "nodes": list(nodes),
         "edges": [],
     }
+
+
+def _edge_row(
+    edge_id: str,
+    a: str,
+    b: str,
+    *,
+    cost: int = 1000,
+    bidirectional: bool = True,
+    enabled: bool = True,
+    authority: str = "authored",
+    kind: str = "road",
+    metadata: dict | None = None,
+) -> dict:
+    return {
+        "edge_id": edge_id,
+        "a": a,
+        "b": b,
+        "kind": kind,
+        "authority": authority,
+        "length_px": 1,
+        "base_move_points_milli": 1000,
+        "movement_cost_milli": cost,
+        "requires_port": False,
+        "can_be_blockaded": False,
+        "traversal_enabled": enabled,
+        "bidirectional": bidirectional,
+        "province_ids": [f"p-{a}", f"p-{b}"],
+        "legacy_crossing_type": None,
+        "metadata": dict(metadata or {}),
+    }
+
+
+def _routing_state(node_ids: list[str]) -> CampaignState:
+    provinces = {
+        f"p-{node_id}": Province(
+            f"p-{node_id}", f"P {node_id}", Faction.NATO
+        )
+        for node_id in node_ids
+    }
+    start_province = f"p-{node_ids[0]}"
+    state = CampaignState(
+        campaign_name="S8 routing",
+        factions={"nato": FactionState(Faction.NATO)},
+        provinces=provinces,
+        battalions={
+            "nato-route": Battalion(
+                battalion_id="nato-route",
+                faction=Faction.NATO,
+                province_id=start_province,
+                roster=[BattalionRosterEntry("rifle", quantity=3)],
+            )
+        },
+    )
+    ensure_strategic_formations(state)
+    _only_force(state).position = FormationOperationalPosition(
+        mode=PositionMode.AT_NODE.value,
+        node_id=node_ids[0],
+    )
+    return state
+
+
+def _routing_graph(node_ids: list[str], edges: list[dict]) -> dict:
+    graph = _graph(
+        nodes=[_node(node_id, f"p-{node_id}") for node_id in node_ids]
+    )
+    graph["edges"] = edges
+    return graph
+
+
+def _source(source_id: str, node_id: str) -> OperationalSupplySource:
+    return OperationalSupplySource(
+        source_hub_id=source_id,
+        source_node_id=node_id,
+        province_id=f"p-{node_id}",
+        eligible_factions=("nato",),
+        source_kind="test",
+    )
 
 
 def _source_by_id(sources, source_hub_id: str):
@@ -411,6 +495,229 @@ class OperationalS8SupplyTests(unittest.TestCase):
 
     def test_land_edge_is_supply_capable_by_default(self) -> None:
         assert_supply_edge_hop_legal(_edge(), origin="a", dest="b")
+
+    def test_connected_formation_gets_lowest_integer_route(self) -> None:
+        nodes = ["formation", "middle", "hub"]
+        state = _routing_state(nodes)
+        graph = _routing_graph(
+            nodes,
+            [
+                _edge_row("edge-1", "formation", "middle", cost=1000),
+                _edge_row("edge-2", "middle", "hub", cost=750),
+            ],
+        )
+
+        with mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            routes = compute_operational_supply_routes(
+                state, Faction.NATO, (_source("hub-source", "hub"),)
+            )
+            route = route_for_formation(state, _only_force(state), routes)
+
+        self.assertIsNotNone(route)
+        self.assertEqual(1750, route.route_cost)
+        self.assertEqual(("formation", "middle", "hub"), route.node_id_path)
+        self.assertEqual(("edge-1", "edge-2"), route.edge_id_path)
+        self.assertEqual("hub-source", route.source_hub_id)
+
+    def test_equal_cost_route_selection_is_insertion_order_independent(self) -> None:
+        nodes = ["formation", "node-a", "node-b", "hub"]
+        edges = [
+            _edge_row("edge-z", "formation", "node-b"),
+            _edge_row("edge-z2", "node-b", "hub"),
+            _edge_row("edge-a", "formation", "node-a"),
+            _edge_row("edge-a2", "node-a", "hub"),
+        ]
+        snapshots = []
+        for ordered_nodes, ordered_edges in (
+            (nodes, edges),
+            (list(reversed(nodes)), list(reversed(edges))),
+        ):
+            state = _routing_state(nodes)
+            graph = _routing_graph(ordered_nodes, ordered_edges)
+            with mock.patch(
+                "gates_of_codex.operational_supply.load_operational_graph_for_state",
+                return_value=graph,
+            ):
+                routes = compute_operational_supply_routes(
+                    state, Faction.NATO, (_source("hub-source", "hub"),)
+                )
+                route = route_for_formation(state, _only_force(state), routes)
+            snapshots.append(route)
+
+        self.assertEqual(snapshots[0], snapshots[1])
+        self.assertEqual(
+            ("formation", "node-a", "hub"), snapshots[0].node_id_path
+        )
+
+    def test_reverse_search_preserves_one_way_gameplay_direction(self) -> None:
+        nodes = ["formation", "hub"]
+        outcomes = []
+        for a, b in (("formation", "hub"), ("hub", "formation")):
+            state = _routing_state(nodes)
+            graph = _routing_graph(
+                nodes,
+                [_edge_row("one-way", a, b, bidirectional=False)],
+            )
+            with mock.patch(
+                "gates_of_codex.operational_supply.load_operational_graph_for_state",
+                return_value=graph,
+            ):
+                routes = compute_operational_supply_routes(
+                    state, Faction.NATO, (_source("hub-source", "hub"),)
+                )
+                outcomes.append(
+                    route_for_formation(state, _only_force(state), routes)
+                )
+
+        self.assertIsNotNone(outcomes[0])
+        self.assertIsNone(outcomes[1])
+
+    def test_on_edge_fixed_point_cost_rounds_up_exactly(self) -> None:
+        self.assertEqual(333, on_edge_attachment_cost(1000, 333))
+        self.assertEqual(500, on_edge_attachment_cost(1000, 500))
+        self.assertEqual(0, on_edge_attachment_cost(1000, 0))
+        self.assertEqual(667, on_edge_attachment_cost(1001, 666))
+
+    def test_on_edge_uses_sole_reachable_endpoint(self) -> None:
+        nodes = ["left", "right", "hub"]
+        state = _routing_state(nodes)
+        _only_force(state).position = FormationOperationalPosition(
+            mode=PositionMode.ON_EDGE.value,
+            edge_id="occupied",
+            progress_milli=500,
+            facing_node_id="right",
+        )
+        graph = _routing_graph(
+            nodes,
+            [
+                _edge_row(
+                    "occupied", "left", "right", bidirectional=False
+                ),
+                _edge_row("to-hub", "right", "hub"),
+            ],
+        )
+
+        with mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            routes = compute_operational_supply_routes(
+                state, Faction.NATO, (_source("right-source", "hub"),)
+            )
+            route = route_for_formation(state, _only_force(state), routes)
+
+        self.assertIsNotNone(route)
+        self.assertEqual("right-source", route.source_hub_id)
+        self.assertEqual(("right", "hub"), route.node_id_path)
+
+    def test_on_edge_chooses_lower_total_endpoint_cost(self) -> None:
+        nodes = ["left", "right", "left-hub", "right-hub"]
+        state = _routing_state(nodes)
+        _only_force(state).position = FormationOperationalPosition(
+            mode=PositionMode.ON_EDGE.value,
+            edge_id="occupied",
+            progress_milli=500,
+            facing_node_id="right",
+        )
+        graph = _routing_graph(
+            nodes,
+            [
+                _edge_row("occupied", "left", "right", cost=1000),
+                _edge_row("left-route", "left", "left-hub", cost=2000),
+                _edge_row("right-route", "right", "right-hub", cost=500),
+            ],
+        )
+
+        with mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            routes = compute_operational_supply_routes(
+                state,
+                Faction.NATO,
+                (
+                    _source("left-source", "left-hub"),
+                    _source("right-source", "right-hub"),
+                ),
+            )
+            route = route_for_formation(state, _only_force(state), routes)
+
+        self.assertIsNotNone(route)
+        self.assertEqual("right-source", route.source_hub_id)
+        self.assertEqual(1000, route.route_cost)
+
+    def test_on_edge_equal_cost_uses_stable_node_then_edge_then_source(self) -> None:
+        nodes = ["left", "right", "left-hub", "right-hub"]
+        state = _routing_state(nodes)
+        _only_force(state).position = FormationOperationalPosition(
+            mode=PositionMode.ON_EDGE.value,
+            edge_id="occupied",
+            progress_milli=500,
+            facing_node_id="right",
+        )
+        graph = _routing_graph(
+            nodes,
+            [
+                _edge_row("occupied", "left", "right"),
+                _edge_row("z-left", "left", "left-hub"),
+                _edge_row("a-right", "right", "right-hub"),
+            ],
+        )
+
+        with mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            routes = compute_operational_supply_routes(
+                state,
+                Faction.NATO,
+                (
+                    _source("left-source", "left-hub"),
+                    _source("right-source", "right-hub"),
+                ),
+            )
+            route = route_for_formation(state, _only_force(state), routes)
+
+        self.assertEqual("left-source", route.source_hub_id)
+        self.assertEqual("left", route.node_id_path[0])
+
+    def test_malformed_edge_reference_fails_closed(self) -> None:
+        nodes = ["formation", "hub"]
+        state = _routing_state(nodes)
+        graph = _routing_graph(
+            nodes,
+            [_edge_row("broken", "formation", "missing")],
+        )
+
+        with mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            routes = compute_operational_supply_routes(
+                state, Faction.NATO, (_source("hub-source", "hub"),)
+            )
+
+        self.assertNotIn("formation", routes)
+
+    def test_unresolved_formation_position_has_no_route(self) -> None:
+        nodes = ["formation", "hub"]
+        state = _routing_state(nodes)
+        _only_force(state).position = None
+        graph = _routing_graph(nodes, [])
+
+        with mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            routes = compute_operational_supply_routes(
+                state, Faction.NATO, (_source("hub-source", "hub"),)
+            )
+            route = route_for_formation(state, _only_force(state), routes)
+
+        self.assertIsNone(route)
 
 
 if __name__ == "__main__":

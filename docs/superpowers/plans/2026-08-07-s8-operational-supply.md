@@ -230,7 +230,7 @@ def test_reverse_search_preserves_one_way_gameplay_direction(self):
     self.assertIsNone(route_for_only_force(reverse))
 
 def test_on_edge_fixed_point_cost_rounds_up_exactly(self):
-    self.assertEqual(334, on_edge_attachment_cost(1000, 333))
+    self.assertEqual(333, on_edge_attachment_cost(1000, 333))
     self.assertEqual(500, on_edge_attachment_cost(1000, 500))
     self.assertEqual(0, on_edge_attachment_cost(1000, 0))
 

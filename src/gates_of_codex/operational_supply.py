@@ -1,13 +1,21 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from heapq import heappop, heappush
 from typing import Any
 
 from .diplomacy import allied_factions, is_friendly_owner
-from .models import CampaignState, Faction
+from .models import CampaignState, Faction, StrategicFormation
 from .operational_movement import assert_edge_hop_legal
 from .operational_position import load_operational_graph_for_state
-from .operational_schema import EdgeKind, OperationalRouteEdge, stable_node_id
+from .operational_schema import (
+    PROGRESS_MILLI_MAX,
+    EdgeKind,
+    OperationalRouteEdge,
+    PositionMode,
+    require_strict_int,
+    stable_node_id,
+)
 from .strategic import infrastructure_levels
 
 
@@ -37,6 +45,25 @@ class OperationalSupplyDiagnostic:
     reason: str
 
 
+@dataclass(frozen=True, slots=True)
+class OperationalSupplyRoute:
+    route_cost: int
+    node_id_path: tuple[str, ...]
+    edge_id_path: tuple[str, ...]
+    source_hub_id: str
+
+    @property
+    def key(
+        self,
+    ) -> tuple[int, tuple[str, ...], tuple[str, ...], str]:
+        return (
+            self.route_cost,
+            self.node_id_path,
+            self.edge_id_path,
+            self.source_hub_id,
+        )
+
+
 def resolve_operational_supply_sources(
     state: CampaignState, faction: Faction
 ) -> tuple[
@@ -61,6 +88,8 @@ def resolve_operational_supply_sources(
         ),
         key=lambda row: str(row["site_id"]),
     )
+
+
     source_sites = [row for row in sites if _site_is_explicit_supply_source(row)]
     source_sites_by_province: dict[str, list[dict[str, Any]]] = {}
     for site in source_sites:
@@ -172,6 +201,165 @@ def resolve_operational_supply_sources(
     )
 
 
+def compute_operational_supply_routes(
+    state: CampaignState,
+    faction: Faction,
+    sources: tuple[OperationalSupplySource, ...],
+) -> dict[str, OperationalSupplyRoute]:
+    """Return the best legal node-to-source route for one faction."""
+    graph = load_operational_graph_for_state(state)
+    if graph is None:
+        return {}
+    nodes, edges = _routing_graph_indexes(graph)
+    if not nodes:
+        return {}
+
+    reverse: dict[str, list[tuple[str, str, int]]] = {}
+    for edge_id in sorted(edges):
+        edge = edges[edge_id]
+        if not _node_is_friendly(state, faction, nodes[edge.a]):
+            continue
+        if not _node_is_friendly(state, faction, nodes[edge.b]):
+            continue
+        cost = max(1, int(edge.movement_cost_milli))
+        try:
+            assert_supply_edge_hop_legal(edge, origin=edge.a, dest=edge.b)
+        except ValueError:
+            pass
+        else:
+            reverse.setdefault(edge.b, []).append((edge.a, edge.edge_id, cost))
+        try:
+            assert_supply_edge_hop_legal(edge, origin=edge.b, dest=edge.a)
+        except ValueError:
+            pass
+        else:
+            reverse.setdefault(edge.a, []).append((edge.b, edge.edge_id, cost))
+    for node_id in list(reverse):
+        reverse[node_id] = sorted(
+            reverse[node_id], key=lambda row: (row[0], row[1], row[2])
+        )
+
+    best: dict[str, OperationalSupplyRoute] = {}
+    heap: list[
+        tuple[
+            tuple[int, tuple[str, ...], tuple[str, ...], str],
+            str,
+        ]
+    ] = []
+    for source in sorted(sources, key=_source_sort_key):
+        node_id = source.source_node_id
+        node = nodes.get(node_id)
+        if node is None or not _node_is_friendly(state, faction, node):
+            continue
+        route = OperationalSupplyRoute(
+            route_cost=0,
+            node_id_path=(node_id,),
+            edge_id_path=(),
+            source_hub_id=source.source_hub_id,
+        )
+        previous = best.get(node_id)
+        if previous is not None and previous.key <= route.key:
+            continue
+        best[node_id] = route
+        heappush(heap, (route.key, node_id))
+
+    while heap:
+        key, node_id = heappop(heap)
+        current = best.get(node_id)
+        if current is None or current.key != key:
+            continue
+        for predecessor, edge_id, cost in reverse.get(node_id, ()):
+            candidate = OperationalSupplyRoute(
+                route_cost=current.route_cost + cost,
+                node_id_path=(predecessor,) + current.node_id_path,
+                edge_id_path=(edge_id,) + current.edge_id_path,
+                source_hub_id=current.source_hub_id,
+            )
+            previous = best.get(predecessor)
+            if previous is not None and previous.key <= candidate.key:
+                continue
+            best[predecessor] = candidate
+            heappush(heap, (candidate.key, predecessor))
+    return {node_id: best[node_id] for node_id in sorted(best)}
+
+
+def route_for_formation(
+    state: CampaignState,
+    formation: StrategicFormation,
+    routes: dict[str, OperationalSupplyRoute],
+) -> OperationalSupplyRoute | None:
+    graph = load_operational_graph_for_state(state)
+    position = formation.position
+    if graph is None or position is None:
+        return None
+    if position.mode == PositionMode.AT_NODE.value:
+        return routes.get(str(position.node_id or ""))
+    if position.mode != PositionMode.ON_EDGE.value:
+        return None
+
+    _nodes, edges = _routing_graph_indexes(graph)
+    edge_id = str(position.edge_id or "")
+    edge = edges.get(edge_id)
+    if edge is None:
+        return None
+    facing = str(position.facing_node_id or "")
+    progress = require_strict_int(
+        position.progress_milli,
+        name="progress_milli",
+        minimum=0,
+        maximum=PROGRESS_MILLI_MAX,
+    )
+    if facing == edge.b:
+        canonical = progress
+    elif facing == edge.a:
+        canonical = PROGRESS_MILLI_MAX - progress
+    else:
+        return None
+
+    candidates: list[OperationalSupplyRoute] = []
+    for endpoint, segment, origin, dest in (
+        (edge.a, canonical, edge.b, edge.a),
+        (
+            edge.b,
+            PROGRESS_MILLI_MAX - canonical,
+            edge.a,
+            edge.b,
+        ),
+    ):
+        try:
+            assert_supply_edge_hop_legal(edge, origin=origin, dest=dest)
+        except ValueError:
+            continue
+        endpoint_route = routes.get(endpoint)
+        if endpoint_route is None:
+            continue
+        if endpoint_route.edge_id_path[:1] == (edge_id,):
+            continue
+        attachment = on_edge_attachment_cost(
+            max(1, int(edge.movement_cost_milli)), segment
+        )
+        candidates.append(
+            OperationalSupplyRoute(
+                route_cost=attachment + endpoint_route.route_cost,
+                node_id_path=endpoint_route.node_id_path,
+                edge_id_path=(edge_id,) + endpoint_route.edge_id_path,
+                source_hub_id=endpoint_route.source_hub_id,
+            )
+        )
+    return None if not candidates else min(candidates, key=lambda item: item.key)
+
+
+def on_edge_attachment_cost(edge_cost: int, segment_milli: int) -> int:
+    cost = require_strict_int(edge_cost, name="edge_cost", minimum=1)
+    segment = require_strict_int(
+        segment_milli,
+        name="segment_milli",
+        minimum=0,
+        maximum=PROGRESS_MILLI_MAX,
+    )
+    return (cost * segment + PROGRESS_MILLI_MAX - 1) // PROGRESS_MILLI_MAX
+
+
 def edge_is_supply_capable(edge: OperationalRouteEdge) -> bool:
     try:
         assert_supply_edge_hop_legal(edge, origin=edge.a, dest=edge.b)
@@ -256,3 +444,52 @@ def _diagnostic_sort_key(
     diagnostic: OperationalSupplyDiagnostic,
 ) -> tuple[str, str, str]:
     return diagnostic.source_hub_id, diagnostic.province_id, diagnostic.reason
+
+
+def _routing_graph_indexes(
+    graph: dict[str, Any],
+) -> tuple[dict[str, dict[str, Any]], dict[str, OperationalRouteEdge]]:
+    nodes = {
+        str(row.get("node_id")): dict(row)
+        for row in graph.get("nodes") or []
+        if isinstance(row, dict) and str(row.get("node_id") or "").strip()
+    }
+    edges: dict[str, OperationalRouteEdge] = {}
+    for row in graph.get("edges") or []:
+        if not isinstance(row, dict):
+            continue
+        try:
+            edge = OperationalRouteEdge(
+                edge_id=str(row["edge_id"]),
+                a=str(row["a"]),
+                b=str(row["b"]),
+                kind=str(row["kind"]),
+                authority=str(row["authority"]),
+                length_px=int(row.get("length_px", 1)),
+                base_move_points_milli=int(
+                    row.get("base_move_points_milli", 1000)
+                ),
+                movement_cost_milli=int(row.get("movement_cost_milli", 1000)),
+                requires_port=bool(row.get("requires_port", False)),
+                can_be_blockaded=bool(row.get("can_be_blockaded", False)),
+                traversal_enabled=bool(row.get("traversal_enabled", True)),
+                bidirectional=bool(row.get("bidirectional", True)),
+                province_ids=list(row.get("province_ids") or []),
+                legacy_crossing_type=row.get("legacy_crossing_type"),
+                metadata=dict(row.get("metadata") or {}),
+            )
+        except (KeyError, TypeError, ValueError):
+            continue
+        if not edge.edge_id.strip() or edge.a not in nodes or edge.b not in nodes:
+            continue
+        edges[edge.edge_id] = edge
+    return nodes, edges
+
+
+def _node_is_friendly(
+    state: CampaignState, faction: Faction, node: dict[str, Any]
+) -> bool:
+    province = state.provinces.get(str(node.get("province_id") or ""))
+    return province is not None and is_friendly_owner(
+        state, faction, province.owner
+    )
