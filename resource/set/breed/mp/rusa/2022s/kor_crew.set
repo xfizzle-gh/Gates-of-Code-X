@@ -1,0 +1,33 @@
+{breed
+	{tags "soldier"}
+	{behaviour soldier}
+	{skin "kor5"}
+	{portrait "kor"}
+	{icon autorifle}
+	{icon_priority 2}
+	{nationality kor}
+	{armors
+		{head rus_helmet_v05}
+		{body rus_6b45_body_01}
+	}
+	{perks
+		(include "ability.inc")
+		("skill_rank_kor")
+		("kor")
+		("guncrew")
+	}
+	{veterancy
+		(include "ability.inc")
+		("veterancy_lvl_0")
+	}
+	{inventory
+		{item "ak12_m1_holo" filling "5x39 ammo" 30}
+		{item "5x39 ammo" 210}
+		{item "rgd5 grenade" 2}
+		{item "rdg2 grenade" 2}
+		{item "bandage_rus" 4.5 0.5}
+		{item "shovel_rus"}
+		{item "rus_bandan"}
+		{in_hands 0}
+	}
+}
