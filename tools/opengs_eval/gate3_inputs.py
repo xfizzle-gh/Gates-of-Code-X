@@ -59,12 +59,10 @@ def _draw_polygon(draw: Any, polygon: Any, fill: Any, hole_fill: Any) -> None:
 
 
 def _draw_land_polygon(draw: Any, polygon: Any) -> None:
-    """Rasterize physical land without inventing inland ocean holes."""
     _draw_polygon(draw, polygon, LAND_COLOR, LAND_COLOR)
 
 
 def _draw_lake_polygon(draw: Any, polygon: Any) -> None:
-    """Rasterize authoritative lake water while retaining lake islands as land."""
     _draw_polygon(draw, polygon, LAKE_COLOR, LAND_COLOR)
 
 
@@ -78,14 +76,25 @@ def _draw_lines(draw: Any, geometry: Any, fill: Any, width: int) -> int:
     return count
 
 
-def _sample_bbox_edges(lon_min: float, lat_min: float, lon_max: float, lat_max: float, samples: int = 256) -> tuple[Any, Any]:
+def _theatre_boundary(lon_min: float, lat_min: float, lon_max: float, lat_max: float, samples: int = 512) -> tuple[Any, Any]:
     import numpy as np
-    horizontal = np.linspace(lon_min, lon_max, samples)
-    vertical = np.linspace(lat_min, lat_max, samples)
-    return (
-        np.concatenate([horizontal, horizontal, np.full(samples, lon_min), np.full(samples, lon_max)]),
-        np.concatenate([np.full(samples, lat_min), np.full(samples, lat_max), vertical, vertical]),
-    )
+    bottom_lon = np.linspace(lon_min, lon_max, samples, endpoint=False)
+    right_lat = np.linspace(lat_min, lat_max, samples, endpoint=False)
+    top_lon = np.linspace(lon_max, lon_min, samples, endpoint=False)
+    left_lat = np.linspace(lat_max, lat_min, samples, endpoint=False)
+    lons = np.concatenate([
+        bottom_lon,
+        np.full(samples, lon_max),
+        top_lon,
+        np.full(samples, lon_min),
+    ])
+    lats = np.concatenate([
+        np.full(samples, lat_min),
+        right_lat,
+        np.full(samples, lat_max),
+        left_lat,
+    ])
+    return lons, lats
 
 
 def _pixel_transformer(min_x: float, min_y: float, max_x: float, max_y: float, width: int, height: int):
@@ -135,17 +144,12 @@ def apply_corridor_density(density: Any, mask: Any, *, baseline: float, sigma: f
         from scipy.ndimage import distance_transform_edt
     except ModuleNotFoundError as exc:
         if int(mask.size) > 65536:
-            raise Gate3Error(
-                "scipy is required for full-scale Gate 3 corridor density"
-            ) from exc
+            raise Gate3Error("scipy is required for full-scale Gate 3 corridor density") from exc
         points = np.argwhere(mask)
         yy, xx = np.indices(mask.shape)
         distance_squared = np.full(mask.shape, np.inf, dtype=np.float64)
         for py, px in points:
-            distance_squared = np.minimum(
-                distance_squared,
-                (yy - int(py)) ** 2 + (xx - int(px)) ** 2,
-            )
+            distance_squared = np.minimum(distance_squared, (yy - int(py)) ** 2 + (xx - int(px)) ** 2)
         distance = np.sqrt(distance_squared)
     else:
         distance = distance_transform_edt(~mask)
@@ -181,7 +185,7 @@ def build_inputs(config_path: Path, natural_earth_root: Path, output: Path) -> d
     from PIL import Image, ImageDraw
     from pyproj import CRS, Transformer
     from scipy.ndimage import label as connected_components
-    from shapely.geometry import box, shape
+    from shapely.geometry import Polygon, box, shape
     from shapely.ops import transform
 
     config, config_sha, config_raw = load_config(config_path)
@@ -192,24 +196,35 @@ def build_inputs(config_path: Path, natural_earth_root: Path, output: Path) -> d
     lon_min, lat_min, lon_max, lat_max = [float(value) for value in config["theatre"]["lon_lat_bounds"]]
     width, height = int(config["raster"]["width"]), int(config["raster"]["height"])
     projection = Transformer.from_crs(CRS.from_string(config["projection"]["source_crs"]), CRS.from_proj4(config["projection"]["proj"]), always_xy=True)
-    edge_lons, edge_lats = _sample_bbox_edges(lon_min, lat_min, lon_max, lat_max)
-    edge_x, edge_y = projection.transform(edge_lons, edge_lats)
-    projected_bounds = (float(np.min(edge_x)), float(np.min(edge_y)), float(np.max(edge_x)), float(np.max(edge_y)))
+    boundary_lons, boundary_lats = _theatre_boundary(lon_min, lat_min, lon_max, lat_max)
+    projected_x, projected_y = projection.transform(boundary_lons, boundary_lats)
+    projected_bounds = (float(np.min(projected_x)), float(np.min(projected_y)), float(np.max(projected_x)), float(np.max(projected_y)))
     to_pixels = _pixel_transformer(*projected_bounds, width, height)
+    pixel_x, pixel_y = to_pixels(projected_x, projected_y)
+    projected_theatre_polygon = Polygon(list(zip(pixel_x.tolist(), pixel_y.tolist())))
+    if not projected_theatre_polygon.is_valid or projected_theatre_polygon.area <= 0:
+        raise Gate3Error("projected theatre polygon is invalid")
     lon_lat_clip = box(lon_min, lat_min, lon_max, lat_max)
+
+    theatre_mask_image = Image.new("L", (width, height), 0)
+    theatre_mask_draw = ImageDraw.Draw(theatre_mask_image)
+    theatre_mask_draw.polygon(_integer_points(projected_theatre_polygon.exterior.coords), fill=255)
+    inside_mask = np.asarray(theatre_mask_image, dtype=np.uint8) == 255
+    if not bool(np.any(inside_mask)) or bool(np.all(inside_mask)):
+        raise Gate3Error("projected theatre mask must include both inside and outside pixels")
 
     land_image = Image.new("RGB", (width, height), OCEAN_COLOR)
     land_draw = ImageDraw.Draw(land_image)
-    boundary_image = Image.new("RGB", (width, height), BOUNDARY_BACKGROUND)
+    boundary_image = Image.new("RGB", (width, height), OUTSIDE_COLOR)
     boundary_draw = ImageDraw.Draw(boundary_image)
+    boundary_draw.polygon(_integer_points(projected_theatre_polygon.exterior.coords), fill=BOUNDARY_BACKGROUND)
     boundary_mask_image = Image.new("1", (width, height), 0)
     boundary_mask_draw = ImageDraw.Draw(boundary_mask_image)
     river_mask_image = Image.new("1", (width, height), 0)
     river_mask_draw = ImageDraw.Draw(river_mask_image)
     feature_counts = {"land_features": 0, "land_polygon_parts": 0, "lake_features": 0, "lake_polygon_parts": 0, "boundary_features": 0, "boundary_line_parts": 0, "river_features": 0, "river_line_parts": 0, "populated_places": 0}
 
-    land_collection = _load_json_bytes(sources["land"]["data"], "Natural Earth land")
-    for feature in land_collection.get("features", []):
+    for feature in _load_json_bytes(sources["land"]["data"], "Natural Earth land").get("features", []):
         pixel_geometry = _projected_geometry(feature["geometry"], lon_lat_clip, projection, to_pixels)
         if pixel_geometry is None:
             continue
@@ -218,8 +233,7 @@ def build_inputs(config_path: Path, natural_earth_root: Path, output: Path) -> d
             _draw_land_polygon(land_draw, polygon)
             feature_counts["land_polygon_parts"] += 1
 
-    lakes_collection = _load_json_bytes(sources["lakes"]["data"], "Natural Earth lakes")
-    for feature in lakes_collection.get("features", []):
+    for feature in _load_json_bytes(sources["lakes"]["data"], "Natural Earth lakes").get("features", []):
         pixel_geometry = _projected_geometry(feature["geometry"], lon_lat_clip, projection, to_pixels)
         if pixel_geometry is None:
             continue
@@ -245,6 +259,20 @@ def build_inputs(config_path: Path, natural_earth_root: Path, output: Path) -> d
         feature_counts["river_features"] += 1
         feature_counts["river_line_parts"] += _draw_lines(river_mask_draw, pixel_geometry, 1, river_width)
 
+    land_array = np.asarray(land_image, dtype=np.uint8).copy()
+    land_array[~inside_mask] = np.asarray(OCEAN_COLOR, dtype=np.uint8)
+    land_image = Image.fromarray(land_array, mode="RGB")
+    boundary_array = np.asarray(boundary_image, dtype=np.uint8).copy()
+    boundary_array[~inside_mask] = np.asarray(OUTSIDE_COLOR, dtype=np.uint8)
+    boundary_image = Image.fromarray(boundary_array, mode="RGB")
+
+    ocean_mask = inside_mask & np.all(land_array == np.asarray(OCEAN_COLOR, dtype=np.uint8), axis=2)
+    lake_mask = inside_mask & np.all(land_array == np.asarray(LAKE_COLOR, dtype=np.uint8), axis=2)
+    land_mask = inside_mask & ~ocean_mask & ~lake_mask
+    boundary_mask = np.asarray(boundary_mask_image, dtype=bool) & inside_mask
+    river_mask = np.asarray(river_mask_image, dtype=bool) & land_mask
+    coast_mask = _coast_mask(land_mask, ocean_mask) & inside_mask
+
     density_policy = config["density"]
     density = np.full((height, width), float(density_policy["baseline"]), dtype=np.float64)
     for feature in _load_json_bytes(sources["populated_places"]["data"], "Natural Earth populated places").get("features", []):
@@ -255,54 +283,79 @@ def build_inputs(config_path: Path, natural_earth_root: Path, output: Path) -> d
         if geometry.is_empty or geometry.geom_type != "Point" or not lon_lat_clip.covers(geometry):
             continue
         pixel_point = transform(to_pixels, transform(projection.transform, geometry))
-        apply_city_density(density, float(pixel_point.x), float(pixel_point.y), _population(feature.get("properties", {})), density_policy)
+        px, py = float(pixel_point.x), float(pixel_point.y)
+        ix, iy = int(round(px)), int(round(py))
+        if not (0 <= ix < width and 0 <= iy < height and inside_mask[iy, ix]):
+            continue
+        apply_city_density(density, px, py, _population(feature.get("properties", {})), density_policy)
         feature_counts["populated_places"] += 1
-
-    land_array = np.asarray(land_image)
-    ocean_mask = np.all(land_array == OCEAN_COLOR, axis=2)
-    lake_mask = np.all(land_array == LAKE_COLOR, axis=2)
-    land_mask = ~ocean_mask & ~lake_mask
-    boundary_mask = np.asarray(boundary_mask_image, dtype=bool)
-    river_mask = np.asarray(river_mask_image, dtype=bool) & land_mask
-    coast_mask = _coast_mask(land_mask, ocean_mask)
     for mask, sigma_key, depth_key in ((boundary_mask, "boundary_sigma", "boundary_depth"), (river_mask, "river_sigma", "river_depth"), (coast_mask, "coast_sigma", "coast_depth")):
         apply_corridor_density(density, mask, baseline=float(density_policy["baseline"]), sigma=float(density_policy[sigma_key]), depth=float(density_policy[depth_key]))
+    density[~inside_mask] = 255.0
     density_image = Image.fromarray(np.clip(np.rint(density), 0, 255).astype(np.uint8), mode="L")
+
     terrain = np.zeros((height, width, 3), dtype=np.uint8)
     terrain[land_mask] = TERRAIN_COLORS[config["terrain"]["land"]]
     terrain[ocean_mask] = TERRAIN_COLORS[config["terrain"]["ocean"]]
     terrain[lake_mask] = TERRAIN_COLORS[config["terrain"]["lake"]]
     terrain_image = Image.fromarray(terrain, mode="RGB")
-    paths = {"land.png": output / "land.png", "boundary.png": output / "boundary.png", "density.png": output / "density.png", "terrain.png": output / "terrain.png"}
+
+    paths = {
+        "land.png": output / "land.png",
+        "boundary.png": output / "boundary.png",
+        "density.png": output / "density.png",
+        "terrain.png": output / "terrain.png",
+        "theatre_mask.png": output / "theatre_mask.png",
+    }
     land_image.save(paths["land.png"], optimize=False, compress_level=9)
     boundary_image.save(paths["boundary.png"], optimize=False, compress_level=9)
     density_image.save(paths["density.png"], optimize=False, compress_level=9)
     terrain_image.save(paths["terrain.png"], optimize=False, compress_level=9)
+    theatre_mask_image.save(paths["theatre_mask.png"], optimize=False, compress_level=9)
 
+    _, land_component_count = connected_components(land_mask)
+    _, ocean_component_count = connected_components(ocean_mask)
     _, lake_component_count = connected_components(lake_mask)
     geography_anchors: list[dict[str, Any]] = []
     for anchor in config["theatre"]["anchors"]:
         source_point = shape({"type": "Point", "coordinates": [anchor["longitude"], anchor["latitude"]]})
         pixel_point = transform(to_pixels, transform(projection.transform, source_point))
         px, py = min(max(int(round(float(pixel_point.x))), 0), width - 1), min(max(int(round(float(pixel_point.y))), 0), height - 1)
+        if not inside_mask[py, px]:
+            raise Gate3Error(f"geography anchor {anchor['name']} is outside the projected theatre mask")
         actual_class = "land" if bool(land_mask[py, px]) else "lake" if bool(lake_mask[py, px]) else "ocean"
         if actual_class != anchor["expected"]:
             raise Gate3Error(f"geography anchor {anchor['name']} expected {anchor['expected']}, got {actual_class} at pixel ({px}, {py})")
         geography_anchors.append({**anchor, "pixel": [px, py], "actual": actual_class, "passed": True})
 
-    source_manifest = {role: {"path": sources[role]["relative_path"], "git_blob_sha1": sources[role]["git_blob_sha1"], "sha256": sources[role]["sha256"], "size_bytes": sources[role]["size_bytes"]} for role in SOURCE_ROLES}
+    source_manifest = {role: {"path": sources[role]["relative_path"], "git_blob_sha1": sources[role]["git_blob_sha1"], "sha256": sources[role]["sha256"], "size_bytes": sources[role]["size_bytes"], "authority": "git_blob_bytes"} for role in SOURCE_ROLES}
     outputs = {name: {"sha256": sha256_file(path), "size_bytes": path.stat().st_size} for name, path in sorted(paths.items())}
     input_manifest = {
-        "schema": INPUT_SCHEMA, "schema_version": INPUT_SCHEMA_VERSION, "status": "experimental_debug_only", "candidate_id": config["candidate_id"], "gate3_config_sha256": config_sha,
+        "schema": INPUT_SCHEMA,
+        "schema_version": INPUT_SCHEMA_VERSION,
+        "status": "experimental_debug_only",
+        "candidate_id": config["candidate_id"],
+        "gate3_config_sha256": config_sha,
         "source": {"repository": config["source"]["repository"], "ref": config["source"]["ref"], "commit": config["source"]["commit"], "license": config["source"]["license"], "terms_url": config["source"]["terms_url"], "files": source_manifest},
-        "projection": config["projection"], "lon_lat_bounds": [lon_min, lat_min, lon_max, lat_max], "projected_bounds": [round(value, 6) for value in projected_bounds], "dimensions": {"width": width, "height": height},
-        "feature_counts": feature_counts, "geography_anchors": geography_anchors,
-        "pixel_counts": {"land": int(land_mask.sum()), "ocean": int(ocean_mask.sum()), "lake": int(lake_mask.sum()), "lake_connected_components": int(lake_component_count), "boundary": int(boundary_mask.sum()), "river": int(river_mask.sum()), "coast": int(coast_mask.sum())},
-        "density": {"policy": density_policy, "minimum": int(np.min(np.asarray(density_image))), "maximum": int(np.max(np.asarray(density_image))), "mean": round(float(np.mean(np.asarray(density_image))), 6)},
-        "terrain": config["terrain"], "outputs": outputs, "isolation": config["isolation"],
+        "projection": config["projection"],
+        "lon_lat_bounds": [lon_min, lat_min, lon_max, lat_max],
+        "projected_bounds": [round(value, 6) for value in projected_bounds],
+        "dimensions": {"width": width, "height": height},
+        "theatre_mask": {"sha256": outputs["theatre_mask.png"]["sha256"], "inside_pixels": int(inside_mask.sum()), "outside_pixels": int((~inside_mask).sum()), "outside_boundary_color": list(OUTSIDE_COLOR)},
+        "feature_counts": feature_counts,
+        "geography_anchors": geography_anchors,
+        "pixel_counts": {"land": int(land_mask.sum()), "ocean": int(ocean_mask.sum()), "lake": int(lake_mask.sum()), "outside": int((~inside_mask).sum()), "boundary": int(boundary_mask.sum()), "river": int(river_mask.sum()), "coast": int(coast_mask.sum())},
+        "component_counts": {"land": int(land_component_count), "ocean": int(ocean_component_count), "lake": int(lake_component_count)},
+        "density": {"policy": density_policy, "minimum": int(np.min(np.asarray(density_image)[inside_mask])), "maximum": int(np.max(np.asarray(density_image)[inside_mask])), "mean": round(float(np.mean(np.asarray(density_image)[inside_mask])), 6)},
+        "terrain": config["terrain"],
+        "outputs": outputs,
+        "isolation": config["isolation"],
     }
     recipe = {
-        "schema": "gates-of-codex.opengs-recipe", "schema_version": 1, "recipe_id": config["candidate_id"], "root_seed": config["generator"]["root_seed"],
+        "schema": "gates-of-codex.opengs-recipe",
+        "schema_version": 1,
+        "recipe_id": config["candidate_id"],
+        "root_seed": config["generator"]["root_seed"],
         "inputs": {"land": {"path": "land.png", "sha256": outputs["land.png"]["sha256"]}, "boundary": {"path": "boundary.png", "sha256": outputs["boundary.png"]["sha256"]}, "density": {"path": "density.png", "sha256": outputs["density.png"]["sha256"]}, "terrain": {"path": "terrain.png", "sha256": outputs["terrain.png"]["sha256"]}},
         "counts": {key: config["counts"][key] for key in ("land_territories", "ocean_territories", "land_provinces", "ocean_provinces")},
         "options": {key: config["generator"][key] for key in ("lloyd_iterations", "density_strength", "exclude_ocean_density", "jagged_land", "jagged_ocean", "jagged_amplitude")},
@@ -315,4 +368,4 @@ def build_inputs(config_path: Path, natural_earth_root: Path, output: Path) -> d
     return input_manifest
 
 
-__all__ = [name for name in globals() if not name.startswith('__')]
+__all__ = [name for name in globals() if not name.startswith("__")]
