@@ -2,9 +2,9 @@
 
 ## Status and authority
 
-Issue #107, issue #77, owner authorization comment `5227987788`, and the correction requested by independent review `4889696294` lock this design. S11 adds deterministic observation and presentation filtering around the existing authoritative campaign state. It does not create a second simulation state and does not alter operational movement, contact, Ambush, retreat, supply, economy, or tactical battle authority.
+Issue #107, issue #77, owner authorization comment `5227987788`, independent review `4889696294`, and compatibility review `4889771055` lock this design. S11 adds deterministic observer-scoped knowledge and presentation filtering around the existing authoritative campaign state. It does not create a second simulation state and does not alter operational movement, contact, Ambush, retreat, supply, economy, or tactical battle authority.
 
-The design starts from the S10 merge commit `cbef4db96f04d26f4127278041f717691712d7eb`. Delivery remains a reviewed chain:
+The design starts from S10 merge commit `cbef4db96f04d26f4127278041f717691712d7eb`. Delivery remains a reviewed chain:
 
 1. docs-only design PR;
 2. Python observation authority and filtering PR;
@@ -20,11 +20,11 @@ Campaign setup retains:
 Fog of War: On / Off
 ```
 
-The first implementation is available but opt-in for v1 and defaults Off until campaign balance and AI behavior are validated. Fog of War Off preserves current perfect-information behavior.
+Fog of War is opt-in and defaults Off. Fog Off preserves the current perfect-information campaign behavior.
 
-Fog of War On is supported only for single-player campaigns with exactly one `FactionState.is_human_controlled == true`. Campaign creation, migration to schema 5, load validation, and any command that enables Fog of War must reject a campaign with zero or more than one human-controlled faction using `fog_of_war_requires_single_human_faction`.
+Fog On is supported only for single-player campaigns with exactly one `FactionState.is_human_controlled == true`. Campaign creation, schema-6 migration, load validation, and any command that enables Fog must reject zero or multiple human-controlled factions with `fog_of_war_requires_single_human_faction`.
 
-Hotseat and remote multiplayer Fog of War are explicit non-goals for the thin slice. They remain usable only with Fog of War Off. There is no seat-transfer protocol, arbitrary observer switch, or retained-client-state purge in PR B or PR C. A human-facing filtered snapshot is bound to the sole human faction; an export caller cannot request another faction's observer picture while Fog of War is On.
+Hotseat and remote multiplayer remain available only with Fog Off. PR B and PR C add no seat-transfer protocol, arbitrary observer switch, or retained-client-state purge. A Fog-on human-facing snapshot is bound to the sole human faction and cannot request another faction's observer picture.
 
 Difficulty may change AI planning budget or aggressiveness, but it must not grant hidden-state access.
 
@@ -32,33 +32,41 @@ Difficulty may change AI planning budget or aggressiveness, but it must not gran
 
 Python owns:
 
-- whether Fog of War is enabled;
+- whether Fog is enabled;
 - the sole authorized human observer faction;
 - observer scope and coalition sharing;
-- current detection tier;
-- last-known knowledge records;
-- deterministic persisted refresh at mutation boundaries;
-- pure observation projection for snapshots and AI;
+- current detection tiers;
+- persisted last-known knowledge;
+- deterministic refresh at authoritative mutation boundaries;
+- pure read-only projection for snapshots and AI;
 - redaction of enemy formations, stances, strength, locations, orders, site progress, and edge traffic;
-- save/load migration and validation.
+- campaign migration, validation, and serialization.
 
-Godot owns only presentation of the already-filtered snapshot. It must not infer hidden positions, calculate detection, query omitted rows, or recover redacted values from other UI models.
+Godot owns only presentation of the already-filtered snapshot. It must not calculate detection, query omitted truth, infer hidden positions, or recover redacted values from other UI models.
 
-The true `CampaignState` remains authoritative for simulation. Observation is a deterministic projection of that state for one observer scope.
+The true `CampaignState` remains the only simulation authority.
 
-## Observer scope, allied sharing, and alliance validity
+## Observer scope, allied sharing, and alliance compatibility
 
 The thin slice uses one shared intelligence picture per coalition.
 
-`observer_scope_id(state, faction)` has exactly these results:
+`observer_scope_id(state, faction)` has exactly these results when observer scope is requested:
 
 - no alliance membership: `faction:<faction_id>`;
 - exactly one alliance membership: `alliance:<alliance_id>`;
-- more than one alliance membership: fail closed with `ambiguous_observer_scope_multiple_alliances`.
+- more than one alliance membership: fail with `ambiguous_observer_scope_multiple_alliances`.
 
-Schema-5 validation rejects any faction appearing in more than one alliance, regardless of whether Fog of War is currently enabled. Schema-4 migration also rejects overlapping membership rather than choosing an alliance by insertion order, name, or sort order.
+Overlapping alliance membership is rejected only when at least one S11 observer condition applies:
 
-Coalition members share current contacts and last-known records completely in the thin slice. No duplicate faction and alliance stores may coexist for the same observer. More restrictive sharing policies remain future scenario options under issue #77.
+1. `fog_of_war_enabled` is `true`;
+2. at least one persisted S11 `KnowledgeRecord` exists in `knowledge_by_observer`; or
+3. code requests an observer scope, observation projection, filtered snapshot, knowledge refresh, or Fog-on AI planning view.
+
+A valid Fog-off campaign with an empty S11 knowledge store is not globally rejected merely because a faction appears in multiple alliances. This preserves current legacy behavior. Such a campaign may load, migrate, save, and run through the complete Fog-off path without deriving observer scope.
+
+If an overlapping-alliance campaign later enables Fog, gains S11 knowledge, or requests observer scope, it fails closed before projection or save. No implementation may choose one alliance by insertion order, lexical order, display name, or first match.
+
+Coalition members share current contacts and last-known records completely. No duplicate faction and alliance stores may coexist for one observer subject. More restrictive sharing remains future work under #77.
 
 ## Information tiers
 
@@ -70,7 +78,7 @@ Enemy knowledge has five ordered tiers:
 4. `assessed`
 5. `fully_observed`
 
-`unknown` is represented by absence of a current observation and absence of a retained last-known record. Persisted `KnowledgeRecord` rows with tier `unknown` are invalid.
+`unknown` is represented by absence of a current observation and absence of a retained record. Persisted records with tier `unknown` are invalid.
 
 ### Contact
 
@@ -81,7 +89,7 @@ Exposes only:
 - current or last-observed province/node ID, or edge ID without exact progress;
 - observation turn and operational tick;
 - sorted source labels;
-- stale/current state.
+- current/stale state.
 
 It does not expose formation ID, actor, echelon, strength, stance, composition, commander, exact edge progress, or orders.
 
@@ -90,69 +98,57 @@ It does not expose formation ID, actor, echelon, strength, stance, composition, 
 Adds:
 
 - observed strategic formation ID;
-- existing formation display identity;
-- actor/national identity where already authoritative;
+- existing display identity;
+- actor or national identity where authoritative;
 - echelon.
 
-It still does not expose exact strength, composition, stance, commander, exact edge progress, or orders.
+It still hides exact strength, composition, stance, commander, exact edge progress, and orders.
 
 ### Assessed
 
-Adds:
-
-- deterministic strength band;
-- readiness/condition band;
-- supply-state band;
-- last-observed direction when available.
-
-Bands are derived from existing authoritative values through fixed thresholds. Exact counts and percentages remain hidden.
+Adds deterministic strength, condition/readiness, and supply bands plus last-observed direction when available. Exact counts and percentages remain hidden.
 
 ### Fully observed
 
-Adds the current exact operational position and existing formation details needed for direct contact or battle presentation. Enemy exact movement orders and intended destination remain hidden even at this tier. A triggered Ambush may be exposed through the existing battle participant contract after contact; an untriggered hidden Ambush stance is not exposed merely because another source reached `assessed`.
+Adds the exact current operational position and existing formation details needed for direct contact or battle presentation. Enemy movement orders and intended destinations remain hidden at every tier. Triggered Ambush metadata may appear through the authoritative S9/S10 battle participant contract; untriggered Ambush stance remains hidden.
 
-## Always-known information
+## Always-known and hidden information
 
-With Fog of War On, these remain visible:
+With Fog On, these remain public:
 
 - authored province boundaries and IDs;
-- the operational route graph, terrain, nodes, and edges;
+- route graph, terrain, nodes, and edges;
 - friendly formations, positions, orders, stances, and detailed state;
-- friendly-controlled province ownership and sites;
-- public scenario objectives;
-- coalition-shared observations permitted by this design;
+- friendly-controlled ownership and sites;
+- public objectives;
+- coalition-shared observations;
 - province ownership in the thin slice.
 
-Hiding ownership, construction, recruitment, strategic income, or logistics infrastructure is outside the first S11 implementation.
-
-## Hidden information
-
-Unless the current observation tier permits it, the snapshot and AI observation must not expose:
+Unless permitted by the current tier, snapshots, AI views, command results, logs, rejection messages, tooltips, stack panels, selection models, accessibility text, and cached presentation models must not expose:
 
 - exact enemy node or edge progress;
-- exact enemy formation identity;
-- exact enemy composition or battalion membership;
+- exact identity;
+- battalion membership or composition;
 - exact condition, supply, experience, or strength;
 - commander identity;
 - stance, including untriggered Ambush;
-- movement order, route, remaining path, or intended destination;
+- movement order, route, remaining path, or destination;
 - enemy site-control progress;
-- hidden edge traffic;
-- selection, tooltip, stack-panel, command-result, log, rejection-reason, or error-message side channels containing the same data.
+- hidden edge traffic.
 
-Dimmed or disabled exact values still count as leaks and are prohibited.
+Blanked, dimmed, disabled, or indirectly countable exact values still constitute leaks.
 
 ## Exact recon capability authority
 
-PR B introduces one persisted field:
+PR B introduces:
 
 ```python
 StrategicFormation.recon_capability: bool = False
 ```
 
-The on-map `StrategicFormation` owns the capability. It is not dynamically inferred from unit names, roster names, battalion type, formation display name, doctrine text, or preferred-category substring matching.
+The on-map `StrategicFormation` owns this authority. Runtime code must not infer recon from names, roster text, battalion type, formation kind, doctrine text, or preferred-category substrings.
 
-For new bundled Europe campaigns and schema-4 migration, `recon_capability` is set `true` only when `template_formation_id` is one of this exact immutable initial whitelist:
+For new bundled campaigns and both legacy migration paths, `recon_capability` becomes `true` only when `template_formation_id` is in this immutable initial whitelist:
 
 ```text
 nato-us-airborne
@@ -161,53 +157,47 @@ ukr-air-assault
 rusa-vdv
 ```
 
-Every other bundled or migrated formation defaults `false`. A custom scenario may explicitly persist `recon_capability: true`; omission means `false`. Loading schema 5 never recomputes or overwrites the persisted flag from template metadata.
-
-This whitelist is grounded in the existing formation definitions whose exact `preferred_categories` include `recon`, but runtime authority is the new boolean and exact template-ID migration table, not the category list.
+Every other migrated formation defaults `false`. Custom schema-6 scenarios may explicitly persist either boolean. Schema-6 loads preserve the persisted value and never recompute it.
 
 ## Exact eligible site authority
 
-A site is a detection source only when all of these conditions hold:
+A site contributes detection only when all conditions hold:
 
-1. it is an authored graph site returned from `graph["sites"]`;
-2. `kind` is exactly `observation` or exactly `command`;
+1. it is authored in `graph["sites"]`;
+2. `kind` is exactly `observation` or `command`;
 3. `route_node_id` is non-empty and resolves to an authored graph node;
-4. its current `controller_faction` belongs to the observer scope;
+4. its current controller belongs to the observer scope;
 5. `metadata.synthetic_anchor_control_site` is not `true`.
 
-No other site kind is eligible in the thin slice. In particular, `objective`, `capital`, `port`, `airfield`, supply, recruitment, and generic control sites do not provide detection unless a later reviewed design explicitly adds their exact kind.
+No other site kind is eligible. `objective`, `capital`, `port`, `airfield`, supply, recruitment, generic control, and unknown kinds contribute nothing.
 
-Synthetic per-province anchor/control sites created by `list_control_sites()` are always excluded, even though they currently use `kind: objective`. A synthetic anchor cannot be made eligible by changing its kind alone; the synthetic metadata flag remains an unconditional exclusion.
+Synthetic per-province anchors created by `list_control_sites()` are always excluded, even if their kind is changed to an eligible value.
 
-## Graph coverage of a source
+## Source coverage
 
 A node-based recon formation or eligible site covers:
 
 - its occupied/source node;
-- every edge incident to that node;
-- the opposite endpoint node of each incident edge.
+- every incident edge;
+- the opposite endpoint of each incident edge.
 
-A recon formation currently on an edge covers:
+A recon formation on an edge covers:
 
-- that occupied edge;
-- both endpoint nodes of that edge.
+- the occupied edge;
+- both endpoint nodes.
 
-It does not project onto other edges incident to those endpoints until it occupies a node. Ordinary non-recon formations project no passive detection area.
-
-Direct encounter authority remains separate and overrides this coverage model.
+It does not spill onto other edges incident to those endpoints until it occupies a node. Ordinary formations project no passive detection area. Direct encounter authority is separate and overrides source coverage.
 
 ## Complete deterministic source-combination table
 
-For one enemy formation, count unique source IDs whose coverage includes the enemy's authoritative node/edge/province location:
+For one enemy formation:
 
-- `R` = number of unique recon-capable strategic formation IDs;
-- `S` = number of unique eligible authored site IDs.
+- `R` is the number of unique covering recon-capable strategic formation IDs;
+- `S` is the number of unique covering eligible authored site IDs.
 
-The same source ID reported through multiple coalition members or code paths counts once. Different sources of the same category do stack according to this table. Source labels are stored sorted by `(source_kind, source_id)`.
+Duplicate reports of one source ID count once. Different source IDs stack exactly as follows. Source labels sort by `(source_kind, source_id)`.
 
-Before Ambush concealment, the tier is exactly:
-
-| Direct encounter/contact | R | S | Base tier |
+| Direct contact | R | S | Base tier |
 |---|---:|---:|---|
 | yes | any | any | `fully_observed` |
 | no | 0 | 0 | `unknown` |
@@ -217,97 +207,35 @@ Before Ambush concealment, the tier is exactly:
 | no | 1 | 1 or more | `assessed` |
 | no | 2 or more | any | `assessed` |
 
-Non-contact source combination is capped at `assessed`. Additional recon formations or sites do not exceed that cap. No weighted score, randomness, insertion order, or “best effort” rule exists.
+Non-contact detection is capped at `assessed`. No weighted score, randomness, insertion-order rule, or best-effort fallback exists.
 
 ## Direct contact and Ambush
 
-Same encounter node or same encounter edge during resolved contact is `fully_observed` for the authoritative participating formations. A pending tactical battle exposes its authoritative participants and contact location through the existing S10 contract. Direct combat knowledge is retained as last-known information after contact ends.
+An authoritative same-node or same-edge encounter gives `fully_observed` to participating formations. A pending battle exposes authoritative participants and contact location through the existing S10 contract.
 
-Before contact, a prepared Ambush reduces the non-contact base tier by one step:
+Before contact, prepared Ambush reduces the non-contact tier by one step:
 
-- `assessed` becomes `identified`;
-- `identified` becomes `contact`;
-- `contact` becomes `unknown`;
+- `assessed` to `identified`;
+- `identified` to `contact`;
+- `contact` to `unknown`;
 - `unknown` remains `unknown`.
 
-Ambush does not reduce `fully_observed` direct-contact authority, never prevents deterministic contact resolution, and never hides a formation already participating in the same encounter. After Ambush triggers, the battle participant contract may expose the triggered state and received multiplier exactly as S9/S10 define.
+Ambush never reduces direct-contact authority, prevents contact resolution, or hides a participating formation.
 
 ## Legacy no-graph campaigns
 
-Fog of War Off remains unchanged.
+Fog Off remains unchanged.
 
-When Fog of War On is explicitly selected for a campaign without an operational graph:
+When Fog On is explicitly selected without an operational graph:
 
-- same province during authoritative contact is `fully_observed`;
-- a recon-capable formation or eligible site in an adjacent province contributes its category count to the same source-combination table;
-- no synthetic pixel LOS is introduced;
-- observation records use province IDs instead of node or edge fields.
+- authoritative same-province contact is `fully_observed`;
+- recon formations and eligible sites in adjacent provinces contribute to the same source table;
+- no pixel line of sight is introduced;
+- records use province IDs instead of node/edge fields.
 
-## Persisted refresh and pure projections
+## Campaign schema 6 and migration contract
 
-Persisted knowledge is refreshed only as part of an authoritative mutation transaction. The order is fixed:
-
-1. apply and validate the authoritative campaign mutation;
-2. collect any observation-relevant mutation context, including contact participants and confirmed removals;
-3. run `refresh_all_observer_knowledge(state, mutation_context)` exactly once;
-4. validate the refreshed campaign;
-5. atomically save the campaign in the same mutation operation.
-
-The refresh must occur immediately before the existing atomic `save_campaign` boundary after all mutation substeps are complete. If refresh or validation fails, the campaign save does not replace the prior file.
-
-This transaction rule applies to:
-
-- campaign creation and schema migration save;
-- operational tick resolution after movement/contact/Ambush/site capture completes;
-- battle auto-resolution and verified external battle import;
-- any authoritative formation creation, removal, or future replacement operation;
-- end-turn or other commands that mutate observation-relevant positions, ownership, or formations.
-
-Snapshot export and AI planning are read operations. They call only pure projection functions such as `project_operational_observation(state, observer_faction)` and must not call persisted refresh, mutate `knowledge_by_observer`, normalize records, modify campaign fields, or save. Repeated snapshot exports and repeated AI planning calls must leave canonical campaign JSON bytes unchanged.
-
-A current projection may combine the already-persisted knowledge store with current friendly/public data for rendering or planning, but it may not write the result back. Persisted knowledge can change only through the mutation transaction above.
-
-## Opaque contact identity, promotion, and multiplicity
-
-Every persisted record has an authority-only `subject_formation_id` used for refresh and validation. That field is never emitted for a `contact` tier frontend/AI row.
-
-For an unidentified subject, the opaque ID is exactly:
-
-```text
-contact-<sha256("goc-s11-contact-v1\0" + observer_scope_id + "\0" + subject_formation_id).hexdigest()>
-```
-
-The full 64 lowercase hexadecimal digest is used; it is not truncated. The unidentified record key is `contact:<opaque_id>`. Because observer scope is part of the digest, coalition/faction observers receive different opaque IDs for the same true formation.
-
-Collision handling is fail-closed. If two different `subject_formation_id` values produce the same opaque ID in one observer scope, refresh raises `opaque_contact_collision` before save. It never overwrites, suffixes by insertion order, or merges by location.
-
-Multiple anonymous formations at the same node, edge, or province remain separate records because each subject produces a separate opaque ID. Projection ordering is stable by opaque ID.
-
-Reacquisition rules are exact:
-
-- an unidentified stale subject reacquired below `identified` uses the same opaque key and updates that one record;
-- when the subject first reaches `identified` or higher, refresh atomically creates `formation:<subject_formation_id>`, merges the prior contact record's earliest-seen and last-known history, and removes `contact:<opaque_id>` in the same save;
-- after promotion, the formation key remains authoritative even if current detection later falls to `contact`; previously learned identity is not forgotten in the no-decay thin slice;
-- a promoted subject can never coexist under both keys;
-- persisted `unknown` records, a contact key whose digest does not match its observer/subject linkage, a formation key whose ID differs from `subject_formation_id`, or duplicate subject records fail validation.
-
-## Confirmed removal and unseen stale-contact lifecycle
-
-A disappearance from true state is not automatically proof of destruction for every observer.
-
-The authoritative mutation transaction supplies `confirmed_removed_formation_ids_by_observer` in its mutation context. A removal is confirmed for an observer scope only when at least one of these is true at that mutation boundary:
-
-- the observer had the subject `fully_observed` immediately before removal;
-- the observer coalition was an authoritative participant in the battle that destroyed or removed the formation;
-- a future explicit authoritative removal operation declares that observer scope as a witness.
-
-For a confirmed observer, refresh deletes the subject's contact or formation record in the same atomic save. The thin slice does not retain a destroyed-history marker.
-
-For every other observer, the last record remains stale at its last observed location. It is not deleted merely because the true formation no longer exists. This intentionally permits an obsolete last-known contact until a later intelligence-decay feature or explicit confirmation resolves it.
-
-PR B introduces no formation merge or split command. Any future merge/split/reorganization operation must provide explicit predecessor/successor lineage and witnessed-removal scopes before it can be used with Fog of War On. Without explicit lineage, old unseen subjects remain stale and new formation IDs are treated as new independent subjects; refresh must not infer lineage from location, faction, name, or battalion membership.
-
-## Campaign persistence contract
+Current pre-S11 `main` already writes campaign schema 5. S11 therefore allocates campaign schema 6.
 
 PR B introduces:
 
@@ -315,122 +243,192 @@ PR B introduces:
 - `CampaignState.fog_of_war_enabled: bool`;
 - `CampaignState.knowledge_by_observer: dict[str, dict[str, KnowledgeRecord]]`.
 
-Campaign schema advances from version 4 to version 5.
+The S11 field set is:
 
-Migration and validation rules:
+- top-level `fog_of_war_enabled`;
+- top-level `knowledge_by_observer`;
+- `recon_capability` on every serialized strategic formation.
 
-- schema 4 and earlier default Fog of War Off;
-- schema-4 knowledge defaults empty;
-- recon capability migrates only through the exact four-template whitelist above;
-- loading does not silently enable Fog of War;
-- schema 5 rejects overlapping alliance membership;
-- schema 5 with Fog of War On requires exactly one human-controlled faction;
-- knowledge records are strictly validated for key, subject linkage, tier-appropriate fields, opaque digest, and sorted unique sources;
-- serialization order is stable by observer scope and record key;
-- save/load round trips are byte-stable under existing deterministic JSON formatting;
-- invalid contradictory records fail closed rather than being normalized silently.
+Migration is exact:
 
-## Frontend snapshot contract
+### Schema 4 and earlier to schema 6
 
-PR B advances the frontend schema from 13 to 14 because enemy row visibility and observation semantics change materially.
+- set `fog_of_war_enabled = false`;
+- set `knowledge_by_observer = {}`;
+- set recon capability through the exact four-template whitelist;
+- preserve all existing Fog-off campaign behavior and authoritative state;
+- write schema 6 only at the normal atomic migration/save boundary.
 
-With Fog of War Off, schema 14 preserves the existing complete formation and battalion information.
+### Existing pre-S11 schema 5 to schema 6
 
-With Fog of War On:
+A schema-5 save with the S11 field set absent is a valid legacy pre-S11 save, not malformed schema 6.
 
-- the observer is the sole human-controlled faction and cannot be overridden by an arbitrary export parameter;
-- friendly `strategic_formations` and `battalions` remain complete;
-- currently observed enemy formations are emitted only to the permitted tier;
-- unknown enemy formations are omitted;
+It migrates exactly like schema 4 and earlier:
+
+- Fog defaults Off;
+- knowledge defaults empty;
+- recon capability uses the exact whitelist;
+- existing campaign state and Fog-off behavior remain unchanged.
+
+Schema 5 is never interpreted as an S11 schema. A schema-5 file containing a partial or complete pre-release S11 field set fails with `unexpected_s11_fields_in_schema5`; it is not silently treated as schema 6.
+
+### Schema 6 validation
+
+Schema 6 requires all S11 fields with their exact types. Missing schema-6 S11 fields are malformed. Records are strictly validated for observer/key/subject linkage, tier-appropriate fields, opaque digest, and sorted unique sources.
+
+Alliance ambiguity validation is conditional:
+
+- overlapping membership is allowed when Fog is Off, knowledge contains no records, and no observer scope is requested;
+- overlapping membership fails when Fog is On;
+- overlapping membership fails when any S11 knowledge record exists;
+- overlapping membership fails whenever observer scope or an observer projection is requested.
+
+Both migration paths default Fog Off. Neither migration silently enables filtering or creates knowledge. Serialization is stable by observer scope and record key, and deterministic save/load round trips are byte-stable.
+
+## Persisted refresh and pure projections
+
+Persisted knowledge changes only inside an authoritative mutation transaction:
+
+1. apply and validate the authoritative mutation;
+2. collect observation-relevant context, including contact participants and confirmed removals;
+3. run `refresh_all_observer_knowledge(state, mutation_context)` exactly once;
+4. validate the refreshed campaign;
+5. atomically save in the same operation.
+
+Refresh occurs immediately before the existing atomic save after all mutation substeps. Refresh or validation failure preserves the prior file.
+
+This applies to campaign creation/migration save, operational ticks, site capture, battle auto-resolution, verified external imports, formation creation/removal, end turn, and future observation-relevant mutations.
+
+Snapshot export and AI planning are pure reads. They may call `project_operational_observation(state, observer_faction)` but must not refresh, normalize, mutate, or save. Repeated projections, exports, and plans leave canonical campaign bytes unchanged.
+
+Fog-off legacy paths with empty knowledge do not request observer scope and therefore do not trigger overlapping-alliance rejection.
+
+## Opaque contact identity, promotion, and multiplicity
+
+Every persisted record has an authority-only `subject_formation_id`, never emitted in a contact-tier frontend or AI row.
+
+The opaque ID is exactly:
+
+```text
+contact-<sha256("goc-s11-contact-v1\0" + observer_scope_id + "\0" + subject_formation_id).hexdigest()>
+```
+
+The full lowercase 64-hex digest is used. Unidentified records use `contact:<opaque_id>`; identified records use `formation:<subject_formation_id>`.
+
+Collisions between distinct subjects fail with `opaque_contact_collision` before save. No suffixing, overwrite, or location merge is allowed. Multiple anonymous formations at one location remain separate and sort by opaque ID.
+
+Reacquisition and promotion are exact:
+
+- unidentified reacquisition below `identified` reuses the same opaque key;
+- first identification atomically creates the formation key, merges history, and removes the opaque key;
+- promoted identity remains known in this no-decay slice even if later detection falls to contact;
+- both keys may never coexist;
+- persisted unknown rows, digest mismatches, formation-key mismatches, and duplicate subjects fail validation.
+
+## Confirmed removal and unseen stale lifecycle
+
+A true-state disappearance is not automatically confirmed for every observer.
+
+`ObservationMutationContext.confirmed_removed_formation_ids_by_observer` confirms removal only when:
+
+- the observer had the subject fully observed immediately before removal;
+- the observer coalition participated in the destroying/removing battle; or
+- an explicit authoritative operation declares that observer a witness.
+
+Confirmed records are deleted in the same atomic save. Unseen removals remain stale at the last observed location. The thin slice stores no destroyed-history marker.
+
+PR B introduces no merge/split command. Future reorganization requires explicit predecessor/successor lineage and witness scopes. Without lineage, old unseen subjects remain stale and new IDs are independent; no lineage is inferred from location, faction, name, or battalion membership.
+
+## Frontend schema 14
+
+PR B advances the frontend schema from 13 to 14.
+
+Fog Off preserves complete current formation and battalion information. Schema-13 compatibility remains accepted only on Fog-off paths.
+
+With Fog On:
+
+- the observer is the sole human faction and cannot be overridden;
+- friendly formations and battalions remain complete;
+- observed enemies are emitted only to the permitted tier;
+- unknown enemies are omitted;
 - retained observations appear in `last_known_contacts`;
-- `fog_of_war` states filtering and the derived observer scope;
-- hidden battalion, commander, stack, presentation, order, site-progress, and edge-traffic rows are removed rather than blanked;
+- `fog_of_war` identifies filtering and observer scope;
+- hidden battalion, commander, stack, presentation, order, site-progress, and edge-traffic rows are removed;
 - contact rows expose opaque IDs, never `subject_formation_id`;
-- province hit testing, color-ID authority, graph geometry, and public ownership remain unchanged.
+- graph geometry, province hit testing, color-ID authority, and public ownership remain unchanged.
 
-Schema-13 consumers remain accepted only for Fog of War Off compatibility paths. Godot S11 presentation targets schema 14 and fails closed if a filtered snapshot omits required observation metadata.
-
-Snapshot creation is pure and read-only. Tests compare serialized campaign bytes before and after repeated exports.
+Snapshot creation is pure and byte-neutral.
 
 ## AI fairness and structural separation
 
-Fog-on AI is split into two stages.
+Fog-on AI has two stages.
 
 ### Pure restricted planner
 
-`build_operational_planning_view(state, faction)` returns an immutable `OperationalPlanningView` containing only:
+`build_operational_planning_view(state, faction)` returns an immutable `OperationalPlanningView` containing only friendly state, public graph/terrain/ownership/objectives, eligible friendly sites, permitted current observations, retained last-known records, and legal route topology/costs.
 
-- full friendly formation state needed for planning;
-- public graph, terrain, ownership, objectives, and eligible friendly site state;
-- current observed enemy rows to their permitted tier;
-- retained last-known records;
-- legal route topology and public movement costs.
+It contains no `CampaignState` reference, hidden enemy collection, callbacks, hidden site progress, or hidden orders.
 
-The value object contains no `CampaignState` reference, no hidden enemy collection, no callback into campaign lookup, and no true-state site-progress or order data.
-
-`plan_operational_intents(view, faction, seed)` is pure. It may rank goals and paths only from this restricted view and returns immutable intents. Access-denial tests pass a proxy that raises if the planner attempts to access undeclared fields or a `CampaignState` object.
+`plan_operational_intents(view, faction, seed)` is pure and ranks only from this view.
 
 ### True-state validator/executor
 
-`validate_and_commit_operational_intents(state, faction, intents)` may use true state only to validate and commit the already-ranked intents through existing movement authority. It must preserve intent order and may only accept or reject each intent. It may not rerank, retarget, choose an alternate goal, substitute a different route, or create a new intent from hidden truth.
+`validate_and_commit_operational_intents(state, faction, intents)` may use truth only to accept or reject already-ranked intents and commit accepted intents through existing authority. It must preserve order and may not rerank, retarget, substitute routes, select alternate goals, or create new intents.
 
-A rejection caused by hidden truth is exposed to the observer only as a sanitized existing/general legality result such as `route_unavailable`; logs and command responses must not identify the hidden formation, stance, strength, or exact location that caused rejection.
+Hidden-truth rejection is sanitized, such as `route_unavailable`, without revealing formation, stance, strength, or location.
 
-The compatibility wrapper for FOW Off may build a complete planning view, but the same two-stage structure remains.
-
-Tests must prove:
-
-- two different true enemy states with identical planning views produce identical intents;
-- the executor does not alter intent order or targets;
-- hidden-state changes may change accept/reject outcomes but never planner ranking;
-- the pure planner cannot access true campaign state;
-- a visible/last-known observation change may alter intents.
+Fog Off uses the same two-stage structure with a complete planning view.
 
 ## Failure and leakage behavior
 
-- Missing graph authority uses the documented province fallback or leaves the contact unknown; it never invents coordinates.
-- Malformed knowledge records fail campaign validation.
-- A missing observation source cannot be replaced with a UI-side guess.
-- Logs, command responses, rejection reasons, and frontend payloads do not include hidden values.
-- Export and tactical handoff use true authoritative participants only after battle creation; pre-battle UI receives the filtered picture until contact authority exists.
-- Fog filtering and planning projection do not modify the true campaign object.
-- Ambiguous alliance scope, unsupported multi-human Fog-on campaigns, opaque collisions, and contradictory record keys fail closed before save.
+- Missing graph authority uses the documented province fallback or leaves contact unknown.
+- Malformed knowledge records fail validation.
+- Missing sources are not replaced by UI guesses.
+- Logs, commands, errors, and rejection reasons expose no hidden values.
+- Tactical export uses true participants only after battle creation.
+- Projection never mutates campaign truth.
+- Overlapping alliances fail only when S11 observer authority is active or requested.
+- Unsupported multi-human Fog-on campaigns, opaque collisions, and contradictory record keys fail before save.
 
 ## Test strategy
 
-PR B tests must cover:
+PR B must test:
 
-- exact recon field default, four-template migration whitelist, custom explicit enablement, and no substring/category inference;
-- exact eligible site kinds, authored-site requirement, valid route-node requirement, coalition control, and unconditional synthetic-anchor exclusion;
-- every row of the deterministic `(direct, R, S)` source-combination table;
-- duplicate source deduplication and the non-contact `assessed` cap;
-- Ambush one-tier concealment after source combination;
-- coalition observer sharing and overlapping-alliance rejection;
-- Fog-on exactly-one-human validation and Fog-off hotseat parity;
-- same-node/same-edge direct observation and one-hop graph coverage;
-- legacy province fallback;
-- persisted refresh only before atomic saves at mutation boundaries;
-- repeated snapshot exports and AI projections leaving canonical campaign bytes unchanged;
-- full opaque-ID formula, reacquisition, collision failure, promotion rekey, duplicate-key rejection, and same-location multiplicity;
-- confirmed observed destruction deleting records and unseen removal retaining stale records;
+- exact recon defaults, whitelist migration, explicit custom values, and no heuristic inference;
+- exact site eligibility and synthetic-anchor exclusion;
+- every source-table row, deduplication, ordering, and assessed cap;
+- Ambush concealment;
+- coalition sharing;
+- schema-4 to schema-6 migration;
+- existing pre-S11 schema-5 to schema-6 migration with absent S11 fields;
+- Fog Off by default on both migration paths;
+- missing S11 fields in schema 5 accepted as valid legacy state;
+- missing required S11 fields in schema 6 rejected;
+- Fog-off overlapping-alliance compatibility;
+- Fog-on overlapping-alliance rejection;
+- S11-knowledge overlapping-alliance rejection;
+- observer-scope-request overlapping-alliance rejection;
+- exactly-one-human Fog-on validation and Fog-off hotseat parity;
+- same-node/same-edge contact and no-graph fallback;
+- mutation-only refresh and atomic failure behavior;
+- byte-neutral projections, exports, and AI planning;
+- opaque-ID vectors, collisions, reacquisition, promotion, multiplicity, and validation;
+- confirmed destruction versus unseen stale retention;
 - no inferred merge/split lineage;
-- campaign schema 4-to-5 migration and byte-stable save/load;
-- schema-14 field filtering with no side-channel leaks;
-- Fog-off parity;
-- restricted `OperationalPlanningView`, access-denial proxy, paired-state intent parity, and executor no-rerank behavior.
+- schema-14 redaction and side-channel closure;
+- restricted planning-view access and executor no-rerank behavior.
 
-PR C Godot tests must cover:
+PR C must test:
 
-- unknown enemies absent from map and panels;
+- unknown enemies absent;
 - current contact, identified, assessed, fully observed, and stale states visibly distinct;
-- separate anonymous contacts at one location remain separately represented;
-- contact-to-identified promotion produces one marker, not duplicates;
-- confirmed destruction removes a marker while unseen stale removal remains;
-- no exact hidden values in tooltips, selection, accessibility text, or cached models;
-- last-known markers fixed at the last observed location;
-- stale age display;
+- anonymous same-location multiplicity;
+- one marker after promotion;
+- confirmed removal absent versus unseen removal stale;
+- no exact hidden values in UI or cached models;
+- fixed last-known location and age;
 - Fog-off visual parity;
-- province color-ID hit testing unaffected.
+- unchanged province hit testing.
 
 ## Explicit non-goals
 
@@ -438,14 +436,15 @@ The first S11 chain does not add:
 
 - Fog-on hotseat or remote multiplayer;
 - arbitrary observer switching;
-- pixel or physics-based line of sight;
+- pixel or physics line of sight;
 - detection RNG;
 - weather, terrain, electronic warfare, air reconnaissance, false contacts, or spies;
-- configurable coalition-sharing policies beyond full thin-slice sharing;
+- configurable sharing beyond full coalition sharing;
 - hidden province ownership, construction, recruitment, income, or logistics;
 - automatic intelligence decay or expiry;
-- exact enemy orders at any information tier;
-- a second AI-only truth model;
-- inferred formation merge/split lineage;
-- changes to S9 contact, Ambush, blocking, or retreat mechanics;
-- changes to Earth3 geography, province IDs, crop, adjacency, route authority, or OpenGS evaluation.
+- exact enemy orders at any tier;
+- a second AI truth model;
+- inferred merge/split lineage;
+- a campaign-wide prohibition on overlapping alliances while S11 observer authority is inactive;
+- changes to S9 contact/Ambush/blocking/retreat;
+- changes to Earth3 geography, IDs, crop, adjacency, route authority, or OpenGS evaluation.
