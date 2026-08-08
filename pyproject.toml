@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gates-of-codex"
-version = "0.13.0"
+version = "0.14.0"
 description = "A clean-room strategic campaign bridge for Call to Arms: Gates of Hell and Code:X"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -19,6 +19,7 @@ earth3 = ["shapely>=2.0"]
 gates-of-codex = "gates_of_codex.entrypoint:main"
 gates-of-codex-live = "gates_of_codex.acceptance_cli:main"
 gates-of-codex-factions = "gates_of_codex.faction_wiring:main"
+gates-of-codex-actors = "gates_of_codex.strategic_actor_cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
