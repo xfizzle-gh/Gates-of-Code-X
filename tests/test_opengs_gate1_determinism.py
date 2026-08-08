@@ -44,6 +44,20 @@ def write_json(path: Path, value: object, *, pretty: bool = False, crlf: bool = 
     path.write_bytes(text.encode("utf-8"))
 
 
+def reseal_manifest(generator, output: Path, changed_output: str | None = None) -> None:
+    path = output / "run_manifest.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if changed_output is not None:
+        payload["outputs"][changed_output] = hashlib.sha256(
+            (output / changed_output).read_bytes()
+        ).hexdigest()
+    payload.pop("manifest_payload_sha256", None)
+    payload["manifest_payload_sha256"] = hashlib.sha256(
+        generator.canonical_json_bytes(payload)
+    ).hexdigest()
+    write_json(path, payload)
+
+
 class Gate1StaticContractTest(unittest.TestCase):
     def test_dependency_closure_has_no_gui_runtime_or_implicit_rng(self) -> None:
         expected_local = {"gate1_common", "gate1_regions", "gate1_pipeline"}
@@ -274,6 +288,99 @@ class Gate1DeterminismTest(unittest.TestCase):
             path.write_text(json.dumps(payload, sort_keys=True, indent=2) + "\n", encoding="utf-8")
             with self.assertRaises(self.g.Gate1Error):
                 self.g.inspect_output(out)
+
+    def test_input_bytes_are_immutable_and_path_mutation_blocks_publish(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            recipe = self.make_fixture(base / "inputs")
+            target = base / "out"
+            original_load = self.pipeline.load_images
+
+            def mutate_after_verified_read(inputs):
+                decoded = original_load(inputs)
+                inputs["land"].path.write_bytes(b"replacement after checksum verification")
+                return decoded
+
+            with mock.patch.object(self.pipeline, "load_images", side_effect=mutate_after_verified_read):
+                with self.assertRaises(self.g.Gate1Error):
+                    self.g.generate(recipe, target)
+            self.assertFalse(target.exists())
+            self.assertFalse(any(base.glob(".out.gate1-*")))
+
+            payload = json.loads(recipe.read_text(encoding="utf-8"))
+            payload["inputs"]["land"]["path"] = "missing.ppm"
+            write_json(recipe, payload)
+            with self.assertRaises(self.g.Gate1Error):
+                self.g.load_recipe(recipe)
+
+    def test_inspect_authenticates_seed_and_environment_provenance(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            recipe = self.make_fixture(base / "inputs")
+            baseline = base / "baseline"
+            self.g.generate(recipe, baseline)
+            baseline_manifest = json.loads((baseline / "run_manifest.json").read_text(encoding="utf-8"))
+            seed_name = next(iter(baseline_manifest["derived_seeds"]))
+            sample_name = next(name for name in baseline_manifest["derived_seeds"] if name.endswith(".sample"))
+            jagged_name = next(name for name in baseline_manifest["derived_seeds"] if name.endswith(".jagged"))
+            mutations = {
+                "seed_value": lambda p: p["derived_seeds"].__setitem__(seed_name, (p["derived_seeds"][seed_name] + 1) % (2**64)),
+                "missing_initial": lambda p: p["derived_seeds"].pop(sample_name),
+                "missing_jagged": lambda p: p["derived_seeds"].pop(jagged_name),
+                "python": lambda p: p["environment"].__setitem__("python", "3.11.8"),
+                "numpy": lambda p: p["environment"].__setitem__("numpy", "2.3.4"),
+                "pillow": lambda p: p["environment"].__setitem__("pillow", "11.3.0"),
+                "scipy": lambda p: p["environment"].__setitem__("scipy", "1.16.2"),
+            }
+            for name, mutate in mutations.items():
+                case = base / name
+                shutil.copytree(baseline, case)
+                manifest_path = case / "run_manifest.json"
+                payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+                mutate(payload)
+                payload.pop("manifest_payload_sha256", None)
+                payload["manifest_payload_sha256"] = hashlib.sha256(
+                    self.g.canonical_json_bytes(payload)
+                ).hexdigest()
+                write_json(manifest_path, payload)
+                with self.subTest(name=name), self.assertRaises(self.g.Gate1Error):
+                    self.g.inspect_output(case)
+
+    def test_inspect_semantically_validates_authoritative_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            recipe = self.make_fixture(base / "inputs")
+            baseline = base / "baseline"
+            self.g.generate(recipe, baseline)
+
+            empty_provinces = base / "empty-provinces"
+            shutil.copytree(baseline, empty_provinces)
+            write_json(empty_provinces / "provinces.json", [])
+            reseal_manifest(self.g, empty_provinces, "provinces.json")
+            with self.assertRaises(self.g.Gate1Error):
+                self.g.inspect_output(empty_provinces)
+
+            bad_parent = base / "bad-parent"
+            shutil.copytree(baseline, bad_parent)
+            records = json.loads((bad_parent / "provinces.json").read_text(encoding="utf-8"))
+            records[0]["territory_id"] = "TRT999999"
+            write_json(bad_parent / "provinces.json", records)
+            reseal_manifest(self.g, bad_parent, "provinces.json")
+            with self.assertRaises(self.g.Gate1Error):
+                self.g.inspect_output(bad_parent)
+
+            bad_png = base / "bad-png"
+            shutil.copytree(baseline, bad_png)
+            (bad_png / "provinces.png").write_bytes(b"not a png")
+            reseal_manifest(self.g, bad_png, "provinces.png")
+            with self.assertRaises(self.g.Gate1Error):
+                self.g.inspect_output(bad_png)
+
+            extra_dir = base / "extra-dir"
+            shutil.copytree(baseline, extra_dir)
+            (extra_dir / "unexpected").mkdir()
+            with self.assertRaises(self.g.Gate1Error):
+                self.g.inspect_output(extra_dir)
 
     def test_cli_contract(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

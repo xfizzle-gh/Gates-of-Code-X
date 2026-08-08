@@ -6,6 +6,7 @@ import hashlib
 import json
 import math
 import struct
+from io import BytesIO
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
@@ -17,7 +18,13 @@ SCHEMA = "gates-of-codex.opengs-recipe"
 SCHEMA_VERSION = 1
 RUN_SCHEMA = "gates-of-codex.opengs-run-manifest"
 RUN_SCHEMA_VERSION = 1
-GENERATOR_VERSION = 2
+GENERATOR_VERSION = 3
+PINNED_ENVIRONMENT = {
+    "python": "3.11.9",
+    "numpy": "2.3.5",
+    "pillow": "12.0.0",
+    "scipy": "1.16.3",
+}
 UPSTREAM_REPOSITORY = "Thomas-Holtvedt/opengs-maptool"
 UPSTREAM_COMMIT = "06e7ec8517bd45872cf44d77cb8784e5ffca49bb"
 MAX_LLOYD_SAMPLE = 100_000
@@ -57,6 +64,7 @@ class InputSpec:
     key: str
     path: Path
     sha256: str
+    data: bytes
 
 
 class SeedLedger:
@@ -246,16 +254,31 @@ def load_recipe(recipe_path: Path, *, verify_inputs: bool = True) -> tuple[dict[
         item = recipe["inputs"][key]
         if item is None:
             continue
-        path = resolve_under(base, item["path"])
-        if not path.is_file():
-            raise Gate1Error(f"missing input {key}: {path}")
+        try:
+            path = resolve_under(base, item["path"])
+            data = path.read_bytes()
+        except (OSError, RuntimeError) as exc:
+            raise Gate1Error(f"cannot read input {key} at {item['path']!r}: {exc}") from exc
         expected = item["sha256"]
-        if verify_inputs:
-            actual = sha256_file(path)
-            if actual != expected:
-                raise Gate1Error(f"input checksum mismatch for {key}: expected {expected}, got {actual}")
-        input_specs[key] = InputSpec(key, path, expected)
+        actual = sha256_bytes(data)
+        if verify_inputs and actual != expected:
+            raise Gate1Error(f"input checksum mismatch for {key}: expected {expected}, got {actual}")
+        input_specs[key] = InputSpec(key, path, expected, data)
     return recipe, input_specs
+
+
+def assert_inputs_unchanged(inputs: Mapping[str, InputSpec]) -> None:
+    """Fail publication if an input path changed after its verified bytes were captured."""
+    for key, spec in sorted(inputs.items()):
+        try:
+            current = spec.path.read_bytes()
+        except OSError as exc:
+            raise Gate1Error(f"input {key} became unreadable before publish: {exc}") from exc
+        actual = sha256_bytes(current)
+        if actual != spec.sha256:
+            raise Gate1Error(
+                f"input {key} changed after verification: expected {spec.sha256}, got {actual}"
+            )
 
 
 def validate_count_block(value: Any, path: str, keys: set[str]) -> dict[str, int]:
@@ -307,9 +330,16 @@ def validate_manifest_shape(manifest: Any) -> dict[str, Any]:
     seeds = top["derived_seeds"]
     if not isinstance(seeds, dict) or not seeds:
         raise Gate1Error("run_manifest.derived_seeds must be a non-empty object")
+    seed_authority = SeedLedger(recipe["root_seed"], recipe["recipe_id"])
     for key, value in seeds.items():
         require_string(key, "run_manifest.derived_seeds key")
         require_int(value, f"run_manifest.derived_seeds.{key}", minimum=0, maximum=2**64 - 1)
+        expected_seed = seed_authority.seed(key)
+        if value != expected_seed:
+            raise Gate1Error(
+                f"run_manifest.derived_seeds.{key} does not match deterministic authority: "
+                f"expected {expected_seed}, got {value}"
+            )
 
     counts = require_object(top["counts"], "run_manifest.counts", required={"requested", "actual"})
     validate_count_block(counts["requested"], "run_manifest.counts.requested", {"land_territories", "ocean_territories", "land_provinces", "ocean_provinces"})
@@ -343,6 +373,11 @@ def validate_manifest_shape(manifest: Any) -> dict[str, Any]:
     environment = require_object(top["environment"], "run_manifest.environment", required={"python", "numpy", "pillow", "scipy"})
     for key in ("python", "numpy", "pillow", "scipy"):
         require_string(environment[key], f"run_manifest.environment.{key}")
+    if environment != PINNED_ENVIRONMENT:
+        raise Gate1Error(
+            "run_manifest environment does not match the pinned Gate 1 profile: "
+            f"expected {PINNED_ENVIRONMENT}, got {environment}"
+        )
     requested = counts["requested"]
     actual = counts["actual"]
     if actual["land_territories"] != requested["land_territories"] or actual["ocean_territories"] != requested["ocean_territories"]:
@@ -363,13 +398,18 @@ def validate_manifest_shape(manifest: Any) -> dict[str, Any]:
 
 
 def load_images(inputs: Mapping[str, InputSpec]) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray | None]:
-    try:
-        land = np.asarray(Image.open(inputs["land"].path).convert("RGB"), dtype=np.uint8)
-        boundary = np.asarray(Image.open(inputs["boundary"].path).convert("RGB"), dtype=np.uint8)
-        density = np.asarray(Image.open(inputs["density"].path).convert("L"), dtype=np.uint8)
-        terrain = np.asarray(Image.open(inputs["terrain"].path).convert("RGB"), dtype=np.uint8) if "terrain" in inputs else None
-    except (OSError, KeyError) as exc:
-        raise Gate1Error(f"cannot load input image: {exc}") from exc
+    def decode(key: str, mode: str) -> np.ndarray:
+        try:
+            with Image.open(BytesIO(inputs[key].data)) as image:
+                image.load()
+                return np.asarray(image.convert(mode), dtype=np.uint8)
+        except (OSError, KeyError, ValueError) as exc:
+            raise Gate1Error(f"cannot decode verified input image {key}: {exc}") from exc
+
+    land = decode("land", "RGB")
+    boundary = decode("boundary", "RGB")
+    density = decode("density", "L")
+    terrain = decode("terrain", "RGB") if "terrain" in inputs else None
     if land.shape != boundary.shape or land.shape[:2] != density.shape:
         raise Gate1Error(f"input dimensions differ: land={land.shape}, boundary={boundary.shape}, density={density.shape}")
     if terrain is not None and terrain.shape != land.shape:

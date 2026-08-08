@@ -3,8 +3,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import platform
+import re
 import shutil
+from io import BytesIO
 import tempfile
 import time
 from pathlib import Path
@@ -13,13 +16,16 @@ from typing import Any
 import numpy as np
 import PIL
 import scipy
+from PIL import Image
 from scipy.ndimage import label as ndlabel
 
 from gate1_common import (
-    AUTHORITATIVE_OUTPUTS, DATA_OUTPUTS, GATE1_SOURCE_FILES, GENERATOR_VERSION,
-    RUN_SCHEMA, RUN_SCHEMA_VERSION, UPSTREAM_COMMIT, UPSTREAM_REPOSITORY,
-    Gate1Error, NumberSeries, SeedLedger, canonical_json_bytes, extract_masks,
-    load_images, load_recipe, sha256_bytes, sha256_file, validate_manifest_shape,
+    AUTHORITATIVE_OUTPUTS, BOUNDARY_COLOR, DATA_OUTPUTS, GATE1_SOURCE_FILES,
+    GENERATOR_VERSION, LAND_TERRAINS, LAKE_TERRAINS, NAVAL_TERRAINS,
+    OCEAN_COLOR, LAKE_COLOR, PINNED_ENVIRONMENT, RUN_SCHEMA, RUN_SCHEMA_VERSION,
+    UPSTREAM_COMMIT, UPSTREAM_REPOSITORY, Gate1Error, NumberSeries, SeedLedger,
+    assert_inputs_unchanged, canonical_json_bytes, extract_masks, load_images,
+    load_recipe, sha256_bytes, sha256_file, validate_manifest_shape,
     write_canonical_json, write_deterministic_rgb_png,
 )
 from gate1_regions import (
@@ -28,6 +34,25 @@ from gate1_regions import (
 )
 
 MODULE_DIR = Path(__file__).resolve().parent
+
+
+def runtime_environment() -> dict[str, str]:
+    return {
+        "python": platform.python_version(),
+        "numpy": np.__version__,
+        "pillow": PIL.__version__,
+        "scipy": scipy.__version__,
+    }
+
+
+def require_pinned_environment() -> None:
+    current = runtime_environment()
+    if current != PINNED_ENVIRONMENT:
+        raise Gate1Error(
+            "Gate 1 requires the pinned environment profile: "
+            f"expected {PINNED_ENVIRONMENT}, got {current}"
+        )
+
 
 
 def _canonical_source_sha256(path: Path) -> str:
@@ -70,6 +95,7 @@ def preflight_counts(masks: dict[str, np.ndarray | int], counts: dict[str, int])
 
 
 def _build_artifacts(recipe_path: Path, staging_dir: Path) -> dict[str, Any]:
+    require_pinned_environment()
     recipe, inputs = load_recipe(recipe_path)
     land_image, boundary_image, density, terrain = load_images(inputs)
     masks = extract_masks(land_image, boundary_image)
@@ -260,17 +286,13 @@ def _build_artifacts(recipe_path: Path, staging_dir: Path) -> dict[str, Any]:
             "canonical_recipe_identity": True,
             "transactional_publish": True,
         },
-        "environment": {
-            "python": platform.python_version(),
-            "numpy": np.__version__,
-            "pillow": PIL.__version__,
-            "scipy": scipy.__version__,
-        },
+        "environment": dict(PINNED_ENVIRONMENT),
     }
     manifest["manifest_payload_sha256"] = hashlib.sha256(canonical_json_bytes(manifest)).hexdigest()
     validate_manifest_shape(manifest)
     write_canonical_json(staging_dir / "run_manifest.json", manifest)
     inspect_output(staging_dir)
+    assert_inputs_unchanged(inputs)
     return manifest
 
 
@@ -294,16 +316,250 @@ def generate(recipe_path: Path, output_dir: Path) -> dict[str, Any]:
         raise Gate1Error(f"generation failed before publish: {exc}") from exc
 
 
-def inspect_output(output_dir: Path) -> dict[str, Any]:
-    manifest_path = output_dir / "run_manifest.json"
+def _read_canonical_json(path: Path, label: str) -> Any:
     try:
-        manifest = json.loads(manifest_path.read_bytes().decode("utf-8"))
+        raw = path.read_bytes()
+        parsed = json.loads(raw.decode("utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise Gate1Error(f"cannot read run manifest: {exc}") from exc
+        raise Gate1Error(f"cannot read {label}: {exc}") from exc
+    if raw != canonical_json_bytes(parsed):
+        raise Gate1Error(f"{label} is not canonical UTF-8/LF JSON")
+    return parsed
+
+
+def _record_number(value: Any, path: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise Gate1Error(f"{path} must be a finite number")
+    number = float(value)
+    if not math.isfinite(number):
+        raise Gate1Error(f"{path} must be a finite number")
+    return number
+
+
+def _record_int(value: Any, path: str, *, minimum: int = 0, maximum: int = 255) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or not minimum <= value <= maximum:
+        raise Gate1Error(f"{path} must be an integer in [{minimum}, {maximum}]")
+    return value
+
+
+def _decode_rgb_png(path: Path, label: str, width: int, height: int) -> np.ndarray:
+    try:
+        raw = path.read_bytes()
+        with Image.open(BytesIO(raw)) as image:
+            image.load()
+            if image.format != "PNG":
+                raise Gate1Error(f"{label} must be PNG, got {image.format}")
+            if image.mode != "RGB":
+                raise Gate1Error(f"{label} must use RGB mode, got {image.mode}")
+            if image.size != (width, height):
+                raise Gate1Error(
+                    f"{label} dimensions must be {(width, height)}, got {image.size}"
+                )
+            if image.info:
+                raise Gate1Error(f"{label} contains unexpected PNG metadata: {sorted(image.info)}")
+            pixels = np.asarray(image, dtype=np.uint8)
+    except Gate1Error:
+        raise
+    except (OSError, ValueError) as exc:
+        raise Gate1Error(f"cannot decode {label}: {exc}") from exc
+    if pixels.shape != (height, width, 3):
+        raise Gate1Error(f"{label} decoded shape is invalid: {pixels.shape}")
+    return pixels
+
+
+def _validate_seed_ledger(manifest: dict[str, Any], territories: list[dict[str, Any]]) -> None:
+    seeds = manifest["derived_seeds"]
+    expected_prefixes: set[str] = set()
+    requested = manifest["counts"]["requested"]
+    if requested["land_territories"]:
+        expected_prefixes.add("territory.land")
+    if requested["ocean_territories"]:
+        expected_prefixes.add("territory.ocean")
+    for index, territory in enumerate(territories):
+        expected_prefixes.add(f"province.{territory['territory_type']}.{index:06d}")
+
+    expected_names: set[str] = set()
+    for prefix in sorted(expected_prefixes):
+        expected_names.add(f"{prefix}.sample")
+        expected_names.add(f"{prefix}.jagged")
+        sample_pattern = re.compile(re.escape(prefix) + r"\.lloyd\.sample\.component_(\d{4})$")
+        replacement_pattern = re.compile(
+            re.escape(prefix) + r"\.lloyd\.empty_replacement\.component_(\d{4})$"
+        )
+        samples = sorted(
+            int(match.group(1))
+            for name in seeds
+            if (match := sample_pattern.fullmatch(name)) is not None
+        )
+        replacements = sorted(
+            int(match.group(1))
+            for name in seeds
+            if (match := replacement_pattern.fullmatch(name)) is not None
+        )
+        if not samples or samples != replacements or samples != list(range(1, max(samples) + 1)):
+            raise Gate1Error(f"derived seed component ledger is incomplete for {prefix}")
+        expected_names.update(
+            f"{prefix}.lloyd.sample.component_{component:04d}" for component in samples
+        )
+        expected_names.update(
+            f"{prefix}.lloyd.empty_replacement.component_{component:04d}"
+            for component in replacements
+        )
+    actual_names = set(seeds)
+    if actual_names != expected_names:
+        missing = sorted(expected_names - actual_names)
+        extra = sorted(actual_names - expected_names)
+        raise Gate1Error(f"derived seed ledger mismatch: missing={missing}, extra={extra}")
+
+
+def _validate_artifact_semantics(output_dir: Path, manifest: dict[str, Any]) -> None:
+    width = manifest["dimensions"]["width"]
+    height = manifest["dimensions"]["height"]
+    territories = _read_canonical_json(output_dir / "territories.json", "territories.json")
+    provinces = _read_canonical_json(output_dir / "provinces.json", "provinces.json")
+    if not isinstance(territories, list) or not isinstance(provinces, list):
+        raise Gate1Error("territories.json and provinces.json must contain arrays")
+
+    territory_keys = {"territory_id", "territory_type", "R", "G", "B", "x", "y", "province_ids"}
+    province_keys = {"province_id", "province_type", "R", "G", "B", "x", "y", "territory_id", "province_terrain"}
+    territory_ids: set[str] = set()
+    province_ids: set[str] = set()
+    territory_colors: set[tuple[int, int, int]] = set()
+    province_colors: set[tuple[int, int, int]] = set()
+    territory_by_id: dict[str, dict[str, Any]] = {}
+
+    for index, item in enumerate(territories, start=1):
+        path = f"territories[{index - 1}]"
+        if not isinstance(item, dict) or set(item) != territory_keys:
+            raise Gate1Error(f"{path} has an invalid record shape")
+        expected_id = f"TRT{index:06d}"
+        if item["territory_id"] != expected_id:
+            raise Gate1Error(f"{path}.territory_id must be {expected_id}")
+        if item["territory_type"] not in {"land", "ocean"}:
+            raise Gate1Error(f"{path}.territory_type is invalid")
+        color = tuple(_record_int(item[key], f"{path}.{key}") for key in ("R", "G", "B"))
+        if color in territory_colors or color in {OCEAN_COLOR, LAKE_COLOR, BOUNDARY_COLOR}:
+            raise Gate1Error(f"{path} has a duplicate or reserved color {color}")
+        x = _record_number(item["x"], f"{path}.x")
+        y = _record_number(item["y"], f"{path}.y")
+        if not (0 <= x < width and 0 <= y < height):
+            raise Gate1Error(f"{path} center is outside declared dimensions")
+        if not isinstance(item["province_ids"], list) or not all(
+            isinstance(value, str) for value in item["province_ids"]
+        ):
+            raise Gate1Error(f"{path}.province_ids must be an array of strings")
+        if len(item["province_ids"]) != len(set(item["province_ids"])):
+            raise Gate1Error(f"{path}.province_ids contains duplicates")
+        territory_ids.add(item["territory_id"])
+        territory_colors.add(color)
+        territory_by_id[item["territory_id"]] = item
+
+    expected_children: dict[str, list[str]] = {territory_id: [] for territory_id in territory_ids}
+    terrain_by_type = {
+        "land": set(LAND_TERRAINS),
+        "ocean": set(NAVAL_TERRAINS),
+        "lake": set(LAKE_TERRAINS),
+    }
+    for index, item in enumerate(provinces, start=1):
+        path = f"provinces[{index - 1}]"
+        if not isinstance(item, dict) or set(item) != province_keys:
+            raise Gate1Error(f"{path} has an invalid record shape")
+        expected_id = f"PRV{index:06d}"
+        if item["province_id"] != expected_id:
+            raise Gate1Error(f"{path}.province_id must be {expected_id}")
+        province_type = item["province_type"]
+        if province_type not in {"land", "ocean", "lake"}:
+            raise Gate1Error(f"{path}.province_type is invalid")
+        color = tuple(_record_int(item[key], f"{path}.{key}") for key in ("R", "G", "B"))
+        if color in province_colors or color in territory_colors or color in {OCEAN_COLOR, LAKE_COLOR, BOUNDARY_COLOR}:
+            raise Gate1Error(f"{path} has a duplicate or reserved color {color}")
+        x = _record_number(item["x"], f"{path}.x")
+        y = _record_number(item["y"], f"{path}.y")
+        if not (0 <= x < width and 0 <= y < height):
+            raise Gate1Error(f"{path} center is outside declared dimensions")
+        parent_id = item["territory_id"]
+        if parent_id not in territory_by_id:
+            raise Gate1Error(f"{path}.territory_id references unknown territory {parent_id!r}")
+        parent_type = territory_by_id[parent_id]["territory_type"]
+        if province_type == "lake":
+            if parent_type != "land":
+                raise Gate1Error(f"{path} lake province must belong to a land territory")
+        elif province_type != parent_type:
+            raise Gate1Error(f"{path} type does not match parent territory")
+        if item["province_terrain"] not in terrain_by_type[province_type]:
+            raise Gate1Error(f"{path}.province_terrain is invalid for {province_type}")
+        province_ids.add(item["province_id"])
+        province_colors.add(color)
+        expected_children[parent_id].append(item["province_id"])
+
+    for territory_id, expected in expected_children.items():
+        actual = territory_by_id[territory_id]["province_ids"]
+        if actual != expected:
+            raise Gate1Error(
+                f"territory {territory_id} province_ids do not match province parent relationships"
+            )
+
+    actual = manifest["counts"]["actual"]
+    land_territories = sum(item["territory_type"] == "land" for item in territories)
+    ocean_territories = sum(item["territory_type"] == "ocean" for item in territories)
+    land_provinces = sum(item["province_type"] == "land" for item in provinces)
+    ocean_provinces = sum(item["province_type"] == "ocean" for item in provinces)
+    lake_provinces = sum(item["province_type"] == "lake" for item in provinces)
+    expected_counts = {
+        "territories": len(territories),
+        "land_territories": land_territories,
+        "ocean_territories": ocean_territories,
+        "provinces": len(provinces),
+        "land_provinces": land_provinces,
+        "ocean_provinces": ocean_provinces,
+        "lake_provinces": lake_provinces,
+    }
+    if actual != expected_counts:
+        raise Gate1Error(f"artifact records do not match manifest counts: {expected_counts}")
+
+    territory_pixels = _decode_rgb_png(output_dir / "territories.png", "territories.png", width, height)
+    province_pixels = _decode_rgb_png(output_dir / "provinces.png", "provinces.png", width, height)
+    territory_png_colors = {tuple(int(v) for v in row) for row in np.unique(territory_pixels.reshape(-1, 3), axis=0)}
+    province_png_colors = {tuple(int(v) for v in row) for row in np.unique(province_pixels.reshape(-1, 3), axis=0)}
+    if territory_png_colors != territory_colors:
+        raise Gate1Error(
+            f"territories.png colors do not match territories.json: "
+            f"missing={sorted(territory_colors - territory_png_colors)}, "
+            f"extra={sorted(territory_png_colors - territory_colors)}"
+        )
+    if province_png_colors != province_colors:
+        raise Gate1Error(
+            f"provinces.png colors do not match provinces.json: "
+            f"missing={sorted(province_colors - province_png_colors)}, "
+            f"extra={sorted(province_png_colors - province_colors)}"
+        )
+    _validate_seed_ledger(manifest, territories)
+
+
+def inspect_output(output_dir: Path) -> dict[str, Any]:
+    require_pinned_environment()
+    expected_names = set(AUTHORITATIVE_OUTPUTS)
+    try:
+        entries = list(output_dir.iterdir())
+    except OSError as exc:
+        raise Gate1Error(f"cannot inspect output directory: {exc}") from exc
+    actual_names = {entry.name for entry in entries}
+    if actual_names != expected_names:
+        raise Gate1Error(
+            f"output entries do not match authoritative set: "
+            f"missing={sorted(expected_names - actual_names)}, "
+            f"unexpected={sorted(actual_names - expected_names)}"
+        )
+    invalid_entries = sorted(
+        entry.name for entry in entries if not entry.is_file() or entry.is_symlink()
+    )
+    if invalid_entries:
+        raise Gate1Error("authoritative output entries must be regular files: " + ", ".join(invalid_entries))
+
+    manifest_path = output_dir / "run_manifest.json"
+    manifest = _read_canonical_json(manifest_path, "run_manifest.json")
     validate_manifest_shape(manifest)
     failures: list[str] = []
-    if manifest_path.read_bytes() != canonical_json_bytes(manifest):
-        failures.append("run_manifest.json is not canonical UTF-8/LF JSON")
     payload = dict(manifest)
     expected_payload_hash = payload.pop("manifest_payload_sha256")
     actual_payload_hash = hashlib.sha256(canonical_json_bytes(payload)).hexdigest()
@@ -312,27 +568,16 @@ def inspect_output(output_dir: Path) -> dict[str, Any]:
     current_identity = generator_identity()
     if manifest["generator_identity"] != current_identity:
         failures.append("generator source identity does not match the inspecting implementation")
+    if manifest["environment"] != runtime_environment():
+        failures.append("manifest environment does not match the inspecting runtime")
     for name, expected in sorted(manifest["outputs"].items()):
         path = output_dir / name
-        if not path.is_file():
-            failures.append(f"missing {name}")
-        else:
-            actual = sha256_file(path)
-            if actual != expected:
-                failures.append(f"checksum {name}: expected {expected}, got {actual}")
-            if name.endswith(".json"):
-                try:
-                    parsed = json.loads(path.read_bytes().decode("utf-8"))
-                except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-                    failures.append(f"invalid JSON {name}: {exc}")
-                else:
-                    if path.read_bytes() != canonical_json_bytes(parsed):
-                        failures.append(f"{name} is not canonical UTF-8/LF JSON")
-    unexpected = sorted(path.name for path in output_dir.iterdir() if path.is_file() and path.name not in AUTHORITATIVE_OUTPUTS)
-    if unexpected:
-        failures.append("unexpected output files: " + ", ".join(unexpected))
+        actual = sha256_file(path)
+        if actual != expected:
+            failures.append(f"checksum {name}: expected {expected}, got {actual}")
     if failures:
         raise Gate1Error("; ".join(failures))
+    _validate_artifact_semantics(output_dir, manifest)
     return {"ok": True, "output_dir": str(output_dir), "failures": [], "manifest": manifest}
 
 
@@ -377,10 +622,7 @@ def benchmark(recipe: Path, output: Path, repetitions: int) -> dict[str, Any]:
         "recipe_canonical_sha256": canonical_recipe_digest(load_recipe(recipe)[0]),
         "repetitions": repetitions,
         "all_identical": all(run["identical_to_first"] for run in runs),
-        "environment": {
-            "python": platform.python_version(), "numpy": np.__version__,
-            "pillow": PIL.__version__, "scipy": scipy.__version__,
-        },
+        "environment": dict(PINNED_ENVIRONMENT),
         "runs": runs,
     }
     write_canonical_json(output / "benchmark.json", result)

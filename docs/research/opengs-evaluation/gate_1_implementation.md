@@ -33,7 +33,7 @@ Generation and benchmark destinations must not already exist. Output is built an
 - Region colors come from SHA-256, not implicit randomness.
 - JSON is canonical UTF-8/LF with sorted keys and fixed separators.
 - PNGs contain no timestamps or ancillary metadata and use a fixed stored-deflate writer.
-- Input checksums and path containment fail closed.
+- Input checksums and path containment fail closed. Verified input bytes are captured once, decoded from immutable buffers, and rechecked at their paths before atomic publication.
 - Every authoritative data output receives a SHA-256 entry in the run manifest.
 
 ## Recipe authority
@@ -69,10 +69,10 @@ The strict run manifest records:
 - requested and actual counts;
 - dimensions and output checksums;
 - canonical generator-source hashes;
-- Python, NumPy, Pillow, and SciPy versions;
+- the exact pinned CPython 3.11.9, NumPy 2.3.5, Pillow 12.0.0, and SciPy 1.16.3 profile;
 - deterministic serialization and transactional-publication flags.
 
-`inspect-output` validates the complete closed manifest shape, count consistency, paired Lloyd streams, source identity, payload checksum, exact output set, file checksums, and canonical JSON bytes. Recomputing a payload hash cannot make a structurally incomplete or provenance-invalid manifest pass.
+`inspect-output` recomputes every named seed from the root authority, enforces the complete stage ledger and pinned environment, validates the exact regular-file output set, parses territory/province relationships and counts, and decodes both RGB PNGs to verify dimensions and exact metadata color correspondence. Recomputing self-reported hashes cannot make semantically invalid artifacts pass.
 
 ## Upstream boundary
 
