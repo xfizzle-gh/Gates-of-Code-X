@@ -24,6 +24,8 @@ var focus_province_ids: Dictionary = {}
 var load_error := ""
 var status_message := ""
 var last_handoff_name := ""
+var last_handoff_save_path := ""
+var last_handoff_battle_id := ""
 var snapshot_source_path := ""
 var view_scale := 1.0
 var view_offset := Vector2.ZERO
@@ -681,6 +683,8 @@ func _parse_apply_output(text: String) -> void:
 		if String(result.get("op", "")) == "handoff" and bool(result.get("ok", false)):
 			var data: Dictionary = result.get("data", {})
 			last_handoff_name = String(data.get("visible_campaign_name", ""))
+			last_handoff_save_path = String(data.get("installed_save_path", ""))
+			last_handoff_battle_id = String(data.get("battle_id", ""))
 			status_message = "Handoff ready. Load Conquest: %s" % last_handoff_name
 			return
 	if not bool(payload.get("ok", true)):
