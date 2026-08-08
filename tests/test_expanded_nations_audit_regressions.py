@@ -105,10 +105,11 @@ class ExpandedNationsAuditRegressionTests(unittest.TestCase):
     def test_output_stale_and_manifest_failures_roll_back(self) -> None:
         real_replace, real_unlink = transaction.replace_path, transaction.unlink_path
         failed = False
+        actor_target = (self.gates / UNITS_RELATIVE).resolve()
 
         def fail_actor(source: Path, target: Path) -> None:
             nonlocal failed
-            if target == self.gates / UNITS_RELATIVE and not failed:
+            if target.resolve() == actor_target and not failed:
                 failed = True
                 raise PermissionError("forced output replacement failure")
             real_replace(source, target)
@@ -118,11 +119,11 @@ class ExpandedNationsAuditRegressionTests(unittest.TestCase):
         )
         deactivate_actor_projection(self.gates)
         failed = False
-        stale = self.gates / RESEARCH_RELATIVE["nato"]
+        stale = (self.gates / RESEARCH_RELATIVE["nato"]).resolve()
 
         def fail_stale(path: Path) -> None:
             nonlocal failed
-            if path == stale and not failed:
+            if path.resolve() == stale and not failed:
                 failed = True
                 raise PermissionError("forced stale deletion failure")
             real_unlink(path)
@@ -132,11 +133,11 @@ class ExpandedNationsAuditRegressionTests(unittest.TestCase):
         )
         deactivate_actor_projection(self.gates)
         failed = False
-        manifest = self.gates / MANIFEST_RELATIVE
+        manifest = (self.gates / MANIFEST_RELATIVE).resolve()
 
         def fail_manifest(source: Path, target: Path) -> None:
             nonlocal failed
-            if target == manifest and source.name.endswith(".goc-stage") and not failed:
+            if target.resolve() == manifest and source.name.endswith(".goc-stage") and not failed:
                 failed = True
                 raise PermissionError("forced manifest replacement failure")
             real_replace(source, target)
@@ -159,11 +160,11 @@ class ExpandedNationsAuditRegressionTests(unittest.TestCase):
         activate_actor_projection(self.payload, self.layers, "fra")
         real_unlink = transaction.unlink_path
         failed = False
-        actor_file = self.gates / UNITS_RELATIVE
+        actor_file = (self.gates / UNITS_RELATIVE).resolve()
 
         def flaky(path: Path) -> None:
             nonlocal failed
-            if path == actor_file and not failed:
+            if path.resolve() == actor_file and not failed:
                 failed = True
                 raise PermissionError("forced deactivation failure")
             real_unlink(path)
