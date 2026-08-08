@@ -49,7 +49,12 @@
     "proj": "+proj=laea +lat_0=45 +lon_0=20 +datum=WGS84 +units=m +no_defs"
   },
   "theatre": {
-    "lon_lat_bounds": [-13.0, 27.0, 45.0, 75.0],
+    "lon_lat_bounds": [
+      -13.0,
+      27.0,
+      45.0,
+      75.0
+    ],
     "policy": "europe_mediterranean_full_ireland_scandinavia_black_sea_limited_north_africa_near_east",
     "anchors": [
       {"name": "ireland", "longitude": -8.0, "latitude": 53.2, "expected": "land"},
@@ -118,7 +123,10 @@
     "selectable": false,
     "operational_sea_generated": false,
     "lake_filtering": "none",
-    "count_policy": "requested_ocean_plus_all_natural_earth_lake_components"
+    "count_policy": "requested_ocean_plus_all_natural_earth_lake_components",
+    "ocean_component_authority": "crop_boundary_or_locked_ocean_anchor",
+    "unanchored_complement_policy": "reclassify_as_land",
+    "connectivity": 4
   },
   "isolation": {
     "debug_only": true,
