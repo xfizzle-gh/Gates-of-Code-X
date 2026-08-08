@@ -148,6 +148,16 @@ class SupplyAndStrategicAITests(unittest.TestCase):
         exported = next(value for value in snapshot["battalions"] if value["id"] == battalion.battalion_id)
         self.assertEqual(2, exported["encircled_turns"])
         self.assertIn("is_in_supply", exported)
+        for faction in snapshot["factions"]:
+            self.assertEqual("province", faction["supply_authority"])
+            self.assertIsInstance(
+                faction["supply_reachable_provinces"], int
+            )
+            self.assertEqual(
+                faction["supply_reachable_provinces"],
+                faction["legacy_admin_supply_reachable_provinces"],
+            )
+            self.assertEqual([], faction["operational_supply_source_ids"])
 
     def test_cli_exposes_supply_and_ai_commands(self) -> None:
         supply = build_parser().parse_args(["supply-status", "campaign.json", "--refresh"])

@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+from contextlib import redirect_stdout
+import io
+import json
 from pathlib import Path
 import unittest
 from unittest import mock
 
 from gates_of_codex.force_migration import ensure_strategic_formations
+from gates_of_codex.cli import main as cli_main
 from gates_of_codex.frontend import build_frontend_snapshot
 from gates_of_codex.models import (
     Alliance,
@@ -34,7 +38,10 @@ from gates_of_codex.operational_supply import (
     route_for_formation,
 )
 from gates_of_codex.state_io import campaign_from_dict
-from gates_of_codex.supply import refresh_supply_for_faction
+from gates_of_codex.supply import (
+    refresh_supply_for_faction,
+    supply_status_for_faction,
+)
 
 
 def _state() -> CampaignState:
@@ -1376,6 +1383,77 @@ class OperationalS8SupplyTests(unittest.TestCase):
         self.assertEqual(
             expected_payload["schema_version"], actual.to_dict()["schema_version"]
         )
+        self.assertEqual("province", actual_report.authority)
+        self.assertEqual(
+            actual_report.reachable_provinces,
+            actual_report.legacy_admin_reachable_provinces,
+        )
+
+    def test_graph_supply_status_uses_formation_authority_without_refresh(self) -> None:
+        state, graph = _lifecycle_state(connected=False)
+        force = _only_force(state)
+        force.supplied = True
+        force.cut_off = False
+        force.source_hub_id = None
+        force.route_cost = None
+        force.grace_ticks_remaining = 1
+
+        with mock.patch(
+            "gates_of_codex.supply.load_operational_graph_for_state",
+            return_value=graph,
+        ), mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            report = supply_status_for_faction(state, Faction.NATO)
+
+        self.assertEqual("operational_graph", report.authority)
+        self.assertIsNone(report.reachable_provinces)
+        self.assertEqual(
+            ("province-supply-source:p-source",), report.sources
+        )
+        self.assertEqual((force.strategic_formation_id,), report.grace_formations)
+        self.assertEqual(("nato-route",), report.grace_battalions)
+        self.assertEqual(("nato-route",), report.supplied_battalions)
+        self.assertEqual((), report.isolated_battalions)
+
+    def test_supply_status_cli_is_graph_aware_with_and_without_refresh(self) -> None:
+        payloads = []
+        supplies = []
+        for refresh in (False, True):
+            state, graph = _lifecycle_state(connected=False)
+            force = _only_force(state)
+            force.supplied = False
+            force.cut_off = True
+            force.source_hub_id = None
+            force.route_cost = None
+            args = ["supply-status", "campaign.json", "--faction", "nato"]
+            if refresh:
+                args.append("--refresh")
+            output = io.StringIO()
+            with mock.patch(
+                "gates_of_codex.cli.load_campaign", return_value=state
+            ), mock.patch(
+                "gates_of_codex.cli.save_campaign"
+            ), mock.patch(
+                "gates_of_codex.supply.load_operational_graph_for_state",
+                return_value=graph,
+            ), mock.patch(
+                "gates_of_codex.operational_supply.load_operational_graph_for_state",
+                return_value=graph,
+            ), redirect_stdout(output):
+                self.assertEqual(0, cli_main(args))
+            payloads.append(json.loads(output.getvalue())[0])
+            supplies.append(state.battalions["nato-route"].supply)
+
+        for payload in payloads:
+            self.assertEqual("operational_graph", payload["authority"])
+            self.assertIsNone(payload["reachable_provinces"])
+            self.assertEqual(["nato-route"], payload["isolated_battalions"])
+            self.assertEqual(
+                ["province-supply-source:p-source"], payload["sources"]
+            )
+        self.assertEqual([100, 75], supplies)
 
     def test_frontend_exports_thin_operational_supply_summary(self) -> None:
         state, graph = _lifecycle_state(connected=False)
@@ -1409,6 +1487,19 @@ class OperationalS8SupplyTests(unittest.TestCase):
         self.assertNotIn("route_cost", exported_force)
         self.assertNotIn("grace_ticks_remaining", exported_force)
         self.assertFalse(exported_battalion["is_in_supply"])
+        faction = snapshot["factions"][0]
+        self.assertEqual("operational_graph", faction["supply_authority"])
+        self.assertIsNone(faction["supply_reachable_provinces"])
+        self.assertEqual(
+            1, faction["legacy_admin_supply_reachable_provinces"]
+        )
+        self.assertEqual(0, faction["operational_connected_formations"])
+        self.assertEqual(0, faction["operational_grace_formations"])
+        self.assertEqual(1, faction["operational_cut_off_formations"])
+        self.assertEqual(
+            ["province-supply-source:p-source"],
+            faction["operational_supply_source_ids"],
+        )
 
 
 if __name__ == "__main__":

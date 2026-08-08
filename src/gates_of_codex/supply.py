@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import deque
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from .diplomacy import allied_factions, is_friendly_owner
 from .models import Battalion, CampaignState, Faction
@@ -23,11 +23,20 @@ ATTRITION_START_TURN = 3
 @dataclass(frozen=True, slots=True)
 class SupplyReport:
     faction: Faction
+    authority: str
     sources: tuple[str, ...]
-    reachable_provinces: int
+    reachable_provinces: int | None
+    legacy_admin_reachable_provinces: int
     supplied_battalions: tuple[str, ...]
     isolated_battalions: tuple[str, ...]
     destroyed_battalions: tuple[str, ...]
+    connected_formations: tuple[str, ...]
+    disconnected_formations: tuple[str, ...]
+    grace_formations: tuple[str, ...]
+    cut_off_formations: tuple[str, ...]
+    connected_battalions: tuple[str, ...]
+    grace_battalions: tuple[str, ...]
+    cut_off_battalions: tuple[str, ...]
 
 
 def mark_default_supply_sources(state: CampaignState) -> None:
@@ -105,16 +114,132 @@ def refresh_supply_for_faction(state: CampaignState, faction: Faction) -> Supply
     for battalion_id in destroyed:
         state.battalions.pop(battalion_id, None)
 
-    report = SupplyReport(
-        faction=faction,
-        sources=tuple(_eligible_sources(state, faction)),
-        reachable_provinces=len(reachable),
+    report = replace(
+        supply_status_for_faction(state, faction),
         supplied_battalions=tuple(supplied),
         isolated_battalions=tuple(isolated),
         destroyed_battalions=tuple(destroyed),
     )
     state.validate()
     return report
+
+
+def supply_status_for_faction(
+    state: CampaignState, faction: Faction
+) -> SupplyReport:
+    """Return one read-only status shape with explicit routing authority."""
+    reachable = reachable_supply_provinces(state, faction)
+    battalions = sorted(
+        (
+            value
+            for value in state.battalions.values()
+            if value.faction == faction
+        ),
+        key=lambda value: value.battalion_id,
+    )
+    if load_operational_graph_for_state(state) is None:
+        supplied = tuple(
+            item.battalion_id
+            for item in battalions
+            if item.province_id in reachable
+        )
+        isolated = tuple(
+            item.battalion_id
+            for item in battalions
+            if item.province_id not in reachable
+        )
+        return SupplyReport(
+            faction=faction,
+            authority="province",
+            sources=tuple(_eligible_sources(state, faction)),
+            reachable_provinces=len(reachable),
+            legacy_admin_reachable_provinces=len(reachable),
+            supplied_battalions=supplied,
+            isolated_battalions=isolated,
+            destroyed_battalions=(),
+            connected_formations=(),
+            disconnected_formations=(),
+            grace_formations=(),
+            cut_off_formations=(),
+            connected_battalions=(),
+            grace_battalions=(),
+            cut_off_battalions=(),
+        )
+
+    from .operational_supply import resolve_operational_supply_sources
+
+    sources, _diagnostics = resolve_operational_supply_sources(state, faction)
+    forces = sorted(
+        (
+            value
+            for value in state.strategic_formations.values()
+            if value.faction == faction
+        ),
+        key=lambda value: value.strategic_formation_id,
+    )
+    connected_forces = tuple(
+        force.strategic_formation_id
+        for force in forces
+        if force.supplied
+        and not force.cut_off
+        and force.grace_ticks_remaining == 0
+        and force.source_hub_id is not None
+    )
+    disconnected_forces = tuple(
+        force.strategic_formation_id
+        for force in forces
+        if force.supplied
+        and not force.cut_off
+        and force.grace_ticks_remaining == 0
+        and force.source_hub_id is None
+    )
+    grace_forces = tuple(
+        force.strategic_formation_id
+        for force in forces
+        if force.supplied and force.grace_ticks_remaining == 1
+    )
+    cut_off_forces = tuple(
+        force.strategic_formation_id for force in forces if force.cut_off
+    )
+    connected_force_set = set(connected_forces)
+    grace_force_set = set(grace_forces)
+    cut_off_force_set = set(cut_off_forces)
+    connected_battalions: list[str] = []
+    grace_battalions: list[str] = []
+    cut_off_battalions: list[str] = []
+    supplied_battalions: list[str] = []
+    isolated_battalions: list[str] = []
+    for battalion in battalions:
+        force = _formation_for_battalion(state, battalion)
+        force_id = None if force is None else force.strategic_formation_id
+        if force is not None and force.supplied:
+            supplied_battalions.append(battalion.battalion_id)
+        else:
+            isolated_battalions.append(battalion.battalion_id)
+        if force_id in connected_force_set:
+            connected_battalions.append(battalion.battalion_id)
+        elif force_id in grace_force_set:
+            grace_battalions.append(battalion.battalion_id)
+        elif force_id in cut_off_force_set or force is None:
+            cut_off_battalions.append(battalion.battalion_id)
+
+    return SupplyReport(
+        faction=faction,
+        authority="operational_graph",
+        sources=tuple(item.source_hub_id for item in sources),
+        reachable_provinces=None,
+        legacy_admin_reachable_provinces=len(reachable),
+        supplied_battalions=tuple(supplied_battalions),
+        isolated_battalions=tuple(isolated_battalions),
+        destroyed_battalions=(),
+        connected_formations=connected_forces,
+        disconnected_formations=disconnected_forces,
+        grace_formations=grace_forces,
+        cut_off_formations=cut_off_forces,
+        connected_battalions=tuple(connected_battalions),
+        grace_battalions=tuple(grace_battalions),
+        cut_off_battalions=tuple(cut_off_battalions),
+    )
 
 
 def refresh_all_supply(state: CampaignState) -> list[SupplyReport]:
@@ -131,22 +256,25 @@ def formation_supplied_for_battalion(
     """Return S8 formation authority, or None for legacy no-graph campaigns."""
     if load_operational_graph_for_state(state) is None:
         return None
-    force = state.strategic_formations.get(
-        battalion.strategic_formation_id
-    )
-    if force is None:
-        force = next(
-            (
-                item
-                for item in sorted(
-                    state.strategic_formations.values(),
-                    key=lambda value: value.strategic_formation_id,
-                )
-                if battalion.battalion_id in item.battalion_ids
-            ),
-            None,
-        )
+    force = _formation_for_battalion(state, battalion)
     return False if force is None else force.supplied
+
+
+def _formation_for_battalion(state: CampaignState, battalion: Battalion):
+    force = state.strategic_formations.get(battalion.strategic_formation_id)
+    if force is not None:
+        return force
+    return next(
+        (
+            item
+            for item in sorted(
+                state.strategic_formations.values(),
+                key=lambda value: value.strategic_formation_id,
+            )
+            if battalion.battalion_id in item.battalion_ids
+        ),
+        None,
+    )
 
 
 def _eligible_sources(state: CampaignState, faction: Faction) -> list[str]:

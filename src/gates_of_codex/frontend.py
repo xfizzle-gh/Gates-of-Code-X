@@ -20,11 +20,36 @@ from .strategic import (
 from .supply import (
     formation_supplied_for_battalion,
     reachable_supply_provinces,
+    supply_status_for_faction,
 )
 
 
 FRONTEND_SCHEMA_VERSION = 13
 FRONTEND_PYTHON_MODULE = "gates_of_codex"
+
+
+def _faction_supply_payload(report) -> dict:
+    operational = report.authority == "operational_graph"
+    return {
+        "supply_authority": report.authority,
+        "supply_reachable_provinces": (
+            None if operational else report.reachable_provinces
+        ),
+        "legacy_admin_supply_reachable_provinces": (
+            report.legacy_admin_reachable_provinces
+        ),
+        "operational_supply_source_ids": (
+            list(report.sources) if operational else []
+        ),
+        "operational_connected_formations": len(
+            report.connected_formations
+        ),
+        "operational_disconnected_formations": len(
+            report.disconnected_formations
+        ),
+        "operational_grace_formations": len(report.grace_formations),
+        "operational_cut_off_formations": len(report.cut_off_formations),
+    }
 
 
 def build_frontend_snapshot(
@@ -79,6 +104,10 @@ def build_frontend_snapshot(
         for faction in (Faction.NATO, Faction.UKRAINE, Faction.RUSSIA, Faction.PRC)
         if faction.value in state.factions
     }
+    supply_status = {
+        faction_id: supply_status_for_faction(state, Faction(faction_id))
+        for faction_id in sorted(state.factions)
+    }
     front_options = list_front_options(state, state.current_faction)
     from .presentation import build_stack_presentations
 
@@ -122,7 +151,7 @@ def build_frontend_snapshot(
                 "maintenance_last_round": faction.maintenance_last_round,
                 "is_human_controlled": faction.is_human_controlled,
                 "is_eliminated": faction.is_eliminated,
-                "supply_reachable_provinces": len(supply_reach.get(faction_id, set())),
+                **_faction_supply_payload(supply_status[faction_id]),
             }
             for faction_id, faction in sorted(state.factions.items())
         ],
