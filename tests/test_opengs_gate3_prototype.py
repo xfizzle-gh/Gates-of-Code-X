@@ -63,7 +63,7 @@ class Gate3ConfigTests(unittest.TestCase):
             "crop_policy": lambda v: v["theatre"].__setitem__("policy", "other"),
             "anchor": lambda v: v["theatre"]["anchors"][0].__setitem__("longitude", -7.9),
             "land_territories": lambda v: v["counts"].__setitem__("land_territories", 351),
-            "ocean_territories": lambda v: v["counts"].__setitem__("ocean_territories", 21),
+            "ocean_territories": lambda v: v["counts"].__setitem__("ocean_territories", 31),
             "seed": lambda v: v["generator"].__setitem__("root_seed", 3514004),
             "generator": lambda v: v["generator"].__setitem__("jagged_land", True),
             "density": lambda v: v["density"].__setitem__("boundary_depth", 39.0),
@@ -195,7 +195,7 @@ class Gate3PackageAuthorityTests(unittest.TestCase):
 
     def snapshot(self):
         dummy = {name: (name + "\n").encode() for name in ("land.png", "boundary.png", "density.png", "terrain.png", "theatre_mask.png")}
-        recipe = {"schema": "gates-of-codex.opengs-recipe", "schema_version": 1, "recipe_id": self.g.CANDIDATE_ID, "root_seed": 3514003, "inputs": {key: {"path": f"{key}.png", "sha256": self.g.sha256_bytes(dummy[f"{key}.png"])} for key in ("land", "boundary", "density", "terrain")}, "counts": {"land_territories": 350, "ocean_territories": 20, "land_provinces": 3299, "ocean_provinces": 215}, "options": {"lloyd_iterations": 4, "density_strength": 2.0, "exclude_ocean_density": True, "jagged_land": False, "jagged_ocean": False, "jagged_amplitude": 0.12}}
+        recipe = {"schema": "gates-of-codex.opengs-recipe", "schema_version": 1, "recipe_id": self.g.CANDIDATE_ID, "root_seed": 3514003, "inputs": {key: {"path": f"{key}.png", "sha256": self.g.sha256_bytes(dummy[f"{key}.png"])} for key in ("land", "boundary", "density", "terrain")}, "counts": {"land_territories": 350, "ocean_territories": 30, "land_provinces": 3299, "ocean_provinces": 215}, "options": {"lloyd_iterations": 4, "density_strength": 2.0, "exclude_ocean_density": True, "jagged_land": False, "jagged_ocean": False, "jagged_amplitude": 0.12}}
         recipe_bytes = self.g.canonical_json_bytes(recipe)
         gate1 = {"recipe": {"recipe_id": self.g.CANDIDATE_ID, "root_seed": 3514003, "canonical_sha256": self.g.sha256_bytes(recipe_bytes)}, "inputs": recipe["inputs"]}
         gate1_bytes = self.g.canonical_json_bytes(gate1)
