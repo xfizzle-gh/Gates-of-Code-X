@@ -28,7 +28,7 @@ NATURAL_EARTH_REPOSITORY = "nvkelso/natural-earth-vector"
 NATURAL_EARTH_REF = "v5.1.2"
 NATURAL_EARTH_COMMIT = "f1890d9f152c896d250a77557a5751a93d494776"
 PROJECTION = "+proj=laea +lat_0=45 +lon_0=20 +datum=WGS84 +units=m +no_defs"
-LOCKED_CONFIG_CANONICAL_SHA256 = "4646af6a193374127e1c6c1570d74eb3e70b52748b1724f1e17879dff416ca85"
+LOCKED_CONFIG_CANONICAL_SHA256 = "bda78a27e60fa53d3f4d672e08ad222c9bce74055b4b61ba5295c55d88ed5cc3"
 SOURCE_ROLES = (
     "land",
     "lakes",
@@ -314,8 +314,8 @@ def load_config(path: Path) -> tuple[dict[str, Any], str, bytes]:
     _require_int(gate2["minimum_shared_edge_pixels"], "config.gate2.minimum_shared_edge_pixels", 1)
     if gate2["authored_boundary_pairs"] != [] or gate2["suppressed_segments"] != []:
         raise Gate3Error("Gate 3 cannot silently add authored Gate 2 overrides")
-    water = _require_dict(top["water_policy"], "config.water_policy", {"selectable", "operational_sea_generated", "lake_filtering", "count_policy"})
-    if water != {"selectable": False, "operational_sea_generated": False, "lake_filtering": "none", "count_policy": "requested_ocean_plus_all_natural_earth_lake_components"}:
+    water = _require_dict(top["water_policy"], "config.water_policy", {"selectable", "operational_sea_generated", "lake_filtering", "count_policy", "ocean_component_authority", "unanchored_complement_policy", "connectivity"})
+    if water != {"selectable": False, "operational_sea_generated": False, "lake_filtering": "none", "count_policy": "requested_ocean_plus_all_natural_earth_lake_components", "ocean_component_authority": "crop_boundary_or_locked_ocean_anchor", "unanchored_complement_policy": "reclassify_as_land", "connectivity": 4}:
         raise Gate3Error("Gate 3 water policy changed")
     isolation = _require_dict(top["isolation"], "config.isolation", {"debug_only", "default_map", "production_registration", "earth3_authority_changed", "campaign_authority_generated"})
     if isolation != {"debug_only": True, "default_map": False, "production_registration": False, "earth3_authority_changed": False, "campaign_authority_generated": False}:
