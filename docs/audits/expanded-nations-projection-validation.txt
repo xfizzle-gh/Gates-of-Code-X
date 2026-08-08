@@ -1,0 +1,21 @@
+Focused local validation
+
+Command:
+  PYTHONPATH=src python -m unittest tests.test_expanded_nations -v
+Result:
+  Ran 6 tests
+  OK
+
+Command:
+  python -m py_compile src/gates_of_codex/expanded_nations.py src/gates_of_codex/expanded_nations_cli.py src/gates_of_codex/expanded_nations_models.py src/gates_of_codex/expanded_nations_render.py src/gates_of_codex/expanded_nations_sources.py src/gates_of_codex/expanded_nations_storage.py tests/test_expanded_nations.py
+Result:
+  exit 0
+
+Accepted resolved payload projection:
+  21 playable actors generated
+  21 playable actors verified
+  0 missing purchase-ready definitions
+  0 actor/research mismatches
+  0 hosted actors selectable
+
+Native Gates of Hell acceptance remains pending.
