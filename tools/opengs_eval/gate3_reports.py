@@ -166,6 +166,7 @@ def derive_reports(
         "selectable_water_count": sum(bool(p["selectable"]) for p in water_provinces),
         "operational_sea_nodes_generated": False,
         "operational_sea_edges_generated": False,
+        "ocean_component_authority": input_manifest["ocean_component_authority"],
     })
     geography_report = _report("gates-of-codex.opengs-gate3-geography-report", {
         "candidate_id": config["candidate_id"],
@@ -179,6 +180,7 @@ def derive_reports(
         "geography_anchors": input_manifest["geography_anchors"],
         "pixel_counts": input_manifest["pixel_counts"],
         "component_counts": input_manifest["component_counts"],
+        "ocean_component_authority": input_manifest["ocean_component_authority"],
         "manual_geometry_edits": 0,
         "islands_and_lakes_source": "pinned Natural Earth v5.1.2 Git blob bytes",
     })
