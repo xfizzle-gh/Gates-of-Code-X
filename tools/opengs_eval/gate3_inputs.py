@@ -119,10 +119,26 @@ def apply_city_density(density: Any, x: float, y: float, population: float, poli
 
 def apply_corridor_density(density: Any, mask: Any, *, baseline: float, sigma: float, depth: float) -> None:
     import numpy as np
-    from scipy.ndimage import distance_transform_edt
     if not bool(np.any(mask)):
         raise Gate3Error("density corridor mask is empty")
-    distance = distance_transform_edt(~mask)
+    try:
+        from scipy.ndimage import distance_transform_edt
+    except ModuleNotFoundError as exc:
+        if int(mask.size) > 65536:
+            raise Gate3Error(
+                "scipy is required for full-scale Gate 3 corridor density"
+            ) from exc
+        points = np.argwhere(mask)
+        yy, xx = np.indices(mask.shape)
+        distance_squared = np.full(mask.shape, np.inf, dtype=np.float64)
+        for py, px in points:
+            distance_squared = np.minimum(
+                distance_squared,
+                (yy - int(py)) ** 2 + (xx - int(px)) ** 2,
+            )
+        distance = np.sqrt(distance_squared)
+    else:
+        distance = distance_transform_edt(~mask)
     influence = np.exp(-(distance**2) / (2.0 * sigma * sigma))
     density[:] = np.minimum(density, baseline - depth * influence)
 
