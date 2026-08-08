@@ -86,6 +86,11 @@ def apply_frontend_commands(
     pending = list(commands) if commands is not None else read_commands(command_file) if command_file else []
     state = load_campaign(campaign)
     results: list[CommandResult] = []
+    from .observation import (
+        ObservationMutationContext,
+        merge_observation_mutation_contexts,
+    )
+    observation_context = ObservationMutationContext()
 
     for raw in pending:
         op = str(raw.get("op", "")).strip().lower()
@@ -102,6 +107,10 @@ def apply_frontend_commands(
         except Exception as exc:  # noqa: BLE001 - surface operator errors in result list
             result = CommandResult(op=op or "unknown", ok=False, detail=str(exc))
         if result.ok:
+            operation_context = result.data.pop("_observation_context", None)
+            observation_context = merge_observation_mutation_contexts(
+                observation_context, operation_context
+            )
             presentation = {
                 "movements": _movement_presentation_delta(
                     before_presentations,
@@ -118,7 +127,11 @@ def apply_frontend_commands(
         if not result.ok:
             break
 
-    save_campaign(state, campaign)
+    save_campaign(
+        state,
+        campaign,
+        observation_context=observation_context,
+    )
     snapshot = ""
     if snapshot_path:
         from .frontend import write_frontend_snapshot
@@ -344,6 +357,7 @@ def _apply_one(state, op: str, raw: dict[str, Any]) -> CommandResult:
             detail=f"winner {winner.value}",
             data={
                 "winner": winner.value,
+                "_observation_context": engine.observation_context,
                 "_battle_finalization_presentation": _battle_finalization_presentation(
                     state,
                     winner,
@@ -431,7 +445,8 @@ def _apply_one(state, op: str, raw: dict[str, Any]) -> CommandResult:
     if op == "run_ai":
         faction = Faction(str(raw.get("faction", state.current_faction.value)))
         seed = int(raw.get("seed", 0))
-        actions = StrategicAI(state, random_seed=seed).take_turn(faction)
+        ai = StrategicAI(state, random_seed=seed)
+        actions = ai.take_turn(faction)
         advanced = ""
         if raw.get("advance_turn"):
             advanced = CampaignEngine(state).end_turn().value
@@ -439,7 +454,12 @@ def _apply_one(state, op: str, raw: dict[str, Any]) -> CommandResult:
             op=op,
             ok=True,
             detail=f"ai {faction.value}",
-            data={"faction": faction.value, "actions": len(actions), "next_faction": advanced},
+            data={
+                "faction": faction.value,
+                "actions": len(actions),
+                "next_faction": advanced,
+                "_observation_context": ai.observation_context,
+            },
         )
     if op == "construct":
         province = str(raw.get("province") or raw.get("province_id") or "")

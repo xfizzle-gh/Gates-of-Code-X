@@ -15,6 +15,8 @@ class SiteKind(str, Enum):
     CROSSING = "crossing"
     FORT = "fort"
     DEPOT = "depot"
+    OBSERVATION = "observation"
+    COMMAND = "command"
 
 
 class NodeKind(str, Enum):

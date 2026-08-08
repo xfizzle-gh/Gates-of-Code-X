@@ -17,6 +17,7 @@ from .models import (
     Faction,
     FactionState,
     ForceEchelon,
+    KnowledgeRecord,
     Formation,
     FormationKind,
     PendingBattle,
@@ -33,6 +34,9 @@ def _roster(value: dict[str, Any]) -> BattalionRosterEntry:
 
 
 def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
+    from .observation import knowledge_record_from_dict, prepare_s11_payload
+
+    data, incoming_schema = prepare_s11_payload(data)
     factions = {
         key: FactionState(
             faction=Faction(value["faction"]),
@@ -211,6 +215,9 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
                 value.get("ambush_ready_tick"),
                 name="ambush_ready_tick",
             ),
+            recon_capability=_strict_supply_bool(
+                value.get("recon_capability"), name="recon_capability"
+            ),
         )
         for key, value in data.get("strategic_formations", {}).items()
     }
@@ -323,6 +330,18 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
         )
         _validate_encounter_contract(pending)
         _validate_pending_ambush_metadata(pending, battalions)
+    knowledge_by_observer: dict[str, dict[str, KnowledgeRecord]] = {}
+    raw_knowledge = data.get("knowledge_by_observer")
+    if not isinstance(raw_knowledge, dict):
+        raise ValueError("knowledge_by_observer must be an object")
+    for scope, rows in raw_knowledge.items():
+        if not isinstance(rows, dict):
+            raise ValueError("knowledge observer rows must be an object")
+        knowledge_by_observer[str(scope)] = {
+            str(key): knowledge_record_from_dict(value)
+            for key, value in rows.items()
+        }
+
     state = CampaignState(
         campaign_name=data["campaign_name"],
         turn_number=int(data.get("turn_number", 1)),
@@ -345,6 +364,10 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
         provinces=provinces,
         battalions=battalions,
         pending_battle=pending,
+        fog_of_war_enabled=_strict_supply_bool(
+            data.get("fog_of_war_enabled"), name="fog_of_war_enabled"
+        ),
+        knowledge_by_observer=knowledge_by_observer,
         schema_version=max(1, int(data.get("schema_version", 1))),
     )
     from .force_migration import ensure_strategic_formations
@@ -358,6 +381,11 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
     ensure_move_orders(state)
     ensure_site_control_state(state)
     refresh_operational_supply(state, consume_grace=False)
+    from .observation import ensure_s11_schema
+
+    ensure_s11_schema(
+        state, migrated_from_pre_s11=incoming_schema < 11
+    )
     state.validate()
     return state
 
@@ -367,13 +395,19 @@ def load_campaign(path: str | Path) -> CampaignState:
     return campaign_from_dict(json.loads(source.read_text(encoding="utf-8-sig")))
 
 
-def save_campaign(state: CampaignState, path: str | Path) -> Path:
+def save_campaign(
+    state: CampaignState,
+    path: str | Path,
+    *,
+    observation_context=None,
+) -> Path:
     from .force_migration import ensure_strategic_formations
     from .operational_capture import ensure_site_control_state
     from .operational_movement import ensure_move_orders
     from .operational_position import ensure_operational_positions
     from .operational_supply import refresh_operational_supply
     from .strategic import ensure_strategic_layer
+    from .observation import ensure_s11_schema, refresh_all_observer_knowledge
 
     ensure_strategic_layer(state)
     ensure_strategic_formations(state)
@@ -381,6 +415,10 @@ def save_campaign(state: CampaignState, path: str | Path) -> Path:
     ensure_move_orders(state)
     ensure_site_control_state(state)
     refresh_operational_supply(state, consume_grace=False)
+    # Raw legacy-file defaults are applied by campaign_from_dict(). New in-memory
+    # campaigns may explicitly enable Fog before their first schema-11 save.
+    ensure_s11_schema(state)
+    refresh_all_observer_knowledge(state, observation_context)
     state.validate()
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)

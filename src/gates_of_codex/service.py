@@ -194,7 +194,11 @@ class GatesOfCodeXService:
                 raise ValueError("Installed Code:X mod stack changed after the battle export")
         engine = CampaignEngine(state)
         result = BattleResultImporter().import_save(engine, save_file, previous_status=manifest.baseline)
-        save_campaign(state, campaign_file)
+        save_campaign(
+            state,
+            campaign_file,
+            observation_context=engine.observation_context,
+        )
         return result
 
 

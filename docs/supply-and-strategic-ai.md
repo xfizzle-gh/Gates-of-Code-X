@@ -130,7 +130,7 @@ drain, and attrition formulas but does not change which authority is reported.
 
 ## Frontend contract
 
-Frontend schema version 13 adds a thin operational supply summary to strategic
+Frontend schema version 14 retains the operational supply summary in strategic
 formations:
 
 - `supplied`

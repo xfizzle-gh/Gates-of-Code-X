@@ -35,6 +35,144 @@ class Faction(StrEnum):
     NEUTRAL = "neutral"
 
 
+class InformationTier(StrEnum):
+    UNKNOWN = "unknown"
+    CONTACT = "contact"
+    IDENTIFIED = "identified"
+    ASSESSED = "assessed"
+    FULLY_OBSERVED = "fully_observed"
+
+
+@dataclass(slots=True)
+class KnowledgeRecord:
+    observer_scope_id: str
+    record_key: str
+    subject_formation_id: str
+    tier: InformationTier
+    opaque_contact_id: str
+    first_seen_turn: int
+    last_seen_turn: int
+    last_seen_tick: int
+    source_ids: list[str] = field(default_factory=list)
+    current: bool = True
+    last_seen_province_id: str = ""
+    last_seen_node_id: str = ""
+    last_seen_edge_id: str = ""
+    last_seen_progress_milli: int | None = None
+    last_seen_direction: str = ""
+    faction_id: str = ""
+    actor_id: str = ""
+    display_name: str = ""
+    echelon: str = ""
+    strength_band: str = ""
+    condition_band: str = ""
+    supply_band: str = ""
+
+    def validate(self) -> None:
+        if not self.observer_scope_id.strip():
+            raise ValueError("knowledge observer_scope_id required")
+        if not self.record_key.strip():
+            raise ValueError("knowledge record_key required")
+        if not self.subject_formation_id.strip():
+            raise ValueError("knowledge subject_formation_id required")
+        if self.tier == InformationTier.UNKNOWN:
+            raise ValueError("persisted_unknown_knowledge_record")
+        for name, value in (
+            ("first_seen_turn", self.first_seen_turn),
+            ("last_seen_turn", self.last_seen_turn),
+            ("last_seen_tick", self.last_seen_tick),
+        ):
+            require_strict_int(value, name=name, minimum=0)
+        if self.last_seen_turn < self.first_seen_turn:
+            raise ValueError("knowledge_last_seen_before_first_seen")
+        if not self.source_ids:
+            raise ValueError("knowledge_source_ids_required")
+        if len(self.source_ids) != len(set(self.source_ids)):
+            raise ValueError("knowledge_source_ids_duplicate")
+        if self.source_ids != sorted(self.source_ids):
+            raise ValueError("knowledge_source_ids_unsorted")
+        if not isinstance(self.current, bool):
+            raise ValueError("knowledge current must be bool")
+        if self.last_seen_progress_milli is not None:
+            require_strict_int(
+                self.last_seen_progress_milli,
+                name="last_seen_progress_milli",
+                minimum=0,
+                maximum=1000,
+            )
+        if self.last_seen_node_id and self.last_seen_edge_id:
+            raise ValueError("knowledge_location_node_edge_conflict")
+        if self.last_seen_progress_milli is not None and not self.last_seen_edge_id:
+            raise ValueError("knowledge_progress_requires_edge")
+        if self.last_seen_direction and not self.last_seen_edge_id:
+            raise ValueError("knowledge_direction_requires_edge")
+        if any(not isinstance(item, str) or not item.strip() for item in self.source_ids):
+            raise ValueError("knowledge_source_id_invalid")
+        for item in self.source_ids:
+            kind, separator, source_id = item.partition(":")
+            if separator != ":" or kind not in {"direct", "recon", "site"} or not source_id:
+                raise ValueError("knowledge_source_id_invalid")
+        if not (self.last_seen_province_id or self.last_seen_node_id or self.last_seen_edge_id):
+            raise ValueError("knowledge_last_seen_location_required")
+
+        identity_values = (
+            self.faction_id,
+            self.display_name,
+            self.echelon,
+        )
+        band_values = (
+            self.strength_band,
+            self.condition_band,
+            self.supply_band,
+        )
+        if self.tier == InformationTier.CONTACT:
+            if not self.record_key.startswith("contact:"):
+                raise ValueError("contact_record_key_mismatch")
+            if any(identity_values) or self.actor_id:
+                raise ValueError("contact_tier_identity_forbidden")
+            if any(band_values):
+                raise ValueError("contact_tier_assessment_forbidden")
+            if self.last_seen_progress_milli is not None or self.last_seen_direction:
+                raise ValueError("contact_tier_exact_movement_forbidden")
+            return
+
+        if self.record_key != f"formation:{self.subject_formation_id}":
+            raise ValueError("formation_record_key_mismatch")
+        if not all(identity_values):
+            raise ValueError("identified_tier_identity_required")
+        try:
+            identity_faction = Faction(self.faction_id)
+        except ValueError as exc:
+            raise ValueError("identified_tier_faction_invalid") from exc
+        if identity_faction == Faction.NEUTRAL:
+            raise ValueError("identified_tier_faction_invalid")
+        if self.echelon not in {"battalion", "regiment", "brigade", "division"}:
+            raise ValueError("identified_tier_echelon_invalid")
+        if self.tier == InformationTier.IDENTIFIED:
+            if any(band_values):
+                raise ValueError("identified_tier_assessment_forbidden")
+            if self.last_seen_progress_milli is not None or self.last_seen_direction:
+                raise ValueError("identified_tier_exact_movement_forbidden")
+            return
+
+        if not all(band_values):
+            raise ValueError("assessed_tier_bands_required")
+        if self.strength_band not in {"light", "medium", "heavy"}:
+            raise ValueError("invalid_strength_band")
+        if self.condition_band not in {"low", "medium", "high"}:
+            raise ValueError("invalid_condition_band")
+        if self.supply_band not in {"low", "medium", "high"}:
+            raise ValueError("invalid_supply_band")
+        if self.tier == InformationTier.ASSESSED and self.last_seen_progress_milli is not None:
+            raise ValueError("assessed_tier_exact_progress_forbidden")
+        if (
+            self.tier == InformationTier.FULLY_OBSERVED
+            and self.last_seen_edge_id
+            and self.last_seen_progress_milli is None
+        ):
+            raise ValueError("fully_observed_edge_progress_required")
+
+
 class BattalionType(StrEnum):
     INFANTRY = "infantry"
     MECHANIZED = "mechanized"
@@ -262,6 +400,8 @@ class StrategicFormation:
     last_grace_consuming_tick: int | None = None
     # S9C: tick after the first complete stationary Ambush tick.
     ambush_ready_tick: int | None = None
+    # S11: persisted on-map recon source authority.
+    recon_capability: bool = False
 
     def validate(self) -> None:
         if not self.strategic_formation_id.strip():
@@ -290,6 +430,10 @@ class StrategicFormation:
         if not isinstance(self.supplied, bool):
             raise ValueError(
                 f"Strategic formation {self.strategic_formation_id} supplied must be bool"
+            )
+        if not isinstance(self.recon_capability, bool):
+            raise ValueError(
+                f"Strategic formation {self.strategic_formation_id} recon_capability must be bool"
             )
         if not isinstance(self.cut_off, bool):
             raise ValueError(
@@ -492,6 +636,8 @@ class CampaignState:
     provinces: dict[str, Province] = field(default_factory=dict)
     battalions: dict[str, Battalion] = field(default_factory=dict)
     pending_battle: PendingBattle | None = None
+    fog_of_war_enabled: bool = False
+    knowledge_by_observer: dict[str, dict[str, KnowledgeRecord]] = field(default_factory=dict)
     schema_version: int = 4
 
     def validate(self) -> None:
@@ -643,6 +789,9 @@ class CampaignState:
             orphan_members = set(membership) - set(self.battalions)
             if orphan_members:
                 raise ValueError(f"Strategic formations reference missing battalions: {sorted(orphan_members)}")
+        from .observation import validate_s11_observer_authority
+
+        validate_s11_observer_authority(self)
         for faction_state in self.factions.values():
             if faction_state.resources < 0:
                 raise ValueError(f"Faction {faction_state.faction.value} has negative resources")
@@ -654,6 +803,11 @@ class CampaignState:
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
+        if self.schema_version < 11:
+            payload.pop("fog_of_war_enabled", None)
+            payload.pop("knowledge_by_observer", None)
+            for row in payload.get("strategic_formations", {}).values():
+                row.pop("recon_capability", None)
         if self.schema_version < 8:
             for row in payload.get("strategic_formations", {}).values():
                 for key in _OPERATIONAL_SUPPLY_FIELDS:

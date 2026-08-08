@@ -60,7 +60,7 @@ class CampaignApp(tk.Tk):
         if value:
             self.load(Path(value))
 
-    def save(self) -> None:
+    def save(self, *, observation_context=None) -> None:
         if self.state is None:
             return
         if self.campaign_path is None:
@@ -68,7 +68,11 @@ class CampaignApp(tk.Tk):
             if not value:
                 return
             self.campaign_path = Path(value)
-        save_campaign(self.state, self.campaign_path)
+        save_campaign(
+            self.state,
+            self.campaign_path,
+            observation_context=observation_context,
+        )
         self.status.config(text=f"Saved {self.campaign_path}")
 
     def refresh(self) -> None:
@@ -125,8 +129,9 @@ class CampaignApp(tk.Tk):
         if self.state is None:
             return
         try:
-            winner = CampaignEngine(self.state).auto_resolve_pending_battle()
-            self.save()
+            engine = CampaignEngine(self.state)
+            winner = engine.auto_resolve_pending_battle()
+            self.save(observation_context=engine.observation_context)
             self.refresh()
             messagebox.showinfo("Battle resolved", f"Winner: {winner.value}")
         except Exception as exc:

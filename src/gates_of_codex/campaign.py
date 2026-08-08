@@ -24,6 +24,22 @@ class CampaignEngine:
         state.validate()
         self.state = state
         self._random = random.Random(random_seed)
+        self._removal_witnesses_by_formation: dict[str, frozenset[str]] = {}
+        self._confirmed_removed_by_observer: dict[str, set[str]] = {}
+
+    @property
+    def observation_context(self):
+        from .observation import ObservationMutationContext
+
+        return ObservationMutationContext(
+            {
+                scope: frozenset(sorted(subject_ids))
+                for scope, subject_ids in sorted(
+                    self._confirmed_removed_by_observer.items()
+                )
+                if subject_ids
+            }
+        )
 
     def move_or_attack(self, battalion_id: str, target_province_id: str) -> MoveResult:
         if self.state.pending_battle is not None:
@@ -98,6 +114,7 @@ class CampaignEngine:
 
     def apply_external_battle_result(self, winner: Faction, survivors: dict[str, list]):
         self._require_operational_battle_finalization_authority()
+        self._capture_pending_battle_removal_witnesses()
         for battalion_id, roster in survivors.items():
             battalion = self.state.battalions.get(battalion_id)
             if battalion is not None:
@@ -110,6 +127,7 @@ class CampaignEngine:
     def apply_battle_result(self, winner: Faction):
         self._require_operational_battle_finalization_authority()
         pending = self._require_pending_battle()
+        self._capture_pending_battle_removal_witnesses()
         attackers = self._participants_battalions(pending.attacking_participants)
         defenders = self._participants_battalions(pending.defending_participants)
         if winner == pending.attacker_faction:
@@ -747,6 +765,7 @@ class CampaignEngine:
         force = self.state.strategic_formations.get(force_id)
         if force is None:
             return OperationalRetreatResolution(formation_id=force_id, reason=reason)
+        self._record_confirmed_formation_removal(force_id)
         if force.commander_id and force.commander_id in self.state.commanders:
             commander = self.state.commanders[force.commander_id]
             if commander.assigned_strategic_formation_id == force_id:
@@ -833,15 +852,19 @@ class CampaignEngine:
                 member.province_id = force.province_id
 
     def _remove_battalion(self, battalion_id: str) -> None:
-        battalion = self.state.battalions.pop(battalion_id, None)
+        battalion = self.state.battalions.get(battalion_id)
         if battalion is None:
             return
+        force_id = battalion.strategic_formation_id
+        force = self.state.strategic_formations.get(force_id) if force_id else None
+        if force is not None and force.battalion_ids == [battalion_id]:
+            self._record_confirmed_formation_removal(force_id)
+        self.state.battalions.pop(battalion_id, None)
         if battalion.commander_id and battalion.commander_id in self.state.commanders:
             commander = self.state.commanders[battalion.commander_id]
             if commander.assigned_battalion_id == battalion_id:
                 commander.assigned_battalion_id = None
                 commander.status = CommanderStatus.UNASSIGNED
-        force_id = battalion.strategic_formation_id
         if not force_id:
             return
         force = self.state.strategic_formations.get(force_id)
@@ -855,6 +878,64 @@ class CampaignEngine:
                 if commander.assigned_strategic_formation_id == force_id:
                     commander.assigned_strategic_formation_id = None
                     commander.status = CommanderStatus.UNASSIGNED
+
+    def remove_strategic_formation(
+        self,
+        force_id: str,
+        *,
+        authoritative_witness_factions: tuple[Faction, ...] = (),
+        reason: str = "authoritative_removal",
+    ):
+        """Authoritatively remove one formation and capture explicit witnesses."""
+        if force_id not in self.state.strategic_formations:
+            raise KeyError(f"Unknown strategic formation: {force_id}")
+        from .observation import capture_observation_removal_witnesses
+
+        captured = capture_observation_removal_witnesses(
+            self.state,
+            frozenset({force_id}),
+            authoritative_witness_factions=frozenset(
+                authoritative_witness_factions
+            ),
+        )
+        self._removal_witnesses_by_formation[force_id] = captured.get(
+            force_id, frozenset()
+        )
+        return self._eliminate_formation(force_id, reason=reason)
+
+    def _capture_pending_battle_removal_witnesses(self) -> None:
+        pending = self._require_pending_battle()
+        participants = (
+            pending.attacking_participants + pending.defending_participants
+        )
+        participating_factions = frozenset(row.faction for row in participants)
+        candidate_force_ids = frozenset(
+            str(battalion.strategic_formation_id)
+            for row in participants
+            for battalion in (self.state.battalions.get(row.battalion_id),)
+            if battalion is not None and battalion.strategic_formation_id
+        )
+        from .observation import capture_observation_removal_witnesses
+
+        captured = capture_observation_removal_witnesses(
+            self.state,
+            candidate_force_ids,
+            participating_factions=participating_factions,
+        )
+        self._removal_witnesses_by_formation.update(captured)
+
+    def _record_confirmed_formation_removal(self, force_id: str) -> None:
+        scopes = self._removal_witnesses_by_formation.get(force_id)
+        if scopes is None:
+            from .observation import capture_observation_removal_witnesses
+
+            scopes = capture_observation_removal_witnesses(
+                self.state, frozenset({force_id})
+            ).get(force_id, frozenset())
+        for scope in scopes:
+            self._confirmed_removed_by_observer.setdefault(scope, set()).add(
+                force_id
+            )
 
     def _build_pending_battle(self, attacker: Battalion, defender: Battalion | None, target_id: str) -> PendingBattle:
         defender_faction = defender.faction if defender else self.state.provinces[target_id].owner
