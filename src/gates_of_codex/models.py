@@ -260,6 +260,8 @@ class StrategicFormation:
     last_supply_refresh_tick: int | None = None
     last_supply_refresh_turn: int | None = None
     last_grace_consuming_tick: int | None = None
+    # S9C: tick after the first complete stationary Ambush tick.
+    ambush_ready_tick: int | None = None
 
     def validate(self) -> None:
         if not self.strategic_formation_id.strip():
@@ -305,6 +307,7 @@ class StrategicFormation:
             ("last_supply_refresh_tick", self.last_supply_refresh_tick),
             ("last_supply_refresh_turn", self.last_supply_refresh_turn),
             ("last_grace_consuming_tick", self.last_grace_consuming_tick),
+            ("ambush_ready_tick", self.ambush_ready_tick),
         ):
             if value is not None:
                 require_strict_int(value, name=name, minimum=0)

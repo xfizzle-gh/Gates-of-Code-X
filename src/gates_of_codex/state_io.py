@@ -207,6 +207,10 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
                 value.get("last_grace_consuming_tick"),
                 name="last_grace_consuming_tick",
             ),
+            ambush_ready_tick=_optional_supply_int(
+                value.get("ambush_ready_tick"),
+                name="ambush_ready_tick",
+            ),
         )
         for key, value in data.get("strategic_formations", {}).items()
     }

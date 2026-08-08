@@ -761,6 +761,13 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
     global_tick = int(clock["global_tick"]) + 1
     tick_in_turn = (int(clock["tick_in_turn"]) + 1) % ticks_n
     set_operational_clock(state, global_tick=global_tick, tick_in_turn=tick_in_turn)
+    from .operational_ambush import refresh_ambush_readiness
+
+    refresh_ambush_readiness(
+        state,
+        completed_tick=global_tick,
+        moved_formation_ids=moved,
+    )
     from .operational_supply import refresh_operational_supply
 
     supply_report = refresh_operational_supply(
