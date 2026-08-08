@@ -1,0 +1,45 @@
+name: Expanded Nations projection
+
+on:
+  push:
+    branches:
+      - feat/170-expanded-nations-activation
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  focused:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.11.9', '3.13']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install
+        run: python -m pip install -e .
+      - name: Expanded Nations unit tests
+        run: python -m unittest tests.test_expanded_nations -v
+      - name: CLI smoke
+        run: python -m gates_of_codex.expanded_nations_cli --help
+      - name: Compile changed Python
+        run: python -m py_compile src/gates_of_codex/expanded_nations.py src/gates_of_codex/expanded_nations_cli.py src/gates_of_codex/expanded_nations_models.py src/gates_of_codex/expanded_nations_render.py src/gates_of_codex/expanded_nations_sources.py src/gates_of_codex/expanded_nations_storage.py tests/test_expanded_nations.py
+
+  powershell:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse Windows activation wrapper
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          [scriptblock]::Create((Get-Content -Raw '.\tools\activate_expanded_nation.ps1')) | Out-Null
