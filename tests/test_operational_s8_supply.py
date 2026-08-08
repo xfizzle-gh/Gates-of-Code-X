@@ -90,6 +90,32 @@ def _graph(*, nodes: list[dict], sites: list[dict] | None = None) -> dict:
     }
 
 
+def _supply_site(
+    site_id: str,
+    node_id: str,
+    *,
+    province_id: str = "p1",
+    owner: str = "nato",
+    authority: str | None = "authored",
+    disabled: bool = False,
+) -> dict:
+    site = {
+        "site_id": site_id,
+        "display_name": site_id,
+        "kind": "depot",
+        "province_id": province_id,
+        "pixel": [0, 0],
+        "route_node_id": node_id,
+        "tags": ["supply_source"],
+        "facilities": [],
+        "owner_faction": owner,
+        "metadata": {"disabled": True} if disabled else {},
+    }
+    if authority is not None:
+        site["authority"] = authority
+    return site
+
+
 def _edge_row(
     edge_id: str,
     a: str,
@@ -335,6 +361,174 @@ class OperationalS8SupplyTests(unittest.TestCase):
         bridged = _source_by_id(sources, "province-supply-source:p1")
         self.assertEqual("site-node", bridged.source_node_id)
         self.assertEqual((), diagnostics)
+
+    def test_candidate_and_disabled_sites_are_not_sources_or_bridges(self) -> None:
+        state = _state()
+        state.provinces["p1"].metadata["supply_source_for"] = ["nato"]
+        anchor_id = stable_node_id("p1", "anchor")
+        graph = _graph(
+            nodes=[
+                _node(anchor_id, "p1"),
+                _node("candidate-node", "p1"),
+                _node("disabled-node", "p1"),
+            ],
+            sites=[
+                _supply_site(
+                    "candidate-depot",
+                    "candidate-node",
+                    authority=EdgeAuthority.CANDIDATE.value,
+                ),
+                _supply_site(
+                    "disabled-depot", "disabled-node", disabled=True
+                ),
+            ],
+        )
+
+        with mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            sources, diagnostics = resolve_operational_supply_sources(
+                state, Faction.NATO
+            )
+
+        self.assertEqual(
+            ("province-supply-source:p1",),
+            tuple(item.source_hub_id for item in sources),
+        )
+        self.assertEqual(anchor_id, sources[0].source_node_id)
+        self.assertEqual((), diagnostics)
+
+    def test_missing_site_and_node_authority_use_authored_schema_default(self) -> None:
+        state = _state()
+        node = _node("legacy-node", "p1")
+        node.pop("authority")
+        site = _supply_site("legacy-depot", "legacy-node", authority=None)
+
+        with mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=_graph(nodes=[node], sites=[site]),
+        ):
+            sources, diagnostics = resolve_operational_supply_sources(
+                state, Faction.NATO
+            )
+
+        self.assertEqual(("legacy-depot",), tuple(
+            item.source_hub_id for item in sources
+        ))
+        self.assertEqual((), diagnostics)
+
+    def test_hostile_site_cannot_hijack_province_source_bridge(self) -> None:
+        state = _state()
+        state.provinces["p1"].metadata["supply_source_for"] = ["nato"]
+        anchor_id = stable_node_id("p1", "anchor")
+        graph = _graph(
+            nodes=[_node(anchor_id, "p1"), _node("hostile-node", "p1")],
+            sites=[_supply_site("hostile-depot", "hostile-node", owner="rusa")],
+        )
+
+        with mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            sources, diagnostics = resolve_operational_supply_sources(
+                state, Faction.NATO
+            )
+
+        source = _source_by_id(sources, "province-supply-source:p1")
+        self.assertEqual(anchor_id, source.source_node_id)
+        self.assertNotIn("hostile-depot", {
+            item.source_hub_id for item in sources
+        })
+        self.assertEqual((), diagnostics)
+
+    def test_authored_site_with_invalid_node_fails_closed_with_diagnostic(self) -> None:
+        cases = (
+            ("missing-node", [], "missing_source_node"),
+            (
+                "cross-province",
+                [_node("cross-province", "p2")],
+                "cross_province_source_node",
+            ),
+            (
+                "candidate-node",
+                [
+                    {
+                        **_node("candidate-node", "p1"),
+                        "authority": EdgeAuthority.CANDIDATE.value,
+                    }
+                ],
+                "non_authored_source_node",
+            ),
+        )
+        for node_id, nodes, reason in cases:
+            with self.subTest(reason=reason):
+                state = _state()
+                site = _supply_site("authored-depot", node_id)
+                with mock.patch(
+                    "gates_of_codex.operational_supply.load_operational_graph_for_state",
+                    return_value=_graph(nodes=nodes, sites=[site]),
+                ):
+                    sources, diagnostics = resolve_operational_supply_sources(
+                        state, Faction.NATO
+                    )
+
+                self.assertEqual((), sources)
+                self.assertEqual(
+                    (("authored-depot", "p1", reason),),
+                    tuple(
+                        (item.source_hub_id, item.province_id, item.reason)
+                        for item in diagnostics
+                    ),
+                )
+
+    def test_invalid_high_precedence_nodes_fall_back_to_authored_anchor(self) -> None:
+        state = _state()
+        state.provinces["p1"].metadata.update(
+            {
+                "infrastructure": {"supply_hub": 1},
+                "supply_hub_node_id": "candidate-hub-node",
+                "static_supply_source_for": ["nato"],
+            }
+        )
+        anchor_id = stable_node_id("p1", "anchor")
+        graph = _graph(
+            nodes=[
+                _node(anchor_id, "p1"),
+                {
+                    **_node("candidate-site-node", "p1"),
+                    "authority": EdgeAuthority.CANDIDATE.value,
+                },
+                {
+                    **_node("candidate-hub-node", "p1"),
+                    "authority": EdgeAuthority.CANDIDATE.value,
+                },
+            ],
+            sites=[_supply_site("candidate-node-depot", "candidate-site-node")],
+        )
+
+        with mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            sources, diagnostics = resolve_operational_supply_sources(
+                state, Faction.NATO
+            )
+
+        self.assertEqual(anchor_id, _source_by_id(
+            sources, "constructed-supply-hub:p1"
+        ).source_node_id)
+        self.assertEqual(anchor_id, _source_by_id(
+            sources, "province-supply-source:p1"
+        ).source_node_id)
+        self.assertEqual(
+            "non_authored_source_node",
+            next(
+                item.reason
+                for item in diagnostics
+                if item.source_hub_id == "candidate-node-depot"
+            ),
+        )
 
     def test_constructed_hub_node_precedes_anchor(self) -> None:
         state = _state()
@@ -601,6 +795,18 @@ class OperationalS8SupplyTests(unittest.TestCase):
 
     def test_land_edge_is_supply_capable_by_default(self) -> None:
         assert_supply_edge_hop_legal(_edge(), origin="a", dest="b")
+
+    def test_supply_capable_metadata_requires_an_actual_bool(self) -> None:
+        for kind in (EdgeKind.ROAD.value, EdgeKind.SEA_LANE.value):
+            for bad in ("true", 1, 0, 1.0, None):
+                with self.subTest(kind=kind, bad=bad), self.assertRaisesRegex(
+                    ValueError, "invalid_supply_capable"
+                ):
+                    assert_supply_edge_hop_legal(
+                        _edge(kind=kind, metadata={"supply_capable": bad}),
+                        origin="a",
+                        dest="b",
+                    )
 
     def test_connected_formation_gets_lowest_integer_route(self) -> None:
         nodes = ["formation", "middle", "hub"]

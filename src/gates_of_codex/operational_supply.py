@@ -10,6 +10,7 @@ from .operational_movement import assert_edge_hop_legal
 from .operational_position import load_operational_graph_for_state
 from .operational_schema import (
     PROGRESS_MILLI_MAX,
+    EdgeAuthority,
     EdgeKind,
     OperationalRouteEdge,
     PositionMode,
@@ -236,13 +237,6 @@ def resolve_operational_supply_sources(
     )
 
 
-    source_sites = [row for row in sites if _site_is_explicit_supply_source(row)]
-    source_sites_by_province: dict[str, list[dict[str, Any]]] = {}
-    for site in source_sites:
-        source_sites_by_province.setdefault(
-            str(site.get("province_id") or ""), []
-        ).append(site)
-
     friendly_values = tuple(
         sorted(item.value for item in allied_factions(state, faction))
     )
@@ -250,8 +244,11 @@ def resolve_operational_supply_sources(
     control = _site_control_snapshot(state)
     sources: list[OperationalSupplySource] = []
     diagnostics: list[OperationalSupplyDiagnostic] = []
+    source_sites_by_province: dict[str, list[dict[str, Any]]] = {}
 
-    for site in source_sites:
+    for site in sites:
+        if not _site_is_usable_supply_source(site):
+            continue
         province_id = str(site.get("province_id") or "")
         source_id = str(site["site_id"])
         if province_id not in state.provinces:
@@ -263,11 +260,17 @@ def resolve_operational_supply_sources(
         if controller not in friendly_set:
             continue
         node_id = str(site.get("route_node_id") or "")
-        if node_id not in nodes:
+        invalid_reason = _source_node_invalid_reason(
+            nodes, node_id, province_id
+        )
+        if invalid_reason is not None:
             diagnostics.append(
-                OperationalSupplyDiagnostic(source_id, province_id, "missing_source_node")
+                OperationalSupplyDiagnostic(
+                    source_id, province_id, invalid_reason
+                )
             )
             continue
+        source_sites_by_province.setdefault(province_id, []).append(site)
         sources.append(
             OperationalSupplySource(
                 source_hub_id=source_id,
@@ -523,7 +526,12 @@ def assert_supply_edge_hop_legal(
 ) -> None:
     """Apply shared movement authority plus S8 sea-edge opt-in."""
     assert_edge_hop_legal(edge, origin=origin, dest=dest)
-    flag = (edge.metadata or {}).get("supply_capable")
+    metadata = edge.metadata or {}
+    if "supply_capable" in metadata and type(
+        metadata["supply_capable"]
+    ) is not bool:
+        raise ValueError("invalid_supply_capable")
+    flag = metadata.get("supply_capable")
     if flag is False:
         raise ValueError("supply_blocked")
     if edge.kind in _SEA_SUPPLY_OPT_IN_KINDS and flag is not True:
@@ -539,6 +547,17 @@ def _site_is_explicit_supply_source(site: dict[str, Any]) -> bool:
     if _SOURCE_TAGS.intersection(tags | facilities):
         return True
     return str(site.get("kind") or "") == "depot"
+
+
+def _site_is_usable_supply_source(site: dict[str, Any]) -> bool:
+    if not _site_is_explicit_supply_source(site):
+        return False
+    if str(
+        site.get("authority", EdgeAuthority.AUTHORED.value)
+    ) != EdgeAuthority.AUTHORED.value:
+        return False
+    metadata = site.get("metadata") or {}
+    return not bool(metadata.get("disabled"))
 
 
 def _site_control_snapshot(state: CampaignState) -> dict[str, dict[str, Any]]:
@@ -572,12 +591,33 @@ def _routing_node_for_source(
 ) -> str | None:
     for site in source_sites_by_province.get(province_id, []):
         node_id = str(site.get("route_node_id") or "")
-        if node_id in nodes:
+        if _source_node_invalid_reason(nodes, node_id, province_id) is None:
             return node_id
-    if associated_node_id and associated_node_id in nodes:
+    if associated_node_id and _source_node_invalid_reason(
+        nodes, associated_node_id, province_id
+    ) is None:
         return associated_node_id
     anchor_id = stable_node_id(province_id, "anchor")
-    return anchor_id if anchor_id in nodes else None
+    return (
+        anchor_id
+        if _source_node_invalid_reason(nodes, anchor_id, province_id) is None
+        else None
+    )
+
+
+def _source_node_invalid_reason(
+    nodes: dict[str, dict[str, Any]], node_id: str, province_id: str
+) -> str | None:
+    node = nodes.get(node_id)
+    if node is None:
+        return "missing_source_node"
+    if str(node.get("province_id") or "") != province_id:
+        return "cross_province_source_node"
+    if str(
+        node.get("authority", EdgeAuthority.AUTHORED.value)
+    ) != EdgeAuthority.AUTHORED.value:
+        return "non_authored_source_node"
+    return None
 
 
 def _source_sort_key(source: OperationalSupplySource) -> tuple[str, str, str]:
