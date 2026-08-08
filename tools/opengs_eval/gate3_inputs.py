@@ -167,6 +167,94 @@ def _coast_mask(land: Any, ocean: Any) -> Any:
     return mask
 
 
+def _theatre_edge_mask(inside_mask: Any) -> Any:
+    import numpy as np
+    edge = np.zeros_like(inside_mask, dtype=bool)
+    edge[0, :] |= inside_mask[0, :]
+    edge[-1, :] |= inside_mask[-1, :]
+    edge[:, 0] |= inside_mask[:, 0]
+    edge[:, -1] |= inside_mask[:, -1]
+    edge[1:, :] |= inside_mask[1:, :] & ~inside_mask[:-1, :]
+    edge[:-1, :] |= inside_mask[:-1, :] & ~inside_mask[1:, :]
+    edge[:, 1:] |= inside_mask[:, 1:] & ~inside_mask[:, :-1]
+    edge[:, :-1] |= inside_mask[:, :-1] & ~inside_mask[:, 1:]
+    return edge
+
+
+def _normalize_ocean_components(
+    raw_ocean_mask: Any,
+    inside_mask: Any,
+    ocean_anchor_pixels: Mapping[str, tuple[int, int]],
+    *,
+    maximum_components: int,
+) -> tuple[Any, dict[str, Any]]:
+    import numpy as np
+    from scipy.ndimage import label as connected_components
+
+    structure = np.asarray([[0, 1, 0], [1, 1, 1], [0, 1, 0]], dtype=np.uint8)
+    labels, raw_count = connected_components(raw_ocean_mask, structure=structure)
+    raw_count = int(raw_count)
+    if raw_count <= 0:
+        raise Gate3Error("locked theatre contains no candidate ocean components")
+    edge_mask = _theatre_edge_mask(inside_mask)
+    anchors_by_label: dict[int, list[str]] = {}
+    for name, (px, py) in sorted(ocean_anchor_pixels.items()):
+        if not (0 <= py < raw_ocean_mask.shape[0] and 0 <= px < raw_ocean_mask.shape[1]):
+            raise Gate3Error(f"locked ocean anchor is outside the raster: {name}")
+        component = int(labels[py, px])
+        if component <= 0:
+            raise Gate3Error(f"locked ocean anchor is not in candidate ocean: {name}")
+        anchors_by_label.setdefault(component, []).append(name)
+
+    retained_labels: list[int] = []
+    records: list[dict[str, Any]] = []
+    retained_by_boundary = 0
+    retained_by_anchor = 0
+    for component in range(1, raw_count + 1):
+        component_mask = labels == component
+        pixel_count = int(component_mask.sum())
+        touches_boundary = bool(np.any(component_mask & edge_mask))
+        anchor_names = sorted(anchors_by_label.get(component, []))
+        retained = touches_boundary or bool(anchor_names)
+        if retained:
+            retained_labels.append(component)
+            retained_by_boundary += int(touches_boundary)
+            retained_by_anchor += int(bool(anchor_names))
+        records.append({
+            "component": component,
+            "pixel_count": pixel_count,
+            "touches_projected_crop_boundary": touches_boundary,
+            "locked_ocean_anchor_names": anchor_names,
+            "retained": retained,
+        })
+    if len(retained_labels) > maximum_components:
+        raise Gate3Error(
+            "retained ocean component count exceeds locked ocean territories: "
+            f"{len(retained_labels)} > {maximum_components}"
+        )
+    retained_mask = np.isin(labels, np.asarray(retained_labels, dtype=labels.dtype))
+    reclassified_mask = raw_ocean_mask & ~retained_mask
+    retained_anchor_names = sorted(name for names in anchors_by_label.values() for name in names)
+    if retained_anchor_names != sorted(ocean_anchor_pixels):
+        raise Gate3Error("not every locked ocean anchor was retained")
+    authority = {
+        "policy": "crop_boundary_or_locked_ocean_anchor",
+        "unanchored_complement_policy": "reclassify_as_land",
+        "connectivity": 4,
+        "raw_component_count": raw_count,
+        "retained_component_count": len(retained_labels),
+        "reclassified_component_count": raw_count - len(retained_labels),
+        "raw_pixel_count": int(raw_ocean_mask.sum()),
+        "retained_pixel_count": int(retained_mask.sum()),
+        "reclassified_pixel_count": int(reclassified_mask.sum()),
+        "retained_by_crop_boundary_count": retained_by_boundary,
+        "retained_by_locked_ocean_anchor_count": retained_by_anchor,
+        "retained_anchor_names": retained_anchor_names,
+        "components": records,
+    }
+    return retained_mask, authority
+
+
 def _projected_geometry(raw_geometry: Mapping[str, Any], lon_lat_clip: Any, projection: Any, to_pixels: Any) -> Any | None:
     from shapely.geometry import shape
     from shapely.ops import transform
@@ -266,8 +354,31 @@ def build_inputs(config_path: Path, natural_earth_root: Path, output: Path) -> d
     boundary_array[~inside_mask] = np.asarray(OUTSIDE_COLOR, dtype=np.uint8)
     boundary_image = Image.fromarray(boundary_array, mode="RGB")
 
-    ocean_mask = inside_mask & np.all(land_array == np.asarray(OCEAN_COLOR, dtype=np.uint8), axis=2)
+    raw_ocean_mask = inside_mask & np.all(land_array == np.asarray(OCEAN_COLOR, dtype=np.uint8), axis=2)
     lake_mask = inside_mask & np.all(land_array == np.asarray(LAKE_COLOR, dtype=np.uint8), axis=2)
+    anchor_pixels: dict[str, tuple[int, int]] = {}
+    for anchor in config["theatre"]["anchors"]:
+        source_point = shape({"type": "Point", "coordinates": [anchor["longitude"], anchor["latitude"]]})
+        pixel_point = transform(to_pixels, transform(projection.transform, source_point))
+        px = min(max(int(round(float(pixel_point.x))), 0), width - 1)
+        py = min(max(int(round(float(pixel_point.y))), 0), height - 1)
+        if not inside_mask[py, px]:
+            raise Gate3Error(f"geography anchor {anchor['name']} is outside the projected theatre mask")
+        anchor_pixels[str(anchor["name"])] = (px, py)
+    ocean_anchor_pixels = {
+        str(anchor["name"]): anchor_pixels[str(anchor["name"])]
+        for anchor in config["theatre"]["anchors"]
+        if anchor["expected"] == "ocean"
+    }
+    ocean_mask, ocean_component_authority = _normalize_ocean_components(
+        raw_ocean_mask,
+        inside_mask,
+        ocean_anchor_pixels,
+        maximum_components=int(config["counts"]["ocean_territories"]),
+    )
+    reclassified_ocean = raw_ocean_mask & ~ocean_mask
+    land_array[reclassified_ocean] = np.asarray(LAND_COLOR, dtype=np.uint8)
+    land_image = Image.fromarray(land_array, mode="RGB")
     land_mask = inside_mask & ~ocean_mask & ~lake_mask
     boundary_mask = np.asarray(boundary_mask_image, dtype=bool) & inside_mask
     river_mask = np.asarray(river_mask_image, dtype=bool) & land_mask
@@ -318,11 +429,7 @@ def build_inputs(config_path: Path, natural_earth_root: Path, output: Path) -> d
     _, lake_component_count = connected_components(lake_mask)
     geography_anchors: list[dict[str, Any]] = []
     for anchor in config["theatre"]["anchors"]:
-        source_point = shape({"type": "Point", "coordinates": [anchor["longitude"], anchor["latitude"]]})
-        pixel_point = transform(to_pixels, transform(projection.transform, source_point))
-        px, py = min(max(int(round(float(pixel_point.x))), 0), width - 1), min(max(int(round(float(pixel_point.y))), 0), height - 1)
-        if not inside_mask[py, px]:
-            raise Gate3Error(f"geography anchor {anchor['name']} is outside the projected theatre mask")
+        px, py = anchor_pixels[str(anchor["name"])]
         actual_class = "land" if bool(land_mask[py, px]) else "lake" if bool(lake_mask[py, px]) else "ocean"
         if actual_class != anchor["expected"]:
             raise Gate3Error(f"geography anchor {anchor['name']} expected {anchor['expected']}, got {actual_class} at pixel ({px}, {py})")
@@ -346,6 +453,7 @@ def build_inputs(config_path: Path, natural_earth_root: Path, output: Path) -> d
         "geography_anchors": geography_anchors,
         "pixel_counts": {"land": int(land_mask.sum()), "ocean": int(ocean_mask.sum()), "lake": int(lake_mask.sum()), "outside": int((~inside_mask).sum()), "boundary": int(boundary_mask.sum()), "river": int(river_mask.sum()), "coast": int(coast_mask.sum())},
         "component_counts": {"land": int(land_component_count), "ocean": int(ocean_component_count), "lake": int(lake_component_count)},
+        "ocean_component_authority": ocean_component_authority,
         "density": {"policy": density_policy, "minimum": int(np.min(np.asarray(density_image)[inside_mask])), "maximum": int(np.max(np.asarray(density_image)[inside_mask])), "mean": round(float(np.mean(np.asarray(density_image)[inside_mask])), 6)},
         "terrain": config["terrain"],
         "outputs": outputs,
