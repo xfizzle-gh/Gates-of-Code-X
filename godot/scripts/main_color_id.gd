@@ -689,7 +689,8 @@ func _draw_operational_presentation() -> void:
 			var image_pixel: Vector2 = model.get("image_pixel", Vector2.INF)
 			if image_pixel == Vector2.INF:
 				continue
-			var screen := _image_to_screen(image_pixel) + model.get("screen_offset", Vector2.ZERO)
+			var screen_offset: Vector2 = model.get("screen_offset", Vector2.ZERO)
+			var screen := _image_to_screen(image_pixel) + screen_offset
 			var faction_color: Color = FACTION_COLORS.get(
 				String(model.get("faction", "neutral")),
 				FACTION_COLORS["neutral"]
