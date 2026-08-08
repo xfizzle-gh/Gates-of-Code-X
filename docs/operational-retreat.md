@@ -43,3 +43,5 @@ The cases prove, respectively:
 2. real swept edge contact and exact recorded-origin rollback;
 3. S8-connected adjacent-node preference;
 4. synchronized trapped elimination and commander/reference cleanup.
+
+The same fixture also covers node and edge save/load determinism, multi-battalion co-location, stance resets, one-way rollback boundaries, insertion-order independence, and the no-second-battle contract.
