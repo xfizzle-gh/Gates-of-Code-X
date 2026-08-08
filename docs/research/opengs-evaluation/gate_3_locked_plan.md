@@ -12,7 +12,7 @@ Gate 3 builds one isolated full-scale Europe-Mediterranean comparison candidate 
 
 The implementation and adversarial-test plan was locked on #134 before implementation. The exact owner-approved configuration is now additionally locked by canonical SHA-256:
 
-`bda78a27e60fa53d3f4d672e08ad222c9bce74055b4b61ba5295c55d88ed5cc3`
+`d6f53a130b66a281d6d39d94c519f1752c9700981b4417b0912931bf8a1f3182`
 
 Any change to source paths or hashes, terms, projection, crop, anchors, dimensions, territory or province counts, generator seed or options, density values, terrain policy, Gate 2 threshold, water policy, or isolation policy requires an explicit configuration change and a new material checkpoint.
 
@@ -44,9 +44,11 @@ The comparison target remains:
 - ocean provinces: 215
 - requested base total: 3,514
 
-The locked source and raster contain 350 disconnected land components, so Gate 3 requests 350 land territories rather than deleting islands or drawing artificial bridges. It requests 20 ocean territories. The explicit theatre mask is applied before ocean component authority is evaluated. Any count change remains material and must be recorded on #134.
+The locked source and raster contain 350 disconnected land components, so Gate 3 requests 350 land territories rather than deleting islands or drawing artificial bridges.
 
-Candidate ocean uses four-connected components after the projected mask is applied. A complement component is retained only when it touches the projected crop boundary or contains a locked `expected: ocean` geography anchor. Every other unanchored enclosed complement cavity is deterministically reclassified as land. The authenticated input manifest and geography/water reports record raw, retained, and reclassified component and pixel counts, boundary-retention counts, anchor-retention counts, and the complete component ledger. Generation fails if the retained ocean-component count exceeds the locked 20 ocean territories or if any locked ocean anchor is not retained.
+After applying the projected theatre mask and the locked crop-boundary/anchor authority rule, the source-derived minimum is 30 authoritative ocean components on both Ubuntu and Windows. Gate 3 therefore requests 30 ocean territories rather than deleting sea components or drawing artificial connections. The 30-territory hierarchy remains below the locked 215 ocean provinces.
+
+Candidate ocean uses four-connected components after the projected mask is applied. A complement component is retained only when it touches the projected crop boundary or contains a locked `expected: ocean` geography anchor. Every other unanchored enclosed complement cavity is deterministically reclassified as land. The authenticated input manifest and geography/water reports record raw, retained, and reclassified component and pixel counts, boundary-retention counts, anchor-retention counts, and the complete component ledger. Generation fails if the retained ocean-component count exceeds the locked 30 ocean territories or if any locked ocean anchor is not retained.
 
 Natural Earth lake components remain additional non-selectable water records and are reported rather than silently filtered. They are not processed by the ocean-complement rule.
 
