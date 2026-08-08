@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
-from typing import Any, Mapping, Sequence
+from typing import Any, Iterator, Mapping, Sequence
 
+from .faction_wiring_scan import _side_from_filename, _side_from_name
 from .goh_source import SourceEntry, scan_source_entries
 from .modstack import resource_root
 from .expanded_nations_models import (
@@ -17,9 +18,21 @@ from .expanded_nations_models import (
 
 _SOURCE_REFERENCE_RE = re.compile(r"^(\d+):([^/]+)/(.+)$")
 _SIDE_CALL_RE = re.compile(r"\bside\s*\(\s*[^)]*\)", re.IGNORECASE)
+_INCLUDE_RE = re.compile(r'^\s*\(\s*include\s+"([^"]+)"\s*\)\s*$', re.IGNORECASE | re.DOTALL)
 _FACTION_SUFFIX_RE = re.compile(
     r"^(?P<base>.*?)(?:\((?P<side>nato|ukr|rusa|prc|sov|csa|frg)\))?$",
     re.IGNORECASE,
+)
+_GENERATED_SOURCE_NAMES = frozenset(
+    {
+        "roster_conquest.set",
+        "goc_active_actor_units.set",
+        "goc_opponent_units.set",
+        "unit_research_nato.set",
+        "unit_research_ukr.set",
+        "unit_research_rusa.set",
+        "unit_research_prc.set",
+    }
 )
 
 
@@ -42,6 +55,11 @@ def project_actor_units(
             )
         if not unit.get("materializable"):
             raise ExpandedNationsError(f"Actor unit is not materializable: {unit_name}")
+        for source_reference in unit.get("source_files", []):
+            if _is_generated_source_reference(str(source_reference)):
+                raise ExpandedNationsError(
+                    f"Actor unit {unit_name} resolved from generated activation source {source_reference}"
+                )
         entry, source_reference = _find_source_entry(unit, roots, gates_root, cache)
         if entry.name in source_entry_names:
             raise ExpandedNationsError(
@@ -93,18 +111,13 @@ def project_opponent_units(
     rendered_entries: list[str] = []
 
     for include in BROAD_ROSTER_INCLUDES:
-        effective = _effective_include_path(include, roots)
-        if effective is None:
-            continue
-        source_path, priority = effective
-        source_reference = f"{priority}:{roots[priority].name}/set/multiplayer/units/{include}"
-        for ordinal, entry in enumerate(_entries_for_path(source_path, cache)):
-            side_calls = [call.value.lower() for call in entry.calls if call.family == "side"]
-            if len(side_calls) > 1:
-                raise ExpandedNationsError(
-                    f"Core roster entry {entry.name!r} in {source_path} has multiple side declarations"
-                )
-            entry_side = side_calls[0] if side_calls else ""
+        for entry, source_path, priority, source_reference, ordinal in _walk_effective_include(
+            include,
+            roots,
+            cache,
+            active=(),
+        ):
+            entry_side = _canonical_entry_side(entry, source_path)
             if entry_side == selected_side:
                 continue
             raw = entry.raw.rstrip()
@@ -128,6 +141,60 @@ def project_opponent_units(
     return projected, "\n".join(rendered_entries).rstrip() + "\n"
 
 
+def _walk_effective_include(
+    include: str,
+    roots: Sequence[Path],
+    cache: dict[Path, tuple[SourceEntry, ...]],
+    *,
+    active: tuple[Path, ...],
+) -> Iterator[tuple[SourceEntry, Path, int, str, int]]:
+    normalized = include.replace("\\", "/").lstrip("/")
+    include_path = Path(normalized)
+    if not normalized or include_path.is_absolute() or ".." in include_path.parts:
+        raise ExpandedNationsError(f"Unsafe opponent roster include: {include}")
+    effective = _effective_include_path(normalized, roots)
+    if effective is None:
+        raise ExpandedNationsError(f"Opponent roster include cannot be resolved: {include}")
+    source_path, priority = effective
+    resolved = source_path.resolve()
+    if resolved in active:
+        chain = " -> ".join(str(path) for path in (*active, resolved))
+        raise ExpandedNationsError(f"Opponent roster include cycle: {chain}")
+    relative = source_path.relative_to(resource_root(roots[priority])).as_posix()
+    source_reference = f"{priority}:{roots[priority].name}/{relative}"
+    entries = _entries_for_path(source_path, cache)
+    for ordinal, entry in enumerate(entries):
+        if entry.macro_kind.lower() == "include":
+            match = _INCLUDE_RE.fullmatch(entry.raw)
+            if match is None:
+                raise ExpandedNationsError(
+                    f"Malformed side-less include in opponent roster {source_path}: {entry.raw!r}"
+                )
+            yield from _walk_effective_include(
+                match.group(1),
+                roots,
+                cache,
+                active=(*active, resolved),
+            )
+            continue
+        if not entry.name:
+            raise ExpandedNationsError(
+                f"Unnamed non-include entry in opponent roster cannot be filtered safely: {source_path}:{entry.location.line}"
+            )
+        yield entry, source_path, priority, source_reference, ordinal
+
+
+def _canonical_entry_side(entry: SourceEntry, source_path: Path) -> str:
+    explicit = [call.value.lower() for call in entry.calls if call.family == "side"]
+    if len(explicit) > 1:
+        raise ExpandedNationsError(
+            f"Core roster entry {entry.name!r} in {source_path} has multiple side declarations"
+        )
+    return _side_from_name(entry.name) or (explicit[0] if explicit else "") or _side_from_filename(
+        source_path.name
+    )
+
+
 def _find_source_entry(
     unit: Mapping[str, Any],
     roots: Sequence[Path],
@@ -149,6 +216,10 @@ def _find_source_entry(
     candidates: list[tuple[int, int, int, SourceEntry, str]] = []
     for source_order, raw_reference in enumerate(unit.get("source_files", [])):
         source_reference = str(raw_reference)
+        if _is_generated_source_reference(source_reference):
+            raise ExpandedNationsError(
+                f"Actor unit {unit_name} cannot use generated activation source {source_reference}"
+            )
         match = _SOURCE_REFERENCE_RE.fullmatch(source_reference)
         if match is None:
             continue
@@ -251,3 +322,8 @@ def _rename_entry(raw: str, entry: SourceEntry, canonical_name: str) -> str:
             f"Could not canonicalize source entry {entry.name!r} to {canonical_name!r}"
         )
     return renamed
+
+
+def _is_generated_source_reference(source_reference: str) -> bool:
+    normalized = source_reference.replace("\\", "/").lower()
+    return any(normalized.endswith("/" + name) or normalized.endswith(":" + name) for name in _GENERATED_SOURCE_NAMES)
