@@ -8,9 +8,11 @@ from pathlib import Path
 
 from gates_of_codex.campaign import CampaignEngine
 from gates_of_codex.models import Faction
+from gates_of_codex.operational_contact import can_enter_node_friendly_stack
 from gates_of_codex.operational_interception import (
     ENCOUNTER_KIND_EDGE_CATCHUP,
     ENCOUNTER_KIND_EDGE_CROSS,
+    ENCOUNTER_KIND_NODE_SIMULTANEOUS,
 )
 from gates_of_codex.operational_movement import (
     activate_committed_orders,
@@ -26,6 +28,7 @@ from gates_of_codex.operational_schema import (
     stable_edge_id,
     stable_node_id,
 )
+from gates_of_codex.operational_retreat import retreat_origin_node
 from gates_of_codex.state_io import load_campaign, save_campaign
 from tests.test_operational_s6_interception import _add_force, _graph, _state
 from tests import test_operational_s9a_retreat as s9a_fixture
@@ -582,6 +585,166 @@ class OperationalS9BDerivedPersistenceTests(unittest.TestCase):
 
         self.assertEqual(snapshots[0], snapshots[1])
         self.assertEqual(snapshots[0], snapshots[2])
+
+    def test_s9b_destroyed_lower_id_does_not_change_simultaneous_contact(self) -> None:
+        snapshots = []
+        for reverse_order, round_trip in (
+            (False, False),
+            (True, False),
+            (False, True),
+            (True, True),
+        ):
+            with self.subTest(
+                reverse_order=reverse_order,
+                round_trip=round_trip,
+            ), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                state = _state(root, _graph(ab_cost=1000))
+                na, nb, nc = (
+                    stable_node_id("a"),
+                    stable_node_id("b"),
+                    stable_node_id("c"),
+                )
+                edge_ab = stable_edge_id("corridor", na, nb)
+                edge_bc = stable_edge_id("corridor", nb, nc)
+                rusa = state.strategic_formations["sf-r"]
+                rusa.position = FormationOperationalPosition(
+                    mode=PositionMode.AT_NODE.value,
+                    node_id=nc,
+                    progress_milli=0,
+                )
+                rusa.province_id = "c"
+                state.battalions["bn-r"].province_id = "c"
+                _add_force(state, "aa-dead", "bn-dead", Faction.NATO, "b")
+                state.battalions["bn-dead"].roster = []
+
+                for force_id, nodes, edges in (
+                    ("sf-n", [na, nb], [edge_ab]),
+                    ("sf-r", [nc, nb], [edge_bc]),
+                ):
+                    issue_move_order(
+                        state,
+                        force_id,
+                        path_node_ids=nodes,
+                        path_edge_ids=edges,
+                        order_id=f"s9b-simultaneous-{force_id}",
+                    )
+                commit_move_orders(state)
+                activate_committed_orders(state)
+                if reverse_order:
+                    state.strategic_formations = dict(
+                        reversed(list(state.strategic_formations.items()))
+                    )
+                    state.battalions = dict(reversed(list(state.battalions.items())))
+                if round_trip:
+                    campaign_path = root / "simultaneous.json"
+                    save_campaign(state, campaign_path)
+                    state = load_campaign(campaign_path)
+
+                report = advance_operational_tick(state)
+
+                assert state.pending_battle is not None
+                snapshots.append(
+                    (
+                        report["swept_kind"],
+                        state.pending_battle.encounter_kind,
+                        tuple(
+                            sorted(
+                                participant.battalion_id
+                                for participant in (
+                                    state.pending_battle.attacking_participants
+                                    + state.pending_battle.defending_participants
+                                )
+                            )
+                        ),
+                        retreat_origin_node(state, "sf-n"),
+                        retreat_origin_node(state, "sf-r"),
+                    )
+                )
+
+        expected = (
+            ENCOUNTER_KIND_NODE_SIMULTANEOUS,
+            ENCOUNTER_KIND_NODE_SIMULTANEOUS,
+            ("bn-n", "bn-r"),
+            stable_node_id("a"),
+            stable_node_id("c"),
+        )
+        self.assertTrue(all(snapshot == expected for snapshot in snapshots), snapshots)
+
+    def test_s9b_destroyed_friendlies_do_not_consume_node_capacity(self) -> None:
+        snapshots = []
+        for reverse_order, round_trip in (
+            (False, False),
+            (True, False),
+            (False, True),
+            (True, True),
+        ):
+            with self.subTest(
+                reverse_order=reverse_order,
+                round_trip=round_trip,
+            ), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                state = _state(root, _graph(ab_cost=1000))
+                na, nb = stable_node_id("a"), stable_node_id("b")
+                edge = stable_edge_id("corridor", na, nb)
+                for index in range(3):
+                    force_id = f"dead-friendly-{index}"
+                    battalion_id = f"bn-dead-friendly-{index}"
+                    _add_force(state, force_id, battalion_id, Faction.NATO, "b")
+                    state.battalions[battalion_id].roster = []
+                if reverse_order:
+                    state.strategic_formations = dict(
+                        reversed(list(state.strategic_formations.items()))
+                    )
+                    state.battalions = dict(reversed(list(state.battalions.items())))
+                if round_trip:
+                    campaign_path = root / "capacity.json"
+                    save_campaign(state, campaign_path)
+                    state = load_campaign(campaign_path)
+
+                mover = state.strategic_formations["sf-n"]
+                capacity_open = can_enter_node_friendly_stack(state, mover, nb)
+                issue_move_order(
+                    state,
+                    "sf-n",
+                    path_node_ids=[na, nb],
+                    path_edge_ids=[edge],
+                    order_id="s9b-live-through-dead-capacity",
+                )
+                committed = tuple(
+                    commit_move_orders(state, faction=Faction.NATO.value)
+                )
+                activate_committed_orders(state)
+                report = advance_operational_tick(state)
+                battle = state.pending_battle
+                snapshots.append(
+                    (
+                        capacity_open,
+                        committed,
+                        report["swept_kind"],
+                        battle.encounter_kind if battle is not None else "",
+                        tuple(
+                            sorted(
+                                participant.battalion_id
+                                for participant in (
+                                    battle.attacking_participants
+                                    + battle.defending_participants
+                                )
+                            )
+                        )
+                        if battle is not None
+                        else (),
+                    )
+                )
+
+        expected = (
+            True,
+            ("sf-n",),
+            "node_contact",
+            "node_contact",
+            ("bn-n", "bn-r"),
+        )
+        self.assertTrue(all(snapshot == expected for snapshot in snapshots), snapshots)
 
 
 if __name__ == "__main__":

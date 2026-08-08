@@ -76,6 +76,24 @@ def formation_is_combat_capable(
     )
 
 
+def combat_capable_formations_at_node(
+    state: CampaignState,
+    node_id: str,
+    *,
+    excluding_formation_id: str | None = None,
+) -> list[StrategicFormation]:
+    """Authoritative physical occupants for contact and node capacity."""
+    return [
+        force
+        for force in formations_at_node(
+            state,
+            node_id,
+            excluding_formation_id=excluding_formation_id,
+        )
+        if formation_is_combat_capable(state, force)
+    ]
+
+
 def enemy_formations_at_node(
     state: CampaignState,
     node_id: str,
@@ -84,11 +102,9 @@ def enemy_formations_at_node(
     excluding_formation_id: str | None = None,
 ) -> list[StrategicFormation]:
     enemies: list[StrategicFormation] = []
-    for force in formations_at_node(
+    for force in combat_capable_formations_at_node(
         state, node_id, excluding_formation_id=excluding_formation_id
     ):
-        if not formation_is_combat_capable(state, force):
-            continue
         if force.faction == faction:
             continue
         if are_allied(state, faction, force.faction):
@@ -105,7 +121,7 @@ def friendly_formations_at_node(
     excluding_formation_id: str | None = None,
 ) -> list[StrategicFormation]:
     friends: list[StrategicFormation] = []
-    for force in formations_at_node(
+    for force in combat_capable_formations_at_node(
         state, node_id, excluding_formation_id=excluding_formation_id
     ):
         if force.faction == faction or are_allied(state, faction, force.faction):
@@ -114,11 +130,7 @@ def friendly_formations_at_node(
 
 
 def node_is_contested(state: CampaignState, node_id: str) -> bool:
-    present = [
-        force
-        for force in formations_at_node(state, node_id)
-        if formation_is_combat_capable(state, force)
-    ]
+    present = combat_capable_formations_at_node(state, node_id)
     if len(present) < 2:
         return False
     factions = {force.faction for force in present}
@@ -156,11 +168,7 @@ def coalition_sides_at_node(
     seed_attacker: StrategicFormation,
 ) -> tuple[list[StrategicFormation], list[StrategicFormation]]:
     """Split all formations on a node into attacker coalition vs defender coalition."""
-    present = [
-        force
-        for force in formations_at_node(state, node_id)
-        if formation_is_combat_capable(state, force)
-    ]
+    present = combat_capable_formations_at_node(state, node_id)
     attackers: list[StrategicFormation] = []
     defenders: list[StrategicFormation] = []
     for force in present:
@@ -507,11 +515,7 @@ def detect_static_node_contacts(state: CampaignState) -> list[str]:
             by_node.setdefault(node_id, []).append(force)
     for node_id in sorted(by_node):
         present = sorted(
-            (
-                force
-                for force in by_node[node_id]
-                if formation_is_combat_capable(state, force)
-            ),
+            combat_capable_formations_at_node(state, node_id),
             key=lambda value: value.strategic_formation_id,
         )
         for index, left in enumerate(present):

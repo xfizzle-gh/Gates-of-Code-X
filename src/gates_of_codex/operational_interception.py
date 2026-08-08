@@ -208,9 +208,9 @@ def detect_swept_contacts(
             by_node_static.setdefault(item.stationary_node_id, []).append(item)
     # Also include non-movers already at nodes from state.
     from .operational_contact import (
+        combat_capable_formations_at_node,
         formation_at_node_id,
         formation_is_combat_capable,
-        formations_at_node,
     )
 
     occupied_nodes = {
@@ -219,11 +219,7 @@ def detect_swept_contacts(
         if (nid := formation_at_node_id(force))
     }
     for node_id in sorted(occupied_nodes):
-        present = [
-            force
-            for force in formations_at_node(state, node_id)
-            if formation_is_combat_capable(state, force)
-        ]
+        present = combat_capable_formations_at_node(state, node_id)
         if len(present) < 2:
             continue
         has_hostile = False
@@ -310,8 +306,7 @@ def detect_swept_contacts(
         # Occupants already at node (entry contact against existing hostiles).
         already = {
             f.strategic_formation_id: f
-            for f in formations_at_node(state, node_id)
-            if formation_is_combat_capable(state, f)
+            for f in combat_capable_formations_at_node(state, node_id)
         }
         # Simultaneous: 2+ arrivals at same exact time with hostile pair among them
         # or vs already-present hostiles.
@@ -539,16 +534,16 @@ def apply_simultaneous_node_arrivals(
     previous legal node and are blocked (no active retry after the battle).
     """
     from .operational_contact import (
-        formations_at_node,
-        max_friendly_formations_per_node,
-        try_create_node_contact_battle,
+        combat_capable_formations_at_node,
         choose_static_attacker_defender,
+        try_create_node_contact_battle,
     )
 
     node_id = contact.node_id
     by_id = {item.formation_id: item for item in intervals}
     already = {
-        f.strategic_formation_id: f for f in formations_at_node(state, node_id)
+        f.strategic_formation_id: f
+        for f in combat_capable_formations_at_node(state, node_id)
     }
     # Only arrivals at this node at the selected contact's exact rational time.
     # Later same-node arrivals this tick stay put and do not join the battle.
@@ -659,10 +654,11 @@ def reject_overflow_arrivals_at_node(
     Used when an earlier contact (e.g. t=0 static) already opened a battle at the
     node so later arrivals this tick never enter, but capacity denials still apply.
     """
-    from .operational_contact import formations_at_node
+    from .operational_contact import combat_capable_formations_at_node
 
     already = {
-        f.strategic_formation_id: f for f in formations_at_node(state, node_id)
+        f.strategic_formation_id: f
+        for f in combat_capable_formations_at_node(state, node_id)
     }
     by_id = {item.formation_id: item for item in intervals}
     arrivals = [
