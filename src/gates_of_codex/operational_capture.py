@@ -153,6 +153,7 @@ def ensure_site_control_state(state: CampaignState) -> dict[str, Any]:
             )
         prior = existing.get(site_id)
         if prior is None:
+            metadata = site.get("metadata") if isinstance(site.get("metadata"), dict) else {}
             control[site_id] = {
                 "controller_faction": _initial_controller(state, site),
                 "claimant_faction": None,
@@ -162,8 +163,13 @@ def ensure_site_control_state(state: CampaignState) -> dict[str, Any]:
                 "province_id": province_id,
                 "route_node_id": node_id,
                 "control_weight_milli": weight,
+                "authored_site_id": site_id,
+                "site_kind": str(site.get("kind") or ""),
+                "authored_site": metadata.get("synthetic_anchor_control_site") is not True,
+                "synthetic_anchor_control_site": metadata.get("synthetic_anchor_control_site") is True,
             }
             continue
+        metadata = site.get("metadata") if isinstance(site.get("metadata"), dict) else {}
         control[site_id] = _validate_control_row(
             prior,
             site_id=site_id,
@@ -172,6 +178,9 @@ def ensure_site_control_state(state: CampaignState) -> dict[str, Any]:
             node_id=node_id,
             weight=weight,
             default_controller=_initial_controller(state, site),
+            site_kind=str(site.get("kind") or ""),
+            authored_site=metadata.get("synthetic_anchor_control_site") is not True,
+            synthetic_anchor=metadata.get("synthetic_anchor_control_site") is True,
         )
     set_site_control_state(state, control)
     return {"ensured": True, "site_count": len(control)}
@@ -320,6 +329,9 @@ def _validate_control_row(
     node_id: str,
     weight: int,
     default_controller: str | None,
+    site_kind: str,
+    authored_site: bool,
+    synthetic_anchor: bool,
 ) -> dict[str, Any]:
     progress = require_strict_int(
         prior.get("progress_ticks", 0),
@@ -361,6 +373,10 @@ def _validate_control_row(
         "province_id": province_id or str(prior.get("province_id") or ""),
         "route_node_id": node_id or str(prior.get("route_node_id") or ""),
         "control_weight_milli": row_weight,
+        "authored_site_id": site_id,
+        "site_kind": site_kind,
+        "authored_site": authored_site,
+        "synthetic_anchor_control_site": synthetic_anchor,
     }
 
 

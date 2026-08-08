@@ -197,8 +197,58 @@ class S11OperationalAITests(unittest.TestCase):
                 defender_formation_id="enemy-c",
             )
             view = build_operational_planning_view(state, Faction.NATO)
+            payload = json.loads(view.campaign_payload_json)
+            self.assertIsNone(payload["pending_battle"])
+            self.assertTrue(payload["map_metadata"]["operational_pause"])
             intents = plan_operational_intents(view, Faction.NATO, 0)
             self.assertEqual(1, len(intents))
+            self.assertEqual("hold_pending_battle", intents[0].action)
+
+    def test_unrelated_pending_battle_is_only_a_public_pause_marker(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            state = _state(Path(td))
+            state.factions["ukr"] = type(state.factions["nato"])(Faction.UKRAINE)
+            state.map_metadata["operational_edge_retreat_nodes"] = {
+                "hidden-retreat-formation": "hidden-retreat-node"
+            }
+            state.pending_battle = PendingBattle(
+                battle_id="hidden-battle-id",
+                origin_province_id="hidden-origin",
+                target_province_id="hidden-target",
+                attacker_faction=Faction.NATO,
+                defender_faction=Faction.RUSSIA,
+                attacking_participants=[
+                    BattleParticipant(
+                        "bn-recon-a", Faction.NATO, "hidden-stage",
+                        contact_initiator=True, ambush_triggered=True,
+                    )
+                ],
+                defending_participants=[
+                    BattleParticipant("bn-enemy-c", Faction.RUSSIA, "hidden-defender")
+                ],
+                player_faction=Faction.NATO,
+                player_is_attacker=True,
+                encounter_node_id="hidden-node",
+                encounter_kind="hidden-ambush",
+                attacker_formation_id="recon-a",
+                defender_formation_id="enemy-c",
+                encounter_edge_id="hidden-edge",
+                encounter_progress_milli=777,
+                encounter_pixel=[99, 88],
+            )
+            view = build_operational_planning_view(state, Faction.UKRAINE)
+            payload = json.loads(view.campaign_payload_json)
+            self.assertIsNone(payload["pending_battle"])
+            self.assertTrue(payload["map_metadata"]["operational_pause"])
+            for secret in (
+                "hidden-battle-id", "hidden-origin", "hidden-target",
+                "hidden-stage", "hidden-defender", "hidden-node",
+                "hidden-edge", "hidden-ambush", '"progress_milli":777',
+                '"contact_initiator":true', '"ambush_triggered":true',
+                "hidden-retreat-formation", "hidden-retreat-node",
+            ):
+                self.assertNotIn(secret, view.campaign_payload_json)
+            intents = plan_operational_intents(view, Faction.UKRAINE, 0)
             self.assertEqual("hold_pending_battle", intents[0].action)
 
     def test_fog_off_uses_complete_two_stage_view(self) -> None:

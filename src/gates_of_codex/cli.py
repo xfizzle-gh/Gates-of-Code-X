@@ -185,8 +185,13 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "auto-resolve":
         state = load_campaign(args.campaign)
-        winner = CampaignEngine(state).auto_resolve_pending_battle()
-        save_campaign(state, args.campaign)
+        engine = CampaignEngine(state)
+        winner = engine.auto_resolve_pending_battle()
+        save_campaign(
+            state,
+            args.campaign,
+            observation_context=engine.observation_context,
+        )
         print(winner.value)
         return 0
     if args.command == "end-turn":
@@ -230,7 +235,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "run-ai-turn":
         state = load_campaign(args.campaign)
         faction = Faction(args.faction)
-        actions = StrategicAI(state, random_seed=args.seed).take_turn(faction)
+        ai = StrategicAI(state, random_seed=args.seed)
+        actions = ai.take_turn(faction)
         next_faction = None
         if args.advance_turn:
             if state.current_faction != faction:
@@ -238,7 +244,11 @@ def main(argv: list[str] | None = None) -> int:
                     f"Cannot advance {faction.value}; current faction is {state.current_faction.value}"
                 )
             next_faction = CampaignEngine(state).end_turn().value
-        save_campaign(state, args.campaign)
+        save_campaign(
+            state,
+            args.campaign,
+            observation_context=ai.observation_context,
+        )
         print(json.dumps({
             "faction": faction.value,
             "actions": [asdict(action) for action in actions],

@@ -27,6 +27,10 @@ class StrategicAI:
         self.random_seed = int(random_seed)
         self.engine = CampaignEngine(state, random_seed=random_seed)
 
+    @property
+    def observation_context(self):
+        return self.engine.observation_context
+
     def take_turn(self, faction: Faction) -> list[StrategicAction]:
         if faction.value not in self.state.factions:
             raise ValueError(f"Unknown strategic faction: {faction.value}")

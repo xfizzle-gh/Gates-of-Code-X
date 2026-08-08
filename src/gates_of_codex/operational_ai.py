@@ -246,6 +246,7 @@ def _fog_filtered_planning_payload(
     payload = copy.deepcopy(state.to_dict())
     payload["fog_of_war_enabled"] = False
     payload["knowledge_by_observer"] = {}
+    payload["pending_battle"] = None
 
     friendly_force_ids = {
         force.strategic_formation_id
@@ -317,11 +318,13 @@ def _fog_filtered_planning_payload(
     # Hidden dynamic site progress is not part of the planning view.
     metadata = payload.get("map_metadata", {})
     if isinstance(metadata, dict):
+        metadata["operational_pause"] = state.pending_battle is not None
         metadata.pop("operational_site_control", None)
         metadata.pop("strategic_actor_runtime", None)
         metadata.pop("actor_content_runtime", None)
         metadata.pop("last_round_economy", None)
         metadata.pop("unit_presentations", None)
+        metadata.pop("operational_edge_retreat_nodes", None)
 
     graph = load_operational_graph_for_state(state)
     public_edge_facing: dict[str, str] = {}
@@ -442,7 +445,9 @@ def _plan_and_issue_on_state(
     is folded into stable order ids only (no RNG).
     """
     del seed  # determinism: no stochastic ranking in S7
-    if state.pending_battle is not None:
+    if state.pending_battle is not None or bool(
+        state.map_metadata.get("operational_pause", False)
+    ):
         return [
             StrategicAction(
                 battalion_id="",

@@ -167,6 +167,9 @@ def validate_s11_observer_authority(
     for scope, rows in state.knowledge_by_observer.items():
         if not isinstance(scope, str) or not scope.strip() or not isinstance(rows, dict):
             raise ValueError("invalid_knowledge_observer_store")
+        if not rows:
+            _validate_persisted_observer_scope_shape(state, scope)
+            continue
         _validate_persisted_observer_scope(state, scope)
         subjects = seen_subjects.setdefault(scope, set())
         for key, record in rows.items():
@@ -186,6 +189,20 @@ def validate_s11_observer_authority(
                     raise ValueError("contact_record_key_mismatch")
             elif record.record_key != f"formation:{record.subject_formation_id}":
                 raise ValueError("formation_record_key_mismatch")
+
+
+def _validate_persisted_observer_scope_shape(
+    state: CampaignState, scope: str
+) -> None:
+    """Validate an empty store key without deriving coalition authority."""
+    kind, separator, authority_id = scope.partition(":")
+    if separator != ":" or not authority_id:
+        raise ValueError("invalid_knowledge_observer_scope")
+    if kind == "faction" and authority_id in state.factions:
+        return
+    if kind == "alliance" and authority_id in state.alliances:
+        return
+    raise ValueError("invalid_knowledge_observer_scope")
 
 def _validate_persisted_observer_scope(
     state: CampaignState, scope: str
@@ -218,6 +235,80 @@ class ObservationMutationContext:
     confirmed_removed_formation_ids_by_observer: Mapping[str, frozenset[str]] = field(
         default_factory=dict
     )
+
+
+def merge_observation_mutation_contexts(
+    *contexts: ObservationMutationContext | None,
+) -> ObservationMutationContext:
+    merged: dict[str, set[str]] = {}
+    for context in contexts:
+        if context is None:
+            continue
+        for scope, subject_ids in (
+            context.confirmed_removed_formation_ids_by_observer.items()
+        ):
+            merged.setdefault(scope, set()).update(subject_ids)
+    return ObservationMutationContext(
+        {
+            scope: frozenset(sorted(subject_ids))
+            for scope, subject_ids in sorted(merged.items())
+            if subject_ids
+        }
+    )
+
+
+def capture_observation_removal_witnesses(
+    state: CampaignState,
+    subject_formation_ids: set[str] | frozenset[str],
+    *,
+    participating_factions: set[Faction] | frozenset[Faction] = frozenset(),
+    authoritative_witness_factions: set[Faction] | frozenset[Faction] = frozenset(),
+) -> dict[str, frozenset[str]]:
+    """Capture observer scopes that can confirm each subject before deletion."""
+    subjects = frozenset(str(item) for item in subject_formation_ids if str(item))
+    if not subjects:
+        return {}
+    if not state.fog_of_war_enabled and not any(
+        bool(rows) for rows in state.knowledge_by_observer.values()
+    ):
+        return {subject_id: frozenset() for subject_id in subjects}
+
+    representatives: dict[str, Faction] = {}
+    for faction_id in sorted(state.factions):
+        faction = Faction(faction_id)
+        representatives.setdefault(observer_scope_id(state, faction), faction)
+
+    result: dict[str, set[str]] = {subject_id: set() for subject_id in subjects}
+    participant_set = frozenset(participating_factions)
+    explicit_set = frozenset(authoritative_witness_factions)
+    for scope, representative in sorted(representatives.items()):
+        coalition = observer_factions(state, representative)
+        blanket_witness = bool(
+            coalition.intersection(participant_set)
+            or coalition.intersection(explicit_set)
+        )
+        current = project_operational_observation(state, representative)
+        persisted = state.knowledge_by_observer.get(scope, {})
+        persisted_by_subject = {
+            row.subject_formation_id: row for row in persisted.values()
+        }
+        for subject_id in subjects:
+            observed = current.get(subject_id)
+            prior = persisted_by_subject.get(subject_id)
+            fully_observed = (
+                observed is not None
+                and observed.tier == InformationTier.FULLY_OBSERVED
+            ) or (
+                prior is not None
+                and prior.current
+                and prior.tier == InformationTier.FULLY_OBSERVED
+            )
+            if blanket_witness or fully_observed:
+                result[subject_id].add(scope)
+    return {
+        subject_id: frozenset(sorted(scopes))
+        for subject_id, scopes in sorted(result.items())
+    }
 
 
 _TIER_RANK = {
@@ -623,12 +714,42 @@ def _site_source_coverage(
     nodes_by_id: dict[str, dict[str, Any]],
     incident: dict[str, set[str]],
 ) -> dict[str, set[str]]:
-    if graph is None:
-        return {}
     from .operational_capture import get_site_control_state
 
     control = get_site_control_state(state)
     result: dict[str, set[str]] = {}
+    if graph is None:
+        for storage_key, control_row in sorted(control.items()):
+            if not isinstance(control_row, dict):
+                continue
+            site_id = str(
+                control_row.get("authored_site_id") or storage_key or ""
+            )
+            province_id = str(control_row.get("province_id") or "")
+            if (
+                not site_id
+                or control_row.get("authored_site") is not True
+                or str(control_row.get("site_kind") or "")
+                not in {"observation", "command"}
+                or control_row.get("synthetic_anchor_control_site") is True
+                or not province_id
+                or province_id not in state.provinces
+            ):
+                continue
+            try:
+                owner = Faction(str(control_row.get("controller_faction")))
+            except (TypeError, ValueError):
+                continue
+            if owner not in coalition:
+                continue
+            covered = {f"province:{province_id}"}
+            covered.update(
+                f"province:{neighbor_id}"
+                for neighbor_id in state.provinces[province_id].neighbors
+            )
+            result.setdefault(site_id, set()).update(covered)
+        return result
+
     for site in graph.get("sites", []):
         if not isinstance(site, dict):
             continue
@@ -644,13 +765,9 @@ def _site_source_coverage(
         ):
             continue
         control_row = control.get(site_id)
-        if control_row is not None:
-            raw_owner = control_row.get("controller_faction")
-        else:
-            raw_owner = site.get("owner_faction")
-            if not raw_owner:
-                province = state.provinces.get(str(site.get("province_id") or ""))
-                raw_owner = province.owner.value if province is not None else None
+        if control_row is None:
+            continue
+        raw_owner = control_row.get("controller_faction")
         try:
             owner = Faction(str(raw_owner))
         except (TypeError, ValueError):

@@ -22,6 +22,7 @@ from gates_of_codex.observation import (
     S11_CAMPAIGN_SCHEMA_VERSION,
     opaque_contact_id,
     observer_scope_id,
+    project_operational_observation,
 )
 from gates_of_codex.state_io import campaign_from_dict
 
@@ -181,6 +182,43 @@ class S11SchemaTests(unittest.TestCase):
 
 
 class S11ObserverScopeTests(unittest.TestCase):
+    @staticmethod
+    def _overlapping_state() -> CampaignState:
+        state = _state()
+        state.schema_version = 11
+        state.alliances = {
+            "one": Alliance("one", "One", [Faction.NATO, Faction.RUSSIA]),
+            "two": Alliance("two", "Two", [Faction.NATO, Faction.RUSSIA]),
+        }
+        return state
+
+    def test_empty_observer_dictionaries_do_not_request_authority(self) -> None:
+        cases = (
+            {},
+            {"faction:nato": {}},
+            {"faction:nato": {}, "faction:rusa": {}},
+        )
+        for stores in cases:
+            with self.subTest(stores=sorted(stores)):
+                state = self._overlapping_state()
+                state.knowledge_by_observer = copy.deepcopy(stores)
+                before = copy.deepcopy(state.to_dict())
+                state.validate()
+                loaded = campaign_from_dict(state.to_dict())
+                loaded.validate()
+                self.assertEqual(before, state.to_dict())
+
+    def test_empty_stores_still_fail_when_observer_authority_is_active(self) -> None:
+        state = self._overlapping_state()
+        state.knowledge_by_observer = {"faction:nato": {}}
+        state.fog_of_war_enabled = True
+        with self.assertRaisesRegex(ValueError, "ambiguous_observer_scope"):
+            state.validate()
+
+        state.fog_of_war_enabled = False
+        with self.assertRaisesRegex(ValueError, "ambiguous_observer_scope"):
+            project_operational_observation(state, Faction.NATO)
+
     def test_scope_is_faction_or_single_alliance(self) -> None:
         state = _state()
         self.assertEqual("faction:nato", observer_scope_id(state, Faction.NATO))
@@ -358,6 +396,12 @@ class S11ObserverScopeTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(ValueError, "fully_observed_edge_progress_required"):
             fully_observed.validate()
+
+        for malformed in (-1, 1001):
+            with self.subTest(last_seen_progress_milli=malformed):
+                fully_observed.last_seen_progress_milli = malformed
+                with self.assertRaisesRegex(ValueError, "last_seen_progress_milli"):
+                    fully_observed.validate()
 
 
 if __name__ == "__main__":

@@ -256,6 +256,77 @@ class DetectionCombinationTests(unittest.TestCase):
             observed = project_operational_observation(state, Faction.NATO)["enemy-c"]
             self.assertEqual(InformationTier.FULLY_OBSERVED, observed.tier)
 
+    def test_no_graph_sites_use_persisted_authored_province_authority(self) -> None:
+        cases = (
+            ([ _site("obs", "nb", "b", "observation") ], False, "c", InformationTier.CONTACT, ["site:obs"]),
+            ([ _site("obs", "nb", "b", "observation"), _site("cmd", "nb", "b", "command") ], False, "c", InformationTier.IDENTIFIED, ["site:cmd", "site:obs"]),
+            ([ _site("obs", "nb", "b", "observation") ], True, "b", InformationTier.ASSESSED, ["recon:recon-a", "site:obs"]),
+            ([ _site("obs", "nb", "b", "observation") ], False, "b", InformationTier.CONTACT, ["site:obs"]),
+        )
+        for sites, recon, province, expected, sources in cases:
+            with self.subTest(expected=expected.value, recon=recon, province=province), tempfile.TemporaryDirectory() as td:
+                state = _state(Path(td), sites=sites)
+                state.strategic_formations["recon-a"].recon_capability = recon
+                enemy = state.strategic_formations["enemy-c"]
+                enemy.province_id = province
+                state.battalions["bn-enemy-c"].province_id = province
+                state.map_metadata.pop("operational_graph", None)
+                observed = project_operational_observation(state, Faction.NATO)["enemy-c"]
+                self.assertEqual(expected, observed.tier)
+                self.assertEqual(sources, observed.source_ids)
+
+    def test_no_graph_sites_reject_ineligible_synthetic_uncontrolled_and_hostile(self) -> None:
+        sites = [
+            _site("objective", "nb", "b", "objective"),
+            _site("synthetic", "nb", "b", "observation", synthetic=True),
+            _site("uncontrolled", "nb", "b", "observation"),
+            _site("hostile", "nb", "b", "command"),
+        ]
+        with tempfile.TemporaryDirectory() as td:
+            state = _state(Path(td), sites=sites)
+            state.strategic_formations["recon-a"].recon_capability = False
+            control = state.map_metadata["operational_site_control"]
+            control["uncontrolled"]["controller_faction"] = None
+            control["hostile"]["controller_faction"] = "rusa"
+            state.map_metadata.pop("operational_graph", None)
+            self.assertNotIn(
+                "enemy-c", project_operational_observation(state, Faction.NATO)
+            )
+
+    def test_no_graph_duplicate_authored_source_ids_are_deduplicated(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            state = _state(Path(td), sites=[_site("obs", "nb", "b", "observation")])
+            state.strategic_formations["recon-a"].recon_capability = False
+            duplicate = dict(state.map_metadata["operational_site_control"]["obs"])
+            duplicate["authored_site_id"] = "obs"
+            state.map_metadata["operational_site_control"]["duplicate-storage-key"] = duplicate
+            state.map_metadata.pop("operational_graph", None)
+            observed = project_operational_observation(state, Faction.NATO)["enemy-c"]
+            self.assertEqual(InformationTier.CONTACT, observed.tier)
+            self.assertEqual(["site:obs"], observed.source_ids)
+
+    def test_no_graph_ambush_reduces_site_tier_and_fog_off_stays_complete(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            state = _state(
+                Path(td),
+                sites=[
+                    _site("obs", "nb", "b", "observation"),
+                    _site("cmd", "nb", "b", "command"),
+                ],
+            )
+            state.strategic_formations["recon-a"].recon_capability = False
+            state.map_metadata.pop("operational_graph", None)
+            enemy = state.strategic_formations["enemy-c"]
+            enemy.stance = "ambush"
+            enemy.ambush_ready_tick = 1
+            observed = project_operational_observation(state, Faction.NATO)["enemy-c"]
+            self.assertEqual(InformationTier.CONTACT, observed.tier)
+
+            state.fog_of_war_enabled = False
+            from gates_of_codex.frontend import build_frontend_snapshot
+            snapshot = build_frontend_snapshot(state)
+            self.assertEqual(2, len(snapshot["strategic_formations"]))
+
     def test_ambush_reduces_noncontact_but_not_direct(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             state = _state(Path(td))

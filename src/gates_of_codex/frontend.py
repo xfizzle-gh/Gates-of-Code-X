@@ -112,7 +112,16 @@ def build_frontend_snapshot(
         faction_id: supply_status_for_faction(state, Faction(faction_id))
         for faction_id in sorted(state.factions)
     }
-    front_options = list_front_options(state, state.current_faction)
+    option_faction = state.current_faction
+    if state.fog_of_war_enabled:
+        human_factions = [
+            row.faction for row in state.factions.values()
+            if row.is_human_controlled
+        ]
+        if len(human_factions) != 1:
+            raise ValueError("fog_of_war_requires_single_human_faction")
+        option_faction = human_factions[0]
+    front_options = list_front_options(state, option_faction)
     from .presentation import build_stack_presentations
 
     stack_payload = build_stack_presentations(state, front_options)
@@ -400,8 +409,17 @@ def _apply_s11_frontend_filter(snapshot: dict, state: CampaignState) -> dict:
         for province_id, items in snapshot.get("battalion_stacks", {}).items()
         if any(item in allowed_battalions for item in items)
     }
+    actionable_battalions = {
+        battalion.battalion_id
+        for battalion in state.battalions.values()
+        if battalion.faction == observer
+    }
     snapshot["battalion_presentations"] = {
-        key: _sanitize_battalion_presentation(value, allowed_battalions)
+        key: _sanitize_battalion_presentation(
+            value,
+            allowed_battalions,
+            actionable=key in actionable_battalions,
+        )
         for key, value in snapshot.get("battalion_presentations", {}).items()
         if key in allowed_battalions
     }
@@ -416,6 +434,10 @@ def _apply_s11_frontend_filter(snapshot: dict, state: CampaignState) -> dict:
                 state.strategic_formations.get(key) is not None
                 and state.strategic_formations[key].faction in coalition
             ),
+            actionable=(
+                state.strategic_formations.get(key) is not None
+                and state.strategic_formations[key].faction == observer
+            ),
         )
         for key, value in snapshot.get(
             "strategic_formation_presentations", {}
@@ -423,7 +445,10 @@ def _apply_s11_frontend_filter(snapshot: dict, state: CampaignState) -> dict:
         if key in fully_observed_subjects
     }
     snapshot["stack_presentations"] = {
-        province_id: copy.deepcopy(row)
+        province_id: _sanitize_stack_presentation(
+            row,
+            actionable_battalions=actionable_battalions,
+        )
         for province_id, row in snapshot.get("stack_presentations", {}).items()
         if isinstance(row, dict)
         and bool(row.get("battalion_ids"))
@@ -530,16 +555,24 @@ def _apply_s11_frontend_filter(snapshot: dict, state: CampaignState) -> dict:
             if key not in {
                 "operational_site_control", "strategic_actor_runtime",
                 "actor_content_runtime", "operational_objectives",
-                "last_round_economy", "unit_presentations"
+                "last_round_economy", "unit_presentations",
+                "operational_edge_retreat_nodes"
             }
         }
 
     snapshot["front_options"] = [
         row
         for row in snapshot.get("front_options", [])
-        if not row.get("enemies")
-        or all(item in allowed_battalions for item in row.get("enemies", []))
+        if row.get("battalion_id") in actionable_battalions
+        and all(item in allowed_battalions for item in row.get("enemies", []))
     ]
+
+    if not _observer_participates_in_pending_battle(state, coalition):
+        snapshot["pending_battle"] = (
+            {"operational_pause": True}
+            if state.pending_battle is not None
+            else None
+        )
 
     snapshot["fog_of_war"] = {
         "enabled": True,
@@ -585,7 +618,9 @@ def _frontend_contact_row(state: CampaignState, record, *, stale: bool = False) 
 
 
 def _observation_display_pixel(state: CampaignState, record) -> list[int] | None:
-    from .operational_position import load_operational_graph_for_state
+    from .models import InformationTier
+    from .operational_position import _pixel_from_position, load_operational_graph_for_state
+    from .operational_schema import FormationOperationalPosition, PositionMode
 
     graph = load_operational_graph_for_state(state)
     if graph is not None:
@@ -595,6 +630,21 @@ def _observation_display_pixel(state: CampaignState, record) -> list[int] | None
             if isinstance(pixel, list) and len(pixel) >= 2:
                 return [int(pixel[0]), int(pixel[1])]
         if record.last_seen_edge_id:
+            if (
+                record.tier == InformationTier.FULLY_OBSERVED
+                and record.last_seen_progress_milli is not None
+            ):
+                exact = _pixel_from_position(
+                    FormationOperationalPosition(
+                        mode=PositionMode.ON_EDGE.value,
+                        edge_id=record.last_seen_edge_id,
+                        progress_milli=record.last_seen_progress_milli,
+                        facing_node_id=record.last_seen_direction or None,
+                    ),
+                    graph,
+                )
+                if exact is not None:
+                    return exact
             edge = next((row for row in graph.get("edges", []) if isinstance(row, dict) and str(row.get("edge_id")) == record.last_seen_edge_id), None)
             if edge is not None:
                 a, b = nodes.get(str(edge.get("a"))), nodes.get(str(edge.get("b")))
@@ -606,20 +656,29 @@ def _observation_display_pixel(state: CampaignState, record) -> list[int] | None
 
 
 def _sanitize_strategic_formation_presentation(
-    value: dict, *, friendly: bool
+    value: dict, *, friendly: bool, actionable: bool
 ) -> dict:
     result = copy.deepcopy(value)
     if not friendly:
         # Enemy movement orders remain hidden at every information tier.
         result.pop("move_order", None)
+    if not actionable:
+        result["can_act"] = False
     return result
 
 
 def _sanitize_battalion_presentation(
     value: dict,
     allowed_battalions: set[str],
+    *,
+    actionable: bool,
 ) -> dict:
     result = copy.deepcopy(value)
+    if not actionable:
+        result["legal_options"] = []
+        result["legal_option_count"] = 0
+        result["can_act"] = False
+        return result
     legal = [
         row
         for row in result.get("legal_options", [])
@@ -628,7 +687,36 @@ def _sanitize_battalion_presentation(
     ]
     result["legal_options"] = legal
     result["legal_option_count"] = len(legal)
+    result["can_act"] = bool(legal)
     return result
+
+
+def _sanitize_stack_presentation(
+    value: dict,
+    *,
+    actionable_battalions: set[str],
+) -> dict:
+    result = copy.deepcopy(value)
+    result["can_act"] = any(
+        item in actionable_battalions
+        for item in result.get("battalion_ids", [])
+    )
+    return result
+
+
+def _observer_participates_in_pending_battle(
+    state: CampaignState,
+    coalition: frozenset[Faction],
+) -> bool:
+    pending = state.pending_battle
+    if pending is None:
+        return False
+    return any(
+        participant.faction in coalition
+        for participant in (
+            pending.attacking_participants + pending.defending_participants
+        )
+    )
 
 
 def write_frontend_snapshot(
