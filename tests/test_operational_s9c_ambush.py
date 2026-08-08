@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import tempfile
 import unittest
@@ -40,7 +41,7 @@ from gates_of_codex.operational_schema import (
     stable_edge_id,
     stable_node_id,
 )
-from gates_of_codex.state_io import load_campaign, save_campaign
+from gates_of_codex.state_io import campaign_from_dict, load_campaign, save_campaign
 
 
 def _node(province_id: str, *, pixel: list[int]) -> dict:
@@ -203,6 +204,34 @@ def _add_force(
     return force
 
 
+def _pending_multi_battalion_payload(root: Path) -> dict:
+    state = _state(root)
+    defender = state.strategic_formations["sf-r"]
+    defender.battalion_ids.append("bn-r-extra")
+    state.battalions["bn-r-extra"] = _battalion(
+        "bn-r-extra",
+        "sf-r",
+        Faction.RUSSIA,
+        "b",
+    )
+    defender.stance = FormationStance.AMBUSH.value
+    defender.ambush_ready_tick = 0
+    node_a, node_b = stable_node_id("a"), stable_node_id("b")
+    issue_move_order(
+        state,
+        "sf-n",
+        path_node_ids=[node_a, node_b],
+        path_edge_ids=[stable_edge_id("corridor", node_a, node_b)],
+        order_id="ord-persisted-metadata",
+    )
+    commit_move_orders(state)
+    activate_committed_orders(state)
+    advance_operational_tick(state)
+    advance_operational_tick(state)
+    assert state.pending_battle is not None
+    return state.to_dict()
+
+
 class OperationalS9CAmbushReadinessTests(unittest.TestCase):
     def test_node_ambush_requires_one_complete_stationary_tick(self) -> None:
         with tempfile.TemporaryDirectory() as td:
@@ -259,6 +288,34 @@ class OperationalS9CAmbushReadinessTests(unittest.TestCase):
             advance_operational_tick(state)
 
             self.assertEqual(force.ambush_ready_tick, 1)
+
+    def test_destroyed_formations_never_prepare_or_retain_readiness(self) -> None:
+        for roster_shape in ("empty", "zero_quantity"):
+            with self.subTest(roster_shape=roster_shape), tempfile.TemporaryDirectory() as td:
+                root = Path(td)
+                state = _state(root)
+                force = state.strategic_formations["sf-n"]
+                force.stance = FormationStance.AMBUSH.value
+                battalion = state.battalions["bn-n"]
+                if roster_shape == "empty":
+                    battalion.roster = []
+                else:
+                    battalion.roster[0].quantity = 0
+
+                advance_operational_tick(state)
+                self.assertIsNone(force.ambush_ready_tick)
+
+                force.ambush_ready_tick = 0
+                refresh_ambush_readiness(state, completed_tick=1)
+                self.assertIsNone(force.ambush_ready_tick)
+
+                save_path = root / f"destroyed-{roster_shape}.json"
+                save_campaign(state, save_path)
+                loaded = load_campaign(save_path)
+                loaded_force = loaded.strategic_formations["sf-n"]
+                self.assertIsNone(loaded_force.ambush_ready_tick)
+                advance_operational_tick(loaded)
+                self.assertIsNone(loaded_force.ambush_ready_tick)
 
     def test_movement_and_stance_change_clear_readiness(self) -> None:
         with tempfile.TemporaryDirectory() as td:
@@ -736,6 +793,191 @@ class OperationalS9CAmbushStrengthTests(unittest.TestCase):
                 3450,
             )
             self.assertEqual(apply_strength_multiplier_milli(1001, 1150), 1151)
+
+    def test_flooring_applies_once_per_formation_before_side_aggregation(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            state = _state(Path(td))
+            first = state.strategic_formations["sf-r"]
+            first.battalion_ids.append("bn-r-extra")
+            state.battalions["bn-r-extra"] = _battalion(
+                "bn-r-extra",
+                "sf-r",
+                Faction.RUSSIA,
+                "b",
+            )
+            second = _add_force(
+                state,
+                "sf-r2",
+                "bn-r2",
+                Faction.RUSSIA,
+                "b",
+            )
+
+            for battalion_id in ("bn-r", "bn-r-extra", "bn-r2"):
+                battalion = state.battalions[battalion_id]
+                battalion.roster[0].category = "recon"
+                battalion.authorized_roster[0].category = "recon"
+                battalion.supply = 0
+                battalion.condition = 0
+            for force in (first, second):
+                force.stance = FormationStance.AMBUSH.value
+                force.ambush_ready_tick = 0
+
+            node_a, node_b = stable_node_id("a"), stable_node_id("b")
+            issue_move_order(
+                state,
+                "sf-n",
+                path_node_ids=[node_a, node_b],
+                path_edge_ids=[stable_edge_id("corridor", node_a, node_b)],
+                order_id="ord-formation-floor",
+            )
+            commit_move_orders(state)
+            activate_committed_orders(state)
+            advance_operational_tick(state)
+            advance_operational_tick(state)
+
+            assert state.pending_battle is not None
+            defenders = state.pending_battle.defending_participants
+            engine = CampaignEngine(state, random_seed=0)
+            first_rows = [
+                row
+                for row in defenders
+                if state.battalions[row.battalion_id].strategic_formation_id
+                == "sf-r"
+            ]
+            second_rows = [
+                row
+                for row in defenders
+                if state.battalions[row.battalion_id].strategic_formation_id
+                == "sf-r2"
+            ]
+
+            self.assertEqual(engine._combat_score_milli(state.battalions["bn-r"]), 112)
+            self.assertEqual(
+                engine._aggregate_participant_strength_milli(first_rows),
+                257,
+            )
+            self.assertEqual(
+                engine._aggregate_participant_strength_milli(second_rows),
+                128,
+            )
+            self.assertEqual(
+                engine._aggregate_participant_strength_milli(defenders),
+                385,
+            )
+            first_metadata = {
+                (
+                    row.contact_initiator,
+                    row.ambush_eligible,
+                    row.ambush_triggered,
+                    row.ambush_strength_multiplier_milli,
+                    row.ambush_readiness_consumed,
+                )
+                for row in first_rows
+            }
+            self.assertEqual(first_metadata, {(False, True, True, 1150, True)})
+            self.assertEqual(len(first_rows), 2)
+            self.assertEqual(len(second_rows), 1)
+
+
+class OperationalS9CAmbushPersistenceValidationTests(unittest.TestCase):
+    def test_persisted_metadata_rejects_non_boolean_and_invalid_multiplier_values(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            payload = _pending_multi_battalion_payload(Path(td))
+            bool_fields = (
+                "contact_initiator",
+                "ambush_eligible",
+                "ambush_triggered",
+                "ambush_readiness_consumed",
+            )
+            for field in bool_fields:
+                for invalid in ("false", 1):
+                    with self.subTest(field=field, invalid=invalid):
+                        malformed = copy.deepcopy(payload)
+                        malformed["pending_battle"]["defending_participants"][0][
+                            field
+                        ] = invalid
+                        with self.assertRaises(ValueError):
+                            campaign_from_dict(malformed)
+
+            for invalid in (0, 1001, 5000):
+                with self.subTest(multiplier=invalid):
+                    malformed = copy.deepcopy(payload)
+                    malformed["pending_battle"]["defending_participants"][0][
+                        "ambush_strength_multiplier_milli"
+                    ] = invalid
+                    with self.assertRaises(ValueError):
+                        campaign_from_dict(malformed)
+
+    def test_persisted_metadata_rejects_semantic_contradictions(self) -> None:
+        cases = {
+            "eligibility_trigger_mismatch": {
+                "ambush_eligible": True,
+                "ambush_triggered": False,
+                "ambush_strength_multiplier_milli": 1000,
+                "ambush_readiness_consumed": True,
+            },
+            "1150_without_trigger": {
+                "ambush_eligible": False,
+                "ambush_triggered": False,
+                "ambush_strength_multiplier_milli": 1150,
+                "ambush_readiness_consumed": True,
+            },
+            "trigger_with_1000": {
+                "ambush_eligible": True,
+                "ambush_triggered": True,
+                "ambush_strength_multiplier_milli": 1000,
+                "ambush_readiness_consumed": True,
+            },
+            "trigger_without_consumption": {
+                "ambush_eligible": True,
+                "ambush_triggered": True,
+                "ambush_strength_multiplier_milli": 1150,
+                "ambush_readiness_consumed": False,
+            },
+            "initiator_plus_trigger": {
+                "contact_initiator": True,
+                "ambush_eligible": True,
+                "ambush_triggered": True,
+                "ambush_strength_multiplier_milli": 1150,
+                "ambush_readiness_consumed": True,
+            },
+        }
+        with tempfile.TemporaryDirectory() as td:
+            payload = _pending_multi_battalion_payload(Path(td))
+            for name, changes in cases.items():
+                with self.subTest(case=name):
+                    malformed = copy.deepcopy(payload)
+                    row = malformed["pending_battle"]["attacking_participants"][0]
+                    row.update(changes)
+                    with self.assertRaises(ValueError):
+                        campaign_from_dict(malformed)
+                    self.assertFalse(malformed["pending_battle"]["completed"])
+
+    def test_persisted_metadata_rejects_inconsistent_rows_for_one_formation(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            malformed = _pending_multi_battalion_payload(Path(td))
+            rows = malformed["pending_battle"]["defending_participants"]
+            self.assertEqual(len(rows), 2)
+            rows[1].update(
+                {
+                    "contact_initiator": False,
+                    "ambush_eligible": False,
+                    "ambush_triggered": False,
+                    "ambush_strength_multiplier_milli": 1000,
+                    "ambush_readiness_consumed": False,
+                }
+            )
+
+            with self.assertRaises(ValueError):
+                campaign_from_dict(malformed)
+            self.assertFalse(malformed["pending_battle"]["completed"])
 
 
 class OperationalS9CAmbushFinalizationTests(unittest.TestCase):

@@ -52,6 +52,8 @@ def refresh_ambush_readiness(
     completed_tick: int,
     moved_formation_ids: Iterable[str] = (),
 ) -> None:
+    from .operational_contact import formation_is_combat_capable
+
     moved = set(moved_formation_ids)
     pending_ids = _pending_formation_ids(state)
     for force in sorted(
@@ -63,7 +65,7 @@ def refresh_ambush_readiness(
             and force.strategic_formation_id not in pending_ids
             and effective_operational_stance(force) == FormationStance.AMBUSH.value
             and _has_fixed_position(force)
-            and any(bid in state.battalions for bid in force.battalion_ids)
+            and formation_is_combat_capable(state, force)
         )
         if not eligible:
             force.ambush_ready_tick = None

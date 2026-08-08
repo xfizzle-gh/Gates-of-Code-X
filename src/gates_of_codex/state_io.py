@@ -256,15 +256,24 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
                     faction=Faction(item["faction"]),
                     stage=item["stage"],
                     is_primary=item.get("is_primary", False),
-                    contact_initiator=item.get("contact_initiator", False),
-                    ambush_eligible=item.get("ambush_eligible", False),
-                    ambush_triggered=item.get("ambush_triggered", False),
-                    ambush_strength_multiplier_milli=_required_supply_int(
-                        item.get("ambush_strength_multiplier_milli", 1000),
-                        name="ambush_strength_multiplier_milli",
+                    contact_initiator=_strict_supply_bool(
+                        item.get("contact_initiator", False),
+                        name="contact_initiator",
                     ),
-                    ambush_readiness_consumed=item.get(
-                        "ambush_readiness_consumed", False
+                    ambush_eligible=_strict_supply_bool(
+                        item.get("ambush_eligible", False),
+                        name="ambush_eligible",
+                    ),
+                    ambush_triggered=_strict_supply_bool(
+                        item.get("ambush_triggered", False),
+                        name="ambush_triggered",
+                    ),
+                    ambush_strength_multiplier_milli=_ambush_multiplier(
+                        item.get("ambush_strength_multiplier_milli", 1000),
+                    ),
+                    ambush_readiness_consumed=_strict_supply_bool(
+                        item.get("ambush_readiness_consumed", False),
+                        name="ambush_readiness_consumed",
                     ),
                 )
                 for item in pending_data.get("attacking_participants", [])
@@ -275,15 +284,24 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
                     faction=Faction(item["faction"]),
                     stage=item["stage"],
                     is_primary=item.get("is_primary", False),
-                    contact_initiator=item.get("contact_initiator", False),
-                    ambush_eligible=item.get("ambush_eligible", False),
-                    ambush_triggered=item.get("ambush_triggered", False),
-                    ambush_strength_multiplier_milli=_required_supply_int(
-                        item.get("ambush_strength_multiplier_milli", 1000),
-                        name="ambush_strength_multiplier_milli",
+                    contact_initiator=_strict_supply_bool(
+                        item.get("contact_initiator", False),
+                        name="contact_initiator",
                     ),
-                    ambush_readiness_consumed=item.get(
-                        "ambush_readiness_consumed", False
+                    ambush_eligible=_strict_supply_bool(
+                        item.get("ambush_eligible", False),
+                        name="ambush_eligible",
+                    ),
+                    ambush_triggered=_strict_supply_bool(
+                        item.get("ambush_triggered", False),
+                        name="ambush_triggered",
+                    ),
+                    ambush_strength_multiplier_milli=_ambush_multiplier(
+                        item.get("ambush_strength_multiplier_milli", 1000),
+                    ),
+                    ambush_readiness_consumed=_strict_supply_bool(
+                        item.get("ambush_readiness_consumed", False),
+                        name="ambush_readiness_consumed",
                     ),
                 )
                 for item in pending_data.get("defending_participants", [])
@@ -304,6 +322,7 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
             encounter_pixel=_parse_encounter_pixel(pending_data.get("encounter_pixel")),
         )
         _validate_encounter_contract(pending)
+        _validate_pending_ambush_metadata(pending, battalions)
     state = CampaignState(
         campaign_name=data["campaign_name"],
         turn_number=int(data.get("turn_number", 1)),
@@ -391,6 +410,18 @@ def _strict_supply_bool(value: Any, *, name: str) -> bool:
     if not isinstance(value, bool):
         raise ValueError(f"{name} must be bool")
     return value
+
+
+def _ambush_multiplier(value: Any) -> int:
+    multiplier = _required_supply_int(
+        value,
+        name="ambush_strength_multiplier_milli",
+    )
+    if multiplier not in {1000, 1150}:
+        raise ValueError(
+            "ambush_strength_multiplier_milli must be exactly 1000 or 1150"
+        )
+    return multiplier
 
 
 def _required_supply_int(
@@ -489,3 +520,46 @@ def _validate_encounter_contract(pending: PendingBattle) -> None:
         return
 
     raise ValueError(f"unknown encounter_kind {kind!r}")
+
+
+def _validate_pending_ambush_metadata(
+    pending: PendingBattle,
+    battalions: dict[str, Battalion],
+) -> None:
+    metadata_by_formation: dict[str, tuple[bool, bool, bool, int, bool]] = {}
+    participants = pending.attacking_participants + pending.defending_participants
+    for participant in participants:
+        if participant.ambush_triggered != participant.ambush_eligible:
+            raise ValueError(
+                "ambush_triggered must equal ambush_eligible under perfect information"
+            )
+        if (
+            participant.ambush_strength_multiplier_milli == 1150
+        ) != participant.ambush_triggered:
+            raise ValueError(
+                "ambush_strength_multiplier_milli must be 1150 if and only if Ambush triggered"
+            )
+        if (
+            participant.ambush_triggered
+            and not participant.ambush_readiness_consumed
+        ):
+            raise ValueError("triggered Ambush requires readiness consumption")
+        if participant.contact_initiator and participant.ambush_triggered:
+            raise ValueError("contact initiator cannot trigger Ambush")
+
+        battalion = battalions.get(participant.battalion_id)
+        if battalion is None or not battalion.strategic_formation_id:
+            continue
+        formation_id = battalion.strategic_formation_id
+        metadata = (
+            participant.contact_initiator,
+            participant.ambush_eligible,
+            participant.ambush_triggered,
+            participant.ambush_strength_multiplier_milli,
+            participant.ambush_readiness_consumed,
+        )
+        previous = metadata_by_formation.setdefault(formation_id, metadata)
+        if previous != metadata:
+            raise ValueError(
+                f"formation {formation_id} has inconsistent persisted Ambush metadata"
+            )

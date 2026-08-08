@@ -326,7 +326,8 @@ class CampaignEngine:
     ) -> int:
         from .operational_ambush import apply_strength_multiplier_milli
 
-        total = 0
+        strength_by_formation: dict[str, int] = {}
+        multiplier_by_formation: dict[str, int] = {}
         seen: set[str] = set()
         for participant in participants:
             if participant.battalion_id in seen:
@@ -335,11 +336,29 @@ class CampaignEngine:
             if battalion is None:
                 continue
             seen.add(participant.battalion_id)
-            total += apply_strength_multiplier_milli(
-                self._combat_score_milli(battalion),
+            formation_id = (
+                battalion.strategic_formation_id
+                or f"battalion:{battalion.battalion_id}"
+            )
+            strength_by_formation[formation_id] = (
+                strength_by_formation.get(formation_id, 0)
+                + self._combat_score_milli(battalion)
+            )
+            previous = multiplier_by_formation.setdefault(
+                formation_id,
                 participant.ambush_strength_multiplier_milli,
             )
-        return total
+            if previous != participant.ambush_strength_multiplier_milli:
+                raise ValueError(
+                    f"formation {formation_id} has inconsistent Ambush multipliers"
+                )
+        return sum(
+            apply_strength_multiplier_milli(
+                strength_by_formation[formation_id],
+                multiplier_by_formation[formation_id],
+            )
+            for formation_id in sorted(strength_by_formation)
+        )
 
     def _formations_for_battalions(self, battalions: list[Battalion]) -> list[str]:
         force_ids: list[str] = []
