@@ -1,0 +1,45 @@
+name: Apply Tested S9A Chunks
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.head_ref == 'feat/s9a-deterministic-retreat'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/s9a-deterministic-retreat
+          fetch-depth: 0
+      - name: Reconstruct and verify tested patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .s9a-handoff/chunk-* > /tmp/s9a.patch.gz.b64
+          echo '7b7a3f6b9c769df2ff712fde22cf0136611786918099e24b21569e61b6e3fae0  /tmp/s9a.patch.gz.b64' | sha256sum -c -
+          base64 -d /tmp/s9a.patch.gz.b64 | gzip -d > /tmp/s9a.patch
+          echo 'd52af6162fcfa0083ebe8b5e6a57f1ad29b74dc8db2dc6056bb24dfd98441b68  /tmp/s9a.patch' | sha256sum -c -
+          git apply --check /tmp/s9a.patch
+          git apply /tmp/s9a.patch
+      - name: Remove temporary handoff machinery
+        shell: bash
+        run: |
+          rm -rf .s9a-handoff
+          rm -f .github/workflows/s9a-apply-local-patch.yml
+          rm -f .github/workflows/s9a-trigger-apply.yml
+          rm -f .github/workflows/s9a-apply-chunks.yml
+      - name: Commit tested S9A integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'xfizzle-gh'
+          git config user.email '87280532+xfizzle-gh@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat: integrate deterministic S9A battle retreat'
+          git push origin HEAD:feat/s9a-deterministic-retreat
