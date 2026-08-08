@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import importlib.util
 import json
 import shutil
@@ -9,12 +10,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-import numpy as np
-from PIL import Image
-
 from tests.test_opengs_gate1_determinism import (
     FIXTURE,
-    MODULE_DIR,
     load_generator,
     reseal_manifest,
     write_json,
@@ -78,6 +75,9 @@ class Gate1SpatialIntegrityTest(unittest.TestCase):
                 self.g.inspect_output(output)
 
     def test_png_and_record_geometry_are_spatially_authenticated(self) -> None:
+        np = importlib.import_module("numpy")
+        Image = importlib.import_module("PIL.Image")
+
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
             recipe = self.make_fixture(base / "inputs")
