@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 from typing import Any, Iterable, Mapping
 
 from .modstack import normalize_stack, stack_signature
@@ -15,6 +16,22 @@ from .faction_wiring_models import (
 from .faction_wiring_report import render_faction_summary
 from .faction_wiring_research import SourceResearchIndex
 from .faction_wiring_scan import SourceUnitIndex
+from .effective_definitions import EffectiveDefinitionIndex
+
+
+_MOD_INFO_NAME_RE = re.compile(r'\{name\s+"([^"]+)"\}', re.I)
+
+
+def _is_west81_layer(root: Path) -> bool:
+    if root.name.casefold() in {"2897299509", "west81", "west-81"}:
+        return True
+    mod_info = root / "mod.info"
+    if not mod_info.is_file():
+        return False
+    match = _MOD_INFO_NAME_RE.search(
+        mod_info.read_text(encoding="utf-8-sig", errors="replace")
+    )
+    return bool(match and match.group(1) in {"West-81", "West81"})
 
 
 class FactionWiringCompiler(FactionComponentMixin, FactionActorMixin):
@@ -33,9 +50,17 @@ class FactionWiringCompiler(FactionComponentMixin, FactionActorMixin):
         self.manifest = dict(manifest or load_faction_manifest())
         validate_faction_manifest(self.manifest)
         self.unit_index = SourceUnitIndex.build(self.roots)
+        self.definition_index = EffectiveDefinitionIndex.build(
+            self.roots,
+            unit_index=self.unit_index,
+        )
         self.research_index = SourceResearchIndex.build(self.roots)
+        self._legacy_layer_priorities = {
+            priority
+            for priority, root in enumerate(self.roots)
+            if _is_west81_layer(root)
+        }
         self._breed_index: dict[tuple[str, str], tuple[Path, int]] | None = None
-        self._vehicle_index: set[str] | None = None
 
     def compile(self) -> dict[str, Any]:
         components = self.manifest["components"]

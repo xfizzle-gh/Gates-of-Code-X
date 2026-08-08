@@ -62,7 +62,23 @@ class EffectiveDefinitionIndexTest(unittest.TestCase):
         )
         index = EffectiveDefinitionIndex.build([self.root / "layer"])
         self.assertTrue(index.resolve("declared", ReferenceKind.INTERACTION_OBJECT).ok)
+        self.assertTrue(index.resolve("declared", ReferenceKind.VEHICLE_ENTITY).ok)
         self.assertFalse(index.resolve("referenced_only", ReferenceKind.INTERACTION_OBJECT).ok)
+
+    def test_interaction_class_suffix_declares_the_exact_entity_key(self) -> None:
+        self.write(
+            "layer/resource/set/interaction_entity/vehicles.inc",
+            '{"gaz-51_eng car" {tags add "truck"}}\n',
+        )
+
+        index = EffectiveDefinitionIndex.build([self.root / "layer"])
+
+        vehicle = index.resolve("gaz-51_eng", ReferenceKind.VEHICLE_ENTITY)
+        interaction = index.resolve("gaz-51_eng", ReferenceKind.INTERACTION_OBJECT)
+        self.assertTrue(vehicle.ok)
+        self.assertTrue(interaction.ok)
+        self.assertEqual("interaction_entity", vehicle.terminal.parser_form)
+        self.assertEqual((), index.candidates_for("gaz-51_eng car"))
 
     def test_loose_definition_wins_packed_collision_within_layer(self) -> None:
         layer = self.root / "layer"
@@ -95,6 +111,64 @@ class EffectiveDefinitionIndexTest(unittest.TestCase):
         self.assertEqual("resolved", resolution.status)
         self.assertEqual(2, len(resolution.candidates))
         self.assertEqual(1, len(resolution.shadowed))
+
+    def test_concrete_def_file_wins_compatible_loose_declarations(self) -> None:
+        self.write("layer/resource/entity/test/declared.def", "{concrete body}\n")
+        self.write(
+            "layer/resource/set/interaction_entity/declared.inc",
+            '{"declared" {tags add "vehicle"}}\n',
+        )
+        self.write(
+            "layer/resource/set/registry/unit.reg",
+            '{"declared"}\n',
+        )
+
+        resolution = EffectiveDefinitionIndex.build([self.root / "layer"]).resolve(
+            "declared", ReferenceKind.VEHICLE_ENTITY
+        )
+
+        self.assertTrue(resolution.ok)
+        self.assertEqual("def_file", resolution.terminal.parser_form)
+        self.assertEqual(3, len(resolution.shadowed))
+
+    def test_conflicting_purchase_wrappers_at_same_priority_are_ambiguous(self) -> None:
+        self.write(
+            "layer/resource/set/multiplayer/units/conquest/a.set",
+            '("squad_vehicle" side(nato) name(shared) vehicle(tank_a))\n',
+        )
+        self.write(
+            "layer/resource/set/multiplayer/units/conquest/b.set",
+            '("squad_vehicle" side(nato) name(shared) vehicle(tank_b))\n',
+        )
+
+        resolution = EffectiveDefinitionIndex.build([self.root / "layer"]).resolve(
+            "shared", ReferenceKind.PURCHASE_UNIT
+        )
+
+        self.assertEqual("ambiguous", resolution.status)
+        self.assertEqual(2, len(resolution.ambiguity.candidates))
+
+    def test_wrapper_wins_complementary_interaction_and_registry_evidence(self) -> None:
+        self.write(
+            "layer/resource/set/multiplayer/units/conquest/wrapper.set",
+            '{"shared" ("squad_vehicle" side(nato) vehicle(shared) crew(driver:1))}\n',
+        )
+        self.write(
+            "layer/resource/set/interaction_entity/shared.inc",
+            '{"shared car" {tags add "vehicle"}}\n',
+        )
+        self.write(
+            "layer/resource/set/registry/unit.reg",
+            '{"shared"}\n',
+        )
+
+        resolution = EffectiveDefinitionIndex.build([self.root / "layer"]).resolve(
+            "shared", ReferenceKind.VEHICLE_ENTITY
+        )
+
+        self.assertTrue(resolution.ok)
+        self.assertEqual("implicit_vehicle_wrapper", resolution.terminal.parser_form)
+        self.assertGreaterEqual(len(resolution.shadowed), 2)
 
     def test_conflicting_loose_candidates_at_same_effective_priority_are_ambiguous(self) -> None:
         self.write("layer/resource/entity/a/conflict.def", "{first body}\n")
@@ -443,6 +517,22 @@ class EffectiveDefinitionIndexTest(unittest.TestCase):
         self.assertEqual("implicit_vehicle_wrapper", vehicle.terminal.parser_form)
         self.assertEqual("resolved", purchase.status)
         self.assertEqual(DefinitionKind.PURCHASE_UNIT_WRAPPER, purchase.terminal.kind)
+
+    def test_purchase_wrapper_with_same_name_vehicle_declares_typed_entity(self) -> None:
+        self.write(
+            "layer/resource/set/multiplayer/units/conquest/vehicles.set",
+            '{"wrapped_vehicle"\n'
+            '  ("squad_vehicle" side(nato) vehicle(wrapped_vehicle) crew(driver:1))\n'
+            '}\n',
+        )
+
+        index = EffectiveDefinitionIndex.build([self.root / "layer"])
+
+        vehicle = index.resolve("wrapped_vehicle", ReferenceKind.VEHICLE_ENTITY)
+        purchase = index.resolve("wrapped_vehicle", ReferenceKind.PURCHASE_UNIT)
+        self.assertTrue(vehicle.ok)
+        self.assertTrue(purchase.ok)
+        self.assertEqual("implicit_vehicle_wrapper", vehicle.terminal.parser_form)
 
 
 if __name__ == "__main__":

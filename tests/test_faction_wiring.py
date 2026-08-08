@@ -11,6 +11,7 @@ from gates_of_codex.faction_wiring import (
     validate_faction_manifest,
 )
 from gates_of_codex.faction_wiring_scan import SourceUnitIndex
+from gates_of_codex.effective_definitions import EffectiveDefinitionIndex
 from gates_of_codex.faction_wiring_types import ReferenceKind
 
 
@@ -83,6 +84,87 @@ class FactionWiringCompilerTest(unittest.TestCase):
         self.assertEqual(payload["error_count"], 1)
         self.assertIn("does_not_exist", payload["problems"][0]["message"])
 
+    def test_missing_optional_unit_remains_a_warning(self) -> None:
+        manifest = self._manifest()
+        manifest["components"]["legacy"]["selectors"][0]["required"] = False
+        manifest["components"]["legacy"]["selectors"][0]["units"] = [
+            "legacy_tank", "optional_missing",
+        ]
+
+        payload = FactionWiringCompiler(
+            [self.west, self.codex], manifest=manifest
+        ).compile()
+
+        self.assertEqual(0, payload["error_count"])
+        self.assertEqual(1, payload["warning_count"])
+        self.assertIn("optional_missing", payload["problems"][0]["message"])
+
+    def test_interaction_entity_declaration_satisfies_vehicle_reference(self) -> None:
+        self._write(
+            self.codex / "resource/set/multiplayer/units/conquest/units_nato.set",
+            '("squad" side(nato) period(2022s) name(test_rifle) '
+            'c1(test_lead:1) c2(test_rifleman:4))\n'
+            '{"test_apc" {vehicle "test_apc"}}\n'
+            '{"test_tank" {vehicle "interaction_tank"}}\n',
+        )
+        self._write(
+            self.codex / "resource/set/interaction_entity/fixture.inc",
+            '{"interaction_tank car" {tags add "vehicle"}}\n',
+        )
+
+        payload = FactionWiringCompiler(
+            [self.west, self.codex], manifest=self._manifest()
+        ).compile()
+
+        self.assertEqual(0, payload["error_count"])
+        self.assertEqual(0, payload["warning_count"])
+
+    def test_inherited_control_alias_satisfies_vehicle_reference(self) -> None:
+        self._write(
+            self.codex / "resource/set/multiplayer/units/conquest/units_nato.set",
+            '("squad" side(nato) period(2022s) name(test_rifle) '
+            'c1(test_lead:1) c2(test_rifleman:4))\n'
+            '{"test_apc" {vehicle "test_apc"}}\n'
+            '{"test_tank" {vehicle "controlled_tank"}}\n',
+        )
+        self._write(
+            self.codex / "resource/entity/test/base_tank.def",
+            "{base}\n",
+        )
+        self._write(
+            self.codex / "resource/set/tp_control.set",
+            '{"controlled_tank" {inherit "vehicle/base_tank"}}\n',
+        )
+
+        payload = FactionWiringCompiler(
+            [self.west, self.codex], manifest=self._manifest()
+        ).compile()
+
+        self.assertEqual(0, payload["error_count"])
+        self.assertEqual(0, payload["warning_count"])
+
+    def test_explicit_strategic_declaration_satisfies_call_in_reference(self) -> None:
+        manifest = self._manifest()
+        manifest["components"]["native"]["selectors"] = [{
+            "kind": "exact",
+            "source_side": "nato",
+            "units": ["test_support"],
+        }]
+        manifest["actors"][0]["required_categories"] = ["vehicle"]
+        self._write(
+            self.codex / "resource/set/multiplayer/units/conquest/units_nato.set",
+            '("strategic_callin" side(nato) name(test_support) '
+            'action(callin) vehicle1(support_id))\n'
+            '("offmap_support" name(support_id) action(callin))\n',
+        )
+
+        payload = FactionWiringCompiler(
+            [self.west, self.codex], manifest=manifest
+        ).compile()
+
+        self.assertEqual(0, payload["error_count"])
+        self.assertEqual(0, payload["warning_count"])
+
     def test_source_unit_missing_breed_is_a_resolution_error(self) -> None:
         missing = self.codex / "resource/set/breed/mp/nato/2022s/test_rifleman.set"
         missing.unlink()
@@ -101,12 +183,14 @@ class FactionWiringCompilerTest(unittest.TestCase):
 
     def test_source_unit_missing_vehicle_is_a_resolution_error(self) -> None:
         self._write(
-            self.codex / "resource/set/registry/unit.reg",
-            '{"test_apc"}\n',
+            self.codex / "resource/set/multiplayer/units/conquest/units_nato.set",
+            '("squad" side(nato) period(2022s) name(test_rifle) c1(test_lead:1) c2(test_rifleman:4))\n'
+            '{"test_apc" {vehicle "test_apc"}}\n'
+            '{"test_tank" {vehicle "missing_tank"}}\n',
         )
         payload = FactionWiringCompiler([self.west, self.codex], manifest=self._manifest()).compile()
         self.assertGreaterEqual(payload["error_count"], 1)
-        self.assertTrue(any("missing vehicle/entity IDs: test_tank" in item["message"] for item in payload["problems"]))
+        self.assertTrue(any("missing vehicle/entity IDs: missing_tank" in item["message"] for item in payload["problems"]))
 
     def test_numbered_vehicle_references_retain_exact_source_locations(self) -> None:
         self._write(
@@ -153,6 +237,56 @@ class FactionWiringCompilerTest(unittest.TestCase):
         keys = {node["key"] for node in usa["research_nodes"]}
         for node in usa["research_nodes"]:
             self.assertTrue(set(node["prerequisites"]).issubset(keys))
+
+    def test_strict_component_provenance_fails_closed_when_index_cannot_resolve(self) -> None:
+        manifest = self._manifest()
+        manifest["components"]["legacy"]["provenance_policy"] = "legacy_explicit"
+        compiler = FactionWiringCompiler([self.west, self.codex], manifest=manifest)
+        compiler.definition_index = EffectiveDefinitionIndex()
+
+        payload = compiler.compile()
+
+        self.assertTrue(any(
+            "cannot establish terminal component provenance" in problem["message"]
+            for problem in payload["problems"]
+        ))
+
+    def test_terminal_west81_candidate_cannot_enter_modern_only_component(self) -> None:
+        manifest = self._manifest()
+        manifest["components"]["legacy"]["provenance_policy"] = "modern_only"
+
+        payload = FactionWiringCompiler(
+            [self.west, self.codex],
+            manifest=manifest,
+        ).compile()
+
+        self.assertTrue(any(
+            "violates modern-only component provenance" in problem["message"]
+            and "West81" in problem["message"]
+            for problem in payload["problems"]
+        ))
+
+    def test_labeled_legacy_component_gets_a_separate_research_root(self) -> None:
+        manifest = self._manifest()
+        manifest["components"]["legacy"].update({
+            "provenance_policy": "legacy_explicit",
+            "research_label": "Fixture Legacy Reserve",
+        })
+
+        payload = FactionWiringCompiler(
+            [self.west, self.codex],
+            manifest=manifest,
+        ).compile()
+
+        self.assertEqual(0, payload["error_count"])
+        proxy = next(actor for actor in payload["actors"] if actor["actor_id"] == "proxy")
+        roots = [
+            node for node in proxy["research_nodes"]
+            if node["node_type"] == "component"
+        ]
+        self.assertEqual(1, len(roots))
+        self.assertEqual("Fixture Legacy Reserve", roots[0]["display_name"])
+        self.assertEqual("legacy", roots[0]["component_id"])
 
     def _manifest(self) -> dict:
         return {

@@ -637,6 +637,41 @@ def _parse_block_calls(
             quote = True
             index += 1
             continue
+        if char == "(" and depth == 1 and _definition_form(raw, index) == "macro":
+            call_end = _matching_parenthesis(raw, index)
+            if call_end is None:
+                return calls, _CallFailure(
+                    code="unterminated_nested_macro",
+                    message="block contains an unterminated nested macro",
+                    offset=index,
+                )
+            nested_raw = raw[index : call_end + 1]
+            nested_calls, failure = _parse_macro_calls(
+                nested_raw,
+                source,
+                source_start + index,
+                line_starts,
+            )
+            if failure is not None:
+                return calls, _CallFailure(
+                    code=failure.code,
+                    message=failure.message,
+                    offset=index + failure.offset,
+                )
+            for call in nested_calls:
+                recognized_calls += 1
+                if recognized_calls > MAX_CALLS_PER_ENTRY:
+                    return calls, _CallFailure(
+                        code="call_limit_exceeded",
+                        message=f"entry exceeded {MAX_CALLS_PER_ENTRY} recognized calls",
+                        offset=index,
+                    )
+                semantic_key = (call.family, call.value)
+                if semantic_key not in seen:
+                    seen.add(semantic_key)
+                    calls.append(call)
+            index = call_end + 1
+            continue
         if char == "}":
             depth -= 1
             index += 1

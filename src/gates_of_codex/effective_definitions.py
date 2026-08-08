@@ -203,22 +203,27 @@ class EffectiveDefinitionIndex:
                 source = path.relative_to(resources).as_posix()
                 text = path.read_text(encoding="utf-8-sig", errors="replace")
                 for source_order, entry in enumerate(scan_source_entries(text, source).entries):
-                    if not entry.name:
+                    identifier = _interaction_identifier(entry.name)
+                    if not identifier:
                         continue
-                    candidate = DefinitionCandidate(
-                        identifier=entry.name,
-                        kind=DefinitionKind.INTERACTION_OBJECT,
-                        layer=root.name,
-                        priority=priority,
-                        path=source,
-                        line=entry.location.line,
-                        column=entry.location.column,
-                        packed=False,
-                        parser_form=entry.form,
-                        source_order=source_order,
-                    )
-                    candidates.append(candidate)
-                    signatures[candidate] = _entry_signature(entry)
+                    for kind in (
+                        DefinitionKind.INTERACTION_OBJECT,
+                        DefinitionKind.VEHICLE_ENTITY,
+                    ):
+                        candidate = DefinitionCandidate(
+                            identifier=identifier,
+                            kind=kind,
+                            layer=root.name,
+                            priority=priority,
+                            path=source,
+                            line=entry.location.line,
+                            column=entry.location.column,
+                            packed=False,
+                            parser_form="interaction_entity",
+                            source_order=source_order,
+                        )
+                        candidates.append(candidate)
+                        signatures[candidate] = _entry_signature(entry)
         _append_case_aliases(
             candidates,
             signatures,
@@ -350,17 +355,48 @@ class EffectiveDefinitionIndex:
             candidate for candidate in candidates
             if _effective_priority(candidate) == top_priority
         )
+        authority = max(_candidate_authority(candidate) for candidate in top)
+        authoritative = tuple(
+            candidate for candidate in top
+            if _candidate_authority(candidate) == authority
+        )
         semantic_values = {
-            self._semantic_signatures.get(candidate, _default_semantic_signature(candidate))
-            for candidate in top
+            self._semantic_signatures.get(
+                candidate,
+                _default_semantic_signature(candidate),
+            )
+            for candidate in authoritative
         }
         if len(semantic_values) > 1:
             return None, DefinitionAmbiguity(
                 identifier=identifier,
-                reason="conflicting candidates at the same effective priority",
-                candidates=top,
+                reason=(
+                    "conflicting authoritative definitions at the same "
+                    "effective priority"
+                ),
+                candidates=authoritative,
             )
-        return top[0], None
+        return authoritative[0], None
+
+
+def _candidate_authority(candidate: DefinitionCandidate) -> int:
+    """Rank complementary declaration evidence without changing layer order.
+
+    A concrete entity body is stronger evidence than a same-name unit wrapper,
+    which is stronger than an interaction declaration or bare registry row.
+    Conflicts are checked among candidates at the strongest available form;
+    weaker forms remain in the complete shadowed candidate chain.
+    """
+
+    return {
+        "def_file": 4,
+        "implicit_vehicle_wrapper": 3,
+        "block": 3,
+        "macro": 3,
+        "interaction_entity": 2,
+        "registry_row": 1,
+        "source_alias": 1,
+    }.get(candidate.parser_form, 0)
 
 
 def _effective_priority(candidate: DefinitionCandidate) -> tuple[int, int]:
@@ -424,9 +460,10 @@ def _append_source_candidates(
         if mode == "set":
             if _is_strategic_declaration(entry):
                 declarations.append((DefinitionKind.STRATEGIC_CALL_IN, "", entry.form))
-            if _is_purchase_wrapper(relative, entry, source_units):
+            purchase_wrapper = _is_purchase_wrapper(relative, entry, source_units)
+            if purchase_wrapper:
                 declarations.append((DefinitionKind.PURCHASE_UNIT_WRAPPER, "", entry.form))
-            if _is_implicit_vehicle_wrapper(entry):
+            if _is_same_name_vehicle_wrapper(entry) or _is_implicit_vehicle_wrapper(entry):
                 declarations.append((DefinitionKind.VEHICLE_ENTITY, "", "implicit_vehicle_wrapper"))
 
         for kind, target, parser_form in declarations:
@@ -447,7 +484,11 @@ def _append_source_candidates(
             signatures[candidate] = (
                 f"alias\0{target}"
                 if kind == DefinitionKind.REGISTRY_ALIAS
-                else _entry_signature(entry)
+                else (
+                    f"declaration\0{kind.value}"
+                    if parser_form == "registry_row"
+                    else _entry_signature(entry)
+                )
             )
 
 
@@ -495,7 +536,7 @@ def _is_purchase_wrapper(
     normalized = relative.lower()
     if not normalized.startswith("set/multiplayer/units/"):
         return False
-    unit = source_units.units.get(entry.name)
+    unit = source_units.resolve(entry.name)
     return unit is not None and unit.materializable
 
 
@@ -509,6 +550,31 @@ def _is_implicit_vehicle_wrapper(entry: SourceEntry) -> bool:
     )
 
 
+def _is_same_name_vehicle_wrapper(entry: SourceEntry) -> bool:
+    """Return true when a purchase row explicitly wraps its own entity ID.
+
+    GoH conquest sources commonly use an outer purchase key with an inner
+    ``vehicle(<same-key>)`` macro.  The outer row is both the purchase-ready
+    wrapper and the effective entity declaration used by the catalog.  The
+    reference is only accepted when the exact outer and inner identifiers
+    agree; unrelated references never establish definitions.
+    """
+
+    if not entry.name:
+        return False
+    return any(
+        call.family in {"vehicle", "entity"}
+        and call.value == entry.name
+        for call in entry.calls
+    )
+
+
+def _interaction_identifier(value: str) -> str:
+    """Extract the declared interaction entity key without its class suffix."""
+
+    return value.strip().split(None, 1)[0] if value.strip() else ""
+
+
 def _append_case_aliases(
     candidates: list[DefinitionCandidate],
     signatures: dict[DefinitionCandidate, str],
@@ -518,7 +584,7 @@ def _append_case_aliases(
 ) -> None:
     definition_spellings: dict[str, set[str]] = defaultdict(set)
     for candidate in candidates:
-        if candidate.kind == DefinitionKind.VEHICLE_ENTITY and candidate.parser_form == "def_file":
+        if candidate.kind == DefinitionKind.VEHICLE_ENTITY:
             definition_spellings[candidate.identifier.casefold()].add(candidate.identifier)
 
     references = sorted(

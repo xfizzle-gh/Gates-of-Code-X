@@ -6,16 +6,27 @@ from typing import Any, Mapping
 
 from .modstack import resource_root
 from .faction_wiring_models import FactionWiringError, ResolutionProblem, _ResolvedComponent
-from .faction_wiring_types import CATEGORY_COSTS, SourceUnit, _copy_unit, _merge_unit
+from .faction_wiring_types import (
+    CATEGORY_COSTS,
+    DefinitionReference,
+    ReferenceKind,
+    SourceUnit,
+    _base_name,
+    _copy_unit,
+    _merge_unit,
+)
 
 
 _JUNK_AFTER_BRACE_RE = re.compile(r'\}\s*[A-Za-z0-9_]+\s*$')
-_REGISTRY_UNIT_RE = re.compile(r'\{\s*"([^"]+)"')
 
 
 class FactionComponentMixin:
     def _resolve_component(self, component_id: str, component: Mapping[str, Any]) -> _ResolvedComponent:
-        result = _ResolvedComponent(component_id=component_id)
+        result = _ResolvedComponent(
+            component_id=component_id,
+            provenance_policy=component.get("provenance_policy", "mixed"),
+            research_label=component.get("research_label", ""),
+        )
         for selector in component["selectors"]:
             kind = selector["kind"]
             if kind == "research_branch":
@@ -152,6 +163,17 @@ class FactionComponentMixin:
                 tier=int(raw.get("tier", 1)),
                 research_cost=int(raw.get("cost", CATEGORY_COSTS.get(raw.get("category", "unknown"), 2))),
             )
+            source = unit.source_files[0]
+            unit.definition_references = [
+                DefinitionReference(
+                    identifier=identifier,
+                    kind=ReferenceKind.VEHICLE_ENTITY,
+                    source=source,
+                    line=1,
+                    column=1,
+                )
+                for identifier in unit.vehicles
+            ]
             self._add_validated_unit(result, unit, severity="error")
 
     def _add_validated_unit(
@@ -162,11 +184,55 @@ class FactionComponentMixin:
         severity: str,
     ) -> None:
         problems = self._unit_asset_problems(unit)
+        provenance_problem = self._component_provenance_problem(result, unit)
+        if provenance_problem:
+            problems.append(provenance_problem)
         if problems:
             for message in problems:
                 result.problems.append(ResolutionProblem(severity, "", result.component_id, message))
             return
         result.units[unit.name] = _merge_unit(result.units.get(unit.name), unit) if unit.name in result.units else unit
+
+    def _component_provenance_problem(
+        self,
+        result: _ResolvedComponent,
+        unit: SourceUnit,
+    ) -> str:
+        if result.provenance_policy == "mixed" or unit.virtual:
+            return ""
+        resolution = self.definition_index.resolve(unit.name, ReferenceKind.PURCHASE_UNIT)
+        if not resolution.ok and _base_name(unit.name) != unit.name:
+            resolution = self.definition_index.resolve(
+                _base_name(unit.name),
+                ReferenceKind.PURCHASE_UNIT,
+            )
+        if not resolution.ok or resolution.terminal is None:
+            candidates = "; ".join(
+                f"{candidate.layer}:{candidate.path}:{candidate.line}"
+                for candidate in resolution.candidates
+            ) or "none"
+            return (
+                f"unit {unit.name} cannot establish terminal component provenance: "
+                f"{resolution.status}; candidates={candidates}"
+            )
+        terminal = resolution.terminal
+        is_legacy = terminal.priority in self._legacy_layer_priorities
+        alias_chain = " -> ".join(
+            f"{hop.identifier}->{hop.target}" for hop in resolution.alias_chain
+        ) or "none"
+        detail = (
+            f"terminal layer={terminal.layer} priority={terminal.priority} "
+            f"path={terminal.path}:{terminal.line}; aliases={alias_chain}"
+        )
+        if result.provenance_policy == "modern_only" and is_legacy:
+            return (
+                f"unit {unit.name} violates modern-only component provenance; {detail}"
+            )
+        if result.provenance_policy == "legacy_explicit" and not is_legacy:
+            return (
+                f"unit {unit.name} violates explicit legacy component provenance; {detail}"
+            )
+        return ""
 
     def _unit_asset_problems(self, unit: SourceUnit) -> list[str]:
         problems: list[str] = []
@@ -189,12 +255,59 @@ class FactionComponentMixin:
                 f"unit {unit.name} references invalid breed definitions: {', '.join(invalid_breeds)}"
             )
 
-        missing_vehicles = sorted(vehicle for vehicle in set(unit.vehicles) if not self._vehicle_exists(vehicle))
-        if missing_vehicles:
+        references = list(unit.definition_references)
+        referenced_identifiers = {item.identifier for item in references}
+        fallback_source = unit.source_files[0] if unit.source_files else unit.source_layer
+        for vehicle in unit.vehicles:
+            if vehicle not in referenced_identifiers:
+                references.append(DefinitionReference(
+                    identifier=vehicle,
+                    kind=ReferenceKind.VEHICLE_ENTITY,
+                    source=fallback_source,
+                    line=1,
+                    column=1,
+                ))
+                referenced_identifiers.add(vehicle)
+
+        missing_by_kind: dict[ReferenceKind, list[str]] = {}
+        for reference in references:
+            resolution = self.definition_index.resolve(reference.identifier, reference.kind)
+            if resolution.ok:
+                continue
+            if resolution.status == "missing":
+                missing_by_kind.setdefault(reference.kind, []).append(reference.identifier)
+                continue
+            problems.append(self._definition_resolution_problem(unit, reference, resolution))
+
+        for kind, identifiers in sorted(missing_by_kind.items(), key=lambda item: item[0].value):
+            label = {
+                ReferenceKind.VEHICLE_ENTITY: "vehicle/entity IDs",
+                ReferenceKind.PURCHASE_UNIT: "purchase-unit IDs",
+                ReferenceKind.STRATEGIC_CALL_IN: "strategic call-in IDs",
+                ReferenceKind.INTERACTION_OBJECT: "interaction-object IDs",
+            }[kind]
             problems.append(
-                f"unit {unit.name} references missing vehicle/entity IDs: {', '.join(missing_vehicles)}"
+                f"unit {unit.name} references missing {label}: {', '.join(sorted(set(identifiers)))}"
             )
         return problems
+
+    @staticmethod
+    def _definition_resolution_problem(unit: SourceUnit, reference: DefinitionReference, resolution: Any) -> str:
+        locations = "; ".join(
+            f"{candidate.layer}:{candidate.path}:{candidate.line}:{candidate.column}"
+            f"[{candidate.kind.value}]"
+            for candidate in resolution.candidates
+        ) or "none"
+        alias_chain = " -> ".join(
+            f"{hop.identifier}->{hop.target}"
+            for hop in resolution.alias_chain
+        ) or "none"
+        return (
+            f"unit {unit.name} cannot resolve {reference.kind.value} ID "
+            f"{reference.identifier}: {resolution.status}; "
+            f"source={reference.source}:{reference.line}:{reference.column}; "
+            f"aliases={alias_chain}; candidates={locations}"
+        )
 
     def _breed_path(self, source_side: str, breed: str) -> Path | None:
         if self._breed_index is None:
@@ -226,18 +339,3 @@ class FactionComponentMixin:
             if _JUNK_AFTER_BRACE_RE.search(line):
                 return f"junk after closing brace on line {line_number}"
         return ""
-
-    def _vehicle_exists(self, vehicle: str) -> bool:
-        if self._vehicle_index is None:
-            values: set[str] = set()
-            for root in self.roots:
-                resources = resource_root(root)
-                registry = resources / "set/registry/unit.reg"
-                if registry.is_file():
-                    text = registry.read_text(encoding="utf-8-sig", errors="replace")
-                    values.update(match.lower() for match in _REGISTRY_UNIT_RE.findall(text))
-                entity_root = resources / "entity"
-                if entity_root.is_dir():
-                    values.update(path.stem.lower() for path in entity_root.rglob("*.def"))
-            self._vehicle_index = values
-        return vehicle.lower() in self._vehicle_index
