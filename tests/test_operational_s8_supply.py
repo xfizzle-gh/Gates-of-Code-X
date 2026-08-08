@@ -4,11 +4,13 @@ from contextlib import redirect_stdout
 import io
 import json
 from pathlib import Path
+import tempfile
 import unittest
 from unittest import mock
 
 from gates_of_codex.force_migration import ensure_strategic_formations
 from gates_of_codex.cli import main as cli_main
+from gates_of_codex.campaign import CampaignEngine
 from gates_of_codex.frontend import build_frontend_snapshot
 from gates_of_codex.models import (
     Alliance,
@@ -29,15 +31,22 @@ from gates_of_codex.operational_schema import (
 )
 from gates_of_codex.operational_supply import (
     OperationalSupplySource,
+    _routing_graph_indexes,
     assert_supply_edge_hop_legal,
     compute_operational_supply_routes,
+    edge_is_supply_capable,
     ensure_operational_supply_state,
     on_edge_attachment_cost,
     refresh_operational_supply,
     resolve_operational_supply_sources,
     route_for_formation,
 )
-from gates_of_codex.state_io import campaign_from_dict
+from gates_of_codex.state_io import (
+    campaign_from_dict,
+    load_campaign,
+    save_campaign,
+)
+from gates_of_codex.strategic import sync_province_infrastructure_owner
 from gates_of_codex.supply import (
     refresh_supply_for_faction,
     supply_status_for_faction,
@@ -1499,6 +1508,228 @@ class OperationalS8SupplyTests(unittest.TestCase):
         self.assertEqual(
             ["province-supply-source:p-source"],
             faction["operational_supply_source_ids"],
+        )
+
+    def test_no_graph_save_bytes_are_unchanged_after_s8_entrypoints(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            baseline_path = root / "baseline.json"
+            after_path = root / "after.json"
+            save_campaign(_state(), baseline_path)
+            baseline = baseline_path.read_bytes()
+            state = load_campaign(baseline_path)
+
+            ensure_operational_supply_state(state)
+            refresh_operational_supply(state, consume_grace=False)
+            supply_status_for_faction(state, Faction.NATO)
+            save_campaign(state, after_path)
+
+            self.assertEqual(baseline, after_path.read_bytes())
+            payload = json.loads(after_path.read_text(encoding="utf-8"))
+            self.assertNotIn(
+                "operational_supply_migration", payload["map_metadata"]
+            )
+            row = next(iter(payload["strategic_formations"].values()))
+            for key in (
+                "supplied",
+                "cut_off",
+                "source_hub_id",
+                "route_cost",
+                "grace_ticks_remaining",
+                "last_supply_refresh_tick",
+                "last_supply_refresh_turn",
+                "last_grace_consuming_tick",
+            ):
+                self.assertNotIn(key, row)
+
+    def test_real_graph_save_load_preserves_grace_state(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            graph_path = root / "operational_graph.json"
+            campaign_path = root / "campaign.json"
+            state, graph = _lifecycle_state(connected=False)
+            graph_path.write_text(json.dumps(graph), encoding="utf-8")
+            state.map_id = "s8-test"
+            state.map_metadata["operational_graph"] = str(graph_path)
+            state.schema_version = 8
+            force = _only_force(state)
+            force.supplied = True
+            force.cut_off = False
+            force.source_hub_id = None
+            force.route_cost = None
+            force.grace_ticks_remaining = 1
+            force.last_supply_refresh_tick = 7
+            force.last_grace_consuming_tick = 7
+
+            save_campaign(state, campaign_path)
+            loaded = load_campaign(campaign_path)
+
+            restored = _only_force(loaded)
+            self.assertTrue(restored.supplied)
+            self.assertFalse(restored.cut_off)
+            self.assertIsNone(restored.source_hub_id)
+            self.assertIsNone(restored.route_cost)
+            self.assertEqual(1, restored.grace_ticks_remaining)
+            self.assertEqual(7, restored.last_grace_consuming_tick)
+
+    def test_frontend_and_strategic_turn_start_do_not_consume_grace(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            graph_path = Path(temporary) / "operational_graph.json"
+            state, graph = _lifecycle_state(connected=False)
+            graph_path.write_text(json.dumps(graph), encoding="utf-8")
+            state.map_id = "s8-test"
+            state.map_metadata["operational_graph"] = str(graph_path)
+            force = _only_force(state)
+            force.supplied = True
+            force.cut_off = False
+            force.source_hub_id = None
+            force.route_cost = None
+            force.grace_ticks_remaining = 1
+            force.last_supply_refresh_tick = 7
+            force.last_grace_consuming_tick = 7
+
+            build_frontend_snapshot(state)
+            self.assertEqual(1, force.grace_ticks_remaining)
+            self.assertEqual(7, force.last_grace_consuming_tick)
+
+            with mock.patch(
+                "gates_of_codex.operational_movement.resolve_strategic_turn_movement"
+            ), mock.patch(
+                "gates_of_codex.economy.settle_round_economy"
+            ), mock.patch(
+                "gates_of_codex.supply.refresh_all_supply"
+            ), mock.patch(
+                "gates_of_codex.strategic.evaluate_campaign_outcome"
+            ):
+                CampaignEngine(state).end_turn()
+
+            self.assertEqual(1, force.grace_ticks_remaining)
+            self.assertEqual(7, force.last_grace_consuming_tick)
+
+    def test_cut_grace_cutoff_then_numeric_drain_end_to_end(self) -> None:
+        state, graph = _lifecycle_state(connected=True)
+        battalion = state.battalions["nato-route"]
+        battalion.supply = 50
+        with mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ), mock.patch(
+            "gates_of_codex.supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            refresh_operational_supply(state, consume_grace=False)
+            graph["edges"][0]["traversal_enabled"] = False
+            refresh_operational_supply(
+                state, consume_grace=True, completed_tick=1
+            )
+            refresh_supply_for_faction(state, Faction.NATO)
+            self.assertEqual(70, battalion.supply)
+            refresh_operational_supply(
+                state, consume_grace=True, completed_tick=2
+            )
+            refresh_supply_for_faction(state, Faction.NATO)
+
+        force = _only_force(state)
+        self.assertFalse(force.supplied)
+        self.assertTrue(force.cut_off)
+        self.assertEqual(0, force.grace_ticks_remaining)
+        self.assertEqual(45, battalion.supply)
+        self.assertEqual(1, battalion.encircled_turns)
+
+    def test_source_capture_and_recapture_disconnects_then_recovers(self) -> None:
+        state, graph = _lifecycle_state(connected=True)
+        state.provinces["p-source"].metadata.pop(
+            "static_supply_source_for", None
+        )
+        source_node = stable_node_id("p-source", "anchor")
+        graph["sites"] = [
+            _supply_site(
+                "authored-depot",
+                source_node,
+                province_id="p-source",
+            )
+        ]
+        control = {
+            "authored-depot": {
+                "controller_faction": "nato",
+                "province_id": "p-source",
+                "route_node_id": source_node,
+            }
+        }
+        state.map_metadata["operational_site_control"] = control
+
+        with mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            refresh_operational_supply(state, consume_grace=False)
+            self.assertEqual("authored-depot", _only_force(state).source_hub_id)
+            control["authored-depot"]["controller_faction"] = "rusa"
+            refresh_operational_supply(
+                state, consume_grace=True, completed_tick=1
+            )
+            self.assertEqual(1, _only_force(state).grace_ticks_remaining)
+            control["authored-depot"]["controller_faction"] = "nato"
+            refresh_operational_supply(state, consume_grace=False)
+
+        force = _only_force(state)
+        self.assertTrue(force.supplied)
+        self.assertFalse(force.cut_off)
+        self.assertEqual(0, force.grace_ticks_remaining)
+        self.assertEqual("authored-depot", force.source_hub_id)
+
+    def test_metadata_and_constructed_source_removal_affect_next_refresh(self) -> None:
+        for source_kind in ("metadata", "constructed"):
+            with self.subTest(source_kind=source_kind):
+                state, graph = _lifecycle_state(connected=True)
+                province = state.provinces["p-source"]
+                if source_kind == "constructed":
+                    province.metadata.pop("static_supply_source_for", None)
+                    province.metadata["infrastructure"] = {"supply_hub": 1}
+                    sync_province_infrastructure_owner(province)
+                with mock.patch(
+                    "gates_of_codex.operational_supply.load_operational_graph_for_state",
+                    return_value=graph,
+                ):
+                    refresh_operational_supply(state, consume_grace=False)
+                    self.assertIsNotNone(_only_force(state).source_hub_id)
+                    if source_kind == "metadata":
+                        province.metadata.pop(
+                            "static_supply_source_for", None
+                        )
+                    else:
+                        province.metadata["infrastructure"]["supply_hub"] = 0
+                        sync_province_infrastructure_owner(province)
+                    refresh_operational_supply(
+                        state, consume_grace=True, completed_tick=1
+                    )
+
+                force = _only_force(state)
+                self.assertIsNone(force.source_hub_id)
+                self.assertEqual(1, force.grace_ticks_remaining)
+
+    def test_committed_production_candidates_remain_unavailable(self) -> None:
+        graph_path = (
+            Path(__file__).resolve().parents[1]
+            / "godot"
+            / "assets"
+            / "maps"
+            / "europe_mediterranean"
+            / "from_goe"
+            / "operational"
+            / "operational_graph.json"
+        )
+        graph = json.loads(graph_path.read_text(encoding="utf-8"))
+        _nodes, edges = _routing_graph_indexes(graph)
+        candidates = tuple(
+            edge
+            for edge in edges.values()
+            if edge.authority == EdgeAuthority.CANDIDATE.value
+        )
+
+        self.assertGreater(len(candidates), 100)
+        self.assertTrue(
+            all(not edge_is_supply_capable(edge) for edge in candidates)
         )
 
 
