@@ -10,5 +10,6 @@
     "legacy_policy": "West81 equipment is permitted only in explicitly named legacy, reserve, neutral, separatist, proxy, or aid components."
   },
   "components_file": "faction_components.json",
-  "actors_file": "faction_actors.json"
+  "actors_file": "faction_actors.json",
+  "audit_adjustments_file": "faction_audit_adjustments.json"
 }
