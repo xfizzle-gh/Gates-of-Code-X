@@ -38,7 +38,8 @@ jobs:
           git diff --check
           changed="$(git diff --name-only)"
           printf '%s\n' "$changed"
-          test "$changed" = $'docs/research/opengs-evaluation/gate_2_geometry_adapter.md\ntests/test_opengs_gate1_to_gate2_adapter.py\ntools/opengs_eval/gate1_to_gate2_adapter.py'
+          allowed=$'docs/research/opengs-evaluation/gate_2_geometry_adapter.md\ntests/test_opengs_gate1_to_gate2_adapter.py\ntools/opengs_eval/gate1_to_gate2_adapter.py'
+          test "$changed" = "docs/research/opengs-evaluation/gate_2_geometry_adapter.md" || test "$changed" = "$allowed"
       - name: Commit and push correction
         shell: bash
         run: |
