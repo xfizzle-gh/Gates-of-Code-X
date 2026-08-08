@@ -8,6 +8,10 @@
 
 **Status:** Approved for implementation on 2026-08-07
 
+**Independent review amendment:** Approved correction requirements received
+after exact reviewed head
+`92174272be558a9e7ac5e0f70a84f8efa893fd92`.
+
 ## Purpose and boundaries
 
 S8 connects the existing strategic supply and degradation system to authoritative operational graph positions, route edges, and controlled source sites. It does not replace the legacy province supply model for campaigns without an operational graph. It also does not add logistics capacity, fuel, convoys, recruitment changes, new damage or attrition formulas, naval blockade simulation, AI supply scoring, or presentation work beyond an additive read-only frontend summary.
@@ -61,11 +65,34 @@ No nearest-node or pixel-distance fallback is allowed. Multiple logical sources 
 
 Source usability is evaluated at every refresh. Existing faction eligibility is retained: same-faction sources are valid, and allied sources are valid only where the existing legacy model's `allied_factions` and source metadata rules already permit sharing. S8 does not introduce a new coalition logistics pool. The source's province and, for authored sites, current site controller must be friendly under those existing rules. Capture, construction, removal, disabling, or control changes therefore affect the next refresh without mutating source or control state during evaluation.
 
+Independent review tightens that authority boundary. A source site participates
+only when it is authored, enabled, friendly-controlled, and attached to a valid
+authored node in the same province. `StrategicSite.authority` and
+`OperationalRouteNode.authority` default to `authored`, so a missing serialized
+authority retains that existing schema-compatible default; any explicit
+non-authored value fails closed. `site.metadata.disabled` uses the repository's
+existing disabled metadata vocabulary and excludes the site both as a logical
+source and as an A/B/C bridge candidate.
+
+Every node selected by source-site, constructed-hub association, explicit-site
+precedence, or canonical anchor must exist, have authored authority, and name
+the same province as the logical source. An invalid higher-precedence bridge
+candidate is ignored for province-metadata and constructed-hub sources so the
+resolver can try the next approved precedence level. An authored site whose own
+route node is invalid is excluded and receives a stable diagnostic. Hostile or
+disabled sites never hijack the routing node of another logical source.
+
 ## Edge eligibility and directed routing
 
 Every supply hop first passes the shared operational movement gates in `assert_edge_hop_legal`: the edge must be enabled, authored rather than candidate, not blocked by shared metadata, and legal in the requested direction.
 
 Land edges are supply-capable by default after those checks. `ferry`, `ferry_or_sea_lane`, and `sea_lane` edges are supply-capable only when `edge.metadata["supply_capable"] is True`. A false `supply_capable` value blocks any edge. No open-sea or geometric connection is synthesized. Candidate corridors remain disabled and are never promoted.
+
+If `supply_capable` is present, its value must be an actual Boolean. `False`
+blocks every edge kind and `True` explicitly opts ferry/sea edges in. Strings,
+integers, floats, and null fail closed with the stable error token
+`invalid_supply_capable`. Missing metadata retains the land-default and
+ferry/sea-default-off behavior.
 
 Routing also retains the legacy friendly-territory rule: route nodes must belong to provinces friendly to the formation under existing faction/alliance rules. This preserves the current province supply authority while changing connectivity to use authored graph hops.
 
@@ -110,6 +137,14 @@ The exact persisted state machine is:
 | Next consecutive disconnected operational tick | false | true | null | null | 0 |
 | Connectivity restored at any refresh | true | false | deterministic source | deterministic integer | 0 |
 
+Those four rows are also the complete set of valid serialized field shapes.
+Any contradictory combination of `supplied`, `cut_off`, source, cost, and grace
+is rejected before load-time recomputation can normalize it. A consuming tick
+must be greater than the formation's last consuming tick to advance grace. An
+equal tick is idempotent; a lower tick raises `stale_completed_tick` before any
+formation supply field changes. Authoritative and grace-consuming tick markers
+are monotonic across tick, turn-start, save, load, and frontend recomputation.
+
 Save/load preserves the one-tick grace row exactly. Post-load authoritative recomputation is non-consuming: if connectivity is still absent it leaves `grace_ticks_remaining=1`; if restored it clears grace immediately. A duplicate refresh of the same operational tick cannot consume grace twice.
 
 The strategic-turn numeric supply refresh remains once per existing round rollover. When an operational graph exists it classifies every battalion through its parent strategic formation's `supplied` state, then applies the existing restore/drain, `encircled_turns`, movement/action gating, and attrition functions unchanged. Multi-battalion formations share one connectivity result but retain per-battalion numeric supply state.
@@ -119,6 +154,32 @@ The strategic-turn numeric supply refresh remains once per existing round rollov
 State serialization writes and strictly parses all S8 formation fields. Optional integer fields reject booleans, strings, and floats using repository strict-integer conventions. Malformed references fail closed during operational refresh; malformed serialized scalar shapes raise deterministic validation errors rather than being coerced.
 
 The frontend contract is additive and read-only. Its schema version increases from 12 to 13. Strategic formations export only `supplied`, `cut_off`, and `source_hub_id`. Existing battalion `is_in_supply` reads its strategic formation's S8 state for graph campaigns and retains province reachability for no-graph campaigns. No logistics UI, map visualization, animation, or write-back command is added.
+
+User-facing status reports carry an explicit authority discriminator:
+`operational_graph` or `province`. Graph campaigns classify battalions and
+formations from S8 state even without a numeric refresh, and expose connected,
+grace, and cut-off groups plus logical operational source IDs. Legacy province
+BFS data, if retained for administration, is labeled
+`legacy_admin_reachable_provinces` and is never presented as operational graph
+reach. `SupplyReport`, `supply-status`, and frontend faction aggregates use the
+same naming. No-graph output retains its established province fields and adds
+only explicit authority/additive status where required by the versioned
+contract.
+
+## Independent review implementation choice
+
+Three correction strategies were evaluated:
+
+1. validate and reconstruct the complete `OperationalGraph` on every refresh;
+2. add centralized, fail-closed S8 predicates for usable sites and source nodes;
+3. broaden the graph schema and migration layer to encode supply-specific
+   authority globally.
+
+S8 uses option 2. It applies the existing schema defaults and shared metadata
+vocabulary without mutating graph content, keeps invalid higher-precedence
+candidates local to source bridging, and avoids rejecting unrelated movement
+content or creating a cross-feature schema migration. Full graph validation and
+supply-specific graph rewriting remain outside this focused review correction.
 
 ## Validation and compatibility
 
