@@ -18,7 +18,8 @@ Set-Location $root
 git fetch origin
 git switch $branch
 
-if (-not (git merge-base --is-ancestor $expected HEAD; $LASTEXITCODE -eq 0)) {
+git merge-base --is-ancestor $expected HEAD
+if ($LASTEXITCODE -ne 0) {
     throw "Wrapper test branch does not descend from audited commit $expected"
 }
 
