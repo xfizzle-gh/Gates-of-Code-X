@@ -1218,6 +1218,7 @@ def destination_reservation_count(
     from .diplomacy import are_allied
     from .operational_contact import (
         formation_at_node_id,
+        formation_is_combat_capable,
         friendly_formations_at_node,
     )
 
@@ -1244,6 +1245,8 @@ def destination_reservation_count(
         if excluding_formation_id and oid == excluding_formation_id:
             continue
         if oid in claimed:
+            continue
+        if not formation_is_combat_capable(state, other):
             continue
         if other.faction != faction and not are_allied(state, faction, other.faction):
             continue

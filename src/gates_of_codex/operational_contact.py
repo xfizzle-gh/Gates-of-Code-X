@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from dataclasses import replace
 from typing import Any
 
 from .diplomacy import are_allied
@@ -11,7 +12,7 @@ from .models import (
     PendingBattle,
     StrategicFormation,
 )
-from .operational_schema import PositionMode
+from .operational_schema import FormationStance, PositionMode
 
 ENCOUNTER_KIND_NODE_CONTACT = "node_contact"
 ENCOUNTER_KIND_EDGE_CROSS = "edge_cross"
@@ -63,6 +64,36 @@ def formations_at_node(
     return found
 
 
+def formation_is_combat_capable(
+    state: CampaignState,
+    force: StrategicFormation,
+) -> bool:
+    """True when a formation has at least one non-destroyed battalion."""
+    return any(
+        battalion is not None and not battalion.is_destroyed
+        for battalion_id in force.battalion_ids
+        if (battalion := state.battalions.get(battalion_id)) is not None
+    )
+
+
+def combat_capable_formations_at_node(
+    state: CampaignState,
+    node_id: str,
+    *,
+    excluding_formation_id: str | None = None,
+) -> list[StrategicFormation]:
+    """Authoritative physical occupants for contact and node capacity."""
+    return [
+        force
+        for force in formations_at_node(
+            state,
+            node_id,
+            excluding_formation_id=excluding_formation_id,
+        )
+        if formation_is_combat_capable(state, force)
+    ]
+
+
 def enemy_formations_at_node(
     state: CampaignState,
     node_id: str,
@@ -71,7 +102,7 @@ def enemy_formations_at_node(
     excluding_formation_id: str | None = None,
 ) -> list[StrategicFormation]:
     enemies: list[StrategicFormation] = []
-    for force in formations_at_node(
+    for force in combat_capable_formations_at_node(
         state, node_id, excluding_formation_id=excluding_formation_id
     ):
         if force.faction == faction:
@@ -90,7 +121,7 @@ def friendly_formations_at_node(
     excluding_formation_id: str | None = None,
 ) -> list[StrategicFormation]:
     friends: list[StrategicFormation] = []
-    for force in formations_at_node(
+    for force in combat_capable_formations_at_node(
         state, node_id, excluding_formation_id=excluding_formation_id
     ):
         if force.faction == faction or are_allied(state, faction, force.faction):
@@ -99,7 +130,7 @@ def friendly_formations_at_node(
 
 
 def node_is_contested(state: CampaignState, node_id: str) -> bool:
-    present = formations_at_node(state, node_id)
+    present = combat_capable_formations_at_node(state, node_id)
     if len(present) < 2:
         return False
     factions = {force.faction for force in present}
@@ -137,7 +168,7 @@ def coalition_sides_at_node(
     seed_attacker: StrategicFormation,
 ) -> tuple[list[StrategicFormation], list[StrategicFormation]]:
     """Split all formations on a node into attacker coalition vs defender coalition."""
-    present = formations_at_node(state, node_id)
+    present = combat_capable_formations_at_node(state, node_id)
     attackers: list[StrategicFormation] = []
     defenders: list[StrategicFormation] = []
     for force in present:
@@ -200,6 +231,10 @@ def try_create_node_contact_battle(
     """
     if state.pending_battle is not None:
         return None
+    if not formation_is_combat_capable(state, seed_attacker):
+        return None
+    if not formation_is_combat_capable(state, seed_defender):
+        return None
 
     attackers, defenders = coalition_sides_at_node(
         state, node_id, seed_attacker=seed_attacker
@@ -251,6 +286,7 @@ def try_create_node_contact_battle(
         defender_formation_id=primary_def,
     )
     state.pending_battle = pending
+    _interrupt_refit_participants(state, pending)
     if retreat_origins:
         from .operational_retreat import record_retreat_origin_node
 
@@ -321,6 +357,15 @@ def resolve_node_entry_contact(
     origin_node_id: str | None = None,
 ) -> dict[str, Any]:
     """After a formation arrives/occupies a node: stack check + cooperative contact battle."""
+    if not formation_is_combat_capable(state, force):
+        return {
+            "ok": True,
+            "reason": "",
+            "battle_id": "",
+            "contested": node_is_contested(state, node_id),
+            "enemies": [],
+            "friendlies": [],
+        }
     result = inspect_node_entry(state, force, node_id)
     if result["reason"] != "enemy_contact" or not create_battle:
         return result
@@ -455,6 +500,7 @@ def try_create_edge_contact_battle(
         encounter_pixel=pixel,
     )
     state.pending_battle = pending
+    _interrupt_refit_participants(state, pending)
     return pending
 
 
@@ -468,7 +514,10 @@ def detect_static_node_contacts(state: CampaignState) -> list[str]:
         if node_id:
             by_node.setdefault(node_id, []).append(force)
     for node_id in sorted(by_node):
-        present = sorted(by_node[node_id], key=lambda value: value.strategic_formation_id)
+        present = sorted(
+            combat_capable_formations_at_node(state, node_id),
+            key=lambda value: value.strategic_formation_id,
+        )
         for index, left in enumerate(present):
             for right in present[index + 1 :]:
                 if left.faction == right.faction:
@@ -510,7 +559,7 @@ def _participants_for_forces(
             if battalion_id in seen:
                 continue
             battalion = state.battalions.get(battalion_id)
-            if battalion is None:
+            if battalion is None or battalion.is_destroyed:
                 continue
             seen.add(battalion_id)
             parts.append(
@@ -522,6 +571,29 @@ def _participants_for_forces(
                 )
             )
     return parts
+
+
+def _interrupt_refit_participants(state: CampaignState, pending: PendingBattle) -> None:
+    """End refit immediately for formations committed to hostile contact."""
+    participant_ids = {
+        participant.battalion_id
+        for participant in pending.attacking_participants + pending.defending_participants
+    }
+    for force in state.strategic_formations.values():
+        if not participant_ids.intersection(force.battalion_ids):
+            continue
+        order = force.move_order
+        locked = order.locked_stance if order is not None else None
+        if (
+            force.stance != FormationStance.REFIT_RESUPPLY.value
+            and locked != FormationStance.REFIT_RESUPPLY.value
+        ):
+            continue
+        force.stance = FormationStance.OPERATIONAL.value
+        if order is not None and locked == FormationStance.REFIT_RESUPPLY.value:
+            force.move_order = replace(
+                order, locked_stance=FormationStance.OPERATIONAL.value
+            )
 
 
 def _mark_primary(

@@ -184,6 +184,8 @@ class CampaignEngine:
         defenders = [bn for bn in defenders if bn.battalion_id in self.state.battalions]
         atk_forces = self._formations_for_battalions(attackers)
         def_forces = self._formations_for_battalions(defenders)
+        for force_id in sorted(set(atk_forces) | set(def_forces)):
+            self._reset_participating_forced_march(force_id)
         is_op_contact = bool(str(getattr(pending, "encounter_kind", "") or ""))
         is_edge_contact = bool(str(getattr(pending, "encounter_edge_id", "") or "").strip())
         edge_progress = getattr(pending, "encounter_progress_milli", None)
@@ -639,13 +641,33 @@ class CampaignEngine:
     def _reset_losing_operational_stance(self, force_id: str) -> None:
         from .operational_schema import FormationStance
 
+        self._reset_operational_stance(
+            force_id,
+            reset_stances={
+                FormationStance.FORCED_MARCH.value,
+                FormationStance.ENTRENCHED.value,
+            },
+        )
+
+    def _reset_participating_forced_march(self, force_id: str) -> None:
+        from .operational_schema import FormationStance
+
+        self._reset_operational_stance(
+            force_id,
+            reset_stances={FormationStance.FORCED_MARCH.value},
+        )
+
+    def _reset_operational_stance(
+        self,
+        force_id: str,
+        *,
+        reset_stances: set[str],
+    ) -> None:
+        from .operational_schema import FormationStance
+
         force = self.state.strategic_formations.get(force_id)
         if force is None:
             return
-        reset_stances = {
-            FormationStance.FORCED_MARCH.value,
-            FormationStance.ENTRENCHED.value,
-        }
         locked = force.move_order.locked_stance if force.move_order is not None else None
         if force.stance not in reset_stances and locked not in reset_stances:
             return
