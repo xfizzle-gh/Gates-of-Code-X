@@ -39,6 +39,19 @@ class FactionAuditAdjustmentTest(unittest.TestCase):
         prc = next(actor for actor in manifest["actors"] if actor["actor_id"] == "prc")
         self.assertEqual(["prc_regular", "prc_legacy_reserve"], prc["components"])
 
+        rejected_unverified_west81_support = {
+            "airstrike_cluster_prc",
+            "airstrike_heavy_prc",
+            "airstrike_light_prc",
+            "airstrike_wp_prc",
+            "artillery_barrage_heavy_prc",
+        }
+        for selector in regular["selectors"]:
+            exclude_regex = selector.get("exclude_regex", "")
+            for unit in rejected_unverified_west81_support:
+                self.assertIn(unit, exclude_regex)
+        self.assertTrue(rejected_unverified_west81_support.isdisjoint(actual))
+
     def test_canada_receives_directly_source_backed_leopard_2a4m(self) -> None:
         manifest = load_faction_manifest()
         validate_faction_manifest(manifest)

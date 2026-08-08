@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 from typing import Any, Mapping
 
+from .effective_definitions import DefinitionCandidate, DefinitionKind
 from .modstack import resource_root
 from .faction_wiring_models import FactionWiringError, ResolutionProblem, _ResolvedComponent
 from .faction_wiring_types import (
@@ -18,6 +19,7 @@ from .faction_wiring_types import (
 
 
 _JUNK_AFTER_BRACE_RE = re.compile(r'\}\s*[A-Za-z0-9_]+\s*$')
+_LAYERED_SOURCE_RE = re.compile(r"^(\d+):[^/]+/(.+)$")
 
 
 class FactionComponentMixin:
@@ -200,13 +202,40 @@ class FactionComponentMixin:
     ) -> str:
         if result.provenance_policy == "mixed" or unit.virtual:
             return ""
-        resolution = self.definition_index.resolve(unit.name, ReferenceKind.PURCHASE_UNIT)
-        if not resolution.ok and _base_name(unit.name) != unit.name:
-            resolution = self.definition_index.resolve(
-                _base_name(unit.name),
-                ReferenceKind.PURCHASE_UNIT,
-            )
-        if not resolution.ok or resolution.terminal is None:
+
+        resolution = self.definition_index.resolve(
+            unit.name,
+            ReferenceKind.PURCHASE_UNIT,
+        )
+        terminal = resolution.terminal if resolution.ok else None
+        alias_chain = resolution.alias_chain if resolution.ok else ()
+
+        # The source catalog already resolves duplicate purchase rows through
+        # deterministic layer/file traversal and records every contributing
+        # source on the effective SourceUnit.  A global identifier lookup may
+        # still be ambiguous when the same unit is declared in both a conquest
+        # file and a doctrine/minimal file in the same winning layer.  Bind the
+        # provenance lookup to the effective source file selected by the unit
+        # catalog instead of treating those complementary rows as an unknown
+        # provenance result.
+        if terminal is None:
+            terminal = self._source_bound_purchase_candidate(unit)
+            alias_chain = ()
+
+        if terminal is None and resolution.status in {"missing", "kind_mismatch"}:
+            base_name = _base_name(unit.name)
+            if base_name != unit.name:
+                base_resolution = self.definition_index.resolve(
+                    base_name,
+                    ReferenceKind.PURCHASE_UNIT,
+                )
+                if base_resolution.ok:
+                    terminal = base_resolution.terminal
+                    alias_chain = base_resolution.alias_chain
+                elif base_resolution.candidates:
+                    resolution = base_resolution
+
+        if terminal is None:
             candidates = "; ".join(
                 f"{candidate.layer}:{candidate.path}:{candidate.line}"
                 for candidate in resolution.candidates
@@ -215,10 +244,9 @@ class FactionComponentMixin:
                 f"unit {unit.name} cannot establish terminal component provenance: "
                 f"{resolution.status}; candidates={candidates}"
             )
-        terminal = resolution.terminal
         is_legacy = terminal.priority in self._legacy_layer_priorities
         alias_chain = " -> ".join(
-            f"{hop.identifier}->{hop.target}" for hop in resolution.alias_chain
+            f"{hop.identifier}->{hop.target}" for hop in alias_chain
         ) or "none"
         detail = (
             f"terminal layer={terminal.layer} priority={terminal.priority} "
@@ -233,6 +261,49 @@ class FactionComponentMixin:
                 f"unit {unit.name} violates explicit legacy component provenance; {detail}"
             )
         return ""
+
+    def _source_bound_purchase_candidate(
+        self,
+        unit: SourceUnit,
+    ) -> DefinitionCandidate | None:
+        names = [unit.name]
+        base_name = _base_name(unit.name)
+        if base_name != unit.name:
+            names.append(base_name)
+
+        candidates = [
+            candidate
+            for name in names
+            for candidate in self.definition_index.candidates_for(name)
+            if candidate.kind == DefinitionKind.PURCHASE_UNIT_WRAPPER
+            and candidate.priority == unit.source_priority
+        ]
+        if not candidates:
+            return None
+
+        effective_paths: list[str] = []
+        for source in unit.source_files:
+            match = _LAYERED_SOURCE_RE.match(source)
+            if match is None or int(match.group(1)) != unit.source_priority:
+                continue
+            effective_paths.append(match.group(2))
+
+        for path in reversed(effective_paths):
+            matching = [candidate for candidate in candidates if candidate.path == path]
+            if matching:
+                return max(
+                    matching,
+                    key=lambda candidate: (
+                        candidate.source_order,
+                        candidate.line,
+                        candidate.column,
+                        candidate.identifier,
+                    ),
+                )
+
+        # No source path matched, so the catalog/index contract is incomplete.
+        # Fail closed rather than guessing among same-layer declarations.
+        return None
 
     def _unit_asset_problems(self, unit: SourceUnit) -> list[str]:
         problems: list[str] = []
@@ -272,7 +343,9 @@ class FactionComponentMixin:
         missing_by_kind: dict[ReferenceKind, list[str]] = {}
         for reference in references:
             resolution = self.definition_index.resolve(reference.identifier, reference.kind)
-            if resolution.ok:
+            if resolution.ok or self.definition_index.establishes_existence(
+                reference.identifier, reference.kind
+            ):
                 continue
             if resolution.status == "missing":
                 missing_by_kind.setdefault(reference.kind, []).append(reference.identifier)

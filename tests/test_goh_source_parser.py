@@ -45,6 +45,29 @@ class GoHSourceParserTests(unittest.TestCase):
         self.assertEqual("tank", result.entries[0].name)
         self.assertEqual(["m1", "radar"], [call.value for call in result.entries[0].calls])
 
+    def test_block_form_retains_its_root_nested_macro_kind(self):
+        result = scan_source_entries(
+            '{"supply_drop"\n'
+            '  ("offmap_support" side(prc) vehicle(ammo_pallet) crew(pilot:0))\n'
+            '  {action "airstrike:flare_paradrop_ammo"}\n'
+            '}\n',
+            "offmap.set",
+        )
+
+        self.assertEqual([], result.diagnostics)
+        self.assertEqual("offmap_support", result.entries[0].macro_kind)
+
+    def test_nested_macro_inside_child_block_does_not_classify_outer_block(self):
+        result = scan_source_entries(
+            '{"ordinary"\n'
+            '  {child ("vehicle" side(nato) crew(driver:1))}\n'
+            '}\n',
+            "nested-child.set",
+        )
+
+        self.assertEqual([], result.diagnostics)
+        self.assertEqual("", result.entries[0].macro_kind)
+
     def test_multiline_name_and_nested_syntax_are_captured(self):
         text = '''("squad_with2types_conquest" side(rusa)
 name(kor_inf_rifle) ; current GoH comment

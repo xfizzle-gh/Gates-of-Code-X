@@ -204,7 +204,15 @@ def scan_source_entries(text: str, source: str) -> SourceScanResult:
                 "",
             )
         else:
-            macro_kind = ""
+            # Block-form purchase rows wrap their operative macro, for example:
+            #
+            #   {"tank"
+            #       ("vehicle" side(prc) crew(tankman:4))
+            #   }
+            #
+            # Preserve that nested macro kind so later classification can tell
+            # vehicle wrappers, off-map support, and ordinary squads apart.
+            macro_kind = _block_macro_kind(raw)
             name = _block_name(raw)
         entries.append(
             SourceEntry(
@@ -841,6 +849,69 @@ def _block_name(raw: str) -> str:
     while end < len(raw) and _is_name_char(raw[end]):
         end += 1
     return raw[start:end]
+
+
+def _block_macro_kind(raw: str) -> str:
+    """Return the first proven root-level nested macro kind in a block.
+
+    Only a parenthesized quoted macro that is a direct child of the outer
+    block qualifies.  Parentheses inside nested braces, strings, or comments
+    are ignored so descriptive/action data cannot accidentally classify the
+    containing purchase row.
+    """
+
+    brace_depth = 1
+    paren_depth = 0
+    quote = False
+    escaped = False
+    comment = False
+    index = 1
+    while index < len(raw) - 1:
+        char = raw[index]
+        if comment:
+            if char == "\n":
+                comment = False
+            index += 1
+            continue
+        if quote:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                quote = False
+            index += 1
+            continue
+        if char == ";" or raw.startswith("//", index):
+            comment = True
+            index += 1
+            continue
+        if char == '"':
+            quote = True
+            index += 1
+            continue
+        if char == "{":
+            brace_depth += 1
+            index += 1
+            continue
+        if char == "}":
+            brace_depth = max(0, brace_depth - 1)
+            index += 1
+            continue
+        if char == "(" and brace_depth == 1 and paren_depth == 0:
+            if _definition_form(raw, index) == "macro":
+                end = _matching_parenthesis(raw, index)
+                if end is not None:
+                    return _macro_kind(raw[index : end + 1])
+            paren_depth += 1
+            index += 1
+            continue
+        if char == "(" and paren_depth:
+            paren_depth += 1
+        elif char == ")" and paren_depth:
+            paren_depth -= 1
+        index += 1
+    return ""
 
 
 def _matching_parenthesis(text: str, open_index: int) -> int | None:

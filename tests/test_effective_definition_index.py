@@ -14,6 +14,30 @@ from gates_of_codex.faction_wiring_types import ReferenceKind
 from gates_of_codex.faction_wiring_scan import SourceUnitIndex
 
 
+def _candidate(
+    identifier: str,
+    kind: DefinitionKind,
+    *,
+    priority: int,
+    path: str,
+    packed: bool = False,
+    parser_form: str,
+    source_order: int = 0,
+) -> DefinitionCandidate:
+    return DefinitionCandidate(
+        identifier=identifier,
+        kind=kind,
+        layer=f"layer-{priority}",
+        priority=priority,
+        path=path,
+        line=1,
+        column=1,
+        packed=packed,
+        parser_form=parser_form,
+        source_order=source_order,
+    )
+
+
 class EffectiveDefinitionIndexTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
@@ -131,6 +155,60 @@ class EffectiveDefinitionIndexTest(unittest.TestCase):
         self.assertEqual("def_file", resolution.terminal.parser_form)
         self.assertEqual(3, len(resolution.shadowed))
 
+    def test_packed_concrete_def_wins_loose_interaction_declarations(self) -> None:
+        layer = self.root / "layer"
+        archive = layer / "resource/entity.pak"
+        archive.parent.mkdir(parents=True)
+        with zipfile.ZipFile(archive, "w") as handle:
+            handle.writestr("entity/test/shared.def", "{concrete packed body}\n")
+        self.write(
+            "layer/resource/set/interaction_entity/one.inc",
+            '{"shared car" {tags add "vehicle"}}\n',
+        )
+        self.write(
+            "layer/resource/set/interaction_entity/two.inc",
+            '{"shared cannon" {tags add "artillery"}}\n',
+        )
+
+        resolution = EffectiveDefinitionIndex.build([layer]).resolve(
+            "shared", ReferenceKind.VEHICLE_ENTITY
+        )
+
+        self.assertTrue(resolution.ok)
+        self.assertTrue(resolution.terminal.packed)
+        self.assertEqual("def_file", resolution.terminal.parser_form)
+        self.assertEqual(
+            2,
+            sum(
+                candidate.kind == DefinitionKind.VEHICLE_ENTITY
+                for candidate in resolution.shadowed
+            ),
+        )
+
+    def test_multiple_interaction_declarations_are_complementary_entity_evidence(self) -> None:
+        self.write(
+            "layer/resource/set/interaction_entity/one.inc",
+            '{"shared car" {tags add "vehicle"}}\n',
+        )
+        self.write(
+            "layer/resource/set/interaction_entity/two.inc",
+            '{"shared cannon" {tags add "artillery"}}\n',
+        )
+
+        resolution = EffectiveDefinitionIndex.build([self.root / "layer"]).resolve(
+            "shared", ReferenceKind.VEHICLE_ENTITY
+        )
+
+        self.assertTrue(resolution.ok)
+        self.assertEqual("interaction_entity", resolution.terminal.parser_form)
+        self.assertEqual(
+            1,
+            sum(
+                candidate.kind == DefinitionKind.VEHICLE_ENTITY
+                for candidate in resolution.shadowed
+            ),
+        )
+
     def test_conflicting_purchase_wrappers_at_same_priority_are_ambiguous(self) -> None:
         self.write(
             "layer/resource/set/multiplayer/units/conquest/a.set",
@@ -169,6 +247,56 @@ class EffectiveDefinitionIndexTest(unittest.TestCase):
         self.assertTrue(resolution.ok)
         self.assertEqual("implicit_vehicle_wrapper", resolution.terminal.parser_form)
         self.assertGreaterEqual(len(resolution.shadowed), 2)
+
+    def test_conflicting_concrete_defs_prove_existence_without_selecting_winner(self) -> None:
+        first = _candidate(
+            "v22",
+            DefinitionKind.VEHICLE_ENTITY,
+            priority=2,
+            path="entity/a/v22.def",
+            packed=True,
+            parser_form="def_file",
+        )
+        second = _candidate(
+            "v22",
+            DefinitionKind.VEHICLE_ENTITY,
+            priority=2,
+            path="entity/b/v22.def",
+            packed=True,
+            parser_form="def_file",
+            source_order=1,
+        )
+        index = EffectiveDefinitionIndex(
+            [first, second],
+            semantic_signatures={first: "body-a", second: "body-b"},
+        )
+
+        resolution = index.resolve("v22", ReferenceKind.VEHICLE_ENTITY)
+        self.assertEqual("ambiguous", resolution.status)
+        self.assertTrue(index.establishes_existence("v22", ReferenceKind.VEHICLE_ENTITY))
+
+    def test_nonconcrete_ambiguity_does_not_prove_existence(self) -> None:
+        first = _candidate(
+            "vehicle_x",
+            DefinitionKind.VEHICLE_ENTITY,
+            priority=2,
+            path="set/a.set",
+            parser_form="macro",
+        )
+        second = _candidate(
+            "vehicle_x",
+            DefinitionKind.VEHICLE_ENTITY,
+            priority=2,
+            path="set/b.set",
+            parser_form="macro",
+            source_order=1,
+        )
+        index = EffectiveDefinitionIndex(
+            [first, second],
+            semantic_signatures={first: "body-a", second: "body-b"},
+        )
+
+        self.assertFalse(index.establishes_existence("vehicle_x", ReferenceKind.VEHICLE_ENTITY))
 
     def test_conflicting_loose_candidates_at_same_effective_priority_are_ambiguous(self) -> None:
         self.write("layer/resource/entity/a/conflict.def", "{first body}\n")
@@ -245,6 +373,45 @@ class EffectiveDefinitionIndexTest(unittest.TestCase):
             resolution.terminal.parser_form,
             resolution.terminal.source_order,
         ))
+
+    def test_paradrop_display_token_resolves_through_explicit_spawn_target(self) -> None:
+        self.write(
+            "layer/resource/entity/service/paradrop_ammo_pallet.def",
+            "{entity body}\n",
+        )
+        self.write(
+            "layer/resource/set/interaction_entity/paradrop.inc",
+            '{"flare_paradrop_ammo" {on spawn {spawn "paradrop_ammo_pallet"}}}\n',
+        )
+        self.write(
+            "layer/resource/set/multiplayer/units/conquest/units_prc.set",
+            '{"paradrop_supply_prc" ("offmap_support" side(prc) vehicle(ammo_pallet)) '
+            '{action "airstrike:flare_paradrop_ammo"}}\n',
+        )
+
+        resolution = EffectiveDefinitionIndex.build([self.root / "layer"]).resolve(
+            "ammo_pallet", ReferenceKind.VEHICLE_ENTITY
+        )
+
+        self.assertTrue(resolution.ok)
+        self.assertEqual("paradrop_ammo_pallet", resolution.terminal.identifier)
+        self.assertEqual(["ammo_pallet->paradrop_ammo_pallet"], [
+            f"{hop.identifier}->{hop.target}" for hop in resolution.alias_chain
+        ])
+
+    def test_non_paradrop_offmap_action_does_not_create_payload_alias(self) -> None:
+        self.write(
+            "layer/resource/set/interaction_entity/support.inc",
+            '{"flare_artillery_105" {on spawn {spawn "shell_entity"}}}\n',
+        )
+        self.write(
+            "layer/resource/set/multiplayer/units/conquest/units_prc.set",
+            '{"artillery_support" ("offmap_support" side(prc) vehicle(display_token)) '
+            '{action "airstrike:flare_artillery_105"}}\n',
+        )
+
+        index = EffectiveDefinitionIndex.build([self.root / "layer"])
+        self.assertEqual((), index.candidates_for("display_token"))
 
     def test_strategic_declaration_requires_explicit_kind_and_action_shape(self) -> None:
         self.write(
@@ -517,6 +684,22 @@ class EffectiveDefinitionIndexTest(unittest.TestCase):
         self.assertEqual("implicit_vehicle_wrapper", vehicle.terminal.parser_form)
         self.assertEqual("resolved", purchase.status)
         self.assertEqual(DefinitionKind.PURCHASE_UNIT_WRAPPER, purchase.terminal.kind)
+
+    def test_block_vehicle_wrapper_without_explicit_reference_declares_same_name_entity(self) -> None:
+        self.write(
+            "layer/resource/set/multiplayer/units/conquest/vehicles.set",
+            '{"legacy_tank"\n'
+            '  ("vehicle" side(prc) crew(tankman:4))\n'
+            '}\n',
+        )
+
+        index = EffectiveDefinitionIndex.build([self.root / "layer"])
+        vehicle = index.resolve("legacy_tank", ReferenceKind.VEHICLE_ENTITY)
+        purchase = index.resolve("legacy_tank", ReferenceKind.PURCHASE_UNIT)
+
+        self.assertTrue(vehicle.ok)
+        self.assertEqual("implicit_vehicle_wrapper", vehicle.terminal.parser_form)
+        self.assertTrue(purchase.ok)
 
     def test_purchase_wrapper_with_same_name_vehicle_declares_typed_entity(self) -> None:
         self.write(

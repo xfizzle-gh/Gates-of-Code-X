@@ -23,6 +23,9 @@ class DefinitionKind(str, Enum):
     REGISTRY_ALIAS = "registry_alias"
 
 
+_SPAWN_TARGET_RE = re.compile(r'\{\s*spawn\s+"([^"\r\n]+)"', re.IGNORECASE)
+
+
 REFERENCE_TERMINAL_KINDS = {
     ReferenceKind.VEHICLE_ENTITY: frozenset({DefinitionKind.VEHICLE_ENTITY}),
     ReferenceKind.PURCHASE_UNIT: frozenset({DefinitionKind.PURCHASE_UNIT_WRAPPER}),
@@ -165,6 +168,9 @@ class EffectiveDefinitionIndex:
                     candidates.append(candidate)
                     signatures[candidate] = _content_signature(path.read_bytes())
 
+            interaction_root = resources / "set/interaction_entity"
+            interaction_spawn_targets = _interaction_spawn_targets(interaction_root)
+
             registry_root = resources / "set/registry"
             if registry_root.is_dir():
                 for path in sorted(registry_root.rglob("*.reg")):
@@ -194,9 +200,9 @@ class EffectiveDefinitionIndex:
                         priority=priority,
                         mode="set",
                         source_units=source_units,
+                        interaction_spawn_targets=interaction_spawn_targets,
                     )
 
-            interaction_root = resources / "set/interaction_entity"
             if not interaction_root.is_dir():
                 continue
             for path in sorted(interaction_root.rglob("*.inc")):
@@ -223,7 +229,16 @@ class EffectiveDefinitionIndex:
                             source_order=source_order,
                         )
                         candidates.append(candidate)
-                        signatures[candidate] = _entry_signature(entry)
+                        # Interaction declarations are existence evidence for the
+                        # named object/entity, not competing concrete entity
+                        # bodies.  The same entity may legitimately receive
+                        # several interaction declarations in one layer.  Those
+                        # declarations must therefore collapse semantically by
+                        # identifier and kind instead of becoming a false
+                        # same-layer ambiguity because their action bodies differ.
+                        signatures[candidate] = (
+                            f"declaration\0{kind.value}\0{identifier}"
+                        )
         _append_case_aliases(
             candidates,
             signatures,
@@ -243,6 +258,34 @@ class EffectiveDefinitionIndex:
             visited=(),
             alias_chain=(),
             collected=(),
+        )
+
+    def establishes_existence(
+        self,
+        identifier: str,
+        reference_kind: ReferenceKind,
+    ) -> bool:
+        """Return whether authoritative typed source evidence proves existence.
+
+        Semantic resolution remains strict.  Two conflicting concrete ``.def``
+        bodies in the same winning layer are still ambiguous for provenance or
+        behavior selection, but either body independently proves that the
+        engine identifier exists.  This narrow existence predicate is used
+        only by asset-reference validation and never chooses a semantic winner.
+        """
+        resolution = self.resolve(identifier, reference_kind)
+        if resolution.ok:
+            return True
+        ambiguity = resolution.ambiguity
+        if resolution.status != "ambiguous" or ambiguity is None:
+            return False
+        allowed = REFERENCE_TERMINAL_KINDS[reference_kind]
+        candidates = ambiguity.candidates
+        return bool(candidates) and all(
+            candidate.kind in allowed
+            and candidate.parser_form == "def_file"
+            and candidate.identifier == identifier
+            for candidate in candidates
         )
 
     def _resolve(
@@ -350,15 +393,25 @@ class EffectiveDefinitionIndex:
         identifier: str,
         candidates: tuple[DefinitionCandidate, ...],
     ) -> tuple[DefinitionCandidate | None, DefinitionAmbiguity | None]:
-        top_priority = max(map(_effective_priority, candidates))
+        # Layer precedence is authoritative.  Within the winning layer, a
+        # concrete definition form is stronger than complementary declaration
+        # evidence.  Loose-vs-packed precedence is applied only between
+        # candidates of equal authority, so a loose interaction declaration
+        # cannot incorrectly eclipse a packed concrete .def body.
+        top_priority = max(candidate.priority for candidate in candidates)
         top = tuple(
             candidate for candidate in candidates
-            if _effective_priority(candidate) == top_priority
+            if candidate.priority == top_priority
         )
         authority = max(_candidate_authority(candidate) for candidate in top)
         authoritative = tuple(
             candidate for candidate in top
             if _candidate_authority(candidate) == authority
+        )
+        origin_priority = max(0 if candidate.packed else 1 for candidate in authoritative)
+        authoritative = tuple(
+            candidate for candidate in authoritative
+            if (0 if candidate.packed else 1) == origin_priority
         )
         semantic_values = {
             self._semantic_signatures.get(
@@ -397,10 +450,6 @@ def _candidate_authority(candidate: DefinitionCandidate) -> int:
         "registry_row": 1,
         "source_alias": 1,
     }.get(candidate.parser_form, 0)
-
-
-def _effective_priority(candidate: DefinitionCandidate) -> tuple[int, int]:
-    return candidate.priority, 0 if candidate.packed else 1
 
 
 def _report_key(candidate: DefinitionCandidate) -> tuple[object, ...]:
@@ -444,6 +493,7 @@ def _append_source_candidates(
     priority: int,
     mode: str,
     source_units: SourceUnitIndex,
+    interaction_spawn_targets: Mapping[str, str] | None = None,
 ) -> None:
     relative = path.relative_to(resources).as_posix()
     text = path.read_text(encoding="utf-8-sig", errors="replace")
@@ -481,15 +531,101 @@ def _append_source_candidates(
                 alias_target=target,
             )
             candidates.append(candidate)
-            signatures[candidate] = (
-                f"alias\0{target}"
-                if kind == DefinitionKind.REGISTRY_ALIAS
-                else (
-                    f"declaration\0{kind.value}"
-                    if parser_form == "registry_row"
-                    else _entry_signature(entry)
+            if kind == DefinitionKind.REGISTRY_ALIAS:
+                signatures[candidate] = f"alias\0{target}"
+            elif parser_form in {"registry_row", "implicit_vehicle_wrapper"}:
+                # These forms establish typed existence but do not provide a
+                # concrete entity body.  Repeated doctrine/conquest wrappers
+                # for the same effective vehicle are complementary evidence,
+                # even when the surrounding purchase metadata differs.
+                signatures[candidate] = (
+                    f"declaration\0{kind.value}\0{entry.name}"
                 )
+            else:
+                signatures[candidate] = _entry_signature(entry)
+
+        if mode == "set" and interaction_spawn_targets:
+            _append_offmap_payload_alias_candidates(
+                candidates,
+                signatures,
+                entry=entry,
+                layer=layer,
+                priority=priority,
+                path=relative,
+                source_order=source_order,
+                interaction_spawn_targets=interaction_spawn_targets,
             )
+
+
+def _interaction_spawn_targets(interaction_root: Path) -> Mapping[str, str]:
+    """Return explicit interaction declarations with one literal spawn target.
+
+    This is used only to prove the established GoH paradrop indirection where
+    an off-map purchase row exposes a display token while its action spawns a
+    concrete parachute wrapper.  Ambiguous or computed spawn bodies are omitted.
+    """
+    if not interaction_root.is_dir():
+        return {}
+    targets: dict[str, str] = {}
+    ambiguous: set[str] = set()
+    for path in sorted(interaction_root.rglob("*.inc")):
+        text = path.read_text(encoding="utf-8-sig", errors="replace")
+        for entry in scan_source_entries(text, path.as_posix()).entries:
+            identifier = _interaction_identifier(entry.name)
+            if not identifier:
+                continue
+            values = tuple(dict.fromkeys(_SPAWN_TARGET_RE.findall(entry.raw)))
+            if len(values) != 1:
+                continue
+            target = values[0]
+            previous = targets.get(identifier)
+            if previous is not None and previous != target:
+                ambiguous.add(identifier)
+            else:
+                targets[identifier] = target
+    for identifier in ambiguous:
+        targets.pop(identifier, None)
+    return targets
+
+
+def _append_offmap_payload_alias_candidates(
+    candidates: list[DefinitionCandidate],
+    signatures: dict[DefinitionCandidate, str],
+    *,
+    entry: SourceEntry,
+    layer: str,
+    priority: int,
+    path: str,
+    source_order: int,
+    interaction_spawn_targets: Mapping[str, str],
+) -> None:
+    if entry.macro_kind.lower() not in {"offmap_support", "strategic_doctrine"}:
+        return
+    actions = [call.value.rsplit(":", 1)[-1] for call in entry.calls if call.family == "action" and call.value]
+    paradrop_actions = [action for action in actions if action.lower().startswith("flare_paradrop_")]
+    if len(paradrop_actions) != 1:
+        return
+    target = interaction_spawn_targets.get(paradrop_actions[0])
+    if not target:
+        return
+    for call in entry.calls:
+        if call.family not in {"vehicle", "entity"} or not call.value or call.value == target:
+            continue
+        candidate = DefinitionCandidate(
+            identifier=call.value,
+            kind=DefinitionKind.REGISTRY_ALIAS,
+            layer=layer,
+            priority=priority,
+            path=path,
+            line=call.location.line,
+            column=call.location.column,
+            packed=False,
+            parser_form="offmap_payload_alias",
+            source_order=source_order,
+            alias_target=target,
+        )
+        candidates.append(candidate)
+        signatures[candidate] = f"alias\0{target}"
 
 
 def _entry_signature(entry: SourceEntry) -> str:
@@ -521,11 +657,7 @@ def _is_strategic_declaration(entry: SourceEntry) -> bool:
     shape = entry.macro_kind.lower()
     if shape not in {"offmap_support", "strategic_doctrine"}:
         return False
-    return any(
-        call.family == "action"
-        and call.value.lower() in {"callin", "call_in", "strategic", "offmap"}
-        for call in entry.calls
-    )
+    return any(call.family == "action" and call.value for call in entry.calls)
 
 
 def _is_purchase_wrapper(
@@ -545,7 +677,10 @@ def _is_implicit_vehicle_wrapper(entry: SourceEntry) -> bool:
         return False
     shape = entry.macro_kind.lower()
     return bool(shape) and (
-        any(token in shape for token in ("vehicle", "tank", "cannon", "artillery", "mortar"))
+        any(
+            token in shape
+            for token in ("vehicle", "tank", "cannon", "artillery", "mortar")
+        )
         or any(call.family == "crew" for call in entry.calls)
     )
 
