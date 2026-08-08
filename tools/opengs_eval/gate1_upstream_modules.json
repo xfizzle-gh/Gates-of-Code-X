@@ -1,0 +1,97 @@
+{
+  "schema": "gates-of-codex.opengs-gate1-upstream-modules",
+  "schema_version": 2,
+  "repository": "Thomas-Holtvedt/opengs-maptool",
+  "commit": "06e7ec8517bd45872cf44d77cb8784e5ffca49bb",
+  "version": "0.3",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2025 Thomas Holtvedt AKA Good Solution Interactive",
+  "adaptation": "Generation concepts were adapted into the four explicitly mapped Gate 1 modules below. No PyQt, file-dialog, GUI, Godot runtime, or JFA compute code was copied.",
+  "source_to_destination": {
+    "config.py": {
+      "source_git_blob": "c5c3e5683e72e652c63f3708f7f1b15a0d807377",
+      "destinations": [
+        "tools/opengs_eval/gate1_common.py"
+      ],
+      "concepts": [
+        "color constants",
+        "terrain lookup constants"
+      ]
+    },
+    "logic/numb_gen.py": {
+      "source_git_blob": "8857729e2ea57c49a8539ca347b2755e52325f7d",
+      "destinations": [
+        "tools/opengs_eval/gate1_common.py"
+      ],
+      "concepts": [
+        "stable numeric identifier series"
+      ]
+    },
+    "logic/utils.py": {
+      "source_git_blob": "44d3ad2ad84004347a06e328ad96a8e44ada977d",
+      "destinations": [
+        "tools/opengs_eval/gate1_common.py",
+        "tools/opengs_eval/gate1_regions.py"
+      ],
+      "concepts": [
+        "mask extraction",
+        "nearest-region support",
+        "enclave cleanup support"
+      ]
+    },
+    "logic/territory_generator.py": {
+      "source_git_blob": "770f6a7167446bde1697ac18deaabc61706caf25",
+      "destinations": [
+        "tools/opengs_eval/gate1_regions.py",
+        "tools/opengs_eval/gate1_pipeline.py"
+      ],
+      "concepts": [
+        "density-weighted seed placement",
+        "Lloyd relaxation",
+        "territory Voronoi assignment",
+        "jagged displacement"
+      ]
+    },
+    "logic/province_generator.py": {
+      "source_git_blob": "10fd5557ba5f52d2c84908815180e4bb75e01acd",
+      "destinations": [
+        "tools/opengs_eval/gate1_regions.py",
+        "tools/opengs_eval/gate1_pipeline.py",
+        "tools/opengs_eval/gate1_generator.py"
+      ],
+      "concepts": [
+        "province allocation",
+        "lake component generation",
+        "terrain classification",
+        "headless raster and metadata export"
+      ]
+    }
+  },
+  "destination_canonical_utf8_lf_sha256": {
+    "tools/opengs_eval/gate1_common.py": "2ac67079f89215997650db2d39de86fc0b6245937b35cd0b8d4c88b1693f0da0",
+    "tools/opengs_eval/gate1_regions.py": "7eb2af41e03566407b2a18ce9652884310af0bb917b967942e86a9d405408ac8",
+    "tools/opengs_eval/gate1_pipeline.py": "58c1142fe7dd52571009462d09e8b52f7deb0ae6749365851a1087060e7b4ad3",
+    "tools/opengs_eval/gate1_generator.py": "417f1c4e23e4e5ac972d81b94d517075d11b011f2ab64b956642a5a07e6faa64"
+  },
+  "included_concepts": [
+    "mask extraction",
+    "density-weighted seed placement",
+    "component-aware Lloyd relaxation",
+    "territory and province Voronoi assignment",
+    "jagged border displacement",
+    "enclave cleanup",
+    "lake component generation",
+    "center-sampled terrain classification",
+    "raster and metadata export"
+  ],
+  "excluded": [
+    "PyQt",
+    "GUI layouts",
+    "file dialogs",
+    "OpenGS Godot runtime",
+    "JFA RenderingDevice compute",
+    "map-mode textures",
+    "label runtime",
+    "editor UX runtime"
+  ]
+}

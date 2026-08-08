@@ -1,0 +1,26 @@
+{
+  "schema": "gates-of-codex.opengs-recipe",
+  "schema_version": 1,
+  "recipe_id": "example_only_replace_checksums",
+  "root_seed": 8675309,
+  "inputs": {
+    "land": {"path": "land.png", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+    "boundary": {"path": "boundary.png", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+    "density": {"path": "density.png", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+    "terrain": null
+  },
+  "counts": {
+    "land_territories": 140,
+    "ocean_territories": 20,
+    "land_provinces": 3299,
+    "ocean_provinces": 215
+  },
+  "options": {
+    "lloyd_iterations": 4,
+    "density_strength": 2.0,
+    "exclude_ocean_density": true,
+    "jagged_land": false,
+    "jagged_ocean": false,
+    "jagged_amplitude": 0.12
+  }
+}
