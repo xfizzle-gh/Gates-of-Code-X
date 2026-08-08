@@ -12,6 +12,7 @@ ACTOR_TYPES = frozenset({"sovereign", "separatist", "expeditionary", "auxiliary"
 ROSTER_CLASSES = frozenset({"full_national", "national_hybrid", "coalition_fallback", "proxy_hybrid", "nonstate"})
 RESEARCH_MODES = frozenset({"native", "hybrid", "generated"})
 SELECTOR_KINDS = frozenset({"research_branch", "exact", "prefix", "regex", "virtual"})
+PROVENANCE_POLICIES = frozenset({"modern_only", "legacy_explicit", "mixed"})
 
 
 class FactionWiringError(ValueError):
@@ -49,6 +50,8 @@ class ResolutionProblem:
 @dataclass(slots=True)
 class _ResolvedComponent:
     component_id: str
+    provenance_policy: str = "mixed"
+    research_label: str = ""
     units: dict[str, SourceUnit] = field(default_factory=dict)
     research_nodes: dict[str, SourceResearchNode] = field(default_factory=dict)
     branch_roots: list[str] = field(default_factory=list)

@@ -2,13 +2,24 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
-from typing import Iterable
+import re
+from typing import Iterable, Mapping
 
 
 RUNTIME_SUFFIXES = {".set", ".lua", ".inc", ".ext", ".xml", ".json"}
 RUNTIME_SUBTREES = ("set", "script")
 KNOWN_WORKSHOP_ORDER = ("2897299509", "3261086933", "3636883799")
+STACK_ROLE_ORDER = (
+    "vanilla",
+    "west81",
+    "codex",
+    "codex_ai_overhaul",
+    "gates_codex",
+)
+ENV_PLACEHOLDER_RE = re.compile(r"\$\{([A-Z][A-Z0-9_]*)\}")
+MOD_INFO_NAME_RE = re.compile(r'\{name\s+"([^"]+)"\}', re.I)
 
 
 def mod_root(value: str | Path) -> Path:
@@ -31,10 +42,22 @@ def normalize_stack(values: Iterable[str | Path]) -> list[Path]:
     return result
 
 
-def load_stack_config(path: str | Path) -> list[Path]:
+def load_stack_config(
+    path: str | Path,
+    *,
+    environ: Mapping[str, str] | None = None,
+) -> list[Path]:
     source = Path(path).expanduser().resolve()
     payload = json.loads(source.read_text(encoding="utf-8-sig"))
     layers = payload.get("layers", [])
+    if not isinstance(layers, list) or not layers:
+        raise ValueError(f"Stack config has no layers: {source}")
+    if any(isinstance(layer, dict) and "role" in layer for layer in layers):
+        return _load_validated_stack_config(source, layers, environ=environ)
+
+    # Legacy ad-hoc configs remain readable for internal fixtures and explicit
+    # one-off tooling. The checked-in Windows config uses the validated role
+    # contract above and therefore never guesses or falls back.
     values: list[Path] = []
     for layer in layers:
         raw = layer.get("path") if isinstance(layer, dict) else layer
@@ -45,6 +68,112 @@ def load_stack_config(path: str | Path) -> list[Path]:
             candidate = (source.parent / candidate).resolve()
         values.append(candidate)
     return normalize_stack(values)
+
+
+def _load_validated_stack_config(
+    source: Path,
+    layers: list[object],
+    *,
+    environ: Mapping[str, str] | None,
+) -> list[Path]:
+    if len(layers) != len(STACK_ROLE_ORDER) or not all(isinstance(layer, dict) for layer in layers):
+        raise ValueError(
+            "Validated stack config requires exactly five object layers in "
+            f"this order: {', '.join(STACK_ROLE_ORDER)}"
+        )
+    roles = tuple(str(layer.get("role", "")) for layer in layers)
+    if roles != STACK_ROLE_ORDER:
+        duplicates = sorted({role for role in roles if roles.count(role) > 1 and role})
+        detail = f"; duplicate roles={duplicates}" if duplicates else ""
+        raise ValueError(
+            "Stack layer order must be exactly "
+            f"{' -> '.join(STACK_ROLE_ORDER)}; got {' -> '.join(roles)}{detail}"
+        )
+
+    environment = os.environ if environ is None else environ
+    roots: list[Path] = []
+    seen: dict[Path, str] = {}
+    for layer in layers:
+        role = str(layer["role"])
+        raw_path = layer.get("path")
+        if not isinstance(raw_path, str) or not raw_path:
+            raise ValueError(f"Stack layer {role} requires a non-empty path")
+        expanded = _expand_environment_path(raw_path, environment, role=role)
+        candidate = Path(expanded).expanduser()
+        if not candidate.is_absolute():
+            candidate = source.parent / candidate
+        root = mod_root(candidate)
+        if not root.is_dir():
+            raise FileNotFoundError(f"Stack layer {role} does not exist: {root}")
+        if root in seen:
+            raise ValueError(
+                f"Stack layers {seen[root]} and {role} resolve to the same root: {root}"
+            )
+        seen[root] = role
+        _validate_layer_identity(root, layer, role=role)
+        roots.append(root)
+    return roots
+
+
+def _expand_environment_path(
+    value: str,
+    environ: Mapping[str, str],
+    *,
+    role: str,
+) -> str:
+    missing: list[str] = []
+
+    def replace(match: re.Match[str]) -> str:
+        name = match.group(1)
+        replacement = environ.get(name)
+        if replacement is None or not str(replacement).strip():
+            missing.append(name)
+            return match.group(0)
+        return str(replacement)
+
+    expanded = ENV_PLACEHOLDER_RE.sub(replace, value)
+    if missing:
+        raise ValueError(
+            f"Stack layer {role} is missing required environment variables: "
+            + ", ".join(sorted(set(missing)))
+        )
+    if "${" in expanded or ENV_PLACEHOLDER_RE.search(expanded):
+        raise ValueError(f"Stack layer {role} contains an unresolved placeholder: {expanded}")
+    return expanded
+
+
+def _validate_layer_identity(root: Path, layer: Mapping[str, object], *, role: str) -> None:
+    if role == "vanilla":
+        sentinels = layer.get("sentinels")
+        if not isinstance(sentinels, list) or not sentinels or not all(
+            isinstance(item, str) and item for item in sentinels
+        ):
+            raise ValueError("Vanilla stack layer requires non-empty sentinel paths")
+        missing = [item for item in sentinels if not (root / item).exists()]
+        if missing:
+            raise ValueError(
+                f"Vanilla root {root} is missing required sentinels: {', '.join(missing)}"
+            )
+        return
+
+    accepted = layer.get("accepted_mod_names")
+    if not isinstance(accepted, list) or not accepted or not all(
+        isinstance(item, str) and item for item in accepted
+    ):
+        raise ValueError(f"Stack layer {role} requires accepted_mod_names")
+    mod_info = root / "mod.info"
+    if not mod_info.is_file():
+        raise ValueError(f"Stack layer {role} has no mod.info: {root}")
+    text = mod_info.read_text(encoding="utf-8-sig", errors="replace")
+    match = MOD_INFO_NAME_RE.search(text)
+    if match is None:
+        raise ValueError(f"Stack layer {role} mod.info has no name: {mod_info}")
+    actual = match.group(1)
+    if actual not in accepted:
+        raise ValueError(
+            f"Stack layer {role} has wrong product identity {actual!r}; "
+            f"accepted={accepted!r}; root={root}"
+        )
 
 
 def resolve_stack(
@@ -82,22 +211,18 @@ def validate_known_order(values: Iterable[str | Path]) -> tuple[bool, str]:
     roots = normalize_stack(values)
     positions: dict[str, int] = {}
     for index, root in enumerate(roots):
-        text = str(root).lower()
-        mod_info = root / "mod.info"
-        if mod_info.is_file():
-            text += "\n" + mod_info.read_text(encoding="utf-8-sig", errors="replace").lower()
-        if "2897299509" in text or "west81" in text or "west 81" in text:
+        path_text = str(root).casefold()
+        mod_name = _mod_info_name(root)
+        if "2897299509" in path_text or mod_name in {"West-81", "West81"}:
             positions.setdefault("2897299509", index)
-        if "3261086933" in text or ("code:x" in text and "overhaul" not in text and "gates of code" not in text):
+        if "3261086933" in path_text or mod_name in {"Code-X", "Code:X"}:
             positions.setdefault("3261086933", index)
-        if "3636883799" in text or "ai overhaul" in text or "conquest ai overhaul" in text:
+        if "3636883799" in path_text or mod_name in {
+            "CodeX Conquest AI Overhaul",
+            "CodeX Conquest AI Overhaul 1.5",
+        }:
             positions.setdefault("3636883799", index)
-        if (
-            "3700832981" in text
-            or "gates-of-code-x" in text
-            or "gates of code:x" in text
-            or "gates of codex" in text
-        ):
+        if mod_name in {"Gates of CodeX", "Gates of Code:X"}:
             positions.setdefault("gates", index)
     missing = [value for value in KNOWN_WORKSHOP_ORDER if value not in positions]
     if "gates" not in positions:
@@ -108,6 +233,16 @@ def validate_known_order(values: Iterable[str | Path]) -> tuple[bool, str]:
     if ordered != sorted(ordered) or positions["gates"] != len(roots) - 1:
         return False, "Expected West81 -> Code:X -> Code:X AI Overhaul -> Gates of CodeX, with Gates last"
     return True, "West81 -> Code:X -> Code:X AI Overhaul -> Gates of CodeX order confirmed"
+
+
+def _mod_info_name(root: Path) -> str:
+    mod_info = root / "mod.info"
+    if not mod_info.is_file():
+        return ""
+    match = MOD_INFO_NAME_RE.search(
+        mod_info.read_text(encoding="utf-8-sig", errors="replace")
+    )
+    return match.group(1) if match else ""
 
 
 def stack_signature(values: Iterable[str | Path]) -> str:

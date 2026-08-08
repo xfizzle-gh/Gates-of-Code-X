@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+from dataclasses import replace
 from pathlib import Path
 
 from gates_of_codex.campaign import CampaignEngine
@@ -32,9 +33,13 @@ from gates_of_codex.operational_movement import (
     commit_move_orders,
     issue_move_order,
 )
-from gates_of_codex.operational_position import ensure_operational_positions
+from gates_of_codex.operational_position import (
+    clear_operational_graph_cache,
+    ensure_operational_positions,
+)
 from gates_of_codex.operational_schema import (
     COST_MILLI_UNITY,
+    FormationStance,
     FormationOperationalPosition,
     MoveOrderStatus,
     PositionMode,
@@ -194,6 +199,221 @@ def _state(tmp: Path, *, with_enemy: bool = True) -> CampaignState:
 
 
 class OperationalS4ContactTests(unittest.TestCase):
+    def test_hostile_occupant_blocks_node_entry_for_every_stance(self) -> None:
+        """A combat-capable hostile is solid at a node regardless of its stance."""
+        for stance in FormationStance:
+            with self.subTest(stance=stance.value), tempfile.TemporaryDirectory() as temporary:
+                state = _state(Path(temporary), with_enemy=True)
+                na, nb = stable_node_id("a"), stable_node_id("b")
+                edge = stable_edge_id("corridor", na, nb)
+                blocker = state.strategic_formations["sf-rusa"]
+                blocker.stance = stance.value
+                issue_move_order(
+                    state, "sf-nato", path_node_ids=[na, nb], path_edge_ids=[edge]
+                )
+                commit_move_orders(state)
+                activate_committed_orders(state)
+
+                report = advance_operational_tick(state)
+
+                self.assertEqual("node_contact", report["swept_kind"])
+                assert state.pending_battle is not None
+                self.assertEqual(nb, state.pending_battle.encounter_node_id)
+                mover = state.strategic_formations["sf-nato"]
+                assert mover.position is not None and mover.move_order is not None
+                self.assertEqual(nb, mover.position.node_id)
+                self.assertEqual(MoveOrderStatus.BLOCKED.value, mover.move_order.status)
+                if stance == FormationStance.ENTRENCHED:
+                    self.assertEqual(FormationStance.ENTRENCHED.value, blocker.stance)
+                if stance == FormationStance.AMBUSH:
+                    self.assertEqual(FormationStance.AMBUSH.value, blocker.stance)
+
+    def test_static_hostile_co_location_creates_contact_for_every_stance(self) -> None:
+        """Static node contact uses occupancy, not either side's stance."""
+        for stance in FormationStance:
+            with self.subTest(stance=stance.value), tempfile.TemporaryDirectory() as temporary:
+                state = _state(Path(temporary), with_enemy=True)
+                nb = stable_node_id("b")
+                attacker = state.strategic_formations["sf-nato"]
+                attacker.position = FormationOperationalPosition(
+                    mode=PositionMode.AT_NODE.value, node_id=nb, progress_milli=0
+                )
+                attacker.province_id = "b"
+                attacker.stance = stance.value
+                for battalion_id in attacker.battalion_ids:
+                    state.battalions[battalion_id].province_id = "b"
+                state.strategic_formations["sf-rusa"].stance = stance.value
+
+                report = advance_operational_tick(state)
+
+                self.assertEqual("node_contact", report["swept_kind"])
+                assert state.pending_battle is not None
+                self.assertEqual(ENCOUNTER_KIND_NODE_CONTACT, state.pending_battle.encounter_kind)
+                self.assertEqual(nb, state.pending_battle.encounter_node_id)
+                if stance == FormationStance.ENTRENCHED:
+                    self.assertEqual(FormationStance.ENTRENCHED.value, attacker.stance)
+                if stance == FormationStance.AMBUSH:
+                    self.assertEqual(FormationStance.AMBUSH.value, attacker.stance)
+
+    def test_friendly_and_allied_node_occupants_do_not_create_contact(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary), with_enemy=False)
+            state.battalions["bn-ally"] = _bn("bn-ally", Faction.NATO, "b")
+            state.battalions["bn-ally"].strategic_formation_id = "sf-ally"
+            state.strategic_formations["sf-ally"] = _force(
+                "sf-ally", Faction.NATO, "b", ["bn-ally"]
+            )
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            edge = stable_edge_id("corridor", na, nb)
+            issue_move_order(
+                state, "sf-nato", path_node_ids=[na, nb], path_edge_ids=[edge]
+            )
+            commit_move_orders(state)
+            activate_committed_orders(state)
+
+            report = advance_operational_tick(state)
+
+            self.assertEqual("", report["swept_kind"])
+            self.assertIsNone(state.pending_battle)
+            mover = state.strategic_formations["sf-nato"]
+            assert mover.position is not None and mover.move_order is not None
+            self.assertEqual(nb, mover.position.node_id)
+            self.assertEqual(MoveOrderStatus.COMPLETED.value, mover.move_order.status)
+
+    def test_non_combat_capable_hostile_occupants_do_not_block_entry(self) -> None:
+        """Empty and destroyed formations are not hostile contact blockers."""
+        for representation in ("empty_roster", "destroyed_battalion"):
+            with self.subTest(representation=representation), tempfile.TemporaryDirectory() as temporary:
+                state = _state(Path(temporary), with_enemy=True)
+                blocker = state.strategic_formations["sf-rusa"]
+                if representation == "empty_roster":
+                    for battalion_id in blocker.battalion_ids:
+                        state.battalions[battalion_id].roster = []
+                else:
+                    for battalion_id in blocker.battalion_ids:
+                        state.battalions[battalion_id].roster = [
+                            BattalionRosterEntry("tank(x)", 0, category="tank")
+                        ]
+                state.validate()
+                na, nb = stable_node_id("a"), stable_node_id("b")
+                edge = stable_edge_id("corridor", na, nb)
+                issue_move_order(
+                    state, "sf-nato", path_node_ids=[na, nb], path_edge_ids=[edge]
+                )
+                commit_move_orders(state)
+                activate_committed_orders(state)
+
+                report = advance_operational_tick(state)
+
+                self.assertEqual("", report["swept_kind"])
+                self.assertIsNone(state.pending_battle)
+                mover = state.strategic_formations["sf-nato"]
+                assert mover.position is not None and mover.move_order is not None
+                self.assertEqual(nb, mover.position.node_id)
+                self.assertEqual(MoveOrderStatus.COMPLETED.value, mover.move_order.status)
+
+    def test_non_combat_capable_hostile_arrival_does_not_seed_node_contact(self) -> None:
+        """A destroyed mover neither blocks nor enters a node-contact battle roster."""
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary), with_enemy=True)
+            mover = state.strategic_formations["sf-rusa"]
+            for battalion_id in mover.battalion_ids:
+                state.battalions[battalion_id].roster = []
+            state.validate()
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            edge = stable_edge_id("corridor", na, nb)
+            issue_move_order(
+                state, "sf-rusa", path_node_ids=[nb, na], path_edge_ids=[edge]
+            )
+            commit_move_orders(state, faction=Faction.RUSSIA.value)
+            activate_committed_orders(state)
+
+            report = advance_operational_tick(state)
+
+            self.assertEqual("", report["swept_kind"])
+            self.assertIsNone(state.pending_battle)
+            assert mover.position is not None and mover.move_order is not None
+            self.assertEqual(na, mover.position.node_id)
+            self.assertEqual(MoveOrderStatus.COMPLETED.value, mover.move_order.status)
+
+    def test_node_contact_immediately_interrupts_refit_for_all_participants(self) -> None:
+        """Mover, stationary blocker, and coalition ally leave refit as battle opens."""
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary), with_enemy=True)
+            state.battalions["bn-rusa-c"] = _bn("bn-rusa-c", Faction.RUSSIA, "b")
+            state.battalions["bn-rusa-c"].strategic_formation_id = "sf-rusa-2"
+            state.strategic_formations["sf-rusa-2"] = _force(
+                "sf-rusa-2", Faction.RUSSIA, "b", ["bn-rusa-c"]
+            )
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            edge = stable_edge_id("corridor", na, nb)
+            for formation_id in ("sf-nato", "sf-rusa", "sf-rusa-2"):
+                state.strategic_formations[formation_id].stance = FormationStance.REFIT_RESUPPLY.value
+            issue_move_order(
+                state, "sf-nato", path_node_ids=[na, nb], path_edge_ids=[edge]
+            )
+            commit_move_orders(state, locked_stance=FormationStance.REFIT_RESUPPLY.value)
+            activate_committed_orders(state)
+
+            advance_operational_tick(state)
+            self.assertIsNone(state.pending_battle)
+            advance_operational_tick(state)
+
+            assert state.pending_battle is not None
+            participant_ids = {
+                part.battalion_id
+                for part in (
+                    state.pending_battle.attacking_participants
+                    + state.pending_battle.defending_participants
+                )
+            }
+            self.assertEqual(
+                {"bn-nato-a", "bn-nato-b", "bn-rusa-a", "bn-rusa-b", "bn-rusa-c"},
+                participant_ids,
+            )
+            for formation_id in ("sf-nato", "sf-rusa", "sf-rusa-2"):
+                force = state.strategic_formations[formation_id]
+                self.assertEqual(FormationStance.OPERATIONAL.value, force.stance)
+            mover_order = state.strategic_formations["sf-nato"].move_order
+            assert mover_order is not None
+            self.assertEqual(FormationStance.OPERATIONAL.value, mover_order.locked_stance)
+
+    def test_forced_march_stops_at_contact_without_extra_traversal(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary), with_enemy=True)
+            graph_path = Path(state.map_metadata["operational_graph"])
+            graph = json.loads(graph_path.read_text(encoding="utf-8"))
+            graph["nodes"].append(_node("c", pixel=[200, 0]))
+            graph["edges"].append(_edge("b", "c"))
+            graph_path.write_text(json.dumps(graph), encoding="utf-8")
+            clear_operational_graph_cache()
+            state.provinces["c"] = Province("c", "C", owner=Faction.NATO, neighbors=["b"], x=200, y=0)
+            state.provinces["b"].neighbors.append("c")
+            na, nb, nc = stable_node_id("a"), stable_node_id("b"), stable_node_id("c")
+            edge_ab = stable_edge_id("corridor", na, nb)
+            edge_bc = stable_edge_id("corridor", nb, nc)
+            issue_move_order(
+                state, "sf-nato", path_node_ids=[na, nb, nc], path_edge_ids=[edge_ab, edge_bc]
+            )
+            commit_move_orders(state)
+            activate_committed_orders(state)
+            mover = state.strategic_formations["sf-nato"]
+            mover.stance = FormationStance.FORCED_MARCH.value
+            assert mover.move_order is not None
+            mover.move_order = replace(
+                mover.move_order, locked_stance=FormationStance.FORCED_MARCH.value
+            )
+
+            report = advance_operational_tick(state)
+
+            assert state.pending_battle is not None
+            self.assertEqual("node_contact", report["swept_kind"])
+            self.assertEqual(nb, state.pending_battle.encounter_node_id)
+            assert mover.position is not None and mover.move_order is not None
+            self.assertEqual(nb, mover.position.node_id)
+            self.assertNotEqual(nc, mover.position.node_id)
+            self.assertEqual(MoveOrderStatus.BLOCKED.value, mover.move_order.status)
+
     def test_enemy_node_entry_preserves_origin_and_all_battalions(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             state = _state(Path(temporary), with_enemy=True)

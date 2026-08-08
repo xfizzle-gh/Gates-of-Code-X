@@ -578,6 +578,73 @@ class OperationalS7AIOrdersTests(unittest.TestCase):
             assert state.pending_battle is not None
             self.assertEqual("node_contact", state.pending_battle.encounter_kind)
 
+    def test_ai_and_player_node_entry_share_contact_authority(self) -> None:
+        """Equivalent committed player and AI attacks stop at the same hostile node."""
+        def snapshot(state: CampaignState, mover_id: str, report: dict) -> dict:
+            battle = state.pending_battle
+            assert battle is not None
+            mover = state.strategic_formations[mover_id]
+            assert mover.position is not None and mover.move_order is not None
+            participants = (
+                battle.attacking_participants + battle.defending_participants
+            )
+            return {
+                "battle_kind": battle.encounter_kind,
+                "encounter_node": battle.encounter_node_id,
+                "participant_factions": sorted(
+                    participant.faction.value for participant in participants
+                ),
+                "position": (mover.position.mode, mover.position.node_id),
+                "order_status": mover.move_order.status,
+                "stance": mover.stance,
+                "moved": report["moved"],
+                "capture_advanced": report["capture"]["advanced"],
+                "swept_kind": report["swept_kind"],
+            }
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            # Player: NATO advances c→b into stationary Russia.
+            player = _state(root / "player", _graph(include_disabled_ac=False, ab_cost=1000))
+            nb, nc = stable_node_id("b"), stable_node_id("c")
+            edge_bc = stable_edge_id("corridor", nb, nc)
+            player.strategic_formations["sf-r"].position = FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value, node_id=nb, progress_milli=0
+            )
+            player.strategic_formations["sf-r"].province_id = "b"
+            player.battalions["bn-r"].province_id = "b"
+            player.provinces["b"].owner = Faction.RUSSIA
+            issue_move_order(
+                player,
+                "sf-n",
+                path_node_ids=[nc, nb],
+                path_edge_ids=[edge_bc],
+                order_id="player-node-contact",
+            )
+            commit_move_orders(player)
+            activate_committed_orders(player)
+            player_report = advance_operational_tick(player)
+
+            # AI: Russia advances a→b into stationary NATO.
+            ai = _state(root / "ai", _graph(include_disabled_ac=False, ab_cost=1000))
+            ai.strategic_formations["sf-n"].position = FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value, node_id=nb, progress_milli=0
+            )
+            ai.strategic_formations["sf-n"].province_id = "b"
+            ai.battalions["bn-n"].province_id = "b"
+            ai.provinces["b"].owner = Faction.NATO
+            actions = plan_and_issue_operational_orders(ai, Faction.RUSSIA, seed=0)
+            self.assertIn("operational_move", [action.action for action in actions])
+            activate_committed_orders(ai)
+            ai_report = advance_operational_tick(ai)
+
+            self.assertEqual(
+                snapshot(player, "sf-n", player_report),
+                snapshot(ai, "sf-r", ai_report),
+            )
+            self.assertEqual((PositionMode.AT_NODE.value, nb), snapshot(player, "sf-n", player_report)["position"])
+            self.assertEqual(MoveOrderStatus.BLOCKED.value, snapshot(ai, "sf-r", ai_report)["order_status"])
+
     def test_swept_edge_interception_via_normal_s6_path(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             state = _state(Path(temporary), _graph(ab_cost=2000, include_disabled_ac=False))

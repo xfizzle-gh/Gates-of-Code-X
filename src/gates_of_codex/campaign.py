@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from .diplomacy import are_allied, is_friendly_owner
 from .models import Battalion, BattleParticipant, CampaignState, CommanderStatus, Faction, PendingBattle
@@ -69,13 +69,25 @@ class CampaignEngine:
 
     def auto_resolve_pending_battle(self) -> Faction:
         pending = self._require_pending_battle()
-        attackers = self._participants_battalions(pending.attacking_participants)
-        defenders = self._participants_battalions(pending.defending_participants)
         target = self._get_province(pending.target_province_id)
-        attacker_score = sum(self._combat_score(item) for item in attackers) or 0.1
+        attacker_score = (
+            self._aggregate_participant_strength_milli(
+                pending.attacking_participants
+            )
+            or 100
+        )
         defender_score = (
-            sum(self._combat_score(item) for item in defenders) or 1.0
-        ) * (1 + min(target.fortification, 5) * 0.12)
+            self._aggregate_participant_strength_milli(
+                pending.defending_participants
+            )
+            or 1000
+        )
+        from .operational_ambush import apply_strength_multiplier_milli
+
+        defender_score = apply_strength_multiplier_milli(
+            defender_score,
+            1000 + min(target.fortification, 5) * 120,
+        )
         winner = (
             pending.attacker_faction
             if self._random.random() < attacker_score / max(attacker_score + defender_score, 1)
@@ -84,7 +96,8 @@ class CampaignEngine:
         self.apply_battle_result(winner)
         return winner
 
-    def apply_external_battle_result(self, winner: Faction, survivors: dict[str, list]) -> None:
+    def apply_external_battle_result(self, winner: Faction, survivors: dict[str, list]):
+        self._require_operational_battle_finalization_authority()
         for battalion_id, roster in survivors.items():
             battalion = self.state.battalions.get(battalion_id)
             if battalion is not None:
@@ -92,9 +105,10 @@ class CampaignEngine:
                 battalion.roster = roster
                 casualty_ratio = max(0.0, 1.0 - battalion.unit_count / previous)
                 battalion.condition = max(10, battalion.condition - max(5, int(casualty_ratio * 35)))
-        self._finalize_positions(winner)
+        return self._finalize_positions(winner)
 
-    def apply_battle_result(self, winner: Faction) -> None:
+    def apply_battle_result(self, winner: Faction):
+        self._require_operational_battle_finalization_authority()
         pending = self._require_pending_battle()
         attackers = self._participants_battalions(pending.attacking_participants)
         defenders = self._participants_battalions(pending.defending_participants)
@@ -112,7 +126,7 @@ class CampaignEngine:
             for defender in defenders:
                 self._apply_percentage_losses(defender, 0.20)
                 defender.condition = max(10, defender.condition - 10)
-        self._finalize_positions(winner)
+        return self._finalize_positions(winner)
 
     def end_turn(self) -> Faction:
         if self.state.pending_battle is not None:
@@ -149,8 +163,22 @@ class CampaignEngine:
         self.state.current_faction = next_faction
         return next_faction
 
-    def _finalize_positions(self, winner: Faction) -> None:
-        """Apply post-battle placement once per strategic formation (not per battalion)."""
+    def _require_operational_battle_finalization_authority(self) -> None:
+        """Abort operational battle finalization before mutation if graph authority is missing."""
+        pending = self._require_pending_battle()
+        if not str(getattr(pending, "encounter_kind", "") or "").strip():
+            return
+        from .operational_retreat import require_operational_retreat_graph
+
+        require_operational_retreat_graph(self.state)
+
+    def _finalize_positions(self, winner: Faction):
+        """Apply post-battle placement once per strategic formation."""
+        from .operational_retreat import (
+            BattleFinalizationReport,
+            clear_retreat_origin_nodes,
+        )
+
         pending = self._require_pending_battle()
         attackers = self._participants_battalions(pending.attacking_participants)
         defenders = self._participants_battalions(pending.defending_participants)
@@ -168,25 +196,32 @@ class CampaignEngine:
         defenders = [bn for bn in defenders if bn.battalion_id in self.state.battalions]
         atk_forces = self._formations_for_battalions(attackers)
         def_forces = self._formations_for_battalions(defenders)
+        for force_id in sorted(set(atk_forces) | set(def_forces)):
+            self._reset_participating_operational_stance(force_id)
         is_op_contact = bool(str(getattr(pending, "encounter_kind", "") or ""))
         is_edge_contact = bool(str(getattr(pending, "encounter_edge_id", "") or "").strip())
         edge_progress = getattr(pending, "encounter_progress_milli", None)
         edge_id = str(getattr(pending, "encounter_edge_id", "") or "")
+        encounter_node_id = str(getattr(pending, "encounter_node_id", "") or "") or None
+        outcomes = []
+
+        def retreat(force_id: str, *, preferred: str | None = None, hold_node: str | None = None) -> None:
+            outcome = self._resolve_formation_after_battle(
+                force_id,
+                lost=True,
+                exclude_province=target.province_id,
+                preferred_retreat=preferred,
+                hold_node_id=hold_node,
+                encounter_node_id=encounter_node_id if is_op_contact else None,
+                encounter_edge_id=edge_id if is_edge_contact else None,
+                encounter_progress_milli=edge_progress if is_edge_contact else None,
+            )
+            if outcome is not None:
+                outcomes.append(outcome)
 
         if winner == pending.attacker_faction:
             for force_id in def_forces:
-                preferred = None
-                hold_node = None
-                if is_edge_contact:
-                    preferred = self._edge_retreat_node(force_id, edge_id)
-                    hold_node = self._edge_retreat_hold_node(force_id)
-                self._resolve_formation_after_battle(
-                    force_id,
-                    lost=True,
-                    exclude_province=target.province_id,
-                    preferred_retreat=preferred,
-                    hold_node_id=hold_node,
-                )
+                retreat(force_id)
             operational_campaign = self._is_operational_campaign()
             hold_node = None if is_edge_contact else self._hold_node_after_battle(
                 pending,
@@ -209,7 +244,6 @@ class CampaignEngine:
                         hold_node_id=hold_node,
                     )
             # Operational-capable campaigns never flip ownership from battle wins (S5).
-            # Legacy campaigns without operational maneuver retain immediate ownership change.
             if (
                 not operational_campaign
                 and not is_op_contact
@@ -231,13 +265,7 @@ class CampaignEngine:
                     getattr(pending, "attacker_formation_id", "") or ""
                 ):
                     preferred = str(pending.origin_province_id or "") or None
-                self._resolve_formation_after_battle(
-                    force_id,
-                    lost=True,
-                    exclude_province=target.province_id,
-                    preferred_retreat=preferred,
-                    hold_node_id=hold_node,
-                )
+                retreat(force_id, preferred=preferred, hold_node=hold_node)
             for force_id in def_forces:
                 if is_edge_contact:
                     self._hold_formation_on_edge(
@@ -249,7 +277,7 @@ class CampaignEngine:
                     self._resolve_formation_after_battle(
                         force_id,
                         lost=False,
-                        hold_province=None,  # stay put
+                        hold_province=None,
                     )
 
         # Entry-contact movers stay blocked for the remainder of the turn.
@@ -264,17 +292,12 @@ class CampaignEngine:
                     MoveOrderStatus.COMPLETED.value,
                     MoveOrderStatus.CANCELLED.value,
                 }:
-                    from dataclasses import replace
-
                     force.move_order = replace(
                         force.move_order, status=MoveOrderStatus.BLOCKED.value
                     )
 
-        # Clear all edge-retreat metadata after op battle finalization (no stale reuse).
         if is_op_contact:
-            store = self.state.map_metadata.get("operational_edge_retreat_nodes")
-            if isinstance(store, dict):
-                store.clear()
+            clear_retreat_origin_nodes(self.state)
 
         pending.completed = True
         self.state.pending_battle = None
@@ -282,6 +305,7 @@ class CampaignEngine:
 
         evaluate_campaign_outcome(self.state)
         self.state.validate()
+        return BattleFinalizationReport(retreat_outcomes=tuple(outcomes))
 
     def _participants_battalions(self, participants) -> list[Battalion]:
         battalions: list[Battalion] = []
@@ -295,6 +319,46 @@ class CampaignEngine:
             seen.add(part.battalion_id)
             battalions.append(battalion)
         return battalions
+
+    def _aggregate_participant_strength_milli(
+        self,
+        participants: list[BattleParticipant],
+    ) -> int:
+        from .operational_ambush import apply_strength_multiplier_milli
+
+        strength_by_formation: dict[str, int] = {}
+        multiplier_by_formation: dict[str, int] = {}
+        seen: set[str] = set()
+        for participant in participants:
+            if participant.battalion_id in seen:
+                continue
+            battalion = self.state.battalions.get(participant.battalion_id)
+            if battalion is None:
+                continue
+            seen.add(participant.battalion_id)
+            formation_id = (
+                battalion.strategic_formation_id
+                or f"battalion:{battalion.battalion_id}"
+            )
+            strength_by_formation[formation_id] = (
+                strength_by_formation.get(formation_id, 0)
+                + self._combat_score_milli(battalion)
+            )
+            previous = multiplier_by_formation.setdefault(
+                formation_id,
+                participant.ambush_strength_multiplier_milli,
+            )
+            if previous != participant.ambush_strength_multiplier_milli:
+                raise ValueError(
+                    f"formation {formation_id} has inconsistent Ambush multipliers"
+                )
+        return sum(
+            apply_strength_multiplier_milli(
+                strength_by_formation[formation_id],
+                multiplier_by_formation[formation_id],
+            )
+            for formation_id in sorted(strength_by_formation)
+        )
 
     def _formations_for_battalions(self, battalions: list[Battalion]) -> list[str]:
         force_ids: list[str] = []
@@ -488,28 +552,28 @@ class CampaignEngine:
         preferred_retreat: str | None = None,
         hold_province: str | None = None,
         hold_node_id: str | None = None,
-    ) -> None:
-        """Once-per-formation post-battle placement. Keeps all survivors co-located."""
+        encounter_node_id: str | None = None,
+        encounter_edge_id: str | None = None,
+        encounter_progress_milli: int | None = None,
+    ):
+        """Once-per-formation post-battle placement. Keeps survivors co-located."""
         from .operational_position import place_formation_at_province_anchor
-        from .operational_schema import FormationOperationalPosition, PositionMode
+        from .operational_schema import (
+            FormationOperationalPosition,
+            MoveOrderStatus,
+            PositionMode,
+        )
 
         force = self.state.strategic_formations.get(force_id)
         if force is None:
-            return
-        # Drop destroyed members already removed from state.
+            return None
         force.battalion_ids = [
             battalion_id
             for battalion_id in force.battalion_ids
             if battalion_id in self.state.battalions
         ]
         if not force.battalion_ids:
-            self.state.strategic_formations.pop(force_id, None)
-            if force.commander_id and force.commander_id in self.state.commanders:
-                commander = self.state.commanders[force.commander_id]
-                if commander.assigned_strategic_formation_id == force_id:
-                    commander.assigned_strategic_formation_id = None
-                    commander.status = CommanderStatus.UNASSIGNED
-            return
+            return self._eliminate_formation(force_id, reason="destroyed_in_battle")
 
         if not lost:
             if hold_province:
@@ -520,7 +584,6 @@ class CampaignEngine:
                     battalion.province_id = force.province_id
                     battalion.strategic_formation_id = force_id
             if hold_node_id:
-                # Stay on the encounter/control-site node so capture ticks can begin.
                 force.position = FormationOperationalPosition(
                     mode=PositionMode.AT_NODE.value,
                     node_id=hold_node_id,
@@ -529,10 +592,54 @@ class CampaignEngine:
                 force.movement_state = "at_anchor"
             elif hold_province:
                 place_formation_at_province_anchor(force, self.state)
-            # else: keep existing operational position (holding defenders).
-            return
+            return None
 
-        # Lost: retreat once.
+        # Graph-authoritative S9A retreat. Only operational contacts enter this path;
+        # legacy no-graph province retreat remains unchanged below.
+        if encounter_node_id or encounter_edge_id:
+            from .operational_retreat import resolve_operational_retreat
+
+            outcome = resolve_operational_retreat(
+                self.state,
+                force_id,
+                encounter_node_id=encounter_node_id,
+                encounter_edge_id=encounter_edge_id,
+                encounter_progress_milli=encounter_progress_milli,
+            )
+            if outcome.eliminated:
+                return self._eliminate_formation(force_id, reason=outcome.reason)
+            if not outcome.destination_node_id or not outcome.destination_province_id:
+                raise RuntimeError(f"Incomplete operational retreat outcome for {force_id}")
+
+            force.province_id = outcome.destination_province_id
+            force.position = FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value,
+                node_id=outcome.destination_node_id,
+                progress_milli=0,
+            )
+            force.movement_state = "at_anchor"
+            for battalion_id in force.battalion_ids:
+                battalion = self.state.battalions.get(battalion_id)
+                if battalion is None:
+                    continue
+                battalion.province_id = force.province_id
+                battalion.strategic_formation_id = force_id
+                battalion.movement_remaining = 0
+
+            if force.move_order is not None and force.move_order.status not in {
+                MoveOrderStatus.COMPLETED.value,
+                MoveOrderStatus.CANCELLED.value,
+            }:
+                force.move_order = replace(
+                    force.move_order, status=MoveOrderStatus.BLOCKED.value
+                )
+            self._reset_losing_operational_stance(force_id)
+            from .operational_retreat import clear_retreat_origin_node
+
+            clear_retreat_origin_node(self.state, force_id)
+            return outcome
+
+        # Legacy province-authoritative retreat: deliberately unchanged.
         destination: str | None = None
         if (
             preferred_retreat
@@ -564,17 +671,14 @@ class CampaignEngine:
             elif candidates:
                 destination = sorted(candidates)[0]
         if destination is None:
-            # No legal retreat: destroy the whole formation.
-            for battalion_id in list(force.battalion_ids):
-                self._remove_battalion(battalion_id)
-            return
+            self._eliminate_formation(force_id, reason="no_legacy_retreat")
+            return None
         force.province_id = destination
         for battalion_id in force.battalion_ids:
             battalion = self.state.battalions.get(battalion_id)
             if battalion is not None:
                 battalion.province_id = destination
                 battalion.strategic_formation_id = force_id
-        # Prefer exact previous legal node when recorded (edge retreat).
         if hold_node_id:
             force.position = FormationOperationalPosition(
                 mode=PositionMode.AT_NODE.value,
@@ -584,6 +688,75 @@ class CampaignEngine:
             force.movement_state = "at_anchor"
         else:
             place_formation_at_province_anchor(force, self.state)
+        return None
+
+    def _reset_losing_operational_stance(self, force_id: str) -> None:
+        from .operational_schema import FormationStance
+
+        self._reset_operational_stance(
+            force_id,
+            reset_stances={
+                FormationStance.FORCED_MARCH.value,
+                FormationStance.ENTRENCHED.value,
+            },
+        )
+
+    def _reset_participating_operational_stance(self, force_id: str) -> None:
+        from .operational_schema import FormationStance
+
+        self._reset_operational_stance(
+            force_id,
+            reset_stances={
+                FormationStance.FORCED_MARCH.value,
+                FormationStance.AMBUSH.value,
+            },
+        )
+
+    def _reset_operational_stance(
+        self,
+        force_id: str,
+        *,
+        reset_stances: set[str],
+    ) -> None:
+        from .operational_schema import FormationStance
+
+        force = self.state.strategic_formations.get(force_id)
+        if force is None:
+            return
+        locked = force.move_order.locked_stance if force.move_order is not None else None
+        if force.stance not in reset_stances and locked not in reset_stances:
+            return
+        if (
+            force.stance == FormationStance.AMBUSH.value
+            or locked == FormationStance.AMBUSH.value
+        ):
+            force.ambush_ready_tick = None
+        force.stance = FormationStance.OPERATIONAL.value
+        if force.move_order is not None and force.move_order.locked_stance is not None:
+            force.move_order = replace(
+                force.move_order,
+                locked_stance=FormationStance.OPERATIONAL.value,
+            )
+
+    def _eliminate_formation(self, force_id: str, *, reason: str):
+        from .operational_retreat import (
+            OperationalRetreatResolution,
+            clear_retreat_origin_node,
+        )
+
+        force = self.state.strategic_formations.get(force_id)
+        if force is None:
+            return OperationalRetreatResolution(formation_id=force_id, reason=reason)
+        if force.commander_id and force.commander_id in self.state.commanders:
+            commander = self.state.commanders[force.commander_id]
+            if commander.assigned_strategic_formation_id == force_id:
+                commander.assigned_strategic_formation_id = None
+                commander.status = CommanderStatus.UNASSIGNED
+        for battalion_id in list(force.battalion_ids):
+            self._remove_battalion(battalion_id)
+        self.state.strategic_formations.pop(force_id, None)
+        clear_retreat_origin_node(self.state, force_id)
+        return OperationalRetreatResolution(formation_id=force_id, reason=reason)
 
     def _hostile_battalion_in(self, province_id: str, faction: Faction) -> bool:
         for battalion in self.state.battalions.values():
@@ -663,6 +836,11 @@ class CampaignEngine:
         battalion = self.state.battalions.pop(battalion_id, None)
         if battalion is None:
             return
+        if battalion.commander_id and battalion.commander_id in self.state.commanders:
+            commander = self.state.commanders[battalion.commander_id]
+            if commander.assigned_battalion_id == battalion_id:
+                commander.assigned_battalion_id = None
+                commander.status = CommanderStatus.UNASSIGNED
         force_id = battalion.strategic_formation_id
         if not force_id:
             return
@@ -694,14 +872,37 @@ class CampaignEngine:
 
     @staticmethod
     def _combat_score(battalion: Battalion | None) -> float:
+        return CampaignEngine._combat_score_milli(battalion) / 1000
+
+    @staticmethod
+    def _combat_score_milli(battalion: Battalion | None) -> int:
         if battalion is None:
-            return 1.0
-        weights = {"infantry": 1, "recon": 0.8, "vehicle": 1.7, "ifv": 2, "tank": 3, "artillery": 2.2, "air_defense": 1.8, "unknown": 1}
-        base = sum(entry.quantity * weights.get(entry.category, 1) for entry in battalion.roster)
-        supply_factor = 0.4 + battalion.supply / 100 * 0.6
-        condition_factor = 0.35 + battalion.condition / 100 * 0.65
-        experience_factor = 1 + min(battalion.experience, 1000) / 5000
-        return max(base * supply_factor * condition_factor * experience_factor, 0.1)
+            return 1000
+        weights_milli = {
+            "infantry": 1000,
+            "recon": 800,
+            "vehicle": 1700,
+            "ifv": 2000,
+            "tank": 3000,
+            "artillery": 2200,
+            "air_defense": 1800,
+            "unknown": 1000,
+        }
+        base_milli = sum(
+            entry.quantity * weights_milli.get(entry.category, 1000)
+            for entry in battalion.roster
+        )
+        supply_factor_milli = 400 + battalion.supply * 6
+        condition_factor_two_milli = 700 + battalion.condition * 13
+        experience_factor_num = 5000 + min(battalion.experience, 1000)
+        score_milli = (
+            base_milli
+            * supply_factor_milli
+            * condition_factor_two_milli
+            * experience_factor_num
+            // (1000 * 2000 * 5000)
+        )
+        return max(score_milli, 100)
 
     @staticmethod
     def _apply_percentage_losses(battalion: Battalion, fraction: float) -> None:

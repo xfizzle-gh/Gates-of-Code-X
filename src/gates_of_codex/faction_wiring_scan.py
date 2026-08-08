@@ -4,27 +4,21 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterator, Sequence
+from typing import Sequence
 
 from .codex.catalog import CodeXCatalogScanner
+from .goh_source import MacroCall, SourceEntry, scan_source_entries
 from .modstack import resource_root
 from .faction_wiring_types import (
-    ENTITY_HINTS, SourceUnit, _base_name, _infer_category, _layer_name,
-    _match_existing_key, _merge_unit, _paren_balance, _source_priority,
+    ENTITY_HINTS, DefinitionReference, ReferenceKind, SourceUnit, _base_name,
+    _infer_category, _layer_name, _match_existing_key, _merge_unit,
+    _source_priority,
 )
 
 SOURCE_SIDE_RE = re.compile(r"(?:^|[_\-.])(nato|ukr|rusa|prc|sov|frg|gdr|csa|usa|ger|eng|fin|pol|rus)(?:[_\-.]|$)", re.I)
 SIDE_SUFFIX_RE = re.compile(r"\(([^()]+)\)$")
-BLOCK_START_RE = re.compile(r'^\s*\{\s*"?([^"\s{}]+(?:\([^)]*\))?)"?')
-MACRO_NAME_RE = re.compile(r"\bname\(([^)]+)\)", re.I)
-MACRO_MEMBER_RE = re.compile(r"\b(?:c\d+|crew\d*|member\d*|breed\d*)\(([^:()\s]+):(\d+)\)", re.I)
 MEMBER_BLOCK_RE = re.compile(r'\{(?:member|breed)\s+"?([^"\s{}]+)"?\s*(\d+)?', re.I)
-VEHICLE_BLOCK_RE = re.compile(r'\{(?:vehicle|entity)\s+"?([^"\s{}]+)', re.I)
-VEHICLE_MACRO_RE = re.compile(r"\b(?:vehicle|entity)\(([^)]+)\)", re.I)
-ACTION_BLOCK_RE = re.compile(r'\{action\s+"?([^"\s{}]+)', re.I)
-ACTION_MACRO_RE = re.compile(r"\baction\(([^)\s]+)\)", re.I)
-SIDE_ATTR_RE = re.compile(r"\bside\(([^)\s]+)\)", re.I)
-PERIOD_ATTR_RE = re.compile(r"\bperiod\(([^)\s]+)\)", re.I)
+MACRO_MEMBER_RE = re.compile(r"\b(?:c\d+|crew\d*|member\d*|breed\d*)\(([^:()\s]+):(\d+)\)", re.I)
 
 
 @dataclass(slots=True)
@@ -68,27 +62,41 @@ class SourceUnitIndex:
             for unit_root in unit_roots:
                 if not unit_root.is_dir():
                     continue
-                for path in sorted(unit_root.rglob("*.set")):
+                for path in sorted(
+                    candidate
+                    for candidate in unit_root.rglob("*")
+                    if candidate.is_file() and candidate.suffix.lower() in {".set", ".goh"}
+                ):
                     if path in visited:
                         continue
                     visited.add(path)
                     filename_side = _side_from_filename(path.name)
-                    if not filename_side:
-                        continue
                     text = path.read_text(encoding="utf-8-sig", errors="replace")
                     relative = path.relative_to(resources).as_posix()
-                    for name, raw, macro_kind in _source_entries(text):
-                        side = _side_from_name(name) or _word_attr(raw, "side") or filename_side
+                    source = f"{priority}:{root.name}/{relative}"
+                    for entry in scan_source_entries(text, source).entries:
+                        name = entry.name
+                        side = _side_from_name(name) or _call_value(entry.calls, "side") or filename_side
                         if not side:
                             continue
-                        period = _word_attr(raw, "period") or _period_from_path(path)
-                        members = _members(raw)
-                        vehicles = _vehicles(raw)
-                        has_crew = bool(re.search(r"\bcrew\d*\(", raw, flags=re.I))
-                        if not vehicles and (has_crew or any(hint in macro_kind.lower() for hint in ENTITY_HINTS)):
+                        period = _call_value(entry.calls, "period") or _period_from_path(path)
+                        members = _members(entry.raw, entry.calls)
+                        vehicles = _vehicles(entry.calls)
+                        references = _definition_references(entry)
+                        has_crew = any(call.family == "crew" for call in entry.calls)
+                        if not vehicles and (has_crew or any(hint in entry.macro_kind.lower() for hint in ENTITY_HINTS)):
                             inferred = _base_name(name)
                             if inferred:
                                 vehicles = [inferred]
+                                references.append(
+                                    DefinitionReference(
+                                        identifier=inferred,
+                                        kind=ReferenceKind.VEHICLE_ENTITY,
+                                        source=entry.location.source,
+                                        line=entry.location.line,
+                                        column=entry.location.column,
+                                    )
+                                )
                         overlay = SourceUnit(
                             name=name,
                             source_side=side,
@@ -96,8 +104,9 @@ class SourceUnitIndex:
                             category=_infer_category(name, members, vehicles),
                             members=members,
                             vehicles=vehicles,
-                            actions=_actions(raw),
-                            source_files=[f"{priority}:{root.name}/{relative}"],
+                            actions=_actions(entry.calls),
+                            definition_references=references,
+                            source_files=[source],
                             source_layer=root.name,
                             source_priority=priority,
                         )
@@ -146,78 +155,67 @@ class SourceUnitIndex:
         return sorted(values, key=lambda unit: unit.name)
 
 
-def _source_entries(text: str) -> Iterator[tuple[str, str, str]]:
-    lines = text.splitlines()
-    index = 0
-    while index < len(lines):
-        line = lines[index]
-        stripped = line.lstrip()
-        if not stripped or stripped.startswith(";") or stripped.startswith("//"):
-            index += 1
-            continue
-        block = BLOCK_START_RE.match(line)
-        if block:
-            raw_lines = [line]
-            depth = line.count("{") - line.count("}")
-            cursor = index + 1
-            while depth > 0 and cursor < len(lines):
-                raw_lines.append(lines[cursor])
-                depth += lines[cursor].count("{") - lines[cursor].count("}")
-                cursor += 1
-            raw = "\n".join(raw_lines)
-            name = _word_attr(raw, "name") or block.group(1)
-            yield name, raw, ""
-            index = cursor
-            continue
-        if ("name(" in line and "(" in line) or re.match(r'^\s*\(\s*"', line):
-            raw_lines = [line]
-            depth = _paren_balance(line)
-            cursor = index + 1
-            while depth > 0 and cursor < len(lines):
-                raw_lines.append(lines[cursor])
-                depth += _paren_balance(lines[cursor])
-                cursor += 1
-            raw = "\n".join(raw_lines)
-            name = _word_attr(raw, "name")
-            if name:
-                kind_match = re.match(r'^\s*\(\s*"([^"]+)"', raw)
-                yield name, raw, kind_match.group(1) if kind_match else ""
-            index = cursor
-            continue
-        index += 1
-
-
-def _members(raw: str) -> dict[str, int]:
+def _members(raw: str, calls: Sequence[MacroCall]) -> dict[str, int]:
     values: dict[str, int] = {}
     for breed, count in MEMBER_BLOCK_RE.findall(raw):
         values[breed] = values.get(breed, 0) + int(count or 1)
-    for breed, count in MACRO_MEMBER_RE.findall(raw):
-        values[breed] = values.get(breed, 0) + int(count)
+    for call in calls:
+        if call.family not in {"c", "crew", "member", "breed"} or ":" not in call.value:
+            continue
+        breed, count = call.value.rsplit(":", 1)
+        if breed and count.isdigit():
+            values[breed] = values.get(breed, 0) + int(count)
+    if not any(":" in call.value for call in calls):
+        for breed, count in MACRO_MEMBER_RE.findall(raw):
+            values[breed] = values.get(breed, 0) + int(count)
     return values
 
 
-def _vehicles(raw: str) -> list[str]:
-    values = VEHICLE_BLOCK_RE.findall(raw)
-    values.extend(match.strip().strip('"') for match in VEHICLE_MACRO_RE.findall(raw))
-    return list(dict.fromkeys(value for value in values if value))
+def _vehicles(calls: Sequence[MacroCall]) -> list[str]:
+    return list(dict.fromkeys(
+        call.value for call in calls
+        if call.family in {"vehicle", "entity"} and call.value
+    ))
 
 
-def _actions(raw: str) -> list[str]:
-    values = ACTION_BLOCK_RE.findall(raw)
-    values.extend(ACTION_MACRO_RE.findall(raw))
-    return list(dict.fromkeys(values))
+def _actions(calls: Sequence[MacroCall]) -> list[str]:
+    return list(dict.fromkeys(
+        call.value for call in calls if call.family == "action" and call.value
+    ))
 
 
-def _word_attr(raw: str, name: str) -> str:
-    if name == "name":
-        match = MACRO_NAME_RE.search(raw)
-    elif name == "side":
-        match = SIDE_ATTR_RE.search(raw)
-    elif name == "period":
-        match = PERIOD_ATTR_RE.search(raw)
-    else:
-        match = re.search(rf"\b{re.escape(name)}\(([^)]+)\)", raw, re.I)
-    return match.group(1).strip().strip('"') if match else ""
+def _call_value(calls: Sequence[MacroCall], family: str) -> str:
+    return next((call.value for call in calls if call.family == family), "")
+
+
+def _definition_references(entry: SourceEntry) -> list[DefinitionReference]:
+    kind = (
+        ReferenceKind.STRATEGIC_CALL_IN
+        if _is_strategic_call_in(entry)
+        else ReferenceKind.VEHICLE_ENTITY
+    )
+    return [
+        DefinitionReference(
+            identifier=call.value,
+            kind=kind,
+            source=call.location.source,
+            line=call.location.line,
+            column=call.location.column,
+        )
+        for call in entry.calls
+        if call.family in {"vehicle", "entity"} and call.value
+    ]
+
+
+def _is_strategic_call_in(entry: SourceEntry) -> bool:
+    macro_kind = entry.macro_kind.lower()
+    has_call_in_kind = "strategic" in macro_kind or "offmap" in macro_kind
+    has_call_in_action = any(
+        call.family == "action"
+        and call.value.lower() in {"callin", "call_in", "strategic", "offmap"}
+        for call in entry.calls
+    )
+    return has_call_in_kind and has_call_in_action
 
 
 def _side_from_filename(name: str) -> str:

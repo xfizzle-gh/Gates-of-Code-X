@@ -47,6 +47,13 @@ def render_faction_summary(payload: Mapping[str, Any]) -> str:
             f"- Category coverage: {', '.join(f'{key}={value}' for key, value in actor['category_counts'].items()) or 'none'}",
             f"- Missing required categories: {', '.join(actor['missing_categories']) or 'none'}",
         ])
+        for component in actor.get("component_metadata", []):
+            if component.get("research_label"):
+                lines.append(
+                    f"- Component branch: `{component['component_id']}` = "
+                    f"{component['research_label']} "
+                    f"(`{component['provenance_policy']}`)"
+                )
         if actor.get("host_actor_id"):
             lines.append(f"- Host actor: `{actor['host_actor_id']}`")
         for note in actor.get("notes", []):

@@ -1,6 +1,6 @@
 param(
     [string]$SourceRoot = (Split-Path -Parent $PSScriptRoot),
-    [string]$TargetRoot = "E:\Steam\steamapps\workshop\content\400750\3700832981",
+    [string]$TargetRoot = $env:GATES_CODEX_DEPLOY_ROOT,
     [switch]$DryRun
 )
 
@@ -42,6 +42,9 @@ function Test-SafeRelativePath {
 }
 
 $Source = Resolve-Directory -Path $SourceRoot
+if ([string]::IsNullOrWhiteSpace($TargetRoot)) {
+    throw "A dedicated deployment target is required. Pass -TargetRoot or set GATES_CODEX_DEPLOY_ROOT."
+}
 $Target = Resolve-Directory -Path $TargetRoot -Create
 
 $sourceFull = [System.IO.Path]::GetFullPath($Source).TrimEnd('\', '/')
