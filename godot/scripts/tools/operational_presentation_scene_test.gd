@@ -78,43 +78,49 @@ func _run_all() -> void:
 	_check(actions.has("replay_contact"), "modal enables session replay")
 	_check(actions.has("skip_presentation"), "active presentation exposes Skip")
 
-	# This is the actual strategic-map counter style resolver used by the draw path.
-	# It consumes ordinary snapshot battalion/strategic-formation rows, not the
-	# presentation_formations screenshot shortcut.
+	# The production draw call must pass the representative battalion's exact
+	# strategic formation ID into the style resolver.
+	var map_source := FileAccess.get_file_as_string("res://scripts/main_color_id.gd")
+	_check(
+		map_source.find('String(battalion.get("strategic_formation_id", ""))') >= 0,
+		"ordinary counter draw path passes exact strategic formation ID"
+	)
 	var moving_baseline: Dictionary = MapMarkersScript.resolve_formation_counter_style(
-		scene,
-		Vector2(50, 50),
-		Color("4f8fd8"),
-		"T",
-		4,
-		false,
-		true
+		scene, Vector2(50, 50), Color("4f8fd8"), "T", 4, false, true, "sf-a"
+	)
+	var identical_nonparticipant: Dictionary = MapMarkersScript.resolve_formation_counter_style(
+		scene, Vector2(50, 50), Color("4f8fd8"), "T", 4, false, true, "sf-a-twin"
+	)
+	var stationary_first: Dictionary = MapMarkersScript.resolve_formation_counter_style(
+		scene, Vector2(50, 50), Color("c95b5b"), "I", 3, false, true, "sf-r"
+	)
+	var stationary_second: Dictionary = MapMarkersScript.resolve_formation_counter_style(
+		scene, Vector2(50, 50), Color("c95b5b"), "I", 3, false, true, "sf-r-2"
 	)
 	var moving_overlay: Dictionary = MapMarkersScript.resolve_formation_counter_style(
-		scene,
-		Vector2(25, 25),
-		Color("4f8fd8"),
-		"T",
-		4,
-		true,
-		true
+		scene, Vector2(25, 25), Color("4f8fd8"), "T", 4, true, true, "sf-a"
 	)
-	var stationary_participant: Dictionary = MapMarkersScript.resolve_formation_counter_style(
-		scene,
-		Vector2(50, 50),
-		Color("c95b5b"),
-		"I",
-		3,
-		false,
-		true
-	)
-	var moving_visible_count := int(bool(moving_baseline.get("visible", true))) \
-		+ int(bool(moving_overlay.get("visible", true)))
+	var moving_visible_count := int(bool(moving_baseline.get("visible", true))) 		+ int(bool(moving_overlay.get("visible", true)))
 	_check_eq(moving_visible_count, 1, "moving formation has exactly one visible counter")
-	_check(not bool(moving_baseline.get("visible", true)), "authoritative endpoint baseline is suppressed")
-	_check(bool(stationary_participant.get("visible", false)), "stationary participant remains visible")
-	_check(bool(stationary_participant.get("emphasized", false)), "stationary participant is emphasized")
-	_check_eq(stationary_participant.get("formation_id", ""), "sf-r", "stationary emphasis resolves real formation row")
+	_check(not bool(moving_baseline.get("visible", true)), "moving endpoint suppressed by exact formation ID")
+	_check(bool(identical_nonparticipant.get("visible", false)), "identical colocated nonparticipant remains visible")
+	_check(not bool(identical_nonparticipant.get("emphasized", true)), "identical colocated nonparticipant is not emphasized")
+	_check(not bool(stationary_first.get("visible", true)), "first stationary participant baseline is replaced")
+	_check(not bool(stationary_second.get("visible", true)), "second stationary participant baseline is replaced")
+	var stationary_models: Array = scene._s10_stationary_participant_models(
+		scene.operational_presenter.contact_model(),
+		scene.operational_presenter.track_model()
+	)
+	_check_eq(stationary_models.size(), 2, "every stationary participant receives an explicit overlay counter")
+	var stationary_ids: Array = []
+	var stationary_offsets: Array = []
+	for model_variant: Variant in stationary_models:
+		var model := model_variant as Dictionary
+		stationary_ids.append(String(model.get("formation_id", "")))
+		stationary_offsets.append(model.get("screen_offset", Vector2.ZERO))
+	stationary_ids.sort()
+	_check_eq(stationary_ids, ["sf-r", "sf-r-2"], "stationary overlay models use exact participant IDs")
+	_check(stationary_offsets[0] != stationary_offsets[1], "colocated stationary participants receive distinct visible offsets")
 
 	scene._handle_button("replay_contact")
 	_check_eq(runner.start_count, 0, "replay issues no command")
@@ -153,8 +159,26 @@ func _pending_snapshot() -> Dictionary:
 				"display_pixel": [50, 50],
 			},
 			{
+				"id": "bn-a-twin",
+				"strategic_formation_id": "sf-a-twin",
+				"province_id": "a",
+				"faction": "nato",
+				"battalion_type": "tank",
+				"unit_count": 4,
+				"display_pixel": [50, 50],
+			},
+			{
 				"id": "bn-r",
 				"strategic_formation_id": "sf-r",
+				"province_id": "b",
+				"faction": "rusa",
+				"battalion_type": "infantry",
+				"unit_count": 3,
+				"display_pixel": [50, 50],
+			},
+			{
+				"id": "bn-r-2",
+				"strategic_formation_id": "sf-r-2",
 				"province_id": "b",
 				"faction": "rusa",
 				"battalion_type": "infantry",
@@ -164,7 +188,9 @@ func _pending_snapshot() -> Dictionary:
 		],
 		"strategic_formations": [
 			{"id": "sf-a", "display_name": "Alpha", "faction": "nato", "display_pixel": [50, 50]},
+			{"id": "sf-a-twin", "display_name": "Alpha Twin", "faction": "nato", "display_pixel": [50, 50]},
 			{"id": "sf-r", "display_name": "Red", "faction": "rusa", "display_pixel": [50, 50]},
+			{"id": "sf-r-2", "display_name": "Red Two", "faction": "rusa", "display_pixel": [50, 50]},
 		],
 		"pending_battle": {
 			"id": "battle-1",
@@ -180,7 +206,8 @@ func _pending_snapshot() -> Dictionary:
 				{"battalion_id": "bn-a", "strategic_formation_id": "sf-a", "formation_display_name": "Alpha", "faction": "nato", "contact_initiator": true, "ambush_triggered": false, "ambush_strength_multiplier_milli": 1000}
 			],
 			"defending_participants": [
-				{"battalion_id": "bn-r", "strategic_formation_id": "sf-r", "formation_display_name": "Red", "faction": "rusa", "contact_initiator": false, "ambush_triggered": true, "ambush_strength_multiplier_milli": 1150}
+				{"battalion_id": "bn-r", "strategic_formation_id": "sf-r", "formation_display_name": "Red", "faction": "rusa", "contact_initiator": false, "ambush_triggered": true, "ambush_strength_multiplier_milli": 1150},
+				{"battalion_id": "bn-r-2", "strategic_formation_id": "sf-r-2", "formation_display_name": "Red Two", "faction": "rusa", "contact_initiator": false, "ambush_triggered": false, "ambush_strength_multiplier_milli": 1000}
 			],
 		},
 	}

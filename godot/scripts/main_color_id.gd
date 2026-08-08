@@ -682,6 +682,27 @@ func _draw_operational_presentation() -> void:
 			)
 			if emphasized:
 				draw_arc(screen, 25.0, 0.0, TAU, 32, Color("ffd27a"), 2.5)
+		for model_variant: Variant in _s10_stationary_participant_models(contact, tracks):
+			if not model_variant is Dictionary:
+				continue
+			var model := model_variant as Dictionary
+			var image_pixel: Vector2 = model.get("image_pixel", Vector2.INF)
+			if image_pixel == Vector2.INF:
+				continue
+			var screen := _image_to_screen(image_pixel) + model.get("screen_offset", Vector2.ZERO)
+			var faction_color: Color = FACTION_COLORS.get(
+				String(model.get("faction", "neutral")),
+				FACTION_COLORS["neutral"]
+			)
+			MapMarkersScript.draw_formation_counter(
+				self,
+				screen,
+				faction_color,
+				String(model.get("glyph", "X")),
+				int(model.get("unit_count", 0)),
+				true
+			)
+			draw_arc(screen, 25.0, 0.0, TAU, 32, Color("ffd27a"), 2.5)
 		if not contact.is_empty():
 			var encounter_pixel: Variant = contact.get("encounter_pixel", Vector2.INF)
 			if encounter_pixel is Vector2 and encounter_pixel != Vector2.INF:
@@ -761,6 +782,52 @@ func _s10_formation_summary(formation_id: String) -> Dictionary:
 		if glyph == "X":
 			glyph = MapMarkersScript.battalion_type_glyph(String(row.get("battalion_type", "")))
 	return {"unit_count": unit_count, "glyph": glyph}
+
+
+func _s10_stationary_participant_models(contact: Dictionary, tracks: Dictionary) -> Array:
+	## Build one explicit overlay counter per stationary participant using exact
+	## strategic formation IDs. Colocated participants receive stable offsets so
+	## every formation remains visible; nonparticipants stay in the ordinary layer.
+	var grouped: Dictionary = {}
+	var participant_ids: Array = contact.get("participant_formation_ids", []).duplicate()
+	participant_ids.sort()
+	for formation_id_variant: Variant in participant_ids:
+		var formation_id := String(formation_id_variant)
+		if formation_id.is_empty() or tracks.has(formation_id):
+			continue
+		var row := _s10_formation_row(formation_id)
+		var image_pixel := _s10_pixel(row.get("display_pixel", null))
+		if image_pixel == Vector2.INF:
+			var encounter: Variant = contact.get("encounter_pixel", Vector2.INF)
+			if encounter is Vector2:
+				image_pixel = encounter as Vector2
+		if image_pixel == Vector2.INF:
+			continue
+		var summary := _s10_formation_summary(formation_id)
+		var key := "%.3f|%.3f" % [image_pixel.x, image_pixel.y]
+		if not grouped.has(key):
+			grouped[key] = []
+		(grouped[key] as Array).append({
+			"formation_id": formation_id,
+			"faction": String(row.get("faction", "neutral")),
+			"image_pixel": image_pixel,
+			"glyph": String(summary.get("glyph", "X")),
+			"unit_count": int(summary.get("unit_count", 0)),
+		})
+	var result: Array = []
+	var group_keys: Array = grouped.keys()
+	group_keys.sort()
+	for key_variant: Variant in group_keys:
+		var group: Array = grouped[key_variant]
+		group.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
+			return String(left.get("formation_id", "")) < String(right.get("formation_id", ""))
+		)
+		var midpoint := float(group.size() - 1) * 0.5
+		for index in range(group.size()):
+			var model := (group[index] as Dictionary).duplicate(true)
+			model["screen_offset"] = Vector2((float(index) - midpoint) * 40.0, 0.0)
+			result.append(model)
+	return result
 
 
 func _s10_pixel(value: Variant) -> Vector2:
@@ -1157,7 +1224,8 @@ func _draw_color_id_overlays() -> void:
 					int(battalion.get("unit_count", 0)),
 					selected,
 					bool(battalion.get("is_in_supply", true)),
-					int(battalion.get("encircled_turns", 0)) > 0
+					int(battalion.get("encircled_turns", 0)) > 0,
+					String(battalion.get("strategic_formation_id", ""))
 				)
 				reserved.append(counter_rect)
 				var stack: Array = battalion_stacks_by_province.get(province_id, [])
