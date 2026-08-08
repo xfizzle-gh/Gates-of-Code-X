@@ -121,7 +121,11 @@ def build_frontend_snapshot(
         if len(human_factions) != 1:
             raise ValueError("fog_of_war_requires_single_human_faction")
         option_faction = human_factions[0]
-    front_options = list_front_options(state, option_faction)
+    front_options = (
+        list_front_options(state, option_faction)
+        if not state.fog_of_war_enabled or state.current_faction == option_faction
+        else []
+    )
     from .presentation import build_stack_presentations
 
     stack_payload = build_stack_presentations(state, front_options)
@@ -409,10 +413,11 @@ def _apply_s11_frontend_filter(snapshot: dict, state: CampaignState) -> dict:
         for province_id, items in snapshot.get("battalion_stacks", {}).items()
         if any(item in allowed_battalions for item in items)
     }
+    observer_has_turn = state.current_faction == observer
     actionable_battalions = {
         battalion.battalion_id
         for battalion in state.battalions.values()
-        if battalion.faction == observer
+        if observer_has_turn and battalion.faction == observer
     }
     snapshot["battalion_presentations"] = {
         key: _sanitize_battalion_presentation(
@@ -435,7 +440,8 @@ def _apply_s11_frontend_filter(snapshot: dict, state: CampaignState) -> dict:
                 and state.strategic_formations[key].faction in coalition
             ),
             actionable=(
-                state.strategic_formations.get(key) is not None
+                observer_has_turn
+                and state.strategic_formations.get(key) is not None
                 and state.strategic_formations[key].faction == observer
             ),
         )

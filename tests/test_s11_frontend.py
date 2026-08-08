@@ -20,6 +20,7 @@ from gates_of_codex.operational_movement import (
     commit_formation_move_order,
     issue_move_order,
 )
+from gates_of_codex.operational_position import clear_operational_graph_cache
 from tests.test_s11_detection import _site, _state
 
 
@@ -221,6 +222,26 @@ class S11FrontendTests(unittest.TestCase):
                 self.assertFalse(
                     snapshot["strategic_formation_presentations"]["enemy-c"]["can_act"]
                 )
+                self.assertTrue(
+                    all(
+                        not row["can_act"]
+                        for row in snapshot["battalion_presentations"].values()
+                    )
+                )
+                self.assertTrue(
+                    all(
+                        not row["can_act"]
+                        for row in snapshot[
+                            "strategic_formation_presentations"
+                        ].values()
+                    )
+                )
+                self.assertTrue(
+                    all(
+                        not row["can_act"]
+                        for row in snapshot["stack_presentations"].values()
+                    )
+                )
                 serialized = json.dumps(snapshot, sort_keys=True)
                 for secret in (
                     "move bn-enemy-c b",
@@ -300,6 +321,7 @@ class S11FrontendTests(unittest.TestCase):
                     elif node["node_id"] == "nc":
                         node["pixel"] = [200, 20]
                 graph_path.write_text(json.dumps(graph), encoding="utf-8")
+                clear_operational_graph_cache()
                 enemy = state.strategic_formations["enemy-c"]
                 enemy.position = FormationOperationalPosition(
                     mode=PositionMode.ON_EDGE.value,
@@ -328,6 +350,7 @@ class S11FrontendTests(unittest.TestCase):
                 elif node["node_id"] == "nc":
                     node["pixel"] = [200, 20]
             graph_path.write_text(json.dumps(graph), encoding="utf-8")
+            clear_operational_graph_cache()
             state.strategic_formations["recon-a"].recon_capability = False
             enemy = state.strategic_formations["enemy-c"]
             enemy.position = FormationOperationalPosition(
