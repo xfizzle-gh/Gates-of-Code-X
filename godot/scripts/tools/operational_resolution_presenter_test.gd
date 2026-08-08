@@ -24,6 +24,7 @@ func _run_all() -> void:
 	_test_direct_contact_kind_labels_and_exact_location()
 	_test_ambush_uses_triggered_1150_only()
 	_test_replay_is_state_neutral_and_session_only()
+	_test_handoff_same_battle_preserves_original_replay()
 	_test_retreat_and_trapped_outcomes_are_authoritative()
 	_test_battle_outcome_is_transient()
 	_test_older_snapshot_without_s10_fields_loads()
@@ -86,6 +87,19 @@ func _payload(movements: Array, battle_finalization: Variant = null) -> Dictiona
 				"op": "advance_operational_tick",
 				"ok": true,
 				"data": {"operational_presentation": presentation},
+			}
+		],
+	}
+
+
+func _handoff_payload() -> Dictionary:
+	return {
+		"ok": true,
+		"results": [
+			{
+				"op": "handoff",
+				"ok": true,
+				"data": {},
 			}
 		],
 	}
@@ -190,7 +204,6 @@ func _test_routed_parallel_interpolation_and_exact_endpoints() -> void:
 	_check_vec(presenter.display_pixel("sf-a", Vector2(200, 0)), Vector2(0, 0), "starts at backend start")
 	_check_vec(presenter.display_pixel("sf-b", Vector2(200, 20)), Vector2(0, 20), "parallel starts together")
 	presenter.advance(0.225)
-	# Routed midpoint must pass through n-b, not direct-map Vector2(100, 0).
 	_check_vec(presenter.display_pixel("sf-a", Vector2(200, 0)), Vector2(100, 100), "follows backend path midpoint")
 	_check_vec(presenter.display_pixel("sf-b", Vector2(200, 20)), Vector2(100, 100), "unrelated formation not serialized")
 	presenter.advance(0.225)
@@ -259,6 +272,32 @@ func _test_replay_is_state_neutral_and_session_only() -> void:
 	presenter.begin_session(next, _graph_index())
 	_check(not presenter.can_replay_last_contact(), "fresh session clears replay")
 	_check(not presenter.replay_last_contact(), "fresh session replay unavailable")
+
+
+func _test_handoff_same_battle_preserves_original_replay() -> void:
+	var presenter = PresenterScript.new()
+	var pending := _pending("edge_cross")
+	var contact_snapshot := _snapshot(pending)
+	var movement := _movement("sf-a", [0, 0], [333, 444], "n-a", "n-b", ["n-a", "n-b"], ["e-ab"])
+	presenter.begin_transition(_snapshot(), contact_snapshot, _payload([movement]), _graph_index())
+	var original_tracks := presenter.track_model()
+	presenter.skip()
+
+	var handed_off_pending := pending.duplicate(true)
+	handed_off_pending["started"] = true
+	var handed_off_snapshot := _snapshot(handed_off_pending)
+	presenter.begin_transition(
+		contact_snapshot,
+		handed_off_snapshot,
+		_handoff_payload(),
+		_graph_index()
+	)
+	_check(not presenter.is_active(), "same-battle handoff does not reactivate contact presentation")
+	_check_eq(presenter.track_model().size(), 0, "same-battle handoff has no new movement tracks")
+	_check(presenter.can_replay_last_contact(), "same-battle handoff preserves replay availability")
+	_check(presenter.replay_last_contact(), "same-battle handoff replay still starts")
+	_check_eq(presenter.track_model(), original_tracks, "replay retains original contact movement tracks")
+	_check_eq(presenter.contact_model().get("battle_id", ""), "battle-1", "replay retains original battle identity")
 
 
 func _test_retreat_and_trapped_outcomes_are_authoritative() -> void:
