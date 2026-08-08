@@ -48,7 +48,7 @@ $env:CODEX_AI_OVERHAUL_ROOT = "E:\Steam\steamapps\workshop\content\400750\CodeX 
 $env:GATES_CODEX_ROOT = $root
 
 $arguments = @(
-    (Join-Path $root "audit\issue161\prepare_wrapper_engine_test.py"),
+    (Join-Path $root "audit\issue161\run_wrapper_engine_test.py"),
     "--game", $env:GOH_VANILLA_ROOT,
     "--codex", $env:CODEX_ROOT,
     "--stack-config", (Join-Path $root "config\mod-stack.windows.json"),
