@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from gates_of_codex.bridge.archive import CampaignSaveArchive
 from gates_of_codex.frontend import FRONTEND_SCHEMA_VERSION, build_frontend_snapshot
 from gates_of_codex.frontend_commands import apply_frontend_commands
 from gates_of_codex.models import (
@@ -34,7 +35,8 @@ from gates_of_codex.operational_schema import (
     stable_edge_id,
     stable_node_id,
 )
-from gates_of_codex.state_io import save_campaign
+from gates_of_codex.service import BattleExportManifest, GatesOfCodeXService
+from gates_of_codex.state_io import load_campaign, save_campaign
 
 
 def _node(province_id: str, *, pixel: list[int]) -> dict:
@@ -200,6 +202,66 @@ def _create_prepared_contact(state: CampaignState) -> None:
     advance_operational_tick(state)
     if state.pending_battle is None:
         raise AssertionError("expected prepared node contact")
+
+
+def _write_completed_external_battle(
+    root: Path,
+    state: CampaignState,
+    *,
+    attacker_survivors: int = 1,
+) -> tuple[Path, Path]:
+    pending = state.pending_battle
+    if pending is None:
+        raise AssertionError("expected pending battle")
+    campaign_path = root / "campaign.json"
+    save_path = root / "completed.sav"
+    pending.started = True
+    pending.exported_save_path = str(save_path.resolve())
+    save_campaign(state, campaign_path)
+
+    rows: list[str] = []
+    object_id = 1
+    for participant in (
+        *pending.attacking_participants,
+        *pending.defending_participants,
+    ):
+        quantity = (
+            attacker_survivors
+            if participant.faction == pending.attacker_faction
+            else 2
+        )
+        for _ in range(quantity):
+            rows.append(
+                f'\t\t{{"tank" "{participant.stage}" 0x{object_id:x}}}'
+            )
+            object_id += 1
+    CampaignSaveArchive().write(
+        save_path,
+        status=(
+            "{saveinfo\n"
+            "\t{version 9}\n"
+            "\t{playedGames 1}\n"
+            "\t{wonGames 0}\n"
+            "}\n"
+        ),
+        campaign_scn=(
+            "{campaign\n"
+            "\t{CampaignSquads\n"
+            + "\n".join(rows)
+            + "\n\t}\n}\n"
+        ),
+    )
+    GatesOfCodeXService().write_manifest(
+        BattleExportManifest(
+            battle_id=pending.battle_id,
+            campaign_path=str(campaign_path.resolve()),
+            save_path=str(save_path.resolve()),
+            catalog_signature="",
+            played_games=0,
+            won_games=0,
+        )
+    )
+    return campaign_path, save_path
 
 
 class S10FrontendPresentationContractTests(unittest.TestCase):
@@ -396,6 +458,97 @@ class S10FrontendPresentationContractTests(unittest.TestCase):
             finalization["retreat_outcomes"],
         )
         self.assertNotIn("operational_presentation", json.dumps(saved, sort_keys=True))
+
+    def test_external_import_exports_exact_retreat_and_applies_survivors_once(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            state = _state(root)
+            _create_prepared_contact(state)
+            campaign_path, _ = _write_completed_external_battle(
+                root,
+                state,
+                attacker_survivors=1,
+            )
+            snapshot_path = root / "snapshot.json"
+
+            first = apply_frontend_commands(
+                campaign_path,
+                commands=[{"op": "import_battle"}],
+                snapshot_path=snapshot_path,
+            )
+            after_first = load_campaign(campaign_path)
+            repeated = apply_frontend_commands(
+                campaign_path,
+                commands=[{"op": "import_battle"}],
+                snapshot_path=snapshot_path,
+            )
+            after_repeated = load_campaign(campaign_path)
+            persisted = campaign_path.read_text(encoding="utf-8")
+
+        self.assertTrue(first["ok"], first)
+        self.assertEqual(1, first["commands_applied"])
+        self.assertEqual(
+            {
+                "winner": "rusa",
+                "retreat_outcomes": [
+                    {
+                        "formation_id": "sf-n",
+                        "destination_node_id": stable_node_id("a"),
+                        "destination_province_id": "a",
+                        "destination_pixel": [0, 0],
+                        "reason": "",
+                    }
+                ],
+            },
+            first["results"][0]["data"]["operational_presentation"][
+                "battle_finalization"
+            ],
+        )
+        self.assertEqual(1, after_first.battalions["bn-n"].unit_count)
+        self.assertFalse(repeated["ok"], repeated)
+        self.assertEqual(0, repeated["commands_applied"])
+        self.assertEqual(1, after_repeated.battalions["bn-n"].unit_count)
+        self.assertNotIn("operational_presentation", persisted)
+        self.assertNotIn("battle_finalization", persisted)
+
+    def test_external_import_exports_exact_trapped_reason_without_destination(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            state = _state(root)
+            _create_prepared_contact(state)
+            state.battalions["bn-r-block"] = _battalion(
+                "bn-r-block", "sf-r-block", Faction.RUSSIA, "a"
+            )
+            state.strategic_formations["sf-r-block"] = _force(
+                "sf-r-block",
+                ["bn-r-block"],
+                Faction.RUSSIA,
+                "a",
+                "Blocking Guards Group",
+            )
+            campaign_path, _ = _write_completed_external_battle(root, state)
+
+            result = apply_frontend_commands(
+                campaign_path,
+                commands=[{"op": "import_battle"}],
+                snapshot_path=root / "snapshot.json",
+            )
+
+        self.assertTrue(result["ok"], result)
+        self.assertEqual(
+            [
+                {
+                    "formation_id": "sf-n",
+                    "destination_node_id": None,
+                    "destination_province_id": None,
+                    "destination_pixel": None,
+                    "reason": "trapped_no_legal_retreat",
+                }
+            ],
+            result["results"][0]["data"]["operational_presentation"][
+                "battle_finalization"
+            ]["retreat_outcomes"],
+        )
 
     def test_additive_participant_fields_round_trip_deterministically(self) -> None:
         with tempfile.TemporaryDirectory() as td:

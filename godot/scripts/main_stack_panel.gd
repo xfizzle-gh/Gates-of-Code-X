@@ -162,6 +162,17 @@ func _draw_pending_battle_modal() -> void:
 	button_y = _draw_button("auto_resolve", "Auto-resolve battle (A)", left, button_y, writeback, Color("4a2f18"))
 	button_y = _draw_button("handoff", "Handoff to GoH (H)", left, button_y, writeback, Color("5a2418"))
 	button_y = _draw_button(
+		"import_battle",
+		"Import verified GoH result (I)",
+		left,
+		button_y,
+		writeback \
+			and bool(snapshot.get("pending_battle", {}).get("started", false)) \
+			and String(snapshot.get("pending_battle", {}).get("id", "")) == last_handoff_battle_id \
+			and not last_handoff_save_path.is_empty(),
+		Color("264a34")
+	)
+	button_y = _draw_button(
 		"replay_contact",
 		"Replay last contact",
 		right,
@@ -661,6 +672,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				_handle_button("auto_resolve")
 			elif key.keycode == KEY_H:
 				_handle_button("handoff")
+			elif key.keycode == KEY_I:
+				_handle_button("import_battle")
 			get_viewport().set_input_as_handled()
 			return
 		if event is InputEventMouseButton and event.pressed:

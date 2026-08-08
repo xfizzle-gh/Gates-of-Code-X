@@ -35,14 +35,19 @@ func _run_all() -> void:
 		return
 	scene.command_runner = runner
 	scene.snapshot = _pending_snapshot()
+	scene.last_handoff_save_path = "completed.sav"
+	scene.last_handoff_battle_id = "unrelated-battle"
 	scene._ensure_operational_presenter()
 	scene.operational_presenter.begin_session(scene.snapshot, _graph_index())
 
 	_check(scene.is_pending_battle_modal_active(), "pending battle opens modal gate")
 	_check(scene.is_map_interaction_blocked(), "modal blocks map interaction")
+	_check(not Array(scene.enabled_action_button_ids()).has("import_battle"), "unrelated handoff cannot expose import")
+	scene.last_handoff_battle_id = "battle-1"
 	var initial_actions: Array = Array(scene.enabled_action_button_ids())
 	_check(initial_actions.has("auto_resolve"), "modal keeps existing proceed action")
 	_check(initial_actions.has("handoff"), "modal keeps existing handoff action")
+	_check(initial_actions.has("import_battle"), "handed-off modal exposes verified import action")
 	_check(not initial_actions.has("end_turn"), "modal blocks end turn")
 	_check(not initial_actions.has("run_ai"), "modal blocks AI resolution")
 	_check(not initial_actions.has("refresh"), "modal blocks refresh interaction")
@@ -104,6 +109,7 @@ func _pending_snapshot() -> Dictionary:
 		],
 		"pending_battle": {
 			"id": "battle-1",
+			"started": true,
 			"encounter_kind": "edge_cross",
 			"encounter_node_id": "",
 			"encounter_edge_id": "e-ab",

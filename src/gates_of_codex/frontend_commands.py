@@ -94,6 +94,9 @@ def apply_frontend_commands(
             if op == "handoff":
                 result = _apply_handoff(campaign, state, raw)
                 state = load_campaign(campaign)
+            elif op == "import_battle":
+                result = _apply_import_battle(campaign, state, raw)
+                state = load_campaign(campaign)
             else:
                 result = _apply_one(state, op, raw)
         except Exception as exc:  # noqa: BLE001 - surface operator errors in result list
@@ -250,6 +253,37 @@ def _apply_handoff(campaign: Path, state, raw: dict[str, Any]) -> CommandResult:
             "verify_command": result.verify_command or "",
             "import_command": result.import_command or "",
             "battle_id": state.pending_battle.battle_id if state.pending_battle else "",
+        },
+    )
+
+
+def _apply_import_battle(
+    campaign: Path,
+    state,
+    raw: dict[str, Any],
+) -> CommandResult:
+    from .service import GatesOfCodeXService
+
+    pending = state.pending_battle
+    if pending is None:
+        raise ValueError("No pending battle to import")
+    save_path = str(raw.get("save_path") or pending.exported_save_path or "").strip()
+    if not save_path:
+        raise ValueError("Pending battle has no handed-off GoH save path")
+    imported = GatesOfCodeXService().import_battle(campaign, save_path=save_path)
+    finalized_state = load_campaign(campaign)
+    return CommandResult(
+        op="import_battle",
+        ok=True,
+        detail=f"winner {imported.winner.value}",
+        data={
+            "winner": imported.winner.value,
+            "survivors": imported.survivor_counts,
+            "_battle_finalization_presentation": _battle_finalization_presentation(
+                finalized_state,
+                imported.winner,
+                imported.finalization_report,
+            ),
         },
     )
 
