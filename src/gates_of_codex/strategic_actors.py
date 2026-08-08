@@ -137,6 +137,12 @@ class StrategicActorState:
 
 
 def ensure_strategic_actor_runtime(state: CampaignState) -> dict[str, StrategicActorState]:
+    """Load or explicitly install the actor runtime without changing unrelated saves.
+
+    This function is intentionally not called by the normal force/schema migration path.
+    Actor state is created only when an actor-aware API or CLI command is used.
+    """
+
     raw = state.map_metadata.get(ACTOR_RUNTIME_KEY)
     if isinstance(raw, dict) and raw.get("schema_version") == ACTOR_RUNTIME_SCHEMA_VERSION:
         actors = _parse_actor_rows(raw.get("actors", {}))
@@ -152,11 +158,29 @@ def ensure_strategic_actor_runtime(state: CampaignState) -> dict[str, StrategicA
             "actors_created": sorted(actors),
             "note": "Legacy tactical factions retained as compatibility strategic actors.",
         }
+    if not actors:
+        raise ValueError("Campaign must contain at least one strategic actor")
+
     _normalize_force_actor_ids(state, actors)
-    if selected not in actors:
-        selected = _fallback_actor_for_side(actors, state.selected_faction)
-    if current not in actors:
-        current = _fallback_actor_for_side(actors, state.current_faction)
+    _normalize_province_actor_ids(state, actors)
+
+    selected = _runtime_actor_for_side_or_any(
+        actors,
+        candidate_id=selected,
+        tactical_side=state.selected_faction,
+        require_playable=True,
+    )
+    state.selected_faction = actors[selected].tactical_side
+
+    current = _runtime_actor_for_side_or_any(
+        actors,
+        candidate_id=current,
+        tactical_side=state.current_faction,
+        require_playable=False,
+    )
+    state.current_faction = actors[current].tactical_side
+
+    _apply_human_control(state, actors, selected)
     _write_runtime(state, actors, selected_actor_id=selected, current_actor_id=current)
     validate_strategic_actor_runtime(state)
     state.schema_version = max(state.schema_version, CAMPAIGN_SCHEMA_VERSION)
@@ -192,15 +216,19 @@ def install_bundled_strategic_actors(
             is_human_controlled=False,
             is_eliminated=(prior.is_eliminated if prior else False),
         )
+
     selected = selected_actor_id or _catalog_actor_for_legacy_selection(actors, state.selected_faction)
     if selected not in actors:
         raise KeyError(f"Unknown strategic actor: {selected}")
     if not actors[selected].playable:
         raise ValueError(f"Strategic actor {selected} is not independently playable")
-    current = selected
+
     _normalize_force_actor_ids(state, actors)
-    _write_runtime(state, actors, selected_actor_id=selected, current_actor_id=current)
-    set_selected_actor(state, selected)
+    _normalize_province_actor_ids(state, actors)
+    state.selected_faction = actors[selected].tactical_side
+    state.current_faction = actors[selected].tactical_side
+    _apply_human_control(state, actors, selected)
+    _write_runtime(state, actors, selected_actor_id=selected, current_actor_id=selected)
     state.map_metadata[ACTOR_MIGRATION_KEY] = {
         "schema_version": ACTOR_RUNTIME_SCHEMA_VERSION,
         "mode": "bundled_faction_catalog",
@@ -230,13 +258,11 @@ def set_selected_actor(state: CampaignState, actor_id: str) -> StrategicActorSta
     actor = actors[actor_id]
     if not actor.playable:
         raise ValueError(f"Strategic actor {actor_id} is not independently playable")
-    for value in actors.values():
-        value.is_human_controlled = value.actor_id == actor_id
-    for faction_state in state.factions.values():
-        faction_state.is_human_controlled = faction_state.faction == actor.tactical_side
+    _apply_human_control(state, actors, actor_id)
     state.selected_faction = actor.tactical_side
     state.current_faction = actor.tactical_side
     _write_runtime(state, actors, selected_actor_id=actor_id, current_actor_id=actor_id)
+    validate_strategic_actor_runtime(state)
     return actor
 
 
@@ -278,6 +304,7 @@ def assign_strategic_formation_actor(state: CampaignState, formation_id: str, ac
             f"Formation {formation_id} tactical side {force.faction.value} does not match actor {actor_id} side {actor.tactical_side.value}"
         )
     force.actor_id = actor_id
+    validate_strategic_actor_runtime(state)
 
 
 def strategic_actor_snapshot(state: CampaignState) -> dict[str, Any]:
@@ -318,9 +345,9 @@ def validate_strategic_actor_runtime(state: CampaignState) -> None:
         raise ValueError("Selected strategic actor tactical side does not match selected_faction")
     if state.current_faction != actors[current].tactical_side:
         raise ValueError("Current strategic actor tactical side does not match current_faction")
-    human = [actor.actor_id for actor in actors.values() if actor.is_human_controlled]
-    if human and human != [selected]:
-        raise ValueError("Exactly the selected strategic actor may be human controlled")
+    human = sorted(actor.actor_id for actor in actors.values() if actor.is_human_controlled)
+    if human != [selected]:
+        raise ValueError("Exactly the selected strategic actor must be human controlled")
     for force in state.strategic_formations.values():
         if not force.actor_id:
             continue
@@ -364,7 +391,7 @@ def _compatibility_actors(state: CampaignState) -> dict[str, StrategicActorState
             roster_class="compatibility",
             resources=faction_state.resources,
             researched_keys=list(faction_state.researched_keys),
-            is_human_controlled=faction_state.is_human_controlled or side == state.selected_faction,
+            is_human_controlled=False,
             is_eliminated=faction_state.is_eliminated,
         )
     return actors
@@ -391,6 +418,18 @@ def _write_runtime(
     }
 
 
+def _apply_human_control(
+    state: CampaignState,
+    actors: Mapping[str, StrategicActorState],
+    selected_actor_id: str,
+) -> None:
+    selected = actors[selected_actor_id]
+    for actor in actors.values():
+        actor.is_human_controlled = actor.actor_id == selected_actor_id
+    for faction_state in state.factions.values():
+        faction_state.is_human_controlled = faction_state.faction == selected.tactical_side
+
+
 def _normalize_force_actor_ids(
     state: CampaignState,
     actors: Mapping[str, StrategicActorState],
@@ -400,6 +439,23 @@ def _normalize_force_actor_ids(
         if candidate is None:
             candidate = _fallback_actor_for_side(actors, force.faction)
         force.actor_id = candidate
+
+
+def _normalize_province_actor_ids(
+    state: CampaignState,
+    actors: Mapping[str, StrategicActorState],
+) -> None:
+    for province in state.provinces.values():
+        raw = province.metadata.get("owner_actor_id")
+        if raw in (None, ""):
+            continue
+        candidate = _resolve_actor_alias(str(raw), actors, province.owner)
+        if candidate is None:
+            if province.owner == Faction.NEUTRAL:
+                province.metadata.pop("owner_actor_id", None)
+                continue
+            candidate = _fallback_actor_for_side(actors, province.owner)
+        province.metadata["owner_actor_id"] = candidate
 
 
 def _resolve_actor_alias(
@@ -414,6 +470,34 @@ def _resolve_actor_alias(
         if actor is not None and actor.tactical_side == tactical_side:
             return candidate
     return None
+
+
+def _runtime_actor_for_side_or_any(
+    actors: Mapping[str, StrategicActorState],
+    *,
+    candidate_id: str,
+    tactical_side: Faction,
+    require_playable: bool,
+) -> str:
+    candidate = actors.get(candidate_id)
+    if candidate is not None and candidate.tactical_side == tactical_side and (candidate.playable or not require_playable):
+        return candidate_id
+    matching = sorted(
+        actor.actor_id
+        for actor in actors.values()
+        if actor.tactical_side == tactical_side and (actor.playable or not require_playable)
+    )
+    if matching:
+        return matching[0]
+    fallback = sorted(
+        actor.actor_id
+        for actor in actors.values()
+        if actor.playable or not require_playable
+    )
+    if not fallback:
+        qualifier = "playable " if require_playable else ""
+        raise ValueError(f"Campaign has no {qualifier}strategic actor")
+    return fallback[0]
 
 
 def _fallback_actor_for_side(
