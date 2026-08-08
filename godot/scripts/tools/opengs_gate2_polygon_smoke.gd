@@ -71,13 +71,13 @@ func _run() -> void:
 		quit(8)
 		return
 	var land_anchor: Array = land_row.get("centroid", [])
-	var land_hit := pm.province_at_image_pos(Vector2(float(land_anchor[0]), float(land_anchor[1])))
+	var land_hit: String = String(pm.province_at_image_pos(Vector2(float(land_anchor[0]), float(land_anchor[1]))))
 	if land_hit != String(land_row.get("id", "")):
 		push_error("Gate 2 land hit-test mismatch: %s" % land_hit)
 		quit(9)
 		return
 	var water_anchor: Array = water_row.get("centroid", [])
-	var water_hit := pm.province_at_image_pos(Vector2(float(water_anchor[0]), float(water_anchor[1])))
+	var water_hit: String = String(pm.province_at_image_pos(Vector2(float(water_anchor[0]), float(water_anchor[1]))))
 	if not water_hit.is_empty():
 		push_error("Gate 2 water must be non-selectable: %s" % water_hit)
 		quit(10)
