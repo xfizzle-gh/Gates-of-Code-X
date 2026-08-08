@@ -7,7 +7,7 @@ Focused local validation:
     tests.test_expanded_nations \
     tests.test_expanded_nations_audit_regressions -v
 Result:
-  Ran 15 tests
+  Ran 13 tests
   OK
 
 Focused exact-head CI covers:
