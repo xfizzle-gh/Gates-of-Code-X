@@ -114,6 +114,19 @@ class GodotAsyncWritebackTests(unittest.TestCase):
         self.assertIn("command_runner_test.gd", workflow)
         self.assertIn("writeback_integration_test.gd", workflow)
 
+    def test_workflow_runs_both_s10_godot_suites_as_distinct_headless_steps(self) -> None:
+        workflow = (ROOT / ".github/workflows/gates-of-codex.yml").read_text(encoding="utf-8")
+        scripts = (
+            "operational_resolution_presenter_test.gd",
+            "operational_presentation_scene_test.gd",
+        )
+        for script in scripts:
+            self.assertEqual(1, workflow.count(script))
+            before_script = workflow[: workflow.index(script)]
+            step = before_script[before_script.rfind("      - name:") :]
+            self.assertIn("S10", step)
+            self.assertIn('"$HOME/godot" --headless --path .', step)
+
     def test_frontend_writeback_contract_async_invocation(self) -> None:
         script = (GODOT / "scripts/main_writeback.gd").read_text(encoding="utf-8")
         self.assertIn("FileAccess.file_exists(python_executable)", script)
