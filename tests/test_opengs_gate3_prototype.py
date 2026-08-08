@@ -136,6 +136,30 @@ class Gate3CandidateContractTests(unittest.TestCase):
         with self.assertRaises(self.g.Gate3Error):
             self.g._validate_candidate_dataset(dataset, self.g.CANDIDATE_ID)
 
+    def test_land_holes_do_not_create_ocean_and_lake_islands_remain_land(self) -> None:
+        class Ring:
+            def __init__(self, coords):
+                self.coords = coords
+
+        class Polygon:
+            exterior = Ring([(0, 0), (4, 0), (4, 4), (0, 4)])
+            interiors = [Ring([(1, 1), (2, 1), (2, 2), (1, 2)])]
+
+        class Draw:
+            def __init__(self):
+                self.fills = []
+
+            def polygon(self, points, *, fill):
+                self.fills.append(fill)
+
+        land_draw = Draw()
+        self.g._draw_land_polygon(land_draw, Polygon())
+        self.assertEqual(land_draw.fills, [self.g.LAND_COLOR, self.g.LAND_COLOR])
+
+        lake_draw = Draw()
+        self.g._draw_lake_polygon(lake_draw, Polygon())
+        self.assertEqual(lake_draw.fills, [self.g.LAKE_COLOR, self.g.LAND_COLOR])
+
     def test_city_and_corridor_density_are_deterministic(self) -> None:
         policy = {"baseline": 235, "city_radius_min": 5, "city_radius_max": 36, "city_depth_min": 45, "city_depth_max": 220}
         left = np.full((32, 32), 235.0, dtype=np.float64)
