@@ -76,6 +76,15 @@ jobs:
           assert sum(count for side, count in wrappers.values() if side == 'ukr') == 35
           assert sum(count for side, count in wrappers.values() if side == 'rusa') == 52
 
+          state = runner.load_migrated_scenario()
+          assert state.schema_version >= 6
+          assert state.strategic_formations
+          assert any(force.faction.value == 'ukr' for force in state.strategic_formations.values())
+          assert any(force.faction.value == 'rusa' for force in state.strategic_formations.values())
+          assert all(battalion.strategic_formation_id for battalion in state.battalions.values())
+          runner.target._select_force(state, runner.target.Faction.UKRAINE)
+          runner.target._select_force(state, runner.target.Faction.RUSSIA)
+
           catalog = CodeXCatalogScanner().scan_stack([Path.cwd()])
           for unit_name, (side, members) in wrappers.items():
               definition = catalog.units.get(unit_name)
