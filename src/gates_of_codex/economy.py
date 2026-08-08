@@ -398,6 +398,11 @@ def repair_formation(state: CampaignState, formation_id: str, points: int | None
 
 
 def settle_round_economy(state: CampaignState) -> list[RoundEconomyReport]:
+    if "actor_content_runtime" in state.map_metadata:
+        from .actor_economy import settle_actor_round_economy
+
+        return settle_actor_round_economy(state)  # type: ignore[return-value]
+
     reports: list[RoundEconomyReport] = []
     for faction_id, faction_state in sorted(state.factions.items()):
         faction = Faction(faction_id)
@@ -433,6 +438,11 @@ def settle_round_economy(state: CampaignState) -> list[RoundEconomyReport]:
 
 
 def run_ai_economy(state: CampaignState, faction: Faction) -> list[dict]:
+    if "actor_content_runtime" in state.map_metadata:
+        from .actor_ai_economy import run_actor_ai_economy
+
+        return run_actor_ai_economy(state, faction)
+
     actions: list[dict] = []
     faction_state = state.factions[faction.value]
     research = available_research(state, faction)
