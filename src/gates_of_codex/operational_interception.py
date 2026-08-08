@@ -108,12 +108,16 @@ def compute_movement_intervals(
     hostiles participate in edge cross/catch-up detection (they never move in
     the normal application phase).
     """
+    from .operational_contact import formation_is_combat_capable
+
     intervals: list[MovementInterval] = []
     active_ids: set[str] = set()
     for force in sorted(
         state.strategic_formations.values(),
         key=lambda value: value.strategic_formation_id,
     ):
+        if not formation_is_combat_capable(state, force):
+            continue
         order = force.move_order
         if order is None or order.status != MoveOrderStatus.ACTIVE.value:
             continue
@@ -127,6 +131,8 @@ def compute_movement_intervals(
         state.strategic_formations.values(),
         key=lambda value: value.strategic_formation_id,
     ):
+        if not formation_is_combat_capable(state, force):
+            continue
         if force.strategic_formation_id in active_ids:
             continue
         stationary = _stationary_on_edge_interval(
@@ -756,9 +762,20 @@ def expand_edge_participants_exact(
     seed_ids: tuple[str, ...],
 ) -> tuple[str, ...]:
     """Include seeds plus allies already at the exact edge+canonical progress."""
-    ids = set(seed_ids)
+    from .operational_contact import formation_is_combat_capable
+
+    ids = {
+        formation_id
+        for formation_id in seed_ids
+        if (
+            force := state.strategic_formations.get(formation_id)
+        ) is not None
+        and formation_is_combat_capable(state, force)
+    }
     for force in state.strategic_formations.values():
         if force.strategic_formation_id in ids:
+            continue
+        if not formation_is_combat_capable(state, force):
             continue
         canonical = formation_canonical_on_edge(force, edge=edge)
         if canonical is None or canonical != progress_canonical:

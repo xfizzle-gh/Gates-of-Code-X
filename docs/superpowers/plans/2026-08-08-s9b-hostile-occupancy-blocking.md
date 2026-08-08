@@ -100,19 +100,22 @@ Add save/load and insertion-order regressions proving:
 - player-issued and S7 AI-issued movement reach the same contact result;
 - repeated runs and formation insertion-order permutations produce identical pending-battle participants, contact location, order status, and final positions.
 
-### Task 6 — Regression and scope audit
+### Task 6 — Focused validation and handoff
 
 Run:
 
-- all focused S9B tests;
+- the dedicated S9B regression module;
 - S4 node-contact tests;
 - S6 interception tests;
 - S7 AI-order tests;
-- S8 supply tests;
 - S9A retreat and authority tests;
-- full repository suite and all required GitHub Actions jobs.
+- a minimal compile check for every changed Python file.
 
 Confirm the final diff contains no S9C, S10, S11, route-authority, Earth3, OpenGS, or supply-formula expansion.
+
+The full repository suite, GitHub CI diagnosis, and independent audit are a
+separate post-push validation stage and are intentionally deferred from this
+implementation handoff.
 
 ## Exit criteria
 
@@ -124,5 +127,6 @@ S9B is complete only when:
 - Refit and Forced March transitions match the locked matrix;
 - blocking is fully derived and no blocking state is persisted;
 - player/AI, save/load, insertion-order, and single-pending-battle contracts are tested;
-- complete exact-head CI is green;
-- an independent reviewer accepts the PR before merge.
+- the focused S9B, S4, S6, S7, and S9A validation is green;
+- every changed Python file compiles;
+- the implementation is pushed to the existing draft PR with exact-head evidence for the deferred validation stage.

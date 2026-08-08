@@ -492,6 +492,7 @@ def try_create_edge_contact_battle(
         encounter_pixel=pixel,
     )
     state.pending_battle = pending
+    _interrupt_refit_participants(state, pending)
     return pending
 
 
@@ -569,7 +570,7 @@ def _participants_for_forces(
 
 
 def _interrupt_refit_participants(state: CampaignState, pending: PendingBattle) -> None:
-    """End refit immediately for formations actually committed to node contact."""
+    """End refit immediately for formations committed to hostile contact."""
     participant_ids = {
         participant.battalion_id
         for participant in pending.attacking_participants + pending.defending_participants
