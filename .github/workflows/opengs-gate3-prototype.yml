@@ -2,6 +2,14 @@ name: OpenGS Gate 3 prototype
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - agent/opengs-gate3-3514-prototype
+    paths:
+      - ".github/workflows/opengs-gate3-prototype.yml"
+      - "tools/opengs_eval/gate3_*"
+      - "tests/test_opengs_gate3_prototype.py"
+      - "docs/research/opengs-evaluation/gate_3_locked_plan.md"
   pull_request:
     paths:
       - ".github/workflows/opengs-gate3-prototype.yml"
