@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - audit/160-phases-5-8
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
