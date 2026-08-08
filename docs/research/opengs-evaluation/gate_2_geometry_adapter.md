@@ -41,6 +41,7 @@ The adapter requires and authenticates:
 - the exact five-file Gate 1 authoritative output set;
 - canonical Gate 1 JSON and the complete embedded Gate 1 run manifest;
 - immutable one-read byte snapshots for every Gate 1 authority file, with hashes and decoding derived from the same captured bytes;
+- immutable one-read byte snapshots for every Gate 1 authority file, with hashes and decoding derived from the same captured bytes;
 - current Gate 1 output checksums and source-record correspondence;
 - a terrain raster captured once as immutable bytes, whose SHA-256 and decoded pixels come from that same snapshot and equal the Gate 1 manifest terrain input checksum;
 - the exact canonical Gate 2 config digest and embedded settings;
@@ -117,6 +118,9 @@ The 23-test suite covers:
 - rejection of a resealed triangle mutation that fills a hole;
 - rejection of a duplicate-triangle/equal-area-omission forgery;
 - authentication of every adapter, config, Gate 1, terrain, and determinism provenance class;
+- province-label and terrain-raster mutation-during-decode races, proving hashes and decoded arrays derive from the same captured bytes;
+- rejection of coherently resealed terrain ledgers that disagree with the authenticated raster;
+- rejection of translated or reshaped component payloads that do not match the authenticated label raster;
 - province-label and terrain-raster mutation-during-decode races, proving hashes and decoded arrays derive from the same captured bytes;
 - rejection of coherently resealed terrain ledgers that disagree with the authenticated raster;
 - rejection of translated or reshaped component payloads that do not match the authenticated label raster;
