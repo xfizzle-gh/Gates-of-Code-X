@@ -6,6 +6,14 @@ extends RefCounted
 ## prefixed with `presentation_` and never treated as simulation authority.
 
 const COUNTER_SIZE := Vector2(34, 22)
+const S10_COUNTER_MATCH_EPSILON := 2.0
+const S10_FACTION_COLORS := {
+	"nato": Color("4f8fd8"),
+	"ukr": Color("e2c84a"),
+	"rusa": Color("c95b5b"),
+	"prc": Color("d08a3f"),
+	"neutral": Color("707780"),
+}
 
 
 static func draw_selected_province_ring(canvas: CanvasItem, center: Vector2, radius := 18.0) -> void:
@@ -23,17 +31,31 @@ static func draw_formation_counter(
 	type_glyph: String,
 	strength: int,
 	selected: bool,
-	in_supply := true,
-	encircled := false
+	in_supply: Variant = null,
+	encircled: Variant = null
 ) -> Rect2:
+	var presentation_overlay := in_supply == null and encircled == null
+	var style := resolve_formation_counter_style(
+		canvas,
+		center,
+		faction_color,
+		type_glyph,
+		strength,
+		presentation_overlay
+	)
+	if not bool(style.get("visible", true)):
+		return Rect2()
+	var emphasized := selected or bool(style.get("emphasized", false))
+	var supplied := true if in_supply == null else bool(in_supply)
+	var is_encircled := false if encircled == null else bool(encircled)
 	var rect := Rect2(center - COUNTER_SIZE * 0.5 + Vector2(0, -2), COUNTER_SIZE)
 	var fill := faction_color.darkened(0.25)
 	fill.a = 0.95
 	canvas.draw_rect(rect, fill)
-	canvas.draw_rect(rect, Color.WHITE if selected else Color(0.1, 0.1, 0.12, 0.95), false, 1.5)
-	if not in_supply:
+	canvas.draw_rect(rect, Color.WHITE if emphasized else Color(0.1, 0.1, 0.12, 0.95), false, 1.5)
+	if not supplied:
 		canvas.draw_rect(Rect2(rect.position, Vector2(4, rect.size.y)), Color("ff6b5f"))
-	if encircled:
+	if is_encircled:
 		canvas.draw_rect(Rect2(rect.position + Vector2(rect.size.x - 4, 0), Vector2(4, rect.size.y)), Color("ffb14e"))
 	var label := "%s %s" % [type_glyph, strength]
 	canvas.draw_string(
@@ -45,7 +67,167 @@ static func draw_formation_counter(
 		12,
 		Color.WHITE
 	)
+	if bool(style.get("emphasized", false)):
+		canvas.draw_arc(center, 25.0, 0.0, TAU, 32, Color("ffd27a"), 2.5)
 	return rect
+
+
+static func resolve_formation_counter_style(
+	canvas: CanvasItem,
+	center: Vector2,
+	faction_color: Color,
+	type_glyph: String,
+	strength: int,
+	presentation_overlay := false,
+	center_is_image_pixel := false
+) -> Dictionary:
+	## Shared by the actual draw path and the active-scene regression.
+	var normal := {"visible": true, "emphasized": false, "formation_id": ""}
+	if presentation_overlay:
+		return normal
+	var presenter: Variant = _object_property(canvas, "operational_presenter", null)
+	if presenter == null or not presenter.has_method("is_active") or not presenter.is_active():
+		return normal
+	var tracks: Dictionary = presenter.track_model()
+	for formation_id_variant: Variant in presenter.active_formation_ids():
+		var formation_id := String(formation_id_variant)
+		if not _counter_matches_formation(canvas, formation_id, faction_color, type_glyph, strength):
+			continue
+		var track: Dictionary = tracks.get(formation_id, {})
+		var endpoint: Variant = track.get("end_pixel", Vector2.INF)
+		if not endpoint is Vector2:
+			continue
+		var endpoint_position := _presentation_position(
+			canvas,
+			endpoint as Vector2,
+			center_is_image_pixel
+		)
+		if endpoint_position != Vector2.INF and center.distance_to(endpoint_position) <= S10_COUNTER_MATCH_EPSILON:
+			return {"visible": false, "emphasized": false, "formation_id": formation_id}
+
+	var contact: Dictionary = presenter.contact_model()
+	for formation_id_variant: Variant in contact.get("participant_formation_ids", []):
+		var formation_id := String(formation_id_variant)
+		if tracks.has(formation_id):
+			continue
+		if not _counter_matches_formation(canvas, formation_id, faction_color, type_glyph, strength):
+			continue
+		var image_pixel := _formation_authoritative_pixel(canvas, formation_id, contact)
+		var participant_position := _presentation_position(
+			canvas,
+			image_pixel,
+			center_is_image_pixel
+		)
+		if participant_position != Vector2.INF and center.distance_to(participant_position) <= S10_COUNTER_MATCH_EPSILON:
+			return {"visible": true, "emphasized": true, "formation_id": formation_id}
+	return normal
+
+
+static func _counter_matches_formation(
+	canvas: CanvasItem,
+	formation_id: String,
+	faction_color: Color,
+	type_glyph: String,
+	strength: int
+) -> bool:
+	var snapshot_variant: Variant = _object_property(canvas, "snapshot", {})
+	if snapshot_variant is Dictionary:
+		for row_variant: Variant in (snapshot_variant as Dictionary).get("battalions", []):
+			if not row_variant is Dictionary:
+				continue
+			var row := row_variant as Dictionary
+			if String(row.get("strategic_formation_id", "")) != formation_id:
+				continue
+			if int(row.get("unit_count", 0)) != strength:
+				continue
+			if battalion_type_glyph(String(row.get("battalion_type", ""))) != type_glyph:
+				continue
+			var expected_color: Color = S10_FACTION_COLORS.get(
+				String(row.get("faction", "neutral")),
+				S10_FACTION_COLORS["neutral"]
+			)
+			if _colors_match(expected_color, faction_color):
+				return true
+	if canvas.has_method("_s10_formation_summary") and canvas.has_method("_s10_formation_row"):
+		var summary_variant: Variant = canvas.call("_s10_formation_summary", formation_id)
+		var formation_variant: Variant = canvas.call("_s10_formation_row", formation_id)
+		if summary_variant is Dictionary and formation_variant is Dictionary:
+			var summary := summary_variant as Dictionary
+			var formation := formation_variant as Dictionary
+			var expected_color: Color = S10_FACTION_COLORS.get(
+				String(formation.get("faction", "neutral")),
+				S10_FACTION_COLORS["neutral"]
+			)
+			return int(summary.get("unit_count", 0)) == strength \
+				and String(summary.get("glyph", "X")) == type_glyph \
+				and _colors_match(expected_color, faction_color)
+	return false
+
+
+static func _formation_authoritative_pixel(
+	canvas: CanvasItem,
+	formation_id: String,
+	contact: Dictionary
+) -> Vector2:
+	if canvas.has_method("_s10_formation_row"):
+		var row_variant: Variant = canvas.call("_s10_formation_row", formation_id)
+		if row_variant is Dictionary:
+			var pixel := _strict_pixel((row_variant as Dictionary).get("display_pixel", null))
+			if pixel != Vector2.INF:
+				return pixel
+	var encounter: Variant = contact.get("encounter_pixel", Vector2.INF)
+	return encounter as Vector2 if encounter is Vector2 else Vector2.INF
+
+
+static func _presentation_position(
+	canvas: CanvasItem,
+	image_pixel: Vector2,
+	center_is_image_pixel: bool
+) -> Vector2:
+	if image_pixel == Vector2.INF:
+		return Vector2.INF
+	if center_is_image_pixel:
+		return image_pixel
+	if not canvas.has_method("_image_to_screen"):
+		return image_pixel
+	var screen_variant: Variant = canvas.call("_image_to_screen", image_pixel)
+	if not screen_variant is Vector2:
+		return Vector2.INF
+	var screen := screen_variant as Vector2
+	if canvas.has_method("_overlay_clamp_rect") and canvas.has_method("_clamp_point_in_rect"):
+		var bounds_variant: Variant = canvas.call("_overlay_clamp_rect")
+		if bounds_variant is Rect2:
+			var clamped_variant: Variant = canvas.call(
+				"_clamp_point_in_rect",
+				screen,
+				bounds_variant as Rect2,
+				18.0
+			)
+			if clamped_variant is Vector2:
+				screen = clamped_variant as Vector2
+	return screen
+
+
+static func _object_property(object: Object, property_name: String, default_value: Variant) -> Variant:
+	for row_variant: Variant in object.get_property_list():
+		if row_variant is Dictionary and String((row_variant as Dictionary).get("name", "")) == property_name:
+			return object.get(property_name)
+	return default_value
+
+
+static func _colors_match(left: Color, right: Color) -> bool:
+	return absf(left.r - right.r) < 0.001 \
+		and absf(left.g - right.g) < 0.001 \
+		and absf(left.b - right.b) < 0.001
+
+
+static func _strict_pixel(value: Variant) -> Vector2:
+	if not value is Array or (value as Array).size() != 2:
+		return Vector2.INF
+	var values := value as Array
+	if typeof(values[0]) not in [TYPE_INT, TYPE_FLOAT] or typeof(values[1]) not in [TYPE_INT, TYPE_FLOAT]:
+		return Vector2.INF
+	return Vector2(float(values[0]), float(values[1]))
 
 
 static func draw_stack_badge(canvas: CanvasItem, anchor: Vector2, count: int) -> Rect2:
