@@ -1,0 +1,179 @@
+{
+  "$id": "https://gates-of-codex.invalid/schema/opengs-gate3-config-v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "candidate_id": {"const": "opengs_gate3_europe_mediterranean_3514_candidate"},
+    "counts": {
+      "additionalProperties": false,
+      "properties": {
+        "comparison_target_total": {"const": 3514},
+        "land_provinces": {"const": 3299},
+        "land_territories": {"minimum": 1, "type": "integer"},
+        "ocean_provinces": {"const": 215},
+        "ocean_territories": {"minimum": 0, "type": "integer"}
+      },
+      "required": ["land_territories", "ocean_territories", "land_provinces", "ocean_provinces", "comparison_target_total"],
+      "type": "object"
+    },
+    "density": {
+      "additionalProperties": false,
+      "properties": {
+        "baseline": {"maximum": 255, "minimum": 0, "type": "integer"},
+        "boundary_depth": {"minimum": 0, "type": "number"},
+        "boundary_sigma": {"exclusiveMinimum": 0, "type": "number"},
+        "city_depth_max": {"minimum": 0, "type": "integer"},
+        "city_depth_min": {"minimum": 0, "type": "integer"},
+        "city_radius_max": {"minimum": 0, "type": "integer"},
+        "city_radius_min": {"minimum": 0, "type": "integer"},
+        "coast_depth": {"minimum": 0, "type": "number"},
+        "coast_sigma": {"exclusiveMinimum": 0, "type": "number"},
+        "combination": {"const": "minimum"},
+        "river_depth": {"minimum": 0, "type": "number"},
+        "river_sigma": {"exclusiveMinimum": 0, "type": "number"}
+      },
+      "required": ["baseline", "city_radius_min", "city_radius_max", "city_depth_min", "city_depth_max", "boundary_sigma", "boundary_depth", "river_sigma", "river_depth", "coast_sigma", "coast_depth", "combination"],
+      "type": "object"
+    },
+    "gate2": {
+      "additionalProperties": false,
+      "properties": {
+        "authored_boundary_pairs": {"maxItems": 0, "type": "array"},
+        "id_prefix": {"const": "og2_"},
+        "minimum_shared_edge_pixels": {"minimum": 1, "type": "integer"},
+        "suppressed_segments": {"maxItems": 0, "type": "array"}
+      },
+      "required": ["id_prefix", "minimum_shared_edge_pixels", "authored_boundary_pairs", "suppressed_segments"],
+      "type": "object"
+    },
+    "generator": {
+      "additionalProperties": false,
+      "properties": {
+        "density_strength": {"minimum": 0, "type": "number"},
+        "exclude_ocean_density": {"type": "boolean"},
+        "jagged_amplitude": {"minimum": 0, "type": "number"},
+        "jagged_land": {"type": "boolean"},
+        "jagged_ocean": {"type": "boolean"},
+        "lloyd_iterations": {"minimum": 0, "type": "integer"},
+        "root_seed": {"maximum": 9223372036854775807, "minimum": 0, "type": "integer"}
+      },
+      "required": ["root_seed", "lloyd_iterations", "density_strength", "exclude_ocean_density", "jagged_land", "jagged_ocean", "jagged_amplitude"],
+      "type": "object"
+    },
+    "isolation": {
+      "additionalProperties": false,
+      "properties": {
+        "campaign_authority_generated": {"const": false},
+        "debug_only": {"const": true},
+        "default_map": {"const": false},
+        "earth3_authority_changed": {"const": false},
+        "production_registration": {"const": false}
+      },
+      "required": ["debug_only", "default_map", "production_registration", "earth3_authority_changed", "campaign_authority_generated"],
+      "type": "object"
+    },
+    "projection": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {"const": "Lambert Azimuthal Equal Area"},
+        "proj": {"const": "+proj=laea +lat_0=45 +lon_0=20 +datum=WGS84 +units=m +no_defs"},
+        "source_crs": {"const": "EPSG:4326"}
+      },
+      "required": ["source_crs", "name", "proj"],
+      "type": "object"
+    },
+    "raster": {
+      "additionalProperties": false,
+      "properties": {"height": {"const": 1536}, "width": {"const": 2048}},
+      "required": ["width", "height"],
+      "type": "object"
+    },
+    "schema": {"const": "gates-of-codex.opengs-gate3-config"},
+    "schema_version": {"const": 1},
+    "source": {
+      "additionalProperties": false,
+      "properties": {
+        "commit": {"const": "f1890d9f152c896d250a77557a5751a93d494776"},
+        "files": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "git_blob_sha1": {"pattern": "^[0-9a-f]{40}$", "type": "string"},
+              "path": {"minLength": 1, "type": "string"},
+              "role": {"enum": ["land", "lakes", "national_boundaries", "populated_places", "rivers"]},
+              "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+            },
+            "required": ["role", "path", "git_blob_sha1", "sha256"],
+            "type": "object"
+          },
+          "maxItems": 5,
+          "minItems": 5,
+          "type": "array"
+        },
+        "license": {"const": "public_domain"},
+        "ref": {"const": "v5.1.2"},
+        "repository": {"const": "nvkelso/natural-earth-vector"},
+        "terms_url": {"type": "string"}
+      },
+      "required": ["repository", "ref", "commit", "license", "terms_url", "files"],
+      "type": "object"
+    },
+    "starting_commit": {"pattern": "^[0-9a-f]{40}$", "type": "string"},
+    "status": {"const": "experimental_debug_only"},
+    "terrain": {
+      "additionalProperties": false,
+      "properties": {
+        "lake": {"const": "lakes"},
+        "land": {"const": "plains"},
+        "ocean": {"const": "deep_ocean"},
+        "policy": {"const": "natural_earth_three_class_baseline"},
+        "production_authority": {"const": false}
+      },
+      "required": ["policy", "land", "ocean", "lake", "production_authority"],
+      "type": "object"
+    },
+    "theatre": {
+      "additionalProperties": false,
+      "properties": {
+        "anchors": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "expected": {"enum": ["land", "ocean", "lake"]},
+              "latitude": {"type": "number"},
+              "longitude": {"type": "number"},
+              "name": {"minLength": 1, "type": "string"}
+            },
+            "required": ["name", "longitude", "latitude", "expected"],
+            "type": "object"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "lon_lat_bounds": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [{"type": "number"}, {"type": "number"}, {"type": "number"}, {"type": "number"}],
+          "type": "array"
+        },
+        "policy": {"minLength": 1, "type": "string"}
+      },
+      "required": ["lon_lat_bounds", "policy", "anchors"],
+      "type": "object"
+    },
+    "water_policy": {
+      "additionalProperties": false,
+      "properties": {
+        "count_policy": {"const": "requested_ocean_plus_all_natural_earth_lake_components"},
+        "lake_filtering": {"const": "none"},
+        "operational_sea_generated": {"const": false},
+        "selectable": {"const": false}
+      },
+      "required": ["selectable", "operational_sea_generated", "lake_filtering", "count_policy"],
+      "type": "object"
+    }
+  },
+  "required": ["schema", "schema_version", "candidate_id", "status", "starting_commit", "source", "projection", "theatre", "raster", "counts", "generator", "density", "terrain", "gate2", "water_policy", "isolation"],
+  "title": "OpenGS Gate 3 prototype configuration",
+  "type": "object"
+}
