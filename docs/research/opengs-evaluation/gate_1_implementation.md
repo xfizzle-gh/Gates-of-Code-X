@@ -12,41 +12,45 @@ Gate 1 creates a deterministic, PyQt-free research generator derived from the pi
 
 ```text
 python tools/opengs_eval/gate1_generator.py validate-recipe <recipe.json>
-python tools/opengs_eval/gate1_generator.py generate <recipe.json> --output <directory>
+python tools/opengs_eval/gate1_generator.py generate <recipe.json> --output <new-directory>
 python tools/opengs_eval/gate1_generator.py inspect-output <directory>
 python tools/opengs_eval/gate1_generator.py compare-runs <left> <right>
-python tools/opengs_eval/gate1_generator.py benchmark <recipe.json> --output <directory> --repetitions 3
+python tools/opengs_eval/gate1_generator.py benchmark <recipe.json> --output <new-directory> --repetitions 3
 ```
+
+Generation and benchmark destinations must not already exist. Output is built and validated in a temporary sibling directory, then atomically renamed into place. Failures remove the staging directory and never mix new files with an earlier successful run.
 
 ## Determinism contract
 
 - A root seed is mandatory.
 - Every stochastic stage receives a named derived 64-bit seed.
-- Territory and province sampling, Lloyd sampling, empty-cell replacement, and jagged noise have separate seed names.
-- Iteration order is explicitly sorted where dictionaries, region IDs, components, and allocations affect output.
-- Allocation uses deterministic largest-remainder logic.
+- Initial sampling, Lloyd sampling, Lloyd empty-cell replacement, and jagged noise use separate streams.
+- Lloyd streams are additionally named per connected component, so sampling consumption cannot perturb empty-cell replacement.
+- Every non-empty connected component receives a seed, and impossible count requests fail before publication.
+- Iteration order is explicitly stabilized where dictionaries, region IDs, components, and allocations affect output.
+- Allocation uses deterministic largest-remainder logic and must exactly satisfy requested land/ocean territory and province counts.
 - Nearest-seed queries apply a stable sub-pixel index tie-break and use one worker.
-- Region colors come from SHA-256, not an implicit random generator.
-- JSON is canonical UTF-8 with sorted keys and fixed separators.
-- PNGs contain no timestamps or ancillary metadata and use fixed compression settings.
-- Input checksums fail closed.
-- Every output receives a SHA-256 entry in the run manifest.
+- Region colors come from SHA-256, not implicit randomness.
+- JSON is canonical UTF-8/LF with sorted keys and fixed separators.
+- PNGs contain no timestamps or ancillary metadata and use a fixed stored-deflate writer.
+- Input checksums and path containment fail closed.
+- Every authoritative data output receives a SHA-256 entry in the run manifest.
 
 ## Recipe authority
 
-The version 1 recipe records:
+The version 1 recipe has a strict, closed shape. Runtime validation is an exact stdlib implementation of the committed schema contract and rejects:
 
-- recipe ID;
-- explicit root seed;
-- relative input paths and SHA-256 hashes;
-- requested land and ocean territory/province counts;
-- Lloyd iteration count;
-- density strength and ocean-density policy;
-- land/ocean jagged flags and amplitude.
+- unknown fields;
+- missing nullable fields such as `inputs.terrain`;
+- booleans used as integers or numbers;
+- wrong object/container types;
+- absolute or escaping paths;
+- invalid SHA-256 values;
+- unsupported or impossible requested counts.
 
-Paths must remain under the recipe directory. Terrain may be omitted. Terrain classification intentionally remains center-sampled in Gate 1 because full-area terrain coverage belongs to Gate 2.
+The authoritative recipe identity is the SHA-256 of canonical parsed recipe JSON, not the source file's whitespace or line endings. Semantically identical LF, CRLF, compact, and pretty-printed recipes therefore produce byte-identical authoritative outputs.
 
-## Output authority
+## Output and manifest authority
 
 The authoritative byte comparison covers:
 
@@ -56,7 +60,19 @@ The authoritative byte comparison covers:
 - `provinces.json`
 - `run_manifest.json`
 
-The manifest records the pinned upstream commit, recipe checksum, input checksums, every named derived seed, output counts, dimensions, output checksums, and determinism flags.
+The strict run manifest records:
+
+- pinned upstream repository and commit;
+- canonical recipe identity;
+- exact input paths and checksums;
+- every named derived seed;
+- requested and actual counts;
+- dimensions and output checksums;
+- canonical generator-source hashes;
+- Python, NumPy, Pillow, and SciPy versions;
+- deterministic serialization and transactional-publication flags.
+
+`inspect-output` validates the complete closed manifest shape, count consistency, paired Lloyd streams, source identity, payload checksum, exact output set, file checksums, and canonical JSON bytes. Recomputing a payload hash cannot make a structurally incomplete or provenance-invalid manifest pass.
 
 ## Upstream boundary
 
@@ -69,7 +85,7 @@ version 0.3
 MIT
 ```
 
-The adapted concepts and exact source Git blob IDs are listed in `gate1_upstream_modules.json`. The existing MIT notice remains in `tools/opengs_eval/LICENSE.opengs-maptool`.
+`gate1_upstream_modules.json` maps each verified upstream Git blob to the actual adapted destination modules and records canonical UTF-8/LF SHA-256 hashes for those destination files. The MIT notice remains in `tools/opengs_eval/LICENSE.opengs-maptool`.
 
 Excluded from Gate 1:
 
@@ -83,28 +99,22 @@ Excluded from Gate 1:
 - operational, supply, air, command, political, and ownership regions;
 - Earth3 production changes.
 
-## CI proof
+## Test and CI proof
 
-The dedicated workflow:
+A stdlib-only AST dependency-closure test remains active in normal repository CI even when optional numerical dependencies are absent. It scans every reachable Gate 1 module and rejects GUI/runtime imports, forbidden runtime names, and `default_rng` calls without explicit seeds.
 
-1. creates a checksummed synthetic input set in a clean workspace;
-2. validates the recipe;
-3. generates two independent outputs on Linux and compares every authoritative byte;
-4. repeats the same proof on Windows;
-5. uploads one output from each platform;
-6. compares Linux output against Windows output byte for byte;
-7. runs a three-repetition benchmark and requires identical manifests.
+The dedicated workflow installs pinned numerical dependencies on Linux and Windows and proves:
+
+1. strict malformed-recipe rejection;
+2. independent Lloyd sampling and empty-replacement streams;
+3. impossible-count and empty-mask rejection;
+4. failure-atomic output publication;
+5. complete malformed-manifest rejection;
+6. semantic recipe-formatting parity;
+7. two independent byte-identical generations per operating system;
+8. three repeated identical benchmark outputs per operating system;
+9. Linux-to-Windows byte parity across every authoritative artifact.
 
 ## Gate 1 exit
 
-Gate 1 is complete only when:
-
-- no implicit randomness remains;
-- no display-server or GUI dependency exists;
-- recipe and run schemas are versioned;
-- input validation fails closed;
-- two clean workspaces are byte-identical;
-- Linux and Windows authoritative outputs are byte-identical;
-- Earth3 and the production runtime remain unchanged.
-
-Stop for owner review. Do not begin Gate 2 automatically.
+Gate 1 is complete only when all dedicated and repository-wide checks are green, the independent reviewer has re-audited the latest head, and the owner approves the gate. Stop before Gate 2 / #133.

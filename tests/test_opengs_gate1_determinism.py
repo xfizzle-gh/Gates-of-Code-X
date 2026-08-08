@@ -1,22 +1,31 @@
 from __future__ import annotations
 
+import ast
+import hashlib
 import importlib.util
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
-GEN = ROOT / "tools" / "opengs_eval" / "gate1_generator.py"
-FIXTURE = ROOT / "tools" / "opengs_eval" / "make_gate1_fixture.py"
+MODULE_DIR = ROOT / "tools" / "opengs_eval"
+GEN = MODULE_DIR / "gate1_generator.py"
+FIXTURE = MODULE_DIR / "make_gate1_fixture.py"
+GATE1_MODULES = tuple(MODULE_DIR / name for name in (
+    "gate1_generator.py", "gate1_common.py", "gate1_regions.py",
+    "gate1_pipeline.py", "make_gate1_fixture.py",
+))
 OPTIONAL_MODULES = ("numpy", "PIL", "scipy")
 
 
 def load_generator():
-    if str(GEN.parent) not in sys.path:
-        sys.path.insert(0, str(GEN.parent))
+    if str(MODULE_DIR) not in sys.path:
+        sys.path.insert(0, str(MODULE_DIR))
     spec = importlib.util.spec_from_file_location("gate1_generator", GEN)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
@@ -25,16 +34,62 @@ def load_generator():
     return module
 
 
+def write_json(path: Path, value: object, *, pretty: bool = False, crlf: bool = False) -> None:
+    if pretty:
+        text = json.dumps(value, sort_keys=True, indent=2) + "\n"
+    else:
+        text = json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n"
+    if crlf:
+        text = text.replace("\n", "\r\n")
+    path.write_bytes(text.encode("utf-8"))
+
+
+class Gate1StaticContractTest(unittest.TestCase):
+    def test_dependency_closure_has_no_gui_runtime_or_implicit_rng(self) -> None:
+        expected_local = {"gate1_common", "gate1_regions", "gate1_pipeline"}
+        discovered_local: set[str] = set()
+        banned_import_roots = {"PyQt5", "PyQt6", "PySide2", "PySide6", "godot", "tkinter"}
+        banned_names = {"QApplication", "RenderingDevice"}
+        for path in GATE1_MODULES:
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        root = alias.name.split(".")[0]
+                        self.assertNotIn(root, banned_import_roots, f"{path}: banned import {alias.name}")
+                        if alias.name.startswith("gate1_"):
+                            discovered_local.add(alias.name.split(".")[0])
+                elif isinstance(node, ast.ImportFrom):
+                    module = node.module or ""
+                    root = module.split(".")[0]
+                    self.assertNotIn(root, banned_import_roots, f"{path}: banned import {module}")
+                    if module.startswith("gate1_"):
+                        discovered_local.add(root)
+                elif isinstance(node, ast.Name):
+                    self.assertNotIn(node.id, banned_names, f"{path}: banned runtime name {node.id}")
+                elif isinstance(node, ast.Attribute):
+                    self.assertNotIn(node.attr, banned_names, f"{path}: banned runtime attribute {node.attr}")
+                elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "default_rng":
+                    self.assertTrue(node.args or node.keywords, f"{path}: default_rng requires an explicit seed")
+                    if node.args:
+                        self.assertFalse(isinstance(node.args[0], ast.Constant) and node.args[0].value is None)
+        self.assertEqual(discovered_local, expected_local)
+
+    def test_committed_schemas_are_strict(self) -> None:
+        for name in ("gate1_recipe.schema.json", "gate1_run_manifest.schema.json"):
+            schema = json.loads((MODULE_DIR / name).read_text(encoding="utf-8"))
+            self.assertFalse(schema["additionalProperties"])
+
+
+@unittest.skipUnless(all(importlib.util.find_spec(name) for name in OPTIONAL_MODULES), "optional OpenGS dependencies are not installed")
 class Gate1DeterminismTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        missing = [name for name in OPTIONAL_MODULES if importlib.util.find_spec(name) is None]
-        if missing:
-            raise unittest.SkipTest(
-                "optional OpenGS evaluation dependencies are not installed: "
-                + ", ".join(missing)
-            )
         cls.g = load_generator()
+        import gate1_pipeline
+        import gate1_regions
+        cls.pipeline = gate1_pipeline
+        cls.regions = gate1_regions
 
     def make_fixture(self, root: Path) -> Path:
         subprocess.run([sys.executable, str(FIXTURE), "--output", str(root)], check=True)
@@ -50,12 +105,27 @@ class Gate1DeterminismTest(unittest.TestCase):
         self.assertEqual(a.manifest(), b.manifest())
         self.assertEqual(len(set(a.manifest().values())), 3)
 
+    def test_lloyd_sampling_and_empty_replacement_have_independent_streams(self) -> None:
+        replacement_seed = 12345
+        expected = self.regions.empty_replacement_indices(replacement_seed, count=8, upper=100)
+        for consumed in (0, 1, 10_000):
+            sampler = __import__("numpy").random.default_rng(999)
+            if consumed:
+                sampler.random(consumed)
+            actual = self.regions.empty_replacement_indices(replacement_seed, count=8, upper=100)
+            self.assertTrue((actual == expected).all())
+        with tempfile.TemporaryDirectory() as temp:
+            recipe = self.make_fixture(Path(temp) / "inputs")
+            manifest = self.g.generate(recipe, Path(temp) / "out")
+            keys = set(manifest["derived_seeds"])
+            self.assertTrue(any(".lloyd.sample.component_" in key for key in keys))
+            self.assertTrue(any(".lloyd.empty_replacement.component_" in key for key in keys))
+
     def test_two_clean_output_directories_are_byte_identical(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
             recipe = self.make_fixture(base / "inputs")
-            left = base / "left"
-            right = base / "right"
+            left, right = base / "left", base / "right"
             self.g.generate(recipe, left)
             self.g.generate(recipe, right)
             comparison = self.g.compare_runs(left, right)
@@ -63,45 +133,153 @@ class Gate1DeterminismTest(unittest.TestCase):
             for name in self.g.AUTHORITATIVE_OUTPUTS:
                 self.assertEqual((left / name).read_bytes(), (right / name).read_bytes(), name)
 
+    def test_semantically_identical_recipe_formatting_has_identical_outputs(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            canonical = self.make_fixture(base / "inputs")
+            payload = json.loads(canonical.read_text(encoding="utf-8"))
+            pretty = canonical.parent / "pretty.json"
+            crlf = canonical.parent / "crlf.json"
+            write_json(pretty, payload, pretty=True)
+            write_json(crlf, payload, pretty=False, crlf=True)
+            outputs = []
+            for index, recipe in enumerate((canonical, pretty, crlf)):
+                out = base / f"out-{index}"
+                self.g.generate(recipe, out)
+                outputs.append(out)
+            for other in outputs[1:]:
+                self.assertTrue(self.g.compare_runs(outputs[0], other)["identical"])
+
     def test_root_seed_changes_authoritative_output(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
             recipe = self.make_fixture(base / "inputs")
-            left = base / "left"
-            right = base / "right"
+            left, right = base / "left", base / "right"
             self.g.generate(recipe, left)
             payload = json.loads(recipe.read_text())
             payload["root_seed"] += 1
-            recipe.write_bytes((json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8"))
+            write_json(recipe, payload)
             self.g.generate(recipe, right)
-            comparison = self.g.compare_runs(left, right)
-            self.assertFalse(comparison["identical"])
+            self.assertFalse(self.g.compare_runs(left, right)["identical"])
+
+    def test_recipe_schema_equivalent_validation_rejects_invalid_values(self) -> None:
+        cases = []
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            recipe = self.make_fixture(base / "inputs")
+            original = json.loads(recipe.read_text())
+            mutations = {
+                "bool_schema_version": lambda p: p.__setitem__("schema_version", True),
+                "extra_top": lambda p: p.__setitem__("extra", 1),
+                "missing_nullable_terrain": lambda p: p["inputs"].pop("terrain"),
+                "bool_density": lambda p: p["options"].__setitem__("density_strength", True),
+                "counts_not_object": lambda p: p.__setitem__("counts", []),
+                "options_not_object": lambda p: p.__setitem__("options", []),
+                "extra_nested": lambda p: p["counts"].__setitem__("extra", 1),
+            }
+            for name, mutate in mutations.items():
+                payload = json.loads(json.dumps(original))
+                mutate(payload)
+                path = recipe.parent / f"{name}.json"
+                write_json(path, payload)
+                with self.subTest(name=name), self.assertRaises(self.g.Gate1Error):
+                    self.g.load_recipe(path)
 
     def test_recipe_checksum_is_fail_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            recipe = self.make_fixture(Path(temp) / "inputs")
+            payload = json.loads(recipe.read_text())
+            payload["inputs"]["density"]["sha256"] = "0" * 64
+            write_json(recipe, payload)
+            with self.assertRaises(self.g.Gate1Error):
+                self.g.load_recipe(recipe)
+
+    def test_impossible_counts_and_empty_masks_fail_closed(self) -> None:
+        import numpy as np
+        with self.assertRaises(self.g.Gate1Error):
+            self.regions.random_seeds(np.zeros((4, 4), dtype=bool), 1, 1, None, 1.0)
+        with self.assertRaises(self.g.Gate1Error):
+            self.regions.random_seeds(np.ones((2, 2), dtype=bool), 5, 1, None, 1.0)
+        with self.assertRaises(self.g.Gate1Error):
+            self.regions.largest_remainder([], 1, [])
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
             recipe = self.make_fixture(base / "inputs")
             payload = json.loads(recipe.read_text())
-            payload["inputs"]["density"]["sha256"] = "0" * 64
-            recipe.write_bytes(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8"))
+            payload["counts"]["land_territories"] = 999999
+            write_json(recipe, payload)
             with self.assertRaises(self.g.Gate1Error):
-                self.g.load_recipe(recipe)
+                self.g.generate(recipe, base / "out")
+            self.assertFalse((base / "out").exists())
 
-    def test_no_implicit_rng_or_gui_dependency(self) -> None:
-        source = GEN.read_text(encoding="utf-8")
-        self.assertNotIn("default_rng()", source)
-        self.assertNotIn("default_rng(None)", source)
-        self.assertNotIn("PyQt", source)
-        self.assertNotIn("QApplication", source)
-        self.assertNotIn("RenderingDevice", source)
-        self.assertNotIn("JFA", source)
+    def test_generation_is_transactional_and_existing_output_is_untouched(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            recipe = self.make_fixture(base / "inputs")
+            existing = base / "existing"
+            existing.mkdir()
+            sentinel = existing / "run_manifest.json"
+            sentinel.write_text("old", encoding="utf-8")
+            with self.assertRaises(self.g.Gate1Error):
+                self.g.generate(recipe, existing)
+            self.assertEqual(sentinel.read_text(encoding="utf-8"), "old")
+
+            target = base / "failed"
+            original = self.pipeline.write_deterministic_rgb_png
+            calls = 0
+            def fail_after_first(path, pixels):
+                nonlocal calls
+                calls += 1
+                original(path, pixels)
+                if calls == 1:
+                    raise RuntimeError("injected failure")
+            with mock.patch.object(self.pipeline, "write_deterministic_rgb_png", side_effect=fail_after_first):
+                with self.assertRaises(self.g.Gate1Error):
+                    self.g.generate(recipe, target)
+            self.assertFalse(target.exists())
+            self.assertFalse(any(base.glob(".failed.gate1-*")))
+
+    def test_inspect_output_enforces_complete_manifest_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            recipe = self.make_fixture(base / "inputs")
+            out = base / "out"
+            self.g.generate(recipe, out)
+            manifest_path = out / "run_manifest.json"
+            for name, mutate in {
+                "missing_environment": lambda p: p.pop("environment"),
+                "extra_property": lambda p: p.__setitem__("extra", 1),
+                "wrong_counts_type": lambda p: p.__setitem__("counts", []),
+                "wrong_upstream": lambda p: p.__setitem__("upstream_repository", "other/repo"),
+                "missing_replacement_seed": lambda p: p["derived_seeds"].pop(next(k for k in p["derived_seeds"] if ".lloyd.empty_replacement.component_" in k)),
+            }.items():
+                payload = json.loads(manifest_path.read_text())
+                mutate(payload)
+                payload.pop("manifest_payload_sha256", None)
+                payload["manifest_payload_sha256"] = hashlib.sha256(self.g.canonical_json_bytes(payload)).hexdigest()
+                write_json(manifest_path, payload)
+                with self.subTest(name=name), self.assertRaises(self.g.Gate1Error):
+                    self.g.inspect_output(out)
+                self.g.generate(recipe, base / f"restore-{name}")
+                shutil.copy2(base / f"restore-{name}" / "run_manifest.json", manifest_path)
+
+    def test_inspect_rejects_noncanonical_manifest_bytes(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            recipe = self.make_fixture(base / "inputs")
+            out = base / "out"
+            self.g.generate(recipe, out)
+            path = out / "run_manifest.json"
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            path.write_text(json.dumps(payload, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+            with self.assertRaises(self.g.Gate1Error):
+                self.g.inspect_output(out)
 
     def test_cli_contract(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp)
             recipe = self.make_fixture(base / "inputs")
-            left = base / "left"
-            right = base / "right"
+            left, right = base / "left", base / "right"
             for command in (
                 ["validate-recipe", str(recipe)],
                 ["generate", str(recipe), "--output", str(left)],

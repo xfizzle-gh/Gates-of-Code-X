@@ -23,7 +23,9 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     out = args.output
-    out.mkdir(parents=True, exist_ok=True)
+    if out.exists():
+        raise SystemExit(f"fixture output already exists: {out}")
+    out.mkdir(parents=True)
     width, height = 320, 220
 
     land = Image.new("RGB", (width, height), OCEAN)
@@ -67,19 +69,11 @@ def main() -> int:
             "density": {"path": "density.pgm", "sha256": sha256(density_path)},
             "terrain": {"path": "terrain.ppm", "sha256": sha256(terrain_path)},
         },
-        "counts": {
-            "land_territories": 12,
-            "ocean_territories": 5,
-            "land_provinces": 96,
-            "ocean_provinces": 24,
-        },
+        "counts": {"land_territories": 12, "ocean_territories": 5, "land_provinces": 96, "ocean_provinces": 24},
         "options": {
-            "lloyd_iterations": 3,
-            "density_strength": 2.0,
-            "exclude_ocean_density": True,
-            "jagged_land": True,
-            "jagged_ocean": False,
-            "jagged_amplitude": 0.12,
+            "lloyd_iterations": 3, "density_strength": 2.0,
+            "exclude_ocean_density": True, "jagged_land": True,
+            "jagged_ocean": False, "jagged_amplitude": 0.12,
         },
     }
     recipe_path = out / "recipe.json"

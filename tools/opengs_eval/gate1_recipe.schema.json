@@ -7,7 +7,7 @@
   "required": ["schema", "schema_version", "recipe_id", "root_seed", "inputs", "counts", "options"],
   "properties": {
     "schema": {"const": "gates-of-codex.opengs-recipe"},
-    "schema_version": {"const": 1},
+    "schema_version": {"type": "integer", "const": 1},
     "recipe_id": {"type": "string", "pattern": "^[a-z0-9_-]+$"},
     "root_seed": {"type": "integer", "minimum": 0, "maximum": 9223372036854775807},
     "inputs": {
