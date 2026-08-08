@@ -1,0 +1,70 @@
+name: OpenGS Gate 1 determinism
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/opengs-gate1-determinism.yml"
+      - "tools/opengs_eval/gate1_*"
+      - "tools/opengs_eval/make_gate1_fixture.py"
+      - "tests/test_opengs_gate1_*.py"
+      - "docs/research/opengs-evaluation/gate_1_implementation.md"
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    name: ${{ matrix.os }} clean deterministic generation
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.9"
+          cache: pip
+      - name: Install pinned dependencies
+        run: python -m pip install numpy==2.3.5 pillow==12.0.0 scipy==1.16.3
+      - name: Compile
+        run: python -m py_compile tools/opengs_eval/gate1_generator.py tools/opengs_eval/make_gate1_fixture.py tests/test_opengs_gate1_spatial_integrity.py
+      - name: Unit contracts
+        run: python -m unittest tests.test_opengs_gate1_determinism tests.test_opengs_gate1_spatial_integrity -v
+      - name: Create checksummed fixture recipe
+        run: python tools/opengs_eval/make_gate1_fixture.py --output build/gate1-inputs
+      - name: Validate recipe
+        run: python tools/opengs_eval/gate1_generator.py validate-recipe build/gate1-inputs/recipe.json
+      - name: Generate clean workspace A
+        run: python tools/opengs_eval/gate1_generator.py generate build/gate1-inputs/recipe.json --output build/gate1-run-a
+      - name: Generate clean workspace B
+        run: python tools/opengs_eval/gate1_generator.py generate build/gate1-inputs/recipe.json --output build/gate1-run-b
+      - name: Compare clean workspaces
+        run: python tools/opengs_eval/gate1_generator.py compare-runs build/gate1-run-a build/gate1-run-b
+      - name: Benchmark repeated output
+        run: python tools/opengs_eval/gate1_generator.py benchmark build/gate1-inputs/recipe.json --output build/gate1-benchmark --repetitions 3
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gate1-${{ runner.os }}
+          path: build/gate1-run-a/
+          if-no-files-found: error
+
+  cross-platform:
+    name: Linux and Windows byte parity
+    needs: generate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.9"
+      - name: Install pinned dependencies
+        run: python -m pip install numpy==2.3.5 pillow==12.0.0 scipy==1.16.3
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: gate1-*
+          path: build/downloads
+      - name: Compare Linux and Windows outputs
+        run: python tools/opengs_eval/gate1_generator.py compare-runs build/downloads/gate1-Linux build/downloads/gate1-Windows
