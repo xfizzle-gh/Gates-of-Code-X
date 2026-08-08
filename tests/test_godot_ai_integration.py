@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -43,6 +45,32 @@ class GodotAiIntegrationContractTests(unittest.TestCase):
         self.assertIn("Pinned plugin version does not match lock version", script)
         self.assertIn("telemetry_disabled=true", script)
         self.assertIn("Do not use the plugin self-updater", script)
+        self.assertIn("${LASTEXITCODE}: git", script)
+        self.assertNotIn("$LASTEXITCODE: git", script)
+
+    def test_powershell_integration_scripts_parse(self) -> None:
+        powershell = shutil.which("pwsh") or shutil.which("powershell")
+        if powershell is None:
+            self.skipTest("PowerShell is unavailable on this runner")
+
+        parse_command = (
+            "$ErrorActionPreference='Stop'; "
+            "[void][scriptblock]::Create([IO.File]::ReadAllText($args[0]))"
+        )
+        for script_path in (SETUP_PATH, LAUNCHER_PATH, DEPLOY_PATH):
+            with self.subTest(script=script_path.relative_to(ROOT).as_posix()):
+                result = subprocess.run(
+                    [powershell, "-NoProfile", "-Command", parse_command, str(script_path)],
+                    cwd=ROOT,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                self.assertEqual(
+                    result.returncode,
+                    0,
+                    msg=(result.stdout + result.stderr).strip(),
+                )
 
     def test_launcher_disables_telemetry_before_starting_godot(self) -> None:
         script = LAUNCHER_PATH.read_text(encoding="utf-8")
