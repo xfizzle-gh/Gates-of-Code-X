@@ -1,0 +1,91 @@
+name: Issue 160 Actor Economy Audit
+
+on:
+  push:
+    branches:
+      - audit/160-phases-5-8
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.9'
+          cache: pip
+
+      - name: Verify audit base
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 14d784de63d58ddbf993d71f95d9f31b8a370cb2 HEAD
+          changed="$(git diff --name-only 14d784de63d58ddbf993d71f95d9f31b8a370cb2...HEAD)"
+          printf '%s\n' "$changed"
+          bad="$(printf '%s\n' "$changed" | grep -Ev '^(audit/issue160/|\.github/workflows/issue160-actor-economy-audit\.yml$)' || true)"
+          test -z "$bad"
+
+      - name: Install audited package
+        run: python -m pip install -e .
+
+      - name: Reconstruct accepted live payload and runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 -d audit/issue160/payload/part00.b64 > /tmp/accepted-payload.json.bz2
+          cat audit/issue160/payload/part01.bin \
+              audit/issue160/payload/part02.bin \
+              audit/issue160/payload/part03.bin \
+              audit/issue160/payload/part04.bin \
+              audit/issue160/payload/part05.bin \
+              audit/issue160/payload/part06.bin \
+              audit/issue160/payload/part07.bin \
+              >> /tmp/accepted-payload.json.bz2
+          python - <<'PY'
+          import bz2
+          import hashlib
+          from pathlib import Path
+
+          payload = bz2.decompress(Path("/tmp/accepted-payload.json.bz2").read_bytes())
+          digest = hashlib.sha256(payload).hexdigest()
+          expected = "d2565337aac74659308c5fc1ca1ff2fe543c7117fb940a196867a33d7d569b46"
+          if digest != expected:
+              raise SystemExit(f"payload hash mismatch: {digest}")
+          Path("/tmp/accepted-resolved-factions.json").write_bytes(payload)
+
+          runner = bz2.decompress(Path("audit/issue160/run_audit.py.bz2").read_bytes())
+          runner_digest = hashlib.sha256(runner).hexdigest()
+          runner_expected = "4f1f0f498a635591536517bd1524d5014528176507fab97ff513f2f54519c492"
+          if runner_digest != runner_expected:
+              raise SystemExit(f"runner hash mismatch: {runner_digest}")
+          Path("/tmp/run_issue160_audit.py").write_bytes(runner)
+          PY
+
+      - name: Run independent phases 5-8 audit
+        run: |
+          python /tmp/run_issue160_audit.py \
+            --payload /tmp/accepted-resolved-factions.json \
+            --output-dir audit/issue160/results
+
+      - name: Hash audit outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum audit/issue160/results/phase5-8.json
+          sha256sum audit/issue160/results/phase5-8.md
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: issue160-phase5-8-audit
+          path: |
+            audit/issue160/results
+          if-no-files-found: warn
