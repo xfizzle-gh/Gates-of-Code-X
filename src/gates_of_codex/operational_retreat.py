@@ -22,17 +22,61 @@ class OperationalRetreatAuthorityUnavailable(RuntimeError):
 
 
 def require_operational_retreat_graph(state: CampaignState) -> dict:
-    """Load retreat graph authority or fail without inventing a trapped result."""
+    """Load and fully index retreat graph authority before gameplay mutation."""
     try:
         graph = load_operational_graph_for_state(state)
-    except (OSError, UnicodeError, ValueError) as exc:
+        if graph is None or not isinstance(graph, dict):
+            raise ValueError("operational graph must be an object")
+
+        # Battle finalization calls this before casualty or survivor mutation.
+        # Build the same complete indexes used by retreat resolution here so a
+        # readable but structurally invalid graph cannot fail after mutation.
+        from .operational_movement import _indexes
+
+        node_ids, edge_ids, edges_by_id, nodes_by_id = _indexes(graph)
+        raw_nodes = graph.get("nodes")
+        raw_edges = graph.get("edges")
+        if not isinstance(raw_nodes, list) or not isinstance(raw_edges, list):
+            raise ValueError("operational graph nodes and edges must be arrays")
+        if len(node_ids) != len(raw_nodes):
+            raise ValueError("operational graph has duplicate node_ids")
+        if len(edge_ids) != len(raw_edges):
+            raise ValueError("operational graph has duplicate edge_ids")
+
+        for node_id, node in nodes_by_id.items():
+            if not node_id.strip():
+                raise ValueError("operational graph node_id required")
+            province_id = node.get("province_id")
+            if not isinstance(province_id, str) or not province_id.strip():
+                raise ValueError(
+                    f"operational graph node {node_id!r} province_id required"
+                )
+            if province_id not in state.provinces:
+                raise ValueError(
+                    f"operational graph node {node_id!r} province missing: "
+                    f"{province_id!r}"
+                )
+
+        for edge in edges_by_id.values():
+            if not edge.edge_id.strip():
+                raise ValueError("operational graph edge_id required")
+            if edge.a not in node_ids or edge.b not in node_ids:
+                raise ValueError(
+                    f"operational graph edge {edge.edge_id!r} references "
+                    "missing endpoint node"
+                )
+    except (
+        AttributeError,
+        KeyError,
+        OSError,
+        OverflowError,
+        TypeError,
+        UnicodeError,
+        ValueError,
+    ) as exc:
         raise OperationalRetreatAuthorityUnavailable(
             "Operational retreat graph authority is unavailable"
         ) from exc
-    if graph is None or not isinstance(graph, dict):
-        raise OperationalRetreatAuthorityUnavailable(
-            "Operational retreat graph authority is unavailable"
-        )
     return graph
 
 
