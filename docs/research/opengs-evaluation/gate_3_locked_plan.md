@@ -6,80 +6,97 @@ Draft pull request: #158
 Required Gate 2 starting commit: `62063d70d2bb94f41b4d997578c02556003e9a72`  
 Candidate ID: `opengs_gate3_europe_mediterranean_3514_candidate`
 
-## Purpose
+## Scope and stop boundary
 
-Gate 3 builds one isolated full-scale Europe-Mediterranean comparison candidate through the accepted deterministic Gate 1 generator and Gate 2 geometry adapter. It remains research-only, non-default, debug-only, and artifact-only. It does not replace Earth3, register a production map, create campaign authority, or begin Gate 4.
+Gate 3 builds one isolated Europe-Mediterranean comparison candidate through the accepted Gate 1 generator and Gate 2 geometry adapter. It remains research-only, non-default, debug-only, and artifact-only. It does not replace Earth3, register a production map, create campaign authority, or begin Gate 4.
 
-The implementation and adversarial-test plan was locked on #134 before implementation. The exact owner-approved configuration is now additionally locked by canonical SHA-256:
+The exact approved configuration is locked by canonical SHA-256:
 
-`d6f53a130b66a281d6d39d94c519f1752c9700981b4417b0912931bf8a1f3182`
+`b4531f78351871fb91dc1f09e9734d14e9e9870bd9b42a869375af7e908d5d74`
 
-Any change to source paths or hashes, terms, projection, crop, anchors, dimensions, territory or province counts, generator seed or options, density values, terrain policy, Gate 2 threshold, water policy, or isolation policy requires an explicit configuration change and a new material checkpoint.
+Any change to source paths or hashes, license terms, projection, crop, anchors, dimensions, counts, generator options, density values, terrain policy, Gate 2 threshold, water policy, or isolation policy requires a new material checkpoint on #134.
 
 ## Locked authority
 
 ### Source bytes
 
-Gate 3 uses only Natural Earth v5.1.2 from `nvkelso/natural-earth-vector` at exact commit `f1890d9f152c896d250a77557a5751a93d494776`.
+Gate 3 uses Natural Earth v5.1.2 only, from `nvkelso/natural-earth-vector` at exact commit `f1890d9f152c896d250a77557a5751a93d494776`.
 
-The five roles are 1:10m land, lakes, national boundary lines, populated places, and river/lake centerlines. Source authority is the exact Git blob object at `<commit>:<path>`, read with `git cat-file blob`. Working-tree bytes are not source authority and cannot be altered by checkout newline conversion. Every role is authenticated by repository, ref, commit, path, Git blob SHA-1, SHA-256, byte size, and public-domain license record.
+The five authenticated roles are land, lakes, national boundary lines, populated places, and rivers. Authority is the exact Git blob at `<commit>:<path>`, read with `git cat-file blob`. Working-tree bytes are never source authority. Every source is authenticated by repository, ref, commit, path, Git blob SHA-1, SHA-256, byte size, and public-domain license record.
 
-### Projection, crop, and no-data mask
+### Projection and theatre mask
 
 Projection:
 
 `+proj=laea +lat_0=45 +lon_0=20 +datum=WGS84 +units=m +no_defs`
 
-Raster dimensions are 2048 by 1536. Longitude/latitude bounds are west -13, south 27, east 45, north 75.
+The raster is 2048 by 1536. Longitude/latitude bounds are west -13, south 27, east 45, north 75.
 
-The densified longitude/latitude boundary is transformed into LAEA and rasterized as an explicit authenticated `theatre_mask.png`. Pixels outside that projected polygon are no-data, not ocean. The Gate 3 boundary input records those pixels with a reserved outside color. The Gate 3 mask adapter excludes them from both Gate 1 land and sea masks. Package inspection independently proves that Gate 1 black background pixels exactly equal the inverse theatre mask in both territory and province rasters.
+The densified geographic boundary is projected and rasterized as authenticated `theatre_mask.png`. Pixels outside that polygon are no-data, not ocean. The Gate 3 adapter excludes them from both Gate 1 land and sea masks. Package inspection proves that Gate 1 background pixels exactly match the inverse theatre mask in both territory and province rasters.
 
-The named land/water anchor set covers Ireland, Great Britain, Scandinavia, Finland, Sicily, Crete, Cyprus, the North African coast, Anatolia, the Irish Sea, English Channel, western Mediterranean, Adriatic, Black Sea, Kattegat, and Baltic.
+The locked geography anchors cover Ireland, Great Britain, Scandinavia, Finland, Sicily, Crete, Cyprus, the North African coast, Anatolia, the Irish Sea, English Channel, western Mediterranean, Adriatic, Black Sea, Kattegat, and Baltic.
 
-### Counts and ocean-component authority
+### Final hierarchy counts
 
-The comparison target remains:
+The locked comparison target remains:
 
 - land provinces: 3,299
 - ocean provinces: 215
-- requested base total: 3,514
+- requested province total: 3,514
 
-The locked source and raster contain 350 disconnected land components, so Gate 3 requests 350 land territories rather than deleting islands or drawing artificial bridges.
+The source-derived hierarchy is:
 
-After applying the projected theatre mask and the locked crop-boundary/anchor authority rule, the source-derived minimum is 30 authoritative ocean components on both Ubuntu and Windows. Gate 3 therefore requests 30 ocean territories rather than deleting sea components or drawing artificial connections. The 30-territory hierarchy remains below the locked 215 ocean provinces.
+- land territories: 468
+- ocean territories: 30
 
-Candidate ocean uses four-connected components after the projected mask is applied. A complement component is retained only when it touches the projected crop boundary or contains a locked `expected: ocean` geography anchor. Every other unanchored enclosed complement cavity is deterministically reclassified as land. The authenticated input manifest and geography/water reports record raw, retained, and reclassified component and pixel counts, boundary-retention counts, anchor-retention counts, and the complete component ledger. Generation fails if the retained ocean-component count exceeds the locked 30 ocean territories or if any locked ocean anchor is not retained.
+The 468 land territories preserve every four-connected non-lake land component after lakes are excluded from land seed eligibility. The 30 ocean territories preserve every authoritative ocean component retained by the policy below. Both hierarchy counts remain below their corresponding province targets.
 
-Natural Earth lake components remain additional non-selectable water records and are reported rather than silently filtered. They are not processed by the ocean-complement rule.
+### Ocean-component authority
+
+Candidate ocean uses four-connected topology after the projected theatre mask is applied. A complement component is retained only when it touches the projected theatre boundary or contains a locked `expected: ocean` anchor. Every unanchored enclosed complement cavity is deterministically reclassified as land.
+
+The input manifest and geography/water reports record raw, retained, and reclassified component and pixel counts, retention reasons, and the complete component ledger. Generation fails if retained components exceed the locked 30 ocean territories or any locked ocean anchor is not retained.
+
+Natural Earth lakes remain separate non-selectable lake provinces and are never processed by the ocean-complement rule.
+
+### Lake-aware territory parenting
+
+Natural Earth lake pixels are excluded from land-territory seed eligibility. After the non-lake land territories are generated, lake pixels receive deterministic nearest-land-territory parent coverage. Territory centers are recalculated from the final parent raster. Gate 1 seed provenance is validated against the non-lake land mask, while the final child-union contract still requires land and lake province masks together to cover their parent territory exactly.
+
+This adapter exists only in Gate 3 orchestration. Accepted Gate 1 and Gate 2 source files are unchanged.
+
+### Exact grid-pinch splitting
+
+Gate 3 retains the accepted Gate 2 exact directed-boundary trace. If a traced ring revisits a grid vertex nonconsecutively, the Gate 3 orchestration adapter recursively splits that self-touching walk into canonical simple cycles at the repeated vertex before the accepted Gate 2 component builder runs.
+
+The splitter must preserve the complete directed boundary-segment multiset exactly. It rejects degenerate cycles, duplicate cycles, open cycles, any remaining repeated vertex, invalid Shapely polygons, or non-positive-area polygons. It does not smooth, buffer, move, add, delete, bridge, or otherwise repair geography. The accepted Gate 2 component assignment, holes, triangulation, adjacency, topology audit, inspection, and publication contracts remain unchanged.
 
 ### Density and terrain
 
-The deterministic density raster combines populated-place population weighting, national-boundary corridors, river corridors, coastline emphasis, and a bounded background baseline. All parameters are part of the exact locked configuration. Coastline weighting is computed after the authoritative ocean-component normalization.
+Density deterministically combines populated places, national boundaries, rivers, coastline emphasis, and a bounded background baseline. Coastline weighting is computed after authoritative ocean normalization.
 
-Terrain remains a three-class legal baseline from the same authenticated physical masks: land is plains, ocean is deep ocean, lakes are lakes. It is not production terrain authority.
+Terrain remains a three-class legal baseline: land is plains, ocean is deep ocean, and lakes are lakes. It is not production terrain authority.
 
 ## Evidence-chain contract
 
-Gate 3 packages must prove the complete chain:
+The package must prove:
 
 1. packaged config bytes match the locked canonical digest;
 2. the input manifest authenticates that exact config and every generated input;
-3. the packaged Gate 1 recipe canonical digest matches the Gate 1 run manifest;
-4. Gate 1 input references match the packaged authenticated input bytes;
-5. the Gate 2 adapter manifest authenticates the packaged Gate 1 manifest, recipe authority, and terrain;
-6. every report is deterministically regenerated from authenticated config, inputs, Gate 1 output, and Gate 2 output;
-7. `checksums.json` is deterministically regenerated from the payload snapshot;
-8. `package_manifest.json` is deterministically regenerated from the same authority.
+3. the packaged Gate 1 recipe digest matches the Gate 1 run manifest;
+4. Gate 1 input references match the packaged authenticated bytes;
+5. the Gate 2 manifest authenticates the packaged Gate 1 manifest, recipe authority, and terrain;
+6. every report is regenerated from authenticated config, inputs, Gate 1 output, and Gate 2 output;
+7. `checksums.json` is regenerated from the payload snapshot;
+8. `package_manifest.json` is regenerated from the same authority.
 
-Coherently resealing a modified config, recipe, report, checksum ledger, or package manifest must still fail inspection.
+Coherently resealing a modified config, recipe, report, checksum ledger, or package manifest must fail inspection.
 
 ## Immutable inspection and publication
 
-Gate 3 captures a complete package tree once as immutable bytes. Capture rejects symlinks, nonregular entries, unexpected files, and unexpected directories and verifies that the tree identity did not change during capture.
+Gate 3 captures the complete package tree once as immutable bytes. Capture rejects symlinks, nonregular entries, unexpected files, unexpected directories, and identity changes during capture.
 
-Semantic inspection operates on a sealed reconstruction of that immutable snapshot. Nested Gate 1 and Gate 2 inspection, report derivation, checksums, and package-manifest verification all use the same captured bytes. Publication creates a separate directory from the inspected snapshot, recaptures it, requires byte equality, and atomically renames that publication directory into place.
-
-The mutable build directory is never renamed as the final package.
+Semantic inspection operates on a sealed reconstruction of that snapshot. Nested Gate 1 and Gate 2 inspection, report derivation, checksums, and package-manifest verification use the same bytes. Publication reconstructs a separate directory from the inspected snapshot, recaptures it, requires byte equality, and atomically renames it into place. The mutable build directory is never published directly.
 
 ## Commands
 
@@ -100,10 +117,19 @@ Destinations must not already exist.
 
 ## Adversarial coverage
 
-Focused tests cover exact-config mutations across every material block, Git-blob versus transformed working-tree bytes, projected outside-crop exclusion, crop-edge/anchor ocean retention, unanchored complement reclassification, source geography and lake classification, selectable water, map namespace and reciprocal adjacency, immutable-tree capture, immutable mappings, extra directories, symlinks, coherent config/manifest forgery, coherent recipe forgery, coherent report forgery, and production/Gate 4 scope boundaries.
+Focused tests cover exact-config mutations across every material block, Git-blob versus transformed working-tree bytes, projected no-data exclusion, ocean retention, lake-aware territory parenting, selectable water, reciprocal adjacency, immutable capture, coherent resealing attacks, production/Gate 4 boundaries, already-simple rings, repeated-vertex figure-eight rings, non-origin pinches, exact boundary-edge conservation, deterministic split order, accepted Gate 2 component construction, and degenerate pinch rejection.
 
-## CI and stop point
+## Validation and stop point
 
-The workflow runs focused contracts on Ubuntu and Windows, two complete 3,514-scale Gate 1 and Gate 2 paths on each operating system, strict snapshot inspection, same-OS repeat comparison, Linux/Windows byte parity, existing Earth3 regression, Gate 3 PolygonMap runtime loading, and artifact capture.
+Exact-head CI must provide:
 
-Keep PR #158 draft and unmerged. Keep #134 open. Do not begin Gate 4/#135. A new independent audit is required after exact-head CI, artifacts, parity, and runtime evidence are green. Any later push or advance of `main` requires a new exact-state check.
+- Ubuntu and Windows focused contracts;
+- two complete Gate 1 and Gate 2 candidate paths per operating system;
+- strict sealed-package inspection;
+- same-OS repeated-output comparison;
+- Linux/Windows byte parity;
+- Earth3 regression;
+- PolygonMap runtime loading;
+- Linux and Windows artifacts.
+
+Keep PR #158 draft and unmerged. Keep #134 open. Do not begin Gate 4/#135. A fresh independent audit is required after the exact-head evidence package is green. Any later push or advance of `main` requires another exact-state check.
