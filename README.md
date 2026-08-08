@@ -16,7 +16,7 @@ Load these layers from lowest to highest priority:
 
 `config/mod-stack.windows.json` contains the current `E:\Steam` paths. Gates of Code:X includes `mod.info` and a `resource` overlay root so it can be enabled as the final GoH mod layer.
 
-The Git repository at `E:\Steam\steamapps\workshop\content\400750\Gates-of-Code-X` is the source of truth. The normal Windows installer synchronizes all tracked project files into `E:\Steam\steamapps\workshop\content\400750\3700832981`, which is the live GoH test item. It never copies `.git`, `.venv`, `live`, backups, build artifacts, logs, or any other untracked development state.
+The Git repository at `E:\Steam\steamapps\workshop\content\400750\Gates-of-Code-X` is the source of truth. The normal Windows installer synchronizes shippable tracked project files into `E:\Steam\steamapps\workshop\content\400750\3700832981`, which is the live GoH test item. It never copies `.git`, `.venv`, `live`, backups, build artifacts, logs, ignored editor addons, or tracked development-only integrations under `dev/`.
 
 A manual sync is also available:
 
@@ -137,6 +137,21 @@ Open `godot/project.godot` after generating `godot/campaign_snapshot.json`. Clic
 ```powershell
 py -3.11 -m unittest discover -s tests -v
 ```
+
+### Godot AI editor automation
+
+The repository includes a pinned, development-only integration for `hi-godot/godot-ai`. It installs the addon locally from an exact reviewed commit, launches Godot with telemetry disabled, and keeps all addon and runtime files outside the Workshop payload.
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass `
+  -File .\dev\godot-ai\setup.ps1
+
+pwsh -NoProfile -ExecutionPolicy Bypass `
+  -File .\dev\godot-ai\open-editor.ps1 `
+  -GodotPath "C:\path\to\Godot_v4.7-stable_win64.exe"
+```
+
+Enable **Godot AI** once under **Project > Project Settings > Plugins**, then configure Grok Build or another approved MCP client in the Godot AI dock. See `dev/godot-ai/README.md` for the trust boundary, agent rules, update process, and required smoke checks.
 
 ## Runtime validation boundary
 
