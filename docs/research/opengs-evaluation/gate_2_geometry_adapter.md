@@ -6,7 +6,9 @@ Exact base: `68cba7d06322cec34a9a9c76eff5b635a9d9e01c`
 
 ## Scope
 
-Gate 2 converts an inspected Gate 1 label-raster run into the existing Gates polygon dataset and strategic-map manifest contracts. It remains an isolated research adapter. It does not register a new production map, modify Earth3, change campaign code, or begin the 3514-scale Gate 3 prototype.
+Gate 2 converts an inspected Gate 1 label-raster run into the existing Gates polygon dataset and strategic-map manifest contracts. It remains an isolated research adapter. It does not register a new production map, modify Earth3 authority, change campaign code, or begin the 3514-scale Gate 3 prototype.
+
+The one shared-runtime change in this gate is narrowly limited to making the existing `PolygonMap` consume the already-emitted optional `components` geometry for hit testing, bounds, border registration, and outlines. Legacy datasets without `components` continue to use their existing primary `ring` unchanged.
 
 ## Commands
 
@@ -17,24 +19,36 @@ python tools/opengs_eval/gate1_to_gate2_adapter.py convert \
   --config <gate2-config.json> \
   --output <new-output-directory>
 
-python tools/opengs_eval/gate1_to_gate2_adapter.py inspect-output <output-directory>
-python tools/opengs_eval/gate1_to_gate2_adapter.py compare-runs <left> <right>
+python tools/opengs_eval/gate1_to_gate2_adapter.py inspect-output \
+  <output-directory> \
+  --gate1-output <gate1-output-directory> \
+  --terrain <terrain-raster> \
+  --config <gate2-config.json>
+
+python tools/opengs_eval/gate1_to_gate2_adapter.py compare-runs \
+  <left> <right> \
+  --gate1-output <gate1-output-directory> \
+  --terrain <terrain-raster> \
+  --config <gate2-config.json>
 ```
 
 The output directory must not already exist. Conversion is failure-atomic: files are built and inspected in a temporary sibling directory and published by one rename.
 
-## Input authority
+## Input and provenance authority
 
-The adapter requires:
+The adapter requires and authenticates:
 
 - the exact five-file Gate 1 authoritative output set;
-- canonical Gate 1 JSON;
-- valid Gate 1 output checksums;
-- a terrain raster whose SHA-256 equals the Gate 1 manifest's terrain input checksum;
+- canonical Gate 1 JSON and the complete embedded Gate 1 run manifest;
+- current Gate 1 output checksums and source-record correspondence;
+- a terrain raster whose SHA-256 equals the Gate 1 manifest terrain input checksum;
+- the exact canonical Gate 2 config digest and embedded settings;
+- the current adapter version and adapter source digest;
 - matching raster dimensions;
-- one stable RGB label for every Gate 1 province record and no unrecorded non-black labels.
+- one stable RGB label for every Gate 1 province record and no unrecorded non-black labels;
+- the complete deterministic assertion set.
 
-The adapter does not import Gate 1 implementation modules or campaign/runtime modules. Gate 1 remains the generator authority; Gate 2 is only a deterministic conversion boundary.
+The adapter does not import Gate 1 implementation modules or campaign/runtime Python modules. Gate 1 remains the generator authority; Gate 2 is only a deterministic conversion and verification boundary.
 
 ## Geometry contract
 
@@ -47,13 +61,14 @@ The adapter does not import Gate 1 implementation modules or campaign/runtime mo
 - Winding is normalized for downward-positive image coordinates.
 - Invalid or self-intersecting rings fail closed; they are not silently repaired.
 - Deterministic constrained-Delaunay triangulation must cover each retained component exactly while leaving holes empty.
+- Inspection rejects triangle overlaps and verifies that the triangle union equals the complete component geometry; summed area alone is not accepted as proof.
 - Every anchor is a strictly interior representative point with measured boundary clearance.
 - Terrain is counted across every province pixel and emitted as full-area counts and percentages.
 - Ocean and lake records remain geometry metadata but are non-selectable.
 
-The current Gates-required compatibility fields (`ring`, `vertices`, `triangles`, `neighbors`) remain present. `components` carries the complete multipart-and-hole authority for future runtime consumption without changing campaign code in this gate.
+The Gates-required compatibility fields (`ring`, `vertices`, `triangles`, `neighbors`) remain present. `components` carries complete multipart-and-hole authority. The existing `PolygonMap` now consumes that optional field while preserving the legacy `ring` fallback.
 
-## Border classes
+## Topology and border authority
 
 Gate 2 emits deterministic border records for:
 
@@ -66,6 +81,8 @@ Gate 2 emits deterministic border records for:
 
 Suppression applies only to exact unit segments listed in the versioned config. Authored boundaries apply only to explicit source-ID pairs.
 
+Inspection independently reconstructs shared-edge measurements from the authenticated Gate 1 labels, reapplies the configured threshold, and requires exact agreement with province neighbors and dataset edges. It also reconstructs and authenticates border classes, references, suppression decisions, component and hole counts, and all topology totals rather than trusting a self-consistent output ledger.
+
 ## Output set
 
 - `polygon_dataset.json`
@@ -74,7 +91,7 @@ Suppression applies only to exact unit segments listed in the versioned config. 
 - `topology_audit.json`
 - `adapter_manifest.json`
 
-All files are canonical UTF-8/LF JSON. `inspect-output` verifies the exact file set, checksums, stable IDs, reciprocal adjacency, geometry validity, triangle coverage, holes, anchors, water policy, terrain totals, border references, and manifest consistency.
+All files are canonical UTF-8/LF JSON. `inspect-output` verifies the exact file set, output hashes, provenance, stable IDs, measured reciprocal adjacency, geometry validity, exact triangle-union coverage, holes, anchors, water policy, terrain totals, border authority, topology ledgers, and manifest consistency.
 
 ## Focused acceptance suite
 
@@ -82,7 +99,7 @@ All files are canonical UTF-8/LF JSON. `inspect-output` verifies the exact file 
 python -m unittest tests.test_opengs_gate1_to_gate2_adapter -v
 ```
 
-The 15-test suite covers:
+The 19-test suite covers:
 
 - single polygons;
 - one and multiple holes;
@@ -97,9 +114,13 @@ The 15-test suite covers:
 - stable isolated IDs and non-selectable water;
 - byte-identical repeated conversion of the real Gate 1 CI fixture;
 - rejection of a resealed triangle mutation that fills a hole;
+- rejection of a duplicate-triangle/equal-area-omission forgery;
+- authentication of every adapter, config, Gate 1, terrain, and determinism provenance class;
+- rejection of coherently forged adjacency and dataset-edge ledgers;
+- rejection of forged border and topology ledgers;
 - strict schema and dependency boundaries.
 
-The dedicated workflow runs the focused suite and two clean conversions on Linux and Windows, compares every authoritative Gate 2 file across operating systems, and opens the Linux result through the existing Godot `PolygonMap` implementation.
+The dedicated workflow runs the focused suite and two clean conversions on Linux and Windows, authenticates both results against the original inputs, compares every authoritative Gate 2 file across operating systems, preserves the existing Earth3 runtime smoke, checks every real Gate 2 land/water/hole anchor, and exercises a synthetic nested-lake plus secondary multipart component through the existing `PolygonMap`.
 
 ## Material assumptions
 
@@ -109,23 +130,26 @@ The dedicated workflow runs the focused suite and two clean conversions on Linux
 4. Gate 2 rejects invalid geometry instead of applying `make_valid`, because automatic repair could silently alter topology.
 5. Ocean and lake records are preserved for borders and topology, but both are non-selectable under the existing Gates water policy.
 6. IDs are assigned only from sorted Gate 1 source IDs in the isolated `og2_` namespace; no `e3_*` ID can be emitted.
+7. The shared `PolygonMap` change is contract-generic: it consumes optional component/hole geometry and does not import, identify, or depend on OpenGS.
 
 ## Known risks and limitations
 
-- The current production Godot loader consumes the legacy primary `ring` for hit testing and does not yet consume the complete `components` extension. The Gate 2 runtime smoke proves that a generated candidate opens through the existing loader and preserves non-selectable water, but complete multipart/hole runtime interaction is not expanded here because that would modify shared production runtime behavior. The complete geometry remains authenticated in the Python dataset and inspection contract for independent review.
+- The `PolygonMap` component/hole path is backward compatible and is covered by the existing Earth3 smoke plus Gate 2 nested-lake and multipart runtime fixtures, but it is still a shared runtime seam and should receive independent exact-head review.
 - Gate 2 uses Shapely 2.1.2 constrained Delaunay triangulation as a pinned build-time dependency. No Shapely or OpenGS dependency enters campaign runtime.
 - The CI fixture is intentionally small. Gate 3 owns 3514-scale generation, performance measurement, and production-quality candidate evaluation.
 
-## Protected paths
+## Protected-path verification
 
-Gate 2 must not modify:
+Gate 2 does not modify:
 
 - `config/earth3/**`
 - `godot/assets/maps/earth3_europe_mediterranean/**`
-- `godot/scripts/polygon_map.gd`
 - campaign/runtime Python packages under `src/gates_of_codex/**`
 - PR #128 assets or presentation code
 - map registration or production selection
+- Gate 3 / 3514-scale prototype paths
+
+The only shared production-runtime file changed is `godot/scripts/polygon_map.gd`, narrowly to consume optional generic component/hole geometry with a legacy-ring fallback. Earth3 authority and campaign behavior remain unchanged and are regression-tested.
 
 ## Stop point
 
