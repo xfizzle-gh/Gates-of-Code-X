@@ -22,15 +22,15 @@ class OperationalRetreatAuthorityUnavailable(RuntimeError):
 
 
 def require_operational_retreat_graph(state: CampaignState) -> dict:
-    """Load and fully index retreat graph authority before gameplay mutation."""
+    """Load and fully validate retreat graph authority before gameplay mutation."""
     try:
         graph = load_operational_graph_for_state(state)
         if graph is None or not isinstance(graph, dict):
             raise ValueError("operational graph must be an object")
 
         # Battle finalization calls this before casualty or survivor mutation.
-        # Build the same complete indexes used by retreat resolution here so a
-        # readable but structurally invalid graph cannot fail after mutation.
+        # Build the same complete indexes used by retreat resolution, then run
+        # the route-edge schema's full semantic validation contract.
         from .operational_movement import _indexes
 
         node_ids, edge_ids, edges_by_id, nodes_by_id = _indexes(graph)
@@ -43,6 +43,8 @@ def require_operational_retreat_graph(state: CampaignState) -> dict:
         if len(edge_ids) != len(raw_edges):
             raise ValueError("operational graph has duplicate edge_ids")
 
+        province_ids = set(state.provinces)
+        node_province: dict[str, str] = {}
         for node_id, node in nodes_by_id.items():
             if not node_id.strip():
                 raise ValueError("operational graph node_id required")
@@ -51,20 +53,19 @@ def require_operational_retreat_graph(state: CampaignState) -> dict:
                 raise ValueError(
                     f"operational graph node {node_id!r} province_id required"
                 )
-            if province_id not in state.provinces:
+            if province_id not in province_ids:
                 raise ValueError(
                     f"operational graph node {node_id!r} province missing: "
                     f"{province_id!r}"
                 )
+            node_province[node_id] = province_id
 
         for edge in edges_by_id.values():
-            if not edge.edge_id.strip():
-                raise ValueError("operational graph edge_id required")
-            if edge.a not in node_ids or edge.b not in node_ids:
-                raise ValueError(
-                    f"operational graph edge {edge.edge_id!r} references "
-                    "missing endpoint node"
-                )
+            edge.validate(
+                node_ids=node_ids,
+                province_ids=province_ids,
+                node_province=node_province,
+            )
     except (
         AttributeError,
         KeyError,
