@@ -9,15 +9,12 @@ from gates_of_codex.campaign import CampaignEngine
 from gates_of_codex.models import BattalionRosterEntry, CampaignState, Faction
 from gates_of_codex.operational_position import clear_operational_graph_cache
 from gates_of_codex.operational_retreat import OperationalRetreatAuthorityUnavailable
-from tests.test_operational_s9a_retreat import (
-    OperationalS9AFinalizationTests,
-    _state,
-)
+from tests import test_operational_s9a_retreat as retreat_fixture
 
 
 class OperationalS9AMalformedGraphAuthorityTests(unittest.TestCase):
     def _pending_node_battle(self, state: CampaignState) -> None:
-        helper = OperationalS9AFinalizationTests()
+        helper = retreat_fixture.OperationalS9AFinalizationTests()
         helper._node_battle(state)
         self.assertIsNotNone(state.pending_battle)
 
@@ -38,7 +35,7 @@ class OperationalS9AMalformedGraphAuthorityTests(unittest.TestCase):
 
     def test_internal_result_rejects_malformed_graph_before_mutation(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            state = _state(Path(temporary))
+            state = retreat_fixture._state(Path(temporary))
             self._pending_node_battle(state)
             engine = CampaignEngine(state, random_seed=0)
             self._replace_graph_with_readable_malformed_authority(state)
@@ -54,7 +51,7 @@ class OperationalS9AMalformedGraphAuthorityTests(unittest.TestCase):
 
     def test_external_result_rejects_malformed_graph_before_mutation(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            state = _state(Path(temporary))
+            state = retreat_fixture._state(Path(temporary))
             self._pending_node_battle(state)
             engine = CampaignEngine(state, random_seed=0)
             self._replace_graph_with_readable_malformed_authority(state)
