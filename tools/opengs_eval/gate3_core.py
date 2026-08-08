@@ -1,45 +1,34 @@
 #!/usr/bin/env python3
-"""Build and inspect the isolated OpenGS Gate 3 Europe-Mediterranean prototype.
-
-Gate 3 orchestrates the accepted Gate 1 deterministic generator and Gate 2
-geometry adapter. It does not register a production map, change Earth3, or
-create campaign authority.
-"""
+"""Shared contracts for the isolated OpenGS Gate 3 prototype."""
 from __future__ import annotations
 
-import argparse
 import hashlib
 import json
 import math
 import os
-import shutil
 import stat
 import subprocess
 import sys
-import tempfile
-import time
-from collections import Counter
 from pathlib import Path
-from typing import Any, Iterable, Iterator, Mapping, Sequence
+from typing import Any, Mapping, Sequence
 
 MODULE_DIR = Path(__file__).resolve().parent
 ROOT = MODULE_DIR.parents[1]
-if str(MODULE_DIR) not in sys.path:
-    sys.path.insert(0, str(MODULE_DIR))
 
 CONFIG_SCHEMA = "gates-of-codex.opengs-gate3-config"
 CONFIG_SCHEMA_VERSION = 1
 INPUT_SCHEMA = "gates-of-codex.opengs-gate3-input-manifest"
-INPUT_SCHEMA_VERSION = 1
+INPUT_SCHEMA_VERSION = 2
 PACKAGE_SCHEMA = "gates-of-codex.opengs-gate3-package"
-PACKAGE_SCHEMA_VERSION = 1
-REPORT_SCHEMA_VERSION = 1
+PACKAGE_SCHEMA_VERSION = 2
+REPORT_SCHEMA_VERSION = 2
 CANDIDATE_ID = "opengs_gate3_europe_mediterranean_3514_candidate"
 STARTING_COMMIT = "62063d70d2bb94f41b4d997578c02556003e9a72"
 NATURAL_EARTH_REPOSITORY = "nvkelso/natural-earth-vector"
 NATURAL_EARTH_REF = "v5.1.2"
 NATURAL_EARTH_COMMIT = "f1890d9f152c896d250a77557a5751a93d494776"
 PROJECTION = "+proj=laea +lat_0=45 +lon_0=20 +datum=WGS84 +units=m +no_defs"
+LOCKED_CONFIG_CANONICAL_SHA256 = "4646af6a193374127e1c6c1570d74eb3e70b52748b1724f1e17879dff416ca85"
 SOURCE_ROLES = (
     "land",
     "lakes",
@@ -66,6 +55,7 @@ INPUT_FILES = (
     "boundary.png",
     "density.png",
     "terrain.png",
+    "theatre_mask.png",
     "gate1_recipe.json",
     "gate2_config.json",
     "gate3_input_manifest.json",
@@ -88,6 +78,7 @@ LAND_COLOR = (220, 220, 220)
 LAKE_COLOR = (0, 255, 0)
 BOUNDARY_COLOR = (0, 0, 0)
 BOUNDARY_BACKGROUND = (255, 255, 255)
+OUTSIDE_COLOR = (255, 0, 255)
 TERRAIN_COLORS = {
     "plains": (255, 129, 66),
     "deep_ocean": (2, 38, 150),
@@ -119,19 +110,10 @@ def sha256_file(path: Path) -> str:
 
 
 def _is_hex(value: Any, length: int) -> bool:
-    return (
-        isinstance(value, str)
-        and len(value) == length
-        and set(value) <= set("0123456789abcdef")
-    )
+    return isinstance(value, str) and len(value) == length and set(value) <= set("0123456789abcdef")
 
 
-def _require_dict(
-    value: Any,
-    path: str,
-    required: set[str],
-    allowed: set[str] | None = None,
-) -> dict[str, Any]:
+def _require_dict(value: Any, path: str, required: set[str], allowed: set[str] | None = None) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise Gate3Error(f"{path} must be an object")
     allowed = required if allowed is None else allowed
@@ -189,7 +171,6 @@ def _read_regular_file(path: Path, label: str) -> bytes:
         raise Gate3Error(f"cannot inspect {label} {path}: {exc}") from exc
     if stat.S_ISLNK(path_before.st_mode) or not stat.S_ISREG(path_before.st_mode):
         raise Gate3Error(f"{label} must be a regular non-symlink file: {path}")
-
     flags = os.O_RDONLY
     if hasattr(os, "O_BINARY"):
         flags |= os.O_BINARY
@@ -210,17 +191,9 @@ def _read_regular_file(path: Path, label: str) -> bytes:
                 break
             chunks.append(chunk)
         after = os.fstat(fd)
-        if (
-            before.st_dev,
-            before.st_ino,
-            before.st_size,
-            before.st_mtime_ns,
-        ) != (
-            after.st_dev,
-            after.st_ino,
-            after.st_size,
-            after.st_mtime_ns,
-        ):
+        identity_before = (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns)
+        identity_after = (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns)
+        if identity_before != identity_after:
             raise Gate3Error(f"{label} changed while being captured: {path}")
         try:
             path_after = path.lstat()
@@ -228,17 +201,8 @@ def _read_regular_file(path: Path, label: str) -> bytes:
             raise Gate3Error(f"cannot recapture {label} {path}: {exc}") from exc
         if stat.S_ISLNK(path_after.st_mode) or not stat.S_ISREG(path_after.st_mode):
             raise Gate3Error(f"{label} path changed to a nonregular entry: {path}")
-        if (
-            path_before.st_dev,
-            path_before.st_ino,
-            path_before.st_size,
-            path_before.st_mtime_ns,
-        ) != (
-            path_after.st_dev,
-            path_after.st_ino,
-            path_after.st_size,
-            path_after.st_mtime_ns,
-        ):
+        final_identity = (path_after.st_dev, path_after.st_ino, path_after.st_size, path_after.st_mtime_ns)
+        if final_identity != identity_before:
             raise Gate3Error(f"{label} path changed while being captured: {path}")
         return b"".join(chunks)
     finally:
@@ -268,9 +232,7 @@ def load_config(path: Path) -> tuple[dict[str, Any], str, bytes]:
     if top["starting_commit"] != STARTING_COMMIT:
         raise Gate3Error("Gate 3 starting commit changed")
     source = _require_dict(top["source"], "config.source", {"repository", "ref", "commit", "license", "terms_url", "files"})
-    if source["repository"] != NATURAL_EARTH_REPOSITORY:
-        raise Gate3Error("unapproved source repository")
-    if source["ref"] != NATURAL_EARTH_REF or source["commit"] != NATURAL_EARTH_COMMIT:
+    if source["repository"] != NATURAL_EARTH_REPOSITORY or source["ref"] != NATURAL_EARTH_REF or source["commit"] != NATURAL_EARTH_COMMIT:
         raise Gate3Error("Natural Earth source is not exactly pinned")
     if source["license"] != "public_domain":
         raise Gate3Error("Gate 3 source license must remain public_domain")
@@ -287,10 +249,8 @@ def load_config(path: Path) -> tuple[dict[str, Any], str, bytes]:
         relative = Path(_require_string(row["path"], f"source.{role}.path"))
         if relative.is_absolute() or ".." in relative.parts:
             raise Gate3Error(f"source path must be contained: {relative}")
-        if not _is_hex(row["git_blob_sha1"], 40):
-            raise Gate3Error(f"source.{role}.git_blob_sha1 must be lowercase SHA-1")
-        if not _is_hex(row["sha256"], 64):
-            raise Gate3Error(f"source.{role}.sha256 must be lowercase SHA-256")
+        if not _is_hex(row["git_blob_sha1"], 40) or not _is_hex(row["sha256"], 64):
+            raise Gate3Error(f"source authority hashes are invalid for {role}")
     if roles != set(SOURCE_ROLES):
         raise Gate3Error("Gate 3 source role set changed")
     projection = _require_dict(top["projection"], "config.projection", {"source_crs", "name", "proj"})
@@ -326,9 +286,9 @@ def load_config(path: Path) -> tuple[dict[str, Any], str, bytes]:
     counts = _require_dict(top["counts"], "config.counts", {"land_territories", "ocean_territories", "land_provinces", "ocean_provinces", "comparison_target_total"})
     for key in counts:
         _require_int(counts[key], f"config.counts.{key}", 0)
-    if counts["land_provinces"] != 3299 or counts["ocean_provinces"] != 215:
-        raise Gate3Error("Gate 3 direct comparison province split changed")
-    if counts["comparison_target_total"] != 3514 or counts["land_provinces"] + counts["ocean_provinces"] != 3514:
+    if counts["land_provinces"] != 3299 or counts["ocean_provinces"] != 215 or counts["comparison_target_total"] != 3514:
+        raise Gate3Error("Gate 3 direct comparison province target changed")
+    if counts["land_provinces"] + counts["ocean_provinces"] != 3514:
         raise Gate3Error("Gate 3 comparison target is inconsistent")
     generator = _require_dict(top["generator"], "config.generator", {"root_seed", "lloyd_iterations", "density_strength", "exclude_ocean_density", "jagged_land", "jagged_ocean", "jagged_amplitude"})
     _require_int(generator["root_seed"], "config.generator.root_seed", 0)
@@ -358,11 +318,16 @@ def load_config(path: Path) -> tuple[dict[str, Any], str, bytes]:
     if water != {"selectable": False, "operational_sea_generated": False, "lake_filtering": "none", "count_policy": "requested_ocean_plus_all_natural_earth_lake_components"}:
         raise Gate3Error("Gate 3 water policy changed")
     isolation = _require_dict(top["isolation"], "config.isolation", {"debug_only", "default_map", "production_registration", "earth3_authority_changed", "campaign_authority_generated"})
-    expected_isolation = {"debug_only": True, "default_map": False, "production_registration": False, "earth3_authority_changed": False, "campaign_authority_generated": False}
-    if isolation != expected_isolation:
+    if isolation != {"debug_only": True, "default_map": False, "production_registration": False, "earth3_authority_changed": False, "campaign_authority_generated": False}:
         raise Gate3Error("Gate 3 isolation contract changed")
     canonical = canonical_json_bytes(top)
-    return top, sha256_bytes(canonical), raw
+    digest = sha256_bytes(canonical)
+    if digest != LOCKED_CONFIG_CANONICAL_SHA256:
+        raise Gate3Error(
+            "Gate 3 config differs from the exact owner-approved canonical configuration: "
+            f"expected {LOCKED_CONFIG_CANONICAL_SHA256}, got {digest}"
+        )
+    return top, digest, raw
 
 
 def _run(command: Sequence[str], *, cwd: Path | None = None) -> str:
@@ -372,34 +337,46 @@ def _run(command: Sequence[str], *, cwd: Path | None = None) -> str:
     return completed.stdout.strip()
 
 
+def _run_bytes(command: Sequence[str], *, cwd: Path | None = None) -> bytes:
+    completed = subprocess.run(list(command), cwd=cwd, check=False, capture_output=True)
+    if completed.returncode != 0:
+        stderr = completed.stderr.decode("utf-8", errors="replace")
+        raise Gate3Error(f"command failed ({completed.returncode}): {' '.join(command)}\nstderr:\n{stderr}")
+    return completed.stdout
+
+
 def _git_head(root: Path) -> str:
     return _run(["git", "-C", str(root), "rev-parse", "HEAD"])
 
 
-def _git_blob_sha1(path: Path) -> str:
-    return _run(["git", "hash-object", str(path)])
-
-
 def capture_sources(config: Mapping[str, Any], natural_earth_root: Path) -> dict[str, dict[str, Any]]:
     root = natural_earth_root.resolve()
-    if _git_head(root) != config["source"]["commit"]:
+    commit = str(config["source"]["commit"])
+    if _git_head(root) != commit:
         raise Gate3Error("Natural Earth checkout head does not match the locked commit")
     captured: dict[str, dict[str, Any]] = {}
     for row in config["source"]["files"]:
-        role = row["role"]
-        path = (root / row["path"]).resolve()
-        try:
-            path.relative_to(root)
-        except ValueError as exc:
-            raise Gate3Error(f"source path escaped checkout: {path}") from exc
-        data = _read_regular_file(path, f"Natural Earth {role}")
-        actual_sha = sha256_bytes(data)
-        actual_blob = _git_blob_sha1(path)
-        if actual_sha != row["sha256"]:
-            raise Gate3Error(f"Natural Earth {role} SHA-256 mismatch: expected {row['sha256']}, got {actual_sha}")
+        role = str(row["role"])
+        relative = Path(str(row["path"]))
+        if relative.is_absolute() or ".." in relative.parts:
+            raise Gate3Error(f"source path escaped checkout: {relative}")
+        object_name = f"{commit}:{relative.as_posix()}"
+        actual_blob = _run(["git", "-C", str(root), "rev-parse", object_name])
         if actual_blob != row["git_blob_sha1"]:
             raise Gate3Error(f"Natural Earth {role} Git blob mismatch: expected {row['git_blob_sha1']}, got {actual_blob}")
-        captured[role] = {"path": path, "data": data, "sha256": actual_sha, "git_blob_sha1": actual_blob, "size_bytes": len(data), "relative_path": row["path"]}
+        data = _run_bytes(["git", "-C", str(root), "cat-file", "blob", object_name])
+        actual_sha = sha256_bytes(data)
+        if actual_sha != row["sha256"]:
+            raise Gate3Error(f"Natural Earth {role} SHA-256 mismatch: expected {row['sha256']}, got {actual_sha}")
+        captured[role] = {
+            "path": root / relative,
+            "data": data,
+            "sha256": actual_sha,
+            "git_blob_sha1": actual_blob,
+            "size_bytes": len(data),
+            "relative_path": relative.as_posix(),
+            "authority": "git_blob_bytes",
+        }
     return captured
 
 
@@ -407,8 +384,8 @@ def verify_source_paths(config: Mapping[str, Any], natural_earth_root: Path, exp
     current = capture_sources(config, natural_earth_root)
     for role in SOURCE_ROLES:
         row = expected[role]
-        if current[role]["sha256"] != row["sha256"]:
+        if current[role]["sha256"] != row["sha256"] or current[role]["git_blob_sha1"] != row["git_blob_sha1"]:
             raise Gate3Error(f"Natural Earth {role} changed before publication")
 
 
-__all__ = [name for name in globals() if not name.startswith('__')]
+__all__ = [name for name in globals() if not name.startswith("__")]
