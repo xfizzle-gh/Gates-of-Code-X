@@ -12,7 +12,7 @@ Gate 3 builds one isolated full-scale Europe-Mediterranean comparison candidate 
 
 The implementation and adversarial-test plan was locked on #134 before implementation. The exact owner-approved configuration is now additionally locked by canonical SHA-256:
 
-`4646af6a193374127e1c6c1570d74eb3e70b52748b1724f1e17879dff416ca85`
+`bda78a27e60fa53d3f4d672e08ad222c9bce74055b4b61ba5295c55d88ed5cc3`
 
 Any change to source paths or hashes, terms, projection, crop, anchors, dimensions, territory or province counts, generator seed or options, density values, terrain policy, Gate 2 threshold, water policy, or isolation policy requires an explicit configuration change and a new material checkpoint.
 
@@ -36,7 +36,7 @@ The densified longitude/latitude boundary is transformed into LAEA and rasterize
 
 The named land/water anchor set covers Ireland, Great Britain, Scandinavia, Finland, Sicily, Crete, Cyprus, the North African coast, Anatolia, the Irish Sea, English Channel, western Mediterranean, Adriatic, Black Sea, Kattegat, and Baltic.
 
-### Counts
+### Counts and ocean-component authority
 
 The comparison target remains:
 
@@ -44,13 +44,15 @@ The comparison target remains:
 - ocean provinces: 215
 - requested base total: 3,514
 
-The locked source and raster contain 350 disconnected land components, so Gate 3 requests 350 land territories rather than deleting islands or drawing artificial bridges. It requests 20 ocean territories. The explicit theatre mask must be applied before ocean component counts are evaluated. Any count change remains material and must be recorded on #134.
+The locked source and raster contain 350 disconnected land components, so Gate 3 requests 350 land territories rather than deleting islands or drawing artificial bridges. It requests 20 ocean territories. The explicit theatre mask is applied before ocean component authority is evaluated. Any count change remains material and must be recorded on #134.
 
-Natural Earth lake components remain additional non-selectable water records and are reported rather than silently filtered.
+Candidate ocean uses four-connected components after the projected mask is applied. A complement component is retained only when it touches the projected crop boundary or contains a locked `expected: ocean` geography anchor. Every other unanchored enclosed complement cavity is deterministically reclassified as land. The authenticated input manifest and geography/water reports record raw, retained, and reclassified component and pixel counts, boundary-retention counts, anchor-retention counts, and the complete component ledger. Generation fails if the retained ocean-component count exceeds the locked 20 ocean territories or if any locked ocean anchor is not retained.
+
+Natural Earth lake components remain additional non-selectable water records and are reported rather than silently filtered. They are not processed by the ocean-complement rule.
 
 ### Density and terrain
 
-The deterministic density raster combines populated-place population weighting, national-boundary corridors, river corridors, coastline emphasis, and a bounded background baseline. All parameters are part of the exact locked configuration.
+The deterministic density raster combines populated-place population weighting, national-boundary corridors, river corridors, coastline emphasis, and a bounded background baseline. All parameters are part of the exact locked configuration. Coastline weighting is computed after the authoritative ocean-component normalization.
 
 Terrain remains a three-class legal baseline from the same authenticated physical masks: land is plains, ocean is deep ocean, lakes are lakes. It is not production terrain authority.
 
@@ -96,7 +98,7 @@ Destinations must not already exist.
 
 ## Adversarial coverage
 
-Focused tests cover exact-config mutations across every material block, Git-blob versus transformed working-tree bytes, projected outside-crop exclusion, source geography and lake classification, selectable water, map namespace and reciprocal adjacency, immutable-tree capture, extra directories, symlinks, coherent config/manifest forgery, coherent recipe forgery, coherent report forgery, and production/Gate 4 scope boundaries.
+Focused tests cover exact-config mutations across every material block, Git-blob versus transformed working-tree bytes, projected outside-crop exclusion, crop-edge/anchor ocean retention, unanchored complement reclassification, source geography and lake classification, selectable water, map namespace and reciprocal adjacency, immutable-tree capture, immutable mappings, extra directories, symlinks, coherent config/manifest forgery, coherent recipe forgery, coherent report forgery, and production/Gate 4 scope boundaries.
 
 ## CI and stop point
 
