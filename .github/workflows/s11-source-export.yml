@@ -18,9 +18,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Package exact checkout
         shell: bash
-        run: tar --exclude=.git -czf gates-of-codex-source.tar.gz .
+        run: tar --exclude=.git -czf ../gates-of-codex-source.tar.gz .
       - uses: actions/upload-artifact@v4
         with:
           name: s11-source-export
-          path: gates-of-codex-source.tar.gz
+          path: ../gates-of-codex-source.tar.gz
           retention-days: 1
