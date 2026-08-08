@@ -438,6 +438,11 @@ class BattleParticipant:
     faction: Faction
     stage: str
     is_primary: bool = False
+    contact_initiator: bool = False
+    ambush_eligible: bool = False
+    ambush_triggered: bool = False
+    ambush_strength_multiplier_milli: int = 1000
+    ambush_readiness_consumed: bool = False
 
 
 @dataclass(slots=True)

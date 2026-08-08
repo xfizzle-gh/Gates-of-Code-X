@@ -5,6 +5,29 @@ from collections.abc import Iterable
 from .models import CampaignState, StrategicFormation
 from .operational_schema import FormationStance, MoveOrderStatus, PositionMode
 
+AMBUSH_STRENGTH_MULTIPLIER_MILLI = 1150
+STRENGTH_MULTIPLIER_MILLI_UNITY = 1000
+
+
+def apply_strength_multiplier_milli(
+    base_strength_milli: int,
+    multiplier_milli: int,
+) -> int:
+    """Apply an exact milli multiplier with deterministic floor rounding."""
+    from .operational_schema import require_strict_int
+
+    base = require_strict_int(
+        base_strength_milli,
+        name="base_strength_milli",
+        minimum=0,
+    )
+    multiplier = require_strict_int(
+        multiplier_milli,
+        name="strength_multiplier_milli",
+        minimum=0,
+    )
+    return base * multiplier // STRENGTH_MULTIPLIER_MILLI_UNITY
+
 
 def effective_operational_stance(force: StrategicFormation) -> str:
     order = force.move_order
@@ -48,6 +71,67 @@ def refresh_ambush_readiness(
             force.ambush_ready_tick = completed_tick
 
 
+def apply_pending_battle_ambush(
+    state: CampaignState,
+    *,
+    initiating_formation_ids: Iterable[str] = (),
+) -> None:
+    pending = state.pending_battle
+    if pending is None:
+        return
+    from .operational_movement import get_operational_clock
+
+    initiators = set(initiating_formation_ids)
+    current_tick = int(get_operational_clock(state)["global_tick"])
+    participants = pending.attacking_participants + pending.defending_participants
+    if any(
+        participant.contact_initiator
+        or participant.ambush_triggered
+        or participant.ambush_readiness_consumed
+        for participant in participants
+    ):
+        return
+    formation_by_battalion = {
+        battalion_id: force
+        for force in state.strategic_formations.values()
+        for battalion_id in force.battalion_ids
+    }
+    metadata_by_formation: dict[str, tuple[bool, bool, bool]] = {}
+    for participant in participants:
+        force = formation_by_battalion.get(participant.battalion_id)
+        if force is None:
+            continue
+        formation_id = force.strategic_formation_id
+        if formation_id not in metadata_by_formation:
+            initiator = formation_id in initiators
+            consumed = force.ambush_ready_tick is not None
+            eligible = (
+                consumed
+                and force.ambush_ready_tick <= current_tick
+                and not initiator
+                and effective_operational_stance(force)
+                == FormationStance.AMBUSH.value
+                and _has_fixed_position(force)
+            )
+            metadata_by_formation[formation_id] = (initiator, eligible, consumed)
+
+        initiator, eligible, consumed = metadata_by_formation[formation_id]
+        participant.contact_initiator = initiator
+        participant.ambush_eligible = eligible
+        participant.ambush_triggered = eligible
+        participant.ambush_strength_multiplier_milli = (
+            AMBUSH_STRENGTH_MULTIPLIER_MILLI
+            if eligible
+            else STRENGTH_MULTIPLIER_MILLI_UNITY
+        )
+        participant.ambush_readiness_consumed = consumed
+
+    for formation_id in sorted(metadata_by_formation):
+        force = state.strategic_formations.get(formation_id)
+        if force is not None:
+            force.ambush_ready_tick = None
+
+
 def _has_fixed_position(force: StrategicFormation) -> bool:
     position = force.position
     if position is None:
@@ -65,7 +149,10 @@ def _pending_formation_ids(state: CampaignState) -> set[str]:
         return set()
     battalion_ids = {
         participant.battalion_id
-        for participant in (*pending.attacker_participants, *pending.defender_participants)
+        for participant in (
+            *pending.attacking_participants,
+            *pending.defending_participants,
+        )
     }
     return {
         battalion.strategic_formation_id

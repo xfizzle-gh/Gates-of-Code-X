@@ -69,13 +69,25 @@ class CampaignEngine:
 
     def auto_resolve_pending_battle(self) -> Faction:
         pending = self._require_pending_battle()
-        attackers = self._participants_battalions(pending.attacking_participants)
-        defenders = self._participants_battalions(pending.defending_participants)
         target = self._get_province(pending.target_province_id)
-        attacker_score = sum(self._combat_score(item) for item in attackers) or 0.1
+        attacker_score = (
+            self._aggregate_participant_strength_milli(
+                pending.attacking_participants
+            )
+            or 100
+        )
         defender_score = (
-            sum(self._combat_score(item) for item in defenders) or 1.0
-        ) * (1 + min(target.fortification, 5) * 0.12)
+            self._aggregate_participant_strength_milli(
+                pending.defending_participants
+            )
+            or 1000
+        )
+        from .operational_ambush import apply_strength_multiplier_milli
+
+        defender_score = apply_strength_multiplier_milli(
+            defender_score,
+            1000 + min(target.fortification, 5) * 120,
+        )
         winner = (
             pending.attacker_faction
             if self._random.random() < attacker_score / max(attacker_score + defender_score, 1)
@@ -185,7 +197,7 @@ class CampaignEngine:
         atk_forces = self._formations_for_battalions(attackers)
         def_forces = self._formations_for_battalions(defenders)
         for force_id in sorted(set(atk_forces) | set(def_forces)):
-            self._reset_participating_forced_march(force_id)
+            self._reset_participating_operational_stance(force_id)
         is_op_contact = bool(str(getattr(pending, "encounter_kind", "") or ""))
         is_edge_contact = bool(str(getattr(pending, "encounter_edge_id", "") or "").strip())
         edge_progress = getattr(pending, "encounter_progress_milli", None)
@@ -307,6 +319,27 @@ class CampaignEngine:
             seen.add(part.battalion_id)
             battalions.append(battalion)
         return battalions
+
+    def _aggregate_participant_strength_milli(
+        self,
+        participants: list[BattleParticipant],
+    ) -> int:
+        from .operational_ambush import apply_strength_multiplier_milli
+
+        total = 0
+        seen: set[str] = set()
+        for participant in participants:
+            if participant.battalion_id in seen:
+                continue
+            battalion = self.state.battalions.get(participant.battalion_id)
+            if battalion is None:
+                continue
+            seen.add(participant.battalion_id)
+            total += apply_strength_multiplier_milli(
+                self._combat_score_milli(battalion),
+                participant.ambush_strength_multiplier_milli,
+            )
+        return total
 
     def _formations_for_battalions(self, battalions: list[Battalion]) -> list[str]:
         force_ids: list[str] = []
@@ -649,12 +682,15 @@ class CampaignEngine:
             },
         )
 
-    def _reset_participating_forced_march(self, force_id: str) -> None:
+    def _reset_participating_operational_stance(self, force_id: str) -> None:
         from .operational_schema import FormationStance
 
         self._reset_operational_stance(
             force_id,
-            reset_stances={FormationStance.FORCED_MARCH.value},
+            reset_stances={
+                FormationStance.FORCED_MARCH.value,
+                FormationStance.AMBUSH.value,
+            },
         )
 
     def _reset_operational_stance(
@@ -671,6 +707,11 @@ class CampaignEngine:
         locked = force.move_order.locked_stance if force.move_order is not None else None
         if force.stance not in reset_stances and locked not in reset_stances:
             return
+        if (
+            force.stance == FormationStance.AMBUSH.value
+            or locked == FormationStance.AMBUSH.value
+        ):
+            force.ambush_ready_tick = None
         force.stance = FormationStance.OPERATIONAL.value
         if force.move_order is not None and force.move_order.locked_stance is not None:
             force.move_order = replace(
@@ -812,14 +853,37 @@ class CampaignEngine:
 
     @staticmethod
     def _combat_score(battalion: Battalion | None) -> float:
+        return CampaignEngine._combat_score_milli(battalion) / 1000
+
+    @staticmethod
+    def _combat_score_milli(battalion: Battalion | None) -> int:
         if battalion is None:
-            return 1.0
-        weights = {"infantry": 1, "recon": 0.8, "vehicle": 1.7, "ifv": 2, "tank": 3, "artillery": 2.2, "air_defense": 1.8, "unknown": 1}
-        base = sum(entry.quantity * weights.get(entry.category, 1) for entry in battalion.roster)
-        supply_factor = 0.4 + battalion.supply / 100 * 0.6
-        condition_factor = 0.35 + battalion.condition / 100 * 0.65
-        experience_factor = 1 + min(battalion.experience, 1000) / 5000
-        return max(base * supply_factor * condition_factor * experience_factor, 0.1)
+            return 1000
+        weights_milli = {
+            "infantry": 1000,
+            "recon": 800,
+            "vehicle": 1700,
+            "ifv": 2000,
+            "tank": 3000,
+            "artillery": 2200,
+            "air_defense": 1800,
+            "unknown": 1000,
+        }
+        base_milli = sum(
+            entry.quantity * weights_milli.get(entry.category, 1000)
+            for entry in battalion.roster
+        )
+        supply_factor_milli = 400 + battalion.supply * 6
+        condition_factor_two_milli = 700 + battalion.condition * 13
+        experience_factor_num = 5000 + min(battalion.experience, 1000)
+        score_milli = (
+            base_milli
+            * supply_factor_milli
+            * condition_factor_two_milli
+            * experience_factor_num
+            // (1000 * 2000 * 5000)
+        )
+        return max(score_milli, 100)
 
     @staticmethod
     def _apply_percentage_losses(battalion: Battalion, fraction: float) -> None:

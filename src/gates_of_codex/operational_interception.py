@@ -633,6 +633,9 @@ def apply_simultaneous_node_arrivals(
             for item in accepted
             if item.path_origin_node
         },
+        initiating_formation_ids=tuple(
+            sorted(item.formation_id for item in accepted)
+        ),
     )
     if battle is None:
         # Caller must restore; signal failure with rejected ids for bookkeeping.

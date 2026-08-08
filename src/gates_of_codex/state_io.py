@@ -256,6 +256,16 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
                     faction=Faction(item["faction"]),
                     stage=item["stage"],
                     is_primary=item.get("is_primary", False),
+                    contact_initiator=item.get("contact_initiator", False),
+                    ambush_eligible=item.get("ambush_eligible", False),
+                    ambush_triggered=item.get("ambush_triggered", False),
+                    ambush_strength_multiplier_milli=_required_supply_int(
+                        item.get("ambush_strength_multiplier_milli", 1000),
+                        name="ambush_strength_multiplier_milli",
+                    ),
+                    ambush_readiness_consumed=item.get(
+                        "ambush_readiness_consumed", False
+                    ),
                 )
                 for item in pending_data.get("attacking_participants", [])
             ],
@@ -265,6 +275,16 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
                     faction=Faction(item["faction"]),
                     stage=item["stage"],
                     is_primary=item.get("is_primary", False),
+                    contact_initiator=item.get("contact_initiator", False),
+                    ambush_eligible=item.get("ambush_eligible", False),
+                    ambush_triggered=item.get("ambush_triggered", False),
+                    ambush_strength_multiplier_milli=_required_supply_int(
+                        item.get("ambush_strength_multiplier_milli", 1000),
+                        name="ambush_strength_multiplier_milli",
+                    ),
+                    ambush_readiness_consumed=item.get(
+                        "ambush_readiness_consumed", False
+                    ),
                 )
                 for item in pending_data.get("defending_participants", [])
             ],
