@@ -124,13 +124,14 @@ jobs:
           GODOT_BIN="$(find . -maxdepth 1 -type f -name 'Godot_v*_linux.x86_64' | head -n 1)"
           install -m 755 "$GODOT_BIN" "$HOME/godot"
       - name: Import Godot project
-        run: "$HOME/godot" --headless --path godot --import --quit-after 1
+        run: |
+          "$HOME/godot" --headless --path godot --import --quit-after 1
       - name: Preserve Earth3 runtime behavior
-        run: >-
-          "$HOME/godot" --headless --path godot --audio-driver Dummy
-          -s res://scripts/tools/earth3_polygon_smoke.gd
+        run: |
+          "$HOME/godot" --headless --path godot --audio-driver Dummy \
+            -s res://scripts/tools/earth3_polygon_smoke.gd
       - name: Load every real Gate 3 land, water, multipart, and hole anchor
-        run: >-
-          "$HOME/godot" --headless --path godot --audio-driver Dummy
-          -s res://scripts/tools/opengs_gate2_polygon_smoke.gd --
-          --manifest="$(pwd)/build/gate3-runtime/candidate/map_manifest.json"
+        run: |
+          "$HOME/godot" --headless --path godot --audio-driver Dummy \
+            -s res://scripts/tools/opengs_gate2_polygon_smoke.gd -- \
+            --manifest="$(pwd)/build/gate3-runtime/candidate/map_manifest.json"
