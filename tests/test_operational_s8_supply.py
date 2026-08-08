@@ -270,7 +270,7 @@ class OperationalS8SupplyTests(unittest.TestCase):
             "(edge_cost * segment_milli + 999) // 1000",
             "disabled candidate corridors",
             "does not invent coalition-wide logistics",
-            "Frontend schema version 13",
+            "Frontend schema version 14",
         ):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, guide)
@@ -1489,7 +1489,7 @@ class OperationalS8SupplyTests(unittest.TestCase):
 
         exported_force = snapshot["strategic_formations"][0]
         exported_battalion = snapshot["battalions"][0]
-        self.assertEqual(13, snapshot["schema_version"])
+        self.assertEqual(14, snapshot["schema_version"])
         self.assertFalse(exported_force["supplied"])
         self.assertTrue(exported_force["cut_off"])
         self.assertIsNone(exported_force["source_hub_id"])
@@ -1530,17 +1530,14 @@ class OperationalS8SupplyTests(unittest.TestCase):
                 "operational_supply_migration", payload["map_metadata"]
             )
             row = next(iter(payload["strategic_formations"].values()))
-            for key in (
-                "supplied",
-                "cut_off",
-                "source_hub_id",
-                "route_cost",
-                "grace_ticks_remaining",
-                "last_supply_refresh_tick",
-                "last_supply_refresh_turn",
-                "last_grace_consuming_tick",
-            ):
-                self.assertNotIn(key, row)
+            self.assertTrue(row["supplied"])
+            self.assertFalse(row["cut_off"])
+            self.assertIsNone(row["source_hub_id"])
+            self.assertIsNone(row["route_cost"])
+            self.assertEqual(0, row["grace_ticks_remaining"])
+            self.assertIsNone(row["last_supply_refresh_tick"])
+            self.assertIsNone(row["last_supply_refresh_turn"])
+            self.assertIsNone(row["last_grace_consuming_tick"])
 
     def test_real_graph_save_load_preserves_grace_state(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

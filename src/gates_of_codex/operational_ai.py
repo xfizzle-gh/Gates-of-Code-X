@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from collections import defaultdict
+import copy
+import json
 from dataclasses import dataclass, replace as dc_replace
 from heapq import heappop, heappush
 from typing import Any
@@ -68,7 +70,366 @@ def operational_graph_authority_present(state: CampaignState) -> bool:
     return load_operational_graph_for_state(state) is not None
 
 
+
+
+@dataclass(frozen=True, slots=True)
+class OperationalPlanningView:
+    """Immutable serialized planning input with no CampaignState reference."""
+
+    faction: str
+    campaign_payload_json: str
+    visible_subject_keys: tuple[str, ...]
+    fog_of_war_enabled: bool
+
+
+@dataclass(frozen=True, slots=True)
+class OperationalIntent:
+    formation_id: str
+    action: str
+    battalion_id: str
+    origin_province_id: str | None
+    target_province_id: str | None
+    details_json: str
+    path_node_ids: tuple[str, ...] = ()
+    path_edge_ids: tuple[str, ...] = ()
+    order_id: str = ""
+    locked_stance: str = ""
+
+
+def build_operational_planning_view(
+    state: CampaignState,
+    faction: Faction,
+) -> OperationalPlanningView:
+    """Build a detached canonical planning payload containing only permitted data."""
+    if not state.fog_of_war_enabled:
+        payload = copy.deepcopy(state.to_dict())
+        visible = tuple(sorted(state.strategic_formations))
+    else:
+        payload, visible = _fog_filtered_planning_payload(state, faction)
+    # The planner never receives a mutable CampaignState, callbacks, or live collections.
+    return OperationalPlanningView(
+        faction=faction.value,
+        campaign_payload_json=json.dumps(payload, sort_keys=True, separators=(",", ":")),
+        visible_subject_keys=visible,
+        fog_of_war_enabled=bool(state.fog_of_war_enabled),
+    )
+
+
+def plan_operational_intents(
+    view: OperationalPlanningView,
+    faction: Faction,
+    seed: int = 0,
+) -> tuple[OperationalIntent, ...]:
+    """Pure planner over a detached restricted view."""
+    if faction.value != view.faction:
+        raise ValueError("planning_view_faction_mismatch")
+    from .state_io import campaign_from_dict
+
+    planning_state = campaign_from_dict(json.loads(view.campaign_payload_json))
+    actions = _plan_and_issue_on_state(planning_state, faction, seed=seed)
+    intents: list[OperationalIntent] = []
+    for action in actions:
+        formation_id = str(action.details.get("formation_id") or "")
+        force = planning_state.strategic_formations.get(formation_id)
+        order = force.move_order if force is not None else None
+        intents.append(
+            OperationalIntent(
+                formation_id=formation_id,
+                action=action.action,
+                battalion_id=action.battalion_id,
+                origin_province_id=action.origin_province_id,
+                target_province_id=action.target_province_id,
+                details_json=json.dumps(action.details, sort_keys=True, separators=(",", ":")),
+                path_node_ids=tuple(order.path_node_ids) if order is not None else (),
+                path_edge_ids=tuple(order.path_edge_ids) if order is not None else (),
+                order_id=str(order.order_id) if order is not None else "",
+                locked_stance=str(order.locked_stance or "") if order is not None else "",
+            )
+        )
+    return tuple(intents)
+
+
+def validate_and_commit_operational_intents(
+    state: CampaignState,
+    faction: Faction,
+    intents: tuple[OperationalIntent, ...] | list[OperationalIntent],
+) -> list[StrategicAction]:
+    """Use truth only to validate/commit intents in their existing order."""
+    actions: list[StrategicAction] = []
+    batch_reservations: dict[str, int] = {}
+    for intent in intents:
+        details = json.loads(intent.details_json)
+        if intent.action != "operational_move":
+            actions.append(
+                StrategicAction(
+                    battalion_id=intent.battalion_id,
+                    action=intent.action,
+                    origin_province_id=intent.origin_province_id,
+                    target_province_id=intent.target_province_id,
+                    details=details,
+                )
+            )
+            continue
+        force = state.strategic_formations.get(intent.formation_id)
+        if force is None or force.faction != faction:
+            actions.append(
+                StrategicAction(
+                    battalion_id=intent.battalion_id,
+                    action="reject",
+                    origin_province_id=intent.origin_province_id,
+                    target_province_id=intent.target_province_id,
+                    details={"formation_id": intent.formation_id, "reason": "route_unavailable"},
+                )
+            )
+            continue
+        previous_order = copy.deepcopy(force.move_order)
+        previous_reservations = dict(batch_reservations)
+        try:
+            order = issue_move_order(
+                state,
+                intent.formation_id,
+                path_node_ids=list(intent.path_node_ids),
+                path_edge_ids=list(intent.path_edge_ids),
+                order_id=intent.order_id,
+            )
+            commit_formation_move_order(
+                state,
+                intent.formation_id,
+                locked_stance=intent.locked_stance or None,
+                batch_reservations=batch_reservations,
+            )
+            details["order_id"] = order.order_id
+            actions.append(
+                StrategicAction(
+                    battalion_id=intent.battalion_id,
+                    action="operational_move",
+                    origin_province_id=intent.origin_province_id,
+                    target_province_id=intent.target_province_id,
+                    details=details,
+                )
+            )
+        except ValueError:
+            force.move_order = previous_order
+            batch_reservations.clear()
+            batch_reservations.update(previous_reservations)
+            actions.append(
+                StrategicAction(
+                    battalion_id=intent.battalion_id,
+                    action="reject",
+                    origin_province_id=intent.origin_province_id,
+                    target_province_id=intent.target_province_id,
+                    details={"formation_id": intent.formation_id, "reason": "route_unavailable"},
+                )
+            )
+    return actions
+
+
 def plan_and_issue_operational_orders(
+    state: CampaignState,
+    faction: Faction,
+    *,
+    seed: int = 0,
+) -> list[StrategicAction]:
+    view = build_operational_planning_view(state, faction)
+    intents = plan_operational_intents(view, faction, seed)
+    return validate_and_commit_operational_intents(state, faction, intents)
+
+
+def _fog_filtered_planning_payload(
+    state: CampaignState,
+    faction: Faction,
+) -> tuple[dict[str, Any], tuple[str, ...]]:
+    from .observation import current_and_last_known_records, observer_factions
+
+    coalition = observer_factions(state, faction)
+    current, stale = current_and_last_known_records(state, faction)
+    payload = copy.deepcopy(state.to_dict())
+    payload["fog_of_war_enabled"] = False
+    payload["knowledge_by_observer"] = {}
+
+    friendly_force_ids = {
+        force.strategic_formation_id
+        for force in state.strategic_formations.values()
+        if force.faction in coalition
+    }
+    friendly_battalion_ids = {
+        battalion_id
+        for force_id in friendly_force_ids
+        for battalion_id in state.strategic_formations[force_id].battalion_ids
+    }
+    payload["strategic_formations"] = {
+        key: value for key, value in payload.get("strategic_formations", {}).items()
+        if key in friendly_force_ids
+    }
+    payload["battalions"] = {
+        key: value for key, value in payload.get("battalions", {}).items()
+        if key in friendly_battalion_ids
+    }
+    payload["commanders"] = {
+        key: value for key, value in payload.get("commanders", {}).items()
+        if value.get("assigned_strategic_formation_id") in friendly_force_ids
+        or value.get("assigned_battalion_id") in friendly_battalion_ids
+    }
+    friendly_template_ids = {
+        force.template_formation_id
+        for force in state.strategic_formations.values()
+        if force.faction in coalition and force.template_formation_id
+    }
+    payload["formations"] = {
+        key: value for key, value in payload.get("formations", {}).items()
+        if key in friendly_template_ids
+    }
+    payload["research_nodes"] = {
+        key: value for key, value in payload.get("research_nodes", {}).items()
+        if Faction(value.get("faction")) in coalition
+    }
+    payload["unit_economy"] = {
+        key: value for key, value in payload.get("unit_economy", {}).items()
+        if Faction(value.get("faction")) in coalition
+    }
+    for faction_id, row in list(payload.get("factions", {}).items()):
+        if Faction(faction_id) in coalition:
+            continue
+        payload["factions"][faction_id] = {
+            "faction": faction_id,
+            "resources": 0,
+            "researched_keys": [],
+            "recruited_pool": [],
+            "reinforcement_pool": [],
+            "income_last_round": 0,
+            "maintenance_last_round": 0,
+            "is_human_controlled": False,
+            "is_eliminated": bool(row.get("is_eliminated", False)),
+        }
+    for province_id, row in payload.get("provinces", {}).items():
+        try:
+            owner = Faction(row.get("owner", "neutral"))
+        except ValueError:
+            owner = Faction.NEUTRAL
+        if owner not in coalition:
+            metadata = row.get("metadata", {})
+            row["metadata"] = {
+                key: value for key, value in metadata.items()
+                if key in {"id_color", "name_source"}
+            }
+            row["fortification"] = 0
+            row["resource_yield"] = 0
+    # Hidden dynamic site progress is not part of the planning view.
+    metadata = payload.get("map_metadata", {})
+    if isinstance(metadata, dict):
+        metadata.pop("operational_site_control", None)
+        metadata.pop("strategic_actor_runtime", None)
+        metadata.pop("actor_content_runtime", None)
+        metadata.pop("last_round_economy", None)
+        metadata.pop("unit_presentations", None)
+
+    graph = load_operational_graph_for_state(state)
+    public_edge_facing: dict[str, str] = {}
+    if graph is not None:
+        for edge in graph.get("edges", []):
+            if not isinstance(edge, dict):
+                continue
+            edge_id = str(edge.get("edge_id") or "")
+            endpoints = sorted(
+                item
+                for item in (
+                    str(edge.get("a") or ""),
+                    str(edge.get("b") or ""),
+                )
+                if item
+            )
+            if edge_id and endpoints:
+                public_edge_facing[edge_id] = endpoints[0]
+
+    hostile_factions = sorted(
+        (item for item in state.factions if Faction(item) not in coalition)
+    )
+    generic_hostile = hostile_factions[0] if hostile_factions else Faction.RUSSIA.value
+    records = list(current.values()) + list(stale)
+    visible_keys: list[str] = sorted(friendly_force_ids)
+    seen_subjects: set[str] = set()
+    for record in sorted(records, key=lambda row: row.record_key):
+        if record.subject_formation_id in seen_subjects:
+            continue
+        seen_subjects.add(record.subject_formation_id)
+        planning_id = (
+            record.subject_formation_id
+            if record.tier.value != "contact"
+            else record.opaque_contact_id
+        )
+        battalion_id = f"planning-{planning_id}"
+        position = None
+        if record.last_seen_node_id:
+            position = {
+                "mode": "at_node", "node_id": record.last_seen_node_id,
+                "edge_id": None, "progress_milli": 0, "facing_node_id": None,
+            }
+        elif (
+            record.last_seen_edge_id
+            and record.last_seen_edge_id in public_edge_facing
+        ):
+            position = {
+                "mode": "on_edge", "node_id": None,
+                "edge_id": record.last_seen_edge_id, "progress_milli": 500,
+                # Contact/identified direction is hidden. Use a public-graph-only
+                # canonical endpoint so the detached planning state remains valid
+                # without encoding the subject's true direction.
+                "facing_node_id": public_edge_facing[record.last_seen_edge_id],
+            }
+        faction_id = record.faction_id or generic_hostile
+        payload["strategic_formations"][planning_id] = {
+            "strategic_formation_id": planning_id,
+            "display_name": record.display_name or "Unidentified contact",
+            "faction": faction_id,
+            "province_id": record.last_seen_province_id,
+            "echelon": record.echelon or "battalion",
+            "commander_id": None,
+            "battalion_ids": [battalion_id],
+            "template_formation_id": "",
+            "stack_order": 0,
+            "movement_state": "observed_contact",
+            "stance": "standard",
+            "actor_id": record.actor_id if record.tier.value != "contact" else "",
+            "condition_summary": 100,
+            "supply_summary": 100,
+            "experience_summary": 0,
+            "is_player_controlled": False,
+            "position": position,
+            "move_order": None,
+            "supplied": True,
+            "cut_off": False,
+            "source_hub_id": None,
+            "route_cost": None,
+            "grace_ticks_remaining": 0,
+            "last_supply_refresh_tick": None,
+            "last_supply_refresh_turn": None,
+            "last_grace_consuming_tick": None,
+            "ambush_ready_tick": None,
+            "recon_capability": False,
+        }
+        payload["battalions"][battalion_id] = {
+            "battalion_id": battalion_id,
+            "faction": faction_id,
+            "province_id": record.last_seen_province_id,
+            "battalion_type": "combined_arms",
+            "roster": [{"unit_name": "observed-contact", "quantity": 1, "stage": "", "category": "unknown", "preserved_objects": []}],
+            "authorized_roster": [{"unit_name": "observed-contact", "quantity": 1, "stage": "", "category": "unknown", "preserved_objects": []}],
+            "formation_id": "",
+            "strategic_formation_id": planning_id,
+            "commander_id": None,
+            "is_player_controlled": False,
+            "movement_remaining": 0,
+            "combat_actions_remaining": 0,
+            "supply": 100,
+            "condition": 100,
+            "experience": 0,
+            "encircled_turns": 0,
+        }
+        visible_keys.append(planning_id)
+    return payload, tuple(sorted(visible_keys))
+
+
+def _plan_and_issue_on_state(
     state: CampaignState,
     faction: Faction,
     *,

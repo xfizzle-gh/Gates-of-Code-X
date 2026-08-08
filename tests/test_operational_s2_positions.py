@@ -296,7 +296,7 @@ class OperationalS2PositionTests(unittest.TestCase):
         bare_reloaded = campaign_from_dict(bare_payload)
         bare_force = next(iter(bare_reloaded.strategic_formations.values()))
         self.assertIsNone(bare_force.position)
-        self.assertEqual(STRATEGIC_FORMATION_SCHEMA_VERSION, bare_reloaded.schema_version)
+        self.assertEqual(11, bare_reloaded.schema_version)
 
     def test_adjacency_move_snaps_only_when_graph_present(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -451,15 +451,14 @@ class OperationalS2PositionTests(unittest.TestCase):
             )
             snapshot = build_frontend_snapshot(state)
             self.assertEqual(FRONTEND_SCHEMA_VERSION, snapshot["schema_version"])
-            self.assertEqual(13, snapshot["schema_version"])
+            self.assertEqual(14, snapshot["schema_version"])
             force_row = snapshot["strategic_formations"][0]
             self.assertEqual(PositionMode.AT_NODE.value, force_row["position"]["mode"])
             self.assertEqual(stable_node_id("a", "anchor"), force_row["position"]["node_id"])
             self.assertEqual([11, 21], force_row["display_pixel"])
             bn_row = next(row for row in snapshot["battalions"] if row["id"] == "bn-1")
             self.assertEqual([11, 21], bn_row["display_pixel"])
-            stacks = build_stack_presentations(state, [])
-            sf = next(iter(stacks["strategic_formations"].values()))
+            sf = next(iter(snapshot["strategic_formation_presentations"].values()))
             self.assertEqual(force_row["position"], sf["position"])
 
     def test_frontend_without_graph_exports_null_position_province_pixel(self) -> None:

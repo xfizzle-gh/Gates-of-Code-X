@@ -52,6 +52,7 @@ def build_parser() -> argparse.ArgumentParser:
     new.add_argument("--codex", required=True)
     new.add_argument("--output", default="campaign.json")
     new.add_argument("--faction", choices=FACTION_CHOICES, default="nato")
+    new.add_argument("--fog-of-war", choices=["on", "off"], default="off")
     show = sub.add_parser("show")
     show.add_argument("campaign")
     move = sub.add_parser("move")
@@ -165,6 +166,7 @@ def main(argv: list[str] | None = None) -> int:
         state = load_bundled_scenario()
         state.code_x_directory = str(Path(args.codex).resolve())
         set_player_faction(state, Faction(args.faction))
+        state.fog_of_war_enabled = args.fog_of_war == "on"
         catalog = CodeXCatalogScanner().scan(args.codex)
         populate_starter_rosters(state, catalog)
         initialize_economy(state, catalog)
@@ -378,7 +380,6 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "export-frontend":
         state = load_campaign(args.campaign)
         output = write_frontend_snapshot(state, args.output, campaign_path=args.campaign)
-        save_campaign(state, args.campaign)
         print(output)
         return 0
     if args.command == "apply-frontend":
