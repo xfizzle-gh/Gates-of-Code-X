@@ -1,0 +1,128 @@
+name: OpenGS Gate 3 prototype
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/opengs-gate3-prototype.yml"
+      - "tools/opengs_eval/gate3_*"
+      - "tests/test_opengs_gate3_prototype.py"
+      - "docs/research/opengs-evaluation/gate_3_locked_plan.md"
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    name: ${{ matrix.os }} Gate 3 contracts
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.9"
+          cache: pip
+      - name: Install pinned dependencies
+        run: python -m pip install numpy==2.3.5 pillow==12.0.0 scipy==1.16.3 shapely==2.1.2 pyproj==3.7.2
+      - name: Compile Gate 3
+        run: python -m py_compile tools/opengs_eval/gate3_core.py tools/opengs_eval/gate3_inputs.py tools/opengs_eval/gate3_reports.py tools/opengs_eval/gate3_package.py tools/opengs_eval/gate3_prototype.py tests/test_opengs_gate3_prototype.py
+      - name: Validate locked configuration
+        run: python tools/opengs_eval/gate3_prototype.py validate-config tools/opengs_eval/gate3_natural_earth_config.json
+      - name: Run adversarial Gate 3 contracts
+        run: python -m unittest tests.test_opengs_gate3_prototype -v
+
+  prototype:
+    name: ${{ matrix.os }} full 3514-scale prototype
+    needs: contracts
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Gates of CodeX
+        uses: actions/checkout@v4
+      - name: Checkout pinned Natural Earth
+        uses: actions/checkout@v4
+        with:
+          repository: nvkelso/natural-earth-vector
+          ref: f1890d9f152c896d250a77557a5751a93d494776
+          path: build/natural-earth
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.9"
+          cache: pip
+      - name: Install pinned dependencies
+        run: python -m pip install numpy==2.3.5 pillow==12.0.0 scipy==1.16.3 shapely==2.1.2 pyproj==3.7.2
+      - name: Build two clean end-to-end candidates
+        run: >-
+          python tools/opengs_eval/gate3_prototype.py run
+          tools/opengs_eval/gate3_natural_earth_config.json
+          --natural-earth-root build/natural-earth
+          --output build/gate3-candidate
+      - name: Strictly inspect published Gate 3 package
+        run: python tools/opengs_eval/gate3_prototype.py inspect-output build/gate3-candidate
+      - name: Upload Gate 3 package
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate3-${{ runner.os }}
+          path: build/gate3-candidate/
+          if-no-files-found: error
+
+  parity:
+    name: Linux and Windows Gate 3 byte parity
+    needs: prototype
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.9"
+          cache: pip
+      - name: Install pinned dependencies
+        run: python -m pip install numpy==2.3.5 pillow==12.0.0 scipy==1.16.3 shapely==2.1.2 pyproj==3.7.2
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: gate3-*
+          path: build/downloads
+      - name: Compare complete authoritative packages
+        run: >-
+          python tools/opengs_eval/gate3_prototype.py compare-runs
+          build/downloads/gate3-Linux
+          build/downloads/gate3-Windows
+
+  godot-runtime:
+    name: Isolated Gate 3 candidate loads in existing PolygonMap
+    needs: prototype
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: gate3-Linux
+          path: build/gate3-runtime
+      - name: Install Godot 4.7
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT_VERSION=4.7-stable
+          curl -fsSL -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip
+          GODOT_BIN="$(find . -maxdepth 1 -type f -name 'Godot_v*_linux.x86_64' | head -n 1)"
+          install -m 755 "$GODOT_BIN" "$HOME/godot"
+      - name: Import Godot project
+        run: "$HOME/godot" --headless --path godot --import --quit-after 1
+      - name: Preserve Earth3 runtime behavior
+        run: >-
+          "$HOME/godot" --headless --path godot --audio-driver Dummy
+          -s res://scripts/tools/earth3_polygon_smoke.gd
+      - name: Load every real Gate 3 land, water, multipart, and hole anchor
+        run: >-
+          "$HOME/godot" --headless --path godot --audio-driver Dummy
+          -s res://scripts/tools/opengs_gate2_polygon_smoke.gd --
+          --manifest="$(pwd)/build/gate3-runtime/candidate/map_manifest.json"
