@@ -108,12 +108,16 @@ def compute_movement_intervals(
     hostiles participate in edge cross/catch-up detection (they never move in
     the normal application phase).
     """
+    from .operational_contact import formation_is_combat_capable
+
     intervals: list[MovementInterval] = []
     active_ids: set[str] = set()
     for force in sorted(
         state.strategic_formations.values(),
         key=lambda value: value.strategic_formation_id,
     ):
+        if not formation_is_combat_capable(state, force):
+            continue
         order = force.move_order
         if order is None or order.status != MoveOrderStatus.ACTIVE.value:
             continue
@@ -127,6 +131,8 @@ def compute_movement_intervals(
         state.strategic_formations.values(),
         key=lambda value: value.strategic_formation_id,
     ):
+        if not formation_is_combat_capable(state, force):
+            continue
         if force.strategic_formation_id in active_ids:
             continue
         stationary = _stationary_on_edge_interval(
@@ -201,7 +207,11 @@ def detect_swept_contacts(
         if item.stationary_node_id:
             by_node_static.setdefault(item.stationary_node_id, []).append(item)
     # Also include non-movers already at nodes from state.
-    from .operational_contact import formation_at_node_id, formations_at_node
+    from .operational_contact import (
+        combat_capable_formations_at_node,
+        formation_at_node_id,
+        formation_is_combat_capable,
+    )
 
     occupied_nodes = {
         nid
@@ -209,7 +219,7 @@ def detect_swept_contacts(
         if (nid := formation_at_node_id(force))
     }
     for node_id in sorted(occupied_nodes):
-        present = formations_at_node(state, node_id)
+        present = combat_capable_formations_at_node(state, node_id)
         if len(present) < 2:
             continue
         has_hostile = False
@@ -285,14 +295,23 @@ def detect_swept_contacts(
         key=lambda kv: (kv[0][0], kv[0][1], kv[0][2]),
     ):
         group = sorted(group, key=lambda value: value.formation_id)
+        combat_arrivals = [
+            item
+            for item in group
+            if (
+                force := state.strategic_formations.get(item.formation_id)
+            ) is not None
+            and formation_is_combat_capable(state, force)
+        ]
         # Occupants already at node (entry contact against existing hostiles).
         already = {
-            f.strategic_formation_id: f for f in formations_at_node(state, node_id)
+            f.strategic_formation_id: f
+            for f in combat_capable_formations_at_node(state, node_id)
         }
         # Simultaneous: 2+ arrivals at same exact time with hostile pair among them
         # or vs already-present hostiles.
-        combined_ids = {item.formation_id for item in group} | set(already)
-        if len(combined_ids) < 2 and len(group) < 1:
+        combined_ids = {item.formation_id for item in combat_arrivals} | set(already)
+        if len(combined_ids) < 2 and len(combat_arrivals) < 1:
             continue
 
         # Build seed hostile pair using destination province owner-defends.
@@ -321,9 +340,9 @@ def detect_swept_contacts(
             continue
 
         # Classify: all-arrival simultaneous vs entry against occupant.
-        arrival_ids = {item.formation_id for item in group}
+        arrival_ids = {item.formation_id for item in combat_arrivals}
         already_ids = set(already)
-        if len(group) >= 2 and _hostile_in_set(state, group):
+        if len(combat_arrivals) >= 2 and _hostile_in_set(state, combat_arrivals):
             kind = ENCOUNTER_KIND_NODE_SIMULTANEOUS
             participants = tuple(sorted(arrival_ids | already_ids))
         elif already_ids and any(
@@ -341,7 +360,7 @@ def detect_swept_contacts(
         ):
             kind = ENCOUNTER_KIND_NODE_CONTACT
             participants = tuple(sorted(arrival_ids | already_ids))
-        elif len(group) >= 2:
+        elif len(combat_arrivals) >= 2:
             kind = ENCOUNTER_KIND_NODE_SIMULTANEOUS
             participants = tuple(sorted(arrival_ids | already_ids))
         else:
@@ -515,16 +534,16 @@ def apply_simultaneous_node_arrivals(
     previous legal node and are blocked (no active retry after the battle).
     """
     from .operational_contact import (
-        formations_at_node,
-        max_friendly_formations_per_node,
-        try_create_node_contact_battle,
+        combat_capable_formations_at_node,
         choose_static_attacker_defender,
+        try_create_node_contact_battle,
     )
 
     node_id = contact.node_id
     by_id = {item.formation_id: item for item in intervals}
     already = {
-        f.strategic_formation_id: f for f in formations_at_node(state, node_id)
+        f.strategic_formation_id: f
+        for f in combat_capable_formations_at_node(state, node_id)
     }
     # Only arrivals at this node at the selected contact's exact rational time.
     # Later same-node arrivals this tick stay put and do not join the battle.
@@ -635,10 +654,11 @@ def reject_overflow_arrivals_at_node(
     Used when an earlier contact (e.g. t=0 static) already opened a battle at the
     node so later arrivals this tick never enter, but capacity denials still apply.
     """
-    from .operational_contact import formations_at_node
+    from .operational_contact import combat_capable_formations_at_node
 
     already = {
-        f.strategic_formation_id: f for f in formations_at_node(state, node_id)
+        f.strategic_formation_id: f
+        for f in combat_capable_formations_at_node(state, node_id)
     }
     by_id = {item.formation_id: item for item in intervals}
     arrivals = [
@@ -738,9 +758,20 @@ def expand_edge_participants_exact(
     seed_ids: tuple[str, ...],
 ) -> tuple[str, ...]:
     """Include seeds plus allies already at the exact edge+canonical progress."""
-    ids = set(seed_ids)
+    from .operational_contact import formation_is_combat_capable
+
+    ids = {
+        formation_id
+        for formation_id in seed_ids
+        if (
+            force := state.strategic_formations.get(formation_id)
+        ) is not None
+        and formation_is_combat_capable(state, force)
+    }
     for force in state.strategic_formations.values():
         if force.strategic_formation_id in ids:
+            continue
+        if not formation_is_combat_capable(state, force):
             continue
         canonical = formation_canonical_on_edge(force, edge=edge)
         if canonical is None or canonical != progress_canonical:
