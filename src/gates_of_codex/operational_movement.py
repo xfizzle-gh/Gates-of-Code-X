@@ -281,6 +281,8 @@ def commit_move_orders_detailed(
             committed_turn=turn,
             locked_stance=locked,
         )
+        if locked != FormationStance.AMBUSH.value:
+            force.ambush_ready_tick = None
         committed_ids.append(force.strategic_formation_id)
     return {"committed": committed_ids, "rejected": rejected}
 
@@ -326,6 +328,8 @@ def commit_formation_move_order(
         committed_turn=int(state.turn_number),
         locked_stance=locked,
     )
+    if locked != FormationStance.AMBUSH.value:
+        force.ambush_ready_tick = None
     # Committed order is live in state; callers must not also bump batch_reservations.
 
 
@@ -632,6 +636,14 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
                         atk_interval.origin_province_id if atk_interval else None
                     ),
                     participant_ids=expanded,
+                    initiating_formation_ids=tuple(
+                        sorted(
+                            item.formation_id
+                            for item in intervals
+                            if item.formation_id in expanded
+                            and item.velocity_canonical != 0
+                        )
+                    ),
                     edge=edge,
                 )
                 if battle is None:
@@ -761,6 +773,13 @@ def advance_operational_tick(state: CampaignState) -> dict[str, Any]:
     global_tick = int(clock["global_tick"]) + 1
     tick_in_turn = (int(clock["tick_in_turn"]) + 1) % ticks_n
     set_operational_clock(state, global_tick=global_tick, tick_in_turn=tick_in_turn)
+    from .operational_ambush import refresh_ambush_readiness
+
+    refresh_ambush_readiness(
+        state,
+        completed_tick=global_tick,
+        moved_formation_ids=moved,
+    )
     from .operational_supply import refresh_operational_supply
 
     supply_report = refresh_operational_supply(
@@ -1038,6 +1057,7 @@ def _advance_formation_one_tick(
             dest_node,
             create_battle=True,
             origin_province_id=origin_province_id,
+            origin_node_id=origin_node,
         )
         if contact["reason"] == "enemy_contact":
             force.move_order = _as_blocked(order)
@@ -1217,6 +1237,7 @@ def destination_reservation_count(
     from .diplomacy import are_allied
     from .operational_contact import (
         formation_at_node_id,
+        formation_is_combat_capable,
         friendly_formations_at_node,
     )
 
@@ -1243,6 +1264,8 @@ def destination_reservation_count(
         if excluding_formation_id and oid == excluding_formation_id:
             continue
         if oid in claimed:
+            continue
+        if not formation_is_combat_capable(state, other):
             continue
         if other.faction != faction and not are_allied(state, faction, other.faction):
             continue

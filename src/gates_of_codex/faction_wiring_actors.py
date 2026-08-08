@@ -43,7 +43,12 @@ class FactionActorMixin:
         if actor.get("playable", False) and not any(item["materializable"] for item in units):
             problems.append(ResolutionProblem("error", actor_id, "", "playable actor has no materializable units"))
 
-        research_nodes = self._compile_actor_research(actor, combined_units, selected_research)
+        research_nodes = self._compile_actor_research(
+            actor,
+            combined_units,
+            selected_research,
+            components,
+        )
         if actor.get("playable", False) and not research_nodes:
             problems.append(ResolutionProblem("error", actor_id, "", "playable actor resolved to an empty research tree"))
 
@@ -80,6 +85,14 @@ class FactionActorMixin:
             "roster_class": actor["roster_class"],
             "research_mode": actor["research"]["mode"],
             "components": list(actor["components"]),
+            "component_metadata": [
+                {
+                    "component_id": component_id,
+                    "provenance_policy": components[component_id].provenance_policy,
+                    "research_label": components[component_id].research_label,
+                }
+                for component_id in actor["components"]
+            ],
             "unit_count": len(units),
             "modern_unit_count": modern_count,
             "legacy_unit_count": legacy_count,
@@ -99,6 +112,7 @@ class FactionActorMixin:
         actor: Mapping[str, Any],
         units: Mapping[str, tuple[SourceUnit, str]],
         selected_research: Mapping[str, tuple[SourceResearchNode, str]],
+        components: Mapping[str, _ResolvedComponent],
     ) -> list[ResolvedResearchNode]:
         actor_id = actor["actor_id"]
         mode = actor["research"]["mode"]
@@ -143,15 +157,37 @@ class FactionActorMixin:
         already_unlocked = {name for node in nodes.values() for name in node.unlock_units}
         extras = [(name, value) for name, value in units.items() if name not in already_unlocked]
         if mode in {"generated", "hybrid"} or extras:
-            category_nodes: dict[tuple[str, int], str] = {}
+            category_nodes: dict[tuple[str, str, int], str] = {}
+            component_roots: dict[str, str] = {}
             for name, (unit, component_id) in sorted(extras, key=lambda item: (item[1][0].tier, _category_rank(item[1][0].category), item[0])):
                 tier = max(1, int(unit.tier))
                 category = unit.category if unit.category in CATEGORY_COSTS else "unknown"
-                category_key = category_nodes.get((category, tier))
+                component = components[component_id]
+                scope = component_id if component.research_label else ""
+                parent_root = root_key
+                if component.research_label:
+                    parent_root = component_roots.get(component_id, "")
+                    if not parent_root:
+                        parent_root = f"actor:{actor_id}:component:{_slug(component_id)}"
+                        component_roots[component_id] = parent_root
+                        nodes[parent_root] = ResolvedResearchNode(
+                            key=parent_root,
+                            actor_id=actor_id,
+                            node_type="component",
+                            display_name=component.research_label,
+                            cost=0,
+                            prerequisites=[root_key],
+                            component_id=component_id,
+                        )
+                category_key = category_nodes.get((scope, category, tier))
                 if category_key is None:
-                    category_key = f"actor:{actor_id}:generated:{_slug(category)}:tier-{tier}"
-                    category_nodes[(category, tier)] = category_key
-                    previous = category_nodes.get((category, tier - 1), root_key)
+                    scope_segment = f":{_slug(component_id)}" if scope else ""
+                    category_key = (
+                        f"actor:{actor_id}:generated{scope_segment}:"
+                        f"{_slug(category)}:tier-{tier}"
+                    )
+                    category_nodes[(scope, category, tier)] = category_key
+                    previous = category_nodes.get((scope, category, tier - 1), parent_root)
                     nodes[category_key] = ResolvedResearchNode(
                         key=category_key,
                         actor_id=actor_id,
@@ -161,7 +197,8 @@ class FactionActorMixin:
                         prerequisites=[previous],
                         component_id=component_id,
                     )
-                unit_key = f"actor:{actor_id}:generated:unit:{_slug(name)}"
+                unit_scope = f":{_slug(component_id)}" if scope else ""
+                unit_key = f"actor:{actor_id}:generated{unit_scope}:unit:{_slug(name)}"
                 nodes[unit_key] = ResolvedResearchNode(
                     key=unit_key,
                     actor_id=actor_id,

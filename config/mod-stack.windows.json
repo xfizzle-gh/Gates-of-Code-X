@@ -1,11 +1,36 @@
 {
-  "name": "Code:X with AI Overhaul",
-  "description": "Ordered from lowest to highest load priority.",
+  "name": "Gates of Code:X live stack",
+  "description": "Portable, fail-closed stack ordered from lowest to highest load priority.",
   "layers": [
-    {"name": "Vanilla", "path": "E:\\Steam\\steamapps\\common\\Call to Arms - Gates of Hell\\resource"},
-    {"name": "West81", "workshop_id": "2897299509", "path": "E:\\Steam\\steamapps\\workshop\\content\\400750\\2897299509\\resource"},
-    {"name": "Code:X", "workshop_id": "3261086933", "path": "E:\\Steam\\steamapps\\workshop\\content\\400750\\3261086933"},
-    {"name": "Code:X AI Overhaul", "workshop_id": "3636883799", "path": "E:\\Steam\\steamapps\\workshop\\content\\400750\\3636883799"},
-    {"name": "Gates of Code:X", "workshop_id": "3700832981", "path": "E:\\Steam\\steamapps\\workshop\\content\\400750\\3700832981"}
+    {
+      "role": "vanilla",
+      "name": "Vanilla",
+      "path": "${GOH_VANILLA_ROOT}",
+      "sentinels": ["resource/entity", "resource/gamelogic.pak"]
+    },
+    {
+      "role": "west81",
+      "name": "West81",
+      "path": "${WEST81_ROOT}",
+      "accepted_mod_names": ["West-81", "West81"]
+    },
+    {
+      "role": "codex",
+      "name": "Code:X",
+      "path": "${CODEX_ROOT}",
+      "accepted_mod_names": ["Code-X", "Code:X"]
+    },
+    {
+      "role": "codex_ai_overhaul",
+      "name": "Code:X AI Overhaul",
+      "path": "${CODEX_AI_OVERHAUL_ROOT}",
+      "accepted_mod_names": ["CodeX Conquest AI Overhaul 1.5"]
+    },
+    {
+      "role": "gates_codex",
+      "name": "Gates of Code:X",
+      "path": "${GATES_CODEX_ROOT}",
+      "accepted_mod_names": ["Gates of CodeX", "Gates of Code:X"]
+    }
   ]
 }

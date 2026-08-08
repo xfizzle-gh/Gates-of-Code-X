@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import asdict, dataclass, field
+from enum import Enum
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -19,6 +20,22 @@ CATEGORY_COSTS = {
 }
 
 
+class ReferenceKind(str, Enum):
+    VEHICLE_ENTITY = "vehicle_entity"
+    PURCHASE_UNIT = "purchase_unit"
+    STRATEGIC_CALL_IN = "strategic_call_in"
+    INTERACTION_OBJECT = "interaction_object"
+
+
+@dataclass(frozen=True, slots=True)
+class DefinitionReference:
+    identifier: str
+    kind: ReferenceKind
+    source: str
+    line: int
+    column: int
+
+
 @dataclass(slots=True)
 class SourceUnit:
     name: str
@@ -28,6 +45,7 @@ class SourceUnit:
     members: dict[str, int] = field(default_factory=dict)
     vehicles: list[str] = field(default_factory=list)
     actions: list[str] = field(default_factory=list)
+    definition_references: list[DefinitionReference] = field(default_factory=list)
     source_files: list[str] = field(default_factory=list)
     source_layer: str = ""
     source_priority: int = -1
@@ -119,6 +137,10 @@ def _merge_unit(base: SourceUnit | None, overlay: SourceUnit) -> SourceUnit:
         members=dict(overlay.members) if overlay.members else dict(base.members),
         vehicles=list(overlay.vehicles) if overlay.vehicles else list(base.vehicles),
         actions=list(dict.fromkeys([*base.actions, *overlay.actions])),
+        definition_references=list(dict.fromkeys([
+            *base.definition_references,
+            *overlay.definition_references,
+        ])),
         source_files=list(dict.fromkeys([*base.source_files, *overlay.source_files])),
         source_layer=overlay.source_layer or base.source_layer,
         source_priority=max(base.source_priority, overlay.source_priority),
@@ -137,6 +159,7 @@ def _copy_unit(unit: SourceUnit) -> SourceUnit:
         members=dict(unit.members),
         vehicles=list(unit.vehicles),
         actions=list(unit.actions),
+        definition_references=list(unit.definition_references),
         source_files=list(unit.source_files),
         source_layer=unit.source_layer,
         source_priority=unit.source_priority,

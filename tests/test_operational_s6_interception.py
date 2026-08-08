@@ -814,6 +814,141 @@ class OperationalS6InterceptionTests(unittest.TestCase):
             self.assertEqual(PositionMode.AT_NODE.value, x.position.mode)
             self.assertEqual(na, x.position.node_id)
 
+    def test_multi_edge_player_order_stops_at_first_hostile_node(self) -> None:
+        """A committed player route a→b→c cannot pass through Russia at b."""
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary), _graph(ab_cost=1000))
+            na, nb, nc = stable_node_id("a"), stable_node_id("b"), stable_node_id("c")
+            edge_ab = stable_edge_id("corridor", na, nb)
+            edge_bc = stable_edge_id("corridor", nb, nc)
+            issue_move_order(
+                state,
+                "sf-n",
+                path_node_ids=[na, nb, nc],
+                path_edge_ids=[edge_ab, edge_bc],
+                order_id="player-through-hostile",
+            )
+            commit_move_orders(state)
+            activate_committed_orders(state)
+
+            report = advance_operational_tick(state)
+
+            self.assertEqual("node_contact", report.get("swept_kind"))
+            assert state.pending_battle is not None
+            self.assertEqual(nb, state.pending_battle.encounter_node_id)
+            mover = state.strategic_formations["sf-n"]
+            assert mover.position is not None and mover.move_order is not None
+            self.assertEqual(PositionMode.AT_NODE.value, mover.position.mode)
+            self.assertEqual(nb, mover.position.node_id)
+            self.assertNotEqual(nc, mover.position.node_id)
+            self.assertEqual(MoveOrderStatus.BLOCKED.value, mover.move_order.status)
+
+    def test_simultaneous_arrivals_choose_one_deterministic_node_contact(self) -> None:
+        """Opponents reaching b together always produce the same single contact."""
+        def run(root: Path, order_ids: tuple[str, str]) -> tuple:
+            root.mkdir(parents=True)
+            state = _state(root, _graph(ab_cost=1000))
+            na, nb, nc = stable_node_id("a"), stable_node_id("b"), stable_node_id("c")
+            edge_ab = stable_edge_id("corridor", na, nb)
+            edge_bc = stable_edge_id("corridor", nb, nc)
+            state.strategic_formations["sf-r"].position = FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value, node_id=nc, progress_milli=0
+            )
+            state.strategic_formations["sf-r"].province_id = "c"
+            state.battalions["bn-r"].province_id = "c"
+            routes = {
+                "sf-n": ([na, nb], [edge_ab]),
+                "sf-r": ([nc, nb], [edge_bc]),
+            }
+            for force_id in order_ids:
+                nodes, edges = routes[force_id]
+                issue_move_order(
+                    state,
+                    force_id,
+                    path_node_ids=nodes,
+                    path_edge_ids=edges,
+                    order_id=f"simultaneous-{force_id}",
+                )
+            commit_move_orders(state)
+            activate_committed_orders(state)
+            report = advance_operational_tick(state)
+            assert state.pending_battle is not None
+            battle = state.pending_battle
+            positions = tuple(
+                (
+                    force_id,
+                    state.strategic_formations[force_id].position.mode,
+                    state.strategic_formations[force_id].position.node_id,
+                )
+                for force_id in ("sf-n", "sf-r")
+            )
+            return (
+                report["swept_kind"],
+                battle.encounter_kind,
+                battle.encounter_node_id,
+                tuple(sorted(
+                    participant.battalion_id
+                    for participant in battle.attacking_participants + battle.defending_participants
+                )),
+                positions,
+            )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            forward = run(root / "forward", ("sf-n", "sf-r"))
+            reverse = run(root / "reverse", ("sf-r", "sf-n"))
+
+            self.assertEqual(forward, reverse)
+            self.assertEqual(
+                (ENCOUNTER_KIND_NODE_SIMULTANEOUS, ENCOUNTER_KIND_NODE_SIMULTANEOUS),
+                forward[:2],
+            )
+            self.assertEqual(stable_node_id("b"), forward[2])
+            self.assertEqual(("bn-n", "bn-r"), forward[3])
+
+    def test_pending_battle_blocks_a_later_order_without_creating_second_battle(self) -> None:
+        """A pending static battle freezes another active formation for the whole tick."""
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary), _graph(ab_cost=1000))
+            na, nb = stable_node_id("a"), stable_node_id("b")
+            edge_ab = stable_edge_id("corridor", na, nb)
+            # Create the t=0 static contact at b.
+            state.strategic_formations["sf-n"].position = FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value, node_id=nb, progress_milli=0
+            )
+            state.strategic_formations["sf-n"].province_id = "b"
+            state.battalions["bn-n"].province_id = "b"
+            # A separate NATO formation would otherwise move into the same node.
+            _add_force(state, "sf-late", "bn-late", Faction.NATO, "a")
+            issue_move_order(
+                state,
+                "sf-late",
+                path_node_ids=[na, nb],
+                path_edge_ids=[edge_ab],
+                order_id="late-after-static-contact",
+            )
+            commit_move_orders(state)
+            activate_committed_orders(state)
+
+            first = advance_operational_tick(state)
+            assert state.pending_battle is not None
+            battle_id = state.pending_battle.battle_id
+            late = state.strategic_formations["sf-late"]
+            assert late.position is not None
+            self.assertEqual(battle_id, first["battle_id"])
+            self.assertEqual("node_contact", state.pending_battle.encounter_kind)
+            self.assertEqual(nb, state.pending_battle.encounter_node_id)
+            self.assertEqual(PositionMode.AT_NODE.value, late.position.mode)
+            self.assertEqual(na, late.position.node_id)
+
+            second = advance_operational_tick(state)
+
+            self.assertFalse(second["advanced"])
+            self.assertEqual("pending_battle", second["reason"])
+            assert state.pending_battle is not None
+            self.assertEqual(battle_id, state.pending_battle.battle_id)
+            self.assertEqual(na, late.position.node_id)
+
     def test_encounter_contract_rejects_mixed_shapes(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             state = _state(Path(temporary), _graph(ab_cost=2000))
