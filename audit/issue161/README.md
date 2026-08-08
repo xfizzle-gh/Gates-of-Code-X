@@ -8,11 +8,11 @@ It adds no gameplay or wrapper implementation changes.
 
 Validated audit-runner head:
 
-`e7d0d3d540807db3a001bd8ac61be2444d75697d`
+`424709e3c24cd274df7d37ca33259e27b7ee41b4`
 
 Dedicated preflight run:
 
-`31276317796`
+`31276350695`
 
 ## Prepare and launch
 
