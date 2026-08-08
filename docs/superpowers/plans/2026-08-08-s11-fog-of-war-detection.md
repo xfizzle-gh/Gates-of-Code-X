@@ -4,17 +4,18 @@
 
 **Goal:** Add deterministic observer-scoped Fog of War, last-known contacts, AI information parity, and Godot presentation without changing true campaign simulation authority or breaking Fog-off legacy campaigns.
 
-**Architecture:** Python stores one authoritative campaign plus deterministic coalition-scoped knowledge records. S11 allocates campaign schema 6 because current pre-S11 saves already use schema 5. Persisted knowledge refresh occurs only inside authoritative mutation transactions immediately before atomic save. Snapshot and AI projection are pure. AI planning uses an immutable restricted view; a separate executor validates and commits already-ranked intents. Godot consumes only filtered frontend schema 14.
+**Architecture:** Python stores one authoritative campaign plus deterministic coalition-scoped knowledge records. S11 allocates campaign schema 11 because exact-base inspection shows pre-S11 systems already occupy campaign schemas 6 through 10. Persisted knowledge refresh occurs only inside authoritative mutation transactions immediately before atomic save. Snapshot and AI projection are pure. AI planning uses an immutable restricted view; a separate executor validates and commits already-ranked intents. Godot consumes only filtered frontend schema 14.
 
 **Tech stack:** Python 3.11+, dataclasses, deterministic JSON persistence, existing operational graph authority, unittest/pytest, Godot 4.7 GDScript, existing SceneTree and screenshot harnesses.
 
 ## Global constraints
 
-- Initial docs base is exact S10 merge `cbef4db96f04d26f4127278041f717691712d7eb`.
-- Follow-up branches start from the exact accepted merge of the preceding S11 PR.
+- PR A merged as exact commit `316edea97c24acf3490f2a0db9881ac1cb141569`.
+- The schema-allocation correction branch starts from that exact PR-A merge.
+- Runtime PR B must be recreated only from the exact accepted merge of the schema-allocation correction.
 - True `CampaignState` remains the only simulation state.
-- Campaign schema advances to 6 only in PR B.
-- Existing schema 4-and-earlier and pre-S11 schema-5 saves migrate separately and both default Fog Off.
+- Campaign schema advances to 11 only in PR B; schemas 6 through 10 remain valid pre-S11 allocations.
+- Every pre-S11 schema 10-or-earlier save with the complete S11 field set absent migrates to schema 11 with Fog Off and empty knowledge.
 - Frontend schema advances from 13 to 14 only in PR B.
 - Fog Off preserves current campaign behavior and compatibility.
 - Fog On supports exactly one human-controlled faction; hotseat/remote multiplayer requires Fog Off.
@@ -64,7 +65,7 @@ Duplicate source IDs count once. Non-contact detection caps at `assessed`. Prepa
 
 ---
 
-## PR A: Lock the design contract
+## PR A: Lock the design contract — merged
 
 **Branch:** `feat/s11-fog-of-war-design`
 
@@ -87,41 +88,67 @@ Lock exact recon and site authority, source combination, mutation-only refresh, 
 
 - [x] **Step 4: Address compatibility review `4889771055`**
 
+The first correction allocated schema 6 after identifying schema 5 as pre-S11. Exact-base implementation inspection later proved that schemas 6 through 10 were also already allocated.
+
+- [x] **Step 5: Discover the exact-base schema collision**
+
+After PR #167 merged, the required PR-B pre-implementation inspection proved that pre-S11 campaign systems already occupy schemas 6 through 10. The empty PR-B shell was stopped before runtime or test changes.
+
+- [x] **Step 6: Stop the empty PR-B shell**
+
+PR #171 was opened from the exact PR-A merge, changed no runtime or test files, documented the collision, and was closed unmerged with an empty net diff.
+
+---
+
+## PR A.1: Correct campaign schema allocation
+
+**Branch:** `fix/s11-schema-11-design`
+
+**Exact base:** `316edea97c24acf3490f2a0db9881ac1cb141569`
+
+**Files:**
+
+- Modify only: `docs/superpowers/specs/2026-08-08-s11-fog-of-war-detection-design.md`
+- Modify only: `docs/superpowers/plans/2026-08-08-s11-fog-of-war-detection.md`
+
+- [x] **Step 1: Lock the corrected schema contract**
+
 Lock all of the following in both documents:
 
-1. S11 campaign schema is 6, not 5;
-2. schema 4-and-earlier migrates to schema 6 with Fog Off, empty knowledge, and whitelist-derived recon;
-3. existing pre-S11 schema 5 with all S11 fields absent is valid legacy state and migrates identically;
-4. missing S11 fields in schema 5 are not treated as malformed schema 6;
-5. schema 6 requires the complete S11 field set;
-6. Fog-off legacy compatibility remains unchanged;
-7. overlapping alliances are accepted when Fog is Off, knowledge is empty, and no observer scope is requested;
-8. overlapping alliances are rejected when Fog is On, S11 records exist, or observer scope/projection is requested;
-9. migration and CLI tests cover every compatibility path.
+1. S11 campaign schema is 11, the next unused monotonic value;
+2. schemas 6 through 10 remain valid pre-S11 allocations;
+3. every schema 10-or-earlier save with the complete S11 field set absent migrates to schema 11;
+4. all such migrations default Fog Off, empty knowledge, and whitelist-derived recon;
+5. any S11 field in schema 10 or earlier fails with `unexpected_s11_fields_in_pre_s11_schema`;
+6. schema 11 and later require the complete S11 field set;
+7. Fog-off legacy compatibility remains unchanged;
+8. overlapping alliances are accepted when Fog is Off, knowledge is empty, and no observer scope is requested;
+9. overlapping alliances are rejected when Fog is On, S11 records exist, or observer scope/projection is requested;
+10. migration and CLI tests cover every occupied pre-S11 schema 4 through 10 plus the complete range rule.
 
-- [ ] **Step 5: Inspect the docs-only diff**
+- [ ] **Step 2: Inspect the docs-only diff**
 
 Confirm exactly the two S11 Markdown files differ and no runtime, test, workflow, Godot, generated, evidence, or PR-B files changed.
 
-- [ ] **Step 6: Run exact-head CI**
+- [ ] **Step 3: Run exact-head CI**
 
 Record exact corrected head and workflow run. Full repository CI remains required.
 
-- [ ] **Step 7: Reply to the two review threads**
+- [ ] **Step 4: Request exact-head independent review**
 
-Cite the exact corrected head and locked sections. Leave all threads unresolved for independent confirmation.
+Post the exact corrected head, exact base, two-file scope, schema-allocation evidence, and required migration tests. Do not begin runtime work.
 
-- [ ] **Step 8: Request exact-head re-review and stop**
+- [ ] **Step 5: Stop after the correction review**
 
-Keep PR #167 draft and unmerged. Do not create PR B until PR A is accepted and merged.
+Keep PR A.1 draft and unmerged. Do not recreate PR B until PR A.1 is independently accepted and merged.
 
 ---
 
 ## PR B: Add Python observation authority and AI parity
 
-**Branch after PR A merge:** `feat/s11-fog-of-war-authority`
+**Branch after PR A.1 merge:** recreate `feat/s11-fog-of-war-authority` from the exact PR-A.1 merge commit. Do not reuse the closed empty PR #171 branch.
 
-### Task B1: Add schema-6 persisted models and conditional observer-scope validation
+### Task B1: Add schema-11 persisted models and conditional observer-scope validation
 
 **Files:**
 
@@ -138,7 +165,7 @@ Keep PR #167 draft and unmerged. Do not create PR B until PR A is accepted and m
 - `StrategicFormation.recon_capability`.
 - `CampaignState.fog_of_war_enabled`.
 - `CampaignState.knowledge_by_observer`.
-- campaign schema 6.
+- campaign schema 11.
 - `observer_scope_id(state, faction)` that rejects multiple memberships only when invoked.
 - `validate_s11_observer_authority(state, *, observer_requested=False)` implementing conditional alliance validation.
 
@@ -153,28 +180,26 @@ Keep PR #167 draft and unmerged. Do not create PR B until PR A is accepted and m
 - [ ] Prove Fog-on requires exactly one human faction.
 - [ ] Prove Fog-off hotseat remains compatible.
 - [ ] Run focused tests and verify RED.
-- [ ] Implement only models, schema-6 parsing/serialization, conditional scope validation, and play-mode validation.
+- [ ] Implement only models, schema-11 parsing/serialization, conditional scope validation, and play-mode validation.
 
 #### Schema migration tests
 
-- [ ] Add schema-4-to-schema-6 migration test.
-- [ ] Add schema-3-and-earlier coverage through the same schema-4-and-earlier path.
-- [ ] Assert Fog Off and empty knowledge after schema-4-and-earlier migration.
-- [ ] Add existing pre-S11 schema-5-to-schema-6 migration with all S11 fields absent.
-- [ ] Assert missing S11 fields in schema 5 are accepted as valid legacy state.
-- [ ] Assert Fog Off and empty knowledge after pre-S11 schema-5 migration.
-- [ ] Assert both migration paths apply the exact four-template recon whitelist.
+- [ ] Add schema-4, schema-5, schema-6, schema-7, schema-8, schema-9, and schema-10 migrations to schema 11.
+- [ ] Add schema-3-and-earlier coverage through the same pre-S11 path.
+- [ ] Assert Fog Off and empty knowledge after every pre-S11 migration.
+- [ ] Assert every schema 10-or-earlier save with the complete S11 field set absent is accepted as valid pre-S11 state.
+- [ ] Assert all pre-S11 migrations apply the exact four-template recon whitelist.
 - [ ] Assert all non-whitelisted or missing-template formations migrate to recon false.
-- [ ] Reject schema 5 containing partial or complete pre-release S11 fields with `unexpected_s11_fields_in_schema5`.
-- [ ] Reject schema 6 missing any required S11 field.
-- [ ] Prove schema-6 loads preserve persisted recon booleans without recomputation.
-- [ ] Add explicit custom schema-6 recon true/false tests.
-- [ ] Add deterministic schema-6 save/load tests.
-- [ ] Add Fog-off overlapping-alliance migration compatibility for both schema-4 and schema-5 inputs.
+- [ ] Reject any partial or complete S11 field set in schema 10 or earlier with `unexpected_s11_fields_in_pre_s11_schema`.
+- [ ] Reject schema 11 or later missing any required S11 field.
+- [ ] Prove schema-11-and-later loads preserve persisted recon booleans without recomputation.
+- [ ] Add explicit custom schema-11 recon true/false tests.
+- [ ] Add deterministic schema-11 save/load tests.
+- [ ] Add Fog-off overlapping-alliance migration compatibility for schemas 4, 5, 6, 7, 8, 9, and 10.
 - [ ] Add Fog-on overlapping-alliance rejection after enablement.
 - [ ] Add S11-knowledge overlapping-alliance rejection.
 - [ ] Run model and state-I/O tests until GREEN.
-- [ ] Commit: `feat: add schema 6 S11 knowledge model`.
+- [ ] Commit: `feat: add schema 11 S11 knowledge model`.
 
 ### Task B2: Implement exact source authority and deterministic tier combination
 
@@ -284,7 +309,7 @@ Keep PR #167 draft and unmerged. Do not create PR B until PR A is accepted and m
 - frontend schema 14.
 
 - [ ] Capture complete Fog-off baseline parity.
-- [ ] Prove Fog-off schema-6 campaigns, including overlapping-alliance legacy campaigns, export complete current information without observer-scope derivation.
+- [ ] Prove Fog-off schema-11 campaigns, including overlapping-alliance legacy campaigns, export complete current information without observer-scope derivation.
 - [ ] Reject arbitrary observer override while Fog On.
 - [ ] Reject overlapping alliances when filtered export requests observer scope.
 - [ ] Remove unknown enemy and dependent battalion/commander/stack/presentation/order/site-progress/edge-traffic rows.
@@ -338,8 +363,8 @@ Keep PR #167 draft and unmerged. Do not create PR B until PR A is accepted and m
 
 - [ ] Add `--fog-of-war on|off` or repository-consistent equivalent, default Off.
 - [ ] Prove old command lines retain Fog Off.
-- [ ] Prove schema-4 creation/load path upgrades to schema 6 with Fog Off.
-- [ ] Prove pre-S11 schema-5 load path upgrades to schema 6 with Fog Off.
+- [ ] Prove representative schema-4 creation/load path upgrades to schema 11 with Fog Off.
+- [ ] Prove pre-S11 schema-10 load path upgrades to schema 11 with Fog Off.
 - [ ] Prove explicit On succeeds only with exactly one human faction.
 - [ ] Prove On rejects multiple-human/hotseat configuration.
 - [ ] Prove Off retains multi-human compatibility.
