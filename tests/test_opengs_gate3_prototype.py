@@ -39,6 +39,8 @@ class Gate3ConfigTests(unittest.TestCase):
     def test_locked_config_digest_and_direct_comparison_total(self):
         config, digest, raw = self.g.load_config(CONFIG)
         self.assertEqual(digest, self.g.LOCKED_CONFIG_CANONICAL_SHA256)
+        self.assertEqual(config["counts"]["land_territories"], 468)
+        self.assertEqual(config["counts"]["ocean_territories"], 30)
         self.assertEqual(config["counts"]["land_provinces"], 3299)
         self.assertEqual(config["counts"]["ocean_provinces"], 215)
         self.assertEqual(config["counts"]["land_provinces"] + config["counts"]["ocean_provinces"], 3514)
@@ -62,7 +64,7 @@ class Gate3ConfigTests(unittest.TestCase):
             "crop": lambda v: v["theatre"].__setitem__("lon_lat_bounds", [-12.0, 27.0, 45.0, 75.0]),
             "crop_policy": lambda v: v["theatre"].__setitem__("policy", "other"),
             "anchor": lambda v: v["theatre"]["anchors"][0].__setitem__("longitude", -7.9),
-            "land_territories": lambda v: v["counts"].__setitem__("land_territories", 351),
+            "land_territories": lambda v: v["counts"].__setitem__("land_territories", 469),
             "ocean_territories": lambda v: v["counts"].__setitem__("ocean_territories", 31),
             "seed": lambda v: v["generator"].__setitem__("root_seed", 3514004),
             "generator": lambda v: v["generator"].__setitem__("jagged_land", True),
@@ -155,6 +157,7 @@ class Gate3CandidateContractTests(unittest.TestCase):
         self.assertFalse(np.any(masks["sea_mask"] & outside))
         self.assertTrue(masks["land_mask"][1, 1] and masks["sea_mask"][1, 2])
 
+    @unittest.skipUnless(importlib.util.find_spec("scipy.ndimage") is not None, "optional Gate 3 SciPy dependency is not installed")
     def test_ocean_component_authority_retains_edge_and_anchor_but_fills_unanchored_cavity(self):
         inside = np.ones((9, 9), dtype=bool)
         inside[[0, -1], :] = False
@@ -195,7 +198,7 @@ class Gate3PackageAuthorityTests(unittest.TestCase):
 
     def snapshot(self):
         dummy = {name: (name + "\n").encode() for name in ("land.png", "boundary.png", "density.png", "terrain.png", "theatre_mask.png")}
-        recipe = {"schema": "gates-of-codex.opengs-recipe", "schema_version": 1, "recipe_id": self.g.CANDIDATE_ID, "root_seed": 3514003, "inputs": {key: {"path": f"{key}.png", "sha256": self.g.sha256_bytes(dummy[f"{key}.png"])} for key in ("land", "boundary", "density", "terrain")}, "counts": {"land_territories": 350, "ocean_territories": 30, "land_provinces": 3299, "ocean_provinces": 215}, "options": {"lloyd_iterations": 4, "density_strength": 2.0, "exclude_ocean_density": True, "jagged_land": False, "jagged_ocean": False, "jagged_amplitude": 0.12}}
+        recipe = {"schema": "gates-of-codex.opengs-recipe", "schema_version": 1, "recipe_id": self.g.CANDIDATE_ID, "root_seed": 3514003, "inputs": {key: {"path": f"{key}.png", "sha256": self.g.sha256_bytes(dummy[f"{key}.png"])} for key in ("land", "boundary", "density", "terrain")}, "counts": {"land_territories": 468, "ocean_territories": 30, "land_provinces": 3299, "ocean_provinces": 215}, "options": {"lloyd_iterations": 4, "density_strength": 2.0, "exclude_ocean_density": True, "jagged_land": False, "jagged_ocean": False, "jagged_amplitude": 0.12}}
         recipe_bytes = self.g.canonical_json_bytes(recipe)
         gate1 = {"recipe": {"recipe_id": self.g.CANDIDATE_ID, "root_seed": 3514003, "canonical_sha256": self.g.sha256_bytes(recipe_bytes)}, "inputs": recipe["inputs"]}
         gate1_bytes = self.g.canonical_json_bytes(gate1)
