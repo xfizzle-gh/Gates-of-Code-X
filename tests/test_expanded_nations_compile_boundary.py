@@ -10,6 +10,7 @@ from unittest import mock
 
 from gates_of_codex.effective_definitions import EffectiveDefinitionIndex
 from gates_of_codex.expanded_nations import (
+    activate_actor_projection,
     activate_from_stack_config,
     deactivate_actor_projection,
     verify_actor_projection,
@@ -17,10 +18,12 @@ from gates_of_codex.expanded_nations import (
 from gates_of_codex.expanded_nations_models import (
     BROAD_ROSTER_INCLUDES,
     MANIFEST_RELATIVE,
+    OPPONENT_UNITS_RELATIVE,
 )
 from gates_of_codex.expanded_nations_opponents import project_opponent_units
 from gates_of_codex.faction_wiring_research import SourceResearchIndex
 from gates_of_codex.faction_wiring_scan import SourceUnitIndex
+from gates_of_codex.goh_source import scan_source_entries
 from gates_of_codex.modstack import stack_signature
 from tests.test_expanded_nations import _payload
 
@@ -184,7 +187,9 @@ class ExpandedNationsOpponentSideTests(unittest.TestCase):
         self.layers = [self.root / name for name in ("vanilla", "west81", "codex", "ai", "gates")]
         for layer in self.layers:
             (layer / "resource").mkdir(parents=True)
+        self.gates = self.layers[-1]
         self._write("conquest/units_rusa.set", (
+            '("squad_with1types_conquest" side(rusa) name(serb_line) c1(Serb_rifleman:5))\n'
             '{"filename_selected" ("squad_with1types_conquest" c1(rus_rifle:5))}\n'
             '(include "conquest/nested_rusa.set")\n'
         ))
@@ -201,6 +206,7 @@ class ExpandedNationsOpponentSideTests(unittest.TestCase):
         ))
         self._write("conquest/units_ukr.set", (
             '{"core_ukr(ukr)" ("squad_with1types_conquest" c1(ukr_rifle:5))}\n'
+            '{"explicit_ukr" ("squad_with1types_conquest" side(ukr) c1(ukr_rifle:5))}\n'
         ))
         self._write("conquest/units_prc_era1960.set", (
             '{"core_prc(prc)" ("squad_with1types_conquest" c1(prc_rifle:5))}\n'
@@ -223,11 +229,64 @@ class ExpandedNationsOpponentSideTests(unittest.TestCase):
         self.assertIn("nested_opponent", names)
         self.assertIn("core_nato(nato)", names)
         self.assertIn("core_ukr(ukr)", names)
+        self.assertIn("explicit_ukr", names)
         self.assertIn("core_prc(prc)", names)
         self.assertNotIn("(include", body.lower())
         sides = {row.entry_name: row.tactical_side for row in projected}
         self.assertEqual(sides["nested_opponent"], "nato")
         self.assertEqual(sides["core_nato(nato)"], "nato")
+        self.assertEqual(sides["explicit_ukr"], "ukr")
+
+    def test_full_activation_materializes_and_verifies_inferred_sides(self) -> None:
+        payload = _payload()
+        actor = next(row for row in payload["actors"] if row["actor_id"] == "srb")
+        actor_unit = actor["units"][0]
+        actor_unit["source_files"] = [
+            "2:codex/set/multiplayer/units/conquest/units_rusa.set"
+        ]
+        actor_unit["source_priority"] = 2
+        actor_unit["source_layer"] = "codex"
+        actor["research_nodes"][-1]["source_file"] = actor_unit["source_files"][0]
+
+        activate_actor_projection(payload, self.layers, "srb")
+        manifest = verify_actor_projection(self.gates)
+        self.assertEqual(manifest["actor_id"], "srb")
+
+        opponent_names = {
+            str(row["entry_name"]) for row in manifest["opponent_units"]
+        }
+        for excluded in (
+            "serb_line",
+            "filename_selected",
+            "nested_selected",
+            "suffix_selected(rusa)",
+        ):
+            self.assertNotIn(excluded, opponent_names)
+        for preserved in (
+            "nested_opponent",
+            "core_nato(nato)",
+            "core_ukr(ukr)",
+            "explicit_ukr",
+            "core_prc(prc)",
+        ):
+            self.assertIn(preserved, opponent_names)
+
+        generated = (self.gates / OPPONENT_UNITS_RELATIVE).read_text(encoding="utf-8")
+        scan = scan_source_entries(generated, OPPONENT_UNITS_RELATIVE.as_posix())
+        self.assertFalse(scan.diagnostics)
+        actual_sides = {
+            entry.name: [
+                call.value.lower()
+                for call in entry.calls
+                if call.family == "side"
+            ]
+            for entry in scan.entries
+        }
+        self.assertEqual(actual_sides["nested_opponent"], ["nato"])
+        self.assertEqual(actual_sides["core_nato(nato)"], ["nato"])
+        self.assertEqual(actual_sides["core_ukr(ukr)"], ["ukr"])
+        self.assertEqual(actual_sides["explicit_ukr"], ["ukr"])
+        self.assertEqual(actual_sides["core_prc(prc)"], ["prc"])
 
 
 if __name__ == "__main__":
