@@ -1,11 +1,6 @@
 name: Temporary Gate 2 publisher
 
 on:
-  push:
-    branches: [agent/opengs-gate2-geometry-adapter]
-    paths:
-      - ".gate2_publish/**"
-      - ".github/workflows/gate2-publish-helper.yml"
   pull_request:
     types: [opened, synchronize]
     paths:
@@ -24,19 +19,35 @@ jobs:
         with:
           ref: agent/opengs-gate2-geometry-adapter
           fetch-depth: 0
-      - name: Publish staged bundle
+      - name: Reconstruct staged bundle
         shell: bash
         run: |
           set -euo pipefail
-          shopt -s nullglob
-          chunks=(.gate2_publish/[0-9][0-9][0-9].b64)
-          if (( ${#chunks[@]} == 0 )); then
-            echo "No staged bundle"
-            exit 0
-          fi
+          python - <<'PY'
+          import base64
+          import pathlib
+          import zipfile
+          root = pathlib.Path('.gate2_publish')
+          chunks = sorted(root.glob('[0-9][0-9][0-9].b64'))
+          if not chunks:
+              raise SystemExit('No staged bundle')
+          encoded = ''.join(path.read_text(encoding='ascii') for path in chunks)
+          print('chunks', len(chunks), 'base64_bytes', len(encoded))
+          archive = pathlib.Path('/tmp/gate2-bundle.zip')
+          archive.write_bytes(base64.b64decode(encoded, validate=True))
+          print('archive_bytes', archive.stat().st_size)
+          with zipfile.ZipFile(archive) as handle:
+              bad = handle.testzip()
+              if bad is not None:
+                  raise SystemExit(f'corrupt member: {bad}')
+              print('members', handle.namelist())
+              handle.extractall('.')
+          PY
+      - name: Commit test-first bundle
+        shell: bash
+        run: |
+          set -euo pipefail
           message="$(cat .gate2_publish/commit-message.txt)"
-          cat "${chunks[@]}" | base64 --decode > /tmp/gate2-bundle.zip
-          unzip -oq /tmp/gate2-bundle.zip -d .
           rm -rf .gate2_publish
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
