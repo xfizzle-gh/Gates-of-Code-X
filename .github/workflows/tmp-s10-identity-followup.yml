@@ -1,0 +1,49 @@
+name: Temporary S10 identity forwarding correction
+
+on:
+  push:
+    branches:
+      - feat/s10-operational-resolution-presentation
+    paths:
+      - .github/workflows/tmp-s10-identity-followup.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/s10-operational-resolution-presentation
+          fetch-depth: 0
+
+      - name: Verify expected correction ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 91b2dcb39672e2533085219638b6dfee1a526dd0 HEAD
+          changed="$(git diff --name-only 91b2dcb39672e2533085219638b6dfee1a526dd0..HEAD | sort)"
+          expected=$'.github/workflows/tmp-s10-identity-followup.yml\ntools/tmp_s10_identity_followup.py'
+          test "$changed" = "$expected"
+
+      - name: Apply correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/tmp_s10_identity_followup.py
+          git diff --check
+
+      - name: Commit correction and remove temporary machinery
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm tools/tmp_s10_identity_followup.py
+          rm .github/workflows/tmp-s10-identity-followup.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(s10): forward exact counter identity"
+          git push origin HEAD:feat/s10-operational-resolution-presentation
