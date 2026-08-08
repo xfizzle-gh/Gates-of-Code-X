@@ -26,6 +26,10 @@ godot/**/*.uid
 godot/home_*.png
 godot/.import/
 
+# Local Godot AI development tooling
+.godot-ai/
+godot/addons/godot_ai/
+
 # Local screenshots and ad-hoc reports
 *.log
 live_*/
