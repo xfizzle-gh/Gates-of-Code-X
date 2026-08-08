@@ -154,4 +154,3 @@ then the minimum implementation, then focused and adjacent regressions.
 5. Commit intentionally, update PR #140 and issue #105 bodies/status, push the
    same branch without force, and wait for the full exact-head Actions matrix.
 6. Stop with PR #140 draft, issue #105 open, and no merge.
-
