@@ -15,11 +15,17 @@ from io import BytesIO
 import math
 import os
 import shutil
+import stat
 import tempfile
+import threading
 from collections import defaultdict
 from dataclasses import dataclass
+from types import MappingProxyType
 from pathlib import Path
-from typing import Any, Iterable, Iterator, Sequence
+from typing import Any, Iterable, Iterator, Mapping, Sequence
+
+import gate1_pipeline
+from gate1_common import AUTHORITATIVE_OUTPUTS as GATE1_AUTHORITATIVE_OUTPUTS, Gate1Error
 
 import numpy as np
 from PIL import Image
@@ -35,7 +41,6 @@ DATASET_SCHEMA = "gates-of-codex.earth3-polygon-dataset"
 DATASET_SCHEMA_VERSION = 2
 MAP_SCHEMA = "gates-of-codex.strategic-map"
 MAP_SCHEMA_VERSION = 1
-GATE1_RUN_SCHEMA = "gates-of-codex.opengs-run-manifest"
 ADAPTER_VERSION = 2
 ID_PREFIX_REQUIRED = "og2_"
 AREA_REL_TOL = 1e-9
@@ -106,6 +111,190 @@ class Gate1Snapshot:
 class TerrainSnapshot:
     sha256: str
     array: np.ndarray
+
+
+@dataclass(frozen=True)
+class FileSetSnapshot:
+    files: Mapping[str, bytes]
+    sha256: Mapping[str, str]
+
+
+_GATE1_INSPECTION_LOCK = threading.Lock()
+
+
+def _read_open_file_once(path: Path, label: str) -> bytes:
+    flags = os.O_RDONLY
+    if hasattr(os, "O_BINARY"):
+        flags |= os.O_BINARY
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    try:
+        fd = os.open(path, flags)
+    except OSError as exc:
+        raise Gate2Error(f"cannot capture {label} {path}: {exc}") from exc
+    try:
+        before = os.fstat(fd)
+        if not stat.S_ISREG(before.st_mode):
+            raise Gate2Error(f"{label} must be a regular file: {path.name}")
+        chunks: list[bytes] = []
+        while True:
+            block = os.read(fd, 1024 * 1024)
+            if not block:
+                break
+            chunks.append(block)
+        after = os.fstat(fd)
+        identity_before = (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns)
+        identity_after = (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns)
+        if identity_before != identity_after:
+            raise Gate2Error(f"{label} changed while being captured: {path.name}")
+        return b"".join(chunks)
+    finally:
+        os.close(fd)
+
+
+def _capture_file_set(root: Path, expected: Sequence[str], label: str) -> FileSetSnapshot:
+    if not root.is_dir():
+        raise Gate2Error(f"{label} directory missing: {root}")
+    expected_set = set(expected)
+    try:
+        entries = list(root.iterdir())
+    except OSError as exc:
+        raise Gate2Error(f"cannot inspect {label} directory {root}: {exc}") from exc
+    actual = {entry.name for entry in entries}
+    if actual != expected_set:
+        raise Gate2Error(
+            f"{label} set mismatch: missing={sorted(expected_set - actual)} "
+            f"extra={sorted(actual - expected_set)}"
+        )
+    invalid = sorted(
+        entry.name for entry in entries if entry.is_symlink() or not entry.is_file()
+    )
+    if invalid:
+        raise Gate2Error(
+            f"{label} entries must be regular files: {', '.join(invalid)}"
+        )
+    files = {
+        name: _read_open_file_once(root / name, label)
+        for name in sorted(expected_set)
+    }
+    try:
+        final_entries = list(root.iterdir())
+    except OSError as exc:
+        raise Gate2Error(f"cannot recheck {label} directory {root}: {exc}") from exc
+    final_names = {entry.name for entry in final_entries}
+    if final_names != expected_set or any(
+        entry.is_symlink() or not entry.is_file() for entry in final_entries
+    ):
+        raise Gate2Error(f"{label} directory changed during capture")
+    return FileSetSnapshot(
+        files=MappingProxyType(dict(files)),
+        sha256=MappingProxyType(
+            {name: sha256_bytes(data) for name, data in files.items()}
+        ),
+    )
+
+
+def _write_file_set(root: Path, snapshot: FileSetSnapshot) -> None:
+    root.mkdir(mode=0o700, parents=False, exist_ok=False)
+    for name in sorted(snapshot.files):
+        path = root / name
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+        if hasattr(os, "O_BINARY"):
+            flags |= os.O_BINARY
+        fd = os.open(path, flags, 0o600)
+        try:
+            data = snapshot.files[name]
+            offset = 0
+            while offset < len(data):
+                offset += os.write(fd, data[offset:])
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+
+
+def _strict_inspect_gate1_snapshot(snapshot: FileSetSnapshot) -> dict[str, Any]:
+    """Run Gate 1's complete inspector against the captured bytes, never paths."""
+
+    def snapshot_bytes(path: Path, label: str) -> bytes:
+        name = Path(path).name
+        try:
+            return snapshot.files[name]
+        except KeyError as exc:
+            raise Gate1Error(
+                f"strict snapshot has no authoritative bytes for {label}: {name}"
+            ) from exc
+
+    def read_canonical_json(path: Path, label: str) -> Any:
+        raw = snapshot_bytes(path, label)
+        try:
+            parsed = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise Gate1Error(f"cannot read {label}: {exc}") from exc
+        if raw != gate1_pipeline.canonical_json_bytes(parsed):
+            raise Gate1Error(f"{label} is not canonical UTF-8/LF JSON")
+        return parsed
+
+    def decode_rgb_png(
+        path: Path, label: str, width: int, height: int
+    ) -> np.ndarray:
+        raw = snapshot_bytes(path, label)
+        try:
+            with Image.open(BytesIO(raw)) as image:
+                image.load()
+                if image.format != "PNG":
+                    raise Gate1Error(f"{label} must be PNG, got {image.format}")
+                if image.mode != "RGB":
+                    raise Gate1Error(f"{label} must use RGB mode, got {image.mode}")
+                if image.size != (width, height):
+                    raise Gate1Error(
+                        f"{label} dimensions must be {(width, height)}, got {image.size}"
+                    )
+                if image.info:
+                    raise Gate1Error(
+                        f"{label} contains unexpected PNG metadata: {sorted(image.info)}"
+                    )
+                pixels = np.asarray(image, dtype=np.uint8).copy()
+        except Gate1Error:
+            raise
+        except (OSError, ValueError) as exc:
+            raise Gate1Error(f"cannot decode {label}: {exc}") from exc
+        if pixels.shape != (height, width, 3):
+            raise Gate1Error(f"{label} decoded shape is invalid: {pixels.shape}")
+        return pixels
+
+    def snapshot_sha256(path: Path) -> str:
+        name = Path(path).name
+        try:
+            return snapshot.sha256[name]
+        except KeyError as exc:
+            raise Gate1Error(
+                f"strict snapshot has no checksum authority for {name}"
+            ) from exc
+
+    with tempfile.TemporaryDirectory(prefix=".gate1-sealed-") as temp_root:
+        sealed = Path(temp_root) / "output"
+        _write_file_set(sealed, snapshot)
+        with _GATE1_INSPECTION_LOCK:
+            original_read = gate1_pipeline._read_canonical_json
+            original_decode = gate1_pipeline._decode_rgb_png
+            original_sha256 = gate1_pipeline.sha256_file
+            gate1_pipeline._read_canonical_json = read_canonical_json
+            gate1_pipeline._decode_rgb_png = decode_rgb_png
+            gate1_pipeline.sha256_file = snapshot_sha256
+            try:
+                result = gate1_pipeline.inspect_output(sealed)
+            except Gate1Error as exc:
+                raise Gate2Error(f"Gate 1 strict inspection failed: {exc}") from exc
+            finally:
+                gate1_pipeline._read_canonical_json = original_read
+                gate1_pipeline._decode_rgb_png = original_decode
+                gate1_pipeline.sha256_file = original_sha256
+        recaptured = _capture_file_set(
+            sealed, GATE1_AUTHORITATIVE_OUTPUTS, "sealed Gate 1 snapshot"
+        )
+        if dict(recaptured.files) != dict(snapshot.files):
+            raise Gate2Error("sealed Gate 1 snapshot changed during strict inspection")
+        return result
 
 
 def canonical_json_bytes(value: Any) -> bytes:
@@ -270,59 +459,32 @@ def _load_canonical_json_bytes(raw: bytes, label: str, source: Path | str) -> An
     return value
 
 
-def _load_canonical_json(path: Path, label: str) -> Any:
-    try:
-        raw = path.read_bytes()
-    except OSError as exc:
-        raise Gate2Error(f"cannot read {label} {path}: {exc}") from exc
-    return _load_canonical_json_bytes(raw, label, path)
 
 def _load_gate1(gate1_dir: Path) -> Gate1Snapshot:
-    expected = {
-        "territories.png",
-        "provinces.png",
-        "territories.json",
-        "provinces.json",
-        "run_manifest.json",
-    }
-    if not gate1_dir.is_dir():
-        raise Gate2Error(f"Gate 1 output directory missing: {gate1_dir}")
-    actual = {p.name for p in gate1_dir.iterdir() if p.is_file()}
-    if actual != expected:
-        raise Gate2Error(
-            f"Gate 1 output set mismatch: missing={sorted(expected - actual)} extra={sorted(actual - expected)}"
-        )
-
-    captured: dict[str, bytes] = {}
-    for name in sorted(expected):
-        path = gate1_dir / name
-        try:
-            captured[name] = path.read_bytes()
-        except OSError as exc:
-            raise Gate2Error(f"cannot capture Gate 1 input {path}: {exc}") from exc
-
-    manifest = _load_canonical_json_bytes(
-        captured["run_manifest.json"], "Gate 1 manifest", gate1_dir / "run_manifest.json"
+    gate1_dir = gate1_dir.resolve()
+    captured = _capture_file_set(
+        gate1_dir, GATE1_AUTHORITATIVE_OUTPUTS, "Gate 1 output"
     )
-    if not isinstance(manifest, dict) or manifest.get("schema") != GATE1_RUN_SCHEMA:
-        raise Gate2Error("Gate 1 manifest schema mismatch")
-    outputs = manifest.get("outputs")
-    if not isinstance(outputs, dict):
-        raise Gate2Error("Gate 1 manifest.outputs must be an object")
+    strict_result = _strict_inspect_gate1_snapshot(captured)
+    manifest = strict_result.get("manifest")
+    if not isinstance(manifest, dict):
+        raise Gate2Error("Gate 1 strict inspector returned no manifest")
+    if manifest != _load_canonical_json_bytes(
+        captured.files["run_manifest.json"],
+        "Gate 1 manifest",
+        gate1_dir / "run_manifest.json",
+    ):
+        raise Gate2Error("Gate 1 strict inspection manifest mismatch")
 
-    output_names = (
-        "territories.png",
-        "provinces.png",
-        "territories.json",
-        "provinces.json",
-    )
-    output_sha256 = {name: sha256_bytes(captured[name]) for name in output_names}
-    for name in output_names:
-        if outputs.get(name) != output_sha256[name]:
-            raise Gate2Error(f"Gate 1 output checksum mismatch: {name}")
+    output_names = tuple(name for name in GATE1_AUTHORITATIVE_OUTPUTS if name != "run_manifest.json")
+    output_sha256 = {name: captured.sha256[name] for name in output_names}
+    if manifest.get("outputs") != output_sha256:
+        raise Gate2Error("Gate 1 strict output provenance mismatch")
 
     provinces_json = _load_canonical_json_bytes(
-        captured["provinces.json"], "Gate 1 provinces", gate1_dir / "provinces.json"
+        captured.files["provinces.json"],
+        "Gate 1 provinces",
+        gate1_dir / "provinces.json",
     )
     if not isinstance(provinces_json, list) or not provinces_json:
         raise Gate2Error("Gate 1 provinces must be a non-empty array")
@@ -332,7 +494,9 @@ def _load_gate1(gate1_dir: Path) -> Gate1Snapshot:
     for i, row in enumerate(provinces_json):
         if not isinstance(row, dict):
             raise Gate2Error(f"Gate 1 provinces[{i}] must be an object")
-        source_id = _require_string(row.get("province_id"), f"Gate 1 provinces[{i}].province_id")
+        source_id = _require_string(
+            row.get("province_id"), f"Gate 1 provinces[{i}].province_id"
+        )
         if source_id in source_ids:
             raise Gate2Error(f"duplicate Gate 1 province ID: {source_id}")
         source_ids.add(source_id)
@@ -342,7 +506,11 @@ def _load_gate1(gate1_dir: Path) -> Gate1Snapshot:
         if province_type not in {"land", "ocean", "lake"}:
             raise Gate2Error(f"unsupported Gate 1 province type: {province_type}")
         rgb = tuple(
-            _require_int(row.get(channel), f"Gate 1 provinces[{i}].{channel}", minimum=0)
+            _require_int(
+                row.get(channel),
+                f"Gate 1 provinces[{i}].{channel}",
+                minimum=0,
+            )
             for channel in ("R", "G", "B")
         )
         if any(v > 255 for v in rgb):
@@ -354,7 +522,8 @@ def _load_gate1(gate1_dir: Path) -> Gate1Snapshot:
             ProvinceSource(
                 source_id=source_id,
                 territory_id=_require_string(
-                    row.get("territory_id"), f"Gate 1 provinces[{i}].territory_id"
+                    row.get("territory_id"),
+                    f"Gate 1 provinces[{i}].territory_id",
                 ),
                 province_type=province_type,
                 center_x=float(row.get("x")),
@@ -364,15 +533,20 @@ def _load_gate1(gate1_dir: Path) -> Gate1Snapshot:
         )
 
     try:
-        with Image.open(BytesIO(captured["provinces.png"])) as decoded:
+        with Image.open(BytesIO(captured.files["provinces.png"])) as decoded:
             image = np.asarray(decoded.convert("RGB"), dtype=np.uint8).copy()
     except Exception as exc:
-        raise Gate2Error(f"cannot decode captured Gate 1 provinces.png: {exc}") from exc
+        raise Gate2Error(
+            f"cannot decode captured Gate 1 provinces.png: {exc}"
+        ) from exc
 
-    dims = manifest.get("dimensions", {})
+    dims = manifest["dimensions"]
     if image.ndim != 3 or image.shape[2] != 3:
         raise Gate2Error("Gate 1 provinces.png must be RGB")
-    if [int(image.shape[1]), int(image.shape[0])] != [dims.get("width"), dims.get("height")]:
+    if [int(image.shape[1]), int(image.shape[0])] != [
+        dims["width"],
+        dims["height"],
+    ]:
         raise Gate2Error("Gate 1 provinces.png dimensions do not match manifest")
     color_to_index = {source.rgb: i for i, source in enumerate(sources)}
     labels = np.full(image.shape[:2], -1, dtype=np.int32)
@@ -388,15 +562,17 @@ def _load_gate1(gate1_dir: Path) -> Gate1Snapshot:
     present = {int(v) for v in np.unique(labels) if int(v) >= 0}
     if present != set(range(len(sources))):
         raise Gate2Error(
-            f"Gate 1 label raster/record mismatch: missing labels={sorted(set(range(len(sources))) - present)}"
+            "Gate 1 label raster/record mismatch: missing labels="
+            f"{sorted(set(range(len(sources))) - present)}"
         )
     return Gate1Snapshot(
         manifest=manifest,
-        manifest_sha256=sha256_bytes(captured["run_manifest.json"]),
+        manifest_sha256=captured.sha256["run_manifest.json"],
         output_sha256=output_sha256,
         sources=tuple(sources),
         labels=labels,
     )
+
 
 def _load_terrain(
     path: Path, gate1_manifest: dict[str, Any], shape: tuple[int, int]
@@ -1116,20 +1292,45 @@ def convert(gate1_dir: Path, terrain: Path, config: Path, output: Path) -> dict[
     if output.exists():
         raise Gate2Error(f"output directory already exists: {output}")
     output.parent.mkdir(parents=True, exist_ok=True)
-    staging = Path(tempfile.mkdtemp(prefix=f".{output.name}.gate2-", dir=output.parent))
-    shutil.rmtree(staging)
+    generation = Path(
+        tempfile.mkdtemp(prefix=f".{output.name}.gate2-build-", dir=output.parent)
+    )
+    publication = Path(
+        tempfile.mkdtemp(prefix=f".{output.name}.gate2-publish-", dir=output.parent)
+    )
+    shutil.rmtree(generation)
+    shutil.rmtree(publication)
     try:
-        staging.mkdir()
+        generation.mkdir()
         gate1_dir = gate1_dir.resolve()
         terrain = terrain.resolve()
         config = config.resolve()
-        result = _build_outputs(gate1_dir, terrain, config, staging)
-        inspect_output(staging, gate1_dir, terrain, config)
-        staging.replace(output)
-        return result
+        _build_outputs(gate1_dir, terrain, config, generation)
+        snapshot = _capture_file_set(
+            generation, AUTHORITATIVE_OUTPUTS, "Gate 2 generated output"
+        )
+        inspect_output(
+            generation, gate1_dir, terrain, config, _snapshot=snapshot
+        )
+        _write_file_set(publication, snapshot)
+        published = _capture_file_set(
+            publication, AUTHORITATIVE_OUTPUTS, "Gate 2 publication snapshot"
+        )
+        if published.files != snapshot.files:
+            raise Gate2Error(
+                "Gate 2 publication bytes differ from the inspected snapshot"
+            )
+        publication.replace(output)
+        shutil.rmtree(generation, ignore_errors=True)
+        return _load_canonical_json_bytes(
+            snapshot.files["adapter_manifest.json"],
+            "adapter manifest",
+            output / "adapter_manifest.json",
+        )
     except Exception as exc:
-        if staging.exists():
-            shutil.rmtree(staging, ignore_errors=True)
+        for candidate in (generation, publication):
+            if candidate.exists():
+                shutil.rmtree(candidate, ignore_errors=True)
         if isinstance(exc, Gate2Error):
             raise
         raise Gate2Error(f"Gate 2 conversion failed before publish: {exc}") from exc
@@ -1192,17 +1393,12 @@ def inspect_output(
     gate1_dir: Path,
     terrain_path: Path,
     config_path: Path,
+    *,
+    _snapshot: FileSetSnapshot | None = None,
 ) -> dict[str, Any]:
-    if not output.is_dir():
-        raise Gate2Error(f"Gate 2 output directory missing: {output}")
-    actual = {p.name for p in output.iterdir() if p.is_file()}
-    if actual != set(AUTHORITATIVE_OUTPUTS):
-        raise Gate2Error(
-            f"Gate 2 output set mismatch: missing={sorted(set(AUTHORITATIVE_OUTPUTS)-actual)} extra={sorted(actual-set(AUTHORITATIVE_OUTPUTS))}"
-        )
-    for child in output.iterdir():
-        if child.is_symlink() or child.is_dir():
-            raise Gate2Error(f"unexpected output entry: {child.name}")
+    snapshot = _snapshot or _capture_file_set(
+        output, AUTHORITATIVE_OUTPUTS, "Gate 2 output"
+    )
 
     config, config_payload = load_config(config_path.resolve())
     gate1 = _load_gate1(gate1_dir.resolve())
@@ -1218,7 +1414,11 @@ def inspect_output(
     }
     directed, _segment_sides, pair_lengths = build_boundary_graph(labels)
 
-    manifest = _load_canonical_json(output / "adapter_manifest.json", "adapter manifest")
+    manifest = _load_canonical_json_bytes(
+        snapshot.files["adapter_manifest.json"],
+        "adapter manifest",
+        output / "adapter_manifest.json",
+    )
     top = _require_object(
         manifest,
         "adapter_manifest",
@@ -1282,13 +1482,29 @@ def inspect_output(
     if not isinstance(outputs, dict) or set(outputs) != set(AUTHORITATIVE_OUTPUTS) - {"adapter_manifest.json"}:
         raise Gate2Error("adapter manifest output set mismatch")
     for name, digest in outputs.items():
-        if digest != sha256_file(output / name):
+        if digest != snapshot.sha256[name]:
             raise Gate2Error(f"Gate 2 output checksum mismatch: {name}")
 
-    dataset = _load_canonical_json(output / "polygon_dataset.json", "polygon dataset")
-    map_manifest = _load_canonical_json(output / "map_manifest.json", "map manifest")
-    meta = _load_canonical_json(output / "dataset_meta.json", "dataset meta")
-    audit = _load_canonical_json(output / "topology_audit.json", "topology audit")
+    dataset = _load_canonical_json_bytes(
+        snapshot.files["polygon_dataset.json"],
+        "polygon dataset",
+        output / "polygon_dataset.json",
+    )
+    map_manifest = _load_canonical_json_bytes(
+        snapshot.files["map_manifest.json"],
+        "map manifest",
+        output / "map_manifest.json",
+    )
+    meta = _load_canonical_json_bytes(
+        snapshot.files["dataset_meta.json"],
+        "dataset meta",
+        output / "dataset_meta.json",
+    )
+    audit = _load_canonical_json_bytes(
+        snapshot.files["topology_audit.json"],
+        "topology audit",
+        output / "topology_audit.json",
+    )
     if dataset.get("schema") != DATASET_SCHEMA or dataset.get("schema_version") != DATASET_SCHEMA_VERSION:
         raise Gate2Error("polygon dataset schema mismatch")
     if dataset.get("map_id") != config.map_id:
@@ -1523,7 +1739,7 @@ def inspect_output(
     for key, expected in expected_counts.items():
         if dataset.get(key) != expected:
             raise Gate2Error(f"polygon dataset count mismatch: {key}")
-    dataset_sha = sha256_file(output / "polygon_dataset.json")
+    dataset_sha = snapshot.sha256["polygon_dataset.json"]
     expected_meta = {
         "map_id": config.map_id,
         **expected_counts,
@@ -1551,9 +1767,23 @@ def compare_runs(
     terrain_path: Path,
     config_path: Path,
 ) -> dict[str, Any]:
-    inspect_output(left, gate1_dir, terrain_path, config_path)
-    inspect_output(right, gate1_dir, terrain_path, config_path)
-    differences = [name for name in AUTHORITATIVE_OUTPUTS if (left / name).read_bytes() != (right / name).read_bytes()]
+    left_snapshot = _capture_file_set(
+        left, AUTHORITATIVE_OUTPUTS, "left Gate 2 output"
+    )
+    right_snapshot = _capture_file_set(
+        right, AUTHORITATIVE_OUTPUTS, "right Gate 2 output"
+    )
+    inspect_output(
+        left, gate1_dir, terrain_path, config_path, _snapshot=left_snapshot
+    )
+    inspect_output(
+        right, gate1_dir, terrain_path, config_path, _snapshot=right_snapshot
+    )
+    differences = [
+        name
+        for name in AUTHORITATIVE_OUTPUTS
+        if left_snapshot.files[name] != right_snapshot.files[name]
+    ]
     result = {"identical": not differences, "differences": differences}
     if differences:
         raise Gate2Error(f"Gate 2 outputs differ: {', '.join(differences)}")
