@@ -58,6 +58,16 @@ def _draw_polygon(draw: Any, polygon: Any, fill: Any, hole_fill: Any) -> None:
             draw.polygon(points, fill=hole_fill)
 
 
+def _draw_land_polygon(draw: Any, polygon: Any) -> None:
+    """Rasterize physical land without inventing inland ocean holes."""
+    _draw_polygon(draw, polygon, LAND_COLOR, LAND_COLOR)
+
+
+def _draw_lake_polygon(draw: Any, polygon: Any) -> None:
+    """Rasterize authoritative lake water while retaining lake islands as land."""
+    _draw_polygon(draw, polygon, LAKE_COLOR, LAND_COLOR)
+
+
 def _draw_lines(draw: Any, geometry: Any, fill: Any, width: int) -> int:
     count = 0
     for line in _iter_lines(geometry):
@@ -205,7 +215,7 @@ def build_inputs(config_path: Path, natural_earth_root: Path, output: Path) -> d
             continue
         feature_counts["land_features"] += 1
         for polygon in _iter_polygons(pixel_geometry):
-            _draw_polygon(land_draw, polygon, LAND_COLOR, OCEAN_COLOR)
+            _draw_land_polygon(land_draw, polygon)
             feature_counts["land_polygon_parts"] += 1
 
     lakes_collection = _load_json_bytes(sources["lakes"]["data"], "Natural Earth lakes")
@@ -215,7 +225,7 @@ def build_inputs(config_path: Path, natural_earth_root: Path, output: Path) -> d
             continue
         feature_counts["lake_features"] += 1
         for polygon in _iter_polygons(pixel_geometry):
-            _draw_polygon(land_draw, polygon, LAKE_COLOR, LAND_COLOR)
+            _draw_lake_polygon(land_draw, polygon)
             feature_counts["lake_polygon_parts"] += 1
 
     boundary_width = max(1, int(round(width / 1024.0)))
