@@ -57,28 +57,111 @@
     ],
     "policy": "europe_mediterranean_full_ireland_scandinavia_black_sea_limited_north_africa_near_east",
     "anchors": [
-      {"name": "ireland", "longitude": -8.0, "latitude": 53.2, "expected": "land"},
-      {"name": "great_britain", "longitude": -2.0, "latitude": 52.5, "expected": "land"},
-      {"name": "scandinavia", "longitude": 15.0, "latitude": 62.0, "expected": "land"},
-      {"name": "finland", "longitude": 26.0, "latitude": 64.0, "expected": "land"},
-      {"name": "sicily", "longitude": 14.2, "latitude": 37.5, "expected": "land"},
-      {"name": "crete", "longitude": 24.9, "latitude": 35.2, "expected": "land"},
-      {"name": "cyprus", "longitude": 33.2, "latitude": 35.0, "expected": "land"},
-      {"name": "north_africa_coast", "longitude": 10.2, "latitude": 36.7, "expected": "land"},
-      {"name": "anatolia", "longitude": 32.0, "latitude": 39.0, "expected": "land"},
-      {"name": "irish_sea", "longitude": -5.0, "latitude": 54.0, "expected": "ocean"},
-      {"name": "english_channel", "longitude": -1.5, "latitude": 50.2, "expected": "ocean"},
-      {"name": "western_mediterranean", "longitude": 5.0, "latitude": 38.0, "expected": "ocean"},
-      {"name": "adriatic", "longitude": 14.5, "latitude": 42.5, "expected": "ocean"},
-      {"name": "black_sea", "longitude": 32.0, "latitude": 43.0, "expected": "ocean"},
-      {"name": "kattegat", "longitude": 11.3, "latitude": 57.0, "expected": "ocean"},
-      {"name": "baltic", "longitude": 20.0, "latitude": 57.0, "expected": "ocean"}
+      {
+        "name": "ireland",
+        "longitude": -8.0,
+        "latitude": 53.2,
+        "expected": "land"
+      },
+      {
+        "name": "great_britain",
+        "longitude": -2.0,
+        "latitude": 52.5,
+        "expected": "land"
+      },
+      {
+        "name": "scandinavia",
+        "longitude": 15.0,
+        "latitude": 62.0,
+        "expected": "land"
+      },
+      {
+        "name": "finland",
+        "longitude": 26.0,
+        "latitude": 64.0,
+        "expected": "land"
+      },
+      {
+        "name": "sicily",
+        "longitude": 14.2,
+        "latitude": 37.5,
+        "expected": "land"
+      },
+      {
+        "name": "crete",
+        "longitude": 24.9,
+        "latitude": 35.2,
+        "expected": "land"
+      },
+      {
+        "name": "cyprus",
+        "longitude": 33.2,
+        "latitude": 35.0,
+        "expected": "land"
+      },
+      {
+        "name": "north_africa_coast",
+        "longitude": 10.2,
+        "latitude": 36.7,
+        "expected": "land"
+      },
+      {
+        "name": "anatolia",
+        "longitude": 32.0,
+        "latitude": 39.0,
+        "expected": "land"
+      },
+      {
+        "name": "irish_sea",
+        "longitude": -5.0,
+        "latitude": 54.0,
+        "expected": "ocean"
+      },
+      {
+        "name": "english_channel",
+        "longitude": -1.5,
+        "latitude": 50.2,
+        "expected": "ocean"
+      },
+      {
+        "name": "western_mediterranean",
+        "longitude": 5.0,
+        "latitude": 38.0,
+        "expected": "ocean"
+      },
+      {
+        "name": "adriatic",
+        "longitude": 14.5,
+        "latitude": 42.5,
+        "expected": "ocean"
+      },
+      {
+        "name": "black_sea",
+        "longitude": 32.0,
+        "latitude": 43.0,
+        "expected": "ocean"
+      },
+      {
+        "name": "kattegat",
+        "longitude": 11.3,
+        "latitude": 57.0,
+        "expected": "ocean"
+      },
+      {
+        "name": "baltic",
+        "longitude": 20.0,
+        "latitude": 57.0,
+        "expected": "ocean"
+      }
     ]
   },
-  "raster": {"width": 2048, "height": 1536},
+  "raster": {
+    "width": 2048,
+    "height": 1536
+  },
   "counts": {
     "land_territories": 350,
-    "ocean_territories": 20,
+    "ocean_territories": 30,
     "land_provinces": 3299,
     "ocean_provinces": 215,
     "comparison_target_total": 3514
