@@ -4,8 +4,9 @@ import json
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Iterable, Iterator
+from typing import Iterable, Iterator, Sequence
 
+from ..goh_source import MacroCall, SourceEntry, scan_source_entries
 from ..modstack import normalize_stack, resource_root, stack_signature
 
 
@@ -99,13 +100,6 @@ class CodeXCatalog:
         return cls.from_dict(json.loads(Path(path).read_text(encoding="utf-8-sig")))
 
 
-@dataclass(frozen=True, slots=True)
-class _SourceEntry:
-    name: str
-    raw: str
-    macro_kind: str = ""
-
-
 class CodeXCatalogScanner:
     FACTIONS = ("nato", "ukr", "rusa", "prc")
     SOURCE_EXTENSIONS = {".set", ".goh"}
@@ -176,12 +170,12 @@ class CodeXCatalogScanner:
         default_side = self._side_from_path(path)
         source = f"{layer_index}:{layer_name}/{path.relative_to(resources).as_posix()}"
 
-        for entry in self._source_entries(text):
-            side = self._side_from_name(entry.name) or self._word_attr(entry.raw, "side") or default_side
+        for entry in self._source_entries(text, source):
+            side = self._side_from_name(entry.name) or self._call_value(entry.calls, "side") or default_side
             side = side.lower()
             if side not in self.FACTIONS:
                 continue
-            period = self._word_attr(entry.raw, "period") or default_period
+            period = self._call_value(entry.calls, "period") or default_period
             name = self._canonical_name(entry.name, side, units)
             unit = units.setdefault(name, UnitDefinition(name=name, side=side, period=period))
             unit.side = side
@@ -190,23 +184,23 @@ class CodeXCatalogScanner:
             if source not in unit.source_files:
                 unit.source_files.append(source)
 
-            members = self._members(entry.raw)
+            members = self._members(entry.raw, entry.calls)
             for breed, count in members.items():
                 unit.members[breed] = max(unit.members.get(breed, 0), count)
 
-            explicit_vehicles = self._vehicles(entry.raw)
+            explicit_vehicles = self._vehicles(entry.calls)
             for vehicle in explicit_vehicles:
                 if vehicle not in unit.vehicles:
                     unit.vehicles.append(vehicle)
 
-            has_crew_slots = bool(re.search(r"\bcrew\d*\(", entry.raw, flags=re.I))
+            has_crew_slots = any(call.family == "crew" for call in entry.calls)
             macro_is_entity = any(hint in entry.macro_kind.lower() for hint in self._ENTITY_MACRO_HINTS)
             if not explicit_vehicles and (has_crew_slots or macro_is_entity):
                 inferred = self._base_name(entry.name)
                 if inferred and inferred not in unit.vehicles:
                     unit.vehicles.append(inferred)
 
-            for action in self._actions(entry.raw):
+            for action in self._actions(entry.calls):
                 if action not in unit.actions:
                     unit.actions.append(action)
             unit.manpower_estimate = max(unit.manpower_estimate, sum(unit.members.values()))
@@ -261,59 +255,12 @@ class CodeXCatalogScanner:
             if end is not None:
                 yield match.group(1), text[start:end]
 
-    @classmethod
-    def _source_entries(cls, text: str) -> Iterator[_SourceEntry]:
-        lines = text.splitlines()
-        index = 0
-        while index < len(lines):
-            line = lines[index]
-            stripped = line.lstrip()
-            if not stripped or stripped.startswith(";") or stripped.startswith("//"):
-                index += 1
-                continue
-
-            block_match = re.match(r'^\s*\{\s*"?([^"\s{}]+(?:\([^)]*\))?)"?', line)
-            if block_match:
-                raw_lines = [line]
-                depth = line.count("{") - line.count("}")
-                cursor = index + 1
-                while depth > 0 and cursor < len(lines):
-                    raw_lines.append(lines[cursor])
-                    depth += lines[cursor].count("{") - lines[cursor].count("}")
-                    cursor += 1
-                raw = "\n".join(raw_lines)
-                macro_name = cls._word_attr(raw, "name")
-                yield _SourceEntry(macro_name or block_match.group(1), raw)
-                index = cursor
-                continue
-
-            if "name(" in line and "(" in line:
-                raw_lines = [line]
-                depth = cls._paren_balance(line)
-                cursor = index + 1
-                while depth > 0 and cursor < len(lines):
-                    raw_lines.append(lines[cursor])
-                    depth += cls._paren_balance(lines[cursor])
-                    cursor += 1
-                raw = "\n".join(raw_lines)
-                name = cls._word_attr(raw, "name")
-                if name:
-                    kind_match = re.match(r'^\s*\(\s*"([^"]+)"', raw)
-                    yield _SourceEntry(name, raw, kind_match.group(1) if kind_match else "")
-                index = cursor
-                continue
-
-            index += 1
+    @staticmethod
+    def _source_entries(text: str, source: str) -> Sequence[SourceEntry]:
+        return scan_source_entries(text, source).entries
 
     @staticmethod
-    def _paren_balance(value: str) -> int:
-        # GoH source macros are not arbitrary code. Ignoring parentheses inside
-        # quoted display strings is sufficient for bounded entry collection.
-        without_quotes = re.sub(r'"[^"]*"', "", value)
-        return without_quotes.count("(") - without_quotes.count(")")
-
-    @classmethod
-    def _members(cls, raw: str) -> dict[str, int]:
+    def _members(raw: str, calls: Sequence[MacroCall]) -> dict[str, int]:
         values: dict[str, int] = {}
         for breed, count in re.findall(
             r'\{(?:member|breed)\s+"?([^"\s{}]+)"?\s*(\d+)?',
@@ -321,24 +268,33 @@ class CodeXCatalogScanner:
             flags=re.I,
         ):
             values[breed] = values.get(breed, 0) + int(count or 1)
-        for breed, count in cls._MACRO_MEMBER_RE.findall(raw):
-            values[breed] = values.get(breed, 0) + int(count)
+        for call in calls:
+            if call.family not in {"c", "crew", "member", "breed"} or ":" not in call.value:
+                continue
+            breed, count = call.value.rsplit(":", 1)
+            if breed and count.isdigit():
+                values[breed] = values.get(breed, 0) + int(count)
+        if not any(":" in call.value for call in calls):
+            for breed, count in CodeXCatalogScanner._MACRO_MEMBER_RE.findall(raw):
+                values[breed] = values.get(breed, 0) + int(count)
         return values
 
     @staticmethod
-    def _vehicles(raw: str) -> list[str]:
-        values = re.findall(r'\{(?:vehicle|entity)\s+"?([^"\s{}]+)', raw, flags=re.I)
-        values.extend(
-            match.strip().strip('"')
-            for match in re.findall(r"\b(?:vehicle|entity)\(([^)]+)\)", raw, flags=re.I)
-        )
-        return list(dict.fromkeys(value for value in values if value))
+    def _vehicles(calls: Sequence[MacroCall]) -> list[str]:
+        return list(dict.fromkeys(
+            call.value for call in calls
+            if call.family in {"vehicle", "entity"} and call.value
+        ))
 
     @staticmethod
-    def _actions(raw: str) -> list[str]:
-        values = re.findall(r'\{action\s+"?([^"\s{}]+)', raw, flags=re.I)
-        values.extend(re.findall(r"\baction\(([^)\s]+)\)", raw, flags=re.I))
-        return list(dict.fromkeys(values))
+    def _actions(calls: Sequence[MacroCall]) -> list[str]:
+        return list(dict.fromkeys(
+            call.value for call in calls if call.family == "action" and call.value
+        ))
+
+    @staticmethod
+    def _call_value(calls: Sequence[MacroCall], family: str) -> str:
+        return next((call.value for call in calls if call.family == family), "")
 
     @classmethod
     def _canonical_name(cls, name: str, side: str, units: dict[str, UnitDefinition]) -> str:

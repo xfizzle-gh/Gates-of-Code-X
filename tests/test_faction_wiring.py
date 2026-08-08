@@ -10,6 +10,8 @@ from gates_of_codex.faction_wiring import (
     load_faction_manifest,
     validate_faction_manifest,
 )
+from gates_of_codex.faction_wiring_scan import SourceUnitIndex
+from gates_of_codex.faction_wiring_types import ReferenceKind
 
 
 class BundledManifestContractTest(unittest.TestCase):
@@ -105,6 +107,42 @@ class FactionWiringCompilerTest(unittest.TestCase):
         payload = FactionWiringCompiler([self.west, self.codex], manifest=self._manifest()).compile()
         self.assertGreaterEqual(payload["error_count"], 1)
         self.assertTrue(any("missing vehicle/entity IDs: test_tank" in item["message"] for item in payload["problems"]))
+
+    def test_numbered_vehicle_references_retain_exact_source_locations(self) -> None:
+        self._write(
+            self.codex / "resource/set/multiplayer/units/conquest/units_nato.set",
+            '("vehicle_conquest" side(nato) name(test_apc) action(strategic) '
+            'vehicle1(apc_one) entity2(sensor_one))\n',
+        )
+
+        unit = SourceUnitIndex.build([self.codex]).resolve("test_apc", side="nato")
+
+        self.assertIsNotNone(unit)
+        self.assertEqual(["apc_one", "sensor_one"], unit.vehicles)
+        self.assertEqual(
+            [
+                ("apc_one", ReferenceKind.VEHICLE_ENTITY, 1),
+                ("sensor_one", ReferenceKind.VEHICLE_ENTITY, 1),
+            ],
+            [
+                (reference.identifier, reference.kind, reference.line)
+                for reference in unit.definition_references
+            ],
+        )
+
+    def test_strategic_call_in_reference_requires_kind_and_action_syntax(self) -> None:
+        self._write(
+            self.codex / "resource/set/multiplayer/units/conquest/units_nato.set",
+            '("strategic_callin" side(nato) name(test_support) action(callin) '
+            'vehicle1(support_id))\n',
+        )
+
+        unit = SourceUnitIndex.build([self.codex]).resolve("test_support", side="nato")
+
+        self.assertIsNotNone(unit)
+        self.assertEqual([ReferenceKind.STRATEGIC_CALL_IN], [
+            reference.kind for reference in unit.definition_references
+        ])
 
     def test_filtered_branch_reparents_prerequisites_without_cycles(self) -> None:
         manifest = self._manifest()
