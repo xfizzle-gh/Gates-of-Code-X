@@ -79,6 +79,24 @@ Every emitted key is actor-scoped. A French unlock cannot unlock a German or gen
 
 Filtered source branches remain valid. When a multinational stepping-stone is removed, the compiler reparents downstream included nodes to the nearest included ancestor.
 
+## Portable stack setup
+
+The faction compiler uses `config/mod-stack.windows.json`, which requires these variables and validates every resolved layer before scanning:
+
+```powershell
+$env:GOH_VANILLA_ROOT = "D:\SteamLibrary\steamapps\common\Call to Arms - Gates of Hell"
+$env:WEST81_ROOT = "D:\SteamLibrary\steamapps\workshop\content\400750\2897299509"
+$env:CODEX_ROOT = "D:\SteamLibrary\steamapps\workshop\content\400750\3261086933"
+$env:CODEX_AI_OVERHAUL_ROOT = "D:\SteamLibrary\steamapps\workshop\content\400750\3636883799"
+$env:GATES_CODEX_ROOT = "D:\Projects\Gates-of-Code-X"
+```
+
+The order is fixed: Vanilla, West81, Code:X, Code:X AI Overhaul, then Gates of Code:X. Missing variables, unresolved placeholders, nonexistent roots, duplicates, wrong order, missing Vanilla sentinels, and incorrect `mod.info` identities are fatal. The loader never guesses another Workshop folder. In particular, `3700832981` identifies `Imperium vs Xenos Conquest` and is not an acceptable Gates layer.
+
+## PRC source separation
+
+The regular PLA component is modern-only and Code:X-authoritative. The fourteen independently audited West81-backed historical vehicles and support actions are isolated under the visible `PRC Legacy / Reserve Equipment` branch. Their terminal West81 provenance remains explicit in the resolved report; no upstream definitions are copied into Gates.
+
 ## Compile and audit
 
 ```powershell

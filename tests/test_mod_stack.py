@@ -40,6 +40,8 @@ class OrderedModStackTests(unittest.TestCase):
             (path / "mod.info").write_text(f'{{mod {{name "{name}"}}}}\n', encoding="utf-8")
         (self.game / "resource/map/multi/2x2/stack_test").mkdir(parents=True)
         (self.game / "resource/map/multi/2x2/stack_test/map").write_text("{map}\n", encoding="utf-8")
+        (self.game / "resource/entity").mkdir(parents=True)
+        (self.game / "resource/gamelogic.pak").write_bytes(b"fixture")
         (self.game / "binaries/x64").mkdir(parents=True)
         (self.game / "binaries/x64/gates_of_hell.exe").write_bytes(b"fixture")
         self._write_codex_units()
@@ -132,6 +134,117 @@ class OrderedModStackTests(unittest.TestCase):
         roots = load_stack_config(config)
         self.assertEqual([self.game.resolve(), self.west.resolve(), self.codex.resolve(), self.ai.resolve(), self.gates.resolve()], roots)
 
+    def test_expands_all_required_environment_variables(self) -> None:
+        config = self._write_portable_stack_config()
+
+        roots = load_stack_config(config, environ=self._stack_environment())
+
+        self.assertEqual(
+            [self.game.resolve(), self.west.resolve(), self.codex.resolve(), self.ai.resolve(), self.gates.resolve()],
+            roots,
+        )
+
+    def test_rejects_missing_environment_variable(self) -> None:
+        config = self._write_portable_stack_config()
+        environ = self._stack_environment()
+        del environ["CODEX_ROOT"]
+
+        with self.assertRaisesRegex(ValueError, "CODEX_ROOT"):
+            load_stack_config(config, environ=environ)
+
+    def test_rejects_unresolved_placeholder(self) -> None:
+        config = self._write_portable_stack_config()
+        payload = json.loads(config.read_text(encoding="utf-8"))
+        payload["layers"][2]["path"] = "${CODEX_ROOT}/${BROKEN-NAME}"
+        config.write_text(json.dumps(payload), encoding="utf-8")
+
+        with self.assertRaisesRegex(ValueError, "unresolved placeholder"):
+            load_stack_config(config, environ=self._stack_environment())
+
+    def test_rejects_nonexistent_root(self) -> None:
+        config = self._write_portable_stack_config()
+        environ = self._stack_environment()
+        environ["CODEX_ROOT"] = str(self.root / "missing")
+
+        with self.assertRaises(FileNotFoundError):
+            load_stack_config(config, environ=environ)
+
+    def test_rejects_incorrect_mod_identity(self) -> None:
+        config = self._write_portable_stack_config()
+        (self.codex / "mod.info").write_text(
+            '{mod {name "Not Code:X"}}\n', encoding="utf-8"
+        )
+
+        with self.assertRaisesRegex(ValueError, "wrong product identity"):
+            load_stack_config(config, environ=self._stack_environment())
+
+    def test_rejects_duplicate_layer_or_normalized_root(self) -> None:
+        config = self._write_portable_stack_config()
+        environ = self._stack_environment()
+        environ["GATES_CODEX_ROOT"] = str(self.codex / "resource")
+
+        with self.assertRaisesRegex(ValueError, "same root"):
+            load_stack_config(config, environ=environ)
+
+    def test_rejects_incorrect_layer_order(self) -> None:
+        config = self._write_portable_stack_config()
+        payload = json.loads(config.read_text(encoding="utf-8"))
+        payload["layers"][1], payload["layers"][2] = payload["layers"][2], payload["layers"][1]
+        config.write_text(json.dumps(payload), encoding="utf-8")
+
+        with self.assertRaisesRegex(ValueError, "order must be exactly"):
+            load_stack_config(config, environ=self._stack_environment())
+
+    def test_validates_vanilla_sentinel_paths(self) -> None:
+        config = self._write_portable_stack_config()
+        (self.game / "resource/gamelogic.pak").unlink()
+
+        with self.assertRaisesRegex(ValueError, "missing required sentinels"):
+            load_stack_config(config, environ=self._stack_environment())
+
+    def test_accepts_active_worktree_as_final_gates_layer(self) -> None:
+        config = self._write_portable_stack_config()
+        worktree = self.root / "active-fix-worktree"
+        worktree.mkdir()
+        (worktree / "resource").mkdir()
+        (worktree / "mod.info").write_text(
+            '{mod {name "Gates of CodeX"}}\n', encoding="utf-8"
+        )
+        environ = self._stack_environment()
+        environ["GATES_CODEX_ROOT"] = str(worktree)
+
+        roots = load_stack_config(config, environ=environ)
+
+        self.assertEqual(worktree.resolve(), roots[-1])
+
+    def test_rejects_unrelated_workshop_package(self) -> None:
+        config = self._write_portable_stack_config()
+        unrelated = self.root / "3700832981"
+        unrelated.mkdir()
+        (unrelated / "resource").mkdir()
+        (unrelated / "mod.info").write_text(
+            '{mod {name "Imperium vs Xenos Conquest"}}\n', encoding="utf-8"
+        )
+        environ = self._stack_environment()
+        environ["GATES_CODEX_ROOT"] = str(unrelated)
+
+        with self.assertRaisesRegex(ValueError, "Imperium vs Xenos Conquest"):
+            load_stack_config(config, environ=environ)
+
+    def test_never_falls_back_or_guesses_workshop_paths(self) -> None:
+        config = self._write_portable_stack_config()
+        environ = self._stack_environment()
+        environ["GATES_CODEX_ROOT"] = str(self.root / "absent-gates")
+        guessed = self.root / "workshop/content/400750/Gates-of-Code-X"
+        guessed.mkdir(parents=True)
+        (guessed / "resource").mkdir()
+        (guessed / "mod.info").write_text(
+            '{mod {name "Gates of CodeX"}}\n', encoding="utf-8"
+        )
+
+        with self.assertRaises(FileNotFoundError):
+            load_stack_config(config, environ=environ)
+
     def test_first_engine_test_stages_installs_and_rewrites_manifest(self) -> None:
         result = run_first_engine_test(
             game_directory=self.game,
@@ -159,6 +272,53 @@ class OrderedModStackTests(unittest.TestCase):
         self.assertEqual(self.template_save.resolve(), Path(manifest.status_template_path).resolve())
         self.assertIn(str(installed), result.verify_command)
         self.assertIn(str(installed), result.import_command)
+
+    def _stack_environment(self) -> dict[str, str]:
+        return {
+            "GOH_VANILLA_ROOT": str(self.game),
+            "WEST81_ROOT": str(self.west),
+            "CODEX_ROOT": str(self.codex),
+            "CODEX_AI_OVERHAUL_ROOT": str(self.ai),
+            "GATES_CODEX_ROOT": str(self.gates),
+        }
+
+    def _write_portable_stack_config(self) -> Path:
+        config = self.root / "portable-stack.json"
+        config.write_text(json.dumps({
+            "layers": [
+                {
+                    "role": "vanilla",
+                    "name": "Vanilla",
+                    "path": "${GOH_VANILLA_ROOT}",
+                    "sentinels": ["resource/entity", "resource/gamelogic.pak"],
+                },
+                {
+                    "role": "west81",
+                    "name": "West81",
+                    "path": "${WEST81_ROOT}",
+                    "accepted_mod_names": ["West-81", "West81"],
+                },
+                {
+                    "role": "codex",
+                    "name": "Code:X",
+                    "path": "${CODEX_ROOT}",
+                    "accepted_mod_names": ["Code-X", "Code:X"],
+                },
+                {
+                    "role": "codex_ai_overhaul",
+                    "name": "Code:X AI Overhaul",
+                    "path": "${CODEX_AI_OVERHAUL_ROOT}",
+                    "accepted_mod_names": ["CodeX Conquest AI Overhaul"],
+                },
+                {
+                    "role": "gates_codex",
+                    "name": "Gates of Code:X",
+                    "path": "${GATES_CODEX_ROOT}",
+                    "accepted_mod_names": ["Gates of CodeX", "Gates of Code:X"],
+                },
+            ]
+        }), encoding="utf-8")
+        return config
 
 
 if __name__ == "__main__":

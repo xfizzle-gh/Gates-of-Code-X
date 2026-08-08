@@ -153,6 +153,22 @@ The manifest separates US, British, German, French, Polish, Italian, Swedish, Fi
 
 All inferred assignments and alternatives are documented in `docs/audits/faction-judgment-calls.md`.
 
+## Portable correction-validation stack
+
+The correction compiler must use the checked-in environment-backed template with the active correction worktree as the sole final Gates layer:
+
+```powershell
+$env:GOH_VANILLA_ROOT = "D:\SteamLibrary\steamapps\common\Call to Arms - Gates of Hell"
+$env:WEST81_ROOT = "D:\SteamLibrary\steamapps\workshop\content\400750\2897299509"
+$env:CODEX_ROOT = "D:\SteamLibrary\steamapps\workshop\content\400750\3261086933"
+$env:CODEX_AI_OVERHAUL_ROOT = "D:\SteamLibrary\steamapps\workshop\content\400750\3636883799"
+$env:GATES_CODEX_ROOT = "D:\Projects\Gates-of-Code-X-faction-fixes"
+```
+
+These paths are examples only. The loader validates exact product identity and order and does not fall back. Workshop item `3700832981` is an unrelated `Imperium vs Xenos Conquest` package and must not be used as the Gates layer.
+
+The regular PRC component is now `modern_only`. Exactly fourteen West81-backed historical/reserve rows are isolated in `prc_legacy_reserve`, reported and researched as `PRC Legacy / Reserve Equipment`.
+
 ## Live-stack acceptance command
 
 The independent auditor must rerun against the current installed stack:
