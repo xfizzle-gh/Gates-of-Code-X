@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - feat/s11-fog-of-war-authority
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
