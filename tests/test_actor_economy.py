@@ -17,6 +17,7 @@ from gates_of_codex.actor_economy import (
     validate_actor_content_runtime,
 )
 from gates_of_codex.faction_wiring_manifest import load_faction_manifest
+from gates_of_codex.force_migration import ensure_strategic_formations
 from gates_of_codex.models import Faction
 from gates_of_codex.scenario import load_bundled_scenario
 from gates_of_codex.state_io import load_campaign, save_campaign
@@ -30,6 +31,7 @@ from gates_of_codex.strategic_actors import (
 class ActorEconomyTest(unittest.TestCase):
     def setUp(self) -> None:
         self.state = load_bundled_scenario()
+        ensure_strategic_formations(self.state)
         self.payload = _resolved_payload()
         install_actor_content(self.state, self.payload, selected_actor_id="fra")
 
@@ -101,6 +103,7 @@ class ActorEconomyTest(unittest.TestCase):
 
     def test_warnings_are_rejected_by_default(self) -> None:
         state = load_bundled_scenario()
+        ensure_strategic_formations(state)
         payload = _resolved_payload()
         payload["warning_count"] = 1
         with self.assertRaises(ValueError):
@@ -108,6 +111,7 @@ class ActorEconomyTest(unittest.TestCase):
 
     def test_cross_actor_research_key_is_rejected(self) -> None:
         state = load_bundled_scenario()
+        ensure_strategic_formations(state)
         payload = _resolved_payload()
         france = next(item for item in payload["actors"] if item["actor_id"] == "fra")
         france["research_nodes"][1]["key"] = "actor:deu:unit:stolen"
