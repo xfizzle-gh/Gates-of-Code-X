@@ -17,10 +17,13 @@ from .strategic import (
     infrastructure_levels,
     update_operational_objectives,
 )
-from .supply import reachable_supply_provinces
+from .supply import (
+    formation_supplied_for_battalion,
+    reachable_supply_provinces,
+)
 
 
-FRONTEND_SCHEMA_VERSION = 12
+FRONTEND_SCHEMA_VERSION = 13
 FRONTEND_PYTHON_MODULE = "gates_of_codex"
 
 
@@ -44,12 +47,14 @@ def build_frontend_snapshot(
     )
 
     from .operational_capture import site_control_snapshot
+    from .operational_supply import refresh_operational_supply
 
     ensure_strategic_formations(state)
     ensure_operational_positions(state)
     ensure_move_orders(state)
     operational_clock = get_operational_clock(state)
     site_control = site_control_snapshot(state)
+    refresh_operational_supply(state, consume_grace=False)
     apply_marker_layout(state)
     objectives = update_operational_objectives(state)
     outcome = evaluate_campaign_outcome(state)
@@ -214,6 +219,9 @@ def build_frontend_snapshot(
                 "supply_summary": force.supply_summary,
                 "experience_summary": force.experience_summary,
                 "is_player_controlled": force.is_player_controlled,
+                "supplied": force.supplied,
+                "cut_off": force.cut_off,
+                "source_hub_id": force.source_hub_id,
             }
             for force in sorted(
                 state.strategic_formations.values(), key=lambda value: value.strategic_formation_id
@@ -251,7 +259,9 @@ def build_frontend_snapshot(
                 "condition": battalion.condition,
                 "repair_points_needed": 100 - battalion.condition,
                 "supply": battalion.supply,
-                "is_in_supply": battalion.province_id in supply_reach.get(battalion.faction.value, set()),
+                "is_in_supply": _battalion_is_in_supply(
+                    state, battalion, supply_reach
+                ),
                 "encircled_turns": battalion.encircled_turns,
                 "experience": battalion.experience,
                 "movement_remaining": battalion.movement_remaining,
@@ -358,6 +368,19 @@ def _battalion_display_pixel(state: CampaignState, battalion) -> list[int] | Non
             return None
         return [int(round(province.x)), int(round(province.y))]
     return resolve_display_pixel(state, force)
+
+
+def _battalion_is_in_supply(
+    state: CampaignState,
+    battalion,
+    supply_reach: dict[str, set[str]],
+) -> bool:
+    operational = formation_supplied_for_battalion(state, battalion)
+    if operational is not None:
+        return operational
+    return battalion.province_id in supply_reach.get(
+        battalion.faction.value, set()
+    )
 
 
 def _pending_battle(state: CampaignState) -> dict | None:

@@ -4,6 +4,7 @@ import unittest
 from unittest import mock
 
 from gates_of_codex.force_migration import ensure_strategic_formations
+from gates_of_codex.frontend import build_frontend_snapshot
 from gates_of_codex.models import (
     Alliance,
     Battalion,
@@ -933,6 +934,39 @@ class OperationalS8SupplyTests(unittest.TestCase):
         self.assertEqual(
             expected_payload["schema_version"], actual.to_dict()["schema_version"]
         )
+
+    def test_frontend_exports_thin_operational_supply_summary(self) -> None:
+        state, graph = _lifecycle_state(connected=False)
+        force = _only_force(state)
+        force.supplied = False
+        force.cut_off = True
+        force.source_hub_id = None
+        force.route_cost = None
+
+        with mock.patch(
+            "gates_of_codex.operational_position.load_operational_graph_for_state",
+            return_value=graph,
+        ), mock.patch(
+            "gates_of_codex.operational_capture.load_operational_graph_for_state",
+            return_value=graph,
+        ), mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ), mock.patch(
+            "gates_of_codex.supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            snapshot = build_frontend_snapshot(state)
+
+        exported_force = snapshot["strategic_formations"][0]
+        exported_battalion = snapshot["battalions"][0]
+        self.assertEqual(13, snapshot["schema_version"])
+        self.assertFalse(exported_force["supplied"])
+        self.assertTrue(exported_force["cut_off"])
+        self.assertIsNone(exported_force["source_hub_id"])
+        self.assertNotIn("route_cost", exported_force)
+        self.assertNotIn("grace_ticks_remaining", exported_force)
+        self.assertFalse(exported_battalion["is_in_supply"])
 
 
 if __name__ == "__main__":
