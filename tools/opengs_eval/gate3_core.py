@@ -183,6 +183,13 @@ def _load_json_bytes(data: bytes, path: str) -> Any:
 
 
 def _read_regular_file(path: Path, label: str) -> bytes:
+    try:
+        path_before = path.lstat()
+    except OSError as exc:
+        raise Gate3Error(f"cannot inspect {label} {path}: {exc}") from exc
+    if stat.S_ISLNK(path_before.st_mode) or not stat.S_ISREG(path_before.st_mode):
+        raise Gate3Error(f"{label} must be a regular non-symlink file: {path}")
+
     flags = os.O_RDONLY
     if hasattr(os, "O_BINARY"):
         flags |= os.O_BINARY
@@ -215,6 +222,24 @@ def _read_regular_file(path: Path, label: str) -> bytes:
             after.st_mtime_ns,
         ):
             raise Gate3Error(f"{label} changed while being captured: {path}")
+        try:
+            path_after = path.lstat()
+        except OSError as exc:
+            raise Gate3Error(f"cannot recapture {label} {path}: {exc}") from exc
+        if stat.S_ISLNK(path_after.st_mode) or not stat.S_ISREG(path_after.st_mode):
+            raise Gate3Error(f"{label} path changed to a nonregular entry: {path}")
+        if (
+            path_before.st_dev,
+            path_before.st_ino,
+            path_before.st_size,
+            path_before.st_mtime_ns,
+        ) != (
+            path_after.st_dev,
+            path_after.st_ino,
+            path_after.st_size,
+            path_after.st_mtime_ns,
+        ):
+            raise Gate3Error(f"{label} path changed while being captured: {path}")
         return b"".join(chunks)
     finally:
         os.close(fd)
