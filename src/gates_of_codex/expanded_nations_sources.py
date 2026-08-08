@@ -6,11 +6,21 @@ from typing import Any, Mapping, Sequence
 
 from .goh_source import SourceEntry, scan_source_entries
 from .modstack import resource_root
-from .expanded_nations_models import ExpandedNationsError, ProjectedUnit, sha256_bytes
+from .expanded_nations_models import (
+    BROAD_ROSTER_INCLUDES,
+    ExpandedNationsError,
+    ProjectedOpponentUnit,
+    ProjectedUnit,
+    SUPPORTED_TACTICAL_SIDES,
+    sha256_bytes,
+)
 
 _SOURCE_REFERENCE_RE = re.compile(r"^(\d+):([^/]+)/(.+)$")
 _SIDE_CALL_RE = re.compile(r"\bside\s*\(\s*[^)]*\)", re.IGNORECASE)
-_FACTION_SUFFIX_RE = re.compile(r"\((?:nato|ukr|rusa|prc|sov|csa|frg)\)$", re.IGNORECASE)
+_FACTION_SUFFIX_RE = re.compile(
+    r"^(?P<base>.*?)(?:\((?P<side>nato|ukr|rusa|prc|sov|csa|frg)\))?$",
+    re.IGNORECASE,
+)
 
 
 def project_actor_units(
@@ -39,14 +49,23 @@ def project_actor_units(
             )
         source_entry_names.add(entry.name)
         source_raw = entry.raw.rstrip()
-        projected_raw, replacements = _SIDE_CALL_RE.subn(f"side({side})", source_raw)
+        renamed_raw = _rename_entry(source_raw, entry, unit_name)
+        projected_raw, replacements = _SIDE_CALL_RE.subn(f"side({side})", renamed_raw)
         if replacements != 1:
             raise ExpandedNationsError(
                 f"Unit {unit_name} source entry {entry.name} has {replacements} side declarations"
             )
+        projected_scan = scan_source_entries(projected_raw, f"generated:{unit_name}")
+        if projected_scan.diagnostics or len(projected_scan.entries) != 1:
+            raise ExpandedNationsError(f"Projected unit {unit_name} is not one valid GoH definition")
+        if projected_scan.entries[0].name != unit_name:
+            raise ExpandedNationsError(
+                f"Projected unit ID {projected_scan.entries[0].name!r} does not match canonical ID {unit_name!r}"
+            )
         source_hash = sha256_bytes(source_raw.encode("utf-8"))
         rendered_entries.append(
             f"; resolved_unit={unit_name}\n"
+            f"; source_entry={entry.name}\n"
             f"; source={source_reference}\n"
             f"; source_sha256={source_hash}\n"
             f"{projected_raw}\n"
@@ -63,6 +82,52 @@ def project_actor_units(
     return projected, "\n".join(rendered_entries).rstrip() + "\n"
 
 
+def project_opponent_units(
+    selected_side: str,
+    roots: Sequence[Path],
+) -> tuple[list[ProjectedOpponentUnit], str]:
+    if selected_side not in SUPPORTED_TACTICAL_SIDES:
+        raise ExpandedNationsError(f"Unsupported selected tactical side: {selected_side}")
+    cache: dict[Path, tuple[SourceEntry, ...]] = {}
+    projected: list[ProjectedOpponentUnit] = []
+    rendered_entries: list[str] = []
+
+    for include in BROAD_ROSTER_INCLUDES:
+        effective = _effective_include_path(include, roots)
+        if effective is None:
+            continue
+        source_path, priority = effective
+        source_reference = f"{priority}:{roots[priority].name}/set/multiplayer/units/{include}"
+        for ordinal, entry in enumerate(_entries_for_path(source_path, cache)):
+            side_calls = [call.value.lower() for call in entry.calls if call.family == "side"]
+            if len(side_calls) > 1:
+                raise ExpandedNationsError(
+                    f"Core roster entry {entry.name!r} in {source_path} has multiple side declarations"
+                )
+            entry_side = side_calls[0] if side_calls else ""
+            if entry_side == selected_side:
+                continue
+            raw = entry.raw.rstrip()
+            source_hash = sha256_bytes(raw.encode("utf-8"))
+            rendered_entries.append(
+                f"; opponent_source={source_reference}\n"
+                f"; opponent_ordinal={ordinal}\n"
+                f"; opponent_side={entry_side or 'shared'}\n"
+                f"; source_sha256={source_hash}\n"
+                f"{raw}\n"
+            )
+            projected.append(
+                ProjectedOpponentUnit(
+                    entry_name=entry.name,
+                    tactical_side=entry_side,
+                    source_reference=source_reference,
+                    source_sha256=source_hash,
+                    projected_sha256=source_hash,
+                )
+            )
+    return projected, "\n".join(rendered_entries).rstrip() + "\n"
+
+
 def _find_source_entry(
     unit: Mapping[str, Any],
     roots: Sequence[Path],
@@ -70,7 +135,7 @@ def _find_source_entry(
     cache: dict[Path, tuple[SourceEntry, ...]],
 ) -> tuple[SourceEntry, str]:
     unit_name = str(unit["unit_name"])
-    source_side = str(unit.get("source_side") or unit.get("tactical_side") or "")
+    source_side = str(unit.get("source_side") or unit.get("tactical_side") or "").lower()
     if unit.get("virtual"):
         wrapper_path = gates_root / "resource/set/multiplayer/units/conquest/units_goc_national_wrappers.set"
         entries = _entries_for_path(wrapper_path, cache)
@@ -81,7 +146,7 @@ def _find_source_entry(
             )
         return matches[0], "gates:resource/set/multiplayer/units/conquest/units_goc_national_wrappers.set"
 
-    candidates: list[tuple[int, int, int, int, SourceEntry, str]] = []
+    candidates: list[tuple[int, int, int, SourceEntry, str]] = []
     for source_order, raw_reference in enumerate(unit.get("source_files", [])):
         source_reference = str(raw_reference)
         match = _SOURCE_REFERENCE_RE.fullmatch(source_reference)
@@ -99,26 +164,35 @@ def _find_source_entry(
         for entry in _entries_for_path(source_path, cache):
             if not _entry_name_matches(entry.name, unit_name, source_side):
                 continue
-            candidates.append(
-                (
-                    priority,
-                    int(priority == int(unit.get("source_priority", -1))),
-                    int(entry.name == unit_name),
-                    source_order,
-                    entry,
-                    source_reference,
-                )
-            )
+            candidates.append((priority, int(entry.name == unit_name), source_order, entry, source_reference))
     if not candidates:
         raise ExpandedNationsError(f"No purchase-ready source definition found for actor unit {unit_name}")
-    candidates.sort(key=lambda item: item[:4])
-    selected = candidates[-1]
-    expected_priority = int(unit.get("source_priority", selected[0]))
-    if selected[0] != expected_priority:
+
+    expected_priority = int(unit.get("source_priority", max(item[0] for item in candidates)))
+    candidates = [item for item in candidates if item[0] == expected_priority]
+    if not candidates:
         raise ExpandedNationsError(
-            f"Unit {unit_name} resolved source priority {selected[0]}, expected {expected_priority}"
+            f"Unit {unit_name} has no matching source definition at expected priority {expected_priority}"
         )
-    return selected[4], selected[5]
+    exact = [item for item in candidates if item[1] == 1]
+    pool = exact or candidates
+    highest_order = max(item[2] for item in pool)
+    winners = [item for item in pool if item[2] == highest_order]
+    unique = {(item[3].name, item[4]) for item in winners}
+    if len(unique) != 1:
+        raise ExpandedNationsError(
+            f"Actor unit {unit_name} has ambiguous purchase-ready aliases at priority {expected_priority}"
+        )
+    selected = winners[0]
+    return selected[3], selected[4]
+
+
+def _effective_include_path(include: str, roots: Sequence[Path]) -> tuple[Path, int] | None:
+    for priority in range(len(roots) - 1, -1, -1):
+        candidate = resource_root(roots[priority]) / "set/multiplayer/units" / include
+        if candidate.is_file():
+            return candidate, priority
+    return None
 
 
 def _entries_for_path(path: Path, cache: dict[Path, tuple[SourceEntry, ...]]) -> tuple[SourceEntry, ...]:
@@ -143,8 +217,37 @@ def _entries_for_path(path: Path, cache: dict[Path, tuple[SourceEntry, ...]]) ->
 def _entry_name_matches(entry_name: str, unit_name: str, source_side: str) -> bool:
     if entry_name == unit_name:
         return True
-    if f"{entry_name}({source_side})" == unit_name:
-        return True
-    if f"{unit_name}({source_side})" == entry_name:
-        return True
-    return _FACTION_SUFFIX_RE.sub("", entry_name) == _FACTION_SUFFIX_RE.sub("", unit_name)
+    entry_match = _FACTION_SUFFIX_RE.fullmatch(entry_name)
+    unit_match = _FACTION_SUFFIX_RE.fullmatch(unit_name)
+    if entry_match is None or unit_match is None:
+        return False
+    if entry_match.group("base") != unit_match.group("base"):
+        return False
+    entry_side = (entry_match.group("side") or "").lower()
+    unit_side = (unit_match.group("side") or "").lower()
+    allowed = {"", source_side.lower()}
+    return entry_side in allowed and unit_side in allowed
+
+
+def _rename_entry(raw: str, entry: SourceEntry, canonical_name: str) -> str:
+    if entry.name == canonical_name:
+        return raw
+    if entry.form == "block":
+        pattern = re.compile(r'^(\s*\{\s*")' + re.escape(entry.name) + r'(")')
+        renamed, count = pattern.subn(
+            lambda match: f"{match.group(1)}{canonical_name}{match.group(2)}",
+            raw,
+            count=1,
+        )
+    elif entry.form == "macro":
+        pattern = re.compile(r"\bname\s*\(\s*" + re.escape(entry.name) + r"\s*\)", re.IGNORECASE)
+        renamed, count = pattern.subn(f"name({canonical_name})", raw, count=1)
+    else:
+        raise ExpandedNationsError(
+            f"Unsupported source-entry form for {entry.name}: {entry.form}"
+        )
+    if count != 1:
+        raise ExpandedNationsError(
+            f"Could not canonicalize source entry {entry.name!r} to {canonical_name!r}"
+        )
+    return renamed
