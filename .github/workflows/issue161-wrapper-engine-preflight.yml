@@ -1,0 +1,75 @@
+name: Issue 161 Wrapper Engine Preflight
+
+on:
+  push:
+    branches:
+      - audit/161-wrapper-engine-acceptance
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python-preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.9'
+
+      - name: Verify audit-only scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 14d784de63d58ddbf993d71f95d9f31b8a370cb2 HEAD
+          changed="$(git diff --name-only 14d784de63d58ddbf993d71f95d9f31b8a370cb2...HEAD)"
+          printf '%s\n' "$changed"
+          bad="$(printf '%s\n' "$changed" | grep -Ev '^(audit/issue161/|\.github/workflows/issue161-wrapper-engine-preflight\.yml$)' || true)"
+          test -z "$bad"
+
+      - name: Install audited package
+        run: python -m pip install -e .
+
+      - name: Compile and inspect generator
+        run: |
+          python -m py_compile audit/issue161/prepare_wrapper_engine_test.py
+          python - <<'PY'
+          import importlib.util
+          from pathlib import Path
+
+          path = Path('audit/issue161/prepare_wrapper_engine_test.py')
+          spec = importlib.util.spec_from_file_location('issue161_prepare', path)
+          module = importlib.util.module_from_spec(spec)
+          assert spec.loader is not None
+          spec.loader.exec_module(module)
+          assert module.AUDITED_COMMIT == '14d784de63d58ddbf993d71f95d9f31b8a370cb2'
+          assert len(module.WRAPPERS) == 14
+          assert sum(1 for side, _ in module.WRAPPERS.values() if side == 'ukr') == 6
+          assert sum(1 for side, _ in module.WRAPPERS.values() if side == 'rusa') == 8
+          assert sum(count for side, count in module.WRAPPERS.values() if side == 'ukr') == 35
+          assert sum(count for side, count in module.WRAPPERS.values() if side == 'rusa') == 52
+          PY
+
+  windows-powershell-preflight:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.9'
+
+      - name: Parse PowerShell scripts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          [scriptblock]::Create((Get-Content -Raw '.\audit\issue161\prepare-wrapper-test.ps1')) | Out-Null
+          [scriptblock]::Create((Get-Content -Raw '.\audit\issue161\collect-wrapper-evidence.ps1')) | Out-Null
+          python -m py_compile .\audit\issue161\prepare_wrapper_engine_test.py
