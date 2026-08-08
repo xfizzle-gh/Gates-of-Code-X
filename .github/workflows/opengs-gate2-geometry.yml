@@ -1,3 +1,4 @@
+# Gate 2 only: no Gate 3 scale or production integration.
 name: OpenGS Gate 2 geometry
 
 on:
