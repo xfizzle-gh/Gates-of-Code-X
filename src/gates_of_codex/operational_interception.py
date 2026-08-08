@@ -493,10 +493,10 @@ def apply_edge_contact_stop(
                 battalion.province_id = force.province_id
                 battalion.strategic_formation_id = force.strategic_formation_id
     # Persist exact retreat nodes for post-battle resolution.
-    store = state.map_metadata.setdefault("operational_edge_retreat_nodes", {})
-    if isinstance(store, dict):
-        for fid, node_id in retreat_map.items():
-            store[str(fid)] = str(node_id)
+    from .operational_retreat import record_retreat_origin_node
+
+    for fid, node_id in sorted(retreat_map.items()):
+        record_retreat_origin_node(state, fid, node_id)
     return retreat_map
 
 
@@ -609,6 +609,11 @@ def apply_simultaneous_node_arrivals(
         seed_def,
         node_id=node_id,
         origin_province_id=battle_origin,
+        retreat_origins={
+            item.formation_id: item.path_origin_node
+            for item in accepted
+            if item.path_origin_node
+        },
     )
     if battle is None:
         # Caller must restore; signal failure with rejected ids for bookkeeping.

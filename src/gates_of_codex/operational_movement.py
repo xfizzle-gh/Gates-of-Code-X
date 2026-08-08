@@ -1038,6 +1038,7 @@ def _advance_formation_one_tick(
             dest_node,
             create_battle=True,
             origin_province_id=origin_province_id,
+            origin_node_id=origin_node,
         )
         if contact["reason"] == "enemy_contact":
             force.move_order = _as_blocked(order)

@@ -191,6 +191,7 @@ def try_create_node_contact_battle(
     *,
     node_id: str,
     origin_province_id: str | None = None,
+    retreat_origins: dict[str, str] | None = None,
 ) -> PendingBattle | None:
     """Create cooperative multi-formation node-contact battle.
 
@@ -250,6 +251,11 @@ def try_create_node_contact_battle(
         defender_formation_id=primary_def,
     )
     state.pending_battle = pending
+    if retreat_origins:
+        from .operational_retreat import record_retreat_origin_node
+
+        for formation_id, origin_node_id in sorted(retreat_origins.items()):
+            record_retreat_origin_node(state, formation_id, origin_node_id)
     return pending
 
 
@@ -312,6 +318,7 @@ def resolve_node_entry_contact(
     *,
     create_battle: bool = True,
     origin_province_id: str | None = None,
+    origin_node_id: str | None = None,
 ) -> dict[str, Any]:
     """After a formation arrives/occupies a node: stack check + cooperative contact battle."""
     result = inspect_node_entry(state, force, node_id)
@@ -342,6 +349,11 @@ def resolve_node_entry_contact(
         seed_def,
         node_id=node_id,
         origin_province_id=origin_province_id or force.province_id,
+        retreat_origins=(
+            {force.strategic_formation_id: origin_node_id}
+            if origin_node_id
+            else None
+        ),
     )
     if battle is None:
         result["reason"] = "invalid_contact_roster"
