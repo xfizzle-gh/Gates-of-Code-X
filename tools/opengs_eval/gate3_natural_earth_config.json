@@ -64,7 +64,7 @@
       {"name": "irish_sea", "longitude": -5.0, "latitude": 54.0, "expected": "ocean"},
       {"name": "english_channel", "longitude": -1.5, "latitude": 50.2, "expected": "ocean"},
       {"name": "western_mediterranean", "longitude": 5.0, "latitude": 38.0, "expected": "ocean"},
-      {"name": "adriatic", "longitude": 16.0, "latitude": 43.0, "expected": "ocean"},
+      {"name": "adriatic", "longitude": 14.5, "latitude": 42.5, "expected": "ocean"},
       {"name": "black_sea", "longitude": 32.0, "latitude": 43.0, "expected": "ocean"},
       {"name": "kattegat", "longitude": 11.3, "latitude": 57.0, "expected": "ocean"},
       {"name": "baltic", "longitude": 20.0, "latitude": 57.0, "expected": "ocean"}
