@@ -43,7 +43,7 @@ func reset_session() -> void:
 
 
 func begin_transition(
-	_previous_snapshot: Dictionary,
+	previous_snapshot: Dictionary,
 	next_snapshot: Dictionary,
 	backend_payload: Dictionary,
 	graph_index: Dictionary = {}
@@ -62,10 +62,13 @@ func begin_transition(
 		if not formation_id.is_empty():
 			_tracks[formation_id] = track
 
-	_contact = _contact_from_snapshot(next_snapshot, _graph_index)
+	var previous_contact := _contact_from_snapshot(previous_snapshot, _graph_index)
+	var next_contact := _contact_from_snapshot(next_snapshot, _graph_index)
+	var new_primary_contact := _is_new_primary_contact(previous_contact, next_contact)
+	_contact = next_contact
 	_outcome = _normalize_outcome(presentation.get("battle_finalization", {}))
-	_active = _has_animated_track() or not _contact.is_empty()
-	if not _contact.is_empty():
+	_active = _has_animated_track() or new_primary_contact
+	if new_primary_contact:
 		_last_contact = {
 			"tracks": _tracks.duplicate(true),
 			"contact": _contact.duplicate(true),
@@ -154,6 +157,21 @@ func _has_animated_track() -> bool:
 		if track_variant is Dictionary and not bool((track_variant as Dictionary).get("snap_only", false)):
 			return true
 	return false
+
+
+func _is_new_primary_contact(previous_contact: Dictionary, next_contact: Dictionary) -> bool:
+	if next_contact.is_empty():
+		return false
+	if previous_contact.is_empty():
+		return true
+	var previous_id := String(previous_contact.get("battle_id", "")).strip_edges()
+	var next_id := String(next_contact.get("battle_id", "")).strip_edges()
+	if previous_id.is_empty() and next_id.is_empty():
+		# Older compatible snapshots may omit the identity. A transition from one
+		# pending contact to another is then treated as the same contact so that a
+		# handoff/status refresh cannot overwrite the session replay record.
+		return false
+	return previous_id != next_id
 
 
 func _extract_operational_presentation(payload: Dictionary) -> Dictionary:
