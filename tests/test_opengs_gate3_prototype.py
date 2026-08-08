@@ -187,6 +187,44 @@ class Gate3CandidateContractTests(unittest.TestCase):
         self.assertEqual(land_draw.fills, [self.g.LAND_COLOR, self.g.LAND_COLOR])
         self.assertEqual(lake_draw.fills, [self.g.LAKE_COLOR, self.g.LAND_COLOR])
 
+    def test_simple_grid_ring_is_unchanged(self):
+        ring = [(0, 0), (2, 0), (2, 2), (0, 2)]
+        self.assertEqual(self.g._split_self_touching_rings([ring]), [ring])
+
+    def test_figure_eight_pinch_splits_without_changing_boundary_edges(self):
+        import gate1_to_gate2_adapter as gate2
+
+        ring = [
+            (0, 0), (2, 0), (2, 2), (0, 2),
+            (0, 0), (-2, 0), (-2, -2), (0, -2),
+        ]
+        split = self.g._split_self_touching_rings([ring])
+        self.assertEqual(len(split), 2)
+        self.assertEqual(self.g._ring_edge_counter([ring]), self.g._ring_edge_counter(split))
+        self.assertTrue(all(len(part) == len(set(part)) for part in split))
+        components = gate2.build_components(split, "fixture")
+        self.assertEqual(len(components), 2)
+        self.assertEqual(sum(component.area for component in components), 8.0)
+
+    def test_non_origin_pinch_has_same_canonical_result(self):
+        original = [
+            (0, 0), (2, 0), (2, 2), (0, 2),
+            (0, 0), (-2, 0), (-2, -2), (0, -2),
+        ]
+        rotated = [
+            (2, 0), (2, 2), (0, 2), (0, 0),
+            (-2, 0), (-2, -2), (0, -2), (0, 0),
+        ]
+        self.assertEqual(
+            self.g._split_self_touching_rings([original]),
+            self.g._split_self_touching_rings([rotated]),
+        )
+
+    def test_degenerate_pinch_fails_closed(self):
+        ring = [(0, 0), (1, 0), (0, 0), (0, 1), (1, 1)]
+        with self.assertRaisesRegex(self.g.Gate3Error, "fewer than three vertices"):
+            self.g._split_self_touching_rings([ring])
+
 
 class Gate3PackageAuthorityTests(unittest.TestCase):
     @classmethod
