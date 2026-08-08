@@ -71,7 +71,8 @@ static func resolve_pending_battle_location(
 				return result
 
 	# 2) edge_id + progress_milli — strict int in range, no clamping of malformed values.
-	var edge_id := String(battle.get("encounter_edge_id", "")).strip_edges()
+	var edge_value: Variant = battle.get("encounter_edge_id", "")
+	var edge_id := "" if edge_value == null else String(edge_value).strip_edges()
 	if not edge_id.is_empty() and battle.has("encounter_progress_milli"):
 		var progress := _parse_strict_progress_milli(battle.get("encounter_progress_milli"))
 		if progress >= 0:
@@ -85,7 +86,8 @@ static func resolve_pending_battle_location(
 				return result
 
 	# 3) encounter_node_id
-	var node_id := String(battle.get("encounter_node_id", "")).strip_edges()
+	var node_value: Variant = battle.get("encounter_node_id", "")
+	var node_id := "" if node_value == null else String(node_value).strip_edges()
 	if not node_id.is_empty():
 		var node_pixel := _node_pixel(graph_index, node_id)
 		if node_pixel != Vector2.INF:

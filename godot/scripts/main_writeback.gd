@@ -2,12 +2,14 @@ extends "res://scripts/main.gd"
 
 # Correctness layer for the write-back checkpoint. The full stack UI remains in #52.
 const FrontendCommandRunnerScript = preload("res://scripts/presentation/command_runner.gd")
+const OperationalResolutionPresenterScript = preload("res://scripts/presentation/operational_resolution_presenter.gd")
 
 var battalion_stacks_by_province: Dictionary = {}
 var battalions_by_id: Dictionary = {}
 var all_front_by_origin: Dictionary = {}
 var selected_battalion_id := ""
 var command_runner: Node
+var operational_presenter
 var _busy_status := ""
 var _last_command_gen_handled := 0
 ## Test/observability: increments only on successful live snapshot commit after a command.
@@ -16,6 +18,7 @@ var snapshot_commit_count := 0
 
 func _ready() -> void:
 	_ensure_command_runner()
+	_ensure_operational_presenter()
 	super._ready()
 
 
@@ -27,6 +30,17 @@ func _ensure_command_runner() -> void:
 	add_child(command_runner)
 	if not command_runner.command_finished.is_connected(_on_command_finished):
 		command_runner.command_finished.connect(_on_command_finished)
+
+
+func _ensure_operational_presenter() -> void:
+	if operational_presenter != null:
+		return
+	operational_presenter = OperationalResolutionPresenterScript.new()
+	if not InputMap.has_action("skip_operational_presentation"):
+		InputMap.add_action("skip_operational_presentation")
+		var event := InputEventKey.new()
+		event.physical_keycode = KEY_SPACE
+		InputMap.action_add_event("skip_operational_presentation", event)
 
 
 func inject_command_runner(runner: Node) -> void:
@@ -75,6 +89,8 @@ func _load_snapshot(path: String) -> void:
 		load_error = String(built.get("error", "snapshot load failed"))
 		return
 	_commit_snapshot_state(built, "", "", false)
+	_ensure_operational_presenter()
+	operational_presenter.begin_session(snapshot, _operational_graph_index())
 
 
 func _try_build_snapshot_state(path: String) -> Dictionary:
@@ -272,7 +288,7 @@ func _draw_province(province: Dictionary) -> void:
 
 
 func _command_mutates_state(button_id: String) -> bool:
-	if button_id in ["fit"]:
+	if button_id in ["fit", "replay_contact", "skip_presentation"]:
 		return false
 	if button_id.begins_with("move:") or button_id.begins_with("construct:"):
 		return true
@@ -280,6 +296,27 @@ func _command_mutates_state(button_id: String) -> bool:
 
 
 func _handle_button(button_id: String) -> void:
+	_ensure_operational_presenter()
+	if button_id == "replay_contact":
+		if operational_presenter.replay_last_contact():
+			status_message = "Replaying last contact - presentation only."
+		else:
+			status_message = "No contact is available to replay in this session."
+		queue_redraw()
+		return
+	if button_id == "skip_presentation":
+		operational_presenter.skip()
+		status_message = "Operational presentation skipped to authoritative endpoints."
+		queue_redraw()
+		return
+	if is_pending_battle_modal_active() and button_id not in ["auto_resolve", "handoff"]:
+		status_message = "Operational resolution paused - resolve or hand off the pending battle."
+		queue_redraw()
+		return
+	if operational_presenter.is_active() and _command_mutates_state(button_id):
+		status_message = "Operational presentation active - Skip or wait for completion."
+		queue_redraw()
+		return
 	if is_command_busy() and _command_mutates_state(button_id):
 		status_message = "Busy - wait for %s to finish." % command_runner.current_op()
 		queue_redraw()
@@ -288,6 +325,10 @@ func _handle_button(button_id: String) -> void:
 
 
 func _issue_move(target_province_id: String) -> void:
+	if is_map_interaction_blocked():
+		status_message = "Operational resolution paused - map orders are blocked."
+		queue_redraw()
+		return
 	if is_command_busy():
 		status_message = "Busy - move ignored until %s finishes." % command_runner.current_op()
 		queue_redraw()
@@ -297,6 +338,10 @@ func _issue_move(target_province_id: String) -> void:
 
 func _draw_button(id: String, label: String, x: float, y: float, enabled: bool, fill := Color("1a2a38")) -> float:
 	var allow := enabled
+	if is_pending_battle_modal_active() and id not in ["auto_resolve", "handoff", "replay_contact", "skip_presentation"]:
+		allow = false
+	if operational_presenter != null and operational_presenter.is_active() and _command_mutates_state(id):
+		allow = false
 	if is_command_busy() and _command_mutates_state(id):
 		allow = false
 	return super._draw_button(id, label, x, y, allow, fill)
@@ -307,14 +352,23 @@ func enabled_action_button_ids() -> PackedStringArray:
 	var ids := PackedStringArray()
 	var writeback := bool(snapshot.get("control", {}).get("enabled", false))
 	var has_battle := snapshot.get("pending_battle") != null
-	var candidates: Array = [
-		["fit", true],
-		["refresh", writeback],
-		["end_turn", writeback and not has_battle],
-		["run_ai", writeback and not has_battle],
-		["auto_resolve", writeback and has_battle],
-		["handoff", writeback and has_battle],
-	]
+	_ensure_operational_presenter()
+	var candidates: Array = []
+	if has_battle:
+		candidates = [
+			["auto_resolve", writeback],
+			["handoff", writeback],
+			["replay_contact", operational_presenter.can_replay_last_contact()],
+			["skip_presentation", operational_presenter.is_active()],
+		]
+	else:
+		candidates = [
+			["fit", true],
+			["refresh", writeback],
+			["end_turn", writeback],
+			["run_ai", writeback],
+			["skip_presentation", operational_presenter.is_active()],
+		]
 	for entry in candidates:
 		var button_id := String(entry[0])
 		var allow := bool(entry[1])
@@ -323,6 +377,24 @@ func enabled_action_button_ids() -> PackedStringArray:
 		if allow:
 			ids.append(button_id)
 	return ids
+
+
+func is_pending_battle_modal_active() -> bool:
+	return snapshot.get("pending_battle", null) is Dictionary
+
+
+func is_map_interaction_blocked() -> bool:
+	return is_pending_battle_modal_active()
+
+
+func _operational_graph_index() -> Dictionary:
+	var graph: Variant = get("operational_graph")
+	if graph == null:
+		return {}
+	var index_value: Variant = graph.get("index")
+	if index_value is Dictionary:
+		return (index_value as Dictionary).duplicate(true)
+	return {}
 
 
 func _backend_launch_candidates(control: Dictionary, apply_args: Array) -> Array:
@@ -348,6 +420,16 @@ func _backend_launch_candidates(control: Dictionary, apply_args: Array) -> Array
 
 func _queue_and_apply(commands: Array) -> void:
 	_ensure_command_runner()
+	_ensure_operational_presenter()
+	var requested_op := FrontendCommandRunnerScript.primary_op(commands)
+	if is_pending_battle_modal_active() and requested_op not in ["auto_resolve", "handoff"]:
+		status_message = "Operational resolution paused - pending battle is modal."
+		queue_redraw()
+		return
+	if operational_presenter.is_active() and requested_op not in ["handoff"]:
+		status_message = "Operational presentation active - Skip or wait for completion."
+		queue_redraw()
+		return
 	var control: Dictionary = snapshot.get("control", {})
 	if not bool(control.get("enabled", false)):
 		status_message = "Write-back disabled. Re-export frontend with campaign path."
@@ -437,6 +519,16 @@ func _payload_failure_detail(output_text: String) -> String:
 	return detail
 
 
+func _backend_payload(output_text: String) -> Dictionary:
+	var text := output_text.strip_edges()
+	if text.is_empty():
+		return {}
+	var parsed: Variant = JSON.parse_string(text)
+	if parsed is Dictionary:
+		return (parsed as Dictionary).duplicate(true)
+	return {}
+
+
 func _clear_busy_ui() -> void:
 	_busy_status = ""
 	queue_redraw()
@@ -484,6 +576,8 @@ func _on_command_finished(
 	var previous_battalion := selected_battalion_id
 	var previous_scale := view_scale
 	var previous_offset := view_offset
+	var previous_snapshot := snapshot.duplicate(true)
+	var backend_payload := _backend_payload(output_text)
 	var load_path := snapshot_path if not snapshot_path.is_empty() else snapshot_source_path
 	var built: Dictionary = _try_build_snapshot_state(load_path)
 	if not bool(built.get("ok", false)):
@@ -496,6 +590,13 @@ func _on_command_finished(
 	# Apply output side-effects only after candidate is valid.
 	_parse_apply_output(output_text)
 	_commit_snapshot_state(built, previous_selected, previous_battalion, true)
+	_ensure_operational_presenter()
+	operational_presenter.begin_transition(
+		previous_snapshot,
+		snapshot,
+		backend_payload,
+		_operational_graph_index()
+	)
 	view_scale = previous_scale
 	view_offset = previous_offset
 	if status_message.is_empty():

@@ -20,6 +20,10 @@ var _scroll_down_rect := Rect2()
 
 
 func _draw_management_panel() -> void:
+	if has_method("is_pending_battle_modal_active") and is_pending_battle_modal_active() \
+	and operational_presenter != null and not operational_presenter.is_active():
+		_draw_pending_battle_modal()
+		return
 	# Full opaque side panel — no ghosted legacy province UI underneath.
 	var viewport := get_viewport_rect().size
 	var panel_x := viewport.x - PANEL_WIDTH
@@ -60,6 +64,10 @@ func _draw_management_panel() -> void:
 	y = _draw_button("run_ai", "Run AI + advance", x, y, writeback and not has_battle)
 	y = _draw_button("auto_resolve", "Auto-resolve battle (A)", x, y, writeback and has_battle, Color("4a2f18"))
 	y = _draw_button("handoff", "Handoff to GoH (H)", x, y, writeback and has_battle, Color("5a2418"))
+	if operational_presenter != null and operational_presenter.can_replay_last_contact():
+		y = _draw_button("replay_contact", "Replay last contact", x, y, true, Color("243140"))
+	if operational_presenter != null and operational_presenter.is_active():
+		y = _draw_button("skip_presentation", "Skip presentation (Space)", x, y, true, Color("243140"))
 	if not writeback:
 		y = _panel_line("Write-back off — re-export frontend.", x, y, Color("ff8e72"), 12)
 	y += 10.0
@@ -70,6 +78,105 @@ func _draw_management_panel() -> void:
 	var stack_bottom := _stack_section_bottom(y, viewport.y - y - 12.0)
 	if stack_bottom + 80.0 < viewport.y:
 		_draw_targets_and_objectives(x, stack_bottom + 12.0)
+
+
+func pending_battle_modal_model() -> Dictionary:
+	var pending_variant: Variant = snapshot.get("pending_battle", null)
+	if not pending_variant is Dictionary:
+		return {}
+	_ensure_operational_presenter()
+	var contact: Dictionary = operational_presenter.contact_model()
+	var attacker_names: Array = []
+	var defender_names: Array = []
+	var formations: Dictionary = contact.get("formations", {})
+	for formation_id: String in contact.get("participant_formation_ids", []):
+		var row: Dictionary = formations.get(formation_id, {})
+		var names: Array = attacker_names if String(row.get("side", "")) == "attacker" else defender_names
+		names.append(String(row.get("display_name", formation_id)))
+	var ambush_lines: Array = []
+	for ambush_variant: Variant in contact.get("ambush", []):
+		if not ambush_variant is Dictionary:
+			continue
+		var ambush := ambush_variant as Dictionary
+		ambush_lines.append("%s: Ambush %s" % [ambush.get("display_name", "Formation"), ambush.get("effect_label", "+15%")])
+	var location := String(contact.get("location_detail", "")).strip_edges()
+	if location.is_empty():
+		var pending := pending_variant as Dictionary
+		var location_value: Variant = pending.get("encounter_node_id", null)
+		if location_value == null or String(location_value).strip_edges().is_empty():
+			location_value = pending.get("encounter_edge_id", "")
+		location = "" if location_value == null else String(location_value).strip_edges()
+	return {
+		"battle_id": String((pending_variant as Dictionary).get("id", "")),
+		"contact_label": String(contact.get("label", "Pending Battle")),
+		"location": location,
+		"attacker_names": attacker_names,
+		"defender_names": defender_names,
+		"ambush_lines": ambush_lines,
+	}
+
+
+func _draw_pending_battle_modal() -> void:
+	button_rects.clear()
+	stack_tab_rects.clear()
+	battalion_row_rects.clear()
+	unit_card_rects.clear()
+	var viewport := get_viewport_rect().size
+	draw_rect(Rect2(Vector2.ZERO, viewport), Color(0.01, 0.015, 0.025, 0.76))
+	var width := minf(880.0, viewport.x - 64.0)
+	var height := minf(480.0, viewport.y - 64.0)
+	var rect := Rect2((viewport - Vector2(width, height)) * 0.5, Vector2(width, height))
+	draw_rect(rect, Color(0.035, 0.047, 0.062, 0.99))
+	draw_rect(rect, Color("ffb14e"), false, 2.0)
+	var model := pending_battle_modal_model()
+	var left := rect.position.x + 30.0
+	var right := rect.position.x + rect.size.x * 0.5 + 14.0
+	var top := rect.position.y + 38.0
+	_draw_panel_text("OPERATIONAL RESOLUTION PAUSED", Vector2(left, top), 22, Color("ffd27a"))
+	_draw_panel_text(String(model.get("contact_label", "Pending Battle")), Vector2(left, top + 38.0), 19, Color.WHITE)
+	var location := String(model.get("location", ""))
+	if not location.is_empty():
+		_draw_panel_text("Contact location: %s" % location, Vector2(left, top + 63.0), 13, Color("9fd7ff"))
+	_draw_panel_text("ATTACKER", Vector2(left, top + 110.0), 14, Color("7fe7ff"))
+	_draw_panel_text("DEFENDER", Vector2(right, top + 110.0), 14, Color("ff8e72"))
+	var y_left := top + 137.0
+	for name: String in model.get("attacker_names", []):
+		_draw_panel_text(name, Vector2(left, y_left), 15, Color.WHITE)
+		y_left += 22.0
+	var y_right := top + 137.0
+	for name: String in model.get("defender_names", []):
+		_draw_panel_text(name, Vector2(right, y_right), 15, Color.WHITE)
+		y_right += 22.0
+	var ambush_y := top + 210.0
+	for line: String in model.get("ambush_lines", []):
+		_draw_panel_text(line, Vector2(left, ambush_y), 15, Color("ffd27a"))
+		ambush_y += 22.0
+	_draw_panel_text(
+		"Campaign state is paused until this battle is resolved or handed off.",
+		Vector2(left, top + 273.0),
+		13,
+		Color(0.78, 0.82, 0.86, 1.0)
+	)
+	var writeback := bool(snapshot.get("control", {}).get("enabled", false))
+	var button_y := top + 304.0
+	button_y = _draw_button("auto_resolve", "Auto-resolve battle (A)", left, button_y, writeback, Color("4a2f18"))
+	button_y = _draw_button("handoff", "Handoff to GoH (H)", left, button_y, writeback, Color("5a2418"))
+	button_y = _draw_button(
+		"replay_contact",
+		"Replay last contact",
+		right,
+		top + 304.0,
+		operational_presenter.can_replay_last_contact(),
+		Color("243140")
+	)
+	_draw_button(
+		"skip_presentation",
+		"Skip presentation (Space)",
+		right,
+		button_y,
+		operational_presenter.is_active(),
+		Color("243140")
+	)
 
 
 func _stack_section_bottom(section_top: float, available_h: float) -> float:
@@ -545,6 +652,31 @@ func _draw_panel_text(text: String, position: Vector2, font_size: int, color: Co
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if has_method("is_pending_battle_modal_active") and is_pending_battle_modal_active():
+		if event is InputEventKey and event.pressed and not event.echo:
+			var key := event as InputEventKey
+			if key.keycode == KEY_SPACE:
+				_handle_button("skip_presentation")
+			elif key.keycode == KEY_A:
+				_handle_button("auto_resolve")
+			elif key.keycode == KEY_H:
+				_handle_button("handoff")
+			get_viewport().set_input_as_handled()
+			return
+		if event is InputEventMouseButton and event.pressed:
+			var modal_mouse := event as InputEventMouseButton
+			if modal_mouse.button_index == MOUSE_BUTTON_LEFT:
+				for button_id: String in button_rects:
+					if (button_rects[button_id] as Rect2).has_point(modal_mouse.position):
+						_handle_button(button_id)
+						break
+		get_viewport().set_input_as_handled()
+		return
+	if event is InputEventKey and event.pressed and not event.echo:
+		if (event as InputEventKey).keycode == KEY_SPACE and operational_presenter != null and operational_presenter.is_active():
+			_handle_button("skip_presentation")
+			get_viewport().set_input_as_handled()
+			return
 	if event is InputEventMouseMotion:
 		var next_tooltip := _unit_tooltip_at(event.position)
 		if next_tooltip != hovered_unit_tooltip:

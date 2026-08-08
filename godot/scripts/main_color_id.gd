@@ -83,7 +83,8 @@ func _ready() -> void:
 	_ensure_presentation_layers()
 	_load_presentation_fixture(presentation_fixture_path)
 	_open_color_id_map()
-	set_process(map_debug.enabled)
+	# S10 presentation advances on the render clock only; campaign authority remains in snapshots.
+	set_process(true)
 	if not _screenshot_path.is_empty():
 		# Legacy in-scene screenshot path: wait for real rendered frames.
 		_fit_complete_theatre()
@@ -96,6 +97,13 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if operational_presenter != null:
+		var presentation_visible: bool = operational_presenter.is_active() \
+			or not operational_presenter.transient_outcome().is_empty()
+		operational_presenter.advance(delta)
+		if presentation_visible or operational_presenter.is_active() \
+		or not operational_presenter.transient_outcome().is_empty():
+			queue_redraw()
 	if has_method("is_command_busy") and is_command_busy():
 		queue_redraw()
 	if map_debug.enabled:
@@ -203,6 +211,25 @@ func _load_presentation_fixture(path: String) -> void:
 	# Optional test/screenshot overlay: inject a pending_battle without Python changes.
 	if presentation_fixture.has("pending_battle") and presentation_fixture.get("pending_battle") is Dictionary:
 		snapshot["pending_battle"] = (presentation_fixture.get("pending_battle") as Dictionary).duplicate(true)
+	if bool(presentation_fixture.get("presentation_writeback_enabled", false)):
+		var fixture_control: Dictionary = snapshot.get("control", {}).duplicate(true)
+		fixture_control["enabled"] = true
+		snapshot["control"] = fixture_control
+	_ensure_operational_presenter()
+	var graph_index := _operational_graph_index()
+	if presentation_fixture.get("presentation_graph_index", null) is Dictionary:
+		graph_index = (presentation_fixture.get("presentation_graph_index") as Dictionary).duplicate(true)
+	operational_presenter.begin_session(snapshot, graph_index)
+	var payload: Variant = presentation_fixture.get("presentation_backend_payload", null)
+	if payload is Dictionary:
+		operational_presenter.duration_seconds = maxf(
+			float(presentation_fixture.get("presentation_duration_seconds", operational_presenter.DEFAULT_DURATION_SECONDS)),
+			0.001
+		)
+		operational_presenter.begin_transition(snapshot, snapshot, payload as Dictionary, graph_index)
+		var fixture_progress := clampf(float(presentation_fixture.get("presentation_progress", 0.0)), 0.0, 1.0)
+		if fixture_progress > 0.0:
+			operational_presenter.advance(operational_presenter.duration_seconds * fixture_progress)
 	# Optional selection hints for Earth3 operational screenshots.
 	if presentation_fixture.has("selected_province_id"):
 		var sp := String(presentation_fixture.get("selected_province_id", ""))
@@ -538,6 +565,7 @@ func _draw() -> void:
 	_draw_color_id_pending_battle()
 	_draw_presentation_fixture_markers()
 	_draw_color_id_overlays()
+	_draw_operational_presentation()
 	if map_debug.enabled:
 		map_debug.counter_bounds = _cached_reserved_rects.duplicate()
 		map_debug.label_bounds = _cached_label_bounds.duplicate()
@@ -613,6 +641,132 @@ func _draw() -> void:
 	)
 	_draw_management_panel()
 	_draw_command_busy_overlay()
+
+
+func _draw_operational_presentation() -> void:
+	if operational_presenter == null:
+		return
+	var active: bool = operational_presenter.is_active()
+	var outcome: Dictionary = operational_presenter.transient_outcome()
+	if not active and outcome.is_empty():
+		return
+	var contact: Dictionary = operational_presenter.contact_model()
+	var participants: Array = contact.get("participant_formation_ids", [])
+	if active:
+		# Keep all parallel tracks visible, while subdued background counters make the
+		# formations involved in the contact the only emphasized group.
+		draw_rect(_map_content_rect(), Color(0.015, 0.02, 0.03, 0.34))
+		var tracks: Dictionary = operational_presenter.track_model()
+		for formation_id: String in operational_presenter.active_formation_ids():
+			var track: Dictionary = tracks.get(formation_id, {})
+			var route := PackedVector2Array()
+			for point: Vector2 in track.get("points", []):
+				route.append(_image_to_screen(point))
+			if route.size() >= 2:
+				MapMarkersScript.draw_route_line(self, route, Color(0.50, 0.91, 1.0, 0.78), 2.2)
+			var row := _s10_formation_row(formation_id)
+			var authoritative := _s10_pixel(row.get("display_pixel", null))
+			if authoritative == Vector2.INF:
+				authoritative = track.get("end_pixel", Vector2.ZERO)
+			var screen := _image_to_screen(operational_presenter.display_pixel(formation_id, authoritative))
+			var faction_color: Color = FACTION_COLORS.get(String(row.get("faction", "neutral")), FACTION_COLORS["neutral"])
+			var summary := _s10_formation_summary(formation_id)
+			var emphasized := participants.has(formation_id)
+			MapMarkersScript.draw_formation_counter(
+				self,
+				screen,
+				faction_color,
+				String(summary.get("glyph", "X")),
+				int(summary.get("unit_count", 0)),
+				emphasized
+			)
+			if emphasized:
+				draw_arc(screen, 25.0, 0.0, TAU, 32, Color("ffd27a"), 2.5)
+		if not contact.is_empty():
+			var encounter_pixel: Variant = contact.get("encounter_pixel", Vector2.INF)
+			if encounter_pixel is Vector2 and encounter_pixel != Vector2.INF:
+				var contact_screen := _image_to_screen(encounter_pixel)
+				MapMarkersScript.draw_crossed_swords_battle_marker(self, contact_screen)
+				var kind := String(contact.get("kind", ""))
+				if BattleLocationScript.is_edge_encounter_kind(kind):
+					MapMarkersScript.draw_edge_contact_marker(self, contact_screen + Vector2(14, 0))
+				else:
+					MapMarkersScript.draw_node_contact_marker(self, contact_screen + Vector2(14, 0))
+				var label := String(contact.get("label", "Contact"))
+				var label_rect := Rect2(contact_screen + Vector2(24, -34), Vector2(230, 27))
+				draw_rect(label_rect, Color(0.04, 0.055, 0.075, 0.96))
+				draw_rect(label_rect, Color("ffd27a"), false, 1.0)
+				draw_string(ThemeDB.fallback_font, label_rect.position + Vector2(9, 18), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
+	if not outcome.is_empty():
+		_draw_operational_outcome(outcome)
+
+
+func _draw_operational_outcome(outcome: Dictionary) -> void:
+	var map_width := get_viewport_rect().size.x - PANEL_WIDTH
+	var band := Rect2(18.0, HEADER_SAFE_TOP + 10.0, map_width - 36.0, 70.0)
+	draw_rect(band, Color(0.035, 0.047, 0.062, 0.96))
+	draw_rect(band, Color("ffd27a"), false, 1.5)
+	var winner := String(outcome.get("winner", "")).to_upper()
+	var line := "Battle finalized" if winner.is_empty() else "Battle finalized — %s victory" % winner
+	var detail: Array = []
+	for row_variant: Variant in outcome.get("retreat_outcomes", []):
+		if not row_variant is Dictionary:
+			continue
+		var row := row_variant as Dictionary
+		var formation_id := String(row.get("formation_id", "Formation"))
+		var destination_value: Variant = row.get("destination_province_id", null)
+		if destination_value == null:
+			destination_value = row.get("destination_node_id", "")
+		var destination := "" if destination_value == null else String(destination_value)
+		var reason := String(row.get("reason", ""))
+		if not destination.is_empty():
+			detail.append("%s retreated to %s" % [formation_id, destination])
+			var destination_pixel: Variant = row.get("destination_pixel", null)
+			if destination_pixel is Vector2:
+				var screen := _image_to_screen(destination_pixel)
+				draw_circle(screen, 9.0, Color(0.35, 0.87, 1.0, 0.22))
+				draw_arc(screen, 13.0, 0.0, TAU, 28, Color("7fe7ff"), 2.2)
+		elif not reason.is_empty():
+			detail.append("%s trapped — %s" % [formation_id, reason.replace("_", " ")])
+	draw_string(ThemeDB.fallback_font, band.position + Vector2(16, 25), line, HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color("ffd27a"))
+	draw_string(ThemeDB.fallback_font, band.position + Vector2(16, 50), "  |  ".join(detail), HORIZONTAL_ALIGNMENT_LEFT, band.size.x - 32.0, 13, Color.WHITE)
+
+
+func _s10_formation_row(formation_id: String) -> Dictionary:
+	for mock_variant: Variant in presentation_fixture.get("presentation_formations", []):
+		if mock_variant is Dictionary and String((mock_variant as Dictionary).get("id", "")) == formation_id:
+			return mock_variant as Dictionary
+	for row_variant: Variant in snapshot.get("strategic_formations", []):
+		if row_variant is Dictionary and String((row_variant as Dictionary).get("id", "")) == formation_id:
+			return row_variant as Dictionary
+	return {}
+
+
+func _s10_formation_summary(formation_id: String) -> Dictionary:
+	var mock := _s10_formation_row(formation_id)
+	if mock.has("presentation_unit_count") or mock.has("presentation_glyph"):
+		return {
+			"unit_count": int(mock.get("presentation_unit_count", 0)),
+			"glyph": String(mock.get("presentation_glyph", "X")),
+		}
+	var unit_count := 0
+	var glyph := "X"
+	for row_variant: Variant in snapshot.get("battalions", []):
+		if not row_variant is Dictionary:
+			continue
+		var row := row_variant as Dictionary
+		if String(row.get("strategic_formation_id", "")) != formation_id:
+			continue
+		unit_count += int(row.get("unit_count", 0))
+		if glyph == "X":
+			glyph = MapMarkersScript.battalion_type_glyph(String(row.get("battalion_type", "")))
+	return {"unit_count": unit_count, "glyph": glyph}
+
+
+func _s10_pixel(value: Variant) -> Vector2:
+	if value is Array and (value as Array).size() == 2:
+		return Vector2(float((value as Array)[0]), float((value as Array)[1]))
+	return Vector2.INF
 
 
 func _draw_command_busy_overlay() -> void:
