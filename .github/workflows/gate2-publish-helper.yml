@@ -6,6 +6,11 @@ on:
     paths:
       - ".gate2_publish/**"
       - ".github/workflows/gate2-publish-helper.yml"
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - ".gate2_publish/**"
+      - ".github/workflows/gate2-publish-helper.yml"
 
 permissions:
   contents: write
@@ -17,6 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: agent/opengs-gate2-geometry-adapter
           fetch-depth: 0
       - name: Publish staged bundle
         shell: bash
