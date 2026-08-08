@@ -1,0 +1,38 @@
+;sdl
+{units
+	;_________________________________________________________
+	;|              GLOBAL  SETTINGS                         |
+	;| this loads setting architecture for declaring units   |
+	;|_______________________________________________________|
+	(include "conquest/settings.set")
+
+	;_________________________________________________________
+	;|              INF SETTINGS                             |
+	;| this configures the CP, flag capture power and kill   |
+	;| points of the different breeds that make inf squads   |
+	;|_______________________________________________________|
+	(include "conquest/inf_ukr.set")
+	(include "conquest/inf_rusa.set")
+	(include "conquest/inf_nato.set")
+	(include "conquest/inf_prc_era1960.set")
+	(include "conquest/inf_sov_era1960.set")
+	(include "conquest/inf_csa_era1960.set")
+	(include "conquest/inf_frg_era1960.set")
+
+	;_________________________________________________________
+	;|            UNIT ROSTERS                               |
+	;| this defines the different squads and units available |
+	;| and configs their cost, buy menu, cooldowns, etc      |
+	;|_______________________________________________________|
+	(include "conquest/units_ukr.set")
+	(include "conquest/units_rusa.set")
+	(include "conquest/units_nato.set")
+	(include "conquest/units_sov_era1960.set")
+	(include "conquest/units_csa_era1960.set")
+	(include "conquest/units_frg_era1960.set")
+	(include "conquest/units_prc_era1960.set")
+
+	; Gates of Code:X final-layer national wrappers.
+	; The authoritative Code:X include order above is preserved unchanged.
+	(include "conquest/units_goc_national_wrappers.set")
+}
