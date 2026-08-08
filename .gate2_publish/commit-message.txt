@@ -1,0 +1,1 @@
+test: define OpenGS Gate 2 geometry contracts
