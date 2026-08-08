@@ -220,6 +220,8 @@ def _write_completed_external_battle(
     save_campaign(state, campaign_path)
 
     rows: list[str] = []
+    objects: list[str] = []
+    inventories: list[str] = []
     object_id = 1
     for participant in (
         *pending.attacking_participants,
@@ -231,8 +233,23 @@ def _write_completed_external_battle(
             else 2
         )
         for _ in range(quantity):
+            object_token = f"0x{object_id:x}"
             rows.append(
-                f'\t\t{{"tank" "{participant.stage}" 0x{object_id:x}}}'
+                f'\t\t{{"tank" "{participant.stage}" {object_token}}}'
+            )
+            objects.append(
+                f'\t{{Entity "tank" {object_token}\n'
+                "\t\t{Position 0 0}\n"
+                "\t\t{Player 0}\n"
+                f"\t\t{{MID {object_id}}}\n"
+                "\t}"
+            )
+            inventories.append(
+                f"\t{{Inventory {object_token}\n"
+                "\t\t{box\n"
+                "\t\t\t{clear}\n"
+                "\t\t}\n"
+                "\t}"
             )
             object_id += 1
     CampaignSaveArchive().write(
@@ -246,7 +263,8 @@ def _write_completed_external_battle(
         ),
         campaign_scn=(
             "{campaign\n"
-            "\t{CampaignSquads\n"
+            + "\n".join(objects + inventories)
+            + "\n\t{CampaignSquads\n"
             + "\n".join(rows)
             + "\n\t}\n}\n"
         ),
