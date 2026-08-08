@@ -35,6 +35,7 @@ class FactionWiringCompiler(FactionComponentMixin, FactionActorMixin):
         self.unit_index = SourceUnitIndex.build(self.roots)
         self.research_index = SourceResearchIndex.build(self.roots)
         self._breed_index: dict[tuple[str, str], tuple[Path, int]] | None = None
+        self._vehicle_index: set[str] | None = None
 
     def compile(self) -> dict[str, Any]:
         components = self.manifest["components"]

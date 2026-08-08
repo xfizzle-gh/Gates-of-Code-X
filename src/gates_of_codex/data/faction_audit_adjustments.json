@@ -1,0 +1,29 @@
+{
+  "component_exact_unit_additions": [
+    {
+      "component_id": "canada_national",
+      "selector_index": 0,
+      "units": [
+        "leopord_2a4m"
+      ],
+      "reason": "Code:X directly supplies the Canadian Leopard 2A4M wrapper alongside Leopard C2 MEXAS. Omitting it left the Canadian national armor progression artificially incomplete."
+    }
+  ],
+  "actor_component_removals": [
+    {
+      "actor_id": "fin",
+      "components": [
+        "soviet_legacy_core"
+      ],
+      "reason": "The complete Soviet legacy pool was too broad for Finland. Finland retains its directly source-backed T-55M, CV9030, Leopard 2A4 seed, NATO-common infantry, and NATO-common support without inheriting the entire Soviet roster."
+    }
+  ],
+  "actor_note_additions": {
+    "can": [
+      "Second self-audit added the directly source-backed Canadian Leopard 2A4M progression."
+    ],
+    "fin": [
+      "Second self-audit removed the broad Soviet legacy pool; only directly selected Finnish/Nordic equipment and NATO-common gap filling remain."
+    ]
+  }
+}
