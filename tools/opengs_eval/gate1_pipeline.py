@@ -107,7 +107,7 @@ def _build_artifacts(recipe_path: Path, staging_dir: Path) -> dict[str, Any]:
 
     territory_series = NumberSeries("TRT")
     land_territory_map, land_territories, next_index = create_region_map(
-        masks["land_fill"], masks["land_border"], counts["land_territories"], 0,
+        masks["land_mask"], np.zeros_like(masks["land_mask"], dtype=bool), counts["land_territories"], 0,
         "land", territory_series, "territory_id", "territory_type", ledger, "territory.land",
         density=density, density_strength=float(options["density_strength"]),
         lloyd_iterations=options["lloyd_iterations"], jagged=options["jagged_land"],
@@ -116,7 +116,7 @@ def _build_artifacts(recipe_path: Path, staging_dir: Path) -> dict[str, Any]:
     ocean_density = None if options["exclude_ocean_density"] else density
     ocean_strength = 1.0 if options["exclude_ocean_density"] else float(options["density_strength"])
     ocean_territory_map, ocean_territories, _ = create_region_map(
-        masks["sea_fill"], masks["sea_border"], counts["ocean_territories"], next_index,
+        masks["sea_mask"], np.zeros_like(masks["sea_mask"], dtype=bool), counts["ocean_territories"], next_index,
         "ocean", territory_series, "territory_id", "territory_type", ledger, "territory.ocean",
         density=ocean_density, density_strength=ocean_strength,
         lloyd_iterations=options["lloyd_iterations"], jagged=options["jagged_ocean"],
@@ -144,35 +144,72 @@ def _build_artifacts(recipe_path: Path, staging_dir: Path) -> dict[str, Any]:
             density_weights[territory_index] = float((256.0 - values.mean()) ** float(options["density_strength"]))
     land_weights = [pixel_counts[int(t["_pmap_index"])] * density_weights[int(t["_pmap_index"])] for t in land_territories]
     ocean_weights = [pixel_counts[int(t["_pmap_index"])] * density_weights[int(t["_pmap_index"])] for t in ocean_territories]
-    land_alloc = largest_remainder(land_territories, counts["land_provinces"], land_weights)
-    ocean_alloc = largest_remainder(ocean_territories, counts["ocean_provinces"], ocean_weights)
+    def province_component_minimum(territory: dict[str, Any]) -> int:
+        territory_index = int(territory["_pmap_index"])
+        eligible_mask = (territory_pmap == territory_index) & ~masks["lake_mask"]
+        _labels, component_count = ndlabel(eligible_mask)
+        component_count = int(component_count)
+        if component_count <= 0:
+            raise Gate1Error(
+                f"territory {territory['territory_id']} has no non-lake province components"
+            )
+        return component_count
+
+    land_minimums = [province_component_minimum(item) for item in land_territories]
+    ocean_minimums = [province_component_minimum(item) for item in ocean_territories]
+    land_alloc = largest_remainder(
+        land_territories,
+        counts["land_provinces"],
+        land_weights,
+        minimums=land_minimums,
+    )
+    ocean_alloc = largest_remainder(
+        ocean_territories,
+        counts["ocean_provinces"],
+        ocean_weights,
+        minimums=ocean_minimums,
+    )
 
     province_series = NumberSeries("PRV")
     province_map = np.full(territory_pmap.shape, -1, dtype=np.int32)
     provinces: list[dict[str, Any]] = []
     province_index = 0
-    boundary_mask = masks["boundary_mask"]
     lake_mask = masks["lake_mask"]
     territory_by_index = {int(item["_pmap_index"]): item for item in territories}
     labeled_lakes, lake_count = ndlabel(lake_mask)
     for component in range(1, lake_count + 1):
         component_mask = labeled_lakes == component
-        ys, xs = np.where(component_mask)
-        center_x, center_y = float(xs.mean()), float(ys.mean())
-        territory_index = int(territory_pmap[round_half_up(center_y), round_half_up(center_x)])
-        parent = territory_by_index.get(territory_index)
-        r, g, b = stable_color(province_index, "lake", used_colors)
-        item = {
-            "province_id": province_series.get_id(), "province_type": "lake",
-            "R": r, "G": g, "B": b, "x": center_x, "y": center_y,
-            "territory_id": parent["territory_id"] if parent else "",
-            "_pmap_index": province_index, "province_terrain": "lakes",
-        }
-        province_map[component_mask] = province_index
-        provinces.append(item)
-        if parent is not None:
+        parent_indices = sorted(
+            int(value)
+            for value in np.unique(territory_pmap[component_mask])
+            if int(value) >= 0
+        )
+        if not parent_indices:
+            raise Gate1Error(f"lake component {component} has no containing territory pixels")
+        for territory_index in parent_indices:
+            parent = territory_by_index.get(territory_index)
+            if parent is None or parent["territory_type"] != "land":
+                raise Gate1Error(
+                    f"lake component {component} intersects invalid parent territory index {territory_index}"
+                )
+            partition_mask = component_mask & (territory_pmap == territory_index)
+            ys, xs = np.where(partition_mask)
+            if len(xs) == 0:
+                raise Gate1Error(
+                    f"lake component {component} has an empty territory partition {territory_index}"
+                )
+            center_x, center_y = float(xs.mean()), float(ys.mean())
+            r, g, b = stable_color(province_index, "lake", used_colors)
+            item = {
+                "province_id": province_series.get_id(), "province_type": "lake",
+                "R": r, "G": g, "B": b, "x": center_x, "y": center_y,
+                "territory_id": parent["territory_id"],
+                "_pmap_index": province_index, "province_terrain": "lakes",
+            }
+            province_map[partition_mask] = province_index
+            provinces.append(item)
             parent.setdefault("province_ids", []).append(item["province_id"])
-        province_index += 1
+            province_index += 1
 
     jobs: list[tuple[dict[str, Any], int]] = []
     jobs.extend((territory, land_alloc[i]) for i, territory in enumerate(land_territories))
@@ -181,8 +218,8 @@ def _build_artifacts(recipe_path: Path, staging_dir: Path) -> dict[str, Any]:
         territory_index = int(territory["_pmap_index"])
         province_type = str(territory["territory_type"])
         territory_mask = territory_pmap == territory_index
-        fill = territory_mask & ~lake_mask & ~boundary_mask
-        border = (territory_mask & boundary_mask) | (territory_mask & lake_mask)
+        fill = territory_mask & ~lake_mask
+        border = np.zeros_like(territory_mask, dtype=bool)
         eligible = int(fill.sum())
         if province_count > eligible:
             raise Gate1Error(
@@ -367,44 +404,88 @@ def _decode_rgb_png(path: Path, label: str, width: int, height: int) -> np.ndarr
     return pixels
 
 
-def _validate_seed_ledger(manifest: dict[str, Any], territories: list[dict[str, Any]]) -> None:
+def _pixel_mask(pixels: np.ndarray, color: tuple[int, int, int]) -> np.ndarray:
+    return np.all(pixels == np.asarray(color, dtype=np.uint8), axis=2)
+
+
+def _mask_centroid(mask: np.ndarray, label: str) -> tuple[float, float]:
+    ys, xs = np.where(mask)
+    if len(xs) == 0:
+        raise Gate1Error(f"{label} has no pixels")
+    count = len(xs)
+    return (
+        float(int(xs.sum(dtype=np.int64)) / count),
+        float(int(ys.sum(dtype=np.int64)) / count),
+    )
+
+
+def _connected_component_count(mask: np.ndarray, label: str) -> int:
+    _labels, count = ndlabel(mask)
+    count = int(count)
+    if count <= 0:
+        raise Gate1Error(f"{label} has no connected components")
+    return count
+
+
+def _validate_seed_ledger(
+    manifest: dict[str, Any],
+    territories: list[dict[str, Any]],
+    provinces: list[dict[str, Any]],
+    territory_masks: dict[str, np.ndarray],
+    province_masks: dict[str, np.ndarray],
+) -> None:
     seeds = manifest["derived_seeds"]
-    expected_prefixes: set[str] = set()
     requested = manifest["counts"]["requested"]
-    if requested["land_territories"]:
-        expected_prefixes.add("territory.land")
-    if requested["ocean_territories"]:
-        expected_prefixes.add("territory.ocean")
+    expected_components: dict[str, int] = {}
+
+    for territory_type, requested_key in (
+        ("land", "land_territories"),
+        ("ocean", "ocean_territories"),
+    ):
+        if not requested[requested_key]:
+            continue
+        masks = [
+            territory_masks[item["territory_id"]]
+            for item in territories
+            if item["territory_type"] == territory_type
+        ]
+        if not masks:
+            raise Gate1Error(f"no {territory_type} territory pixels exist for seed authority")
+        combined = np.logical_or.reduce(masks)
+        expected_components[f"territory.{territory_type}"] = _connected_component_count(
+            combined, f"territory.{territory_type} seed mask"
+        )
+
+    province_by_id = {item["province_id"]: item for item in provinces}
     for index, territory in enumerate(territories):
-        expected_prefixes.add(f"province.{territory['territory_type']}.{index:06d}")
+        child_masks = [
+            province_masks[province_id]
+            for province_id in territory["province_ids"]
+            if province_by_id[province_id]["province_type"] != "lake"
+        ]
+        if not child_masks:
+            raise Gate1Error(
+                f"territory {territory['territory_id']} has no non-lake province pixels for seed authority"
+            )
+        combined = np.logical_or.reduce(child_masks)
+        prefix = f"province.{territory['territory_type']}.{index:06d}"
+        expected_components[prefix] = _connected_component_count(
+            combined, f"{prefix} seed mask"
+        )
 
     expected_names: set[str] = set()
-    for prefix in sorted(expected_prefixes):
+    for prefix, component_count in sorted(expected_components.items()):
         expected_names.add(f"{prefix}.sample")
         expected_names.add(f"{prefix}.jagged")
-        sample_pattern = re.compile(re.escape(prefix) + r"\.lloyd\.sample\.component_(\d{4})$")
-        replacement_pattern = re.compile(
-            re.escape(prefix) + r"\.lloyd\.empty_replacement\.component_(\d{4})$"
-        )
-        samples = sorted(
-            int(match.group(1))
-            for name in seeds
-            if (match := sample_pattern.fullmatch(name)) is not None
-        )
-        replacements = sorted(
-            int(match.group(1))
-            for name in seeds
-            if (match := replacement_pattern.fullmatch(name)) is not None
-        )
-        if not samples or samples != replacements or samples != list(range(1, max(samples) + 1)):
-            raise Gate1Error(f"derived seed component ledger is incomplete for {prefix}")
         expected_names.update(
-            f"{prefix}.lloyd.sample.component_{component:04d}" for component in samples
+            f"{prefix}.lloyd.sample.component_{component:04d}"
+            for component in range(1, component_count + 1)
         )
         expected_names.update(
             f"{prefix}.lloyd.empty_replacement.component_{component:04d}"
-            for component in replacements
+            for component in range(1, component_count + 1)
         )
+
     actual_names = set(seeds)
     if actual_names != expected_names:
         missing = sorted(expected_names - actual_names)
@@ -427,6 +508,8 @@ def _validate_artifact_semantics(output_dir: Path, manifest: dict[str, Any]) -> 
     territory_colors: set[tuple[int, int, int]] = set()
     province_colors: set[tuple[int, int, int]] = set()
     territory_by_id: dict[str, dict[str, Any]] = {}
+    province_by_id: dict[str, dict[str, Any]] = {}
+    expected_color_authority: set[tuple[int, int, int]] = set()
 
     for index, item in enumerate(territories, start=1):
         path = f"territories[{index - 1}]"
@@ -435,9 +518,15 @@ def _validate_artifact_semantics(output_dir: Path, manifest: dict[str, Any]) -> 
         expected_id = f"TRT{index:06d}"
         if item["territory_id"] != expected_id:
             raise Gate1Error(f"{path}.territory_id must be {expected_id}")
-        if item["territory_type"] not in {"land", "ocean"}:
+        territory_type = item["territory_type"]
+        if territory_type not in {"land", "ocean"}:
             raise Gate1Error(f"{path}.territory_type is invalid")
         color = tuple(_record_int(item[key], f"{path}.{key}") for key in ("R", "G", "B"))
+        expected_color = stable_color(index - 1, territory_type, expected_color_authority)
+        if color != expected_color:
+            raise Gate1Error(
+                f"{path} color does not match stable index authority: expected {expected_color}, got {color}"
+            )
         if color in territory_colors or color in {OCEAN_COLOR, LAKE_COLOR, BOUNDARY_COLOR}:
             raise Gate1Error(f"{path} has a duplicate or reserved color {color}")
         x = _record_number(item["x"], f"{path}.x")
@@ -471,6 +560,11 @@ def _validate_artifact_semantics(output_dir: Path, manifest: dict[str, Any]) -> 
         if province_type not in {"land", "ocean", "lake"}:
             raise Gate1Error(f"{path}.province_type is invalid")
         color = tuple(_record_int(item[key], f"{path}.{key}") for key in ("R", "G", "B"))
+        expected_color = stable_color(index - 1, province_type, expected_color_authority)
+        if color != expected_color:
+            raise Gate1Error(
+                f"{path} color does not match stable index authority: expected {expected_color}, got {color}"
+            )
         if color in province_colors or color in territory_colors or color in {OCEAN_COLOR, LAKE_COLOR, BOUNDARY_COLOR}:
             raise Gate1Error(f"{path} has a duplicate or reserved color {color}")
         x = _record_number(item["x"], f"{path}.x")
@@ -490,11 +584,12 @@ def _validate_artifact_semantics(output_dir: Path, manifest: dict[str, Any]) -> 
             raise Gate1Error(f"{path}.province_terrain is invalid for {province_type}")
         province_ids.add(item["province_id"])
         province_colors.add(color)
+        province_by_id[item["province_id"]] = item
         expected_children[parent_id].append(item["province_id"])
 
     for territory_id, expected in expected_children.items():
-        actual = territory_by_id[territory_id]["province_ids"]
-        if actual != expected:
+        actual_children = territory_by_id[territory_id]["province_ids"]
+        if actual_children != expected:
             raise Gate1Error(
                 f"territory {territory_id} province_ids do not match province parent relationships"
             )
@@ -533,7 +628,55 @@ def _validate_artifact_semantics(output_dir: Path, manifest: dict[str, Any]) -> 
             f"missing={sorted(province_colors - province_png_colors)}, "
             f"extra={sorted(province_png_colors - province_colors)}"
         )
-    _validate_seed_ledger(manifest, territories)
+
+    territory_masks: dict[str, np.ndarray] = {}
+    for index, item in enumerate(territories):
+        path = f"territories[{index}]"
+        color = tuple(int(item[key]) for key in ("R", "G", "B"))
+        mask = _pixel_mask(territory_pixels, color)
+        territory_masks[item["territory_id"]] = mask
+        expected_x, expected_y = _mask_centroid(mask, path)
+        if not math.isclose(float(item["x"]), expected_x, rel_tol=0.0, abs_tol=1e-12) or not math.isclose(
+            float(item["y"]), expected_y, rel_tol=0.0, abs_tol=1e-12
+        ):
+            raise Gate1Error(
+                f"{path} center does not match raster centroid: "
+                f"expected ({expected_x}, {expected_y}), got ({item['x']}, {item['y']})"
+            )
+
+    province_masks: dict[str, np.ndarray] = {}
+    for index, item in enumerate(provinces):
+        path = f"provinces[{index}]"
+        color = tuple(int(item[key]) for key in ("R", "G", "B"))
+        mask = _pixel_mask(province_pixels, color)
+        province_masks[item["province_id"]] = mask
+        expected_x, expected_y = _mask_centroid(mask, path)
+        if not math.isclose(float(item["x"]), expected_x, rel_tol=0.0, abs_tol=1e-12) or not math.isclose(
+            float(item["y"]), expected_y, rel_tol=0.0, abs_tol=1e-12
+        ):
+            raise Gate1Error(
+                f"{path} center does not match raster centroid: "
+                f"expected ({expected_x}, {expected_y}), got ({item['x']}, {item['y']})"
+            )
+        parent_mask = territory_masks[item["territory_id"]]
+        if np.any(mask & ~parent_mask):
+            raise Gate1Error(
+                f"{path} pixels are not contained by declared parent {item['territory_id']}"
+            )
+
+    for territory in territories:
+        child_masks = [province_masks[province_id] for province_id in territory["province_ids"]]
+        if not child_masks:
+            raise Gate1Error(f"territory {territory['territory_id']} has no province pixels")
+        child_union = np.logical_or.reduce(child_masks)
+        if not np.array_equal(child_union, territory_masks[territory["territory_id"]]):
+            raise Gate1Error(
+                f"territory {territory['territory_id']} pixels do not equal the union of declared children"
+            )
+
+    _validate_seed_ledger(
+        manifest, territories, provinces, territory_masks, province_masks
+    )
 
 
 def inspect_output(output_dir: Path) -> dict[str, Any]:

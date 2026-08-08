@@ -26,9 +26,10 @@ Generation and benchmark destinations must not already exist. Output is built an
 - Every stochastic stage receives a named derived 64-bit seed.
 - Initial sampling, Lloyd sampling, Lloyd empty-cell replacement, and jagged noise use separate streams.
 - Lloyd streams are additionally named per connected component, so sampling consumption cannot perturb empty-cell replacement.
-- Every non-empty connected component receives a seed, and impossible count requests fail before publication.
+- Territory and province generation use output-reconstructable masks; inspection independently recomputes each connected-component count from decoded raster geometry before accepting the stage ledger.
+- Every non-empty connected component receives exactly one paired Lloyd stream, and impossible count requests fail before publication.
 - Iteration order is explicitly stabilized where dictionaries, region IDs, components, and allocations affect output.
-- Allocation uses deterministic largest-remainder logic and must exactly satisfy requested land/ocean territory and province counts.
+- Allocation uses deterministic largest-remainder logic with independently measured connected-component lower bounds and must exactly satisfy requested land/ocean territory and province counts.
 - Nearest-seed queries apply a stable sub-pixel index tie-break and use one worker.
 - Region colors come from SHA-256, not implicit randomness.
 - JSON is canonical UTF-8/LF with sorted keys and fixed separators.
@@ -72,7 +73,7 @@ The strict run manifest records:
 - the exact pinned CPython 3.11.9, NumPy 2.3.5, Pillow 12.0.0, and SciPy 1.16.3 profile;
 - deterministic serialization and transactional-publication flags.
 
-`inspect-output` recomputes every named seed from the root authority, enforces the complete stage ledger and pinned environment, validates the exact regular-file output set, parses territory/province relationships and counts, and decodes both RGB PNGs to verify dimensions and exact metadata color correspondence. Recomputing self-reported hashes cannot make semantically invalid artifacts pass.
+`inspect-output` recomputes every named seed from the root authority, derives the exact component-stage ledger from output-reconstructable raster masks, and enforces the pinned environment. It validates stable index-derived colors, exact record centroids, province-to-territory pixel containment, complete child coverage, dimensions, relationships, counts, and the exact regular-file output set. Recomputing self-reported hashes cannot make an extra component stream, swapped pixel region, moved center, or coherent parent reassignment pass.
 
 ## Upstream boundary
 
@@ -113,7 +114,9 @@ The dedicated workflow installs pinned numerical dependencies on Linux and Windo
 6. semantic recipe-formatting parity;
 7. two independent byte-identical generations per operating system;
 8. three repeated identical benchmark outputs per operating system;
-9. Linux-to-Windows byte parity across every authoritative artifact.
+9. Linux-to-Windows byte parity across every authoritative artifact;
+10. rejection of extra deterministically valid component streams;
+11. rejection of pixel-region swaps, in-bounds center mutation, and coherent parent reassignment.
 
 ## Gate 1 exit
 

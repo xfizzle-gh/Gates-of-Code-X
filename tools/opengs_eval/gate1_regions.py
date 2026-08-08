@@ -297,40 +297,68 @@ def combine_maps(land_map: np.ndarray, ocean_map: np.ndarray, metadata: Sequence
     return rgb, combined
 
 
-def largest_remainder(items: Sequence[Mapping[str, Any]], total: int, weights: Sequence[float]) -> list[int]:
+def largest_remainder(
+    items: Sequence[Mapping[str, Any]],
+    total: int,
+    weights: Sequence[float],
+    *,
+    minimums: Sequence[int] | None = None,
+) -> list[int]:
     n = len(items)
     if n == 0:
         if total != 0:
             raise Gate1Error(f"cannot allocate {total} regions across zero territories")
         return []
-    if total < n:
-        raise Gate1Error(f"cannot allocate {total} regions across {n} territories with minimum one")
+    if len(weights) != n:
+        raise Gate1Error("allocation weights do not match territory count")
+    lower_bounds = [1] * n if minimums is None else [int(value) for value in minimums]
+    if len(lower_bounds) != n or any(value < 1 for value in lower_bounds):
+        raise Gate1Error("allocation minimums must provide one positive integer per territory")
+    minimum_total = sum(lower_bounds)
+    if total < minimum_total:
+        raise Gate1Error(
+            f"cannot allocate {total} regions across component minimum {minimum_total}"
+        )
     total_weight = float(sum(weights))
     if total_weight <= 0:
         weights, total_weight = [1.0] * n, float(n)
     exact = [float(w) / total_weight * total for w in weights]
-    allocation = [max(1, int(math.floor(value))) for value in exact]
+    allocation = [max(lower_bounds[i], int(math.floor(exact[i]))) for i in range(n)]
     current = sum(allocation)
     if current < total:
-        order = sorted(range(n), key=lambda i: (-(exact[i] - math.floor(exact[i])), int(items[i]["_pmap_index"])))
-        for i in order:
-            if current == total:
-                break
-            allocation[i] += 1
-            current += 1
+        order = sorted(
+            range(n),
+            key=lambda i: (
+                -(exact[i] - math.floor(exact[i])),
+                int(items[i]["_pmap_index"]),
+            ),
+        )
+        while current < total:
+            for i in order:
+                allocation[i] += 1
+                current += 1
+                if current == total:
+                    break
     elif current > total:
-        order = sorted(range(n), key=lambda i: (exact[i] - math.floor(exact[i]), -allocation[i], int(items[i]["_pmap_index"])))
+        order = sorted(
+            range(n),
+            key=lambda i: (
+                exact[i] - math.floor(exact[i]),
+                -allocation[i],
+                int(items[i]["_pmap_index"]),
+            ),
+        )
         while current > total:
             changed = False
             for i in order:
-                if allocation[i] > 1:
+                if allocation[i] > lower_bounds[i]:
                     allocation[i] -= 1
                     current -= 1
                     changed = True
                     if current == total:
                         break
             if not changed:
-                raise Gate1Error("allocation could not satisfy total")
+                raise Gate1Error("allocation could not satisfy component minimums and total")
     return allocation
 
 
