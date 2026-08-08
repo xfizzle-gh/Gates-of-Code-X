@@ -49,6 +49,11 @@ class OperationalRetreatResolution:
         return self.reason == TRAPPED_NO_LEGAL_RETREAT
 
 
+@dataclass(frozen=True, slots=True)
+class BattleFinalizationReport:
+    retreat_outcomes: tuple[OperationalRetreatResolution, ...] = ()
+
+
 def record_retreat_origin_node(
     state: CampaignState,
     formation_id: str,
