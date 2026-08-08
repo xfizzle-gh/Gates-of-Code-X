@@ -23,17 +23,34 @@ static func draw_formation_counter(
 	type_glyph: String,
 	strength: int,
 	selected: bool,
-	in_supply := true,
-	encircled := false
+	in_supply: Variant = null,
+	encircled: Variant = null,
+	formation_id := ""
 ) -> Rect2:
+	var presentation_overlay := in_supply == null and encircled == null
+	var style := resolve_formation_counter_style(
+		canvas,
+		center,
+		faction_color,
+		type_glyph,
+		strength,
+		presentation_overlay,
+		false,
+		formation_id
+	)
+	if not bool(style.get("visible", true)):
+		return Rect2()
+	var emphasized := selected or bool(style.get("emphasized", false))
+	var supplied := true if in_supply == null else bool(in_supply)
+	var is_encircled := false if encircled == null else bool(encircled)
 	var rect := Rect2(center - COUNTER_SIZE * 0.5 + Vector2(0, -2), COUNTER_SIZE)
 	var fill := faction_color.darkened(0.25)
 	fill.a = 0.95
 	canvas.draw_rect(rect, fill)
-	canvas.draw_rect(rect, Color.WHITE if selected else Color(0.1, 0.1, 0.12, 0.95), false, 1.5)
-	if not in_supply:
+	canvas.draw_rect(rect, Color.WHITE if emphasized else Color(0.1, 0.1, 0.12, 0.95), false, 1.5)
+	if not supplied:
 		canvas.draw_rect(Rect2(rect.position, Vector2(4, rect.size.y)), Color("ff6b5f"))
-	if encircled:
+	if is_encircled:
 		canvas.draw_rect(Rect2(rect.position + Vector2(rect.size.x - 4, 0), Vector2(4, rect.size.y)), Color("ffb14e"))
 	var label := "%s %s" % [type_glyph, strength]
 	canvas.draw_string(
@@ -45,7 +62,46 @@ static func draw_formation_counter(
 		12,
 		Color.WHITE
 	)
+	if bool(style.get("emphasized", false)):
+		canvas.draw_arc(center, 25.0, 0.0, TAU, 32, Color("ffd27a"), 2.5)
 	return rect
+
+
+static func resolve_formation_counter_style(
+	canvas: CanvasItem,
+	_center: Vector2,
+	_faction_color: Color,
+	_type_glyph: String,
+	_strength: int,
+	presentation_overlay := false,
+	_center_is_image_pixel := false,
+	formation_id := ""
+) -> Dictionary:
+	## The ordinary map draw path supplies the exact representative formation ID.
+	## S10 never guesses identity from color, glyph, strength, or position.
+	var normal := {"visible": true, "emphasized": false, "formation_id": formation_id}
+	if presentation_overlay or formation_id.is_empty():
+		return normal
+	var presenter: Variant = _object_property(canvas, "operational_presenter", null)
+	if presenter == null or not presenter.has_method("is_active") or not presenter.is_active():
+		return normal
+	var tracks: Dictionary = presenter.track_model()
+	if tracks.has(formation_id):
+		return {"visible": false, "emphasized": false, "formation_id": formation_id}
+	var contact: Dictionary = presenter.contact_model()
+	var participants: Array = contact.get("participant_formation_ids", [])
+	if participants.has(formation_id):
+		# Stationary participants are drawn explicitly by formation ID in the S10
+		# overlay, including multiple formations colocated in one stack.
+		return {"visible": false, "emphasized": false, "formation_id": formation_id}
+	return normal
+
+
+static func _object_property(object: Object, property_name: String, default_value: Variant) -> Variant:
+	for row_variant: Variant in object.get_property_list():
+		if row_variant is Dictionary and String((row_variant as Dictionary).get("name", "")) == property_name:
+			return object.get(property_name)
+	return default_value
 
 
 static func draw_stack_badge(canvas: CanvasItem, anchor: Vector2, count: int) -> Rect2:

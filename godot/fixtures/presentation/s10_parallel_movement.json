@@ -1,0 +1,26 @@
+{
+  "schema": "gates-of-codex.presentation-fixture",
+  "presentation_duration_seconds": 10.0,
+  "presentation_progress": 0.45,
+  "presentation_formations": [
+    {"id": "sf-blue", "display_name": "1st Armored Group", "faction": "nato", "display_pixel": [2400, 1700], "presentation_unit_count": 18, "presentation_glyph": "T"},
+    {"id": "sf-red", "display_name": "8th Guards Group", "faction": "rusa", "display_pixel": [2400, 1700], "presentation_unit_count": 16, "presentation_glyph": "M"}
+  ],
+  "presentation_graph_index": {
+    "nodes": {
+      "n-blue": {"pixel": [1800, 1900]},
+      "n-center": {"pixel": [2400, 1700]},
+      "n-red": {"pixel": [3000, 1350]}
+    },
+    "edges": {
+      "e-blue": {"edge_id": "e-blue", "a": "n-blue", "b": "n-center"},
+      "e-red": {"edge_id": "e-red", "a": "n-red", "b": "n-center"}
+    }
+  },
+  "presentation_backend_payload": {
+    "movements": [
+      {"formation_id": "sf-blue", "start_position": {"mode": "at_node", "node_id": "n-blue"}, "end_position": {"mode": "at_node", "node_id": "n-center"}, "start_pixel": [1800, 1900], "end_pixel": [2400, 1700], "path_node_ids": ["n-blue", "n-center"], "path_edge_ids": ["e-blue"]},
+      {"formation_id": "sf-red", "start_position": {"mode": "at_node", "node_id": "n-red"}, "end_position": {"mode": "at_node", "node_id": "n-center"}, "start_pixel": [3000, 1350], "end_pixel": [2400, 1700], "path_node_ids": ["n-red", "n-center"], "path_edge_ids": ["e-red"]}
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "gates-of-codex.presentation-fixture",
+  "presentation_writeback_enabled": true,
+  "pending_battle": {
+    "id": "s10-prepared-ambush",
+    "encounter_kind": "node_contact",
+    "encounter_node_id": "op-node-Minsk-anchor",
+    "encounter_edge_id": null,
+    "encounter_progress_milli": 0,
+    "encounter_pixel": [2900, 1400],
+    "attacking_participants": [
+      {"battalion_id": "bn-blue", "strategic_formation_id": "sf-blue", "formation_display_name": "1st Armored Group", "faction": "nato", "contact_initiator": true, "ambush_triggered": false, "ambush_strength_multiplier_milli": 1000}
+    ],
+    "defending_participants": [
+      {"battalion_id": "bn-red-a", "strategic_formation_id": "sf-red", "formation_display_name": "8th Guards Group", "faction": "rusa", "contact_initiator": false, "ambush_triggered": true, "ambush_strength_multiplier_milli": 1150},
+      {"battalion_id": "bn-red-b", "strategic_formation_id": "sf-red", "formation_display_name": "8th Guards Group", "faction": "rusa", "contact_initiator": false, "ambush_triggered": true, "ambush_strength_multiplier_milli": 1150}
+    ]
+  }
+}
