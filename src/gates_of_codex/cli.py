@@ -34,7 +34,7 @@ from .strategic import (
 )
 from .strategic_ai import StrategicAI
 from .play_context import list_front_options
-from .supply import reachable_supply_provinces, refresh_supply_for_faction
+from .supply import refresh_supply_for_faction, supply_status_for_faction
 
 
 FACTION_CHOICES = ["nato", "ukr", "rusa", "prc"]
@@ -202,25 +202,25 @@ def main(argv: list[str] | None = None) -> int:
         for faction in factions:
             if args.refresh:
                 report = refresh_supply_for_faction(state, faction)
-                payload.append(asdict(report))
             else:
-                reachable = reachable_supply_provinces(state, faction)
-                battalions = sorted(
-                    (value for value in state.battalions.values() if value.faction == faction),
-                    key=lambda value: value.battalion_id,
-                )
-                payload.append({
-                    "faction": faction.value,
-                    "reachable_provinces": len(reachable),
-                    "supplied_battalions": [
-                        value.battalion_id for value in battalions if value.province_id in reachable
-                    ],
-                    "isolated_battalions": [
-                        value.battalion_id for value in battalions if value.province_id not in reachable
-                    ],
-                    "supply": {value.battalion_id: value.supply for value in battalions},
-                    "encircled_turns": {value.battalion_id: value.encircled_turns for value in battalions},
-                })
+                report = supply_status_for_faction(state, faction)
+            row = asdict(report)
+            battalions = sorted(
+                (
+                    value
+                    for value in state.battalions.values()
+                    if value.faction == faction
+                ),
+                key=lambda value: value.battalion_id,
+            )
+            row["supply"] = {
+                value.battalion_id: value.supply for value in battalions
+            }
+            row["encircled_turns"] = {
+                value.battalion_id: value.encircled_turns
+                for value in battalions
+            }
+            payload.append(row)
         if args.refresh:
             save_campaign(state, args.campaign)
         print(json.dumps(payload, indent=2))

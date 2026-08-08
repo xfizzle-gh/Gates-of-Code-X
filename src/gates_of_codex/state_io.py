@@ -184,9 +184,36 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
             is_player_controlled=bool(value.get("is_player_controlled", False)),
             position=position_from_dict(value.get("position")),
             move_order=move_order_from_dict(value.get("move_order")),
+            supplied=_strict_supply_bool(value.get("supplied", True), name="supplied"),
+            cut_off=_strict_supply_bool(value.get("cut_off", False), name="cut_off"),
+            source_hub_id=_optional_supply_id(
+                value.get("source_hub_id"), name="source_hub_id"
+            ),
+            route_cost=_optional_supply_int(value.get("route_cost"), name="route_cost"),
+            grace_ticks_remaining=_required_supply_int(
+                value.get("grace_ticks_remaining", 0),
+                name="grace_ticks_remaining",
+                maximum=1,
+            ),
+            last_supply_refresh_tick=_optional_supply_int(
+                value.get("last_supply_refresh_tick"),
+                name="last_supply_refresh_tick",
+            ),
+            last_supply_refresh_turn=_optional_supply_int(
+                value.get("last_supply_refresh_turn"),
+                name="last_supply_refresh_turn",
+            ),
+            last_grace_consuming_tick=_optional_supply_int(
+                value.get("last_grace_consuming_tick"),
+                name="last_grace_consuming_tick",
+            ),
         )
         for key, value in data.get("strategic_formations", {}).items()
     }
+    # Reject contradictory persisted S8 state before authoritative load-time
+    # recomputation can normalize it into a different legal shape.
+    for force in strategic_formations.values():
+        force.validate()
     commanders = {
         key: Commander(
             commander_id=value["commander_id"],
@@ -281,11 +308,13 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
     from .operational_capture import ensure_site_control_state
     from .operational_movement import ensure_move_orders
     from .operational_position import ensure_operational_positions
+    from .operational_supply import refresh_operational_supply
 
     ensure_strategic_formations(state)
     ensure_operational_positions(state)
     ensure_move_orders(state)
     ensure_site_control_state(state)
+    refresh_operational_supply(state, consume_grace=False)
     state.validate()
     return state
 
@@ -300,6 +329,7 @@ def save_campaign(state: CampaignState, path: str | Path) -> Path:
     from .operational_capture import ensure_site_control_state
     from .operational_movement import ensure_move_orders
     from .operational_position import ensure_operational_positions
+    from .operational_supply import refresh_operational_supply
     from .strategic import ensure_strategic_layer
 
     ensure_strategic_layer(state)
@@ -307,6 +337,7 @@ def save_campaign(state: CampaignState, path: str | Path) -> Path:
     ensure_operational_positions(state)
     ensure_move_orders(state)
     ensure_site_control_state(state)
+    refresh_operational_supply(state, consume_grace=False)
     state.validate()
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -330,6 +361,34 @@ def _optional_strict_int(value: Any) -> int | None:
     from .operational_schema import require_strict_int
 
     return require_strict_int(value, name="encounter_progress_milli", minimum=0, maximum=1000)
+
+
+def _strict_supply_bool(value: Any, *, name: str) -> bool:
+    if not isinstance(value, bool):
+        raise ValueError(f"{name} must be bool")
+    return value
+
+
+def _required_supply_int(
+    value: Any, *, name: str, maximum: int | None = None
+) -> int:
+    from .operational_schema import require_strict_int
+
+    return require_strict_int(value, name=name, minimum=0, maximum=maximum)
+
+
+def _optional_supply_int(value: Any, *, name: str) -> int | None:
+    if value is None:
+        return None
+    return _required_supply_int(value, name=name)
+
+
+def _optional_supply_id(value: Any, *, name: str) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{name} must be a non-empty string or null")
+    return value
 
 
 def _parse_encounter_pixel(value: Any) -> list[int]:

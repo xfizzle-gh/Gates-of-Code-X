@@ -15,6 +15,18 @@ from .operational_schema import (
 )
 
 
+_OPERATIONAL_SUPPLY_FIELDS = (
+    "supplied",
+    "cut_off",
+    "source_hub_id",
+    "route_cost",
+    "grace_ticks_remaining",
+    "last_supply_refresh_tick",
+    "last_supply_refresh_turn",
+    "last_grace_consuming_tick",
+)
+
+
 class Faction(StrEnum):
     NATO = "nato"
     UKRAINE = "ukr"
@@ -239,6 +251,15 @@ class StrategicFormation:
     position: FormationOperationalPosition | None = None
     # S3: current draft/active move order (formation is movement authority).
     move_order: OperationalMoveOrder | None = None
+    # S8: deterministic operational supply connectivity state.
+    supplied: bool = True
+    cut_off: bool = False
+    source_hub_id: str | None = None
+    route_cost: int | None = None
+    grace_ticks_remaining: int = 0
+    last_supply_refresh_tick: int | None = None
+    last_supply_refresh_turn: int | None = None
+    last_grace_consuming_tick: int | None = None
 
     def validate(self) -> None:
         if not self.strategic_formation_id.strip():
@@ -264,6 +285,62 @@ class StrategicFormation:
                 raise ValueError(
                     f"Strategic formation {self.strategic_formation_id} has invalid move_order status"
                 )
+        if not isinstance(self.supplied, bool):
+            raise ValueError(
+                f"Strategic formation {self.strategic_formation_id} supplied must be bool"
+            )
+        if not isinstance(self.cut_off, bool):
+            raise ValueError(
+                f"Strategic formation {self.strategic_formation_id} cut_off must be bool"
+            )
+        if self.source_hub_id is not None and (
+            not isinstance(self.source_hub_id, str)
+            or not self.source_hub_id.strip()
+        ):
+            raise ValueError(
+                f"Strategic formation {self.strategic_formation_id} source_hub_id cannot be empty"
+            )
+        for name, value in (
+            ("route_cost", self.route_cost),
+            ("last_supply_refresh_tick", self.last_supply_refresh_tick),
+            ("last_supply_refresh_turn", self.last_supply_refresh_turn),
+            ("last_grace_consuming_tick", self.last_grace_consuming_tick),
+        ):
+            if value is not None:
+                require_strict_int(value, name=name, minimum=0)
+        require_strict_int(
+            self.grace_ticks_remaining,
+            name="grace_ticks_remaining",
+            minimum=0,
+            maximum=1,
+        )
+        supply_shape = (
+            self.supplied,
+            self.cut_off,
+            self.source_hub_id is not None,
+            self.route_cost is not None,
+            self.grace_ticks_remaining,
+        )
+        legal_supply_shapes = {
+            (True, False, True, True, 0),
+            (True, False, False, False, 0),
+            (True, False, False, False, 1),
+            (False, True, False, False, 0),
+        }
+        if supply_shape not in legal_supply_shapes:
+            raise ValueError(
+                f"Strategic formation {self.strategic_formation_id} "
+                "invalid_operational_supply_state"
+            )
+        if self.last_grace_consuming_tick is not None and (
+            self.last_supply_refresh_tick is None
+            or self.last_supply_refresh_tick
+            < self.last_grace_consuming_tick
+        ):
+            raise ValueError(
+                f"Strategic formation {self.strategic_formation_id} "
+                "invalid_supply_tick_order"
+            )
 
 
 @dataclass(slots=True)
@@ -568,7 +645,12 @@ class CampaignState:
                     raise ValueError(f"Invalid reinforcement target {entry.formation_id}")
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        payload = asdict(self)
+        if self.schema_version < 8:
+            for row in payload.get("strategic_formations", {}).values():
+                for key in _OPERATIONAL_SUPPLY_FIELDS:
+                    row.pop(key, None)
+        return payload
 
     def _allows_mixed_province_presence(self) -> bool:
         """Hostile co-presence only with explicit operational capability or contact.

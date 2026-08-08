@@ -131,6 +131,7 @@ class CampaignEngine:
         if index == len(active) - 1 or index == -1:
             from .economy import settle_round_economy
             from .operational_movement import resolve_strategic_turn_movement
+            from .operational_supply import refresh_operational_supply
             from .strategic import evaluate_campaign_outcome
             from .supply import refresh_all_supply
 
@@ -138,6 +139,7 @@ class CampaignEngine:
             # (manual commit during turn N activates when turn N ends).
             resolve_strategic_turn_movement(self.state)
             self.state.turn_number += 1
+            refresh_operational_supply(self.state, consume_grace=False)
             settle_round_economy(self.state)
             for battalion in self.state.battalions.values():
                 battalion.movement_remaining = 1
