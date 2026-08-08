@@ -30,7 +30,7 @@ None of the medium- or low-confidence decisions should be presented as proof tha
 | Polish armor/artillery | T-72, Leopard 2PL, K2, 2S1, RM-70, and Rosomak exist in Code:X | High for equipment identity |
 | Swedish armor | CV90/Strf and Strv assets exist in Code:X | High for equipment identity |
 | Dutch mechanized equipment | YPR-765 and CV9035 assets exist in Code:X | High for equipment identity |
-| Canadian armor | Leopard C2 MEXAS exists in Code:X | High for equipment identity |
+| Canadian armor | Leopard C2 MEXAS and Leopard 2A4M exist in Code:X | High for equipment identity |
 
 ## Winged / judgment-call decisions
 
@@ -62,9 +62,9 @@ None of the medium- or low-confidence decisions should be presented as proof tha
 
 - **Exact component:** `nato_common_infantry`, `finland_national`, and NATO-common support
 - **Source evidence:** Code:X supplies `t_55m_fin`, CV9030, and a Leopard 2A4 variant, but no complete Finnish infantry tree.
-- **Inference:** Generic Nordic/NATO infantry represents the personnel layer. The T-55M is treated as a reserve/legacy option, not evidence for a broad Soviet roster.
+- **Inference:** Generic Nordic/NATO infantry represents the personnel layer. The T-55M is treated as a direct Finnish reserve/legacy option. The second self-audit removed `soviet_legacy_core` because the full Soviet pool was not justified by the source evidence.
 - **Confidence:** Medium.
-- **Best alternative:** Add Finnish infantry and support breeds, then restrict equipment to actual Finnish-service systems.
+- **Best alternative:** Add Finnish infantry and support breeds, then restrict equipment to deliberately selected Finnish-service systems.
 
 ### Sweden
 
@@ -85,8 +85,8 @@ None of the medium- or low-confidence decisions should be presented as proof tha
 ### Canada
 
 - **Exact component:** `nato_common_infantry` plus `canada_national`
-- **Source evidence:** Code:X supplies Leopard C2 MEXAS and a Leopard 2A4M identifier, but no complete Canadian infantry branch.
-- **Inference:** Generic NATO infantry and common support represent the missing Canadian personnel layer.
+- **Source evidence:** Code:X supplies both Leopard C2 MEXAS and Leopard 2A4M, but no complete Canadian infantry branch.
+- **Inference:** Generic NATO infantry and common support represent the missing Canadian personnel layer. The second self-audit added Leopard 2A4M to the Canadian national component because its omission left the directly supported armor progression incomplete.
 - **Confidence:** Medium.
 - **Best alternative:** Add Canadian infantry, LAV-family units, artillery, and crew definitions.
 
@@ -164,6 +164,14 @@ These are narrow overlay corrections, not replacement national families.
 | `fr_spotter` | Stray text after the binocular inventory entry | Removed the malformed trailing token and preserved the existing SOF kit | High |
 | `rus114_marksman` | Empty inventory item and malformed stealth perk notation | Removed the empty item and normalized the stealth perk while preserving the 114th marksman kit | High |
 
-## Remaining important limitation
+## Purchase-ready wrapper materialization
 
-The `goc_*` ILDU, Sparta/Vostok, and Serbian entries are strategic catalog wrappers assembled from source breeds. Before final tactical export acceptance, an independent audit must verify that the battle materializer emits or resolves purchase-ready native GoH squad definitions for those IDs. A non-empty member list in the strategic catalog alone is not proof that the game engine can purchase or spawn the wrapper.
+The 14 inferred `goc_*` ILDU, Sparta/Vostok, and Serbian squads now have native final-layer definitions in:
+
+```text
+resource/set/multiplayer/units/conquest/units_goc_national_wrappers.set
+```
+
+The definitions reference the same existing breeds as the actor manifest. Repository tests require every virtual manifest unit to resolve through `CodeXCatalogScanner`, remain materializable, use only supported tactical sides, and match the manifest composition exactly.
+
+This closes the earlier repository-level gap where the actor economy could purchase a strategic wrapper that the tactical catalog could not resolve. Live Gates of Hell acceptance is still required to prove the generated `campaign.scn` containing these explicit humans and squad rows is accepted by the current engine and full Workshop stack.
