@@ -43,6 +43,7 @@ jobs:
           src/gates_of_codex/expanded_nations_cli.py
           src/gates_of_codex/expanded_nations_compile.py
           src/gates_of_codex/expanded_nations_models.py
+          src/gates_of_codex/expanded_nations_opponent_render.py
           src/gates_of_codex/expanded_nations_opponents.py
           src/gates_of_codex/expanded_nations_render.py
           src/gates_of_codex/expanded_nations_sources.py
