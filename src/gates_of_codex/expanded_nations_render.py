@@ -12,6 +12,8 @@ from .expanded_nations_models import (
     CANONICAL_INF_INCLUDES,
     ExpandedNationsError,
     GENERATED_MARKER,
+    ProjectedOpponentUnit,
+    ProjectedResearchNode,
     ProjectedUnit,
     sha256_bytes,
 )
@@ -30,6 +32,22 @@ def render_units_file(actor: Mapping[str, Any], projected_units: Sequence[Projec
     )
 
 
+def render_opponent_units_file(
+    actor: Mapping[str, Any],
+    projected_units: Sequence[ProjectedOpponentUnit],
+    body: str,
+) -> str:
+    return (
+        f"{GENERATED_MARKER}\n"
+        f"; selected_actor_id={actor['actor_id']}\n"
+        f"; excluded_tactical_side={actor['tactical_side']}\n"
+        f"; opponent_entry_count={len(projected_units)}\n"
+        "; Non-selected tactical-side definitions are preserved from the effective Core roster.\n"
+        "; Entries for the selected tactical side are intentionally excluded.\n\n"
+        + body
+    )
+
+
 def render_roster_file(actor: Mapping[str, Any]) -> str:
     lines = [
         ";sdl",
@@ -41,11 +59,17 @@ def render_roster_file(actor: Mapping[str, Any]) -> str:
         "",
     ]
     lines.extend(f'\t(include "{value}")' for value in CANONICAL_INF_INCLUDES)
-    lines.extend(["", '\t(include "conquest/goc_active_actor_units.set")', "}", ""])
+    lines.extend([
+        "",
+        '\t(include "conquest/goc_opponent_units.set")',
+        '\t(include "conquest/goc_active_actor_units.set")',
+        "}",
+        "",
+    ])
     return "\n".join(lines)
 
 
-def render_research_file(actor: Mapping[str, Any]) -> str:
+def project_research_nodes(actor: Mapping[str, Any]) -> list[ProjectedResearchNode]:
     nodes = topological_research_nodes(actor)
     node_ids: dict[str, str] = {}
     unit_ids: set[str] = set()
@@ -69,6 +93,32 @@ def render_research_file(actor: Mapping[str, Any]) -> str:
             raise ExpandedNationsError(f"Duplicate projected research ID: {engine_id}")
         node_ids[str(node["key"])] = engine_id
 
+    projected: list[ProjectedResearchNode] = []
+    for node in nodes:
+        key = str(node["key"])
+        prerequisites = [str(item) for item in node.get("prerequisites", [])]
+        required = node_ids[prerequisites[0]] if prerequisites else ""
+        cost = int(node.get("cost", 0))
+        if cost < 0:
+            raise ExpandedNationsError(f"Research node {key} has negative cost")
+        unlock_units = [str(item) for item in node.get("unlock_units", [])]
+        projected.append(
+            ProjectedResearchNode(
+                key=key,
+                engine_id=node_ids[key],
+                required_engine_id=required,
+                cost=cost,
+                unlock_unit=unlock_units[0] if unlock_units else None,
+            )
+        )
+    return projected
+
+
+def render_research_file(
+    actor: Mapping[str, Any],
+    projected_nodes: Sequence[ProjectedResearchNode] | None = None,
+) -> str:
+    nodes = list(projected_nodes or project_research_nodes(actor))
     lines = [
         GENERATED_MARKER,
         f"; actor_id={actor['actor_id']}",
@@ -91,21 +141,20 @@ def render_research_file(actor: Mapping[str, Any]) -> str:
     ]
     columns = 14
     for index, node in enumerate(nodes):
-        key = str(node["key"])
-        engine_id = node_ids[key]
-        prerequisites = [str(item) for item in node.get("prerequisites", [])]
-        required = node_ids[prerequisites[0]] if prerequisites else ""
-        cost = int(node.get("cost", 0))
-        if cost < 0:
-            raise ExpandedNationsError(f"Research node {key} has negative cost")
         x = 1 + 2 * (index % columns)
         y = 3 + 2 * (index // columns)
-        label = str(node.get("display_name") or key).replace("\n", " ")
-        lines.append(f"; {key} | {label}")
-        if node.get("unlock_units"):
-            lines.append(f'{{"{engine_id}" requires "{required}" costs {cost} position {x} {y}}}')
+        metadata = json.dumps(asdict(node), sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        lines.append(f"; goc-node {metadata}")
+        if node.unlock_unit is not None:
+            lines.append(
+                f'{{"{node.engine_id}" requires "{node.required_engine_id}" '
+                f"costs {node.cost} position {x} {y}}}"
+            )
         else:
-            lines.append(f'{{ tech "{engine_id}" requires "{required}" costs {cost} position {x} {y}}}')
+            lines.append(
+                f'{{ tech "{node.engine_id}" requires "{node.required_engine_id}" '
+                f"costs {node.cost} position {x} {y}}}"
+            )
     lines.append("")
     return "\n".join(lines)
 
