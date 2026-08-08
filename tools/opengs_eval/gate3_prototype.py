@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from collections import Counter
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator, Mapping, Sequence
@@ -15,6 +16,8 @@ import gate3_package as _package
 from gate3_package import *
 
 _BASE_GATE1_CONTRACT = _package.gate3_masked_gate1_contract
+
+PointI = tuple[int, int]
 
 
 def _masked_extract_masks(land: Any, boundary: Any) -> dict[str, Any]:
@@ -79,20 +82,108 @@ def _land_seed_territory_masks(
     return adjusted
 
 
+def _ring_edge_counter(rings: Sequence[Sequence[PointI]]) -> Counter[tuple[PointI, PointI]]:
+    edges: Counter[tuple[PointI, PointI]] = Counter()
+    for ring in rings:
+        if len(ring) < 3:
+            raise Gate3Error("Gate 3 grid ring has fewer than three vertices")
+        for index, point in enumerate(ring):
+            following = ring[(index + 1) % len(ring)]
+            if point == following:
+                raise Gate3Error("Gate 3 grid ring contains a zero-length edge")
+            edges[(point, following)] += 1
+    return edges
+
+
+def _split_repeated_vertex_ring(ring: Sequence[PointI]) -> list[list[PointI]]:
+    """Split a self-touching exact grid walk into edge-identical simple cycles."""
+    pending = [list(ring)]
+    simple: list[list[PointI]] = []
+    while pending:
+        current = pending.pop()
+        if len(current) < 3:
+            raise Gate3Error("Gate 3 pinch split produced a degenerate cycle")
+        first_position: dict[PointI, int] = {}
+        split: tuple[list[PointI], list[PointI]] | None = None
+        for index, point in enumerate(current):
+            prior = first_position.get(point)
+            if prior is None:
+                first_position[point] = index
+                continue
+            left = current[prior:index]
+            right = current[index:] + current[:prior]
+            if len(left) < 3 or len(right) < 3:
+                raise Gate3Error(
+                    f"Gate 3 pinch at {point} produced a cycle with fewer than three vertices"
+                )
+            split = (left, right)
+            break
+        if split is None:
+            if len(set(current)) != len(current):
+                raise Gate3Error("Gate 3 pinch splitter left a repeated vertex")
+            simple.append(current)
+            continue
+        # LIFO in reverse lexical order yields stable processing independent of
+        # the original walk's rotation while preserving every directed edge.
+        ordered = sorted(split, key=lambda value: tuple(value), reverse=True)
+        pending.extend(ordered)
+    simple.sort(key=lambda value: (-abs(_signed_area_exact(value)), tuple(value)))
+    return simple
+
+
+def _signed_area_exact(ring: Sequence[PointI]) -> int:
+    doubled = 0
+    for index, (x1, y1) in enumerate(ring):
+        x2, y2 = ring[(index + 1) % len(ring)]
+        doubled += x1 * y2 - x2 * y1
+    return doubled
+
+
+def _split_self_touching_rings(rings: Sequence[Sequence[PointI]]) -> list[list[PointI]]:
+    before = _ring_edge_counter(rings)
+    split: list[list[PointI]] = []
+    for ring in rings:
+        split.extend(_split_repeated_vertex_ring(ring))
+    if _ring_edge_counter(split) != before:
+        raise Gate3Error("Gate 3 pinch splitting changed the exact directed boundary edge ledger")
+    keys = [tuple(ring) for ring in split]
+    if len(keys) != len(set(keys)):
+        raise Gate3Error("Gate 3 pinch splitting produced a duplicate cycle")
+    split.sort(key=lambda value: (-abs(_signed_area_exact(value)), tuple(value)))
+    return split
+
+
 @contextmanager
 def gate3_masked_gate1_contract() -> Iterator[None]:
     import numpy as np
     import gate1_pipeline
+    import gate1_to_gate2_adapter
 
     state: dict[str, Any] = {"lake_mask": None}
     original_package_mask = _package._masked_extract_masks
+    original_trace_rings = gate1_to_gate2_adapter.trace_rings
 
     def extract_masks_with_lake_parenting(land: Any, boundary: Any) -> dict[str, Any]:
         masks = _masked_extract_masks(land, boundary)
         state["lake_mask"] = masks["lake_mask"].copy()
         return masks
 
+    def trace_rings_with_exact_pinch_split(
+        edges: set[tuple[PointI, PointI]],
+    ) -> list[list[PointI]]:
+        traced = original_trace_rings(edges)
+        split = _split_self_touching_rings(traced)
+        for ring in split:
+            polygon = gate1_to_gate2_adapter.Polygon(ring)
+            if not polygon.is_valid:
+                reason = gate1_to_gate2_adapter.is_valid_reason(polygon)
+                raise Gate3Error(f"Gate 3 pinch-split ring remains invalid: {reason}")
+            if polygon.area <= 0:
+                raise Gate3Error("Gate 3 pinch-split ring has non-positive absolute area")
+        return split
+
     _package._masked_extract_masks = extract_masks_with_lake_parenting
+    gate1_to_gate2_adapter.trace_rings = trace_rings_with_exact_pinch_split
     try:
         with _BASE_GATE1_CONTRACT():
             original_create_region_map = gate1_pipeline.create_region_map
@@ -184,6 +275,7 @@ def gate3_masked_gate1_contract() -> Iterator[None]:
                 gate1_pipeline.combine_maps = original_combine_maps
                 gate1_pipeline._validate_seed_ledger = original_validate_seed_ledger
     finally:
+        gate1_to_gate2_adapter.trace_rings = original_trace_rings
         _package._masked_extract_masks = original_package_mask
 
 
