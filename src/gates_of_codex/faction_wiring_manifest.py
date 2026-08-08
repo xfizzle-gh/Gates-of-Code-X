@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from .faction_wiring_models import (
-    ACTOR_TYPES, MANIFEST_SCHEMA, MANIFEST_VERSION, RESEARCH_MODES,
+    ACTOR_TYPES, MANIFEST_SCHEMA, MANIFEST_VERSION, PROVENANCE_POLICIES, RESEARCH_MODES,
     ROSTER_CLASSES, SELECTOR_KINDS, SUPPORTED_TACTICAL_SIDES,
     FactionWiringError, ResolvedResearchNode,
 )
@@ -148,8 +148,19 @@ def validate_faction_manifest(manifest: Mapping[str, Any]) -> None:
     for component_id, component in manifest["components"].items():
         if not _valid_id(component_id):
             raise FactionWiringError(f"Invalid component ID: {component_id}")
-        if set(component) != {"description", "selectors"}:
+        allowed_component_fields = {
+            "description", "selectors", "provenance_policy", "research_label",
+        }
+        if not {"description", "selectors"}.issubset(component) or set(component) - allowed_component_fields:
             raise FactionWiringError(f"Component {component_id} has invalid fields")
+        policy = component.get("provenance_policy", "mixed")
+        if policy not in PROVENANCE_POLICIES:
+            raise FactionWiringError(
+                f"Component {component_id} has invalid provenance policy {policy}"
+            )
+        label = component.get("research_label", "")
+        if not isinstance(label, str) or (label and not label.strip()):
+            raise FactionWiringError(f"Component {component_id} has invalid research label")
         if not isinstance(component["selectors"], list) or not component["selectors"]:
             raise FactionWiringError(f"Component {component_id} must have selectors")
         for selector in component["selectors"]:

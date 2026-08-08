@@ -6,6 +6,39 @@ from gates_of_codex.faction_wiring_manifest import load_faction_manifest, valida
 
 
 class FactionAuditAdjustmentTest(unittest.TestCase):
+    def test_prc_legacy_reserve_contains_exactly_the_audited_rows(self) -> None:
+        expected = {
+            "artillery_barrage_light_prc",
+            "artillery_barrage_medium_prc",
+            "artillery_barrage_rocket_prc",
+            "artillery_barrage_smoke_prc",
+            "mortar_barrage_light_prc",
+            "mortar_barrage_medium_prc",
+            "mortar_barrage_smoke_prc",
+            "paradrop_supply_prc",
+            "ptl-02",
+            "t62_545",
+            "type80",
+            "ztz852",
+            "ztz853",
+            "ztz96a",
+        }
+        manifest = load_faction_manifest()
+        validate_faction_manifest(manifest)
+        regular = manifest["components"]["prc_regular"]
+        reserve = manifest["components"]["prc_legacy_reserve"]
+        actual = {
+            unit
+            for selector in reserve["selectors"]
+            for unit in selector["units"]
+        }
+        self.assertEqual("modern_only", regular["provenance_policy"])
+        self.assertEqual("legacy_explicit", reserve["provenance_policy"])
+        self.assertEqual("PRC Legacy / Reserve Equipment", reserve["research_label"])
+        self.assertEqual(expected, actual)
+        prc = next(actor for actor in manifest["actors"] if actor["actor_id"] == "prc")
+        self.assertEqual(["prc_regular", "prc_legacy_reserve"], prc["components"])
+
     def test_canada_receives_directly_source_backed_leopard_2a4m(self) -> None:
         manifest = load_faction_manifest()
         validate_faction_manifest(manifest)

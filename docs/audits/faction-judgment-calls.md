@@ -175,3 +175,11 @@ resource/set/multiplayer/units/conquest/units_goc_national_wrappers.set
 The definitions reference the same existing breeds as the actor manifest. Repository tests require every virtual manifest unit to resolve through `CodeXCatalogScanner`, remain materializable, use only supported tactical sides, and match the manifest composition exactly.
 
 This closes the earlier repository-level gap where the actor economy could purchase a strategic wrapper that the tactical catalog could not resolve. Live Gates of Hell acceptance is still required to prove the generated `campaign.scn` containing these explicit humans and squad rows is accepted by the current engine and full Workshop stack.
+
+### PRC legacy / reserve equipment separation
+
+- **Exact components:** `prc_regular` and `prc_legacy_reserve`
+- **Source evidence:** Independent issue #150 provenance traversal found fourteen PRC rows whose effective terminal definitions come from West81 rather than Code:X: `artillery_barrage_light_prc`, `artillery_barrage_medium_prc`, `artillery_barrage_rocket_prc`, `artillery_barrage_smoke_prc`, `mortar_barrage_light_prc`, `mortar_barrage_medium_prc`, `mortar_barrage_smoke_prc`, `paradrop_supply_prc`, `ptl-02`, `t62_545`, `type80`, `ztz852`, `ztz853`, and `ztz96a`.
+- **Inference:** These rows remain useful as historical, mobilization, or reserve content, but they must not be presented as modern Code:X-authoritative PLA equipment. They are isolated under the visible `PRC Legacy / Reserve Equipment` research branch. `prc_regular` is enforced as `modern_only`; `prc_legacy_reserve` is enforced as `legacy_explicit` using terminal resolved provenance.
+- **Confidence:** High for the effective West81 provenance and the need to separate it; medium for the historical/reserve gameplay framing.
+- **Best alternative:** Replace individual reserve rows with authoritative Code:X definitions when equivalent modern or historically accurate PRC content is supplied, then remove those rows from the legacy component rather than copying upstream definitions into Gates.
