@@ -13,8 +13,8 @@ Gate 2 converts an inspected Gate 1 label-raster run into the existing Gates pol
 ```text
 python tools/opengs_eval/gate1_to_gate2_adapter.py convert \
   <gate1-output-directory> \
-  <terrain-raster> \
-  <gate2-config.json> \
+  --terrain <terrain-raster> \
+  --config <gate2-config.json> \
   --output <new-output-directory>
 
 python tools/opengs_eval/gate1_to_gate2_adapter.py inspect-output <output-directory>
