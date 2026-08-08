@@ -16,7 +16,7 @@ function Invoke-Git {
 
     & $script:Git.Source @Arguments
     if ($LASTEXITCODE -ne 0) {
-        throw "git failed with exit code $LASTEXITCODE: git $($Arguments -join ' ')"
+        throw "git failed with exit code ${LASTEXITCODE}: git $($Arguments -join ' ')"
     }
 }
 
