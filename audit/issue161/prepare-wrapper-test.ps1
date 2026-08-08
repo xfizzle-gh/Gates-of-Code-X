@@ -10,6 +10,7 @@ $PSNativeCommandUseErrorActionPreference = $true
 
 $expected = "14d784de63d58ddbf993d71f95d9f31b8a370cb2"
 $branch = "audit/161-wrapper-engine-acceptance"
+$workflowPath = ".github/workflows/issue161-wrapper-engine-preflight.yml"
 $root = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $venv = "E:\Steam\steamapps\workshop\content\400750\Gates-of-Code-X-wrapper-test-venv"
 
@@ -24,7 +25,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $changed = @(git diff --name-only "$expected...HEAD")
-$bad = @($changed | Where-Object { $_ -notlike "audit/issue161/*" })
+$bad = @($changed | Where-Object { $_ -notlike "audit/issue161/*" -and $_ -ne $workflowPath })
 if ($bad.Count -gt 0) {
     throw "Wrapper test branch changes non-audit paths: $($bad -join ', ')"
 }
