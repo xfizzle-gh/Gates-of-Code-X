@@ -223,6 +223,7 @@ def try_create_node_contact_battle(
     node_id: str,
     origin_province_id: str | None = None,
     retreat_origins: dict[str, str] | None = None,
+    initiating_formation_ids: tuple[str, ...] = (),
 ) -> PendingBattle | None:
     """Create cooperative multi-formation node-contact battle.
 
@@ -286,6 +287,12 @@ def try_create_node_contact_battle(
         defender_formation_id=primary_def,
     )
     state.pending_battle = pending
+    from .operational_ambush import apply_pending_battle_ambush
+
+    apply_pending_battle_ambush(
+        state,
+        initiating_formation_ids=initiating_formation_ids,
+    )
     _interrupt_refit_participants(state, pending)
     if retreat_origins:
         from .operational_retreat import record_retreat_origin_node
@@ -399,6 +406,7 @@ def resolve_node_entry_contact(
             if origin_node_id
             else None
         ),
+        initiating_formation_ids=(force.strategic_formation_id,),
     )
     if battle is None:
         result["reason"] = "invalid_contact_roster"
@@ -424,6 +432,7 @@ def try_create_edge_contact_battle(
     encounter_province_id: str,
     origin_province_id: str | None = None,
     participant_ids: tuple[str, ...] | None = None,
+    initiating_formation_ids: tuple[str, ...] = (),
     edge: Any = None,
 ) -> PendingBattle | None:
     """Create cooperative edge-contact battle at a shared canonical progress.
@@ -500,6 +509,12 @@ def try_create_edge_contact_battle(
         encounter_pixel=pixel,
     )
     state.pending_battle = pending
+    from .operational_ambush import apply_pending_battle_ambush
+
+    apply_pending_battle_ambush(
+        state,
+        initiating_formation_ids=initiating_formation_ids,
+    )
     _interrupt_refit_participants(state, pending)
     return pending
 
