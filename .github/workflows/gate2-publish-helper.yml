@@ -1,0 +1,39 @@
+name: Temporary Gate 2 publisher
+
+on:
+  push:
+    branches: [agent/opengs-gate2-geometry-adapter]
+    paths:
+      - ".gate2_publish/**"
+      - ".github/workflows/gate2-publish-helper.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Publish staged bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          chunks=(.gate2_publish/[0-9][0-9][0-9].b64)
+          if (( ${#chunks[@]} == 0 )); then
+            echo "No staged bundle"
+            exit 0
+          fi
+          message="$(cat .gate2_publish/commit-message.txt)"
+          cat "${chunks[@]}" | base64 --decode > /tmp/gate2-bundle.zip
+          unzip -oq /tmp/gate2-bundle.zip -d .
+          rm -rf .gate2_publish
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "$message"
+          git push origin HEAD:agent/opengs-gate2-geometry-adapter
