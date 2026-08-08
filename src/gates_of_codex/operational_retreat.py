@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from .diplomacy import are_allied, is_friendly_owner
 from .models import CampaignState, Faction, StrategicFormation
 from .operational_position import load_operational_graph_for_state
 from .operational_schema import (
     PROGRESS_MILLI_MAX,
+    EdgeAuthority,
     EdgeKind,
     OperationalRouteEdge,
     require_strict_int,
@@ -61,7 +62,20 @@ def require_operational_retreat_graph(state: CampaignState) -> dict:
             node_province[node_id] = province_id
 
         for edge in edges_by_id.values():
-            edge.validate(
+            validation_edge = edge
+            if (
+                edge.authority == EdgeAuthority.AUTHORED.value
+                and edge.kind == EdgeKind.CORRIDOR.value
+                and not edge.legacy_crossing_type
+            ):
+                # S3-S6 runtime fixtures and compatible pre-S9 saves used
+                # authored corridor records before the S1 authoring policy
+                # reserved corridor for candidates. Runtime traversal still
+                # accepts those records. Validate every edge semantic under
+                # the equivalent authored land kind while preserving the
+                # original graph bytes and gameplay interpretation.
+                validation_edge = replace(edge, kind=EdgeKind.ROAD.value)
+            validation_edge.validate(
                 node_ids=node_ids,
                 province_ids=province_ids,
                 node_province=node_province,
