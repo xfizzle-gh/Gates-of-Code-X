@@ -2,6 +2,7 @@ extends SceneTree
 
 const MainScript = preload("res://scripts/main_stack_panel.gd")
 const FakeRunnerScript = preload("res://scripts/tools/fake_command_runner.gd")
+const MapMarkersScript = preload("res://scripts/presentation/map_markers.gd")
 
 var passed := 0
 var failed := 0
@@ -77,6 +78,44 @@ func _run_all() -> void:
 	_check(actions.has("replay_contact"), "modal enables session replay")
 	_check(actions.has("skip_presentation"), "active presentation exposes Skip")
 
+	# This is the actual strategic-map counter style resolver used by the draw path.
+	# It consumes ordinary snapshot battalion/strategic-formation rows, not the
+	# presentation_formations screenshot shortcut.
+	var moving_baseline: Dictionary = MapMarkersScript.resolve_formation_counter_style(
+		scene,
+		Vector2(50, 50),
+		Color("4f8fd8"),
+		"T",
+		4,
+		false,
+		true
+	)
+	var moving_overlay: Dictionary = MapMarkersScript.resolve_formation_counter_style(
+		scene,
+		Vector2(25, 25),
+		Color("4f8fd8"),
+		"T",
+		4,
+		true,
+		true
+	)
+	var stationary_participant: Dictionary = MapMarkersScript.resolve_formation_counter_style(
+		scene,
+		Vector2(50, 50),
+		Color("c95b5b"),
+		"I",
+		3,
+		false,
+		true
+	)
+	var moving_visible_count := int(bool(moving_baseline.get("visible", true))) \
+		+ int(bool(moving_overlay.get("visible", true)))
+	_check_eq(moving_visible_count, 1, "moving formation has exactly one visible counter")
+	_check(not bool(moving_baseline.get("visible", true)), "authoritative endpoint baseline is suppressed")
+	_check(bool(stationary_participant.get("visible", false)), "stationary participant remains visible")
+	_check(bool(stationary_participant.get("emphasized", false)), "stationary participant is emphasized")
+	_check_eq(stationary_participant.get("formation_id", ""), "sf-r", "stationary emphasis resolves real formation row")
+
 	scene._handle_button("replay_contact")
 	_check_eq(runner.start_count, 0, "replay issues no command")
 	_check_eq(JSON.stringify(scene.snapshot), before_bytes, "replay leaves snapshot bytes unchanged")
@@ -103,9 +142,29 @@ func _pending_snapshot() -> Dictionary:
 			"commands_path": "commands.json",
 		},
 		"campaign": {"current_faction": "nato", "selected_faction": "nato"},
+		"battalions": [
+			{
+				"id": "bn-a",
+				"strategic_formation_id": "sf-a",
+				"province_id": "a",
+				"faction": "nato",
+				"battalion_type": "tank",
+				"unit_count": 4,
+				"display_pixel": [50, 50],
+			},
+			{
+				"id": "bn-r",
+				"strategic_formation_id": "sf-r",
+				"province_id": "b",
+				"faction": "rusa",
+				"battalion_type": "infantry",
+				"unit_count": 3,
+				"display_pixel": [50, 50],
+			},
+		],
 		"strategic_formations": [
-			{"id": "sf-a", "display_name": "Alpha", "display_pixel": [50, 50]},
-			{"id": "sf-r", "display_name": "Red", "display_pixel": [50, 50]},
+			{"id": "sf-a", "display_name": "Alpha", "faction": "nato", "display_pixel": [50, 50]},
+			{"id": "sf-r", "display_name": "Red", "faction": "rusa", "display_pixel": [50, 50]},
 		],
 		"pending_battle": {
 			"id": "battle-1",
