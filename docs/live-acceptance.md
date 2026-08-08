@@ -12,7 +12,17 @@ Enable these GoH layers from lowest to highest priority:
 4. Code:X AI Overhaul, Workshop `3636883799`
 5. Gates of Code:X
 
-The checked-in `config/mod-stack.windows.json` represents this order for the current `E:\Steam` installation. The primary `--codex` argument must point to `3261086933`, not the AI Overhaul.
+The checked-in `config/mod-stack.windows.json` represents this order through five required environment variables. It does not contain machine-specific paths and does not search Workshop directories. Set them in the same PowerShell session before validation:
+
+```powershell
+$env:GOH_VANILLA_ROOT = "D:\SteamLibrary\steamapps\common\Call to Arms - Gates of Hell"
+$env:WEST81_ROOT = "D:\SteamLibrary\steamapps\workshop\content\400750\2897299509"
+$env:CODEX_ROOT = "D:\SteamLibrary\steamapps\workshop\content\400750\3261086933"
+$env:CODEX_AI_OVERHAUL_ROOT = "D:\SteamLibrary\steamapps\workshop\content\400750\3636883799"
+$env:GATES_CODEX_ROOT = "D:\Projects\Gates-of-Code-X"
+```
+
+The primary `--codex` argument must point to `3261086933`, not the AI Overhaul. `GATES_CODEX_ROOT` must point to the exact repository, worktree, or verified Gates package under test. Workshop item `3700832981` is an unrelated product and is rejected by identity validation.
 
 ## 1. Validate the installation and stack
 

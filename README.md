@@ -12,20 +12,31 @@ Load these layers from lowest to highest priority:
 2. West81, Workshop `2897299509`
 3. Code:X, Workshop `3261086933`
 4. Code:X AI Overhaul, Workshop `3636883799`
-5. Gates of Code:X, Workshop test item `3700832981`
+5. Gates of Code:X, using the active repository, worktree, or verified published package
 
-`config/mod-stack.windows.json` contains the current `E:\Steam` paths. Gates of Code:X includes `mod.info` and a `resource` overlay root so it can be enabled as the final GoH mod layer.
+`config/mod-stack.windows.json` is a portable, fail-closed template. It contains no local absolute paths. Set the five required environment variables before running any stack-aware command:
 
-The Git repository at `E:\Steam\steamapps\workshop\content\400750\Gates-of-Code-X` is the source of truth. The normal Windows installer synchronizes all tracked project files into `E:\Steam\steamapps\workshop\content\400750\3700832981`, which is the live GoH test item. It never copies `.git`, `.venv`, `live`, backups, build artifacts, logs, or any other untracked development state.
+```powershell
+$env:GOH_VANILLA_ROOT = "D:\SteamLibrary\steamapps\common\Call to Arms - Gates of Hell"
+$env:WEST81_ROOT = "D:\SteamLibrary\steamapps\workshop\content\400750\2897299509"
+$env:CODEX_ROOT = "D:\SteamLibrary\steamapps\workshop\content\400750\3261086933"
+$env:CODEX_AI_OVERHAUL_ROOT = "D:\SteamLibrary\steamapps\workshop\content\400750\3636883799"
+$env:GATES_CODEX_ROOT = "D:\Projects\Gates-of-Code-X"
+```
 
-A manual sync is also available:
+`GATES_CODEX_ROOT` should point to the exact repository or worktree being tested. The loader validates the fixed layer order, required Vanilla sentinels, exact `mod.info` product identities, duplicate roots, and path existence. It never guesses a Workshop directory or falls back to another package.
+
+Workshop item `3700832981` is **not** Gates of Code:X. Its installed identity is `Imperium vs Xenos Conquest`, so the validated stack rejects it as the final layer. Do not deploy Gates files into that directory.
+
+For a separate disposable deployment, provide an explicit target rather than relying on a remembered Workshop ID:
 
 ```powershell
 pwsh -NoProfile -ExecutionPolicy Bypass `
-  -File .\tools\deploy_workshop_test.ps1
+  -File .\tools\deploy_workshop_test.ps1 `
+  -TargetRoot "D:\SteamLibrary\steamapps\workshop\content\400750\<dedicated-gates-test-folder>"
 ```
 
-The deployment manifest at `3700832981\.goc-deployment-manifest.json` records the source commit and deployed files. Later syncs remove only stale files that were previously written by this deployment script; unrelated Workshop files are preserved.
+The deployment manifest in that explicit target records the source commit and deployed files. Later syncs remove only stale files previously written by the deployment script; unrelated files remain untouched.
 
 ## Implemented
 
@@ -62,10 +73,10 @@ The Europe graph is exact for the observed alpha adjacency contract. Only 63 sou
 ## Install from source on Windows
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\install_gates_of_codex.ps1
+powershell -ExecutionPolicy Bypass -File .\tools\install_gates_of_codex.ps1 -NoWorkshopDeploy
 ```
 
-The installer updates the Python environment and the Workshop test item. Use `-NoWorkshopDeploy` only when intentionally updating the Python environment without touching `3700832981`. An alternate deployment destination can be supplied with `-WorkshopTestTarget`.
+The installer updates the Python environment. Use `-NoWorkshopDeploy` for normal repository/worktree development. A separate deployment is permitted only with an explicit, dedicated `-WorkshopTestTarget`; never use `3700832981`.
 
 Alternatively:
 

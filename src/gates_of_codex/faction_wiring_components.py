@@ -1,0 +1,414 @@
+from __future__ import annotations
+
+import re
+from pathlib import Path
+from typing import Any, Mapping
+
+from .effective_definitions import DefinitionCandidate, DefinitionKind
+from .modstack import resource_root
+from .faction_wiring_models import FactionWiringError, ResolutionProblem, _ResolvedComponent
+from .faction_wiring_types import (
+    CATEGORY_COSTS,
+    DefinitionReference,
+    ReferenceKind,
+    SourceUnit,
+    _base_name,
+    _copy_unit,
+    _merge_unit,
+)
+
+
+_JUNK_AFTER_BRACE_RE = re.compile(r'\}\s*[A-Za-z0-9_]+\s*$')
+_LAYERED_SOURCE_RE = re.compile(r"^(\d+):[^/]+/(.+)$")
+
+
+class FactionComponentMixin:
+    def _resolve_component(self, component_id: str, component: Mapping[str, Any]) -> _ResolvedComponent:
+        result = _ResolvedComponent(
+            component_id=component_id,
+            provenance_policy=component.get("provenance_policy", "mixed"),
+            research_label=component.get("research_label", ""),
+        )
+        for selector in component["selectors"]:
+            kind = selector["kind"]
+            if kind == "research_branch":
+                self._resolve_branch_selector(result, selector)
+            elif kind == "exact":
+                self._resolve_exact_selector(result, selector)
+            elif kind == "prefix":
+                self._resolve_prefix_selector(result, selector)
+            elif kind == "regex":
+                self._resolve_regex_selector(result, selector)
+            elif kind == "virtual":
+                self._resolve_virtual_selector(result, selector)
+            else:
+                raise FactionWiringError(f"Unsupported selector kind: {kind}")
+        return result
+
+    def _resolve_branch_selector(self, result: _ResolvedComponent, selector: Mapping[str, Any]) -> None:
+        side = selector["source_side"]
+        root = selector["root"]
+        descendants = self.research_index.descendants(side, root)
+        required = selector.get("required", True)
+        if not descendants:
+            severity = "error" if required else "warning"
+            result.problems.append(ResolutionProblem(severity, "", result.component_id, f"missing research branch {side}:{root}"))
+            return
+        include = re.compile(selector["include_regex"], re.I) if selector.get("include_regex") else None
+        exclude = re.compile(selector["exclude_regex"], re.I) if selector.get("exclude_regex") else None
+        selected_units: set[str] = set()
+        for node in descendants:
+            if node.kind != "unit":
+                continue
+            if include and not include.search(node.node_id):
+                continue
+            if exclude and exclude.search(node.node_id):
+                continue
+            selected_units.add(node.node_id)
+        included_nodes = self._research_closure(side, root, selected_units)
+        result.branch_roots.append(root)
+        for node_id in included_nodes:
+            node = self.research_index.get(side, node_id)
+            if node is None:
+                continue
+            result.research_nodes[f"{side}:{node.node_id}"] = node
+            if node.kind != "unit" or node.node_id not in selected_units:
+                continue
+            unit = self.unit_index.resolve(node.node_id, side=side) or self.unit_index.resolve(node.node_id)
+            if unit is None or not unit.materializable:
+                result.problems.append(ResolutionProblem(
+                    "warning", "", result.component_id,
+                    f"research unit {side}:{node.node_id} has no materializable catalog definition",
+                ))
+                continue
+            copy = _copy_unit(unit)
+            copy.tier = max(copy.tier, int(selector.get("tier", 1)))
+            copy.research_cost = max(copy.research_cost, node.cost)
+            self._add_validated_unit(result, copy, severity="error")
+
+    def _research_closure(self, side: str, root: str, selected_units: set[str]) -> set[str]:
+        included: set[str] = {root}
+        for unit_id in selected_units:
+            current = unit_id
+            guard: set[str] = set()
+            while current and current not in guard:
+                guard.add(current)
+                node = self.research_index.get(side, current)
+                if node is None:
+                    break
+                included.add(current)
+                if current == root:
+                    break
+                current = node.prerequisite
+        return included
+
+    def _resolve_exact_selector(self, result: _ResolvedComponent, selector: Mapping[str, Any]) -> None:
+        side = selector.get("source_side", "")
+        required = selector.get("required", True)
+        severity = "error" if required else "warning"
+        for name in selector["units"]:
+            unit = self.unit_index.resolve(name, side=side) or self.unit_index.resolve(name)
+            if unit is None or not unit.materializable:
+                result.problems.append(ResolutionProblem(severity, "", result.component_id, f"missing materializable unit {name}"))
+                continue
+            copy = _copy_unit(unit)
+            copy.tier = max(copy.tier, int(selector.get("tier", 1)))
+            if selector.get("category"):
+                copy.category = selector["category"]
+            self._add_validated_unit(result, copy, severity=severity)
+
+    def _resolve_prefix_selector(self, result: _ResolvedComponent, selector: Mapping[str, Any]) -> None:
+        side = selector.get("source_side", "")
+        required = selector.get("required", True)
+        severity = "error" if required else "warning"
+        excluded = re.compile(selector["exclude_regex"], re.I) if selector.get("exclude_regex") else None
+        matches: list[SourceUnit] = []
+        for prefix in selector["prefixes"]:
+            matches.extend(self.unit_index.matching(side=side, prefix=prefix))
+        matches = [unit for unit in matches if not excluded or not excluded.search(unit.name)]
+        if not matches and required:
+            result.problems.append(ResolutionProblem("error", "", result.component_id, "prefix selector matched no units"))
+        for unit in matches:
+            copy = _copy_unit(unit)
+            copy.tier = max(copy.tier, int(selector.get("tier", 1)))
+            self._add_validated_unit(result, copy, severity=severity)
+
+    def _resolve_regex_selector(self, result: _ResolvedComponent, selector: Mapping[str, Any]) -> None:
+        side = selector.get("source_side", "")
+        required = selector.get("required", True)
+        severity = "error" if required else "warning"
+        matches: dict[str, SourceUnit] = {}
+        for pattern in selector["patterns"]:
+            for unit in self.unit_index.matching(side=side, pattern=pattern):
+                matches[unit.name] = unit
+        if not matches and required:
+            result.problems.append(ResolutionProblem("error", "", result.component_id, "regex selector matched no units"))
+        for unit in matches.values():
+            copy = _copy_unit(unit)
+            copy.tier = max(copy.tier, int(selector.get("tier", 1)))
+            self._add_validated_unit(result, copy, severity=severity)
+
+    def _resolve_virtual_selector(self, result: _ResolvedComponent, selector: Mapping[str, Any]) -> None:
+        for raw in selector["units"]:
+            unit = SourceUnit(
+                name=raw["name"],
+                source_side=raw["source_side"],
+                period=raw.get("period", "2022s"),
+                category=raw.get("category", "infantry"),
+                members={key: int(value) for key, value in raw.get("members", {}).items()},
+                vehicles=list(raw.get("vehicles", [])),
+                actions=list(raw.get("actions", [])),
+                source_files=["Gates-of-Code-X:faction_wiring_manifest"],
+                source_layer="Gates of Code:X",
+                source_priority=len(self.roots),
+                virtual=True,
+                tier=int(raw.get("tier", 1)),
+                research_cost=int(raw.get("cost", CATEGORY_COSTS.get(raw.get("category", "unknown"), 2))),
+            )
+            source = unit.source_files[0]
+            unit.definition_references = [
+                DefinitionReference(
+                    identifier=identifier,
+                    kind=ReferenceKind.VEHICLE_ENTITY,
+                    source=source,
+                    line=1,
+                    column=1,
+                )
+                for identifier in unit.vehicles
+            ]
+            self._add_validated_unit(result, unit, severity="error")
+
+    def _add_validated_unit(
+        self,
+        result: _ResolvedComponent,
+        unit: SourceUnit,
+        *,
+        severity: str,
+    ) -> None:
+        problems = self._unit_asset_problems(unit)
+        provenance_problem = self._component_provenance_problem(result, unit)
+        if provenance_problem:
+            problems.append(provenance_problem)
+        if problems:
+            for message in problems:
+                result.problems.append(ResolutionProblem(severity, "", result.component_id, message))
+            return
+        result.units[unit.name] = _merge_unit(result.units.get(unit.name), unit) if unit.name in result.units else unit
+
+    def _component_provenance_problem(
+        self,
+        result: _ResolvedComponent,
+        unit: SourceUnit,
+    ) -> str:
+        if result.provenance_policy == "mixed" or unit.virtual:
+            return ""
+
+        resolution = self.definition_index.resolve(
+            unit.name,
+            ReferenceKind.PURCHASE_UNIT,
+        )
+        terminal = resolution.terminal if resolution.ok else None
+        alias_chain = resolution.alias_chain if resolution.ok else ()
+
+        # The source catalog already resolves duplicate purchase rows through
+        # deterministic layer/file traversal and records every contributing
+        # source on the effective SourceUnit.  A global identifier lookup may
+        # still be ambiguous when the same unit is declared in both a conquest
+        # file and a doctrine/minimal file in the same winning layer.  Bind the
+        # provenance lookup to the effective source file selected by the unit
+        # catalog instead of treating those complementary rows as an unknown
+        # provenance result.
+        if terminal is None:
+            terminal = self._source_bound_purchase_candidate(unit)
+            alias_chain = ()
+
+        if terminal is None and resolution.status in {"missing", "kind_mismatch"}:
+            base_name = _base_name(unit.name)
+            if base_name != unit.name:
+                base_resolution = self.definition_index.resolve(
+                    base_name,
+                    ReferenceKind.PURCHASE_UNIT,
+                )
+                if base_resolution.ok:
+                    terminal = base_resolution.terminal
+                    alias_chain = base_resolution.alias_chain
+                elif base_resolution.candidates:
+                    resolution = base_resolution
+
+        if terminal is None:
+            candidates = "; ".join(
+                f"{candidate.layer}:{candidate.path}:{candidate.line}"
+                for candidate in resolution.candidates
+            ) or "none"
+            return (
+                f"unit {unit.name} cannot establish terminal component provenance: "
+                f"{resolution.status}; candidates={candidates}"
+            )
+        is_legacy = terminal.priority in self._legacy_layer_priorities
+        alias_chain = " -> ".join(
+            f"{hop.identifier}->{hop.target}" for hop in alias_chain
+        ) or "none"
+        detail = (
+            f"terminal layer={terminal.layer} priority={terminal.priority} "
+            f"path={terminal.path}:{terminal.line}; aliases={alias_chain}"
+        )
+        if result.provenance_policy == "modern_only" and is_legacy:
+            return (
+                f"unit {unit.name} violates modern-only component provenance; {detail}"
+            )
+        if result.provenance_policy == "legacy_explicit" and not is_legacy:
+            return (
+                f"unit {unit.name} violates explicit legacy component provenance; {detail}"
+            )
+        return ""
+
+    def _source_bound_purchase_candidate(
+        self,
+        unit: SourceUnit,
+    ) -> DefinitionCandidate | None:
+        names = [unit.name]
+        base_name = _base_name(unit.name)
+        if base_name != unit.name:
+            names.append(base_name)
+
+        candidates = [
+            candidate
+            for name in names
+            for candidate in self.definition_index.candidates_for(name)
+            if candidate.kind == DefinitionKind.PURCHASE_UNIT_WRAPPER
+            and candidate.priority == unit.source_priority
+        ]
+        if not candidates:
+            return None
+
+        effective_paths: list[str] = []
+        for source in unit.source_files:
+            match = _LAYERED_SOURCE_RE.match(source)
+            if match is None or int(match.group(1)) != unit.source_priority:
+                continue
+            effective_paths.append(match.group(2))
+
+        for path in reversed(effective_paths):
+            matching = [candidate for candidate in candidates if candidate.path == path]
+            if matching:
+                return max(
+                    matching,
+                    key=lambda candidate: (
+                        candidate.source_order,
+                        candidate.line,
+                        candidate.column,
+                        candidate.identifier,
+                    ),
+                )
+
+        # No source path matched, so the catalog/index contract is incomplete.
+        # Fail closed rather than guessing among same-layer declarations.
+        return None
+
+    def _unit_asset_problems(self, unit: SourceUnit) -> list[str]:
+        problems: list[str] = []
+        missing_breeds: list[str] = []
+        invalid_breeds: list[str] = []
+        for breed in sorted(unit.members):
+            path = self._breed_path(unit.source_side, breed)
+            if path is None:
+                missing_breeds.append(breed)
+                continue
+            issue = self._breed_quality_issue(path)
+            if issue:
+                invalid_breeds.append(f"{breed} ({issue})")
+        if missing_breeds:
+            problems.append(
+                f"unit {unit.name} references missing {unit.source_side} breeds: {', '.join(missing_breeds)}"
+            )
+        if invalid_breeds:
+            problems.append(
+                f"unit {unit.name} references invalid breed definitions: {', '.join(invalid_breeds)}"
+            )
+
+        references = list(unit.definition_references)
+        referenced_identifiers = {item.identifier for item in references}
+        fallback_source = unit.source_files[0] if unit.source_files else unit.source_layer
+        for vehicle in unit.vehicles:
+            if vehicle not in referenced_identifiers:
+                references.append(DefinitionReference(
+                    identifier=vehicle,
+                    kind=ReferenceKind.VEHICLE_ENTITY,
+                    source=fallback_source,
+                    line=1,
+                    column=1,
+                ))
+                referenced_identifiers.add(vehicle)
+
+        missing_by_kind: dict[ReferenceKind, list[str]] = {}
+        for reference in references:
+            resolution = self.definition_index.resolve(reference.identifier, reference.kind)
+            if resolution.ok or self.definition_index.establishes_existence(
+                reference.identifier, reference.kind
+            ):
+                continue
+            if resolution.status == "missing":
+                missing_by_kind.setdefault(reference.kind, []).append(reference.identifier)
+                continue
+            problems.append(self._definition_resolution_problem(unit, reference, resolution))
+
+        for kind, identifiers in sorted(missing_by_kind.items(), key=lambda item: item[0].value):
+            label = {
+                ReferenceKind.VEHICLE_ENTITY: "vehicle/entity IDs",
+                ReferenceKind.PURCHASE_UNIT: "purchase-unit IDs",
+                ReferenceKind.STRATEGIC_CALL_IN: "strategic call-in IDs",
+                ReferenceKind.INTERACTION_OBJECT: "interaction-object IDs",
+            }[kind]
+            problems.append(
+                f"unit {unit.name} references missing {label}: {', '.join(sorted(set(identifiers)))}"
+            )
+        return problems
+
+    @staticmethod
+    def _definition_resolution_problem(unit: SourceUnit, reference: DefinitionReference, resolution: Any) -> str:
+        locations = "; ".join(
+            f"{candidate.layer}:{candidate.path}:{candidate.line}:{candidate.column}"
+            f"[{candidate.kind.value}]"
+            for candidate in resolution.candidates
+        ) or "none"
+        alias_chain = " -> ".join(
+            f"{hop.identifier}->{hop.target}"
+            for hop in resolution.alias_chain
+        ) or "none"
+        return (
+            f"unit {unit.name} cannot resolve {reference.kind.value} ID "
+            f"{reference.identifier}: {resolution.status}; "
+            f"source={reference.source}:{reference.line}:{reference.column}; "
+            f"aliases={alias_chain}; candidates={locations}"
+        )
+
+    def _breed_path(self, source_side: str, breed: str) -> Path | None:
+        if self._breed_index is None:
+            values: dict[tuple[str, str], tuple[Path, int]] = {}
+            for priority in range(len(self.roots) - 1, -1, -1):
+                root = self.roots[priority]
+                breed_root = resource_root(root) / "set/breed/mp"
+                if not breed_root.is_dir():
+                    continue
+                for path in sorted(breed_root.rglob("*.set")):
+                    relative = path.relative_to(breed_root).parts
+                    side = relative[0].lower() if relative else ""
+                    values.setdefault((side, path.stem.lower()), (path, priority))
+            self._breed_index = values
+        value = self._breed_index.get((source_side.lower(), breed.lower()))
+        return value[0] if value else None
+
+    def _breed_exists(self, source_side: str, breed: str) -> bool:
+        return self._breed_path(source_side, breed) is not None
+
+    @staticmethod
+    def _breed_quality_issue(path: Path) -> str:
+        text = path.read_text(encoding="utf-8-sig", errors="replace")
+        if text.count("{") != text.count("}"):
+            return "unbalanced braces"
+        if re.search(r'\{\s*item\s+"\s*"', text, re.I):
+            return "empty inventory item"
+        for line_number, line in enumerate(text.splitlines(), start=1):
+            if _JUNK_AFTER_BRACE_RE.search(line):
+                return f"junk after closing brace on line {line_number}"
+        return ""
