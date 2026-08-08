@@ -20,7 +20,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat .gate2-review-bundle.part* | base64 -d > /tmp/gate2-review.tar.gz
+          cat \
+            .gate2-review-bundle.part00 \
+            .gate2-review-bundle.part01 \
+            .gate2-review-bundle.part02 \
+            .gate2-review-bundle.part03a \
+            .gate2-review-bundle.part03b \
+            .gate2-review-bundle.part03c \
+            .gate2-review-bundle.part03d \
+            .gate2-review-bundle.part03e \
+            .gate2-review-bundle.part04 \
+            .gate2-review-bundle.part05 \
+            .gate2-review-bundle.part06 \
+            | base64 -d > /tmp/gate2-review.tar.gz
           echo "502cd1a593190bda0d8e248a74a623eb0442f63f57146db39bc20654ac9c4bfc  /tmp/gate2-review.tar.gz" | sha256sum -c -
           tar -xzf /tmp/gate2-review.tar.gz
           python patch_polygon_map.py
@@ -32,7 +44,7 @@ jobs:
           python -m py_compile \
             tools/opengs_eval/gate1_to_gate2_adapter.py \
             tests/test_opengs_gate1_to_gate2_adapter.py
-          git config user.name "github-actions[bot]]"
+          git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
             .github/workflows/opengs-gate2-geometry.yml \
