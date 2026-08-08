@@ -1,0 +1,193 @@
+name: Apply S9A Malformed Graph Fix
+
+on:
+  push:
+    branches:
+      - feat/s9a-deterministic-retreat
+    paths:
+      - .github/s9a-malformed-graph-trigger
+
+permissions:
+  contents: write
+
+jobs:
+  apply-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/s9a-deterministic-retreat
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Patch authority preflight and regressions
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          retreat_path = Path('src/gates_of_codex/operational_retreat.py')
+          retreat = retreat_path.read_text(encoding='utf-8')
+          old = '''def require_operational_retreat_graph(state: CampaignState) -> dict:
+              """Load retreat graph authority or fail without inventing a trapped result."""
+              try:
+                  graph = load_operational_graph_for_state(state)
+              except (OSError, UnicodeError, ValueError) as exc:
+                  raise OperationalRetreatAuthorityUnavailable(
+                      "Operational retreat graph authority is unavailable"
+                  ) from exc
+              if graph is None or not isinstance(graph, dict):
+                  raise OperationalRetreatAuthorityUnavailable(
+                      "Operational retreat graph authority is unavailable"
+                  )
+              return graph
+          '''
+          new = '''def require_operational_retreat_graph(state: CampaignState) -> dict:
+              """Load and fully index retreat graph authority before gameplay mutation."""
+              try:
+                  graph = load_operational_graph_for_state(state)
+                  if graph is None or not isinstance(graph, dict):
+                      raise ValueError("operational graph must be an object")
+
+                  # Battle finalization calls this before casualty or survivor mutation.
+                  # Build the same complete indexes used by retreat resolution now so a
+                  # readable but structurally invalid graph cannot fail after mutation.
+                  from .operational_movement import _indexes
+
+                  node_ids, edge_ids, edges_by_id, nodes_by_id = _indexes(graph)
+                  raw_nodes = graph.get("nodes")
+                  raw_edges = graph.get("edges")
+                  if not isinstance(raw_nodes, list) or not isinstance(raw_edges, list):
+                      raise ValueError("operational graph nodes and edges must be arrays")
+                  if len(node_ids) != len(raw_nodes):
+                      raise ValueError("operational graph has duplicate node_ids")
+                  if len(edge_ids) != len(raw_edges):
+                      raise ValueError("operational graph has duplicate edge_ids")
+
+                  for node_id, node in nodes_by_id.items():
+                      if not node_id.strip():
+                          raise ValueError("operational graph node_id required")
+                      province_id = node.get("province_id")
+                      if not isinstance(province_id, str) or not province_id.strip():
+                          raise ValueError(
+                              f"operational graph node {node_id!r} province_id required"
+                          )
+                      if province_id not in state.provinces:
+                          raise ValueError(
+                              f"operational graph node {node_id!r} province missing: "
+                              f"{province_id!r}"
+                          )
+
+                  for edge in edges_by_id.values():
+                      if not edge.edge_id.strip():
+                          raise ValueError("operational graph edge_id required")
+                      if edge.a not in node_ids or edge.b not in node_ids:
+                          raise ValueError(
+                              f"operational graph edge {edge.edge_id!r} references "
+                              "missing endpoint node"
+                          )
+              except (
+                  AttributeError,
+                  KeyError,
+                  OSError,
+                  OverflowError,
+                  TypeError,
+                  UnicodeError,
+                  ValueError,
+              ) as exc:
+                  raise OperationalRetreatAuthorityUnavailable(
+                      "Operational retreat graph authority is unavailable"
+                  ) from exc
+              return graph
+          '''
+          if old not in retreat:
+              raise SystemExit('operational_retreat authority block did not match exact head')
+          retreat_path.write_text(retreat.replace(old, new, 1), encoding='utf-8')
+
+          tests_path = Path('tests/test_operational_s9a_retreat.py')
+          tests = tests_path.read_text(encoding='utf-8')
+          marker = '''    def test_multi_battalion_formation_retreats_once_and_colocates(self) -> None:
+          '''
+          addition = '''    def _replace_graph_with_readable_malformed_authority(
+              self, state: CampaignState
+          ) -> None:
+              graph_path = Path(str(state.map_metadata["operational_graph"]))
+              graph = json.loads(graph_path.read_text(encoding="utf-8"))
+              del graph["edges"][0]["a"]
+              graph_path.write_text(json.dumps(graph), encoding="utf-8")
+              clear_operational_graph_cache()
+
+              # Prove this is readable JSON and specifically a structural authority
+              # failure rather than the missing-file case covered separately.
+              malformed = json.loads(graph_path.read_text(encoding="utf-8"))
+              self.assertIsInstance(malformed, dict)
+              self.assertNotIn("a", malformed["edges"][0])
+
+          def test_malformed_graph_aborts_internal_finalization_without_mutation(self) -> None:
+              with tempfile.TemporaryDirectory() as temporary:
+                  state = _state(Path(temporary))
+                  self._node_battle(state)
+                  engine = CampaignEngine(state, random_seed=0)
+                  self._replace_graph_with_readable_malformed_authority(state)
+                  before = json.dumps(state.to_dict(), sort_keys=True)
+
+                  with self.assertRaises(OperationalRetreatAuthorityUnavailable):
+                      engine.apply_battle_result(Faction.RUSSIA)
+
+                  self.assertEqual(before, json.dumps(state.to_dict(), sort_keys=True))
+                  self.assertIn("sf-nato", state.strategic_formations)
+                  self.assertIn("bn-nato", state.battalions)
+                  self.assertIsNotNone(state.pending_battle)
+
+          def test_malformed_graph_aborts_external_finalization_without_mutation(self) -> None:
+              with tempfile.TemporaryDirectory() as temporary:
+                  state = _state(Path(temporary))
+                  self._node_battle(state)
+                  engine = CampaignEngine(state, random_seed=0)
+                  self._replace_graph_with_readable_malformed_authority(state)
+                  before = json.dumps(state.to_dict(), sort_keys=True)
+                  replacement_survivors = {
+                      "bn-nato": [
+                          BattalionRosterEntry("inf", 1, category="infantry")
+                      ]
+                  }
+
+                  with self.assertRaises(OperationalRetreatAuthorityUnavailable):
+                      engine.apply_external_battle_result(
+                          Faction.RUSSIA,
+                          replacement_survivors,
+                      )
+
+                  self.assertEqual(before, json.dumps(state.to_dict(), sort_keys=True))
+                  self.assertIn("sf-nato", state.strategic_formations)
+                  self.assertIn("bn-nato", state.battalions)
+                  self.assertIsNotNone(state.pending_battle)
+
+          '''
+          if marker not in tests:
+              raise SystemExit('S9A finalization insertion marker did not match exact head')
+          tests_path.write_text(tests.replace(marker, addition + marker, 1), encoding='utf-8')
+          PY
+
+      - name: Install test dependencies
+        run: python -m pip install -e ".[earth3]"
+
+      - name: Run S9A and full regression suite
+        run: |
+          python -m unittest tests.test_operational_s9a_retreat -v
+          python -m unittest discover -s tests -v
+
+      - name: Commit reviewed fix and remove delivery files
+        shell: bash
+        run: |
+          git config user.name "xfizzle-gh"
+          git config user.email "87280532+xfizzle-gh@users.noreply.github.com"
+          git rm .github/workflows/s9a-malformed-graph-fix.yml
+          git rm .github/s9a-malformed-graph-trigger
+          git add src/gates_of_codex/operational_retreat.py tests/test_operational_s9a_retreat.py
+          git diff --check
+          git commit -m "fix(operational): validate retreat graph before mutation"
+          git push origin HEAD:feat/s9a-deterministic-retreat
