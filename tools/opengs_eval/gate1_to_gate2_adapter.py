@@ -24,18 +24,18 @@ import numpy as np
 from PIL import Image
 from shapely import constrained_delaunay_triangles, is_valid_reason
 from shapely.geometry import GeometryCollection, MultiPolygon, Point, Polygon
-from shapely.ops import nearest_points
+from shapely.ops import nearest_points, unary_union
 
 ADAPTER_SCHEMA = "gates-of-codex.opengs-gate2-config"
 ADAPTER_SCHEMA_VERSION = 1
 ADAPTER_MANIFEST_SCHEMA = "gates-of-codex.opengs-gate2-manifest"
-ADAPTER_MANIFEST_VERSION = 1
+ADAPTER_MANIFEST_VERSION = 2
 DATASET_SCHEMA = "gates-of-codex.earth3-polygon-dataset"
 DATASET_SCHEMA_VERSION = 2
 MAP_SCHEMA = "gates-of-codex.strategic-map"
 MAP_SCHEMA_VERSION = 1
 GATE1_RUN_SCHEMA = "gates-of-codex.opengs-run-manifest"
-ADAPTER_VERSION = 1
+ADAPTER_VERSION = 2
 ID_PREFIX_REQUIRED = "og2_"
 AREA_REL_TOL = 1e-9
 COORD_ROUND = 6
@@ -607,7 +607,8 @@ def triangulate_components(components: Sequence[Polygon], source_id: str) -> tup
         raise Gate2Error(
             f"province {source_id} triangle area mismatch: rel={rel:.12g} poly={poly_area} tri={tri_area}"
         )
-    return _flatten_ring(vertices), indices, rel
+    union_rel, _ = _triangle_union_contract(components, triangles, source_id)
+    return _flatten_ring(vertices), indices, max(rel, union_rel)
 
 
 def _terrain_palette(province_type: str) -> dict[str, tuple[int, int, int]]:
@@ -1018,12 +1019,14 @@ def _build_outputs(
         "adapter_source_sha256": _canonical_source_digest(source_path),
         "config": {
             "canonical_sha256": sha256_bytes(canonical_json_bytes(config_payload)),
+            "payload": config_payload,
             "map_id": config.map_id,
             "id_prefix": config.id_prefix,
             "minimum_shared_edge_pixels": config.minimum_shared_edge_pixels,
         },
         "gate1": {
             "run_manifest_sha256": sha256_file(gate1_dir / "run_manifest.json"),
+            "run_manifest": gate1_manifest,
             "recipe": gate1_manifest.get("recipe"),
             "outputs": {
                 name: sha256_file(gate1_dir / name)
@@ -1053,8 +1056,11 @@ def convert(gate1_dir: Path, terrain: Path, config: Path, output: Path) -> dict[
     shutil.rmtree(staging)
     try:
         staging.mkdir()
-        result = _build_outputs(gate1_dir.resolve(), terrain.resolve(), config.resolve(), staging)
-        inspect_output(staging)
+        gate1_dir = gate1_dir.resolve()
+        terrain = terrain.resolve()
+        config = config.resolve()
+        result = _build_outputs(gate1_dir, terrain, config, staging)
+        inspect_output(staging, gate1_dir, terrain, config)
         staging.replace(output)
         return result
     except Exception as exc:
@@ -1079,7 +1085,50 @@ def _ring_from_flat(value: Any, path: str) -> list[tuple[float, float]]:
     return coords
 
 
-def inspect_output(output: Path) -> dict[str, Any]:
+def _expected_determinism() -> dict[str, bool]:
+    return {
+        "canonical_json": True,
+        "stable_label_normalization": True,
+        "stable_id_assignment": True,
+        "exact_grid_topology": True,
+        "transactional_publish": True,
+    }
+
+
+def _triangle_union_contract(
+    components: Sequence[Polygon],
+    triangles: Sequence[Polygon],
+    pid: str,
+) -> tuple[float, float]:
+    component_union = unary_union(list(components))
+    component_sum = sum(poly.area for poly in components)
+    if component_union.is_empty or component_union.area <= 0:
+        raise Gate2Error(f"{pid} component union is empty")
+    component_overlap = component_sum - component_union.area
+    if component_overlap / component_union.area > AREA_REL_TOL:
+        raise Gate2Error(f"{pid} geometry components overlap")
+    triangle_sum = sum(tri.area for tri in triangles)
+    triangle_union = unary_union(list(triangles))
+    if triangle_union.is_empty or triangle_union.area <= 0:
+        raise Gate2Error(f"{pid} triangle union is empty")
+    overlap = triangle_sum - triangle_union.area
+    if overlap / component_union.area > AREA_REL_TOL:
+        raise Gate2Error(f"{pid} triangles overlap")
+    symmetric_difference = triangle_union.symmetric_difference(component_union).area
+    relative_difference = symmetric_difference / component_union.area
+    if relative_difference > AREA_REL_TOL:
+        raise Gate2Error(
+            f"{pid} triangle union does not exactly cover geometry: rel={relative_difference:.12g}"
+        )
+    return abs(triangle_sum - component_union.area) / component_union.area, relative_difference
+
+
+def inspect_output(
+    output: Path,
+    gate1_dir: Path,
+    terrain_path: Path,
+    config_path: Path,
+) -> dict[str, Any]:
     if not output.is_dir():
         raise Gate2Error(f"Gate 2 output directory missing: {output}")
     actual = {p.name for p in output.iterdir() if p.is_file()}
@@ -1090,6 +1139,16 @@ def inspect_output(output: Path) -> dict[str, Any]:
     for child in output.iterdir():
         if child.is_symlink() or child.is_dir():
             raise Gate2Error(f"unexpected output entry: {child.name}")
+
+    config, config_payload = load_config(config_path.resolve())
+    gate1_manifest, sources, labels = _load_gate1(gate1_dir.resolve())
+    _load_terrain(terrain_path.resolve(), gate1_manifest, labels.shape)
+    source_order = sorted(range(len(sources)), key=lambda i: sources[i].source_id)
+    id_by_label = {
+        label: f"{config.id_prefix}{position + 1:06d}"
+        for position, label in enumerate(source_order)
+    }
+
     manifest = _load_canonical_json(output / "adapter_manifest.json", "adapter manifest")
     top = _require_object(
         manifest,
@@ -1101,39 +1160,134 @@ def inspect_output(output: Path) -> dict[str, Any]:
     )
     if top["schema"] != ADAPTER_MANIFEST_SCHEMA or top["schema_version"] != ADAPTER_MANIFEST_VERSION:
         raise Gate2Error("adapter manifest schema mismatch")
+    if top["adapter_version"] != ADAPTER_VERSION or isinstance(top["adapter_version"], bool):
+        raise Gate2Error("adapter version mismatch")
+    if top["adapter_source_sha256"] != _canonical_source_digest(Path(__file__).resolve()):
+        raise Gate2Error("adapter source digest mismatch")
+
+    config_record = _require_object(
+        top["config"],
+        "adapter_manifest.config",
+        required={"canonical_sha256", "payload", "map_id", "id_prefix", "minimum_shared_edge_pixels"},
+    )
+    expected_config_sha = sha256_bytes(canonical_json_bytes(config_payload))
+    if config_record["canonical_sha256"] != expected_config_sha:
+        raise Gate2Error("adapter config digest mismatch")
+    if config_record["payload"] != config_payload:
+        raise Gate2Error("adapter embedded config mismatch")
+    expected_config_fields = {
+        "map_id": config.map_id,
+        "id_prefix": config.id_prefix,
+        "minimum_shared_edge_pixels": config.minimum_shared_edge_pixels,
+    }
+    for key, expected in expected_config_fields.items():
+        if config_record[key] != expected:
+            raise Gate2Error(f"adapter config field mismatch: {key}")
+
+    gate1_record = _require_object(
+        top["gate1"],
+        "adapter_manifest.gate1",
+        required={"run_manifest_sha256", "run_manifest", "recipe", "outputs"},
+    )
+    gate1_manifest_sha = sha256_file(gate1_dir / "run_manifest.json")
+    if gate1_record["run_manifest_sha256"] != gate1_manifest_sha:
+        raise Gate2Error("Gate 1 manifest digest mismatch")
+    if gate1_record["run_manifest"] != gate1_manifest:
+        raise Gate2Error("embedded Gate 1 manifest mismatch")
+    if gate1_record["recipe"] != gate1_manifest.get("recipe"):
+        raise Gate2Error("Gate 1 recipe provenance mismatch")
+    expected_gate1_outputs = {
+        name: sha256_file(gate1_dir / name)
+        for name in ("territories.png", "provinces.png", "territories.json", "provinces.json")
+    }
+    if gate1_record["outputs"] != expected_gate1_outputs:
+        raise Gate2Error("Gate 1 output provenance mismatch")
+    if gate1_record["outputs"] != gate1_manifest.get("outputs"):
+        raise Gate2Error("Gate 1 output provenance disagrees with manifest")
+    terrain_sha = sha256_file(terrain_path)
+    if top["terrain_sha256"] != terrain_sha:
+        raise Gate2Error("terrain provenance digest mismatch")
+    if gate1_manifest.get("inputs", {}).get("terrain", {}).get("sha256") != terrain_sha:
+        raise Gate2Error("terrain provenance disagrees with Gate 1 manifest")
+    if top["determinism"] != _expected_determinism():
+        raise Gate2Error("adapter determinism assertions mismatch")
+
     outputs = top["outputs"]
     if not isinstance(outputs, dict) or set(outputs) != set(AUTHORITATIVE_OUTPUTS) - {"adapter_manifest.json"}:
         raise Gate2Error("adapter manifest output set mismatch")
     for name, digest in outputs.items():
         if digest != sha256_file(output / name):
             raise Gate2Error(f"Gate 2 output checksum mismatch: {name}")
+
     dataset = _load_canonical_json(output / "polygon_dataset.json", "polygon dataset")
     map_manifest = _load_canonical_json(output / "map_manifest.json", "map manifest")
     meta = _load_canonical_json(output / "dataset_meta.json", "dataset meta")
     audit = _load_canonical_json(output / "topology_audit.json", "topology audit")
     if dataset.get("schema") != DATASET_SCHEMA or dataset.get("schema_version") != DATASET_SCHEMA_VERSION:
         raise Gate2Error("polygon dataset schema mismatch")
-    if map_manifest.get("schema") != MAP_SCHEMA or map_manifest.get("renderer") != "polygon_mesh":
+    if dataset.get("map_id") != config.map_id:
+        raise Gate2Error("polygon dataset map ID mismatch")
+    expected_bounds = {
+        "origin_source_xy": [0.0, 0.0],
+        "width": float(labels.shape[1]),
+        "height": float(labels.shape[0]),
+        "source_min_xy": [0.0, 0.0],
+        "source_max_xy": [float(labels.shape[1]), float(labels.shape[0])],
+    }
+    if dataset.get("bounds") != expected_bounds:
+        raise Gate2Error("polygon dataset bounds mismatch")
+    contract = dataset.get("gate2_contract")
+    expected_contract = {
+        "version": 1,
+        "boundary_graph": "exact_unit_grid_before_collinear_simplification",
+        "minimum_shared_edge_pixels": config.minimum_shared_edge_pixels,
+        "adjacency": "reciprocal_shared_edge_only",
+        "winding": "outer_positive_holes_negative_in_image_coordinates",
+        "triangulation": "shapely_constrained_delaunay_hole_preserving",
+        "anchor": "interior_representative_point_with_boundary_clearance",
+        "terrain": "full_area_nearest_palette_percentages",
+        "water": "non_selectable_ocean_and_lake_records",
+        "id_namespace": config.id_prefix,
+    }
+    if contract != expected_contract:
+        raise Gate2Error("Gate 2 dataset contract mismatch")
+    if map_manifest.get("schema") != MAP_SCHEMA or map_manifest.get("schema_version") != MAP_SCHEMA_VERSION or map_manifest.get("renderer") != "polygon_mesh":
         raise Gate2Error("map manifest contract mismatch")
+    if map_manifest.get("map_id") != config.map_id or map_manifest.get("bounds") != expected_bounds:
+        raise Gate2Error("map manifest identity or bounds mismatch")
     if map_manifest.get("water_policy") != "water_not_normally_selectable":
         raise Gate2Error("map manifest water policy mismatch")
     if map_manifest.get("stable_id_policy") != "isolated_opengs_gate2_namespace":
         raise Gate2Error("map manifest stable ID policy mismatch")
+    if map_manifest.get("source_gate1_manifest_sha256") != gate1_manifest_sha:
+        raise Gate2Error("map manifest Gate 1 provenance mismatch")
+
     provinces = dataset.get("provinces")
     if not isinstance(provinces, list) or not provinces:
         raise Gate2Error("polygon dataset provinces must be a non-empty array")
+    expected_ids = [id_by_label[label] for label in source_order]
     ids = [row.get("id") for row in provinces]
-    if len(ids) != len(set(ids)) or any(not isinstance(pid, str) or not pid.startswith(ID_PREFIX_REQUIRED) for pid in ids):
-        raise Gate2Error("Gate 2 province IDs are not unique in the isolated namespace")
-    if any(str(pid).startswith("e3_") for pid in ids):
-        raise Gate2Error("Gate 2 output must never use e3_* IDs")
+    if ids != expected_ids:
+        raise Gate2Error("Gate 2 province IDs do not match deterministic source ordering")
+    if any(not isinstance(pid, str) or not pid.startswith(ID_PREFIX_REQUIRED) or pid.startswith("e3_") for pid in ids):
+        raise Gate2Error("Gate 2 province IDs are outside the isolated namespace")
     if dataset.get("province_count") != len(provinces):
         raise Gate2Error("polygon dataset province_count mismatch")
+
     id_set = set(ids)
-    computed_edges: set[tuple[str, str]] = set()
-    for i, row in enumerate(provinces):
+    row_by_id = {row["id"]: row for row in provinces}
+    topology_rows: list[dict[str, Any]] = []
+    total_vertices = 0
+    total_triangles = 0
+    max_tri_error = 0.0
+    for position, row in enumerate(provinces):
         pid = row["id"]
-        if bool(row.get("is_water")) == bool(row.get("selectable")):
+        label = source_order[position]
+        source = sources[label]
+        if row.get("source_id") != source.source_id or row.get("territory_id") != source.territory_id or row.get("province_type") != source.province_type:
+            raise Gate2Error(f"{pid} source provenance mismatch")
+        is_water = source.province_type in {"ocean", "lake"}
+        if row.get("is_water") is not is_water or row.get("selectable") is not (not is_water):
             raise Gate2Error(f"{pid} water/selectable contract is inconsistent")
         coverage = row.get("terrain_coverage")
         pixels = row.get("terrain_coverage_pixels")
@@ -1141,6 +1295,9 @@ def inspect_output(output: Path) -> dict[str, Any]:
             raise Gate2Error(f"{pid} terrain coverage contract is invalid")
         if abs(sum(float(v) for v in coverage.values()) - 1.0) > 10 ** (-PERCENT_ROUND + 1):
             raise Gate2Error(f"{pid} terrain coverage does not sum to one")
+        if sum(int(v) for v in pixels.values()) != int(np.count_nonzero(labels == label)):
+            raise Gate2Error(f"{pid} terrain pixel coverage mismatch")
+
         components_raw = row.get("components")
         if not isinstance(components_raw, list) or not components_raw:
             raise Gate2Error(f"{pid} has no geometry components")
@@ -1152,24 +1309,23 @@ def inspect_output(output: Path) -> dict[str, Any]:
             holes_raw = component["holes"]
             if not isinstance(holes_raw, list):
                 raise Gate2Error(f"{pid}.components[{ci}].holes must be an array")
-            holes = [
-                _ring_from_flat(hole, f"{pid}.components[{ci}].holes[{hi}]")
-                for hi, hole in enumerate(holes_raw)
-            ]
+            holes = [_ring_from_flat(hole, f"{pid}.components[{ci}].holes[{hi}]") for hi, hole in enumerate(holes_raw)]
             if _signed_area(outer) <= 0 or any(_signed_area(hole) >= 0 for hole in holes):
                 raise Gate2Error(f"{pid} winding normalization mismatch")
             poly = Polygon(outer, holes)
             if not poly.is_valid or poly.area <= 0:
                 raise Gate2Error(f"{pid} invalid component: {is_valid_reason(poly)}")
+            if abs(float(component["area"]) - poly.area) / poly.area > AREA_REL_TOL:
+                raise Gate2Error(f"{pid} component area ledger mismatch")
             components.append(poly)
-        union_area = sum(poly.area for poly in components)
+
         vertices = _ring_from_flat(row.get("vertices"), f"{pid}.vertices")
         indices = row.get("triangles")
         if not isinstance(indices, list) or len(indices) < 3 or len(indices) % 3:
             raise Gate2Error(f"{pid} triangle index array is invalid")
-        tri_area = 0.0
+        triangles: list[Polygon] = []
         for ti in range(0, len(indices), 3):
-            tri_indices = indices[ti : ti + 3]
+            tri_indices = indices[ti:ti + 3]
             if any(isinstance(v, bool) or not isinstance(v, int) or v < 0 or v >= len(vertices) for v in tri_indices):
                 raise Gate2Error(f"{pid} triangle index out of range")
             tri = Polygon([vertices[v] for v in tri_indices])
@@ -1177,11 +1333,17 @@ def inspect_output(output: Path) -> dict[str, Any]:
                 raise Gate2Error(f"{pid} has degenerate triangle")
             if not any(poly.covers(tri) for poly in components):
                 raise Gate2Error(f"{pid} triangle crosses a hole or component boundary")
-            tri_area += tri.area
-        if abs(tri_area - union_area) / union_area > AREA_REL_TOL:
-            raise Gate2Error(f"{pid} triangle area does not cover geometry")
+            triangles.append(tri)
+        tri_error, _ = _triangle_union_contract(components, triangles, pid)
+        max_tri_error = max(max_tri_error, tri_error)
+        union_area = unary_union(components).area
+        if abs(float(row.get("area", -1)) - union_area) / union_area > AREA_REL_TOL:
+            raise Gate2Error(f"{pid} province area ledger mismatch")
+        total_vertices += len(vertices)
+        total_triangles += len(triangles)
+
         anchor = row.get("centroid")
-        if not isinstance(anchor, list) or len(anchor) != 2:
+        if not isinstance(anchor, list) or len(anchor) != 2 or row.get("label") != anchor:
             raise Gate2Error(f"{pid} anchor shape invalid")
         point = Point(float(anchor[0]), float(anchor[1]))
         owner = next((poly for poly in components if poly.contains(point)), None)
@@ -1196,31 +1358,117 @@ def inspect_output(output: Path) -> dict[str, Any]:
         for neighbor in neighbors:
             if neighbor not in id_set or neighbor == pid:
                 raise Gate2Error(f"{pid} references invalid neighbor {neighbor}")
-            computed_edges.add(_canonical_pair(pid, neighbor))
-    for row in provinces:
-        for neighbor in row["neighbors"]:
-            other = provinces[ids.index(neighbor)]
-            if row["id"] not in other["neighbors"]:
-                raise Gate2Error(f"adjacency is not reciprocal: {row['id']} -> {neighbor}")
-    edges = dataset.get("edges")
-    if not isinstance(edges, list) or {
-        _canonical_pair(edge[0], edge[1])
-        for edge in edges
-        if isinstance(edge, list) and len(edge) == 2
-    } != computed_edges:
-        raise Gate2Error("dataset edges do not match reciprocal province neighbors")
-    if audit.get("ok") is not True or audit.get("province_count") != len(provinces):
-        raise Gate2Error("topology audit failed or count mismatch")
-    if meta.get("dataset_sha256") != sha256_file(output / "polygon_dataset.json"):
-        raise Gate2Error("dataset meta checksum mismatch")
-    if map_manifest.get("polygon_dataset", {}).get("sha256") != sha256_file(output / "polygon_dataset.json"):
-        raise Gate2Error("map manifest dataset checksum mismatch")
+        topology_rows.append({
+            "id": pid,
+            "source_id": source.source_id,
+            "component_count": len(components),
+            "hole_count": sum(len(poly.interiors) for poly in components),
+            "pixel_count": int(np.count_nonzero(labels == label)),
+            "polygon_area": round(float(union_area), 6),
+            "tri_area_relative_error": tri_error,
+            "anchor_clearance": clearance,
+        })
+
+    _directed, _segment_sides, pair_lengths = build_boundary_graph(labels)
+    expected_edges: list[list[str]] = []
+    expected_shared_edges: list[dict[str, Any]] = []
+    expected_neighbors = {pid: [] for pid in ids}
+    for (left_label, right_label), length in sorted(pair_lengths.items()):
+        left_id, right_id = id_by_label[left_label], id_by_label[right_label]
+        qualifies = length >= config.minimum_shared_edge_pixels
+        expected_shared_edges.append({
+            "a": left_id,
+            "b": right_id,
+            "shared_edge_pixels": length,
+            "minimum": config.minimum_shared_edge_pixels,
+            "adjacent": qualifies,
+        })
+        if qualifies:
+            edge = [left_id, right_id] if left_id < right_id else [right_id, left_id]
+            expected_edges.append(edge)
+            expected_neighbors[left_id].append(right_id)
+            expected_neighbors[right_id].append(left_id)
+    expected_edges.sort()
+    for pid in expected_neighbors:
+        expected_neighbors[pid].sort()
+    if dataset.get("edges") != expected_edges:
+        raise Gate2Error("dataset adjacency does not match measured shared boundaries")
+    for pid, expected in expected_neighbors.items():
+        if row_by_id[pid].get("neighbors") != expected:
+            raise Gate2Error(f"{pid} neighbors do not match measured shared boundaries")
+
+    expected_border_records, expected_border_flat, expected_suppressed = _build_border_classes(
+        labels, sources, id_by_label, config
+    )
+    if dataset.get("border_classes") != expected_border_records:
+        raise Gate2Error("border class ledger does not match measured boundary graph")
+    if dataset.get("border_segments") != expected_border_flat:
+        raise Gate2Error("drawn border ledger does not match measured boundary graph")
+    if dataset.get("exterior_border_suppress") != expected_suppressed:
+        raise Gate2Error("suppressed border ledger does not match configured boundary graph")
+
+    expected_audit = {
+        "schema": "gates-of-codex.opengs-gate2-topology-audit",
+        "schema_version": 1,
+        "ok": True,
+        "province_count": len(provinces),
+        "component_count": sum(row["component_count"] for row in topology_rows),
+        "hole_count": sum(row["hole_count"] for row in topology_rows),
+        "adjacency_edge_count": len(expected_edges),
+        "minimum_shared_edge_pixels": config.minimum_shared_edge_pixels,
+        "max_triangle_area_relative_error": max_tri_error,
+        "provinces": topology_rows,
+        "shared_edges": expected_shared_edges,
+        "border_class_counts": {
+            cls: sum(row["class"] == cls for row in expected_border_records)
+            for cls in sorted({row["class"] for row in expected_border_records})
+        },
+    }
+    if audit != expected_audit:
+        raise Gate2Error("topology audit does not match recomputed authority")
+
+    expected_counts = {
+        "province_count": len(provinces),
+        "land_count": sum(not bool(row["is_water"]) for row in provinces),
+        "water_count": sum(bool(row["is_water"]) for row in provinces),
+        "vertex_count": total_vertices,
+        "triangle_count": total_triangles,
+        "edge_count": len(expected_edges),
+        "border_segment_count": len(expected_border_records),
+    }
+    for key, expected in expected_counts.items():
+        if dataset.get(key) != expected:
+            raise Gate2Error(f"polygon dataset count mismatch: {key}")
+    dataset_sha = sha256_file(output / "polygon_dataset.json")
+    expected_meta = {
+        "map_id": config.map_id,
+        **expected_counts,
+        "dataset_sha256": dataset_sha,
+        "bounds": expected_bounds,
+        "sample_province_ids": ids[:5],
+        "gate1_recipe": gate1_manifest.get("recipe"),
+    }
+    if meta != expected_meta:
+        raise Gate2Error("dataset metadata does not match recomputed authority")
+    expected_map_dataset = {
+        "path": "polygon_dataset.json",
+        "sha256": dataset_sha,
+        "province_count": len(provinces),
+    }
+    if map_manifest.get("polygon_dataset") != expected_map_dataset or map_manifest.get("province_count") != len(provinces):
+        raise Gate2Error("map manifest dataset authority mismatch")
     return manifest
 
 
-def compare_runs(left: Path, right: Path) -> dict[str, Any]:
-    inspect_output(left)
-    inspect_output(right)
+def compare_runs(
+    left: Path,
+    right: Path,
+    gate1_dir: Path,
+    terrain_path: Path,
+    config_path: Path,
+) -> dict[str, Any]:
+    inspect_output(left, gate1_dir, terrain_path, config_path)
+    inspect_output(right, gate1_dir, terrain_path, config_path)
     differences = [name for name in AUTHORITATIVE_OUTPUTS if (left / name).read_bytes() != (right / name).read_bytes()]
     result = {"identical": not differences, "differences": differences}
     if differences:
@@ -1238,9 +1486,15 @@ def build_parser() -> argparse.ArgumentParser:
     convert_parser.add_argument("--output", type=Path, required=True)
     inspect_parser = sub.add_parser("inspect-output")
     inspect_parser.add_argument("output", type=Path)
+    inspect_parser.add_argument("--gate1-output", type=Path, required=True)
+    inspect_parser.add_argument("--terrain", type=Path, required=True)
+    inspect_parser.add_argument("--config", type=Path, required=True)
     compare_parser = sub.add_parser("compare-runs")
     compare_parser.add_argument("left", type=Path)
     compare_parser.add_argument("right", type=Path)
+    compare_parser.add_argument("--gate1-output", type=Path, required=True)
+    compare_parser.add_argument("--terrain", type=Path, required=True)
+    compare_parser.add_argument("--config", type=Path, required=True)
     return parser
 
 
@@ -1250,9 +1504,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.command == "convert":
             result = convert(args.gate1_output, args.terrain, args.config, args.output)
         elif args.command == "inspect-output":
-            result = inspect_output(args.output)
+            result = inspect_output(args.output, args.gate1_output, args.terrain, args.config)
         else:
-            result = compare_runs(args.left, args.right)
+            result = compare_runs(
+                args.left, args.right, args.gate1_output, args.terrain, args.config
+            )
         print(json.dumps(result, sort_keys=True))
         return 0
     except Gate2Error as exc:

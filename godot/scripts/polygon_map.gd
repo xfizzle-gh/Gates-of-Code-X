@@ -44,6 +44,7 @@ var centroids: PackedVector2Array = PackedVector2Array()
 var bounds_min: PackedVector2Array = PackedVector2Array()
 var bounds_max: PackedVector2Array = PackedVector2Array()
 var rings: Array = []
+var components: Array = []
 
 var _meshes: Array = []
 var _mesh_instances: Array = []
@@ -117,6 +118,7 @@ func open(manifest_path: String, snapshot: Dictionary, faction_colors: Dictionar
 	bounds_min = PackedVector2Array()
 	bounds_max = PackedVector2Array()
 	rings.clear()
+	components.clear()
 	_suppress_border_keys.clear()
 	# Allowlisted excluded-outline edges only (meta.contract=allowlisted_excluded_source_outline_only).
 	# Default: src 11836 northern pseudo-outline — not general crop-exterior borders.
@@ -137,6 +139,7 @@ func open(manifest_path: String, snapshot: Dictionary, faction_colors: Dictionar
 	bounds_min.resize(province_count)
 	bounds_max.resize(province_count)
 	rings.resize(province_count)
+	components.resize(province_count)
 	land_province_count = 0
 	water_province_count = 0
 
@@ -174,21 +177,28 @@ func open(manifest_path: String, snapshot: Dictionary, faction_colors: Dictionar
 		var c: Array = row.get("centroid", [0.0, 0.0])
 		centroids[i] = Vector2(float(c[0]), float(c[1]))
 
-		var ring_pts := PackedVector2Array()
-		var ring_raw: Array = row.get("ring", [])
+		var ring_pts := _packed_ring(row.get("ring", []))
+		rings[i] = ring_pts
+		var province_components := _component_rings_from_row(row, ring_pts)
+		components[i] = province_components
 		var min_v := Vector2(INF, INF)
 		var max_v := Vector2(-INF, -INF)
-		for ri in range(0, ring_raw.size(), 2):
-			if ri + 1 >= ring_raw.size():
-				break
-			var rp := Vector2(float(ring_raw[ri]), float(ring_raw[ri + 1]))
-			ring_pts.append(rp)
-			min_v = min_v.min(rp)
-			max_v = max_v.max(rp)
-		rings[i] = ring_pts
-		_register_ring_edges(edge_counts, ring_pts, water)
+		for component_value: Variant in province_components:
+			var component: Dictionary = component_value
+			var outer: PackedVector2Array = component.get("outer", PackedVector2Array())
+			_register_ring_edges(edge_counts, outer, water)
+			for rp: Vector2 in outer:
+				min_v = min_v.min(rp)
+				max_v = max_v.max(rp)
+			var holes: Array = component.get("holes", [])
+			for hole_value: Variant in holes:
+				var hole: PackedVector2Array = hole_value
+				_register_ring_edges(edge_counts, hole, water)
+				for hp: Vector2 in hole:
+					min_v = min_v.min(hp)
+					max_v = max_v.max(hp)
 
-		# Water: keep IDs/rings/hit-test only — no filled polygon blocks.
+		# Water: keep IDs and complete component geometry for exclusion/hit tests; no fill blocks.
 		if not water:
 			var verts: Array = row.get("vertices", [])
 			var tris: Array = row.get("triangles", [])
@@ -598,6 +608,42 @@ func _build_ocean_mesh() -> void:
 	_ocean_mesh = st.commit()
 
 
+func _packed_ring(value: Variant) -> PackedVector2Array:
+	var result := PackedVector2Array()
+	if not value is Array:
+		return result
+	var raw: Array = value
+	for i in range(0, raw.size(), 2):
+		if i + 1 >= raw.size():
+			break
+		result.append(Vector2(float(raw[i]), float(raw[i + 1])))
+	return result
+
+
+func _component_rings_from_row(row: Dictionary, fallback: PackedVector2Array) -> Array:
+	var result: Array = []
+	var raw_components: Variant = row.get("components", [])
+	if raw_components is Array:
+		for component_value: Variant in raw_components:
+			if not component_value is Dictionary:
+				continue
+			var component: Dictionary = component_value
+			var outer := _packed_ring(component.get("outer", []))
+			if outer.size() < 3:
+				continue
+			var holes: Array = []
+			var raw_holes: Variant = component.get("holes", [])
+			if raw_holes is Array:
+				for hole_value: Variant in raw_holes:
+					var hole := _packed_ring(hole_value)
+					if hole.size() >= 3:
+						holes.append(hole)
+			result.append({"outer": outer, "holes": holes})
+	if result.is_empty() and fallback.size() >= 3:
+		result.append({"outer": fallback, "holes": []})
+	return result
+
+
 func _register_ring_edges(edge_counts: Dictionary, ring: PackedVector2Array, water: bool) -> void:
 	# edge_counts[key] = [land_n, water_n]
 	var n := ring.size()
@@ -672,8 +718,7 @@ func _build_border_mesh_from_edges(edge_counts: Dictionary) -> void:
 		_border_mesh = st.commit()
 
 
-func _draw_province_outline(canvas: CanvasItem, map_space, idx: int, color: Color, width: float) -> void:
-	var ring: PackedVector2Array = rings[idx] if idx < rings.size() else PackedVector2Array()
+func _draw_ring_outline(canvas: CanvasItem, map_space, ring: PackedVector2Array, color: Color, width: float) -> void:
 	if ring.size() < 2:
 		return
 	var pts := PackedVector2Array()
@@ -682,6 +727,21 @@ func _draw_province_outline(canvas: CanvasItem, map_space, idx: int, color: Colo
 		pts[i] = map_space.image_to_screen(ring[i])
 	pts[ring.size()] = pts[0]
 	canvas.draw_polyline(pts, color, width, true)
+
+
+func _draw_province_outline(canvas: CanvasItem, map_space, idx: int, color: Color, width: float) -> void:
+	var province_components: Array = components[idx] if idx < components.size() else []
+	if province_components.is_empty():
+		var fallback: PackedVector2Array = rings[idx] if idx < rings.size() else PackedVector2Array()
+		_draw_ring_outline(canvas, map_space, fallback, color, width)
+		return
+	for component_value: Variant in province_components:
+		var component: Dictionary = component_value
+		var outer: PackedVector2Array = component.get("outer", PackedVector2Array())
+		_draw_ring_outline(canvas, map_space, outer, color, width)
+		for hole_value: Variant in component.get("holes", []):
+			var hole: PackedVector2Array = hole_value
+			_draw_ring_outline(canvas, map_space, hole, color, width)
 
 
 func _build_spatial_grid() -> void:
@@ -703,12 +763,7 @@ func _build_spatial_grid() -> void:
 				_grid[key] = arr
 
 
-func _point_in_province(pos: Vector2, idx: int) -> bool:
-	var mn := bounds_min[idx]
-	var mx := bounds_max[idx]
-	if pos.x < mn.x or pos.y < mn.y or pos.x > mx.x or pos.y > mx.y:
-		return false
-	var ring: PackedVector2Array = rings[idx] if idx < rings.size() else PackedVector2Array()
+func _point_in_ring(pos: Vector2, ring: PackedVector2Array) -> bool:
 	var n := ring.size()
 	if n < 3:
 		return false
@@ -726,6 +781,31 @@ func _point_in_province(pos: Vector2, idx: int) -> bool:
 			inside = not inside
 		j = i
 	return inside
+
+
+func _point_in_province(pos: Vector2, idx: int) -> bool:
+	var mn := bounds_min[idx]
+	var mx := bounds_max[idx]
+	if pos.x < mn.x or pos.y < mn.y or pos.x > mx.x or pos.y > mx.y:
+		return false
+	var province_components: Array = components[idx] if idx < components.size() else []
+	if province_components.is_empty():
+		var fallback: PackedVector2Array = rings[idx] if idx < rings.size() else PackedVector2Array()
+		return _point_in_ring(pos, fallback)
+	for component_value: Variant in province_components:
+		var component: Dictionary = component_value
+		var outer: PackedVector2Array = component.get("outer", PackedVector2Array())
+		if not _point_in_ring(pos, outer):
+			continue
+		var inside_hole := false
+		for hole_value: Variant in component.get("holes", []):
+			var hole: PackedVector2Array = hole_value
+			if _point_in_ring(pos, hole):
+				inside_hole = true
+				break
+		if not inside_hole:
+			return true
+	return false
 
 
 func _approx_area(idx: int) -> float:

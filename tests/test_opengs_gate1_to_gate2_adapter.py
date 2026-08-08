@@ -241,7 +241,7 @@ class Gate2GeometryTests(unittest.TestCase):
             out_a, out_b = root / "a", root / "b"
             self.g.convert(gate1, terrain_path, config, out_a)
             self.g.convert(gate1, terrain_path, config, out_b)
-            self.assertTrue(self.g.compare_runs(out_a, out_b)["identical"])
+            self.assertTrue(self.g.compare_runs(out_a, out_b, gate1, terrain_path, config)["identical"])
             dataset = json.loads((out_a / "polygon_dataset.json").read_text())
             self.assertEqual([row["source_id"] for row in dataset["provinces"]], ["PRV000002", "PRV000005", "PRV000010"])
             self.assertEqual([row["id"] for row in dataset["provinces"]], ["og2_000001", "og2_000002", "og2_000003"])
@@ -261,7 +261,8 @@ class Gate2GeometryTests(unittest.TestCase):
             root = Path(td)
             gate1, terrain_path = self.make_gate1_output(root, labels, sources, terrain)
             output = root / "output"
-            self.g.convert(gate1, terrain_path, self.config_file(root), output)
+            config = self.config_file(root)
+            self.g.convert(gate1, terrain_path, config, output)
             dataset_path = output / "polygon_dataset.json"
             dataset = json.loads(dataset_path.read_text())
             land = next(row for row in dataset["provinces"] if not row["is_water"])
@@ -284,7 +285,147 @@ class Gate2GeometryTests(unittest.TestCase):
                 adapter["outputs"][name] = hashlib.sha256((output / name).read_bytes()).hexdigest()
             adapter_path.write_bytes(canonical(adapter))
             with self.assertRaises(self.g.Gate2Error):
-                self.g.inspect_output(output)
+                self.g.inspect_output(output, gate1, terrain_path, config)
+
+    def reseal_dataset_outputs(self, output: Path) -> None:
+        dataset_sha = hashlib.sha256((output / "polygon_dataset.json").read_bytes()).hexdigest()
+        meta_path = output / "dataset_meta.json"
+        meta = json.loads(meta_path.read_text())
+        meta["dataset_sha256"] = dataset_sha
+        meta_path.write_bytes(canonical(meta))
+        map_path = output / "map_manifest.json"
+        map_manifest = json.loads(map_path.read_text())
+        map_manifest["polygon_dataset"]["sha256"] = dataset_sha
+        map_path.write_bytes(canonical(map_manifest))
+        adapter_path = output / "adapter_manifest.json"
+        adapter = json.loads(adapter_path.read_text())
+        for name in ("polygon_dataset.json", "dataset_meta.json", "map_manifest.json", "topology_audit.json"):
+            adapter["outputs"][name] = hashlib.sha256((output / name).read_bytes()).hexdigest()
+        adapter_path.write_bytes(canonical(adapter))
+
+    def make_three_province_chain(self, root: Path):
+        labels = self.np.full((6, 12), -1, dtype=self.np.int32)
+        labels[1:5, 1:4] = 0
+        labels[1:5, 4:7] = 1
+        labels[1:5, 7:10] = 2
+        sources = [
+            self.source("A", "land", (10, 20, 30)),
+            self.source("B", "land", (40, 50, 60)),
+            self.source("C", "land", (70, 80, 90)),
+        ]
+        terrain = self.np.zeros((*labels.shape, 3), dtype=self.np.uint8)
+        terrain[:] = self.g.LAND_TERRAINS["plains"]
+        gate1, terrain_path = self.make_gate1_output(root, labels, sources, terrain)
+        config = self.config_file(root)
+        output = root / "output"
+        self.g.convert(gate1, terrain_path, config, output)
+        return gate1, terrain_path, config, output
+
+    def test_inspection_authenticates_all_provenance_classes(self) -> None:
+        labels = self.np.full((6, 7), -1, dtype=self.np.int32)
+        labels[1:5, 1:6] = 0
+        sources = [self.source("ONLY", "land", (10, 20, 30))]
+        terrain = self.np.zeros((*labels.shape, 3), dtype=self.np.uint8)
+        terrain[:] = self.g.LAND_TERRAINS["plains"]
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            gate1, terrain_path = self.make_gate1_output(root, labels, sources, terrain)
+            config = self.config_file(root)
+            pristine = root / "pristine"
+            self.g.convert(gate1, terrain_path, config, pristine)
+            mutations = {
+                "adapter_version": lambda m: m.__setitem__("adapter_version", 999),
+                "adapter_source": lambda m: m.__setitem__("adapter_source_sha256", "f" * 64),
+                "config_digest": lambda m: m["config"].__setitem__("canonical_sha256", "f" * 64),
+                "config_payload": lambda m: m["config"]["payload"].__setitem__("minimum_shared_edge_pixels", 9),
+                "gate1_manifest": lambda m: m["gate1"].__setitem__("run_manifest_sha256", "f" * 64),
+                "gate1_outputs": lambda m: m["gate1"]["outputs"].__setitem__("provinces.png", "f" * 64),
+                "terrain": lambda m: m.__setitem__("terrain_sha256", "f" * 64),
+                "determinism": lambda m: m["determinism"].__setitem__("exact_grid_topology", False),
+            }
+            for name, mutate in mutations.items():
+                with self.subTest(name=name):
+                    candidate = root / name
+                    shutil.copytree(pristine, candidate)
+                    manifest_path = candidate / "adapter_manifest.json"
+                    manifest = json.loads(manifest_path.read_text())
+                    mutate(manifest)
+                    manifest_path.write_bytes(canonical(manifest))
+                    with self.assertRaises(self.g.Gate2Error):
+                        self.g.inspect_output(candidate, gate1, terrain_path, config)
+
+    def test_inspection_rejects_equal_area_duplicate_and_omission(self) -> None:
+        labels = self.np.full((8, 8), -1, dtype=self.np.int32)
+        labels[1:7, 1:7] = 0
+        sources = [self.source("LAND", "land", (10, 20, 30))]
+        terrain = self.np.zeros((*labels.shape, 3), dtype=self.np.uint8)
+        terrain[:] = self.g.LAND_TERRAINS["plains"]
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            gate1, terrain_path = self.make_gate1_output(root, labels, sources, terrain)
+            config = self.config_file(root)
+            output = root / "output"
+            self.g.convert(gate1, terrain_path, config, output)
+            dataset_path = output / "polygon_dataset.json"
+            dataset = json.loads(dataset_path.read_text())
+            row = dataset["provinces"][0]
+            vertices = list(zip(row["vertices"][::2], row["vertices"][1::2]))
+            triples = [row["triangles"][i:i+3] for i in range(0, len(row["triangles"]), 3)]
+            areas = []
+            for tri in triples:
+                poly = self.g.Polygon([vertices[index] for index in tri])
+                areas.append(poly.area)
+            pair = next((i, j) for i in range(len(triples)) for j in range(i + 1, len(triples)) if triples[i] != triples[j] and abs(areas[i] - areas[j]) < 1e-12)
+            triples[pair[1]] = list(triples[pair[0]])
+            row["triangles"] = [index for tri in triples for index in tri]
+            dataset_path.write_bytes(canonical(dataset))
+            self.reseal_dataset_outputs(output)
+            with self.assertRaisesRegex(self.g.Gate2Error, "overlap|exactly cover"):
+                self.g.inspect_output(output, gate1, terrain_path, config)
+
+    def test_inspection_rejects_coherent_adjacency_forgery(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            gate1, terrain_path, config, output = self.make_three_province_chain(root)
+            dataset_path = output / "polygon_dataset.json"
+            dataset = json.loads(dataset_path.read_text())
+            rows = {row["source_id"]: row for row in dataset["provinces"]}
+            a, b, c = rows["A"]["id"], rows["B"]["id"], rows["C"]["id"]
+            dataset["edges"] = sorted([[a, c], [b, c]])
+            rows["A"]["neighbors"] = [c]
+            rows["B"]["neighbors"] = [c]
+            rows["C"]["neighbors"] = sorted([a, b])
+            dataset_path.write_bytes(canonical(dataset))
+            audit_path = output / "topology_audit.json"
+            audit = json.loads(audit_path.read_text())
+            for entry in audit["shared_edges"]:
+                if {entry["a"], entry["b"]} == {a, b}:
+                    entry["adjacent"] = False
+            audit["shared_edges"].append({"a": a, "b": c, "shared_edge_pixels": 1, "minimum": 1, "adjacent": True})
+            audit["shared_edges"].sort(key=lambda row: (row["a"], row["b"]))
+            audit_path.write_bytes(canonical(audit))
+            self.reseal_dataset_outputs(output)
+            with self.assertRaisesRegex(self.g.Gate2Error, "measured shared boundaries"):
+                self.g.inspect_output(output, gate1, terrain_path, config)
+
+    def test_inspection_rejects_border_ledger_forgery(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            gate1, terrain_path, config, output = self.make_three_province_chain(root)
+            dataset_path = output / "polygon_dataset.json"
+            dataset = json.loads(dataset_path.read_text())
+            record = next(row for row in dataset["border_classes"] if row["class"] == "internal_land")
+            record["class"] = "authored_boundary"
+            dataset["border_classes"].sort(key=lambda row: (row["class"], row["segment"], row["left_id"] or "", row["right_id"] or ""))
+            dataset_path.write_bytes(canonical(dataset))
+            audit_path = output / "topology_audit.json"
+            audit = json.loads(audit_path.read_text())
+            audit["border_class_counts"]["internal_land"] -= 1
+            audit["border_class_counts"]["authored_boundary"] = 1
+            audit_path.write_bytes(canonical(audit))
+            self.reseal_dataset_outputs(output)
+            with self.assertRaisesRegex(self.g.Gate2Error, "border class ledger"):
+                self.g.inspect_output(output, gate1, terrain_path, config)
 
     @unittest.skipUnless(os.environ.get("GATE2_GATE1_OUTPUT"), "dedicated workflow Gate 1 fixture not supplied")
     def test_real_gate1_fixture_two_runs_byte_identical(self) -> None:
@@ -296,7 +437,7 @@ class Gate2GeometryTests(unittest.TestCase):
             a, b = root / "a", root / "b"
             self.g.convert(gate1, terrain, config, a)
             self.g.convert(gate1, terrain, config, b)
-            self.assertTrue(self.g.compare_runs(a, b)["identical"])
+            self.assertTrue(self.g.compare_runs(a, b, gate1, terrain, config)["identical"])
             dataset = json.loads((a / "polygon_dataset.json").read_text())
             self.assertEqual(dataset["province_count"], 123)
             self.assertEqual(dataset["land_count"], 96)
