@@ -5,6 +5,7 @@ from pathlib import Path
 
 from ..campaign import CampaignEngine
 from ..models import Faction
+from ..operational_retreat import BattleFinalizationReport
 from .archive import CampaignSaveArchive
 from .scn import CampaignScnParser
 from .status import StatusBuilder, StatusResult
@@ -17,6 +18,7 @@ class BattleImportResult:
     previous_status: StatusResult
     current_status: StatusResult
     survivor_counts: dict[str, int]
+    finalization_report: BattleFinalizationReport
 
 
 class BattleResultImporter:
@@ -47,11 +49,12 @@ class BattleResultImporter:
         else:
             winner = pending.attacker_faction
         survivors = self.scn.survivor_rosters(contents.campaign_scn, pending)
-        engine.apply_external_battle_result(winner, survivors)
+        finalization_report = engine.apply_external_battle_result(winner, survivors)
         return BattleImportResult(
             winner=winner,
             player_won=player_won,
             previous_status=previous_status,
             current_status=current,
             survivor_counts={key: sum(item.quantity for item in roster) for key, roster in survivors.items()},
+            finalization_report=finalization_report,
         )

@@ -1,0 +1,18 @@
+{
+  "schema": "gates-of-codex.presentation-fixture",
+  "presentation_writeback_enabled": true,
+  "pending_battle": {
+    "id": "s10-node-simultaneous",
+    "encounter_kind": "node_simultaneous",
+    "encounter_node_id": "op-node-Warszawa-anchor",
+    "encounter_edge_id": null,
+    "encounter_progress_milli": 0,
+    "encounter_pixel": [2600, 1500],
+    "attacking_participants": [
+      {"battalion_id": "bn-blue", "strategic_formation_id": "sf-blue", "formation_display_name": "1st Armored Group", "faction": "nato", "contact_initiator": true, "ambush_triggered": false, "ambush_strength_multiplier_milli": 1000}
+    ],
+    "defending_participants": [
+      {"battalion_id": "bn-red", "strategic_formation_id": "sf-red", "formation_display_name": "8th Guards Group", "faction": "rusa", "contact_initiator": false, "ambush_triggered": false, "ambush_strength_multiplier_milli": 1000}
+    ]
+  }
+}
