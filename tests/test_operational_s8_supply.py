@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 import unittest
 from unittest import mock
 
@@ -214,6 +215,24 @@ def _edge(
 
 
 class OperationalS8SupplyTests(unittest.TestCase):
+    def test_supply_guide_documents_operational_contract(self) -> None:
+        guide = (
+            Path(__file__).resolve().parents[1]
+            / "docs"
+            / "supply-and-strategic-ai.md"
+        ).read_text(encoding="utf-8")
+
+        for phrase in (
+            "province-supply-source:<province_id>",
+            "one-tick grace",
+            "(edge_cost * segment_milli + 999) // 1000",
+            "disabled candidate corridors",
+            "does not invent coalition-wide logistics",
+            "Frontend schema version 13",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, guide)
+
     def test_s8_fields_round_trip_strictly(self) -> None:
         state = _state()
         state.schema_version = 8
@@ -265,6 +284,23 @@ class OperationalS8SupplyTests(unittest.TestCase):
 
                 with self.assertRaisesRegex(ValueError, "route_cost"):
                     campaign_from_dict(payload)
+
+    def test_s8_source_hub_id_rejects_non_string_values(self) -> None:
+        for bad in (7, True, ["hub"]):
+            with self.subTest(bad=bad):
+                state = _state()
+                state.schema_version = 8
+                payload = state.to_dict()
+                row = next(iter(payload["strategic_formations"].values()))
+                row["source_hub_id"] = bad
+
+                with self.assertRaisesRegex(ValueError, "source_hub_id"):
+                    campaign_from_dict(payload)
+
+        state = _state()
+        _only_force(state).source_hub_id = 7
+        with self.assertRaisesRegex(ValueError, "source_hub_id"):
+            state.validate()
 
     def test_authored_source_site_node_precedes_anchor(self) -> None:
         state = _state()
@@ -446,6 +482,51 @@ class OperationalS8SupplyTests(unittest.TestCase):
             sources, _ = resolve_operational_supply_sources(state, Faction.NATO)
 
         self.assertEqual((), sources)
+
+    def test_hostile_site_control_disables_source_on_next_refresh(self) -> None:
+        state, graph = _lifecycle_state(connected=True)
+        state.provinces["p-source"].metadata.pop(
+            "static_supply_source_for", None
+        )
+        source_node = stable_node_id("p-source", "anchor")
+        graph["sites"] = [
+            {
+                "site_id": "authored-depot",
+                "display_name": "Authored depot",
+                "kind": "depot",
+                "province_id": "p-source",
+                "route_node_id": source_node,
+                "owner_faction": "nato",
+                "metadata": {},
+            }
+        ]
+        control = {
+            "authored-depot": {
+                "controller_faction": "nato",
+                "province_id": "p-source",
+                "route_node_id": source_node,
+            }
+        }
+        state.map_metadata["operational_site_control"] = control
+
+        with mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            refresh_operational_supply(state, consume_grace=False)
+            self.assertEqual("authored-depot", _only_force(state).source_hub_id)
+            control["authored-depot"]["controller_faction"] = "rusa"
+            before = {
+                key: dict(value) for key, value in control.items()
+            }
+            refresh_operational_supply(
+                state, consume_grace=True, completed_tick=1
+            )
+
+        force = _only_force(state)
+        self.assertIsNone(force.source_hub_id)
+        self.assertEqual(1, force.grace_ticks_remaining)
+        self.assertEqual(before, state.map_metadata["operational_site_control"])
 
     def test_missing_anchor_fails_closed_with_diagnostic(self) -> None:
         state = _state()
@@ -716,6 +797,23 @@ class OperationalS8SupplyTests(unittest.TestCase):
             nodes,
             [_edge_row("broken", "formation", "missing")],
         )
+
+        with mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            routes = compute_operational_supply_routes(
+                state, Faction.NATO, (_source("hub-source", "hub"),)
+            )
+
+        self.assertNotIn("formation", routes)
+
+    def test_non_integer_edge_cost_fails_closed(self) -> None:
+        nodes = ["formation", "hub"]
+        state = _routing_state(nodes)
+        edge = _edge_row("coerced", "formation", "hub")
+        edge["movement_cost_milli"] = "1000"
+        graph = _routing_graph(nodes, [edge])
 
         with mock.patch(
             "gates_of_codex.operational_supply.load_operational_graph_for_state",

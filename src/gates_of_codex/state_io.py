@@ -186,10 +186,8 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
             move_order=move_order_from_dict(value.get("move_order")),
             supplied=_strict_supply_bool(value.get("supplied", True), name="supplied"),
             cut_off=_strict_supply_bool(value.get("cut_off", False), name="cut_off"),
-            source_hub_id=(
-                None
-                if value.get("source_hub_id") is None
-                else str(value.get("source_hub_id"))
+            source_hub_id=_optional_supply_id(
+                value.get("source_hub_id"), name="source_hub_id"
             ),
             route_cost=_optional_supply_int(value.get("route_cost"), name="route_cost"),
             grace_ticks_remaining=_required_supply_int(
@@ -379,6 +377,14 @@ def _optional_supply_int(value: Any, *, name: str) -> int | None:
     if value is None:
         return None
     return _required_supply_int(value, name=name)
+
+
+def _optional_supply_id(value: Any, *, name: str) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{name} must be a non-empty string or null")
+    return value
 
 
 def _parse_encounter_pixel(value: Any) -> list[int]:

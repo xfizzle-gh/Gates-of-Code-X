@@ -34,7 +34,7 @@ The deployment manifest at `3700832981\.goc-deployment-manifest.json` records th
 - Western and Eastern coalitions with alliance-aware movement, retreat, and supply routes
 - National and specialized formation identities beneath each strategic faction
 - Provisional Central Asian deployment zone for PRC and a Russia-aligned North Korean contingent
-- Coalition supply tracing, isolation, encirclement turns, low-supply movement penalties, and attrition
+- Deterministic operational-graph supply tracing with persisted grace, plus legacy province supply compatibility, isolation, and attrition
 - Deterministic strategic AI movement, neutral capture, hostile attacks, and battle auto-resolution
 - Catalog-derived Code:X research progression with prerequisites and resource costs
 - Formation-specific recruitment pools, persistent reinforcement reserves, casualty replacement, and force expansion

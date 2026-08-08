@@ -293,7 +293,10 @@ class StrategicFormation:
             raise ValueError(
                 f"Strategic formation {self.strategic_formation_id} cut_off must be bool"
             )
-        if self.source_hub_id is not None and not self.source_hub_id.strip():
+        if self.source_hub_id is not None and (
+            not isinstance(self.source_hub_id, str)
+            or not self.source_hub_id.strip()
+        ):
             raise ValueError(
                 f"Strategic formation {self.strategic_formation_id} source_hub_id cannot be empty"
             )

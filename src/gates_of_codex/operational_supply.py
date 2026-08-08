@@ -367,7 +367,7 @@ def compute_operational_supply_routes(
             continue
         if not _node_is_friendly(state, faction, nodes[edge.b]):
             continue
-        cost = max(1, int(edge.movement_cost_milli))
+        cost = edge.movement_cost_milli
         try:
             assert_supply_edge_hop_legal(edge, origin=edge.a, dest=edge.b)
         except ValueError:
@@ -481,9 +481,7 @@ def route_for_formation(
             continue
         if endpoint_route.edge_id_path[:1] == (edge_id,):
             continue
-        attachment = on_edge_attachment_cost(
-            max(1, int(edge.movement_cost_milli)), segment
-        )
+        attachment = on_edge_attachment_cost(edge.movement_cost_milli, segment)
         candidates.append(
             OperationalSupplyRoute(
                 route_cost=attachment + endpoint_route.route_cost,
@@ -611,15 +609,31 @@ def _routing_graph_indexes(
                 b=str(row["b"]),
                 kind=str(row["kind"]),
                 authority=str(row["authority"]),
-                length_px=int(row.get("length_px", 1)),
-                base_move_points_milli=int(
-                    row.get("base_move_points_milli", 1000)
+                length_px=require_strict_int(
+                    row.get("length_px", 1), name="length_px", minimum=1
                 ),
-                movement_cost_milli=int(row.get("movement_cost_milli", 1000)),
-                requires_port=bool(row.get("requires_port", False)),
-                can_be_blockaded=bool(row.get("can_be_blockaded", False)),
-                traversal_enabled=bool(row.get("traversal_enabled", True)),
-                bidirectional=bool(row.get("bidirectional", True)),
+                base_move_points_milli=require_strict_int(
+                    row.get("base_move_points_milli", 1000),
+                    name="base_move_points_milli",
+                    minimum=1,
+                ),
+                movement_cost_milli=require_strict_int(
+                    row.get("movement_cost_milli", 1000),
+                    name="movement_cost_milli",
+                    minimum=1,
+                ),
+                requires_port=_strict_graph_bool(
+                    row.get("requires_port", False), "requires_port"
+                ),
+                can_be_blockaded=_strict_graph_bool(
+                    row.get("can_be_blockaded", False), "can_be_blockaded"
+                ),
+                traversal_enabled=_strict_graph_bool(
+                    row.get("traversal_enabled", True), "traversal_enabled"
+                ),
+                bidirectional=_strict_graph_bool(
+                    row.get("bidirectional", True), "bidirectional"
+                ),
                 province_ids=list(row.get("province_ids") or []),
                 legacy_crossing_type=row.get("legacy_crossing_type"),
                 metadata=dict(row.get("metadata") or {}),
@@ -630,6 +644,12 @@ def _routing_graph_indexes(
             continue
         edges[edge.edge_id] = edge
     return nodes, edges
+
+
+def _strict_graph_bool(value: Any, name: str) -> bool:
+    if not isinstance(value, bool):
+        raise ValueError(f"{name} must be bool")
+    return value
 
 
 def _node_is_friendly(
