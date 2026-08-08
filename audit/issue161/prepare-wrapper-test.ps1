@@ -65,11 +65,12 @@ if ($ProfileDirectory -or $InstallDirectory) {
 if ($TemplateSave) {
     $arguments += @("--template-save", $TemplateSave)
 }
-if (-not $NoLaunch) {
-    $arguments += "--launch"
-}
 
 & $python @arguments
+
+if (-not $NoLaunch) {
+    & $python -c "from gates_of_codex.launcher import launch_game; launch_game(r'$($env:GOH_VANILLA_ROOT)')"
+}
 
 Write-Host ""
 Write-Host "The two wrapper test saves are installed."
