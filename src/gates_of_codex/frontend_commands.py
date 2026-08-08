@@ -262,7 +262,9 @@ def _apply_import_battle(
     state,
     raw: dict[str, Any],
 ) -> CommandResult:
+    from .acceptance import verify_tactical_result
     from .service import GatesOfCodeXService
+    from .stack_acceptance import verify_stack_result
 
     pending = state.pending_battle
     if pending is None:
@@ -270,7 +272,32 @@ def _apply_import_battle(
     save_path = str(raw.get("save_path") or pending.exported_save_path or "").strip()
     if not save_path:
         raise ValueError("Pending battle has no handed-off GoH save path")
-    imported = GatesOfCodeXService().import_battle(campaign, save_path=save_path)
+
+    service = GatesOfCodeXService()
+    manifest = service.load_manifest(service.manifest_path(save_path))
+    resource_stack = (
+        state.map_metadata.get("resource_stack", []) or manifest.resource_stack
+    )
+    stack_config = state.map_metadata.get("stack_config")
+    if resource_stack or state.code_x_directory:
+        verification = verify_stack_result(
+            campaign,
+            save_path=save_path,
+            code_x_directory=state.code_x_directory or None,
+            resource_stack=resource_stack or None,
+            stack_config=stack_config or None,
+        )
+    else:
+        verification = verify_tactical_result(
+            campaign,
+            save_path=save_path,
+            code_x_directory=None,
+        )
+    if not verification.ok:
+        detail = "; ".join(verification.errors) or "unknown verification failure"
+        raise ValueError(f"GoH result verification failed: {detail}")
+
+    imported = service.import_battle(campaign, save_path=save_path)
     finalized_state = load_campaign(campaign)
     return CommandResult(
         op="import_battle",
