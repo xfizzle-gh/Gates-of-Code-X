@@ -59,7 +59,7 @@ jobs:
           source = Path("godot/fixtures/snapshots/earth3_operational.json")
           target = Path("godot/fixtures/snapshots/_s10_post_finalization.json")
           data = json.loads(source.read_text(encoding="utf-8"))
-          assert isinstance(data.get("pending_battle"), dict), "source snapshot must contain the pre-finalization pending battle"
+          assert isinstance(data.get("pending_battle"), dict)
           data.pop("pending_battle")
           assert "pending_battle" not in data
           target.write_text(json.dumps(data, separators=(",", ":")) + "\n", encoding="utf-8")
@@ -107,7 +107,7 @@ jobs:
               scene.operational_presenter.begin_session(scene.snapshot, {})
               scene._load_presentation_fixture(String(case.get("fixture", "")))
               if scene.is_pending_battle_modal_active():
-                push_error("pending-battle modal remains active for %s" % case.get("fixture", ""))
+                push_error("pending-battle modal remains active")
                 scene.free()
                 quit(1)
                 return
@@ -119,7 +119,7 @@ jobs:
               var actions: Array = Array(scene.enabled_action_button_ids())
               for forbidden: String in ["auto_resolve", "handoff", "import_battle"]:
                 if actions.has(forbidden):
-                  push_error("resolved battle exposes forbidden action %s" % forbidden)
+                  push_error("resolved battle exposes forbidden enabled action %s" % forbidden)
                   scene.free()
                   quit(1)
                   return
@@ -163,8 +163,8 @@ jobs:
               "$HOME/godot" --path godot --audio-driver Dummy \
               -s res://scripts/tools/map_screenshot.gd -- \
               --snapshot="$SNAP" --width=1920 --height=1080 \
-              --out="$OUT/$name" "$@"
-            test -s "$OUT/$name"
+              --out="$OUT/${name%.png}_full.png" "$@"
+            test -s "$OUT/${name%.png}_full.png"
           }
           shoot successful_retreat.png \
             --fixture=res://fixtures/presentation/s10_retreat.json \
@@ -172,6 +172,43 @@ jobs:
           shoot trapped_no_legal_retreat.png \
             --fixture=res://fixtures/presentation/s10_trapped.json \
             --focus-image=2400,1700 --view-scale=0.8
+
+      - name: Frame outcome viewport without persistent command sidebar
+        working-directory: source
+        run: |
+          set -euo pipefail
+          cat > godot/_s10_crop_finalization_evidence.gd <<'GD'
+          extends SceneTree
+
+          func _initialize() -> void:
+            var root_path := ""
+            for arg: String in OS.get_cmdline_user_args():
+              if arg.begins_with("--root="):
+                root_path = arg.substr(7)
+            if root_path.is_empty():
+              push_error("missing --root")
+              quit(1)
+              return
+            for stem: String in ["successful_retreat", "trapped_no_legal_retreat"]:
+              var source_path := root_path.path_join(stem + "_full.png")
+              var output_path := root_path.path_join(stem + ".png")
+              var image := Image.load_from_file(source_path)
+              if image == null or image.is_empty() or image.get_width() != 1920 or image.get_height() != 1080:
+                push_error("invalid full-frame source %s" % source_path)
+                quit(1)
+                return
+              var framed := image.get_region(Rect2i(0, 0, 1520, 1080))
+              if framed.save_png(output_path) != OK:
+                push_error("failed to save framed evidence %s" % output_path)
+                quit(1)
+                return
+              DirAccess.remove_absolute(source_path)
+            print("s10_finalization_evidence_crop: PASS 1520x1080 map and outcome viewport")
+            quit(0)
+          GD
+          "$HOME/godot" --headless --path godot --audio-driver Dummy \
+            -s res://_s10_crop_finalization_evidence.gd -- \
+            --root="$(pwd)/s10-finalization-evidence-correction"
 
       - name: Build replacement manifest
         working-directory: source
@@ -194,7 +231,7 @@ jobs:
               data = path.read_bytes()
               assert data[:8] == b"\x89PNG\r\n\x1a\n", name
               width, height = struct.unpack(">II", data[16:24])
-              assert (width, height) == (1920, 1080), (name, width, height)
+              assert (width, height) == (1520, 1080), (name, width, height)
               files.append({
                   "filename": name,
                   "fixture": fixture,
@@ -213,6 +250,7 @@ jobs:
               "base_snapshot": "godot/fixtures/snapshots/earth3_operational.json",
               "derived_snapshot": "godot/fixtures/snapshots/_s10_post_finalization.json",
               "derived_snapshot_change": "removed pending_battle to represent the committed post-finalization state",
+              "capture_framing": "left 1520x1080 map and finalization-outcome viewport from the genuine 1920x1080 runtime frame; excludes the persistent 400px management sidebar",
               "replacement_capture_count": 2,
               "files": files,
           }
