@@ -1,4 +1,4 @@
-name: Temporary S10 GDScript parse diagnostic
+name: Temporary S10 parse correction
 
 on:
   push:
@@ -8,16 +8,41 @@ on:
       - .github/workflows/tmp-s10-parse-diagnostic.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  diagnose:
+  correct:
     runs-on: ubuntu-latest
     steps:
       - name: Check out exact branch
         uses: actions/checkout@v4
         with:
           ref: feat/s10-operational-resolution-presentation
+          fetch-depth: 0
+
+      - name: Verify expected ancestry and scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor a0d2092006c9b5b0259b5f6c8231ca9cb027ba00 HEAD
+          changed="$(git diff --name-only a0d2092006c9b5b0259b5f6c8231ca9cb027ba00..HEAD | sort)"
+          test "$changed" = '.github/workflows/tmp-s10-parse-diagnostic.yml'
+
+      - name: Apply explicit Vector2 correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('godot/scripts/main_color_id.gd')
+          text = path.read_text(encoding='utf-8')
+          old = '''\t\t\tvar screen := _image_to_screen(image_pixel) + model.get("screen_offset", Vector2.ZERO)'''
+          new = '''\t\t\tvar screen_offset: Vector2 = model.get("screen_offset", Vector2.ZERO)\n\t\t\tvar screen := _image_to_screen(image_pixel) + screen_offset'''
+          if text.count(old) != 1:
+              raise SystemExit(f'expected one ambiguous screen expression, found {text.count(old)}')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+          git diff --check
 
       - name: Install Godot 4.7
         shell: bash
@@ -28,20 +53,22 @@ jobs:
           GODOT_BIN="$(find . -maxdepth 1 -type f -name 'Godot_v*_linux.x86_64' | head -n 1)"
           install -m 755 "$GODOT_BIN" "$HOME/godot"
 
-      - name: Diagnose changed script chain
+      - name: Run corrected S10 scene suite
         working-directory: godot
         shell: bash
         run: |
-          set +e
-          for script in \
-            res://scripts/presentation/map_markers.gd \
-            res://scripts/main_color_id.gd \
-            res://scripts/main_map_contract.gd \
-            res://scripts/main_stack_panel.gd \
-            res://scripts/tools/operational_presentation_scene_test.gd
-          do
-            echo "===== CHECK $script ====="
-            "$HOME/godot" --headless --path . --audio-driver Dummy --check-only --script "$script"
-            echo "===== EXIT $? $script ====="
-          done
-          exit 0
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --import --quit-after 1
+          "$HOME/godot" --headless --path . --audio-driver Dummy \
+            -s res://scripts/tools/operational_presentation_scene_test.gd
+
+      - name: Commit correction and remove temporary workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/tmp-s10-parse-diagnostic.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(s10): type stationary counter offset"
+          git push origin HEAD:feat/s10-operational-resolution-presentation
