@@ -25,6 +25,7 @@ from .expanded_nations_models import (
     sha256_bytes,
     validate_payload,
 )
+from .expanded_nations_opponents import project_opponent_units
 from .expanded_nations_render import (
     project_research_nodes,
     projection_signature,
@@ -33,7 +34,7 @@ from .expanded_nations_render import (
     render_roster_file,
     render_units_file,
 )
-from .expanded_nations_sources import project_actor_units, project_opponent_units
+from .expanded_nations_sources import project_actor_units
 from .expanded_nations_storage import (
     deactivate_actor_projection,
     install_projection,
