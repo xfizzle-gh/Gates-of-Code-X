@@ -44,9 +44,17 @@ jobs:
       - name: Focused Gate 2 acceptance suite
         run: python -m unittest tests.test_opengs_gate1_to_gate2_adapter -v
       - name: Convert clean workspace A
-        run: python tools/opengs_eval/gate1_to_gate2_adapter.py convert build/gate1-run build/gate1-inputs/terrain.ppm tools/opengs_eval/gate2_example_config.json --output build/gate2-a
+        run: >-
+          python tools/opengs_eval/gate1_to_gate2_adapter.py convert build/gate1-run
+          --terrain build/gate1-inputs/terrain.ppm
+          --config tools/opengs_eval/gate2_example_config.json
+          --output build/gate2-a
       - name: Convert clean workspace B
-        run: python tools/opengs_eval/gate1_to_gate2_adapter.py convert build/gate1-run build/gate1-inputs/terrain.ppm tools/opengs_eval/gate2_example_config.json --output build/gate2-b
+        run: >-
+          python tools/opengs_eval/gate1_to_gate2_adapter.py convert build/gate1-run
+          --terrain build/gate1-inputs/terrain.ppm
+          --config tools/opengs_eval/gate2_example_config.json
+          --output build/gate2-b
       - name: Inspect and compare clean workspaces
         run: |
           python tools/opengs_eval/gate1_to_gate2_adapter.py inspect-output build/gate2-a
