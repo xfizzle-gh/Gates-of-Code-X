@@ -317,6 +317,20 @@ wrapper(
         self.assertEqual(first.diagnostics, second.diagnostics)
         self.assertEqual(first.entries, second.entries)
 
+    def test_unexpected_closer_recovers_at_unclosed_root_peer_depth(self):
+        text = '''("broken"
+}
+{"valid" {vehicle "tank"}}
+'''
+
+        first = scan_source_entries(text, "unclosed-root-recovery.set")
+        second = scan_source_entries(text, "unclosed-root-recovery.set")
+
+        self.assertEqual(["unexpected_closer"], [item.code for item in first.diagnostics])
+        self.assertEqual(["valid"], [entry.name for entry in first.entries])
+        self.assertEqual(first.diagnostics, second.diagnostics)
+        self.assertEqual(first.entries, second.entries)
+
 
 if __name__ == "__main__":
     unittest.main()

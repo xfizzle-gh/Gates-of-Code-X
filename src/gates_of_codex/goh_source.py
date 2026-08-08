@@ -732,7 +732,11 @@ def _find_recovery(
 ) -> int:
     cursor = index
     escaped = False
+    baseline_paren_depth = paren_depth
+    baseline_brace_depth = brace_depth
     while cursor < len(text):
+        baseline_paren_depth = min(baseline_paren_depth, paren_depth)
+        baseline_brace_depth = min(baseline_brace_depth, brace_depth)
         char = text[cursor]
         if in_comment:
             if char == "\n":
@@ -756,7 +760,10 @@ def _find_recovery(
             in_quote = True
             cursor += 1
             continue
-        if paren_depth == 0 and brace_depth == 0:
+        if (
+            paren_depth == baseline_paren_depth
+            and brace_depth == baseline_brace_depth
+        ):
             if _definition_form(text, cursor) is not None:
                 return cursor
         if char == "(":
