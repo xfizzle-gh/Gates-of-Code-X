@@ -1,0 +1,11 @@
+{
+  "schema": "gates-of-codex.presentation-fixture",
+  "presentation_backend_payload": {
+    "battle_finalization": {
+      "winner": "nato",
+      "retreat_outcomes": [
+        {"formation_id": "8th Guards Group", "destination_node_id": "op-node-Minsk-anchor", "destination_province_id": "Minsk", "destination_pixel": [2900, 1400], "reason": ""}
+      ]
+    }
+  }
+}

@@ -428,6 +428,14 @@ def _pending_battle(state: CampaignState) -> dict | None:
         "completed": pending.completed,
         "attacking_battalions": [value.battalion_id for value in pending.attacking_participants],
         "defending_battalions": [value.battalion_id for value in pending.defending_participants],
+        "attacking_participants": [
+            _pending_battle_participant(state, value)
+            for value in pending.attacking_participants
+        ],
+        "defending_participants": [
+            _pending_battle_participant(state, value)
+            for value in pending.defending_participants
+        ],
         "encounter_node_id": pending.encounter_node_id,
         "encounter_kind": pending.encounter_kind,
         "attacker_formation_id": pending.attacker_formation_id,
@@ -435,6 +443,29 @@ def _pending_battle(state: CampaignState) -> dict | None:
         "encounter_edge_id": pending.encounter_edge_id,
         "encounter_progress_milli": pending.encounter_progress_milli,
         "encounter_pixel": list(pending.encounter_pixel or []),
+    }
+
+
+def _pending_battle_participant(state: CampaignState, participant) -> dict:
+    battalion = state.battalions.get(participant.battalion_id)
+    strategic_formation_id = (
+        str(battalion.strategic_formation_id or "") if battalion is not None else ""
+    )
+    force = state.strategic_formations.get(strategic_formation_id)
+    return {
+        "battalion_id": participant.battalion_id,
+        "strategic_formation_id": strategic_formation_id,
+        "formation_display_name": (
+            force.display_name if force is not None else strategic_formation_id
+        ),
+        "faction": participant.faction.value,
+        "stage": participant.stage,
+        "is_primary": participant.is_primary,
+        "contact_initiator": participant.contact_initiator,
+        "ambush_eligible": participant.ambush_eligible,
+        "ambush_triggered": participant.ambush_triggered,
+        "ambush_strength_multiplier_milli": participant.ambush_strength_multiplier_milli,
+        "ambush_readiness_consumed": participant.ambush_readiness_consumed,
     }
 
 

@@ -21,6 +21,19 @@ class CommandResult:
     data: dict[str, Any] = field(default_factory=dict)
 
 
+class _FrontendReportingCampaignEngine(CampaignEngine):
+    """Capture existing finalization output for transient frontend presentation."""
+
+    def __init__(self, state) -> None:
+        super().__init__(state)
+        self.last_battle_finalization = None
+
+    def apply_battle_result(self, winner: Faction):
+        report = super().apply_battle_result(winner)
+        self.last_battle_finalization = report
+        return report
+
+
 def default_commands_path(snapshot_path: str | Path) -> Path:
     path = Path(snapshot_path)
     return path.with_name("frontend_commands.json")
@@ -76,14 +89,31 @@ def apply_frontend_commands(
 
     for raw in pending:
         op = str(raw.get("op", "")).strip().lower()
+        before_presentations = _formation_presentation_rows(state)
         try:
             if op == "handoff":
                 result = _apply_handoff(campaign, state, raw)
+                state = load_campaign(campaign)
+            elif op == "import_battle":
+                result = _apply_import_battle(campaign, state, raw)
                 state = load_campaign(campaign)
             else:
                 result = _apply_one(state, op, raw)
         except Exception as exc:  # noqa: BLE001 - surface operator errors in result list
             result = CommandResult(op=op or "unknown", ok=False, detail=str(exc))
+        if result.ok:
+            presentation = {
+                "movements": _movement_presentation_delta(
+                    before_presentations,
+                    _formation_presentation_rows(state),
+                )
+            }
+            battle_finalization = result.data.pop(
+                "_battle_finalization_presentation", None
+            )
+            if battle_finalization is not None:
+                presentation["battle_finalization"] = battle_finalization
+            result.data["operational_presentation"] = presentation
         results.append(result)
         if not result.ok:
             break
@@ -112,6 +142,84 @@ def apply_frontend_commands(
         "pending_battle": state.pending_battle.battle_id if state.pending_battle else None,
         "current_faction": state.current_faction.value,
         "turn_number": state.turn_number,
+    }
+
+
+def _formation_presentation_rows(state) -> dict[str, dict[str, Any]]:
+    from .operational_movement import move_order_to_dict
+    from .operational_position import position_to_dict, resolve_display_pixel
+
+    rows: dict[str, dict[str, Any]] = {}
+    for force in sorted(
+        state.strategic_formations.values(),
+        key=lambda value: value.strategic_formation_id,
+    ):
+        order = move_order_to_dict(force.move_order) or {}
+        rows[force.strategic_formation_id] = {
+            "position": position_to_dict(force.position),
+            "pixel": resolve_display_pixel(state, force),
+            "path_node_ids": list(order.get("path_node_ids") or []),
+            "path_edge_ids": list(order.get("path_edge_ids") or []),
+        }
+    return rows
+
+
+def _movement_presentation_delta(
+    before: dict[str, dict[str, Any]],
+    after: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    movements: list[dict[str, Any]] = []
+    for formation_id in sorted(set(before) & set(after)):
+        start = before[formation_id]
+        end = after[formation_id]
+        if (
+            start.get("position") == end.get("position")
+            and start.get("pixel") == end.get("pixel")
+        ):
+            continue
+        path_node_ids = list(
+            start.get("path_node_ids") or end.get("path_node_ids") or []
+        )
+        path_edge_ids = list(
+            start.get("path_edge_ids") or end.get("path_edge_ids") or []
+        )
+        movements.append(
+            {
+                "formation_id": formation_id,
+                "start_position": start.get("position"),
+                "end_position": end.get("position"),
+                "start_pixel": start.get("pixel"),
+                "end_pixel": end.get("pixel"),
+                "path_node_ids": path_node_ids,
+                "path_edge_ids": path_edge_ids,
+            }
+        )
+    return movements
+
+
+def _battle_finalization_presentation(state, winner: Faction, report) -> dict[str, Any]:
+    from .operational_position import resolve_display_pixel
+
+    outcomes: list[dict[str, Any]] = []
+    for outcome in tuple(getattr(report, "retreat_outcomes", ()) or ()):
+        force = state.strategic_formations.get(outcome.formation_id)
+        destination_pixel = (
+            resolve_display_pixel(state, force)
+            if force is not None and outcome.destination_node_id
+            else None
+        )
+        outcomes.append(
+            {
+                "formation_id": outcome.formation_id,
+                "destination_node_id": outcome.destination_node_id,
+                "destination_province_id": outcome.destination_province_id,
+                "destination_pixel": destination_pixel,
+                "reason": outcome.reason,
+            }
+        )
+    return {
+        "winner": winner.value,
+        "retreat_outcomes": outcomes,
     }
 
 
@@ -149,6 +257,64 @@ def _apply_handoff(campaign: Path, state, raw: dict[str, Any]) -> CommandResult:
     )
 
 
+def _apply_import_battle(
+    campaign: Path,
+    state,
+    raw: dict[str, Any],
+) -> CommandResult:
+    from .acceptance import verify_tactical_result
+    from .service import GatesOfCodeXService
+    from .stack_acceptance import verify_stack_result
+
+    pending = state.pending_battle
+    if pending is None:
+        raise ValueError("No pending battle to import")
+    save_path = str(raw.get("save_path") or pending.exported_save_path or "").strip()
+    if not save_path:
+        raise ValueError("Pending battle has no handed-off GoH save path")
+
+    service = GatesOfCodeXService()
+    manifest = service.load_manifest(service.manifest_path(save_path))
+    resource_stack = (
+        state.map_metadata.get("resource_stack", []) or manifest.resource_stack
+    )
+    stack_config = state.map_metadata.get("stack_config")
+    if resource_stack or state.code_x_directory:
+        verification = verify_stack_result(
+            campaign,
+            save_path=save_path,
+            code_x_directory=state.code_x_directory or None,
+            resource_stack=resource_stack or None,
+            stack_config=stack_config or None,
+        )
+    else:
+        verification = verify_tactical_result(
+            campaign,
+            save_path=save_path,
+            code_x_directory=None,
+        )
+    if not verification.ok:
+        detail = "; ".join(verification.errors) or "unknown verification failure"
+        raise ValueError(f"GoH result verification failed: {detail}")
+
+    imported = service.import_battle(campaign, save_path=save_path)
+    finalized_state = load_campaign(campaign)
+    return CommandResult(
+        op="import_battle",
+        ok=True,
+        detail=f"winner {imported.winner.value}",
+        data={
+            "winner": imported.winner.value,
+            "survivors": imported.survivor_counts,
+            "_battle_finalization_presentation": _battle_finalization_presentation(
+                finalized_state,
+                imported.winner,
+                imported.finalization_report,
+            ),
+        },
+    )
+
+
 def _apply_one(state, op: str, raw: dict[str, Any]) -> CommandResult:
     if op in {"", "refresh", "noop"}:
         return CommandResult(op=op or "refresh", ok=True, detail="snapshot refresh only")
@@ -170,8 +336,21 @@ def _apply_one(state, op: str, raw: dict[str, Any]) -> CommandResult:
             },
         )
     if op == "auto_resolve":
-        winner = CampaignEngine(state).auto_resolve_pending_battle()
-        return CommandResult(op=op, ok=True, detail=f"winner {winner.value}", data={"winner": winner.value})
+        engine = _FrontendReportingCampaignEngine(state)
+        winner = engine.auto_resolve_pending_battle()
+        return CommandResult(
+            op=op,
+            ok=True,
+            detail=f"winner {winner.value}",
+            data={
+                "winner": winner.value,
+                "_battle_finalization_presentation": _battle_finalization_presentation(
+                    state,
+                    winner,
+                    engine.last_battle_finalization,
+                ),
+            },
+        )
     if op == "issue_move_order":
         from .operational_movement import issue_move_order, move_order_to_dict
 
