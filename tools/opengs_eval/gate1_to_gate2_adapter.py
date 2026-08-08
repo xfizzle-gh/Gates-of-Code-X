@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+from io import BytesIO
 import math
 import os
 import shutil
@@ -90,6 +91,21 @@ class Config:
     minimum_shared_edge_pixels: int
     authored_boundary_pairs: frozenset[tuple[str, str]]
     suppressed_segments: frozenset[SegmentI]
+
+
+@dataclass(frozen=True)
+class Gate1Snapshot:
+    manifest: dict[str, Any]
+    manifest_sha256: str
+    output_sha256: dict[str, str]
+    sources: tuple[ProvinceSource, ...]
+    labels: np.ndarray
+
+
+@dataclass(frozen=True)
+class TerrainSnapshot:
+    sha256: str
+    array: np.ndarray
 
 
 def canonical_json_bytes(value: Any) -> bytes:
@@ -244,18 +260,24 @@ def load_config(path: Path) -> tuple[Config, dict[str, Any]]:
     )
 
 
-def _load_canonical_json(path: Path, label: str) -> Any:
+def _load_canonical_json_bytes(raw: bytes, label: str, source: Path | str) -> Any:
     try:
-        raw = path.read_bytes()
         value = json.loads(raw.decode("utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise Gate2Error(f"cannot read {label} {path}: {exc}") from exc
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise Gate2Error(f"cannot read {label} {source}: {exc}") from exc
     if canonical_json_bytes(value) != raw:
         raise Gate2Error(f"{label} must be canonical UTF-8/LF JSON")
     return value
 
 
-def _load_gate1(gate1_dir: Path) -> tuple[dict[str, Any], list[ProvinceSource], np.ndarray]:
+def _load_canonical_json(path: Path, label: str) -> Any:
+    try:
+        raw = path.read_bytes()
+    except OSError as exc:
+        raise Gate2Error(f"cannot read {label} {path}: {exc}") from exc
+    return _load_canonical_json_bytes(raw, label, path)
+
+def _load_gate1(gate1_dir: Path) -> Gate1Snapshot:
     expected = {
         "territories.png",
         "provinces.png",
@@ -270,17 +292,38 @@ def _load_gate1(gate1_dir: Path) -> tuple[dict[str, Any], list[ProvinceSource], 
         raise Gate2Error(
             f"Gate 1 output set mismatch: missing={sorted(expected - actual)} extra={sorted(actual - expected)}"
         )
-    manifest = _load_canonical_json(gate1_dir / "run_manifest.json", "Gate 1 manifest")
+
+    captured: dict[str, bytes] = {}
+    for name in sorted(expected):
+        path = gate1_dir / name
+        try:
+            captured[name] = path.read_bytes()
+        except OSError as exc:
+            raise Gate2Error(f"cannot capture Gate 1 input {path}: {exc}") from exc
+
+    manifest = _load_canonical_json_bytes(
+        captured["run_manifest.json"], "Gate 1 manifest", gate1_dir / "run_manifest.json"
+    )
     if not isinstance(manifest, dict) or manifest.get("schema") != GATE1_RUN_SCHEMA:
         raise Gate2Error("Gate 1 manifest schema mismatch")
     outputs = manifest.get("outputs")
     if not isinstance(outputs, dict):
         raise Gate2Error("Gate 1 manifest.outputs must be an object")
-    for name in ("territories.png", "provinces.png", "territories.json", "provinces.json"):
-        digest = outputs.get(name)
-        if digest != sha256_file(gate1_dir / name):
+
+    output_names = (
+        "territories.png",
+        "provinces.png",
+        "territories.json",
+        "provinces.json",
+    )
+    output_sha256 = {name: sha256_bytes(captured[name]) for name in output_names}
+    for name in output_names:
+        if outputs.get(name) != output_sha256[name]:
             raise Gate2Error(f"Gate 1 output checksum mismatch: {name}")
-    provinces_json = _load_canonical_json(gate1_dir / "provinces.json", "Gate 1 provinces")
+
+    provinces_json = _load_canonical_json_bytes(
+        captured["provinces.json"], "Gate 1 provinces", gate1_dir / "provinces.json"
+    )
     if not isinstance(provinces_json, list) or not provinces_json:
         raise Gate2Error("Gate 1 provinces must be a non-empty array")
     sources: list[ProvinceSource] = []
@@ -319,7 +362,13 @@ def _load_gate1(gate1_dir: Path) -> tuple[dict[str, Any], list[ProvinceSource], 
                 rgb=rgb,
             )
         )
-    image = np.asarray(Image.open(gate1_dir / "provinces.png").convert("RGB"), dtype=np.uint8)
+
+    try:
+        with Image.open(BytesIO(captured["provinces.png"])) as decoded:
+            image = np.asarray(decoded.convert("RGB"), dtype=np.uint8).copy()
+    except Exception as exc:
+        raise Gate2Error(f"cannot decode captured Gate 1 provinces.png: {exc}") from exc
+
     dims = manifest.get("dimensions", {})
     if image.ndim != 3 or image.shape[2] != 3:
         raise Gate2Error("Gate 1 provinces.png must be RGB")
@@ -332,7 +381,6 @@ def _load_gate1(gate1_dir: Path) -> tuple[dict[str, Any], list[ProvinceSource], 
     for color_arr in unique:
         color = tuple(int(v) for v in color_arr)
         if color == (0, 0, 0):
-            # Gate 1 uses black only for pixels outside all generated masks.
             continue
         if color not in color_to_index:
             raise Gate2Error(f"provinces.png contains unknown RGB label: {color}")
@@ -342,21 +390,36 @@ def _load_gate1(gate1_dir: Path) -> tuple[dict[str, Any], list[ProvinceSource], 
         raise Gate2Error(
             f"Gate 1 label raster/record mismatch: missing labels={sorted(set(range(len(sources))) - present)}"
         )
-    return manifest, sources, labels
+    return Gate1Snapshot(
+        manifest=manifest,
+        manifest_sha256=sha256_bytes(captured["run_manifest.json"]),
+        output_sha256=output_sha256,
+        sources=tuple(sources),
+        labels=labels,
+    )
 
-
-def _load_terrain(path: Path, gate1_manifest: dict[str, Any], shape: tuple[int, int]) -> np.ndarray:
+def _load_terrain(
+    path: Path, gate1_manifest: dict[str, Any], shape: tuple[int, int]
+) -> TerrainSnapshot:
     terrain_ref = gate1_manifest.get("inputs", {}).get("terrain")
     if terrain_ref is None:
         raise Gate2Error("Gate 2 requires the exact terrain raster; Gate 1 run recorded terrain=null")
     expected = terrain_ref.get("sha256") if isinstance(terrain_ref, dict) else None
-    if expected != sha256_file(path):
+    try:
+        raw = path.read_bytes()
+    except OSError as exc:
+        raise Gate2Error(f"cannot capture terrain raster {path}: {exc}") from exc
+    digest = sha256_bytes(raw)
+    if expected != digest:
         raise Gate2Error("terrain raster checksum does not match the Gate 1 manifest")
-    arr = np.asarray(Image.open(path).convert("RGB"), dtype=np.uint8)
+    try:
+        with Image.open(BytesIO(raw)) as decoded:
+            arr = np.asarray(decoded.convert("RGB"), dtype=np.uint8).copy()
+    except Exception as exc:
+        raise Gate2Error(f"cannot decode captured terrain raster {path}: {exc}") from exc
     if arr.shape[:2] != shape or arr.shape[2] != 3:
         raise Gate2Error("terrain raster dimensions do not match provinces.png")
-    return arr
-
+    return TerrainSnapshot(sha256=digest, array=arr)
 
 def _add_directed_boundary(
     edge_map: dict[int, set[tuple[PointI, PointI]]], label: int, a: PointI, b: PointI
@@ -798,8 +861,12 @@ def _build_outputs(
     output_dir: Path,
 ) -> dict[str, Any]:
     config, config_payload = load_config(config_path)
-    gate1_manifest, sources, labels = _load_gate1(gate1_dir)
-    terrain = _load_terrain(terrain_path, gate1_manifest, labels.shape)
+    gate1 = _load_gate1(gate1_dir)
+    gate1_manifest = gate1.manifest
+    sources = gate1.sources
+    labels = gate1.labels
+    terrain_snapshot = _load_terrain(terrain_path, gate1_manifest, labels.shape)
+    terrain = terrain_snapshot.array
     directed, _segment_sides, pair_lengths = build_boundary_graph(labels)
 
     source_order = sorted(range(len(sources)), key=lambda i: sources[i].source_id)
@@ -970,7 +1037,7 @@ def _build_outputs(
         "water_policy": "water_not_normally_selectable",
         "experimental": True,
         "gate": 2,
-        "source_gate1_manifest_sha256": sha256_file(gate1_dir / "run_manifest.json"),
+        "source_gate1_manifest_sha256": gate1.manifest_sha256,
     }
     write_canonical_json(output_dir / "map_manifest.json", manifest)
     topology_audit = {
@@ -1025,15 +1092,12 @@ def _build_outputs(
             "minimum_shared_edge_pixels": config.minimum_shared_edge_pixels,
         },
         "gate1": {
-            "run_manifest_sha256": sha256_file(gate1_dir / "run_manifest.json"),
+            "run_manifest_sha256": gate1.manifest_sha256,
             "run_manifest": gate1_manifest,
             "recipe": gate1_manifest.get("recipe"),
-            "outputs": {
-                name: sha256_file(gate1_dir / name)
-                for name in ("territories.png", "provinces.png", "territories.json", "provinces.json")
-            },
+            "outputs": dict(gate1.output_sha256),
         },
-        "terrain_sha256": sha256_file(terrain_path),
+        "terrain_sha256": terrain_snapshot.sha256,
         "outputs": output_hashes,
         "determinism": {
             "canonical_json": True,
@@ -1141,13 +1205,18 @@ def inspect_output(
             raise Gate2Error(f"unexpected output entry: {child.name}")
 
     config, config_payload = load_config(config_path.resolve())
-    gate1_manifest, sources, labels = _load_gate1(gate1_dir.resolve())
-    _load_terrain(terrain_path.resolve(), gate1_manifest, labels.shape)
+    gate1 = _load_gate1(gate1_dir.resolve())
+    gate1_manifest = gate1.manifest
+    sources = gate1.sources
+    labels = gate1.labels
+    terrain_snapshot = _load_terrain(terrain_path.resolve(), gate1_manifest, labels.shape)
+    terrain = terrain_snapshot.array
     source_order = sorted(range(len(sources)), key=lambda i: sources[i].source_id)
     id_by_label = {
         label: f"{config.id_prefix}{position + 1:06d}"
         for position, label in enumerate(source_order)
     }
+    directed, _segment_sides, pair_lengths = build_boundary_graph(labels)
 
     manifest = _load_canonical_json(output / "adapter_manifest.json", "adapter manifest")
     top = _require_object(
@@ -1189,22 +1258,19 @@ def inspect_output(
         "adapter_manifest.gate1",
         required={"run_manifest_sha256", "run_manifest", "recipe", "outputs"},
     )
-    gate1_manifest_sha = sha256_file(gate1_dir / "run_manifest.json")
+    gate1_manifest_sha = gate1.manifest_sha256
     if gate1_record["run_manifest_sha256"] != gate1_manifest_sha:
         raise Gate2Error("Gate 1 manifest digest mismatch")
     if gate1_record["run_manifest"] != gate1_manifest:
         raise Gate2Error("embedded Gate 1 manifest mismatch")
     if gate1_record["recipe"] != gate1_manifest.get("recipe"):
         raise Gate2Error("Gate 1 recipe provenance mismatch")
-    expected_gate1_outputs = {
-        name: sha256_file(gate1_dir / name)
-        for name in ("territories.png", "provinces.png", "territories.json", "provinces.json")
-    }
+    expected_gate1_outputs = dict(gate1.output_sha256)
     if gate1_record["outputs"] != expected_gate1_outputs:
         raise Gate2Error("Gate 1 output provenance mismatch")
     if gate1_record["outputs"] != gate1_manifest.get("outputs"):
         raise Gate2Error("Gate 1 output provenance disagrees with manifest")
-    terrain_sha = sha256_file(terrain_path)
+    terrain_sha = terrain_snapshot.sha256
     if top["terrain_sha256"] != terrain_sha:
         raise Gate2Error("terrain provenance digest mismatch")
     if gate1_manifest.get("inputs", {}).get("terrain", {}).get("sha256") != terrain_sha:
@@ -1289,18 +1355,37 @@ def inspect_output(
         is_water = source.province_type in {"ocean", "lake"}
         if row.get("is_water") is not is_water or row.get("selectable") is not (not is_water):
             raise Gate2Error(f"{pid} water/selectable contract is inconsistent")
-        coverage = row.get("terrain_coverage")
-        pixels = row.get("terrain_coverage_pixels")
-        if not isinstance(coverage, dict) or not coverage or not isinstance(pixels, dict) or set(coverage) != set(pixels):
-            raise Gate2Error(f"{pid} terrain coverage contract is invalid")
-        if abs(sum(float(v) for v in coverage.values()) - 1.0) > 10 ** (-PERCENT_ROUND + 1):
-            raise Gate2Error(f"{pid} terrain coverage does not sum to one")
-        if sum(int(v) for v in pixels.values()) != int(np.count_nonzero(labels == label)):
-            raise Gate2Error(f"{pid} terrain pixel coverage mismatch")
+        mask = labels == label
+        expected_coverage, expected_pixels, expected_terrain_id = terrain_coverage(
+            terrain, mask, source.province_type
+        )
+        if row.get("terrain_coverage") != expected_coverage:
+            raise Gate2Error(f"{pid} terrain coverage does not match the authenticated raster")
+        if row.get("terrain_coverage_pixels") != expected_pixels:
+            raise Gate2Error(f"{pid} terrain pixel ledger does not match the authenticated raster")
+        if row.get("terrain_id") != expected_terrain_id:
+            raise Gate2Error(f"{pid} terrain ID does not match the authenticated raster")
 
         components_raw = row.get("components")
         if not isinstance(components_raw, list) or not components_raw:
             raise Gate2Error(f"{pid} has no geometry components")
+        expected_components = build_components(
+            trace_rings(directed[label]), source.source_id
+        )
+        expected_component_payload = [
+            _component_payload(poly) for poly in expected_components
+        ]
+        if components_raw != expected_component_payload:
+            raise Gate2Error(
+                f"{pid} components do not match the authenticated Gate 1 label raster"
+            )
+        expected_ring = _flatten_ring(
+            list(expected_components[0].exterior.coords)[:-1]
+        )
+        if row.get("ring") != expected_ring:
+            raise Gate2Error(
+                f"{pid} primary ring does not match the authenticated Gate 1 label raster"
+            )
         components: list[Polygon] = []
         for ci, component in enumerate(components_raw):
             if not isinstance(component, dict) or set(component) != {"outer", "holes", "area"}:
@@ -1369,7 +1454,6 @@ def inspect_output(
             "anchor_clearance": clearance,
         })
 
-    _directed, _segment_sides, pair_lengths = build_boundary_graph(labels)
     expected_edges: list[list[str]] = []
     expected_shared_edges: list[dict[str, Any]] = []
     expected_neighbors = {pid: [] for pid in ids}

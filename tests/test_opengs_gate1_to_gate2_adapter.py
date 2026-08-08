@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 import hashlib
+import io
 import importlib.util
 import json
 import os
@@ -10,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -208,6 +210,12 @@ class Gate2GeometryTests(unittest.TestCase):
         }
         (gate1 / "run_manifest.json").write_bytes(canonical(manifest))
         return gate1, terrain_path
+
+
+    def png_bytes(self, image) -> bytes:
+        buffer = io.BytesIO()
+        self.Image.fromarray(image, "RGB").save(buffer, format="PNG")
+        return buffer.getvalue()
 
     def config_file(self, root: Path, threshold: int = 1) -> Path:
         path = root / "config.json"
@@ -425,6 +433,134 @@ class Gate2GeometryTests(unittest.TestCase):
             audit_path.write_bytes(canonical(audit))
             self.reseal_dataset_outputs(output)
             with self.assertRaisesRegex(self.g.Gate2Error, "border class ledger"):
+                self.g.inspect_output(output, gate1, terrain_path, config)
+
+
+    def test_province_raster_decode_uses_captured_bytes(self) -> None:
+        labels = self.np.full((6, 9), -1, dtype=self.np.int32)
+        labels[1:5, 1:4] = 0
+        labels[1:5, 5:8] = 1
+        sources = [
+            self.source("LEFT", "land", (10, 20, 30)),
+            self.source("RIGHT", "land", (40, 50, 60)),
+        ]
+        terrain = self.np.zeros((*labels.shape, 3), dtype=self.np.uint8)
+        terrain[:] = self.g.LAND_TERRAINS["plains"]
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            gate1, _terrain_path = self.make_gate1_output(root, labels, sources, terrain)
+            province_path = gate1 / "provinces.png"
+            original_bytes = province_path.read_bytes()
+            mutated_labels = self.np.flip(labels, axis=1)
+            mutated_image = self.np.zeros((*labels.shape, 3), dtype=self.np.uint8)
+            for index, source in enumerate(sources):
+                mutated_image[mutated_labels == index] = source.rgb
+            replacement_bytes = self.png_bytes(mutated_image)
+            original_open = self.g.Image.open
+
+            def racing_open(source, *args, **kwargs):
+                province_path.write_bytes(replacement_bytes)
+                try:
+                    opened = original_open(source, *args, **kwargs)
+                    opened.load()
+                    copied = opened.copy()
+                    opened.close()
+                    return copied
+                finally:
+                    province_path.write_bytes(original_bytes)
+
+            with mock.patch.object(self.g.Image, "open", side_effect=racing_open):
+                snapshot = self.g._load_gate1(gate1)
+            self.assertEqual(snapshot.output_sha256["provinces.png"], hashlib.sha256(original_bytes).hexdigest())
+            self.np.testing.assert_array_equal(snapshot.labels, labels)
+
+    def test_terrain_raster_decode_uses_captured_bytes(self) -> None:
+        labels = self.np.full((6, 7), -1, dtype=self.np.int32)
+        labels[1:5, 1:6] = 0
+        sources = [self.source("ONLY", "land", (10, 20, 30))]
+        terrain = self.np.zeros((*labels.shape, 3), dtype=self.np.uint8)
+        terrain[:] = self.g.LAND_TERRAINS["plains"]
+        replacement = self.np.zeros_like(terrain)
+        replacement[:] = self.g.LAND_TERRAINS["forest"]
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            gate1, terrain_path = self.make_gate1_output(root, labels, sources, terrain)
+            manifest = json.loads((gate1 / "run_manifest.json").read_text())
+            original_bytes = terrain_path.read_bytes()
+            replacement_bytes = self.png_bytes(replacement)
+            original_open = self.g.Image.open
+
+            def racing_open(source, *args, **kwargs):
+                terrain_path.write_bytes(replacement_bytes)
+                try:
+                    opened = original_open(source, *args, **kwargs)
+                    opened.load()
+                    copied = opened.copy()
+                    opened.close()
+                    return copied
+                finally:
+                    terrain_path.write_bytes(original_bytes)
+
+            with mock.patch.object(self.g.Image, "open", side_effect=racing_open):
+                snapshot = self.g._load_terrain(terrain_path, manifest, labels.shape)
+            self.assertEqual(snapshot.sha256, hashlib.sha256(original_bytes).hexdigest())
+            self.np.testing.assert_array_equal(snapshot.array, terrain)
+
+    def test_inspection_rejects_coherently_resealed_terrain_ledger(self) -> None:
+        labels = self.np.full((6, 6), -1, dtype=self.np.int32)
+        labels[1:5, 1:5] = 0
+        sources = [self.source("LAND", "land", (10, 20, 30))]
+        terrain = self.np.zeros((*labels.shape, 3), dtype=self.np.uint8)
+        terrain[:] = self.g.LAND_TERRAINS["plains"]
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            gate1, terrain_path = self.make_gate1_output(root, labels, sources, terrain)
+            config = self.config_file(root)
+            output = root / "output"
+            self.g.convert(gate1, terrain_path, config, output)
+            dataset_path = output / "polygon_dataset.json"
+            dataset = json.loads(dataset_path.read_text())
+            row = dataset["provinces"][0]
+            row["terrain_coverage"] = {"forest": 0.5, "mountain": 0.5}
+            row["terrain_coverage_pixels"] = {"forest": 8, "mountain": 8}
+            row["terrain_id"] = "forest"
+            dataset_path.write_bytes(canonical(dataset))
+            self.reseal_dataset_outputs(output)
+            with self.assertRaisesRegex(self.g.Gate2Error, "terrain .*authenticated raster"):
+                self.g.inspect_output(output, gate1, terrain_path, config)
+
+    def test_inspection_rejects_resealed_geometry_not_matching_raster(self) -> None:
+        labels = self.np.full((8, 10), -1, dtype=self.np.int32)
+        labels[1:6, 1:6] = 0
+        sources = [self.source("LAND", "land", (10, 20, 30))]
+        terrain = self.np.zeros((*labels.shape, 3), dtype=self.np.uint8)
+        terrain[:] = self.g.LAND_TERRAINS["plains"]
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            gate1, terrain_path = self.make_gate1_output(root, labels, sources, terrain)
+            config = self.config_file(root)
+            output = root / "output"
+            self.g.convert(gate1, terrain_path, config, output)
+            dataset_path = output / "polygon_dataset.json"
+            dataset = json.loads(dataset_path.read_text())
+            row = dataset["provinces"][0]
+
+            def shift_flat(values):
+                return [
+                    value + (0.5 if index % 2 == 0 else 0.25)
+                    for index, value in enumerate(values)
+                ]
+
+            row["ring"] = shift_flat(row["ring"])
+            row["vertices"] = shift_flat(row["vertices"])
+            for component in row["components"]:
+                component["outer"] = shift_flat(component["outer"])
+                component["holes"] = [shift_flat(hole) for hole in component["holes"]]
+            row["centroid"] = [row["centroid"][0] + 0.5, row["centroid"][1] + 0.25]
+            row["label"] = list(row["centroid"])
+            dataset_path.write_bytes(canonical(dataset))
+            self.reseal_dataset_outputs(output)
+            with self.assertRaisesRegex(self.g.Gate2Error, "components do not match .*label raster"):
                 self.g.inspect_output(output, gate1, terrain_path, config)
 
     @unittest.skipUnless(os.environ.get("GATE2_GATE1_OUTPUT"), "dedicated workflow Gate 1 fixture not supplied")

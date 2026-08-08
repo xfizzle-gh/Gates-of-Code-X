@@ -40,8 +40,9 @@ The adapter requires and authenticates:
 
 - the exact five-file Gate 1 authoritative output set;
 - canonical Gate 1 JSON and the complete embedded Gate 1 run manifest;
+- immutable one-read byte snapshots for every Gate 1 authority file, with hashes and decoding derived from the same captured bytes;
 - current Gate 1 output checksums and source-record correspondence;
-- a terrain raster whose SHA-256 equals the Gate 1 manifest terrain input checksum;
+- a terrain raster captured once as immutable bytes, whose SHA-256 and decoded pixels come from that same snapshot and equal the Gate 1 manifest terrain input checksum;
 - the exact canonical Gate 2 config digest and embedded settings;
 - the current adapter version and adapter source digest;
 - matching raster dimensions;
@@ -57,13 +58,13 @@ The adapter does not import Gate 1 implementation modules or campaign/runtime Py
 - Corner-only and diagonal-only contact never creates adjacency.
 - The minimum shared-edge threshold is an explicit versioned integer in raster pixels.
 - Simplification removes only exactly collinear grid points; no tolerance-based approximation is used.
-- Every outer component and hole is retained in `components`.
+- Every outer component and hole is retained in `components`; inspection reconstructs the exact rings from the authenticated label raster and requires byte-semantic agreement with each emitted component and primary ring.
 - Winding is normalized for downward-positive image coordinates.
 - Invalid or self-intersecting rings fail closed; they are not silently repaired.
 - Deterministic constrained-Delaunay triangulation must cover each retained component exactly while leaving holes empty.
 - Inspection rejects triangle overlaps and verifies that the triangle union equals the complete component geometry; summed area alone is not accepted as proof.
 - Every anchor is a strictly interior representative point with measured boundary clearance.
-- Terrain is counted across every province pixel and emitted as full-area counts and percentages.
+- Terrain is counted across every province pixel and emitted as full-area counts and percentages; inspection recomputes every terrain count, percentage, and dominant terrain ID from the authenticated raster.
 - Ocean and lake records remain geometry metadata but are non-selectable.
 
 The Gates-required compatibility fields (`ring`, `vertices`, `triangles`, `neighbors`) remain present. `components` carries complete multipart-and-hole authority. The existing `PolygonMap` now consumes that optional field while preserving the legacy `ring` fallback.
@@ -99,7 +100,7 @@ All files are canonical UTF-8/LF JSON. `inspect-output` verifies the exact file 
 python -m unittest tests.test_opengs_gate1_to_gate2_adapter -v
 ```
 
-The 19-test suite covers:
+The 23-test suite covers:
 
 - single polygons;
 - one and multiple holes;
@@ -116,6 +117,9 @@ The 19-test suite covers:
 - rejection of a resealed triangle mutation that fills a hole;
 - rejection of a duplicate-triangle/equal-area-omission forgery;
 - authentication of every adapter, config, Gate 1, terrain, and determinism provenance class;
+- province-label and terrain-raster mutation-during-decode races, proving hashes and decoded arrays derive from the same captured bytes;
+- rejection of coherently resealed terrain ledgers that disagree with the authenticated raster;
+- rejection of translated or reshaped component payloads that do not match the authenticated label raster;
 - rejection of coherently forged adjacency and dataset-edge ledgers;
 - rejection of forged border and topology ledgers;
 - strict schema and dependency boundaries.
