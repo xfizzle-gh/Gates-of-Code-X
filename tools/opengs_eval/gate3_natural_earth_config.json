@@ -72,7 +72,7 @@
   },
   "raster": {"width": 2048, "height": 1536},
   "counts": {
-    "land_territories": 120,
+    "land_territories": 350,
     "ocean_territories": 20,
     "land_provinces": 3299,
     "ocean_provinces": 215,
