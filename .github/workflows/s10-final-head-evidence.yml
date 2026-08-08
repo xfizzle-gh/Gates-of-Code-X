@@ -1,0 +1,178 @@
+name: S10 final-head visual evidence
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact accepted S10 head
+        uses: actions/checkout@v4
+        with:
+          ref: d8cce0e3a4618d55c2530e88b10be51273c8b73b
+          path: source
+          fetch-depth: 1
+
+      - name: Verify exact source commit
+        working-directory: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "d8cce0e3a4618d55c2530e88b10be51273c8b73b"
+          test "$(git status --porcelain)" = ""
+
+      - name: Install rendering dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1 libxcursor1 libxinerama1 libxrandr2 libxi6 libx11-6
+
+      - name: Install Godot 4.7
+        run: |
+          set -euo pipefail
+          GODOT_VERSION=4.7-stable
+          curl -fsSL -o godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip
+          GODOT_BIN="$(find . -maxdepth 1 -type f -name 'Godot_v*_linux.x86_64' | head -n 1)"
+          install -m 755 "$GODOT_BIN" "$HOME/godot"
+          "$HOME/godot" --version
+
+      - name: Import exact-head Godot project
+        working-directory: source/godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --import --quit-after 1
+
+      - name: Verify accepted S10 presentation suites
+        working-directory: source/godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --audio-driver Dummy \
+            -s res://scripts/tools/operational_resolution_presenter_test.gd
+          "$HOME/godot" --headless --path . --audio-driver Dummy \
+            -s res://scripts/tools/operational_presentation_scene_test.gd
+
+      - name: Generate eight required captures and movement proof
+        working-directory: source
+        run: |
+          set -euo pipefail
+          OUT="$(pwd)/s10-final-head-evidence"
+          mkdir -p "$OUT"
+          SNAP=res://fixtures/snapshots/earth3_operational.json
+          shoot() {
+            local name="$1"; shift
+            xvfb-run -a -s "-screen 0 1920x1080x24" \
+              "$HOME/godot" --path godot --audio-driver Dummy \
+              -s res://scripts/tools/map_screenshot.gd -- \
+              --snapshot="$SNAP" --width=1920 --height=1080 \
+              --out="$OUT/$name" "$@"
+            test -s "$OUT/$name"
+          }
+
+          shoot node_contact.png \
+            --fixture=res://fixtures/presentation/s10_node_contact.json \
+            --focus-image=2600,1500 --view-scale=1.0
+          shoot node_simultaneous.png \
+            --fixture=res://fixtures/presentation/s10_node_simultaneous.json \
+            --focus-image=2600,1500 --view-scale=1.0
+          shoot edge_cross.png \
+            --fixture=res://fixtures/presentation/s10_edge_cross.json \
+            --focus-image=2650,1480 --view-scale=1.0
+          shoot edge_catchup.png \
+            --fixture=res://fixtures/presentation/s10_edge_catchup.json \
+            --focus-image=2750,1450 --view-scale=1.0
+          shoot prepared_ambush.png \
+            --fixture=res://fixtures/presentation/s10_prepared_ambush.json \
+            --focus-image=2900,1400 --view-scale=1.0
+          shoot pending_battle_modal.png \
+            --fixture=res://fixtures/presentation/s10_node_contact.json
+          shoot successful_retreat.png \
+            --fixture=res://fixtures/presentation/s10_retreat.json \
+            --focus-image=2400,1700 --view-scale=0.8
+          shoot trapped_no_legal_retreat.png \
+            --fixture=res://fixtures/presentation/s10_trapped.json \
+            --focus-image=2400,1700 --view-scale=0.8
+
+          # Supplemental capture required to visually check one rendered counter per mover.
+          shoot parallel_movement_proof.png \
+            --fixture=res://fixtures/presentation/s10_parallel_movement.json \
+            --focus-image=2400,1700 --view-scale=1.0
+
+      - name: Build indexed manifest
+        working-directory: source
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import struct
+          from pathlib import Path
+
+          root = Path("s10-final-head-evidence")
+          fixture_by_file = {
+              "node_contact.png": "godot/fixtures/presentation/s10_node_contact.json",
+              "node_simultaneous.png": "godot/fixtures/presentation/s10_node_simultaneous.json",
+              "edge_cross.png": "godot/fixtures/presentation/s10_edge_cross.json",
+              "edge_catchup.png": "godot/fixtures/presentation/s10_edge_catchup.json",
+              "prepared_ambush.png": "godot/fixtures/presentation/s10_prepared_ambush.json",
+              "pending_battle_modal.png": "godot/fixtures/presentation/s10_node_contact.json",
+              "successful_retreat.png": "godot/fixtures/presentation/s10_retreat.json",
+              "trapped_no_legal_retreat.png": "godot/fixtures/presentation/s10_trapped.json",
+              "parallel_movement_proof.png": "godot/fixtures/presentation/s10_parallel_movement.json",
+          }
+          required = [
+              "node_contact.png",
+              "node_simultaneous.png",
+              "edge_cross.png",
+              "edge_catchup.png",
+              "prepared_ambush.png",
+              "pending_battle_modal.png",
+              "successful_retreat.png",
+              "trapped_no_legal_retreat.png",
+          ]
+          files = []
+          for name, fixture in fixture_by_file.items():
+              path = root / name
+              data = path.read_bytes()
+              assert data[:8] == b"\x89PNG\r\n\x1a\n", name
+              width, height = struct.unpack(">II", data[16:24])
+              assert (width, height) == (1920, 1080), (name, width, height)
+              files.append({
+                  "filename": name,
+                  "required": name in required,
+                  "fixture": fixture,
+                  "width": width,
+                  "height": height,
+                  "bytes": len(data),
+                  "sha256": hashlib.sha256(data).hexdigest(),
+              })
+          manifest = {
+              "schema": "gates-of-codex.s10-final-visual-evidence",
+              "source_commit": "d8cce0e3a4618d55c2530e88b10be51273c8b73b",
+              "integrated_main": "14d784de63d58ddbf993d71f95d9f31b8a370cb2",
+              "godot_version": "4.7.stable.official.5b4e0cb0f",
+              "runtime_scene": "godot/main.tscn",
+              "snapshot": "godot/fixtures/snapshots/earth3_operational.json",
+              "required_capture_count": 8,
+              "supplemental_capture_count": 1,
+              "files": files,
+          }
+          (root / "manifest.json").write_text(
+              json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(manifest, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload final-head visual package
+        uses: actions/upload-artifact@v4
+        with:
+          name: s10-final-head-visual-evidence-d8cce0e
+          path: source/s10-final-head-evidence/
+          if-no-files-found: error
+          compression-level: 6
