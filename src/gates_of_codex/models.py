@@ -314,6 +314,33 @@ class StrategicFormation:
             minimum=0,
             maximum=1,
         )
+        supply_shape = (
+            self.supplied,
+            self.cut_off,
+            self.source_hub_id is not None,
+            self.route_cost is not None,
+            self.grace_ticks_remaining,
+        )
+        legal_supply_shapes = {
+            (True, False, True, True, 0),
+            (True, False, False, False, 0),
+            (True, False, False, False, 1),
+            (False, True, False, False, 0),
+        }
+        if supply_shape not in legal_supply_shapes:
+            raise ValueError(
+                f"Strategic formation {self.strategic_formation_id} "
+                "invalid_operational_supply_state"
+            )
+        if self.last_grace_consuming_tick is not None and (
+            self.last_supply_refresh_tick is None
+            or self.last_supply_refresh_tick
+            < self.last_grace_consuming_tick
+        ):
+            raise ValueError(
+                f"Strategic formation {self.strategic_formation_id} "
+                "invalid_supply_tick_order"
+            )
 
 
 @dataclass(slots=True)

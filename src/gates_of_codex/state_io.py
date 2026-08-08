@@ -210,6 +210,10 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
         )
         for key, value in data.get("strategic_formations", {}).items()
     }
+    # Reject contradictory persisted S8 state before authoritative load-time
+    # recomputation can normalize it into a different legal shape.
+    for force in strategic_formations.values():
+        force.validate()
     commanders = {
         key: Commander(
             commander_id=value["commander_id"],

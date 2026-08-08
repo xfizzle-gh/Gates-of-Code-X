@@ -328,6 +328,80 @@ class OperationalS8SupplyTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "source_hub_id"):
             state.validate()
 
+    def test_only_four_operational_supply_state_shapes_are_valid(self) -> None:
+        allowed = {
+            (True, False, True, True, 0),
+            (True, False, False, False, 0),
+            (True, False, False, False, 1),
+            (False, True, False, False, 0),
+        }
+        for supplied in (False, True):
+            for cut_off in (False, True):
+                for has_source in (False, True):
+                    for has_cost in (False, True):
+                        for grace in (0, 1):
+                            shape = (
+                                supplied,
+                                cut_off,
+                                has_source,
+                                has_cost,
+                                grace,
+                            )
+                            state = _state()
+                            force = _only_force(state)
+                            force.supplied = supplied
+                            force.cut_off = cut_off
+                            force.source_hub_id = "hub" if has_source else None
+                            force.route_cost = 10 if has_cost else None
+                            force.grace_ticks_remaining = grace
+                            with self.subTest(shape=shape):
+                                if shape in allowed:
+                                    state.validate()
+                                else:
+                                    with self.assertRaisesRegex(
+                                        ValueError,
+                                        "invalid_operational_supply_state",
+                                    ):
+                                        state.validate()
+
+    def test_invalid_persisted_supply_shape_is_rejected_before_recompute(self) -> None:
+        state, graph = _lifecycle_state(connected=True)
+        state.schema_version = 8
+        payload = state.to_dict()
+        row = next(iter(payload["strategic_formations"].values()))
+        row.update(
+            {
+                "supplied": False,
+                "cut_off": False,
+                "source_hub_id": None,
+                "route_cost": None,
+                "grace_ticks_remaining": 0,
+            }
+        )
+
+        with mock.patch(
+            "gates_of_codex.operational_position.load_operational_graph_for_state",
+            return_value=graph,
+        ), mock.patch(
+            "gates_of_codex.operational_capture.load_operational_graph_for_state",
+            return_value=graph,
+        ), mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ), self.assertRaisesRegex(
+            ValueError, "invalid_operational_supply_state"
+        ):
+            campaign_from_dict(payload)
+
+    def test_supply_tick_markers_reject_impossible_persisted_order(self) -> None:
+        state = _state()
+        force = _only_force(state)
+        force.last_supply_refresh_tick = 4
+        force.last_grace_consuming_tick = 5
+
+        with self.assertRaisesRegex(ValueError, "invalid_supply_tick_order"):
+            state.validate()
+
     def test_authored_source_site_node_precedes_anchor(self) -> None:
         state = _state()
         state.provinces["p1"].metadata["supply_source_for"] = ["nato"]
@@ -1104,6 +1178,69 @@ class OperationalS8SupplyTests(unittest.TestCase):
         self.assertFalse(force.cut_off)
         self.assertEqual(1, force.grace_ticks_remaining)
 
+    def test_stale_completed_tick_fails_before_mutating_supply_state(self) -> None:
+        state, graph = _lifecycle_state(connected=False)
+        force = _only_force(state)
+        force.supplied = True
+        force.cut_off = False
+        force.grace_ticks_remaining = 1
+        force.last_supply_refresh_tick = 5
+        force.last_supply_refresh_turn = 3
+        force.last_grace_consuming_tick = 5
+        before = (
+            force.supplied,
+            force.cut_off,
+            force.source_hub_id,
+            force.route_cost,
+            force.grace_ticks_remaining,
+            force.last_supply_refresh_tick,
+            force.last_supply_refresh_turn,
+            force.last_grace_consuming_tick,
+        )
+
+        with mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ), self.assertRaisesRegex(ValueError, "stale_completed_tick"):
+            refresh_operational_supply(
+                state, consume_grace=True, completed_tick=4
+            )
+
+        self.assertEqual(
+            before,
+            (
+                force.supplied,
+                force.cut_off,
+                force.source_hub_id,
+                force.route_cost,
+                force.grace_ticks_remaining,
+                force.last_supply_refresh_tick,
+                force.last_supply_refresh_turn,
+                force.last_grace_consuming_tick,
+            ),
+        )
+
+    def test_refresh_and_grace_tick_markers_are_monotonic(self) -> None:
+        state, graph = _lifecycle_state(connected=True)
+        force = _only_force(state)
+        force.last_supply_refresh_tick = 10
+        force.last_grace_consuming_tick = 8
+        state.map_metadata["operational_clock"] = {"global_tick": 3}
+
+        with mock.patch(
+            "gates_of_codex.operational_supply.load_operational_graph_for_state",
+            return_value=graph,
+        ):
+            refresh_operational_supply(state, consume_grace=False)
+            self.assertEqual(10, force.last_supply_refresh_tick)
+            self.assertEqual(8, force.last_grace_consuming_tick)
+            refresh_operational_supply(
+                state, consume_grace=True, completed_tick=11
+            )
+
+        self.assertEqual(11, force.last_supply_refresh_tick)
+        self.assertEqual(11, force.last_grace_consuming_tick)
+
     def test_post_load_recompute_preserves_grace(self) -> None:
         state, graph = _lifecycle_state(connected=False)
         state.schema_version = 8
@@ -1111,6 +1248,7 @@ class OperationalS8SupplyTests(unittest.TestCase):
         force.supplied = True
         force.cut_off = False
         force.grace_ticks_remaining = 1
+        force.last_supply_refresh_tick = 7
         force.last_grace_consuming_tick = 7
         with mock.patch(
             "gates_of_codex.operational_position.load_operational_graph_for_state",

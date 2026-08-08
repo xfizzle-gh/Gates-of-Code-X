@@ -130,13 +130,17 @@ def refresh_operational_supply(
     """Refresh graph connectivity and optionally advance persisted grace once."""
     if load_operational_graph_for_state(state) is None:
         return OperationalSupplyReport(authoritative=False)
-    ensure_operational_supply_state(state)
     if consume_grace:
         completed_tick = require_strict_int(
             completed_tick,
             name="completed_tick",
             minimum=0,
         )
+        for force in state.strategic_formations.values():
+            previous_tick = force.last_grace_consuming_tick
+            if previous_tick is not None and completed_tick < previous_tick:
+                raise ValueError("stale_completed_tick")
+    ensure_operational_supply_state(state)
 
     from .operational_movement import get_operational_clock
 
@@ -167,8 +171,18 @@ def refresh_operational_supply(
             )
             routes_by_faction[faction_key] = routes
         route = route_for_formation(state, force, routes)
-        force.last_supply_refresh_tick = refresh_tick
-        force.last_supply_refresh_turn = int(state.turn_number)
+        force.last_supply_refresh_tick = max(
+            refresh_tick,
+            force.last_supply_refresh_tick
+            if force.last_supply_refresh_tick is not None
+            else refresh_tick,
+        )
+        force.last_supply_refresh_turn = max(
+            int(state.turn_number),
+            force.last_supply_refresh_turn
+            if force.last_supply_refresh_turn is not None
+            else int(state.turn_number),
+        )
         if route is not None:
             force.supplied = True
             force.cut_off = False
