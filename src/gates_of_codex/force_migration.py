@@ -41,9 +41,6 @@ def ensure_strategic_formations(state: CampaignState) -> dict:
             record = _stable_migration_record(incoming_schema)
             state.map_metadata[MIGRATION_RECORD_KEY] = record
         state.schema_version = max(state.schema_version, STRATEGIC_FORMATION_SCHEMA_VERSION)
-        from .strategic_actors import ensure_strategic_actor_runtime
-
-        ensure_strategic_actor_runtime(state)
         return record
 
     owned: dict[str, str] = {}
@@ -113,9 +110,6 @@ def ensure_strategic_formations(state: CampaignState) -> dict:
     # Persist a stable record once. Do not rewrite run counters on every load/save.
     if MIGRATION_RECORD_KEY not in state.map_metadata:
         state.map_metadata[MIGRATION_RECORD_KEY] = _stable_migration_record(incoming_schema)
-    from .strategic_actors import ensure_strategic_actor_runtime
-
-    ensure_strategic_actor_runtime(state)
     return state.map_metadata[MIGRATION_RECORD_KEY]
 
 
