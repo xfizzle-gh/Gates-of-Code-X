@@ -19,6 +19,31 @@ class GoHMacroCatalogTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.temporary.cleanup()
 
+    def _write_source(self, content: str) -> None:
+        (self.source_root / "units_nato.goh").write_text(content, encoding="utf-8")
+
+    def test_numbered_vehicle_and_entity_macros_do_not_infer_the_squad_name(self) -> None:
+        self._write_source(
+            '("recon" side(nato) name(recon_mix) crew1(driver:1) '
+            'vehicle1(apc_one) vehicle2(apc_two) entity1(sensor_one))\n'
+        )
+
+        unit = CodeXCatalogScanner().scan(self.root).units["recon_mix"]
+
+        self.assertEqual(["apc_one", "apc_two", "sensor_one"], unit.vehicles)
+        self.assertNotIn("recon_mix", unit.vehicles)
+
+    def test_multiline_name_continuation_retains_members(self) -> None:
+        self._write_source(
+            '("squad_with2types_conquest" side(rusa)\n'
+            'name(kor_inf_rifle)\n'
+            'c1(lead:1) c2(rifle:7))\n'
+        )
+
+        unit = CodeXCatalogScanner().scan(self.root).units["kor_inf_rifle"]
+
+        self.assertEqual({"lead": 1, "rifle": 7}, unit.members)
+
     def test_merges_macro_composition_into_faction_suffixed_lua_rows(self) -> None:
         (self.lua_root / "2022s.lua").write_text(
             """

@@ -28,6 +28,15 @@ class RepositoryHygieneTests(unittest.TestCase):
         ).strip()
         self.assertEqual("", tracked)
 
+    def test_deployment_scripts_do_not_default_to_unrelated_workshop_item(self) -> None:
+        for relative in (
+            "tools/deploy_workshop_test.ps1",
+            "tools/install_gates_of_codex.ps1",
+        ):
+            body = (ROOT / relative).read_text(encoding="utf-8")
+            self.assertNotIn("3700832981", body)
+            self.assertIn("GATES_CODEX_DEPLOY_ROOT", body)
+
     def test_hygiene_doc_present(self) -> None:
         path = ROOT / "docs/repository-hygiene.md"
         self.assertTrue(path.is_file())
