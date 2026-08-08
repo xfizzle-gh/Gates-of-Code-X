@@ -32,6 +32,7 @@ jobs:
           test -f .gate1-spatial-fixes.ready
           python .github/scripts/apply_gate1_spatial_authority.py
           python .github/scripts/apply_gate1_lake_parent_authority.py
+          python .github/scripts/apply_gate1_component_allocation.py
       - name: Install pinned Gate 1 profile
         run: python -m pip install numpy==2.3.5 pillow==12.0.0 scipy==1.16.3
       - name: Validate correction set
@@ -67,6 +68,7 @@ jobs:
           rm -f \
             .github/scripts/apply_gate1_spatial_authority.py \
             .github/scripts/apply_gate1_lake_parent_authority.py \
+            .github/scripts/apply_gate1_component_allocation.py \
             .github/workflows/apply-gate1-spatial-authority.yml \
             .gate1-spatial-fixes.ready
       - name: Commit and push correction set
