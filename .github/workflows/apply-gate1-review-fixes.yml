@@ -7,6 +7,11 @@ on:
     paths:
       - ".gate1-review-fixes.part*"
       - ".github/workflows/apply-gate1-review-fixes.yml"
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".gate1-review-fixes.part*"
+      - ".github/workflows/apply-gate1-review-fixes.yml"
 
 permissions:
   contents: write
