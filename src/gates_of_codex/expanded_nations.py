@@ -25,7 +25,7 @@ from .expanded_nations_models import (
     sha256_bytes,
     validate_payload,
 )
-from .expanded_nations_opponents import project_opponent_units
+from .expanded_nations_opponent_render import project_opponent_units
 from .expanded_nations_render import (
     project_research_nodes,
     projection_signature,
