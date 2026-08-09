@@ -6,6 +6,7 @@ from dataclasses import dataclass, replace
 from .diplomacy import allied_factions, is_friendly_owner
 from .models import Battalion, CampaignState, Faction
 from .operational_position import load_operational_graph_for_state
+from .p2_integrity import earth3_p2_supply_disabled
 
 
 DEFAULT_SUPPLY_SOURCES: dict[Faction, tuple[str, ...]] = {
@@ -54,6 +55,8 @@ def mark_default_supply_sources(state: CampaignState) -> None:
 
 
 def reachable_supply_provinces(state: CampaignState, faction: Faction) -> set[str]:
+    if earth3_p2_supply_disabled(state):
+        return set()
     friendly = allied_factions(state, faction)
     sources = _eligible_sources(state, faction)
     reachable: set[str] = set()
@@ -77,6 +80,8 @@ def reachable_supply_provinces(state: CampaignState, faction: Faction) -> set[st
 
 
 def refresh_supply_for_faction(state: CampaignState, faction: Faction) -> SupplyReport:
+    if earth3_p2_supply_disabled(state):
+        return supply_status_for_faction(state, faction)
     reachable = reachable_supply_provinces(state, faction)
     supplied: list[str] = []
     isolated: list[str] = []
@@ -128,7 +133,6 @@ def supply_status_for_faction(
     state: CampaignState, faction: Faction
 ) -> SupplyReport:
     """Return one read-only status shape with explicit routing authority."""
-    reachable = reachable_supply_provinces(state, faction)
     battalions = sorted(
         (
             value
@@ -137,6 +141,25 @@ def supply_status_for_faction(
         ),
         key=lambda value: value.battalion_id,
     )
+    if earth3_p2_supply_disabled(state):
+        return SupplyReport(
+            faction=faction,
+            authority="none_until_p3",
+            sources=(),
+            reachable_provinces=None,
+            legacy_admin_reachable_provinces=0,
+            supplied_battalions=(),
+            isolated_battalions=(),
+            destroyed_battalions=(),
+            connected_formations=(),
+            disconnected_formations=(),
+            grace_formations=(),
+            cut_off_formations=(),
+            connected_battalions=(),
+            grace_battalions=(),
+            cut_off_battalions=(),
+        )
+    reachable = reachable_supply_provinces(state, faction)
     if load_operational_graph_for_state(state) is None:
         supplied = tuple(
             item.battalion_id
@@ -254,6 +277,8 @@ def formation_supplied_for_battalion(
     state: CampaignState, battalion: Battalion
 ) -> bool | None:
     """Return S8 formation authority, or None for legacy no-graph campaigns."""
+    if earth3_p2_supply_disabled(state):
+        return None
     if load_operational_graph_for_state(state) is None:
         return None
     force = _formation_for_battalion(state, battalion)

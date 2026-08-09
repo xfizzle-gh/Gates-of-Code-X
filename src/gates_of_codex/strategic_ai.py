@@ -35,7 +35,12 @@ class StrategicAI:
         if faction.value not in self.state.factions:
             raise ValueError(f"Unknown strategic faction: {faction.value}")
         actions: list[StrategicAction] = []
-        if self.state.unit_economy and self.state.research_nodes:
+        actor_content_installed = isinstance(
+            self.state.map_metadata.get("actor_content_runtime"), dict
+        )
+        if actor_content_installed or (
+            self.state.unit_economy and self.state.research_nodes
+        ):
             for economy_action in run_ai_economy(self.state, faction):
                 actions.append(
                     StrategicAction(
