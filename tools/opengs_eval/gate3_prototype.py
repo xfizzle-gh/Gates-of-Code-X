@@ -14,6 +14,9 @@ if str(MODULE_DIR) not in sys.path:
 
 import gate3_package as _package
 from gate3_package import *
+from gate3_snapshot import install_stable_capture
+
+capture_tree, capture_tree_with_hook = install_stable_capture(_package)
 
 _BASE_GATE1_CONTRACT = _package.gate3_masked_gate1_contract
 
@@ -123,8 +126,6 @@ def _split_repeated_vertex_ring(ring: Sequence[PointI]) -> list[list[PointI]]:
                 raise Gate3Error("Gate 3 pinch splitter left a repeated vertex")
             simple.append(current)
             continue
-        # LIFO in reverse lexical order yields stable processing independent of
-        # the original walk's rotation while preserving every directed edge.
         ordered = sorted(split, key=lambda value: tuple(value), reverse=True)
         pending.extend(ordered)
     simple.sort(key=lambda value: (-abs(_signed_area_exact(value)), tuple(value)))
