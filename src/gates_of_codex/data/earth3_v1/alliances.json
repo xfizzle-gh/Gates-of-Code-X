@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "alliances": [
+    {
+      "alliance_id": "western_coalition",
+      "display_name": "NATO–Ukraine Partnership",
+      "factions": ["nato", "ukr"],
+      "notes": "Ukraine retains its UKR tactical side and is explicitly allied with NATO through the existing alliance model."
+    }
+  ]
+}

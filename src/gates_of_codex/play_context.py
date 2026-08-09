@@ -179,6 +179,10 @@ def list_front_options(state: CampaignState, faction: Faction | None = None) -> 
     """List legal moves/attacks for the current (or specified) faction."""
 
     from .diplomacy import are_allied, is_friendly_owner
+    from .earth3_bootstrap import earth3_p2_movement_unavailable
+
+    if earth3_p2_movement_unavailable(state):
+        return []
 
     active = faction or state.current_faction
     options: list[dict] = []

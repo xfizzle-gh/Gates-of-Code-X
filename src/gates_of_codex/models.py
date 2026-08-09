@@ -800,6 +800,19 @@ class CampaignState:
                 formation = self.formations.get(entry.formation_id)
                 if formation is None or formation.faction != faction_state.faction:
                     raise ValueError(f"Invalid reinforcement target {entry.formation_id}")
+        actor_content = self.map_metadata.get("actor_content_runtime")
+        if (
+            "earth3_bootstrap" in self.map_metadata
+            or self.map_metadata.get("scenario_content_phase") == "p2_campaign_bootstrap"
+            or (
+                isinstance(actor_content, dict)
+                and actor_content.get("earth3_bootstrap_id")
+                == "earth3_v1_campaign_bootstrap"
+            )
+        ):
+            from .earth3_bootstrap import validate_earth3_bootstrap_campaign_state
+
+            validate_earth3_bootstrap_campaign_state(self)
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
