@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import inspect
-from collections.abc import Mapping
-from pathlib import Path
+from collections.abc import Iterator, Mapping
+from contextlib import contextmanager
+from contextvars import ContextVar
 
 from .models import CampaignState, Faction
 
@@ -10,6 +10,11 @@ from .models import CampaignState, Faction
 EARTH3_MAP_ID = "earth3_europe_mediterranean"
 EARTH3_P2_BOOTSTRAP_ID = "earth3_v1_campaign_bootstrap"
 EARTH3_P2_CONTENT_PHASE = "p2_campaign_bootstrap"
+
+_P2_INTERMEDIATE_STATE: ContextVar[CampaignState | None] = ContextVar(
+    "earth3_p2_intermediate_state",
+    default=None,
+)
 
 _P2_FORMATION_IDS = frozenset(
     {
@@ -42,6 +47,22 @@ _P2_OPENING_PROVINCE_IDS = frozenset(
         "e3_3380",
     }
 )
+
+
+@contextmanager
+def allow_p2_intermediate_validation(state: CampaignState) -> Iterator[None]:
+    """Temporarily identify one in-memory state during actor-content installation.
+
+    The token is process-local, state-object-specific, exception-safe, and is never
+    serialized. It exists solely for install_actor_content()'s internal validation
+    before the canonical P2 identity markers are finalized by the bootstrap builder.
+    """
+
+    token = _P2_INTERMEDIATE_STATE.set(state)
+    try:
+        yield
+    finally:
+        _P2_INTERMEDIATE_STATE.reset(token)
 
 
 def is_earth3_p2_bearing_state(state: CampaignState) -> bool:
@@ -78,7 +99,7 @@ def validate_earth3_p2_identity(state: CampaignState) -> None:
         return
 
     metadata = state.map_metadata
-    if _trusted_builder_intermediate_validation(state):
+    if _trusted_installer_intermediate_validation(state):
         return
 
     from .earth3_bootstrap import Earth3BootstrapError
@@ -101,28 +122,15 @@ def validate_earth3_p2_identity(state: CampaignState) -> None:
         raise Earth3BootstrapError("Earth3 P2 actor-content identity mismatch")
 
 
-def _trusted_builder_intermediate_validation(state: CampaignState) -> bool:
-    """Allow only the canonical builder's live intermediate state validation."""
+def _trusted_installer_intermediate_validation(state: CampaignState) -> bool:
+    """Allow only the exact state object inside the installer validation context."""
+    if _P2_INTERMEDIATE_STATE.get() is not state:
+        return False
+
     metadata = state.map_metadata
     if "earth3_bootstrap" in metadata or "scenario_content_phase" in metadata:
         return False
     actor_content = metadata.get("actor_content_runtime")
     if not isinstance(actor_content, Mapping):
         return False
-    if actor_content.get("earth3_bootstrap_id") is not None:
-        return False
-
-    frame = inspect.currentframe()
-    try:
-        frame = None if frame is None else frame.f_back
-        while frame is not None:
-            if (
-                frame.f_code.co_name == "build_earth3_v1_campaign"
-                and Path(frame.f_code.co_filename).name == "earth3_bootstrap.py"
-                and frame.f_locals.get("state") is state
-            ):
-                return True
-            frame = frame.f_back
-    finally:
-        del frame
-    return False
+    return actor_content.get("earth3_bootstrap_id") is None
