@@ -434,7 +434,7 @@ class Earth3P2OpeningStateTests(unittest.TestCase):
         state = _campaign()
         battalion = next(iter(state.battalions.values()))
         battalion.faction = Faction.RUSSIA
-        with self.assertRaisesRegex(ValueError, "faction does not match strategic formation"):
+        with self.assertRaisesRegex(ValueError, "faction does not match formation"):
             state.validate()
 
     def test_no_operational_graph_routes_nodes_or_adjacency_authority_is_added(self) -> None:
@@ -448,7 +448,7 @@ class Earth3P2OpeningStateTests(unittest.TestCase):
     def test_frontend_snapshot_succeeds_and_preserves_production_fallback_none(self) -> None:
         snapshot = build_frontend_snapshot(_campaign())
         self.assertEqual("none", snapshot["strategic_map"]["fallback"])
-        self.assertEqual("production", snapshot["strategic_map"]["mode"])
+        self.assertEqual("production", snapshot["strategic_map"]["status"])
 
 
 class Earth3P2FootprintAndMovementTests(unittest.TestCase):
