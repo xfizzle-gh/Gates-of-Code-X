@@ -4,12 +4,16 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from gates_of_codex.expanded_nations_actor_sources import project_actor_units
+from gates_of_codex.expanded_nations_actor_sources import (
+    normalize_actor_purchase_ids,
+    project_actor_units,
+)
 from gates_of_codex.expanded_nations_models import (
     ExpandedNationsError,
     UNITS_RELATIVE,
 )
 from gates_of_codex.expanded_nations_native_verify import _legacy_verification_view
+from gates_of_codex.expanded_nations_render import project_research_nodes
 from gates_of_codex.goh_source import scan_source_entries
 
 
@@ -70,7 +74,7 @@ class ExpandedNationsNativeSquadIdTests(unittest.TestCase):
         self.assertEqual("macro", generated[0].form)
         self.assertEqual("goc_serb_rifle", generated[0].name)
 
-    def test_upstream_macro_projection_preserves_native_base_name(self) -> None:
+    def test_upstream_macro_projection_normalizes_catalog_and_research_ids(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary) / "stack"
             source = root / "resource/set/multiplayer/units/conquest/fixture.set"
@@ -84,9 +88,10 @@ class ExpandedNationsNativeSquadIdTests(unittest.TestCase):
             actor = {
                 "actor_id": "fixture",
                 "tactical_side": "rusa",
+                "unit_count": 1,
                 "units": [
                     {
-                        "unit_name": "fixture_rifle(rusa)",
+                        "unit_name": "fixture_rifle",
                         "tactical_side": "rusa",
                         "source_side": "rusa",
                         "source_priority": 0,
@@ -97,11 +102,28 @@ class ExpandedNationsNativeSquadIdTests(unittest.TestCase):
                         ],
                     }
                 ],
+                "research_nodes": [
+                    {
+                        "key": "actor:fixture:unit",
+                        "cost": 1,
+                        "prerequisites": [],
+                        "unlock_units": ["fixture_rifle"],
+                    }
+                ],
             }
             projected, body = project_actor_units(actor, [root], root)
             self.assertEqual("fixture_rifle(rusa)", projected[0].unit_name)
             self.assertIn("name(fixture_rifle)", body)
             self.assertNotIn("name(fixture_rifle(rusa))", body)
+
+            normalized = normalize_actor_purchase_ids(actor, projected)
+            self.assertEqual(
+                "fixture_rifle(rusa)",
+                normalized["units"][0]["unit_name"],
+            )
+            research = project_research_nodes(normalized)
+            self.assertEqual("fixture_rifle(rusa)", research[0].engine_id)
+            self.assertEqual("fixture_rifle(rusa)", research[0].unlock_unit)
 
     def test_verification_view_authenticates_effective_macro_id(self) -> None:
         actor_text = (
