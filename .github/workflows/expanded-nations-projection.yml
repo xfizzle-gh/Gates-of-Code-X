@@ -33,6 +33,7 @@ jobs:
           tests.test_expanded_nations
           tests.test_expanded_nations_audit_regressions
           tests.test_expanded_nations_compile_boundary
+          tests.test_expanded_nations_legacy_side_conflicts
           -v
       - name: CLI smoke
         run: python -m gates_of_codex.expanded_nations_cli --help
@@ -53,6 +54,7 @@ jobs:
           tests/test_expanded_nations.py
           tests/test_expanded_nations_audit_regressions.py
           tests/test_expanded_nations_compile_boundary.py
+          tests/test_expanded_nations_legacy_side_conflicts.py
 
   powershell:
     runs-on: windows-latest
