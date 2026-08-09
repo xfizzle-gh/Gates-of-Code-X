@@ -39,6 +39,25 @@ class P2IdentityDowngradeGuardTests(unittest.TestCase):
         with self.assertRaisesRegex(Earth3BootstrapError, "bootstrap provenance is missing"):
             campaign_from_dict(payload)
 
+    def test_serialized_construction_token_lookalike_cannot_bypass_identity_guard(self) -> None:
+        payload = _campaign().to_dict()
+        payload["map_metadata"].pop("earth3_bootstrap", None)
+        payload["map_metadata"].pop("scenario_content_phase", None)
+        payload["map_metadata"]["actor_content_runtime"].pop(
+            "earth3_bootstrap_id", None
+        )
+        payload["map_metadata"]["_earth3_p2_construction_token"] = "forged"
+
+        with self.assertRaisesRegex(Earth3BootstrapError, "bootstrap provenance is missing"):
+            campaign_from_dict(payload)
+
+    def test_completed_campaign_does_not_retain_construction_token(self) -> None:
+        state = _campaign()
+
+        self.assertNotIn("_earth3_p2_construction_token", state.map_metadata)
+        self.assertNotIn("_earth3_p2_construction_token", state.to_dict()["map_metadata"])
+        state.validate()
+
     def test_removing_runtime_identity_objects_still_cannot_hide_p2_formations(self) -> None:
         state = _campaign()
         state.map_metadata.pop("earth3_bootstrap", None)
