@@ -791,6 +791,236 @@ def _resolved_catalog(
     return _canonicalize_resolved_catalog(resolved_catalog)
 
 
+def _immutable_actor_content_projection(actor_content: Mapping[str, Any]) -> dict[str, Any]:
+    """Return the canonical, persisted catalog authority for an installed P2 runtime.
+
+    The installer deliberately keeps campaign progress beside catalog definitions.
+    This projection covers only the installed, immutable definition surface; all
+    live economy, research, roster, and diagnostic fields remain outside it.
+    """
+
+    def require_mapping(value: Any, *, label: str) -> Mapping[str, Any]:
+        if not isinstance(value, Mapping):
+            raise Earth3BootstrapError(f"Earth3 P2 immutable {label} must be an object")
+        return value
+
+    def require_list(value: Any, *, label: str) -> list[Any]:
+        if not isinstance(value, list):
+            raise Earth3BootstrapError(f"Earth3 P2 immutable {label} must be an array")
+        return value
+
+    def require_string(value: Any, *, label: str, allow_empty: bool = False) -> str:
+        if not isinstance(value, str) or (not allow_empty and not value):
+            raise Earth3BootstrapError(f"Earth3 P2 immutable {label} must be a string")
+        return value
+
+    def require_int(value: Any, *, label: str) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise Earth3BootstrapError(f"Earth3 P2 immutable {label} must be an int")
+        return value
+
+    def require_bool(value: Any, *, label: str) -> bool:
+        if not isinstance(value, bool):
+            raise Earth3BootstrapError(f"Earth3 P2 immutable {label} must be a bool")
+        return value
+
+    def normalized_source(value: Any, *, label: str, allow_empty: bool = False) -> str:
+        source = require_string(value, label=label, allow_empty=allow_empty).replace("\\\\", "/")
+        if source and (
+            source.startswith("/")
+            or source.startswith("//")
+            or re.match(r"^[A-Za-z]:/", source)
+        ):
+            raise Earth3BootstrapError(f"Earth3 P2 immutable {label} contains an absolute source path")
+        return source
+
+    def sorted_strings(value: Any, *, label: str) -> list[str]:
+        return sorted(require_string(item, label=label) for item in require_list(value, label=label))
+
+    def members(value: Any, *, label: str) -> dict[str, int]:
+        raw_members = require_mapping(value, label=label)
+        normalized: dict[str, int] = {}
+        for key, count in raw_members.items():
+            normalized[require_string(key, label=f"{label} member")] = require_int(
+                count,
+                label=f"{label} count",
+            )
+        return dict(sorted(normalized.items()))
+
+    runtime = require_mapping(actor_content, label="actor-content runtime")
+    source_layers = require_list(runtime.get("source_layers"), label="source layers")
+    projected_layers: list[dict[str, Any]] = []
+    layer_priorities: set[int] = set()
+    for raw_layer in source_layers:
+        layer = require_mapping(raw_layer, label="source layer")
+        priority = require_int(layer.get("priority"), label="source layer priority")
+        if priority in layer_priorities:
+            raise Earth3BootstrapError("Earth3 P2 immutable source layers contain duplicate priorities")
+        layer_priorities.add(priority)
+        projected_layers.append(
+            {
+                "priority": priority,
+                "name": require_string(layer.get("name"), label="source layer name"),
+            }
+        )
+
+    raw_actors = require_mapping(runtime.get("actors"), label="actor-content actors")
+    projected_actors: list[dict[str, Any]] = []
+    for actor_id in sorted(raw_actors):
+        actor = require_mapping(raw_actors[actor_id], label=f"actor {actor_id}")
+        if require_string(actor_id, label="actor-content actor key") != require_string(
+            actor.get("actor_id"),
+            label=f"actor {actor_id} id",
+        ):
+            raise Earth3BootstrapError(f"Earth3 P2 immutable actor key mismatch: {actor_id}")
+
+        raw_units = require_mapping(actor.get("units"), label=f"actor {actor_id} units")
+        projected_units: list[dict[str, Any]] = []
+        for unit_name in sorted(raw_units):
+            unit = require_mapping(raw_units[unit_name], label=f"actor {actor_id} unit {unit_name}")
+            if require_string(unit_name, label="actor-content unit key") != require_string(
+                unit.get("unit_name"),
+                label=f"actor {actor_id} unit {unit_name} name",
+            ):
+                raise Earth3BootstrapError(
+                    f"Earth3 P2 immutable unit key mismatch: {actor_id}:{unit_name}"
+                )
+            projected_units.append(
+                {
+                    "unit_name": unit_name,
+                    "actor_id": require_string(unit.get("actor_id"), label=f"unit {unit_name} actor"),
+                    "component_id": require_string(
+                        unit.get("component_id"), label=f"unit {unit_name} component", allow_empty=True
+                    ),
+                    "source_side": require_string(unit.get("source_side"), label=f"unit {unit_name} source side"),
+                    "tactical_side": require_string(
+                        unit.get("tactical_side"), label=f"unit {unit_name} tactical side"
+                    ),
+                    "period": require_string(unit.get("period"), label=f"unit {unit_name} period", allow_empty=True),
+                    "category": require_string(unit.get("category"), label=f"unit {unit_name} category"),
+                    "members": members(unit.get("members"), label=f"unit {unit_name} members"),
+                    "vehicles": sorted_strings(unit.get("vehicles"), label=f"unit {unit_name} vehicles"),
+                    "actions": sorted_strings(unit.get("actions"), label=f"unit {unit_name} actions"),
+                    "materializable": require_bool(
+                        unit.get("materializable"), label=f"unit {unit_name} materializable"
+                    ),
+                    "source_files": sorted(
+                        normalized_source(item, label=f"unit {unit_name} source file")
+                        for item in require_list(unit.get("source_files"), label=f"unit {unit_name} source files")
+                    ),
+                    "source_layer": normalized_source(
+                        unit.get("source_layer"), label=f"unit {unit_name} source layer", allow_empty=True
+                    ),
+                    "source_priority": require_int(
+                        unit.get("source_priority"), label=f"unit {unit_name} source priority"
+                    ),
+                    "virtual": require_bool(unit.get("virtual"), label=f"unit {unit_name} virtual"),
+                    "tier": require_int(unit.get("tier"), label=f"unit {unit_name} tier"),
+                    "source_research_cost": require_int(
+                        unit.get("source_research_cost"), label=f"unit {unit_name} source research cost"
+                    ),
+                    "research_options": sorted_strings(
+                        unit.get("research_options"), label=f"unit {unit_name} research options"
+                    ),
+                    "purchase_cost": require_int(
+                        unit.get("purchase_cost"), label=f"unit {unit_name} purchase cost"
+                    ),
+                    "maintenance_cost": require_int(
+                        unit.get("maintenance_cost"), label=f"unit {unit_name} maintenance cost"
+                    ),
+                    "repair_cost_per_point": require_int(
+                        unit.get("repair_cost_per_point"), label=f"unit {unit_name} repair cost"
+                    ),
+                    "manpower_estimate": require_int(
+                        unit.get("manpower_estimate"), label=f"unit {unit_name} manpower estimate"
+                    ),
+                }
+            )
+
+        raw_nodes = require_mapping(actor.get("research_nodes"), label=f"actor {actor_id} research nodes")
+        projected_nodes: list[dict[str, Any]] = []
+        for key in sorted(raw_nodes):
+            node = require_mapping(raw_nodes[key], label=f"actor {actor_id} research node {key}")
+            if require_string(key, label="actor-content research key") != require_string(
+                node.get("key"),
+                label=f"actor {actor_id} research node key",
+            ):
+                raise Earth3BootstrapError(
+                    f"Earth3 P2 immutable research key mismatch: {actor_id}:{key}"
+                )
+            projected_nodes.append(
+                {
+                    "key": key,
+                    "actor_id": require_string(node.get("actor_id"), label=f"research {key} actor"),
+                    "node_type": require_string(node.get("node_type"), label=f"research {key} type"),
+                    "display_name": require_string(node.get("display_name"), label=f"research {key} display name"),
+                    "cost": require_int(node.get("cost"), label=f"research {key} cost"),
+                    "source_cost": require_int(node.get("source_cost"), label=f"research {key} source cost"),
+                    "prerequisites": sorted_strings(node.get("prerequisites"), label=f"research {key} prerequisites"),
+                    "unlock_units": sorted_strings(node.get("unlock_units"), label=f"research {key} unlock units"),
+                    "source_node": require_string(
+                        node.get("source_node"), label=f"research {key} source node", allow_empty=True
+                    ),
+                    "source_file": normalized_source(
+                        node.get("source_file"), label=f"research {key} source file", allow_empty=True
+                    ),
+                    "component_id": require_string(
+                        node.get("component_id"), label=f"research {key} component", allow_empty=True
+                    ),
+                }
+            )
+
+        projected_actors.append(
+            {
+                "actor_id": actor_id,
+                "display_name": require_string(actor.get("display_name"), label=f"actor {actor_id} display name"),
+                "tactical_side": require_string(actor.get("tactical_side"), label=f"actor {actor_id} tactical side"),
+                "roster_class": require_string(actor.get("roster_class"), label=f"actor {actor_id} roster class"),
+                "units": projected_units,
+                "research_nodes": projected_nodes,
+            }
+        )
+
+    actor_count = require_int(runtime.get("actor_count"), label="actor-content actor count")
+    if actor_count != len(projected_actors):
+        raise Earth3BootstrapError("Earth3 P2 immutable actor count does not match actor content")
+    source_policy = runtime.get("source_policy")
+    try:
+        json.dumps(source_policy, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    except (TypeError, ValueError) as exc:
+        raise Earth3BootstrapError("Earth3 P2 immutable source policy is not canonical JSON") from exc
+    return {
+        "actor_content_schema_version": require_int(runtime.get("schema_version"), label="actor-content schema version"),
+        "resolved_schema": require_string(runtime.get("resolved_schema"), label="resolved schema"),
+        "resolved_schema_version": require_int(
+            runtime.get("resolved_schema_version"), label="resolved schema version"
+        ),
+        "manifest_sha256": require_string(runtime.get("manifest_sha256"), label="manifest identity"),
+        "source_policy": copy.deepcopy(source_policy),
+        "source_layers": sorted(projected_layers, key=lambda row: (row["priority"], row["name"])),
+        "actor_count": actor_count,
+        "actors": projected_actors,
+    }
+
+
+def _immutable_actor_content_digest(actor_content: Mapping[str, Any]) -> str:
+    return _canonical_sha256(_immutable_actor_content_projection(actor_content))
+
+
+def _validate_immutable_actor_content_provenance(
+    actor_content: Mapping[str, Any],
+    expected_identity: str,
+) -> None:
+    if not isinstance(expected_identity, str) or not _HEX_SHA256.fullmatch(expected_identity):
+        raise Earth3BootstrapError("Earth3 P2 immutable catalog identity is invalid")
+    if actor_content.get("warning_count") != 0:
+        raise Earth3BootstrapError("Earth3 P2 installed actor content contains compiler warnings")
+    if actor_content.get("migration_exceptions") != []:
+        raise Earth3BootstrapError("Earth3 P2 opening actor content cannot contain migration exceptions")
+    if _immutable_actor_content_digest(actor_content) != expected_identity:
+        raise Earth3BootstrapError("Earth3 P2 installed actor content catalog identity mismatch")
+
+
 def _materialize_roster(
     actor: Mapping[str, Any],
     requests: list[dict[str, Any]],
@@ -834,7 +1064,7 @@ def build_earth3_v1_campaign(
     authority_root: str | Path | None = None,
 ) -> CampaignState:
     bundle = load_earth3_bootstrap(authority_root=authority_root)
-    catalog, catalog_identity = _resolved_catalog(
+    catalog, _ = _resolved_catalog(
         resolved_catalog=resolved_catalog,
         resource_stack=resource_stack,
         stack_config=stack_config,
@@ -853,7 +1083,6 @@ def build_earth3_v1_campaign(
     state = build_earth3_campaign(authority_root)
     bootstrap = bundle.documents["bootstrap.json"]
     state.campaign_name = str(bootstrap["campaign_name"])
-    state.catalog_signature = catalog_identity
     state.turn_number = int(bootstrap["turn_number"])
     state.selected_faction = Faction.NATO
     state.current_faction = Faction.NATO
@@ -961,9 +1190,15 @@ def build_earth3_v1_campaign(
     from .actor_economy import install_actor_content, validate_actor_content_runtime
     from .strategic_actors import ACTOR_RUNTIME_KEY, validate_strategic_actor_runtime
 
-    install_actor_content(state, catalog, allow_warnings=True)
+    install_actor_content(state, catalog)
     runtime = state.map_metadata[ACTOR_RUNTIME_KEY]
     state.map_metadata["actor_content_runtime"]["earth3_bootstrap_id"] = BOOTSTRAP_ID
+    catalog_identity = _immutable_actor_content_digest(state.map_metadata["actor_content_runtime"])
+    _validate_immutable_actor_content_provenance(
+        state.map_metadata["actor_content_runtime"],
+        catalog_identity,
+    )
+    state.catalog_signature = catalog_identity
     resources = {
         str(row["actor_id"]): int(row["resources"])
         for row in bundle.documents["factions.json"]["active_actors"]
@@ -975,6 +1210,10 @@ def build_earth3_v1_campaign(
             actor["researched_keys"] = []
     validate_strategic_actor_runtime(state)
     validate_actor_content_runtime(state)
+    _validate_immutable_actor_content_provenance(
+        state.map_metadata["actor_content_runtime"],
+        catalog_identity,
+    )
 
     sites = copy.deepcopy(bundle.documents["sites.json"]["sites"])
     zones = copy.deepcopy(bundle.documents["deployment_zones.json"]["deployment_zones"])
@@ -1171,15 +1410,15 @@ def validate_earth3_bootstrap_provenance(state: CampaignState) -> None:
     if metadata["dormant_prc_state"] != "inherited_actor_installation_compatibility_only":
         raise Earth3BootstrapError("Earth3 P2 dormant PRC provenance mismatch")
     actor_content = state.map_metadata.get("actor_content_runtime")
-    if (
-        not isinstance(actor_content, dict)
-        or actor_content.get("earth3_bootstrap_id") != BOOTSTRAP_ID
-        or any(
-            actor_content.get(key) != metadata["catalog_identity"]
-            for key in ("stack_signature", "wiring_signature")
-        )
-    ):
-        raise Earth3BootstrapError("Earth3 P2 catalog provenance does not match actor content")
+    if not isinstance(actor_content, dict) or actor_content.get("earth3_bootstrap_id") != BOOTSTRAP_ID:
+        raise Earth3BootstrapError("Earth3 P2 catalog provenance does not identify installed actor content")
+    from .actor_economy import validate_actor_content_runtime
+
+    try:
+        validate_actor_content_runtime(state)
+    except ValueError as exc:
+        raise Earth3BootstrapError("Earth3 P2 installed actor content is invalid") from exc
+    _validate_immutable_actor_content_provenance(actor_content, metadata["catalog_identity"])
     if metadata["movement_authority"] != MOVEMENT_AUTHORITY:
         raise Earth3BootstrapError("Earth3 P2 movement authority mismatch")
     if metadata["route_ids"] or metadata["operational_node_ids"]:
