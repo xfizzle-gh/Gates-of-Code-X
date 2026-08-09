@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "ownership": [
+    {"province_id": "e3_0592", "faction": "nato", "actor_id": "deu"},
+    {"province_id": "e3_0513", "faction": "nato", "actor_id": "usa"},
+    {"province_id": "e3_0504", "faction": "nato", "actor_id": "usa"},
+    {"province_id": "e3_0442", "faction": "nato", "actor_id": "pol"},
+    {"province_id": "e3_1937", "faction": "ukr", "actor_id": "ukr"},
+    {"province_id": "e3_1749", "faction": "ukr", "actor_id": "ukr"},
+    {"province_id": "e3_1208", "faction": "ukr", "actor_id": "ukr"},
+    {"province_id": "e3_1962", "faction": "ukr", "actor_id": "ukr"},
+    {"province_id": "e3_2793", "faction": "rusa", "actor_id": "rus"},
+    {"province_id": "e3_2794", "faction": "rusa", "actor_id": "rus"},
+    {"province_id": "e3_3380", "faction": "rusa", "actor_id": "rus"}
+  ]
+}

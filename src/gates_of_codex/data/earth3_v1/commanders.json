@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "content_judgment": "The existing schema supports commanders and no approved authoritative commander catalog is present. These deterministic role records are explicitly fictional scenario content and add no traits, bonuses, or mechanics.",
+  "commanders": [
+    {"commander_id": "cmd_deu_berlin", "display_name": "Berlin Brigade Commander", "rank": "Brigade Commander", "formation_id": "sf_deu_berlin"},
+    {"commander_id": "cmd_usa_tallinn", "display_name": "Tallinn Brigade Commander", "rank": "Brigade Commander", "formation_id": "sf_usa_tallinn"},
+    {"commander_id": "cmd_usa_riga", "display_name": "Riga Brigade Commander", "rank": "Brigade Commander", "formation_id": "sf_usa_riga"},
+    {"commander_id": "cmd_pol_vilnius", "display_name": "Vilnius Brigade Commander", "rank": "Brigade Commander", "formation_id": "sf_pol_vilnius"},
+    {"commander_id": "cmd_ukr_kyiv", "display_name": "Kyiv Brigade Commander", "rank": "Brigade Commander", "formation_id": "sf_ukr_kyiv"},
+    {"commander_id": "cmd_ukr_odesa", "display_name": "Odesa Brigade Commander", "rank": "Brigade Commander", "formation_id": "sf_ukr_odesa"},
+    {"commander_id": "cmd_ukr_kherson", "display_name": "Kherson Brigade Commander", "rank": "Brigade Commander", "formation_id": "sf_ukr_kherson"},
+    {"commander_id": "cmd_ukr_zaporizhzhia", "display_name": "Zaporizhzhia Brigade Commander", "rank": "Brigade Commander", "formation_id": "sf_ukr_zaporizhzhia"},
+    {"commander_id": "cmd_rus_rostov", "display_name": "Rostov Brigade Commander", "rank": "Brigade Commander", "formation_id": "sf_rus_rostov"},
+    {"commander_id": "cmd_rus_luhansk", "display_name": "Luhansk Brigade Commander", "rank": "Brigade Commander", "formation_id": "sf_rus_luhansk"},
+    {"commander_id": "cmd_rus_donetsk", "display_name": "Donetsk Brigade Commander", "rank": "Brigade Commander", "formation_id": "sf_rus_donetsk"}
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "preferences": [
+    {"province_id": "e3_0442", "map_id": "multi/dcg_[cwa71]_fulda"},
+    {"province_id": "e3_0504", "map_id": "multi/dcg_[cwa71]_fulda"},
+    {"province_id": "e3_0513", "map_id": "multi/dcg_[cwa71]_fulda"},
+    {"province_id": "e3_0592", "map_id": "multi/dcg_[cwa71]_fulda"},
+    {"province_id": "e3_1208", "map_id": "multi/dcg_[cwa71]_fulda"},
+    {"province_id": "e3_1749", "map_id": "multi/dcg_[cwa71]_fulda"},
+    {"province_id": "e3_1937", "map_id": "multi/dcg_[cwa71]_fulda"},
+    {"province_id": "e3_1962", "map_id": "multi/dcg_[cwa71]_fulda"},
+    {"province_id": "e3_2793", "map_id": "multi/dcg_[cwa71]_fulda"},
+    {"province_id": "e3_2794", "map_id": "multi/dcg_[cwa71]_fulda"},
+    {"province_id": "e3_3380", "map_id": "multi/dcg_[cwa71]_fulda"}
+  ]
+}

@@ -157,6 +157,10 @@ class Earth3ScenarioRegistryTests(unittest.TestCase):
                 "gates_of_codex.europe_mediterranean_from_goe."
                 "build_europe_mediterranean_from_goe_campaign"
             ) as legacy_em,
+            patch(
+                "gates_of_codex.earth3_bootstrap.build_earth3_v1_campaign",
+                return_value=build_earth3_campaign(),
+            ),
         ):
             state = build_scenario()
         legacy_goe.assert_not_called()
@@ -739,6 +743,10 @@ class Earth3DefaultCreationAndFrontendTests(unittest.TestCase):
             with (
                 patch.object(Path, "read_text", guarded_read_text),
                 patch("gates_of_codex.europe.build_goe_europe_campaign") as legacy_goe,
+                patch(
+                    "gates_of_codex.cli.build_scenario",
+                    return_value=build_earth3_campaign(),
+                ),
             ):
                 self.assertEqual(0, main(["new", str(output)]))
         finally:

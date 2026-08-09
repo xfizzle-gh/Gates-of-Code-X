@@ -25,9 +25,9 @@ class ScenarioDefinition:
 
 
 def _build_earth3(**options) -> CampaignState:
-    from .earth3_campaign import build_earth3_campaign
+    from .earth3_bootstrap import build_earth3_v1_campaign
 
-    return build_earth3_campaign(**options)
+    return build_earth3_v1_campaign(**options)
 
 
 def _build_legacy_goe_europe(**options) -> CampaignState:
@@ -56,8 +56,9 @@ SCENARIO_REGISTRY = MappingProxyType(
                 "godot/assets/maps/earth3_europe_mediterranean/map_manifest.json",
                 "godot/assets/maps/earth3_europe_mediterranean/polygon_dataset.json",
                 "godot/assets/maps/earth3_europe_mediterranean/dataset_meta.json",
+                "src/gates_of_codex/data/earth3_v1/*.json",
             ),
-            display_name="Earth3 Europe–Mediterranean v1",
+            display_name="Earth3 Europe–Mediterranean v1 Campaign Bootstrap",
         ),
         "legacy_goe_europe": ScenarioDefinition(
             scenario_id="legacy_goe_europe",

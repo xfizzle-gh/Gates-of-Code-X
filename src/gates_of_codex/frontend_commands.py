@@ -470,11 +470,26 @@ def _apply_one(state, op: str, raw: dict[str, Any]) -> CommandResult:
         built = build_infrastructure(state, faction, province, building)
         return CommandResult(op=op, ok=True, detail=f"built {building}", data=asdict(built))
     if op == "repair":
-        from .economy import repair_formation
-
         formation = str(raw.get("formation") or raw.get("formation_id") or "")
         points = raw.get("points")
-        repaired = repair_formation(state, formation, None if points is None else int(points))
+        requested_points = None if points is None else int(points)
+        actor_content = state.map_metadata.get("actor_content_runtime")
+        if isinstance(actor_content, dict):
+            from .actor_economy import repair_actor_formation
+
+            battalion_id = raw.get("battalion") or raw.get("battalion_id")
+            repaired = repair_actor_formation(
+                state,
+                formation,
+                requested_points,
+                battalion_id=(
+                    None if battalion_id in (None, "") else str(battalion_id)
+                ),
+            )
+        else:
+            from .economy import repair_formation
+
+            repaired = repair_formation(state, formation, requested_points)
         return CommandResult(op=op, ok=True, detail=f"repaired {formation}", data=asdict(repaired))
     if op == "handoff":
         raise ValueError("handoff is handled at the campaign-path layer")
