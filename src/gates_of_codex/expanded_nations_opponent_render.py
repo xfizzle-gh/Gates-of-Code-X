@@ -9,6 +9,7 @@ from .expanded_nations_models import (
     ProjectedOpponentUnit,
     SUPPORTED_TACTICAL_SIDES,
     sha256_bytes,
+    side_family,
 )
 from .expanded_nations_opponents import (
     _canonical_entry_side,
@@ -28,17 +29,11 @@ def project_opponent_units(
     selected_side: str,
     roots: Sequence[Path],
 ) -> tuple[list[ProjectedOpponentUnit], str]:
-    """Flatten, filter, and canonicalize opponent purchase definitions.
-
-    Filtering keeps the compiler authority order: name suffix, explicit side,
-    then source filename. Native GoH execution semantics remain the entry's
-    explicit side when one exists. A suffix/explicit disagreement is accepted
-    only when the suffix supplies the classification side and the containing
-    source filename independently agrees with the explicit native side.
-    """
+    """Flatten, filter, and canonicalize opponent purchase definitions."""
 
     if selected_side not in SUPPORTED_TACTICAL_SIDES:
         raise ExpandedNationsError(f"Unsupported selected tactical side: {selected_side}")
+    selected_family = side_family(selected_side)
 
     projected: list[ProjectedOpponentUnit] = []
     rendered_entries: list[str] = []
@@ -54,7 +49,8 @@ def project_opponent_units(
             active=(),
         ):
             classification_side, native_side = _entry_side_authority(entry, source_path)
-            if selected_side in {classification_side, native_side}:
+            effective_classification = classification_side or native_side
+            if effective_classification in selected_family:
                 continue
 
             source_raw = entry.raw.rstrip()
