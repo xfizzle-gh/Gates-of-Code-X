@@ -73,6 +73,9 @@ def ensure_strategic_formations(state: CampaignState) -> dict:
                 supply_summary=battalion.supply,
                 experience_summary=battalion.experience,
                 is_player_controlled=battalion.is_player_controlled,
+                recon_capability=_migrated_recon_capability(
+                    battalion.formation_id
+                ),
             )
             state.strategic_formations[force_id] = force
         else:
@@ -170,6 +173,12 @@ def _stable_migration_record(incoming_schema: int) -> dict:
         "default_movement_state": DEFAULT_MOVEMENT_STATE,
         "note": "Legacy independent battalions wrapped as battalion-echelon strategic formations.",
     }
+
+
+def _migrated_recon_capability(template_formation_id: str) -> bool:
+    from .observation import RECON_TEMPLATE_IDS
+
+    return template_formation_id in RECON_TEMPLATE_IDS
 
 
 def _display_name_for_battalion(state: CampaignState, battalion: Battalion) -> str:

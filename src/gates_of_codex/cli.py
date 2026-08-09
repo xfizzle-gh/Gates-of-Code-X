@@ -52,6 +52,7 @@ def build_parser() -> argparse.ArgumentParser:
     new.add_argument("--codex", required=True)
     new.add_argument("--output", default="campaign.json")
     new.add_argument("--faction", choices=FACTION_CHOICES, default="nato")
+    new.add_argument("--fog-of-war", choices=["on", "off"], default="off")
     show = sub.add_parser("show")
     show.add_argument("campaign")
     move = sub.add_parser("move")
@@ -165,6 +166,7 @@ def main(argv: list[str] | None = None) -> int:
         state = load_bundled_scenario()
         state.code_x_directory = str(Path(args.codex).resolve())
         set_player_faction(state, Faction(args.faction))
+        state.fog_of_war_enabled = args.fog_of_war == "on"
         catalog = CodeXCatalogScanner().scan(args.codex)
         populate_starter_rosters(state, catalog)
         initialize_economy(state, catalog)
@@ -183,8 +185,13 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "auto-resolve":
         state = load_campaign(args.campaign)
-        winner = CampaignEngine(state).auto_resolve_pending_battle()
-        save_campaign(state, args.campaign)
+        engine = CampaignEngine(state)
+        winner = engine.auto_resolve_pending_battle()
+        save_campaign(
+            state,
+            args.campaign,
+            observation_context=engine.observation_context,
+        )
         print(winner.value)
         return 0
     if args.command == "end-turn":
@@ -228,7 +235,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "run-ai-turn":
         state = load_campaign(args.campaign)
         faction = Faction(args.faction)
-        actions = StrategicAI(state, random_seed=args.seed).take_turn(faction)
+        ai = StrategicAI(state, random_seed=args.seed)
+        actions = ai.take_turn(faction)
         next_faction = None
         if args.advance_turn:
             if state.current_faction != faction:
@@ -236,7 +244,11 @@ def main(argv: list[str] | None = None) -> int:
                     f"Cannot advance {faction.value}; current faction is {state.current_faction.value}"
                 )
             next_faction = CampaignEngine(state).end_turn().value
-        save_campaign(state, args.campaign)
+        save_campaign(
+            state,
+            args.campaign,
+            observation_context=ai.observation_context,
+        )
         print(json.dumps({
             "faction": faction.value,
             "actions": [asdict(action) for action in actions],
@@ -378,7 +390,6 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "export-frontend":
         state = load_campaign(args.campaign)
         output = write_frontend_snapshot(state, args.output, campaign_path=args.campaign)
-        save_campaign(state, args.campaign)
         print(output)
         return 0
     if args.command == "apply-frontend":

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import sys
 import tempfile
@@ -24,7 +25,7 @@ from .supply import (
 )
 
 
-FRONTEND_SCHEMA_VERSION = 13
+FRONTEND_SCHEMA_VERSION = 14
 FRONTEND_PYTHON_MODULE = "gates_of_codex"
 
 
@@ -58,6 +59,9 @@ def build_frontend_snapshot(
     campaign_path: str | Path | None = None,
     snapshot_path: str | Path | None = None,
 ) -> dict:
+    # Frontend export is a pure projection. Existing helper functions may normalize
+    # derived state, so operate only on a detached copy.
+    state = copy.deepcopy(state)
     ensure_strategic_layer(state)
     from .force_migration import ensure_strategic_formations
     from .operational_movement import (
@@ -108,14 +112,27 @@ def build_frontend_snapshot(
         faction_id: supply_status_for_faction(state, Faction(faction_id))
         for faction_id in sorted(state.factions)
     }
-    front_options = list_front_options(state, state.current_faction)
+    option_faction = state.current_faction
+    if state.fog_of_war_enabled:
+        human_factions = [
+            row.faction for row in state.factions.values()
+            if row.is_human_controlled
+        ]
+        if len(human_factions) != 1:
+            raise ValueError("fog_of_war_requires_single_human_faction")
+        option_faction = human_factions[0]
+    front_options = (
+        list_front_options(state, option_faction)
+        if not state.fog_of_war_enabled or state.current_faction == option_faction
+        else []
+    )
     from .presentation import build_stack_presentations
 
     stack_payload = build_stack_presentations(state, front_options)
     battalion_presentations = stack_payload["battalions"]
     strategic_formation_presentations = stack_payload.get("strategic_formations", {})
 
-    return {
+    snapshot = {
         "schema": "gates-of-codex.frontend",
         "schema_version": FRONTEND_SCHEMA_VERSION,
         "campaign": {
@@ -316,6 +333,396 @@ def build_frontend_snapshot(
             state.map_metadata.get("province_names") or province_name_coverage(state)
         ),
     }
+    return _apply_s11_frontend_filter(snapshot, state)
+
+
+def _apply_s11_frontend_filter(snapshot: dict, state: CampaignState) -> dict:
+    if not state.fog_of_war_enabled:
+        snapshot["fog_of_war"] = {
+            "enabled": False,
+            "observer_faction": None,
+            "observer_scope_id": None,
+        }
+        snapshot["last_known_contacts"] = []
+        return snapshot
+
+    from .observation import (
+        current_and_last_known_records,
+        knowledge_record_to_dict,
+        observer_factions,
+        observer_scope_id,
+    )
+    from .models import InformationTier
+
+    humans = [row.faction for row in state.factions.values() if row.is_human_controlled]
+    if len(humans) != 1:
+        raise ValueError("fog_of_war_requires_single_human_faction")
+    observer = humans[0]
+    coalition = observer_factions(state, observer)
+    scope = observer_scope_id(state, observer)
+    current, stale = current_and_last_known_records(state, observer)
+    full_force_rows = {row["id"]: row for row in snapshot.get("strategic_formations", [])}
+    filtered_forces: list[dict] = []
+    fully_observed_subjects: set[str] = set()
+    for force in sorted(state.strategic_formations.values(), key=lambda row: row.strategic_formation_id):
+        full = full_force_rows.get(force.strategic_formation_id, {})
+        if force.faction in coalition:
+            friendly = dict(full)
+            friendly["information_tier"] = "friendly"
+            filtered_forces.append(friendly)
+            fully_observed_subjects.add(force.strategic_formation_id)
+            continue
+        record = current.get(force.strategic_formation_id)
+        if record is None:
+            continue
+        if record.tier == InformationTier.FULLY_OBSERVED:
+            row = dict(full)
+            row.pop("move_order", None)
+            row.pop("stance", None)
+            row["information_tier"] = record.tier.value
+            row["source_ids"] = list(record.source_ids)
+            filtered_forces.append(row)
+            fully_observed_subjects.add(force.strategic_formation_id)
+            continue
+        row = _frontend_contact_row(state, record)
+        filtered_forces.append(row)
+    snapshot["strategic_formations"] = filtered_forces
+
+    allowed_battalions: set[str] = set()
+    for force_id in fully_observed_subjects:
+        force = state.strategic_formations.get(force_id)
+        if force is not None:
+            allowed_battalions.update(force.battalion_ids)
+    snapshot["battalions"] = [
+        row for row in snapshot.get("battalions", []) if row.get("id") in allowed_battalions
+    ]
+    allowed_commanders = {
+        row.get("commander_id")
+        for row in snapshot["strategic_formations"]
+        if row.get("commander_id")
+    } | {
+        row.get("commander_id")
+        for row in snapshot["battalions"]
+        if row.get("commander_id")
+    }
+    snapshot["commanders"] = [
+        row for row in snapshot.get("commanders", []) if row.get("id") in allowed_commanders
+    ]
+    snapshot["battalion_stacks"] = {
+        province_id: [item for item in items if item in allowed_battalions]
+        for province_id, items in snapshot.get("battalion_stacks", {}).items()
+        if any(item in allowed_battalions for item in items)
+    }
+    observer_has_turn = state.current_faction == observer
+    actionable_battalions = {
+        battalion.battalion_id
+        for battalion in state.battalions.values()
+        if observer_has_turn and battalion.faction == observer
+    }
+    snapshot["battalion_presentations"] = {
+        key: _sanitize_battalion_presentation(
+            value,
+            allowed_battalions,
+            actionable=key in actionable_battalions,
+        )
+        for key, value in snapshot.get("battalion_presentations", {}).items()
+        if key in allowed_battalions
+    }
+    for row in snapshot["battalions"]:
+        row["presentation"] = snapshot["battalion_presentations"].get(
+            row.get("id"), {}
+        )
+    snapshot["strategic_formation_presentations"] = {
+        key: _sanitize_strategic_formation_presentation(
+            value,
+            friendly=(
+                state.strategic_formations.get(key) is not None
+                and state.strategic_formations[key].faction in coalition
+            ),
+            actionable=(
+                observer_has_turn
+                and state.strategic_formations.get(key) is not None
+                and state.strategic_formations[key].faction == observer
+            ),
+        )
+        for key, value in snapshot.get(
+            "strategic_formation_presentations", {}
+        ).items()
+        if key in fully_observed_subjects
+    }
+    snapshot["stack_presentations"] = {
+        province_id: _sanitize_stack_presentation(
+            row,
+            actionable_battalions=actionable_battalions,
+        )
+        for province_id, row in snapshot.get("stack_presentations", {}).items()
+        if isinstance(row, dict)
+        and bool(row.get("battalion_ids"))
+        and all(
+            item in allowed_battalions
+            for item in row.get("battalion_ids", [])
+        )
+    }
+
+    allowed_templates = {
+        force.template_formation_id
+        for force in state.strategic_formations.values()
+        if force.faction in coalition
+        or force.strategic_formation_id in fully_observed_subjects
+    }
+    filtered_templates: list[dict] = []
+    for row in snapshot.get("formations", []):
+        template_id = row.get("id")
+        if template_id not in allowed_templates:
+            continue
+        sanitized = dict(row)
+        template = state.formations.get(str(template_id))
+        if template is not None and template.faction not in coalition:
+            for key in (
+                "deployment_zone",
+                "doctrine_tags",
+                "preferred_categories",
+                "notes",
+                "recruitment_offers",
+            ):
+                sanitized.pop(key, None)
+        filtered_templates.append(sanitized)
+    snapshot["formations"] = filtered_templates
+    snapshot["research"] = [
+        row for row in snapshot.get("research", []) if Faction(row.get("faction")) in coalition
+    ]
+    for faction_row in snapshot.get("factions", []):
+        try:
+            faction = Faction(faction_row.get("id"))
+        except ValueError:
+            continue
+        if faction not in coalition:
+            keep = {
+                "id": faction_row.get("id"),
+                "is_human_controlled": False,
+                "is_eliminated": faction_row.get("is_eliminated", False),
+            }
+            faction_row.clear()
+            faction_row.update(keep)
+
+    visible_battalion_ids = {row.get("id") for row in snapshot.get("battalions", [])}
+    for province in snapshot.get("provinces", []):
+        owner_raw = province.get("owner")
+        try:
+            owner = Faction(owner_raw)
+        except ValueError:
+            owner = Faction.NEUTRAL
+        province["occupied_by_battalions"] = [
+            item for item in province.get("occupied_by_battalions", [])
+            if item in visible_battalion_ids
+        ]
+        province["occupied_by"] = (
+            province["occupied_by_battalions"][0]
+            if province["occupied_by_battalions"] else ""
+        )
+        province["supply_source_for"] = [
+            item
+            for item in province.get("supply_source_for", [])
+            if item in {member.value for member in coalition}
+        ]
+        if owner not in coalition:
+            province["infrastructure"] = {}
+            province["construction_options"] = []
+            province.pop("resource_yield", None)
+            province.pop("fortification", None)
+            metadata = province.get("metadata", {})
+            if isinstance(metadata, dict):
+                province["metadata"] = {
+                    key: value
+                    for key, value in metadata.items()
+                    if key in {"id_color", "name_source", "layout_source"}
+                }
+
+    safe_site_control = []
+    for row in snapshot.get("campaign", {}).get("site_control", []):
+        sanitized = dict(row)
+        raw_controller = sanitized.get("controller_faction")
+        try:
+            controller = Faction(raw_controller) if raw_controller else None
+        except ValueError:
+            controller = None
+        if controller not in coalition:
+            for key in (
+                "controller_faction", "claimant_faction", "claimant_formation_id",
+                "progress_ticks", "required_ticks", "control_weight_milli"
+            ):
+                sanitized.pop(key, None)
+        safe_site_control.append(sanitized)
+    snapshot.setdefault("campaign", {})["site_control"] = safe_site_control
+    metadata = snapshot["campaign"].get("map_metadata", {})
+    if isinstance(metadata, dict):
+        snapshot["campaign"]["map_metadata"] = {
+            key: value for key, value in metadata.items()
+            if key not in {
+                "operational_site_control", "strategic_actor_runtime",
+                "actor_content_runtime", "operational_objectives",
+                "last_round_economy", "unit_presentations",
+                "operational_edge_retreat_nodes"
+            }
+        }
+
+    snapshot["front_options"] = [
+        row
+        for row in snapshot.get("front_options", [])
+        if row.get("battalion_id") in actionable_battalions
+        and all(item in allowed_battalions for item in row.get("enemies", []))
+    ]
+
+    if not _observer_participates_in_pending_battle(state, coalition):
+        snapshot["pending_battle"] = (
+            {"operational_pause": True}
+            if state.pending_battle is not None
+            else None
+        )
+
+    snapshot["fog_of_war"] = {
+        "enabled": True,
+        "observer_faction": observer.value,
+        "observer_scope_id": scope,
+    }
+    snapshot["last_known_contacts"] = [
+        _frontend_contact_row(state, row, stale=True) for row in stale
+    ]
+    return snapshot
+
+
+def _frontend_contact_row(state: CampaignState, record, *, stale: bool = False) -> dict:
+    row = {
+        "id": record.opaque_contact_id if record.tier.value == "contact" else record.subject_formation_id,
+        "information_tier": record.tier.value,
+        "current": False if stale else bool(record.current),
+        "province_id": record.last_seen_province_id,
+        "last_seen_node_id": record.last_seen_node_id,
+        "last_seen_edge_id": record.last_seen_edge_id,
+        "last_seen_turn": record.last_seen_turn,
+        "last_seen_tick": record.last_seen_tick,
+        "source_ids": list(record.source_ids),
+        "display_pixel": _observation_display_pixel(state, record),
+    }
+    if record.tier.value != "contact":
+        row.update({
+            "display_name": record.display_name,
+            "faction": record.faction_id,
+            "actor_id": record.actor_id,
+            "echelon": record.echelon,
+        })
+    if record.tier.value in {"assessed", "fully_observed"}:
+        row.update({
+            "strength_band": record.strength_band,
+            "condition_band": record.condition_band,
+            "supply_band": record.supply_band,
+            "last_seen_direction": record.last_seen_direction,
+        })
+    if record.tier.value == "fully_observed" and record.last_seen_progress_milli is not None:
+        row["last_seen_progress_milli"] = record.last_seen_progress_milli
+    return row
+
+
+def _observation_display_pixel(state: CampaignState, record) -> list[int] | None:
+    from .models import InformationTier
+    from .operational_position import _pixel_from_position, load_operational_graph_for_state
+    from .operational_schema import FormationOperationalPosition, PositionMode
+
+    graph = load_operational_graph_for_state(state)
+    if graph is not None:
+        nodes = {str(row.get("node_id")): row for row in graph.get("nodes", []) if isinstance(row, dict)}
+        if record.last_seen_node_id in nodes:
+            pixel = nodes[record.last_seen_node_id].get("pixel")
+            if isinstance(pixel, list) and len(pixel) >= 2:
+                return [int(pixel[0]), int(pixel[1])]
+        if record.last_seen_edge_id:
+            if (
+                record.tier == InformationTier.FULLY_OBSERVED
+                and record.last_seen_progress_milli is not None
+            ):
+                exact = _pixel_from_position(
+                    FormationOperationalPosition(
+                        mode=PositionMode.ON_EDGE.value,
+                        edge_id=record.last_seen_edge_id,
+                        progress_milli=record.last_seen_progress_milli,
+                        facing_node_id=record.last_seen_direction or None,
+                    ),
+                    graph,
+                )
+                if exact is not None:
+                    return exact
+            edge = next((row for row in graph.get("edges", []) if isinstance(row, dict) and str(row.get("edge_id")) == record.last_seen_edge_id), None)
+            if edge is not None:
+                a, b = nodes.get(str(edge.get("a"))), nodes.get(str(edge.get("b")))
+                if a and b and isinstance(a.get("pixel"), list) and isinstance(b.get("pixel"), list):
+                    return [int(round((a["pixel"][0] + b["pixel"][0]) / 2)), int(round((a["pixel"][1] + b["pixel"][1]) / 2))]
+    province = state.provinces.get(record.last_seen_province_id)
+    return None if province is None else [int(round(province.x)), int(round(province.y))]
+
+
+
+def _sanitize_strategic_formation_presentation(
+    value: dict, *, friendly: bool, actionable: bool
+) -> dict:
+    result = copy.deepcopy(value)
+    if not friendly:
+        # Enemy movement orders remain hidden at every information tier.
+        result.pop("move_order", None)
+    if not actionable:
+        result["can_act"] = False
+    return result
+
+
+def _sanitize_battalion_presentation(
+    value: dict,
+    allowed_battalions: set[str],
+    *,
+    actionable: bool,
+) -> dict:
+    result = copy.deepcopy(value)
+    if not actionable:
+        result["legal_options"] = []
+        result["legal_option_count"] = 0
+        result["can_act"] = False
+        return result
+    legal = [
+        row
+        for row in result.get("legal_options", [])
+        if not row.get("enemies")
+        or all(item in allowed_battalions for item in row.get("enemies", []))
+    ]
+    result["legal_options"] = legal
+    result["legal_option_count"] = len(legal)
+    result["can_act"] = bool(legal)
+    return result
+
+
+def _sanitize_stack_presentation(
+    value: dict,
+    *,
+    actionable_battalions: set[str],
+) -> dict:
+    result = copy.deepcopy(value)
+    result["can_act"] = any(
+        item in actionable_battalions
+        for item in result.get("battalion_ids", [])
+    )
+    return result
+
+
+def _observer_participates_in_pending_battle(
+    state: CampaignState,
+    coalition: frozenset[Faction],
+) -> bool:
+    pending = state.pending_battle
+    if pending is None:
+        return False
+    return any(
+        participant.faction in coalition
+        for participant in (
+            pending.attacking_participants + pending.defending_participants
+        )
+    )
 
 
 def write_frontend_snapshot(

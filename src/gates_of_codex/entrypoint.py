@@ -268,6 +268,7 @@ def _run_new(arguments: list[str]) -> int:
     _add_stack_arguments(parser, require_codex=False)
     parser.add_argument("--output", default="campaign.json")
     parser.add_argument("--faction", choices=FACTION_CHOICES, default="nato")
+    parser.add_argument("--fog-of-war", choices=["on", "off"], default="off")
     parser.add_argument(
         "--strategic-map",
         choices=["interim_goe_europe", "europe_mediterranean_from_goe"],
@@ -290,6 +291,7 @@ def _run_new(arguments: list[str]) -> int:
             manifest_path=args.em_manifest,
             selected_faction=Faction(args.faction),
         )
+        state.fog_of_war_enabled = args.fog_of_war == "on"
         if args.game:
             state.game_directory = str(Path(args.game).expanduser().resolve())
         if args.profile:
@@ -328,6 +330,7 @@ def _run_new(arguments: list[str]) -> int:
     if args.stack_config:
         state.map_metadata["stack_config"] = str(Path(args.stack_config).expanduser().resolve())
     set_player_faction(state, Faction(args.faction))
+    state.fog_of_war_enabled = args.fog_of_war == "on"
     populate_starter_rosters(state, catalog)
     initialize_economy(state, catalog)
     evaluate_campaign_outcome(state)
