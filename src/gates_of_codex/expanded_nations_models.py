@@ -50,10 +50,10 @@ class ProjectedUnit:
 class ProjectedOpponentUnit:
     entry_name: str
     tactical_side: str
-    native_side: str
     source_reference: str
     source_sha256: str
     projected_sha256: str
+    native_side: str = ""
 
 
 @dataclass(frozen=True, slots=True)
