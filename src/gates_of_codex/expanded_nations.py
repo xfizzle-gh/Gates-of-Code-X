@@ -7,6 +7,7 @@ from typing import Any, Iterable, Mapping, Sequence
 from .faction_wiring_compiler import FactionWiringCompiler
 from .launcher import launch_game
 from .modstack import load_stack_config, normalize_stack
+from .expanded_nations_actor_sources import project_actor_units
 from .expanded_nations_compile import clean_compile_source_view
 from .expanded_nations_models import (
     ACTIVATION_SCHEMA,
@@ -35,7 +36,6 @@ from .expanded_nations_render import (
     render_roster_file,
     render_units_file,
 )
-from .expanded_nations_sources import project_actor_units
 from .expanded_nations_storage import (
     deactivate_actor_projection,
     install_projection,
