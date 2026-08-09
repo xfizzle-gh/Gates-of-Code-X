@@ -28,7 +28,7 @@ class S11CliTests(unittest.TestCase):
                 scanner = MagicMock()
                 scanner.scan.return_value = MagicMock()
                 with (
-                    patch("gates_of_codex.cli.load_bundled_scenario", return_value=state),
+                    patch("gates_of_codex.cli.build_scenario", return_value=state),
                     patch("gates_of_codex.cli.CodeXCatalogScanner", return_value=scanner),
                     patch("gates_of_codex.cli.populate_starter_rosters"),
                     patch("gates_of_codex.cli.initialize_economy"),
@@ -38,6 +38,8 @@ class S11CliTests(unittest.TestCase):
                     result = cli_main(
                         [
                             "new",
+                            "--scenario",
+                            "legacy_goe_europe",
                             "--codex",
                             td,
                             "--output",
