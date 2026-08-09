@@ -4,6 +4,11 @@ from pathlib import Path
 from typing import Any, Callable, Mapping
 
 from .expanded_nations_compile import recover_interrupted_compile
+from .expanded_nations_models import (
+    ExpandedNationsError,
+    MANIFEST_RELATIVE,
+    all_managed_candidates,
+)
 from .expanded_nations_transaction import (
     deactivate_actor_projection as _deactivate_actor_projection,
     install_projection as _install_projection,
@@ -45,6 +50,18 @@ def install_projection(
 def deactivate_actor_projection(gates_root: str | Path) -> bool:
     root = Path(gates_root).expanduser().resolve()
     recover_interrupted_compile(root)
+    manifest_path = root / MANIFEST_RELATIVE
+    if not manifest_path.is_file():
+        orphaned_binary = [
+            path
+            for path in all_managed_candidates(root)
+            if path.is_file() and path.suffix.lower() == ".png"
+        ]
+        if orphaned_binary:
+            raise ExpandedNationsError(
+                "Generated Expanded Nations presentation files exist without an activation manifest: "
+                + ", ".join(str(path) for path in orphaned_binary)
+            )
     return _deactivate_actor_projection(root)
 
 
