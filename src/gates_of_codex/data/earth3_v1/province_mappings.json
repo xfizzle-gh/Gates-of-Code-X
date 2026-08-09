@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "location_authority": "src/gates_of_codex/earth3/locations.py#REQUIRED_LOCATIONS",
+  "stable_id_authority": "godot/assets/maps/earth3_europe_mediterranean/polygon_dataset.json#provinces[id,source_id]",
+  "justification": "Exact source-province IDs from the licensed local Earth3 extract are joined to the committed production dataset's source_id and stable id fields; no centroid or visual inference is used.",
+  "mappings": [
+    {"display_name": "Berlin", "location_key": "Berlin", "source_province_id": 592, "province_id": "e3_0592"},
+    {"display_name": "Tallinn", "location_key": "Tallinn", "source_province_id": 513, "province_id": "e3_0513"},
+    {"display_name": "Riga", "location_key": "Riga", "source_province_id": 504, "province_id": "e3_0504"},
+    {"display_name": "Vilnius", "location_key": "Vilnius", "source_province_id": 442, "province_id": "e3_0442"},
+    {"display_name": "Kyiv", "location_key": "Kyiv", "source_province_id": 3757, "province_id": "e3_1937"},
+    {"display_name": "Odesa", "location_key": "Odesa", "source_province_id": 3241, "province_id": "e3_1749"},
+    {"display_name": "Kherson", "location_key": "Kherson", "source_province_id": 1271, "province_id": "e3_1208"},
+    {"display_name": "Zaporizhzhia", "location_key": "Zaporizhzhia", "source_province_id": 3782, "province_id": "e3_1962"},
+    {"display_name": "Rostov-on-Don", "location_key": "Rostov_on_Don", "source_province_id": 10868, "province_id": "e3_2793"},
+    {"display_name": "Luhansk", "location_key": "Luhansk", "source_province_id": 10869, "province_id": "e3_2794"},
+    {"display_name": "Donetsk", "location_key": "Donetsk", "source_province_id": 12175, "province_id": "e3_3380"}
+  ]
+}

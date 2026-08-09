@@ -58,6 +58,10 @@ class StrategicAI:
                     details=construction,
                 )
             )
+        from .earth3_bootstrap import earth3_p2_movement_unavailable
+
+        if earth3_p2_movement_unavailable(self.state):
+            return actions
         # Operational authority: graph-native orders only (no province teleport).
         from .operational_ai import (
             operational_graph_authority_present,

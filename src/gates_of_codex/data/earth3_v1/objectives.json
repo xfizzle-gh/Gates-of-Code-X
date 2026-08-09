@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "capitals": [
+    {"capital_id": "capital_western_berlin", "display_name": "Western Command – Berlin", "owner_type": "alliance", "owner_id": "western_coalition", "province_id": "e3_0592"},
+    {"capital_id": "capital_ukraine_kyiv", "display_name": "Ukraine Command – Kyiv", "owner_type": "actor", "owner_id": "ukr", "province_id": "e3_1937"},
+    {"capital_id": "capital_russia_rostov", "display_name": "Russia Command – Rostov-on-Don", "owner_type": "actor", "owner_id": "rus", "province_id": "e3_2793"}
+  ],
+  "objectives": [
+    {"id": "obj_western_donbas", "display_name": "Secure Donetsk and Luhansk", "owner_type": "alliance", "owner_id": "western_coalition", "coalition": "western_coalition", "kind": "control", "targets": ["e3_2794", "e3_3380"], "required": 2, "primary": true, "progress": 0, "completed": false, "rewarded": false, "reward_each": 0},
+    {"id": "obj_russian_kyiv_vilnius", "display_name": "Future Kyiv–Vilnius Operation", "owner_type": "actor", "owner_id": "rus", "coalition": "russian_command", "kind": "control", "targets": ["e3_0442", "e3_1937"], "required": 2, "primary": false, "progress": 0, "completed": false, "rewarded": false, "reward_each": 0}
+  ]
+}

@@ -40,10 +40,10 @@ attack targets.
 ## Actors, alliances, and forces
 
 The human NATO seat uses strategic actor `usa`. NATO-side formations remain
-actor-scoped: US, German, Polish, and Ukrainian formations use `usa`, `germany`,
-`poland`, and `ukraine` respectively. Ukraine retains its existing NATO
-membership, UKR tactical side, and explicit alliance relationship. Russia uses
-actor `russia` and its existing tactical side. Actor ownership governs every
+actor-scoped and use the manifest's canonical IDs: `usa` (United States), `deu`
+(Germany), `pol` (Poland), and `ukr` (Ukraine). Ukraine retains its existing
+UKR tactical side and receives an explicit alliance relationship with NATO.
+Russia uses manifest actor `rus` and its existing tactical side. Actor ownership governs every
 formation, roster, research state, economy, recruitment pool, and provenance
 record even when actors share a faction.
 

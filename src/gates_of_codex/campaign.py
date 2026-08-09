@@ -44,6 +44,12 @@ class CampaignEngine:
     def move_or_attack(self, battalion_id: str, target_province_id: str) -> MoveResult:
         if self.state.pending_battle is not None:
             raise RuntimeError("Resolve the pending battle first")
+        from .earth3_bootstrap import earth3_p2_movement_unavailable
+
+        if earth3_p2_movement_unavailable(self.state):
+            raise ValueError(
+                "Earth3 P2 operational movement and attack are unavailable until P3"
+            )
         battalion = self._get_battalion(battalion_id)
         self._reject_if_operational_order_locked(battalion)
         target = self._get_province(target_province_id)
