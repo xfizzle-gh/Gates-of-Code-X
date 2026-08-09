@@ -151,19 +151,48 @@ def construction_cost(province: Province, building: str) -> int:
 def construction_options(state: CampaignState, faction: Faction, province_id: str) -> list[dict[str, Any]]:
     ensure_strategic_layer(state)
     province = _province(state, province_id)
+    from .earth3_bootstrap import (
+        earth3_p2_actor_resources,
+        earth3_p2_footprint,
+        is_earth3_p2_campaign,
+    )
+
+    outside_p2_footprint = (
+        is_earth3_p2_campaign(state)
+        and province_id not in earth3_p2_footprint(state)
+    )
+    p2_campaign = is_earth3_p2_campaign(state)
+    actor_scope = (
+        earth3_p2_actor_resources(state, province_id, faction)
+        if p2_campaign and not outside_p2_footprint and province.owner == faction
+        else None
+    )
+    available_resources = (
+        int(actor_scope[0]["resources"])
+        if actor_scope is not None
+        else (
+            0
+            if p2_campaign
+            else state.factions[faction.value].resources
+        )
+    )
     reachable = reachable_supply_provinces(state, faction)
     levels = infrastructure_levels(province)
     options = []
     for building, rules in BUILDING_RULES.items():
         cost = construction_cost(province, building)
         reasons: list[str] = []
+        if outside_p2_footprint:
+            reasons.append("outside_scenario_footprint")
+        if p2_campaign and building == "supply_hub":
+            reasons.append("operational_supply_unavailable_until_p3")
         if province.owner != faction:
             reasons.append("province_not_owned")
         if province_id not in reachable:
             reasons.append("province_not_supplied")
         if levels[building] >= rules["max_level"]:
             reasons.append("maximum_level")
-        if state.factions[faction.value].resources < cost:
+        if available_resources < cost:
             reasons.append("insufficient_resources")
         options.append(
             {
@@ -187,8 +216,18 @@ def build_infrastructure(
 ) -> ConstructionResult:
     ensure_strategic_layer(state)
     province = _province(state, province_id)
+    from .earth3_bootstrap import (
+        earth3_p2_actor_resources,
+        require_earth3_p2_actionable,
+    )
+
+    require_earth3_p2_actionable(state, province_id, action="construction")
     if building not in BUILDING_RULES:
         raise KeyError(f"Unknown building: {building}")
+    from .earth3_bootstrap import is_earth3_p2_campaign
+
+    if is_earth3_p2_campaign(state) and building == "supply_hub":
+        raise ValueError("Earth3 P2 operational supply connectivity is unavailable until P3")
     if province.owner != faction:
         raise ValueError(f"Faction {faction.value} does not own {province_id}")
     if province_id not in reachable_supply_provinces(state, faction):
@@ -198,10 +237,23 @@ def build_infrastructure(
     if levels[building] >= rules["max_level"]:
         raise ValueError(f"{building} is already at maximum level")
     cost = construction_cost(province, building)
-    faction_state = state.factions[faction.value]
-    if faction_state.resources < cost:
+    actor_scope = earth3_p2_actor_resources(state, province_id, faction)
+    resource_row = (
+        actor_scope[0]
+        if actor_scope is not None
+        else state.factions[faction.value]
+    )
+    resources = (
+        int(resource_row["resources"])
+        if isinstance(resource_row, dict)
+        else resource_row.resources
+    )
+    if resources < cost:
         raise ValueError(f"Insufficient resources: need {cost}")
-    faction_state.resources -= cost
+    if isinstance(resource_row, dict):
+        resource_row["resources"] = resources - cost
+    else:
+        resource_row.resources -= cost
     levels[building] += 1
     province.metadata["infrastructure"] = levels
     if building == "fortification":
@@ -218,7 +270,11 @@ def build_infrastructure(
         building=building,
         level=levels[building],
         cost=cost,
-        resources_remaining=faction_state.resources,
+        resources_remaining=(
+            int(resource_row["resources"])
+            if isinstance(resource_row, dict)
+            else resource_row.resources
+        ),
     )
 
 

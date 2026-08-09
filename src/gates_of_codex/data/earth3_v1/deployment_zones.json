@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "deployment_zones": [
+    {"actor_id": "usa", "province_ids": ["e3_0504", "e3_0513"]},
+    {"actor_id": "deu", "province_ids": ["e3_0592"]},
+    {"actor_id": "pol", "province_ids": ["e3_0442"]},
+    {"actor_id": "ukr", "province_ids": ["e3_1208", "e3_1749", "e3_1937", "e3_1962"]},
+    {"actor_id": "rus", "province_ids": ["e3_2793", "e3_2794", "e3_3380"]}
+  ]
+}

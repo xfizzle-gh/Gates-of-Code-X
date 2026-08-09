@@ -53,6 +53,10 @@ def build_parser() -> argparse.ArgumentParser:
     new.add_argument("--codex")
     new.add_argument("--output")
     new.add_argument("--scenario", default=DEFAULT_SCENARIO_ID)
+    new.add_argument(
+        "--stack-config",
+        help="Validated active-stack config required to materialize Earth3 P2 rosters",
+    )
     new.add_argument("--faction", choices=FACTION_CHOICES, default="nato")
     new.add_argument("--fog-of-war", choices=["on", "off"], default="off")
     show = sub.add_parser("show")
@@ -181,7 +185,19 @@ def main(argv: list[str] | None = None) -> int:
             raise ValueError(
                 f"--codex is required when creating legacy scenario {definition.scenario_id}"
             )
-        state = build_scenario(args.scenario)
+        builder_options = (
+            {"stack_config": args.stack_config}
+            if definition.scenario_id == DEFAULT_SCENARIO_ID
+            else {}
+        )
+        state = build_scenario(args.scenario, **builder_options)
+        if (
+            definition.scenario_id == DEFAULT_SCENARIO_ID
+            and args.faction != Faction.NATO.value
+        ):
+            raise ValueError(
+                "Earth3 P2 human seat is fixed to the usa actor on the NATO tactical side"
+            )
         if args.codex:
             state.code_x_directory = str(Path(args.codex).resolve())
         set_player_faction(state, Faction(args.faction))

@@ -1,0 +1,11 @@
+{
+  "bootstrap_id": "earth3_v1_campaign_bootstrap",
+  "schema_version": 1,
+  "campaign_name": "Earth3 Central Europe–Baltic–Ukraine",
+  "selected_actor_id": "usa",
+  "current_actor_id": "usa",
+  "turn_number": 1,
+  "movement_authority": "p3_required",
+  "operational_maneuver_enabled": false,
+  "content_note": "Coherent P2 opening state; operational maneuver is intentionally unavailable until P3."
+}

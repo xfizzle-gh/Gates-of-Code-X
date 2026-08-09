@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "tactical_factions": [
+    {"faction_id": "nato", "resources": 0, "is_human_controlled": true, "compatibility_role": "active_tactical_side"},
+    {"faction_id": "ukr", "resources": 0, "is_human_controlled": false, "compatibility_role": "active_tactical_side"},
+    {"faction_id": "rusa", "resources": 0, "is_human_controlled": false, "compatibility_role": "active_tactical_side"},
+    {"faction_id": "prc", "resources": 0, "is_human_controlled": false, "compatibility_role": "inherited_actor_installation_only"}
+  ],
+  "active_actors": [
+    {"actor_id": "usa", "manifest_display_name": "United States", "tactical_side": "nato", "resources": 600},
+    {"actor_id": "deu", "manifest_display_name": "Germany", "tactical_side": "nato", "resources": 450},
+    {"actor_id": "pol", "manifest_display_name": "Poland", "tactical_side": "nato", "resources": 450},
+    {"actor_id": "ukr", "manifest_display_name": "Ukraine", "tactical_side": "ukr", "resources": 600},
+    {"actor_id": "rus", "manifest_display_name": "Russia", "tactical_side": "rusa", "resources": 750}
+  ],
+  "dormant_prc_note": "The existing actor-content installer necessarily retains the manifest PRC runtime row. P2 assigns it no scenario territory, forces, commanders, deployment, objectives, sites, roster, meaningful resources, or progression."
+}

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "connectivity_authority": "none_until_p3",
+  "sites": [
+    {"site_id": "site_berlin_command", "display_name": "Berlin Command", "kind": "command", "province_id": "e3_0592", "owner_actor_id": "deu", "supply_hub_intent": true},
+    {"site_id": "site_riga_depot", "display_name": "Riga Depot", "kind": "depot", "province_id": "e3_0504", "owner_actor_id": "usa", "supply_hub_intent": true},
+    {"site_id": "site_kyiv_command", "display_name": "Kyiv Command", "kind": "command", "province_id": "e3_1937", "owner_actor_id": "ukr", "supply_hub_intent": true},
+    {"site_id": "site_odesa_port", "display_name": "Odesa Port", "kind": "port", "province_id": "e3_1749", "owner_actor_id": "ukr", "supply_hub_intent": true},
+    {"site_id": "site_rostov_depot", "display_name": "Rostov Depot", "kind": "depot", "province_id": "e3_2793", "owner_actor_id": "rus", "supply_hub_intent": true},
+    {"site_id": "site_luhansk_objective", "display_name": "Luhansk Objective", "kind": "objective", "province_id": "e3_2794", "owner_actor_id": "rus", "supply_hub_intent": false},
+    {"site_id": "site_donetsk_objective", "display_name": "Donetsk Objective", "kind": "objective", "province_id": "e3_3380", "owner_actor_id": "rus", "supply_hub_intent": false}
+  ]
+}
