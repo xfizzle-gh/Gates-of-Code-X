@@ -7,7 +7,10 @@ from typing import Any, Iterable, Mapping, Sequence
 from .faction_wiring_compiler import FactionWiringCompiler
 from .launcher import launch_game
 from .modstack import load_stack_config, normalize_stack
-from .expanded_nations_actor_sources import project_actor_units
+from .expanded_nations_actor_sources import (
+    normalize_actor_purchase_ids,
+    project_actor_units,
+)
 from .expanded_nations_compile import clean_compile_source_view
 from .expanded_nations_models import (
     ACTIVATION_SCHEMA,
@@ -135,30 +138,31 @@ def activate_actor_projection(
             f"Actor {actor_id} projected {len(projected_units)} units, "
             f"expected {actor['unit_count']}"
         )
+    native_actor = normalize_actor_purchase_ids(actor, projected_units)
     opponent_units, opponent_body = project_opponent_units(side, roots)
-    projected_research = project_research_nodes(actor)
-    presentation_outputs = project_actor_presentation(actor, roots)
+    projected_research = project_research_nodes(native_actor)
+    presentation_outputs = project_actor_presentation(native_actor, roots)
 
     outputs: dict[Path, bytes] = {
-        ROSTER_RELATIVE: render_roster_file(actor).encode("utf-8"),
+        ROSTER_RELATIVE: render_roster_file(native_actor).encode("utf-8"),
         UNITS_RELATIVE: render_units_file(
-            actor,
+            native_actor,
             projected_units,
             projected_body,
         ).encode("utf-8"),
         OPPONENT_UNITS_RELATIVE: render_opponent_units_file(
-            actor,
+            native_actor,
             opponent_units,
             opponent_body,
         ).encode("utf-8"),
         RESEARCH_RELATIVE[side]: render_research_file(
-            actor,
+            native_actor,
             projected_research,
         ).encode("utf-8"),
         **presentation_outputs,
     }
     signature = projection_signature(
-        actor,
+        native_actor,
         payload,
         outputs,
         projected_units,
@@ -173,10 +177,10 @@ def activate_actor_projection(
     manifest_payload = {
         "schema": ACTIVATION_SCHEMA,
         "schema_version": ACTIVATION_VERSION,
-        "actor_id": actor["actor_id"],
-        "display_name": actor["display_name"],
+        "actor_id": native_actor["actor_id"],
+        "display_name": native_actor["display_name"],
         "tactical_side": side,
-        "playable": bool(actor["playable"]),
+        "playable": bool(native_actor["playable"]),
         "unit_count": len(projected_units),
         "opponent_entry_count": len(opponent_units),
         "research_node_count": len(projected_research),
@@ -203,8 +207,8 @@ def activate_actor_projection(
         post_commit_verify=lambda: verify_actor_projection(final_root),
     )
     return ActivationResult(
-        actor_id=str(actor["actor_id"]),
-        display_name=str(actor["display_name"]),
+        actor_id=str(native_actor["actor_id"]),
+        display_name=str(native_actor["display_name"]),
         tactical_side=side,
         unit_count=len(projected_units),
         research_node_count=len(projected_research),
