@@ -125,6 +125,113 @@ class ExpandedNationsNativeSquadIdTests(unittest.TestCase):
             self.assertEqual("fixture_rifle(rusa)", research[0].engine_id)
             self.assertEqual("fixture_rifle(rusa)", research[0].unlock_unit)
 
+    def test_source_local_defines_are_preserved_and_not_counted_as_purchases(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "stack"
+            source = root / "resource/set/multiplayer/units/conquest/fixture.set"
+            source.parent.mkdir(parents=True)
+            source.write_text(
+                '{define "dp_infantry_8"\n'
+                '    ("squad_with8types_conquest" c1(dummy:1))\n'
+                '}\n'
+                '{"fixture_saperi(rusa)"\n'
+                '    ("dp_infantry_8" side(rusa) period(2022s) '
+                'c1(rus_squadlead:1) c2(rus_rifleman:7))\n'
+                '    ("doctrine_t1" cool(180) d(modern_rusa_vdv) cost(3))\n'
+                '}\n',
+                encoding="utf-8",
+            )
+            actor = {
+                "actor_id": "fixture",
+                "tactical_side": "rusa",
+                "units": [
+                    {
+                        "unit_name": "fixture_saperi(rusa)",
+                        "tactical_side": "rusa",
+                        "source_side": "rusa",
+                        "source_priority": 0,
+                        "materializable": True,
+                        "virtual": False,
+                        "source_files": [
+                            "0:stack/set/multiplayer/units/conquest/fixture.set"
+                        ],
+                    }
+                ],
+            }
+            projected, body = project_actor_units(actor, [root], root)
+            self.assertEqual(1, len(projected))
+            self.assertLess(body.index('{define "dp_infantry_8"'), body.index('{"fixture_saperi(rusa)"'))
+            scan = scan_source_entries(body, "generated")
+            self.assertFalse(scan.diagnostics)
+            self.assertEqual(["define", "fixture_saperi(rusa)"], [entry.name for entry in scan.entries])
+
+            actor_text = body.encode("utf-8")
+            manifest = {
+                "tactical_side": "rusa",
+                "units": [{"unit_name": "fixture_saperi(rusa)"}],
+                "files": [
+                    {
+                        "relative_path": UNITS_RELATIVE.as_posix(),
+                        "sha256": "fixture",
+                        "byte_count": len(actor_text),
+                    }
+                ],
+            }
+            outputs, normalized = _legacy_verification_view(
+                {UNITS_RELATIVE: actor_text},
+                manifest,
+            )
+            transformed = outputs[UNITS_RELATIVE].decode("utf-8")
+            self.assertNotIn('{define "dp_infantry_8"', transformed)
+            self.assertIn('{"fixture_saperi(rusa)"', transformed)
+            self.assertEqual(1, len(normalized["units"]))
+
+    def test_conflicting_source_local_defines_fail_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "stack"
+            conquest = root / "resource/set/multiplayer/units/conquest"
+            conquest.mkdir(parents=True)
+            (conquest / "a.set").write_text(
+                '{define "dp_infantry_8" ("squad_with8types_conquest" c1(a:1))}\n'
+                '{"fixture_a(rusa)" ("dp_infantry_8" side(rusa) c1(a:8))}\n',
+                encoding="utf-8",
+            )
+            (conquest / "b.set").write_text(
+                '{define "dp_infantry_8" ("squad_with8types_conquest" c1(b:1))}\n'
+                '{"fixture_b(rusa)" ("dp_infantry_8" side(rusa) c1(b:8))}\n',
+                encoding="utf-8",
+            )
+            actor = {
+                "actor_id": "fixture",
+                "tactical_side": "rusa",
+                "units": [
+                    {
+                        "unit_name": "fixture_a(rusa)",
+                        "tactical_side": "rusa",
+                        "source_side": "rusa",
+                        "source_priority": 0,
+                        "materializable": True,
+                        "virtual": False,
+                        "source_files": [
+                            "0:stack/set/multiplayer/units/conquest/a.set"
+                        ],
+                    },
+                    {
+                        "unit_name": "fixture_b(rusa)",
+                        "tactical_side": "rusa",
+                        "source_side": "rusa",
+                        "source_priority": 0,
+                        "materializable": True,
+                        "virtual": False,
+                        "source_files": [
+                            "0:stack/set/multiplayer/units/conquest/b.set"
+                        ],
+                    },
+                ],
+            }
+            with self.assertRaisesRegex(ExpandedNationsError, "conflicts between"):
+                project_actor_units(actor, [root], root)
+
     def test_verification_view_authenticates_effective_macro_id(self) -> None:
         actor_text = (
             "; generated\n"
