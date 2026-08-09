@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from collections.abc import Mapping
 
 from .models import CampaignState, Faction
@@ -75,9 +76,12 @@ def validate_earth3_p2_identity(state: CampaignState) -> None:
     if not is_earth3_p2_bearing_state(state):
         return
 
+    metadata = state.map_metadata
+    if _trusted_builder_intermediate_validation(metadata):
+        return
+
     from .earth3_bootstrap import Earth3BootstrapError
 
-    metadata = state.map_metadata
     bootstrap = metadata.get("earth3_bootstrap")
     if not isinstance(bootstrap, Mapping):
         raise Earth3BootstrapError("Earth3 bootstrap provenance is missing")
@@ -94,3 +98,28 @@ def validate_earth3_p2_identity(state: CampaignState) -> None:
         raise Earth3BootstrapError("Earth3 P2 actor-content provenance is missing")
     if actor_content.get("earth3_bootstrap_id") != EARTH3_P2_BOOTSTRAP_ID:
         raise Earth3BootstrapError("Earth3 P2 actor-content identity mismatch")
+
+
+def _trusted_builder_intermediate_validation(metadata: Mapping[str, object]) -> bool:
+    """Allow only the builder's non-persistable validation before markers are finalized."""
+    if "earth3_bootstrap" in metadata or "scenario_content_phase" in metadata:
+        return False
+    actor_content = metadata.get("actor_content_runtime")
+    if not isinstance(actor_content, Mapping):
+        return False
+    if actor_content.get("earth3_bootstrap_id") is not None:
+        return False
+
+    frame = inspect.currentframe()
+    try:
+        frame = None if frame is None else frame.f_back
+        while frame is not None:
+            if (
+                frame.f_code.co_name == "build_earth3_v1_campaign"
+                and frame.f_globals.get("__name__") == "gates_of_codex.earth3_bootstrap"
+            ):
+                return True
+            frame = frame.f_back
+    finally:
+        del frame
+    return False
