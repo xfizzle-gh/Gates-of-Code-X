@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+import sys
 from collections.abc import Mapping
 
 from .models import CampaignState, Faction
@@ -101,7 +102,7 @@ def validate_earth3_p2_identity(state: CampaignState) -> None:
 
 
 def _trusted_builder_intermediate_validation(metadata: Mapping[str, object]) -> bool:
-    """Allow only the builder's non-persistable validation before markers are finalized."""
+    """Allow only the exact loaded builder's non-persistable intermediate validation."""
     if "earth3_bootstrap" in metadata or "scenario_content_phase" in metadata:
         return False
     actor_content = metadata.get("actor_content_runtime")
@@ -110,14 +111,17 @@ def _trusted_builder_intermediate_validation(metadata: Mapping[str, object]) -> 
     if actor_content.get("earth3_bootstrap_id") is not None:
         return False
 
+    module = sys.modules.get("gates_of_codex.earth3_bootstrap")
+    builder = None if module is None else getattr(module, "build_earth3_v1_campaign", None)
+    builder_code = getattr(builder, "__code__", None)
+    if builder_code is None:
+        return False
+
     frame = inspect.currentframe()
     try:
         frame = None if frame is None else frame.f_back
         while frame is not None:
-            if (
-                frame.f_code.co_name == "build_earth3_v1_campaign"
-                and frame.f_globals.get("__name__") == "gates_of_codex.earth3_bootstrap"
-            ):
+            if frame.f_code is builder_code:
                 return True
             frame = frame.f_back
     finally:
