@@ -5,6 +5,7 @@ from pathlib import Path
 import re
 from typing import Any, Mapping
 
+from .faction_wiring_scan import _side_from_filename, _side_from_name
 from .goh_source import scan_source_entries
 from .expanded_nations_models import (
     ACTIVATION_SCHEMA,
@@ -114,11 +115,32 @@ def verify_projection_artifacts(outputs: Mapping[Path, bytes], manifest: Mapping
         raise ExpandedNationsError("Generated opponent projection is malformed or incomplete")
     for entry, row in zip(opponent_scan.entries, opponent_rows, strict=True):
         expected_name = str(row.get("entry_name", ""))
-        expected_side = str(row.get("tactical_side", ""))
+        classification_side = str(row.get("tactical_side", ""))
+        native_side = str(row.get("native_side", ""))
+        source_reference = str(row.get("source_reference", ""))
         actual_sides = [call.value.lower() for call in entry.calls if call.family == "side"]
-        if entry.name != expected_name or actual_sides != ([expected_side] if expected_side else []):
+        expected_sides = [native_side] if native_side else []
+        if entry.name != expected_name or actual_sides != expected_sides:
             raise ExpandedNationsError(f"Generated opponent entry does not match manifest: {expected_name}")
-        if expected_side == side:
+
+        suffix_side = _side_from_name(entry.name)
+        filename_side = _side_from_filename(_source_filename(source_reference))
+        derived_classification = suffix_side or native_side or filename_side
+        if classification_side != derived_classification:
+            raise ExpandedNationsError(
+                f"Generated opponent classification disagrees with source authority: {entry.name}"
+            )
+        if classification_side != native_side:
+            if not (
+                suffix_side
+                and suffix_side == classification_side
+                and filename_side
+                and filename_side == native_side
+            ):
+                raise ExpandedNationsError(
+                    f"Generated opponent side mismatch lacks source-backed authority: {entry.name}"
+                )
+        if side in {classification_side, native_side}:
             raise ExpandedNationsError(f"Generated opponent projection leaks selected side {side}: {entry.name}")
 
     parsed_nodes = parse_generated_research(research_text)
@@ -148,6 +170,11 @@ def verify_projection_artifacts(outputs: Mapping[Path, bytes], manifest: Mapping
         raise ExpandedNationsError(
             f"Generated research unlock IDs do not match actor purchase IDs: expected={expected_actor_ids}; actual={unlock_ids}"
         )
+
+
+def _source_filename(source_reference: str) -> str:
+    normalized = source_reference.replace("\\", "/")
+    return normalized.rsplit("/", 1)[-1]
 
 
 def parse_generated_research(text: str) -> list[dict[str, Any]]:
