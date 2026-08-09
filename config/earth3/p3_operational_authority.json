@@ -21,7 +21,7 @@
   "directionality": "bidirectional",
   "movement_cost_milli": 1000,
   "supply_eligible": true,
-  "graph_relative_path": "godot/assets/maps/earth3_europe_mediterranean/operational/operational_graph.json",
+  "graph_relative_path": "godot/assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json",
   "graph_raw_sha256": "c2d6ab30bfd3e2e15404242144831c5dd6ba284cd132e605e2544be8524d72cf",
   "p2_sites_raw_sha256": "7fbfa2bd7fd40f97f69b5b515bb77cb7145d1299153a2263d79443692f4c2ef3",
   "frozen_p1": {

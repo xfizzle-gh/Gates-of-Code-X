@@ -28,7 +28,8 @@ PROPOSAL_RAW_SHA256 = "353b19cfbd29ea30ea2881758950679892755b9e208cfd863db4510a8
 APPROVAL_ISSUE = 141
 APPROVAL_COMMENT_ID = 5234226059
 GRAPH_RELATIVE_PATH = (
-    "godot/assets/maps/earth3_europe_mediterranean/operational/operational_graph.json"
+    "godot/assets/maps/earth3_europe_mediterranean/p3_authority/"
+    "p3_operational_graph.json"
 )
 AUTHORITY_RELATIVE_PATH = "config/earth3/p3_operational_authority.json"
 PROPOSAL_RELATIVE_PATH = "docs/audits/p3-first-corridor-route-inventory.json"

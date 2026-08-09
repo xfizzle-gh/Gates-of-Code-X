@@ -5,11 +5,20 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+import sys
 
 import pytest
 
-
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from gates_of_codex.operational_position import (
+    _graph_candidate_paths,
+    clear_operational_graph_cache,
+    load_operational_graph_payload,
+)
+
+
 AUTHORITY_PATH = ROOT / "config/earth3/p3_operational_authority.json"
 PROPOSAL_PATH = ROOT / "docs/audits/p3-first-corridor-route-inventory.json"
 DATASET_PATH = (
@@ -18,7 +27,11 @@ DATASET_PATH = (
 SITES_PATH = ROOT / "src/gates_of_codex/data/earth3_v1/sites.json"
 GRAPH_PATH = (
     ROOT
-    / "godot/assets/maps/earth3_europe_mediterranean/operational/operational_graph.json"
+    / "godot/assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json"
+)
+P3_FIXED_GRAPH_PATH = (
+    ROOT
+    / "godot/assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json"
 )
 BUILDER_PATH = ROOT / "tools/earth3/build_p3_operational_graph.py"
 
@@ -113,6 +126,33 @@ def test_graph_is_the_exact_approved_64_node_65_edge_projection() -> None:
         "proposal_commit": authority["proposal_commit"],
         "rollback_batch_id": ROLLBACK_BATCH_ID,
     }
+
+
+def test_raw_p2_metadata_cannot_discover_the_enabled_p3_graph() -> None:
+    raw_p2_metadata = {
+        "operational_graph": None,
+        "strategic_map_manifest": (
+            "assets/maps/earth3_europe_mediterranean/map_manifest.json"
+        ),
+    }
+    candidates = _graph_candidate_paths(
+        map_id="earth3_europe_mediterranean",
+        map_metadata=raw_p2_metadata,
+        roots=[ROOT],
+    )
+    resolved_candidates = {path.resolve() for path in candidates}
+    assert P3_FIXED_GRAPH_PATH.resolve() not in resolved_candidates
+    assert all(path.name != P3_FIXED_GRAPH_PATH.name for path in candidates)
+
+    clear_operational_graph_cache()
+    assert (
+        load_operational_graph_payload(
+            "earth3_europe_mediterranean",
+            map_metadata=raw_p2_metadata,
+            search_roots=[ROOT],
+        )
+        is None
+    )
 
 
 def test_builder_reproduces_committed_bytes_and_is_input_order_independent() -> None:

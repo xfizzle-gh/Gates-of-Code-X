@@ -11,7 +11,7 @@ PROPOSAL = ROOT / "docs/audits/p3-first-corridor-route-inventory.json"
 P3_AUTHORITY = ROOT / "config/earth3/p3_operational_authority.json"
 P3_GRAPH = (
     ROOT
-    / "godot/assets/maps/earth3_europe_mediterranean/operational/operational_graph.json"
+    / "godot/assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json"
 )
 
 AUTHORIZED_BASE_COMMIT = "d16e7b145db82180d628bc9c0a636ebbab51db3c"
@@ -208,6 +208,6 @@ def test_exact_byte_p3_artifacts_are_forced_to_lf_in_git() -> None:
     attributes = (ROOT / ".gitattributes").read_text(encoding="utf-8").splitlines()
     assert "config/earth3/p3_operational_authority.json text eol=lf" in attributes
     assert (
-        "godot/assets/maps/earth3_europe_mediterranean/operational/operational_graph.json text eol=lf"
+        "godot/assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json text eol=lf"
         in attributes
     )
