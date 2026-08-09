@@ -1,31 +1,35 @@
-# Expanded Nations live acceptance gate
+# Expanded Nations native acceptance
 
-Native acceptance is paused pending fresh independent audit of the current integrated PR head.
+## Accepted historical checks
 
-The first Serbia activation stopped before game launch on a live Code:X legacy side conflict. Exactly three FRG-identity purchase entries in `units_csa_era1960.set` carry explicit native `side(csa)`. The schema-3 correction records classification and native side separately, preserves the native side, verifies source-backed authority, and remains fail-closed for unsupported mismatches.
+- Serbia passed at the previously accepted implementation.
+- DPRK passed at the previously accepted implementation.
 
-The exact current PR head, current main SHA, and exact-head workflows are recorded on PR #172 and native-acceptance issue #177. This document intentionally avoids pinning a mutable SHA.
+These observations remain historical native evidence only.
 
-Native testing remains blocked until independent review accepts the current exact head.
+## Current blocker: Russia
 
-## Representative matrix
+A brand-new Russia campaign crashed while opening the dynamic-campaign page at
+head `3579281e630f573838bf7451f8aa0c334c415068`:
 
-| Actor | Tactical side | Expected native roster boundary | Status |
-|---|---|---|---|
-| Serbia (`srb`) | `rusa` | Serbian actor projection only | blocked pending re-audit |
-| DPRK (`dprk`) | `rusa` | DPRK projection only, no Russian-only recruitment | pending Serbia |
-| Russia (`rus`) | `rusa` | Russian projection only | pending Serbia |
-| France (`fra`) | `nato` | French projection only, no German-only recruitment | pending Serbia |
-| Germany (`deu`) | `nato` | German projection only, no French-only recruitment | pending Serbia |
-| Ukraine (`ukr`) | `ukr` | Ukraine plus declared ILDU component only | pending Serbia |
-| PRC (`prc`) | `prc` | PRC modern content plus separate legacy/reserve research branch | pending Serbia |
+`APP_ERROR: define not found`
 
-Each representative test must confirm:
+The engine failed on a generated purchase block invoking `dp_infantry_8` in
+`conquest/goc_active_actor_units.set`. The excerpt ends the failing block on line
+472; the line-474 `resolved_unit=rus155_inf_saperi(rusa)` comment begins the next
+entry and does not identify the failing purchase.
 
-1. the expected units appear in native Conquest recruitment;
-2. another actor sharing the same tactical side does not leak into recruitment;
-3. the generated research tree loads;
-4. at least one representative unit can be purchased and spawned;
-5. `game.log` contains no projection-related missing definition, breed, item, weapon, or entity error;
-6. non-selected opponent and legacy purchase definitions remain available;
-7. `-Core` removes the projection and restores canonical Code:X behavior.
+The first attempted correction at head
+`b7a9442009b6924a847ae1df536001bf3ee1fc28` searched only same-source brace-form
+`{define ...}` declarations. Installed-stack matrix regeneration produced all 21
+actor rows and passed structural verification, but every actor row, all 96 managed
+file hashes, and every projection signature were identical to the pre-correction
+matrix. Russia retained actor-unit hash
+`a8a37b9d757620c4f42fbe4dcbb1522ebab7ef9a3c4b039dadbafafcee7a80fa`.
+
+Therefore the required definition was not emitted and Russia remains blocked.
+Capture the effective installed-stack declaration and include path for
+`dp_infantry_8` before replacing the correction.
+
+Do not run another native Russia campaign, proceed to France, mark PR #172 ready,
+or merge.
