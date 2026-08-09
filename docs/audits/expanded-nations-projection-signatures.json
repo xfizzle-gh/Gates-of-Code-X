@@ -24,8 +24,8 @@
     "ukr",
     "usa"
   ],
-  "invalidated_by_head": "52ccf1cc8ae5b0150cc2176ac0fc4c372b85f3aa",
-  "invalidation_reason": "Source-local purchase define preservation changes generated actor-unit bytes and projection signatures. Regenerate the complete installed-stack matrix after exact-head CI and audit.",
+  "invalidated_by_head": "24c1a49dfa3ea5f737d8f1ae8390837142408116",
+  "invalidation_reason": "Required source-local purchase define closure changes generated actor-unit bytes and projection signatures. Regenerate the complete installed-stack matrix after exact-head CI and audit.",
   "playable_actor_count": 21,
   "schema": "gates-of-codex.expanded-nations-projection-matrix",
   "schema_version": 3
