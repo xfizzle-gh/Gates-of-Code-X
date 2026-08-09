@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
@@ -130,12 +131,50 @@ def generate_projection_matrix_from_stack_config(
     source_head: str = "",
 ) -> dict[str, Any]:
     roots, payload = compile_resolved_factions(stack_config)
+    final_root = Path(gates_root).expanduser().resolve() if gates_root else roots[-1]
+    _verify_git_exact_head(final_root, source_head)
     return build_projection_matrix(
         payload,
         roots,
         gates_root=gates_root,
         source_head=source_head,
     )
+
+
+def _verify_git_exact_head(root: Path, expected_head: str) -> None:
+    if not expected_head:
+        raise ExpandedNationsError("Projection matrix requires an exact source head")
+    head = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "HEAD"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if head.returncode != 0:
+        raise ExpandedNationsError(
+            "Projection matrix could not verify the Gates Git head: "
+            + head.stderr.strip()
+        )
+    actual_head = head.stdout.strip()
+    if actual_head != expected_head:
+        raise ExpandedNationsError(
+            f"Projection matrix source-head mismatch: expected {expected_head}, got {actual_head}"
+        )
+    status = subprocess.run(
+        ["git", "-C", str(root), "status", "--porcelain"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if status.returncode != 0:
+        raise ExpandedNationsError(
+            "Projection matrix could not verify the Gates working tree: "
+            + status.stderr.strip()
+        )
+    if status.stdout.strip():
+        raise ExpandedNationsError(
+            "Projection matrix requires a completely clean Gates working tree before generation"
+        )
 
 
 def render_projection_matrix_markdown(matrix: Mapping[str, Any]) -> str:

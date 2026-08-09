@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -16,6 +17,7 @@ from gates_of_codex.expanded_nations_matrix import (
     load_projection_matrix,
     render_projection_matrix_markdown,
     write_projection_matrix_evidence,
+    _verify_git_exact_head,
 )
 from gates_of_codex.expanded_nations_models import (
     MANIFEST_RELATIVE,
@@ -94,6 +96,39 @@ class ExpandedNationsMatrixTests(unittest.TestCase):
                 source_head="fixture-head",
             )
         self.assertTrue(deactivate_actor_projection(self.gates))
+
+    def test_exact_head_guard_rejects_wrong_or_dirty_checkout(self) -> None:
+        repository = self.root / "repo"
+        repository.mkdir()
+        subprocess.run(["git", "init", str(repository)], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "-C", str(repository), "config", "user.email", "matrix@example.invalid"],
+            check=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(repository), "config", "user.name", "Matrix Test"],
+            check=True,
+        )
+        tracked = repository / "tracked.txt"
+        tracked.write_text("clean\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repository), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repository), "commit", "-m", "fixture"],
+            check=True,
+            capture_output=True,
+        )
+        head = subprocess.run(
+            ["git", "-C", str(repository), "rev-parse", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        _verify_git_exact_head(repository, head)
+        with self.assertRaisesRegex(ExpandedNationsError, "source-head mismatch"):
+            _verify_git_exact_head(repository, "0" * 40)
+        tracked.write_text("dirty\n", encoding="utf-8")
+        with self.assertRaisesRegex(ExpandedNationsError, "completely clean"):
+            _verify_git_exact_head(repository, head)
 
     def test_invalidated_evidence_contains_no_stale_signatures(self) -> None:
         evidence = invalidated_projection_evidence(
