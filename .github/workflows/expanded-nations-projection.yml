@@ -37,6 +37,7 @@ jobs:
           tests.test_expanded_nations_matrix
           tests.test_expanded_nations_native_contracts
           tests.test_expanded_nations_native_failure_paths
+          tests.test_expanded_nations_native_squad_ids
           tests.test_faction_audit_adjustments
           -v
       - name: CLI smoke
@@ -45,10 +46,12 @@ jobs:
         run: >-
           python -m py_compile
           src/gates_of_codex/expanded_nations.py
+          src/gates_of_codex/expanded_nations_actor_sources.py
           src/gates_of_codex/expanded_nations_cli.py
           src/gates_of_codex/expanded_nations_compile.py
           src/gates_of_codex/expanded_nations_matrix.py
           src/gates_of_codex/expanded_nations_models.py
+          src/gates_of_codex/expanded_nations_native_verify.py
           src/gates_of_codex/expanded_nations_opponent_render.py
           src/gates_of_codex/expanded_nations_opponents.py
           src/gates_of_codex/expanded_nations_presentation.py
@@ -64,6 +67,7 @@ jobs:
           tests/test_expanded_nations_matrix.py
           tests/test_expanded_nations_native_contracts.py
           tests/test_expanded_nations_native_failure_paths.py
+          tests/test_expanded_nations_native_squad_ids.py
           tests/test_faction_audit_adjustments.py
 
   powershell:
