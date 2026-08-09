@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from dataclasses import asdict, dataclass
 import hashlib
 import json
-from dataclasses import asdict, dataclass
 from pathlib import Path
 import re
 from typing import Any, Mapping
@@ -18,7 +18,10 @@ ROSTER_RELATIVE = Path("resource/set/multiplayer/units/roster_conquest.set")
 UNITS_RELATIVE = Path("resource/set/multiplayer/units/conquest/goc_active_actor_units.set")
 OPPONENT_UNITS_RELATIVE = Path("resource/set/multiplayer/units/conquest/goc_opponent_units.set")
 MANIFEST_RELATIVE = Path("live/expanded_nations/active.json")
-RESEARCH_RELATIVE = {side: Path(f"resource/set/dynamic_campaign/unit_research_{side}.set") for side in SUPPORTED_TACTICAL_SIDES}
+RESEARCH_RELATIVE = {
+    side: Path(f"resource/set/dynamic_campaign/unit_research_{side}.set")
+    for side in SUPPORTED_TACTICAL_SIDES
+}
 
 CANONICAL_INF_INCLUDES = (
     "conquest/inf_ukr.set", "conquest/inf_rusa.set", "conquest/inf_nato.set",
@@ -29,6 +32,26 @@ BROAD_ROSTER_INCLUDES = (
     "conquest/units_ukr.set", "conquest/units_rusa.set", "conquest/units_nato.set",
     "conquest/units_sov_era1960.set", "conquest/units_csa_era1960.set",
     "conquest/units_frg_era1960.set", "conquest/units_prc_era1960.set",
+)
+
+# The modern campaign side is a strategic export side, while the inherited
+# West81 rosters also expose historical side IDs. These families are used only
+# for classifying which inherited purchase definitions belong to the selected
+# player side. A source-backed classification side wins over a conflicting
+# native side so known legacy FRG/CSA declarations remain available as
+# opponents rather than being discarded by an erroneous side(...) field.
+TACTICAL_SIDE_FAMILIES: Mapping[str, frozenset[str]] = {
+    "nato": frozenset({"nato", "frg"}),
+    "ukr": frozenset({"ukr"}),
+    "rusa": frozenset({"rusa", "sov", "csa"}),
+    "prc": frozenset({"prc"}),
+}
+
+PORTRAIT_ROOT_RELATIVE = Path("resource/interface/scene/portrait_squad")
+SERBIA_PRESENTATION_UNITS = (
+    "goc_serb_at(rusa)",
+    "goc_serb_recon(rusa)",
+    "goc_serb_rifle(rusa)",
 )
 SAFE_ACTOR_ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 
@@ -137,24 +160,51 @@ def select_actor(payload: Mapping[str, Any], actor_id: str) -> Mapping[str, Any]
     if len(unlock_units) != len(set(unlock_units)):
         raise ExpandedNationsError(f"Actor {actor_id} research unlocks one or more units more than once")
     if set(unlock_units) != set(names):
-        missing, extra = sorted(set(names) - set(unlock_units)), sorted(set(unlock_units) - set(names))
+        missing = sorted(set(names) - set(unlock_units))
+        extra = sorted(set(unlock_units) - set(names))
         raise ExpandedNationsError(
-            f"Actor {actor_id} research/unit projection mismatch; missing_unlocks={missing}; unknown_unlocks={extra}"
+            f"Actor {actor_id} research/unit projection mismatch; "
+            f"missing_unlocks={missing}; unknown_unlocks={extra}"
         )
     return actor
 
 
-def managed_relatives_for_side(side: str) -> tuple[Path, Path, Path, Path]:
+def side_family(side: str) -> frozenset[str]:
+    if side not in TACTICAL_SIDE_FAMILIES:
+        raise ExpandedNationsError(f"Unsupported tactical side family: {side}")
+    return TACTICAL_SIDE_FAMILIES[side]
+
+
+def presentation_relatives_for_actor(actor_id: str) -> tuple[Path, ...]:
+    if actor_id != "srb":
+        return ()
+    return tuple(
+        PORTRAIT_ROOT_RELATIVE / f"{unit_name}_{index:02d}.png"
+        for unit_name in SERBIA_PRESENTATION_UNITS
+        for index in range(4)
+    )
+
+
+def managed_relatives_for_side(side: str) -> tuple[Path, ...]:
     if side not in RESEARCH_RELATIVE:
         raise ExpandedNationsError(f"Unsupported manifest tactical side: {side}")
-    return ROSTER_RELATIVE, UNITS_RELATIVE, OPPONENT_UNITS_RELATIVE, RESEARCH_RELATIVE[side]
+    return (
+        ROSTER_RELATIVE,
+        UNITS_RELATIVE,
+        OPPONENT_UNITS_RELATIVE,
+        RESEARCH_RELATIVE[side],
+    )
 
 
 def all_managed_candidates(root: Path) -> list[Path]:
-    return [
-        root / ROSTER_RELATIVE, root / UNITS_RELATIVE, root / OPPONENT_UNITS_RELATIVE,
-        *(root / path for path in RESEARCH_RELATIVE.values()),
-    ]
+    relatives = {
+        ROSTER_RELATIVE,
+        UNITS_RELATIVE,
+        OPPONENT_UNITS_RELATIVE,
+        *RESEARCH_RELATIVE.values(),
+        *presentation_relatives_for_actor("srb"),
+    }
+    return [root / relative for relative in sorted(relatives, key=lambda item: item.as_posix())]
 
 
 def safe_target(root: Path, relative: str) -> Path:
