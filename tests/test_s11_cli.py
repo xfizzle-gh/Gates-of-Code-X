@@ -24,11 +24,11 @@ class S11CliTests(unittest.TestCase):
     def test_basic_new_command_persists_requested_fog_state(self) -> None:
         for setting, expected in (("off", False), ("on", True)):
             with self.subTest(setting=setting), tempfile.TemporaryDirectory() as td:
-                state = load_bundled_scenario()
+                state = load_bundled_scenario("legacy_goe_europe")
                 scanner = MagicMock()
                 scanner.scan.return_value = MagicMock()
                 with (
-                    patch("gates_of_codex.cli.load_bundled_scenario", return_value=state),
+                    patch("gates_of_codex.cli.build_scenario", return_value=state),
                     patch("gates_of_codex.cli.CodeXCatalogScanner", return_value=scanner),
                     patch("gates_of_codex.cli.populate_starter_rosters"),
                     patch("gates_of_codex.cli.initialize_economy"),
@@ -38,6 +38,8 @@ class S11CliTests(unittest.TestCase):
                     result = cli_main(
                         [
                             "new",
+                            "--scenario",
+                            "legacy_goe_europe",
                             "--codex",
                             td,
                             "--output",
@@ -56,7 +58,7 @@ class S11CliTests(unittest.TestCase):
                 self.assertEqual(1, len(humans))
 
     def test_full_new_entrypoint_applies_fog_on_to_selected_map(self) -> None:
-        state = load_bundled_scenario()
+        state = load_bundled_scenario("legacy_goe_europe")
         set_player_faction(state, Faction.NATO)
         with (
             tempfile.TemporaryDirectory() as td,
@@ -83,7 +85,7 @@ class S11CliTests(unittest.TestCase):
         self.assertTrue(save.call_args.args[0].fog_of_war_enabled)
 
     def test_fog_on_new_command_rejects_multiple_humans(self) -> None:
-        state = load_bundled_scenario()
+        state = load_bundled_scenario("legacy_goe_europe")
         state.factions["nato"].is_human_controlled = True
         state.factions["rusa"].is_human_controlled = True
         with tempfile.TemporaryDirectory() as td, patch(

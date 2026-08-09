@@ -42,9 +42,33 @@ class Earth3AuthorityConsistencyTests(unittest.TestCase):
         self.assertEqual(auth["land_count"], 3299)
         self.assertEqual(auth["water_count"], 215)
         self.assertEqual(auth["selectable_province_count"], 3299)
+        self.assertEqual(meta["land_count"], 3299)
+        self.assertEqual(meta["water_count"], 215)
+        self.assertEqual(meta["selectable_province_count"], 3295)
+        self.assertEqual(ds["edge_count"], 10223)
+        self.assertEqual(meta["edge_count"], 10223)
+        self.assertEqual(man["fallback_map_id"], "europe_mediterranean_from_goe")
         self.assertEqual(auth["dataset_sha256"], ds_sha)
         self.assertEqual(meta["dataset_sha256"], ds_sha)
         self.assertEqual(man["polygon_dataset"]["sha256"], ds_sha)
+
+        rows = {p["id"]: p for p in ds["provinces"]}
+        actual_water = sum(bool(p["is_water"]) for p in rows.values())
+        actual_selectable = sum(not bool(p["is_water"]) for p in rows.values())
+        declared_edges = {tuple(sorted(edge)) for edge in ds["edges"]}
+        neighbor_edges = {
+            tuple(sorted((province_id, neighbor_id)))
+            for province_id, province in rows.items()
+            for neighbor_id in province["neighbors"]
+        }
+        self.assertEqual(len(ds["edges"]), len(declared_edges))
+        self.assertEqual(10249, len(declared_edges))
+        self.assertEqual(declared_edges, neighbor_edges)
+        self.assertEqual(215, actual_water)
+        self.assertEqual(3299, actual_selectable)
+        for province_id, province in rows.items():
+            for neighbor_id in province["neighbors"]:
+                self.assertIn(province_id, rows[neighbor_id]["neighbors"])
 
         self.assertEqual(tri["province_count_checked"], 3514)
         self.assertEqual(tri["failed_count"], 0)

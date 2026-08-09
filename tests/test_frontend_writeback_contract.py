@@ -12,11 +12,12 @@ from gates_of_codex.frontend import (
     build_frontend_apply_invocation,
     build_frontend_snapshot,
 )
+from gates_of_codex.scenario import build_scenario
 
 
 class FrontendWritebackContractTests(unittest.TestCase):
     def test_control_exports_exact_python_path_with_spaces(self) -> None:
-        state = build_goe_europe_campaign()
+        state = build_scenario("legacy_goe_europe")
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary) / "Gates of Code X"
             fake_python = root / ".venv" / "Scripts" / "python executable.exe"
@@ -45,6 +46,14 @@ class FrontendWritebackContractTests(unittest.TestCase):
         round_trip = json.loads(json.dumps(snapshot))
         self.assertEqual(expected_python, round_trip["control"]["python_executable"])
         self.assertEqual("marker_non_authoritative", round_trip["strategic_map"]["fallback"])
+        self.assertEqual(
+            ["goe_europe_alpha_graph_v1"],
+            round_trip["strategic_map"]["available_map_ids"],
+        )
+        self.assertEqual(
+            ["earth3_europe_mediterranean"],
+            round_trip["strategic_map"]["production_map_ids"],
+        )
         manifest_parts = Path(round_trip["strategic_map"]["manifest_path"]).parts
         self.assertEqual(
             ("assets", "maps", "europe", "interim_goe", "map_manifest.json"),

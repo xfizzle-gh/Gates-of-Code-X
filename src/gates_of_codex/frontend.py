@@ -7,6 +7,16 @@ import tempfile
 from dataclasses import asdict
 from pathlib import Path
 
+from .earth3_campaign import (
+    CAMPAIGN_DATASET_IDENTIFIER,
+    CAMPAIGN_MANIFEST_IDENTIFIER,
+    EARTH3_MANIFEST_PATH,
+    EARTH3_MAP_ID,
+    EARTH3_SCENARIO_ID,
+    PRODUCTION_AUTHORITY_IDENTIFIER,
+    Earth3AuthorityError,
+    load_earth3_authority,
+)
 from .economy import available_research, formation_recruitment_offers
 from .map_layout import apply_marker_layout, is_human_readable_name, province_name_coverage
 from .models import CampaignState, Faction
@@ -27,6 +37,35 @@ from .supply import (
 
 FRONTEND_SCHEMA_VERSION = 14
 FRONTEND_PYTHON_MODULE = "gates_of_codex"
+LEGACY_GOE_MAP_ID = "goe_europe_alpha_graph_v1"
+_LEGACY_GOE_COMPATIBILITY_ALIASES = ("goe_europe", "interim_goe_europe")
+_MAP_MANIFEST_BY_ID = {
+    EARTH3_MAP_ID: "assets/maps/earth3_europe_mediterranean/map_manifest.json",
+    "europe_mediterranean_from_goe": "assets/maps/europe_mediterranean/from_goe/map_manifest.json",
+    LEGACY_GOE_MAP_ID: "assets/maps/europe/interim_goe/map_manifest.json",
+    "goe_europe": "assets/maps/europe/interim_goe/map_manifest.json",
+    "interim_goe_europe": "assets/maps/europe/interim_goe/map_manifest.json",
+}
+_LEGACY_MAP_IDS = (
+    LEGACY_GOE_MAP_ID,
+    *_LEGACY_GOE_COMPATIBILITY_ALIASES,
+    "europe_mediterranean_from_goe",
+)
+
+
+def _declares_earth3_authority(state: CampaignState) -> bool:
+    metadata = state.map_metadata
+    return any(
+        (
+            state.map_id == EARTH3_MAP_ID,
+            metadata.get("strategic_map_id") == EARTH3_MAP_ID,
+            metadata.get("scenario_id") == EARTH3_SCENARIO_ID,
+            metadata.get("manifest_identifier") == CAMPAIGN_MANIFEST_IDENTIFIER,
+            metadata.get("dataset_identifier") == CAMPAIGN_DATASET_IDENTIFIER,
+            metadata.get("production_authority_identifier")
+            == PRODUCTION_AUTHORITY_IDENTIFIER,
+        )
+    )
 
 
 def _faction_supply_payload(report) -> dict:
@@ -84,7 +123,8 @@ def build_frontend_snapshot(
     operational_clock = get_operational_clock(state)
     site_control = site_control_snapshot(state)
     refresh_operational_supply(state, consume_grace=False)
-    apply_marker_layout(state)
+    if not _declares_earth3_authority(state):
+        apply_marker_layout(state)
     objectives = update_operational_objectives(state)
     outcome = evaluate_campaign_outcome(state)
     state.validate()
@@ -880,14 +920,13 @@ def _strategic_map_block(
     state: CampaignState,
     snapshot_path: str | Path | None,
 ) -> dict:
+    persisted_map_id = str(state.map_metadata.get("strategic_map_id", state.map_id))
+    if _declares_earth3_authority(state):
+        return _earth3_strategic_map_block(state)
+
     snapshot_directory = Path(snapshot_path).resolve().parent if snapshot_path else None
     configured = str(state.map_metadata.get("strategic_map_manifest", "")).strip()
-    map_id = str(state.map_metadata.get("strategic_map_id", state.map_id))
-    relative_by_id = {
-        "europe_mediterranean_from_goe": "assets/maps/europe_mediterranean/from_goe/map_manifest.json",
-        "goe_europe": "assets/maps/europe/interim_goe/map_manifest.json",
-        "interim_goe_europe": "assets/maps/europe/interim_goe/map_manifest.json",
-    }
+    map_id = persisted_map_id
     candidates: list[Path] = []
     if configured:
         configured_path = Path(configured).expanduser()
@@ -901,9 +940,11 @@ def _strategic_map_block(
             candidates.append(Path.cwd() / "godot" / configured_path)
             if configured_path.parts and configured_path.parts[0] != "godot":
                 candidates.append(Path.cwd() / "godot" / configured_path)
-    if snapshot_directory is not None:
-        candidates.append(snapshot_directory / relative_by_id.get(map_id, relative_by_id["interim_goe_europe"]))
-    candidates.append(Path.cwd() / "godot" / relative_by_id.get(map_id, relative_by_id["interim_goe_europe"]))
+    relative = _MAP_MANIFEST_BY_ID.get(map_id)
+    if relative is not None:
+        if snapshot_directory is not None:
+            candidates.append(snapshot_directory / relative)
+        candidates.append(Path.cwd() / "godot" / relative)
 
     resolved: Path | None = None
     for candidate in candidates:
@@ -914,17 +955,109 @@ def _strategic_map_block(
         if path.is_file():
             resolved = path
             break
-    default_prov = "interim_goe_reference_asset"
     if map_id == "europe_mediterranean_from_goe":
         default_prov = "derived_from_interim_goe_europe_theatre_crop"
+        status = "legacy"
+        fallback = "marker_non_authoritative"
+    elif map_id == LEGACY_GOE_MAP_ID or map_id in _LEGACY_GOE_COMPATIBILITY_ALIASES:
+        default_prov = "interim_goe_reference_asset"
+        status = "legacy"
+        fallback = "marker_non_authoritative"
+    else:
+        default_prov = "configured_campaign_map"
+        status = "custom"
+        fallback = "none"
     return {
         "enabled": bool(resolved and resolved.is_file()),
         "manifest_path": str(resolved) if resolved else "",
         "configured": bool(configured),
         "map_id": map_id,
-        "available_map_ids": ["interim_goe_europe", "europe_mediterranean_from_goe"],
+        "status": status,
+        "available_map_ids": [map_id] if resolved else [],
+        "production_map_ids": [EARTH3_MAP_ID],
+        "legacy_map_ids": list(_LEGACY_MAP_IDS),
         "provenance": str(state.map_metadata.get("strategic_map_provenance", default_prov)),
-        "fallback": "marker_non_authoritative",
+        "fallback": fallback,
+    }
+
+
+def _require_earth3_persisted_value(
+    state: CampaignState,
+    field: str,
+    expected,
+) -> None:
+    actual = state.map_metadata.get(field)
+    if actual != expected:
+        raise Earth3AuthorityError(
+            f"Earth3 campaign {field} mismatch: expected {expected!r}, got {actual!r}"
+        )
+
+
+def _earth3_strategic_map_block(state: CampaignState) -> dict:
+    if state.map_id != EARTH3_MAP_ID:
+        raise Earth3AuthorityError(
+            f"Earth3 campaign state.map_id mismatch: expected {EARTH3_MAP_ID!r}, "
+            f"got {state.map_id!r}"
+        )
+    _require_earth3_persisted_value(state, "strategic_map_id", EARTH3_MAP_ID)
+    _require_earth3_persisted_value(
+        state,
+        "strategic_map_manifest",
+        CAMPAIGN_MANIFEST_IDENTIFIER,
+    )
+    _require_earth3_persisted_value(
+        state,
+        "manifest_identifier",
+        CAMPAIGN_MANIFEST_IDENTIFIER,
+    )
+    _require_earth3_persisted_value(
+        state,
+        "dataset_identifier",
+        CAMPAIGN_DATASET_IDENTIFIER,
+    )
+    _require_earth3_persisted_value(
+        state,
+        "production_authority_identifier",
+        PRODUCTION_AUTHORITY_IDENTIFIER,
+    )
+
+    try:
+        authority = load_earth3_authority()
+    except Earth3AuthorityError as exc:
+        if str(exc).startswith("Earth3 manifest missing:"):
+            raise FileNotFoundError(
+                f"Earth3 map manifest missing: {CAMPAIGN_MANIFEST_IDENTIFIER}"
+            ) from exc
+        raise
+
+    for field, expected in (
+        ("manifest_sha256", authority.manifest_sha256),
+        ("dataset_sha256", authority.dataset_sha256),
+        ("embedded_dataset_sha256", authority.embedded_dataset_sha256),
+        ("geometry_sha256", authority.geometry_sha256),
+        ("production_asset_version", authority.production_asset_version),
+        ("included_ids_sha256", authority.included_ids_sha256),
+        ("topology_edge_count", authority.topology_edge_count),
+    ):
+        _require_earth3_persisted_value(state, field, expected)
+
+    manifest_path = authority.root / EARTH3_MANIFEST_PATH
+    return {
+        "enabled": True,
+        "manifest_path": str(manifest_path),
+        "configured": True,
+        "map_id": EARTH3_MAP_ID,
+        "status": "production",
+        "available_map_ids": [EARTH3_MAP_ID],
+        "production_map_ids": [EARTH3_MAP_ID],
+        "legacy_map_ids": list(_LEGACY_MAP_IDS),
+        "provenance": str(
+            state.map_metadata.get(
+                "strategic_map_provenance",
+                "earth3_production_authority",
+            )
+        ),
+        "fallback": "none",
     }
 
 

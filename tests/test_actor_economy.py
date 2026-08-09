@@ -30,7 +30,7 @@ from gates_of_codex.strategic_actors import (
 
 class ActorEconomyTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.state = load_bundled_scenario()
+        self.state = load_bundled_scenario("legacy_goe_europe")
         ensure_strategic_formations(self.state)
         self.payload = _resolved_payload()
         install_actor_content(self.state, self.payload, selected_actor_id="fra")
@@ -102,7 +102,7 @@ class ActorEconomyTest(unittest.TestCase):
         self.assertEqual(actor_content_snapshot(loaded), before)
 
     def test_warnings_are_rejected_by_default(self) -> None:
-        state = load_bundled_scenario()
+        state = load_bundled_scenario("legacy_goe_europe")
         ensure_strategic_formations(state)
         payload = _resolved_payload()
         payload["warning_count"] = 1
@@ -110,7 +110,7 @@ class ActorEconomyTest(unittest.TestCase):
             install_actor_content(state, payload, selected_actor_id="fra")
 
     def test_cross_actor_research_key_is_rejected(self) -> None:
-        state = load_bundled_scenario()
+        state = load_bundled_scenario("legacy_goe_europe")
         ensure_strategic_formations(state)
         payload = _resolved_payload()
         france = next(item for item in payload["actors"] if item["actor_id"] == "fra")
