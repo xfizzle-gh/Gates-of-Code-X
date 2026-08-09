@@ -5,7 +5,10 @@ from pathlib import Path
 import re
 from typing import Any, Mapping
 
-from .expanded_nations_actor_sources import effective_purchase_id
+from .expanded_nations_actor_sources import (
+    defined_macro_name,
+    effective_purchase_id,
+)
 from .expanded_nations_models import (
     ExpandedNationsError,
     MANIFEST_RELATIVE,
@@ -18,7 +21,7 @@ from .expanded_nations_verify import (
     verify_manifest_files,
     verify_projection_artifacts as _verify_projection_artifacts,
 )
-from .goh_source import scan_source_entries
+from .goh_source import SourceEntry, scan_source_entries
 
 __all__ = [
     "load_manifest",
@@ -55,10 +58,11 @@ def verify_projection_artifacts(
 
     The existing semantic verifier expects each parsed entry name to equal the
     manifest purchase ID. Native top-level squad macros instead store a base
-    ``name(...)`` and derive the effective ID from their ``side(...)`` call. This
-    adapter first authenticates that native relationship, then creates an
-    in-memory verification view whose macro names equal the effective IDs. The
-    files written to disk are never altered.
+    ``name(...)`` and derive the effective ID from their ``side(...)`` call.
+    Source-local ``{define ...}`` declarations are runtime dependencies rather
+    than purchases. This adapter authenticates both contracts, then creates an
+    in-memory verification view containing purchase definitions only. The files
+    written to disk are never altered.
     """
 
     verification_outputs, verification_manifest = _legacy_verification_view(
@@ -83,17 +87,47 @@ def _legacy_verification_view(
     if actor_scan.diagnostics:
         raise ExpandedNationsError("Generated actor unit file is malformed")
 
+    define_entries = [
+        entry for entry in actor_scan.entries if _is_define_entry(entry)
+    ]
+    purchase_entries = [
+        entry for entry in actor_scan.entries if not _is_define_entry(entry)
+    ]
+    define_names = [defined_macro_name(entry.raw) for entry in define_entries]
+    if any(not name for name in define_names):
+        raise ExpandedNationsError(
+            "Generated actor unit file contains an unnamed source-local define"
+        )
+    if len(define_names) != len(set(define_names)):
+        raise ExpandedNationsError(
+            "Generated actor unit file contains duplicate source-local defines"
+        )
+    if purchase_entries and any(
+        entry.location.line > purchase_entries[0].location.line
+        for entry in define_entries
+    ):
+        raise ExpandedNationsError(
+            "Generated source-local defines must precede actor purchases"
+        )
+
     actor_rows = manifest.get("units")
     if not isinstance(actor_rows, list):
         raise ExpandedNationsError("Activation manifest units must be a list")
-    if len(actor_scan.entries) != len(actor_rows):
+    if len(purchase_entries) != len(actor_rows):
         raise ExpandedNationsError(
             "Generated actor unit count does not match activation manifest"
         )
 
     side = str(manifest.get("tactical_side", "")).lower()
     transformed = actor_text
-    for entry, row in zip(actor_scan.entries, actor_rows, strict=True):
+    for entry in define_entries:
+        if entry.raw not in transformed:
+            raise ExpandedNationsError(
+                "Could not construct purchase-only verification view"
+            )
+        transformed = transformed.replace(entry.raw, "", 1)
+
+    for entry, row in zip(purchase_entries, actor_rows, strict=True):
         canonical = str(row.get("unit_name", ""))
         actual = effective_purchase_id(entry, side)
         if actual != canonical:
@@ -136,3 +170,7 @@ def _legacy_verification_view(
     matches[0]["sha256"] = sha256_bytes(transformed_bytes)
     matches[0]["byte_count"] = len(transformed_bytes)
     return verification_outputs, verification_manifest
+
+
+def _is_define_entry(entry: SourceEntry) -> bool:
+    return entry.form == "block" and entry.name.lower() == "define"
