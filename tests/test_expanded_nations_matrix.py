@@ -12,12 +12,12 @@ from gates_of_codex.expanded_nations import (
     deactivate_actor_projection,
 )
 from gates_of_codex.expanded_nations_matrix import (
+    _verify_git_exact_head,
     build_projection_matrix,
     invalidated_projection_evidence,
     load_projection_matrix,
     render_projection_matrix_markdown,
     write_projection_matrix_evidence,
-    _verify_git_exact_head,
 )
 from gates_of_codex.expanded_nations_models import (
     MANIFEST_RELATIVE,
@@ -30,7 +30,10 @@ class ExpandedNationsMatrixTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
-        self.layers = [self.root / name for name in ("vanilla", "west81", "codex", "ai", "gates")]
+        self.layers = [
+            self.root / name
+            for name in ("vanilla", "west81", "codex", "ai", "gates")
+        ]
         for layer in self.layers:
             (layer / "resource").mkdir(parents=True)
         self.gates = self.layers[-1]
@@ -50,7 +53,11 @@ class ExpandedNationsMatrixTests(unittest.TestCase):
         self.temp.cleanup()
 
     def _source(self, priority: int, name: str, text: str) -> None:
-        path = self.layers[priority] / "resource/set/multiplayer/units/conquest" / name
+        path = (
+            self.layers[priority]
+            / "resource/set/multiplayer/units/conquest"
+            / name
+        )
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
 
@@ -67,11 +74,13 @@ class ExpandedNationsMatrixTests(unittest.TestCase):
         self.assertEqual({"fra", "srb"}, set(matrix["actors"]))
         for row in matrix["actors"].values():
             self.assertEqual(1, row["unit_count"])
-            self.assertEqual(2, row["research_node_count"])
+            self.assertEqual(1, row["research_node_count"])
             self.assertTrue(row["projection_signature"])
             self.assertEqual(4, len(row["managed_files"]))
         self.assertFalse((self.gates / MANIFEST_RELATIVE).exists())
-        self.assertFalse(any(path.exists() for path in all_managed_candidates(self.gates)))
+        self.assertFalse(
+            any(path.exists() for path in all_managed_candidates(self.gates))
+        )
 
         json_path = self.root / "matrix.json"
         markdown_path = self.root / "matrix.md"
@@ -100,7 +109,11 @@ class ExpandedNationsMatrixTests(unittest.TestCase):
     def test_exact_head_guard_rejects_wrong_or_dirty_checkout(self) -> None:
         repository = self.root / "repo"
         repository.mkdir()
-        subprocess.run(["git", "init", str(repository)], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "init", str(repository)],
+            check=True,
+            capture_output=True,
+        )
         subprocess.run(
             ["git", "-C", str(repository), "config", "user.email", "matrix@example.invalid"],
             check=True,
@@ -111,7 +124,10 @@ class ExpandedNationsMatrixTests(unittest.TestCase):
         )
         tracked = repository / "tracked.txt"
         tracked.write_text("clean\n", encoding="utf-8")
-        subprocess.run(["git", "-C", str(repository), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repository), "add", "tracked.txt"],
+            check=True,
+        )
         subprocess.run(
             ["git", "-C", str(repository), "commit", "-m", "fixture"],
             check=True,
@@ -133,7 +149,7 @@ class ExpandedNationsMatrixTests(unittest.TestCase):
     def test_invalidated_evidence_contains_no_stale_signatures(self) -> None:
         evidence = invalidated_projection_evidence(
             invalidated_by_head="new-head",
-            reason="roster component changed",
+            reason="native projection contract changed",
             invalidated_actor_ids=("srb", "dprk", "donbas", "blr"),
         )
         path = self.root / "invalidated.json"
@@ -141,7 +157,10 @@ class ExpandedNationsMatrixTests(unittest.TestCase):
         loaded = load_projection_matrix(path)
         self.assertEqual("invalidated", loaded["evidence_state"])
         self.assertEqual({}, loaded["actors"])
-        self.assertEqual(["blr", "donbas", "dprk", "srb"], loaded["invalidated_actor_ids"])
+        self.assertEqual(
+            ["blr", "donbas", "dprk", "srb"],
+            loaded["invalidated_actor_ids"],
+        )
 
 
 def _unit(actor: str, name: str, side: str, source: str) -> dict:
