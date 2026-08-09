@@ -8,7 +8,7 @@ import re
 from typing import Any, Mapping
 
 ACTIVATION_SCHEMA = "gates-of-codex.expanded-nations-activation"
-ACTIVATION_VERSION = 2
+ACTIVATION_VERSION = 3
 RESOLVED_SCHEMA = "gates-of-codex.resolved-factions"
 RESOLVED_VERSION = 1
 SUPPORTED_TACTICAL_SIDES = ("nato", "ukr", "rusa", "prc")
@@ -50,6 +50,7 @@ class ProjectedUnit:
 class ProjectedOpponentUnit:
     entry_name: str
     tactical_side: str
+    native_side: str
     source_reference: str
     source_sha256: str
     projected_sha256: str
