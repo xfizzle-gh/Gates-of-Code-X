@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 import re
 from typing import Any, Mapping, Sequence
@@ -24,14 +25,25 @@ _NATIVE_ID_RE = re.compile(
     r"^(?P<base>.*?)(?:\((?P<side>nato|ukr|rusa|prc|sov|csa|frg)\))?$",
     re.IGNORECASE,
 )
-_SOURCE_REFERENCE_RE = re.compile(r"^(\d+):[^/]+/(.+)$")
-_DEFINE_HEADER_RE = re.compile(
-    r'^\s*\{\s*define\s+(?:"(?P<quoted>[^"]+)"|(?P<bare>[^\s{}]+))',
-    re.IGNORECASE,
+_DEFINE_START_RE = re.compile(
+    r'(?im)^[ \t]*\(define[ \t\r\n]+"(?P<name>[^"\r\n]+)"'
 )
 _WRAPPER_RELATIVE = Path(
     "resource/set/multiplayer/units/conquest/units_goc_national_wrappers.set"
 )
+_DEFINITION_SUFFIXES = {".set", ".inc", ".goh"}
+_REQUIRED_DEFINITION_PREFIXES = ("dp_", "doctrine_", "generic_dp_")
+
+
+@dataclass(frozen=True, slots=True)
+class ParenthesizedDefine:
+    name: str
+    raw: str
+    dependencies: tuple[str, ...]
+    source_reference: str
+    priority: int
+    relative_path: str
+    line: int
 
 
 def project_actor_units(
@@ -46,22 +58,23 @@ def project_actor_units(
     effective purchase ID as ``name(side)``. Projected units therefore record the
     effective ID even when the compiler catalog stored only the macro base name.
 
-    Some upstream purchase blocks invoke source-local macros declared through
-    ``{define ...}`` blocks in the same source file. Those declarations are part
-    of the native purchase contract. Preserve only the recursive dependency
-    closure required by selected purchases, keep source order, deduplicate
-    byte-identical declarations, and fail closed if selected source files assign
-    different bodies to the same required define name.
+    Doctrine purchase blocks may depend on parenthesized ``(define "..." ...)``
+    declarations stored in a different file from the purchase. Resolve those
+    definitions through deterministic installed-stack precedence, preserve only
+    the recursive closure not already supplied by the effective Conquest settings
+    file, and emit dependencies before purchases.
     """
 
     side = str(actor["tactical_side"]).lower()
     cache: dict[Path, tuple[SourceEntry, ...]] = {}
+    definition_index = _scan_stack_definitions(roots)
+    baseline_definitions = _baseline_definition_names(roots)
     projected: list[ProjectedUnit] = []
     source_entry_names: set[str] = set()
     projected_ids: set[str] = set()
     rendered_entries: list[str] = []
     define_order: list[str] = []
-    definitions: dict[str, tuple[str, str]] = {}
+    definitions: dict[str, ParenthesizedDefine] = {}
 
     for unit in sorted(actor["units"], key=lambda row: str(row["unit_name"])):
         actor_unit_name = str(unit["unit_name"])
@@ -95,19 +108,21 @@ def project_actor_units(
                 gates_root,
                 cache,
             )
-            source_path = _source_path_from_reference(source_reference, roots)
-            for dependency in _required_define_entries(entry, source_path, cache):
-                define_name = defined_macro_name(dependency.raw)
-                define_raw = dependency.raw.rstrip()
-                previous = definitions.get(define_name)
+            for dependency in _required_define_entries(
+                entry,
+                definition_index,
+                baseline_definitions,
+            ):
+                previous = definitions.get(dependency.name)
                 if previous is None:
-                    definitions[define_name] = (define_raw, source_reference)
-                    define_order.append(define_name)
-                elif previous[0] != define_raw:
+                    definitions[dependency.name] = dependency
+                    define_order.append(dependency.name)
+                elif previous.raw.rstrip() != dependency.raw.rstrip():
                     raise ExpandedNationsError(
-                        f"Actor {actor['actor_id']} source-local define "
-                        f"{define_name!r} conflicts between {previous[1]} and "
-                        f"{source_reference}"
+                        f"Actor {actor['actor_id']} required define "
+                        f"{dependency.name!r} conflicts between "
+                        f"{previous.source_reference} and "
+                        f"{dependency.source_reference}"
                     )
 
         source_key = f"{source_reference}:{entry.name}"
@@ -193,10 +208,10 @@ def project_actor_units(
 
     rendered_definitions = [
         f"; source_define={define_name}\n"
-        f"; source={definitions[define_name][1]}\n"
+        f"; source={definitions[define_name].source_reference}\n"
         f"; source_define_sha256="
-        f"{sha256_bytes(definitions[define_name][0].encode('utf-8'))}\n"
-        f"{definitions[define_name][0]}\n"
+        f"{sha256_bytes(definitions[define_name].raw.rstrip().encode('utf-8'))}\n"
+        f"{definitions[define_name].raw.rstrip()}\n"
         for define_name in define_order
     ]
     body_parts = [*rendered_definitions, *rendered_entries]
@@ -258,88 +273,304 @@ def effective_purchase_id(entry: SourceEntry, side: str) -> str:
     return entry.name
 
 
-def defined_macro_name(raw: str) -> str:
-    """Return the declared name of one source-local ``{define ...}`` block."""
+def scan_parenthesized_defines(
+    text: str,
+    source_reference: str,
+    *,
+    priority: int = 0,
+    relative_path: str = "",
+) -> tuple[ParenthesizedDefine, ...]:
+    """Collect bounded top-level ``(define "name" ...)`` declarations."""
 
-    match = _DEFINE_HEADER_RE.match(raw)
-    if match is None:
-        return ""
-    return str(match.group("quoted") or match.group("bare") or "")
+    definitions: list[ParenthesizedDefine] = []
+    cursor = 0
+    while True:
+        match = _DEFINE_START_RE.search(text, cursor)
+        if match is None:
+            break
+        start = text.find("(", match.start(), match.end())
+        if start < 0:
+            raise ExpandedNationsError(
+                f"Malformed parenthesized define header in {source_reference}"
+            )
+        end = _capture_parenthesized(text, start, source_reference)
+        raw = text[start:end]
+        definitions.append(
+            ParenthesizedDefine(
+                name=str(match.group("name")),
+                raw=raw,
+                dependencies=quoted_macro_names(raw),
+                source_reference=source_reference,
+                priority=priority,
+                relative_path=relative_path,
+                line=text.count("\n", 0, start) + 1,
+            )
+        )
+        cursor = end
+    return tuple(definitions)
+
+
+def quoted_macro_names(raw: str) -> tuple[str, ...]:
+    """Return quoted macro invocations from one GoH block in source order."""
+
+    names: list[str] = []
+    seen: set[str] = set()
+    index = 0
+    quote = False
+    escaped = False
+    comment = False
+    while index < len(raw):
+        char = raw[index]
+        if comment:
+            if char == "\n":
+                comment = False
+            index += 1
+            continue
+        if quote:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                quote = False
+            index += 1
+            continue
+        if char == ";" or raw.startswith("//", index):
+            comment = True
+            index += 1
+            continue
+        if char == '"':
+            quote = True
+            index += 1
+            continue
+        if char != "(":
+            index += 1
+            continue
+
+        token = index + 1
+        while token < len(raw) and raw[token].isspace():
+            token += 1
+        if token >= len(raw) or raw[token] != '"':
+            index += 1
+            continue
+        token += 1
+        value: list[str] = []
+        escaped_token = False
+        while token < len(raw):
+            current = raw[token]
+            if escaped_token:
+                value.append(current)
+                escaped_token = False
+            elif current == "\\":
+                escaped_token = True
+            elif current == '"':
+                break
+            else:
+                value.append(current)
+            token += 1
+        if token >= len(raw):
+            raise ExpandedNationsError("Quoted macro invocation is unterminated")
+        name = "".join(value)
+        if name and name not in seen:
+            seen.add(name)
+            names.append(name)
+        index = token + 1
+    return tuple(names)
+
+
+def definition_requires_projection(name: str) -> bool:
+    lowered = name.lower()
+    return lowered.startswith(_REQUIRED_DEFINITION_PREFIXES)
+
+
+def _capture_parenthesized(
+    text: str,
+    start: int,
+    source_reference: str,
+) -> int:
+    depth = 0
+    quote = False
+    escaped = False
+    comment = False
+    index = start
+    while index < len(text):
+        if index - start >= 1_000_000:
+            raise ExpandedNationsError(
+                f"Parenthesized define is too large in {source_reference}"
+            )
+        char = text[index]
+        if comment:
+            if char == "\n":
+                comment = False
+            index += 1
+            continue
+        if quote:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                quote = False
+            index += 1
+            continue
+        if char == ";" or text.startswith("//", index):
+            comment = True
+            index += 1
+            continue
+        if char == '"':
+            quote = True
+            index += 1
+            continue
+        if char == "(":
+            depth += 1
+            if depth > 256:
+                raise ExpandedNationsError(
+                    f"Parenthesized define nesting is too deep in {source_reference}"
+                )
+        elif char == ")":
+            depth -= 1
+            if depth == 0:
+                return index + 1
+            if depth < 0:
+                break
+        index += 1
+    raise ExpandedNationsError(
+        f"Parenthesized define is unterminated in {source_reference}"
+    )
+
+
+def _scan_stack_definitions(
+    roots: Sequence[Path],
+) -> dict[str, tuple[ParenthesizedDefine, ...]]:
+    by_name: dict[str, list[ParenthesizedDefine]] = {}
+    for priority, root in enumerate(roots):
+        resource = resource_root(root)
+        units_root = resource / "set/multiplayer/units"
+        if not units_root.is_dir():
+            continue
+        paths = sorted(
+            (
+                path
+                for path in units_root.rglob("*")
+                if path.is_file() and path.suffix.lower() in _DEFINITION_SUFFIXES
+            ),
+            key=lambda path: path.as_posix().lower(),
+        )
+        for path in paths:
+            relative = path.relative_to(resource).as_posix()
+            reference = f"{priority}:{root.name}/{relative}"
+            if _is_generated_source_reference(reference):
+                continue
+            try:
+                text = path.read_text(encoding="utf-8-sig")
+            except UnicodeDecodeError as exc:
+                raise ExpandedNationsError(
+                    f"Cannot decode definition source {reference}"
+                ) from exc
+            for definition in scan_parenthesized_defines(
+                text,
+                reference,
+                priority=priority,
+                relative_path=relative,
+            ):
+                by_name.setdefault(definition.name, []).append(definition)
+    return {name: tuple(rows) for name, rows in by_name.items()}
+
+
+def _baseline_definition_names(roots: Sequence[Path]) -> frozenset[str]:
+    relative = Path("set/multiplayer/units/conquest/settings.set")
+    for priority in range(len(roots) - 1, -1, -1):
+        root = roots[priority]
+        resource = resource_root(root)
+        path = resource / relative
+        if not path.is_file():
+            continue
+        reference = f"{priority}:{root.name}/{relative.as_posix()}"
+        try:
+            text = path.read_text(encoding="utf-8-sig")
+        except UnicodeDecodeError as exc:
+            raise ExpandedNationsError(
+                f"Cannot decode effective Conquest settings {reference}"
+            ) from exc
+        return frozenset(
+            definition.name
+            for definition in scan_parenthesized_defines(
+                text,
+                reference,
+                priority=priority,
+                relative_path=relative.as_posix(),
+            )
+        )
+    return frozenset()
 
 
 def _required_define_entries(
     purchase: SourceEntry,
-    path: Path,
-    cache: dict[Path, tuple[SourceEntry, ...]],
-) -> tuple[SourceEntry, ...]:
-    """Return source-ordered local defines reachable from one purchase."""
-
-    ordered: list[tuple[str, SourceEntry]] = []
-    by_name: dict[str, SourceEntry] = {}
-    for entry in _define_entries_for_path(path, cache):
-        name = defined_macro_name(entry.raw)
-        if not name:
-            raise ExpandedNationsError(f"Source define in {path} has no macro name")
-        previous = by_name.get(name)
-        if previous is None:
-            by_name[name] = entry
-            ordered.append((name, entry))
-        elif previous.raw.rstrip() != entry.raw.rstrip():
-            raise ExpandedNationsError(
-                f"Source file {path} defines {name!r} with conflicting bodies"
-            )
-
+    index: Mapping[str, tuple[ParenthesizedDefine, ...]],
+    baseline_definitions: frozenset[str],
+) -> tuple[ParenthesizedDefine, ...]:
+    ordered: list[ParenthesizedDefine] = []
     required: set[str] = set()
-    active: set[str] = set()
+    active: list[str] = []
 
     def visit(name: str) -> None:
-        if name not in by_name or name in required:
+        if name in baseline_definitions or name in required:
+            return
+        candidates = index.get(name, ())
+        if not candidates:
+            if definition_requires_projection(name):
+                chain = " -> ".join([*active, name])
+                raise ExpandedNationsError(
+                    f"Required purchase define is missing from the effective stack: "
+                    f"{chain}"
+                )
             return
         if name in active:
+            chain = " -> ".join([*active, name])
             raise ExpandedNationsError(
-                f"Source-local define dependency cycle in {path}: {name}"
+                f"Parenthesized define dependency cycle: {chain}"
             )
-        active.add(name)
-        dependency = by_name[name]
-        visit(dependency.macro_kind)
-        active.remove(name)
+        selected = _effective_define(name, candidates)
+        active.append(name)
+        for dependency in selected.dependencies:
+            visit(dependency)
+        active.pop()
         required.add(name)
+        ordered.append(selected)
 
-    visit(purchase.macro_kind)
-    return tuple(entry for name, entry in ordered if name in required)
-
-
-def _define_entries_for_path(
-    path: Path,
-    cache: dict[Path, tuple[SourceEntry, ...]],
-) -> tuple[SourceEntry, ...]:
-    return tuple(
-        entry
-        for entry in _entries_for_path(path, cache)
-        if entry.form == "block" and entry.name.lower() == "define"
-    )
+    for macro_name in quoted_macro_names(purchase.raw):
+        visit(macro_name)
+    return tuple(ordered)
 
 
-def _source_path_from_reference(
-    source_reference: str,
-    roots: Sequence[Path],
-) -> Path:
-    match = _SOURCE_REFERENCE_RE.fullmatch(source_reference)
-    if match is None:
-        raise ExpandedNationsError(
-            f"Cannot resolve source-local defines for {source_reference}"
+def _effective_define(
+    name: str,
+    candidates: Sequence[ParenthesizedDefine],
+) -> ParenthesizedDefine:
+    highest = max(row.priority for row in candidates)
+    effective = [row for row in candidates if row.priority == highest]
+    raw_by_value: dict[str, list[ParenthesizedDefine]] = {}
+    for row in effective:
+        raw_by_value.setdefault(row.raw.rstrip(), []).append(row)
+    if len(raw_by_value) != 1:
+        locations = ", ".join(
+            f"{row.source_reference}:{row.line}"
+            for row in sorted(
+                effective,
+                key=lambda item: (
+                    item.relative_path.lower(),
+                    item.line,
+                ),
+            )
         )
-    priority = int(match.group(1))
-    if priority < 0 or priority >= len(roots):
         raise ExpandedNationsError(
-            f"Source-local define priority is invalid: {source_reference}"
+            f"Effective stack defines {name!r} with conflicting bodies: "
+            f"{locations}"
         )
-    path = resource_root(roots[priority]) / match.group(2)
-    if not path.is_file():
-        raise ExpandedNationsError(
-            f"Source-local define file is missing: {source_reference}"
-        )
-    return path
+    return sorted(
+        effective,
+        key=lambda row: (row.relative_path.lower(), row.line),
+    )[0]
 
 
 def _find_virtual_source_entry(
