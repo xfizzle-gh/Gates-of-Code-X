@@ -24,8 +24,8 @@
     "ukr",
     "usa"
   ],
-  "invalidated_by_head": "24c1a49dfa3ea5f737d8f1ae8390837142408116",
-  "invalidation_reason": "Required source-local purchase define closure changes generated actor-unit bytes and projection signatures. Regenerate the complete installed-stack matrix after exact-head CI and audit.",
+  "invalidated_by_head": "b7a9442009b6924a847ae1df536001bf3ee1fc28",
+  "invalidation_reason": "Installed-stack regeneration produced actor rows, managed-file hashes, and projection signatures identical to the pre-fix matrix. The required dp_infantry_8 definition was not emitted, so the source-local define correction was not exercised and Russia remains blocked.",
   "playable_actor_count": 21,
   "schema": "gates-of-codex.expanded-nations-projection-matrix",
   "schema_version": 3
