@@ -37,35 +37,38 @@ def project_actor_units(
 
     Block definitions carry their complete purchase ID in the outer quoted name.
     Top-level squad macros carry only the base name; Gates of Hell derives their
-    effective purchase ID as ``name(side)``. The manifest and research graph keep
-    that effective ID while the rendered macro preserves the native base name.
+    effective purchase ID as ``name(side)``. Projected units therefore record the
+    effective ID even when the compiler catalog stored only the macro base name.
     """
 
     side = str(actor["tactical_side"]).lower()
     cache: dict[Path, tuple[SourceEntry, ...]] = {}
     projected: list[ProjectedUnit] = []
     source_entry_names: set[str] = set()
+    projected_ids: set[str] = set()
     rendered_entries: list[str] = []
 
     for unit in sorted(actor["units"], key=lambda row: str(row["unit_name"])):
-        unit_name = str(unit["unit_name"])
+        actor_unit_name = str(unit["unit_name"])
         if str(unit.get("tactical_side", "")).lower() != side:
             raise ExpandedNationsError(
-                f"Actor {actor['actor_id']} unit {unit_name} targets "
+                f"Actor {actor['actor_id']} unit {actor_unit_name} targets "
                 f"{unit.get('tactical_side')}, expected {side}"
             )
         if not unit.get("materializable"):
-            raise ExpandedNationsError(f"Actor unit is not materializable: {unit_name}")
+            raise ExpandedNationsError(
+                f"Actor unit is not materializable: {actor_unit_name}"
+            )
         for source_reference in unit.get("source_files", []):
             if _is_generated_source_reference(str(source_reference)):
                 raise ExpandedNationsError(
-                    f"Actor unit {unit_name} resolved from generated activation source "
-                    f"{source_reference}"
+                    f"Actor unit {actor_unit_name} resolved from generated "
+                    f"activation source {source_reference}"
                 )
 
         if unit.get("virtual"):
             entry, source_reference = _find_virtual_source_entry(
-                unit_name,
+                actor_unit_name,
                 side,
                 gates_root,
                 cache,
@@ -81,44 +84,69 @@ def project_actor_units(
         source_key = f"{source_reference}:{entry.name}"
         if source_key in source_entry_names:
             raise ExpandedNationsError(
-                f"Actor {actor['actor_id']} resolves multiple units to source entry "
-                f"{entry.name}"
+                f"Actor {actor['actor_id']} resolves multiple units to source "
+                f"entry {entry.name}"
             )
         source_entry_names.add(source_key)
 
-        source_raw = entry.raw.rstrip()
         rendered_name = (
-            _native_macro_name(unit_name, side)
+            _native_macro_name(actor_unit_name, side)
             if entry.form == "macro"
-            else unit_name
+            else actor_unit_name
         )
+        projected_unit_name = (
+            f"{rendered_name}({side})"
+            if entry.form == "macro"
+            else actor_unit_name
+        )
+        if projected_unit_name in projected_ids:
+            raise ExpandedNationsError(
+                f"Actor {actor['actor_id']} projects duplicate native purchase "
+                f"ID {projected_unit_name}"
+            )
+        projected_ids.add(projected_unit_name)
+
+        source_raw = entry.raw.rstrip()
         renamed_raw = _rename_entry(source_raw, entry, rendered_name)
         projected_raw = _project_source_raw(
             renamed_raw,
-            unit_name=unit_name,
+            unit_name=projected_unit_name,
             source_side=str(unit.get("source_side") or side).lower(),
             target_side=side,
         )
-        projected_scan = scan_source_entries(projected_raw, f"generated:{unit_name}")
+        projected_scan = scan_source_entries(
+            projected_raw,
+            f"generated:{projected_unit_name}",
+        )
         if projected_scan.diagnostics or len(projected_scan.entries) != 1:
             raise ExpandedNationsError(
-                f"Projected unit {unit_name} is not one valid GoH definition"
+                f"Projected unit {projected_unit_name} is not one valid GoH definition"
             )
         generated = projected_scan.entries[0]
-        _verify_generated_identity(generated, unit_name, side)
+        _verify_generated_identity(
+            generated,
+            projected_unit_name,
+            side,
+        )
 
         side_calls = [
             call.value.lower() for call in generated.calls if call.family == "side"
         ]
         if side_calls != [side]:
             raise ExpandedNationsError(
-                f"Projected unit {unit_name} has tactical sides {side_calls}, "
-                f"expected {side}"
+                f"Projected unit {projected_unit_name} has tactical sides "
+                f"{side_calls}, expected {side}"
             )
 
         source_hash = sha256_bytes(source_raw.encode("utf-8"))
+        actor_alias = (
+            ""
+            if actor_unit_name == projected_unit_name
+            else f"; actor_unit={actor_unit_name}\n"
+        )
         rendered_entries.append(
-            f"; resolved_unit={unit_name}\n"
+            f"; resolved_unit={projected_unit_name}\n"
+            f"{actor_alias}"
             f"; source_entry={entry.name}\n"
             f"; source={source_reference}\n"
             f"; source_sha256={source_hash}\n"
@@ -126,7 +154,7 @@ def project_actor_units(
         )
         projected.append(
             ProjectedUnit(
-                unit_name=unit_name,
+                unit_name=projected_unit_name,
                 source_entry_name=entry.name,
                 source_reference=source_reference,
                 source_sha256=source_hash,
@@ -135,6 +163,50 @@ def project_actor_units(
         )
 
     return projected, "\n".join(rendered_entries).rstrip() + "\n"
+
+
+def normalize_actor_purchase_ids(
+    actor: Mapping[str, Any],
+    projected_units: Sequence[ProjectedUnit],
+) -> dict[str, Any]:
+    """Return an actor view whose units and research use native purchase IDs."""
+
+    ordered_units = sorted(
+        actor["units"],
+        key=lambda row: str(row["unit_name"]),
+    )
+    if len(ordered_units) != len(projected_units):
+        raise ExpandedNationsError(
+            f"Actor {actor['actor_id']} cannot normalize mismatched unit counts"
+        )
+    mapping = {
+        str(row["unit_name"]): projected.unit_name
+        for row, projected in zip(ordered_units, projected_units, strict=True)
+    }
+    if len(set(mapping.values())) != len(mapping):
+        raise ExpandedNationsError(
+            f"Actor {actor['actor_id']} native purchase normalization collides"
+        )
+
+    normalized = dict(actor)
+    normalized["units"] = [
+        {
+            **dict(row),
+            "unit_name": mapping[str(row["unit_name"])],
+        }
+        for row in actor["units"]
+    ]
+    normalized["research_nodes"] = [
+        {
+            **dict(node),
+            "unlock_units": [
+                mapping.get(str(unit_name), str(unit_name))
+                for unit_name in node.get("unlock_units", [])
+            ],
+        }
+        for node in actor["research_nodes"]
+    ]
+    return normalized
 
 
 def effective_purchase_id(entry: SourceEntry, side: str) -> str:
@@ -180,25 +252,26 @@ def _native_macro_name(unit_name: str, side: str) -> str:
     match = _NATIVE_ID_RE.fullmatch(unit_name)
     if match is None or not match.group("base"):
         raise ExpandedNationsError(
-            f"Native squad macro has an invalid canonical purchase ID: {unit_name}"
+            f"Native squad macro has an invalid catalog ID: {unit_name}"
         )
     suffix = (match.group("side") or "").lower()
     normalized_side = side.lower()
-    if suffix != normalized_side:
+    if suffix and suffix != normalized_side:
         raise ExpandedNationsError(
-            f"Native squad macro {unit_name} must carry tactical suffix "
-            f"({normalized_side})"
+            f"Native squad macro {unit_name} conflicts with tactical side "
+            f"{normalized_side}"
         )
     return str(match.group("base"))
 
 
 def _verify_generated_identity(
     generated: SourceEntry,
-    unit_name: str,
+    projected_unit_name: str,
     side: str,
 ) -> None:
     actual = effective_purchase_id(generated, side)
-    if actual != unit_name:
+    if actual != projected_unit_name:
         raise ExpandedNationsError(
-            f"Projected unit ID {actual!r} does not match canonical ID {unit_name!r}"
+            f"Projected unit ID {actual!r} does not match canonical native ID "
+            f"{projected_unit_name!r}"
         )
