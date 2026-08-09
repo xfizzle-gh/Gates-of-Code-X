@@ -9,16 +9,16 @@ from .expanded_nations_models import (
     MANIFEST_RELATIVE,
     all_managed_candidates,
 )
-from .expanded_nations_transaction import (
-    deactivate_actor_projection as _deactivate_actor_projection,
-    install_projection as _install_projection,
-    recover_interrupted_deactivation,
-)
-from .expanded_nations_verify import (
+from .expanded_nations_native_verify import (
     load_manifest,
     verify_actor_projection_files,
     verify_manifest_files,
     verify_projection_artifacts,
+)
+from .expanded_nations_transaction import (
+    deactivate_actor_projection as _deactivate_actor_projection,
+    install_projection as _install_projection,
+    recover_interrupted_deactivation,
 )
 
 __all__ = [
