@@ -2,11 +2,11 @@
 
 Native acceptance is paused pending fresh independent audit of the current integrated PR head.
 
-The first Serbia activation at independently accepted head `01f7a83f33bdc0b1d90a6146e0adfdcfcbb2fc0b` stopped before game launch. The live Code:X stack contains exactly three FRG-identity purchase entries in `units_csa_era1960.set` whose operative native side is explicitly `csa`. The schema-3 correction records classification and native side separately, preserves `side(csa)`, verifies source-backed authority, and remains fail-closed for unsupported mismatches.
+The first Serbia activation stopped before game launch on a live Code:X legacy side conflict. Exactly three FRG-identity purchase entries in `units_csa_era1960.set` carry explicit native `side(csa)`. The schema-3 correction records classification and native side separately, preserves the native side, verifies source-backed authority, and remains fail-closed for unsupported mismatches.
 
-Implementation code completed at `87eb0366206f2517240eb1f462d606cbea6e3ef4`. The branch was then integrated with current main using a normal merge commit. The exact current PR head, current main SHA, and exact-head workflows are recorded on PR #172 and native-acceptance issue #177.
+The exact current PR head, current main SHA, and exact-head workflows are recorded on PR #172 and native-acceptance issue #177. This document intentionally avoids pinning a mutable SHA.
 
-This document does not authorize resumed testing until independent review accepts the current exact head.
+Native testing remains blocked until independent review accepts the current exact head.
 
 ## Representative matrix
 
