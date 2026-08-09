@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import shutil
+import subprocess
 import tempfile
 import unittest
 from contextlib import contextmanager
@@ -16,6 +17,7 @@ from gates_of_codex.earth3_campaign import (
     CAMPAIGN_MANIFEST_IDENTIFIER,
     PRODUCTION_AUTHORITY_IDENTIFIER,
     Earth3AuthorityError,
+    _canonical_authority_root,
     build_earth3_campaign,
     load_earth3_authority,
 )
@@ -66,6 +68,29 @@ def _normalized_sha256(path: Path, *, strip_one_trailing_newline: bool = False) 
             raise AssertionError(f"{path} does not have the required trailing LF")
         raw = raw[:-1]
     return hashlib.sha256(raw).hexdigest()
+
+
+def _windows_short_path(path: Path) -> str | None:
+    if os.name != "nt":
+        return None
+    import ctypes
+    from ctypes import wintypes
+
+    get_short_path_name = ctypes.windll.kernel32.GetShortPathNameW
+    get_short_path_name.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR, wintypes.DWORD]
+    get_short_path_name.restype = wintypes.DWORD
+
+    long_path = str(path.resolve())
+    needed = get_short_path_name(long_path, None, 0)
+    if needed == 0:
+        return None
+    buffer = ctypes.create_unicode_buffer(needed)
+    if get_short_path_name(long_path, buffer, needed) == 0:
+        return None
+    short_path = buffer.value
+    if os.path.normcase(short_path) == os.path.normcase(long_path):
+        return None
+    return short_path
 
 
 def _all_dict_keys(value) -> set[str]:
@@ -490,6 +515,49 @@ class Earth3FailureBehaviorTests(unittest.TestCase):
             self.skipTest(f"platform refused authority-root symlink creation: {exc}")
         with self.assertRaisesRegex(Earth3AuthorityError, "authority root.*symlink"):
             build_earth3_campaign(substituted_root)
+
+    def test_windows_short_path_alias_accepted_for_authority_root(self) -> None:
+        if os.name != "nt":
+            self.skipTest("Windows-only 8.3 alias regression")
+        root = self._copy_authority()
+        short_path = _windows_short_path(root)
+        if short_path is None:
+            self.skipTest("filesystem does not provide a distinct short-name alias")
+        authority = build_earth3_campaign(Path(short_path))
+        self.assertEqual(APPROVED_PROVINCE_COUNT, len(authority.provinces))
+
+    def test_windows_temp_directory_resolve_spelling_is_not_symlink_evidence(self) -> None:
+        if os.name != "nt":
+            self.skipTest("Windows-only path-alias regression")
+        temp_path = Path(self.temporary.name)
+        canonical_root = _canonical_authority_root(temp_path)
+        self.assertTrue(os.path.samefile(temp_path, canonical_root))
+        root = self._copy_authority()
+        build_earth3_campaign(root)
+
+    def test_windows_junction_substitution_fails_closed(self) -> None:
+        if os.name != "nt":
+            self.skipTest("Windows-only junction regression")
+        root = self._copy_authority()
+        maps = root / "godot/assets/maps"
+        substituted_maps = root / "godot/assets/maps-substituted"
+        maps.rename(substituted_maps)
+        try:
+            result = subprocess.run(
+                ["cmd", "/c", "mklink", "/J", str(maps), str(substituted_maps)],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode != 0:
+                self.skipTest(
+                    "platform refused junction creation: "
+                    f"{result.stderr.strip() or result.stdout.strip()}"
+                )
+        except OSError as exc:
+            self.skipTest(f"platform refused junction creation: {exc}")
+        with self.assertRaisesRegex(Earth3AuthorityError, "symlink"):
+            build_earth3_campaign(root)
 
     def test_manifest_declared_hash_mismatch_fails_closed(self) -> None:
         root = self._copy_authority()

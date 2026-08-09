@@ -92,10 +92,17 @@ def _default_authority_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def _same_canonical_path(left: Path, right: Path) -> bool:
-    return os.path.normcase(os.path.normpath(str(left))) == os.path.normcase(
-        os.path.normpath(str(right))
-    )
+def _is_symlink_or_reparse_point(path_stat: os.stat_result) -> bool:
+    if stat.S_ISLNK(path_stat.st_mode):
+        return True
+    file_attributes = getattr(path_stat, "st_file_attributes", None)
+    if file_attributes is not None and (file_attributes & stat.FILE_ATTRIBUTE_REPARSE_POINT):
+        return True
+    return False
+
+
+def _same_file_identity(before: os.stat_result, after: os.stat_result) -> bool:
+    return (before.st_dev, before.st_ino) == (after.st_dev, after.st_ino)
 
 
 def _canonical_authority_root(root: Path) -> Path:
@@ -104,7 +111,7 @@ def _canonical_authority_root(root: Path) -> Path:
         root_stat = os.lstat(absolute_root)
     except OSError as exc:
         raise Earth3AuthorityError(f"Earth3 authority root missing: {absolute_root}") from exc
-    if stat.S_ISLNK(root_stat.st_mode):
+    if _is_symlink_or_reparse_point(root_stat):
         raise Earth3AuthorityError(f"Earth3 authority root is a symlink: {absolute_root}")
     if not stat.S_ISDIR(root_stat.st_mode):
         raise Earth3AuthorityError(f"Earth3 authority root is not a directory: {absolute_root}")
@@ -112,13 +119,17 @@ def _canonical_authority_root(root: Path) -> Path:
         canonical_root = absolute_root.resolve(strict=True)
     except OSError as exc:
         raise Earth3AuthorityError(f"Earth3 authority root is not canonical: {absolute_root}") from exc
-    if not _same_canonical_path(absolute_root, canonical_root):
+    try:
+        resolved_stat = os.lstat(canonical_root)
+    except OSError as exc:
+        raise Earth3AuthorityError(f"Earth3 authority root is not canonical: {absolute_root}") from exc
+    if _is_symlink_or_reparse_point(resolved_stat):
+        raise Earth3AuthorityError(f"Earth3 authority root is a symlink: {absolute_root}")
+    if not stat.S_ISDIR(resolved_stat.st_mode):
+        raise Earth3AuthorityError(f"Earth3 authority root is not a directory: {absolute_root}")
+    if not _same_file_identity(root_stat, resolved_stat):
         raise Earth3AuthorityError(f"Earth3 authority root is symlinked: {absolute_root}")
     return canonical_root
-
-
-def _same_file_identity(before: os.stat_result, after: os.stat_result) -> bool:
-    return (before.st_dev, before.st_ino) == (after.st_dev, after.st_ino)
 
 
 def _revalidate_captured_authority_path(
@@ -130,15 +141,13 @@ def _revalidate_captured_authority_path(
     path_stat: os.stat_result,
 ) -> None:
     """Reject authority-path substitutions observable during the raw read window."""
-    refreshed_root = _canonical_authority_root(canonical_root)
-    if not _same_canonical_path(canonical_root, refreshed_root):
-        raise Earth3AuthorityError(f"Earth3 authority root changed while reading: {canonical_root}")
+    _canonical_authority_root(canonical_root)
     try:
         refreshed_root_stat = os.lstat(canonical_root)
     except OSError as exc:
         raise Earth3AuthorityError(f"Earth3 authority root changed while reading: {canonical_root}") from exc
     if (
-        stat.S_ISLNK(refreshed_root_stat.st_mode)
+        _is_symlink_or_reparse_point(refreshed_root_stat)
         or not stat.S_ISDIR(refreshed_root_stat.st_mode)
         or not _same_file_identity(root_stat, refreshed_root_stat)
     ):
@@ -152,7 +161,7 @@ def _revalidate_captured_authority_path(
                 f"{relative_path.as_posix()} parent changed while being read: {parent}"
             ) from exc
         if (
-            stat.S_ISLNK(refreshed_parent_stat.st_mode)
+            _is_symlink_or_reparse_point(refreshed_parent_stat)
             or not stat.S_ISDIR(refreshed_parent_stat.st_mode)
             or not _same_file_identity(initial_stat, refreshed_parent_stat)
         ):
@@ -169,10 +178,9 @@ def _revalidate_captured_authority_path(
             f"{relative_path.as_posix()} path changed while being read"
         ) from exc
     if (
-        stat.S_ISLNK(refreshed_path_stat.st_mode)
+        _is_symlink_or_reparse_point(refreshed_path_stat)
         or not stat.S_ISREG(refreshed_path_stat.st_mode)
         or not _same_file_identity(path_stat, refreshed_path_stat)
-        or not _same_canonical_path(canonical_path, refreshed_resolved_path)
     ):
         raise Earth3AuthorityError(f"{relative_path.as_posix()} path changed while being read")
 
@@ -187,7 +195,7 @@ def _read_fixed_authority_json(
         root_stat = os.lstat(canonical_root)
     except OSError as exc:
         raise Earth3AuthorityError(f"Earth3 authority root changed while reading: {canonical_root}") from exc
-    if stat.S_ISLNK(root_stat.st_mode) or not stat.S_ISDIR(root_stat.st_mode):
+    if _is_symlink_or_reparse_point(root_stat) or not stat.S_ISDIR(root_stat.st_mode):
         raise Earth3AuthorityError(f"Earth3 authority root changed while reading: {canonical_root}")
     if relative_path.is_absolute() or ".." in relative_path.parts:
         raise Earth3AuthorityError(f"{label} path is not a fixed relative authority entry")
@@ -207,7 +215,7 @@ def _read_fixed_authority_json(
             parent_stat = os.lstat(parent)
         except OSError as exc:
             raise Earth3AuthorityError(f"{label} missing: {relative_path.as_posix()}") from exc
-        if stat.S_ISLNK(parent_stat.st_mode):
+        if _is_symlink_or_reparse_point(parent_stat):
             raise Earth3AuthorityError(
                 f"{label} is symlinked or not canonical: {relative_path.as_posix()}"
             )
@@ -219,18 +227,23 @@ def _read_fixed_authority_json(
         path_stat = os.lstat(canonical_path)
     except OSError as exc:
         raise Earth3AuthorityError(f"{label} missing: {relative_path.as_posix()}") from exc
-    if stat.S_ISLNK(path_stat.st_mode):
+    if _is_symlink_or_reparse_point(path_stat):
         raise Earth3AuthorityError(f"{label} is a symlink: {relative_path.as_posix()}")
     if not stat.S_ISREG(path_stat.st_mode):
         raise Earth3AuthorityError(f"{label} is not a regular file: {relative_path.as_posix()}")
     try:
         resolved_path = canonical_path.resolve(strict=True)
         resolved_path.relative_to(canonical_root)
+        resolved_stat = os.lstat(resolved_path)
     except (OSError, ValueError) as exc:
         raise Earth3AuthorityError(
             f"{label} is not contained by the authority root: {relative_path.as_posix()}"
         ) from exc
-    if not _same_canonical_path(canonical_path, resolved_path):
+    if (
+        _is_symlink_or_reparse_point(resolved_stat)
+        or not stat.S_ISREG(resolved_stat.st_mode)
+        or not _same_file_identity(path_stat, resolved_stat)
+    ):
         raise Earth3AuthorityError(
             f"{label} is symlinked or not canonical: {relative_path.as_posix()}"
         )
