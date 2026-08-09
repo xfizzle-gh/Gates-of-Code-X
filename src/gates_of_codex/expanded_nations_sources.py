@@ -18,6 +18,7 @@ from .expanded_nations_models import (
 
 _SOURCE_REFERENCE_RE = re.compile(r"^(\d+):([^/]+)/(.+)$")
 _SIDE_CALL_RE = re.compile(r"\bside\s*\(\s*[^)]*\)", re.IGNORECASE)
+_PERIOD_ERA1960_RE = re.compile(r"\bperiod\s*\(\s*era1960\s*\)", re.IGNORECASE)
 _INCLUDE_RE = re.compile(r'^\s*\(\s*include\s+"([^"]+)"\s*\)\s*$', re.IGNORECASE | re.DOTALL)
 _FACTION_SUFFIX_RE = re.compile(
     r"^(?P<base>.*?)(?:\((?P<side>nato|ukr|rusa|prc|sov|csa|frg)\))?$",
@@ -34,6 +35,14 @@ _GENERATED_SOURCE_NAMES = frozenset(
         "unit_research_prc.set",
     }
 )
+_SOVIET_RUSA_CREW_ALIASES: Mapping[str, str] = {
+    "grd_vehicleman": "rus_vehicleman",
+    "sup_tankman": "rus_vehicleman",
+    "sup_vehicleman": "rus_vehicleman",
+    "vmf_vehicleman": "rus_vehicleman",
+    "sup_guncrew": "rus_supporter",
+    "sup_supporter": "rus_supporter",
+}
 
 
 def project_actor_units(
@@ -51,14 +60,16 @@ def project_actor_units(
         unit_name = str(unit["unit_name"])
         if str(unit.get("tactical_side")) != side:
             raise ExpandedNationsError(
-                f"Actor {actor['actor_id']} unit {unit_name} targets {unit.get('tactical_side')}, expected {side}"
+                f"Actor {actor['actor_id']} unit {unit_name} targets "
+                f"{unit.get('tactical_side')}, expected {side}"
             )
         if not unit.get("materializable"):
             raise ExpandedNationsError(f"Actor unit is not materializable: {unit_name}")
         for source_reference in unit.get("source_files", []):
             if _is_generated_source_reference(str(source_reference)):
                 raise ExpandedNationsError(
-                    f"Actor unit {unit_name} resolved from generated activation source {source_reference}"
+                    f"Actor unit {unit_name} resolved from generated activation source "
+                    f"{source_reference}"
                 )
         entry, source_reference = _find_source_entry(unit, roots, gates_root, cache)
         if entry.name in source_entry_names:
@@ -68,17 +79,24 @@ def project_actor_units(
         source_entry_names.add(entry.name)
         source_raw = entry.raw.rstrip()
         renamed_raw = _rename_entry(source_raw, entry, unit_name)
-        projected_raw, replacements = _SIDE_CALL_RE.subn(f"side({side})", renamed_raw)
-        if replacements != 1:
-            raise ExpandedNationsError(
-                f"Unit {unit_name} source entry {entry.name} has {replacements} side declarations"
-            )
+        projected_raw = _project_source_raw(
+            renamed_raw,
+            unit_name=unit_name,
+            source_side=str(unit.get("source_side") or side).lower(),
+            target_side=side,
+        )
         projected_scan = scan_source_entries(projected_raw, f"generated:{unit_name}")
         if projected_scan.diagnostics or len(projected_scan.entries) != 1:
             raise ExpandedNationsError(f"Projected unit {unit_name} is not one valid GoH definition")
-        if projected_scan.entries[0].name != unit_name:
+        generated = projected_scan.entries[0]
+        if generated.name != unit_name:
             raise ExpandedNationsError(
-                f"Projected unit ID {projected_scan.entries[0].name!r} does not match canonical ID {unit_name!r}"
+                f"Projected unit ID {generated.name!r} does not match canonical ID {unit_name!r}"
+            )
+        side_calls = [call.value.lower() for call in generated.calls if call.family == "side"]
+        if side_calls != [side]:
+            raise ExpandedNationsError(
+                f"Projected unit {unit_name} has tactical sides {side_calls}, expected {side}"
             )
         source_hash = sha256_bytes(source_raw.encode("utf-8"))
         rendered_entries.append(
@@ -100,45 +118,65 @@ def project_actor_units(
     return projected, "\n".join(rendered_entries).rstrip() + "\n"
 
 
+def _project_source_raw(
+    raw: str,
+    *,
+    unit_name: str,
+    source_side: str,
+    target_side: str,
+) -> str:
+    projected, replacements = _SIDE_CALL_RE.subn(f"side({target_side})", raw)
+    if replacements != 1:
+        raise ExpandedNationsError(
+            f"Unit {unit_name} source definition has {replacements} side declarations"
+        )
+
+    if source_side == target_side:
+        return projected
+
+    if source_side == "sov" and target_side == "rusa":
+        projected, periods = _PERIOD_ERA1960_RE.subn("period(2022s)", projected)
+        if periods != 1:
+            raise ExpandedNationsError(
+                f"Soviet-to-RUSA unit {unit_name} requires one era1960 period, found {periods}"
+            )
+        for source_crew, target_crew in _SOVIET_RUSA_CREW_ALIASES.items():
+            pattern = re.compile(
+                r"(\bcrew\d*\s*\(\s*)" + re.escape(source_crew) + r"(?=\s*:)",
+                re.IGNORECASE,
+            )
+            projected = pattern.sub(
+                lambda match, replacement=target_crew: match.group(1) + replacement,
+                projected,
+            )
+        unresolved = [
+            crew
+            for crew in _SOVIET_RUSA_CREW_ALIASES
+            if re.search(
+                r"\bcrew\d*\s*\(\s*" + re.escape(crew) + r"\s*:",
+                projected,
+                re.IGNORECASE,
+            )
+        ]
+        if unresolved:
+            raise ExpandedNationsError(
+                f"Soviet-to-RUSA unit {unit_name} retains legacy crew aliases: {unresolved}"
+            )
+        if _PERIOD_ERA1960_RE.search(projected):
+            raise ExpandedNationsError(
+                f"Soviet-to-RUSA unit {unit_name} retains era1960 period"
+            )
+        return projected
+
+    return projected
+
+
 def project_opponent_units(
     selected_side: str,
     roots: Sequence[Path],
 ) -> tuple[list[ProjectedOpponentUnit], str]:
-    if selected_side not in SUPPORTED_TACTICAL_SIDES:
-        raise ExpandedNationsError(f"Unsupported selected tactical side: {selected_side}")
-    cache: dict[Path, tuple[SourceEntry, ...]] = {}
-    projected: list[ProjectedOpponentUnit] = []
-    rendered_entries: list[str] = []
-
-    for include in BROAD_ROSTER_INCLUDES:
-        for entry, source_path, priority, source_reference, ordinal in _walk_effective_include(
-            include,
-            roots,
-            cache,
-            active=(),
-        ):
-            entry_side = _canonical_entry_side(entry, source_path)
-            if entry_side == selected_side:
-                continue
-            raw = entry.raw.rstrip()
-            source_hash = sha256_bytes(raw.encode("utf-8"))
-            rendered_entries.append(
-                f"; opponent_source={source_reference}\n"
-                f"; opponent_ordinal={ordinal}\n"
-                f"; opponent_side={entry_side or 'shared'}\n"
-                f"; source_sha256={source_hash}\n"
-                f"{raw}\n"
-            )
-            projected.append(
-                ProjectedOpponentUnit(
-                    entry_name=entry.name,
-                    tactical_side=entry_side,
-                    source_reference=source_reference,
-                    source_sha256=source_hash,
-                    projected_sha256=source_hash,
-                )
-            )
-    return projected, "\n".join(rendered_entries).rstrip() + "\n"
+    from .expanded_nations_opponent_render import project_opponent_units as implementation
+    return implementation(selected_side, roots)
 
 
 def _walk_effective_include(
@@ -179,7 +217,8 @@ def _walk_effective_include(
             continue
         if not entry.name:
             raise ExpandedNationsError(
-                f"Unnamed non-include entry in opponent roster cannot be filtered safely: {source_path}:{entry.location.line}"
+                "Unnamed non-include entry in opponent roster cannot be filtered safely: "
+                f"{source_path}:{entry.location.line}"
             )
         yield entry, source_path, priority, source_reference, ordinal
 
@@ -190,8 +229,10 @@ def _canonical_entry_side(entry: SourceEntry, source_path: Path) -> str:
         raise ExpandedNationsError(
             f"Core roster entry {entry.name!r} in {source_path} has multiple side declarations"
         )
-    return _side_from_name(entry.name) or (explicit[0] if explicit else "") or _side_from_filename(
-        source_path.name
+    return (
+        _side_from_name(entry.name)
+        or (explicit[0] if explicit else "")
+        or _side_from_filename(source_path.name)
     )
 
 
@@ -204,14 +245,20 @@ def _find_source_entry(
     unit_name = str(unit["unit_name"])
     source_side = str(unit.get("source_side") or unit.get("tactical_side") or "").lower()
     if unit.get("virtual"):
-        wrapper_path = gates_root / "resource/set/multiplayer/units/conquest/units_goc_national_wrappers.set"
+        wrapper_path = (
+            gates_root
+            / "resource/set/multiplayer/units/conquest/units_goc_national_wrappers.set"
+        )
         entries = _entries_for_path(wrapper_path, cache)
         matches = [entry for entry in entries if entry.name == unit_name]
         if len(matches) != 1:
             raise ExpandedNationsError(
                 f"Virtual unit {unit_name} requires exactly one committed wrapper definition"
             )
-        return matches[0], "gates:resource/set/multiplayer/units/conquest/units_goc_national_wrappers.set"
+        return (
+            matches[0],
+            "gates:resource/set/multiplayer/units/conquest/units_goc_national_wrappers.set",
+        )
 
     candidates: list[tuple[int, int, int, SourceEntry, str]] = []
     for source_order, raw_reference in enumerate(unit.get("source_files", [])):
@@ -235,9 +282,13 @@ def _find_source_entry(
         for entry in _entries_for_path(source_path, cache):
             if not _entry_name_matches(entry.name, unit_name, source_side):
                 continue
-            candidates.append((priority, int(entry.name == unit_name), source_order, entry, source_reference))
+            candidates.append(
+                (priority, int(entry.name == unit_name), source_order, entry, source_reference)
+            )
     if not candidates:
-        raise ExpandedNationsError(f"No purchase-ready source definition found for actor unit {unit_name}")
+        raise ExpandedNationsError(
+            f"No purchase-ready source definition found for actor unit {unit_name}"
+        )
 
     expected_priority = int(unit.get("source_priority", max(item[0] for item in candidates)))
     candidates = [item for item in candidates if item[0] == expected_priority]
@@ -258,7 +309,10 @@ def _find_source_entry(
     return selected[3], selected[4]
 
 
-def _effective_include_path(include: str, roots: Sequence[Path]) -> tuple[Path, int] | None:
+def _effective_include_path(
+    include: str,
+    roots: Sequence[Path],
+) -> tuple[Path, int] | None:
     for priority in range(len(roots) - 1, -1, -1):
         candidate = resource_root(roots[priority]) / "set/multiplayer/units" / include
         if candidate.is_file():
@@ -266,7 +320,10 @@ def _effective_include_path(include: str, roots: Sequence[Path]) -> tuple[Path, 
     return None
 
 
-def _entries_for_path(path: Path, cache: dict[Path, tuple[SourceEntry, ...]]) -> tuple[SourceEntry, ...]:
+def _entries_for_path(
+    path: Path,
+    cache: dict[Path, tuple[SourceEntry, ...]],
+) -> tuple[SourceEntry, ...]:
     resolved = path.resolve()
     if resolved in cache:
         return cache[resolved]
@@ -311,7 +368,10 @@ def _rename_entry(raw: str, entry: SourceEntry, canonical_name: str) -> str:
             count=1,
         )
     elif entry.form == "macro":
-        pattern = re.compile(r"\bname\s*\(\s*" + re.escape(entry.name) + r"\s*\)", re.IGNORECASE)
+        pattern = re.compile(
+            r"\bname\s*\(\s*" + re.escape(entry.name) + r"\s*\)",
+            re.IGNORECASE,
+        )
         renamed, count = pattern.subn(f"name({canonical_name})", raw, count=1)
     else:
         raise ExpandedNationsError(
@@ -326,4 +386,7 @@ def _rename_entry(raw: str, entry: SourceEntry, canonical_name: str) -> str:
 
 def _is_generated_source_reference(source_reference: str) -> bool:
     normalized = source_reference.replace("\\", "/").lower()
-    return any(normalized.endswith("/" + name) or normalized.endswith(":" + name) for name in _GENERATED_SOURCE_NAMES)
+    return any(
+        normalized.endswith("/" + name) or normalized.endswith(":" + name)
+        for name in _GENERATED_SOURCE_NAMES
+    )
