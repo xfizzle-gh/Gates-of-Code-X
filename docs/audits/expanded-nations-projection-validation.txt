@@ -1,35 +1,35 @@
-Expanded Nations projection matrix validation
+Expanded Nations projection validation
 
-Status: REJECTED
+Current branch head: 2f99e2b82a08abe60050a7e4d36565ca1b15f1ea
+Implementation head: a4faf628c556d9341d4353ffa9b797002cde987a
 
-Uploaded bundle:
-- name: expanded-nations-define-closure-matrix-20260809-154233.zip
-- sha256: e6437999b442064d16ea2bd98b38733c83a1a719bec8c7ed2bfa5569c7f22718
-- generated source head: b7a9442009b6924a847ae1df536001bf3ee1fc28
-- actor rows: 21
-- wiring signature: 970ee67395eeff51323e78fb280145a1fa6747ab28fe74ef2aa1a0cdfa714754
-- stack signature: 18ab5b6ce4f08fc758e641ead4e70f0163a525065f9402554de79b9681d41711
+Native Russia failure:
+- undefined macro: dp_infantry_8
+- owning generated purchase: rus155_inf_rpg28(rusa)
+- declaration syntax: (define "dp_infantry_8" ...)
+- declaration source: Code:X AI Overhaul
+  resource/set/multiplayer/units/2022s/doctrine_settings.set
+- declaration source SHA-256:
+  519173451b87ce6b464a5ffce3de5bfa0f0f87b59e519642ea03ee3137255365
+- purchase source: Code:X AI Overhaul
+  resource/set/multiplayer/units/2022s/doctrine_units_rusa.set
+- purchase source SHA-256:
+  d88fe754d4a7e608f153a48e5e0aa4ffdd1546dc47e07a7da7bd230cbd3bd51e
 
-Structural generation passed:
-- exact head verified
-- Core restored before generation
-- 21 actors generated and semantically verified
-- Core restored after generation
-- only the two matrix files changed locally
+Rejected first correction:
+The same-source brace-form implementation produced actor rows, managed-file
+hashes, and projection signatures identical to the pre-fix matrix. It did not
+emit the required definition.
 
-Audit rejection:
-- compared with the previously accepted matrix generated at source head
-  df09c4b9bda53a0c771bfc681ac8654c5f90f2a3
-- all 21 actor rows were identical
-- all 96 managed-file hashes were identical
-- all 21 projection signatures were identical
-- Russia actor-unit hash remained
-  a8a37b9d757620c4f42fbe4dcbb1522ebab7ef9a3c4b039dadbafafcee7a80fa
-- Russia projection signature remained
-  4b66c920cbe707b144f5f0e49d68eed4a3e7ffd1829d51a88a85206d82cc8c43
+Replacement correction:
+- bounded parenthesized-definition scanner
+- effective installed-stack precedence
+- recursive cross-file definition closure
+- baseline Conquest-settings exclusion
+- deterministic conflict, cycle, and missing-definition failures
+- final generated-artifact closure verification
+- exact rus155_inf_rpg28 regression
 
-Conclusion:
-The required dp_infantry_8 definition was not emitted. The same-source brace-form
-define correction was not exercised by the installed stack and does not resolve
-the native Russia crash. The generated complete matrix must not be committed as
-authoritative evidence. Russia, France, ready-for-review, and merge remain blocked.
+The complete matrix remains invalidated with an empty actor map. Regeneration is
+not authorized until both exact-head workflows at the current branch head pass
+and the replacement receives exact-head review.
