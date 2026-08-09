@@ -48,9 +48,10 @@ def project_actor_units(
 
     Some upstream purchase blocks invoke source-local macros declared through
     ``{define ...}`` blocks in the same source file. Those declarations are part
-    of the native purchase contract. Preserve them ahead of projected purchases,
-    deduplicate byte-identical declarations, and fail closed if selected source
-    files assign different bodies to the same define name.
+    of the native purchase contract. Preserve only the recursive dependency
+    closure required by selected purchases, keep source order, deduplicate
+    byte-identical declarations, and fail closed if selected source files assign
+    different bodies to the same required define name.
     """
 
     side = str(actor["tactical_side"]).lower()
@@ -95,12 +96,8 @@ def project_actor_units(
                 cache,
             )
             source_path = _source_path_from_reference(source_reference, roots)
-            for dependency in _define_entries_for_path(source_path, cache):
+            for dependency in _required_define_entries(entry, source_path, cache):
                 define_name = defined_macro_name(dependency.raw)
-                if not define_name:
-                    raise ExpandedNationsError(
-                        f"Source define in {source_reference} has no macro name"
-                    )
                 define_raw = dependency.raw.rstrip()
                 previous = definitions.get(define_name)
                 if previous is None:
@@ -268,6 +265,48 @@ def defined_macro_name(raw: str) -> str:
     if match is None:
         return ""
     return str(match.group("quoted") or match.group("bare") or "")
+
+
+def _required_define_entries(
+    purchase: SourceEntry,
+    path: Path,
+    cache: dict[Path, tuple[SourceEntry, ...]],
+) -> tuple[SourceEntry, ...]:
+    """Return source-ordered local defines reachable from one purchase."""
+
+    ordered: list[tuple[str, SourceEntry]] = []
+    by_name: dict[str, SourceEntry] = {}
+    for entry in _define_entries_for_path(path, cache):
+        name = defined_macro_name(entry.raw)
+        if not name:
+            raise ExpandedNationsError(f"Source define in {path} has no macro name")
+        previous = by_name.get(name)
+        if previous is None:
+            by_name[name] = entry
+            ordered.append((name, entry))
+        elif previous.raw.rstrip() != entry.raw.rstrip():
+            raise ExpandedNationsError(
+                f"Source file {path} defines {name!r} with conflicting bodies"
+            )
+
+    required: set[str] = set()
+    active: set[str] = set()
+
+    def visit(name: str) -> None:
+        if name not in by_name or name in required:
+            return
+        if name in active:
+            raise ExpandedNationsError(
+                f"Source-local define dependency cycle in {path}: {name}"
+            )
+        active.add(name)
+        dependency = by_name[name]
+        visit(dependency.macro_kind)
+        active.remove(name)
+        required.add(name)
+
+    visit(purchase.macro_kind)
+    return tuple(entry for name, entry in ordered if name in required)
 
 
 def _define_entries_for_path(
