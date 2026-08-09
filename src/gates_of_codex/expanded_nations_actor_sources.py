@@ -18,9 +18,15 @@ from .expanded_nations_sources import (
     _rename_entry,
 )
 from .goh_source import SourceEntry, scan_source_entries
+from .modstack import resource_root
 
 _NATIVE_ID_RE = re.compile(
     r"^(?P<base>.*?)(?:\((?P<side>nato|ukr|rusa|prc|sov|csa|frg)\))?$",
+    re.IGNORECASE,
+)
+_SOURCE_REFERENCE_RE = re.compile(r"^(\d+):[^/]+/(.+)$")
+_DEFINE_HEADER_RE = re.compile(
+    r'^\s*\{\s*define\s+(?:"(?P<quoted>[^"]+)"|(?P<bare>[^\s{}]+))',
     re.IGNORECASE,
 )
 _WRAPPER_RELATIVE = Path(
@@ -39,6 +45,12 @@ def project_actor_units(
     Top-level squad macros carry only the base name; Gates of Hell derives their
     effective purchase ID as ``name(side)``. Projected units therefore record the
     effective ID even when the compiler catalog stored only the macro base name.
+
+    Some upstream purchase blocks invoke source-local macros declared through
+    ``{define ...}`` blocks in the same source file. Those declarations are part
+    of the native purchase contract. Preserve them ahead of projected purchases,
+    deduplicate byte-identical declarations, and fail closed if selected source
+    files assign different bodies to the same define name.
     """
 
     side = str(actor["tactical_side"]).lower()
@@ -47,6 +59,8 @@ def project_actor_units(
     source_entry_names: set[str] = set()
     projected_ids: set[str] = set()
     rendered_entries: list[str] = []
+    define_order: list[str] = []
+    definitions: dict[str, tuple[str, str]] = {}
 
     for unit in sorted(actor["units"], key=lambda row: str(row["unit_name"])):
         actor_unit_name = str(unit["unit_name"])
@@ -80,6 +94,24 @@ def project_actor_units(
                 gates_root,
                 cache,
             )
+            source_path = _source_path_from_reference(source_reference, roots)
+            for dependency in _define_entries_for_path(source_path, cache):
+                define_name = defined_macro_name(dependency.raw)
+                if not define_name:
+                    raise ExpandedNationsError(
+                        f"Source define in {source_reference} has no macro name"
+                    )
+                define_raw = dependency.raw.rstrip()
+                previous = definitions.get(define_name)
+                if previous is None:
+                    definitions[define_name] = (define_raw, source_reference)
+                    define_order.append(define_name)
+                elif previous[0] != define_raw:
+                    raise ExpandedNationsError(
+                        f"Actor {actor['actor_id']} source-local define "
+                        f"{define_name!r} conflicts between {previous[1]} and "
+                        f"{source_reference}"
+                    )
 
         source_key = f"{source_reference}:{entry.name}"
         if source_key in source_entry_names:
@@ -162,7 +194,16 @@ def project_actor_units(
             )
         )
 
-    return projected, "\n".join(rendered_entries).rstrip() + "\n"
+    rendered_definitions = [
+        f"; source_define={define_name}\n"
+        f"; source={definitions[define_name][1]}\n"
+        f"; source_define_sha256="
+        f"{sha256_bytes(definitions[define_name][0].encode('utf-8'))}\n"
+        f"{definitions[define_name][0]}\n"
+        for define_name in define_order
+    ]
+    body_parts = [*rendered_definitions, *rendered_entries]
+    return projected, "\n".join(body_parts).rstrip() + "\n"
 
 
 def normalize_actor_purchase_ids(
@@ -218,6 +259,48 @@ def effective_purchase_id(entry: SourceEntry, side: str) -> str:
             raise ExpandedNationsError("Native squad macro has no name(...) value")
         return f"{entry.name}({normalized_side})"
     return entry.name
+
+
+def defined_macro_name(raw: str) -> str:
+    """Return the declared name of one source-local ``{define ...}`` block."""
+
+    match = _DEFINE_HEADER_RE.match(raw)
+    if match is None:
+        return ""
+    return str(match.group("quoted") or match.group("bare") or "")
+
+
+def _define_entries_for_path(
+    path: Path,
+    cache: dict[Path, tuple[SourceEntry, ...]],
+) -> tuple[SourceEntry, ...]:
+    return tuple(
+        entry
+        for entry in _entries_for_path(path, cache)
+        if entry.form == "block" and entry.name.lower() == "define"
+    )
+
+
+def _source_path_from_reference(
+    source_reference: str,
+    roots: Sequence[Path],
+) -> Path:
+    match = _SOURCE_REFERENCE_RE.fullmatch(source_reference)
+    if match is None:
+        raise ExpandedNationsError(
+            f"Cannot resolve source-local defines for {source_reference}"
+        )
+    priority = int(match.group(1))
+    if priority < 0 or priority >= len(roots):
+        raise ExpandedNationsError(
+            f"Source-local define priority is invalid: {source_reference}"
+        )
+    path = resource_root(roots[priority]) / match.group(2)
+    if not path.is_file():
+        raise ExpandedNationsError(
+            f"Source-local define file is missing: {source_reference}"
+        )
+    return path
 
 
 def _find_virtual_source_entry(
