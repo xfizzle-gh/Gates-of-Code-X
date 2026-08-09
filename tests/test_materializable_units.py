@@ -63,7 +63,7 @@ class MaterializableUnitTests(unittest.TestCase):
 
     def test_starter_economy_and_research_exclude_nonmaterializable_unit(self) -> None:
         catalog = self._catalog()
-        state = load_bundled_scenario()
+        state = load_bundled_scenario("legacy_goe_europe")
         set_player_faction(state, Faction.NATO)
         populate_starter_rosters(state, catalog)
         initialize_economy(state, catalog)
@@ -84,7 +84,7 @@ class MaterializableUnitTests(unittest.TestCase):
 
     def test_bridge_preflight_reports_all_nonmaterializable_roster_entries(self) -> None:
         catalog = self._catalog()
-        state = load_bundled_scenario()
+        state = load_bundled_scenario("legacy_goe_europe")
         set_player_faction(state, Faction.NATO)
         populate_starter_rosters(state, catalog)
         initialize_economy(state, catalog)

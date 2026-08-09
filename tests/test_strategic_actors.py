@@ -22,7 +22,7 @@ from gates_of_codex.strategic_actors import (
 
 class StrategicActorMigrationTest(unittest.TestCase):
     def test_legacy_campaign_receives_compatibility_actors(self) -> None:
-        state = load_bundled_scenario()
+        state = load_bundled_scenario("legacy_goe_europe")
         actors = ensure_strategic_actor_runtime(state)
         self.assertEqual(set(actors), set(state.factions) - {Faction.NEUTRAL.value})
         self.assertEqual(selected_actor(state).actor_id, state.selected_faction.value)
@@ -33,7 +33,7 @@ class StrategicActorMigrationTest(unittest.TestCase):
             self.assertEqual(actors[force.actor_id].tactical_side, force.faction)
 
     def test_save_load_round_trip_preserves_actor_runtime(self) -> None:
-        state = load_bundled_scenario()
+        state = load_bundled_scenario("legacy_goe_europe")
         install_bundled_strategic_actors(state, selected_actor_id="fra")
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "campaign.json"
@@ -46,7 +46,7 @@ class StrategicActorMigrationTest(unittest.TestCase):
 
 class BundledStrategicActorTest(unittest.TestCase):
     def test_installs_all_audited_actors_and_selects_france(self) -> None:
-        state = load_bundled_scenario()
+        state = load_bundled_scenario("legacy_goe_europe")
         actors = install_bundled_strategic_actors(state, selected_actor_id="fra")
         self.assertEqual(len(actors), 24)
         self.assertEqual(state.selected_faction, Faction.NATO)
@@ -59,19 +59,19 @@ class BundledStrategicActorTest(unittest.TestCase):
         validate_strategic_actor_runtime(state)
 
     def test_north_korea_selects_russian_tactical_side(self) -> None:
-        state = load_bundled_scenario()
+        state = load_bundled_scenario("legacy_goe_europe")
         install_bundled_strategic_actors(state, selected_actor_id="dprk")
         self.assertEqual(state.selected_faction, Faction.RUSSIA)
         self.assertEqual(selected_actor(state).actor_id, "dprk")
 
     def test_non_playable_auxiliary_cannot_be_selected(self) -> None:
-        state = load_bundled_scenario()
+        state = load_bundled_scenario("legacy_goe_europe")
         install_bundled_strategic_actors(state, selected_actor_id="ukr")
         with self.assertRaises(ValueError):
             set_selected_actor(state, "ukr_ildu")
 
     def test_province_actor_must_match_tactical_owner(self) -> None:
-        state = load_bundled_scenario()
+        state = load_bundled_scenario("legacy_goe_europe")
         actors = install_bundled_strategic_actors(state, selected_actor_id="fra")
         province = next(value for value in state.provinces.values() if value.owner == Faction.NATO)
         assign_province_actor(state, province.province_id, "fra")

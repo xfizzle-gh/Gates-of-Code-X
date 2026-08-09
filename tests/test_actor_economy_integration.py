@@ -16,7 +16,7 @@ from gates_of_codex.strategic_actors import (
 
 class ActorEconomyIntegrationTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.state = load_bundled_scenario()
+        self.state = load_bundled_scenario("legacy_goe_europe")
         ensure_strategic_formations(self.state)
         install_actor_content(self.state, _resolved_payload(), selected_actor_id="fra")
 

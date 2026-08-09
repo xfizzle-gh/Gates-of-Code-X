@@ -311,7 +311,7 @@ def _run_new(arguments: list[str]) -> int:
         parser.error("--codex is required for interim_goe_europe campaigns")
     stack = resolve_stack(args.stack, config=args.stack_config, fallback=args.codex)
     catalog = CodeXCatalogScanner().scan_stack(stack)
-    state = load_bundled_scenario()
+    state = load_bundled_scenario("legacy_goe_europe")
     state.code_x_directory = str(Path(args.codex).resolve())
     state.map_metadata["resource_stack"] = stack_to_strings(stack)
     state.map_metadata["strategic_map_id"] = "interim_goe_europe"

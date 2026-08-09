@@ -26,7 +26,7 @@ from gates_of_codex.state_io import load_campaign, save_campaign
 class CampaignEconomyTests(unittest.TestCase):
     def setUp(self) -> None:
         self.catalog = self._catalog()
-        self.state = load_bundled_scenario()
+        self.state = load_bundled_scenario("legacy_goe_europe")
         populate_starter_rosters(self.state, self.catalog)
         initialize_economy(self.state, self.catalog)
         for faction_state in self.state.factions.values():

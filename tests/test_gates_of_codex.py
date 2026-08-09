@@ -9,7 +9,7 @@ from gates_of_codex.bridge.archive import CampaignSaveArchive
 from gates_of_codex.bridge.scn import CampaignScnBuilder, CampaignScnParser
 from gates_of_codex.bridge.status import BattleStatusOptions, StatusBuilder, StatusResult
 from gates_of_codex.campaign import CampaignEngine
-from gates_of_codex.cli import build_parser
+from gates_of_codex.cli import build_parser, main
 from gates_of_codex.codex.catalog import CodeXCatalogScanner
 from gates_of_codex.models import Faction
 from gates_of_codex.scenario import load_bundled_scenario
@@ -61,15 +61,15 @@ class GatesOfCodeXTests(unittest.TestCase):
         state.provinces["Hessen"].owner = Faction.RUSSIA
         engine.move_or_attack(NATO_BATTALION, "Hessen")
 
-    def test_bundled_scenario_validates(self) -> None:
-        state = load_bundled_scenario()
+    def test_explicit_legacy_goe_scenario_validates(self) -> None:
+        state = load_bundled_scenario("legacy_goe_europe")
         state.validate()
         self.assertEqual(set(state.factions), {"nato", "ukr", "rusa", "prc"})
         self.assertEqual(517, len(state.provinces))
         self.assertGreaterEqual(len(state.formations), 14)
 
     def test_campaign_round_trip(self) -> None:
-        state = load_bundled_scenario()
+        state = load_bundled_scenario("legacy_goe_europe")
         path = self.root / "campaign.json"
         save_campaign(state, path)
         loaded = load_campaign(path)
@@ -78,7 +78,7 @@ class GatesOfCodeXTests(unittest.TestCase):
         self.assertEqual(len(loaded.formations), len(state.formations))
 
     def test_neutral_capture(self) -> None:
-        state = load_bundled_scenario()
+        state = load_bundled_scenario("legacy_goe_europe")
         result = CampaignEngine(state).move_or_attack(NATO_BATTALION, "Westfalen")
         self.assertTrue(result.moved)
         self.assertEqual(state.provinces["Westfalen"].owner, Faction.NATO)
@@ -89,14 +89,14 @@ class GatesOfCodeXTests(unittest.TestCase):
             self.assertGreaterEqual(len(catalog.by_faction(faction)), 2)
 
     def test_starter_rosters_use_catalog(self) -> None:
-        state = load_bundled_scenario()
+        state = load_bundled_scenario("legacy_goe_europe")
         catalog = CodeXCatalogScanner().scan(self.codex)
         populate_starter_rosters(state, catalog)
         for battalion in state.battalions.values():
             self.assertNotIn("placeholder", battalion.roster[0].unit_name)
 
     def test_status_round_trip(self) -> None:
-        state = load_bundled_scenario()
+        state = load_bundled_scenario("legacy_goe_europe")
         self._prepare_nato_russia_battle(state)
         text = StatusBuilder().build(state.pending_battle, BattleStatusOptions("multi/4x4/test", played_games=4, won_games=2))
         self.assertTrue(text.startswith("{saveinfo"))
@@ -104,7 +104,7 @@ class GatesOfCodeXTests(unittest.TestCase):
         self.assertEqual(result, StatusResult(4, 2))
 
     def test_status_template_is_patched_without_losing_saveinfo_metadata(self) -> None:
-        state = load_bundled_scenario()
+        state = load_bundled_scenario("legacy_goe_europe")
         self._prepare_nato_russia_battle(state)
         template = (
             "{saveinfo\n"
@@ -157,7 +157,7 @@ class GatesOfCodeXTests(unittest.TestCase):
         self.assertEqual(1, text.count("{timestamp "))
 
     def test_status_template_crlf_is_patched_in_place(self) -> None:
-        state = load_bundled_scenario()
+        state = load_bundled_scenario("legacy_goe_europe")
         self._prepare_nato_russia_battle(state)
         template = (
             "{saveinfo\r\n"
@@ -206,7 +206,7 @@ class GatesOfCodeXTests(unittest.TestCase):
             StatusBuilder.validate(bad)
 
     def test_campaign_scn_graph(self) -> None:
-        state = load_bundled_scenario()
+        state = load_bundled_scenario("legacy_goe_europe")
         catalog = CodeXCatalogScanner().scan(self.codex)
         populate_starter_rosters(state, catalog)
         self._prepare_nato_russia_battle(state)
@@ -230,6 +230,19 @@ class GatesOfCodeXTests(unittest.TestCase):
     def test_cli_parser(self) -> None:
         args = build_parser().parse_args(["new", "--codex", str(self.codex), "--output", "test.json"])
         self.assertEqual(args.command, "new")
+
+    def test_cli_explicit_legacy_creation_still_works(self) -> None:
+        output = self.root / "legacy-campaign.json"
+        result = main([
+            "new",
+            str(output),
+            "--scenario",
+            "legacy_goe_europe",
+            "--codex",
+            str(self.codex),
+        ])
+        self.assertEqual(0, result)
+        self.assertEqual("goe_europe", load_campaign(output).map_id)
 
 
 if __name__ == "__main__":

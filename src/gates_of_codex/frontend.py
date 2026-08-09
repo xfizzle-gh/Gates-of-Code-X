@@ -27,6 +27,18 @@ from .supply import (
 
 FRONTEND_SCHEMA_VERSION = 14
 FRONTEND_PYTHON_MODULE = "gates_of_codex"
+EARTH3_MAP_ID = "earth3_europe_mediterranean"
+_MAP_MANIFEST_BY_ID = {
+    EARTH3_MAP_ID: "assets/maps/earth3_europe_mediterranean/map_manifest.json",
+    "europe_mediterranean_from_goe": "assets/maps/europe_mediterranean/from_goe/map_manifest.json",
+    "goe_europe": "assets/maps/europe/interim_goe/map_manifest.json",
+    "interim_goe_europe": "assets/maps/europe/interim_goe/map_manifest.json",
+}
+_LEGACY_MAP_IDS = (
+    "goe_europe",
+    "interim_goe_europe",
+    "europe_mediterranean_from_goe",
+)
 
 
 def _faction_supply_payload(report) -> dict:
@@ -84,7 +96,8 @@ def build_frontend_snapshot(
     operational_clock = get_operational_clock(state)
     site_control = site_control_snapshot(state)
     refresh_operational_supply(state, consume_grace=False)
-    apply_marker_layout(state)
+    if state.map_id != EARTH3_MAP_ID:
+        apply_marker_layout(state)
     objectives = update_operational_objectives(state)
     outcome = evaluate_campaign_outcome(state)
     state.validate()
@@ -883,11 +896,6 @@ def _strategic_map_block(
     snapshot_directory = Path(snapshot_path).resolve().parent if snapshot_path else None
     configured = str(state.map_metadata.get("strategic_map_manifest", "")).strip()
     map_id = str(state.map_metadata.get("strategic_map_id", state.map_id))
-    relative_by_id = {
-        "europe_mediterranean_from_goe": "assets/maps/europe_mediterranean/from_goe/map_manifest.json",
-        "goe_europe": "assets/maps/europe/interim_goe/map_manifest.json",
-        "interim_goe_europe": "assets/maps/europe/interim_goe/map_manifest.json",
-    }
     candidates: list[Path] = []
     if configured:
         configured_path = Path(configured).expanduser()
@@ -901,9 +909,11 @@ def _strategic_map_block(
             candidates.append(Path.cwd() / "godot" / configured_path)
             if configured_path.parts and configured_path.parts[0] != "godot":
                 candidates.append(Path.cwd() / "godot" / configured_path)
-    if snapshot_directory is not None:
-        candidates.append(snapshot_directory / relative_by_id.get(map_id, relative_by_id["interim_goe_europe"]))
-    candidates.append(Path.cwd() / "godot" / relative_by_id.get(map_id, relative_by_id["interim_goe_europe"]))
+    relative = _MAP_MANIFEST_BY_ID.get(map_id)
+    if relative is not None:
+        if snapshot_directory is not None:
+            candidates.append(snapshot_directory / relative)
+        candidates.append(Path.cwd() / "godot" / relative)
 
     resolved: Path | None = None
     for candidate in candidates:
@@ -914,17 +924,37 @@ def _strategic_map_block(
         if path.is_file():
             resolved = path
             break
-    default_prov = "interim_goe_reference_asset"
-    if map_id == "europe_mediterranean_from_goe":
+    if map_id == EARTH3_MAP_ID and resolved is None:
+        required = _MAP_MANIFEST_BY_ID[EARTH3_MAP_ID]
+        raise FileNotFoundError(f"Earth3 map manifest missing: {required}")
+
+    if map_id == EARTH3_MAP_ID:
+        default_prov = "earth3_production_authority"
+        status = "production"
+        fallback = "none"
+    elif map_id == "europe_mediterranean_from_goe":
         default_prov = "derived_from_interim_goe_europe_theatre_crop"
+        status = "legacy"
+        fallback = "marker_non_authoritative"
+    elif map_id in {"goe_europe", "interim_goe_europe"}:
+        default_prov = "interim_goe_reference_asset"
+        status = "legacy"
+        fallback = "marker_non_authoritative"
+    else:
+        default_prov = "configured_campaign_map"
+        status = "custom"
+        fallback = "none"
     return {
         "enabled": bool(resolved and resolved.is_file()),
         "manifest_path": str(resolved) if resolved else "",
         "configured": bool(configured),
         "map_id": map_id,
-        "available_map_ids": ["interim_goe_europe", "europe_mediterranean_from_goe"],
+        "status": status,
+        "available_map_ids": [map_id] if resolved else [],
+        "production_map_ids": [EARTH3_MAP_ID],
+        "legacy_map_ids": list(_LEGACY_MAP_IDS),
         "provenance": str(state.map_metadata.get("strategic_map_provenance", default_prov)),
-        "fallback": "marker_non_authoritative",
+        "fallback": fallback,
     }
 
 

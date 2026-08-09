@@ -21,7 +21,7 @@ from .frontend import write_frontend_snapshot
 from .frontend_commands import apply_frontend_commands, default_commands_path
 from .launcher import launch_game
 from .models import Faction
-from .scenario import load_bundled_scenario
+from .scenario import DEFAULT_SCENARIO_ID, build_scenario, get_scenario
 from .service import GatesOfCodeXService
 from .starter import populate_starter_rosters, set_player_faction
 from .state_io import load_campaign, save_campaign
@@ -49,8 +49,10 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument("--codex", required=True)
     scan.add_argument("--output")
     new = sub.add_parser("new")
-    new.add_argument("--codex", required=True)
-    new.add_argument("--output", default="campaign.json")
+    new.add_argument("campaign", nargs="?")
+    new.add_argument("--codex")
+    new.add_argument("--output")
+    new.add_argument("--scenario", default=DEFAULT_SCENARIO_ID)
     new.add_argument("--faction", choices=FACTION_CHOICES, default="nato")
     new.add_argument("--fog-of-war", choices=["on", "off"], default="off")
     show = sub.add_parser("show")
@@ -143,6 +145,16 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _new_campaign_output(args) -> str:
+    positional = str(args.campaign).strip() if args.campaign else ""
+    flagged = str(args.output).strip() if args.output else ""
+    if positional and flagged and Path(positional) != Path(flagged):
+        raise ValueError(
+            "new campaign output was provided both positionally and with --output"
+        )
+    return flagged or positional or "campaign.json"
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "doctor":
@@ -163,16 +175,24 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps({faction: len(catalog.by_faction(faction)) for faction in FACTION_CHOICES}, indent=2))
         return 0
     if args.command == "new":
-        state = load_bundled_scenario()
-        state.code_x_directory = str(Path(args.codex).resolve())
+        definition = get_scenario(args.scenario)
+        output = _new_campaign_output(args)
+        if definition.status == "legacy" and not args.codex:
+            raise ValueError(
+                f"--codex is required when creating legacy scenario {definition.scenario_id}"
+            )
+        state = build_scenario(args.scenario)
+        if args.codex:
+            state.code_x_directory = str(Path(args.codex).resolve())
         set_player_faction(state, Faction(args.faction))
         state.fog_of_war_enabled = args.fog_of_war == "on"
-        catalog = CodeXCatalogScanner().scan(args.codex)
-        populate_starter_rosters(state, catalog)
-        initialize_economy(state, catalog)
-        evaluate_campaign_outcome(state)
-        save_campaign(state, args.output)
-        print(args.output)
+        if definition.status == "legacy":
+            catalog = CodeXCatalogScanner().scan(args.codex)
+            populate_starter_rosters(state, catalog)
+            initialize_economy(state, catalog)
+            evaluate_campaign_outcome(state)
+        save_campaign(state, output)
+        print(output)
         return 0
     if args.command == "show":
         print(json.dumps(load_campaign(args.campaign).to_dict(), indent=2))

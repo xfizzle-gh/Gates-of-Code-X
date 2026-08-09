@@ -45,6 +45,11 @@ class FrontendWritebackContractTests(unittest.TestCase):
         round_trip = json.loads(json.dumps(snapshot))
         self.assertEqual(expected_python, round_trip["control"]["python_executable"])
         self.assertEqual("marker_non_authoritative", round_trip["strategic_map"]["fallback"])
+        self.assertEqual(["goe_europe"], round_trip["strategic_map"]["available_map_ids"])
+        self.assertEqual(
+            ["earth3_europe_mediterranean"],
+            round_trip["strategic_map"]["production_map_ids"],
+        )
         manifest_parts = Path(round_trip["strategic_map"]["manifest_path"]).parts
         self.assertEqual(
             ("assets", "maps", "europe", "interim_goe", "map_manifest.json"),

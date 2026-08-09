@@ -159,7 +159,7 @@ def run_first_engine_test(
     campaign_path = session / "campaign.json"
     export_save_path = session / "campaign.sav"
 
-    state = load_bundled_scenario()
+    state = load_bundled_scenario("legacy_goe_europe")
     state.code_x_directory = str(codex)
     state.map_metadata["resource_stack"] = stack_to_strings(stack)
     set_player_faction(state, Faction.NATO)

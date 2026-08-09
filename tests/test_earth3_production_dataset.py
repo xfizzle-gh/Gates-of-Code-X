@@ -22,6 +22,8 @@ class Earth3ProductionDatasetTests(unittest.TestCase):
         self.assertEqual(meta["province_count"], APPROVED_COUNT)
         self.assertEqual(meta["land_count"], 3299)
         self.assertEqual(meta["water_count"], 215)
+        self.assertEqual(meta["selectable_province_count"], 3295)
+        self.assertEqual(meta["edge_count"], 10223)
         self.assertEqual(meta["included_source_ids_sha256"], APPROVED_HASH)
         self.assertEqual(meta.get("pre_sanitize_included_ids_sha256"), PRE_HASH)
         self.assertGreater(meta["triangle_count"], 100000)

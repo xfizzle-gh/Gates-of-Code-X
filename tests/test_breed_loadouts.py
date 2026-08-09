@@ -83,7 +83,7 @@ class BreedLoadoutTests(unittest.TestCase):
             (codex / "mod.info").write_text('{name "Code:X"}\n', encoding="utf-8")
 
             catalog = CodeXCatalogScanner().scan(codex)
-            state = load_bundled_scenario()
+            state = load_bundled_scenario("legacy_goe_europe")
             populate_starter_rosters(state, catalog)
             engine = CampaignEngine(state)
             nato = next(value for value in state.battalions.values() if value.faction == Faction.NATO)
