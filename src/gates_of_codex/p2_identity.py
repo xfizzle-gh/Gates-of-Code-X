@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
-from contextvars import ContextVar
 
 from .models import CampaignState, Faction
 
@@ -11,10 +10,8 @@ EARTH3_MAP_ID = "earth3_europe_mediterranean"
 EARTH3_P2_BOOTSTRAP_ID = "earth3_v1_campaign_bootstrap"
 EARTH3_P2_CONTENT_PHASE = "p2_campaign_bootstrap"
 
-_P2_INTERMEDIATE_STATE: ContextVar[CampaignState | None] = ContextVar(
-    "earth3_p2_intermediate_state",
-    default=None,
-)
+_P2_CONSTRUCTION_KEY = "_earth3_p2_construction_token"
+_P2_CONSTRUCTION_TOKEN = object()
 
 _P2_FORMATION_IDS = frozenset(
     {
@@ -51,18 +48,22 @@ _P2_OPENING_PROVINCE_IDS = frozenset(
 
 @contextmanager
 def allow_p2_intermediate_validation(state: CampaignState) -> Iterator[None]:
-    """Temporarily identify one in-memory state during actor-content installation.
+    """Allow only one in-memory installer validation before P2 markers exist.
 
-    The token is process-local, state-object-specific, exception-safe, and is never
-    serialized. It exists solely for install_actor_content()'s internal validation
-    before the canonical P2 identity markers are finalized by the bootstrap builder.
+    The sentinel is an object-identity token that JSON cannot serialize or forge. It
+    is attached only to the exact state being installed and is removed in ``finally``
+    before the builder's final strict validation and before the state can be returned.
     """
 
-    token = _P2_INTERMEDIATE_STATE.set(state)
+    metadata = state.map_metadata
+    if _P2_CONSTRUCTION_KEY in metadata:
+        raise RuntimeError("Earth3 P2 construction validation is already active")
+    metadata[_P2_CONSTRUCTION_KEY] = _P2_CONSTRUCTION_TOKEN
     try:
         yield
     finally:
-        _P2_INTERMEDIATE_STATE.reset(token)
+        if metadata.get(_P2_CONSTRUCTION_KEY) is _P2_CONSTRUCTION_TOKEN:
+            metadata.pop(_P2_CONSTRUCTION_KEY, None)
 
 
 def is_earth3_p2_bearing_state(state: CampaignState) -> bool:
@@ -123,11 +124,10 @@ def validate_earth3_p2_identity(state: CampaignState) -> None:
 
 
 def _trusted_installer_intermediate_validation(state: CampaignState) -> bool:
-    """Allow only the exact state object inside the installer validation context."""
-    if _P2_INTERMEDIATE_STATE.get() is not state:
-        return False
-
+    """Allow only the exact state carrying this process's unforgeable token."""
     metadata = state.map_metadata
+    if metadata.get(_P2_CONSTRUCTION_KEY) is not _P2_CONSTRUCTION_TOKEN:
+        return False
     if "earth3_bootstrap" in metadata or "scenario_content_phase" in metadata:
         return False
     actor_content = metadata.get("actor_content_runtime")
