@@ -274,7 +274,7 @@ def _validate_strict_actor_assignments(state: CampaignState) -> None:
                 )
             if battalion.faction != force.faction:
                 raise Earth3BootstrapError(
-                    f"Earth3 P2 battalion faction assignment mismatch: {battalion_id}"
+                    f"Earth3 P2 battalion faction does not match formation: {battalion_id}"
                 )
             for entry in battalion.roster + battalion.authorized_roster:
                 if entry.unit_name not in actor_units:
