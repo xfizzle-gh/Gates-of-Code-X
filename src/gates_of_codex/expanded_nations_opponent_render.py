@@ -15,6 +15,7 @@ from .expanded_nations_opponents import (
     _effective_include_path,
     _walk_effective_include,
 )
+from .faction_wiring_scan import _side_from_filename, _side_from_name
 from .goh_source import (
     SourceEntry,
     _definition_form,
@@ -29,12 +30,11 @@ def project_opponent_units(
 ) -> tuple[list[ProjectedOpponentUnit], str]:
     """Flatten, filter, and canonicalize opponent purchase definitions.
 
-    The resolver classifies every source entry by the compiler authority order:
-    name suffix, explicit side call, then source filename. When that authority
-    infers a non-empty side without an explicit ``side(...)`` call, the emitted
-    definition receives one. This keeps the generated artifact self-contained
-    and lets semantic verification prove the same side without consulting the
-    original source tree.
+    Filtering keeps the compiler authority order: name suffix, explicit side,
+    then source filename. Native GoH execution semantics remain the entry's
+    explicit side when one exists. A suffix/explicit disagreement is accepted
+    only when the suffix supplies the classification side and the containing
+    source filename independently agrees with the explicit native side.
     """
 
     if selected_side not in SUPPORTED_TACTICAL_SIDES:
@@ -53,18 +53,19 @@ def project_opponent_units(
             cache,  # type: ignore[arg-type]
             active=(),
         ):
-            entry_side = _canonical_entry_side(entry, source_path)
-            if entry_side == selected_side:
+            classification_side, native_side = _entry_side_authority(entry, source_path)
+            if selected_side in {classification_side, native_side}:
                 continue
 
             source_raw = entry.raw.rstrip()
-            projected_raw = _materialize_side(entry, source_raw, entry_side)
+            projected_raw = _materialize_side(entry, source_raw, native_side)
             source_hash = sha256_bytes(source_raw.encode("utf-8"))
             projected_hash = sha256_bytes(projected_raw.encode("utf-8"))
             rendered_entries.append(
                 f"; opponent_source={source_reference}\n"
                 f"; opponent_ordinal={ordinal}\n"
-                f"; opponent_side={entry_side or 'shared'}\n"
+                f"; opponent_classification_side={classification_side or 'shared'}\n"
+                f"; opponent_native_side={native_side or 'shared'}\n"
                 f"; source_sha256={source_hash}\n"
                 f"; projected_sha256={projected_hash}\n"
                 f"{projected_raw}\n"
@@ -72,7 +73,8 @@ def project_opponent_units(
             projected.append(
                 ProjectedOpponentUnit(
                     entry_name=entry.name,
-                    tactical_side=entry_side,
+                    tactical_side=classification_side,
+                    native_side=native_side,
                     source_reference=source_reference,
                     source_sha256=source_hash,
                     projected_sha256=projected_hash,
@@ -80,6 +82,27 @@ def project_opponent_units(
             )
 
     return projected, "\n".join(rendered_entries).rstrip() + "\n"
+
+
+def _entry_side_authority(entry: SourceEntry, source_path: Path) -> tuple[str, str]:
+    explicit = [call.value.lower() for call in entry.calls if call.family == "side"]
+    if len(explicit) > 1:
+        raise ExpandedNationsError(
+            f"Opponent entry {entry.name!r} has multiple side declarations"
+        )
+
+    classification_side = _canonical_entry_side(entry, source_path)
+    native_side = explicit[0] if explicit else classification_side
+    if classification_side != native_side:
+        suffix_side = _side_from_name(entry.name)
+        filename_side = _side_from_filename(source_path.name)
+        if classification_side != suffix_side or native_side != filename_side:
+            raise ExpandedNationsError(
+                f"Opponent entry {entry.name!r} has ambiguous side authority: "
+                f"classification={classification_side!r}, explicit={native_side!r}, "
+                f"filename={filename_side!r}"
+            )
+    return classification_side, native_side
 
 
 def _materialize_side(entry: SourceEntry, raw: str, side: str) -> str:
@@ -92,7 +115,7 @@ def _materialize_side(entry: SourceEntry, raw: str, side: str) -> str:
         if explicit != [side]:
             raise ExpandedNationsError(
                 f"Opponent entry {entry.name!r} explicit side {explicit[0]!r} "
-                f"disagrees with canonical side {side!r}"
+                f"disagrees with native side {side!r}"
             )
         return raw
     if not side:
