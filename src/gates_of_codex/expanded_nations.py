@@ -26,6 +26,7 @@ from .expanded_nations_models import (
     validate_payload,
 )
 from .expanded_nations_opponent_render import project_opponent_units
+from .expanded_nations_presentation import project_actor_presentation
 from .expanded_nations_render import (
     project_research_nodes,
     projection_signature,
@@ -60,10 +61,14 @@ __all__ = [
 ]
 
 
-def compile_resolved_factions(stack_config: str | Path) -> tuple[list[Path], dict[str, Any]]:
+def compile_resolved_factions(
+    stack_config: str | Path,
+) -> tuple[list[Path], dict[str, Any]]:
     roots = load_stack_config(stack_config)
     if not roots:
-        raise ExpandedNationsError("Expanded Nations compilation requires an ordered mod stack")
+        raise ExpandedNationsError(
+            "Expanded Nations compilation requires an ordered mod stack"
+        )
     with clean_compile_source_view(roots[-1]):
         payload = FactionWiringCompiler(roots).compile()
     validate_payload(payload)
@@ -77,7 +82,12 @@ def activate_from_stack_config(
     gates_root: str | Path | None = None,
 ) -> ActivationResult:
     roots, payload = compile_resolved_factions(stack_config)
-    return activate_actor_projection(payload, roots, actor_id, gates_root=gates_root)
+    return activate_actor_projection(
+        payload,
+        roots,
+        actor_id,
+        gates_root=gates_root,
+    )
 
 
 def activate_actor_projection(
@@ -87,22 +97,23 @@ def activate_actor_projection(
     *,
     gates_root: str | Path | None = None,
 ) -> ActivationResult:
-    """Generate one actor-specific native roster and research projection.
-
-    The selected tactical side is replaced by one strategic actor. Purchase
-    definitions for every other tactical side are preserved in a filtered,
-    generated opponent file. Generated files exist only in the final Gates
-    layer. Core Code:X is restored by removing the verified managed projection.
-    """
+    """Generate one actor-specific native roster and research projection."""
 
     validate_payload(payload)
     roots = normalize_stack(resource_stack)
     if not roots:
-        raise ExpandedNationsError("Expanded Nations activation requires an ordered mod stack")
-    final_root = Path(gates_root).expanduser().resolve() if gates_root else roots[-1]
+        raise ExpandedNationsError(
+            "Expanded Nations activation requires an ordered mod stack"
+        )
+    final_root = (
+        Path(gates_root).expanduser().resolve()
+        if gates_root
+        else roots[-1]
+    )
     if final_root != roots[-1]:
         raise ExpandedNationsError(
-            f"Gates root must be the final stack layer: expected {roots[-1]}, got {final_root}"
+            f"Gates root must be the final stack layer: "
+            f"expected {roots[-1]}, got {final_root}"
         )
     if not final_root.is_dir():
         raise FileNotFoundError(f"Gates root does not exist: {final_root}")
@@ -110,30 +121,54 @@ def activate_actor_projection(
     actor = select_actor(payload, actor_id)
     side = str(actor["tactical_side"])
     if side not in SUPPORTED_TACTICAL_SIDES:
-        raise ExpandedNationsError(f"Actor {actor_id} has unsupported tactical side {side}")
+        raise ExpandedNationsError(
+            f"Actor {actor_id} has unsupported tactical side {side}"
+        )
 
-    projected_units, projected_body = project_actor_units(actor, roots, final_root)
+    projected_units, projected_body = project_actor_units(
+        actor,
+        roots,
+        final_root,
+    )
     if len(projected_units) != int(actor["unit_count"]):
         raise ExpandedNationsError(
-            f"Actor {actor_id} projected {len(projected_units)} units, expected {actor['unit_count']}"
+            f"Actor {actor_id} projected {len(projected_units)} units, "
+            f"expected {actor['unit_count']}"
         )
     opponent_units, opponent_body = project_opponent_units(side, roots)
     projected_research = project_research_nodes(actor)
+    presentation_outputs = project_actor_presentation(actor, roots)
 
     outputs: dict[Path, bytes] = {
         ROSTER_RELATIVE: render_roster_file(actor).encode("utf-8"),
-        UNITS_RELATIVE: render_units_file(actor, projected_units, projected_body).encode("utf-8"),
+        UNITS_RELATIVE: render_units_file(
+            actor,
+            projected_units,
+            projected_body,
+        ).encode("utf-8"),
         OPPONENT_UNITS_RELATIVE: render_opponent_units_file(
-            actor, opponent_units, opponent_body
+            actor,
+            opponent_units,
+            opponent_body,
         ).encode("utf-8"),
         RESEARCH_RELATIVE[side]: render_research_file(
-            actor, projected_research
+            actor,
+            projected_research,
         ).encode("utf-8"),
+        **presentation_outputs,
     }
-    signature = projection_signature(actor, payload, outputs, projected_units)
+    signature = projection_signature(
+        actor,
+        payload,
+        outputs,
+        projected_units,
+    )
     managed = tuple(
         ManagedFile(relative.as_posix(), sha256_bytes(data), len(data))
-        for relative, data in sorted(outputs.items(), key=lambda item: item[0].as_posix())
+        for relative, data in sorted(
+            outputs.items(),
+            key=lambda item: item[0].as_posix(),
+        )
     )
     manifest_payload = {
         "schema": ACTIVATION_SCHEMA,
@@ -152,6 +187,13 @@ def activate_actor_projection(
         "units": [asdict(item) for item in projected_units],
         "opponent_units": [asdict(item) for item in opponent_units],
         "research_nodes": [asdict(item) for item in projected_research],
+        "presentation_files": [
+            path.as_posix()
+            for path in sorted(
+                presentation_outputs,
+                key=lambda item: item.as_posix(),
+            )
+        ],
     }
     verify_projection_artifacts(outputs, manifest_payload)
     install_projection(
@@ -181,6 +223,10 @@ def launch_expanded_nation(
     gates_root: str | Path | None = None,
     extra_args: Sequence[str] | None = None,
 ) -> ActivationResult:
-    result = activate_from_stack_config(stack_config, actor_id, gates_root=gates_root)
+    result = activate_from_stack_config(
+        stack_config,
+        actor_id,
+        gates_root=gates_root,
+    )
     launch_game(game_directory, list(extra_args or ()))
     return result
