@@ -36,7 +36,9 @@ class ExpandedNationsProjectionTests(unittest.TestCase):
         wrapper = self.gates / "resource/set/multiplayer/units/conquest/units_goc_national_wrappers.set"
         wrapper.parent.mkdir(parents=True)
         wrapper.write_text(
-            '{"goc_ildu_rifle(ukr)" ("squad_with1types_conquest" side(ukr) c1(nato_rifleman:5))}\n',
+            '("squad_with1types_conquest" side(ukr) period(2022s) '
+            'min_stage(1) max_stage(99) name(goc_ildu_rifle) '
+            'c1(nato_rifleman:5))\n',
             encoding="utf-8",
         )
         self.payload = _payload()
@@ -113,8 +115,10 @@ class ExpandedNationsProjectionTests(unittest.TestCase):
         activate_actor_projection(self.payload, self.layers, "ukr")
         manifest = verify_actor_projection(self.gates)
         self.assertEqual(manifest["unit_count"], 1)
+        self.assertEqual(manifest["units"][0]["unit_name"], "goc_ildu_rifle(ukr)")
         scan = scan_source_entries((self.gates / UNITS_RELATIVE).read_text(encoding="utf-8"), "generated")
-        self.assertEqual(scan.entries[0].name, "goc_ildu_rifle(ukr)")
+        self.assertEqual(scan.entries[0].form, "macro")
+        self.assertEqual(scan.entries[0].name, "goc_ildu_rifle")
 
 
 class ExpandedNationsStaticContractTests(unittest.TestCase):
