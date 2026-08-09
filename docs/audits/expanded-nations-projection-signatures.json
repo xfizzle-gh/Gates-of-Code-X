@@ -1,16 +1,306 @@
 {
+  "actors": {
+    "blr": {
+      "display_name": "Belarus",
+      "managed_files": {
+        "resource/set/dynamic_campaign/unit_research_rusa.set": "73acd660d1abc8e0f86054c810ee70d1eb1beb4239dbb038c6b5dbac53291517",
+        "resource/set/multiplayer/units/conquest/goc_active_actor_units.set": "ff11b6993451c40fcf60b65bc60205caa8b33134f6dcc5614c3e58b1f366095d",
+        "resource/set/multiplayer/units/conquest/goc_opponent_units.set": "8bbf16807511d7a1e8eca3ce291e33c873162aef8807d8c8c5dc16cbf5051a1d",
+        "resource/set/multiplayer/units/roster_conquest.set": "6dc98a60e43230bf5249f334792b4c7026124912039f8444b87ecff5d43e1a39"
+      },
+      "opponent_entry_count": 1194,
+      "projection_signature": "31be28ec7e50e918d6e5a013830e4ae051ff62df52eb6a6d2d9bd0d5ce34142f",
+      "research_node_count": 42,
+      "tactical_side": "rusa",
+      "unit_count": 30
+    },
+    "can": {
+      "display_name": "Canada",
+      "managed_files": {
+        "resource/set/dynamic_campaign/unit_research_nato.set": "50bc291d4d34ce752fa6cfe6c77ea508ca1d145a4fc0db03aa435eb22b07e52e",
+        "resource/set/multiplayer/units/conquest/goc_active_actor_units.set": "35aa9bdbd952438f9a6e958d4b9996deb216fd534dcfa04b6156e3e39bc3dadb",
+        "resource/set/multiplayer/units/conquest/goc_opponent_units.set": "9456b21b8f89c84bccaf8f44a1571aa9a53060033fe2d19b82560e261da0d34d",
+        "resource/set/multiplayer/units/roster_conquest.set": "27a2c95fe4d51b6e6d9777aaa32a5b455dc5e45d64305b54148198a636ab10fb"
+      },
+      "opponent_entry_count": 1272,
+      "projection_signature": "a06cf83d9cb155f064a2e8f8bbd8d63bb3876cea9738aab325476a8d9a9d0c96",
+      "research_node_count": 21,
+      "tactical_side": "nato",
+      "unit_count": 14
+    },
+    "deu": {
+      "display_name": "Germany",
+      "managed_files": {
+        "resource/set/dynamic_campaign/unit_research_nato.set": "5a5f078c78d13c762ab49094d15675952b74439c38f371c69d091e30e49af0c4",
+        "resource/set/multiplayer/units/conquest/goc_active_actor_units.set": "97fc64bb759ca87eb55931d7fbe6e084361289294525a1ceb983e6fb938ee84f",
+        "resource/set/multiplayer/units/conquest/goc_opponent_units.set": "c6fbbf178cc15552d9d61a00b726cf96a0b3915c63c98ecdeb5a86e16a7a9716",
+        "resource/set/multiplayer/units/roster_conquest.set": "a702c133d39cc2a61692c33235c508ad2907f9096413dfebe4018757c5206d91"
+      },
+      "opponent_entry_count": 1272,
+      "projection_signature": "d1ddf201169a40cc44d017822b63ade44c35233c96363de4031354e400d9179c",
+      "research_node_count": 42,
+      "tactical_side": "nato",
+      "unit_count": 29
+    },
+    "dnk": {
+      "display_name": "Denmark",
+      "managed_files": {
+        "resource/set/dynamic_campaign/unit_research_nato.set": "69ad2e5b3733dd5d0755aeb3b8639f975cfc20117784872968e723a9f69304c4",
+        "resource/set/multiplayer/units/conquest/goc_active_actor_units.set": "8479568c9d5ece9b9964ecb3665a4349d3abcb2c9f3aff77fcbf5566ed6424f3",
+        "resource/set/multiplayer/units/conquest/goc_opponent_units.set": "1593adf4a5dd306c5723bd82bcc2a1003a308bba66ceef2f1e68801cffb92e9c",
+        "resource/set/multiplayer/units/roster_conquest.set": "851b2f501cfd7e81e924cb3ec85c80af60b1f82bc3c66e78f132bfa040ed479f"
+      },
+      "opponent_entry_count": 1272,
+      "projection_signature": "23feec5dc060f23bf87727c0a6999d1613e9ba34fdcbe7e27f95052b7d517729",
+      "research_node_count": 64,
+      "tactical_side": "nato",
+      "unit_count": 55
+    },
+    "donbas": {
+      "display_name": "Donbas Forces",
+      "managed_files": {
+        "resource/set/dynamic_campaign/unit_research_rusa.set": "9410ca50b72ced1751a54570309cb6524bc9422dd4454a3b56b2aee3d4d63e29",
+        "resource/set/multiplayer/units/conquest/goc_active_actor_units.set": "a8a3d28d2848a06dc6aa54832edcc4e7e4c8eaf3e41c3824867d93ca33fd72ad",
+        "resource/set/multiplayer/units/conquest/goc_opponent_units.set": "9517fd80f232e50fc46823f07f4b7737ec4d1710eef9ce19730c32f6e8ae11a4",
+        "resource/set/multiplayer/units/roster_conquest.set": "e036b6aff6c16c0a90fb61aa653918364175e84044afb370688fc36e79184363"
+      },
+      "opponent_entry_count": 1194,
+      "projection_signature": "f72601e75ad39673da7119e52c0e713f25e2f901d39455df9b7190d83cbbc304",
+      "research_node_count": 63,
+      "tactical_side": "rusa",
+      "unit_count": 46
+    },
+    "dprk": {
+      "display_name": "North Korea",
+      "managed_files": {
+        "resource/set/dynamic_campaign/unit_research_rusa.set": "205fea1dfaeca23404aacb3447454c14c821678c54543d4b4fc50073fde7df91",
+        "resource/set/multiplayer/units/conquest/goc_active_actor_units.set": "f061ee2517a6c51ae876bcb2b027875bab7aacc8fc4396b4a19d113733655253",
+        "resource/set/multiplayer/units/conquest/goc_opponent_units.set": "b995d13d838f000b3c839808dd2fcb096a23e31e6cf5161545f59e5ee606a516",
+        "resource/set/multiplayer/units/roster_conquest.set": "30ec3d4699493809464850e546f3235c60ec89a7af040f93a3d503c85bd9c146"
+      },
+      "opponent_entry_count": 1194,
+      "projection_signature": "ef49fbceb0c71244302e46c9ebf776b0f3b4e6887464ca9969f7de073150d0bc",
+      "research_node_count": 31,
+      "tactical_side": "rusa",
+      "unit_count": 22
+    },
+    "esp": {
+      "display_name": "Spain",
+      "managed_files": {
+        "resource/set/dynamic_campaign/unit_research_nato.set": "729c21e01806470abb27f9d3407babea44ff15f9fe434d6fbdb198a4d4775336",
+        "resource/set/multiplayer/units/conquest/goc_active_actor_units.set": "a3e1a6f21da39eef0f00f75b9f8aa871cf15ae83e239f1006919abad4bf229c3",
+        "resource/set/multiplayer/units/conquest/goc_opponent_units.set": "198800b99d7a654abe33527cf58dd80169eb660081deafa3d4591d20c4a56456",
+        "resource/set/multiplayer/units/roster_conquest.set": "bc2482d348d388c1b073a8af36e0b1eab06dbe336912aebcd9ed075778d969a8"
+      },
+      "opponent_entry_count": 1272,
+      "projection_signature": "02d4c77ae5889a602f8e83daa3249e273594891f51a9c3060354bb712df64d70",
+      "research_node_count": 64,
+      "tactical_side": "nato",
+      "unit_count": 55
+    },
+    "fin": {
+      "display_name": "Finland",
+      "managed_files": {
+        "resource/set/dynamic_campaign/unit_research_nato.set": "171f4d6aa3a678c547bf4756d250c6abdfe1b77f7ff5a97e9c174a91b770f0ca",
+        "resource/set/multiplayer/units/conquest/goc_active_actor_units.set": "46a5db4d22f6a87cd9f8419e3ea4385665c9000c89509a394c2d4a43d5d100b0",
+        "resource/set/multiplayer/units/conquest/goc_opponent_units.set": "ffc73556dabd7a25db57215efbcdabd0d6562eef8396aa438ffbcc6ccf5a1327",
+        "resource/set/multiplayer/units/roster_conquest.set": "0be155454b25eb1dd7afad4202ffb27c0eaf224018b2fdd7d74456fe52931703"
+      },
+      "opponent_entry_count": 1272,
+      "projection_signature": "172d57fdb7f5899261001de5584d03891045525a2d0e6334f616f3ddb51e748e",
+      "research_node_count": 23,
+      "tactical_side": "nato",
+      "unit_count": 15
+    },
+    "fra": {
+      "display_name": "France",
+      "managed_files": {
+        "resource/set/dynamic_campaign/unit_research_nato.set": "5fbe4c113e9cdac4dedc75027e43a46ee012411b9896811d9ee39f1aae960838",
+        "resource/set/multiplayer/units/conquest/goc_active_actor_units.set": "7401115d165f5bcb129a3d6c48326084ea307974c71c6ddef61ea1955550a03c",
+        "resource/set/multiplayer/units/conquest/goc_opponent_units.set": "617481cbf3000bf54efb98e193cc445534111eaed16d2eccddfefcdbbdb28d27",
+        "resource/set/multiplayer/units/roster_conquest.set": "e7ac7c5191f57d863f47ae883e854837a9edbb2cc9fec8aa0dbdc2367530ffb0"
+      },
+      "opponent_entry_count": 1272,
+      "projection_signature": "78c1f7ab0097ef597fe6ad36b6e21651ee88638367c8971a205d00fd3e19da11",
+      "research_node_count": 29,
+      "tactical_side": "nato",
+      "unit_count": 21
+    },
+    "gbr": {
+      "display_name": "United Kingdom",
+      "managed_files": {
+        "resource/set/dynamic_campaign/unit_research_nato.set": "2b10edd09f75ac61be0cf9bf70f20452b715bea0d6a18240672516ec13f52030",
+        "resource/set/multiplayer/units/conquest/goc_active_actor_units.set": "d76470487e45b624b9a258512616b321b7f16eee83327204bbbe6824df620cb0",
+        "resource/set/multiplayer/units/conquest/goc_opponent_units.set": "aba8d2ef48e1aead3a4db9941337952628800e8f271cd3a0785131bfa7e004d4",
+        "resource/set/multiplayer/units/roster_conquest.set": "da781781e1253af26fefe340a4ad52fa52c485cc2d3e48b23489deacfd28762d"
+      },
+      "opponent_entry_count": 1272,
+      "projection_signature": "735aeffaa9da122346040fb56c45afbdf61f7ebf809a79a764307c33126c1833",
+      "research_node_count": 44,
+      "tactical_side": "nato",
+      "unit_count": 33
+    },
+    "ita": {
+      "display_name": "Italy",
+      "managed_files": {
+        "resource/set/dynamic_campaign/unit_research_nato.set": "5330202d9de03e0cd766c8e221076cb9c99f0bdb90ff4518017f5b75cc0e62f8",
+        "resource/set/multiplayer/units/conquest/goc_active_actor_units.set": "44fe00980977c3da127c894f6e8c2f8ae177655e347a20f541bd3651b7fb40ff",
+        "resource/set/multiplayer/units/conquest/goc_opponent_units.set": "e49cc8ad62ab691672a7935010a188545c0cd73b3861ea3cd73ca31cb9774e73",
+        "resource/set/multiplayer/units/roster_conquest.set": "f49451a42e4e5b9b9fc19e7cc687f0c02f87adb9d41a77d57642d81096af626a"
+      },
+      "opponent_entry_count": 1272,
+      "projection_signature": "72f1c38530fd8feb50b961c315746426caac8e98574bfc5cb177b91e9081c9a6",
+      "research_node_count": 27,
+      "tactical_side": "nato",
+      "unit_count": 19
+    },
+    "nld": {
+      "display_name": "Netherlands",
+      "managed_files": {
+        "resource/set/dynamic_campaign/unit_research_nato.set": "fade9239c1a3a8f11f6006c2cd2ef7efa0c91db2aa4ffd3f4a22d287bc2cbd8c",
+        "resource/set/multiplayer/units/conquest/goc_active_actor_units.set": "3f70ccd233790de8840a1b3c30dcdcc6b6fc5e90467996786d4ad6896bbf0803",
+        "resource/set/multiplayer/units/conquest/goc_opponent_units.set": "1c8e8bd348783f6522d7c2908435c7bb478d12490cbd20cfaced2de2f2485b4e",
+        "resource/set/multiplayer/units/roster_conquest.set": "b0558bae27cef3c9165d98b1dfb250cc127033f0053d53d47bdbac287171f28a"
+      },
+      "opponent_entry_count": 1272,
+      "projection_signature": "3e75740201ffca783a079693ffdef4d01a9f5816c0ade8a18f75677b0c636d28",
+      "research_node_count": 23,
+      "tactical_side": "nato",
+      "unit_count": 15
+    },
+    "nor": {
+      "display_name": "Norway",
+      "managed_files": {
+        "resource/set/dynamic_campaign/unit_research_nato.set": "636db375e78b68fef149e3150c271a4fac148def0ac551e536a960079822ffeb",
+        "resource/set/multiplayer/units/conquest/goc_active_actor_units.set": "84877738f293fef4a02496f7d7813a8a2bb7901dac1526f6183456608167f808",
+        "resource/set/multiplayer/units/conquest/goc_opponent_units.set": "51965a66231acbff5479f983b840b88552596373b3371c3fde725c3ec7b3ccae",
+        "resource/set/multiplayer/units/roster_conquest.set": "3e584b42bdd3ba1c18d9caaf82e0107ff480eee1cd7f137e09994f8430333cc4"
+      },
+      "opponent_entry_count": 1272,
+      "projection_signature": "b810ea73ed415cfaa9694078688c478ee43129354ce790c6477121950fd45e04",
+      "research_node_count": 64,
+      "tactical_side": "nato",
+      "unit_count": 55
+    },
+    "pol": {
+      "display_name": "Poland",
+      "managed_files": {
+        "resource/set/dynamic_campaign/unit_research_nato.set": "9017bad76e8b161dbb9e86e0fe8cca97bfd1a9c03fdf33e66cabd091cf36d5ca",
+        "resource/set/multiplayer/units/conquest/goc_active_actor_units.set": "36bdd065422fd02c874d315865dd3112bcf5a069d341ba89e3356c0a1ea27bfa",
+        "resource/set/multiplayer/units/conquest/goc_opponent_units.set": "417142cf7df86d1b55aa4669d42cded45df39633903cfc88614f58748c4df03e",
+        "resource/set/multiplayer/units/roster_conquest.set": "7a9c8d6623cc594e3f53bf8f202c1f459c77342ef813ead9686af2db45ff90d3"
+      },
+      "opponent_entry_count": 1272,
+      "projection_signature": "cad3bd65e7429fb3cf555c8f34c6586e43fde8b7c7d4ca4d54cb3597e9636d07",
+      "research_node_count": 26,
+      "tactical_side": "nato",
+      "unit_count": 18
+    },
+    "prc": {
+      "display_name": "People's Republic of China",
+      "managed_files": {
+        "resource/set/dynamic_campaign/unit_research_prc.set": "7ce853046472597b2070efd93f6d1ba5b31b0478eebf01bce959201915ad58fa",
+        "resource/set/multiplayer/units/conquest/goc_active_actor_units.set": "992eaef3c46339b9f049789fd9c656dffce60ca1b559dc3802ae2cbca0afa6e8",
+        "resource/set/multiplayer/units/conquest/goc_opponent_units.set": "f2d35b7678de9ca33620c6fef649f0c0226880a970cf2fdd2673045dedbcf7bc",
+        "resource/set/multiplayer/units/roster_conquest.set": "53d507ab68a43404c51fadbffdccac4800cf798bb3ff5ce576f045bb5ce699b7"
+      },
+      "opponent_entry_count": 1454,
+      "projection_signature": "d220d0c1da435b1f07b8f21769ee098b025ef7c81fe7599f71b698bd037d55e9",
+      "research_node_count": 100,
+      "tactical_side": "prc",
+      "unit_count": 80
+    },
+    "rus": {
+      "display_name": "Russia",
+      "managed_files": {
+        "resource/set/dynamic_campaign/unit_research_rusa.set": "c358665f34b9cff6384caa8005cf8ea7d3b7741226321d4010ee1e6249ed1850",
+        "resource/set/multiplayer/units/conquest/goc_active_actor_units.set": "c8022804bcde1ebf4ce79d43b3a8a2d0ff0938d888550bf89918d7884085a5a9",
+        "resource/set/multiplayer/units/conquest/goc_opponent_units.set": "35d4a329c492d98daa828f7c4ccc747ace5afdd627f45fb682da628a940f44b2",
+        "resource/set/multiplayer/units/roster_conquest.set": "a2d25306f834c2245c17d549d085f3969f5ed7644a1bf9374c89ee82fcfe0359"
+      },
+      "opponent_entry_count": 1194,
+      "projection_signature": "4e1a53597a267935c64b80693799940db2a51ca374eb59502e230980e13779af",
+      "research_node_count": 249,
+      "tactical_side": "rusa",
+      "unit_count": 212
+    },
+    "srb": {
+      "display_name": "Serbia",
+      "managed_files": {
+        "resource/set/dynamic_campaign/unit_research_rusa.set": "4a759b4334fe8aeb09548839bdb16eeea7966cf08359f38e1fddf14bfac3c498",
+        "resource/set/multiplayer/units/conquest/goc_active_actor_units.set": "689a1f5afd1cf3c439d093651059469fa4b4d5b325510817ec29664856fd9cec",
+        "resource/set/multiplayer/units/conquest/goc_opponent_units.set": "8724bcd64162c64993a474131a33c21a98b51a6acbab8009ead1291b115ef204",
+        "resource/set/multiplayer/units/roster_conquest.set": "ee76c9503c72c2a29734549316ac9dda497343d399a4460f8c9c8921d030b068"
+      },
+      "opponent_entry_count": 1194,
+      "projection_signature": "5db29f9d8ffebb0d12414fd5b68c56c38ecbb3e076d575b234f9e0e6af0beec7",
+      "research_node_count": 28,
+      "tactical_side": "rusa",
+      "unit_count": 18
+    },
+    "swe": {
+      "display_name": "Sweden",
+      "managed_files": {
+        "resource/set/dynamic_campaign/unit_research_nato.set": "b5e44bd8189c067966df50354247384506f84a56dac12551a1ab43c87440defd",
+        "resource/set/multiplayer/units/conquest/goc_active_actor_units.set": "37606cbad5ba730a79f6743858659e2dfa52ca087a507e2954e38c229f7e1f11",
+        "resource/set/multiplayer/units/conquest/goc_opponent_units.set": "422d9fc3065c8ef3e2459c942edf7c386eee3703cff3fa20aaba8f772aadbbd7",
+        "resource/set/multiplayer/units/roster_conquest.set": "23b0f5f973fa1617f38694e5f346fd3b255cdae2c2453cc103f2de2ba0b12f77"
+      },
+      "opponent_entry_count": 1272,
+      "projection_signature": "4204bc2dab60d1c56e3a12a3f2c3b4c1c410b4c7c4310674abd42e2f3e0816b3",
+      "research_node_count": 26,
+      "tactical_side": "nato",
+      "unit_count": 17
+    },
+    "tur": {
+      "display_name": "Turkey",
+      "managed_files": {
+        "resource/set/dynamic_campaign/unit_research_nato.set": "cfca6fcda8a3fa43139a484e8c45d13217c3bd4d64cd3cb0ce2dd9e49c989ee9",
+        "resource/set/multiplayer/units/conquest/goc_active_actor_units.set": "126d57dd6fcc8cf06d0a822a354770e7c0cdf9e837a34b6ab7e7a6901601f208",
+        "resource/set/multiplayer/units/conquest/goc_opponent_units.set": "d280cd7348ae86f530c2aa2d9cfd0dd3f500d0d5d6a8921c175aa24c64ee6cb8",
+        "resource/set/multiplayer/units/roster_conquest.set": "ea4fc9bb367e79ce0e2ef7fdc747cfa1b46b55abb2be3d58dbf4dbdcb857125c"
+      },
+      "opponent_entry_count": 1272,
+      "projection_signature": "071b7a3deaf33b114bbafd11c3d98477e5f3e13759a45c1567ad2f2e5171c822",
+      "research_node_count": 64,
+      "tactical_side": "nato",
+      "unit_count": 55
+    },
+    "ukr": {
+      "display_name": "Ukraine",
+      "managed_files": {
+        "resource/set/dynamic_campaign/unit_research_ukr.set": "2419123671db7fd6aa2d0158406ad852944dc3abdd986d7229300bf2848cd00f",
+        "resource/set/multiplayer/units/conquest/goc_active_actor_units.set": "8bfc55b8900d46b103171263adb55512de68ae8490f06854e002785f00c7392c",
+        "resource/set/multiplayer/units/conquest/goc_opponent_units.set": "c41bb9f957f63c536ce45066373f8a9e14e255862312ba8f6761123dc047b76e",
+        "resource/set/multiplayer/units/roster_conquest.set": "f11edf0a1ecefef08c6c2f5f20de2ed1d1185946679d142bb36b0360f493fd02"
+      },
+      "opponent_entry_count": 1281,
+      "projection_signature": "f007e51ab9bbb8d2e1d40d7d3a738cfcfa7b09a5c9e44b67398ce06a65a9a221",
+      "research_node_count": 227,
+      "tactical_side": "ukr",
+      "unit_count": 185
+    },
+    "usa": {
+      "display_name": "United States",
+      "managed_files": {
+        "resource/set/dynamic_campaign/unit_research_nato.set": "0300916c532b9ba04578d84dcb966f5310ea0b3786955a156c1bf7880b7cf2da",
+        "resource/set/multiplayer/units/conquest/goc_active_actor_units.set": "aa174ede621e322c45c6f83ad698084fe787adcb94d7d60e44175654086afb6a",
+        "resource/set/multiplayer/units/conquest/goc_opponent_units.set": "6717cbfb5f52554701dc34a71beaa21d1b4224bc2393f8190f8727d5f8cd6ba1",
+        "resource/set/multiplayer/units/roster_conquest.set": "f7ee863f0ebcdf5ccc4ea9bc67db34711d255f6a529c5ed29748dd673c9859c5"
+      },
+      "opponent_entry_count": 1272,
+      "projection_signature": "7043bbd3eb2c8ee28dc6c989378f0deae4e62799371f995ffe12472c462f53f6",
+      "research_node_count": 93,
+      "tactical_side": "nato",
+      "unit_count": 74
+    }
+  },
+  "evidence_state": "complete",
+  "manifest_sha256": "ce5616614b2a380c23fcb63c5fc4feffbce8b4a6821083b03ea4553f9609cbbe",
+  "playable_actor_count": 21,
   "schema": "gates-of-codex.expanded-nations-projection-matrix",
   "schema_version": 3,
-  "evidence_state": "invalidated",
-  "invalidated_by_head": "0f739d0c0b6134c8fafb4c0ac5e60623b983b148",
-  "invalidation_reason": "The soviet_legacy_core roster changed after the prior five-layer matrix was generated. Six Soviet infantry purchases were removed, so the prior actor counts, research counts, and projection signatures are not exact-head evidence.",
-  "invalidated_actor_ids": [
-    "blr",
-    "donbas",
-    "dprk",
-    "srb"
-  ],
-  "playable_actor_count": 21,
-  "required_generator": "python -m gates_of_codex.expanded_nations_cli matrix --stack-config config/mod-stack.windows.json --gates-root . --source-head <exact-head> --json-output docs/audits/expanded-nations-projection-signatures.json --markdown-output docs/audits/expanded-nations-projection-matrix.md",
-  "actors": {}
+  "source_head": "1fe2c6b5a23941f2c3f9949f2629d063d59ba7ff",
+  "stack_signature": "b1fc7c9db1d3448ca4a16d9403b7c58b5b149ac348528f6036bb303086cf245b",
+  "wiring_signature": "9e5eba486c37e1dbe96bea01cba14ab81219bba2022eae3e86b01adb2e5f363c"
 }
