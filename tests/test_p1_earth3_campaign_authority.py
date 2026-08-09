@@ -329,9 +329,30 @@ class Earth3FailureBehaviorTests(unittest.TestCase):
         return destination
 
     @staticmethod
+    @contextmanager
     def _repin_manifest(manifest: Path):
         digest = _normalized_sha256(manifest)
-        return patch("gates_of_codex.earth3_campaign.APPROVED_MANIFEST_SHA256", digest)
+        with (
+            patch(
+                "gates_of_codex.earth3_campaign.APPROVED_MANIFEST_SHA256",
+                digest,
+            ),
+            patch(
+                "gates_of_codex.earth3_campaign._APPROVED_EXACT_BYTE_IDENTITIES",
+                {
+                    (
+                        digest,
+                        APPROVED_DATASET_RAW_SHA256,
+                        APPROVED_EMBEDDED_DATASET_SHA256,
+                    ): (
+                        APPROVED_DATASET_SHA256,
+                        APPROVED_GEOMETRY_SHA256,
+                        APPROVED_PRODUCTION_ASSET_VERSION,
+                    )
+                },
+            ),
+        ):
+            yield
 
     @contextmanager
     def _mutated_structural_authority(self, root: Path, mutate):
