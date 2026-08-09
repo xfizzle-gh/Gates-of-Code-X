@@ -36,6 +36,7 @@ jobs:
           tests.test_expanded_nations_legacy_side_conflicts
           tests.test_expanded_nations_matrix
           tests.test_expanded_nations_native_contracts
+          tests.test_expanded_nations_native_failure_paths
           tests.test_faction_audit_adjustments
           -v
       - name: CLI smoke
@@ -62,6 +63,7 @@ jobs:
           tests/test_expanded_nations_legacy_side_conflicts.py
           tests/test_expanded_nations_matrix.py
           tests/test_expanded_nations_native_contracts.py
+          tests/test_expanded_nations_native_failure_paths.py
           tests/test_faction_audit_adjustments.py
 
   powershell:
