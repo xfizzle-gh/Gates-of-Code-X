@@ -17,6 +17,7 @@ from gates_of_codex.earth3_campaign import (
     load_earth3_authority,
 )
 from gates_of_codex.frontend import build_frontend_snapshot
+from gates_of_codex.models import Faction, FactionState
 from gates_of_codex.scenario import (
     DEFAULT_SCENARIO_ID,
     build_scenario,
@@ -52,6 +53,7 @@ STALE_EMBEDDED_EDGE_COUNT = 10223
 STALE_METADATA_SELECTABLE_COUNT = 3295
 EARTH3_MAP_ID = "earth3_europe_mediterranean"
 EARTH3_SCENARIO_ID = "earth3_v1"
+LEGACY_GOE_MAP_ID = "goe_europe_alpha_graph_v1"
 
 
 def _normalized_sha256(path: Path, *, strip_one_trailing_newline: bool = False) -> str:
@@ -104,8 +106,12 @@ class Earth3ScenarioRegistryTests(unittest.TestCase):
             value.endswith("map_manifest.json")
             for value in production.required_asset_authority
         ))
-        self.assertEqual("legacy", get_scenario("legacy_goe_europe").status)
-        self.assertEqual("legacy", get_scenario("legacy_goe_europe_mediterranean").status)
+        legacy_goe = get_scenario("legacy_goe_europe")
+        legacy_em = get_scenario("legacy_goe_europe_mediterranean")
+        self.assertEqual(LEGACY_GOE_MAP_ID, legacy_goe.map_id)
+        self.assertEqual("legacy", legacy_goe.status)
+        self.assertEqual("europe_mediterranean_from_goe", legacy_em.map_id)
+        self.assertEqual("legacy", legacy_em.status)
 
     def test_unknown_scenario_id_fails_clearly(self) -> None:
         with self.assertRaisesRegex(
@@ -131,7 +137,7 @@ class Earth3ScenarioRegistryTests(unittest.TestCase):
     def test_explicit_legacy_scenarios_remain_available_and_are_never_default(self) -> None:
         goe = build_scenario("legacy_goe_europe")
         em = build_scenario("legacy_goe_europe_mediterranean")
-        self.assertEqual("goe_europe", goe.map_id)
+        self.assertEqual(LEGACY_GOE_MAP_ID, goe.map_id)
         self.assertEqual("legacy_goe_europe", goe.map_metadata["scenario_id"])
         self.assertEqual("europe_mediterranean_from_goe", em.map_id)
         self.assertEqual(
@@ -275,11 +281,25 @@ class Earth3ProductionAuthorityTests(unittest.TestCase):
         self.assertIsNone(metadata["operational_graph"])
         self.assertEqual([], metadata["operational_objectives"])
         self.assertEqual({}, metadata["coalition_capitals"])
-        self.assertEqual({}, state.factions)
+        self.assertEqual("p1_schema_compatibility_only", metadata["runtime_faction_state"])
+        self.assertEqual({Faction.NATO.value}, set(state.factions))
+        nato = state.factions[Faction.NATO.value]
+        self.assertEqual(Faction.NATO, nato.faction)
+        self.assertEqual(FactionState(faction=Faction.NATO).resources, nato.resources)
+        self.assertTrue(nato.is_human_controlled)
+        self.assertEqual([], nato.researched_keys)
+        self.assertEqual([], nato.recruited_pool)
+        self.assertEqual([], nato.reinforcement_pool)
+        self.assertEqual(0, nato.income_last_round)
+        self.assertEqual(0, nato.maintenance_last_round)
+        self.assertFalse(nato.is_eliminated)
+        self.assertFalse(state.fog_of_war_enabled)
         self.assertEqual({}, state.alliances)
         self.assertEqual({}, state.formations)
         self.assertEqual({}, state.strategic_formations)
         self.assertEqual({}, state.commanders)
+        self.assertEqual({}, state.research_nodes)
+        self.assertEqual({}, state.unit_economy)
         self.assertEqual({}, state.battalions)
         for value in _all_strings(metadata):
             self.assertFalse(Path(value).is_absolute(), value)
@@ -553,6 +573,9 @@ class Earth3DefaultCreationAndFrontendTests(unittest.TestCase):
         state = load_campaign(output)
         self.assertEqual(EARTH3_SCENARIO_ID, state.map_metadata["scenario_id"])
         self.assertEqual(EARTH3_MAP_ID, state.map_id)
+        self.assertEqual({Faction.NATO.value}, set(state.factions))
+        self.assertEqual(Faction.NATO, state.factions[Faction.NATO.value].faction)
+        self.assertTrue(state.factions[Faction.NATO.value].is_human_controlled)
 
     def test_default_frontend_snapshot_identifies_only_earth3_production_map(self) -> None:
         state = build_earth3_campaign()
@@ -564,6 +587,8 @@ class Earth3DefaultCreationAndFrontendTests(unittest.TestCase):
             )
         legacy_layout.assert_not_called()
         strategic_map = snapshot["strategic_map"]
+        self.assertEqual(Faction.NATO.value, snapshot["campaign"]["selected_faction"])
+        self.assertEqual(Faction.NATO.value, snapshot["campaign"]["current_faction"])
         self.assertEqual(EARTH3_MAP_ID, snapshot["campaign"]["map_id"])
         self.assertEqual(EARTH3_MAP_ID, strategic_map["map_id"])
         self.assertEqual([EARTH3_MAP_ID], strategic_map["available_map_ids"])
@@ -592,7 +617,7 @@ class Earth3DefaultCreationAndFrontendTests(unittest.TestCase):
 
     def test_legacy_save_round_trip_and_frontend_export_preserve_map_identity(self) -> None:
         for scenario_id, expected_map_id in (
-            ("legacy_goe_europe", "goe_europe"),
+            ("legacy_goe_europe", LEGACY_GOE_MAP_ID),
             ("legacy_goe_europe_mediterranean", "europe_mediterranean_from_goe"),
         ):
             with self.subTest(scenario_id=scenario_id):
@@ -609,6 +634,10 @@ class Earth3DefaultCreationAndFrontendTests(unittest.TestCase):
                 )
                 self.assertEqual(expected_map_id, snapshot["campaign"]["map_id"])
                 self.assertEqual(expected_map_id, snapshot["strategic_map"]["map_id"])
+                self.assertEqual(
+                    "marker_non_authoritative",
+                    snapshot["strategic_map"]["fallback"],
+                )
 
     def test_existing_legacy_save_fixture_loads_without_earth3_migration(self) -> None:
         legacy = load_legacy_test_scenario()

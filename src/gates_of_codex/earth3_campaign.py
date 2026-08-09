@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .models import CampaignState, Faction, Province
+from .models import CampaignState, Faction, FactionState, Province
 
 
 EARTH3_SCENARIO_ID = "earth3_v1"
@@ -745,6 +745,15 @@ def build_earth3_campaign(authority_root: str | Path | None = None) -> CampaignS
             "operational_maneuver_enabled": False,
             "operational_objectives": [],
             "coalition_capitals": {},
+            "runtime_faction_state": "p1_schema_compatibility_only",
+        },
+        # P1 compatibility only: use the existing schema default resources and
+        # leave research, recruitment, reinforcements, ownership, and forces empty.
+        factions={
+            Faction.NATO.value: FactionState(
+                faction=Faction.NATO,
+                is_human_controlled=True,
+            ),
         },
         provinces=provinces,
         schema_version=11,

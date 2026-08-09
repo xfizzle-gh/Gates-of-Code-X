@@ -61,7 +61,7 @@ SCENARIO_REGISTRY = MappingProxyType(
         ),
         "legacy_goe_europe": ScenarioDefinition(
             scenario_id="legacy_goe_europe",
-            map_id="goe_europe",
+            map_id="goe_europe_alpha_graph_v1",
             builder=_build_legacy_goe_europe,
             status="legacy",
             required_asset_authority=("gates_of_codex/data/goe_graph_*.b85",),

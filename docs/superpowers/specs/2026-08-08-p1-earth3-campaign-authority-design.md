@@ -2,7 +2,7 @@
 
 ## Scope
 
-P1 makes the committed `earth3_europe_mediterranean` production assets authoritative for newly created campaigns. It adds map and scenario identity only: no starting ownership, formations, objectives, commanders, resources, deployment zones, operational routes, tactical handoff, player launcher, or Fog presentation.
+P1 makes the committed `earth3_europe_mediterranean` production assets authoritative for newly created campaigns. It adds map and scenario identity only: no starting ownership, formations, objectives, commanders, meaningful economy, deployment zones, operational routes, tactical handoff, player launcher, or Fog presentation.
 
 The implementation branches directly from `b8f125fe484c9bf616c75b39587ed9afe3f4ca07` on `feat/p0-p1-earth3-campaign-authority`.
 
@@ -14,14 +14,14 @@ A new `gates_of_codex.earth3_campaign` module owns the production authority cont
 
 The builder emits one `Province` per committed Earth3 province. Each province uses the stable Earth3 ID as its temporary P1 display name, the committed label anchor as its display coordinate, neutral ownership, zero resource yield, committed adjacency, and scalar metadata for source ID, centroid, terrain, continent, water, and selectability. Polygon rings, render vertices, triangles, borders, and other geometry remain exclusively in `polygon_dataset.json`.
 
-The P1 state contains no formations, battalions, commanders, alliances, objectives, routes, or starting ownership. Minimal faction compatibility records are omitted unless an existing schema path proves they are required. Scenario and asset provenance is stored in `map_metadata` using repository-relative identifiers and approved hashes, never machine-specific asset paths.
+The P1 state contains no formations, battalions, commanders, alliances, objectives, routes, or starting ownership. Because the frontend construction snapshot reads the selected faction's runtime state, the skeleton includes exactly one existing-model NATO `FactionState`, marked human-controlled, with the schema-default numeric resource value and empty research/recruitment/reinforcement pools. Metadata labels it P1 schema compatibility only; it is not P2 economy or force content. Scenario and asset provenance is stored in `map_metadata` using repository-relative identifiers and approved hashes, never machine-specific asset paths.
 
 ### Scenario registry and CLI
 
 `gates_of_codex.scenario` exposes an explicit immutable registry with:
 
 - `earth3_v1` → `earth3_europe_mediterranean`, production, Earth3 builder;
-- `legacy_goe_europe` → `goe_europe`, legacy, GoE builder;
+- `legacy_goe_europe` → `goe_europe_alpha_graph_v1`, legacy, GoE builder;
 - `legacy_goe_europe_mediterranean` → `europe_mediterranean_from_goe`, legacy, derived GoE builder.
 
 Unknown IDs raise an error listing valid IDs. `load_bundled_scenario()` remains as a compatibility entry point but delegates to `earth3_v1` by default. The `new` parser gains explicit `--scenario`; omitted selection resolves only to `earth3_v1`. Legacy post-processing that scans Code:X, populates starter rosters, and initializes the economy remains limited to explicitly selected legacy scenarios. The Earth3 P1 skeleton does not invent P2 content.

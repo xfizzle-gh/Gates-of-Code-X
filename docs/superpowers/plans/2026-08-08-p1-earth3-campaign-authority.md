@@ -126,6 +126,8 @@ Province(
 
 Set provenance fields for scenario/map IDs, relative manifest identifier, approved manifest/dataset hashes, included-ID hash, province/land/water/selectable counts, stable-ID policy, water policy, adjacency authority, and explicit absence of an approved operational graph. Set empty strategic objectives/capitals so generic save normalization cannot invent GoE/P2 content.
 
+Add exactly one existing-model NATO `FactionState` for the selected/current faction so validation, serialization, Fog Off snapshots, and frontend construction can use the runtime schema. Mark it human-controlled, retain the schema-default numeric resource value, leave all research/recruitment/reinforcement pools empty, and label the row as P1 compatibility state rather than P2 economy content.
+
 - [ ] **Step 5: Perform static source review only**
 
 Inspect imports and call graph to prove `earth3_campaign.py` does not import GoE modules or geometry into campaign state. Do not run it.
@@ -193,7 +195,12 @@ For Earth3 return production identity only:
     "map_id": "earth3_europe_mediterranean",
     "available_map_ids": ["earth3_europe_mediterranean"],
     "production_map_ids": ["earth3_europe_mediterranean"],
-    "legacy_map_ids": ["goe_europe", "europe_mediterranean_from_goe"],
+    "legacy_map_ids": [
+        "goe_europe_alpha_graph_v1",
+        "goe_europe",  # compatibility alias
+        "interim_goe_europe",  # compatibility alias
+        "europe_mediterranean_from_goe",
+    ],
     "fallback": "none",
 }
 ```

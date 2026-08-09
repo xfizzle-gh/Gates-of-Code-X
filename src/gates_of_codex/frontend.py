@@ -28,15 +28,18 @@ from .supply import (
 FRONTEND_SCHEMA_VERSION = 14
 FRONTEND_PYTHON_MODULE = "gates_of_codex"
 EARTH3_MAP_ID = "earth3_europe_mediterranean"
+LEGACY_GOE_MAP_ID = "goe_europe_alpha_graph_v1"
+_LEGACY_GOE_COMPATIBILITY_ALIASES = ("goe_europe", "interim_goe_europe")
 _MAP_MANIFEST_BY_ID = {
     EARTH3_MAP_ID: "assets/maps/earth3_europe_mediterranean/map_manifest.json",
     "europe_mediterranean_from_goe": "assets/maps/europe_mediterranean/from_goe/map_manifest.json",
+    LEGACY_GOE_MAP_ID: "assets/maps/europe/interim_goe/map_manifest.json",
     "goe_europe": "assets/maps/europe/interim_goe/map_manifest.json",
     "interim_goe_europe": "assets/maps/europe/interim_goe/map_manifest.json",
 }
 _LEGACY_MAP_IDS = (
-    "goe_europe",
-    "interim_goe_europe",
+    LEGACY_GOE_MAP_ID,
+    *_LEGACY_GOE_COMPATIBILITY_ALIASES,
     "europe_mediterranean_from_goe",
 )
 
@@ -936,7 +939,7 @@ def _strategic_map_block(
         default_prov = "derived_from_interim_goe_europe_theatre_crop"
         status = "legacy"
         fallback = "marker_non_authoritative"
-    elif map_id in {"goe_europe", "interim_goe_europe"}:
+    elif map_id == LEGACY_GOE_MAP_ID or map_id in _LEGACY_GOE_COMPATIBILITY_ALIASES:
         default_prov = "interim_goe_reference_asset"
         status = "legacy"
         fallback = "marker_non_authoritative"

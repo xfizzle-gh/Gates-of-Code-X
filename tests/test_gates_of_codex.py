@@ -242,7 +242,7 @@ class GatesOfCodeXTests(unittest.TestCase):
             str(self.codex),
         ])
         self.assertEqual(0, result)
-        self.assertEqual("goe_europe", load_campaign(output).map_id)
+        self.assertEqual("goe_europe_alpha_graph_v1", load_campaign(output).map_id)
 
 
 if __name__ == "__main__":
