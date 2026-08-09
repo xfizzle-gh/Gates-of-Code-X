@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import inspect
-import sys
 from collections.abc import Mapping
+from pathlib import Path
 
 from .models import CampaignState, Faction
 
@@ -78,7 +78,7 @@ def validate_earth3_p2_identity(state: CampaignState) -> None:
         return
 
     metadata = state.map_metadata
-    if _trusted_builder_intermediate_validation(metadata):
+    if _trusted_builder_intermediate_validation(state):
         return
 
     from .earth3_bootstrap import Earth3BootstrapError
@@ -101,8 +101,9 @@ def validate_earth3_p2_identity(state: CampaignState) -> None:
         raise Earth3BootstrapError("Earth3 P2 actor-content identity mismatch")
 
 
-def _trusted_builder_intermediate_validation(metadata: Mapping[str, object]) -> bool:
-    """Allow only the exact loaded builder's non-persistable intermediate validation."""
+def _trusted_builder_intermediate_validation(state: CampaignState) -> bool:
+    """Allow only the canonical builder's live intermediate state validation."""
+    metadata = state.map_metadata
     if "earth3_bootstrap" in metadata or "scenario_content_phase" in metadata:
         return False
     actor_content = metadata.get("actor_content_runtime")
@@ -111,17 +112,15 @@ def _trusted_builder_intermediate_validation(metadata: Mapping[str, object]) -> 
     if actor_content.get("earth3_bootstrap_id") is not None:
         return False
 
-    module = sys.modules.get("gates_of_codex.earth3_bootstrap")
-    builder = None if module is None else getattr(module, "build_earth3_v1_campaign", None)
-    builder_code = getattr(builder, "__code__", None)
-    if builder_code is None:
-        return False
-
     frame = inspect.currentframe()
     try:
         frame = None if frame is None else frame.f_back
         while frame is not None:
-            if frame.f_code is builder_code:
+            if (
+                frame.f_code.co_name == "build_earth3_v1_campaign"
+                and Path(frame.f_code.co_filename).name == "earth3_bootstrap.py"
+                and frame.f_locals.get("state") is state
+            ):
                 return True
             frame = frame.f_back
     finally:
