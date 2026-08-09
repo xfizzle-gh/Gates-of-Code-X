@@ -39,6 +39,7 @@ jobs:
           tests.test_expanded_nations_native_failure_paths
           tests.test_expanded_nations_native_squad_ids
           tests.test_faction_audit_adjustments
+          tests.test_faction_wrapper_units
           -v
       - name: CLI smoke
         run: python -m gates_of_codex.expanded_nations_cli --help
@@ -69,6 +70,7 @@ jobs:
           tests/test_expanded_nations_native_failure_paths.py
           tests/test_expanded_nations_native_squad_ids.py
           tests/test_faction_audit_adjustments.py
+          tests/test_faction_wrapper_units.py
 
   powershell:
     runs-on: windows-latest
