@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
+from contextlib import contextmanager
+from contextvars import ContextVar
 from typing import Any
 
 from .models import CampaignState
@@ -45,8 +47,10 @@ _P2_COMMANDER_IDS = frozenset(
     formation_id.replace("sf_", "cmd_", 1) for formation_id in _P2_STRATEGIC_FORMATION_IDS
 )
 _P2_ACTIVE_ACTOR_IDS = frozenset({"usa", "deu", "pol", "ukr", "rus"})
-_P2_OBJECTIVE_IDS = frozenset({"obj_western_donbas", "obj_russian_kyiv_vilnius"})
-_P2_COALITION_IDS = frozenset({"western_coalition", "russian_command"})
+_P2_CONSTRUCTION_STATE_IDS: ContextVar[frozenset[int]] = ContextVar(
+    "earth3_p2_construction_state_ids",
+    default=frozenset(),
+)
 
 
 def _mapping_keys(value: Any) -> frozenset[str]:
@@ -55,24 +59,26 @@ def _mapping_keys(value: Any) -> frozenset[str]:
     return frozenset(str(key) for key in value)
 
 
-def _objective_ids(value: Any) -> frozenset[str]:
-    if not isinstance(value, list):
-        return frozenset()
-    return frozenset(
-        str(row.get("id", ""))
-        for row in value
-        if isinstance(row, Mapping) and row.get("id")
-    )
+@contextmanager
+def _trusted_earth3_p2_construction(state: CampaignState) -> Iterator[None]:
+    """Exclude one in-memory builder state from persisted P2 recognition."""
+    state_ids = _P2_CONSTRUCTION_STATE_IDS.get()
+    token = _P2_CONSTRUCTION_STATE_IDS.set(state_ids | {id(state)})
+    try:
+        yield
+    finally:
+        _P2_CONSTRUCTION_STATE_IDS.reset(token)
 
 
 def _has_p2_exclusive_structure(state: CampaignState) -> bool:
     """Recognize retained P2 campaign structure after removable markers are stripped.
 
-    P2 force and actor structures exist briefly while the trusted builder installs
-    actor content. The committed objective/capital structures are added only after
-    that intermediate validation, so requiring both surfaces avoids misclassifying
-    the builder's temporary state while still identifying persisted P2 content.
+    The trusted builder's temporary pre-provenance state is excluded only through
+    an in-memory context that cannot be serialized into a campaign save.
     """
+    if id(state) in _P2_CONSTRUCTION_STATE_IDS.get():
+        return False
+
     metadata = state.map_metadata
     has_p2_force_structure = bool(
         _P2_STRATEGIC_FORMATION_IDS.intersection(state.strategic_formations)
@@ -90,20 +96,7 @@ def _has_p2_exclusive_structure(state: CampaignState) -> bool:
         and _P2_ACTIVE_ACTOR_IDS.issubset(_mapping_keys(actor_content.get("actors")))
     )
 
-    has_p2_postconstruction_structure = bool(
-        _P2_OBJECTIVE_IDS.intersection(
-            _objective_ids(metadata.get("operational_objectives"))
-        )
-        or (
-            isinstance(metadata.get("coalition_capitals"), Mapping)
-            and _P2_COALITION_IDS.issubset(
-                _mapping_keys(metadata.get("coalition_capitals"))
-            )
-        )
-    )
-    return has_p2_postconstruction_structure and (
-        has_p2_force_structure or has_p2_actor_structure
-    )
+    return has_p2_force_structure or has_p2_actor_structure
 
 
 def is_earth3_p2_bearing_state(state: CampaignState) -> bool:

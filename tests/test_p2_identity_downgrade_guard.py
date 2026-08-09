@@ -30,6 +30,12 @@ class P2IdentityDowngradeGuardTests(unittest.TestCase):
         ):
             state.map_metadata.pop(key, None)
 
+    @classmethod
+    def _strip_every_removable_recognition_surface(cls, state) -> None:
+        cls._strip_all_eight_recognition_signals(state)
+        state.map_metadata.pop("operational_objectives", None)
+        state.map_metadata.pop("coalition_capitals", None)
+
     def test_simultaneous_identity_marker_removal_cannot_downgrade_p2_state(self) -> None:
         state = _campaign()
         self._strip_all_three_identity_markers(state)
@@ -74,6 +80,22 @@ class P2IdentityDowngradeGuardTests(unittest.TestCase):
         self.assertTrue(is_earth3_p2_bearing_state(state))
         with self.assertRaisesRegex(Earth3BootstrapError, "top-level catalog identity is missing"):
             state.validate()
+
+    def test_serialized_force_and_actor_structure_alone_cannot_downgrade_p2(self) -> None:
+        state = _campaign()
+        self._strip_every_removable_recognition_surface(state)
+
+        self.assertIn("sf_deu_berlin", state.strategic_formations)
+        self.assertIn("bn_sf_deu_berlin", state.battalions)
+        self.assertIn("strategic_actor_runtime", state.map_metadata)
+        self.assertIn("actor_content_runtime", state.map_metadata)
+        self.assertTrue(is_earth3_p2_bearing_state(state))
+
+        payload = state.to_dict()
+        payload["map_metadata"]["manifest_sha256"] = "0" * 64
+        payload["strategic_formations"]["sf_deu_berlin"]["actor_id"] = "usa"
+        with self.assertRaisesRegex(Earth3BootstrapError, "top-level catalog identity is missing"):
+            campaign_from_dict(payload)
 
     def test_serialized_all_eight_signal_removal_cannot_downgrade_p2(self) -> None:
         state = _campaign()

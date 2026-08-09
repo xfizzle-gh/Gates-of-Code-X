@@ -1188,9 +1188,11 @@ def build_earth3_v1_campaign(
         )
 
     from .actor_economy import install_actor_content, validate_actor_content_runtime
+    from .p2_identity import _trusted_earth3_p2_construction
     from .strategic_actors import ACTOR_RUNTIME_KEY, validate_strategic_actor_runtime
 
-    install_actor_content(state, catalog)
+    with _trusted_earth3_p2_construction(state):
+        install_actor_content(state, catalog)
     runtime = state.map_metadata[ACTOR_RUNTIME_KEY]
     state.map_metadata["actor_content_runtime"]["earth3_bootstrap_id"] = BOOTSTRAP_ID
     catalog_identity = _immutable_actor_content_digest(state.map_metadata["actor_content_runtime"])
