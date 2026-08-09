@@ -18,6 +18,18 @@ class P2IdentityDowngradeGuardTests(unittest.TestCase):
         actor_content = state.map_metadata["actor_content_runtime"]
         actor_content.pop("earth3_bootstrap_id", None)
 
+    @classmethod
+    def _strip_all_eight_recognition_signals(cls, state) -> None:
+        cls._strip_all_three_identity_markers(state)
+        state.catalog_signature = ""
+        for key in (
+            "earth3_p2_capitals",
+            "earth3_p2_site_intents",
+            "earth3_p2_deployment_zones",
+            "earth3_p2_tactical_map_preferences",
+        ):
+            state.map_metadata.pop(key, None)
+
     def test_simultaneous_identity_marker_removal_cannot_downgrade_p2_state(self) -> None:
         state = _campaign()
         self._strip_all_three_identity_markers(state)
@@ -41,6 +53,37 @@ class P2IdentityDowngradeGuardTests(unittest.TestCase):
         self.assertTrue(is_earth3_p2_bearing_state(state))
         with self.assertRaisesRegex(Earth3BootstrapError, "top-level catalog identity is missing"):
             state.validate()
+
+    def test_all_eight_signals_removed_still_identifies_retained_p2_structure(self) -> None:
+        state = _campaign()
+        self._strip_all_eight_recognition_signals(state)
+
+        self.assertIn("sf_deu_berlin", state.strategic_formations)
+        self.assertIn("bn_sf_deu_berlin", state.battalions)
+        self.assertIn("strategic_actor_runtime", state.map_metadata)
+        self.assertIn("actor_content_runtime", state.map_metadata)
+        self.assertTrue(is_earth3_p2_bearing_state(state))
+        with self.assertRaisesRegex(Earth3BootstrapError, "top-level catalog identity is missing"):
+            state.validate()
+
+    def test_all_eight_signals_and_objectives_removed_still_uses_capital_structure(self) -> None:
+        state = _campaign()
+        self._strip_all_eight_recognition_signals(state)
+        state.map_metadata.pop("operational_objectives", None)
+
+        self.assertTrue(is_earth3_p2_bearing_state(state))
+        with self.assertRaisesRegex(Earth3BootstrapError, "top-level catalog identity is missing"):
+            state.validate()
+
+    def test_serialized_all_eight_signal_removal_cannot_downgrade_p2(self) -> None:
+        state = _campaign()
+        self._strip_all_eight_recognition_signals(state)
+        payload = state.to_dict()
+        payload["map_metadata"]["manifest_sha256"] = "0" * 64
+        payload["strategic_formations"]["sf_deu_berlin"]["actor_id"] = "usa"
+
+        with self.assertRaisesRegex(Earth3BootstrapError, "top-level catalog identity is missing"):
+            campaign_from_dict(payload)
 
     def test_serialized_marker_removal_rejects_before_other_p2_tampering_can_load(self) -> None:
         payload = _campaign().to_dict()
