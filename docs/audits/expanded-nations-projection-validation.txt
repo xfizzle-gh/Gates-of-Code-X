@@ -1,29 +1,35 @@
-Expanded Nations implementation-side validation status
+Expanded Nations projection matrix validation
 
-The previously complete 21-playable-actor schema-3 projection matrix is
-invalidated after native Serbia acceptance at exact head
-0926d347138738f75205237b75fef1145383d77f.
+Status: REJECTED
 
-Native evidence proved that implementation-side syntax and hash verification did
-not cover four engine contracts:
+Uploaded bundle:
+- name: expanded-nations-define-closure-matrix-20260809-154233.zip
+- sha256: e6437999b442064d16ea2bd98b38733c83a1a719bec8c7ed2bfa5569c7f22718
+- generated source head: b7a9442009b6924a847ae1df536001bf3ee1fc28
+- actor rows: 21
+- wiring signature: 970ee67395eeff51323e78fb280145a1fa6747ab28fe74ef2aa1a0cdfa714754
+- stack signature: 18ab5b6ce4f08fc758e641ead4e70f0163a525065f9402554de79b9681d41711
 
-  * RUSA replacement must exclude the inherited SOV/CSA purchase family.
-  * Soviet-pattern equipment exported to RUSA must use period(2022s) and native
-    rus_vehicleman/rus_supporter crew aliases.
-  * Actor-created Serbia squad IDs require native squad localization and four
-    portrait variants.
-  * Native research must emit purchase IDs rather than opaque generated tech IDs.
+Structural generation passed:
+- exact head verified
+- Core restored before generation
+- 21 actors generated and semantically verified
+- Core restored after generation
+- only the two matrix files changed locally
 
-The correction changes generated actor, opponent, research, presentation, and
-manifest bytes. All prior actor counts and signatures are stale.
+Audit rejection:
+- compared with the previously accepted matrix generated at source head
+  df09c4b9bda53a0c771bfc681ac8654c5f90f2a3
+- all 21 actor rows were identical
+- all 96 managed-file hashes were identical
+- all 21 projection signatures were identical
+- Russia actor-unit hash remained
+  a8a37b9d757620c4f42fbe4dcbb1522ebab7ef9a3c4b039dadbafafcee7a80fa
+- Russia projection signature remained
+  4b66c920cbe707b144f5f0e49d68eed4a3e7ffd1829d51a88a85206d82cc8c43
 
-Required next evidence:
-
-  run the focused and full exact-head workflows
-  obtain fresh independent implementation review
-  run the exact-stack matrix from clean Core mode
-  commit the complete 21-actor JSON and Markdown outputs
-  obtain fresh evidence review
-  resume Serbia only after those gates pass
-
-Do not proceed to DPRK or merge PR #172.
+Conclusion:
+The required dp_infantry_8 definition was not emitted. The same-source brace-form
+define correction was not exercised by the installed stack and does not resolve
+the native Russia crash. The generated complete matrix must not be committed as
+authoritative evidence. Russia, France, ready-for-review, and merge remain blocked.
