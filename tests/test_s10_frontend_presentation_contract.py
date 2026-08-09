@@ -209,6 +209,8 @@ def _write_completed_external_battle(
     state: CampaignState,
     *,
     attacker_survivors: int = 1,
+    defender_survivors: int = 2,
+    player_won: bool = False,
 ) -> tuple[Path, Path]:
     pending = state.pending_battle
     if pending is None:
@@ -230,7 +232,7 @@ def _write_completed_external_battle(
         quantity = (
             attacker_survivors
             if participant.faction == pending.attacker_faction
-            else 2
+            else defender_survivors
         )
         for _ in range(quantity):
             object_token = f"0x{object_id:x}"
@@ -258,7 +260,7 @@ def _write_completed_external_battle(
             "{saveinfo\n"
             "\t{version 9}\n"
             "\t{playedGames 1}\n"
-            "\t{wonGames 0}\n"
+            f"\t{{wonGames {1 if player_won else 0}}}\n"
             "}\n"
         ),
         campaign_scn=(
@@ -290,8 +292,8 @@ class S10FrontendPresentationContractTests(unittest.TestCase):
 
             snapshot = build_frontend_snapshot(state)
 
-        self.assertEqual(13, FRONTEND_SCHEMA_VERSION)
-        self.assertEqual(13, snapshot["schema_version"])
+        self.assertEqual(14, FRONTEND_SCHEMA_VERSION)
+        self.assertEqual(14, snapshot["schema_version"])
         pending = snapshot["pending_battle"]
         self.assertEqual(["bn-n"], pending["attacking_battalions"])
         self.assertEqual(["bn-r-1", "bn-r-2"], pending["defending_battalions"])
@@ -528,6 +530,34 @@ class S10FrontendPresentationContractTests(unittest.TestCase):
         self.assertEqual(1, after_repeated.battalions["bn-n"].unit_count)
         self.assertNotIn("operational_presentation", persisted)
         self.assertNotIn("battle_finalization", persisted)
+
+    def test_external_import_generates_witnessed_removal_context(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            state = _state(root)
+            state.fog_of_war_enabled = True
+            _create_prepared_contact(state)
+            campaign_path, _ = _write_completed_external_battle(
+                root,
+                state,
+                attacker_survivors=2,
+                defender_survivors=0,
+                player_won=True,
+            )
+
+            result = apply_frontend_commands(
+                campaign_path,
+                commands=[{"op": "import_battle"}],
+                snapshot_path=root / "snapshot.json",
+            )
+            loaded = load_campaign(campaign_path)
+
+        self.assertTrue(result["ok"], result)
+        self.assertNotIn("sf-r", loaded.strategic_formations)
+        self.assertNotIn(
+            "formation:sf-r",
+            loaded.knowledge_by_observer["faction:nato"],
+        )
 
     def test_external_import_exports_exact_trapped_reason_without_destination(self) -> None:
         with tempfile.TemporaryDirectory() as td:

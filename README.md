@@ -104,6 +104,7 @@ gates-of-codex new `
   --game "E:\Steam\steamapps\common\Call to Arms - Gates of Hell" `
   --profile "C:\Users\paulf\AppData\Local\digitalmindsoft\gates of hell\profiles\46383268" `
   --map "multi/dcg_[cwa71]_fulda" `
+  --fog-of-war on `
   --output campaign.json
 
 # Strategic actions
@@ -131,6 +132,8 @@ gates-of-codex construct campaign.json Warszawa supply_hub --faction nato
 # Godot snapshot (read-only viewer)
 gates-of-codex export-frontend campaign.json --output .\godot\campaign_snapshot.json
 ```
+
+Fog of War is opt-in. Omit `--fog-of-war` or pass `--fog-of-war off` to retain complete-information behavior. `--fog-of-war on` requires exactly one human-controlled faction; hotseat and multi-human campaigns remain Fog-off only in this slice. Campaigns created or loaded from schemas 10 and earlier migrate to schema 11 with Fog Off unless creation explicitly selects On.
 
 `handoff` remembers game/profile/map/install paths on the campaign after the first run, auto-picks a unique GoH save filename from the visible Conquest name, and prints the exact load / verify / import steps. `first-test` remains acceptance-only.
 

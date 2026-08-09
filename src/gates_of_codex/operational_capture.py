@@ -134,6 +134,11 @@ def ensure_site_control_state(state: CampaignState) -> dict[str, Any]:
     # Graph is available: reject malformed capture config instead of erasing it.
     hold = capture_hold_ticks(state, strict=True)
     existing = get_site_control_state(state, strict=True)
+    authored_node_ids = {
+        str(node.get("node_id"))
+        for node in graph.get("nodes", [])
+        if isinstance(node, dict) and node.get("node_id")
+    }
     control: dict[str, dict[str, Any]] = {}
     for site in sites:
         site_id = str(site.get("site_id") or "")
@@ -151,6 +156,12 @@ def ensure_site_control_state(state: CampaignState) -> dict[str, Any]:
                 site.get("capture_threshold_milli"),
                 name=f"site[{site_id}].capture_threshold_milli",
             )
+        metadata = site.get("metadata") if isinstance(site.get("metadata"), dict) else {}
+        eligible_authored_site = (
+            metadata.get("synthetic_anchor_control_site") is not True
+            and bool(node_id)
+            and node_id in authored_node_ids
+        )
         prior = existing.get(site_id)
         if prior is None:
             control[site_id] = {
@@ -162,6 +173,10 @@ def ensure_site_control_state(state: CampaignState) -> dict[str, Any]:
                 "province_id": province_id,
                 "route_node_id": node_id,
                 "control_weight_milli": weight,
+                "authored_site_id": site_id,
+                "site_kind": str(site.get("kind") or ""),
+                "authored_site": eligible_authored_site,
+                "synthetic_anchor_control_site": metadata.get("synthetic_anchor_control_site") is True,
             }
             continue
         control[site_id] = _validate_control_row(
@@ -172,6 +187,9 @@ def ensure_site_control_state(state: CampaignState) -> dict[str, Any]:
             node_id=node_id,
             weight=weight,
             default_controller=_initial_controller(state, site),
+            site_kind=str(site.get("kind") or ""),
+            authored_site=eligible_authored_site,
+            synthetic_anchor=metadata.get("synthetic_anchor_control_site") is True,
         )
     set_site_control_state(state, control)
     return {"ensured": True, "site_count": len(control)}
@@ -320,6 +338,9 @@ def _validate_control_row(
     node_id: str,
     weight: int,
     default_controller: str | None,
+    site_kind: str,
+    authored_site: bool,
+    synthetic_anchor: bool,
 ) -> dict[str, Any]:
     progress = require_strict_int(
         prior.get("progress_ticks", 0),
@@ -336,11 +357,15 @@ def _validate_control_row(
         name=f"site[{site_id}].control_weight_milli",
         minimum=1,
     )
-    controller = prior.get("controller_faction", default_controller)
+    controller = (
+        prior["controller_faction"]
+        if "controller_faction" in prior
+        else default_controller
+    )
     if controller is not None:
         controller = str(controller)
         if not controller.strip():
-            controller = default_controller
+            controller = None
     claimant = prior.get("claimant_faction")
     if claimant is not None:
         claimant = str(claimant) if str(claimant).strip() else None
@@ -353,7 +378,7 @@ def _validate_control_row(
         claimant_fid = None
         progress = 0
     return {
-        "controller_faction": controller if controller is not None else default_controller,
+        "controller_faction": controller,
         "claimant_faction": claimant,
         "claimant_formation_id": claimant_fid,
         "progress_ticks": progress,
@@ -361,6 +386,10 @@ def _validate_control_row(
         "province_id": province_id or str(prior.get("province_id") or ""),
         "route_node_id": node_id or str(prior.get("route_node_id") or ""),
         "control_weight_milli": row_weight,
+        "authored_site_id": site_id,
+        "site_kind": site_kind,
+        "authored_site": authored_site,
+        "synthetic_anchor_control_site": synthetic_anchor,
     }
 
 
