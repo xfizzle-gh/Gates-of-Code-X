@@ -75,6 +75,52 @@ class FactionAuditAdjustmentTest(unittest.TestCase):
         self.assertIn("nato_common_support", finland["components"])
         self.assertTrue(any("broad Soviet legacy pool" in note for note in finland["notes"]))
 
+    def test_soviet_legacy_core_is_heavy_equipment_only(self) -> None:
+        manifest = load_faction_manifest()
+        validate_faction_manifest(manifest)
+        component = manifest["components"]["soviet_legacy_core"]
+        actual = {
+            unit
+            for selector in component["selectors"]
+            if selector["kind"] == "exact"
+            for unit in selector["units"]
+        }
+        self.assertEqual(
+            {
+                "btr-60pb",
+                "btr-80",
+                "bmp-1",
+                "bmp1p",
+                "bmp2",
+                "mtlb",
+                "t55a",
+                "t55am",
+                "t72a",
+                "t72b",
+                "122mm_d-30",
+                "bm-21_grad",
+                "zsu-23-4m",
+                "ural375",
+                "ural375_ammo",
+            },
+            actual,
+        )
+        self.assertTrue(
+            {
+                "squad_rifle_con",
+                "squad_rifle_moto2_con(sov)",
+                "squad_rifle_mech2_con(sov)",
+                "squad_guards_con",
+                "squad_engineer_moto_con(sov)",
+                "squad_medic_moto_con(sov)",
+            }.isdisjoint(actual)
+        )
+        actors = {actor["actor_id"]: actor for actor in manifest["actors"]}
+        self.assertIn("serbia_infantry", actors["srb"]["components"])
+        self.assertIn("kpa_infantry", actors["dprk"]["components"])
+        self.assertIn("donbas_native", actors["donbas"]["components"])
+        self.assertIn("belarus_modern_support", actors["blr"]["components"])
+
     def test_audit_notes_are_applied_without_duplicates(self) -> None:
         first = load_faction_manifest()
         second = load_faction_manifest()

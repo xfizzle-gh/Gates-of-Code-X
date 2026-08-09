@@ -1,0 +1,32 @@
+{
+  "actors": {},
+  "evidence_state": "invalidated",
+  "invalidated_actor_ids": [
+    "blr",
+    "can",
+    "deu",
+    "dnk",
+    "donbas",
+    "dprk",
+    "esp",
+    "fin",
+    "fra",
+    "gbr",
+    "ita",
+    "nld",
+    "nor",
+    "pol",
+    "prc",
+    "rus",
+    "srb",
+    "swe",
+    "tur",
+    "ukr",
+    "usa"
+  ],
+  "invalidated_by_head": "891bfae083e2b6b39986c2c8fbf09bf35e945e2e",
+  "invalidation_reason": "Native Serbia acceptance at exact head 891bfae083e2b6b39986c2c8fbf09bf35e945e2e proved that research could see top-level squad purchase IDs while the Army screen silently omitted block-form virtual squads. Canonical Code:X infantry uses a top-level squad_with* macro whose effective purchase ID is name(side). Correcting native macro identity changes generated actor-unit bytes and projection signatures for every actor containing macro-form squads, so all prior rows are stale.",
+  "playable_actor_count": 21,
+  "schema": "gates-of-codex.expanded-nations-projection-matrix",
+  "schema_version": 3
+}
