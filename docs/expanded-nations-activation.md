@@ -59,6 +59,23 @@ py -3.11 -m gates_of_codex.expanded_nations_cli verify `
   --gates-root .
 ```
 
+## Generate the exact-stack projection matrix
+
+Matrix generation must begin in Core mode. It activates and semantically verifies every playable actor, restores Core after each actor, writes exact-head JSON and Markdown evidence, and confirms no managed projection remains afterward.
+
+```powershell
+.\tools\activate_expanded_nation.ps1 -Core
+
+py -3.11 -m gates_of_codex.expanded_nations_cli matrix `
+  --stack-config .\config\mod-stack.windows.json `
+  --gates-root . `
+  --source-head (git rev-parse HEAD).Trim() `
+  --json-output .\docs\audits\expanded-nations-projection-signatures.json `
+  --markdown-output .\docs\audits\expanded-nations-projection-matrix.md
+```
+
+The command refuses to run over an active projection, unmanaged generated-path occupants, a non-final Gates root, or an invalid source stack. A failed actor run attempts Core restoration before returning the failure.
+
 ## Safety and determinism
 
 Activation fails closed when:

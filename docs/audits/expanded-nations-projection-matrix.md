@@ -1,31 +1,29 @@
-# Expanded Nations corrected projection matrix
+# Expanded Nations projection matrix
 
-The corrected implementation was exercised against the accepted 24-actor resolved payload and the audited West81, Code:X, AI Overhaul, and Gates source layers. All 21 playable actors generated, semantically verified, and restored to Core mode successfully.
+## Evidence status: invalidated
 
-The opponent-entry count is the filtered set preserved for non-selected tactical sides. Entries belonging to the selected actor's tactical side are excluded and replaced by that actor's roster.
+The previously tracked 21-actor matrix was generated before exact head
+`0f739d0c0b6134c8fafb4c0ac5e60623b983b148` removed six Soviet infantry
+purchases from `soviet_legacy_core`.
 
-| Actor | Actor units | Preserved opponent entries | Research nodes |
-|---|---:|---:|---:|
-| blr | 36 | 1194 | 50 |
-| can | 14 | 1272 | 21 |
-| deu | 29 | 1272 | 42 |
-| dnk | 55 | 1272 | 64 |
-| donbas | 52 | 1194 | 70 |
-| dprk | 28 | 1194 | 37 |
-| esp | 55 | 1272 | 64 |
-| fin | 15 | 1272 | 23 |
-| fra | 21 | 1272 | 29 |
-| gbr | 33 | 1272 | 44 |
-| ita | 19 | 1272 | 27 |
-| nld | 15 | 1272 | 23 |
-| nor | 55 | 1272 | 64 |
-| pol | 18 | 1272 | 26 |
-| prc | 80 | 1454 | 100 |
-| rus | 212 | 1194 | 249 |
-| srb | 24 | 1194 | 35 |
-| swe | 17 | 1272 | 26 |
-| tur | 55 | 1272 | 64 |
-| ukr | 185 | 1281 | 227 |
-| usa | 74 | 1272 | 93 |
+That component is used by Belarus, Donbas, DPRK, and Serbia. Their prior actor
+counts, research counts, and projection signatures are therefore stale. The old
+matrix has been removed rather than partially preserving mixed-head evidence.
+No actor count or signature in this document is currently authoritative.
 
-This is deterministic implementation-side source and projection validation. It is not independent audit acceptance and it is not native Gates of Hell acceptance. The corrected exact head still requires full CI, fresh independent review, and the documented live matrix before the PR can leave draft state.
+Regenerate the complete matrix from Core mode against the exact installed
+five-layer Workshop stack:
+
+```powershell
+py -3.11 -m gates_of_codex.expanded_nations_cli matrix `
+  --stack-config .\config\mod-stack.windows.json `
+  --gates-root . `
+  --source-head (git rev-parse HEAD).Trim() `
+  --json-output .\docs\audits\expanded-nations-projection-signatures.json `
+  --markdown-output .\docs\audits\expanded-nations-projection-matrix.md
+```
+
+The command activates and semantically verifies every playable actor, restores
+Core after each actor, records exact actor/opponent/research counts and managed
+file hashes, and leaves the installation in Core mode. Native gameplay
+acceptance remains separate.

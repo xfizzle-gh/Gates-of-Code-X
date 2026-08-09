@@ -11,6 +11,10 @@ from .expanded_nations import (
     launch_expanded_nation,
     verify_actor_projection,
 )
+from .expanded_nations_matrix import (
+    generate_projection_matrix_from_stack_config,
+    write_projection_matrix_evidence,
+)
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -40,6 +44,16 @@ def _parser() -> argparse.ArgumentParser:
 
     core = subparsers.add_parser("core", help="remove the projection and restore inherited Core Code:X")
     core.add_argument("--gates-root", required=True)
+
+    matrix = subparsers.add_parser(
+        "matrix",
+        help="generate exact-stack evidence for every playable actor and restore Core",
+    )
+    matrix.add_argument("--stack-config", required=True)
+    matrix.add_argument("--gates-root")
+    matrix.add_argument("--source-head", required=True)
+    matrix.add_argument("--json-output", required=True)
+    matrix.add_argument("--markdown-output", required=True)
     return parser
 
 
@@ -85,6 +99,33 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "core":
         changed = deactivate_actor_projection(args.gates_root)
         print(json.dumps({"ok": True, "mode": "core", "projection_removed": changed}, indent=2))
+        return 0
+    if args.command == "matrix":
+        matrix = generate_projection_matrix_from_stack_config(
+            args.stack_config,
+            gates_root=args.gates_root,
+            source_head=args.source_head,
+        )
+        write_projection_matrix_evidence(
+            matrix,
+            json_output=args.json_output,
+            markdown_output=args.markdown_output,
+        )
+        print(
+            json.dumps(
+                {
+                    "ok": True,
+                    "mode": "core",
+                    "playable_actor_count": matrix["playable_actor_count"],
+                    "source_head": matrix["source_head"],
+                    "wiring_signature": matrix["wiring_signature"],
+                    "stack_signature": matrix["stack_signature"],
+                    "json_output": args.json_output,
+                    "markdown_output": args.markdown_output,
+                },
+                indent=2,
+            )
+        )
         return 0
     raise AssertionError(f"Unhandled command: {args.command}")
 
