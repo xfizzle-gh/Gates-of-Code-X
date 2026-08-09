@@ -12,7 +12,7 @@ from .expanded_nations_models import (
     all_managed_candidates,
     safe_target,
 )
-from .expanded_nations_verify import (
+from .expanded_nations_native_verify import (
     load_manifest,
     verify_actor_projection_files,
     verify_manifest_files,
