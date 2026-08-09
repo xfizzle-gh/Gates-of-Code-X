@@ -1,0 +1,13 @@
+; Gates of Code:X Expanded Nations squad presentation.
+
+msgctxt "desc/squad/goc_serb_rifle(rusa)"
+msgid  "Serbian Rifle Squad"
+msgstr ""
+
+msgctxt "desc/squad/goc_serb_at(rusa)"
+msgid  "Serbian Anti-Tank Squad"
+msgstr ""
+
+msgctxt "desc/squad/goc_serb_recon(rusa)"
+msgid  "Serbian Reconnaissance Squad"
+msgstr ""
