@@ -3,7 +3,9 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
 import re
+import stat
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -23,6 +25,7 @@ CAMPAIGN_DATASET_IDENTIFIER = "assets/maps/earth3_europe_mediterranean/polygon_d
 PRODUCTION_AUTHORITY_IDENTIFIER = "config/earth3/production_authority.json"
 
 APPROVED_MANIFEST_SHA256 = "614a926e79f11e3cfac8c867c7bacce107fc69344b17fabb6b4545cdeaa6a357"
+APPROVED_DATASET_RAW_SHA256 = "4aadab4b5106bbfa4c2d37e8173c3d1675f35a448cbd7f32a8b871c464ce1b84"
 APPROVED_DATASET_SHA256 = "8ae59bd89419a368fe9131ef7c50d94a7f1cafacd1cfae44362ac9b5d9decced"
 APPROVED_EMBEDDED_DATASET_SHA256 = (
     "8ae59c33da5094b722b1ffad61d2862cdd4805369d74d6c6298425735982a241"
@@ -43,9 +46,29 @@ STALE_METADATA_SELECTABLE_COUNT = 3295
 
 _STABLE_ID = re.compile(r"^e3_[0-9]{4}$")
 
+_APPROVED_EXACT_BYTE_IDENTITIES = {
+    (
+        APPROVED_MANIFEST_SHA256,
+        APPROVED_DATASET_RAW_SHA256,
+        APPROVED_EMBEDDED_DATASET_SHA256,
+    ): (
+        APPROVED_DATASET_SHA256,
+        APPROVED_GEOMETRY_SHA256,
+        APPROVED_PRODUCTION_ASSET_VERSION,
+    )
+}
+
 
 class Earth3AuthorityError(ValueError):
     """Committed Earth3 production authority is missing or inconsistent."""
+
+
+@dataclass(frozen=True, slots=True)
+class CapturedAuthorityJson:
+    path: Path
+    raw_bytes: bytes
+    raw_sha256: str
+    parsed_json: dict[str, Any]
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,27 +92,191 @@ def _default_authority_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def _normalized_text(path: Path) -> str:
-    return path.read_bytes().decode("utf-8").replace("\r\n", "\n").replace("\r", "\n")
+def _same_canonical_path(left: Path, right: Path) -> bool:
+    return os.path.normcase(os.path.normpath(str(left))) == os.path.normcase(
+        os.path.normpath(str(right))
+    )
 
 
-def _sha256_text(path: Path, *, strip_one_trailing_newline: bool = False) -> str:
-    text = _normalized_text(path)
-    if strip_one_trailing_newline and text.endswith("\n"):
-        text = text[:-1]
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def _read_required_json(path: Path, *, label: str, identifier: str) -> dict[str, Any]:
-    if not path.is_file():
-        raise Earth3AuthorityError(f"{label} missing: {identifier}")
+def _canonical_authority_root(root: Path) -> Path:
+    absolute_root = Path(os.path.abspath(root))
     try:
-        value = json.loads(_normalized_text(path))
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        raise Earth3AuthorityError(f"{label} is not valid UTF-8 JSON: {identifier}: {exc}") from exc
+        root_stat = os.lstat(absolute_root)
+    except OSError as exc:
+        raise Earth3AuthorityError(f"Earth3 authority root missing: {absolute_root}") from exc
+    if stat.S_ISLNK(root_stat.st_mode):
+        raise Earth3AuthorityError(f"Earth3 authority root is a symlink: {absolute_root}")
+    if not stat.S_ISDIR(root_stat.st_mode):
+        raise Earth3AuthorityError(f"Earth3 authority root is not a directory: {absolute_root}")
+    try:
+        canonical_root = absolute_root.resolve(strict=True)
+    except OSError as exc:
+        raise Earth3AuthorityError(f"Earth3 authority root is not canonical: {absolute_root}") from exc
+    if not _same_canonical_path(absolute_root, canonical_root):
+        raise Earth3AuthorityError(f"Earth3 authority root is symlinked: {absolute_root}")
+    return canonical_root
+
+
+def _same_file_identity(before: os.stat_result, after: os.stat_result) -> bool:
+    return (before.st_dev, before.st_ino) == (after.st_dev, after.st_ino)
+
+
+def _revalidate_captured_authority_path(
+    canonical_root: Path,
+    relative_path: Path,
+    canonical_path: Path,
+    root_stat: os.stat_result,
+    parent_stats: tuple[tuple[Path, os.stat_result], ...],
+    path_stat: os.stat_result,
+) -> None:
+    """Reject authority-path substitutions observable during the raw read window."""
+    refreshed_root = _canonical_authority_root(canonical_root)
+    if not _same_canonical_path(canonical_root, refreshed_root):
+        raise Earth3AuthorityError(f"Earth3 authority root changed while reading: {canonical_root}")
+    try:
+        refreshed_root_stat = os.lstat(canonical_root)
+    except OSError as exc:
+        raise Earth3AuthorityError(f"Earth3 authority root changed while reading: {canonical_root}") from exc
+    if (
+        stat.S_ISLNK(refreshed_root_stat.st_mode)
+        or not stat.S_ISDIR(refreshed_root_stat.st_mode)
+        or not _same_file_identity(root_stat, refreshed_root_stat)
+    ):
+        raise Earth3AuthorityError(f"Earth3 authority root changed while reading: {canonical_root}")
+
+    for parent, initial_stat in parent_stats:
+        try:
+            refreshed_parent_stat = os.lstat(parent)
+        except OSError as exc:
+            raise Earth3AuthorityError(
+                f"{relative_path.as_posix()} parent changed while being read: {parent}"
+            ) from exc
+        if (
+            stat.S_ISLNK(refreshed_parent_stat.st_mode)
+            or not stat.S_ISDIR(refreshed_parent_stat.st_mode)
+            or not _same_file_identity(initial_stat, refreshed_parent_stat)
+        ):
+            raise Earth3AuthorityError(
+                f"{relative_path.as_posix()} parent changed while being read: {parent}"
+            )
+
+    try:
+        refreshed_path_stat = os.lstat(canonical_path)
+        refreshed_resolved_path = canonical_path.resolve(strict=True)
+        refreshed_resolved_path.relative_to(canonical_root)
+    except (OSError, ValueError) as exc:
+        raise Earth3AuthorityError(
+            f"{relative_path.as_posix()} path changed while being read"
+        ) from exc
+    if (
+        stat.S_ISLNK(refreshed_path_stat.st_mode)
+        or not stat.S_ISREG(refreshed_path_stat.st_mode)
+        or not _same_file_identity(path_stat, refreshed_path_stat)
+        or not _same_canonical_path(canonical_path, refreshed_resolved_path)
+    ):
+        raise Earth3AuthorityError(f"{relative_path.as_posix()} path changed while being read")
+
+
+def _read_fixed_authority_json(
+    root: Path,
+    relative_path: Path,
+    label: str,
+) -> CapturedAuthorityJson:
+    canonical_root = _canonical_authority_root(root)
+    try:
+        root_stat = os.lstat(canonical_root)
+    except OSError as exc:
+        raise Earth3AuthorityError(f"Earth3 authority root changed while reading: {canonical_root}") from exc
+    if stat.S_ISLNK(root_stat.st_mode) or not stat.S_ISDIR(root_stat.st_mode):
+        raise Earth3AuthorityError(f"Earth3 authority root changed while reading: {canonical_root}")
+    if relative_path.is_absolute() or ".." in relative_path.parts:
+        raise Earth3AuthorityError(f"{label} path is not a fixed relative authority entry")
+    canonical_path = canonical_root / relative_path
+    try:
+        canonical_path.relative_to(canonical_root)
+    except ValueError as exc:
+        raise Earth3AuthorityError(
+            f"{label} path is not contained by the authority root: {relative_path.as_posix()}"
+        ) from exc
+
+    parent = canonical_root
+    parent_stats: list[tuple[Path, os.stat_result]] = []
+    for component in relative_path.parts[:-1]:
+        parent = parent / component
+        try:
+            parent_stat = os.lstat(parent)
+        except OSError as exc:
+            raise Earth3AuthorityError(f"{label} missing: {relative_path.as_posix()}") from exc
+        if stat.S_ISLNK(parent_stat.st_mode):
+            raise Earth3AuthorityError(
+                f"{label} is symlinked or not canonical: {relative_path.as_posix()}"
+            )
+        if not stat.S_ISDIR(parent_stat.st_mode):
+            raise Earth3AuthorityError(f"{label} parent is not a directory: {parent}")
+        parent_stats.append((parent, parent_stat))
+
+    try:
+        path_stat = os.lstat(canonical_path)
+    except OSError as exc:
+        raise Earth3AuthorityError(f"{label} missing: {relative_path.as_posix()}") from exc
+    if stat.S_ISLNK(path_stat.st_mode):
+        raise Earth3AuthorityError(f"{label} is a symlink: {relative_path.as_posix()}")
+    if not stat.S_ISREG(path_stat.st_mode):
+        raise Earth3AuthorityError(f"{label} is not a regular file: {relative_path.as_posix()}")
+    try:
+        resolved_path = canonical_path.resolve(strict=True)
+        resolved_path.relative_to(canonical_root)
+    except (OSError, ValueError) as exc:
+        raise Earth3AuthorityError(
+            f"{label} is not contained by the authority root: {relative_path.as_posix()}"
+        ) from exc
+    if not _same_canonical_path(canonical_path, resolved_path):
+        raise Earth3AuthorityError(
+            f"{label} is symlinked or not canonical: {relative_path.as_posix()}"
+        )
+
+    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(canonical_path, flags)
+        with os.fdopen(descriptor, "rb") as authority_file:
+            opened_stat = os.fstat(authority_file.fileno())
+            if not stat.S_ISREG(opened_stat.st_mode):
+                raise Earth3AuthorityError(
+                    f"{label} is not a regular file: {relative_path.as_posix()}"
+                )
+            if (opened_stat.st_dev, opened_stat.st_ino) != (path_stat.st_dev, path_stat.st_ino):
+                raise Earth3AuthorityError(
+                    f"{label} changed while being opened: {relative_path.as_posix()}"
+                )
+            raw_bytes = authority_file.read()
+    except Earth3AuthorityError:
+        raise
+    except OSError as exc:
+        raise Earth3AuthorityError(f"{label} cannot be read: {relative_path.as_posix()}") from exc
+
+    _revalidate_captured_authority_path(
+        canonical_root,
+        relative_path,
+        canonical_path,
+        root_stat,
+        tuple(parent_stats),
+        path_stat,
+    )
+
+    try:
+        value = json.loads(raw_bytes.decode("utf-8"))
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise Earth3AuthorityError(
+            f"{label} is not valid UTF-8 JSON: {relative_path.as_posix()}: {exc}"
+        ) from exc
     if not isinstance(value, dict):
-        raise Earth3AuthorityError(f"{label} must be a JSON object: {identifier}")
-    return value
+        raise Earth3AuthorityError(f"{label} must be a JSON object: {relative_path.as_posix()}")
+    return CapturedAuthorityJson(
+        path=canonical_path,
+        raw_bytes=raw_bytes,
+        raw_sha256=hashlib.sha256(raw_bytes).hexdigest(),
+        parsed_json=value,
+    )
 
 
 def _require_equal(actual: Any, expected: Any, *, field: str, source: str) -> None:
@@ -597,51 +784,66 @@ def _validate_provinces_and_adjacency(
 
 
 def load_earth3_authority(authority_root: str | Path | None = None) -> Earth3Authority:
-    root = Path(authority_root) if authority_root is not None else _default_authority_root()
-    manifest_path = root / EARTH3_MANIFEST_PATH
-    dataset_path = root / EARTH3_DATASET_PATH
-    metadata_path = root / EARTH3_METADATA_PATH
-    production_path = root / EARTH3_PRODUCTION_AUTHORITY_PATH
-
-    manifest = _read_required_json(
-        manifest_path,
+    requested_root = Path(authority_root) if authority_root is not None else _default_authority_root()
+    root = _canonical_authority_root(requested_root)
+    captured_manifest = _read_fixed_authority_json(
+        root,
+        EARTH3_MANIFEST_PATH,
         label="Earth3 manifest",
-        identifier=EARTH3_MANIFEST_PATH.as_posix(),
     )
-    if not dataset_path.is_file():
+    captured_dataset = _read_fixed_authority_json(
+        root,
+        EARTH3_DATASET_PATH,
+        label="Earth3 production dataset",
+    )
+    captured_metadata = _read_fixed_authority_json(
+        root,
+        EARTH3_METADATA_PATH,
+        label="Earth3 dataset metadata",
+    )
+    captured_production = _read_fixed_authority_json(
+        root,
+        EARTH3_PRODUCTION_AUTHORITY_PATH,
+        label="Earth3 production authority",
+    )
+    manifest = captured_manifest.parsed_json
+    dataset = captured_dataset.parsed_json
+    metadata = captured_metadata.parsed_json
+    production = captured_production.parsed_json
+
+    if captured_manifest.raw_sha256 != APPROVED_MANIFEST_SHA256:
         raise Earth3AuthorityError(
-            f"Earth3 production dataset missing: {EARTH3_DATASET_PATH.as_posix()}"
+            "Earth3 manifest SHA-256 mismatch: "
+            f"expected {APPROVED_MANIFEST_SHA256}, got {captured_manifest.raw_sha256}"
         )
-    embedded_dataset_sha256 = _sha256_text(
-        dataset_path, strip_one_trailing_newline=True
-    )
+    if captured_dataset.raw_sha256 != APPROVED_DATASET_RAW_SHA256:
+        raise Earth3AuthorityError(
+            "Earth3 production dataset bytes/SHA-256 mismatch: "
+            f"expected raw digest {APPROVED_DATASET_RAW_SHA256}, got {captured_dataset.raw_sha256}"
+        )
+    if captured_dataset.raw_bytes[-1:] != b"\n":
+        raise Earth3AuthorityError(
+            "Earth3 production dataset bytes/SHA-256 mismatch: expected one terminal LF"
+        )
+    embedded_dataset_sha256 = hashlib.sha256(captured_dataset.raw_bytes[:-1]).hexdigest()
     if embedded_dataset_sha256 != APPROVED_EMBEDDED_DATASET_SHA256:
         raise Earth3AuthorityError(
             "Earth3 production dataset bytes/SHA-256 mismatch: "
             f"expected embedded digest {APPROVED_EMBEDDED_DATASET_SHA256}, "
             f"got {embedded_dataset_sha256}"
         )
-    manifest_sha256 = _sha256_text(manifest_path)
-    if manifest_sha256 != APPROVED_MANIFEST_SHA256:
+    try:
+        dataset_sha256, geometry_sha256, production_asset_version = _APPROVED_EXACT_BYTE_IDENTITIES[
+            (
+                captured_manifest.raw_sha256,
+                captured_dataset.raw_sha256,
+                embedded_dataset_sha256,
+            )
+        ]
+    except KeyError as exc:
         raise Earth3AuthorityError(
-            "Earth3 manifest SHA-256 mismatch: "
-            f"expected {APPROVED_MANIFEST_SHA256}, got {manifest_sha256}"
-        )
-    dataset = _read_required_json(
-        dataset_path,
-        label="Earth3 production dataset",
-        identifier=EARTH3_DATASET_PATH.as_posix(),
-    )
-    metadata = _read_required_json(
-        metadata_path,
-        label="Earth3 dataset metadata",
-        identifier=EARTH3_METADATA_PATH.as_posix(),
-    )
-    production = _read_required_json(
-        production_path,
-        label="Earth3 production authority",
-        identifier=EARTH3_PRODUCTION_AUTHORITY_PATH.as_posix(),
-    )
+            "Earth3 owner provenance is not an accepted exact-byte contract"
+        ) from exc
     _validate_count_authority(manifest, dataset, metadata, production)
     _validate_identity_and_hash_authority(
         manifest,
@@ -651,9 +853,6 @@ def load_earth3_authority(authority_root: str | Path | None = None) -> Earth3Aut
         embedded_dataset_sha256=embedded_dataset_sha256,
     )
     provinces, topology_edge_count = _validate_provinces_and_adjacency(dataset, production)
-    # The owner-ruling dataset and geometry digests are provenance contracts.
-    # They are attached only after the frozen export bytes, its embedded digest,
-    # and the independently checked structural authority all validate.
     return Earth3Authority(
         root=root,
         manifest=manifest,
@@ -661,11 +860,11 @@ def load_earth3_authority(authority_root: str | Path | None = None) -> Earth3Aut
         metadata=metadata,
         production=production,
         provinces=provinces,
-        manifest_sha256=manifest_sha256,
-        dataset_sha256=APPROVED_DATASET_SHA256,
+        manifest_sha256=captured_manifest.raw_sha256,
+        dataset_sha256=dataset_sha256,
         embedded_dataset_sha256=embedded_dataset_sha256,
-        geometry_sha256=APPROVED_GEOMETRY_SHA256,
-        production_asset_version=APPROVED_PRODUCTION_ASSET_VERSION,
+        geometry_sha256=geometry_sha256,
+        production_asset_version=production_asset_version,
         topology_edge_count=topology_edge_count,
         included_ids_sha256=APPROVED_INCLUDED_IDS_SHA256,
     )

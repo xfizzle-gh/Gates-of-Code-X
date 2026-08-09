@@ -243,3 +243,104 @@ Body includes issue #176, exact base/head, changed-file count, implementation su
 - [ ] **Step 5: Comment on issue #176 and stop**
 
 Post the draft PR link and exact head. Do not wait for or inspect CI, do not mark ready, do not merge, and do not begin P2.
+
+## Exact-head audit remediation: review 4890304600
+
+This section supersedes only the affected loader/frontend steps after the audit
+of head `56e2fb762470e234e358b60afc73a0b80fbf80f9`. Frozen Earth3 JSON blobs,
+stable IDs, geometry, hashes, policies, topology, scenario content, and all
+P2+ boundaries remain unchanged. Regressions are authored before production
+edits but are not executed in this workstream under the owner-directed P1
+execution boundary.
+
+### Task 6: Bind owner provenance to captured exact bytes
+
+**Files:**
+- Create: `.gitattributes`
+- Modify: `src/gates_of_codex/earth3_campaign.py`
+- Modify: `tests/test_p1_earth3_campaign_authority.py`
+
+**Interfaces:**
+- Produces: `_read_fixed_authority_json(root, relative_path, label) -> CapturedAuthorityJson`.
+- Produces: a captured record containing the fixed canonical path, raw bytes,
+  raw SHA-256, and parsed JSON from that same byte buffer.
+- Preserves: owner dataset identity `8ae59bd89419a368fe9131ef7c50d94a7f1cafacd1cfae44362ac9b5d9decced`
+  by deriving it only from the accepted exact Git-blob digest
+  `4aadab4b5106bbfa4c2d37e8173c3d1675f35a448cbd7f32a8b871c464ce1b84`.
+
+- [x] **Step 1: Author exact-byte and fixed-path regressions**
+
+Add distinct tests that copy the frozen authority and then require rejection
+for: LF-to-CRLF conversion, removal/replacement of the single trailing LF,
+a symlinked dataset file, and a symlinked authority-root substitution. Skip
+only the symlink cases when the platform refuses symlink creation.
+
+- [x] **Step 2: Pin checkout byte representation**
+
+Add `.gitattributes` entries with `text eol=lf` for the manifest, polygon
+dataset, dataset metadata, and production-authority JSON. This changes no
+frozen Git blob; it prevents checkout conversion from changing the bytes the
+runtime validates.
+
+- [x] **Step 3: Capture and validate each fixed authority entry once**
+
+Resolve the requested authority root, reject a symlinked root, require each
+fixed relative entry to resolve exactly beneath that root, reject symlink and
+non-regular entries with `lstat`/`fstat`, read one binary buffer, decode
+UTF-8 and parse JSON from that buffer, and calculate SHA-256 from the same
+buffer. Never call `read_bytes()` or text normalization again for that entry.
+
+- [x] **Step 4: Derive persisted identities from the accepted byte contract**
+
+Require the exact manifest raw digest
+`614a926e79f11e3cfac8c867c7bacce107fc69344b17fabb6b4545cdeaa6a357`
+and exact dataset raw digest
+`4aadab4b5106bbfa4c2d37e8173c3d1675f35a448cbd7f32a8b871c464ce1b84`.
+Derive the embedded payload digest from the captured dataset buffer minus its
+one required terminal LF. Return the owner dataset/geometry/version identities
+only from the accepted exact-byte mapping; do not attach them on an
+independent constant-only path.
+
+### Task 7: Make frontend Earth3 resolution immutable
+
+**Files:**
+- Modify: `src/gates_of_codex/frontend.py`
+- Modify: `tests/test_p1_earth3_campaign_authority.py`
+
+**Interfaces:**
+- Consumes: the fixed Earth3 loader and its captured-byte identities.
+- Produces: an enabled Earth3 strategic-map block only after canonical path and
+  persisted provenance checks succeed.
+
+- [x] **Step 1: Author campaign-metadata substitution regressions**
+
+Require frontend export to reject absolute and relative noncanonical
+`strategic_map_manifest` values, reject a plausible external manifest, reject
+altered persisted manifest/dataset/embedded/geometry/version identities, and
+propagate fixed-loader symlink rejection. Preserve explicit legacy/custom map
+resolution behavior.
+
+- [x] **Step 2: Resolve Earth3 before generic configured candidates**
+
+When `map_id == "earth3_europe_mediterranean"`, require the persisted
+manifest identifier to equal
+`assets/maps/earth3_europe_mediterranean/map_manifest.json`, call
+`load_earth3_authority()`, and use only
+`authority.root / EARTH3_MANIFEST_PATH`. Never append the campaign-configured
+path to the generic candidate list.
+
+- [x] **Step 3: Verify saved provenance before enabling**
+
+Compare the persisted manifest, owner dataset, embedded dataset, geometry,
+asset-version, included-ID, and topology identities to the freshly loaded
+fixed authority. Raise `Earth3AuthorityError` on any mismatch; only then emit
+`enabled: true`, production status, and `fallback: "none"`.
+
+### Task 8: Static audit and publication
+
+- [x] Confirm the four frozen authority blobs match the exact base.
+- [x] Confirm only P1 loader/frontend/tests/docs and LF checkout policy changed.
+- [x] Do not run tests, compilation, linting, type checks, smoke checks,
+  packaging, workflows, CI status, or CI logs.
+- [ ] Commit, update PR #181 exact scope/head and review disposition, push the
+  existing branch, keep it draft/unmerged, and stop before P2.

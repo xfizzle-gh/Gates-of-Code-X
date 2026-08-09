@@ -12,6 +12,9 @@ from unittest.mock import patch
 
 from gates_of_codex.cli import build_parser, main
 from gates_of_codex.earth3_campaign import (
+    CAMPAIGN_DATASET_IDENTIFIER,
+    CAMPAIGN_MANIFEST_IDENTIFIER,
+    PRODUCTION_AUTHORITY_IDENTIFIER,
     Earth3AuthorityError,
     build_earth3_campaign,
     load_earth3_authority,
@@ -38,7 +41,7 @@ APPROVED_DATASET_SHA256 = "8ae59bd89419a368fe9131ef7c50d94a7f1cafacd1cfae44362ac
 APPROVED_EMBEDDED_DATASET_SHA256 = (
     "8ae59c33da5094b722b1ffad61d2862cdd4805369d74d6c6298425735982a241"
 )
-APPROVED_NORMALIZED_DATASET_BYTES_SHA256 = (
+APPROVED_DATASET_RAW_SHA256 = (
     "4aadab4b5106bbfa4c2d37e8173c3d1675f35a448cbd7f32a8b871c464ce1b84"
 )
 APPROVED_GEOMETRY_SHA256 = "7715807367932662642ff6d0c52faf8657b379abf6f67978a9acece3d18f2678"
@@ -57,10 +60,12 @@ LEGACY_GOE_MAP_ID = "goe_europe_alpha_graph_v1"
 
 
 def _normalized_sha256(path: Path, *, strip_one_trailing_newline: bool = False) -> str:
-    text = path.read_text(encoding="utf-8")
-    if strip_one_trailing_newline and text.endswith("\n"):
-        text = text[:-1]
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+    raw = path.read_bytes()
+    if strip_one_trailing_newline:
+        if not raw.endswith(b"\n"):
+            raise AssertionError(f"{path} does not have the required trailing LF")
+        raw = raw[:-1]
+    return hashlib.sha256(raw).hexdigest()
 
 
 def _all_dict_keys(value) -> set[str]:
@@ -157,7 +162,7 @@ class Earth3ProductionAuthorityTests(unittest.TestCase):
             _normalized_sha256(DATASET, strip_one_trailing_newline=True),
         )
         self.assertEqual(
-            APPROVED_NORMALIZED_DATASET_BYTES_SHA256,
+            APPROVED_DATASET_RAW_SHA256,
             _normalized_sha256(DATASET),
         )
         self.assertEqual(APPROVED_MANIFEST_SHA256, authority.manifest_sha256)
@@ -334,26 +339,26 @@ class Earth3FailureBehaviorTests(unittest.TestCase):
         dataset_path = assets / "polygon_dataset.json"
         dataset = json.loads(dataset_path.read_text(encoding="utf-8"))
         mutate(dataset)
-        dataset_path.write_text(
-            json.dumps(dataset, separators=(",", ":")) + "\n",
-            encoding="utf-8",
+        dataset_path.write_bytes(
+            (json.dumps(dataset, separators=(",", ":")) + "\n").encode("utf-8")
         )
         digest = _normalized_sha256(dataset_path, strip_one_trailing_newline=True)
+        dataset_raw_digest = _normalized_sha256(dataset_path)
 
         metadata_path = assets / "dataset_meta.json"
         metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
         metadata["dataset_sha256"] = digest
-        metadata_path.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
+        metadata_path.write_bytes((json.dumps(metadata, indent=2) + "\n").encode("utf-8"))
 
         production_path = root / "config/earth3/production_authority.json"
         production = json.loads(production_path.read_text(encoding="utf-8"))
         production["dataset_sha256"] = digest
-        production_path.write_text(json.dumps(production, indent=2) + "\n", encoding="utf-8")
+        production_path.write_bytes((json.dumps(production, indent=2) + "\n").encode("utf-8"))
 
         manifest_path = assets / "map_manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         manifest["polygon_dataset"]["sha256"] = digest
-        manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+        manifest_path.write_bytes((json.dumps(manifest, indent=2) + "\n").encode("utf-8"))
         manifest_digest = _normalized_sha256(manifest_path)
 
         with (
@@ -364,6 +369,20 @@ class Earth3FailureBehaviorTests(unittest.TestCase):
             patch(
                 "gates_of_codex.earth3_campaign.APPROVED_MANIFEST_SHA256",
                 manifest_digest,
+            ),
+            patch(
+                "gates_of_codex.earth3_campaign.APPROVED_DATASET_RAW_SHA256",
+                dataset_raw_digest,
+            ),
+            patch(
+                "gates_of_codex.earth3_campaign._APPROVED_EXACT_BYTE_IDENTITIES",
+                {
+                    (manifest_digest, dataset_raw_digest, digest): (
+                        APPROVED_DATASET_SHA256,
+                        APPROVED_GEOMETRY_SHA256,
+                        APPROVED_PRODUCTION_ASSET_VERSION,
+                    )
+                },
             ),
         ):
             yield
@@ -394,6 +413,62 @@ class Earth3FailureBehaviorTests(unittest.TestCase):
         dataset.write_text(text[:-1] + " " + text[-1:], encoding="utf-8")
         with self.assertRaisesRegex(Earth3AuthorityError, "dataset bytes/SHA-256 mismatch"):
             build_earth3_campaign(root)
+
+    def test_crlf_converted_dataset_bytes_fail_closed(self) -> None:
+        root = self._copy_authority()
+        dataset = root / "godot/assets/maps/earth3_europe_mediterranean/polygon_dataset.json"
+        dataset.write_bytes(dataset.read_bytes().replace(b"\n", b"\r\n"))
+        with self.assertRaisesRegex(Earth3AuthorityError, "dataset bytes/SHA-256 mismatch"):
+            build_earth3_campaign(root)
+
+    def test_dataset_without_its_required_terminal_lf_fails_closed(self) -> None:
+        root = self._copy_authority()
+        dataset = root / "godot/assets/maps/earth3_europe_mediterranean/polygon_dataset.json"
+        raw = dataset.read_bytes()
+        self.assertEqual(b"\n", raw[-1:])
+        dataset.write_bytes(raw[:-1])
+        with self.assertRaisesRegex(Earth3AuthorityError, "dataset bytes/SHA-256 mismatch"):
+            build_earth3_campaign(root)
+
+    def test_dataset_trailing_byte_fails_closed(self) -> None:
+        root = self._copy_authority()
+        dataset = root / "godot/assets/maps/earth3_europe_mediterranean/polygon_dataset.json"
+        dataset.write_bytes(dataset.read_bytes() + b" ")
+        with self.assertRaisesRegex(Earth3AuthorityError, "dataset bytes/SHA-256 mismatch"):
+            build_earth3_campaign(root)
+
+    def test_symlinked_dataset_fails_closed(self) -> None:
+        root = self._copy_authority()
+        dataset = root / "godot/assets/maps/earth3_europe_mediterranean/polygon_dataset.json"
+        dataset.unlink()
+        try:
+            dataset.symlink_to(DATASET)
+        except OSError as exc:
+            self.skipTest(f"platform refused dataset symlink creation: {exc}")
+        with self.assertRaisesRegex(Earth3AuthorityError, "symlink"):
+            build_earth3_campaign(root)
+
+    def test_symlinked_intermediate_authority_directory_fails_closed(self) -> None:
+        root = self._copy_authority()
+        maps = root / "godot/assets/maps"
+        substituted_maps = root / "godot/assets/maps-substituted"
+        maps.rename(substituted_maps)
+        try:
+            maps.symlink_to(substituted_maps, target_is_directory=True)
+        except OSError as exc:
+            self.skipTest(f"platform refused authority-directory symlink creation: {exc}")
+        with self.assertRaisesRegex(Earth3AuthorityError, "symlink"):
+            build_earth3_campaign(root)
+
+    def test_symlinked_authority_root_fails_closed(self) -> None:
+        root = self._copy_authority()
+        substituted_root = self.root / "authority-substitution"
+        try:
+            substituted_root.symlink_to(root, target_is_directory=True)
+        except OSError as exc:
+            self.skipTest(f"platform refused authority-root symlink creation: {exc}")
+        with self.assertRaisesRegex(Earth3AuthorityError, "authority root.*symlink"):
+            build_earth3_campaign(substituted_root)
 
     def test_manifest_declared_hash_mismatch_fails_closed(self) -> None:
         root = self._copy_authority()
@@ -541,6 +616,16 @@ class Earth3DefaultCreationAndFrontendTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.temporary.cleanup()
 
+    def _copy_authority(self) -> Path:
+        destination = self.root / "authority"
+        asset_destination = destination / "godot/assets/maps/earth3_europe_mediterranean"
+        asset_destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(EARTH3_ASSETS, asset_destination)
+        auth_destination = destination / "config/earth3/production_authority.json"
+        auth_destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(PRODUCTION_AUTHORITY, auth_destination)
+        return destination
+
     def test_new_parser_defaults_to_earth3_and_accepts_positional_output(self) -> None:
         output = self.root / "campaign.json"
         args = build_parser().parse_args(["new", str(output)])
@@ -602,18 +687,129 @@ class Earth3DefaultCreationAndFrontendTests(unittest.TestCase):
 
     def test_missing_earth3_frontend_assets_fail_clearly(self) -> None:
         state = build_earth3_campaign()
-        original_is_file = Path.is_file
-
-        def hide_earth3(path: Path) -> bool:
-            if "earth3_europe_mediterranean" in path.parts:
-                return False
-            return original_is_file(path)
-
+        empty_authority = self.root / "empty-authority"
+        empty_authority.mkdir()
         with (
-            patch.object(Path, "is_file", hide_earth3),
+            patch(
+                "gates_of_codex.earth3_campaign._default_authority_root",
+                return_value=empty_authority,
+            ),
             self.assertRaisesRegex(FileNotFoundError, "Earth3 map manifest missing"),
         ):
             build_frontend_snapshot(state, snapshot_path=self.root / "snapshot.json")
+
+    def test_earth3_frontend_rejects_noncanonical_persisted_manifest_paths(self) -> None:
+        for configured in (
+            str(MANIFEST.resolve()),
+            "../assets/maps/earth3_europe_mediterranean/map_manifest.json",
+        ):
+            with self.subTest(configured=configured):
+                state = build_earth3_campaign()
+                state.map_metadata["strategic_map_manifest"] = configured
+                with self.assertRaisesRegex(
+                    Earth3AuthorityError,
+                    "strategic_map_manifest",
+                ):
+                    build_frontend_snapshot(
+                        state,
+                        snapshot_path=self.root / "snapshot.json",
+                    )
+
+    def test_earth3_frontend_rejects_plausible_external_manifest_copy(self) -> None:
+        state = build_earth3_campaign()
+        external = self.root / "external/map_manifest.json"
+        external.parent.mkdir(parents=True)
+        shutil.copy2(MANIFEST, external)
+        state.map_metadata["strategic_map_manifest"] = str(external.resolve())
+        with self.assertRaisesRegex(Earth3AuthorityError, "strategic_map_manifest"):
+            build_frontend_snapshot(state, snapshot_path=self.root / "snapshot.json")
+
+    def test_earth3_frontend_rejects_persisted_authority_identity_changes(self) -> None:
+        replacements = {
+            "manifest_sha256": "0" * 64,
+            "dataset_sha256": "1" * 64,
+            "embedded_dataset_sha256": "2" * 64,
+            "geometry_sha256": "3" * 64,
+            "production_asset_version": "substituted",
+            "included_ids_sha256": "4" * 64,
+            "topology_edge_count": APPROVED_TOPOLOGY_EDGE_COUNT - 1,
+            "manifest_identifier": "assets/maps/substituted/map_manifest.json",
+            "dataset_identifier": "assets/maps/substituted/polygon_dataset.json",
+            "production_authority_identifier": "config/substituted/authority.json",
+        }
+        for field, replacement in replacements.items():
+            with self.subTest(field=field):
+                state = build_earth3_campaign()
+                state.map_metadata[field] = replacement
+                with self.assertRaisesRegex(Earth3AuthorityError, field):
+                    build_frontend_snapshot(
+                        state,
+                        snapshot_path=self.root / "snapshot.json",
+                    )
+
+    def test_earth3_frontend_requires_both_map_identities(self) -> None:
+        for field in ("state.map_id", "strategic_map_id"):
+            with self.subTest(field=field):
+                state = build_earth3_campaign()
+                if field == "state.map_id":
+                    state.map_id = LEGACY_GOE_MAP_ID
+                else:
+                    state.map_metadata["strategic_map_id"] = LEGACY_GOE_MAP_ID
+                with (
+                    patch("gates_of_codex.frontend.apply_marker_layout") as legacy_layout,
+                    self.assertRaisesRegex(Earth3AuthorityError, "map_id"),
+                ):
+                    build_frontend_snapshot(
+                        state,
+                        snapshot_path=self.root / "snapshot.json",
+                    )
+                legacy_layout.assert_not_called()
+
+    def test_earth3_frontend_propagates_fixed_loader_symlink_rejection(self) -> None:
+        state = build_earth3_campaign()
+        authority_root = self._copy_authority()
+        dataset = (
+            authority_root
+            / "godot/assets/maps/earth3_europe_mediterranean/polygon_dataset.json"
+        )
+        dataset.unlink()
+        try:
+            dataset.symlink_to(DATASET)
+        except OSError as exc:
+            self.skipTest(f"platform refused dataset symlink creation: {exc}")
+        with (
+            patch(
+                "gates_of_codex.earth3_campaign._default_authority_root",
+                return_value=authority_root,
+            ),
+            self.assertRaisesRegex(Earth3AuthorityError, "symlink"),
+        ):
+            build_frontend_snapshot(state, snapshot_path=self.root / "snapshot.json")
+
+    def test_earth3_frontend_accepts_only_canonical_persisted_identifiers(self) -> None:
+        state = build_earth3_campaign()
+        self.assertEqual(
+            CAMPAIGN_MANIFEST_IDENTIFIER,
+            state.map_metadata["strategic_map_manifest"],
+        )
+        self.assertEqual(
+            CAMPAIGN_MANIFEST_IDENTIFIER,
+            state.map_metadata["manifest_identifier"],
+        )
+        self.assertEqual(
+            CAMPAIGN_DATASET_IDENTIFIER,
+            state.map_metadata["dataset_identifier"],
+        )
+        self.assertEqual(
+            PRODUCTION_AUTHORITY_IDENTIFIER,
+            state.map_metadata["production_authority_identifier"],
+        )
+        snapshot = build_frontend_snapshot(
+            state,
+            snapshot_path=ROOT / "godot/campaign_snapshot.json",
+        )
+        self.assertEqual(EARTH3_MAP_ID, snapshot["strategic_map"]["map_id"])
+        self.assertTrue(snapshot["strategic_map"]["enabled"])
 
     def test_legacy_save_round_trip_and_frontend_export_preserve_map_identity(self) -> None:
         for scenario_id, expected_map_id in (
