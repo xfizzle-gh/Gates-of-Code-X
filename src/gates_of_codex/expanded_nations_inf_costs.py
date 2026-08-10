@@ -230,11 +230,12 @@ def verify_actor_inf_cost_rows(
                 f"Activation manifest contains duplicate inf-cost target: {target_path}"
             )
         seen.add(folded)
-        if roster_text.count(f'"{target_path}"') != 1:
+        row_token = f'{{"{target_path}"'
+        if roster_text.count(row_token) != 1:
             raise ExpandedNationsError(
                 f"Managed roster does not contain exactly one inf-cost target row: {target_path}"
             )
-        position = roster_text.find(f'"{target_path}"')
+        position = roster_text.find(row_token)
         window = roster_text[position : position + 1024]
         if re.search(
             _SIDE_RE_TEMPLATE % re.escape(target_side),
