@@ -12,7 +12,13 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from gates_of_codex.earth3_operational import load_authenticated_p3_graph
-from gates_of_codex.operational_ai import _build_graph_indexes, find_operational_path
+from gates_of_codex.models import Faction
+from gates_of_codex.operational_ai import (
+    _build_graph_indexes,
+    _ranked_goals,
+    find_operational_path,
+    plan_and_issue_operational_orders,
+)
 from gates_of_codex.operational_movement import issue_move_order
 from gates_of_codex.scenario import build_scenario
 
@@ -36,6 +42,10 @@ OBJECTIVE_NODES = (
     "op-node-e3_0442-anchor",
     "op-node-e3_1937-anchor",
 )
+RUSSIAN_OBJECTIVE_NODES = {
+    "op-node-e3_0442-anchor",
+    "op-node-e3_1937-anchor",
+}
 
 
 def _node(province_id: str) -> str:
@@ -100,6 +110,46 @@ def test_all_starting_nodes_reach_both_p2_objective_clusters_on_allowlisted_edge
             )
             assert path is not None, (formation_id, goal)
             assert set(path.edge_ids) <= allowlist
+
+
+def test_production_russian_ai_ranks_kyiv_vilnius_and_commits_only_approved_routes() -> None:
+    state = build_scenario("earth3_v1")
+    graph = load_authenticated_p3_graph()
+    edges_by_id, nodes_by_id, adjacency = _build_graph_indexes(graph)
+    approved = set(edges_by_id)
+
+    russian_forces = sorted(
+        (
+            force
+            for force in state.strategic_formations.values()
+            if force.faction == Faction.RUSSIA
+        ),
+        key=lambda force: force.strategic_formation_id,
+    )
+    assert len(russian_forces) == 3
+    for force in russian_forces:
+        assert force.position is not None and force.position.node_id
+        goals = _ranked_goals(
+            state,
+            force,
+            start_node=str(force.position.node_id),
+            adjacency=adjacency,
+            nodes_by_id=nodes_by_id,
+            stance="operational",
+        )
+        ranked_nodes = {node_id for _priority, node_id, _kind in goals}
+        assert RUSSIAN_OBJECTIVE_NODES <= ranked_nodes
+
+    actions = plan_and_issue_operational_orders(state, Faction.RUSSIA, seed=0)
+    moves = [action for action in actions if action.action == "operational_move"]
+    assert moves
+    for action in moves:
+        formation_id = str(action.details["formation_id"])
+        force = state.strategic_formations[formation_id]
+        assert force.move_order is not None
+        assert force.move_order.status == "committed"
+        assert force.move_order.path_edge_ids
+        assert set(force.move_order.path_edge_ids) <= approved
 
 
 def test_ai_pathfinding_is_insertion_order_independent() -> None:
