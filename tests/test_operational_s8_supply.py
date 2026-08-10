@@ -1489,7 +1489,7 @@ class OperationalS8SupplyTests(unittest.TestCase):
 
         exported_force = snapshot["strategic_formations"][0]
         exported_battalion = snapshot["battalions"][0]
-        self.assertEqual(14, snapshot["schema_version"])
+        self.assertEqual(15, snapshot["schema_version"])
         self.assertFalse(exported_force["supplied"])
         self.assertTrue(exported_force["cut_off"])
         self.assertIsNone(exported_force["source_hub_id"])

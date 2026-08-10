@@ -292,8 +292,8 @@ class S10FrontendPresentationContractTests(unittest.TestCase):
 
             snapshot = build_frontend_snapshot(state)
 
-        self.assertEqual(14, FRONTEND_SCHEMA_VERSION)
-        self.assertEqual(14, snapshot["schema_version"])
+        self.assertEqual(15, FRONTEND_SCHEMA_VERSION)
+        self.assertEqual(15, snapshot["schema_version"])
         pending = snapshot["pending_battle"]
         self.assertEqual(["bn-n"], pending["attacking_battalions"])
         self.assertEqual(["bn-r-1", "bn-r-2"], pending["defending_battalions"])
