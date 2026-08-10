@@ -27,11 +27,16 @@ class ScenarioDefinition:
 def _build_earth3(**options) -> CampaignState:
     from .earth3_bootstrap import build_earth3_v1_campaign
     from .earth3_operational import migrate_earth3_p2_to_p3
+    from .operational_capture import ensure_site_control_state
 
-    # Keep the direct Earth3 bootstrap builder frozen at P2.  Production scenario
+    # Keep the direct Earth3 bootstrap builder frozen at P2. Production scenario
     # construction adds P3 only through the separately authenticated atomic
     # migration, so P2 content remains independently reproducible and testable.
-    return migrate_earth3_p2_to_p3(build_earth3_v1_campaign(**options))
+    state = migrate_earth3_p2_to_p3(build_earth3_v1_campaign(**options))
+    # Initialize mutable P3 control rows only after migration/authentication. The
+    # authored graph retains actor provenance; controller rows use tactical sides.
+    ensure_site_control_state(state)
+    return state
 
 
 def _build_legacy_goe_europe(**options) -> CampaignState:
