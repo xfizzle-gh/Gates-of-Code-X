@@ -42,6 +42,7 @@ class EdgeKind(str, Enum):
 class EdgeAuthority(str, Enum):
     CANDIDATE = "candidate"
     AUTHORED = "authored"
+    APPROVED = "approved"
 
 
 class PositionMode(str, Enum):
@@ -84,6 +85,20 @@ PROGRESS_MILLI_MIN = 0
 PROGRESS_MILLI_MAX = 1000
 # Fixed-point: 1000 == 1.0x cost / 1.0 base move point.
 COST_MILLI_UNITY = 1000
+
+APPROVED_CORRIDOR_COMMENT_ID = 5234226059
+APPROVED_CORRIDOR_BATCH_ID = "earth3-p3-first-playable-corridors-v1"
+APPROVED_CORRIDOR_ROLLBACK_BATCH_ID = "p3-batch-001"
+APPROVED_CORRIDOR_SOURCE = "owner_approved_earth3_p3_corridor"
+APPROVED_CORRIDOR_METADATA_KEYS = frozenset(
+    {
+        "approval_comment_id",
+        "batch_id",
+        "rollback_batch_id",
+        "source",
+        "supply_capable",
+    }
+)
 
 
 def require_strict_int(value: Any, *, name: str, minimum: int | None = None, maximum: int | None = None) -> int:
@@ -247,6 +262,23 @@ class OperationalRouteEdge:
         province_ids: set[str],
         node_province: dict[str, str],
     ) -> None:
+        self._validate_structure(
+            node_ids=node_ids,
+            province_ids=province_ids,
+            node_province=node_province,
+        )
+        if self.authority == EdgeAuthority.APPROVED.value:
+            raise ValueError(
+                f"approved edge {self.edge_id} requires the authenticated exact allowlist"
+            )
+
+    def _validate_structure(
+        self,
+        *,
+        node_ids: set[str],
+        province_ids: set[str],
+        node_province: dict[str, str],
+    ) -> None:
         if not self.edge_id.strip():
             raise ValueError("edge_id required")
         if self.a not in node_ids or self.b not in node_ids:
@@ -291,6 +323,35 @@ class OperationalRouteEdge:
                 f"candidate edge {self.edge_id} must have traversal_enabled=false "
                 "until explicitly authored or approved"
             )
+        if self.authority == EdgeAuthority.APPROVED.value:
+            valid_approved_policy = all(
+                (
+                    self.kind == EdgeKind.CORRIDOR.value,
+                    self.edge_id == stable_edge_id(EdgeKind.CORRIDOR.value, self.a, self.b),
+                    self.base_move_points_milli == COST_MILLI_UNITY,
+                    self.movement_cost_milli == COST_MILLI_UNITY,
+                    self.requires_port is False,
+                    self.can_be_blockaded is False,
+                    self.traversal_enabled is True,
+                    self.bidirectional is True,
+                    self.legacy_crossing_type is None,
+                    set(self.metadata) == APPROVED_CORRIDOR_METADATA_KEYS,
+                    isinstance(self.metadata.get("approval_comment_id"), int)
+                    and not isinstance(self.metadata.get("approval_comment_id"), bool),
+                    self.metadata.get("approval_comment_id")
+                    == APPROVED_CORRIDOR_COMMENT_ID,
+                    self.metadata.get("batch_id") == APPROVED_CORRIDOR_BATCH_ID,
+                    self.metadata.get("rollback_batch_id")
+                    == APPROVED_CORRIDOR_ROLLBACK_BATCH_ID,
+                    self.metadata.get("source") == APPROVED_CORRIDOR_SOURCE,
+                    self.metadata.get("supply_capable") is True,
+                )
+            )
+            if not valid_approved_policy:
+                raise ValueError(
+                    f"approved edge {self.edge_id} does not match the exact owner-approved "
+                    "corridor policy"
+                )
         if self.authority == EdgeAuthority.AUTHORED.value and self.kind not in {
             EdgeKind.STRAIT.value,
             EdgeKind.FERRY.value,
@@ -477,6 +538,19 @@ class OperationalGraph:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def validate(self, *, province_ids: Iterable[str]) -> None:
+        self._validate_structure(province_ids=province_ids)
+        approved = [
+            edge.edge_id
+            for edge in self.edges
+            if edge.authority == EdgeAuthority.APPROVED.value
+        ]
+        if approved:
+            raise ValueError(
+                "approved edges require the authenticated Earth3 P3 loader: "
+                f"{approved[0]}"
+            )
+
+    def _validate_structure(self, *, province_ids: Iterable[str]) -> None:
         """Validate graph. Must not mutate self.metadata or any nested records."""
         provinces = set(province_ids)
         self.rules.validate()
@@ -497,7 +571,7 @@ class OperationalGraph:
         for node in self.nodes:
             node.validate(province_ids=provinces, site_ids=site_id_set)
         for edge in self.edges:
-            edge.validate(
+            edge._validate_structure(
                 node_ids=node_id_set,
                 province_ids=provinces,
                 node_province=node_province,

@@ -29,9 +29,27 @@ def ensure_strategic_formations(state: CampaignState) -> dict:
     - Derived summaries refresh deterministically after migration.
     - Pending/archived battles are left untouched.
     - Dangling commander refs are cleared only for legacy pre-schema-6 saves.
+
+    Earth3 P2/P3 campaigns already carry authored strategic-formation authority.
+    They must be checked before any legacy normalizer can repair, synchronize,
+    refresh, or otherwise mutate them. For those campaigns this function performs
+    only the narrow formation/battalion integrity checks that the legacy migration
+    itself could otherwise repair. Full P2/P3 authority authentication remains in
+    the Earth3 migration/validation path, avoiding repeated full-map validation
+    every time ordinary runtime code calls this compatibility helper.
     """
 
     incoming_schema = int(state.schema_version)
+
+    from .earth3_bootstrap import is_earth3_p2_campaign
+
+    if is_earth3_p2_campaign(state):
+        _validate_authored_earth3_force_structure(state)
+        record = state.map_metadata.get(MIGRATION_RECORD_KEY)
+        if isinstance(record, dict):
+            return dict(record)
+        return _stable_migration_record(incoming_schema)
+
     legacy = incoming_schema < STRATEGIC_FORMATION_SCHEMA_VERSION
 
     if _already_migrated(state):
@@ -114,6 +132,66 @@ def ensure_strategic_formations(state: CampaignState) -> dict:
     if MIGRATION_RECORD_KEY not in state.map_metadata:
         state.map_metadata[MIGRATION_RECORD_KEY] = _stable_migration_record(incoming_schema)
     return state.map_metadata[MIGRATION_RECORD_KEY]
+
+
+def _validate_authored_earth3_force_structure(state: CampaignState) -> None:
+    """Reject exactly the authored-force damage that legacy migration could repair.
+
+    This check is intentionally read-only and limited to strategic-formation /
+    battalion identity, membership, faction, and province relationships. The full
+    immutable Earth3 authority, actor, graph, and provenance checks are performed
+    by the P2/P3 validators immediately around campaign migration/load.
+    """
+
+    membership: dict[str, str] = {}
+    for force_id, force in state.strategic_formations.items():
+        if force_id != force.strategic_formation_id:
+            raise ValueError(f"Strategic formation key mismatch: {force_id}")
+        for battalion_id in force.battalion_ids:
+            if battalion_id in membership:
+                raise ValueError(
+                    f"Battalion {battalion_id} belongs to multiple strategic formations "
+                    f"({membership[battalion_id]} and {force_id})"
+                )
+            membership[battalion_id] = force_id
+            battalion = state.battalions.get(battalion_id)
+            if battalion is None:
+                raise ValueError(
+                    f"Strategic formation {force_id} references missing battalion {battalion_id}"
+                )
+            if battalion.strategic_formation_id != force_id:
+                raise ValueError(
+                    f"Battalion {battalion_id} strategic formation membership is inconsistent"
+                )
+            if battalion.faction != force.faction:
+                raise ValueError(
+                    f"Battalion {battalion_id} faction does not match strategic formation"
+                )
+            if battalion.province_id != force.province_id:
+                raise ValueError(
+                    f"Battalion {battalion_id} province {battalion.province_id} does not match "
+                    f"strategic formation province {force.province_id}"
+                )
+
+    for battalion_id, battalion in state.battalions.items():
+        force_id = battalion.strategic_formation_id
+        if not force_id:
+            raise ValueError(
+                f"Battalion {battalion_id} is not assigned to a strategic formation"
+            )
+        force = state.strategic_formations.get(force_id)
+        if force is None:
+            raise ValueError(
+                f"Battalion {battalion_id} references missing strategic formation {force_id}"
+            )
+        if battalion_id not in force.battalion_ids:
+            raise ValueError(
+                f"Battalion {battalion_id} missing from strategic formation membership list"
+            )
+        if membership.get(battalion_id) != force_id:
+            raise ValueError(
+                f"Battalion {battalion_id} strategic formation membership is inconsistent"
+            )
 
 
 def refresh_strategic_formation_summaries(state: CampaignState) -> None:
