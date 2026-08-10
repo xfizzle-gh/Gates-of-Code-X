@@ -54,6 +54,14 @@ SERBIA_PRESENTATION_UNITS = (
     "goc_serb_recon(rusa)",
     "goc_serb_rifle(rusa)",
 )
+SPAIN_PRESENTATION_UNITS = (
+    "3rd_assault_at(nato)",
+    "3rd_assault_decepticons(nato)",
+    "3rd_assault_javelin(nato)",
+    "3rd_assault_mg3(nato)",
+    "3rd_assault_saperi(nato)",
+    "3rd_assault_saperi_at(nato)",
+)
 SAFE_ACTOR_ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 _MANAGED_SUFFIXES = (
     ".goc-deactivate.goc-stage",
@@ -184,11 +192,15 @@ def side_family(side: str) -> frozenset[str]:
 
 
 def presentation_relatives_for_actor(actor_id: str) -> tuple[Path, ...]:
-    if actor_id != "srb":
+    if actor_id == "srb":
+        units = SERBIA_PRESENTATION_UNITS
+    elif actor_id == "esp":
+        units = SPAIN_PRESENTATION_UNITS
+    else:
         return ()
     return tuple(
         PORTRAIT_ROOT_RELATIVE / f"{unit_name}_{index:02d}.png"
-        for unit_name in SERBIA_PRESENTATION_UNITS
+        for unit_name in units
         for index in range(4)
     )
 
@@ -211,6 +223,7 @@ def all_managed_candidates(root: Path) -> list[Path]:
         OPPONENT_UNITS_RELATIVE,
         *RESEARCH_RELATIVE.values(),
         *presentation_relatives_for_actor("srb"),
+        *presentation_relatives_for_actor("esp"),
     }
     candidates = {root / relative for relative in relatives}
     breed_root = root / BREED_ROOT_RELATIVE
