@@ -18,6 +18,7 @@ ROSTER_RELATIVE = Path("resource/set/multiplayer/units/roster_conquest.set")
 UNITS_RELATIVE = Path("resource/set/multiplayer/units/conquest/goc_active_actor_units.set")
 OPPONENT_UNITS_RELATIVE = Path("resource/set/multiplayer/units/conquest/goc_opponent_units.set")
 MANIFEST_RELATIVE = Path("live/expanded_nations/active.json")
+BREED_ROOT_RELATIVE = Path("resource/set/breed/mp")
 RESEARCH_RELATIVE = {
     side: Path(f"resource/set/dynamic_campaign/unit_research_{side}.set")
     for side in SUPPORTED_TACTICAL_SIDES
@@ -54,6 +55,13 @@ SERBIA_PRESENTATION_UNITS = (
     "goc_serb_rifle(rusa)",
 )
 SAFE_ACTOR_ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+_MANAGED_SUFFIXES = (
+    ".goc-deactivate.goc-stage",
+    ".goc-compile-suspended",
+    ".goc-deactivate",
+    ".goc-stage",
+    ".goc-restore",
+)
 
 
 class ExpandedNationsError(ValueError):
@@ -204,7 +212,28 @@ def all_managed_candidates(root: Path) -> list[Path]:
         *RESEARCH_RELATIVE.values(),
         *presentation_relatives_for_actor("srb"),
     }
-    return [root / relative for relative in sorted(relatives, key=lambda item: item.as_posix())]
+    candidates = {root / relative for relative in relatives}
+    breed_root = root / BREED_ROOT_RELATIVE
+    if breed_root.is_dir():
+        marker = GENERATED_MARKER.encode("utf-8")
+        for path in breed_root.rglob("*"):
+            if not path.is_file():
+                continue
+            try:
+                if marker not in path.read_bytes()[:1024]:
+                    continue
+            except OSError:
+                continue
+            candidates.add(_canonical_managed_path(path))
+    return sorted(candidates, key=lambda path: path.as_posix())
+
+
+def _canonical_managed_path(path: Path) -> Path:
+    name = path.name
+    for suffix in _MANAGED_SUFFIXES:
+        if name.endswith(suffix):
+            return path.with_name(name[: -len(suffix)])
+    return path
 
 
 def safe_target(root: Path, relative: str) -> Path:
