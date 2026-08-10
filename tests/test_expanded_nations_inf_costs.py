@@ -81,6 +81,28 @@ class ExpandedNationsInfCostTests(unittest.TestCase):
         }
         verify_actor_inf_cost_rows(roster, manifest)
 
+    def test_proven_demo_h_typo_uses_demon_h_cost_row(self) -> None:
+        breed = self.layers[2] / "resource/set/breed/mp/ukr/2022s/azov3_demo_h.set"
+        breed.parent.mkdir(parents=True)
+        breed.write_text('{breed {skin "fixture"}}\n', encoding="utf-8")
+        self._write_inf(
+            "ukr",
+            '{"mp/ukr/2022s/azov3_demon_h" ("ukr_specops" side(ukr)) {cost 40.0}}',
+        )
+        actor = self._actor()
+        actor["units"][0]["members"] = {"azov3_demo_h": 1}
+
+        rows, body = project_actor_inf_cost_rows(actor, self.layers)
+
+        self.assertEqual(1, len(rows))
+        row = rows[0]
+        self.assertEqual("mp/ukr/2022s/azov3_demon_h", row.source_path)
+        self.assertEqual("mp/nato/2022s/azov3_demo_h", row.target_path)
+        self.assertEqual(40.0, row.cost)
+        self.assertIn('"mp/nato/2022s/azov3_demo_h"', body)
+        self.assertNotIn('"mp/nato/2022s/azov3_demon_h"', body)
+        self.assertIn("{cost 40.0}", body)
+
     def test_existing_target_native_cost_wins_without_override(self) -> None:
         self._write_source_breed()
         self._write_inf(
