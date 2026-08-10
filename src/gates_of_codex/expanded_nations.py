@@ -11,6 +11,7 @@ from .expanded_nations_actor_sources import (
     normalize_actor_purchase_ids,
     project_actor_units,
 )
+from .expanded_nations_breeds import project_actor_breed_files
 from .expanded_nations_compile import clean_compile_source_view
 from .expanded_nations_models import (
     ACTIVATION_SCHEMA,
@@ -142,6 +143,7 @@ def activate_actor_projection(
     opponent_units, opponent_body = project_opponent_units(side, roots)
     projected_research = project_research_nodes(native_actor)
     presentation_outputs = project_actor_presentation(native_actor, roots)
+    breed_outputs = project_actor_breed_files(native_actor, roots)
 
     outputs: dict[Path, bytes] = {
         ROSTER_RELATIVE: render_roster_file(native_actor).encode("utf-8"),
@@ -160,6 +162,7 @@ def activate_actor_projection(
             projected_research,
         ).encode("utf-8"),
         **presentation_outputs,
+        **breed_outputs,
     }
     signature = projection_signature(
         native_actor,
@@ -195,6 +198,13 @@ def activate_actor_projection(
             path.as_posix()
             for path in sorted(
                 presentation_outputs,
+                key=lambda item: item.as_posix(),
+            )
+        ],
+        "breed_files": [
+            path.as_posix()
+            for path in sorted(
+                breed_outputs,
                 key=lambda item: item.as_posix(),
             )
         ],
