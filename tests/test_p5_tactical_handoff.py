@@ -186,7 +186,10 @@ class StackDependencyRepresentationTests(unittest.TestCase):
 
         message = str(raised.exception)
         self.assertIn("Gates of CodeX", message)
-        self.assertIn(str(local_gates), message)
+        # stack_dependency_tokens normalizes layers through the existing path
+        # machinery, so the message carries the canonical path. On Windows the
+        # raw temp-dir spelling is an 8.3 alias (RUNNER~1) of the same directory.
+        self.assertIn(str(local_gates.resolve()), message)
 
     def test_workshop_id_is_read_from_the_layer_path_not_hardcoded(self) -> None:
         """A republished item must be represented by its own id."""
