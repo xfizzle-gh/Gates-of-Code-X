@@ -12,6 +12,12 @@ from .models import (
     Province,
     StrategicFormation,
 )
+from .operational_capture import (
+    SITE_CONTROL_KEY,
+    ensure_site_control_state,
+    list_control_sites,
+    set_site_control_state,
+)
 from .operational_movement import move_order_from_dict
 from .operational_position import (
     _graph_indexes,
@@ -38,6 +44,13 @@ def build_restricted_p3_planning_state(
     require weakening them. Instead, construct only the state surfaces consumed
     by the operational planner and independently authenticate the public P3 graph.
 
+    Mutable site-capture progress is also absent from the serialized projection.
+    After graph authentication, the planner derives only each site's current
+    visible controller from the already-visible province owner and initializes a
+    zero-progress internal control row. This prevents authored starting ownership
+    from overriding an evolved captured province without exposing claimant/progress
+    state.
+
     No actor runtime, catalog content, hidden battalions, commanders, research,
     economy, observation records, or pending-battle details are reconstructed.
     """
@@ -48,7 +61,11 @@ def build_restricted_p3_planning_state(
         raise OperationalPlanningProjectionError("planning projection metadata must be an object")
     if "earth3_p3_operational_authority" not in metadata:
         raise OperationalPlanningProjectionError("restricted P3 planning authority missing")
-    for forbidden in ("strategic_actor_runtime", "actor_content_runtime"):
+    for forbidden in (
+        "strategic_actor_runtime",
+        "actor_content_runtime",
+        SITE_CONTROL_KEY,
+    ):
         if forbidden in metadata:
             raise OperationalPlanningProjectionError(
                 f"restricted P3 planning projection leaked {forbidden}"
@@ -231,6 +248,7 @@ def build_restricted_p3_planning_state(
         raise OperationalPlanningProjectionError(
             "restricted P3 planning projection has no authenticated graph"
         )
+    _install_visible_site_control(state)
     node_ids, edge_ids, edges_by_id, nodes_by_id = _graph_indexes(graph)
     for force_id, force in sorted(state.strategic_formations.items()):
         position = force.position
@@ -248,6 +266,56 @@ def build_restricted_p3_planning_state(
                 f"restricted planning formation {force_id} position is invalid"
             )
     return state
+
+
+def _install_visible_site_control(state: CampaignState) -> None:
+    """Derive planner-only site controllers from visible province ownership.
+
+    The serialized S11 projection intentionally excludes mutable site-control
+    claimant/progress rows. Authored graph ownership is starting provenance, not
+    current mutable control. Seed a minimal prior row for every legal control site
+    using the current province owner, then let the normal validator fill only
+    zero-progress structural fields. This keeps current controller visibility while
+    preventing hidden capture progress from crossing the observation boundary.
+    """
+    if SITE_CONTROL_KEY in state.map_metadata:
+        raise OperationalPlanningProjectionError(
+            "restricted P3 planning projection must not contain mutable site-control state"
+        )
+
+    visible_control: dict[str, dict[str, Any]] = {}
+    for site in list_control_sites(state):
+        site_id = str(site.get("site_id") or "")
+        province_id = str(site.get("province_id") or "")
+        if not site_id or not province_id:
+            continue
+        province = state.provinces.get(province_id)
+        controller = None
+        if province is not None and province.owner != Faction.NEUTRAL:
+            controller = province.owner.value
+        visible_control[site_id] = {"controller_faction": controller}
+
+    set_site_control_state(state, visible_control)
+    ensure_site_control_state(state)
+
+    normalized = state.map_metadata.get(SITE_CONTROL_KEY)
+    if not isinstance(normalized, dict):
+        raise OperationalPlanningProjectionError(
+            "restricted P3 planner could not initialize visible site control"
+        )
+    for site_id, row in normalized.items():
+        if not isinstance(row, dict):
+            raise OperationalPlanningProjectionError(
+                f"restricted P3 planner site-control row is malformed: {site_id}"
+            )
+        if (
+            row.get("claimant_faction") is not None
+            or row.get("claimant_formation_id") is not None
+            or row.get("progress_ticks") != 0
+        ):
+            raise OperationalPlanningProjectionError(
+                f"restricted P3 planner leaked capture progress: {site_id}"
+            )
 
 
 def _strict_bool(value: Any, *, name: str) -> bool:
