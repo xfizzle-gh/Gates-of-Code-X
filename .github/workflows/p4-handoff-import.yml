@@ -1,0 +1,36 @@
+name: Import sealed P4 handoff
+
+on:
+  push:
+    branches:
+      - chore/p4-handoff-import
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct and verify sealed bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .p4-import/bundle.part* | base64 --decode > /tmp/p4.bundle
+          echo "5747421e9f0b01f3ae1f476655f60b0335727c526bc79d254dffb62c32805e3f  /tmp/p4.bundle" | sha256sum -c -
+          test "$(git bundle list-heads /tmp/p4.bundle | awk '$2=="refs/heads/claude/earth3-p4-vertical-slice-gj7lzc"{print $1}')" = "7c0a4f0a0942dc5aa6986bed19b70accaa1faa7d"
+          git cat-file -e 6707139d0f6409b6b4fdbbc5698de81d37b6731f^{commit}
+          git bundle verify /tmp/p4.bundle
+
+      - name: Import exact P4 history
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch /tmp/p4.bundle refs/heads/claude/earth3-p4-vertical-slice-gj7lzc:refs/remotes/p4/exact
+          test "$(git rev-parse refs/remotes/p4/exact)" = "7c0a4f0a0942dc5aa6986bed19b70accaa1faa7d"
+          test "$(git merge-base refs/remotes/p4/exact 6707139d0f6409b6b4fdbbc5698de81d37b6731f)" = "6707139d0f6409b6b4fdbbc5698de81d37b6731f"
+          git push origin 7c0a4f0a0942dc5aa6986bed19b70accaa1faa7d:refs/heads/claude/earth3-p4-vertical-slice-gj7lzc
