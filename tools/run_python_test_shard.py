@@ -8,6 +8,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Iterable, Iterator
 
+ROOT = Path(__file__).resolve().parents[1]
+
 SHARDS = (
     "core",
     "earth3-authority-bootstrap",
@@ -80,6 +82,16 @@ def _walk_suite(suite: unittest.TestSuite) -> Iterator[unittest.TestCase]:
 
 
 def discover_tests(start_dir: Path) -> list[unittest.TestCase]:
+    # ``python -m unittest discover -s tests`` runs with the repository root on
+    # sys.path because Python is executing a module from the working directory.
+    # Executing this repository-owned runner as ``python tools/...`` instead puts
+    # only ``tools/`` at sys.path[0]. Preserve the old canonical import context so
+    # tests that intentionally share fixtures via ``tests.test_*`` resolve exactly
+    # as they did before sharding.
+    root_text = str(ROOT)
+    if root_text not in sys.path:
+        sys.path.insert(0, root_text)
+
     loader = unittest.defaultTestLoader
     suite = loader.discover(str(start_dir), pattern="test*.py")
     return list(_walk_suite(suite))
@@ -138,6 +150,8 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit("Specify --verify-partition and/or --shard")
 
     start_dir = Path(args.start_dir)
+    if not start_dir.is_absolute():
+        start_dir = ROOT / start_dir
     if not start_dir.is_dir():
         raise SystemExit(f"Test discovery directory does not exist: {start_dir}")
 
