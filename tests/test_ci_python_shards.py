@@ -96,6 +96,24 @@ class PythonShardClassificationTests(unittest.TestCase):
             set(partition["p4-production-launch"]),
         )
 
+    def test_repository_discovery_preserves_package_import_context(self) -> None:
+        tests = SHARDS.discover_tests(ROOT / "tests")
+        ids = [test.id() for test in tests]
+        failed_imports = [
+            test_id
+            for test_id in ids
+            if test_id.startswith("unittest.loader._FailedTest.")
+        ]
+        self.assertEqual([], failed_imports)
+        self.assertTrue(
+            any("test_operational_s9a_authority" in test_id for test_id in ids),
+            "known tests.* fixture-import consumer was not discovered",
+        )
+        self.assertTrue(
+            any("test_s11_frontend" in test_id for test_id in ids),
+            "known tests.* fixture-import consumer was not discovered",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
