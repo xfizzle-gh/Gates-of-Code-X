@@ -44,6 +44,7 @@ from gates_of_codex.player_shell import (
     build_play_parser,
     create_new_campaign,
     find_godot_executable,
+    last_campaign_path,
     launch_strategic_application,
     player_home,
     read_last_campaign,
@@ -870,15 +871,39 @@ class DeterminismAndPathTests(unittest.TestCase):
         self.assertIn("My Saved Games", created.campaign_path)
 
     def test_default_campaign_directory_is_predictable_per_user(self) -> None:
+        # Both sides are canonicalized: the player home and everything derived
+        # from it share one spelling, so an aliased home cannot split state.
         with tempfile.TemporaryDirectory() as temporary:
-            home = Path(temporary) / "home dir"
+            home = (Path(temporary) / "home dir").resolve(strict=False)
             environ = _environ(home)
             resolved = resolve_campaign_paths(None, environ=environ)
 
-        self.assertEqual(home, player_home(environ))
-        self.assertEqual(
-            home / "campaigns" / "earth3_v1" / "campaign.json", resolved.campaign
-        )
+            self.assertEqual(home, player_home(environ))
+            self.assertEqual(
+                home / "campaigns" / "earth3_v1" / "campaign.json", resolved.campaign
+            )
+
+    def test_aliased_player_home_resolves_to_one_pointer_location(self) -> None:
+        """Two spellings of one home must not yield two remembered-campaign files."""
+        if os.name == "nt":
+            self.skipTest("Windows 8.3 canonicalization is exercised by native CI")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            real_home = root / "real home"
+            real_home.mkdir()
+            alias = root / "alias home"
+            try:
+                alias.symlink_to(real_home, target_is_directory=True)
+            except OSError as exc:
+                self.skipTest(f"symlink creation unavailable: {exc}")
+
+            self.assertEqual(
+                player_home(_environ(real_home)), player_home(_environ(alias))
+            )
+            self.assertEqual(
+                last_campaign_path(_environ(real_home)),
+                last_campaign_path(_environ(alias)),
+            )
 
     def test_default_home_follows_platform_convention(self) -> None:
         if os.name == "nt":
@@ -887,7 +912,7 @@ class DeterminismAndPathTests(unittest.TestCase):
             self.assertIn("AppData", str(home))
         else:
             home = player_home({"XDG_DATA_HOME": "/var/tmp/xdg"})
-            self.assertEqual(Path("/var/tmp/xdg/gates-of-codex"), home)
+            self.assertEqual(Path("/var/tmp/xdg/gates-of-codex").resolve(strict=False), home)
 
     def test_strategic_application_launch_uses_argv_not_a_shell_string(self) -> None:
         recorded: dict[str, object] = {}

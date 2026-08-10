@@ -113,20 +113,26 @@ class PlayResult:
 
 
 def player_home(environ: Mapping[str, str] | None = None) -> Path:
-    """Return the predictable per-user Gates of CodeX directory."""
+    """Return the predictable per-user Gates of CodeX directory.
+
+    Canonicalized for the same reason campaign paths are: the home directory
+    locates the remembered-campaign pointer, so two spellings of one directory
+    (a Windows 8.3 alias, a symlink) would otherwise produce two pointer files
+    and split the "continue my campaign" state.
+    """
     env = os.environ if environ is None else environ
     override = str(env.get(HOME_ENVIRONMENT_VARIABLE, "")).strip()
     if override:
-        return Path(override).expanduser()
+        return Path(override).expanduser().resolve(strict=False)
     if os.name == "nt":
         local = str(env.get("LOCALAPPDATA", "")).strip()
         if local:
-            return Path(local) / "GatesOfCodeX"
-        return Path.home() / "AppData" / "Local" / "GatesOfCodeX"
+            return (Path(local) / "GatesOfCodeX").resolve(strict=False)
+        return (Path.home() / "AppData" / "Local" / "GatesOfCodeX").resolve(strict=False)
     xdg = str(env.get("XDG_DATA_HOME", "")).strip()
     if xdg:
-        return Path(xdg) / "gates-of-codex"
-    return Path.home() / ".local" / "share" / "gates-of-codex"
+        return (Path(xdg) / "gates-of-codex").resolve(strict=False)
+    return (Path.home() / ".local" / "share" / "gates-of-codex").resolve(strict=False)
 
 
 def resolve_campaign_paths(
