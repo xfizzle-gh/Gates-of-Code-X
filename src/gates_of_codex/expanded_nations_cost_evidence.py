@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 import json
+import subprocess
 import re
 import statistics
 from pathlib import Path
@@ -34,7 +35,7 @@ from .goh_source import scan_source_entries
 from .modstack import normalize_stack, resource_root
 
 COST_EVIDENCE_SCHEMA = "gates-of-codex.expanded-nations-cost-evidence"
-COST_EVIDENCE_VERSION = 1
+COST_EVIDENCE_VERSION = 2
 
 _MEMBER_RE = re.compile(
     r"\bc\d+\s*\(\s*([A-Za-z0-9_./+-]+)\s*:\s*(\d+)\s*\)",
@@ -56,8 +57,11 @@ class UnitCostEvidence:
     native_recruitment_cost: float | None
     personnel_cost: float | None
     entity_cost: float | None
+    vehicle_entity_cost: float | None
     cp: float | None
+    special_points_cost: float | None
     virtual: bool
+    has_vehicle: bool
     zero_cost: bool
     intentional_zero: bool
     rationale: str
@@ -99,7 +103,7 @@ def build_cost_evidence_matrix(
         )
 
     source_index = _build_effective_inf_index(roots)
-    vehicle_costs = _build_vehicle_cost_index(roots)
+    vehicle_costs, vehicle_conflicts = _build_vehicle_cost_index(roots)
     playable = sorted(
         (row for row in payload["actors"] if bool(row.get("playable"))),
         key=lambda row: str(row["actor_id"]),
@@ -146,6 +150,7 @@ def build_cost_evidence_matrix(
                     roots=roots,
                     index=effective_index,
                     vehicle_costs=vehicle_costs,
+                    vehicle_conflicts=vehicle_conflicts,
                 )
                 unit_rows.append(evidence)
                 if evidence.native_recruitment_cost is not None:
@@ -240,6 +245,10 @@ def render_cost_evidence_markdown(matrix: Mapping[str, Any]) -> str:
         f"- playable_actors: {matrix.get('playable_actor_count')}",
         f"- unintended_zero_total: {matrix.get('unintended_zero_total')}",
         "",
+        "Native recruitment cost counts money-price authority only "
+        "(`{cost N}` / purchase `cost(N)` / vehicle entity `{cost}` / pure-infantry inf sums). "
+        "`cp()` and `cost_sp` are recorded per unit but never counted as recruitment money.",
+        "",
         "| actor | side | units | proj_rows | min | median | max | unintended_zero | intentional_zero |",
         "|---|---|---:|---:|---:|---:|---:|---:|---:|",
     ]
@@ -292,10 +301,12 @@ def generate_cost_evidence_from_stack_config(
     source_head: str = "",
 ) -> dict[str, Any]:
     roots, payload = compile_resolved_factions(stack_config)
+    final_root = Path(gates_root).expanduser().resolve() if gates_root else roots[-1]
+    _verify_git_exact_head(final_root, source_head)
     return build_cost_evidence_matrix(
         payload,
         roots,
-        gates_root=gates_root or roots[-1],
+        gates_root=final_root,
         source_head=source_head,
     )
 
@@ -311,29 +322,32 @@ def _evaluate_unit_cost(
     roots: Sequence[Path],
     index: Any,
     vehicle_costs: Mapping[str, float],
+    vehicle_conflicts: Mapping[str, tuple[str, ...]],
 ) -> UnitCostEvidence:
     virtual = bool(unit_meta.get("virtual")) if unit_meta else entry_name.startswith("goc_")
     call_map: dict[str, list[str]] = {}
     for call in entry_calls:
         call_map.setdefault(str(getattr(call, "family", "")).lower(), []).append(str(call.value))
 
-    entity_cost = _first_block_cost(entry_raw)
-    if entity_cost is None and call_map.get("cost"):
+    # Purchase-level money cost only (not CP, not special points).
+    purchase_cost = _first_block_cost(entry_raw)
+    if purchase_cost is None and call_map.get("cost"):
         try:
-            entity_cost = float(call_map["cost"][0])
+            purchase_cost = float(call_map["cost"][0])
         except ValueError:
-            entity_cost = None
-    cost_sp = None
+            purchase_cost = None
+
+    special_points = None
     if call_map.get("cost_sp"):
         try:
-            cost_sp = float(call_map["cost_sp"][0])
+            special_points = float(call_map["cost_sp"][0])
         except ValueError:
-            cost_sp = None
+            special_points = None
+
     cp_vals = call_map.get("cp") or []
     cp = float(cp_vals[0]) if cp_vals else None
 
     members = _extract_members(entry_raw, unit_meta)
-    # Ignore zero-count placeholder crew slots (common on UGV / offmap macros).
     members = {k: v for k, v in members.items() if int(v) > 0}
     personnel, gaps, allowlisted = _personnel_cost(
         members=members,
@@ -343,83 +357,101 @@ def _evaluate_unit_cost(
         index=index,
     )
 
-    vehicle_names = _VEHICLE_CALL_RE.findall(entry_raw)
+    vehicle_names = [name for name in _VEHICLE_CALL_RE.findall(entry_raw)]
+    has_vehicle = bool(vehicle_names) or (
+        bool(unit_meta.get("vehicles")) if unit_meta else False
+    ) or ('("squad_vehicle"' in entry_raw) or ' ("squad_vehicle"' in entry_raw or re.search(r'\(\s*"squad_vehicle"', entry_raw) is not None
+
     vehicle_entity_cost = None
+    vehicle_lookup_error = None
     for name in vehicle_names:
-        key = name.casefold()
-        if key in vehicle_costs:
-            vehicle_entity_cost = float(vehicle_costs[key])
+        try:
+            found = _lookup_vehicle_cost(vehicle_costs, vehicle_conflicts, name)
+        except ExpandedNationsError as exc:
+            vehicle_lookup_error = str(exc)
+            found = None
+        if found is not None:
+            vehicle_entity_cost = found
             break
 
-    has_vehicles = bool(vehicle_names) or (
-        bool(unit_meta.get("vehicles")) if unit_meta else False
-    )
+    # Purchase-name entity rows can also author vehicle-squad pricing in source packs.
+    if vehicle_entity_cost is None and has_vehicle:
+        for candidate in (entry_name, entry_name.split("(", 1)[0]):
+            try:
+                found = _lookup_vehicle_cost(vehicle_costs, vehicle_conflicts, candidate)
+            except ExpandedNationsError as exc:
+                vehicle_lookup_error = str(exc)
+                found = None
+            if found is not None:
+                vehicle_entity_cost = found
+                break
+
     is_offmap = any(
         token in entry_raw.lower()
         for token in ("strategic_doctrine", "offmap_support", "airstrike:", "universal_strat")
     )
 
-    if entity_cost is not None and entity_cost > 0:
+    # Recruitment-money authority only.
+    if purchase_cost is not None and purchase_cost > 0:
         economy = "entity_purchase_cost"
-        native = entity_cost
-        rationale = "native purchase exposes positive cost authority"
+        native = purchase_cost
+        rationale = "native purchase exposes positive money cost authority"
         zero = False
         intentional = False
-    elif cost_sp is not None and cost_sp > 0:
-        economy = "special_points_cost"
-        native = cost_sp
-        rationale = "native offmap/support purchase uses positive cost_sp authority"
+    elif is_offmap and special_points is not None and special_points > 0:
+        economy = "offmap_special_points"
+        native = None
+        rationale = "offmap/support uses special-points authority, not recruitment money cost"
         zero = False
         intentional = False
-    elif vehicle_entity_cost is not None and vehicle_entity_cost > 0:
+    elif is_offmap:
+        economy = "offmap_support"
+        native = 0.0 if purchase_cost in (None, 0.0) else purchase_cost
+        rationale = "native offmap/strategic support without ordinary recruitment money cost"
+        zero = native == 0.0
+        intentional = bool(zero)
+    elif has_vehicle and vehicle_entity_cost is not None and vehicle_entity_cost > 0:
         economy = "vehicle_entity_cost"
         native = vehicle_entity_cost
-        rationale = f"vehicle entity cost authority for {vehicle_names[0]}"
+        rationale = "vehicle entity money-cost authority"
         zero = False
         intentional = False
-    elif personnel is not None and personnel > 0:
+    elif has_vehicle:
+        economy = "vehicle_unpriced"
+        native = 0.0
+        if vehicle_lookup_error:
+            rationale = vehicle_lookup_error
+        elif vehicle_names:
+            rationale = (
+                "vehicle-bearing purchase lacks purchase money cost and vehicle entity "
+                f"money cost for {', '.join(vehicle_names)}"
+            )
+        else:
+            rationale = "vehicle-bearing purchase lacks purchase/vehicle money-cost authority"
+        zero = True
+        intentional = False
+    elif not has_vehicle and personnel is not None and personnel > 0:
         economy = "personnel_inf_sum"
         native = personnel
-        rationale = "positive summed breed inf costs"
+        rationale = "pure infantry/squad priced by positive summed breed inf costs"
         zero = False
         intentional = False
-    elif has_vehicles and cp is not None and cp > 0:
-        economy = "vehicle_cp_only"
-        native = cp
-        rationale = "vehicle/support purchase exposes positive cp() authority"
-        zero = False
-        intentional = False
-    elif is_offmap and (entity_cost == 0 or cp == 0 or cost_sp == 0):
-        economy = "offmap_support"
-        native = float(entity_cost or cost_sp or 0.0)
-        rationale = (
-            "native offmap/strategic support purchase; zero/low special-cost authority "
-            "matches source doctrine rows"
-        )
-        zero = native <= 0
-        intentional = zero
-    elif allowlisted and (personnel is None or personnel == 0) and not gaps:
+    elif not has_vehicle and allowlisted and (personnel is None or personnel == 0) and not gaps:
         economy = "allowlisted_unpriced_incomplete"
         native = 0.0
         rationale = "only allowlisted unpriced members; companion coverage missing"
         zero = True
         intentional = False
-    elif members and (personnel is None or personnel <= 0):
+    elif not has_vehicle and members and (personnel is None or personnel <= 0):
         economy = "personnel_unpriced"
         native = 0.0
         rationale = "infantry/squad members lack positive inf cost coverage"
         zero = True
         intentional = False
-    elif has_vehicles:
-        economy = "vehicle_unpriced"
-        native = 0.0
-        rationale = "vehicle/support purchase lacks positive cost/cp/entity authority"
-        zero = True
-        intentional = False
     else:
         economy = "unknown"
         native = 0.0
-        rationale = "unable to classify native recruitment authority"
+        rationale = "unable to classify native recruitment money-cost authority"
         zero = True
         intentional = False
 
@@ -428,9 +460,12 @@ def _evaluate_unit_cost(
         economy_class=economy,
         native_recruitment_cost=native,
         personnel_cost=personnel,
-        entity_cost=entity_cost if entity_cost is not None else vehicle_entity_cost,
+        entity_cost=purchase_cost,
+        vehicle_entity_cost=vehicle_entity_cost,
         cp=cp,
+        special_points_cost=special_points,
         virtual=virtual,
+        has_vehicle=bool(has_vehicle),
         zero_cost=bool(zero),
         intentional_zero=bool(intentional),
         rationale=rationale,
@@ -568,9 +603,18 @@ def _count_classes(units: Sequence[UnitCostEvidence]) -> dict[str, int]:
     return dict(sorted(out.items()))
 
 
-def _build_vehicle_cost_index(roots: Sequence[Path]) -> dict[str, float]:
-    """Index native vehicle entity {cost} rows from conquest unit files."""
-    found: dict[str, tuple[int, float]] = {}
+def _build_vehicle_cost_index(
+    roots: Sequence[Path],
+) -> tuple[dict[str, float], dict[str, tuple[str, ...]]]:
+    """Index native vehicle entity {cost} rows with same-priority conflict tracking.
+
+    Returns (effective_costs, conflicts) where conflicts maps vehicle name to the
+    provenance strings of conflicting same-priority definitions.
+    """
+
+    effective: dict[str, tuple[int, float, str]] = {}
+    conflicts: dict[str, list[tuple[int, float, str]]] = {}
+
     for priority, root in enumerate(roots):
         conquest = resource_root(root) / "set/multiplayer/units/conquest"
         if not conquest.is_dir():
@@ -578,17 +622,102 @@ def _build_vehicle_cost_index(roots: Sequence[Path]) -> dict[str, float]:
         for path in sorted(conquest.glob("units_*.set"), key=lambda item: item.as_posix().casefold()):
             try:
                 text = path.read_text(encoding="utf-8-sig")
-            except UnicodeDecodeError:
-                continue
-            for match in _VEHICLE_COST_RE.finditer(text):
-                name = match.group(1).casefold()
-                cost = float(match.group(2))
+            except UnicodeDecodeError as exc:
+                raise ExpandedNationsError(f"Cannot decode vehicle unit metadata: {path}") from exc
+            reference = f"{priority}:{root.name}/{path.relative_to(resource_root(root)).as_posix()}"
+            scan = scan_source_entries(text, reference)
+            for entry in scan.entries:
+                # Only vehicle entity definitions contribute vehicle price authority.
+                forms = [str(getattr(c, "value", "")).lower() for c in entry.calls if getattr(c, "family", "") == ""]
+                raw_l = entry.raw.lower()
+                is_vehicle_entity = (
+                    '("vehicle"' in raw_l
+                    or "(\"vehicle\"" in entry.raw
+                    or "\t(\"vehicle\"" in entry.raw
+                    or ' ("vehicle"' in entry.raw
+                )
+                if not is_vehicle_entity:
+                    # also accept form token vehicle as first paren family-less macro/block body
+                    if "vehicle" not in raw_l.split("\n", 1)[0] and '("vehicle"' not in raw_l and "(\"vehicle\"" not in entry.raw:
+                        # Detect classic vehicle block body.
+                        if not re.search(r'\(\s*"vehicle"', entry.raw):
+                            continue
+                match = _BLOCK_COST_RE.search(entry.raw)
+                if match is None:
+                    continue
+                cost = float(match.group(1))
                 if cost <= 0:
                     continue
-                previous = found.get(name)
-                if previous is None or priority >= previous[0]:
-                    found[name] = (priority, cost)
-    return {name: cost for name, (_priority, cost) in sorted(found.items())}
+                key = entry.name.casefold()
+                prov = f"{reference}::{entry.name}"
+                bucket = conflicts.setdefault(key, [])
+                # Track all candidates by priority.
+                bucket.append((priority, cost, prov))
+
+    resolved: dict[str, float] = {}
+    conflict_out: dict[str, tuple[str, ...]] = {}
+    for key, candidates in conflicts.items():
+        # Highest priority wins if unique cost at that priority.
+        max_priority = max(item[0] for item in candidates)
+        top = [item for item in candidates if item[0] == max_priority]
+        unique_costs = {item[1] for item in top}
+        if len(unique_costs) == 1:
+            resolved[key] = next(iter(unique_costs))
+        else:
+            conflict_out[key] = tuple(sorted({item[2] for item in top}))
+    return resolved, conflict_out
+
+
+def _lookup_vehicle_cost(
+    vehicle_costs: Mapping[str, float],
+    vehicle_conflicts: Mapping[str, tuple[str, ...]],
+    name: str,
+) -> float | None:
+    key = name.casefold()
+    if key in vehicle_conflicts:
+        refs = ", ".join(vehicle_conflicts[key])
+        raise ExpandedNationsError(
+            f"Conflicting native vehicle cost authority for {name}: {refs}"
+        )
+    if key in vehicle_costs:
+        return float(vehicle_costs[key])
+    return None
+
+
+def _verify_git_exact_head(root: Path, expected_head: str) -> None:
+    if not expected_head:
+        raise ExpandedNationsError("Cost evidence requires an exact source head")
+    head = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "HEAD"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if head.returncode != 0:
+        raise ExpandedNationsError(
+            "Cost evidence could not verify the Gates Git head: " + head.stderr.strip()
+        )
+    actual_head = head.stdout.strip()
+    if actual_head != expected_head:
+        raise ExpandedNationsError(
+            f"Cost evidence source-head mismatch: expected {expected_head}, got {actual_head}"
+        )
+    status = subprocess.run(
+        ["git", "-C", str(root), "status", "--porcelain"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if status.returncode != 0:
+        raise ExpandedNationsError(
+            "Cost evidence could not inspect the Gates working tree: "
+            + status.stderr.strip()
+        )
+    if status.stdout.strip():
+        raise ExpandedNationsError(
+            "Cost evidence requires a completely clean Gates working tree before generation"
+        )
+
 
 
 def _fmt(value: Any) -> str:
