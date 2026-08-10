@@ -371,12 +371,14 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
         schema_version=max(1, int(data.get("schema_version", 1))),
     )
     from .force_migration import ensure_strategic_formations
+    from .earth3_operational import migrate_earth3_p2_to_p3
     from .operational_capture import ensure_site_control_state
     from .operational_movement import ensure_move_orders
     from .operational_position import ensure_operational_positions
     from .operational_supply import refresh_operational_supply
 
     ensure_strategic_formations(state)
+    state = migrate_earth3_p2_to_p3(state)
     ensure_operational_positions(state)
     ensure_move_orders(state)
     ensure_site_control_state(state)
@@ -392,7 +394,7 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
 
 def load_campaign(path: str | Path) -> CampaignState:
     source = Path(path)
-    return campaign_from_dict(json.loads(source.read_text(encoding="utf-8-sig")))
+    return campaign_from_dict(_strict_campaign_json(source.read_text(encoding="utf-8-sig")))
 
 
 def save_campaign(
@@ -422,7 +424,9 @@ def save_campaign(
     state.validate()
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(state.to_dict(), indent=2, ensure_ascii=False) + "\n"
+    payload = json.dumps(
+        state.to_dict(), indent=2, ensure_ascii=False, sort_keys=True
+    ) + "\n"
     with tempfile.NamedTemporaryFile(
         mode="w", encoding="utf-8", prefix=f".{destination.name}.",
         suffix=".tmp", dir=destination.parent, delete=False
@@ -431,6 +435,22 @@ def save_campaign(
         temporary_path = Path(temporary.name)
     temporary_path.replace(destination)
     return destination
+
+
+def _strict_campaign_json(raw: str) -> dict[str, Any]:
+    """Parse a campaign object while rejecting duplicate serialized records."""
+    def pairs_hook(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        value: dict[str, Any] = {}
+        for key, item in pairs:
+            if key in value:
+                raise ValueError(f"duplicate JSON key: {key}")
+            value[key] = item
+        return value
+
+    parsed = json.loads(raw, object_pairs_hook=pairs_hook)
+    if not isinstance(parsed, dict):
+        raise ValueError("campaign save must be a JSON object")
+    return parsed
 
 
 def _optional_strict_int(value: Any) -> int | None:

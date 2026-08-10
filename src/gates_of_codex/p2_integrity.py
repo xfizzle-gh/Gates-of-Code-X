@@ -76,6 +76,10 @@ def validate_earth3_p2_integrity(state: CampaignState) -> None:
 
 def _validate_persisted_p1_authority(state: CampaignState) -> None:
     from .earth3_bootstrap import Earth3BootstrapError
+    from .earth3_operational import (
+        P3_AUTHORITY_METADATA_KEY,
+        P3_GRAPH_RELATIVE_PATH,
+    )
     from .earth3_campaign import (
         APPROVED_LAND_COUNT,
         APPROVED_PROVINCE_COUNT,
@@ -120,7 +124,11 @@ def _validate_persisted_p1_authority(state: CampaignState) -> None:
             f"{CAMPAIGN_DATASET_IDENTIFIER}#provinces[].neighbors",
         ],
         "approved_operational_assets": [],
-        "operational_graph": None,
+        "operational_graph": (
+            P3_GRAPH_RELATIVE_PATH
+            if P3_AUTHORITY_METADATA_KEY in state.map_metadata
+            else None
+        ),
     }
     if state.map_id != EARTH3_MAP_ID:
         raise Earth3BootstrapError("Earth3 P2 persisted map identity mismatch")
