@@ -106,6 +106,73 @@ class ExpandedNationsInfCostTests(unittest.TestCase):
         self.assertNotIn('"mp/nato/2022s/azov3_demon_h"', body)
         self.assertIn("{cost 40.0}", body)
 
+    def test_proven_mg_mg3_typo_uses_mg3_cost_row(self) -> None:
+        self._write_source_breed_named("azov3_mg_mg3")
+        self._write_inf(
+            "ukr",
+            '{"mp/ukr/2022s/azov3_mg3" ("ukr_specops" side(ukr)) {cost 44.5}}',
+        )
+        actor = self._actor()
+        actor["units"][0]["members"] = {"azov3_mg_mg3": 2}
+
+        rows, body = project_actor_inf_cost_rows(actor, self.layers)
+
+        self.assertEqual(1, len(rows))
+        row = rows[0]
+        self.assertEqual("mp/ukr/2022s/azov3_mg3", row.source_path)
+        self.assertEqual("mp/nato/2022s/azov3_mg_mg3", row.target_path)
+        self.assertEqual(44.5, row.cost)
+        self.assertIn('"mp/nato/2022s/azov3_mg_mg3"', body)
+        self.assertNotIn('"mp/nato/2022s/azov3_mg3"', body)
+        self.assertIn("{cost 44.5}", body)
+
+    def test_proven_saperi_native_conflict_uses_observed_specops_price(self) -> None:
+        self._write_source_breed_named("azov3_saperi")
+        self._write_inf_at(
+            2,
+            "inf_ukr_a.set",
+            '{"mp/ukr/2022s/azov3_saperi" ("ukr_radioman" side(ukr)) {cost 21.5}}',
+        )
+        self._write_inf_at(
+            2,
+            "inf_ukr_b.set",
+            '{"mp/ukr/2022s/azov3_saperi" ("ukr_specops" side(ukr)) {cost 26.0}}',
+        )
+        actor = self._actor()
+        actor["units"][0]["members"] = {"azov3_saperi": 7}
+
+        rows, body = project_actor_inf_cost_rows(actor, self.layers)
+
+        self.assertEqual(1, len(rows))
+        row = rows[0]
+        self.assertEqual("mp/ukr/2022s/azov3_saperi", row.source_path)
+        self.assertEqual("mp/nato/2022s/azov3_saperi", row.target_path)
+        self.assertEqual(26.0, row.cost)
+        self.assertIn('("ukr_specops" side(nato))', body)
+        self.assertIn("{cost 26.0}", body)
+        self.assertNotIn("{cost 21.5}", body)
+
+    def test_proven_saperi_disposition_fails_if_expected_row_disappears(self) -> None:
+        self._write_source_breed_named("azov3_saperi")
+        self._write_inf_at(
+            2,
+            "inf_ukr_a.set",
+            '{"mp/ukr/2022s/azov3_saperi" ("ukr_radioman" side(ukr)) {cost 21.5}}',
+        )
+        self._write_inf_at(
+            2,
+            "inf_ukr_b.set",
+            '{"mp/ukr/2022s/azov3_saperi" ("ukr_specops" side(ukr)) {cost 25.0}}',
+        )
+        actor = self._actor()
+        actor["units"][0]["members"] = {"azov3_saperi": 7}
+
+        with self.assertRaisesRegex(
+            ExpandedNationsError,
+            "Proven native inf disposition no longer resolves uniquely",
+        ):
+            project_actor_inf_cost_rows(actor, self.layers)
+
     def test_source_native_unpriced_member_preserves_omission_with_positive_unit_coverage(self) -> None:
         self._write_source_breed()
         self._write_source_breed_named("azov3_antitank_javelin")
