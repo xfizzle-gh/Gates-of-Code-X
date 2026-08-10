@@ -21,8 +21,15 @@ from gates_of_codex.earth3_operational import (
 from gates_of_codex.models import Faction
 from gates_of_codex.observation import refresh_all_observer_knowledge
 from gates_of_codex.operational_ai import (
+    _site_owner,
     build_operational_planning_view,
     plan_and_issue_operational_orders,
+)
+from gates_of_codex.operational_capture import (
+    ensure_site_control_state,
+    get_site_control_state,
+    list_control_sites,
+    set_site_control_state,
 )
 from gates_of_codex.operational_movement import (
     activate_committed_orders,
@@ -30,8 +37,12 @@ from gates_of_codex.operational_movement import (
     commit_move_orders,
     issue_move_order,
 )
+from gates_of_codex.operational_planning_projection import (
+    build_restricted_p3_planning_state,
+)
 from gates_of_codex.scenario import build_scenario
 from gates_of_codex.state_io import campaign_from_dict, load_campaign, save_campaign
+from gates_of_codex.strategic import sync_province_infrastructure_owner
 
 
 ZAP_NODES = [
@@ -73,6 +84,22 @@ def _pending_zaporizhzhia_donetsk_battle():
     advance_operational_tick(state)
     assert state.pending_battle is not None
     return state
+
+
+def _set_post_capture_kyiv_control(state) -> None:
+    """Put production state in the stable post-capture state AI must observe."""
+    ensure_site_control_state(state)
+    control = get_site_control_state(state)
+    row = control["site_kyiv_command"]
+    row["controller_faction"] = Faction.RUSSIA.value
+    row["claimant_faction"] = None
+    row["claimant_formation_id"] = None
+    row["progress_ticks"] = row["required_ticks"]
+    set_site_control_state(state, control)
+
+    province = state.provinces["e3_1937"]
+    province.owner = Faction.RUSSIA
+    sync_province_infrastructure_owner(province)
 
 
 def test_eliminated_starting_formation_round_trips_without_recreation(
@@ -139,6 +166,7 @@ def test_fog_enabled_production_p3_ai_uses_restricted_view_and_only_approved_rou
     assert view.fog_of_war_enabled is True
     assert "strategic_actor_runtime" not in metadata
     assert "actor_content_runtime" not in metadata
+    assert "operational_site_control" not in metadata
     assert set(payload["strategic_formations"]) == set(view.visible_subject_keys)
 
     before_actor_runtime = copy.deepcopy(state.map_metadata["strategic_actor_runtime"])
@@ -159,3 +187,44 @@ def test_fog_enabled_production_p3_ai_uses_restricted_view_and_only_approved_rou
         assert order is not None
         assert order.path_edge_ids
         assert set(order.path_edge_ids) <= approved_ids
+
+
+def test_fog_planner_uses_current_kyiv_controller_without_capture_progress() -> None:
+    state = _normalized_p3()
+    _set_post_capture_kyiv_control(state)
+    assert state.provinces["e3_1937"].owner == Faction.RUSSIA
+    assert (
+        get_site_control_state(state)["site_kyiv_command"]["controller_faction"]
+        == Faction.RUSSIA.value
+    )
+
+    state.fog_of_war_enabled = True
+    refresh_all_observer_knowledge(state)
+
+    for observer in (Faction.RUSSIA, Faction.UKRAINE):
+        view = build_operational_planning_view(state, observer)
+        payload = json.loads(view.campaign_payload_json)
+        assert "operational_site_control" not in payload["map_metadata"]
+
+        planning_state = build_restricted_p3_planning_state(
+            payload,
+            visible_subject_keys=view.visible_subject_keys,
+        )
+        control = get_site_control_state(planning_state)
+        kyiv_row = control["site_kyiv_command"]
+        assert kyiv_row["controller_faction"] == Faction.RUSSIA.value
+        assert kyiv_row["claimant_faction"] is None
+        assert kyiv_row["claimant_formation_id"] is None
+        assert kyiv_row["progress_ticks"] == 0
+
+        kyiv_site = next(
+            site
+            for site in list_control_sites(planning_state)
+            if site["site_id"] == "site_kyiv_command"
+        )
+        assert _site_owner(planning_state, kyiv_site, "e3_1937") == Faction.RUSSIA
+
+    before_control = copy.deepcopy(state.map_metadata["operational_site_control"])
+    actions = plan_and_issue_operational_orders(state, Faction.RUSSIA, seed=0)
+    assert actions
+    assert state.map_metadata["operational_site_control"] == before_control
