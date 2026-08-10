@@ -31,6 +31,16 @@ _SOURCE_COST_ALIASES: Mapping[str, str] = {
     "mp/ukr/2022s/azov3_demo_h": "mp/ukr/2022s/azov3_demon_h",
 }
 
+# Exact installed-stack probing also proved that ``azov3_antitank_javelin`` is a
+# real Code:X breed used by the native ``3rd_assault_javelin`` purchase, while
+# neither Code:X nor the AI Overhaul defines a matching Conquest ``inf`` row.
+# Do not invent a price from nearby AT variants. Preserve this source-native
+# omission only for this exact path, but require the containing projected unit
+# to retain positive native cost coverage from at least one other member.
+_SOURCE_NATIVE_UNPRICED_PATHS = frozenset({
+    "mp/ukr/2022s/azov3_antitank_javelin",
+})
+
 
 @dataclass(frozen=True, slots=True)
 class ProjectedInfCost:
@@ -64,10 +74,15 @@ def project_actor_inf_cost_rows(
     """Project native personnel-cost rows required by approved cross-side breeds.
 
     GoH Conquest prices infantry through breed-path rows in ``inf_*.set`` such
-    as ``mp/ukr/2022s/foo``.  Mirroring a breed from one tactical side to
+    as ``mp/ukr/2022s/foo``. Mirroring a breed from one tactical side to
     another without mirroring that row leaves the new target-side breed with a
-    native purchase cost of zero.  Preserve the effective installed source row
+    native purchase cost of zero. Preserve the effective installed source row
     and change only its breed path and explicit side declaration.
+
+    A source-native breed may exceptionally have no ``inf`` row at all. Such an
+    omission is accepted only when explicitly allowlisted from installed-stack
+    evidence and only when the containing projected purchase still has positive
+    native personnel-cost coverage from another member.
     """
 
     target_side = str(actor.get("tactical_side", "")).lower()
@@ -86,6 +101,9 @@ def project_actor_inf_cost_rows(
         if not isinstance(members, Mapping) or not members:
             continue
 
+        unit_has_positive_cost = False
+        unit_name = str(unit.get("unit_name", "<unnamed>"))
+
         for breed in sorted(str(name) for name in members):
             source_breed, source_side_root = _resolve_source_breed(
                 roots,
@@ -100,25 +118,30 @@ def project_actor_inf_cost_rows(
             native_target = _lookup_effective_inf_row(index, target_path)
             if native_target is not None:
                 _positive_cost(native_target.entry, native_target.source_reference)
+                unit_has_positive_cost = True
                 continue
 
             source_row = _lookup_effective_inf_row(index, source_path)
             cost_source_path = source_path
             if source_row is None:
                 alias_path = _SOURCE_COST_ALIASES.get(source_path.casefold())
-                if alias_path is None:
+                if alias_path is not None:
+                    source_row = _lookup_effective_inf_row(index, alias_path)
+                    if source_row is None:
+                        raise ExpandedNationsError(
+                            f"Cross-side breed {source_path} has no native Conquest inf cost row "
+                            f"and configured source alias {alias_path} is missing"
+                        )
+                    cost_source_path = alias_path
+                elif source_path.casefold() in _SOURCE_NATIVE_UNPRICED_PATHS:
+                    continue
+                else:
                     raise ExpandedNationsError(
                         f"Cross-side breed {source_path} has no native Conquest inf cost row"
                     )
-                source_row = _lookup_effective_inf_row(index, alias_path)
-                if source_row is None:
-                    raise ExpandedNationsError(
-                        f"Cross-side breed {source_path} has no native Conquest inf cost row "
-                        f"and configured source alias {alias_path} is missing"
-                    )
-                cost_source_path = alias_path
 
             source_cost = _positive_cost(source_row.entry, source_row.source_reference)
+            unit_has_positive_cost = True
             rendered = _project_inf_row(
                 source_row.entry,
                 source_path=cost_source_path,
@@ -167,6 +190,11 @@ def project_actor_inf_cost_rows(
                     )
                 continue
             projected[target_path.casefold()] = (record, rendered)
+
+        if not unit_has_positive_cost:
+            raise ExpandedNationsError(
+                f"Cross-side unit {unit_name} has no positive native Conquest inf cost coverage"
+            )
 
     ordered = [projected[key] for key in sorted(projected)]
     records = [row[0] for row in ordered]
@@ -290,11 +318,11 @@ def _build_effective_inf_index(
 
     Installed mods can contain duplicate paths in multiple ``inf*.set`` files at
     the same stack priority, and an upstream file can also contain parser
-    diagnostics in definitions unrelated to the actor being projected.  Keep
-    every successfully parsed row.  Same-priority duplicate rows remain a
-    projection ambiguity only when the actor requests that path.  A requested
+    diagnostics in definitions unrelated to the actor being projected. Keep
+    every successfully parsed row. Same-priority duplicate rows remain a
+    projection ambiguity only when the actor requests that path. A requested
     malformed row cannot enter the index and therefore still fails closed as a
-    missing native cost row.  A higher-priority definitive row replaces both a
+    missing native cost row. A higher-priority definitive row replaces both a
     lower-priority row and a lower-priority conflict, matching stack semantics.
     """
 
