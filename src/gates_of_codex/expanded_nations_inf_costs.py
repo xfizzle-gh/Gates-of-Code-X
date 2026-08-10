@@ -43,6 +43,12 @@ class _IndexedInfRow:
     priority: int
 
 
+@dataclass(frozen=True, slots=True)
+class _EffectiveInfIndex:
+    rows: Mapping[str, _IndexedInfRow]
+    conflicts: Mapping[str, tuple[_IndexedInfRow, ...]]
+
+
 def project_actor_inf_cost_rows(
     actor: Mapping[str, Any],
     roots: Sequence[Path],
@@ -83,12 +89,12 @@ def project_actor_inf_cost_rows(
             source_path = f"mp/{source_side}/{breed_relative.as_posix()}"
             target_path = f"mp/{target_side}/{breed_relative.as_posix()}"
 
-            native_target = index.get(target_path.casefold())
+            native_target = _lookup_effective_inf_row(index, target_path)
             if native_target is not None:
                 _positive_cost(native_target.entry, native_target.source_reference)
                 continue
 
-            source_row = index.get(source_path.casefold())
+            source_row = _lookup_effective_inf_row(index, source_path)
             if source_row is None:
                 raise ExpandedNationsError(
                     f"Cross-side breed {source_path} has no native Conquest inf cost row"
@@ -260,13 +266,24 @@ def verify_actor_inf_cost_rows(
 
 def _build_effective_inf_index(
     roots: Sequence[Path],
-) -> dict[str, _IndexedInfRow]:
+) -> _EffectiveInfIndex:
+    """Index effective inf rows without rejecting unrelated upstream conflicts.
+
+    Installed mods can contain duplicate paths in multiple ``inf*.set`` files at
+    the same stack priority.  Those duplicates are only a projection ambiguity
+    when the actor actually needs that path.  Keep conflicts keyed by effective
+    path and fail closed only when a requested source or target resolves to one.
+    A higher-priority layer replaces both a lower-priority row and a lower-
+    priority conflict, matching normal stack override semantics.
+    """
+
     effective: dict[str, _IndexedInfRow] = {}
+    conflicts: dict[str, tuple[_IndexedInfRow, ...]] = {}
     for priority, root in enumerate(roots):
         conquest = resource_root(root) / "set/multiplayer/units/conquest"
         if not conquest.is_dir():
             continue
-        within_priority: dict[str, _IndexedInfRow] = {}
+        within_priority: dict[str, list[_IndexedInfRow]] = {}
         for path in sorted(conquest.glob("inf*.set"), key=lambda item: item.as_posix().casefold()):
             try:
                 text = path.read_text(encoding="utf-8-sig")
@@ -280,15 +297,38 @@ def _build_effective_inf_index(
                 raise ExpandedNationsError(f"Native inf metadata is malformed: {reference}")
             for entry in scan.entries:
                 key = entry.name.casefold()
-                previous = within_priority.get(key)
-                current = _IndexedInfRow(entry, reference, priority)
-                if previous is not None and previous.entry.raw.rstrip() != entry.raw.rstrip():
-                    raise ExpandedNationsError(
-                        f"Conflicting native inf metadata at stack priority {priority}: {entry.name}"
-                    )
-                within_priority[key] = current
-        effective.update(within_priority)
-    return effective
+                within_priority.setdefault(key, []).append(
+                    _IndexedInfRow(entry, reference, priority)
+                )
+
+        for key, candidates in within_priority.items():
+            unique: dict[str, _IndexedInfRow] = {}
+            for candidate in candidates:
+                unique.setdefault(candidate.entry.raw.rstrip(), candidate)
+            if len(unique) > 1:
+                effective.pop(key, None)
+                conflicts[key] = tuple(unique.values())
+                continue
+            effective[key] = next(iter(unique.values()))
+            conflicts.pop(key, None)
+
+    return _EffectiveInfIndex(rows=effective, conflicts=conflicts)
+
+
+def _lookup_effective_inf_row(
+    index: _EffectiveInfIndex,
+    path: str,
+) -> _IndexedInfRow | None:
+    key = path.casefold()
+    conflict = index.conflicts.get(key)
+    if conflict is not None:
+        priority = conflict[0].priority
+        references = ", ".join(sorted(row.source_reference for row in conflict))
+        raise ExpandedNationsError(
+            f"Conflicting native inf metadata at effective stack priority {priority} "
+            f"for requested path {path}: {references}"
+        )
+    return index.rows.get(key)
 
 
 def _project_inf_row(
