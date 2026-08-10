@@ -47,7 +47,7 @@ _VEHICLE_COST_RE = re.compile(
     r'\{\s*"([^"]+)"\s*[\s\S]{0,400}?\{\s*cost\s+(-?(?:\d+(?:\.\d*)?|\.\d+))\s*\}',
     re.IGNORECASE,
 )
-_VEHICLE_CALL_RE = re.compile(r"\bvehicle\s*\(\s*([^)\s]+)\s*\)", re.IGNORECASE)
+_VEHICLE_CALL_RE = re.compile(r"\bvehicle\d*\s*\(\s*([^)\s]+)\s*\)", re.IGNORECASE)
 
 
 @dataclass(frozen=True, slots=True)
@@ -365,7 +365,7 @@ def _evaluate_unit_cost(
         index=index,
     )
 
-    vehicle_names = [name for name in _VEHICLE_CALL_RE.findall(entry_raw)]
+    vehicle_names = list(dict.fromkeys(_VEHICLE_CALL_RE.findall(entry_raw)))
     has_vehicle = bool(vehicle_names) or (
         bool(unit_meta.get("vehicles")) if unit_meta else False
     ) or ('("squad_vehicle"' in entry_raw) or ' ("squad_vehicle"' in entry_raw or re.search(r'\(\s*"squad_vehicle"', entry_raw) is not None
