@@ -34,7 +34,9 @@ from gates_of_codex.modstack import (
     UnrepresentableStackLayer,
     stack_dependency_tokens,
 )
+from gates_of_codex.bridge.archive import CampaignSaveArchive
 from gates_of_codex.models import Faction, PendingBattle
+from gates_of_codex.play_context import resolve_status_template
 
 
 #: Ids observed leaking in the S10 acceptance. Used only to build adversarial
@@ -257,6 +259,77 @@ class GeneratedModsBlockTests(unittest.TestCase):
         text = self._build(tokens)
 
         self.assertEqual(tokens, _mods_block(text))
+
+
+def _write_save(path: Path, campaign_name: str) -> Path:
+    """Write a valid Conquest save carrying a given visible campaign name."""
+    status = _template_with_stale_mods().replace(
+        '{name "Unrelated Galactic Conquest"}', f'{{name "{campaign_name}"}}'
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    CampaignSaveArchive().write(path, status=status, campaign_scn="{campaign}\n")
+    return path
+
+
+class StatusTemplateSelectionTests(unittest.TestCase):
+    """#166 D2: never silently adopt an unrelated campaign save as the template."""
+
+    def test_ambiguous_unrelated_saves_are_refused_instead_of_newest_wins(self) -> None:
+        """The #166 shape: several unrelated saves, newest happens to be foreign."""
+        import os
+
+        with tempfile.TemporaryDirectory() as temporary:
+            install = Path(temporary) / "campaign"
+            older = _write_save(install / "conquest template.sav", "My Conquest")
+            newest = _write_save(install / "galactic conquest.sav", "Galactic Conquest Wars")
+            os.utime(older, (1_000_000, 1_000_000))
+            os.utime(newest, (2_000_000, 2_000_000))
+            with self.assertRaises(RuntimeError) as raised:
+                resolve_status_template(install, install / "target.sav")
+
+        message = str(raised.exception)
+        self.assertIn("Refusing to pick a saveinfo template by modification time", message)
+        self.assertIn("galactic conquest.sav", message)
+        self.assertIn("--template-save", message)
+
+    def test_single_player_created_template_is_accepted(self) -> None:
+        """The documented first-run setup carries the player's own name, not ours."""
+        with tempfile.TemporaryDirectory() as temporary:
+            install = Path(temporary) / "campaign"
+            only = _write_save(install / "conquest template.sav", "My Conquest")
+            chosen = resolve_status_template(install, install / "target.sav")
+
+        self.assertEqual(only.resolve(), chosen)
+
+    def test_our_own_save_is_selected_over_a_newer_unrelated_one(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            install = Path(temporary) / "campaign"
+            ours = _write_save(install / "ours.sav", "Gates of CodeX b714b08b")
+            newer = _write_save(install / "unrelated.sav", "Galactic Conquest Wars")
+            # Make the unrelated save unambiguously newest.
+            import os
+            os.utime(ours, (1_000_000, 1_000_000))
+            os.utime(newer, (2_000_000, 2_000_000))
+            chosen = resolve_status_template(install, install / "target.sav")
+
+        self.assertEqual(ours.resolve(), chosen)
+
+    def test_explicit_template_is_always_honoured(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            install = Path(temporary) / "campaign"
+            unrelated = _write_save(install / "unrelated.sav", "Galactic Conquest Wars")
+            chosen = resolve_status_template(install, install / "target.sav", unrelated)
+
+        self.assertEqual(unrelated.resolve(), chosen)
+
+    def test_no_candidates_still_reports_the_actionable_setup_message(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            install = Path(temporary) / "campaign"
+            install.mkdir(parents=True)
+            with self.assertRaises(RuntimeError) as raised:
+                resolve_status_template(install, install / "target.sav")
+
+        self.assertIn("No valid Conquest saveinfo template", str(raised.exception))
 
 
 if __name__ == "__main__":

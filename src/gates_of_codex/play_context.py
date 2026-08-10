@@ -30,6 +30,8 @@ def resolve_status_template(
     install_root: str | Path,
     installed_save_path: str | Path,
     explicit: str | Path | None = None,
+    *,
+    name_prefix: str = "Gates of CodeX",
 ) -> Path:
     archive = CampaignSaveArchive()
     install = Path(install_root)
@@ -43,18 +45,56 @@ def resolve_status_template(
         key=lambda path: path.stat().st_mtime,
         reverse=True,
     )
+    # #166 D2: newest-wins let an unrelated campaign save become the template.
+    # Prefer our own saves, and never silently adopt someone else's campaign.
+    ours: list[Path] = []
+    unrelated: list[Path] = []
     errors: list[str] = []
     for candidate in candidates:
         try:
             archive.validate(candidate)
-            return candidate.resolve()
         except (OSError, ValueError) as exc:
             errors.append(f"{candidate.name}: {exc}")
+            continue
+        (ours if _is_own_save(archive, candidate, name_prefix) else unrelated).append(candidate)
+    if ours:
+        return ours[0].resolve()
+    if len(unrelated) == 1:
+        # The documented first-run setup is "create and save one normal Conquest
+        # with the intended mod stack", which carries the player's own name rather
+        # than ours. A single candidate is that save; it is not a silent choice
+        # among alternatives, and its {mods} block is fully replaced on export.
+        return unrelated[0].resolve()
+    if unrelated:
+        listed = ", ".join(path.name for path in unrelated[:5])
+        raise RuntimeError(
+            f"Refusing to pick a saveinfo template by modification time among "
+            f"{len(unrelated)} unrelated campaign saves in {install}: {listed}. "
+            f"No {name_prefix} save is present to inherit from. Pass --template-save "
+            "explicitly to choose the Conquest save that carries the intended mod stack."
+        )
     detail = "; ".join(errors[:5]) if errors else "no other .sav files were found"
     raise RuntimeError(
         "No valid Conquest saveinfo template was found. Create and save one normal Conquest with the intended mod stack, "
         f"or pass --template-save explicitly. Details: {detail}"
     )
+
+
+def _is_own_save(archive: CampaignSaveArchive, candidate: Path, name_prefix: str) -> bool:
+    """True when a save's visible campaign name marks it as one of ours.
+
+    Identity comes from the save's own ``{name}``, which is what
+    :func:`allocate_visible_campaign_name` stamps, so a template can only be
+    inherited from a campaign this tool created.
+    """
+    prefix = str(name_prefix).strip()
+    if not prefix:
+        return False
+    try:
+        status = archive.read(candidate).status
+    except (OSError, ValueError):
+        return False
+    return read_status_campaign_name(status).strip().startswith(prefix)
 
 
 def allocate_visible_campaign_name(
