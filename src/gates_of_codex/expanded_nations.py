@@ -13,6 +13,11 @@ from .expanded_nations_actor_sources import (
 )
 from .expanded_nations_breeds import project_actor_breed_files
 from .expanded_nations_compile import clean_compile_source_view
+from .expanded_nations_inf_costs import (
+    inject_actor_inf_cost_rows,
+    project_actor_inf_cost_rows,
+    verify_actor_inf_cost_rows,
+)
 from .expanded_nations_models import (
     ACTIVATION_SCHEMA,
     ACTIVATION_VERSION,
@@ -144,9 +149,14 @@ def activate_actor_projection(
     projected_research = project_research_nodes(native_actor)
     presentation_outputs = project_actor_presentation(native_actor, roots)
     breed_outputs = project_actor_breed_files(native_actor, roots)
+    inf_cost_rows, inf_cost_body = project_actor_inf_cost_rows(native_actor, roots)
+    roster_text = inject_actor_inf_cost_rows(
+        render_roster_file(native_actor),
+        inf_cost_body,
+    )
 
     outputs: dict[Path, bytes] = {
-        ROSTER_RELATIVE: render_roster_file(native_actor).encode("utf-8"),
+        ROSTER_RELATIVE: roster_text.encode("utf-8"),
         UNITS_RELATIVE: render_units_file(
             native_actor,
             projected_units,
@@ -194,6 +204,7 @@ def activate_actor_projection(
         "units": [asdict(item) for item in projected_units],
         "opponent_units": [asdict(item) for item in opponent_units],
         "research_nodes": [asdict(item) for item in projected_research],
+        "inf_cost_rows": [asdict(item) for item in inf_cost_rows],
         "presentation_files": [
             path.as_posix()
             for path in sorted(
@@ -209,6 +220,7 @@ def activate_actor_projection(
             )
         ],
     }
+    verify_actor_inf_cost_rows(roster_text, manifest_payload)
     verify_projection_artifacts(outputs, manifest_payload)
     install_projection(
         final_root,
