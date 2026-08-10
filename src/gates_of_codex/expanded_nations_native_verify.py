@@ -11,9 +11,11 @@ from .expanded_nations_actor_sources import (
     quoted_macro_names,
     scan_parenthesized_defines,
 )
+from .expanded_nations_inf_costs import verify_actor_inf_cost_rows
 from .expanded_nations_models import (
     ExpandedNationsError,
     MANIFEST_RELATIVE,
+    ROSTER_RELATIVE,
     UNITS_RELATIVE,
     safe_target,
     sha256_bytes,
@@ -56,7 +58,7 @@ def verify_projection_artifacts(
     outputs: Mapping[Path, bytes],
     manifest: Mapping[str, Any],
 ) -> None:
-    """Verify native purchase IDs and projected definition closure."""
+    """Verify native purchase IDs, definition closure, and projected personnel costs."""
 
     verification_outputs, verification_manifest = _legacy_verification_view(
         outputs,
@@ -65,6 +67,12 @@ def verify_projection_artifacts(
     _verify_projection_artifacts(
         verification_outputs,
         verification_manifest,
+    )
+    if ROSTER_RELATIVE not in outputs:
+        raise ExpandedNationsError("Projection is missing the managed roster artifact")
+    verify_actor_inf_cost_rows(
+        outputs[ROSTER_RELATIVE].decode("utf-8-sig"),
+        manifest,
     )
 
 
