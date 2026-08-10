@@ -250,7 +250,6 @@ def resolve_operational_supply_sources(
         key=lambda row: str(row["site_id"]),
     )
 
-
     friendly_values = tuple(
         sorted(item.value for item in allied_factions(state, faction))
     )
@@ -380,9 +379,9 @@ def compute_operational_supply_routes(
     reverse: dict[str, list[tuple[str, str, int]]] = {}
     for edge_id in sorted(edges):
         edge = edges[edge_id]
-        if not _node_is_friendly(state, faction, nodes[edge.a]):
+        if not _node_is_supply_transit_legal(state, faction, nodes[edge.a]):
             continue
-        if not _node_is_friendly(state, faction, nodes[edge.b]):
+        if not _node_is_supply_transit_legal(state, faction, nodes[edge.b]):
             continue
         cost = edge.movement_cost_milli
         try:
@@ -713,3 +712,31 @@ def _node_is_friendly(
     return province is not None and is_friendly_owner(
         state, faction, province.owner
     )
+
+
+def _node_is_supply_transit_legal(
+    state: CampaignState,
+    faction: Faction,
+    node: dict[str, Any],
+) -> bool:
+    """Allow friendly or unoccupied-neutral P3 transit, never hostile transit."""
+    province = state.provinces.get(str(node.get("province_id") or ""))
+    if province is None:
+        return False
+    if province.owner != Faction.NEUTRAL and not is_friendly_owner(
+        state, faction, province.owner
+    ):
+        return False
+
+    node_id = str(node.get("node_id") or "")
+    if not node_id:
+        return False
+    from .operational_contact import formation_at_node_id
+
+    friendly = allied_factions(state, faction)
+    for force in state.strategic_formations.values():
+        if formation_at_node_id(force) != node_id:
+            continue
+        if force.faction not in friendly:
+            return False
+    return True
