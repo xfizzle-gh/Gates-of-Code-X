@@ -11,11 +11,18 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from gates_of_codex.campaign import CampaignEngine
-from gates_of_codex.earth3_bootstrap import build_earth3_v1_campaign
+from gates_of_codex.earth3_bootstrap import (
+    build_earth3_v1_campaign,
+    earth3_p2_footprint,
+)
 from gates_of_codex.earth3_operational import (
     P3_AUTHORITY_METADATA_KEY,
     load_authenticated_p3_graph,
     validate_earth3_p3_campaign_extension,
+)
+from gates_of_codex.operational_capture import (
+    get_site_control_state,
+    list_control_sites,
 )
 from gates_of_codex.scenario import build_scenario, get_scenario
 
@@ -167,6 +174,32 @@ def test_approved_graph_connects_every_start_and_preserves_reviewed_route_shape(
 
     # The deliberate opening battle approach is exactly three approved hops.
     _assert_route(graph, ["e3_1962", "e3_2795", "e3_2796", "e3_3380"])
+
+
+def test_p3_capture_authority_never_expands_beyond_frozen_p2_footprint() -> None:
+    state = build_scenario("earth3_v1")
+    graph = load_authenticated_p3_graph()
+    footprint = set(earth3_p2_footprint(state))
+    graph_node_ids = {str(node["node_id"]) for node in graph["nodes"]}
+
+    sites = list_control_sites(state)
+    site_provinces = {str(site["province_id"]) for site in sites}
+    assert site_provinces <= footprint
+    assert all(str(site["route_node_id"]) in graph_node_ids for site in sites)
+
+    # These two interior nodes are deliberately traversable/contact-capable P3
+    # corridor provinces, but they are not P2 territorial-actionability authority.
+    assert "e3_2795" not in footprint
+    assert "e3_2796" not in footprint
+    assert "e3_2795" not in site_provinces
+    assert "e3_2796" not in site_provinces
+
+    control = get_site_control_state(state, strict=True)
+    assert control
+    assert {
+        str(row["province_id"])
+        for row in control.values()
+    } <= footprint
 
 
 def test_legacy_polygon_move_remains_blocked_for_production_p3() -> None:
