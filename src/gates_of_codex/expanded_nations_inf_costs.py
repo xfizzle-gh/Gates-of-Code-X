@@ -135,6 +135,7 @@ def project_actor_inf_cost_rows(
             continue
 
         unit_has_positive_cost = False
+        members_considered = False
         unit_name = str(unit.get("unit_name", "<unnamed>"))
         cross_side = (
             str(unit.get("component_id", "")) in _CROSS_SIDE_BREED_COMPONENTS
@@ -151,11 +152,15 @@ def project_actor_inf_cost_rows(
                     period=period,
                 )
             except ExpandedNationsError:
-                if _unit_requires_positive_coverage(unit, target_side):
+                # Cross-side materialization requires resolvable breeds.
+                # Same-side scans skip unresolvable members; unit-level coverage
+                # still fails closed when a required unit ends with no priced members.
+                if cross_side:
                     raise
                 continue
             breed_relative = source_breed.relative_to(source_side_root).with_suffix("")
             source_path = f"mp/{source_side}/{breed_relative.as_posix()}"
+            members_considered = True
             target_path = (
                 f"mp/{target_side}/{breed_relative.as_posix()}"
                 if cross_side
@@ -247,7 +252,11 @@ def project_actor_inf_cost_rows(
                 continue
             projected[target_path.casefold()] = (record, rendered)
 
-        if not unit_has_positive_cost and _unit_requires_positive_coverage(unit, target_side):
+        if (
+            members_considered
+            and not unit_has_positive_cost
+            and _unit_requires_positive_coverage(unit, target_side)
+        ):
             raise ExpandedNationsError(
                 f"Infantry unit {unit_name} has no positive native Conquest inf cost coverage"
             )
