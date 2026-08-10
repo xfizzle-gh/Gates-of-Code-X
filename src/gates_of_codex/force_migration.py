@@ -29,9 +29,29 @@ def ensure_strategic_formations(state: CampaignState) -> dict:
     - Derived summaries refresh deterministically after migration.
     - Pending/archived battles are left untouched.
     - Dangling commander refs are cleared only for legacy pre-schema-6 saves.
+
+    Earth3 P2/P3 campaigns already carry authored strategic-formation authority.
+    They must be validated before any legacy normalizer can repair, synchronize,
+    refresh, or otherwise mutate them.  For those campaigns this function is a
+    validation-only no-op; the separately authenticated P2->P3 migrator owns the
+    only authorized initialization mutation.
     """
 
     incoming_schema = int(state.schema_version)
+
+    from .earth3_bootstrap import (
+        is_earth3_p2_campaign,
+        validate_earth3_bootstrap_campaign_state,
+    )
+
+    if is_earth3_p2_campaign(state):
+        validate_earth3_bootstrap_campaign_state(state)
+        state.validate()
+        record = state.map_metadata.get(MIGRATION_RECORD_KEY)
+        if isinstance(record, dict):
+            return dict(record)
+        return _stable_migration_record(incoming_schema)
+
     legacy = incoming_schema < STRATEGIC_FORMATION_SCHEMA_VERSION
 
     if _already_migrated(state):
