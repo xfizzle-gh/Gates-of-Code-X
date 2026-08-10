@@ -18,6 +18,11 @@ from .strategic_ai import StrategicAI
 #: other operations because the batch rollback cannot undo them.
 SELF_COMMITTING_OPS = frozenset({"handoff", "import_battle"})
 
+#: Read-only actions. They mutate nothing, so they are never recorded in the
+#: exactly-once ledger: a player must be able to re-verify a result after
+#: replaying a battle and get a fresh verdict rather than a "duplicate" reply.
+READ_ONLY_OPS = frozenset({"verify_result"})
+
 #: Campaign-metadata key holding the exactly-once command ledger.
 COMMAND_LEDGER_KEY = "frontend_command_ledger"
 
@@ -178,7 +183,7 @@ def apply_frontend_commands(
     for raw in pending:
         op = str(raw.get("op", "")).strip().lower()
         command_id = _command_identity(raw)
-        if command_id and ledger_contains(ledger, command_id):
+        if command_id and op not in READ_ONLY_OPS and ledger_contains(ledger, command_id):
             # Replay of an already-accepted command. Never apply it a second
             # time; report success so the caller converges on current state.
             results.append(
@@ -222,7 +227,7 @@ def apply_frontend_commands(
             if battle_finalization is not None:
                 presentation["battle_finalization"] = battle_finalization
             result.data["operational_presentation"] = presentation
-            if command_id:
+            if command_id and op not in READ_ONLY_OPS:
                 _ledger_record(ledger, command_id, op)
                 result.data["command_id"] = command_id
         results.append(result)
@@ -460,14 +465,18 @@ def _verify_result(campaign: Path, state, save_path: str):
     manifest = service.load_manifest(service.manifest_path(save_path))
     pending = state.pending_battle
     # Bind the result to this campaign and this battle before anything else.
-    if pending is not None and manifest.battle_id and manifest.battle_id != pending.battle_id:
+    # A field the manifest does not carry is skipped rather than assumed,
+    # matching how the rest of the manifest contract treats absent values.
+    manifest_battle = str(getattr(manifest, "battle_id", "") or "")
+    manifest_campaign = str(getattr(manifest, "campaign_path", "") or "")
+    if pending is not None and manifest_battle and manifest_battle != pending.battle_id:
         raise ValueError(
-            f"Handoff manifest belongs to battle {manifest.battle_id!r}, "
+            f"Handoff manifest belongs to battle {manifest_battle!r}, "
             f"but the pending battle is {pending.battle_id!r}"
         )
-    if manifest.campaign_path and Path(manifest.campaign_path).resolve() != campaign:
+    if manifest_campaign and Path(manifest_campaign).resolve() != campaign:
         raise ValueError(
-            f"Handoff manifest belongs to campaign {manifest.campaign_path!r}, "
+            f"Handoff manifest belongs to campaign {manifest_campaign!r}, "
             f"not {str(campaign)!r}"
         )
     resource_stack = (

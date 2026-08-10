@@ -334,3 +334,160 @@ class StatusTemplateSelectionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ResultVerificationAndImportTests(unittest.TestCase):
+    """P5 import authority: verification-gated, bound, and applied exactly once."""
+
+    def _prepared(self, root: Path):
+        from test_s10_frontend_presentation_contract import (
+            _create_prepared_contact,
+            _state,
+            _write_completed_external_battle,
+        )
+
+        state = _state(root)
+        _create_prepared_contact(state)
+        return _write_completed_external_battle(root, state)
+
+    def test_verify_result_reports_a_verdict_without_mutating_the_campaign(self) -> None:
+        from gates_of_codex.frontend_commands import apply_frontend_commands
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            campaign_path, save_path = self._prepared(root)
+            # Normalize serialization first: the fixture hand-writes ints where
+            # the serializer emits floats, so an un-normalized baseline would
+            # differ for reasons unrelated to the command under test.
+            from gates_of_codex.state_io import load_campaign, save_campaign
+
+            save_campaign(load_campaign(campaign_path), campaign_path)
+            before = campaign_path.read_bytes()
+            result = apply_frontend_commands(
+                campaign_path,
+                commands=[{"op": "verify_result", "command_id": "v1"}],
+                snapshot_path=None,
+            )
+            after = campaign_path.read_bytes()
+
+        row = result["results"][0]
+        self.assertEqual("verify_result", row["op"])
+        self.assertTrue(row["ok"], row)
+        self.assertIn("verified", row["data"])
+        # Read-only: the authoritative campaign is byte-identical, and the
+        # verdict consumed no exactly-once ledger slot, so a replayed battle can
+        # be re-verified instead of returning a stale "duplicate" answer.
+        self.assertEqual(before, after)
+        self.assertNotIn("frontend_command_ledger", after.decode("utf-8"))
+
+    def test_verification_rejects_a_result_bound_to_another_battle(self) -> None:
+        from gates_of_codex.frontend_commands import apply_frontend_commands
+        from gates_of_codex.service import GatesOfCodeXService
+        from dataclasses import replace as dc_replace
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            campaign_path, save_path = self._prepared(root)
+            service = GatesOfCodeXService()
+            manifest = service.load_manifest(service.manifest_path(save_path))
+            service.write_manifest(dc_replace(manifest, battle_id="some-other-battle"))
+
+            verified = apply_frontend_commands(
+                campaign_path,
+                commands=[{"op": "verify_result", "command_id": "v-bound"}],
+                snapshot_path=None,
+            )
+            before = campaign_path.read_bytes()
+            imported = apply_frontend_commands(
+                campaign_path,
+                commands=[{"op": "import_battle", "command_id": "i-bound"}],
+                snapshot_path=None,
+            )
+            after = campaign_path.read_bytes()
+
+        self.assertFalse(verified["results"][0]["ok"], verified)
+        self.assertIn("some-other-battle", verified["results"][0]["detail"])
+        self.assertFalse(imported["ok"], imported)
+        self.assertEqual(before, after)
+
+    def test_verification_rejects_a_result_bound_to_another_campaign(self) -> None:
+        from gates_of_codex.frontend_commands import apply_frontend_commands
+        from gates_of_codex.service import GatesOfCodeXService
+        from dataclasses import replace as dc_replace
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            campaign_path, save_path = self._prepared(root)
+            service = GatesOfCodeXService()
+            manifest = service.load_manifest(service.manifest_path(save_path))
+            service.write_manifest(
+                dc_replace(manifest, campaign_path=str(root / "other-campaign.json"))
+            )
+            before = campaign_path.read_bytes()
+            imported = apply_frontend_commands(
+                campaign_path,
+                commands=[{"op": "import_battle", "command_id": "i-camp"}],
+                snapshot_path=None,
+            )
+            after = campaign_path.read_bytes()
+
+        self.assertFalse(imported["ok"], imported)
+        self.assertIn("other-campaign.json", imported["results"][0]["detail"])
+        self.assertEqual(before, after)
+
+    def test_accepted_import_clears_the_pending_battle_exactly_once(self) -> None:
+        from gates_of_codex.frontend_commands import apply_frontend_commands
+        from gates_of_codex.state_io import load_campaign
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            campaign_path, _ = self._prepared(root)
+            self.assertIsNotNone(load_campaign(campaign_path).pending_battle)
+
+            first = apply_frontend_commands(
+                campaign_path,
+                commands=[{"op": "import_battle", "command_id": "imp-1"}],
+                snapshot_path=None,
+            )
+            after_first = load_campaign(campaign_path)
+            replayed = apply_frontend_commands(
+                campaign_path,
+                commands=[{"op": "import_battle", "command_id": "imp-1"}],
+                snapshot_path=None,
+            )
+            after_replay = load_campaign(campaign_path)
+
+        self.assertTrue(first["ok"], first)
+        # Pending battle is cleared only by the accepted import.
+        self.assertIsNone(after_first.pending_battle)
+        # The replayed id is recognised and cannot apply a second result.
+        self.assertTrue(replayed["ok"], replayed)
+        self.assertEqual(0, replayed["commands_applied"])
+        self.assertTrue(replayed["results"][0]["data"]["duplicate"])
+        self.assertEqual(
+            {key: value.unit_count for key, value in after_first.battalions.items()},
+            {key: value.unit_count for key, value in after_replay.battalions.items()},
+        )
+
+    def test_accepted_import_refreshes_the_snapshot_from_campaign_state(self) -> None:
+        from gates_of_codex.frontend_commands import apply_frontend_commands
+        from gates_of_codex.state_io import load_campaign
+        import json as _json
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            campaign_path, _ = self._prepared(root)
+            snapshot_path = root / "campaign_snapshot.json"
+            result = apply_frontend_commands(
+                campaign_path,
+                commands=[{"op": "import_battle", "command_id": "imp-snap"}],
+                snapshot_path=snapshot_path,
+            )
+            state = load_campaign(campaign_path)
+            self.assertTrue(snapshot_path.is_file())
+            snapshot = _json.loads(snapshot_path.read_text(encoding="utf-8"))
+
+        self.assertTrue(result["ok"], result)
+        # The refreshed snapshot reflects accepted state: no pending battle.
+        self.assertIsNone(snapshot.get("pending_battle"))
+        self.assertIsNone(state.pending_battle)
