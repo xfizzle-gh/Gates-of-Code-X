@@ -400,7 +400,18 @@ def _strict_positive_milli(value: Any, *, name: str) -> int:
 def _initial_controller(state: CampaignState, site: dict[str, Any]) -> str | None:
     owner = site.get("owner_faction")
     if owner not in (None, ""):
-        return str(owner)
+        owner_id = str(owner)
+        if owner_id in state.factions:
+            return owner_id
+        runtime = state.map_metadata.get("strategic_actor_runtime")
+        actors = runtime.get("actors") if isinstance(runtime, dict) else None
+        actor = actors.get(owner_id) if isinstance(actors, dict) else None
+        tactical_side = actor.get("tactical_side") if isinstance(actor, dict) else None
+        if isinstance(tactical_side, str) and tactical_side in state.factions:
+            return tactical_side
+        # Preserve legacy graph behavior for non-actor owner strings. Earth3 P3
+        # actor IDs are always resolved above through authenticated P2 runtime.
+        return owner_id
     province_id = str(site.get("province_id") or "")
     province = state.provinces.get(province_id)
     if province is None or province.owner == Faction.NEUTRAL:
