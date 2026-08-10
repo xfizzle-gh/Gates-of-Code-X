@@ -147,6 +147,29 @@ class ExpandedNationsInfCostTests(unittest.TestCase):
         self.assertEqual(1, len(rows))
         self.assertEqual(36.5, rows[0].cost)
 
+    def test_unrelated_parser_diagnostic_in_source_file_does_not_block_projection(self) -> None:
+        self._write_source_breed()
+        self._write_inf(
+            "ukr",
+            '{"broken\n'
+            '{"mp/ukr/2022s/azov3_squadlead" ("ukr_elite" side(ukr)) {cost 36.5}}',
+        )
+
+        rows, _ = project_actor_inf_cost_rows(self._actor(), self.layers)
+
+        self.assertEqual(1, len(rows))
+        self.assertEqual(36.5, rows[0].cost)
+
+    def test_requested_malformed_row_still_fails_closed(self) -> None:
+        self._write_source_breed()
+        self._write_inf(
+            "ukr",
+            '{"mp/ukr/2022s/azov3_squadlead\n',
+        )
+
+        with self.assertRaisesRegex(ExpandedNationsError, "no native Conquest inf cost row"):
+            project_actor_inf_cost_rows(self._actor(), self.layers)
+
     def test_requested_same_priority_conflict_fails_closed(self) -> None:
         self._write_source_breed()
         self._write_inf_at(
