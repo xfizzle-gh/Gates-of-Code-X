@@ -52,11 +52,10 @@ def _prepare_opening_contact():
         order_id="p3-donetsk-to-zap",
     )
     committed = commit_move_orders(state)
-    assert set(committed["committed"]) == {
+    assert set(committed) == {
         "sf_ukr_zaporizhzhia",
         "sf_rus_donetsk",
     }
-    assert committed["rejected"] == []
     assert activate_committed_orders(state) == 2
 
     first = advance_operational_tick(state)
