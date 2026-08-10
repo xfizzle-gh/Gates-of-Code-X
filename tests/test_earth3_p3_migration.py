@@ -107,6 +107,46 @@ def test_raw_p2_campaign_dict_load_migrates_after_authentication() -> None:
     validate_earth3_p3_campaign_extension(loaded)
 
 
+@pytest.mark.parametrize(
+    ("mutation", "error"),
+    [
+        (
+            "missing_formation",
+            "references missing strategic formation sf_usa_tallinn",
+        ),
+        (
+            "missing_membership",
+            "missing from strategic formation membership list",
+        ),
+    ],
+)
+def test_raw_p2_load_rejects_formation_damage_before_legacy_repair(
+    mutation: str,
+    error: str,
+) -> None:
+    payload = _campaign().to_dict()
+    formation_id = "sf_usa_tallinn"
+    battalion_id = payload["strategic_formations"][formation_id]["battalion_ids"][0]
+    if mutation == "missing_formation":
+        payload["strategic_formations"].pop(formation_id)
+    else:
+        payload["strategic_formations"][formation_id]["battalion_ids"].remove(
+            battalion_id
+        )
+    before = copy.deepcopy(payload)
+
+    with pytest.raises(ValueError, match=error):
+        campaign_from_dict(payload)
+
+    assert payload == before
+    if mutation == "missing_formation":
+        assert formation_id not in payload["strategic_formations"]
+    else:
+        assert battalion_id not in payload["strategic_formations"][formation_id][
+            "battalion_ids"
+        ]
+
+
 def test_authentication_failure_happens_before_any_source_mutation() -> None:
     source = _campaign()
     before = _canonical_state(source)
