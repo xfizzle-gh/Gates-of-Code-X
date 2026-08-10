@@ -152,10 +152,12 @@ def resolve_campaign_paths(
         else:
             root = raw
             campaign_file = raw / CAMPAIGN_FILE_NAME
-    # ``resolve`` keeps Windows drive-relative and mixed-separator input stable
-    # without requiring the directory to exist yet.
-    root = Path(os.path.abspath(str(root)))
-    campaign_file = Path(os.path.abspath(str(campaign_file)))
+    # Canonicalize through the filesystem so one campaign has one textual path
+    # identity. On Windows this expands 8.3 aliases (for example RUNNER~1), and
+    # on POSIX it resolves existing symlinked parent components. ``strict=False``
+    # keeps the not-yet-created campaign directory valid for New Campaign.
+    root = root.resolve(strict=False)
+    campaign_file = campaign_file.resolve(strict=False)
     if campaign_file.parent != root:
         root = campaign_file.parent
     return CampaignPaths(
@@ -279,13 +281,13 @@ def validate_stack(
             layers[-1],
             stack_config=source,
             profile_directory=profile_directory or None,
-        )
+         )
         if not report.ok:
             failures = "; ".join(
                 f"{check.name}: {check.detail}"
                 for check in report.checks
                 if not check.ok
-            )
+             )
             raise PlayerShellError(
                 f"Mod stack validation failed for {source}: {failures or 'unknown failure'}"
             )
@@ -294,7 +296,7 @@ def validate_stack(
 
 # ---------------------------------------------------------------------------
 # Godot strategic application
-# ---------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 
 def godot_project_directory(explicit: str | Path | None = None) -> Path:
@@ -366,7 +368,7 @@ def launch_strategic_application(
 
 # ---------------------------------------------------------------------------
 # Launch settings persistence
-# ---------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 
 def persist_launch_settings(
@@ -556,7 +558,7 @@ def publish_snapshot(state: CampaignState, paths: CampaignPaths) -> Path:
     return written
 
 
-# ---------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
