@@ -281,13 +281,13 @@ def validate_stack(
             layers[-1],
             stack_config=source,
             profile_directory=profile_directory or None,
-         )
+        )
         if not report.ok:
             failures = "; ".join(
                 f"{check.name}: {check.detail}"
                 for check in report.checks
                 if not check.ok
-             )
+            )
             raise PlayerShellError(
                 f"Mod stack validation failed for {source}: {failures or 'unknown failure'}"
             )
@@ -296,7 +296,7 @@ def validate_stack(
 
 # ---------------------------------------------------------------------------
 # Godot strategic application
-# ----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 
 
 def godot_project_directory(explicit: str | Path | None = None) -> Path:
@@ -368,7 +368,7 @@ def launch_strategic_application(
 
 # ---------------------------------------------------------------------------
 # Launch settings persistence
-# ----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 
 
 def persist_launch_settings(
@@ -558,7 +558,7 @@ def publish_snapshot(state: CampaignState, paths: CampaignPaths) -> Path:
     return written
 
 
-# ----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
