@@ -267,14 +267,16 @@ def verify_actor_inf_cost_rows(
 def _build_effective_inf_index(
     roots: Sequence[Path],
 ) -> _EffectiveInfIndex:
-    """Index effective inf rows without rejecting unrelated upstream conflicts.
+    """Index parseable effective inf rows without rejecting unrelated source damage.
 
     Installed mods can contain duplicate paths in multiple ``inf*.set`` files at
-    the same stack priority.  Those duplicates are only a projection ambiguity
-    when the actor actually needs that path.  Keep conflicts keyed by effective
-    path and fail closed only when a requested source or target resolves to one.
-    A higher-priority layer replaces both a lower-priority row and a lower-
-    priority conflict, matching normal stack override semantics.
+    the same stack priority, and an upstream file can also contain parser
+    diagnostics in definitions unrelated to the actor being projected.  Keep
+    every successfully parsed row.  Same-priority duplicate rows remain a
+    projection ambiguity only when the actor requests that path.  A requested
+    malformed row cannot enter the index and therefore still fails closed as a
+    missing native cost row.  A higher-priority definitive row replaces both a
+    lower-priority row and a lower-priority conflict, matching stack semantics.
     """
 
     effective: dict[str, _IndexedInfRow] = {}
@@ -293,8 +295,6 @@ def _build_effective_inf_index(
                 continue
             reference = f"{priority}:{root.name}/{path.relative_to(resource_root(root)).as_posix()}"
             scan = scan_source_entries(text, reference)
-            if scan.diagnostics:
-                raise ExpandedNationsError(f"Native inf metadata is malformed: {reference}")
             for entry in scan.entries:
                 key = entry.name.casefold()
                 within_priority.setdefault(key, []).append(
