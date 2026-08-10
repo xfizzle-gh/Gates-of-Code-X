@@ -164,6 +164,10 @@ def resolve_display_pixel(
 
 def load_operational_graph_for_state(state: CampaignState) -> dict[str, Any] | None:
     """Resolve operational graph via map metadata / asset contract (not package path)."""
+    if str(state.map_id) == "earth3_europe_mediterranean":
+        from .earth3_operational import load_authenticated_p3_graph_for_state
+
+        return load_authenticated_p3_graph_for_state(state)
     return load_operational_graph_payload(
         map_id=str(state.map_id),
         map_metadata=state.map_metadata,

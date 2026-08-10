@@ -1,11 +1,24 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 from pathlib import Path
+import sys
+
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from gates_of_codex.operational_schema import (
+    EdgeAuthority,
+    EdgeKind,
+    OperationalRouteEdge,
+)
+
+
 FROZEN_HASHES = ROOT / "tests/fixtures/earth3_p3_frozen_hashes.json"
 PROPOSAL = ROOT / "docs/audits/p3-first-corridor-route-inventory.json"
 P3_AUTHORITY = ROOT / "config/earth3/p3_operational_authority.json"
@@ -83,6 +96,45 @@ def _approved_edge_contract(proposal: dict) -> list[dict]:
         "rollback_batch_id",
     )
     return [{key: edge[key] for key in keys} for edge in proposal["proposed_edges"]]
+
+
+def _approved_schema_edge() -> OperationalRouteEdge:
+    left = "op-node-e3_0391-anchor"
+    right = "op-node-e3_2171-anchor"
+    return OperationalRouteEdge(
+        edge_id=f"op-edge-corridor-{left}__{right}",
+        a=left,
+        b=right,
+        kind=EdgeKind.CORRIDOR.value,
+        authority=EdgeAuthority.APPROVED.value,
+        length_px=38,
+        base_move_points_milli=1000,
+        movement_cost_milli=1000,
+        requires_port=False,
+        can_be_blockaded=False,
+        traversal_enabled=True,
+        bidirectional=True,
+        province_ids=["e3_0391", "e3_2171"],
+        legacy_crossing_type=None,
+        metadata={
+            "approval_comment_id": APPROVAL_COMMENT_ID,
+            "batch_id": APPROVED_BATCH_ID,
+            "rollback_batch_id": APPROVED_ROLLBACK_BATCH_ID,
+            "source": "owner_approved_earth3_p3_corridor",
+            "supply_capable": True,
+        },
+    )
+
+
+def _validate_schema_edge(edge: OperationalRouteEdge) -> None:
+    edge.validate(
+        node_ids={edge.a, edge.b},
+        province_ids=set(edge.province_ids),
+        node_province={
+            edge.a: edge.province_ids[0],
+            edge.b: edge.province_ids[1],
+        },
+    )
 
 
 def test_frozen_hash_fixture_names_the_exact_authorized_inputs() -> None:
@@ -211,3 +263,52 @@ def test_exact_byte_p3_artifacts_are_forced_to_lf_in_git() -> None:
         "godot/assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json text eol=lf"
         in attributes
     )
+
+
+def test_approved_corridor_schema_accepts_only_the_exact_owner_policy() -> None:
+    _validate_schema_edge(_approved_schema_edge())
+
+    mutations = {
+        "disabled": lambda edge: setattr(edge, "traversal_enabled", False),
+        "wrong kind": lambda edge: setattr(edge, "kind", EdgeKind.ROAD.value),
+        "wrong base cost": lambda edge: setattr(edge, "base_move_points_milli", 999),
+        "wrong movement cost": lambda edge: setattr(edge, "movement_cost_milli", 999),
+        "one way": lambda edge: setattr(edge, "bidirectional", False),
+        "requires port": lambda edge: setattr(edge, "requires_port", True),
+        "blockadable": lambda edge: setattr(edge, "can_be_blockaded", True),
+        "legacy crossing": lambda edge: setattr(edge, "legacy_crossing_type", "land"),
+        "wrong approval": lambda edge: edge.metadata.__setitem__(
+            "approval_comment_id", APPROVAL_COMMENT_ID + 1
+        ),
+        "wrong batch": lambda edge: edge.metadata.__setitem__("batch_id", "other"),
+        "wrong rollback": lambda edge: edge.metadata.__setitem__(
+            "rollback_batch_id", "p3-batch-002"
+        ),
+        "wrong source": lambda edge: edge.metadata.__setitem__("source", "candidate"),
+        "no supply": lambda edge: edge.metadata.__setitem__("supply_capable", False),
+        "missing metadata": lambda edge: edge.metadata.pop("source"),
+        "unknown metadata": lambda edge: edge.metadata.__setitem__("extra", True),
+    }
+    for _label, mutate in mutations.items():
+        edge = copy.deepcopy(_approved_schema_edge())
+        mutate(edge)
+        with pytest.raises(ValueError, match="approved edge"):
+            _validate_schema_edge(edge)
+
+
+def test_candidate_and_authored_edge_schema_behavior_is_unchanged() -> None:
+    candidate = copy.deepcopy(_approved_schema_edge())
+    candidate.authority = EdgeAuthority.CANDIDATE.value
+    candidate.traversal_enabled = False
+    candidate.metadata = {}
+    _validate_schema_edge(candidate)
+    candidate.traversal_enabled = True
+    with pytest.raises(ValueError, match="candidate edge"):
+        _validate_schema_edge(candidate)
+
+    authored = copy.deepcopy(_approved_schema_edge())
+    authored.edge_id = f"op-edge-strait-{authored.a}__{authored.b}"
+    authored.kind = EdgeKind.STRAIT.value
+    authored.authority = EdgeAuthority.AUTHORED.value
+    authored.metadata = {}
+    _validate_schema_edge(authored)
