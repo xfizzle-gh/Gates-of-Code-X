@@ -47,6 +47,11 @@ class ExpandedNationsInfCostTests(unittest.TestCase):
         breed.parent.mkdir(parents=True)
         breed.write_text('{breed {skin "fixture"}}\n', encoding="utf-8")
 
+    def _write_source_breed_named(self, name: str) -> None:
+        breed = self.layers[2] / f"resource/set/breed/mp/ukr/2022s/{name}.set"
+        breed.parent.mkdir(parents=True, exist_ok=True)
+        breed.write_text('{breed {skin "fixture"}}\n', encoding="utf-8")
+
     def _write_inf_at(self, layer_index: int, filename: str, row: str) -> None:
         path = self.layers[layer_index] / f"resource/set/multiplayer/units/conquest/{filename}"
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -82,9 +87,7 @@ class ExpandedNationsInfCostTests(unittest.TestCase):
         verify_actor_inf_cost_rows(roster, manifest)
 
     def test_proven_demo_h_typo_uses_demon_h_cost_row(self) -> None:
-        breed = self.layers[2] / "resource/set/breed/mp/ukr/2022s/azov3_demo_h.set"
-        breed.parent.mkdir(parents=True)
-        breed.write_text('{breed {skin "fixture"}}\n', encoding="utf-8")
+        self._write_source_breed_named("azov3_demo_h")
         self._write_inf(
             "ukr",
             '{"mp/ukr/2022s/azov3_demon_h" ("ukr_specops" side(ukr)) {cost 40.0}}',
@@ -102,6 +105,36 @@ class ExpandedNationsInfCostTests(unittest.TestCase):
         self.assertIn('"mp/nato/2022s/azov3_demo_h"', body)
         self.assertNotIn('"mp/nato/2022s/azov3_demon_h"', body)
         self.assertIn("{cost 40.0}", body)
+
+    def test_source_native_unpriced_member_preserves_omission_with_positive_unit_coverage(self) -> None:
+        self._write_source_breed()
+        self._write_source_breed_named("azov3_antitank_javelin")
+        self._write_inf(
+            "ukr",
+            '{"mp/ukr/2022s/azov3_squadlead" ("ukr_elite" side(ukr)) {cost 36.5}}',
+        )
+        actor = self._actor()
+        actor["units"][0]["members"] = {
+            "azov3_squadlead": 1,
+            "azov3_antitank_javelin": 2,
+        }
+
+        rows, body = project_actor_inf_cost_rows(actor, self.layers)
+
+        self.assertEqual(1, len(rows))
+        self.assertEqual("mp/nato/2022s/azov3_squadlead", rows[0].target_path)
+        self.assertNotIn("azov3_antitank_javelin", body)
+
+    def test_source_native_unpriced_member_alone_fails_closed(self) -> None:
+        self._write_source_breed_named("azov3_antitank_javelin")
+        actor = self._actor()
+        actor["units"][0]["members"] = {"azov3_antitank_javelin": 2}
+
+        with self.assertRaisesRegex(
+            ExpandedNationsError,
+            "no positive native Conquest inf cost coverage",
+        ):
+            project_actor_inf_cost_rows(actor, self.layers)
 
     def test_existing_target_native_cost_wins_without_override(self) -> None:
         self._write_source_breed()
