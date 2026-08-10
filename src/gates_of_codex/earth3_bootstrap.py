@@ -1434,10 +1434,24 @@ def validate_earth3_bootstrap_campaign_state(state: CampaignState) -> None:
     if not is_earth3_p2_campaign(state):
         return
     footprint = earth3_p2_footprint(state)
-    if state.map_metadata.get("operational_graph") not in (None, ""):
-        raise Earth3BootstrapError("Earth3 P2 cannot enable an operational graph")
-    if state.map_metadata.get("operational_maneuver_enabled") is not False:
-        raise Earth3BootstrapError("Earth3 P2 operational maneuver must remain disabled")
+    from .earth3_operational import (
+        P3_AUTHORITY_METADATA_KEY,
+        P3_MIGRATION_METADATA_KEY,
+    )
+
+    if P3_AUTHORITY_METADATA_KEY in state.map_metadata:
+        from .earth3_operational import validate_earth3_p3_campaign_extension
+
+        validate_earth3_p3_campaign_extension(state)
+    else:
+        if P3_MIGRATION_METADATA_KEY in state.map_metadata:
+            raise Earth3BootstrapError(
+                "Earth3 P3 migration provenance requires the P3 authority marker"
+            )
+        if state.map_metadata.get("operational_graph") not in (None, ""):
+            raise Earth3BootstrapError("Earth3 P2 cannot enable an operational graph")
+        if state.map_metadata.get("operational_maneuver_enabled") is not False:
+            raise Earth3BootstrapError("Earth3 P2 operational maneuver must remain disabled")
     for province in state.provinces.values():
         expected_actionable = province.province_id in footprint
         if province.metadata.get("scenario_actionable") is not expected_actionable:

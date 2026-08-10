@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import math
@@ -39,6 +40,23 @@ AUTHORITY_SCHEMA = "gates-of-codex.earth3-p3-operational-authority"
 GRAPH_SCHEMA = "gates-of-codex.operational-graph"
 P3_STATE_SCHEMA = "gates-of-codex.earth3-p3-state-authority"
 P3_AUTHORITY_METADATA_KEY = "earth3_p3_operational_authority"
+P3_MIGRATION_SCHEMA = "gates-of-codex.earth3-p2-to-p3-migration"
+P3_MIGRATION_METADATA_KEY = "earth3_p3_migration"
+P3_STARTING_FORMATION_IDS = frozenset(
+    {
+        "sf_deu_berlin",
+        "sf_pol_vilnius",
+        "sf_rus_donetsk",
+        "sf_rus_luhansk",
+        "sf_rus_rostov",
+        "sf_ukr_kherson",
+        "sf_ukr_kyiv",
+        "sf_ukr_odesa",
+        "sf_ukr_zaporizhzhia",
+        "sf_usa_riga",
+        "sf_usa_tallinn",
+    }
+)
 
 P3_AUTHORITY_RELATIVE_PATH = "config/earth3/p3_operational_authority.json"
 P3_GRAPH_RELATIVE_PATH = (
@@ -211,6 +229,19 @@ def authenticated_p3_state_metadata() -> dict[str, Any]:
         "allowlist_sha256": ALLOWLIST_SHA256,
         "batch_id": APPROVED_CORRIDOR_BATCH_ID,
         "rollback_batch_id": APPROVED_CORRIDOR_ROLLBACK_BATCH_ID,
+    }
+
+
+def authenticated_p3_migration_metadata() -> dict[str, Any]:
+    """Return immutable provenance for the one authorized raw-P2 migration."""
+    return {
+        "schema": P3_MIGRATION_SCHEMA,
+        "schema_version": 1,
+        "source_bootstrap_id": "earth3_v1_campaign_bootstrap",
+        "placement": "exact_p2_province_anchor",
+        "formation_count": len(P3_STARTING_FORMATION_IDS),
+        "authority_raw_sha256": AUTHORITY_RAW_SHA256,
+        "graph_raw_sha256": GRAPH_RAW_SHA256,
     }
 
 
@@ -980,3 +1011,137 @@ def load_authenticated_p3_graph_for_state(
             "Earth3 state must use the fixed P3 graph path"
         )
     return load_authenticated_p3_graph()
+
+
+def validate_earth3_p3_campaign_extension(state: CampaignState) -> None:
+    """Validate mutable P3 state against separately authenticated P2/P3 authority.
+
+    This validator never repairs state.  The graph is authenticated inside this
+    function so callers cannot supply a graph or allowlist as a trust context.
+    """
+    from .earth3_bootstrap import (
+        is_earth3_p2_campaign,
+        validate_earth3_bootstrap_provenance,
+    )
+    from .operational_position import _graph_indexes, _position_is_valid
+
+    if state.map_id != EARTH3_MAP_ID or not is_earth3_p2_campaign(state):
+        raise Earth3OperationalAuthorityError(
+            "Earth3 P3 state must extend the exact Earth3 P2 campaign"
+        )
+    validate_earth3_bootstrap_provenance(state)
+    if state.map_metadata.get("operational_maneuver_enabled") is not True:
+        raise Earth3OperationalAuthorityError(
+            "Earth3 P3 operational maneuver must be explicitly enabled"
+        )
+    if state.map_metadata.get(P3_MIGRATION_METADATA_KEY) != (
+        authenticated_p3_migration_metadata()
+    ):
+        raise Earth3OperationalAuthorityError(
+            "Earth3 P3 migration provenance mismatch"
+        )
+
+    graph = load_authenticated_p3_graph_for_state(state)
+    if graph is None:  # Marker presence is part of the closed P3 extension.
+        raise Earth3OperationalAuthorityError("Earth3 P3 state authority marker missing")
+    node_ids, edge_ids, edges_by_id, nodes_by_id = _graph_indexes(graph)
+    if set(state.strategic_formations) != P3_STARTING_FORMATION_IDS:
+        raise Earth3OperationalAuthorityError(
+            "Earth3 P3 position set must contain the exact eleven P2 formations"
+        )
+    for formation_id, force in sorted(state.strategic_formations.items()):
+        if not _position_is_valid(
+            force.position,
+            province_id=force.province_id,
+            node_ids=node_ids,
+            edge_ids=edge_ids,
+            edges_by_id=edges_by_id,
+            nodes_by_id=nodes_by_id,
+        ):
+            raise Earth3OperationalAuthorityError(
+                f"Earth3 P3 formation {formation_id} position is missing or invalid"
+            )
+
+
+def migrate_earth3_p2_to_p3(state: CampaignState) -> CampaignState:
+    """Return an atomic deterministic P3 replacement for an exact raw P2 state.
+
+    Raw authority and source state are validated first.  P3 authority is then
+    completely authenticated and all placements are planned before the source
+    is copied.  Any later failure affects only the unpublished replacement.
+    """
+    from .earth3_bootstrap import (
+        is_earth3_p2_campaign,
+        load_earth3_bootstrap,
+        validate_earth3_bootstrap_campaign_state,
+    )
+    from .operational_position import OPERATIONAL_POSITION_SCHEMA_VERSION
+    from .operational_schema import FormationOperationalPosition, PositionMode
+
+    # Avoid importing or constructing P2 content for unrelated campaigns.
+    if not is_earth3_p2_campaign(state):
+        return state
+    if P3_AUTHORITY_METADATA_KEY in state.map_metadata:
+        validate_earth3_p3_campaign_extension(state)
+        return state
+
+    # Full raw-P2 state validation is read-only and preserves the original P2
+    # prohibition against graph or maneuver enablement.
+    validate_earth3_bootstrap_campaign_state(state)
+    state.validate()
+
+    # Authentication completes before deepcopy or any replacement mutation.
+    graph = load_authenticated_p3_graph()
+    nodes_by_id = {str(node["node_id"]): node for node in graph["nodes"]}
+    bundle = load_earth3_bootstrap()
+    formation_rows = bundle.documents["formations.json"]["formations"]
+    expected_provinces = {
+        str(row["formation_id"]): str(row["province_id"])
+        for row in formation_rows
+    }
+    if set(expected_provinces) != set(state.strategic_formations):
+        raise Earth3OperationalAuthorityError(
+            "Earth3 P2 formation identity set does not match migration authority"
+        )
+
+    planned_node_ids: dict[str, str] = {}
+    for formation_id, province_id in sorted(expected_provinces.items()):
+        force = state.strategic_formations[formation_id]
+        if force.province_id != province_id:
+            raise Earth3OperationalAuthorityError(
+                f"Earth3 P2 formation {formation_id} province does not match migration authority"
+            )
+        node_id = stable_node_id(province_id, "anchor")
+        node = nodes_by_id.get(node_id)
+        if node is None or str(node.get("province_id")) != province_id:
+            raise Earth3OperationalAuthorityError(
+                f"Earth3 P3 graph lacks the authorized anchor for {formation_id}"
+            )
+        planned_node_ids[formation_id] = node_id
+
+    replacement = copy.deepcopy(state)
+    replacement.map_metadata[P3_AUTHORITY_METADATA_KEY] = (
+        authenticated_p3_state_metadata()
+    )
+    replacement.map_metadata[P3_MIGRATION_METADATA_KEY] = (
+        authenticated_p3_migration_metadata()
+    )
+    replacement.map_metadata["operational_graph"] = P3_GRAPH_RELATIVE_PATH
+    replacement.map_metadata["operational_maneuver_enabled"] = True
+    replacement.schema_version = max(
+        replacement.schema_version, OPERATIONAL_POSITION_SCHEMA_VERSION
+    )
+    for formation_id, node_id in sorted(planned_node_ids.items()):
+        replacement.strategic_formations[formation_id].position = (
+            FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value,
+                node_id=node_id,
+                edge_id=None,
+                progress_milli=0,
+                facing_node_id=None,
+            )
+        )
+
+    validate_earth3_p3_campaign_extension(replacement)
+    replacement.validate()
+    return replacement

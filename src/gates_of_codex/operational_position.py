@@ -99,6 +99,18 @@ def ensure_operational_positions(state: CampaignState) -> dict:
     If the graph cannot be resolved, leave formation positions, schema_version,
     and map_metadata completely unchanged.
     """
+    from .earth3_operational import (
+        P3_AUTHORITY_METADATA_KEY,
+        P3_MIGRATION_METADATA_KEY,
+        validate_earth3_p3_campaign_extension,
+    )
+
+    # Authenticated Earth3 P3 saves are mutable campaign state, never a source
+    # for initialization repair.  Validate them before any generic migration.
+    if P3_AUTHORITY_METADATA_KEY in state.map_metadata:
+        validate_earth3_p3_campaign_extension(state)
+        return dict(state.map_metadata[P3_MIGRATION_METADATA_KEY])
+
     from .force_migration import ensure_strategic_formations
 
     ensure_strategic_formations(state)
