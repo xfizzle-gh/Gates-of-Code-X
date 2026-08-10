@@ -20,7 +20,7 @@ from .launcher import find_game_executable, launch_game
 from .map_discovery import MapCandidate, discover_maps
 from .modstack import (
     resolve_stack,
-    stack_mod_tokens,
+    stack_dependency_tokens,
     stack_to_strings,
     validate_known_order,
     validate_stack_paths,
@@ -29,8 +29,6 @@ from .service import (
     BattleExportManifest,
     GatesOfCodeXService,
     apply_installed_fingerprint,
-    merge_mod_tokens,
-    read_profile_mod_tokens,
 )
 
 
@@ -210,6 +208,13 @@ def prepare_stack_handoff(
         failed = [check.detail for check in validation.checks if not check.ok]
         raise RuntimeError("Live mod-stack validation failed: " + "; ".join(failed))
 
+    # #166 D1: the export dependency list is exactly the validated stack. The
+    # player's profile options.set is deliberately NOT merged in -- it carries
+    # every mod they happen to have enabled, which is how unrelated Workshop ids
+    # reached generated saves. Computed here, before any mutation, so an
+    # unrepresentable layer fails closed while the campaign is still untouched.
+    export_mods = stack_dependency_tokens(stack)
+
     used_maps = [str(value) for value in state.map_metadata.get("used_tactical_maps", []) if value]
     available_maps = [value.identifier for value in validation.maps]
     preferred_map = select_tactical_map(
@@ -270,8 +275,6 @@ def prepare_stack_handoff(
     if installed is not None:
         paths.extend([installed, service.manifest_path(installed)])
     backup = backup_existing_files(paths, backup_root=backup_root, label="tactical-handoff")
-    profile_mods = read_profile_mod_tokens(profile)
-    export_mods = merge_mod_tokens(profile_mods, stack_mod_tokens(stack))
     manifest = service.export_battle(
         campaign,
         code_x_directory=codex,
