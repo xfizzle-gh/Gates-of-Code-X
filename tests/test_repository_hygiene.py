@@ -28,6 +28,21 @@ class RepositoryHygieneTests(unittest.TestCase):
         ).strip()
         self.assertEqual("", tracked)
 
+    def test_no_runtime_json_is_tracked_at_the_godot_project_root(self) -> None:
+        """Generic guard for generated queue/snapshot artifacts.
+
+        The enumerated check above only knows the names it was given, so a
+        runtime queue written under a different name (``godot/commands.json``)
+        was once committed while that test stayed green. Authored Godot JSON
+        lives under ``assets/`` or ``fixtures/``; nothing belongs at the project
+        root, so anything appearing there is generated output.
+        """
+        tracked = subprocess.check_output(
+            ["git", "ls-files", "godot/*.json"], cwd=ROOT, text=True
+        ).split()
+        at_root = [path for path in tracked if path.count("/") == 1]
+        self.assertEqual([], at_root)
+
     def test_deployment_scripts_do_not_default_to_unrelated_workshop_item(self) -> None:
         for relative in (
             "tools/deploy_workshop_test.ps1",

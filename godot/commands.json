@@ -1,9 +1,0 @@
-{
-	"commands": [
-		{
-			"command_id": "1786394522-834571:verify_result:1",
-			"op": "verify_result",
-			"save_path": "completed.sav"
-		}
-	]
-}

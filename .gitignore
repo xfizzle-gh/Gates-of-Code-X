@@ -22,6 +22,7 @@ campaign.json
 godot/.godot/
 godot/campaign_snapshot.json
 godot/frontend_commands.json
+godot/commands.json
 godot/**/*.uid
 godot/home_*.png
 godot/.import/
