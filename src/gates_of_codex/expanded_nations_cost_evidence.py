@@ -652,18 +652,10 @@ def _build_vehicle_cost_index(
                 # Only vehicle entity definitions contribute vehicle price authority.
                 forms = [str(getattr(c, "value", "")).lower() for c in entry.calls if getattr(c, "family", "") == ""]
                 raw_l = entry.raw.lower()
-                is_vehicle_entity = (
-                    '("vehicle"' in raw_l
-                    or "(\"vehicle\"" in entry.raw
-                    or "\t(\"vehicle\"" in entry.raw
-                    or ' ("vehicle"' in entry.raw
-                )
-                if not is_vehicle_entity:
-                    # also accept form token vehicle as first paren family-less macro/block body
-                    if "vehicle" not in raw_l.split("\n", 1)[0] and '("vehicle"' not in raw_l and "(\"vehicle\"" not in entry.raw:
-                        # Detect classic vehicle block body.
-                        if not re.search(r'\(\s*"vehicle"', entry.raw):
-                            continue
+                # Accept vehicle / vehicle2 / vehicleN entity forms used by Code:X.
+                if re.search(r'\(\s*"vehicle\d*"', entry.raw) is None:
+                    continue
+
                 match = _BLOCK_COST_RE.search(entry.raw)
                 if match is None:
                     continue

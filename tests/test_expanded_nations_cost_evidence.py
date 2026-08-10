@@ -190,5 +190,36 @@ class ExpandedNationsCostEvidenceTests(unittest.TestCase):
         self.assertEqual(87.5, ev.native_recruitment_cost)
         self.assertFalse(ev.has_vehicle)
 
+
+    def test_vehicle2_entity_form_is_indexed(self) -> None:
+        units = self.layers[2] / "resource/set/multiplayer/units/conquest/units_rusa.set"
+        units.parent.mkdir(parents=True)
+        units.write_text(
+            '{"t80uk"\n'
+            '\t("vehicle2" side(rusa) crew1(rus_vehicleman_cmd:1) crew2(rus_vehicleman:2))\n'
+            '\t{cost 1950} {not_for_player_sale 1}\n'
+            '}\n',
+            encoding="utf-8",
+        )
+        vc, conf = _build_vehicle_cost_index(self.layers)
+        self.assertEqual(1950.0, vc["t80uk"])
+        raw = (
+            '{"squad_rus4_t80uk(rusa)"\n'
+            '\t("squad_vehicle" side(rusa) vehicle(t80uk) cw(0) cp(4) crew(rus_vehicleman:3))\n'
+            '}'
+        )
+        breed = self.layers[2] / "resource/set/breed/mp/rusa/2022s/rus_vehicleman.set"
+        breed.parent.mkdir(parents=True, exist_ok=True)
+        breed.write_text('{breed {skin "x"}}\n', encoding="utf-8")
+        inf = self.layers[2] / "resource/set/multiplayer/units/conquest/inf_rusa.set"
+        inf.parent.mkdir(parents=True, exist_ok=True)
+        inf.write_text(
+            '{"mp/rusa/2022s/rus_vehicleman" ("rusa_crew" side(rusa)) {cost 10.0}}\n',
+            encoding="utf-8",
+        )
+        ev = self._eval(raw, vehicle_costs=vc, conflicts=conf)
+        self.assertEqual("vehicle_entity_cost", ev.economy_class)
+        self.assertEqual(1950.0, ev.native_recruitment_cost)
+
 if __name__ == "__main__":
     unittest.main()
