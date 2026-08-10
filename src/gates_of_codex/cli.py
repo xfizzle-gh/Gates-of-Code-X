@@ -142,6 +142,12 @@ def build_parser() -> argparse.ArgumentParser:
     apply_frontend.add_argument("campaign")
     apply_frontend.add_argument("--snapshot", default="godot/campaign_snapshot.json")
     apply_frontend.add_argument("--commands", help="Defaults to <snapshot-dir>/frontend_commands.json")
+    play = sub.add_parser(
+        "play",
+        help="Launch or continue a playable campaign in the Godot strategic application",
+        add_help=False,
+    )
+    play.add_argument("play_args", nargs=argparse.REMAINDER)
     launch = sub.add_parser("launch")
     launch.add_argument("--game", required=True)
     ui = sub.add_parser("ui")
@@ -438,6 +444,10 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(json.dumps(result, indent=2))
         return 0 if result.get("ok") else 1
+    if args.command == "play":
+        from .player_shell import main as play_main
+
+        return play_main(args.play_args)
     if args.command == "launch":
         launch_game(args.game)
         return 0

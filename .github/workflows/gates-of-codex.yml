@@ -113,6 +113,44 @@ jobs:
           set -euo pipefail
           "$HOME/godot" --headless --path . --audio-driver Dummy \
             -s res://scripts/tools/operational_presentation_scene_test.gd
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Python package for P4 snapshot generation
+        run: python -m pip install -e ".[earth3]"
+      - name: Generate P4 production Earth3 snapshot through the player shell
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          import sys
+          from pathlib import Path
+
+          sys.path.insert(0, "tests")
+          from test_p2_earth3_campaign_bootstrap import _resolved_catalog
+          from gates_of_codex.player_shell import build_play_parser, run_play
+
+          root = Path(os.environ["RUNNER_TEMP"]) / "p4-production-campaign"
+          environ = dict(os.environ)
+          environ["GATES_OF_CODEX_HOME"] = str(root / "home")
+          args = build_play_parser().parse_args(
+              ["--new", "--campaign", str(root / "campaign"), "--no-launch"]
+          )
+          # The runner has no installed Gates of Hell stack, so catalog authority
+          # is injected the same way the P2 bootstrap tests inject it. Everything
+          # downstream is the real production player-launch path.
+          result = run_play(args, environ=environ, resolved_catalog=_resolved_catalog())
+          assert result.map_id == "earth3_europe_mediterranean", result.map_id
+          Path("p4-snapshot-path.txt").write_text(result.snapshot_path, encoding="utf-8")
+          print("generated", result.snapshot_path)
+          PY
+      - name: Godot P4 player shell contract test (generated production snapshot)
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --audio-driver Dummy \
+            -s res://scripts/tools/player_shell_test.gd -- \
+            "--snapshot=$(cat ../p4-snapshot-path.txt)"
       - name: Godot map CI check (draw path + viewport smoke)
         working-directory: godot
         run: |

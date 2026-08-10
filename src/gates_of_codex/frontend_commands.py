@@ -13,12 +13,80 @@ from .strategic import build_infrastructure
 from .strategic_ai import StrategicAI
 
 
+#: Commands that commit to the campaign file through their own service-level
+#: transaction instead of the in-memory batch. They may never share a batch with
+#: other operations because the batch rollback cannot undo them.
+SELF_COMMITTING_OPS = frozenset({"handoff", "import_battle"})
+
+#: Campaign-metadata key holding the exactly-once command ledger.
+COMMAND_LEDGER_KEY = "frontend_command_ledger"
+
+#: Retained ledger entries. Bounded so the campaign file cannot grow without
+#: limit; replay protection therefore covers the most recent applications.
+COMMAND_LEDGER_LIMIT = 512
+
+
 @dataclass(slots=True)
 class CommandResult:
     op: str
     ok: bool
     detail: str = ""
     data: dict[str, Any] = field(default_factory=dict)
+
+
+def read_command_ledger(state) -> dict[str, Any]:
+    """Return the normalized exactly-once ledger carried by the campaign."""
+    raw = state.map_metadata.get(COMMAND_LEDGER_KEY)
+    entries: list[dict[str, Any]] = []
+    sequence = 0
+    if isinstance(raw, dict):
+        sequence = int(raw.get("sequence", 0) or 0)
+        for item in raw.get("entries", []) or []:
+            if not isinstance(item, dict):
+                continue
+            command_id = str(item.get("command_id", "")).strip()
+            if not command_id:
+                continue
+            entries.append(
+                {
+                    "command_id": command_id,
+                    "op": str(item.get("op", "")),
+                    "sequence": int(item.get("sequence", 0) or 0),
+                }
+            )
+    return {"sequence": sequence, "entries": entries}
+
+
+def ledger_contains(ledger: dict[str, Any], command_id: str) -> bool:
+    identity = str(command_id).strip()
+    if not identity:
+        return False
+    return any(entry["command_id"] == identity for entry in ledger["entries"])
+
+
+def _ledger_record(ledger: dict[str, Any], command_id: str, op: str) -> None:
+    identity = str(command_id).strip()
+    if not identity or ledger_contains(ledger, identity):
+        return
+    ledger["sequence"] = int(ledger["sequence"]) + 1
+    ledger["entries"].append(
+        {"command_id": identity, "op": str(op), "sequence": ledger["sequence"]}
+    )
+    if len(ledger["entries"]) > COMMAND_LEDGER_LIMIT:
+        del ledger["entries"][: len(ledger["entries"]) - COMMAND_LEDGER_LIMIT]
+
+
+def _store_command_ledger(state, ledger: dict[str, Any]) -> None:
+    if not ledger["entries"]:
+        return
+    state.map_metadata[COMMAND_LEDGER_KEY] = {
+        "sequence": int(ledger["sequence"]),
+        "entries": [dict(entry) for entry in ledger["entries"]],
+    }
+
+
+def _command_identity(raw: dict[str, Any]) -> str:
+    return str(raw.get("command_id") or raw.get("id") or "").strip()
 
 
 class _FrontendReportingCampaignEngine(CampaignEngine):
@@ -85,6 +153,7 @@ def apply_frontend_commands(
     command_file = Path(commands_path).resolve() if commands_path else None
     pending = list(commands) if commands is not None else read_commands(command_file) if command_file else []
     state = load_campaign(campaign)
+    ledger = read_command_ledger(state)
     results: list[CommandResult] = []
     from .observation import (
         ObservationMutationContext,
@@ -92,8 +161,35 @@ def apply_frontend_commands(
     )
     observation_context = ObservationMutationContext()
 
+    batch_error = _batch_rejection(pending)
+    if batch_error:
+        # Reject before touching the campaign so a malformed batch can never
+        # publish partial authoritative state.
+        if command_file is not None:
+            clear_commands(command_file)
+        return _apply_report(
+            state,
+            campaign,
+            ok=False,
+            snapshot="",
+            results=[CommandResult(op="batch", ok=False, detail=batch_error)],
+        )
+
     for raw in pending:
         op = str(raw.get("op", "")).strip().lower()
+        command_id = _command_identity(raw)
+        if command_id and ledger_contains(ledger, command_id):
+            # Replay of an already-accepted command. Never apply it a second
+            # time; report success so the caller converges on current state.
+            results.append(
+                CommandResult(
+                    op=op or "unknown",
+                    ok=True,
+                    detail=f"duplicate command_id {command_id} ignored",
+                    data={"command_id": command_id, "duplicate": True},
+                )
+            )
+            continue
         before_presentations = _formation_presentation_rows(state)
         try:
             if op == "handoff":
@@ -123,10 +219,30 @@ def apply_frontend_commands(
             if battle_finalization is not None:
                 presentation["battle_finalization"] = battle_finalization
             result.data["operational_presentation"] = presentation
+            if command_id:
+                _ledger_record(ledger, command_id, op)
+                result.data["command_id"] = command_id
         results.append(result)
         if not result.ok:
             break
 
+    if command_file is not None:
+        # The queue is an inbox: consumed batches never remain readable, so a
+        # rejected batch cannot be silently reapplied by a later run.
+        clear_commands(command_file)
+
+    if any(not item.ok for item in results):
+        # Rejected batch: discard every in-memory mutation. The campaign file and
+        # the published snapshot both remain at the previously accepted state.
+        return _apply_report(
+            load_campaign(campaign),
+            campaign,
+            ok=False,
+            snapshot="",
+            results=results,
+        )
+
+    _store_command_ledger(state, ledger)
     save_campaign(
         state,
         campaign,
@@ -136,21 +252,68 @@ def apply_frontend_commands(
     if snapshot_path:
         from .frontend import write_frontend_snapshot
 
-        snapshot = str(
-            write_frontend_snapshot(
+        try:
+            snapshot = str(
+                write_frontend_snapshot(
+                    state,
+                    snapshot_path,
+                    campaign_path=campaign,
+                ).resolve()
+            )
+        except Exception as exc:  # noqa: BLE001 - authoritative state is already committed
+            # The campaign is authoritative and already committed atomically.
+            # Publishing the derived snapshot failed, so the caller keeps the
+            # previously accepted presentation until the next refresh.
+            report = _apply_report(
                 state,
-                snapshot_path,
-                campaign_path=campaign,
-            ).resolve()
-        )
-    if command_file is not None:
-        clear_commands(command_file)
+                campaign,
+                ok=False,
+                snapshot="",
+                results=results,
+            )
+            report["snapshot_publish_failed"] = str(exc)
+            return report
 
+    return _apply_report(state, campaign, ok=True, snapshot=snapshot, results=results)
+
+
+def _batch_rejection(pending: list[dict[str, Any]]) -> str:
+    """Return a rejection reason when the batch cannot be applied atomically."""
+    ops = [str(raw.get("op", "")).strip().lower() for raw in pending]
+    self_committing = sorted({op for op in ops if op in SELF_COMMITTING_OPS})
+    if self_committing and len(ops) > 1:
+        return (
+            f"{', '.join(self_committing)} must be submitted alone; "
+            f"batched with {len(ops) - 1} other command(s)"
+        )
+    identities = [_command_identity(raw) for raw in pending]
+    seen = {value for value in identities if value}
+    if len(seen) != len([value for value in identities if value]):
+        return "batch contains duplicate command_id values"
+    return ""
+
+
+def _apply_report(
+    state,
+    campaign: Path,
+    *,
+    ok: bool,
+    snapshot: str,
+    results: list[CommandResult],
+) -> dict[str, Any]:
     return {
-        "ok": all(item.ok for item in results) if results else True,
+        "ok": ok,
         "campaign_path": str(campaign),
         "snapshot_path": snapshot,
-        "commands_applied": len([item for item in results if item.ok]),
+        "commands_applied": len(
+            [
+                item
+                for item in results
+                if item.ok and not bool(item.data.get("duplicate"))
+            ]
+        )
+        if ok
+        else 0,
         "results": [asdict(item) for item in results],
         "pending_battle": state.pending_battle.battle_id if state.pending_battle else None,
         "current_faction": state.current_faction.value,

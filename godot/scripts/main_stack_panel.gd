@@ -19,6 +19,35 @@ var _scroll_up_rect := Rect2()
 var _scroll_down_rect := Rect2()
 
 
+func _player_launch_model() -> Dictionary:
+	return player_launch_block()
+
+
+func _scenario_label(application: Dictionary, campaign: Dictionary) -> String:
+	## Never invent a name: report exactly what the authoritative campaign says.
+	var display := String(application.get("scenario_display_name", "")).strip_edges()
+	if not display.is_empty():
+		return display
+	var scenario_id := String(application.get("scenario_id", "")).strip_edges()
+	if not scenario_id.is_empty():
+		return scenario_id
+	return String(campaign.get("map_id", "unknown"))
+
+
+func _save_path_label(application: Dictionary, control: Dictionary) -> String:
+	var path := String(application.get("campaign_path", "")).strip_edges()
+	if path.is_empty():
+		path = String(control.get("campaign_path", "")).strip_edges()
+	if path.is_empty():
+		return "(unsaved)"
+	var normalized := path.replace("\\", "/")
+	var name := normalized.get_file()
+	var parent := normalized.get_base_dir().get_file()
+	if parent.is_empty():
+		return name
+	return "%s/%s" % [parent, name]
+
+
 func _draw_management_panel() -> void:
 	if has_method("is_pending_battle_modal_active") and is_pending_battle_modal_active() \
 	and operational_presenter != null and not operational_presenter.is_active():
@@ -37,7 +66,35 @@ func _draw_management_panel() -> void:
 	var writeback := bool(control.get("enabled", false))
 	var has_battle := snapshot.get("pending_battle") != null
 
+	var application: Dictionary = snapshot.get("application", {})
 	y = _panel_heading("CAMPAIGN COMMAND", x, y)
+	y = _panel_line(
+		"%s %s" % [
+			String(application.get("name", "Gates of CodeX")),
+			String(application.get("version", "")),
+		],
+		x,
+		y,
+		Color(0.55, 0.72, 0.86, 1.0),
+		12
+	)
+	y = _panel_line(
+		"Scenario: %s" % _scenario_label(application, campaign),
+		x,
+		y,
+		Color(0.78, 0.88, 0.96, 1.0),
+		12
+	)
+	y = _panel_line(
+		"Turn %s   Save: %s" % [
+			str(campaign.get("turn_number", 0)),
+			_save_path_label(application, control),
+		],
+		x,
+		y,
+		Color(0.66, 0.78, 0.88, 1.0),
+		12
+	)
 	y = _panel_line(
 		"Faction: %s   Current: %s" % [
 			String(campaign.get("selected_faction", "")).to_upper(),
@@ -56,6 +113,29 @@ func _draw_management_panel() -> void:
 		x,
 		y
 	)
+	y += 8.0
+	y = _panel_heading("CAMPAIGN", x, y)
+	var play: Dictionary = _player_launch_model()
+	var play_enabled := bool(play.get("enabled", false))
+	var confirm_new := new_campaign_confirm_pending
+	y = _draw_button(
+		"new_campaign",
+		"Confirm New Campaign" if confirm_new else "New Campaign",
+		x,
+		y,
+		play_enabled and not (play.get("new_args", []) as Array).is_empty(),
+		Color("5a2418") if confirm_new else Color("243140")
+	)
+	y = _draw_button(
+		"continue_campaign",
+		"Continue Campaign",
+		x,
+		y,
+		play_enabled and not (play.get("continue_args", []) as Array).is_empty(),
+		Color("243140")
+	)
+	if not play_enabled:
+		y = _panel_line("Launcher unavailable — start via 'gates-of-codex play'.", x, y, Color("ff8e72"), 11)
 	y += 8.0
 	y = _panel_heading("ACTIONS", x, y)
 	y = _draw_button("fit", "Fit front (F)", x, y, true, Color("243140"))
