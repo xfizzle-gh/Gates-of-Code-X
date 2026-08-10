@@ -299,10 +299,18 @@ def generate_cost_evidence_from_stack_config(
     *,
     gates_root: str | Path | None = None,
     source_head: str = "",
+    source_repo: str | Path | None = None,
 ) -> dict[str, Any]:
     roots, payload = compile_resolved_factions(stack_config)
     final_root = Path(gates_root).expanduser().resolve() if gates_root else roots[-1]
-    _verify_git_exact_head(final_root, source_head)
+    # Exact-head proof is against the implementation checkout, which may differ from
+    # the live Workshop deploy root used as the final activation layer.
+    repo_root = (
+        Path(source_repo).expanduser().resolve()
+        if source_repo
+        else Path(__file__).resolve().parents[2]
+    )
+    _verify_git_exact_head(repo_root, source_head)
     return build_cost_evidence_matrix(
         payload,
         roots,

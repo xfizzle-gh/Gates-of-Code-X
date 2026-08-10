@@ -65,6 +65,7 @@ def _parser() -> argparse.ArgumentParser:
     cost.add_argument("--stack-config", required=True)
     cost.add_argument("--gates-root")
     cost.add_argument("--source-head", required=True)
+    cost.add_argument("--source-repo", help="implementation git checkout for exact-head proof")
     cost.add_argument("--json-output", required=True)
     cost.add_argument("--markdown-output", required=True)
     return parser
@@ -118,6 +119,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.stack_config,
             gates_root=args.gates_root,
             source_head=args.source_head,
+            source_repo=getattr(args, "source_repo", None),
         )
         write_cost_evidence(
             matrix,
