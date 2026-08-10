@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from dataclasses import dataclass
 import json
@@ -41,6 +41,13 @@ _SOURCE_COST_ALIASES: Mapping[str, str] = {
     "mp/nato/era2022/fj_eng_at": "mp/nato/2022s/fj_engineer_at",
 }
 
+# Deterministic same-side cost authority for breeds that exist without native inf rows.
+# Two evidence classes only (never fuzzy name matching):
+# 1) Same-role sister-formation: Donbas Vostok infantry breeds have no inf rows while the
+#    co-located Sparta (spd_*) formation on the same rusa side has complete native rows for
+#    the identical tactical roles (squadlead/rifleman/mg/at/medic/...).
+# 2) Same-equipment crew: Vostok mortar/SPG crews map to Code:X native rusa crew rows for
+#    the exact weapon systems (2B14, SPG-9), not unrelated roles.
 _SOURCE_COST_ROLE_MAP: Mapping[str, str] = {
     "mp/rusa/2022s/vostok_squadlead": "mp/rusa/2022s/spd_squadlead",
     "mp/rusa/2022s/vostok_seniorrifleman": "mp/rusa/2022s/spd_seniorrifleman",
@@ -51,9 +58,8 @@ _SOURCE_COST_ROLE_MAP: Mapping[str, str] = {
     "mp/rusa/2022s/vostok_antitank": "mp/rusa/2022s/spd_antitank",
     "mp/rusa/2022s/vostok_antitankasst": "mp/rusa/2022s/spd_antitankasst",
     "mp/rusa/2022s/vostok_medic": "mp/rusa/2022s/spd_medic",
-    "mp/rusa/2022s/vostok_2b14crew": "mp/rusa/2022s/spd_uav",
-    "mp/rusa/2022s/vostok_spg9crew": "mp/rusa/2022s/spd_antitank",
-    "mp/rusa/2022s/spd_spotter": "mp/rusa/2022s/spd_sniper",
+    "mp/rusa/2022s/vostok_2b14crew": "mp/rusa/2022s/rus114_rez_2b14crew",
+    "mp/rusa/2022s/vostok_spg9crew": "mp/rusa/2022s/rus114_rez_spg9crew",
 }
 
 # Native GoH observation on the exact owner stack resolved one requested-path
@@ -72,6 +78,8 @@ _SOURCE_CONFLICT_DISPOSITIONS: Mapping[str, tuple[str, float]] = {
 # Do not invent a price from nearby AT variants. Preserve this source-native
 # omission only for this exact path, but require the containing projected unit
 # to retain positive native cost coverage from at least one other member.
+# Source-native omissions: real breeds with no exact inf row. Allowed only when the
+# containing purchase still has positive personnel-cost coverage from another member.
 _SOURCE_NATIVE_UNPRICED_PATHS = frozenset({
     "mp/ukr/2022s/azov3_antitank_javelin",
     "mp/rusa/2022s/kor_crew",
@@ -80,6 +88,8 @@ _SOURCE_NATIVE_UNPRICED_PATHS = frozenset({
     "mp/rusa/2022s/kor_crew_spg9",
     "mp/rusa/2022s/kor_saperi",
     "mp/rusa/2022s/kor_saperi_rpo",
+    # Sparta recon spotter breed has no inf row; other recon members remain priced.
+    "mp/rusa/2022s/spd_spotter",
 })
 
 
@@ -115,10 +125,16 @@ def project_actor_inf_cost_rows(
     """Project native personnel-cost rows required by actor infantry purchases.
 
     GoH Conquest prices infantry through breed-path rows in ``inf_*.set``.
-    Missing rows leave purchases free. This projector mirrors cross-side breed
-    costs, fills exact alias/role-map gaps for same-side virtual/national
-    infantry, never invents prices outside explicit allowlists, and fails closed
-    when a pure-infantry/virtual purchase would remain unpriced.
+    Missing rows leave purchases free. This projector:
+
+    - mirrors cross-side breed costs onto the actor tactical side;
+    - fills exact alias/role-map gaps for same-side virtual/national infantry;
+    - uses alternate-period rows only as *source authority*, always projecting
+      onto the exact breed path the purchase resolves;
+    - never invents prices outside explicit allowlists;
+    - fails closed for virtual and approved cross-side purchases without positive
+      coverage, and for any purchase that relies on allowlisted unpriced members
+      without priced companions.
     """
 
     target_side = str(actor.get("tactical_side", "")).lower()
@@ -135,13 +151,14 @@ def project_actor_inf_cost_rows(
             continue
 
         unit_has_positive_cost = False
-        members_considered = False
+        used_allowlisted_unpriced = False
         unit_name = str(unit.get("unit_name", "<unnamed>"))
         cross_side = (
             str(unit.get("component_id", "")) in _CROSS_SIDE_BREED_COMPONENTS
             and source_side
             and source_side != target_side
         )
+        requires_coverage = _unit_requires_positive_coverage(unit, target_side)
 
         for breed in sorted(str(name) for name in members):
             try:
@@ -152,15 +169,12 @@ def project_actor_inf_cost_rows(
                     period=period,
                 )
             except ExpandedNationsError:
-                # Cross-side materialization requires resolvable breeds.
-                # Same-side scans skip unresolvable members; unit-level coverage
-                # still fails closed when a required unit ends with no priced members.
-                if cross_side:
+                # Virtual and cross-side purchases must resolve every member breed.
+                if requires_coverage:
                     raise
                 continue
             breed_relative = source_breed.relative_to(source_side_root).with_suffix("")
             source_path = f"mp/{source_side}/{breed_relative.as_posix()}"
-            members_considered = True
             target_path = (
                 f"mp/{target_side}/{breed_relative.as_posix()}"
                 if cross_side
@@ -168,9 +182,11 @@ def project_actor_inf_cost_rows(
             )
 
             try:
-                native_target = _lookup_cost_row(index, target_path)
+                # Exact target path only. Alternate-period hits are never treated as
+                # already covering the real breed path.
+                native_target = _lookup_effective_inf_row(index, target_path)
             except ExpandedNationsError:
-                if _unit_requires_positive_coverage(unit, target_side):
+                if requires_coverage:
                     raise
                 continue
             if native_target is not None:
@@ -181,13 +197,14 @@ def project_actor_inf_cost_rows(
             try:
                 authority = _resolve_cost_authority(index, source_path)
             except ExpandedNationsError:
-                if _unit_requires_positive_coverage(unit, target_side):
+                if requires_coverage:
                     raise
                 continue
             if authority is None:
                 if _is_allowlisted_unpriced(source_path) or _is_allowlisted_unpriced(target_path):
+                    used_allowlisted_unpriced = True
                     continue
-                if _unit_requires_positive_coverage(unit, target_side):
+                if requires_coverage:
                     raise ExpandedNationsError(
                         f"Infantry breed {source_path} has no native Conquest inf cost row"
                     )
@@ -197,6 +214,7 @@ def project_actor_inf_cost_rows(
             authority_side = cost_source_path.split("/")[1].lower()
             source_cost = _positive_cost(source_row.entry, source_row.source_reference)
             unit_has_positive_cost = True
+            # Exact native authority already lives on the purchase breed path.
             if cost_source_path.casefold() == target_path.casefold():
                 continue
 
@@ -252,10 +270,8 @@ def project_actor_inf_cost_rows(
                 continue
             projected[target_path.casefold()] = (record, rendered)
 
-        if (
-            members_considered
-            and not unit_has_positive_cost
-            and _unit_requires_positive_coverage(unit, target_side)
+        if not unit_has_positive_cost and (
+            requires_coverage or used_allowlisted_unpriced
         ):
             raise ExpandedNationsError(
                 f"Infantry unit {unit_name} has no positive native Conquest inf cost coverage"
@@ -426,18 +442,24 @@ def _period_variants(path: str) -> tuple[str, ...]:
     return tuple(variants)
 
 
-def _lookup_cost_row(index: _EffectiveInfIndex, path: str) -> _IndexedInfRow | None:
-    for candidate in _period_variants(path):
-        row = _lookup_effective_inf_row(index, candidate)
-        if row is not None:
-            return row
-    return None
+def _lookup_exact_cost_row(index: _EffectiveInfIndex, path: str) -> _IndexedInfRow | None:
+    """Exact path only. Period variants are authority, not coverage."""
+    return _lookup_effective_inf_row(index, path)
 
 
 def _resolve_cost_authority(
     index: _EffectiveInfIndex,
     source_path: str,
 ) -> tuple[str, _IndexedInfRow] | None:
+    """Return (authority_path, row) for generating a target breed cost row.
+
+    Lookup order:
+    1. exact source path
+    2. alternate-period forms of the source path (authority only)
+    3. exact alias table
+    4. exact role-map table (and their alternate-period forms)
+    """
+
     for candidate in _period_variants(source_path):
         row = _lookup_effective_inf_row(index, candidate)
         if row is not None:
@@ -451,9 +473,10 @@ def _resolve_cost_authority(
                 break
         if alias is None:
             continue
-        row = _lookup_cost_row(index, alias)
-        if row is not None:
-            return alias, row
+        for alias_candidate in _period_variants(alias):
+            row = _lookup_effective_inf_row(index, alias_candidate)
+            if row is not None:
+                return alias_candidate, row
 
     for key in _period_variants(source_path):
         role = None
@@ -463,9 +486,10 @@ def _resolve_cost_authority(
                 break
         if role is None:
             continue
-        row = _lookup_cost_row(index, role)
-        if row is not None:
-            return role, row
+        for role_candidate in _period_variants(role):
+            row = _lookup_effective_inf_row(index, role_candidate)
+            if row is not None:
+                return role_candidate, row
     return None
 
 

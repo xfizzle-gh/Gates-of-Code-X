@@ -431,7 +431,7 @@ class ExpandedNationsInfCostTests(unittest.TestCase):
         self.assertEqual(0, len(rows))
         self.assertEqual("", body)
 
-    def test_period_fallback_finds_2022s_cost_for_era2022_breed(self) -> None:
+    def test_period_fallback_projects_onto_exact_breed_path(self) -> None:
         breed = self.layers[2] / "resource/set/breed/mp/nato/era2022/fr_spotter.set"
         breed.parent.mkdir(parents=True, exist_ok=True)
         breed.write_text('{breed {skin "fr"}}\n', encoding="utf-8")
@@ -455,9 +455,93 @@ class ExpandedNationsInfCostTests(unittest.TestCase):
             ],
         }
         rows, body = project_actor_inf_cost_rows(actor, self.layers)
-        # Native authority path equals resolved target after period fallback match
-        # on the same path family; no generated override required.
-        self.assertEqual(0, len(rows))
+        self.assertEqual(1, len(rows))
+        self.assertEqual("mp/nato/2022s/fr_spotter", rows[0].source_path)
+        self.assertEqual("mp/nato/era2022/fr_spotter", rows[0].target_path)
+        self.assertEqual(32.4, rows[0].cost)
+        self.assertIn('"mp/nato/era2022/fr_spotter"', body)
+
+
+
+    def test_kor_allowlisted_unpriced_alone_fails_closed_even_if_not_virtual(self) -> None:
+        breed = self.layers[2] / "resource/set/breed/mp/rusa/2022s/kor_saperi.set"
+        breed.parent.mkdir(parents=True, exist_ok=True)
+        breed.write_text('{breed {skin "kor"}}\n', encoding="utf-8")
+        actor = {
+            "actor_id": "dprk",
+            "display_name": "DPRK",
+            "tactical_side": "rusa",
+            "units": [
+                {
+                    "unit_name": "kor_inf_saperi",
+                    "component_id": "dprk_national",
+                    "source_side": "rusa",
+                    "period": "2022s",
+                    "virtual": False,
+                    "members": {"kor_saperi": 5},
+                    "vehicles": [],
+                }
+            ],
+        }
+        with self.assertRaisesRegex(
+            ExpandedNationsError,
+            r"kor_inf_saperi.*no positive native Conquest inf cost coverage",
+        ):
+            project_actor_inf_cost_rows(actor, self.layers)
+
+    def test_virtual_unit_with_unresolvable_members_fails_closed(self) -> None:
+        actor = {
+            "actor_id": "donbas",
+            "display_name": "Donbas",
+            "tactical_side": "rusa",
+            "units": [
+                {
+                    "unit_name": "goc_missing(rusa)",
+                    "component_id": "donbas_latent",
+                    "source_side": "rusa",
+                    "period": "2022s",
+                    "virtual": True,
+                    "members": {"missing_breed": 1},
+                    "vehicles": [],
+                }
+            ],
+        }
+        with self.assertRaisesRegex(
+            ExpandedNationsError,
+            r"missing_breed|Cross-side breed source is missing",
+        ):
+            project_actor_inf_cost_rows(actor, self.layers)
+
+    def test_vostok_crew_uses_same_equipment_native_authority(self) -> None:
+        breed = self.layers[2] / "resource/set/breed/mp/rusa/2022s/vostok_2b14crew.set"
+        breed.parent.mkdir(parents=True, exist_ok=True)
+        breed.write_text('{breed {skin "vostok"}}\n', encoding="utf-8")
+        self._write_inf(
+            "rusa",
+            '{"mp/rusa/2022s/rus114_rez_2b14crew" ("rusa_radioman" side(rusa)) {cost 136.5}}',
+        )
+        actor = {
+            "actor_id": "donbas",
+            "display_name": "Donbas",
+            "tactical_side": "rusa",
+            "units": [
+                {
+                    "unit_name": "goc_vostok_mortar(rusa)",
+                    "component_id": "donbas_latent",
+                    "source_side": "rusa",
+                    "period": "2022s",
+                    "virtual": True,
+                    "members": {"vostok_2b14crew": 2},
+                    "vehicles": [],
+                }
+            ],
+        }
+        rows, body = project_actor_inf_cost_rows(actor, self.layers)
+        self.assertEqual(1, len(rows))
+        self.assertEqual("mp/rusa/2022s/rus114_rez_2b14crew", rows[0].source_path)
+        self.assertEqual("mp/rusa/2022s/vostok_2b14crew", rows[0].target_path)
+        self.assertEqual(136.5, rows[0].cost)
+
 
 if __name__ == "__main__":
     unittest.main()
