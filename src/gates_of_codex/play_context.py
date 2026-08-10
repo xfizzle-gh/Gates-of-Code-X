@@ -32,7 +32,15 @@ def resolve_status_template(
     explicit: str | Path | None = None,
     *,
     name_prefix: str = "Gates of CodeX",
+    campaign_path: str | Path | None = None,
 ) -> Path:
+    """Choose the saveinfo skeleton for a handoff export.
+
+    #176 requires the handoff to bind to the exact campaign, so automatic reuse
+    of a previously generated template requires its adjacent ``.goc.json`` to
+    name this strategic campaign. The manifest's ``battle_id`` is deliberately
+    not compared: the template is only a skeleton from an earlier battle.
+    """
     archive = CampaignSaveArchive()
     install = Path(install_root)
     installed = Path(installed_save_path).resolve()
@@ -46,9 +54,10 @@ def resolve_status_template(
         reverse=True,
     )
     # #166 D2: newest-wins let an unrelated campaign save become the template.
-    # Prefer our own saves, and never silently adopt someone else's campaign.
-    ours: list[Path] = []
-    unrelated: list[Path] = []
+    # Automatic reuse is now bound to this campaign; a name prefix alone is only
+    # provenance and can belong to a different strategic campaign.
+    same_campaign: list[Path] = []
+    unbound: list[Path] = []
     errors: list[str] = []
     for candidate in candidates:
         try:
@@ -56,21 +65,26 @@ def resolve_status_template(
         except (OSError, ValueError) as exc:
             errors.append(f"{candidate.name}: {exc}")
             continue
-        (ours if _is_own_save(archive, candidate, name_prefix) else unrelated).append(candidate)
-    if ours:
-        return ours[0].resolve()
-    if len(unrelated) == 1:
+        if _is_own_save(archive, candidate, name_prefix) and _binds_to_campaign(
+            candidate, campaign_path
+        ):
+            same_campaign.append(candidate)
+        else:
+            unbound.append(candidate)
+    if same_campaign:
+        return same_campaign[0].resolve()
+    if len(unbound) == 1:
         # The documented first-run setup is "create and save one normal Conquest
         # with the intended mod stack", which carries the player's own name rather
         # than ours. A single candidate is that save; it is not a silent choice
         # among alternatives, and its {mods} block is fully replaced on export.
-        return unrelated[0].resolve()
-    if unrelated:
-        listed = ", ".join(path.name for path in unrelated[:5])
+        return unbound[0].resolve()
+    if unbound:
+        listed = ", ".join(path.name for path in unbound[:5])
         raise RuntimeError(
             f"Refusing to pick a saveinfo template by modification time among "
-            f"{len(unrelated)} unrelated campaign saves in {install}: {listed}. "
-            f"No {name_prefix} save is present to inherit from. Pass --template-save "
+            f"{len(unbound)} candidate saves in {install}: {listed}. None is a "
+            f"{name_prefix} template bound to this campaign. Pass --template-save "
             "explicitly to choose the Conquest save that carries the intended mod stack."
         )
     detail = "; ".join(errors[:5]) if errors else "no other .sav files were found"
@@ -95,6 +109,32 @@ def _is_own_save(archive: CampaignSaveArchive, candidate: Path, name_prefix: str
     except (OSError, ValueError):
         return False
     return read_status_campaign_name(status).strip().startswith(prefix)
+
+
+def _binds_to_campaign(candidate: Path, campaign_path: str | Path | None) -> bool:
+    """True when a generated template's sidecar names this strategic campaign.
+
+    ``battle_id`` is intentionally ignored: the template is a saveinfo skeleton
+    from a previous battle of the same campaign, not the current result.
+    """
+    if campaign_path is None:
+        return False
+    from .service import GatesOfCodeXService
+
+    manifest_path = GatesOfCodeXService.manifest_path(candidate)
+    if not manifest_path.is_file():
+        return False
+    try:
+        manifest = GatesOfCodeXService.load_manifest(manifest_path)
+    except (OSError, ValueError, TypeError):
+        return False
+    recorded = str(getattr(manifest, "campaign_path", "") or "")
+    if not recorded:
+        return False
+    try:
+        return Path(recorded).resolve() == Path(campaign_path).resolve()
+    except OSError:
+        return False
 
 
 def allocate_visible_campaign_name(

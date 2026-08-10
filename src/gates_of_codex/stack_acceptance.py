@@ -264,7 +264,12 @@ def prepare_stack_handoff(
     if status_template_path:
         template = Path(status_template_path).expanduser().resolve()
     elif install_root is not None:
-        template = resolve_status_template(install_root, installed or export_save)
+        template = resolve_status_template(
+            install_root,
+            installed or export_save,
+            name_prefix=name_prefix,
+            campaign_path=campaign,
+        )
     else:
         template = None
 

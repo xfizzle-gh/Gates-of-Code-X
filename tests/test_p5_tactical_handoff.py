@@ -274,6 +274,22 @@ def _write_save(path: Path, campaign_name: str) -> Path:
     return path
 
 
+def _bind_save_to_campaign(save_path: Path, campaign_path: Path) -> Path:
+    """Write the adjacent .goc.json that binds a generated template to a campaign."""
+    from gates_of_codex.service import BattleExportManifest, GatesOfCodeXService
+
+    return GatesOfCodeXService().write_manifest(
+        BattleExportManifest(
+            battle_id="goc-prior-battle",
+            campaign_path=str(campaign_path.resolve()),
+            save_path=str(save_path.resolve()),
+            catalog_signature="",
+            played_games=0,
+            won_games=0,
+        )
+    )
+
+
 class StatusTemplateSelectionTests(unittest.TestCase):
     """#166 D2: never silently adopt an unrelated campaign save as the template."""
 
@@ -299,23 +315,77 @@ class StatusTemplateSelectionTests(unittest.TestCase):
         """The documented first-run setup carries the player's own name, not ours."""
         with tempfile.TemporaryDirectory() as temporary:
             install = Path(temporary) / "campaign"
+            campaign = Path(temporary) / "campaign.json"
+            campaign.write_text("{}", encoding="utf-8")
             only = _write_save(install / "conquest template.sav", "My Conquest")
-            chosen = resolve_status_template(install, install / "target.sav")
+            chosen = resolve_status_template(
+                install, install / "target.sav", campaign_path=campaign
+            )
 
         self.assertEqual(only.resolve(), chosen)
 
-    def test_our_own_save_is_selected_over_a_newer_unrelated_one(self) -> None:
+    def test_same_campaign_template_wins_over_a_newer_unrelated_save(self) -> None:
+        import os
+
         with tempfile.TemporaryDirectory() as temporary:
-            install = Path(temporary) / "campaign"
+            root = Path(temporary)
+            campaign = root / "campaign.json"
+            campaign.write_text("{}", encoding="utf-8")
+            install = root / "campaign"
             ours = _write_save(install / "ours.sav", "Gates of CodeX b714b08b")
+            _bind_save_to_campaign(ours, campaign)
             newer = _write_save(install / "unrelated.sav", "Galactic Conquest Wars")
-            # Make the unrelated save unambiguously newest.
-            import os
             os.utime(ours, (1_000_000, 1_000_000))
             os.utime(newer, (2_000_000, 2_000_000))
-            chosen = resolve_status_template(install, install / "target.sav")
+            chosen = resolve_status_template(
+                install, install / "target.sav", campaign_path=campaign
+            )
 
         self.assertEqual(ours.resolve(), chosen)
+
+    def test_gates_template_from_another_campaign_does_not_win(self) -> None:
+        """#176 requires binding to the exact campaign, not merely our name prefix."""
+        import os
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            campaign = root / "campaign.json"
+            other_campaign = root / "other-campaign.json"
+            for path in (campaign, other_campaign):
+                path.write_text("{}", encoding="utf-8")
+            install = root / "campaign"
+            foreign = _write_save(install / "foreign gates.sav", "Gates of CodeX aaaaaaa1")
+            _bind_save_to_campaign(foreign, other_campaign)
+            ordinary = _write_save(install / "conquest template.sav", "My Conquest")
+            os.utime(foreign, (2_000_000, 2_000_000))
+            os.utime(ordinary, (1_000_000, 1_000_000))
+            with self.assertRaises(RuntimeError) as raised:
+                resolve_status_template(
+                    install, install / "target.sav", campaign_path=campaign
+                )
+
+        message = str(raised.exception)
+        self.assertIn("bound to this campaign", message)
+        self.assertIn("foreign gates.sav", message)
+
+    def test_gates_template_without_a_sidecar_is_not_treated_as_bound(self) -> None:
+        import os
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            campaign = root / "campaign.json"
+            campaign.write_text("{}", encoding="utf-8")
+            install = root / "campaign"
+            unbound = _write_save(install / "gates no sidecar.sav", "Gates of CodeX b1")
+            ordinary = _write_save(install / "conquest template.sav", "My Conquest")
+            os.utime(unbound, (2_000_000, 2_000_000))
+            os.utime(ordinary, (1_000_000, 1_000_000))
+            with self.assertRaises(RuntimeError) as raised:
+                resolve_status_template(
+                    install, install / "target.sav", campaign_path=campaign
+                )
+
+        self.assertIn("bound to this campaign", str(raised.exception))
 
     def test_explicit_template_is_always_honoured(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
