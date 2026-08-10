@@ -4,12 +4,16 @@ on:
   push:
     branches:
       - chore/p4-handoff-import
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
 
 jobs:
   import:
+    if: github.event_name == 'push' || github.head_ref == 'chore/p4-handoff-import'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
