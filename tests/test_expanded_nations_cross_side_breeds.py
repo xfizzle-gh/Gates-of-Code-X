@@ -61,8 +61,11 @@ class ExpandedNationsCrossSideBreedTests(unittest.TestCase):
         self.assertEqual({breed_relative, include_relative}, set(outputs))
         for relative in (breed_relative, include_relative):
             self.assertTrue(outputs[relative].decode("utf-8").startswith(GENERATED_MARKER))
-        self.assertIn(source_breed.read_text(encoding="utf-8").strip(), outputs[breed_relative].decode("utf-8"))
-        self.assertIn(source_include.read_text(encoding="utf-8").strip(), outputs[include_relative].decode("utf-8"))
+        # Compare bytes, not newline-normalized read_text() output.  Windows
+        # write_text() emits CRLF while Linux emits LF, and the projection is
+        # required to preserve the source payload bytes exactly on either host.
+        self.assertTrue(outputs[breed_relative].endswith(source_breed.read_bytes()))
+        self.assertTrue(outputs[include_relative].endswith(source_include.read_bytes()))
 
     def test_existing_target_side_breed_is_never_overwritten(self) -> None:
         self._write_source()
