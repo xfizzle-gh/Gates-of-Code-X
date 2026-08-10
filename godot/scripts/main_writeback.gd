@@ -491,7 +491,7 @@ func _handle_button(button_id: String) -> void:
 			"save_path": last_handoff_save_path,
 		}])
 		return
-	if is_pending_battle_modal_active() and button_id not in ["auto_resolve", "handoff", "import_battle"]:
+	if is_pending_battle_modal_active() and button_id not in ["auto_resolve", "handoff", "import_battle", "verify_result"]:
 		status_message = "Operational resolution paused - resolve or hand off the pending battle."
 		queue_redraw()
 		return
@@ -520,7 +520,7 @@ func _issue_move(target_province_id: String) -> void:
 
 func _draw_button(id: String, label: String, x: float, y: float, enabled: bool, fill := Color("1a2a38")) -> float:
 	var allow := enabled
-	if is_pending_battle_modal_active() and id not in ["auto_resolve", "handoff", "import_battle", "replay_contact", "skip_presentation", "new_campaign", "continue_campaign"]:
+	if is_pending_battle_modal_active() and id not in ["auto_resolve", "handoff", "import_battle", "verify_result", "replay_contact", "skip_presentation", "new_campaign", "continue_campaign"]:
 		allow = false
 	if operational_presenter != null and operational_presenter.is_active() and _command_mutates_state(id):
 		allow = false
@@ -616,11 +616,11 @@ func _queue_and_apply(commands: Array) -> void:
 	_ensure_command_runner()
 	_ensure_operational_presenter()
 	var requested_op := FrontendCommandRunnerScript.primary_op(commands)
-	if is_pending_battle_modal_active() and requested_op not in ["auto_resolve", "handoff", "import_battle"]:
+	if is_pending_battle_modal_active() and requested_op not in ["auto_resolve", "handoff", "import_battle", "verify_result"]:
 		status_message = "Operational resolution paused - pending battle is modal."
 		queue_redraw()
 		return
-	if operational_presenter.is_active() and requested_op not in ["handoff", "import_battle"]:
+	if operational_presenter.is_active() and requested_op not in ["handoff", "import_battle", "verify_result"]:
 		status_message = "Operational presentation active - Skip or wait for completion."
 		queue_redraw()
 		return

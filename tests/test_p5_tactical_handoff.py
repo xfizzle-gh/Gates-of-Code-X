@@ -368,6 +368,58 @@ class StatusTemplateSelectionTests(unittest.TestCase):
         self.assertIn("bound to this campaign", message)
         self.assertIn("foreign gates.sav", message)
 
+    def test_sole_foreign_campaign_template_is_never_adopted(self) -> None:
+        """The single-candidate first-run path must not swallow a foreign template."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            campaign = root / "campaign.json"
+            other_campaign = root / "other-campaign.json"
+            for path in (campaign, other_campaign):
+                path.write_text("{}", encoding="utf-8")
+            install = root / "campaign"
+            foreign = _write_save(install / "foreign gates.sav", "Gates of CodeX aaaaaaa1")
+            _bind_save_to_campaign(foreign, other_campaign)
+            with self.assertRaises(RuntimeError) as raised:
+                resolve_status_template(
+                    install, install / "target.sav", campaign_path=campaign
+                )
+
+        message = str(raised.exception)
+        self.assertIn("not bound to this campaign", message)
+        self.assertIn("foreign gates.sav", message)
+
+    def test_sole_sidecar_less_generated_template_is_never_adopted(self) -> None:
+        """A generated save whose sidecar is missing is not identity-bound either."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            campaign = root / "campaign.json"
+            campaign.write_text("{}", encoding="utf-8")
+            install = root / "campaign"
+            _write_save(install / "gates no sidecar.sav", "Gates of CodeX b1")
+            with self.assertRaises(RuntimeError) as raised:
+                resolve_status_template(
+                    install, install / "target.sav", campaign_path=campaign
+                )
+
+        message = str(raised.exception)
+        self.assertIn("not bound to this campaign", message)
+        self.assertIn("gates no sidecar.sav", message)
+
+    def test_sidecar_binding_is_authority_without_the_visible_name_prefix(self) -> None:
+        """Identity comes from the .goc.json, not from how the save is named."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            campaign = root / "campaign.json"
+            campaign.write_text("{}", encoding="utf-8")
+            install = root / "campaign"
+            renamed = _write_save(install / "renamed by player.sav", "Operation Whatever")
+            _bind_save_to_campaign(renamed, campaign)
+            chosen = resolve_status_template(
+                install, install / "target.sav", campaign_path=campaign
+            )
+
+        self.assertEqual(renamed.resolve(), chosen)
+
     def test_gates_template_without_a_sidecar_is_not_treated_as_bound(self) -> None:
         import os
 

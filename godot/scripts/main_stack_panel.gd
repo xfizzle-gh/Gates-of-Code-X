@@ -268,6 +268,15 @@ func _draw_pending_battle_modal() -> void:
 		writeback and not last_handoff_save_path.is_empty(),
 		Color("243140")
 	)
+	var modal_handoff_status := handoff_status_label()
+	if not modal_handoff_status.is_empty():
+		_draw_panel_text(
+			modal_handoff_status,
+			Vector2(left, button_y + 4.0),
+			12,
+			Color("9fe7a8") if can_import_verified_result() else Color("ffd27a")
+		)
+		button_y += 20.0
 	button_y = _draw_button(
 		"import_battle",
 		"Import verified GoH result (I)",
@@ -276,7 +285,7 @@ func _draw_pending_battle_modal() -> void:
 		writeback \
 			and bool(snapshot.get("pending_battle", {}).get("started", false)) \
 			and String(snapshot.get("pending_battle", {}).get("id", "")) == last_handoff_battle_id \
-			and not last_handoff_save_path.is_empty(),
+			and can_import_verified_result(),
 		Color("264a34")
 	)
 	button_y = _draw_button(
