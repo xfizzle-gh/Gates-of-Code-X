@@ -1,0 +1,33 @@
+{
+  "schema": "gates-of-codex.earth3-p3-frozen-hashes",
+  "schema_version": 1,
+  "authorized_base_commit": "d16e7b145db82180d628bc9c0a636ebbab51db3c",
+  "accepted_p2_head": "4f2eee80256b9a4c5388c88b2d2e357b883b9e6c",
+  "proposal_commit": "1c51766f4c099d3307db70cffec815772b314d21",
+  "approval_issue": 141,
+  "approval_comment_id": 5234226059,
+  "frozen_files": {
+    "p1": {
+      "config/earth3/production_authority.json": "57d56e0aae4e98464e698aaa90b10af70a248d16f348d7888f69e93aa0d7c17f",
+      "godot/assets/maps/earth3_europe_mediterranean/dataset_meta.json": "4dadaa1da207e9d22c9ed90d39cef8e225dd5a2e606228e4c81266568932108d",
+      "godot/assets/maps/earth3_europe_mediterranean/map_manifest.json": "614a926e79f11e3cfac8c867c7bacce107fc69344b17fabb6b4545cdeaa6a357",
+      "godot/assets/maps/earth3_europe_mediterranean/polygon_dataset.json": "4aadab4b5106bbfa4c2d37e8173c3d1675f35a448cbd7f32a8b871c464ce1b84"
+    },
+    "proposal": {
+      "docs/audits/p3-first-corridor-route-inventory.json": "353b19cfbd29ea30ea2881758950679892755b9e208cfd863db4510a802b9cf4"
+    },
+    "p2": {
+      "src/gates_of_codex/data/earth3_v1/alliances.json": "a07d869258d6f7b35bfeb5a5d5842bd3522b69d49f606357eb32480ea4754ff4",
+      "src/gates_of_codex/data/earth3_v1/bootstrap.json": "7ee4af8825a8acbf1813801f3eef7909b0e7e0e0dd0b68f0b25eb4cf642e108a",
+      "src/gates_of_codex/data/earth3_v1/commanders.json": "2413fe95a155a8361a6eaca3b33cc431a65413e54352d70acb46ad8ee4f79acf",
+      "src/gates_of_codex/data/earth3_v1/deployment_zones.json": "f6889dffd996dc1f3a08b1c9259ff60bdd9ffe385baccfa8a6ae1ebac75f47b3",
+      "src/gates_of_codex/data/earth3_v1/factions.json": "2be1b40bfa69c1f43f123f6156a8b35f5d23ca15cc4386663be7392e0bb480a8",
+      "src/gates_of_codex/data/earth3_v1/formations.json": "e8ae502e05ea30233d52257a3cfba7509250601015c2ea00f1acdbe32c63b31c",
+      "src/gates_of_codex/data/earth3_v1/objectives.json": "b399d922e61bbfd14977b2f1a7dd660a96ca567cfb321ead89111483fded2d54",
+      "src/gates_of_codex/data/earth3_v1/ownership.json": "c7439886d60f8ba7ae138c403f62b7b34777211831a92d7bb346cb39dfd9d7df",
+      "src/gates_of_codex/data/earth3_v1/province_mappings.json": "d7788110f5a57343c7007f2f9ec6cb9f0e9e334e63dd4a6881e18ab542c6bb16",
+      "src/gates_of_codex/data/earth3_v1/sites.json": "7fbfa2bd7fd40f97f69b5b515bb77cb7145d1299153a2263d79443692f4c2ef3",
+      "src/gates_of_codex/data/earth3_v1/tactical_maps.json": "cbf2a1023b080449a12329f17bba6d299e784a3734f7f47809ba683add713259"
+    }
+  }
+}

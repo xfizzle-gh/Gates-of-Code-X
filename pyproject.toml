@@ -13,7 +13,7 @@ authors = [{name = "xfizzle-gh"}]
 dependencies = []
 
 [project.optional-dependencies]
-earth3 = ["shapely>=2.0"]
+earth3 = ["shapely>=2.0", "pytest>=8.0"]
 
 [project.scripts]
 gates-of-codex = "gates_of_codex.entrypoint:main"

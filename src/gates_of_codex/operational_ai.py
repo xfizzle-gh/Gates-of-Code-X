@@ -123,9 +123,25 @@ def plan_operational_intents(
     """Pure planner over a detached restricted view."""
     if faction.value != view.faction:
         raise ValueError("planning_view_faction_mismatch")
-    from .state_io import campaign_from_dict
 
-    planning_state = campaign_from_dict(json.loads(view.campaign_payload_json))
+    payload = json.loads(view.campaign_payload_json)
+    metadata = payload.get("map_metadata") if isinstance(payload, dict) else None
+    if (
+        view.fog_of_war_enabled
+        and isinstance(metadata, dict)
+        and "earth3_p3_operational_authority" in metadata
+    ):
+        from .operational_planning_projection import build_restricted_p3_planning_state
+
+        planning_state = build_restricted_p3_planning_state(
+            payload,
+            visible_subject_keys=view.visible_subject_keys,
+        )
+    else:
+        from .state_io import campaign_from_dict
+
+        planning_state = campaign_from_dict(payload)
+
     actions = _plan_and_issue_on_state(planning_state, faction, seed=seed)
     intents: list[OperationalIntent] = []
     for action in actions:

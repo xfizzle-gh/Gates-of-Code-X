@@ -1,0 +1,1010 @@
+{
+  "schema": "gates-of-codex.earth3-p3-operational-authority",
+  "schema_version": 1,
+  "status": "owner_approved_runtime_authority",
+  "map_id": "earth3_europe_mediterranean",
+  "authorized_base_commit": "d16e7b145db82180d628bc9c0a636ebbab51db3c",
+  "accepted_p2_head": "4f2eee80256b9a4c5388c88b2d2e357b883b9e6c",
+  "proposal_commit": "1c51766f4c099d3307db70cffec815772b314d21",
+  "proposal_inventory_sha256": "353b19cfbd29ea30ea2881758950679892755b9e208cfd863db4510a802b9cf4",
+  "approval_issue": 141,
+  "approval_comment_id": 5234226059,
+  "batch_id": "earth3-p3-first-playable-corridors-v1",
+  "rollback_batch_id": "p3-batch-001",
+  "allowlist_sha256": "08901e371baa34688429afc9a6f06cc6361da13eac6eb9907901b47c9c233965",
+  "approved_edge_count": 65,
+  "approved_node_count": 64,
+  "disabled_candidate_edge_count": 8690,
+  "disabled_candidate_ids_sha256": "a7d52fbe2abd1d9b32349ad42e8e00876e3f4727411f58a5e640a3b8a75bbdcf",
+  "complete_candidate_ids_sha256": "2385c49e1ddbb851f0c2d16bbcd7f112adce57b8b9aeddcab76850ab71794bad",
+  "excluded_structural_edge_count": 1494,
+  "directionality": "bidirectional",
+  "movement_cost_milli": 1000,
+  "supply_eligible": true,
+  "graph_relative_path": "godot/assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json",
+  "graph_raw_sha256": "c2d6ab30bfd3e2e15404242144831c5dd6ba284cd132e605e2544be8524d72cf",
+  "p2_sites_raw_sha256": "7fbfa2bd7fd40f97f69b5b515bb77cb7145d1299153a2263d79443692f4c2ef3",
+  "frozen_p1": {
+    "source_dataset_raw_sha256": "4aadab4b5106bbfa4c2d37e8173c3d1675f35a448cbd7f32a8b871c464ce1b84",
+    "source_dataset_sha256": "8ae59bd89419a368fe9131ef7c50d94a7f1cafacd1cfae44362ac9b5d9decced",
+    "source_embedded_dataset_sha256": "8ae59c33da5094b722b1ffad61d2862cdd4805369d74d6c6298425735982a241",
+    "source_topology_edge_count": 10249
+  },
+  "approved_edges": [
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0391-anchor__op-node-e3_2171-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0391-anchor",
+        "op-node-e3_2171-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0391",
+        "e3_2171"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0391-anchor__op-node-e3_2298-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0391-anchor",
+        "op-node-e3_2298-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0391",
+        "e3_2298"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0395-anchor__op-node-e3_2171-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0395-anchor",
+        "op-node-e3_2171-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0395",
+        "e3_2171"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0395-anchor__op-node-e3_2175-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0395-anchor",
+        "op-node-e3_2175-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0395",
+        "e3_2175"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0399-anchor__op-node-e3_0493-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0399-anchor",
+        "op-node-e3_0493-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0399",
+        "e3_0493"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0399-anchor__op-node-e3_2175-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0399-anchor",
+        "op-node-e3_2175-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0399",
+        "e3_2175"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0402-anchor__op-node-e3_0405-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0402-anchor",
+        "op-node-e3_0405-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0402",
+        "e3_0405"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0402-anchor__op-node-e3_2298-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0402-anchor",
+        "op-node-e3_2298-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0402",
+        "e3_2298"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0405-anchor__op-node-e3_0449-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0405-anchor",
+        "op-node-e3_0449-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0405",
+        "e3_0449"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0412-anchor__op-node-e3_0449-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0412-anchor",
+        "op-node-e3_0449-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0412",
+        "e3_0449"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0412-anchor__op-node-e3_0567-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0412-anchor",
+        "op-node-e3_0567-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0412",
+        "e3_0567"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0430-anchor__op-node-e3_0498-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0430-anchor",
+        "op-node-e3_0498-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0430",
+        "e3_0498"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0430-anchor__op-node-e3_1819-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0430-anchor",
+        "op-node-e3_1819-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0430",
+        "e3_1819"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0442-anchor__op-node-e3_0456-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0442-anchor",
+        "op-node-e3_0456-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0442",
+        "e3_0456"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0442-anchor__op-node-e3_1816-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0442-anchor",
+        "op-node-e3_1816-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0442",
+        "e3_1816"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0442-anchor__op-node-e3_1818-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0442-anchor",
+        "op-node-e3_1818-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0442",
+        "e3_1818"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0455-anchor__op-node-e3_0456-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0455-anchor",
+        "op-node-e3_0456-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0455",
+        "e3_0456"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0455-anchor__op-node-e3_1837-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0455-anchor",
+        "op-node-e3_1837-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0455",
+        "e3_1837"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0493-anchor__op-node-e3_1816-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0493-anchor",
+        "op-node-e3_1816-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0493",
+        "e3_1816"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0498-anchor__op-node-e3_0504-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0498-anchor",
+        "op-node-e3_0504-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0498",
+        "e3_0504"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0504-anchor__op-node-e3_0505-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0504-anchor",
+        "op-node-e3_0505-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0504",
+        "e3_0505"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0505-anchor__op-node-e3_2042-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0505-anchor",
+        "op-node-e3_2042-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0505",
+        "e3_2042"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0513-anchor__op-node-e3_0514-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0513-anchor",
+        "op-node-e3_0514-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0513",
+        "e3_0514"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0514-anchor__op-node-e3_0519-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0514-anchor",
+        "op-node-e3_0519-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0514",
+        "e3_0519"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0518-anchor__op-node-e3_0519-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0518-anchor",
+        "op-node-e3_0519-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0518",
+        "e3_0519"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0518-anchor__op-node-e3_0523-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0518-anchor",
+        "op-node-e3_0523-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0518",
+        "e3_0523"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0523-anchor__op-node-e3_2042-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0523-anchor",
+        "op-node-e3_2042-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0523",
+        "e3_2042"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0567-anchor__op-node-e3_0581-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0567-anchor",
+        "op-node-e3_0581-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0567",
+        "e3_0581"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0581-anchor__op-node-e3_0593-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0581-anchor",
+        "op-node-e3_0593-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0581",
+        "e3_0593"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0592-anchor__op-node-e3_0593-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_0592-anchor",
+        "op-node-e3_0593-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_0592",
+        "e3_0593"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1208-anchor__op-node-e3_1209-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1208-anchor",
+        "op-node-e3_1209-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1208",
+        "e3_1209"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1208-anchor__op-node-e3_1876-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1208-anchor",
+        "op-node-e3_1876-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1208",
+        "e3_1876"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1209-anchor__op-node-e3_1943-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1209-anchor",
+        "op-node-e3_1943-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1209",
+        "e3_1943"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1747-anchor__op-node-e3_1943-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1747-anchor",
+        "op-node-e3_1943-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1747",
+        "e3_1943"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1747-anchor__op-node-e3_1962-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1747-anchor",
+        "op-node-e3_1962-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1747",
+        "e3_1962"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1749-anchor__op-node-e3_1936-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1749-anchor",
+        "op-node-e3_1936-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1749",
+        "e3_1936"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1749-anchor__op-node-e3_3480-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1749-anchor",
+        "op-node-e3_3480-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1749",
+        "e3_3480"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1818-anchor__op-node-e3_1819-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1818-anchor",
+        "op-node-e3_1819-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1818",
+        "e3_1819"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1836-anchor__op-node-e3_1851-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1836-anchor",
+        "op-node-e3_1851-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1836",
+        "e3_1851"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1836-anchor__op-node-e3_2634-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1836-anchor",
+        "op-node-e3_2634-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1836",
+        "e3_2634"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1837-anchor__op-node-e3_2634-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1837-anchor",
+        "op-node-e3_2634-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1837",
+        "e3_2634"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1849-anchor__op-node-e3_1851-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1849-anchor",
+        "op-node-e3_1851-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1849",
+        "e3_1851"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1849-anchor__op-node-e3_1938-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1849-anchor",
+        "op-node-e3_1938-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1849",
+        "e3_1938"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1876-anchor__op-node-e3_3480-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1876-anchor",
+        "op-node-e3_3480-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1876",
+        "e3_3480"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1936-anchor__op-node-e3_1947-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1936-anchor",
+        "op-node-e3_1947-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1936",
+        "e3_1947"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1937-anchor__op-node-e3_1938-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1937-anchor",
+        "op-node-e3_1938-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1937",
+        "e3_1938"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1937-anchor__op-node-e3_1944-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1937-anchor",
+        "op-node-e3_1944-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1937",
+        "e3_1944"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1937-anchor__op-node-e3_2808-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1937-anchor",
+        "op-node-e3_2808-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1937",
+        "e3_2808"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1944-anchor__op-node-e3_2062-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1944-anchor",
+        "op-node-e3_2062-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1944",
+        "e3_2062"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1947-anchor__op-node-e3_2330-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1947-anchor",
+        "op-node-e3_2330-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1947",
+        "e3_2330"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1951-anchor__op-node-e3_3379-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1951-anchor",
+        "op-node-e3_3379-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1951",
+        "e3_3379"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1951-anchor__op-node-e3_3380-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1951-anchor",
+        "op-node-e3_3380-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1951",
+        "e3_3380"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1961-anchor__op-node-e3_1962-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1961-anchor",
+        "op-node-e3_1962-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1961",
+        "e3_1962"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1961-anchor__op-node-e3_2800-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1961-anchor",
+        "op-node-e3_2800-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1961",
+        "e3_2800"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1962-anchor__op-node-e3_2795-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_1962-anchor",
+        "op-node-e3_2795-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_1962",
+        "e3_2795"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_2062-anchor__op-node-e3_2331-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_2062-anchor",
+        "op-node-e3_2331-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_2062",
+        "e3_2331"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_2330-anchor__op-node-e3_2331-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_2330-anchor",
+        "op-node-e3_2331-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_2330",
+        "e3_2331"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_2793-anchor__op-node-e3_2794-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_2793-anchor",
+        "op-node-e3_2794-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_2793",
+        "e3_2794"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_2793-anchor__op-node-e3_3379-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_2793-anchor",
+        "op-node-e3_3379-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_2793",
+        "e3_3379"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_2794-anchor__op-node-e3_3380-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_2794-anchor",
+        "op-node-e3_3380-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_2794",
+        "e3_3380"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_2795-anchor__op-node-e3_2796-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_2795-anchor",
+        "op-node-e3_2796-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_2795",
+        "e3_2796"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_2796-anchor__op-node-e3_3380-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_2796-anchor",
+        "op-node-e3_3380-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_2796",
+        "e3_3380"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_2800-anchor__op-node-e3_2810-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_2800-anchor",
+        "op-node-e3_2810-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_2800",
+        "e3_2810"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_2808-anchor__op-node-e3_2809-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_2808-anchor",
+        "op-node-e3_2809-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_2808",
+        "e3_2809"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_2809-anchor__op-node-e3_2810-anchor",
+      "endpoint_node_ids": [
+        "op-node-e3_2809-anchor",
+        "op-node-e3_2810-anchor"
+      ],
+      "endpoint_province_ids": [
+        "e3_2809",
+        "e3_2810"
+      ],
+      "directionality": "bidirectional",
+      "movement_cost_milli": 1000,
+      "supply_eligible": true,
+      "rollback_batch_id": "p3-batch-001"
+    }
+  ]
+}
