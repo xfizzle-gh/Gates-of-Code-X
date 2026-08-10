@@ -74,7 +74,13 @@ def capture_hold_ticks(state: CampaignState, *, strict: bool = False) -> int:
 
 
 def list_control_sites(state: CampaignState) -> list[dict[str, Any]]:
-    """Authored graph sites plus synthetic anchor sites for uncovered provinces."""
+    """Authored graph sites plus legal synthetic anchor control sites.
+
+    Synthetic capture authority only exists where the operational graph actually
+    has an anchor. Earth3 P2/P3 further restricts synthetic sites to the frozen P2
+    scenario footprint, so approved neutral corridor transit never promotes
+    outside provinces into territorial gameplay authority.
+    """
     graph = load_operational_graph_for_state(state)
     if graph is None:
         return []
@@ -91,9 +97,22 @@ def list_control_sites(state: CampaignState) -> list[dict[str, Any]]:
         for site in authored
         if str(site.get("province_id") or "")
     }
+    graph_node_provinces = {
+        str(node.get("province_id") or "")
+        for node in graph.get("nodes") or []
+        if isinstance(node, dict) and str(node.get("province_id") or "")
+    }
+    synthetic_provinces = set(state.provinces) & graph_node_provinces
+
+    from .earth3_bootstrap import earth3_p2_footprint, is_earth3_p2_campaign
+
+    if is_earth3_p2_campaign(state):
+        synthetic_provinces &= set(earth3_p2_footprint(state))
+
     sites = list(authored)
-    # Per-province synthetic anchors only where no authored control site exists.
-    for province_id in sorted(state.provinces):
+    # Per-province synthetic anchors only where an authored graph node exists,
+    # and on Earth3 only inside the immutable P2 scenario footprint.
+    for province_id in sorted(synthetic_provinces):
         if province_id in covered_provinces:
             continue
         node_id = stable_node_id(province_id, "anchor")
