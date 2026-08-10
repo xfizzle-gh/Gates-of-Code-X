@@ -1016,11 +1016,14 @@ def load_authenticated_p3_graph_for_state(
 def validate_earth3_p3_campaign_extension(state: CampaignState) -> None:
     """Validate mutable P3 state against separately authenticated P2/P3 authority.
 
-    This validator never repairs state.  The graph is authenticated inside this
-    function so callers cannot supply a graph or allowlist as a trust context.
+    The exact eleven-force set is an initialization invariant enforced by
+    ``migrate_earth3_p2_to_p3``. Evolved P3 campaigns may legitimately lose
+    formations, but never gain or substitute an unapproved formation identity.
+    This validator is read-only and never recreates eliminated forces.
     """
     from .earth3_bootstrap import (
         is_earth3_p2_campaign,
+        load_earth3_bootstrap,
         validate_earth3_bootstrap_provenance,
     )
     from .operational_position import _graph_indexes, _position_is_valid
@@ -1042,14 +1045,38 @@ def validate_earth3_p3_campaign_extension(state: CampaignState) -> None:
         )
 
     graph = load_authenticated_p3_graph_for_state(state)
-    if graph is None:  # Marker presence is part of the closed P3 extension.
+    if graph is None:
         raise Earth3OperationalAuthorityError("Earth3 P3 state authority marker missing")
     node_ids, edge_ids, edges_by_id, nodes_by_id = _graph_indexes(graph)
-    if set(state.strategic_formations) != P3_STARTING_FORMATION_IDS:
+
+    current_ids = set(state.strategic_formations)
+    unknown_ids = current_ids - P3_STARTING_FORMATION_IDS
+    if unknown_ids:
         raise Earth3OperationalAuthorityError(
-            "Earth3 P3 position set must contain the exact eleven P2 formations"
+            "Earth3 P3 formation identity is outside the authorized P2 initialization set: "
+            + ", ".join(sorted(unknown_ids))
         )
+
+    bundle = load_earth3_bootstrap()
+    expected_rows = {
+        str(row["formation_id"]): row
+        for row in bundle.documents["formations.json"]["formations"]
+    }
+    if set(expected_rows) != P3_STARTING_FORMATION_IDS:
+        raise Earth3OperationalAuthorityError(
+            "Earth3 P3 formation identity authority does not match the accepted P2 bundle"
+        )
+
     for formation_id, force in sorted(state.strategic_formations.items()):
+        expected = expected_rows[formation_id]
+        if (
+            force.actor_id != str(expected["actor_id"])
+            or force.faction.value != str(expected["faction"])
+            or force.template_formation_id != f"toe_{formation_id}"
+        ):
+            raise Earth3OperationalAuthorityError(
+                f"Earth3 P3 formation identity mismatch: {formation_id}"
+            )
         if not _position_is_valid(
             force.position,
             province_id=force.province_id,
@@ -1078,19 +1105,15 @@ def migrate_earth3_p2_to_p3(state: CampaignState) -> CampaignState:
     from .operational_position import OPERATIONAL_POSITION_SCHEMA_VERSION
     from .operational_schema import FormationOperationalPosition, PositionMode
 
-    # Avoid importing or constructing P2 content for unrelated campaigns.
     if not is_earth3_p2_campaign(state):
         return state
     if P3_AUTHORITY_METADATA_KEY in state.map_metadata:
         validate_earth3_p3_campaign_extension(state)
         return state
 
-    # Full raw-P2 state validation is read-only and preserves the original P2
-    # prohibition against graph or maneuver enablement.
     validate_earth3_bootstrap_campaign_state(state)
     state.validate()
 
-    # Authentication completes before deepcopy or any replacement mutation.
     graph = load_authenticated_p3_graph()
     nodes_by_id = {str(node["node_id"]): node for node in graph["nodes"]}
     bundle = load_earth3_bootstrap()
