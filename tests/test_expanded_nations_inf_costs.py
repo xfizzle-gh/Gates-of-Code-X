@@ -47,10 +47,13 @@ class ExpandedNationsInfCostTests(unittest.TestCase):
         breed.parent.mkdir(parents=True)
         breed.write_text('{breed {skin "fixture"}}\n', encoding="utf-8")
 
-    def _write_inf(self, side: str, row: str) -> None:
-        path = self.layers[2] / f"resource/set/multiplayer/units/conquest/inf_{side}.set"
+    def _write_inf_at(self, layer_index: int, filename: str, row: str) -> None:
+        path = self.layers[layer_index] / f"resource/set/multiplayer/units/conquest/{filename}"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(row + "\n", encoding="utf-8")
+
+    def _write_inf(self, side: str, row: str) -> None:
+        self._write_inf_at(2, f"inf_{side}.set", row)
 
     def test_cross_side_cost_preserves_source_native_price(self) -> None:
         self._write_source_breed()
@@ -121,6 +124,70 @@ class ExpandedNationsInfCostTests(unittest.TestCase):
 
         self.assertEqual([], rows)
         self.assertEqual("", body)
+
+    def test_unrelated_same_priority_conflict_does_not_block_projection(self) -> None:
+        self._write_source_breed()
+        self._write_inf(
+            "ukr",
+            '{"mp/ukr/2022s/azov3_squadlead" ("ukr_elite" side(ukr)) {cost 36.5}}',
+        )
+        self._write_inf_at(
+            1,
+            "inf_csa_a.set",
+            '{"mp/csa/era1950/usmc_guncrew" ("csa_crew" side(csa)) {cost 10}}',
+        )
+        self._write_inf_at(
+            1,
+            "inf_csa_b.set",
+            '{"mp/csa/era1950/usmc_guncrew" ("csa_crew" side(csa)) {cost 11}}',
+        )
+
+        rows, _ = project_actor_inf_cost_rows(self._actor(), self.layers)
+
+        self.assertEqual(1, len(rows))
+        self.assertEqual(36.5, rows[0].cost)
+
+    def test_requested_same_priority_conflict_fails_closed(self) -> None:
+        self._write_source_breed()
+        self._write_inf_at(
+            2,
+            "inf_ukr_a.set",
+            '{"mp/ukr/2022s/azov3_squadlead" ("ukr_elite" side(ukr)) {cost 36.5}}',
+        )
+        self._write_inf_at(
+            2,
+            "inf_ukr_b.set",
+            '{"mp/ukr/2022s/azov3_squadlead" ("ukr_elite" side(ukr)) {cost 37.0}}',
+        )
+
+        with self.assertRaisesRegex(
+            ExpandedNationsError,
+            "Conflicting native inf metadata.*requested path mp/ukr/2022s/azov3_squadlead",
+        ):
+            project_actor_inf_cost_rows(self._actor(), self.layers)
+
+    def test_higher_priority_row_replaces_lower_priority_conflict(self) -> None:
+        self._write_source_breed()
+        self._write_inf_at(
+            1,
+            "inf_ukr_a.set",
+            '{"mp/ukr/2022s/azov3_squadlead" ("ukr_elite" side(ukr)) {cost 30}}',
+        )
+        self._write_inf_at(
+            1,
+            "inf_ukr_b.set",
+            '{"mp/ukr/2022s/azov3_squadlead" ("ukr_elite" side(ukr)) {cost 31}}',
+        )
+        self._write_inf(
+            "ukr",
+            '{"mp/ukr/2022s/azov3_squadlead" ("ukr_elite" side(ukr)) {cost 36.5}}',
+        )
+
+        rows, _ = project_actor_inf_cost_rows(self._actor(), self.layers)
+
+        self.assertEqual(1, len(rows))
+        self.assertEqual(36.5, rows[0].cost)
+        self.assertTrue(rows[0].source_reference.startswith("2:codex/"))
 
 
 if __name__ == "__main__":
