@@ -23,6 +23,14 @@ _SIDE_RE_TEMPLATE = r"\bside\s*\(\s*%s\s*\)"
 _INF_MARKER = "; goc-inf-cost "
 _ROSTER_INSERT_BEFORE = '\t(include "conquest/goc_opponent_units.set")'
 
+# Exact installed-stack probing proved this is an upstream Code:X metadata typo:
+# the real breed and squad member are ``azov3_demo_h``, no ``azov3_demon_h``
+# breed exists anywhere in the stack, and the only hardened demolitions cost row
+# is misspelled ``azov3_demon_h`` at 40.0. Keep this alias exact and narrow.
+_SOURCE_COST_ALIASES: Mapping[str, str] = {
+    "mp/ukr/2022s/azov3_demo_h": "mp/ukr/2022s/azov3_demon_h",
+}
+
 
 @dataclass(frozen=True, slots=True)
 class ProjectedInfCost:
@@ -95,14 +103,25 @@ def project_actor_inf_cost_rows(
                 continue
 
             source_row = _lookup_effective_inf_row(index, source_path)
+            cost_source_path = source_path
             if source_row is None:
-                raise ExpandedNationsError(
-                    f"Cross-side breed {source_path} has no native Conquest inf cost row"
-                )
+                alias_path = _SOURCE_COST_ALIASES.get(source_path.casefold())
+                if alias_path is None:
+                    raise ExpandedNationsError(
+                        f"Cross-side breed {source_path} has no native Conquest inf cost row"
+                    )
+                source_row = _lookup_effective_inf_row(index, alias_path)
+                if source_row is None:
+                    raise ExpandedNationsError(
+                        f"Cross-side breed {source_path} has no native Conquest inf cost row "
+                        f"and configured source alias {alias_path} is missing"
+                    )
+                cost_source_path = alias_path
+
             source_cost = _positive_cost(source_row.entry, source_row.source_reference)
             rendered = _project_inf_row(
                 source_row.entry,
-                source_path=source_path,
+                source_path=cost_source_path,
                 target_path=target_path,
                 source_side=source_side,
                 target_side=target_side,
@@ -131,7 +150,7 @@ def project_actor_inf_cost_rows(
                 )
 
             record = ProjectedInfCost(
-                source_path=source_path,
+                source_path=cost_source_path,
                 target_path=target_path,
                 source_side=source_side,
                 target_side=target_side,
