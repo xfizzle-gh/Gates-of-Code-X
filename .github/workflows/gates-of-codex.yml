@@ -14,28 +14,76 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
+  python-shards-ubuntu-311:
+    name: python-shard (ubuntu-latest, 3.11, ${{ matrix.shard }})
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        python-version: ["3.11", "3.13"]
-    runs-on: ${{ matrix.os }}
+        shard: [core, earth3-authority-bootstrap, p4-production-launch]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.11"
       - name: Install
         run: python -m pip install -e ".[earth3]"
-      - name: Test
-        run: python -m unittest discover -s tests -v
+      - name: Verify partition and run shard
+        run: python tools/run_python_test_shard.py --verify-partition --shard ${{ matrix.shard }}
       - name: Campaign CLI smoke test
+        if: matrix.shard == 'core'
         run: gates-of-codex --help
       - name: Live acceptance CLI smoke test
+        if: matrix.shard == 'core'
+        run: gates-of-codex-live --help
+
+  python-shards-ubuntu-313:
+    name: python-shard (ubuntu-latest, 3.13, ${{ matrix.shard }})
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [core, earth3-authority-bootstrap, p4-production-launch]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: python -m pip install -e ".[earth3]"
+      - name: Verify partition and run shard
+        run: python tools/run_python_test_shard.py --verify-partition --shard ${{ matrix.shard }}
+      - name: Campaign CLI smoke test
+        if: matrix.shard == 'core'
+        run: gates-of-codex --help
+      - name: Live acceptance CLI smoke test
+        if: matrix.shard == 'core'
+        run: gates-of-codex-live --help
+
+  python-shards-windows-311:
+    name: python-shard (windows-latest, 3.11, ${{ matrix.shard }})
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [core, earth3-authority-bootstrap, p4-production-launch]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: python -m pip install -e ".[earth3]"
+      - name: Verify partition and run shard
+        run: python tools/run_python_test_shard.py --verify-partition --shard ${{ matrix.shard }}
+      - name: Campaign CLI smoke test
+        if: matrix.shard == 'core'
+        run: gates-of-codex --help
+      - name: Live acceptance CLI smoke test
+        if: matrix.shard == 'core'
         run: gates-of-codex-live --help
       - name: Windows PowerShell installer and Workshop deployment smoke test
-        if: runner.os == 'Windows' && matrix.python-version == '3.11'
+        if: matrix.shard == 'core'
         shell: pwsh
         run: |
           Remove-Item -LiteralPath .venv -Recurse -Force -ErrorAction SilentlyContinue
@@ -56,6 +104,89 @@ jobs:
           if (-not (Test-Path -LiteralPath (Join-Path $deploy ".goc-deployment-manifest.json") -PathType Leaf)) {
             throw "Workshop deployment did not write its manifest"
           }
+
+  python-shards-windows-313:
+    name: python-shard (windows-latest, 3.13, ${{ matrix.shard }})
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [core, earth3-authority-bootstrap, p4-production-launch]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: python -m pip install -e ".[earth3]"
+      - name: Verify partition and run shard
+        run: python tools/run_python_test_shard.py --verify-partition --shard ${{ matrix.shard }}
+      - name: Campaign CLI smoke test
+        if: matrix.shard == 'core'
+        run: gates-of-codex --help
+      - name: Live acceptance CLI smoke test
+        if: matrix.shard == 'core'
+        run: gates-of-codex-live --help
+
+  test-ubuntu-311:
+    name: test (ubuntu-latest, 3.11)
+    if: ${{ always() }}
+    needs: python-shards-ubuntu-311
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every Ubuntu 3.11 shard
+        env:
+          SHARD_RESULT: ${{ needs.python-shards-ubuntu-311.result }}
+        run: |
+          if [ "$SHARD_RESULT" != "success" ]; then
+            echo "Ubuntu 3.11 Python shards did not all succeed: $SHARD_RESULT"
+            exit 1
+          fi
+
+  test-ubuntu-313:
+    name: test (ubuntu-latest, 3.13)
+    if: ${{ always() }}
+    needs: python-shards-ubuntu-313
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every Ubuntu 3.13 shard
+        env:
+          SHARD_RESULT: ${{ needs.python-shards-ubuntu-313.result }}
+        run: |
+          if [ "$SHARD_RESULT" != "success" ]; then
+            echo "Ubuntu 3.13 Python shards did not all succeed: $SHARD_RESULT"
+            exit 1
+          fi
+
+  test-windows-311:
+    name: test (windows-latest, 3.11)
+    if: ${{ always() }}
+    needs: python-shards-windows-311
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every Windows 3.11 shard
+        env:
+          SHARD_RESULT: ${{ needs.python-shards-windows-311.result }}
+        run: |
+          if [ "$SHARD_RESULT" != "success" ]; then
+            echo "Windows 3.11 Python shards did not all succeed: $SHARD_RESULT"
+            exit 1
+          fi
+
+  test-windows-313:
+    name: test (windows-latest, 3.13)
+    if: ${{ always() }}
+    needs: python-shards-windows-313
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every Windows 3.13 shard
+        env:
+          SHARD_RESULT: ${{ needs.python-shards-windows-313.result }}
+        run: |
+          if [ "$SHARD_RESULT" != "success" ]; then
+            echo "Windows 3.13 Python shards did not all succeed: $SHARD_RESULT"
+            exit 1
+          fi
 
   godot-map:
     runs-on: ubuntu-latest
@@ -406,7 +537,7 @@ jobs:
             docs/godot-presentation/screenshots/earth3/
 
   windows-executable:
-    needs: [test, godot-map]
+    needs: [test-ubuntu-311, test-ubuntu-313, test-windows-311, test-windows-313, godot-map]
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
