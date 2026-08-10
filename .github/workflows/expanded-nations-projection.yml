@@ -35,6 +35,7 @@ jobs:
           tests.test_expanded_nations_compile_boundary
           tests.test_expanded_nations_cross_side_breeds
           tests.test_expanded_nations_inf_costs
+          tests.test_expanded_nations_cost_evidence
           tests.test_expanded_nations_legacy_side_conflicts
           tests.test_expanded_nations_matrix
           tests.test_expanded_nations_native_contracts
