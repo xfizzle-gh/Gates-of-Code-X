@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import stat
@@ -44,6 +45,11 @@ P3_GRAPH_RELATIVE_PATH = (
     "godot/assets/maps/earth3_europe_mediterranean/p3_authority/"
     "p3_operational_graph.json"
 )
+P3_PROPOSAL_RELATIVE_PATH = "docs/audits/p3-first-corridor-route-inventory.json"
+P3_DATASET_RELATIVE_PATH = (
+    "godot/assets/maps/earth3_europe_mediterranean/polygon_dataset.json"
+)
+P3_SITES_RELATIVE_PATH = "src/gates_of_codex/data/earth3_v1/sites.json"
 
 AUTHORITY_RAW_SHA256 = "3b3330eb90351c7751d3a582c3f4c177796e297314c6e8f5497f516926fb200f"
 GRAPH_RAW_SHA256 = "c2d6ab30bfd3e2e15404242144831c5dd6ba284cd132e605e2544be8524d72cf"
@@ -66,6 +72,9 @@ P1_DATASET_SHA256 = "8ae59bd89419a368fe9131ef7c50d94a7f1cafacd1cfae44362ac9b5d9d
 P1_EMBEDDED_DATASET_SHA256 = (
     "8ae59c33da5094b722b1ffad61d2862cdd4805369d74d6c6298425735982a241"
 )
+PROPOSAL_LOGICAL_SHA256 = "8ab5127c69faf74f7a02fd554551380350ecc6cadf6ac3f5795f08ccd0ace44a"
+DATASET_LOGICAL_SHA256 = "ef9ed2caf73cd18046a38c1ac26f67728dba5786a9b21471d52f69366813fb42"
+P2_SITES_LOGICAL_SHA256 = "184a5e88c7f8f8dcf26da8eb3ca47588d166555f590c7ef03a8569120fa52d0e"
 
 _AUTHORITY_KEYS = {
     "schema",
@@ -222,6 +231,16 @@ def _canonical_list_sha256(values: list[str]) -> str:
     return _sha256(raw)
 
 
+def _canonical_document_sha256(value: dict[str, Any]) -> str:
+    raw = json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return _sha256(raw)
+
+
 def _is_symlink_or_reparse(value: os.stat_result) -> bool:
     if stat.S_ISLNK(value.st_mode):
         return True
@@ -273,16 +292,41 @@ def _canonical_repository_root(root: Path) -> Path:
     return resolved
 
 
+def _fixed_path_component_stats(
+    root: Path, relative: Path, *, label: str
+) -> list[tuple[Path, os.stat_result]]:
+    captured: list[tuple[Path, os.stat_result]] = []
+    current = root
+    for index, component in enumerate(relative.parts):
+        current = current / component
+        try:
+            current_stat = os.lstat(current)
+        except OSError as exc:
+            location = "file" if index == len(relative.parts) - 1 else "intermediate component"
+            raise Earth3OperationalAuthorityError(
+                f"{label} missing {location}: {current}"
+            ) from exc
+        if _is_symlink_or_reparse(current_stat):
+            location = "file" if index == len(relative.parts) - 1 else "intermediate component"
+            raise Earth3OperationalAuthorityError(
+                f"{label} {location} is a symlink, junction, or reparse point: {current}"
+            )
+        if index < len(relative.parts) - 1 and not stat.S_ISDIR(current_stat.st_mode):
+            raise Earth3OperationalAuthorityError(
+                f"{label} intermediate component is not a directory: {current}"
+            )
+        captured.append((current, current_stat))
+    return captured
+
+
 def _capture_fixed_file(root: Path, relative_path: str, *, label: str) -> bytes:
     relative = Path(relative_path)
     if relative.is_absolute() or ".." in relative.parts:
         raise Earth3OperationalAuthorityError(f"{label} path is not fixed")
     path = root.joinpath(*relative.parts)
-    try:
-        before = os.lstat(path)
-    except OSError as exc:
-        raise Earth3OperationalAuthorityError(f"{label} missing: {relative_path}") from exc
-    if _is_symlink_or_reparse(before) or not stat.S_ISREG(before.st_mode):
+    components_before = _fixed_path_component_stats(root, relative, label=label)
+    before = components_before[-1][1]
+    if not stat.S_ISREG(before.st_mode):
         raise Earth3OperationalAuthorityError(f"{label} is not a regular fixed file")
     try:
         resolved = path.resolve(strict=True)
@@ -307,14 +351,19 @@ def _capture_fixed_file(root: Path, relative_path: str, *, label: str) -> bytes:
         raise Earth3OperationalAuthorityError(f"{label} cannot be read") from exc
 
     try:
-        final = os.lstat(path)
+        components_after = _fixed_path_component_stats(root, relative, label=label)
+        final = components_after[-1][1]
         final_resolved = path.resolve(strict=True)
         final_resolved.relative_to(root)
     except (OSError, ValueError) as exc:
         raise Earth3OperationalAuthorityError(f"{label} changed while reading") from exc
-    if (
-        _is_symlink_or_reparse(final)
-        or not _same_identity(before, final)
+    if any(
+        before_path != after_path or not _same_identity(before_stat, after_stat)
+        for (before_path, before_stat), (after_path, after_stat) in zip(
+            components_before, components_after
+        )
+    ) or (
+        not _same_identity(before, final)
         or final.st_size != before.st_size
         or final.st_mtime_ns != before.st_mtime_ns
         or final_resolved != resolved
@@ -466,6 +515,175 @@ def _validate_authority(authority: dict[str, Any]) -> list[dict[str, Any]]:
     ):
         raise Earth3OperationalAuthorityError("P3 authority allowlist mismatch")
     return edges
+
+
+def _projection_pixel(value: Any) -> int:
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not math.isfinite(float(value))
+        or value < 0
+    ):
+        raise Earth3OperationalAuthorityError(
+            "P3 frozen projection input contains an invalid centroid"
+        )
+    return int(math.floor(float(value) + 0.5))
+
+
+def _expected_graph_projection(
+    authority: dict[str, Any],
+    proposal: dict[str, Any],
+    dataset: dict[str, Any],
+    sites_document: dict[str, Any],
+) -> dict[str, Any]:
+    expected_inputs = (
+        (proposal, PROPOSAL_LOGICAL_SHA256, "proposal"),
+        (dataset, DATASET_LOGICAL_SHA256, "dataset"),
+        (sites_document, P2_SITES_LOGICAL_SHA256, "P2 sites"),
+    )
+    for document, expected_sha256, label in expected_inputs:
+        if (
+            not isinstance(document, dict)
+            or _canonical_document_sha256(document) != expected_sha256
+        ):
+            raise Earth3OperationalAuthorityError(
+                f"P3 frozen projection input mismatch: {label}"
+            )
+
+    try:
+        province_by_id = {
+            row["id"]: row for row in dataset["provinces"]
+        }
+        site_rows = sorted(sites_document["sites"], key=lambda row: row["site_id"])
+        site_by_province = {row["province_id"]: row for row in site_rows}
+        pixels: dict[str, list[int]] = {}
+        nodes: list[dict[str, Any]] = []
+        for approved_node in proposal["proposed_nodes"]:
+            province_id = approved_node["province_id"]
+            centroid = province_by_id[province_id]["centroid"]
+            pixel = [_projection_pixel(centroid[0]), _projection_pixel(centroid[1])]
+            pixels[province_id] = pixel
+            p2_site = site_by_province.get(province_id)
+            nodes.append(
+                {
+                    "node_id": approved_node["node_id"],
+                    "display_name": f"{province_id} operational anchor",
+                    "kind": "anchor",
+                    "pixel": pixel,
+                    "province_id": province_id,
+                    "site_id": None,
+                    "terrain": "unknown",
+                    "is_hub": bool(p2_site and p2_site["supply_hub_intent"]),
+                    "authority": "authored",
+                    "metadata": {
+                        "role": "earth3_p3_province_anchor",
+                        "source": "frozen_earth3_centroid",
+                    },
+                }
+            )
+
+        sites: list[dict[str, Any]] = []
+        for site in site_rows:
+            province_id = site["province_id"]
+            sites.append(
+                {
+                    "site_id": site["site_id"],
+                    "display_name": site["display_name"],
+                    "kind": site["kind"],
+                    "province_id": province_id,
+                    "pixel": pixels[province_id],
+                    "route_node_id": stable_node_id(province_id),
+                    "control_weight_milli": COST_MILLI_UNITY,
+                    "capture_threshold_milli": COST_MILLI_UNITY,
+                    "tags": ["earth3_p2_site_intent"],
+                    "facilities": ["supply_hub"] if site["supply_hub_intent"] else [],
+                    "owner_faction": site["owner_actor_id"],
+                    "authority": "authored",
+                    "metadata": {
+                        "source": "frozen_earth3_p2_site_intent",
+                        "supply_hub_intent": site["supply_hub_intent"],
+                    },
+                }
+            )
+
+        edges: list[dict[str, Any]] = []
+        for edge in authority["approved_edges"]:
+            left_pid, right_pid = edge["endpoint_province_ids"]
+            left_px, right_px = pixels[left_pid], pixels[right_pid]
+            length_px = max(
+                1,
+                int(
+                    math.floor(
+                        math.hypot(
+                            right_px[0] - left_px[0], right_px[1] - left_px[1]
+                        )
+                        + 0.5
+                    )
+                ),
+            )
+            edges.append(
+                {
+                    "edge_id": edge["edge_id"],
+                    "a": edge["endpoint_node_ids"][0],
+                    "b": edge["endpoint_node_ids"][1],
+                    "kind": "corridor",
+                    "authority": "approved",
+                    "length_px": length_px,
+                    "base_move_points_milli": COST_MILLI_UNITY,
+                    "movement_cost_milli": edge["movement_cost_milli"],
+                    "requires_port": False,
+                    "can_be_blockaded": False,
+                    "traversal_enabled": True,
+                    "bidirectional": edge["directionality"] == "bidirectional",
+                    "province_ids": edge["endpoint_province_ids"],
+                    "legacy_crossing_type": None,
+                    "metadata": {
+                        "approval_comment_id": APPROVED_CORRIDOR_COMMENT_ID,
+                        "batch_id": authority["batch_id"],
+                        "rollback_batch_id": edge["rollback_batch_id"],
+                        "source": APPROVED_CORRIDOR_SOURCE,
+                        "supply_capable": edge["supply_eligible"],
+                    },
+                }
+            )
+    except (KeyError, IndexError, TypeError, ValueError) as exc:
+        raise Earth3OperationalAuthorityError(
+            f"P3 frozen projection input is malformed: {exc}"
+        ) from exc
+
+    return {
+        "schema": GRAPH_SCHEMA,
+        "schema_version": 2,
+        "map_id": EARTH3_MAP_ID,
+        "rules": {
+            "ticks_per_strategic_turn": 10,
+            "capture_hold_ticks": 2,
+            "max_friendly_formations_per_node": 3,
+            "capture_mode": "control_site_node_only",
+            "interception_mode": "swept_movement",
+            "formation_is_movement_authority": True,
+            "authored_crossings_traversable_v1": True,
+            "enforce_port_requirements": False,
+            "enforce_blockades": False,
+        },
+        "sites": sites,
+        "nodes": nodes,
+        "edges": edges,
+        "metadata": {
+            "allowlist_sha256": authority["allowlist_sha256"],
+            "approval_comment_id": APPROVED_CORRIDOR_COMMENT_ID,
+            "authority_schema_version": 1,
+            "batch_id": authority["batch_id"],
+            "disabled_candidate_edge_count": authority[
+                "disabled_candidate_edge_count"
+            ],
+            "disabled_candidate_ids_sha256": authority[
+                "disabled_candidate_ids_sha256"
+            ],
+            "proposal_commit": authority["proposal_commit"],
+            "rollback_batch_id": authority["rollback_batch_id"],
+        },
+    }
 
 
 def _validate_graph(authority: dict[str, Any], graph: dict[str, Any]) -> None:
@@ -668,16 +886,30 @@ def _validate_graph(authority: dict[str, Any], graph: dict[str, Any]) -> None:
         metadata=dict(graph_metadata),
     )
     try:
-        runtime_graph.validate(province_ids=set(node_provinces.values()))
+        runtime_graph._validate_structure(province_ids=set(node_provinces.values()))
     except (TypeError, ValueError) as exc:
         raise Earth3OperationalAuthorityError(f"P3 graph schema validation failed: {exc}") from exc
 
 
-def validate_p3_documents(authority: dict[str, Any], graph: dict[str, Any]) -> None:
+def validate_p3_documents(
+    authority: dict[str, Any],
+    graph: dict[str, Any],
+    *,
+    proposal: dict[str, Any],
+    dataset: dict[str, Any],
+    sites_document: dict[str, Any],
+) -> None:
     """Validate closed P3 documents independently of their raw-byte authentication."""
     if not isinstance(authority, dict) or not isinstance(graph, dict):
         raise Earth3OperationalAuthorityError("P3 authority and graph must be objects")
     _validate_authority(authority)
+    expected_graph = _expected_graph_projection(
+        authority, proposal, dataset, sites_document
+    )
+    if graph != expected_graph:
+        raise Earth3OperationalAuthorityError(
+            "P3 graph does not match the exact frozen-input authority projection"
+        )
     _validate_graph(authority, graph)
 
 
@@ -692,13 +924,37 @@ def load_authenticated_p3_graph(
         root, P3_AUTHORITY_RELATIVE_PATH, label="Earth3 P3 authority"
     )
     graph_raw = _capture_fixed_file(root, P3_GRAPH_RELATIVE_PATH, label="Earth3 P3 graph")
+    proposal_raw = _capture_fixed_file(
+        root, P3_PROPOSAL_RELATIVE_PATH, label="Earth3 P3 proposal"
+    )
+    dataset_raw = _capture_fixed_file(
+        root, P3_DATASET_RELATIVE_PATH, label="Earth3 P1 dataset"
+    )
+    sites_raw = _capture_fixed_file(
+        root, P3_SITES_RELATIVE_PATH, label="Earth3 P2 sites"
+    )
     if _sha256(authority_raw) != AUTHORITY_RAW_SHA256:
         raise Earth3OperationalAuthorityError("Earth3 P3 authority SHA-256 mismatch")
     if _sha256(graph_raw) != GRAPH_RAW_SHA256:
         raise Earth3OperationalAuthorityError("Earth3 P3 graph SHA-256 mismatch")
+    if _sha256(proposal_raw) != PROPOSAL_RAW_SHA256:
+        raise Earth3OperationalAuthorityError("Earth3 P3 proposal SHA-256 mismatch")
+    if _sha256(dataset_raw) != P1_DATASET_RAW_SHA256:
+        raise Earth3OperationalAuthorityError("Earth3 P1 dataset SHA-256 mismatch")
+    if _sha256(sites_raw) != P2_SITES_RAW_SHA256:
+        raise Earth3OperationalAuthorityError("Earth3 P2 sites SHA-256 mismatch")
     authority = _strict_json_object(authority_raw, label="Earth3 P3 authority")
     graph = _strict_json_object(graph_raw, label="Earth3 P3 graph")
-    validate_p3_documents(authority, graph)
+    proposal = _strict_json_object(proposal_raw, label="Earth3 P3 proposal")
+    dataset = _strict_json_object(dataset_raw, label="Earth3 P1 dataset")
+    sites_document = _strict_json_object(sites_raw, label="Earth3 P2 sites")
+    validate_p3_documents(
+        authority,
+        graph,
+        proposal=proposal,
+        dataset=dataset,
+        sites_document=sites_document,
+    )
     return graph
 
 
@@ -706,9 +962,9 @@ def load_authenticated_p3_graph_for_state(
     state: CampaignState,
 ) -> dict[str, Any] | None:
     """Return the graph only for an exactly authenticated serialized P3 marker."""
-    marker = state.map_metadata.get(P3_AUTHORITY_METADATA_KEY)
-    if marker is None:
+    if P3_AUTHORITY_METADATA_KEY not in state.map_metadata:
         return None
+    marker = state.map_metadata[P3_AUTHORITY_METADATA_KEY]
     expected = authenticated_p3_state_metadata()
     if (
         not isinstance(marker, dict)

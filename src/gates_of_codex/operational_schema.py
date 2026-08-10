@@ -262,6 +262,23 @@ class OperationalRouteEdge:
         province_ids: set[str],
         node_province: dict[str, str],
     ) -> None:
+        self._validate_structure(
+            node_ids=node_ids,
+            province_ids=province_ids,
+            node_province=node_province,
+        )
+        if self.authority == EdgeAuthority.APPROVED.value:
+            raise ValueError(
+                f"approved edge {self.edge_id} requires the authenticated exact allowlist"
+            )
+
+    def _validate_structure(
+        self,
+        *,
+        node_ids: set[str],
+        province_ids: set[str],
+        node_province: dict[str, str],
+    ) -> None:
         if not self.edge_id.strip():
             raise ValueError("edge_id required")
         if self.a not in node_ids or self.b not in node_ids:
@@ -521,6 +538,19 @@ class OperationalGraph:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def validate(self, *, province_ids: Iterable[str]) -> None:
+        self._validate_structure(province_ids=province_ids)
+        approved = [
+            edge.edge_id
+            for edge in self.edges
+            if edge.authority == EdgeAuthority.APPROVED.value
+        ]
+        if approved:
+            raise ValueError(
+                "approved edges require the authenticated Earth3 P3 loader: "
+                f"{approved[0]}"
+            )
+
+    def _validate_structure(self, *, province_ids: Iterable[str]) -> None:
         """Validate graph. Must not mutate self.metadata or any nested records."""
         provinces = set(province_ids)
         self.rules.validate()
@@ -541,7 +571,7 @@ class OperationalGraph:
         for node in self.nodes:
             node.validate(province_ids=provinces, site_ids=site_id_set)
         for edge in self.edges:
-            edge.validate(
+            edge._validate_structure(
                 node_ids=node_id_set,
                 province_ids=provinces,
                 node_province=node_province,

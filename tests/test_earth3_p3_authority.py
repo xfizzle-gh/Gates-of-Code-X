@@ -126,14 +126,24 @@ def _approved_schema_edge() -> OperationalRouteEdge:
     )
 
 
-def _validate_schema_edge(edge: OperationalRouteEdge) -> None:
-    edge.validate(
-        node_ids={edge.a, edge.b},
-        province_ids=set(edge.province_ids),
-        node_province={
+def _schema_validation_kwargs(edge: OperationalRouteEdge) -> dict:
+    return {
+        "node_ids": {edge.a, edge.b},
+        "province_ids": set(edge.province_ids),
+        "node_province": {
             edge.a: edge.province_ids[0],
             edge.b: edge.province_ids[1],
         },
+    }
+
+
+def _validate_schema_edge(edge: OperationalRouteEdge) -> None:
+    edge.validate(**_schema_validation_kwargs(edge))
+
+
+def _validate_schema_edge_structure(edge: OperationalRouteEdge) -> None:
+    edge._validate_structure(
+        **_schema_validation_kwargs(edge),
     )
 
 
@@ -266,7 +276,10 @@ def test_exact_byte_p3_artifacts_are_forced_to_lf_in_git() -> None:
 
 
 def test_approved_corridor_schema_accepts_only_the_exact_owner_policy() -> None:
-    _validate_schema_edge(_approved_schema_edge())
+    edge = _approved_schema_edge()
+    with pytest.raises(ValueError, match="authenticated.*allowlist"):
+        _validate_schema_edge(edge)
+    _validate_schema_edge_structure(edge)
 
     mutations = {
         "disabled": lambda edge: setattr(edge, "traversal_enabled", False),
@@ -293,7 +306,34 @@ def test_approved_corridor_schema_accepts_only_the_exact_owner_policy() -> None:
         edge = copy.deepcopy(_approved_schema_edge())
         mutate(edge)
         with pytest.raises(ValueError, match="approved edge"):
-            _validate_schema_edge(edge)
+            _validate_schema_edge_structure(edge)
+
+
+def test_disabled_candidate_id_cannot_claim_approved_authority() -> None:
+    proposal = _read_json(PROPOSAL)
+    disabled_id = proposal["disabled_candidate_edge_ids"][0]
+    left, right = disabled_id.removeprefix("op-edge-corridor-").split("__", 1)
+    edge = _approved_schema_edge()
+    edge.edge_id = disabled_id
+    edge.a = left
+    edge.b = right
+    edge.province_ids = [
+        left.removeprefix("op-node-").removesuffix("-anchor"),
+        right.removeprefix("op-node-").removesuffix("-anchor"),
+    ]
+
+    with pytest.raises(ValueError, match="authenticated.*allowlist"):
+        _validate_schema_edge(edge)
+
+
+def test_caller_supplied_allowlist_cannot_bypass_global_schema_trust() -> None:
+    edge = _approved_schema_edge()
+    approved = set(_read_json(PROPOSAL)["proposed_enabled_edge_ids"])
+    with pytest.raises(TypeError, match="approved_edge_ids"):
+        edge.validate(
+            **_schema_validation_kwargs(edge),
+            approved_edge_ids=approved,
+        )
 
 
 def test_candidate_and_authored_edge_schema_behavior_is_unchanged() -> None:
