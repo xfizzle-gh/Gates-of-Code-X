@@ -7,6 +7,20 @@
         "leopord_2a4m"
       ],
       "reason": "Code:X directly supplies the Canadian Leopard 2A4M wrapper alongside Leopard C2 MEXAS. Omitting it left the Canadian national armor progression artificially incomplete."
+    },
+    {
+      "component_id": "france_national",
+      "selector_index": 0,
+      "units": [
+        "squad_arf_rifle(nato)",
+        "squad_arf_rifle_spike(nato)",
+        "squad_arf_mg(nato)",
+        "squad_arf_at(nato)",
+        "squad_arf_scout(nato)",
+        "squad_dsk_eng(nato)",
+        "squad_dsk_eng_at(nato)"
+      ],
+      "reason": "France is intentionally a national hybrid using ARF line infantry until dedicated French line-infantry wrappers exist. The common-infantry research selector did not retain canonical purchase IDs carrying the (nato) suffix, leaving France with support weapons and vehicles but no recruitable line infantry."
     }
   ],
   "actor_component_removals": [
@@ -24,6 +38,9 @@
     ],
     "fin": [
       "Second self-audit removed the broad Soviet legacy pool; only directly selected Finnish/Nordic equipment and NATO-common gap filling remain."
+    ],
+    "fra": [
+      "Native France acceptance restored the canonical ARF rifle, SPIKE, machine-gun, anti-tank, scout, and DSK engineer squads required by the temporary line-infantry policy."
     ]
   }
 }
