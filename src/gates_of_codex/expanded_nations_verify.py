@@ -10,6 +10,7 @@ from .goh_source import scan_source_entries
 from .expanded_nations_models import (
     ACTIVATION_SCHEMA,
     ACTIVATION_VERSION,
+    BREED_ROOT_RELATIVE,
     BROAD_ROSTER_INCLUDES,
     ExpandedNationsError,
     GENERATED_MARKER,
@@ -75,6 +76,7 @@ def verify_projection_artifacts(
     side = str(manifest.get("tactical_side", ""))
     expected = set(managed_relatives_for_side(side))
     expected.update(_manifest_presentation_relatives(manifest))
+    expected.update(_manifest_breed_relatives(manifest))
     if set(outputs) != expected:
         missing = sorted(path.as_posix() for path in expected - set(outputs))
         extra = sorted(path.as_posix() for path in set(outputs) - expected)
@@ -138,6 +140,7 @@ def verify_projection_artifacts(
     _verify_opponents(opponent_text, manifest, side)
     _verify_research(research_text, manifest)
     _verify_presentation(outputs, manifest)
+    _verify_breed_projection(outputs, manifest)
 
 
 def _verify_actor_units(
@@ -351,6 +354,52 @@ def _manifest_presentation_relatives(
     return values
 
 
+def _manifest_breed_relatives(
+    manifest: Mapping[str, Any],
+) -> tuple[Path, ...]:
+    raw = manifest.get("breed_files", [])
+    if not isinstance(raw, list):
+        raise ExpandedNationsError(
+            "Activation manifest breed_files must be a list"
+        )
+    values = tuple(Path(str(item)) for item in raw)
+    if len(values) != len(set(values)):
+        raise ExpandedNationsError(
+            "Activation manifest breed files are duplicate"
+        )
+    side = str(manifest.get("tactical_side", "")).lower()
+    allowed_root = BREED_ROOT_RELATIVE / side
+    for relative in values:
+        if relative.suffix.lower() not in {".set", ".inc"}:
+            raise ExpandedNationsError(
+                f"Activation manifest contains unsupported breed artifact: {relative}"
+            )
+        try:
+            relative.relative_to(allowed_root)
+        except ValueError as exc:
+            raise ExpandedNationsError(
+                f"Activation manifest breed artifact escapes target side: {relative}"
+            ) from exc
+    return values
+
+
+def _verify_breed_projection(
+    outputs: Mapping[Path, bytes],
+    manifest: Mapping[str, Any],
+) -> None:
+    for relative in _manifest_breed_relatives(manifest):
+        data = outputs[relative]
+        text = data.decode("utf-8-sig")
+        if not text.startswith(GENERATED_MARKER):
+            raise ExpandedNationsError(
+                f"Generated cross-side breed lacks managed marker: {relative}"
+            )
+        if relative.suffix.lower() == ".set" and text.count("{") != text.count("}"):
+            raise ExpandedNationsError(
+                f"Generated cross-side breed has unbalanced braces: {relative}"
+            )
+
+
 def _source_filename(source_reference: str) -> str:
     normalized = source_reference.replace("\\", "/")
     return normalized.rsplit("/", 1)[-1]
@@ -452,6 +501,7 @@ def load_manifest(path: Path) -> dict[str, Any]:
 def verify_manifest_files(root: Path, manifest: Mapping[str, Any]) -> None:
     allowed_paths = set(managed_relatives_for_side(str(manifest["tactical_side"])))
     allowed_paths.update(_manifest_presentation_relatives(manifest))
+    allowed_paths.update(_manifest_breed_relatives(manifest))
     allowed = {item.as_posix() for item in allowed_paths}
     rows = manifest.get("files", [])
     actual = {str(row.get("relative_path", "")) for row in rows}
