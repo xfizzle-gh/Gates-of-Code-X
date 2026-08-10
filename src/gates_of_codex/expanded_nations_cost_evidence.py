@@ -231,6 +231,11 @@ def build_cost_evidence_matrix(
         "wiring_signature": str(payload["wiring_signature"]),
         "unintended_zero_total": len(global_unintended_zeros),
         "unintended_zeros": global_unintended_zeros,
+        "source_vehicle_money_gap_total": sum(
+            1
+            for item in global_unintended_zeros
+            if str(item.get("economy_class")) == "vehicle_unpriced"
+        ),
         "actors": actors,
     }
 
@@ -365,25 +370,33 @@ def _evaluate_unit_cost(
         index=index,
     )
 
+    # Purchase text is authority for whether a unit is vehicle-bearing. Wiring
+    # meta may list vehicles that the activated purchase form does not carry.
     vehicle_names = list(dict.fromkeys(_VEHICLE_CALL_RE.findall(entry_raw)))
-    has_vehicle = bool(vehicle_names) or (
-        bool(unit_meta.get("vehicles")) if unit_meta else False
-    ) or ('("squad_vehicle"' in entry_raw) or ' ("squad_vehicle"' in entry_raw or re.search(r'\(\s*"squad_vehicle"', entry_raw) is not None
+    has_vehicle = bool(vehicle_names) or bool(
+        re.search(r'\(\s*"(?:squad_vehicle\d*|vehicle)"', entry_raw)
+    )
 
     vehicle_entity_cost = None
     vehicle_lookup_error = None
+    resolved_vehicle_costs: list[float] = []
+    missing_vehicles: list[str] = []
     for name in vehicle_names:
         try:
             found = _lookup_vehicle_cost(vehicle_costs, vehicle_conflicts, name)
         except ExpandedNationsError as exc:
             vehicle_lookup_error = str(exc)
             found = None
-        if found is not None:
-            vehicle_entity_cost = found
-            break
+        if found is None:
+            missing_vehicles.append(name)
+        else:
+            resolved_vehicle_costs.append(float(found))
+    # Multi-vehicle purchases require every referenced vehicle body to be priced.
+    if resolved_vehicle_costs and not missing_vehicles and vehicle_lookup_error is None:
+        vehicle_entity_cost = float(sum(resolved_vehicle_costs))
 
     # Purchase-name entity rows can also author vehicle-squad pricing in source packs.
-    if vehicle_entity_cost is None and has_vehicle:
+    if vehicle_entity_cost is None and has_vehicle and not vehicle_names:
         for candidate in (entry_name, entry_name.split("(", 1)[0]):
             try:
                 found = _lookup_vehicle_cost(vehicle_costs, vehicle_conflicts, candidate)
@@ -429,10 +442,11 @@ def _evaluate_unit_cost(
         native = 0.0
         if vehicle_lookup_error:
             rationale = vehicle_lookup_error
-        elif vehicle_names:
+        elif missing_vehicles or vehicle_names:
+            names = missing_vehicles or vehicle_names
             rationale = (
                 "vehicle-bearing purchase lacks purchase money cost and vehicle entity "
-                f"money cost for {', '.join(vehicle_names)}"
+                f"money cost for {', '.join(names)}"
             )
         else:
             rationale = "vehicle-bearing purchase lacks purchase/vehicle money-cost authority"

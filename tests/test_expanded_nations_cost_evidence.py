@@ -157,5 +157,38 @@ class ExpandedNationsCostEvidenceTests(unittest.TestCase):
         self.assertIn("never counted as recruitment money", md)
 
 
+
+    def test_purchase_text_not_wiring_meta_decides_vehicle(self) -> None:
+        breed = self.layers[2] / "resource/set/breed/mp/nato/2022s/usmc_rifleman.set"
+        breed.parent.mkdir(parents=True, exist_ok=True)
+        breed.write_text('{breed {skin "x"}}\n', encoding="utf-8")
+        inf = self.layers[2] / "resource/set/multiplayer/units/conquest/inf_nato.set"
+        inf.parent.mkdir(parents=True, exist_ok=True)
+        inf.write_text(
+            '{"mp/nato/2022s/usmc_rifleman" ("nato_basic" side(nato)) {cost 17.5}}\n',
+            encoding="utf-8",
+        )
+        raw = (
+            '{"squad_usmc_rifle(nato)"\n'
+            '\t("mp_infantry_1" side(nato) c1(usmc_rifleman:5))\n'
+            '}'
+        )
+        entry = scan_source_entries(raw + "\n", "t").entries[0]
+        ev = _evaluate_unit_cost(
+            entry_name=entry.name,
+            entry_raw=entry.raw,
+            entry_form=entry.form,
+            entry_calls=entry.calls,
+            unit_meta={"vehicles": ["MAARS"], "members": {"usmc_rifleman": 5}},
+            tactical_side="nato",
+            roots=self.layers,
+            index=self._index(),
+            vehicle_costs={},
+            vehicle_conflicts={},
+        )
+        self.assertEqual("personnel_inf_sum", ev.economy_class)
+        self.assertEqual(87.5, ev.native_recruitment_cost)
+        self.assertFalse(ev.has_vehicle)
+
 if __name__ == "__main__":
     unittest.main()
