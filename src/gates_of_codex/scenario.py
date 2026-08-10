@@ -26,8 +26,12 @@ class ScenarioDefinition:
 
 def _build_earth3(**options) -> CampaignState:
     from .earth3_bootstrap import build_earth3_v1_campaign
+    from .earth3_operational import migrate_earth3_p2_to_p3
 
-    return build_earth3_v1_campaign(**options)
+    # Keep the direct Earth3 bootstrap builder frozen at P2.  Production scenario
+    # construction adds P3 only through the separately authenticated atomic
+    # migration, so P2 content remains independently reproducible and testable.
+    return migrate_earth3_p2_to_p3(build_earth3_v1_campaign(**options))
 
 
 def _build_legacy_goe_europe(**options) -> CampaignState:
@@ -53,9 +57,11 @@ SCENARIO_REGISTRY = MappingProxyType(
             status="production",
             required_asset_authority=(
                 "config/earth3/production_authority.json",
+                "config/earth3/p3_operational_authority.json",
                 "godot/assets/maps/earth3_europe_mediterranean/map_manifest.json",
                 "godot/assets/maps/earth3_europe_mediterranean/polygon_dataset.json",
                 "godot/assets/maps/earth3_europe_mediterranean/dataset_meta.json",
+                "godot/assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json",
                 "src/gates_of_codex/data/earth3_v1/*.json",
             ),
             display_name="Earth3 Europe–Mediterranean v1 Campaign Bootstrap",
