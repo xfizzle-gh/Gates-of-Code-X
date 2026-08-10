@@ -14,6 +14,11 @@ var _busy_status := ""
 var _last_command_gen_handled := 0
 ## Test/observability: increments only on successful live snapshot commit after a command.
 var snapshot_commit_count := 0
+## Player-shell state. New Campaign replaces authoritative state, so it always
+## requires a second confirming press.
+var new_campaign_confirm_pending := false
+var _command_sequence := 0
+var _session_token := ""
 
 
 func _ready() -> void:
@@ -292,11 +297,129 @@ func _command_mutates_state(button_id: String) -> bool:
 		return false
 	if button_id.begins_with("move:") or button_id.begins_with("construct:"):
 		return true
-	return button_id in ["refresh", "end_turn", "run_ai", "auto_resolve", "handoff", "import_battle"]
+	return button_id in [
+		"refresh",
+		"end_turn",
+		"run_ai",
+		"auto_resolve",
+		"handoff",
+		"import_battle",
+		"new_campaign",
+		"continue_campaign",
+	]
+
+
+func next_command_id(op: String) -> String:
+	## Stable per-session identity used by the backend exactly-once ledger.
+	if _session_token.is_empty():
+		_session_token = "%d-%d" % [
+			int(Time.get_unix_time_from_system()),
+			int(Time.get_ticks_usec()),
+		]
+	_command_sequence += 1
+	return "%s:%s:%d" % [_session_token, op, _command_sequence]
+
+
+func _stamp_command_ids(commands: Array) -> Array:
+	## Every mutation carries an identity so a replay cannot apply twice.
+	var stamped: Array = []
+	for item in commands:
+		if not item is Dictionary:
+			continue
+		var entry: Dictionary = (item as Dictionary).duplicate(true)
+		var existing := String(entry.get("command_id", "")).strip_edges()
+		if existing.is_empty():
+			entry["command_id"] = next_command_id(String(entry.get("op", "command")))
+		stamped.append(entry)
+	return stamped
+
+
+func player_launch_block() -> Dictionary:
+	var control: Dictionary = snapshot.get("control", {})
+	var play: Variant = control.get("play", {})
+	if play is Dictionary:
+		return (play as Dictionary).duplicate(true)
+	return {}
+
+
+func can_start_new_campaign() -> bool:
+	var play := player_launch_block()
+	return bool(play.get("enabled", false)) \
+		and not (play.get("new_args", []) as Array).is_empty() \
+		and not is_command_busy()
+
+
+func can_continue_campaign() -> bool:
+	var play := player_launch_block()
+	return bool(play.get("enabled", false)) \
+		and not (play.get("continue_args", []) as Array).is_empty() \
+		and not is_command_busy()
+
+
+func _run_player_launch(op: String, args_key: String) -> void:
+	_ensure_command_runner()
+	var play := player_launch_block()
+	if not bool(play.get("enabled", false)):
+		status_message = "Player launch unavailable — re-export the frontend with a campaign path."
+		queue_redraw()
+		return
+	var raw_args: Array = play.get(args_key, [])
+	if raw_args.is_empty():
+		status_message = "Player launch arguments missing for %s." % op
+		queue_redraw()
+		return
+	if is_command_busy():
+		status_message = "Busy — wait for %s to finish." % command_runner.current_op()
+		queue_redraw()
+		return
+	var launch_args: Array = []
+	for value in raw_args:
+		launch_args.append(String(value))
+	var control: Dictionary = snapshot.get("control", {})
+	var snapshot_path := String(control.get("snapshot_path", ""))
+	var candidates := _backend_launch_candidates(control, launch_args)
+	# The launcher rewrites the authoritative campaign and republishes the
+	# snapshot; the runner reports the same way an apply-frontend batch does.
+	var marker: Array = [{"op": op, "command_id": next_command_id(op)}]
+	var start: Dictionary = command_runner.try_start_candidates(
+		marker,
+		candidates,
+		snapshot_path if not snapshot_path.is_empty() else snapshot_source_path
+	)
+	if not bool(start.get("ok", false)):
+		status_message = "Unable to start player launch: %s" % String(start.get("reason", "rejected"))
+		queue_redraw()
+		return
+	_busy_status = "Running %s..." % op
+	status_message = _busy_status
+	set_process(true)
+	queue_redraw()
 
 
 func _handle_button(button_id: String) -> void:
 	_ensure_operational_presenter()
+	if button_id != "new_campaign":
+		new_campaign_confirm_pending = false
+	if button_id == "new_campaign":
+		if not can_start_new_campaign():
+			status_message = "New Campaign unavailable right now."
+			queue_redraw()
+			return
+		if not new_campaign_confirm_pending:
+			new_campaign_confirm_pending = true
+			status_message = "New Campaign replaces the current campaign — press again to confirm."
+			queue_redraw()
+			return
+		new_campaign_confirm_pending = false
+		_run_player_launch("new_campaign", "new_args")
+		return
+	if button_id == "continue_campaign":
+		if not can_continue_campaign():
+			status_message = "Continue Campaign unavailable right now."
+			queue_redraw()
+			return
+		_run_player_launch("continue_campaign", "continue_args")
+		return
 	if button_id == "replay_contact":
 		if operational_presenter.replay_last_contact():
 			status_message = "Replaying last contact - presentation only."
@@ -344,7 +467,7 @@ func _issue_move(target_province_id: String) -> void:
 
 func _draw_button(id: String, label: String, x: float, y: float, enabled: bool, fill := Color("1a2a38")) -> float:
 	var allow := enabled
-	if is_pending_battle_modal_active() and id not in ["auto_resolve", "handoff", "import_battle", "replay_contact", "skip_presentation"]:
+	if is_pending_battle_modal_active() and id not in ["auto_resolve", "handoff", "import_battle", "replay_contact", "skip_presentation", "new_campaign", "continue_campaign"]:
 		allow = false
 	if operational_presenter != null and operational_presenter.is_active() and _command_mutates_state(id):
 		allow = false
@@ -364,23 +487,28 @@ func enabled_action_button_ids() -> PackedStringArray:
 		and String(pending.get("id", "")) == last_handoff_battle_id \
 		and not last_handoff_save_path.is_empty()
 	_ensure_operational_presenter()
-	var candidates: Array = []
+	var play := player_launch_block()
+	var play_enabled := bool(play.get("enabled", false))
+	var candidates: Array = [
+		["new_campaign", play_enabled and not (play.get("new_args", []) as Array).is_empty()],
+		["continue_campaign", play_enabled and not (play.get("continue_args", []) as Array).is_empty()],
+	]
 	if has_battle:
-		candidates = [
+		candidates.append_array([
 			["auto_resolve", writeback],
 			["handoff", writeback],
 			["import_battle", can_import],
 			["replay_contact", operational_presenter.can_replay_last_contact()],
 			["skip_presentation", operational_presenter.is_active()],
-		]
+		])
 	else:
-		candidates = [
+		candidates.append_array([
 			["fit", true],
 			["refresh", writeback],
 			["end_turn", writeback],
 			["run_ai", writeback],
 			["skip_presentation", operational_presenter.is_active()],
-		]
+		])
 	for entry in candidates:
 		var button_id := String(entry[0])
 		var allow := bool(entry[1])
@@ -464,7 +592,10 @@ func _queue_and_apply(commands: Array) -> void:
 		queue_redraw()
 		return
 
-	var payload := {"commands": commands}
+	# Identity is stamped only on the queued payload. In-flight duplicate
+	# suppression above still compares the raw command shape, while the backend
+	# ledger uses these ids to guarantee a replayed queue applies exactly once.
+	var payload := {"commands": _stamp_command_ids(commands)}
 	var file := FileAccess.open(commands_path, FileAccess.WRITE)
 	if file == null:
 		status_message = "Unable to write commands: %s" % commands_path
