@@ -2,9 +2,9 @@
 
 - schema: `gates-of-codex.expanded-nations-cost-evidence` v2
 - evidence_state: `blocked`
-- source_head: `4d31df555d75af2f60ed1ce865812029bfa1c314`
+- source_head: `cd5e34c4519f56028c9aa4ff3b5149c98c3af36c`
 - playable_actors: 21
-- unintended_zero_total: 8
+- unintended_zero_total: 7
 
 Native recruitment cost counts money-price authority only (`{cost N}` / purchase `cost(N)` / vehicle entity `{cost}` / pure-infantry inf sums). `cp()` and `cost_sp` are recorded per unit but never counted as recruitment money.
 
@@ -25,7 +25,7 @@ Native recruitment cost counts money-price authority only (`{cost N}` / purchase
 | nor | nato | 55 | 2 | 15 | 700 | 2400 | 0 | 0 |
 | pol | nato | 18 | 0 | 3 | 400 | 2250 | 0 | 0 |
 | prc | prc | 80 | 0 | 4 | 350 | 5000 | 0 | 0 |
-| rus | rusa | 212 | 0 | 0 | 350 | 5600 | 2 | 0 |
+| rus | rusa | 212 | 0 | 0 | 350 | 5600 | 1 | 0 |
 | srb | rusa | 18 | 0 | 60 | 400 | 1100 | 0 | 0 |
 | swe | nato | 17 | 0 | 3 | 410 | 2150 | 0 | 0 |
 | tur | nato | 55 | 2 | 15 | 700 | 2400 | 0 | 0 |
@@ -36,7 +36,6 @@ Native recruitment cost counts money-price authority only (`{cost N}` / purchase
 
 - `gbr` / `squad_gb3_mot_rifle_cougar(nato)` (vehicle_unpriced): vehicle-bearing purchase lacks purchase money cost and vehicle entity money cost for cougar-oh
 - `rus` / `squad_rus155_m2a2_2022(rusa)` (vehicle_unpriced): vehicle-bearing purchase lacks purchase money cost and vehicle entity money cost for m2a2_ods_bradley_arat_rus
-- `rus` / `squad_rus4_t80uk(rusa)` (vehicle_unpriced): vehicle-bearing purchase lacks purchase money cost and vehicle entity money cost for t80uk
 - `ukr` / `squad_ukr93_razv_novator(ukr)` (vehicle_unpriced): vehicle-bearing purchase lacks purchase money cost and vehicle entity money cost for novator
 - `usa` / `squad_tank1_m109(nato)` (vehicle_unpriced): vehicle-bearing purchase lacks purchase money cost and vehicle entity money cost for m109_paladin_n
 - `usa` / `squad_tank1_m270(nato)` (vehicle_unpriced): vehicle-bearing purchase lacks purchase money cost and vehicle entity money cost for m270_n_clu

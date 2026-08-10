@@ -8860,8 +8860,8 @@
       "economy_class_counts": {
         "entity_purchase_cost": 62,
         "personnel_inf_sum": 54,
-        "vehicle_entity_cost": 94,
-        "vehicle_unpriced": 2
+        "vehicle_entity_cost": 95,
+        "vehicle_unpriced": 1
       },
       "intentional_zero_count": 0,
       "intentional_zero_units": [],
@@ -8875,19 +8875,13 @@
       "research_node_count": 212,
       "stack_signature": "15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe",
       "tactical_side": "rusa",
-      "unintended_zero_count": 2,
+      "unintended_zero_count": 1,
       "unintended_zero_units": [
         {
           "economy_class": "vehicle_unpriced",
           "member_gaps": [],
           "rationale": "vehicle-bearing purchase lacks purchase money cost and vehicle entity money cost for m2a2_ods_bradley_arat_rus",
           "unit_name": "squad_rus155_m2a2_2022(rusa)"
-        },
-        {
-          "economy_class": "vehicle_unpriced",
-          "member_gaps": [],
-          "rationale": "vehicle-bearing purchase lacks purchase money cost and vehicle entity money cost for t80uk",
-          "unit_name": "squad_rus4_t80uk(rusa)"
         }
       ],
       "unit_count": 212,
@@ -10940,19 +10934,19 @@
         },
         {
           "cp": 4.0,
-          "economy_class": "vehicle_unpriced",
+          "economy_class": "vehicle_entity_cost",
           "entity_cost": null,
           "has_vehicle": true,
           "intentional_zero": false,
           "member_gaps": [],
-          "native_recruitment_cost": 0.0,
+          "native_recruitment_cost": 1950.0,
           "personnel_cost": 30.0,
-          "rationale": "vehicle-bearing purchase lacks purchase money cost and vehicle entity money cost for t80uk",
+          "rationale": "vehicle entity money-cost authority",
           "special_points_cost": null,
           "unit_name": "squad_rus4_t80uk(rusa)",
-          "vehicle_entity_cost": null,
+          "vehicle_entity_cost": 1950.0,
           "virtual": false,
-          "zero_cost": true
+          "zero_cost": false
         },
         {
           "cp": 4.0,
@@ -18096,9 +18090,9 @@
   "playable_actor_count": 21,
   "schema": "gates-of-codex.expanded-nations-cost-evidence",
   "schema_version": 2,
-  "source_head": "4d31df555d75af2f60ed1ce865812029bfa1c314",
-  "source_vehicle_money_gap_total": 8,
-  "unintended_zero_total": 8,
+  "source_head": "cd5e34c4519f56028c9aa4ff3b5149c98c3af36c",
+  "source_vehicle_money_gap_total": 7,
+  "unintended_zero_total": 7,
   "unintended_zeros": [
     {
       "actor_id": "gbr",
@@ -18111,12 +18105,6 @@
       "economy_class": "vehicle_unpriced",
       "rationale": "vehicle-bearing purchase lacks purchase money cost and vehicle entity money cost for m2a2_ods_bradley_arat_rus",
       "unit_name": "squad_rus155_m2a2_2022(rusa)"
-    },
-    {
-      "actor_id": "rus",
-      "economy_class": "vehicle_unpriced",
-      "rationale": "vehicle-bearing purchase lacks purchase money cost and vehicle entity money cost for t80uk",
-      "unit_name": "squad_rus4_t80uk(rusa)"
     },
     {
       "actor_id": "ukr",
