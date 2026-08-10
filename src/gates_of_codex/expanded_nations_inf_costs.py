@@ -23,12 +23,23 @@ _SIDE_RE_TEMPLATE = r"\bside\s*\(\s*%s\s*\)"
 _INF_MARKER = "; goc-inf-cost "
 _ROSTER_INSERT_BEFORE = '\t(include "conquest/goc_opponent_units.set")'
 
-# Exact installed-stack probing proved this is an upstream Code:X metadata typo:
-# the real breed and squad member are ``azov3_demo_h``, no ``azov3_demon_h``
-# breed exists anywhere in the stack, and the only hardened demolitions cost row
-# is misspelled ``azov3_demon_h`` at 40.0. Keep this alias exact and narrow.
+# Exact installed-stack probing proved these are upstream Code:X metadata typos.
+# Keep every alias exact and narrow: the left-hand path is the real breed used by
+# a native purchase, while the right-hand path is the only matching native cost
+# metadata path and has no corresponding breed in the probed stack.
 _SOURCE_COST_ALIASES: Mapping[str, str] = {
     "mp/ukr/2022s/azov3_demo_h": "mp/ukr/2022s/azov3_demon_h",
+    "mp/ukr/2022s/azov3_mg_mg3": "mp/ukr/2022s/azov3_mg3",
+}
+
+# Native GoH observation on the exact owner stack resolved one requested-path
+# conflict that static source inspection could not: 3rd_assault_saperi renders
+# at 234.5 while the saperi_at control renders at 273.0. With azov3_mg at 52.5,
+# only the ukr_specops azov3_saperi row at 26.0 reproduces the native price.
+# Treat this as an exact evidence-backed disposition, never a generic duplicate
+# precedence rule. If the candidate set changes, fail closed.
+_SOURCE_CONFLICT_DISPOSITIONS: Mapping[str, tuple[str, float]] = {
+    "mp/ukr/2022s/azov3_saperi": ("ukr_specops", 26.0),
 }
 
 # Exact installed-stack probing also proved that ``azov3_antitank_javelin`` is a
@@ -369,6 +380,24 @@ def _lookup_effective_inf_row(
     key = path.casefold()
     conflict = index.conflicts.get(key)
     if conflict is not None:
+        disposition = _SOURCE_CONFLICT_DISPOSITIONS.get(key)
+        if disposition is not None:
+            expected_role, expected_cost = disposition
+            role_marker = f'("{expected_role}"'
+            matches = [
+                row
+                for row in conflict
+                if role_marker in row.entry.raw
+                and _positive_cost(row.entry, row.source_reference) == expected_cost
+            ]
+            if len(matches) == 1:
+                return matches[0]
+            references = ", ".join(sorted(row.source_reference for row in conflict))
+            raise ExpandedNationsError(
+                f"Proven native inf disposition no longer resolves uniquely for requested path "
+                f"{path}: expected {expected_role} cost {expected_cost}; candidates {references}"
+            )
+
         priority = conflict[0].priority
         references = ", ".join(sorted(row.source_reference for row in conflict))
         raise ExpandedNationsError(
