@@ -195,6 +195,9 @@ def apply_frontend_commands(
             if op == "handoff":
                 result = _apply_handoff(campaign, state, raw)
                 state = load_campaign(campaign)
+            elif op == "verify_result":
+                # Read-only: no reload, no mutation, safe in any batch.
+                result = _apply_verify_result(campaign, state, raw)
             elif op == "import_battle":
                 result = _apply_import_battle(campaign, state, raw)
                 state = load_campaign(campaign)
@@ -433,42 +436,83 @@ def _apply_handoff(campaign: Path, state, raw: dict[str, Any]) -> CommandResult:
     )
 
 
-def _apply_import_battle(
-    campaign: Path,
-    state,
-    raw: dict[str, Any],
-) -> CommandResult:
+def _resolve_result_save_path(state, raw: dict[str, Any]) -> str:
+    pending = state.pending_battle
+    if pending is None:
+        raise ValueError("No pending battle to verify")
+    save_path = str(raw.get("save_path") or pending.exported_save_path or "").strip()
+    if not save_path:
+        raise ValueError("Pending battle has no handed-off GoH save path")
+    return save_path
+
+
+def _verify_result(campaign: Path, state, save_path: str):
+    """Verify a played GoH save against the exact campaign and pending battle.
+
+    Shared by the standalone ``verify_result`` action and by ``import_battle``,
+    so the player-facing check and the import gate can never diverge.
+    """
     from .acceptance import verify_tactical_result
     from .service import GatesOfCodeXService
     from .stack_acceptance import verify_stack_result
 
-    pending = state.pending_battle
-    if pending is None:
-        raise ValueError("No pending battle to import")
-    save_path = str(raw.get("save_path") or pending.exported_save_path or "").strip()
-    if not save_path:
-        raise ValueError("Pending battle has no handed-off GoH save path")
-
     service = GatesOfCodeXService()
     manifest = service.load_manifest(service.manifest_path(save_path))
+    pending = state.pending_battle
+    # Bind the result to this campaign and this battle before anything else.
+    if pending is not None and manifest.battle_id and manifest.battle_id != pending.battle_id:
+        raise ValueError(
+            f"Handoff manifest belongs to battle {manifest.battle_id!r}, "
+            f"but the pending battle is {pending.battle_id!r}"
+        )
+    if manifest.campaign_path and Path(manifest.campaign_path).resolve() != campaign:
+        raise ValueError(
+            f"Handoff manifest belongs to campaign {manifest.campaign_path!r}, "
+            f"not {str(campaign)!r}"
+        )
     resource_stack = (
         state.map_metadata.get("resource_stack", []) or manifest.resource_stack
     )
     stack_config = state.map_metadata.get("stack_config")
     if resource_stack or state.code_x_directory:
-        verification = verify_stack_result(
+        return verify_stack_result(
             campaign,
             save_path=save_path,
             code_x_directory=state.code_x_directory or None,
             resource_stack=resource_stack or None,
             stack_config=stack_config or None,
         )
-    else:
-        verification = verify_tactical_result(
-            campaign,
-            save_path=save_path,
-            code_x_directory=None,
-        )
+    return verify_tactical_result(campaign, save_path=save_path, code_x_directory=None)
+
+
+def _apply_verify_result(campaign: Path, state, raw: dict[str, Any]) -> CommandResult:
+    """Verify a played result without importing it. Never mutates the campaign."""
+    save_path = _resolve_result_save_path(state, raw)
+    verification = _verify_result(campaign, state, save_path)
+    errors = list(getattr(verification, "errors", []) or [])
+    return CommandResult(
+        op="verify_result",
+        ok=True,
+        detail="verified" if verification.ok else "verification failed",
+        data={
+            "verified": bool(verification.ok),
+            "save_path": save_path,
+            "battle_id": state.pending_battle.battle_id if state.pending_battle else "",
+            "errors": errors,
+        },
+    )
+
+
+def _apply_import_battle(
+    campaign: Path,
+    state,
+    raw: dict[str, Any],
+) -> CommandResult:
+    from .service import GatesOfCodeXService
+
+    save_path = _resolve_result_save_path(state, raw)
+    service = GatesOfCodeXService()
+    verification = _verify_result(campaign, state, save_path)
     if not verification.ok:
         detail = "; ".join(verification.errors) or "unknown verification failure"
         raise ValueError(f"GoH result verification failed: {detail}")

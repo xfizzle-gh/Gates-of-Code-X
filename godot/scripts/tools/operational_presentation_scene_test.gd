@@ -48,7 +48,24 @@ func _run_all() -> void:
 	var initial_actions: Array = Array(scene.enabled_action_button_ids())
 	_check(initial_actions.has("auto_resolve"), "modal keeps existing proceed action")
 	_check(initial_actions.has("handoff"), "modal keeps existing handoff action")
-	_check(initial_actions.has("import_battle"), "handed-off modal exposes verified import action")
+	# P5 (#176): import is blocked until Verify Result accepts this exact save.
+	_check(
+		not initial_actions.has("import_battle"),
+		"unverified handoff cannot expose import"
+	)
+	_check(initial_actions.has("verify_result"), "handed-off modal exposes verify action")
+	scene.last_verified_save_path = "completed.sav"
+	scene.last_verification_ok = true
+	_check(
+		Array(scene.enabled_action_button_ids()).has("import_battle"),
+		"verified handoff exposes import action"
+	)
+	scene.last_verified_save_path = "some-other.sav"
+	_check(
+		not Array(scene.enabled_action_button_ids()).has("import_battle"),
+		"verification of a different save cannot unlock import"
+	)
+	scene.last_verified_save_path = "completed.sav"
 	_check(not initial_actions.has("end_turn"), "modal blocks end turn")
 	_check(not initial_actions.has("run_ai"), "modal blocks AI resolution")
 	_check(not initial_actions.has("refresh"), "modal blocks refresh interaction")

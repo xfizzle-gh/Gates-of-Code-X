@@ -143,7 +143,26 @@ func _draw_management_panel() -> void:
 	y = _draw_button("end_turn", "End turn (E)", x, y, writeback and not has_battle)
 	y = _draw_button("run_ai", "Run AI + advance", x, y, writeback and not has_battle)
 	y = _draw_button("auto_resolve", "Auto-resolve battle (A)", x, y, writeback and has_battle, Color("4a2f18"))
-	y = _draw_button("handoff", "Handoff to GoH (H)", x, y, writeback and has_battle, Color("5a2418"))
+	y = _draw_button("handoff", "Launch Battle in GoH (H)", x, y, writeback and has_battle, Color("5a2418"))
+	if not last_handoff_save_path.is_empty():
+		y = _draw_button("verify_result", "Verify Result", x, y, writeback, Color("243140"))
+		y = _draw_button(
+			"import_battle",
+			"Import Result",
+			x,
+			y,
+			writeback and can_import_verified_result(),
+			Color("24402c")
+		)
+		var handoff_status := handoff_status_label()
+		if not handoff_status.is_empty():
+			y = _panel_line(
+				handoff_status,
+				x,
+				y,
+				Color("9fe7a8") if can_import_verified_result() else Color("ffd27a"),
+				11
+			)
 	if operational_presenter != null and operational_presenter.can_replay_last_contact():
 		y = _draw_button("replay_contact", "Replay last contact", x, y, true, Color("243140"))
 	if operational_presenter != null and operational_presenter.is_active():
@@ -240,7 +259,15 @@ func _draw_pending_battle_modal() -> void:
 	var writeback := bool(snapshot.get("control", {}).get("enabled", false))
 	var button_y := top + 304.0
 	button_y = _draw_button("auto_resolve", "Auto-resolve battle (A)", left, button_y, writeback, Color("4a2f18"))
-	button_y = _draw_button("handoff", "Handoff to GoH (H)", left, button_y, writeback, Color("5a2418"))
+	button_y = _draw_button("handoff", "Launch Battle in GoH (H)", left, button_y, writeback, Color("5a2418"))
+	button_y = _draw_button(
+		"verify_result",
+		"Verify Result",
+		left,
+		button_y,
+		writeback and not last_handoff_save_path.is_empty(),
+		Color("243140")
+	)
 	button_y = _draw_button(
 		"import_battle",
 		"Import verified GoH result (I)",

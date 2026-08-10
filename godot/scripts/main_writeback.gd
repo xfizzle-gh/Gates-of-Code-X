@@ -17,6 +17,10 @@ var snapshot_commit_count := 0
 ## Player-shell state. New Campaign replaces authoritative state, so it always
 ## requires a second confirming press.
 var new_campaign_confirm_pending := false
+## P5: Import Result stays unavailable until Verify Result accepts this save.
+var last_verified_save_path := ""
+var last_verification_ok := false
+var last_verification_detail := ""
 var _command_sequence := 0
 var _session_token := ""
 
@@ -295,6 +299,9 @@ func _draw_province(province: Dictionary) -> void:
 func _command_mutates_state(button_id: String) -> bool:
 	if button_id in ["fit", "replay_contact", "skip_presentation"]:
 		return false
+	if button_id == "verify_result":
+		# Read-only verification: never mutates campaign or snapshot.
+		return false
 	if button_id.begins_with("move:") or button_id.begins_with("construct:"):
 		return true
 	return button_id in [
@@ -332,6 +339,38 @@ func _stamp_command_ids(commands: Array) -> Array:
 			entry["command_id"] = next_command_id(String(entry.get("op", "command")))
 		stamped.append(entry)
 	return stamped
+
+
+func can_import_verified_result() -> bool:
+	## P5: import is unavailable until Verify Result accepted this exact save.
+	return last_verification_ok \
+		and not last_handoff_save_path.is_empty() \
+		and last_verified_save_path == last_handoff_save_path
+
+
+func handoff_status_label() -> String:
+	if last_handoff_save_path.is_empty():
+		return ""
+	if can_import_verified_result():
+		return "Result verified - ready to import."
+	if not last_verification_detail.is_empty():
+		return "Verification failed: %s" % last_verification_detail
+	return "Awaiting Verify Result."
+
+
+func _capture_verification(payload: Dictionary) -> void:
+	var results: Array = payload.get("results", [])
+	for item in results:
+		if not item is Dictionary:
+			continue
+		var row: Dictionary = item as Dictionary
+		if String(row.get("op", "")) != "verify_result":
+			continue
+		var data: Dictionary = row.get("data", {})
+		last_verified_save_path = String(data.get("save_path", ""))
+		last_verification_ok = bool(data.get("verified", false))
+		var errors: Array = data.get("errors", [])
+		last_verification_detail = "" if last_verification_ok else ", ".join(errors.slice(0, 3))
 
 
 func player_launch_block() -> Dictionary:
@@ -432,7 +471,21 @@ func _handle_button(button_id: String) -> void:
 		status_message = "Operational presentation skipped to authoritative endpoints."
 		queue_redraw()
 		return
+	if button_id == "verify_result":
+		if last_handoff_save_path.is_empty():
+			status_message = "Nothing to verify - hand a battle off to Gates of Hell first."
+			queue_redraw()
+			return
+		_queue_and_apply([{
+			"op": "verify_result",
+			"save_path": last_handoff_save_path,
+		}])
+		return
 	if button_id == "import_battle":
+		if not can_import_verified_result():
+			status_message = "Verify Result must accept this save before it can be imported."
+			queue_redraw()
+			return
 		_queue_and_apply([{
 			"op": "import_battle",
 			"save_path": last_handoff_save_path,
@@ -497,7 +550,8 @@ func enabled_action_button_ids() -> PackedStringArray:
 		candidates.append_array([
 			["auto_resolve", writeback],
 			["handoff", writeback],
-			["import_battle", can_import],
+			["verify_result", writeback and not last_handoff_save_path.is_empty()],
+			["import_battle", can_import and can_import_verified_result()],
 			["replay_contact", operational_presenter.can_replay_last_contact()],
 			["skip_presentation", operational_presenter.is_active()],
 		])
@@ -732,6 +786,7 @@ func _on_command_finished(
 
 	# Apply output side-effects only after candidate is valid.
 	_parse_apply_output(output_text)
+	_capture_verification(backend_payload)
 	_commit_snapshot_state(built, previous_selected, previous_battalion, true)
 	_ensure_operational_presenter()
 	operational_presenter.begin_transition(

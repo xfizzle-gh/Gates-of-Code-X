@@ -1156,6 +1156,8 @@ def _control_block(
             "construct",
             "repair",
             "handoff",
+            "verify_result",
+            "import_battle",
             "refresh",
         ],
     }
