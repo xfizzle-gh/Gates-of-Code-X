@@ -175,7 +175,7 @@ Run:
 
 ```powershell
 python -m unittest tests.test_p6_packaging.PackagingProvenanceTests -v
-python -m unittest tests.test_release_workflow tests.test_installer -v
+python -m unittest tests.test_p6_packaging -v
 git status --short
 ```
 
