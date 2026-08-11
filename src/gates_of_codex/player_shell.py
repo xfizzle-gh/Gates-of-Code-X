@@ -199,6 +199,24 @@ def read_last_campaign(environ: Mapping[str, str] | None = None) -> Path | None:
     return Path(value) if value else None
 
 
+def clear_last_campaign_if_matches(
+    campaign: str | Path,
+    *,
+    environ: Mapping[str, str] | None = None,
+) -> bool:
+    """Clear launcher preference only when it identifies this campaign."""
+    remembered = read_last_campaign(environ)
+    target = Path(campaign).expanduser().resolve(strict=False)
+    if remembered is None or remembered.expanduser().resolve(strict=False) != target:
+        return False
+    pointer = last_campaign_path(environ)
+    try:
+        pointer.unlink()
+    except FileNotFoundError:
+        return False
+    return True
+
+
 def write_last_campaign(
     campaign: str | Path,
     *,

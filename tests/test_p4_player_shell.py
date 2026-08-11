@@ -42,6 +42,7 @@ from gates_of_codex.player_shell import (
     PLAYER_LAUNCH_KEY,
     PlayerShellError,
     build_play_parser,
+    clear_last_campaign_if_matches,
     create_new_campaign,
     find_godot_executable,
     last_campaign_path,
@@ -50,6 +51,7 @@ from gates_of_codex.player_shell import (
     read_last_campaign,
     resolve_campaign_paths,
     run_play,
+    write_last_campaign,
 )
 from gates_of_codex.state_io import load_campaign
 
@@ -772,6 +774,32 @@ class LegacyCompatibilityTests(unittest.TestCase):
 
 
 class DeterminismAndPathTests(unittest.TestCase):
+    def test_clear_last_campaign_removes_only_matching_pointer(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary) / "home"
+            environ = _environ(home)
+            campaign = home / "campaigns" / "earth3_v1" / "campaign.json"
+            write_last_campaign(campaign, environ=environ)
+
+            self.assertTrue(
+                clear_last_campaign_if_matches(campaign, environ=environ)
+            )
+            self.assertFalse(last_campaign_path(environ).exists())
+
+    def test_clear_last_campaign_preserves_nonmatching_pointer(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary) / "home"
+            environ = _environ(home)
+            remembered = home / "campaigns" / "other" / "campaign.json"
+            target = home / "campaigns" / "earth3_v1" / "campaign.json"
+            pointer = write_last_campaign(remembered, environ=environ)
+            before = pointer.read_bytes()
+
+            self.assertFalse(
+                clear_last_campaign_if_matches(target, environ=environ)
+            )
+            self.assertEqual(before, pointer.read_bytes())
+
     def test_campaign_and_snapshot_writes_are_deterministic_and_atomic(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

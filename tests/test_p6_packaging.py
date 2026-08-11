@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / "src") not in sys.path:
     sys.path.insert(0, str(ROOT / "src"))
 
+from gates_of_codex import packaging  # noqa: E402
 from gates_of_codex.packaging import (  # noqa: E402
     PackagingError,
     backup_managed_campaign,
@@ -25,7 +26,12 @@ from gates_of_codex.packaging import (  # noqa: E402
     restore_managed_backup,
     write_source_commit_stamp,
 )
-from gates_of_codex.player_shell import CAMPAIGN_FILE_NAME, SNAPSHOT_FILE_NAME  # noqa: E402
+from gates_of_codex.player_shell import (  # noqa: E402
+    CAMPAIGN_FILE_NAME,
+    SNAPSHOT_FILE_NAME,
+    last_campaign_path,
+    write_last_campaign,
+)
 
 
 class PackagingProvenanceTests(unittest.TestCase):
@@ -304,9 +310,51 @@ class ManagedRestoreResetTests(unittest.TestCase):
         campaign_dir = home / "campaigns" / "earth3_v1"
         campaign_dir.mkdir(parents=True, exist_ok=True)
         campaign = campaign_dir / CAMPAIGN_FILE_NAME
-        campaign.write_text(body + "\n", encoding="utf-8")
+        payload = {
+            "campaign_name": "Managed restore fixture",
+            "current_faction": "nato",
+            "factions": {"nato": {"faction": "nato"}},
+            "provinces": {
+                "fixture": {
+                    "display_name": "Fixture",
+                    "neighbors": [],
+                    "owner": "nato",
+                    "province_id": "fixture",
+                }
+            },
+            "selected_faction": "nato",
+            "turn_number": 1,
+        }
+        payload.update(json.loads(body))
+        campaign.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
         (campaign_dir / SNAPSHOT_FILE_NAME).write_text('{"schema":"gates-of-codex.frontend"}\n', encoding="utf-8")
         return campaign
+
+    def _tree_bytes(self, directory: Path) -> dict[str, bytes]:
+        return {
+            path.relative_to(directory).as_posix(): path.read_bytes()
+            for path in sorted(directory.rglob("*"))
+            if path.is_file()
+        }
+
+    def _manifest(self, backup_directory: str | Path) -> tuple[Path, dict]:
+        manifest = Path(backup_directory) / "backup.json"
+        return manifest, json.loads(manifest.read_text(encoding="utf-8"))
+
+    def _assert_restore_rejected_without_live_change(
+        self,
+        backup_directory: str | Path,
+        campaign: Path,
+        env: dict[str, str],
+    ) -> None:
+        before = self._tree_bytes(campaign.parent)
+        with self.assertRaises(PackagingError):
+            restore_managed_backup(
+                backup_directory,
+                expected_campaign=campaign,
+                environ=env,
+            )
+        self.assertEqual(before, self._tree_bytes(campaign.parent))
 
     def test_backup_and_restore_round_trip_is_contained(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -322,8 +370,44 @@ class ManagedRestoreResetTests(unittest.TestCase):
                 environ=env,
             )
             self.assertTrue(any(path == campaign for path in restored))
+            if os.name == "nt":
+                for path in restored:
+                    self.assertEqual(
+                        (campaign.parent / path.name).resolve(strict=False),
+                        path.resolve(strict=False),
+                    )
             payload = json.loads(campaign.read_text(encoding="utf-8"))
             self.assertEqual("original", payload["marker"])
+
+    def test_restore_rejects_malformed_manifest_without_changing_live_tree(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            env = self._managed_home(temporary)
+            home = Path(env["GATES_OF_CODEX_HOME"])
+            campaign = self._seed_campaign(home, '{"marker":"backup"}')
+            record = backup_managed_campaign(campaign, environ=env)
+            campaign.write_text('{"marker":"live"}\n', encoding="utf-8")
+            (Path(record.backup_directory) / "backup.json").write_text(
+                "{broken", encoding="utf-8"
+            )
+
+            self._assert_restore_rejected_without_live_change(
+                record.backup_directory, campaign, env
+            )
+
+    def test_restore_rejects_noncanonical_created_at_without_live_change(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            env = self._managed_home(temporary)
+            home = Path(env["GATES_OF_CODEX_HOME"])
+            campaign = self._seed_campaign(home, '{"marker":"backup"}')
+            record = backup_managed_campaign(campaign, environ=env)
+            manifest, payload = self._manifest(record.backup_directory)
+            payload["created_at_utc"] = "2026-01-01 23:00:00+00:00"
+            manifest.write_text(json.dumps(payload), encoding="utf-8")
+            campaign.write_text('{"marker":"live"}\n', encoding="utf-8")
+
+            self._assert_restore_rejected_without_live_change(
+                record.backup_directory, campaign, env
+            )
 
     def test_restore_refuses_unrelated_campaign_destination(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -335,12 +419,9 @@ class ManagedRestoreResetTests(unittest.TestCase):
             other = other_dir / CAMPAIGN_FILE_NAME
             other.write_text('{"id":"b"}\n', encoding="utf-8")
             record = backup_managed_campaign(campaign_a, environ=env)
-            with self.assertRaises(PackagingError):
-                restore_managed_backup(
-                    record.backup_directory,
-                    expected_campaign=other,
-                    environ=env,
-                )
+            self._assert_restore_rejected_without_live_change(
+                record.backup_directory, other, env
+            )
 
     def test_restore_refuses_paths_outside_managed_home(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -354,17 +435,354 @@ class ManagedRestoreResetTests(unittest.TestCase):
             outside = Path(temporary) / "escape" / CAMPAIGN_FILE_NAME
             payload["files"] = {str(outside): next(iter(payload["files"].values()))}
             manifest.write_text(json.dumps(payload), encoding="utf-8")
+            self._assert_restore_rejected_without_live_change(
+                record.backup_directory, campaign, env
+            )
+
+    def test_restore_rejects_unexpected_destination_name(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            env = self._managed_home(temporary)
+            home = Path(env["GATES_OF_CODEX_HOME"])
+            campaign = self._seed_campaign(home)
+            record = backup_managed_campaign(campaign, environ=env)
+            manifest, payload = self._manifest(record.backup_directory)
+            campaign_source = payload["files"].pop(str(campaign.resolve()))
+            payload["files"][str(campaign.parent / "notes.txt")] = campaign_source
+            manifest.write_text(json.dumps(payload), encoding="utf-8")
+
+            self._assert_restore_rejected_without_live_change(
+                record.backup_directory, campaign, env
+            )
+
+    def test_restore_preflight_failure_removes_sibling_stage(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            env = self._managed_home(temporary)
+            home = Path(env["GATES_OF_CODEX_HOME"])
+            campaign = self._seed_campaign(home)
+            record = backup_managed_campaign(campaign, environ=env)
+            (campaign.parent / "notes.txt").write_text("unexpected\n", encoding="utf-8")
+
             with self.assertRaises(PackagingError):
-                restore_managed_backup(record.backup_directory, environ=env)
+                restore_managed_backup(
+                    record.backup_directory,
+                    expected_campaign=campaign,
+                    environ=env,
+                )
+
+            self.assertEqual(
+                [],
+                list(campaign.parent.parent.glob(".earth3_v1.restore-*")),
+            )
+
+    def test_restore_rejects_missing_source(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            env = self._managed_home(temporary)
+            home = Path(env["GATES_OF_CODEX_HOME"])
+            campaign = self._seed_campaign(home)
+            record = backup_managed_campaign(campaign, environ=env)
+            _, payload = self._manifest(record.backup_directory)
+            Path(payload["files"][str(campaign.resolve())]).unlink()
+
+            self._assert_restore_rejected_without_live_change(
+                record.backup_directory, campaign, env
+            )
+
+    def test_restore_rejects_source_outside_backup_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            env = self._managed_home(temporary)
+            home = Path(env["GATES_OF_CODEX_HOME"])
+            campaign = self._seed_campaign(home)
+            record = backup_managed_campaign(campaign, environ=env)
+            manifest, payload = self._manifest(record.backup_directory)
+            outside = Path(temporary) / "copied-campaign.json"
+            outside.write_bytes(campaign.read_bytes())
+            payload["files"][str(campaign.resolve())] = str(outside)
+            manifest.write_text(json.dumps(payload), encoding="utf-8")
+
+            self._assert_restore_rejected_without_live_change(
+                record.backup_directory, campaign, env
+            )
+
+    @unittest.skipUnless(os.name == "nt", "directory junctions are Windows-only")
+    def test_restore_rejects_canonical_campaign_beyond_junction_root(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            env = self._managed_home(temporary)
+            home = Path(env["GATES_OF_CODEX_HOME"])
+            external_campaigns = Path(temporary) / "external campaigns"
+            external_campaigns.mkdir()
+            junction = home / "campaigns"
+            created = subprocess.run(
+                [
+                    "cmd.exe",
+                    "/d",
+                    "/c",
+                    "mklink",
+                    "/J",
+                    str(junction),
+                    str(external_campaigns),
+                ],
+                capture_output=True,
+                text=True,
+            )
+            if created.returncode != 0:
+                self.skipTest(f"junction creation unavailable: {created.stderr}")
+            try:
+                campaign = self._seed_campaign(home, '{"marker":"backup"}')
+                canonical_campaign = campaign.resolve(strict=True)
+                record = backup_managed_campaign(canonical_campaign, environ=env)
+                campaign.write_text('{"marker":"live"}\n', encoding="utf-8")
+                before = self._tree_bytes(campaign.parent)
+
+                with self.assertRaises(PackagingError):
+                    restore_managed_backup(
+                        record.backup_directory,
+                        expected_campaign=canonical_campaign,
+                        environ=env,
+                    )
+
+                self.assertEqual(before, self._tree_bytes(campaign.parent))
+            finally:
+                if junction.exists():
+                    junction.rmdir()
+
+    def test_restore_rejects_duplicate_source_alias(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            env = self._managed_home(temporary)
+            home = Path(env["GATES_OF_CODEX_HOME"])
+            campaign = self._seed_campaign(home)
+            record = backup_managed_campaign(campaign, environ=env)
+            manifest, payload = self._manifest(record.backup_directory)
+            campaign_source = Path(payload["files"][str(campaign.resolve())])
+            aliased_source = (
+                campaign_source.parent
+                / ".."
+                / campaign_source.parent.name
+                / campaign_source.name
+            )
+            payload["files"][str(campaign.parent / SNAPSHOT_FILE_NAME)] = str(
+                aliased_source
+            )
+            manifest.write_text(json.dumps(payload), encoding="utf-8")
+
+            self._assert_restore_rejected_without_live_change(
+                record.backup_directory, campaign, env
+            )
+
+    def test_latest_backup_ignores_newer_unrelated_campaign(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            env = self._managed_home(temporary)
+            home = Path(env["GATES_OF_CODEX_HOME"])
+            campaign = self._seed_campaign(home, '{"marker":"matching-backup"}')
+            matching = backup_managed_campaign(campaign, environ=env, label="matching")
+            other = home / "campaigns" / "other" / CAMPAIGN_FILE_NAME
+            other.parent.mkdir(parents=True)
+            other.write_bytes(campaign.read_bytes())
+            unrelated = backup_managed_campaign(other, environ=env, label="unrelated")
+            unrelated_manifest, payload = self._manifest(unrelated.backup_directory)
+            payload["created_at_utc"] = "9999-12-31T23:59:59+00:00"
+            unrelated_manifest.write_text(json.dumps(payload), encoding="utf-8")
+
+            descriptor = packaging.latest_managed_backup(campaign, environ=env)
+
+            self.assertIsNotNone(descriptor)
+            assert descriptor is not None
+            self.assertEqual(
+                Path(matching.backup_directory).resolve(strict=False),
+                Path(descriptor["backup_directory"]).resolve(strict=False),
+            )
+            campaign.write_text('{"marker":"live"}\n', encoding="utf-8")
+            restored = restore_managed_backup(
+                expected_campaign=campaign,
+                environ=env,
+            )
+            self.assertTrue(restored)
+            self.assertEqual(
+                "matching-backup",
+                json.loads(campaign.read_text(encoding="utf-8"))["marker"],
+            )
+
+    def test_latest_restore_rejects_when_only_unrelated_backup_exists(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            env = self._managed_home(temporary)
+            home = Path(env["GATES_OF_CODEX_HOME"])
+            campaign = self._seed_campaign(home, '{"marker":"live"}')
+            other = home / "campaigns" / "other" / CAMPAIGN_FILE_NAME
+            other.parent.mkdir(parents=True)
+            other.write_bytes(campaign.read_bytes())
+            backup_managed_campaign(other, environ=env, label="unrelated")
+            before = self._tree_bytes(campaign.parent)
+
+            with self.assertRaisesRegex(
+                PackagingError, "No authenticated backup exists"
+            ):
+                restore_managed_backup(
+                    expected_campaign=campaign,
+                    environ=env,
+                )
+
+            self.assertEqual(before, self._tree_bytes(campaign.parent))
+
+    def test_restore_publication_failure_rolls_back_byte_identical_tree(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            env = self._managed_home(temporary)
+            home = Path(env["GATES_OF_CODEX_HOME"])
+            campaign = self._seed_campaign(home, '{"turn":7,"marker":"backup"}')
+            record = backup_managed_campaign(campaign, environ=env)
+            campaign.write_text('{"turn":99,"marker":"live"}\n', encoding="utf-8")
+            (campaign.parent / SNAPSHOT_FILE_NAME).write_bytes(b"live snapshot\r\n")
+            before = self._tree_bytes(campaign.parent)
+            real_replace = packaging._replace_directory
+            calls = 0
+
+            def fail_stage_publish(source: Path, destination: Path) -> None:
+                nonlocal calls
+                calls += 1
+                if calls == 2:
+                    raise OSError("injected publication failure")
+                real_replace(source, destination)
+
+            with mock.patch(
+                "gates_of_codex.packaging._replace_directory",
+                side_effect=fail_stage_publish,
+            ):
+                with self.assertRaises(PackagingError):
+                    restore_managed_backup(
+                        record.backup_directory,
+                        expected_campaign=campaign,
+                        environ=env,
+                    )
+            self.assertEqual(before, self._tree_bytes(campaign.parent))
+
+    def test_post_rename_validation_failure_restores_live_tree(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            env = self._managed_home(temporary)
+            home = Path(env["GATES_OF_CODEX_HOME"])
+            campaign = self._seed_campaign(home, '{"marker":"backup"}')
+            record = backup_managed_campaign(campaign, environ=env)
+            campaign.write_text('{"marker":"live"}\n', encoding="utf-8")
+            before = self._tree_bytes(campaign.parent)
+            real_require_directory = packaging._require_directory
+            rollback_checks = 0
+
+            def fail_first_rollback_check(path: Path, *, label: str):
+                nonlocal rollback_checks
+                if label == "restore rollback":
+                    rollback_checks += 1
+                    if rollback_checks == 1:
+                        raise PackagingError("injected rollback validation failure")
+                return real_require_directory(path, label=label)
+
+            with mock.patch(
+                "gates_of_codex.packaging._require_directory",
+                side_effect=fail_first_rollback_check,
+            ):
+                with self.assertRaises(PackagingError):
+                    restore_managed_backup(
+                        record.backup_directory,
+                        expected_campaign=campaign,
+                        environ=env,
+                    )
+
+            self.assertTrue(campaign.parent.is_dir())
+            self.assertEqual(before, self._tree_bytes(campaign.parent))
+
+    def test_restore_rollback_failure_preserves_recovery_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            env = self._managed_home(temporary)
+            home = Path(env["GATES_OF_CODEX_HOME"])
+            campaign = self._seed_campaign(home, '{"marker":"backup"}')
+            record = backup_managed_campaign(campaign, environ=env)
+            campaign.write_text('{"marker":"live"}\n', encoding="utf-8")
+            before = self._tree_bytes(campaign.parent)
+            rollback = campaign.parent.parent / ".earth3_v1.rollback-preserved"
+            real_replace = packaging._replace_directory
+            calls = 0
+
+            def fail_publish_and_rollback(source: Path, destination: Path) -> None:
+                nonlocal calls
+                calls += 1
+                if calls >= 2:
+                    raise OSError(f"injected replacement failure {calls}")
+                real_replace(source, destination)
+
+            fake_uuid = mock.Mock(hex="preserved")
+            with mock.patch(
+                "gates_of_codex.packaging.uuid.uuid4", return_value=fake_uuid
+            ), mock.patch(
+                "gates_of_codex.packaging._replace_directory",
+                side_effect=fail_publish_and_rollback,
+            ):
+                with self.assertRaisesRegex(
+                    PackagingError, str(rollback).replace("\\", "\\\\")
+                ):
+                    restore_managed_backup(
+                        record.backup_directory,
+                        expected_campaign=campaign,
+                        environ=env,
+                    )
+            self.assertTrue(rollback.is_dir())
+            self.assertEqual(before, self._tree_bytes(rollback))
+
+    def test_stage_cleanup_failure_does_not_mask_preserved_rollback(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            env = self._managed_home(temporary)
+            home = Path(env["GATES_OF_CODEX_HOME"])
+            campaign = self._seed_campaign(home, '{"marker":"backup"}')
+            record = backup_managed_campaign(campaign, environ=env)
+            campaign.write_text('{"marker":"live"}\n', encoding="utf-8")
+            before = self._tree_bytes(campaign.parent)
+            rollback = campaign.parent.parent / ".earth3_v1.rollback-preserved"
+            real_replace = packaging._replace_directory
+            real_remove = packaging._remove_sibling_directory
+            calls = 0
+
+            def fail_publish_and_rollback(source: Path, destination: Path) -> None:
+                nonlocal calls
+                calls += 1
+                if calls >= 2:
+                    raise OSError(f"injected replacement failure {calls}")
+                real_replace(source, destination)
+
+            def fail_stage_cleanup(path: Path, *, parent: Path, label: str) -> None:
+                if label == "restore stage":
+                    raise OSError("stage cleanup blocked")
+                real_remove(path, parent=parent, label=label)
+
+            fake_uuid = mock.Mock(hex="preserved")
+            with mock.patch(
+                "gates_of_codex.packaging.uuid.uuid4", return_value=fake_uuid
+            ), mock.patch(
+                "gates_of_codex.packaging._replace_directory",
+                side_effect=fail_publish_and_rollback,
+            ), mock.patch(
+                "gates_of_codex.packaging._remove_sibling_directory",
+                side_effect=fail_stage_cleanup,
+            ):
+                with self.assertRaisesRegex(
+                    PackagingError, str(rollback).replace("\\", "\\\\")
+                ):
+                    restore_managed_backup(
+                        record.backup_directory,
+                        expected_campaign=campaign,
+                        environ=env,
+                    )
+
+            self.assertTrue(rollback.is_dir())
+            self.assertEqual(before, self._tree_bytes(rollback))
 
     def test_reset_test_campaign_only_clears_managed_known_files(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             env = self._managed_home(temporary)
             home = Path(env["GATES_OF_CODEX_HOME"])
             campaign = self._seed_campaign(home, '{"turn":3}')
+            write_last_campaign(campaign, environ=env)
             report = reset_test_campaign(campaign, environ=env, create_backup=True)
             self.assertTrue(report["ok"])
+            self.assertTrue(report["campaign_deleted"])
+            self.assertEqual("new_campaign", report["next_player_state"])
+            self.assertTrue(report["last_campaign_cleared"])
             self.assertFalse(campaign.exists())
+            self.assertFalse(last_campaign_path(env).exists())
             self.assertTrue(Path(report["backup_directory"]).is_dir())
 
     def test_reset_refuses_unexpected_files_and_escapes(self) -> None:
