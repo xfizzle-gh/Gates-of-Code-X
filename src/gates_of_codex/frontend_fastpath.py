@@ -15,11 +15,12 @@ work around that projection:
   machine JSON, inflating the file and parse/write work.
 
 During one snapshot build we temporarily replace only the two strategic helper
-lookups used by ``construction_options``: strategic initialization becomes a
-no-op after the frontend's real initialization, and selected-faction supply
-reachability returns one precomputed set. The original helpers are restored in a
-``finally`` block. The frontend's own supply/status calculations still use the
-unmodified supply module functions, so presentation semantics do not change.
+lookups used by ``construction_options``. Strategic initialization becomes a
+no-op after the frontend's real initialization. The first construction
+reachability lookup runs the original BFS against that already-initialized
+projection and caches the exact set for the rest of the province loop. Original
+helpers are restored in a ``finally`` block. The frontend's own supply/status
+calculations still use the unmodified supply module functions.
 """
 
 import json
@@ -30,10 +31,8 @@ from typing import Any
 from . import frontend as _frontend
 from . import strategic as _strategic
 from .models import CampaignState, Faction
-from .supply import reachable_supply_provinces as _reachable_supply_provinces
 
 
-_ORIGINAL_STRATEGIC_ENSURE = _strategic.ensure_strategic_layer
 _ORIGINAL_STRATEGIC_REACHABLE = _strategic.reachable_supply_provinces
 
 
@@ -46,20 +45,27 @@ def build_frontend_snapshot_fast(
     """Build the normal snapshot while deduplicating per-province setup work."""
 
     selected = state.selected_faction
-    selected_reachable = _reachable_supply_provinces(state, selected)
     previous_ensure = _strategic.ensure_strategic_layer
     previous_reachable = _strategic.reachable_supply_provinces
+    selected_reachable: set[str] | None = None
+    projection_identity: int | None = None
 
     def _already_initialized(_state: CampaignState) -> None:
-        # ``frontend.build_frontend_snapshot`` calls its imported original
-        # ``ensure_strategic_layer`` once before any construction projection.
-        # Calls reached through strategic helper globals after that are repeats.
+        # ``frontend.build_frontend_snapshot`` calls its own imported original
+        # ``ensure_strategic_layer`` once on the deep-copied projection before
+        # any construction projection. Calls reached through strategic helper
+        # globals after that point are repeats.
         return None
 
     def _snapshot_reachable(candidate: CampaignState, faction: Faction) -> set[str]:
-        if faction == selected:
-            return set(selected_reachable)
-        return _ORIGINAL_STRATEGIC_REACHABLE(candidate, faction)
+        nonlocal selected_reachable, projection_identity
+        if faction != selected:
+            return _ORIGINAL_STRATEGIC_REACHABLE(candidate, faction)
+        candidate_identity = id(candidate)
+        if selected_reachable is None or projection_identity != candidate_identity:
+            selected_reachable = _ORIGINAL_STRATEGIC_REACHABLE(candidate, faction)
+            projection_identity = candidate_identity
+        return set(selected_reachable)
 
     _strategic.ensure_strategic_layer = _already_initialized
     _strategic.reachable_supply_provinces = _snapshot_reachable
