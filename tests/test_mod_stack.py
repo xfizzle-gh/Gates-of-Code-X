@@ -25,7 +25,11 @@ class OrderedModStackTests(unittest.TestCase):
         self.west = self.root / "2897299509"
         self.codex = self.root / "3261086933"
         self.ai = self.root / "3636883799"
-        self.gates = self.root / "Gates-of-Code-X"
+        # Mounted from a Workshop-style folder like the live stack, so the layer
+        # has a representable saveinfo dependency id. A purely local path is a
+        # separate, deliberately fail-closed case covered in
+        # tests/test_p5_tactical_handoff.py.
+        self.gates = self.root / "4000000001"
         self.profile = self.root / "profiles/12345678"
         self.install_directory = self.profile / "campaign"
         for path in (self.game, self.west, self.codex, self.ai, self.gates, self.install_directory):

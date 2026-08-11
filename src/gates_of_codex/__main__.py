@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .entrypoint import main
+from .fast_entrypoint import main
 
 
 raise SystemExit(main())

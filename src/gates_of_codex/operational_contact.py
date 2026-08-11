@@ -21,10 +21,19 @@ ENCOUNTER_KIND_NODE_SIMULTANEOUS = "node_simultaneous"
 DEFAULT_MAX_FRIENDLY_PER_NODE = 3
 
 
-def max_friendly_formations_per_node(state: CampaignState) -> int:
+def max_friendly_formations_per_node(
+    state: CampaignState, *, graph: dict[str, Any] | None = None
+) -> int:
+    """Friendly stack cap from graph rules.
+
+    ``graph`` lets a caller that already authenticated and loaded the graph reuse
+    it. Authentication is exact-byte and deliberately expensive, so re-loading it
+    once per candidate destination is what made bulk capacity checks quadratic.
+    """
     from .operational_position import load_operational_graph_for_state
 
-    graph = load_operational_graph_for_state(state)
+    if graph is None:
+        graph = load_operational_graph_for_state(state)
     if graph is None:
         return DEFAULT_MAX_FRIENDLY_PER_NODE
     rules = graph.get("rules") or {}

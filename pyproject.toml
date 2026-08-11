@@ -16,7 +16,7 @@ dependencies = []
 earth3 = ["shapely>=2.0", "pytest>=8.0"]
 
 [project.scripts]
-gates-of-codex = "gates_of_codex.entrypoint:main"
+gates-of-codex = "gates_of_codex.fast_entrypoint:main"
 gates-of-codex-live = "gates_of_codex.acceptance_cli:main"
 gates-of-codex-factions = "gates_of_codex.faction_wiring:main"
 gates-of-codex-actors = "gates_of_codex.strategic_actor_cli:main"

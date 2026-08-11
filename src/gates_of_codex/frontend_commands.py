@@ -18,6 +18,11 @@ from .strategic_ai import StrategicAI
 #: other operations because the batch rollback cannot undo them.
 SELF_COMMITTING_OPS = frozenset({"handoff", "import_battle"})
 
+#: Read-only actions. They mutate nothing, so they are never recorded in the
+#: exactly-once ledger: a player must be able to re-verify a result after
+#: replaying a battle and get a fresh verdict rather than a "duplicate" reply.
+READ_ONLY_OPS = frozenset({"verify_result"})
+
 #: Campaign-metadata key holding the exactly-once command ledger.
 COMMAND_LEDGER_KEY = "frontend_command_ledger"
 
@@ -178,7 +183,7 @@ def apply_frontend_commands(
     for raw in pending:
         op = str(raw.get("op", "")).strip().lower()
         command_id = _command_identity(raw)
-        if command_id and ledger_contains(ledger, command_id):
+        if command_id and op not in READ_ONLY_OPS and ledger_contains(ledger, command_id):
             # Replay of an already-accepted command. Never apply it a second
             # time; report success so the caller converges on current state.
             results.append(
@@ -195,6 +200,9 @@ def apply_frontend_commands(
             if op == "handoff":
                 result = _apply_handoff(campaign, state, raw)
                 state = load_campaign(campaign)
+            elif op == "verify_result":
+                # Read-only: no reload, no mutation, safe in any batch.
+                result = _apply_verify_result(campaign, state, raw)
             elif op == "import_battle":
                 result = _apply_import_battle(campaign, state, raw)
                 state = load_campaign(campaign)
@@ -219,7 +227,7 @@ def apply_frontend_commands(
             if battle_finalization is not None:
                 presentation["battle_finalization"] = battle_finalization
             result.data["operational_presentation"] = presentation
-            if command_id:
+            if command_id and op not in READ_ONLY_OPS:
                 _ledger_record(ledger, command_id, op)
                 result.data["command_id"] = command_id
         results.append(result)
@@ -411,12 +419,19 @@ def _apply_handoff(campaign: Path, state, raw: dict[str, Any]) -> CommandResult:
     backup_root = Path(str(raw.get("backup_root", root / "backups")))
     if not backup_root.is_absolute():
         backup_root = (root / backup_root).resolve()
+    template_raw = str(
+        raw.get("template_save")
+        or raw.get("status_template_path")
+        or state.map_metadata.get("status_template_path")
+        or ""
+    ).strip()
     result = prepare_stack_handoff(
         campaign,
         map_name=str(raw["map"]) if raw.get("map") else None,
         work_root=work_root,
         backup_root=backup_root,
         launch=bool(raw.get("launch", False)),
+        status_template_path=template_raw or None,
     )
     visible = result.visible_campaign_name or result.manifest.visible_campaign_name
     return CommandResult(
@@ -433,42 +448,136 @@ def _apply_handoff(campaign: Path, state, raw: dict[str, Any]) -> CommandResult:
     )
 
 
-def _apply_import_battle(
+def _resolve_result_save_path(state, raw: dict[str, Any]) -> str:
+    pending = state.pending_battle
+    if pending is None:
+        raise ValueError("No pending battle to verify")
+    save_path = str(raw.get("save_path") or pending.exported_save_path or "").strip()
+    if not save_path:
+        raise ValueError("Pending battle has no handed-off GoH save path")
+    return save_path
+
+
+def _assert_manifest_binds_result(
+    manifest,
+    *,
     campaign: Path,
+    save_file: Path,
     state,
-    raw: dict[str, Any],
-) -> CommandResult:
+) -> None:
+    """Fail closed unless the manifest names this campaign, save and battle.
+
+    ``GatesOfCodeXService.import_battle`` is the reference contract: it requires
+    all three bindings to match exactly. This mirrors it so a manifest cannot be
+    certified by ``verify_result`` and then refused by the import authority,
+    which is the one divergence the shared helper exists to prevent.
+
+    Every binding is required to be **present**. Treating an empty field as
+    "nothing to check" made an unbound manifest verify, which is precisely the
+    manifest that should never unlock Import.
+
+    ``.strip()`` is used only to detect empty/whitespace-only values. Equality
+    and path resolution use the original unstripped fields, matching
+    ``import_battle`` exactly so a padded-but-otherwise-correct identity cannot
+    pass this gate and then be refused by Import.
+    """
+    raw_battle = str(getattr(manifest, "battle_id", "") or "")
+    raw_campaign = str(getattr(manifest, "campaign_path", "") or "")
+    raw_save = str(getattr(manifest, "save_path", "") or "")
+    # Compare resolved against resolved, exactly as ``import_battle`` does, so a
+    # caller passing a relative campaign path cannot produce a false mismatch.
+    campaign_file = Path(campaign).resolve()
+
+    if not raw_campaign.strip():
+        raise ValueError("Handoff manifest does not name a campaign")
+    if Path(raw_campaign).resolve() != campaign_file:
+        raise ValueError(
+            f"Handoff manifest belongs to campaign {raw_campaign!r}, "
+            f"not {str(campaign_file)!r}"
+        )
+
+    if not raw_save.strip():
+        raise ValueError("Handoff manifest does not name a tactical save")
+    if Path(raw_save).resolve() != save_file:
+        raise ValueError(
+            f"Handoff manifest belongs to tactical save {raw_save!r}, "
+            f"not {str(save_file)!r}"
+        )
+
+    pending = state.pending_battle
+    if pending is None:
+        raise ValueError("No pending battle to verify this result against")
+    if not raw_battle.strip():
+        raise ValueError("Handoff manifest does not name a battle")
+    if raw_battle != pending.battle_id:
+        raise ValueError(
+            f"Handoff manifest belongs to battle {raw_battle!r}, "
+            f"but the pending battle is {pending.battle_id!r}"
+        )
+
+
+def _verify_result(campaign: Path, state, save_path: str):
+    """Verify a played GoH save against the exact campaign and pending battle.
+
+    Shared by the standalone ``verify_result`` action and by ``import_battle``,
+    so the player-facing check and the import gate can never diverge.
+    """
     from .acceptance import verify_tactical_result
     from .service import GatesOfCodeXService
     from .stack_acceptance import verify_stack_result
 
-    pending = state.pending_battle
-    if pending is None:
-        raise ValueError("No pending battle to import")
-    save_path = str(raw.get("save_path") or pending.exported_save_path or "").strip()
-    if not save_path:
-        raise ValueError("Pending battle has no handed-off GoH save path")
-
     service = GatesOfCodeXService()
-    manifest = service.load_manifest(service.manifest_path(save_path))
+    save_file = Path(save_path).resolve()
+    manifest = service.load_manifest(service.manifest_path(save_file))
+    # Bind the result to this campaign, this tactical save and this battle before
+    # anything else, using exactly the three bindings ``import_battle`` enforces.
+    # An absent value proves nothing, so it is a refusal rather than a skipped
+    # check: a manifest that cannot name what it belongs to must never be able to
+    # certify a result the import authority would then reject.
+    _assert_manifest_binds_result(manifest, campaign=campaign, save_file=save_file, state=state)
     resource_stack = (
         state.map_metadata.get("resource_stack", []) or manifest.resource_stack
     )
     stack_config = state.map_metadata.get("stack_config")
     if resource_stack or state.code_x_directory:
-        verification = verify_stack_result(
+        return verify_stack_result(
             campaign,
             save_path=save_path,
             code_x_directory=state.code_x_directory or None,
             resource_stack=resource_stack or None,
             stack_config=stack_config or None,
         )
-    else:
-        verification = verify_tactical_result(
-            campaign,
-            save_path=save_path,
-            code_x_directory=None,
-        )
+    return verify_tactical_result(campaign, save_path=save_path, code_x_directory=None)
+
+
+def _apply_verify_result(campaign: Path, state, raw: dict[str, Any]) -> CommandResult:
+    """Verify a played result without importing it. Never mutates the campaign."""
+    save_path = _resolve_result_save_path(state, raw)
+    verification = _verify_result(campaign, state, save_path)
+    errors = list(getattr(verification, "errors", []) or [])
+    return CommandResult(
+        op="verify_result",
+        ok=True,
+        detail="verified" if verification.ok else "verification failed",
+        data={
+            "verified": bool(verification.ok),
+            "save_path": save_path,
+            "battle_id": state.pending_battle.battle_id if state.pending_battle else "",
+            "errors": errors,
+        },
+    )
+
+
+def _apply_import_battle(
+    campaign: Path,
+    state,
+    raw: dict[str, Any],
+) -> CommandResult:
+    from .service import GatesOfCodeXService
+
+    save_path = _resolve_result_save_path(state, raw)
+    service = GatesOfCodeXService()
+    verification = _verify_result(campaign, state, save_path)
     if not verification.ok:
         detail = "; ".join(verification.errors) or "unknown verification failure"
         raise ValueError(f"GoH result verification failed: {detail}")

@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scripts/main_stack_panel.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/main_perf.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/main_stack_panel.gd" id="2_stack_contract"]
 
 [node name="GatesOfCodeXMap" type="Node2D"]
 script = ExtResource("1_main")
+metadata/_stack_panel_contract = ExtResource("2_stack_contract")

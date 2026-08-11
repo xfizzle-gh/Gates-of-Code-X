@@ -626,6 +626,25 @@ def _persisted_stack_config(campaign: Path) -> str:
     return str(metadata.get("stack_config", "") or "")
 
 
+def _codex_layer_from_stack(layers: list[str]) -> str:
+    """Return the primary Code:X layer path from a resolved stack, if present."""
+    from .modstack import MOD_INFO_NAME_RE
+
+    for layer in layers:
+        root = Path(layer)
+        mod_info = root / "mod.info"
+        if not mod_info.is_file():
+            continue
+        try:
+            text = mod_info.read_text(encoding="utf-8-sig", errors="replace")
+        except OSError:
+            continue
+        match = MOD_INFO_NAME_RE.search(text)
+        if match and match.group(1) in {"Code-X", "Code:X"}:
+            return str(root.resolve())
+    return ""
+
+
 def run_play(
     args: argparse.Namespace,
     *,
@@ -710,6 +729,16 @@ def run_play(
             **common,
         )
         mode = "continue"
+
+    # Handoff requires code_x_directory + resource_stack on the campaign. Stack
+    # validation already resolved the exact layers; persist them so Godot's
+    # handoff path does not depend on ambient environment variables.
+    if stack_layers:
+        state.map_metadata["resource_stack"] = list(stack_layers)
+        codex_layer = _codex_layer_from_stack(stack_layers)
+        if codex_layer:
+            state.code_x_directory = codex_layer
+        save_campaign(state, paths.campaign)
 
     snapshot = publish_snapshot(state, paths)
     write_last_campaign(paths.campaign, environ=environ)

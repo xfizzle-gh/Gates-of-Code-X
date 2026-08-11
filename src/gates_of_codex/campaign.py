@@ -125,10 +125,36 @@ class CampaignEngine:
             battalion = self.state.battalions.get(battalion_id)
             if battalion is not None:
                 previous = max(1, battalion.unit_count)
-                battalion.roster = roster
+                # GoH scn survivors can name support/crew rows outside the
+                # Earth3 actor catalog (e.g. arf_medic). Keep only units the
+                # owning actor is allowed to carry so import cannot fail closed
+                # after a real played battle.
+                battalion.roster = self._filter_roster_to_actor_authority(
+                    battalion_id, roster
+                )
                 casualty_ratio = max(0.0, 1.0 - battalion.unit_count / previous)
                 battalion.condition = max(10, battalion.condition - max(5, int(casualty_ratio * 35)))
         return self._finalize_positions(winner)
+
+    def _filter_roster_to_actor_authority(self, battalion_id: str, roster: list):
+        from .earth3_bootstrap import is_earth3_p2_campaign
+
+        if not is_earth3_p2_campaign(self.state):
+            return roster
+        battalion = self.state.battalions.get(battalion_id)
+        if battalion is None:
+            return roster
+        force = self.state.strategic_formations.get(battalion.strategic_formation_id)
+        if force is None or not force.actor_id:
+            return roster
+        actors = (self.state.map_metadata.get("actor_content_runtime") or {}).get("actors")
+        if not isinstance(actors, dict):
+            return roster
+        actor = actors.get(force.actor_id) or {}
+        allowed = actor.get("units")
+        if not isinstance(allowed, dict):
+            return roster
+        return [entry for entry in roster if getattr(entry, "unit_name", "") in allowed]
 
     def apply_battle_result(self, winner: Faction):
         self._require_operational_battle_finalization_authority()

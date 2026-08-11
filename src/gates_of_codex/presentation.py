@@ -60,12 +60,21 @@ def unit_presentation_from_catalog(unit: UnitDefinition) -> dict[str, Any]:
 def build_stack_presentations(
     state: CampaignState,
     front_options: Iterable[dict[str, Any]],
+    *,
+    operational_options: Iterable[dict[str, Any]] = (),
 ) -> dict[str, Any]:
     legal_by_battalion: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for option in front_options:
         battalion_id = str(option.get("battalion_id", ""))
         if battalion_id:
             legal_by_battalion[battalion_id].append(dict(option))
+
+    # Graph-native orders are held by the strategic formation, not a battalion.
+    orders_by_formation: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for option in operational_options:
+        formation_id = str(option.get("formation_id", ""))
+        if formation_id:
+            orders_by_formation[formation_id].append(dict(option))
 
     battalions: dict[str, dict[str, Any]] = {}
     stacks: dict[str, list[str]] = defaultdict(list)
@@ -97,6 +106,7 @@ def build_stack_presentations(
             continue
         member_rows = [battalions[battalion_id] for battalion_id in member_ids]
         total_units = sum(int(row["unit_count"]) for row in member_rows)
+        graph_orders = orders_by_formation.get(force.strategic_formation_id, [])
         force_presentations[force.strategic_formation_id] = {
             "id": force.strategic_formation_id,
             "display_name": force.display_name,
@@ -114,7 +124,12 @@ def build_stack_presentations(
             "battalion_ids": list(member_ids),
             "battalion_count": len(member_ids),
             "unit_count": int(total_units),
-            "can_act": any(bool(row["can_act"]) for row in member_rows),
+            # A graph-native campaign has no province-adjacency options at all,
+            # so battalion can_act alone would report every formation inert.
+            "can_act": bool(graph_orders)
+            or any(bool(row["can_act"]) for row in member_rows),
+            "can_issue_move_order": bool(graph_orders),
+            "operational_option_count": len(graph_orders),
             "template_formation_id": force.template_formation_id,
         }
 
@@ -173,7 +188,8 @@ def build_stack_presentations(
             "supply": int(round(weighted_supply / weight)),
             "reinforcement_cost": int(sum(int(row["reinforcement_cost"]) for row in rows)),
             "repair_cost": int(sum(int(row["repair_cost"]) for row in rows)),
-            "can_act": any(bool(row["can_act"]) for row in rows),
+            "can_act": any(bool(row["can_act"]) for row in rows)
+            or any(bool(orders_by_formation.get(force_id)) for force_id in strategic_formation_ids),
             "actor_markers": sorted(
                 {
                     str(row["actor_marker"])
