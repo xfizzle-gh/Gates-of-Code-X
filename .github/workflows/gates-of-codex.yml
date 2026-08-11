@@ -677,12 +677,18 @@ jobs:
           $expectedCommit = '${{ steps.provenance.outputs.commit }}'
           foreach ($executable in @("dist\GatesOfCodeX.exe", "dist\GatesOfCodeXLive.exe")) {
             $archive = (pyi-archive_viewer -l $executable | Out-String)
-            $entry = [regex]::Match($archive, 'gates_of_codex[\\/]SOURCE_COMMIT').Value
-            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($entry)) {
+            if ($LASTEXITCODE -ne 0 -or $archive -notmatch 'SOURCE_COMMIT') {
               throw "Frozen executable is missing provenance: $executable"
             }
-            $extracted = (@("X $entry", "", "Q") | pyi-archive_viewer $executable | Out-String)
-            if ($LASTEXITCODE -ne 0 -or $extracted -notmatch [regex]::Escape($expectedCommit)) {
+            $verified = $false
+            foreach ($entry in @("gates_of_codex\SOURCE_COMMIT", "gates_of_codex/SOURCE_COMMIT")) {
+              $extracted = (@("X $entry", "", "Q") | pyi-archive_viewer $executable | Out-String)
+              if ($LASTEXITCODE -eq 0 -and $extracted -match [regex]::Escape($expectedCommit)) {
+                $verified = $true
+                break
+              }
+            }
+            if (-not $verified) {
               throw "Frozen executable provenance does not match $expectedCommit`: $executable"
             }
           }
