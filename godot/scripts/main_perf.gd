@@ -14,6 +14,22 @@ extends "res://scripts/main_stack_panel.gd"
 ## This script does not alter operational graph authority or campaign rules.
 
 const PLAYER_TURN_ORDER := ["nato", "ukr", "rusa", "prc"]
+const BatchOperationalResolutionPresenterScript = preload(
+	"res://scripts/presentation/operational_resolution_presenter_batch.gd"
+)
+
+
+func _ensure_operational_presenter() -> void:
+	## Use the batch-aware presentation adapter so the single player-round command
+	## still animates movement resolved by later operations in the batch.
+	if operational_presenter != null:
+		return
+	operational_presenter = BatchOperationalResolutionPresenterScript.new()
+	if not InputMap.has_action("skip_operational_presentation"):
+		InputMap.add_action("skip_operational_presentation")
+		var event := InputEventKey.new()
+		event.physical_keycode = KEY_SPACE
+		InputMap.action_add_event("skip_operational_presentation", event)
 
 
 func _handle_button(button_id: String) -> void:
