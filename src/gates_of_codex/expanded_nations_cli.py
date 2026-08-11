@@ -133,6 +133,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                     "evidence_state": matrix["evidence_state"],
                     "playable_actor_count": matrix["playable_actor_count"],
                     "unintended_zero_total": matrix["unintended_zero_total"],
+                    "native_positive_total": matrix.get("native_positive_total"),
+                    "native_unknown_numeric_total": matrix.get("native_unknown_numeric_total"),
                     "source_head": matrix["source_head"],
                     "json_output": args.json_output,
                     "markdown_output": args.markdown_output,

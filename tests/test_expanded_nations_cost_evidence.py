@@ -221,5 +221,58 @@ class ExpandedNationsCostEvidenceTests(unittest.TestCase):
         self.assertEqual("vehicle_entity_cost", ev.economy_class)
         self.assertEqual(1950.0, ev.native_recruitment_cost)
 
+
+    def test_owner_verified_unknown_numeric_is_exact(self) -> None:
+        raw = (
+            '{"squad_gb3_mot_rifle_cougar(nato)"\n'
+            '\t("squad_vehicle" side(nato) vehicle(cougar-oh) cw(0) cp(4) crew(gb_crew:3))\n'
+            '}'
+        )
+        breed = self.layers[2] / "resource/set/breed/mp/nato/2022s/gb_crew.set"
+        breed.parent.mkdir(parents=True, exist_ok=True)
+        breed.write_text('{breed {skin "x"}}\n', encoding="utf-8")
+        inf = self.layers[2] / "resource/set/multiplayer/units/conquest/inf_nato.set"
+        inf.parent.mkdir(parents=True, exist_ok=True)
+        inf.write_text(
+            '{"mp/nato/2022s/gb_crew" ("nato_basic" side(nato)) {cost 20.0}}\n',
+            encoding="utf-8",
+        )
+        ev = self._eval(raw, side="nato", vehicle_costs={}, conflicts={})
+        self.assertEqual("native_ui_verified_positive_unknown", ev.economy_class)
+        self.assertIsNone(ev.native_recruitment_cost)
+        self.assertFalse(ev.zero_cost)
+        self.assertIn("cougar-oh", ev.rationale)
+
+    def test_unknown_vehicle_id_still_fails_closed(self) -> None:
+        raw = (
+            '{"squad_mystery(nato)"\n'
+            '\t("squad_vehicle" side(nato) vehicle(totally_unknown_tank) cw(0) cp(4) crew(gb_crew:3))\n'
+            '}'
+        )
+        breed = self.layers[2] / "resource/set/breed/mp/nato/2022s/gb_crew.set"
+        breed.parent.mkdir(parents=True, exist_ok=True)
+        breed.write_text('{breed {skin "x"}}\n', encoding="utf-8")
+        inf = self.layers[2] / "resource/set/multiplayer/units/conquest/inf_nato.set"
+        inf.parent.mkdir(parents=True, exist_ok=True)
+        inf.write_text(
+            '{"mp/nato/2022s/gb_crew" ("nato_basic" side(nato)) {cost 20.0}}\n',
+            encoding="utf-8",
+        )
+        ev = self._eval(raw, side="nato", vehicle_costs={}, conflicts={})
+        self.assertEqual("vehicle_unpriced", ev.economy_class)
+        self.assertEqual(0.0, ev.native_recruitment_cost)
+        self.assertTrue(ev.zero_cost)
+        self.assertIn("totally_unknown_tank", ev.rationale)
+
+    def test_allowlist_does_not_cover_mixed_unknown_vehicle(self) -> None:
+        raw = (
+            '{"squad_mixed(nato)"\n'
+            '\t("squad_vehicle" side(nato) vehicle1(cougar-oh) vehicle2(totally_unknown_tank) cw(0) cp(4))\n'
+            '}'
+        )
+        ev = self._eval(raw, side="nato", vehicle_costs={}, conflicts={})
+        self.assertEqual("vehicle_unpriced", ev.economy_class)
+        self.assertTrue(ev.zero_cost)
+
 if __name__ == "__main__":
     unittest.main()

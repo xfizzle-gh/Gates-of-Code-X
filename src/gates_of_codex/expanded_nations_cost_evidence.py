@@ -35,7 +35,7 @@ from .goh_source import scan_source_entries
 from .modstack import normalize_stack, resource_root
 
 COST_EVIDENCE_SCHEMA = "gates-of-codex.expanded-nations-cost-evidence"
-COST_EVIDENCE_VERSION = 2
+COST_EVIDENCE_VERSION = 3
 
 _MEMBER_RE = re.compile(
     r"\bc\d+\s*\(\s*([A-Za-z0-9_./+-]+)\s*:\s*(\d+)\s*\)",
@@ -48,6 +48,18 @@ _VEHICLE_COST_RE = re.compile(
     re.IGNORECASE,
 )
 _VEHICLE_CALL_RE = re.compile(r"\bvehicle\d*\s*\(\s*([^)\s]+)\s*\)", re.IGNORECASE)
+
+# Owner-native-UI verified: these exact vehicle IDs display a positive recruitment
+# money price in GoH, but the installed stack has no parseable money-cost row under
+# that exact ID. Keep the exception exact; do not invent numeric prices.
+_NATIVE_UI_VERIFIED_POSITIVE_UNKNOWN_VEHICLE_IDS = frozenset({
+    "cougar-oh",
+    "m2a2_ods_bradley_arat_rus",
+    "novator",
+    "m109_paladin_n",
+    "m270_n_clu",
+    "maars",
+})
 
 
 @dataclass(frozen=True, slots=True)
@@ -171,6 +183,16 @@ def build_cost_evidence_matrix(
             unintended_zeros = [
                 u for u in unit_rows if u.zero_cost and not u.intentional_zero
             ]
+            native_positive = [
+                u
+                for u in unit_rows
+                if u.native_recruitment_cost is not None and float(u.native_recruitment_cost) > 0
+            ]
+            native_unknown_numeric = [
+                u
+                for u in unit_rows
+                if u.economy_class == "native_ui_verified_positive_unknown"
+            ]
 
             actors[actor_id] = {
                 "actor_id": actor_id,
@@ -190,6 +212,16 @@ def build_cost_evidence_matrix(
                 "native_recruitment_cost_max": max(costs) if costs else None,
                 "unintended_zero_count": len(unintended_zeros),
                 "intentional_zero_count": len(intentional_zeros),
+                "native_positive_count": len(native_positive),
+                "native_unknown_numeric_count": len(native_unknown_numeric),
+                "native_unknown_numeric_units": [
+                    {
+                        "unit_name": u.unit_name,
+                        "economy_class": u.economy_class,
+                        "rationale": u.rationale,
+                    }
+                    for u in native_unknown_numeric
+                ],
                 "intentional_zero_units": [
                     {"unit_name": u.unit_name, "rationale": u.rationale}
                     for u in intentional_zeros
@@ -236,6 +268,12 @@ def build_cost_evidence_matrix(
             for item in global_unintended_zeros
             if str(item.get("economy_class")) == "vehicle_unpriced"
         ),
+        "native_positive_total": sum(
+            int(row.get("native_positive_count") or 0) for row in actors.values()
+        ),
+        "native_unknown_numeric_total": sum(
+            int(row.get("native_unknown_numeric_count") or 0) for row in actors.values()
+        ),
         "actors": actors,
     }
 
@@ -249,17 +287,19 @@ def render_cost_evidence_markdown(matrix: Mapping[str, Any]) -> str:
         f"- source_head: `{matrix.get('source_head')}`",
         f"- playable_actors: {matrix.get('playable_actor_count')}",
         f"- unintended_zero_total: {matrix.get('unintended_zero_total')}",
+        f"- native_positive_total: {matrix.get('native_positive_total')}",
+        f"- native_unknown_numeric_total: {matrix.get('native_unknown_numeric_total')}",
         "",
         "Native recruitment cost counts money-price authority only "
         "(`{cost N}` / purchase `cost(N)` / vehicle entity `{cost}` / pure-infantry inf sums). "
         "`cp()` and `cost_sp` are recorded per unit but never counted as recruitment money.",
         "",
-        "| actor | side | units | proj_rows | min | median | max | unintended_zero | intentional_zero |",
-        "|---|---|---:|---:|---:|---:|---:|---:|---:|",
+        "| actor | side | units | proj_rows | min | median | max | native_positive | unknown_numeric | unintended_zero | intentional_zero |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for actor_id, row in sorted((matrix.get("actors") or {}).items()):
         lines.append(
-            "| {actor} | {side} | {units} | {proj} | {mn} | {med} | {mx} | {uz} | {iz} |".format(
+            "| {actor} | {side} | {units} | {proj} | {mn} | {med} | {mx} | {np} | {nu} | {uz} | {iz} |".format(
                 actor=actor_id,
                 side=row.get("tactical_side"),
                 units=row.get("unit_count"),
@@ -267,6 +307,8 @@ def render_cost_evidence_markdown(matrix: Mapping[str, Any]) -> str:
                 mn=_fmt(row.get("native_recruitment_cost_min")),
                 med=_fmt(row.get("native_recruitment_cost_median")),
                 mx=_fmt(row.get("native_recruitment_cost_max")),
+                np=row.get("native_positive_count"),
+                nu=row.get("native_unknown_numeric_count"),
                 uz=row.get("unintended_zero_count"),
                 iz=row.get("intentional_zero_count"),
             )
@@ -438,20 +480,38 @@ def _evaluate_unit_cost(
         zero = False
         intentional = False
     elif has_vehicle:
-        economy = "vehicle_unpriced"
-        native = 0.0
-        if vehicle_lookup_error:
-            rationale = vehicle_lookup_error
-        elif missing_vehicles or vehicle_names:
-            names = missing_vehicles or vehicle_names
+        gap_names = list(missing_vehicles or vehicle_names)
+        gap_folded = {n.casefold() for n in gap_names}
+        allow_folded = {n.casefold() for n in _NATIVE_UI_VERIFIED_POSITIVE_UNKNOWN_VEHICLE_IDS}
+        if (
+            gap_names
+            and gap_folded <= allow_folded
+            and vehicle_lookup_error is None
+            and purchase_cost in (None, 0.0)
+            and vehicle_entity_cost is None
+        ):
+            economy = "native_ui_verified_positive_unknown"
+            native = None
             rationale = (
-                "vehicle-bearing purchase lacks purchase money cost and vehicle entity "
-                f"money cost for {', '.join(names)}"
+                "owner native-UI verified positive recruitment money with no parseable "
+                f"exact vehicle money row for {', '.join(gap_names)}; numeric price unknown"
             )
+            zero = False
+            intentional = False
         else:
-            rationale = "vehicle-bearing purchase lacks purchase/vehicle money-cost authority"
-        zero = True
-        intentional = False
+            economy = "vehicle_unpriced"
+            native = 0.0
+            if vehicle_lookup_error:
+                rationale = vehicle_lookup_error
+            elif gap_names:
+                rationale = (
+                    "vehicle-bearing purchase lacks purchase money cost and vehicle entity "
+                    f"money cost for {', '.join(gap_names)}"
+                )
+            else:
+                rationale = "vehicle-bearing purchase lacks purchase/vehicle money-cost authority"
+            zero = True
+            intentional = False
     elif not has_vehicle and personnel is not None and personnel > 0:
         economy = "personnel_inf_sum"
         native = personnel
