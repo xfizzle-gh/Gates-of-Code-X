@@ -1,0 +1,5 @@
+﻿msgid "mp/army/goc_usa"
+msgstr "GOC USA (spike)"
+
+msgid "mp/army/goc_fra"
+msgstr "GOC France (spike)"

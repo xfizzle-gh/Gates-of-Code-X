@@ -1,0 +1,47 @@
+﻿; Disposable #201 spike units for goc_usa. Do not ship as production content.
+; Breeds intentionally reuse mp/nato paths; army identity is goc_usa.
+
+{"goc_usa_test_rifle(goc_usa)"
+	{charge {delay 0}{interval 0}}
+	{content "mp/nato/2022s/usmc_rifleman mp/nato/2022s/usmc_rifleman mp/nato/2022s/usmc_rifleman mp/nato/2022s/usmc_medic"}
+	{tags "conquest conquestonly goc_usa 2022s"}
+	{level 1}
+	{cost 120}
+	{cp 4}
+	{cw 0}
+	{research_stage 1}
+	{research_stage_max 99}
+	{squad_cost_factor 1}
+	{round_multiple 5.0}
+	{button "inf1"}
+}
+
+{"goc_usa_test_at(goc_usa)"
+	{charge {delay 0}{interval 0}}
+	{content "mp/nato/2022s/usmc_teamlead mp/nato/2022s/usmc_antitank_smaw mp/nato/2022s/usmc_antitank_smaw"}
+	{tags "conquest conquestonly goc_usa 2022s"}
+	{level 1}
+	{cost 90}
+	{cp 3}
+	{cw 0}
+	{research_stage 1}
+	{research_stage_max 99}
+	{squad_cost_factor 1}
+	{round_multiple 5.0}
+	{button "inf2"}
+}
+
+{"goc_usa_test_vehicle(goc_usa)"
+	{charge {delay 0}{interval 0}}
+	{content "m1126 ( mp/nato/2022s/usmc_vehicleman mp/nato/2022s/usmc_vehicleman mp/nato/2022s/usmc_vehicleman )"}
+	{tags "conquest conquestonly goc_usa 2022s"}
+	{level 1}
+	{cost 200}
+	{cp 4}
+	{cw 2}
+	{research_stage 1}
+	{research_stage_max 99}
+	{squad_cost_factor 1}
+	{round_multiple 5.0}
+	{button "vehicles"}
+}

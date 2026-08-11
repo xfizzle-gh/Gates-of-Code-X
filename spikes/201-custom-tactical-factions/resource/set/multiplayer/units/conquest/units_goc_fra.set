@@ -1,0 +1,46 @@
+﻿; Disposable #201 spike units for goc_fra. Do not ship as production content.
+
+{"goc_fra_test_rifle(goc_fra)"
+	{charge {delay 0}{interval 0}}
+	{content "mp/nato/2022s/nato_rifleman mp/nato/2022s/nato_rifleman mp/nato/2022s/nato_rifleman mp/nato/2022s/nato_medic"}
+	{tags "conquest conquestonly goc_fra 2022s"}
+	{level 1}
+	{cost 115}
+	{cp 4}
+	{cw 0}
+	{research_stage 1}
+	{research_stage_max 99}
+	{squad_cost_factor 1}
+	{round_multiple 5.0}
+	{button "inf1"}
+}
+
+{"goc_fra_test_at(goc_fra)"
+	{charge {delay 0}{interval 0}}
+	{content "mp/nato/2022s/nato_teamlead mp/nato/2022s/nato_antitank mp/nato/2022s/nato_antitank"}
+	{tags "conquest conquestonly goc_fra 2022s"}
+	{level 1}
+	{cost 95}
+	{cp 3}
+	{cw 0}
+	{research_stage 1}
+	{research_stage_max 99}
+	{squad_cost_factor 1}
+	{round_multiple 5.0}
+	{button "inf2"}
+}
+
+{"goc_fra_test_vehicle(goc_fra)"
+	{charge {delay 0}{interval 0}}
+	{content "amx10rc ( mp/nato/2022s/usmc_vehicleman mp/nato/2022s/usmc_vehicleman mp/nato/2022s/usmc_vehicleman )"}
+	{tags "conquest conquestonly goc_fra 2022s"}
+	{level 1}
+	{cost 450}
+	{cp 8}
+	{cw 3}
+	{research_stage 1}
+	{research_stage_max 99}
+	{squad_cost_factor 1}
+	{round_multiple 5.0}
+	{button "vehicles"}
+}
