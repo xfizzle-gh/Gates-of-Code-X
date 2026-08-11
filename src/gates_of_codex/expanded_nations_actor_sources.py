@@ -22,7 +22,7 @@ from .goh_source import SourceEntry, scan_source_entries
 from .modstack import resource_root
 
 _NATIVE_ID_RE = re.compile(
-    r"^(?P<base>.*?)(?:\((?P<side>nato|ukr|rusa|prc|sov|csa|frg)\))?$",
+    r"^(?P<base>.*?)(?:\((?P<side>nato|ukr|rusa|prc|sov|csa|frg|goc_[a-z0-9_]+)\))?$",
     re.IGNORECASE,
 )
 _DEFINE_START_RE = re.compile(
@@ -133,16 +133,23 @@ def project_actor_units(
             )
         source_entry_names.add(source_key)
 
-        rendered_name = (
-            _native_macro_name(actor_unit_name, side)
-            if entry.form == "macro"
-            else actor_unit_name
-        )
-        projected_unit_name = (
-            f"{rendered_name}({side})"
-            if entry.form == "macro"
-            else actor_unit_name
-        )
+        if entry.form == "macro":
+            rendered_name = _native_macro_name(actor_unit_name, side)
+            projected_unit_name = f"{rendered_name}({side})"
+        else:
+            # Block purchase IDs carry the full effective ID in the quoted name.
+            # Remap a source-side parenthetical onto the target engine army token.
+            match = _NATIVE_ID_RE.fullmatch(actor_unit_name)
+            if (
+                match
+                and match.group("base")
+                and match.group("side")
+                and match.group("side").lower() != side.lower()
+            ):
+                projected_unit_name = f"{match.group('base')}({side})"
+            else:
+                projected_unit_name = actor_unit_name
+            rendered_name = projected_unit_name
         if projected_unit_name in projected_ids:
             raise ExpandedNationsError(
                 f"Actor {actor['actor_id']} projects duplicate native purchase "
@@ -610,10 +617,20 @@ def _native_macro_name(unit_name: str, side: str) -> str:
     suffix = (match.group("side") or "").lower()
     normalized_side = side.lower()
     if suffix and suffix != normalized_side:
-        raise ExpandedNationsError(
-            f"Native squad macro {unit_name} conflicts with tactical side "
-            f"{normalized_side}"
-        )
+        # Catalog IDs often retain the source-side parenthetical (e.g. squad_arf_rifle(nato))
+        # while production GOC armies project onto a distinct engine token (goc_bel).
+        # Allow stripping a core/historical source suffix when the target side differs.
+        from .goc_tactical_army_registry import CORE_TACTICAL_SIDES, is_goc_tactical_side
+
+        source_sides = set(CORE_TACTICAL_SIDES) | {"sov", "csa", "frg"}
+        if not (
+            suffix in source_sides
+            and (is_goc_tactical_side(normalized_side) or normalized_side in source_sides)
+        ):
+            raise ExpandedNationsError(
+                f"Native squad macro {unit_name} conflicts with tactical side "
+                f"{normalized_side}"
+            )
     return str(match.group("base"))
 
 

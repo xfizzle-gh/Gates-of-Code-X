@@ -12,12 +12,15 @@ from gates_of_codex.faction_wiring import (
     load_faction_manifest,
     validate_faction_manifest,
 )
+from gates_of_codex.expanded_nations_models import (
+    BROAD_ROSTER_INCLUDES,
+    CANONICAL_INF_INCLUDES,
+)
 from gates_of_codex.goc_native_dc_seam import (
     expected_seam_relpaths,
     playable_west_sides,
     render_alliances_generic,
-    render_purchase_lua,
-    unit_id,
+    render_roster_conquest,
     validate_repo_native_dc_seam,
 )
 from gates_of_codex.goc_tactical_army_registry import (
@@ -170,6 +173,20 @@ class NativeDcSeamTests(unittest.TestCase):
         self.assertEqual(problems, [])
         for rel in expected_seam_relpaths():
             self.assertTrue((root / rel).is_file(), rel)
+        # roster_conquest.set is runtime-only (single-owner generated path).
+        ignore = (root / ".gitignore").read_text(encoding="utf-8")
+        self.assertIn("/resource/set/multiplayer/units/roster_conquest.set", ignore)
+        roster_render = render_roster_conquest()
+        for rel in CANONICAL_INF_INCLUDES:
+            self.assertIn(rel, roster_render)
+        for rel in BROAD_ROSTER_INCLUDES:
+            self.assertIn(rel, roster_render)
+        for required in (
+            "conquest/inf_sov_era1960.set",
+            "conquest/inf_frg_era1960.set",
+            "conquest/units_frg_era1960.set",
+        ):
+            self.assertIn(required, roster_render)
         alliances = (root / "resource/set/multiplayer/games/presets/alliances_generic.inc").read_text(
             encoding="utf-8"
         )
@@ -182,18 +199,30 @@ class NativeDcSeamTests(unittest.TestCase):
                 / side
                 / f"conquest.{side}.lua"
             ).read_text(encoding="utf-8")
-            self.assertEqual(lua, render_purchase_lua(side))
             self.assertIn("Repeat", lua)
-            self.assertIn(unit_id(side, "rifle"), lua)
+            self.assertIn("Units", lua)
+            self.assertNotIn("usmc_rifleman", lua)
+            self.assertNotIn("_test_rifle", lua)
             research = (
                 root / "resource/set/dynamic_campaign" / f"unit_research_{side}.set"
             ).read_text(encoding="utf-8")
-            self.assertIn(unit_id(side, "rifle"), research)
+            self.assertIn(side, research)
             units = (
                 root / "resource/set/multiplayer/units/conquest" / f"units_{side}.set"
             ).read_text(encoding="utf-8")
-            self.assertIn(side, units)
-            self.assertIn(f"({side})", units)
+            self.assertIn(f"side({side})", units)
+            self.assertNotIn("usmc_rifleman", units)
+            self.assertIn("Deterministic rendering of #190-approved", units)
+        # #190 authority identity for national hybrids.
+        cze = (
+            root / "resource/set/multiplayer/units/conquest/units_goc_cze.set"
+        ).read_text(encoding="utf-8")
+        self.assertIn("vz_77_dana", cze)
+        self.assertIn("squad_arf_rifle", cze)
+        svk = (
+            root / "resource/set/multiplayer/units/conquest/units_goc_svk.set"
+        ).read_text(encoding="utf-8")
+        self.assertIn("vz_77_dana", svk)
         # Strategic-only armies stay registered but out of the alliance picker.
         for token in ("goc_aut", "goc_che", "goc_irl", "goc_isl"):
             self.assertNotIn(f'{{armies "{token}"}}', alliances)
@@ -210,7 +239,7 @@ class NativeDcSeamTests(unittest.TestCase):
         ctf = (
             root / "resource/set/multiplayer/games/campaign_capture_the_flag.set"
         ).read_text(encoding="utf-8")
-        self.assertIn('presets/alliances_generic.inc', ctf)
+        self.assertIn("presets/alliances_generic.inc", ctf)
 
 
 class Phase191ManifestTests(unittest.TestCase):

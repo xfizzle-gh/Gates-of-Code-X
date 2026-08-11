@@ -47,7 +47,7 @@
         "kind": "research_branch",
         "source_side": "nato",
         "root": "2022arf",
-        "include_regex": "^(2022arf|squad_arf_(rifle|rifle_spike|mg|at|scout)|squad_dsk_eng|squad_dsk_eng_at)$"
+        "include_regex": "^(2022arf|squad_arf_(rifle|rifle_spike|mg|at|scout)(\\([^)]*\\))?|squad_dsk_eng(_at)?(\\([^)]*\\))?)$"
       }
     ]
   },
@@ -718,7 +718,7 @@
         "kind": "research_branch",
         "source_side": "nato",
         "root": "2022arf",
-        "include_regex": "^(2022arf|squad_arf_(rifle|rifle_spike|mg|at|scout)|squad_dsk_eng|squad_dsk_eng_at)$"
+        "include_regex": "^(2022arf|squad_arf_(rifle|rifle_spike|mg|at|scout)(\\([^)]*\\))?|squad_dsk_eng(_at)?(\\([^)]*\\))?)$"
       }
     ]
   },

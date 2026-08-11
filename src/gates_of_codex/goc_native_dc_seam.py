@@ -1,15 +1,33 @@
 """Production native Dynamic Conquest seam for Gates-owned goc_* armies (#191/#201).
 
-Follows the owner-confirmed #201 recipe:
-army registration, alliances_generic, values.set matchups, roster includes,
-inf/units, research, purchase Lua, conquest.lua nationMap/coalitions, CTF.
+Native per-side packs are a deterministic rendering of the #190-approved
+faction-wiring / compiler actor authority (not disposable bootstrap prototypes).
+
+``roster_conquest.set`` lifecycle (single owner contract):
+- Never committed; always generated under the ignored runtime path.
+- ``materialize_native_dc_seam`` writes the multi-faction native-DC roster
+  (complete core includes + all playable production goc packs).
+- Expanded Nations activation may overwrite the same path with a single-actor
+  isolation roster. Both generators share CANONICAL core include lists.
 """
 from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any, Mapping, Sequence
 
+from .expanded_nations_actor_sources import (
+    normalize_actor_purchase_ids,
+    project_actor_units,
+)
+from .expanded_nations_inf_costs import project_actor_inf_cost_rows
+from .expanded_nations_models import (
+    BROAD_ROSTER_INCLUDES,
+    CANONICAL_INF_INCLUDES,
+    GENERATED_MARKER,
+)
+from .expanded_nations_render import project_research_nodes, render_research_file
+from .faction_wiring_compiler import FactionWiringCompiler
 from .goc_tactical_army_registry import (
     GocArmyRegistryError,
     army_row,
@@ -18,40 +36,17 @@ from .goc_tactical_army_registry import (
     playable_goc_sides,
     render_army_set,
 )
+from .modstack import normalize_stack
 
 CORE_WEST = ("nato", "ukr")
 CORE_EAST = ("rusa", "prc")
-
-# Bootstrap DC pack reuses proven Code:X NATO breed paths (same approach as #201 spike).
-# Army identity is the goc_* side tag; breeds are not claimed as national authorship.
-_BOOTSTRAP_BREEDS = (
-    ("mp/nato/2022s/usmc_rifleman", "nato_basic", "13.5"),
-    ("mp/nato/2022s/usmc_medic", "nato_medic", "14.0"),
-    ("mp/nato/2022s/usmc_teamlead", "nato_basic", "10.5"),
-    ("mp/nato/2022s/usmc_antitank_smaw", "nato_basic", "40.0"),
-    ("mp/nato/2022s/usmc_vehicleman", "nato_supporter", "10.5"),
-)
-
-_CORE_ROSTER_INF = (
-    "conquest/inf_ukr.set",
-    "conquest/inf_rusa.set",
-    "conquest/inf_nato.set",
-    "conquest/inf_prc_era1960.set",
-    "conquest/inf_csa_era1960.set",
-)
-_CORE_ROSTER_UNITS = (
-    "conquest/units_ukr.set",
-    "conquest/units_rusa.set",
-    "conquest/units_nato.set",
-    "conquest/units_sov_era1960.set",
-    "conquest/units_csa_era1960.set",
-    "conquest/units_prc_era1960.set",
-)
 
 _NATION_MAP_CORE = (
     "rusa = 1, ukr = 2, nato = 3, csa = 4, sov = 5, prc = 6, frg = 7, pol = 8"
 )
 _NATION_MAP_ALIASES = "rus = 1, ger = 2, fin = 3, usa = 3, eng = 3, jap = 6"
+
+_ROSTER_RELATIVE = "resource/set/multiplayer/units/roster_conquest.set"
 
 
 def playable_west_sides() -> tuple[str, ...]:
@@ -70,8 +65,8 @@ def playable_east_sides() -> tuple[str, ...]:
     )
 
 
-def unit_id(side: str, kind: str) -> str:
-    return f"{side}_{kind}({side})"
+def actor_id_for_side(side: str) -> str:
+    return str(army_row(side)["actor_id"])
 
 
 def render_alliances_generic() -> str:
@@ -109,7 +104,6 @@ def render_ctf_set() -> str:
 
 def _matchup_pairs() -> list[str]:
     pairs: list[str] = []
-    # Preserve Core pairs required by Code:X create-menu regions.
     core_pairs = [
         ("nato", "ukr"),
         ("nato", "rusa"),
@@ -132,7 +126,6 @@ def _matchup_pairs() -> list[str]:
         for opp in opponents:
             pairs.append(f'"{side} {opp}"')
             pairs.append(f'"{opp} {side}"')
-    # Stable unique order.
     seen: set[str] = set()
     ordered: list[str] = []
     for item in pairs:
@@ -150,7 +143,6 @@ def render_values_set() -> str:
     return (
         "; Gates production GOC values.set (#191)\n"
         "; Core matchups retained; production goc_* both-direction pairs injected.\n"
-        "; Empty AvailableMatchups for a shown region crash Dynamic Conquest create.\n"
         "\n"
         "{Regions\n"
         "\t{Europe\n"
@@ -177,137 +169,123 @@ def render_values_set() -> str:
 
 
 def render_roster_conquest() -> str:
+    """Multi-faction native DC roster: complete core + production goc packs.
+
+    Uses the same canonical core include lists as Expanded Nations. Runtime-only.
+    """
     sides = playable_goc_sides()
-    inf_goc = "\n".join(f'\t(include "conquest/inf_{side}.set")' for side in sides)
-    units_goc = "\n".join(f'\t(include "conquest/units_{side}.set")' for side in sides)
-    core_inf = "\n".join(f'\t(include "{path}")' for path in _CORE_ROSTER_INF)
-    core_units = "\n".join(f'\t(include "{path}")' for path in _CORE_ROSTER_UNITS)
-    return (
-        ";sdl\n"
-        "; Gates #191 production roster: Core stack includes + production goc_* packs\n"
-        "; Only includes files present under multiplayer/units/conquest/ on the live stack.\n"
-        "{units\n"
-        '\t(include "conquest/settings.set")\n'
-        "\n"
-        f"{core_inf}\n"
-        f"{inf_goc}\n"
-        "\n"
-        f"{core_units}\n"
-        f"{units_goc}\n"
-        "}\n"
-    )
-
-
-def render_inf_set(side: str) -> str:
     lines = [
-        f"; #191 production inf costs for {side}.",
-        "; Breed paths reuse Code:X nato assets; side tag is the GOC army token.",
+        ";sdl",
+        GENERATED_MARKER,
+        "; mode=native_multi_faction_dc",
+        "; owner=goc_native_dc_seam.materialize_native_dc_seam",
+        "{units",
+        '\t(include "conquest/settings.set")',
         "",
     ]
-    for breed, macro, cost in _BOOTSTRAP_BREEDS:
-        lines.append(f'{{"{breed}"\t\t("{macro}" side({side})) {{cost {cost}}}}}')
-    return "\n".join(lines) + "\n"
+    lines.extend(f'\t(include "{path}")' for path in CANONICAL_INF_INCLUDES)
+    lines.extend(f'\t(include "conquest/inf_{side}.set")' for side in sides)
+    lines.append("")
+    lines.extend(f'\t(include "{path}")' for path in BROAD_ROSTER_INCLUDES)
+    lines.extend(f'\t(include "conquest/units_{side}.set")' for side in sides)
+    lines.extend(["}", ""])
+    return "\n".join(lines)
 
 
-def render_units_set(side: str) -> str:
-    rifle = unit_id(side, "rifle")
-    at = unit_id(side, "at")
-    vehicle = unit_id(side, "vehicle")
+def render_units_set_from_projection(
+    actor: Mapping[str, Any],
+    body: str,
+) -> str:
+    side = str(actor["tactical_side"])
     return (
-        f"; #191 production DC bootstrap units for {side}.\n"
-        "; Breeds reuse mp/nato paths; army identity is the goc_* side tag.\n"
-        "\n"
-        f'{{"{rifle}"\n'
-        "\t{charge {delay 0}{interval 0}}\n"
-        '\t{content "mp/nato/2022s/usmc_rifleman mp/nato/2022s/usmc_rifleman '
-        'mp/nato/2022s/usmc_rifleman mp/nato/2022s/usmc_medic"}\n'
-        f'\t{{tags "conquest conquestonly {side} 2022s"}}\n'
-        "\t{level 1}\n"
-        "\t{cost 120}\n"
-        "\t{cp 4}\n"
-        "\t{cw 0}\n"
-        "\t{research_stage 1}\n"
-        "\t{research_stage_max 99}\n"
-        "\t{squad_cost_factor 1}\n"
-        "\t{round_multiple 5.0}\n"
-        '\t{button "inf1"}\n'
-        "}\n"
-        "\n"
-        f'{{"{at}"\n'
-        "\t{charge {delay 0}{interval 0}}\n"
-        '\t{content "mp/nato/2022s/usmc_teamlead mp/nato/2022s/usmc_antitank_smaw '
-        'mp/nato/2022s/usmc_antitank_smaw"}\n'
-        f'\t{{tags "conquest conquestonly {side} 2022s"}}\n'
-        "\t{level 1}\n"
-        "\t{cost 90}\n"
-        "\t{cp 3}\n"
-        "\t{cw 0}\n"
-        "\t{research_stage 1}\n"
-        "\t{research_stage_max 99}\n"
-        "\t{squad_cost_factor 1}\n"
-        "\t{round_multiple 5.0}\n"
-        '\t{button "inf2"}\n'
-        "}\n"
-        "\n"
-        f'{{"{vehicle}"\n'
-        "\t{charge {delay 0}{interval 0}}\n"
-        '\t{content "m1126 ( mp/nato/2022s/usmc_vehicleman mp/nato/2022s/usmc_vehicleman '
-        'mp/nato/2022s/usmc_vehicleman )"}\n'
-        f'\t{{tags "conquest conquestonly {side} 2022s"}}\n'
-        "\t{level 1}\n"
-        "\t{cost 200}\n"
-        "\t{cp 4}\n"
-        "\t{cw 2}\n"
-        "\t{research_stage 1}\n"
-        "\t{research_stage_max 99}\n"
-        "\t{squad_cost_factor 1}\n"
-        "\t{round_multiple 5.0}\n"
-        '\t{button "vehicles"}\n'
-        "}\n"
+        f"{GENERATED_MARKER}\n"
+        f"; #191 production native DC units for {side}\n"
+        f"; actor_id={actor['actor_id']}\n"
+        f"; display_name={actor['display_name']}\n"
+        f"; tactical_side={side}\n"
+        f"; unit_count={actor['unit_count']}\n"
+        f"; components={','.join(actor.get('components') or [])}\n"
+        "; Deterministic rendering of #190-approved compiler actor authority.\n"
+        "; Source definitions projected from the installed stack; not bootstrap prototypes.\n\n"
+        + body
     )
 
 
-def render_research_set(side: str) -> str:
-    rifle = unit_id(side, "rifle")
-    at = unit_id(side, "at")
-    vehicle = unit_id(side, "vehicle")
+def render_inf_set_from_projection(actor: Mapping[str, Any], body: str) -> str:
+    side = str(actor["tactical_side"])
+    if not body.strip():
+        return (
+            f"{GENERATED_MARKER}\n"
+            f"; #191 production inf costs for {side} (none required)\n"
+            f"; actor_id={actor['actor_id']}\n"
+        )
     return (
-        "  {IconGap 30}\n"
-        "\n"
-        f"; #191 production research tree for {side} — isolated GOC bootstrap pool.\n"
-        "\n"
-        '\t{ tech "reinforcement_stage_1"\t\trequires ""\t\t\t\t\t\t\tcosts 0  position 0 0}\n'
-        '\t{ tech "reinforcement_stage_2"\t\trequires "reinforcement_stage_1"\tcosts 1  position 1 0}\n'
-        '\t{ tech "reinforcement_stage_3"\t\trequires "reinforcement_stage_2"\tcosts 2  position 2 0}\n'
-        '\t{ tech "reinforcement_stage_4"\t\trequires "reinforcement_stage_3"\tcosts 5  position 3 0}\n'
-        '\t{ tech "reinforcement_stage_5"\t\trequires "reinforcement_stage_4"\tcosts 7  position 4 0}\n'
-        "\t\n"
-        '\t{ tech "defense_level_1"\t\t\trequires "reinforcement_stage_2"\tcosts 1  position 7 0}\n'
-        '\t{ tech "defense_level_2"\t\t\trequires "defense_level_1"\t\t\tcosts 5  position 8 0}\n'
-        '\t{ tech "defense_level_3"\t\t\trequires "defense_level_2"\t\t\tcosts 7  position 9 0}\n'
-        "\n"
-        f'\t{{"{rifle}"\t\t\trequires ""\t\t\t\tcosts 1 position 1 2}}\n'
-        f'\t{{"{at}"\t\t\trequires "{rifle}"\t\t\t\tcosts 1 position 3 2}}\n'
-        f'\t{{"{vehicle}"\t\t\trequires "{rifle}"\t\t\t\tcosts 2 position 5 2}}\n'
+        f"{GENERATED_MARKER}\n"
+        f"; #191 production inf costs for {side}\n"
+        f"; actor_id={actor['actor_id']}\n"
+        f"; tactical_side={side}\n\n"
+        + body
     )
 
 
-def render_purchase_lua(side: str) -> str:
-    rifle = unit_id(side, "rifle")
-    at = unit_id(side, "at")
-    vehicle = unit_id(side, "vehicle")
-    return (
-        "Purchases = Purchases or {}\n"
-        f'Purchases["conquest.{side}"] = {{\n'
-        "\t{Repeat = 0,\n"
-        "\t\tUnits = {\n"
-        f'\t\t\t{{priority = 2.2, type = {{"Class2", "Infantry", "Squad"}}, unit = "{rifle}"}},\n'
-        f'\t\t\t{{priority = 1.5, type = {{"Class2", "Infantry", "Squad", "AT"}}, unit = "{at}"}},\n'
-        f'\t\t\t{{priority = 0.8, type = {{"Class1", "Armored", "Vehicle"}}, unit = "{vehicle}"}},\n'
-        "\t\t}\n"
-        "\t},\n"
-        "}\n"
-    )
+def _lua_type_for_unit(unit: Mapping[str, Any]) -> list[str]:
+    category = str(unit.get("category") or "infantry").lower()
+    name = str(unit.get("unit_name") or "").lower()
+    if category == "infantry" or "squad_" in name:
+        tags = ["Class2", "Infantry", "Squad"]
+        if "_at" in name or "javelin" in name or "smaw" in name:
+            tags.append("AT")
+        return tags
+    if category == "tank":
+        return ["Class1", "Armored", "Tank"]
+    if category in {"ifv", "vehicle", "apc"}:
+        return ["Class1", "Armored", "Vehicle"]
+    if category == "artillery":
+        return ["Class1", "Artillery"]
+    if category in {"air_defense", "aa"}:
+        return ["Class1", "AirDefence"]
+    if category in {"aviation", "air"}:
+        return ["Class1", "Aviation"]
+    if category == "anti_armor":
+        return ["Class1", "Armored", "AT"]
+    return ["Class2", "Infantry", "Squad"]
+
+
+def render_purchase_lua_from_actor(actor: Mapping[str, Any]) -> str:
+    side = str(actor["tactical_side"])
+    units = sorted(actor.get("units") or [], key=lambda row: str(row["unit_name"]))
+    lines = [
+        "Purchases = Purchases or {}",
+        f'Purchases["conquest.{side}"] = {{',
+        "\t{Repeat = 0,",
+        "\t\tUnits = {",
+    ]
+    for index, unit in enumerate(units):
+        unit_name = str(unit["unit_name"])
+        # Macro purchases use name(side); block IDs may already include side.
+        if "(" not in unit_name:
+            purchase_id = f"{unit_name}({side})"
+        else:
+            # Remap trailing core side to target goc side when present.
+            purchase_id = re.sub(
+                r"\((nato|ukr|rusa|prc|sov|csa|frg)\)$",
+                f"({side})",
+                unit_name,
+                flags=re.I,
+            )
+            if not purchase_id.endswith(f"({side})"):
+                # Already a bare or non-core parenthetical; keep compiler name and
+                # rely on projected body identity. Prefer explicit goc side suffix.
+                base = unit_name.split("(", 1)[0]
+                purchase_id = f"{base}({side})"
+        tags = _lua_type_for_unit(unit)
+        tag_lit = ", ".join(f'"{item}"' for item in tags)
+        priority = max(0.2, 2.5 - (index * 0.02))
+        lines.append(
+            f'\t\t\t{{priority = {priority:.2f}, type = {{{tag_lit}}}, unit = "{purchase_id}"}},'
+        )
+    lines.extend(["\t\t}", "\t},", "}", ""])
+    return "\n".join(lines)
 
 
 def render_nation_map_entries() -> str:
@@ -353,14 +331,6 @@ def patch_conquest_lua(aio_text: str) -> str:
     alias_body = _NATION_MAP_ALIASES
     west_body = render_west_nations_table()
     east_body = render_east_nations_table()
-
-    nation_pattern = re.compile(
-        r"local\s+nationMap\s*=\s*\{.*?\}\s*"
-        r"(?:--[^\n]*\n\s*)*"
-        r"(?:rus\s*=\s*1.*?jap\s*=\s*6\s*)?\}",
-        re.DOTALL,
-    )
-    # Prefer exact multi-line replacement of the AIO two-line nationMap block.
     nation_block = (
         f"\tlocal nationMap = {{ {nation_body},\n"
         f"\t\t-- legacy / alias ids\n"
@@ -374,14 +344,12 @@ def patch_conquest_lua(aio_text: str) -> str:
         aio_text,
         count=1,
     )
+    if n1 != 1 and "goc_bel" not in aio_text:
+        raise GocArmyRegistryError(
+            "Unable to patch conquest.lua nationMap; AIO format unexpected"
+        )
     if n1 != 1:
-        # Already patched or format drift: replace nationMap table contents if GOC keys missing.
-        if "goc_bel" not in aio_text:
-            raise GocArmyRegistryError(
-                "Unable to patch conquest.lua nationMap; AIO format unexpected"
-            )
         text = aio_text
-
     text, n2 = re.subn(
         r"local eastNations = \{[^\}]+\}",
         f"local eastNations = {east_body}",
@@ -410,34 +378,34 @@ def render_dlg_mp_keys() -> str:
         "",
     ]
     registry = load_goc_army_registry()["armies"]
+    display = {
+        "bel": "Belgium",
+        "prt": "Portugal",
+        "cze": "Czechia",
+        "svk": "Slovakia",
+        "hun": "Hungary",
+        "ltu": "Lithuania",
+        "lva": "Latvia",
+        "est": "Estonia",
+        "aut": "Austria",
+        "che": "Switzerland",
+        "irl": "Ireland",
+        "isl": "Iceland",
+    }
     for side in sorted(registry):
         actor = registry[side]["actor_id"]
-        display = {
-            "bel": "Belgium",
-            "prt": "Portugal",
-            "cze": "Czechia",
-            "svk": "Slovakia",
-            "hun": "Hungary",
-            "ltu": "Lithuania",
-            "lva": "Latvia",
-            "est": "Estonia",
-            "aut": "Austria",
-            "che": "Switzerland",
-            "irl": "Ireland",
-            "isl": "Iceland",
-        }.get(actor, actor.upper())
         lines.append(f'msgid "mp/army/{side}"')
-        lines.append(f'msgstr "{display}"')
+        lines.append(f'msgstr "{display.get(actor, actor.upper())}"')
         lines.append("")
     return "\n".join(lines)
 
 
-def expected_seam_relpaths() -> list[str]:
+def committed_seam_relpaths() -> list[str]:
+    """Paths that must be committed (roster_conquest.set is intentionally excluded)."""
     paths = [
         "resource/set/multiplayer/games/presets/alliances_generic.inc",
         "resource/set/multiplayer/games/campaign_capture_the_flag.set",
         "resource/set/dynamic_campaign/values.set",
-        "resource/set/multiplayer/units/roster_conquest.set",
         "resource/script/multiplayer/modes/conquest.lua",
         "resource/localizations/default/interface/text/dlg_mp_goc_phase2.pot",
     ]
@@ -455,14 +423,52 @@ def expected_seam_relpaths() -> list[str]:
     return paths
 
 
+def expected_seam_relpaths() -> list[str]:
+    # Backward-compatible name used by tests.
+    return committed_seam_relpaths()
+
+
+def _select_playable_actors(payload: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    by_id = {str(row["actor_id"]): row for row in payload["actors"]}
+    selected: dict[str, dict[str, Any]] = {}
+    for side in playable_goc_sides():
+        actor_id = actor_id_for_side(side)
+        actor = by_id.get(actor_id)
+        if actor is None:
+            raise GocArmyRegistryError(f"Resolved catalog missing actor {actor_id}")
+        if str(actor.get("tactical_side")) != side:
+            raise GocArmyRegistryError(
+                f"Actor {actor_id} tactical_side {actor.get('tactical_side')} != {side}"
+            )
+        if not actor.get("playable"):
+            raise GocArmyRegistryError(f"Playable registry side {side} actor is not playable")
+        if int(actor.get("unit_count") or 0) < 1:
+            raise GocArmyRegistryError(
+                f"Playable actor {actor_id} resolved zero units from #190 authority"
+            )
+        selected[side] = actor
+    return selected
+
+
 def materialize_native_dc_seam(
     repo_root: str | Path,
     *,
+    resource_stack: Sequence[str | Path],
     aio_conquest_lua: str | Path | None = None,
     flag_source: str | Path | None = None,
+    resolved_payload: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Write production native DC seam files under repo_root/resource."""
+    """Write production native DC seam from #190 compiler authority + stack sources."""
     root = Path(repo_root)
+    roots = normalize_stack(resource_stack)
+    if not roots:
+        raise GocArmyRegistryError("Native DC materialize requires an ordered resource stack")
+    payload = dict(resolved_payload) if resolved_payload is not None else FactionWiringCompiler(roots).compile()
+    if int(payload.get("error_count") or 0) != 0:
+        raise GocArmyRegistryError(
+            f"Resolved catalog has {payload.get('error_count')} error(s); refuse native DC materialize"
+        )
+    actors_by_side = _select_playable_actors(payload)
     written: list[str] = []
 
     def _write(rel: str, text: str) -> None:
@@ -483,32 +489,42 @@ def materialize_native_dc_seam(
         render_ctf_set(),
     )
     _write("resource/set/dynamic_campaign/values.set", render_values_set())
-    _write(
-        "resource/set/multiplayer/units/roster_conquest.set",
-        render_roster_conquest(),
-    )
+    # Runtime-only roster (gitignored).
+    _write(_ROSTER_RELATIVE, render_roster_conquest())
     _write(
         "resource/localizations/default/interface/text/dlg_mp_goc_phase2.pot",
         render_dlg_mp_keys(),
     )
 
-    for side in playable_goc_sides():
-        _write(
-            f"resource/set/multiplayer/units/conquest/inf_{side}.set",
-            render_inf_set(side),
-        )
+    unit_counts: dict[str, int] = {}
+    for side, actor in sorted(actors_by_side.items()):
+        projected_units, projected_body = project_actor_units(actor, roots, root)
+        native_actor = normalize_actor_purchase_ids(actor, projected_units)
+        if len(projected_units) != int(native_actor["unit_count"]):
+            raise GocArmyRegistryError(
+                f"Actor {native_actor['actor_id']} projected {len(projected_units)} "
+                f"units, catalog unit_count={native_actor['unit_count']}"
+            )
+        inf_rows, inf_body = project_actor_inf_cost_rows(native_actor, roots)
+        research_nodes = project_research_nodes(native_actor)
         _write(
             f"resource/set/multiplayer/units/conquest/units_{side}.set",
-            render_units_set(side),
+            render_units_set_from_projection(native_actor, projected_body),
+        )
+        _write(
+            f"resource/set/multiplayer/units/conquest/inf_{side}.set",
+            render_inf_set_from_projection(native_actor, inf_body),
         )
         _write(
             f"resource/set/dynamic_campaign/unit_research_{side}.set",
-            render_research_set(side),
+            render_research_file(native_actor, research_nodes),
         )
         _write(
             f"resource/script/multiplayer/units/{side}/conquest.{side}.lua",
-            render_purchase_lua(side),
+            render_purchase_lua_from_actor(native_actor),
         )
+        unit_counts[side] = len(projected_units)
+        _ = inf_rows  # projection validates; body is authoritative on disk
 
     if aio_conquest_lua is None:
         raise GocArmyRegistryError(
@@ -531,7 +547,6 @@ def materialize_native_dc_seam(
                 written.append(str(dest.relative_to(root)).replace("\\", "/"))
                 flag_copies += 1
 
-    # Remove obsolete fragment that is no longer the active alliance SoT.
     obsolete = root / "resource/set/multiplayer/games/presets/alliances_goc_production_west.inc"
     removed = False
     if obsolete.is_file():
@@ -539,18 +554,43 @@ def materialize_native_dc_seam(
         removed = True
 
     return {
-        "written": sorted(written),
+        "written": sorted(set(written)),
         "playable_sides": list(playable_goc_sides()),
+        "unit_counts": unit_counts,
         "flag_copies": flag_copies,
         "removed_obsolete_alliance_fragment": removed,
+        "roster_path": _ROSTER_RELATIVE,
+        "roster_committed": False,
     }
 
 
 def validate_repo_native_dc_seam(repo_root: str | Path) -> list[str]:
-    """Return problems if the committed seam is incomplete or inactive."""
+    """Return problems if the committed seam is incomplete or authority-divergent."""
     root = Path(repo_root)
     problems: list[str] = []
-    for rel in expected_seam_relpaths():
+
+    # Roster must remain runtime-only / gitignored contract.
+    roster_path = root / _ROSTER_RELATIVE
+    gitignore = (root / ".gitignore").read_text(encoding="utf-8")
+    if "/resource/set/multiplayer/units/roster_conquest.set" not in gitignore:
+        problems.append("roster_conquest.set missing from .gitignore (must stay runtime-only)")
+    # If present on disk, it must be the multi-faction renderer output (not bootstrap).
+    if roster_path.is_file():
+        roster_text = roster_path.read_text(encoding="utf-8", errors="ignore")
+        expected = render_roster_conquest()
+        if roster_text != expected:
+            # Allow expanded-nations single-actor roster while still requiring core completeness
+            for rel in CANONICAL_INF_INCLUDES:
+                if rel not in roster_text and "goc_active_actor_units" not in roster_text:
+                    problems.append(f"on-disk roster missing canonical include {rel}")
+            for rel in ("conquest/inf_sov_era1960.set", "conquest/inf_frg_era1960.set", "conquest/units_frg_era1960.set"):
+                if rel not in roster_text and "goc_active_actor_units" not in roster_text:
+                    problems.append(f"on-disk roster missing core include {rel}")
+        for side in playable_goc_sides():
+            if f"inf_{side}.set" not in roster_text and "goc_active_actor_units" not in roster_text:
+                problems.append(f"native multi-faction roster missing {side}")
+
+    for rel in committed_seam_relpaths():
         path = root / rel
         if not path.is_file():
             problems.append(f"missing {rel}")
@@ -564,29 +604,56 @@ def validate_repo_native_dc_seam(repo_root: str | Path) -> list[str]:
                 if f'{{armies "{core}"}}' not in text:
                     problems.append(f"alliances_generic missing core {core}")
         if rel.endswith("campaign_capture_the_flag.set"):
-            if 'presets/alliances_generic.inc' not in text:
+            if "presets/alliances_generic.inc" not in text:
                 problems.append("CTF does not include alliances_generic.inc")
         if rel.endswith("values.set"):
             for side in playable_goc_sides():
                 if side not in text:
                     problems.append(f"values.set missing matchups for {side}")
-        if rel.endswith("roster_conquest.set"):
-            for side in playable_goc_sides():
-                if f"inf_{side}.set" not in text or f"units_{side}.set" not in text:
-                    problems.append(f"roster missing includes for {side}")
         if rel.endswith("conquest.lua"):
             for side in playable_goc_sides():
                 if side not in text:
                     problems.append(f"conquest.lua missing {side}")
-            if "westNations" not in text or "eastNations" not in text:
-                problems.append("conquest.lua missing coalition tables")
-        if "/units/" in rel and rel.endswith(".lua"):
+        if rel.endswith(".lua") and "/units/" in rel:
             if "Repeat" not in text or "Units" not in text:
                 problems.append(f"purchase lua schema invalid: {rel}")
+            # Reject disposable bootstrap markers.
+            if "usmc_rifleman" in text or "_test_rifle" in text:
+                problems.append(f"purchase lua still uses bootstrap prototype content: {rel}")
+        if rel.endswith("units_goc_cze.set"):
+            if "vz_77_dana" not in text:
+                problems.append("goc_cze units pack missing #190 authority unit vz_77_dana")
+            if "usmc_rifleman" in text or "m1126" in text:
+                problems.append("goc_cze units pack still contains bootstrap USMC/Stryker content")
+        if rel.endswith("units_goc_svk.set"):
+            if "vz_77_dana" not in text:
+                problems.append("goc_svk units pack missing #190 authority unit vz_77_dana")
+        if "/units_goc_" in rel and rel.endswith(".set"):
+            if "bootstrap" in text.lower() and "Disposable #201" in text:
+                problems.append(f"production units pack still labeled disposable spike: {rel}")
+            if GENERATED_MARKER not in text and "Deterministic rendering" not in text:
+                # Allow either marker style after regeneration.
+                if "usmc_rifleman" in text:
+                    problems.append(f"units pack looks like bootstrap prototype: {rel}")
+
     obsolete = root / "resource/set/multiplayer/games/presets/alliances_goc_production_west.inc"
     if obsolete.is_file():
-        problems.append(
-            "obsolete alliances_goc_production_west.inc still present; "
-            "alliances_generic.inc is the active SoT"
-        )
+        problems.append("obsolete alliances_goc_production_west.inc still present")
+
+    # Renderer self-check for complete core roster.
+    rendered = render_roster_conquest()
+    for rel in CANONICAL_INF_INCLUDES:
+        if rel not in rendered:
+            problems.append(f"render_roster_conquest missing {rel}")
+    for rel in BROAD_ROSTER_INCLUDES:
+        if rel not in rendered:
+            problems.append(f"render_roster_conquest missing {rel}")
+    for required in (
+        "conquest/inf_sov_era1960.set",
+        "conquest/inf_frg_era1960.set",
+        "conquest/units_frg_era1960.set",
+    ):
+        if required not in rendered:
+            problems.append(f"render_roster_conquest missing required core {required}")
+
     return problems

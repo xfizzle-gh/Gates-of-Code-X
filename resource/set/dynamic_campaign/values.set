@@ -1,6 +1,5 @@
 ; Gates production GOC values.set (#191)
 ; Core matchups retained; production goc_* both-direction pairs injected.
-; Empty AvailableMatchups for a shown region crash Dynamic Conquest create.
 
 {Regions
 	{Europe
