@@ -1,14 +1,10 @@
-{"West"
-	{title "mp/alliance/west"}
-	{armies "nato"}
-	{armies "ukr"}
+{"BLUEFOR"
+	{title "mp/alliance/bluefor"}
 	{armies "goc_usa"}
-	{icon "/interface/pages/multi/flag_nato"}
+	{icon "/interface/pages/multi/flag_goc_usa"}
 }
-{"East"
-	{title "mp/alliance/east"}
-	{armies "rusa"}
-	{armies "prc"}
+{"OPFOR"
+	{title "mp/alliance/opfor"}
 	{armies "goc_fra"}
-	{icon "/interface/pages/multi/flag_rusa"}
+	{icon "/interface/pages/multi/flag_goc_fra"}
 }

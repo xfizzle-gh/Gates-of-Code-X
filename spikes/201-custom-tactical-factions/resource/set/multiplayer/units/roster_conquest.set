@@ -1,28 +1,9 @@
 ;sdl
-; #201 disposable spike roster.
-; settings.set = Code:X conquest macros (from stack). There is no common.set here.
-; Inf rows for goc pools + unit purchases.
+; #201 replacement roster (GaW/MW style)
 {units
 	(include "conquest/settings.set")
-
-	(include "conquest/inf_ukr.set")
-	(include "conquest/inf_rusa.set")
-	(include "conquest/inf_nato.set")
-	(include "conquest/inf_prc_era1960.set")
-	(include "conquest/inf_sov_era1960.set")
-	(include "conquest/inf_csa_era1960.set")
-	(include "conquest/inf_frg_era1960.set")
 	(include "conquest/inf_goc_usa.set")
 	(include "conquest/inf_goc_fra.set")
-
-	(include "conquest/units_ukr.set")
-	(include "conquest/units_rusa.set")
-	(include "conquest/units_nato.set")
-	(include "conquest/units_sov_era1960.set")
-	(include "conquest/units_csa_era1960.set")
-	(include "conquest/units_frg_era1960.set")
-	(include "conquest/units_prc_era1960.set")
-
 	(include "conquest/units_goc_usa.set")
 	(include "conquest/units_goc_fra.set")
 }
