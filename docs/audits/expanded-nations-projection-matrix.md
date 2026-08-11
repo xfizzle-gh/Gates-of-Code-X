@@ -3,34 +3,34 @@
 This matrix was generated from the exact installed five-layer stack by activating,
 semantically verifying, and restoring Core mode for every playable actor.
 
-- Source head: `5afe790d13e696e473317caec2d28756098c8b10`
-- Wiring signature: `970ee67395eeff51323e78fb280145a1fa6747ab28fe74ef2aa1a0cdfa714754`
-- Stack signature: `18ab5b6ce4f08fc758e641ead4e70f0163a525065f9402554de79b9681d41711`
+- Source head: `be633dea6698cabf705c6b70e7a9e4b90137f6b7`
+- Wiring signature: `39537ade80359144e6ede94929fc03fe800ae6ba6f7aea6be036cc166bb6f51a`
+- Stack signature: `15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe`
 - Playable actors: 21
 
 | Actor | Tactical side | Actor units | Preserved opponent entries | Research nodes | Projection signature |
 |---|---|---:|---:|---:|---|
-| blr | rusa | 30 | 719 | 30 | `01873beb9fce17c8a86504222b4cef5334fdbdc1eaf259dffd82a27c36d3d094` |
-| can | nato | 14 | 1181 | 14 | `3a8b6251df89dba38a4a08a9e179698f329ccc4b256ed7106cba2c1b7360f101` |
-| deu | nato | 29 | 1181 | 29 | `9913bdaeff7f764a77ff43b290d5fc1cf13a4ef5b77c570134d52fb3300a0a1b` |
-| dnk | nato | 55 | 1181 | 55 | `2b0e0ca868dff3e042648f50d61a2b28d947b1916e18760e812a0028525cc754` |
-| donbas | rusa | 46 | 719 | 46 | `0a44cede8c9e4fec4cbe6ceb1c4df366856a1b52f3aa644eb4b2fc74398069b6` |
-| dprk | rusa | 22 | 719 | 22 | `43d16c20e6f897bdfd7a5660b828b8d6ba6ddcf760aa63401fc08a1d417e6599` |
-| esp | nato | 55 | 1181 | 55 | `9ba133a4348c390d9e5c5da02822b8793c891f01fccb4237639270d2909c6dfe` |
-| fin | nato | 15 | 1181 | 15 | `e4d3431b4475c129f31d2645c008862d7d25791475b38745f0319b5a3e70be54` |
-| fra | nato | 21 | 1181 | 21 | `9c8202ded61cba03db2dade35321c634e8c58867b37baad827a2d7162c3ff1ed` |
-| gbr | nato | 33 | 1181 | 33 | `af25a80357c4da79b85d54ba5272a258ff84dd6a09624d68176a13dd85bf5d4d` |
-| ita | nato | 19 | 1181 | 19 | `bac9019e591c1262565fb20ae58cfa14b5f1c52f75857a6345710bc3c5d31004` |
-| nld | nato | 15 | 1181 | 15 | `a9a7f11ee7d917c89971e01bf1ddb0a05681814ae77c461b3ad9818442cd9f82` |
-| nor | nato | 55 | 1181 | 55 | `cd0b9568a91fb1b5797c684e108d50362eda75cd68f74d4ab9fc9dad45028372` |
-| pol | nato | 18 | 1181 | 18 | `36695b50e0ea085fdfd7d58752c3e7a225ca5a8e8a614aafa703b11af229c57e` |
-| prc | prc | 80 | 1454 | 80 | `d8b16e1869fbbee06cce03f5755acde1750ab00a9a05d5a34fcbf86036efb19c` |
-| rus | rusa | 212 | 719 | 212 | `1d196ffab19efe7533668ebc27b5905f4a4f85c6e29bf3c4fd7febd87b4ff6a4` |
-| srb | rusa | 18 | 719 | 18 | `1588b67120a2a268ce80fee346c8a766a47eaff31bffdeecf78254d3dbf694bc` |
-| swe | nato | 17 | 1181 | 17 | `4be5d67b1436a9838f741793b402736595ec7f2340164eda0839e380150be3dd` |
-| tur | nato | 55 | 1181 | 55 | `27ee17ce75c058ac57a5036b291557fa6a5064f485f3af6ef3f8042dbab754b1` |
-| ukr | ukr | 185 | 1281 | 185 | `02d81edb1dbcc10f063a85c7006f5bb94af11763c6911d90bb1effc2bce7ee79` |
-| usa | nato | 74 | 1181 | 74 | `27188491a3d67b1b0909cfcc4a0b43d787f51c39178fe6332608779bf57c8caf` |
+| blr | rusa | 30 | 719 | 30 | `e2d7ff9084b2965394828b56a4c170fbb5584b8086cb18597d54303f58ae9326` |
+| can | nato | 14 | 1181 | 14 | `c176d9d74ec55563b758b3aaac2cc47047e20b448e178a9abb9453e41d33fbee` |
+| deu | nato | 29 | 1181 | 29 | `1402e665a13422ad7ea71dce231ab473a4284ea42f69f2f2dda45dd56530f9c8` |
+| dnk | nato | 55 | 1181 | 55 | `d68746611a05a955fdcd0d2a6530484d5edd30d472360802d2f1df8590c7dcab` |
+| donbas | rusa | 46 | 719 | 46 | `324f8fea5e999edd966770a3e2c81e14f6577bd925fe1bce92aeab188a5d834b` |
+| dprk | rusa | 22 | 719 | 22 | `87b1110672c4295da6896bbdd6d4af020a5ffd7cab34b10f11d8fd77c5988a51` |
+| esp | nato | 50 | 1181 | 50 | `2c38fe77c8ae7985f72d3515a1f0ae8b942c56517a2c46bfb6ed2b04cb80022a` |
+| fin | nato | 15 | 1181 | 15 | `a300184aed0fa06d87beed1171b9bc1d4a6ded47f2785966d08b5c08ab373eef` |
+| fra | nato | 28 | 1181 | 28 | `8a27c450ed7e3a4893ac29e76aeb42dcecf6136aff26463520c66425ae42e9e4` |
+| gbr | nato | 33 | 1181 | 33 | `45be5e8b574dc6c5a914479ea14adda5aef2d3d5616e759abef50c78b2a592b0` |
+| ita | nato | 19 | 1181 | 19 | `c25325e75788f489384abeb6191cd5ea6e7e1415c4c5fce823f3f7fcc1fd6008` |
+| nld | nato | 15 | 1181 | 15 | `d532e3f81ee8b276441770321b75837605990b21f881a0902869371f30cfdb6b` |
+| nor | nato | 55 | 1181 | 55 | `1ed50f92d0ad11d69f7eb62902af09087f2c0945992be071d475eb5cf85c0f29` |
+| pol | nato | 18 | 1181 | 18 | `6ca480d3f09d5ce42641d4abe9e54a76db935d7db77904c408d1445362fc7fbc` |
+| prc | prc | 80 | 0 | 100 | `c7d3197956fb41d9f3485ced9c5877bb162447538417c7e454816791b6f477ff` |
+| rus | rusa | 212 | 719 | 212 | `e14372682fef87b3ba98a428cc5c4c5a9823314060ea05b34bd7b620016d318a` |
+| srb | rusa | 18 | 719 | 18 | `8b83cc7b9cf74ef7645b181fe9879cf97a999ae8a0b1c578d877e7923699fcd3` |
+| swe | nato | 17 | 1181 | 17 | `21322045a53012e9c41980021a414b940c6b3ea5ea9752434a2408f2f91300b8` |
+| tur | nato | 55 | 1181 | 55 | `ce00341328607fcdcbd34b4e4aac15f3d456ebe19c48af0a44e1baff75d755f7` |
+| ukr | ukr | 179 | 1281 | 179 | `5f71bd946c326fac233cc3af4a01bd1b48f29730d4de5456078748a2b1d7ff68` |
+| usa | nato | 74 | 1181 | 74 | `11d3eeda5efdd78fdb3145ae63b587e28d052511482b0f353b7ed1883ad94e69` |
 
 This is deterministic implementation-side source and projection validation.
 It is not native Gates of Hell gameplay acceptance or merge approval.

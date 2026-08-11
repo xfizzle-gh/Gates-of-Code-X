@@ -1,6 +1,7 @@
 {
   "actors": {
     "blr": {
+      "activation_mode": "expanded",
       "actor_id": "blr",
       "display_name": "Belarus",
       "economy_class_counts": {
@@ -19,7 +20,7 @@
       "projected_inf_cost_max": null,
       "projected_inf_cost_min": null,
       "projected_inf_cost_row_count": 0,
-      "projection_signature": "7f2e53c927298b9c9d3c74966d2785f002cfdf0b5efaac010d18d44b6798479a",
+      "projection_signature": "e2d7ff9084b2965394828b56a4c170fbb5584b8086cb18597d54303f58ae9326",
       "research_node_count": 30,
       "stack_signature": "15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe",
       "tactical_side": "rusa",
@@ -510,6 +511,7 @@
       ]
     },
     "can": {
+      "activation_mode": "expanded",
       "actor_id": "can",
       "display_name": "Canada",
       "economy_class_counts": {
@@ -527,7 +529,7 @@
       "projected_inf_cost_max": null,
       "projected_inf_cost_min": null,
       "projected_inf_cost_row_count": 0,
-      "projection_signature": "5ad004253cd8972fd9339317f72ace419a5ceb0e1a4ae2c8a79f877803f19fa8",
+      "projection_signature": "c176d9d74ec55563b758b3aaac2cc47047e20b448e178a9abb9453e41d33fbee",
       "research_node_count": 14,
       "stack_signature": "15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe",
       "tactical_side": "nato",
@@ -776,6 +778,7 @@
       ]
     },
     "deu": {
+      "activation_mode": "expanded",
       "actor_id": "deu",
       "display_name": "Germany",
       "economy_class_counts": {
@@ -794,7 +797,7 @@
       "projected_inf_cost_max": null,
       "projected_inf_cost_min": null,
       "projected_inf_cost_row_count": 0,
-      "projection_signature": "24b6e02f70d5f9b9de7e2249be4701433e8135237579f91a2b5a7a7ab70d7c73",
+      "projection_signature": "1402e665a13422ad7ea71dce231ab473a4284ea42f69f2f2dda45dd56530f9c8",
       "research_node_count": 29,
       "stack_signature": "15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe",
       "tactical_side": "nato",
@@ -1305,6 +1308,7 @@
       ]
     },
     "dnk": {
+      "activation_mode": "expanded",
       "actor_id": "dnk",
       "display_name": "Denmark",
       "economy_class_counts": {
@@ -1323,7 +1327,7 @@
       "projected_inf_cost_max": 45.2,
       "projected_inf_cost_min": 35.5,
       "projected_inf_cost_row_count": 2,
-      "projection_signature": "f997bf57557f439da46adc6cfd36a2dffc75a4b4e14fe3b465098557aae9dbdb",
+      "projection_signature": "d68746611a05a955fdcd0d2a6530484d5edd30d472360802d2f1df8590c7dcab",
       "research_node_count": 55,
       "stack_signature": "15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe",
       "tactical_side": "nato",
@@ -2246,6 +2250,7 @@
       ]
     },
     "donbas": {
+      "activation_mode": "expanded",
       "actor_id": "donbas",
       "display_name": "Donbas Forces",
       "economy_class_counts": {
@@ -2264,7 +2269,7 @@
       "projected_inf_cost_max": 136.5,
       "projected_inf_cost_min": 7.0,
       "projected_inf_cost_row_count": 10,
-      "projection_signature": "3b6c7e10eb4a4e4fc73bd79a17351c6536ebbe2652b2e9ff06f0aa8fc65f5a0e",
+      "projection_signature": "324f8fea5e999edd966770a3e2c81e14f6577bd925fe1bce92aeab188a5d834b",
       "research_node_count": 46,
       "stack_signature": "15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe",
       "tactical_side": "rusa",
@@ -3017,6 +3022,7 @@
       ]
     },
     "dprk": {
+      "activation_mode": "expanded",
       "actor_id": "dprk",
       "display_name": "North Korea",
       "economy_class_counts": {
@@ -3034,7 +3040,7 @@
       "projected_inf_cost_max": null,
       "projected_inf_cost_min": null,
       "projected_inf_cost_row_count": 0,
-      "projection_signature": "24379f400c5625e555a00bfa0cad9eb58be5a7545dc310d8f47583d9a08a2817",
+      "projection_signature": "87b1110672c4295da6896bbdd6d4af020a5ffd7cab34b10f11d8fd77c5988a51",
       "research_node_count": 22,
       "stack_signature": "15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe",
       "tactical_side": "rusa",
@@ -3397,6 +3403,7 @@
       ]
     },
     "esp": {
+      "activation_mode": "expanded",
       "actor_id": "esp",
       "display_name": "Spain",
       "economy_class_counts": {
@@ -3415,7 +3422,7 @@
       "projected_inf_cost_max": 76.5,
       "projected_inf_cost_min": 10.0,
       "projected_inf_cost_row_count": 24,
-      "projection_signature": "537f1529b0620bf28f817520ff53e037dc4c2a209634602570631a98493ac2e6",
+      "projection_signature": "2c38fe77c8ae7985f72d3515a1f0ae8b942c56517a2c46bfb6ed2b04cb80022a",
       "research_node_count": 50,
       "stack_signature": "15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe",
       "tactical_side": "nato",
@@ -4256,6 +4263,7 @@
       ]
     },
     "fin": {
+      "activation_mode": "expanded",
       "actor_id": "fin",
       "display_name": "Finland",
       "economy_class_counts": {
@@ -4273,7 +4281,7 @@
       "projected_inf_cost_max": null,
       "projected_inf_cost_min": null,
       "projected_inf_cost_row_count": 0,
-      "projection_signature": "c7a1c2bf2505aff7a9d2dddec8ba1ca8f790db55a727af7a129ec44dc849bb54",
+      "projection_signature": "a300184aed0fa06d87beed1171b9bc1d4a6ded47f2785966d08b5c08ab373eef",
       "research_node_count": 15,
       "stack_signature": "15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe",
       "tactical_side": "nato",
@@ -4540,6 +4548,7 @@
       ]
     },
     "fra": {
+      "activation_mode": "expanded",
       "actor_id": "fra",
       "display_name": "France",
       "economy_class_counts": {
@@ -4558,7 +4567,7 @@
       "projected_inf_cost_max": 45.2,
       "projected_inf_cost_min": 32.4,
       "projected_inf_cost_row_count": 3,
-      "projection_signature": "9d14c58bc864bbf65a8aa7fbbded64affb8d38718c331bcee524c8279b8174cd",
+      "projection_signature": "8a27c450ed7e3a4893ac29e76aeb42dcecf6136aff26463520c66425ae42e9e4",
       "research_node_count": 28,
       "stack_signature": "15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe",
       "tactical_side": "nato",
@@ -5035,6 +5044,7 @@
       ]
     },
     "gbr": {
+      "activation_mode": "expanded",
       "actor_id": "gbr",
       "display_name": "United Kingdom",
       "economy_class_counts": {
@@ -5054,7 +5064,7 @@
       "projected_inf_cost_max": null,
       "projected_inf_cost_min": null,
       "projected_inf_cost_row_count": 0,
-      "projection_signature": "5d5238b49c3c723909e1e8816f2d3cedeb34e4fa718a153e08faa6574b2208b9",
+      "projection_signature": "45be5e8b574dc6c5a914479ea14adda5aef2d3d5616e759abef50c78b2a592b0",
       "research_node_count": 33,
       "stack_signature": "15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe",
       "tactical_side": "nato",
@@ -5615,6 +5625,7 @@
       ]
     },
     "ita": {
+      "activation_mode": "expanded",
       "actor_id": "ita",
       "display_name": "Italy",
       "economy_class_counts": {
@@ -5633,7 +5644,7 @@
       "projected_inf_cost_max": null,
       "projected_inf_cost_min": null,
       "projected_inf_cost_row_count": 0,
-      "projection_signature": "1dd57f88c30d45e45db71b6ab425af2fbc8616a1884be26722543b36b5806c81",
+      "projection_signature": "c25325e75788f489384abeb6191cd5ea6e7e1415c4c5fce823f3f7fcc1fd6008",
       "research_node_count": 19,
       "stack_signature": "15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe",
       "tactical_side": "nato",
@@ -5962,6 +5973,7 @@
       ]
     },
     "nld": {
+      "activation_mode": "expanded",
       "actor_id": "nld",
       "display_name": "Netherlands",
       "economy_class_counts": {
@@ -5980,7 +5992,7 @@
       "projected_inf_cost_max": null,
       "projected_inf_cost_min": null,
       "projected_inf_cost_row_count": 0,
-      "projection_signature": "48abc0d39226d7fb5b33743db4073ca261e0b25d5ddab86e8e429b9c9ed698e7",
+      "projection_signature": "d532e3f81ee8b276441770321b75837605990b21f881a0902869371f30cfdb6b",
       "research_node_count": 15,
       "stack_signature": "15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe",
       "tactical_side": "nato",
@@ -6245,6 +6257,7 @@
       ]
     },
     "nor": {
+      "activation_mode": "expanded",
       "actor_id": "nor",
       "display_name": "Norway",
       "economy_class_counts": {
@@ -6263,7 +6276,7 @@
       "projected_inf_cost_max": 45.2,
       "projected_inf_cost_min": 35.5,
       "projected_inf_cost_row_count": 2,
-      "projection_signature": "a5e9080e782b9d5b1393ac58b5ec4b835e758b8d4525336cf04a400525a843ad",
+      "projection_signature": "1ed50f92d0ad11d69f7eb62902af09087f2c0945992be071d475eb5cf85c0f29",
       "research_node_count": 55,
       "stack_signature": "15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe",
       "tactical_side": "nato",
@@ -7186,6 +7199,7 @@
       ]
     },
     "pol": {
+      "activation_mode": "expanded",
       "actor_id": "pol",
       "display_name": "Poland",
       "economy_class_counts": {
@@ -7204,7 +7218,7 @@
       "projected_inf_cost_max": null,
       "projected_inf_cost_min": null,
       "projected_inf_cost_row_count": 0,
-      "projection_signature": "b5b9886cd5c24f12042458e7d5aff93d9ac663a77b6cee9cbf34cc29db866aa3",
+      "projection_signature": "6ca480d3f09d5ce42641d4abe9e54a76db935d7db77904c408d1445362fc7fbc",
       "research_node_count": 18,
       "stack_signature": "15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe",
       "tactical_side": "nato",
@@ -7517,6 +7531,7 @@
       ]
     },
     "prc": {
+      "activation_mode": "codex_passthrough",
       "actor_id": "prc",
       "display_name": "People's Republic of China",
       "economy_class_counts": {
@@ -7536,8 +7551,8 @@
       "projected_inf_cost_max": null,
       "projected_inf_cost_min": null,
       "projected_inf_cost_row_count": 0,
-      "projection_signature": "42502d7a4f3b74f21d6a1cf0c0d39ba13ccef603ab25ef87e316347c07258272",
-      "research_node_count": 80,
+      "projection_signature": "c7d3197956fb41d9f3485ced9c5877bb162447538417c7e454816791b6f477ff",
+      "research_node_count": 100,
       "stack_signature": "15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe",
       "tactical_side": "prc",
       "unintended_zero_count": 0,
@@ -8891,6 +8906,7 @@
       ]
     },
     "rus": {
+      "activation_mode": "expanded",
       "actor_id": "rus",
       "display_name": "Russia",
       "economy_class_counts": {
@@ -8916,7 +8932,7 @@
       "projected_inf_cost_max": null,
       "projected_inf_cost_min": null,
       "projected_inf_cost_row_count": 0,
-      "projection_signature": "aefc295ed9c65325de3a93114b0a917619d47ca9426fd412e678ee8b0082ad94",
+      "projection_signature": "e14372682fef87b3ba98a428cc5c4c5a9823314060ea05b34bd7b620016d318a",
       "research_node_count": 212,
       "stack_signature": "15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe",
       "tactical_side": "rusa",
@@ -12395,6 +12411,7 @@
       ]
     },
     "srb": {
+      "activation_mode": "expanded",
       "actor_id": "srb",
       "display_name": "Serbia",
       "economy_class_counts": {
@@ -12412,7 +12429,7 @@
       "projected_inf_cost_max": null,
       "projected_inf_cost_min": null,
       "projected_inf_cost_row_count": 0,
-      "projection_signature": "91164612a0a278b1e796743b8a7a27bddc1a1aca79ecf7c687c7a8238ab483dd",
+      "projection_signature": "8b83cc7b9cf74ef7645b181fe9879cf97a999ae8a0b1c578d877e7923699fcd3",
       "research_node_count": 18,
       "stack_signature": "15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe",
       "tactical_side": "rusa",
@@ -12711,6 +12728,7 @@
       ]
     },
     "swe": {
+      "activation_mode": "expanded",
       "actor_id": "swe",
       "display_name": "Sweden",
       "economy_class_counts": {
@@ -12729,7 +12747,7 @@
       "projected_inf_cost_max": null,
       "projected_inf_cost_min": null,
       "projected_inf_cost_row_count": 0,
-      "projection_signature": "ccbff1599b1d7750088d5aca0f0859d419514ad914b52de43c47ff3d2a323392",
+      "projection_signature": "21322045a53012e9c41980021a414b940c6b3ea5ea9752434a2408f2f91300b8",
       "research_node_count": 17,
       "stack_signature": "15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe",
       "tactical_side": "nato",
@@ -13026,6 +13044,7 @@
       ]
     },
     "tur": {
+      "activation_mode": "expanded",
       "actor_id": "tur",
       "display_name": "Turkey",
       "economy_class_counts": {
@@ -13044,7 +13063,7 @@
       "projected_inf_cost_max": 45.2,
       "projected_inf_cost_min": 35.5,
       "projected_inf_cost_row_count": 2,
-      "projection_signature": "d1c17fb298e53a4e2ae2b9b766ac36b31e79d01f675a67927101e44d38af3607",
+      "projection_signature": "ce00341328607fcdcbd34b4e4aac15f3d456ebe19c48af0a44e1baff75d755f7",
       "research_node_count": 55,
       "stack_signature": "15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe",
       "tactical_side": "nato",
@@ -13967,6 +13986,7 @@
       ]
     },
     "ukr": {
+      "activation_mode": "expanded",
       "actor_id": "ukr",
       "display_name": "Ukraine",
       "economy_class_counts": {
@@ -13992,7 +14012,7 @@
       "projected_inf_cost_max": 44.5,
       "projected_inf_cost_min": 40.0,
       "projected_inf_cost_row_count": 2,
-      "projection_signature": "e9051d8c8fbf1e38fa00f8a346afa9a7db38765656284e124cbc1f60d0fd6a52",
+      "projection_signature": "5f71bd946c326fac233cc3af4a01bd1b48f29730d4de5456078748a2b1d7ff68",
       "research_node_count": 179,
       "stack_signature": "15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe",
       "tactical_side": "ukr",
@@ -16883,6 +16903,7 @@
       ]
     },
     "usa": {
+      "activation_mode": "expanded",
       "actor_id": "usa",
       "display_name": "United States",
       "economy_class_counts": {
@@ -16923,7 +16944,7 @@
       "projected_inf_cost_max": 32.4,
       "projected_inf_cost_min": 32.4,
       "projected_inf_cost_row_count": 1,
-      "projection_signature": "26b8c7312fba93570f6d3787abae1dda66ea25f831425d37f86e4f546834df37",
+      "projection_signature": "11d3eeda5efdd78fdb3145ae63b587e28d052511482b0f353b7ed1883ad94e69",
       "research_node_count": 74,
       "stack_signature": "15af2f4361baef1a6bce495df337d91e21e2e94b3a3baedb5891dccf9014dafe",
       "tactical_side": "nato",
@@ -18140,7 +18161,7 @@
   "playable_actor_count": 21,
   "schema": "gates-of-codex.expanded-nations-cost-evidence",
   "schema_version": 4,
-  "source_head": "dd205e515d5aee43d9dde4ed4d48acb2625a0c79",
+  "source_head": "be633dea6698cabf705c6b70e7a9e4b90137f6b7",
   "source_vehicle_money_gap_total": 0,
   "unintended_zero_total": 0,
   "unintended_zeros": [],

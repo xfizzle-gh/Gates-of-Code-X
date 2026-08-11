@@ -2,7 +2,7 @@
 
 - schema: `gates-of-codex.expanded-nations-cost-evidence` v4
 - evidence_state: `complete`
-- source_head: `dd205e515d5aee43d9dde4ed4d48acb2625a0c79`
+- source_head: `be633dea6698cabf705c6b70e7a9e4b90137f6b7`
 - playable_actors: 21
 - unintended_zero_total: 0
 - native_positive_total: 1054
