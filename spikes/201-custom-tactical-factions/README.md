@@ -1,33 +1,30 @@
 # #201 Custom Tactical Faction Spike
 
-**Native status (2026-08-11):** Create Conquest menu **PARTIAL PASS** for `goc_usa` / `goc_fra`.
+**Owner status (2026-08-11):** custom DC factions **`goc_usa` / `goc_fra` work** on the live stack.
 
-Full recipe + failure log: [`docs/audits/201-native-create-menu-pass.md`](../../docs/audits/201-native-create-menu-pass.md)
+- Recipe: [`docs/audits/201-native-create-menu-pass.md`](../../docs/audits/201-native-create-menu-pass.md)  
+- Review brief: [`docs/audits/201-chatgpt-review-brief.md`](../../docs/audits/201-chatgpt-review-brief.md)
 
-## What worked
+## Working model
 
-Additive custom factions on the **final Gates workshop layer** (`3696721120`), stack:
+Additive on final Gates layer. Core `nato/ukr/rusa/prc` retained.
 
-`West81 → Code:X → AI Overhaul → Gates (last)`
-
-| Surface | Working choice |
-|---------|----------------|
-| Army ids | `goc_usa=90`, `goc_fra=91` |
+| Surface | Working |
+|---------|---------|
+| Army ids | 90 / 91 |
 | Alliances | West: nato, ukr, goc_usa · East: rusa, prc, goc_fra |
-| values | Code:X regions + goc matchups |
-| units/conquest | Parent files on final layer + goc inf/units |
-| roster | Only existing includes + goc |
-| research | `unit_research_goc_*.set` (owner-tuned on live) |
-| purchase lua | `Repeat` / `Units` / `priority` / `unit` |
-| conquest.lua | Full AIO copy + nationMap + west/east |
-| CTF | includes `alliances_generic.inc` |
+| values | Code:X + goc matchups |
+| units/conquest | Parent files on final layer + goc |
+| roster | Existing includes only + goc |
+| research | `unit_research_goc_*` (owner-tuned live) |
+| purchase | `Repeat` / `Units` / `priority` / `unit` |
+| conquest.lua | AIO + nationMap + coalitions |
+| CTF | → `alliances_generic.inc` |
 
-## Spike contents
+## Stack
 
-Gates-owned registration and `goc_*` content snapshotted from the working live layer. Parent Code:X/AIO unit bodies are deploy-time copies on the live workshop tree, not all vendored here.
+`West81 → Code:X → AI Overhaul → Gates last` (`3696721120`)
 
-## Next
+## Git vs live
 
-1. Test A battle path (create → fight → AI → save)  
-2. Tests B/C  
-3. Owner disposition on #201 before production Expanded Nations wiring  
+Spike snapshots Gates-owned registration/`goc_*` files from the working workshop tree. Parent unit bodies may exist only on the live final layer as deploy-time copies.
