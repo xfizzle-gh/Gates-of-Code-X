@@ -1,72 +1,47 @@
-# Vehicle money-cost gap source audit (read-only)
+# Vehicle money-cost gap disposition (owner UI verified)
 
-Exact installed stack: Vanilla → West81 → Code:X → Code:X AI Overhaul → Gates.
-Implementation head bound in evidence: see `expanded-nations-cost-evidence.json` `source_head`.
+Exact head binding: see `expanded-nations-cost-evidence.json` `source_head`.
 
-## Resolved by exact authority (implemented)
+## Owner disposition applied
 
-### `t80uk`
-- **Exact vehicle entity money row found:** Code:X / AI Overhaul `units_rusa.set`
-- Form: `("vehicle2" ...)` not `("vehicle" ...)`
-- Cost: **1950.0** (`not_for_player_sale 1`)
-- Purchase use: `squad_rus4_t80uk(rusa)` → `vehicle(t80uk)`
-- **Disposition:** index `vehicle2`/`vehicleN` entity forms (implemented + regression).
-- Note: purchase-name block `squad_rus4_t80uk(rusa)` also has `{cost 2500}`; classifier uses vehicle-entity money authority first (1950).
+The following **exact vehicle IDs** were owner-verified in native GoH UI as having
+**positive recruitment money** while the installed stack still has **no parseable
+exact money-cost row** for that ID.
 
-## Remaining gaps — no exact money row for the purchase vehicle ID
+Classifier class: `native_ui_verified_positive_unknown`  
+`native_recruitment_cost`: `null` (unknown numeric; not invented)  
+`zero_cost`: false  
+Not counted in `unintended_zero_total`.
 
-No prices invented. Nearby IDs listed only as non-authoritative context.
+Exact allowlist (case-insensitive):
 
-### 1. `cougar-oh` (GBR `squad_gb3_mot_rifle_cougar`)
-- Exact money definition: **NONE**
-- Purchase uses: Code:X/AI `units_nato.set` `vehicle(cougar-oh)`
-- Assets: unit icons exist (`cougar-oh_*.png`)
-- Nearby priced ID: `cougar-og` cost **230** (`not_for_player_sale`)
-- **Not an exact alias** (`oh` ≠ `og`)
-- **Needs disposition / native UI test**
+- `cougar-oh`
+- `m2a2_ods_bradley_arat_rus`
+- `novator`
+- `m109_paladin_n`
+- `m270_n_clu`
+- `maars` / `MAARS`
 
-### 2. `m2a2_ods_bradley_arat_rus` (RUS `squad_rus155_m2a2_2022`)
-- Exact money definition: **NONE**
-- Purchase uses: Code:X/AI `units_rusa.set` `vehicle(m2a2_ods_bradley_arat_rus)`
-- Nearby: `m2a2_ods_bradley` **450**; `m2a2_ods_bradley_arat` **480** (UKR, nfs on arat)
-- **Not exact** (missing/extra `_rus` nationalization suffix)
-- **Needs disposition / native UI test**
+Purchases covered after regeneration:
 
-### 3. `novator` (UKR `squad_ukr93_razv_novator`)
-- Exact money definition for `novator`: **NONE**
-- Purchase uses: `vehicle(novator)`
-- Nearby exact priced entity: `novator_stugna-p` **270** (same pack)
-- **Not exact ID match**
-- **Needs disposition** (possible narrow alias only if native UI proves same body)
-
-### 4. `m109_paladin_n` (USA `squad_tank1_m109`)
-- Exact money definition: **NONE**
-- Purchase uses: `vehicle(m109_paladin_n)`
-- Nearby: `m109_paladin` **2500** (UKR pack); legacy `m109`/`paladin` West81 rows
-- **Not exact** (`_n` NATO suffix)
-- **Needs disposition / native UI test**
-
-### 5. `m270_n_clu` (USA `squad_tank1_m270`)
-- Exact money definition: **NONE**
-- Purchase uses: `vehicle(m270_n_clu)`
-- Nearby: `m270_n` **1800** (nfs); `m270_ukr_clu` **4500**
-- **Not exact** (`_clu` cluster munition variant suffix)
-- **Needs disposition / native UI test**
-
-### 6–7. `MAARS` (USA `squad_usmc_rifle_javelin`, `squad_usmc_rifle_m3`)
-- Exact money definition: **NONE**
-- Purchase uses: `vehicle(MAARS)` on USMC rifle variants
-- Assets: icons only (`maars_*.png`)
-- Nearby UGVs priced under different IDs (`ugv_mg_ap` 160, etc.) — **not MAARS**
-- **Needs disposition / native UI test** (may be free/support drone in native UI)
+- GBR `squad_gb3_mot_rifle_cougar(nato)`
+- RUS `squad_rus155_m2a2_2022(rusa)`
+- UKR `squad_ukr93_razv_novator(ukr)`
+- USA `squad_tank1_m109(nato)`
+- USA `squad_tank1_m270(nato)`
+- USA `squad_usmc_rifle_javelin`
+- USA `squad_usmc_rifle_m3`
 
 ## Explicit non-actions
-- No fuzzy aliasing of `_n` / `_clu` / `_rus` / `oh`↔`og` without owner/native proof
-- No invented balance values
-- No Phase 2 / #201 work
 
-## Recommended next
-For each remaining ID: either
-1. authorize a **narrow exact alias** with provenance after native UI cost observation, or
-2. mark as **intentional source-native unpriced vehicle** with allowlist + rationale, or
-3. remove/replace the purchase selector if the vehicle body is non-recruitable junk.
+- No numeric price invented from nearby IDs
+- Unknown vehicle IDs outside the allowlist still fail closed as `vehicle_unpriced`
+- `t80uk` remains resolved by exact `vehicle2` money row (1950), not this allowlist
+
+## Counts contract
+
+Per actor and globally the evidence reports:
+
+- `native_positive_count` / `native_positive_total`
+- `native_unknown_numeric_count` / `native_unknown_numeric_total`
+- `unintended_zero_count` / `unintended_zero_total`
