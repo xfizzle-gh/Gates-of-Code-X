@@ -1,12 +1,12 @@
 # Expanded Nations native recruitment-cost evidence
 
-- schema: `gates-of-codex.expanded-nations-cost-evidence` v3
+- schema: `gates-of-codex.expanded-nations-cost-evidence` v4
 - evidence_state: `complete`
-- source_head: `1307df25e67503d69290fdefd35589b65d569746`
+- source_head: `dd205e515d5aee43d9dde4ed4d48acb2625a0c79`
 - playable_actors: 21
 - unintended_zero_total: 0
-- native_positive_total: 1053
-- native_unknown_numeric_total: 7
+- native_positive_total: 1054
+- native_unknown_numeric_total: 6
 
 Native recruitment cost counts money-price authority only (`{cost N}` / purchase `cost(N)` / vehicle entity `{cost}` / pure-infantry inf sums). `cp()` and `cost_sp` are recorded per unit but never counted as recruitment money.
 
@@ -21,7 +21,7 @@ Native recruitment cost counts money-price authority only (`{cost N}` / purchase
 | esp | nato | 50 | 24 | 3 | 700 | 2400 | 50 | 0 | 0 | 0 |
 | fin | nato | 15 | 0 | 3 | 350 | 1800 | 15 | 0 | 0 | 0 |
 | fra | nato | 28 | 3 | 3 | 295 | 1950 | 28 | 0 | 0 | 0 |
-| gbr | nato | 33 | 0 | 3 | 296.5 | 1900 | 32 | 1 | 0 | 0 |
+| gbr | nato | 33 | 0 | 3 | 293 | 1900 | 33 | 0 | 0 | 0 |
 | ita | nato | 19 | 0 | 3 | 450 | 1800 | 19 | 0 | 0 | 0 |
 | nld | nato | 15 | 0 | 3 | 350 | 1800 | 15 | 0 | 0 | 0 |
 | nor | nato | 55 | 2 | 15 | 700 | 2400 | 55 | 0 | 0 | 0 |

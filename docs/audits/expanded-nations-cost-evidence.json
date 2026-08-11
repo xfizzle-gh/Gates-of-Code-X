@@ -5039,24 +5039,18 @@
       "display_name": "United Kingdom",
       "economy_class_counts": {
         "entity_purchase_cost": 10,
-        "native_ui_verified_positive_unknown": 1,
+        "native_ui_verified_positive_numeric": 1,
         "personnel_inf_sum": 13,
         "vehicle_entity_cost": 9
       },
       "intentional_zero_count": 0,
       "intentional_zero_units": [],
-      "native_positive_count": 32,
+      "native_positive_count": 33,
       "native_recruitment_cost_max": 1900.0,
-      "native_recruitment_cost_median": 296.5,
+      "native_recruitment_cost_median": 293.0,
       "native_recruitment_cost_min": 3.0,
-      "native_unknown_numeric_count": 1,
-      "native_unknown_numeric_units": [
-        {
-          "economy_class": "native_ui_verified_positive_unknown",
-          "rationale": "owner native-UI verified positive recruitment money with no parseable exact vehicle money row for cougar-oh; numeric price unknown",
-          "unit_name": "squad_gb3_mot_rifle_cougar(nato)"
-        }
-      ],
+      "native_unknown_numeric_count": 0,
+      "native_unknown_numeric_units": [],
       "projected_inf_cost_max": null,
       "projected_inf_cost_min": null,
       "projected_inf_cost_row_count": 0,
@@ -5390,16 +5384,16 @@
         },
         {
           "cp": 4.0,
-          "economy_class": "native_ui_verified_positive_unknown",
+          "economy_class": "native_ui_verified_positive_numeric",
           "entity_cost": null,
           "has_vehicle": true,
           "intentional_zero": false,
           "member_gaps": [
             "gb_crew:missing_inf"
           ],
-          "native_recruitment_cost": null,
+          "native_recruitment_cost": 230.0,
           "personnel_cost": 228.0,
-          "rationale": "owner native-UI verified positive recruitment money with no parseable exact vehicle money row for cougar-oh; numeric price unknown",
+          "rationale": "owner native-UI verified exact recruitment money for purchase squad_gb3_mot_rifle_cougar(nato) / vehicle cougar-oh; stack lacks parseable exact vehicle money row (preserved UI price 230)",
           "special_points_cost": null,
           "unit_name": "squad_gb3_mot_rifle_cougar(nato)",
           "vehicle_entity_cost": null,
@@ -8915,7 +8909,7 @@
       "native_unknown_numeric_units": [
         {
           "economy_class": "native_ui_verified_positive_unknown",
-          "rationale": "owner native-UI verified positive recruitment money with no parseable exact vehicle money row for m2a2_ods_bradley_arat_rus; numeric price unknown",
+          "rationale": "owner native-UI verified positive recruitment money for purchase squad_rus155_m2a2_2022(rusa) / vehicle m2a2_ods_bradley_arat_rus; numeric price unknown and stack lacks parseable exact vehicle money row",
           "unit_name": "squad_rus155_m2a2_2022(rusa)"
         }
       ],
@@ -10625,7 +10619,7 @@
           "member_gaps": [],
           "native_recruitment_cost": null,
           "personnel_cost": 254.0,
-          "rationale": "owner native-UI verified positive recruitment money with no parseable exact vehicle money row for m2a2_ods_bradley_arat_rus; numeric price unknown",
+          "rationale": "owner native-UI verified positive recruitment money for purchase squad_rus155_m2a2_2022(rusa) / vehicle m2a2_ods_bradley_arat_rus; numeric price unknown and stack lacks parseable exact vehicle money row",
           "special_points_cost": null,
           "unit_name": "squad_rus155_m2a2_2022(rusa)",
           "vehicle_entity_cost": null,
@@ -13991,7 +13985,7 @@
       "native_unknown_numeric_units": [
         {
           "economy_class": "native_ui_verified_positive_unknown",
-          "rationale": "owner native-UI verified positive recruitment money with no parseable exact vehicle money row for novator; numeric price unknown",
+          "rationale": "owner native-UI verified positive recruitment money for purchase squad_ukr93_razv_novator(ukr) / vehicle novator; numeric price unknown and stack lacks parseable exact vehicle money row",
           "unit_name": "squad_ukr93_razv_novator(ukr)"
         }
       ],
@@ -16447,7 +16441,7 @@
           "member_gaps": [],
           "native_recruitment_cost": null,
           "personnel_cost": 304.5,
-          "rationale": "owner native-UI verified positive recruitment money with no parseable exact vehicle money row for novator; numeric price unknown",
+          "rationale": "owner native-UI verified positive recruitment money for purchase squad_ukr93_razv_novator(ukr) / vehicle novator; numeric price unknown and stack lacks parseable exact vehicle money row",
           "special_points_cost": null,
           "unit_name": "squad_ukr93_razv_novator(ukr)",
           "vehicle_entity_cost": null,
@@ -16907,22 +16901,22 @@
       "native_unknown_numeric_units": [
         {
           "economy_class": "native_ui_verified_positive_unknown",
-          "rationale": "owner native-UI verified positive recruitment money with no parseable exact vehicle money row for m109_paladin_n; numeric price unknown",
+          "rationale": "owner native-UI verified positive recruitment money for purchase squad_tank1_m109(nato) / vehicle m109_paladin_n; numeric price unknown and stack lacks parseable exact vehicle money row",
           "unit_name": "squad_tank1_m109(nato)"
         },
         {
           "economy_class": "native_ui_verified_positive_unknown",
-          "rationale": "owner native-UI verified positive recruitment money with no parseable exact vehicle money row for m270_n_clu; numeric price unknown",
+          "rationale": "owner native-UI verified positive recruitment money for purchase squad_tank1_m270(nato) / vehicle m270_n_clu; numeric price unknown and stack lacks parseable exact vehicle money row",
           "unit_name": "squad_tank1_m270(nato)"
         },
         {
           "economy_class": "native_ui_verified_positive_unknown",
-          "rationale": "owner native-UI verified positive recruitment money with no parseable exact vehicle money row for MAARS; numeric price unknown",
+          "rationale": "owner native-UI verified positive recruitment money for purchase squad_usmc_rifle_javelin / vehicle maars; numeric price unknown and stack lacks parseable exact vehicle money row",
           "unit_name": "squad_usmc_rifle_javelin"
         },
         {
           "economy_class": "native_ui_verified_positive_unknown",
-          "rationale": "owner native-UI verified positive recruitment money with no parseable exact vehicle money row for MAARS; numeric price unknown",
+          "rationale": "owner native-UI verified positive recruitment money for purchase squad_usmc_rifle_m3 / vehicle maars; numeric price unknown and stack lacks parseable exact vehicle money row",
           "unit_name": "squad_usmc_rifle_m3"
         }
       ],
@@ -17650,7 +17644,7 @@
           "member_gaps": [],
           "native_recruitment_cost": null,
           "personnel_cost": 42.0,
-          "rationale": "owner native-UI verified positive recruitment money with no parseable exact vehicle money row for m109_paladin_n; numeric price unknown",
+          "rationale": "owner native-UI verified positive recruitment money for purchase squad_tank1_m109(nato) / vehicle m109_paladin_n; numeric price unknown and stack lacks parseable exact vehicle money row",
           "special_points_cost": null,
           "unit_name": "squad_tank1_m109(nato)",
           "vehicle_entity_cost": null,
@@ -17714,7 +17708,7 @@
           "member_gaps": [],
           "native_recruitment_cost": null,
           "personnel_cost": 42.0,
-          "rationale": "owner native-UI verified positive recruitment money with no parseable exact vehicle money row for m270_n_clu; numeric price unknown",
+          "rationale": "owner native-UI verified positive recruitment money for purchase squad_tank1_m270(nato) / vehicle m270_n_clu; numeric price unknown and stack lacks parseable exact vehicle money row",
           "special_points_cost": null,
           "unit_name": "squad_tank1_m270(nato)",
           "vehicle_entity_cost": null,
@@ -18066,7 +18060,7 @@
           "member_gaps": [],
           "native_recruitment_cost": null,
           "personnel_cost": 393.0,
-          "rationale": "owner native-UI verified positive recruitment money with no parseable exact vehicle money row for MAARS; numeric price unknown",
+          "rationale": "owner native-UI verified positive recruitment money for purchase squad_usmc_rifle_javelin / vehicle maars; numeric price unknown and stack lacks parseable exact vehicle money row",
           "special_points_cost": null,
           "unit_name": "squad_usmc_rifle_javelin",
           "vehicle_entity_cost": null,
@@ -18082,7 +18076,7 @@
           "member_gaps": [],
           "native_recruitment_cost": null,
           "personnel_cost": 306.5,
-          "rationale": "owner native-UI verified positive recruitment money with no parseable exact vehicle money row for MAARS; numeric price unknown",
+          "rationale": "owner native-UI verified positive recruitment money for purchase squad_usmc_rifle_m3 / vehicle maars; numeric price unknown and stack lacks parseable exact vehicle money row",
           "special_points_cost": null,
           "unit_name": "squad_usmc_rifle_m3",
           "vehicle_entity_cost": null,
@@ -18141,12 +18135,12 @@
     }
   },
   "evidence_state": "complete",
-  "native_positive_total": 1053,
-  "native_unknown_numeric_total": 7,
+  "native_positive_total": 1054,
+  "native_unknown_numeric_total": 6,
   "playable_actor_count": 21,
   "schema": "gates-of-codex.expanded-nations-cost-evidence",
-  "schema_version": 3,
-  "source_head": "1307df25e67503d69290fdefd35589b65d569746",
+  "schema_version": 4,
+  "source_head": "dd205e515d5aee43d9dde4ed4d48acb2625a0c79",
   "source_vehicle_money_gap_total": 0,
   "unintended_zero_total": 0,
   "unintended_zeros": [],
