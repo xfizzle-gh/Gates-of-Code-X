@@ -78,3 +78,19 @@ Does **not** edit upstream Workshop packages in place; only the final Gates laye
 `Invalid army identifier (must be in range [0, 99])` (`mp_gamemisc.cpp:182`)
 
 Engine hard-limits numeric `{id N}` to **0..99**. Spike IDs 100/101 crashed on launch. Retargeted to **90/91**.
+
+## Critical missing seam (found via MW prior art)
+
+Dynamic Conquest army picker uses **alliance ? army registry**, not armies/*.set alone.
+
+Effective file (AI Overhaul):
+`resource/set/multiplayer/games/presets/alliances_generic.inc`
+
+Stock contents only:
+
+- West: `nato`, `ukr`
+- East: `rusa`, `prc`
+
+MW comment: *create_dynamic_campaign UI expects these ids to be present in the alliance->army registry*.
+
+Spike now overlays that file and registers `goc_usa` under West and `goc_fra` under East (opposition pairing for Test A).
