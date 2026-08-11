@@ -1,48 +1,1780 @@
 {
   "schema": "gates-of-codex.expanded-nations-phase2-source-candidates",
   "schema_version": 1,
-  "status": "pending_live_stack_audit",
+  "status": "live_stack_audit_complete",
   "parent_issue": 189,
   "audit_issue": 190,
   "initial_stacked_base": "c59cbc247c565071d458c5724d9be626fcdf7dc0",
   "candidate_count": 37,
   "candidates": [
-    {"actor_id":"grc","planning_class":"playable_or_fallback","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"rou","planning_class":"playable_or_fallback","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"bgr","planning_class":"playable_or_fallback","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"hun","planning_class":"playable_or_fallback","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"cze","planning_class":"playable_or_fallback","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"svk","planning_class":"playable_or_fallback","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"bel","planning_class":"playable_or_fallback","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"prt","planning_class":"playable_or_fallback","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"hrv","planning_class":"playable_or_fallback","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"ltu","planning_class":"playable_or_fallback","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"lva","planning_class":"playable_or_fallback","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"est","planning_class":"playable_or_fallback","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"aut","planning_class":"strategic_first","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"che","planning_class":"strategic_first","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"irl","planning_class":"strategic_first","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"svn","planning_class":"strategic_first","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"bih","planning_class":"strategic_first","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"mne","planning_class":"strategic_first","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"alb","planning_class":"strategic_first","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"mkd","planning_class":"strategic_first","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"mda","planning_class":"strategic_first","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"isl","planning_class":"strategic_first","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"cyp","planning_class":"strategic_first","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"mlt","planning_class":"strategic_first","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"geo","planning_class":"crop_conditional","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"arm","planning_class":"crop_conditional","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"aze","planning_class":"crop_conditional","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"isr","planning_class":"crop_conditional","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"lbn","planning_class":"crop_conditional","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"syr","planning_class":"crop_conditional","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"jor","planning_class":"crop_conditional","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"irq","planning_class":"crop_conditional","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"mar","planning_class":"crop_conditional","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"dza","planning_class":"crop_conditional","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"tun","planning_class":"crop_conditional","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"lby","planning_class":"crop_conditional","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]},
-    {"actor_id":"egy","planning_class":"crop_conditional","status":"pending_audit","theatre_present":null,"disposition":null,"tactical_side":null,"components":[],"exact_units":[],"research_roots":[],"source_layers":[],"legacy_units":[],"cross_side_units":[],"missing_categories":[],"confidence":null,"blockers":[],"notes":[]}
-  ]
+    {
+      "actor_id": "grc",
+      "planning_class": "playable_or_fallback",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "coalition_fallback",
+      "tactical_side": "goc_grc",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [
+        "national_equipment",
+        "national_infantry",
+        "national_research"
+      ],
+      "confidence": "medium",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "No distinctive national breeds/units/equipment IDs found after strict token filter. Playable only via explicit labeled coalition fallback if owner authorizes.",
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_grc` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Greece"
+    },
+    {
+      "actor_id": "rou",
+      "planning_class": "playable_or_fallback",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "coalition_fallback",
+      "tactical_side": "goc_rou",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [
+        "national_equipment",
+        "national_infantry",
+        "national_research"
+      ],
+      "confidence": "medium",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "No distinctive national breeds/units/equipment IDs found after strict token filter. Playable only via explicit labeled coalition fallback if owner authorizes.",
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_rou` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Romania"
+    },
+    {
+      "actor_id": "bgr",
+      "planning_class": "playable_or_fallback",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "coalition_fallback",
+      "tactical_side": "goc_bgr",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [
+        "national_equipment",
+        "national_infantry",
+        "national_research"
+      ],
+      "confidence": "medium",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "No distinctive national breeds/units/equipment IDs found after strict token filter. Playable only via explicit labeled coalition fallback if owner authorizes.",
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_bgr` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Bulgaria"
+    },
+    {
+      "actor_id": "hun",
+      "planning_class": "playable_or_fallback",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "coalition_fallback",
+      "tactical_side": "goc_hun",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [
+        "national_equipment",
+        "national_infantry",
+        "national_research"
+      ],
+      "confidence": "medium",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "No distinctive national breeds/units/equipment IDs found after strict token filter. Playable only via explicit labeled coalition fallback if owner authorizes.",
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_hun` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Hungary"
+    },
+    {
+      "actor_id": "cze",
+      "planning_class": "playable_or_fallback",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "national_hybrid",
+      "tactical_side": "goc_cze",
+      "components": [
+        "cze_national",
+        "gapfill_equipment_audited"
+      ],
+      "exact_units": [
+        "vz_77_dana"
+      ],
+      "research_roots": [],
+      "source_layers": [
+        "aio",
+        "codex",
+        "gates"
+      ],
+      "legacy_units": [],
+      "cross_side_units": [
+        "vz_77_dana|src=nato|layer=codex|path=resource/set/multiplayer/units/conquest/units_nato.set",
+        "vz_77_dana|src=nato|layer=aio|path=resource/set/multiplayer/units/conquest/units_nato.set",
+        "vz_77_dana|src=nato|layer=gates|path=resource/set/multiplayer/units/conquest/units_nato.set"
+      ],
+      "missing_categories": [
+        "complete_national_equipment_tree",
+        "native_research_tree"
+      ],
+      "confidence": "medium",
+      "blockers": [],
+      "notes": [
+        "No dedicated national research root; generated/hybrid research expected under goc_* later.",
+        "National seed present but incomplete for full sovereign package.",
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_cze` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`.",
+        "3 side-tagged source rows require goc_* side-remap/materialization testing."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 3,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [
+          {
+            "layer": "codex",
+            "path": "resource/set/multiplayer/units/conquest/units_nato.set",
+            "unit_id": "vz_77_dana",
+            "kind": "national"
+          },
+          {
+            "layer": "aio",
+            "path": "resource/set/multiplayer/units/conquest/units_nato.set",
+            "unit_id": "vz_77_dana",
+            "kind": "national"
+          },
+          {
+            "layer": "gates",
+            "path": "resource/set/multiplayer/units/conquest/units_nato.set",
+            "unit_id": "vz_77_dana",
+            "kind": "national"
+          }
+        ],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {
+          "artillery": [
+            "vz_77_dana"
+          ]
+        },
+        "national_infantry_present": true,
+        "national_equipment_present": false,
+        "modern_codex_authority": true,
+        "west81_legacy_only": false
+      },
+      "display_name": "Czechia"
+    },
+    {
+      "actor_id": "svk",
+      "planning_class": "playable_or_fallback",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "national_hybrid",
+      "tactical_side": "goc_svk",
+      "components": [
+        "svk_equipment_identity",
+        "nato_common_infantry_bridge"
+      ],
+      "exact_units": [
+        "vz_77_dana"
+      ],
+      "research_roots": [],
+      "source_layers": [
+        "aio",
+        "codex",
+        "gates"
+      ],
+      "legacy_units": [],
+      "cross_side_units": [
+        "vz_77_dana|src=nato|layer=codex|path=resource/set/multiplayer/units/conquest/units_nato.set",
+        "vz_77_dana|src=nato|layer=aio|path=resource/set/multiplayer/units/conquest/units_nato.set",
+        "vz_77_dana|src=nato|layer=gates|path=resource/set/multiplayer/units/conquest/units_nato.set"
+      ],
+      "missing_categories": [
+        "national_infantry_breeds",
+        "native_research_tree"
+      ],
+      "confidence": "medium-low",
+      "blockers": [],
+      "notes": [
+        "Distinctive equipment identity without national breed family; infantry bridge must be explicit and labeled.",
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_svk` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`.",
+        "3 side-tagged source rows require goc_* side-remap/materialization testing."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 3,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [
+          {
+            "layer": "codex",
+            "path": "resource/set/multiplayer/units/conquest/units_nato.set",
+            "unit_id": "vz_77_dana",
+            "kind": "equipment"
+          },
+          {
+            "layer": "aio",
+            "path": "resource/set/multiplayer/units/conquest/units_nato.set",
+            "unit_id": "vz_77_dana",
+            "kind": "equipment"
+          },
+          {
+            "layer": "gates",
+            "path": "resource/set/multiplayer/units/conquest/units_nato.set",
+            "unit_id": "vz_77_dana",
+            "kind": "equipment"
+          }
+        ],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {
+          "artillery": [
+            "vz_77_dana"
+          ]
+        },
+        "national_infantry_present": false,
+        "national_equipment_present": true,
+        "modern_codex_authority": true,
+        "west81_legacy_only": false
+      },
+      "display_name": "Slovakia"
+    },
+    {
+      "actor_id": "bel",
+      "planning_class": "playable_or_fallback",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "coalition_fallback",
+      "tactical_side": "goc_bel",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [
+        "national_equipment",
+        "national_infantry",
+        "national_research"
+      ],
+      "confidence": "medium",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "No distinctive national breeds/units/equipment IDs found after strict token filter. Playable only via explicit labeled coalition fallback if owner authorizes.",
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_bel` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Belgium"
+    },
+    {
+      "actor_id": "prt",
+      "planning_class": "playable_or_fallback",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "coalition_fallback",
+      "tactical_side": "goc_prt",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [
+        "national_equipment",
+        "national_infantry",
+        "national_research"
+      ],
+      "confidence": "medium",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "No distinctive national breeds/units/equipment IDs found after strict token filter. Playable only via explicit labeled coalition fallback if owner authorizes.",
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_prt` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Portugal"
+    },
+    {
+      "actor_id": "hrv",
+      "planning_class": "playable_or_fallback",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "coalition_fallback",
+      "tactical_side": "goc_hrv",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [
+        "national_equipment",
+        "national_infantry",
+        "national_research"
+      ],
+      "confidence": "medium",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "No distinctive national breeds/units/equipment IDs found after strict token filter. Playable only via explicit labeled coalition fallback if owner authorizes.",
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_hrv` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Croatia"
+    },
+    {
+      "actor_id": "ltu",
+      "planning_class": "playable_or_fallback",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "coalition_fallback",
+      "tactical_side": "goc_ltu",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [
+        "national_equipment",
+        "national_infantry",
+        "national_research"
+      ],
+      "confidence": "medium",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "No distinctive national breeds/units/equipment IDs found after strict token filter. Playable only via explicit labeled coalition fallback if owner authorizes.",
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_ltu` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Lithuania"
+    },
+    {
+      "actor_id": "lva",
+      "planning_class": "playable_or_fallback",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "coalition_fallback",
+      "tactical_side": "goc_lva",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [
+        "national_equipment",
+        "national_infantry",
+        "national_research"
+      ],
+      "confidence": "medium",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "No distinctive national breeds/units/equipment IDs found after strict token filter. Playable only via explicit labeled coalition fallback if owner authorizes.",
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_lva` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Latvia"
+    },
+    {
+      "actor_id": "est",
+      "planning_class": "playable_or_fallback",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "coalition_fallback",
+      "tactical_side": "goc_est",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [
+        "national_equipment",
+        "national_infantry",
+        "national_research"
+      ],
+      "confidence": "medium",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "No distinctive national breeds/units/equipment IDs found after strict token filter. Playable only via explicit labeled coalition fallback if owner authorizes.",
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_est` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Estonia"
+    },
+    {
+      "actor_id": "aut",
+      "planning_class": "strategic_first",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_aut",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "high",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_aut` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Austria"
+    },
+    {
+      "actor_id": "che",
+      "planning_class": "strategic_first",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_che",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "high",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_che` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Switzerland"
+    },
+    {
+      "actor_id": "irl",
+      "planning_class": "strategic_first",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_irl",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "high",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_irl` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Ireland"
+    },
+    {
+      "actor_id": "svn",
+      "planning_class": "strategic_first",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_svn",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "high",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_svn` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Slovenia"
+    },
+    {
+      "actor_id": "bih",
+      "planning_class": "strategic_first",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_bih",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "high",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_bih` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Bosnia and Herzegovina"
+    },
+    {
+      "actor_id": "mne",
+      "planning_class": "strategic_first",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_mne",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "high",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_mne` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Montenegro"
+    },
+    {
+      "actor_id": "alb",
+      "planning_class": "strategic_first",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_alb",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "high",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_alb` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Albania"
+    },
+    {
+      "actor_id": "mkd",
+      "planning_class": "strategic_first",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_mkd",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "high",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_mkd` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "North Macedonia"
+    },
+    {
+      "actor_id": "mda",
+      "planning_class": "strategic_first",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_mda",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "high",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_mda` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `rusa`."
+      ],
+      "provisional_coalition_family": "rusa",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Moldova"
+    },
+    {
+      "actor_id": "isl",
+      "planning_class": "strategic_first",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_isl",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "high",
+      "blockers": [
+        "no_standing_army_content_expected"
+      ],
+      "notes": [
+        "No standing national land-force package expected or evidenced.",
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_isl` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Iceland"
+    },
+    {
+      "actor_id": "cyp",
+      "planning_class": "strategic_first",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_cyp",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "high",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_cyp` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Cyprus"
+    },
+    {
+      "actor_id": "mlt",
+      "planning_class": "strategic_first",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_mlt",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "high",
+      "blockers": [
+        "no_standing_army_content_expected"
+      ],
+      "notes": [
+        "No standing national land-force package expected or evidenced.",
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_mlt` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Malta"
+    },
+    {
+      "actor_id": "geo",
+      "planning_class": "crop_conditional",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_geo",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "medium",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_geo` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Georgia"
+    },
+    {
+      "actor_id": "arm",
+      "planning_class": "crop_conditional",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_arm",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "medium",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_arm` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `rusa`."
+      ],
+      "provisional_coalition_family": "rusa",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Armenia"
+    },
+    {
+      "actor_id": "aze",
+      "planning_class": "crop_conditional",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_aze",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "medium",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_aze` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Azerbaijan"
+    },
+    {
+      "actor_id": "isr",
+      "planning_class": "crop_conditional",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "national_hybrid",
+      "tactical_side": "goc_isr",
+      "components": [
+        "isr_equipment_identity",
+        "nato_common_infantry_bridge"
+      ],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [
+        "codex"
+      ],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [
+        "national_infantry_breeds",
+        "native_research_tree"
+      ],
+      "confidence": "medium-low",
+      "blockers": [],
+      "notes": [
+        "Distinctive equipment identity without national breed family; infantry bridge must be explicit and labeled.",
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_isr` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 2,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [
+          {
+            "layer": "codex",
+            "entity": "spike-er"
+          },
+          {
+            "layer": "codex",
+            "entity": "spike-sr"
+          }
+        ],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": true,
+        "modern_codex_authority": true,
+        "west81_legacy_only": false
+      },
+      "display_name": "Israel"
+    },
+    {
+      "actor_id": "lbn",
+      "planning_class": "crop_conditional",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_lbn",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "medium",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_lbn` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Lebanon"
+    },
+    {
+      "actor_id": "syr",
+      "planning_class": "crop_conditional",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_syr",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "medium",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_syr` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `rusa`."
+      ],
+      "provisional_coalition_family": "rusa",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Syria"
+    },
+    {
+      "actor_id": "jor",
+      "planning_class": "crop_conditional",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_jor",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "medium",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_jor` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Jordan"
+    },
+    {
+      "actor_id": "irq",
+      "planning_class": "crop_conditional",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_irq",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "medium",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_irq` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Iraq"
+    },
+    {
+      "actor_id": "mar",
+      "planning_class": "crop_conditional",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_mar",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "medium",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_mar` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Morocco"
+    },
+    {
+      "actor_id": "dza",
+      "planning_class": "crop_conditional",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_dza",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "medium",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_dza` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `rusa`."
+      ],
+      "provisional_coalition_family": "rusa",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Algeria"
+    },
+    {
+      "actor_id": "tun",
+      "planning_class": "crop_conditional",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_tun",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "medium",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_tun` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Tunisia"
+    },
+    {
+      "actor_id": "lby",
+      "planning_class": "crop_conditional",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_lby",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "medium",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_lby` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `rusa`."
+      ],
+      "provisional_coalition_family": "rusa",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Libya"
+    },
+    {
+      "actor_id": "egy",
+      "planning_class": "crop_conditional",
+      "status": "audited",
+      "theatre_present": true,
+      "disposition": "strategic_only",
+      "tactical_side": "goc_egy",
+      "components": [],
+      "exact_units": [],
+      "research_roots": [],
+      "source_layers": [],
+      "legacy_units": [],
+      "cross_side_units": [],
+      "missing_categories": [],
+      "confidence": "medium",
+      "blockers": [
+        "no_distinctive_national_source_content"
+      ],
+      "notes": [
+        "Architecture (#201 approved): prefer Gates tactical ID `goc_egy` for sovereign/persistent production wiring; Core nato/ukr/rusa/prc unchanged. Provisional coalition family for labeled gap-fill only: `nato`."
+      ],
+      "provisional_coalition_family": "nato",
+      "evidence": {
+        "method": "strict_distinctive_tokens",
+        "breed_count": 0,
+        "national_unit_count": 0,
+        "equipment_unit_count": 0,
+        "research_count": 0,
+        "entity_count": 0,
+        "breed_samples": [],
+        "unit_samples": [],
+        "equipment_samples": [],
+        "research_samples": [],
+        "entity_samples": [],
+        "categories": {},
+        "national_infantry_present": false,
+        "national_equipment_present": false,
+        "modern_codex_authority": false,
+        "west81_legacy_only": false
+      },
+      "display_name": "Egypt"
+    }
+  ],
+  "audit_environment": {
+    "audit_date_utc": "2026-08-11T16:20:58.355977+00:00",
+    "auditor": "agent-opencode-#190-strict",
+    "python_version": "3.11.9",
+    "layers": {
+      "vanilla": {
+        "root": "E:\\Steam\\steamapps\\common\\Call to Arms - Gates of Hell",
+        "exists": true,
+        "name": null,
+        "mod_info_sha256": null,
+        "mtime_utc": "2026-08-02T23:42:05.550986+00:00"
+      },
+      "west81": {
+        "root": "E:\\Steam\\steamapps\\workshop\\content\\400750\\2897299509",
+        "exists": true,
+        "name": "West-81",
+        "mod_info_sha256": "eb50ad1d70c99ee3381c28bf92985565146f03745b55e905e82f5ba6b3d91c9a",
+        "mtime_utc": "2026-08-03T00:03:38.884970+00:00"
+      },
+      "codex": {
+        "root": "E:\\Steam\\steamapps\\workshop\\content\\400750\\3261086933",
+        "exists": true,
+        "name": "Code-X",
+        "mod_info_sha256": "1e46dad6e520c9cea20c2cd69d02ca0b71bfd58ea370893b5de8b1514d9ab6c3",
+        "mtime_utc": "2026-08-10T14:58:33.164935+00:00"
+      },
+      "aio": {
+        "root": "E:\\Steam\\steamapps\\workshop\\content\\400750\\3636883799",
+        "exists": true,
+        "name": "CodeX Conquest AI Overhaul 1.5",
+        "mod_info_sha256": "1cfe26b426459f77c3cd56cdeb21d75b2dc16d63524b0e88da2773016f4ecfa0",
+        "mtime_utc": "2026-08-03T00:03:38.780542+00:00"
+      },
+      "gates": {
+        "root": "E:\\Steam\\steamapps\\workshop\\content\\400750\\3696721120",
+        "exists": true,
+        "name": "Gates of CodeX",
+        "mod_info_sha256": "f0b232f51847833deec5575c9254a43ec8650eedb62f930e71bc07cc09eb4e69",
+        "mtime_utc": "2026-08-11T14:42:45.167204+00:00"
+      }
+    },
+    "architecture_note": "#201 owner-approved: Expanded Nations prefers distinct Gates-owned goc_* tactical faction IDs for sovereign/persistent actors; Core Code:X nato/ukr/rusa/prc remain unchanged.",
+    "method": "Strict distinctive-token scan of breed stems/paths, unit IDs, research stems, and entity names across Vanilla/West81/Code:X/AIO/Gates. Generic common equipment (unqualified T-72/BMP/M113/BTR/Leopard) is NOT attributed to a nation without a national qualifier. Short ISO prefixes that collide were excluded.",
+    "repository_head": "e7974005173c3cf48fc28f7f0307288ba87875d1"
+  },
+  "architecture_disposition": "#201 owner-approved: Expanded Nations prefers distinct Gates-owned goc_* tactical faction IDs for sovereign/persistent actors; Core Code:X nato/ukr/rusa/prc remain unchanged.",
+  "integration_main": "2d5be91fe3c9a3ed18c0e16333444ccca08b3763",
+  "completed_utc": "2026-08-11T16:21:00.108178+00:00"
 }
