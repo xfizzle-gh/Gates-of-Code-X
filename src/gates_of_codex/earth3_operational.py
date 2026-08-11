@@ -944,6 +944,15 @@ def validate_p3_documents(
     _validate_graph(authority, graph)
 
 
+#: Authenticated graphs keyed by ``(root, five raw digests)``. Authentication is
+#: never skipped: every call still reads all five artifacts and compares all five
+#: digests against the frozen constants *before* the cache is consulted, so a
+#: tampered artifact fails exactly as it did before. Only the deterministic
+#: re-derivation of the expected projection — the part that costs ~1.2s per call
+#: and ran hundreds of times per strategic turn — is reused.
+_AUTHENTICATED_P3_GRAPH_CACHE: dict[tuple[str, ...], dict[str, Any]] = {}
+
+
 def load_authenticated_p3_graph(
     *, repository_root: Path | None = None
 ) -> dict[str, Any]:
@@ -964,16 +973,33 @@ def load_authenticated_p3_graph(
     sites_raw = _capture_fixed_file(
         root, P3_SITES_RELATIVE_PATH, label="Earth3 P2 sites"
     )
-    if _sha256(authority_raw) != AUTHORITY_RAW_SHA256:
+    authority_digest = _sha256(authority_raw)
+    graph_digest = _sha256(graph_raw)
+    proposal_digest = _sha256(proposal_raw)
+    dataset_digest = _sha256(dataset_raw)
+    sites_digest = _sha256(sites_raw)
+    if authority_digest != AUTHORITY_RAW_SHA256:
         raise Earth3OperationalAuthorityError("Earth3 P3 authority SHA-256 mismatch")
-    if _sha256(graph_raw) != GRAPH_RAW_SHA256:
+    if graph_digest != GRAPH_RAW_SHA256:
         raise Earth3OperationalAuthorityError("Earth3 P3 graph SHA-256 mismatch")
-    if _sha256(proposal_raw) != PROPOSAL_RAW_SHA256:
+    if proposal_digest != PROPOSAL_RAW_SHA256:
         raise Earth3OperationalAuthorityError("Earth3 P3 proposal SHA-256 mismatch")
-    if _sha256(dataset_raw) != P1_DATASET_RAW_SHA256:
+    if dataset_digest != P1_DATASET_RAW_SHA256:
         raise Earth3OperationalAuthorityError("Earth3 P1 dataset SHA-256 mismatch")
-    if _sha256(sites_raw) != P2_SITES_RAW_SHA256:
+    if sites_digest != P2_SITES_RAW_SHA256:
         raise Earth3OperationalAuthorityError("Earth3 P2 sites SHA-256 mismatch")
+    cache_key = (
+        str(root),
+        authority_digest,
+        graph_digest,
+        proposal_digest,
+        dataset_digest,
+        sites_digest,
+    )
+    cached = _AUTHENTICATED_P3_GRAPH_CACHE.get(cache_key)
+    if cached is not None:
+        # Callers index and mutate freely; never hand out the cached instance.
+        return copy.deepcopy(cached)
     authority = _strict_json_object(authority_raw, label="Earth3 P3 authority")
     graph = _strict_json_object(graph_raw, label="Earth3 P3 graph")
     proposal = _strict_json_object(proposal_raw, label="Earth3 P3 proposal")
@@ -986,6 +1012,7 @@ def load_authenticated_p3_graph(
         dataset=dataset,
         sites_document=sites_document,
     )
+    _AUTHENTICATED_P3_GRAPH_CACHE[cache_key] = copy.deepcopy(graph)
     return graph
 
 
@@ -1013,13 +1040,17 @@ def load_authenticated_p3_graph_for_state(
     return load_authenticated_p3_graph()
 
 
-def validate_earth3_p3_campaign_extension(state: CampaignState) -> None:
+def validate_earth3_p3_campaign_extension(state: CampaignState) -> frozenset[str]:
     """Validate mutable P3 state against separately authenticated P2/P3 authority.
 
     The exact eleven-force set is an initialization invariant enforced by
     ``migrate_earth3_p2_to_p3``. Evolved P3 campaigns may legitimately lose
     formations, but never gain or substitute an unapproved formation identity.
     This validator is read-only and never recreates eliminated forces.
+
+    Returns the province ids anchored by the authenticated graph's nodes. That
+    set is derived here rather than re-loaded by the caller because graph
+    authentication is exact-byte and deliberately expensive.
     """
     from .earth3_bootstrap import (
         is_earth3_p2_campaign,
@@ -1088,6 +1119,12 @@ def validate_earth3_p3_campaign_extension(state: CampaignState) -> None:
             raise Earth3OperationalAuthorityError(
                 f"Earth3 P3 formation {formation_id} position is missing or invalid"
             )
+
+    return frozenset(
+        str(node.get("province_id") or "")
+        for node in nodes_by_id.values()
+        if node.get("province_id")
+    )
 
 
 def migrate_earth3_p2_to_p3(state: CampaignState) -> CampaignState:

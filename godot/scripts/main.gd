@@ -19,6 +19,13 @@ var battalions_by_province: Dictionary = {}
 var formations_by_id: Dictionary = {}
 var factions_by_id: Dictionary = {}
 var front_by_origin: Dictionary = {}
+## Graph-native movement authority (#206): strategic_formation_id -> Array of
+## legal route rows exported by the backend, each carrying the full authenticated
+## node/edge path. Province polygon adjacency never derives a player order.
+var orders_by_formation: Dictionary = {}
+## province_id -> Array of strategic_formation_ids that have a legal order there.
+var order_formations_by_province: Dictionary = {}
+var selected_strategic_formation_id := ""
 var legal_targets: Dictionary = {}
 var focus_province_ids: Dictionary = {}
 var load_error := ""
@@ -63,6 +70,8 @@ func _load_snapshot(path: String) -> void:
 	formations_by_id.clear()
 	factions_by_id.clear()
 	front_by_origin.clear()
+	orders_by_formation.clear()
+	order_formations_by_province.clear()
 	legal_targets.clear()
 	focus_province_ids.clear()
 	button_rects.clear()
@@ -97,6 +106,9 @@ func _load_snapshot(path: String) -> void:
 		if not front_by_origin.has(origin):
 			front_by_origin[origin] = []
 		(front_by_origin[origin] as Array).append(option)
+	var indexed := index_operational_orders(snapshot)
+	orders_by_formation = indexed.get("by_formation", {})
+	order_formations_by_province = indexed.get("by_province", {})
 	_select_default_province()
 	_rebuild_legal_targets()
 	_rebuild_focus_set()
@@ -112,6 +124,17 @@ func _select_default_province() -> void:
 			return
 	var campaign: Dictionary = snapshot.get("campaign", {})
 	var current := String(campaign.get("current_faction", ""))
+	# Prefer a formation that has an authoritative graph order: on a graph-native
+	# campaign that is the only surface that can actually issue movement.
+	for option: Dictionary in snapshot.get("operational_orders", []):
+		if String(option.get("faction", "")) != current:
+			continue
+		var origin_province := String(option.get("origin_province_id", ""))
+		if origin_province.is_empty():
+			continue
+		selected_province_id = origin_province
+		selected_strategic_formation_id = String(option.get("formation_id", ""))
+		return
 	for option: Dictionary in snapshot.get("front_options", []):
 		var origin := String(option.get("origin", ""))
 		var battalion: Dictionary = battalions_by_province.get(origin, {})
@@ -126,15 +149,54 @@ func _select_default_province() -> void:
 		selected_province_id = String(provinces_by_id.keys()[0])
 
 
+func index_operational_orders(source: Dictionary) -> Dictionary:
+	## Index the backend's legal graph orders. Every row already passed the same
+	## gates the authoritative commit runs, so nothing here re-derives legality.
+	var by_formation: Dictionary = {}
+	var by_province: Dictionary = {}
+	for option: Dictionary in source.get("operational_orders", []):
+		var formation_id := String(option.get("formation_id", ""))
+		if formation_id.is_empty():
+			continue
+		if not by_formation.has(formation_id):
+			by_formation[formation_id] = []
+		(by_formation[formation_id] as Array).append(option)
+		var origin := String(option.get("origin_province_id", ""))
+		if origin.is_empty():
+			continue
+		if not by_province.has(origin):
+			by_province[origin] = []
+		var holders: Array = by_province[origin]
+		if not holders.has(formation_id):
+			holders.append(formation_id)
+	return {"by_formation": by_formation, "by_province": by_province}
+
+
+func formation_ids_at_province(province_id: String) -> Array:
+	var stack: Dictionary = snapshot.get("stack_presentations", {}).get(province_id, {})
+	return (stack.get("strategic_formation_ids", []) as Array).duplicate()
+
+
+func _ensure_order_formation_selection() -> void:
+	## Keep the ordering formation consistent with the selected province, but
+	## never override a formation the player explicitly selected there — a force
+	## with no legal graph order must be able to report exactly that.
+	if not selected_strategic_formation_id.is_empty() \
+	and formation_ids_at_province(selected_province_id).has(selected_strategic_formation_id):
+		return
+	var holders: Array = order_formations_by_province.get(selected_province_id, [])
+	if not holders.is_empty():
+		selected_strategic_formation_id = String(holders[0])
+		return
+	var present := formation_ids_at_province(selected_province_id)
+	selected_strategic_formation_id = String(present[0]) if not present.is_empty() else ""
+
+
 func _rebuild_legal_targets() -> void:
 	legal_targets.clear()
-	var battalion: Dictionary = battalions_by_province.get(selected_province_id, {})
-	if battalion.is_empty():
-		return
-	for option: Dictionary in front_by_origin.get(selected_province_id, []):
-		if String(option.get("battalion_id", "")) != String(battalion.get("id", "")):
-			continue
-		legal_targets[String(option.get("target", ""))] = option
+	_ensure_order_formation_selection()
+	for option: Dictionary in orders_by_formation.get(selected_strategic_formation_id, []):
+		legal_targets[String(option.get("target_province_id", ""))] = option
 
 
 func _rebuild_focus_set() -> void:
@@ -143,6 +205,9 @@ func _rebuild_focus_set() -> void:
 		focus_province_ids[selected_province_id] = true
 	for target_id in legal_targets.keys():
 		focus_province_ids[String(target_id)] = true
+	for option: Dictionary in snapshot.get("operational_orders", []):
+		focus_province_ids[String(option.get("origin_province_id", ""))] = true
+		focus_province_ids[String(option.get("target_province_id", ""))] = true
 	for option: Dictionary in snapshot.get("front_options", []):
 		focus_province_ids[String(option.get("origin", ""))] = true
 		focus_province_ids[String(option.get("target", ""))] = true
@@ -230,8 +295,10 @@ func _draw_province(province: Dictionary) -> void:
 	if selected:
 		draw_arc(position, 18.0, 0.0, TAU, 36, Color("7fe7ff"), 2.4)
 	if not target_option.is_empty():
-		var kind := String(target_option.get("kind", "move"))
-		var ring := Color("ff9f43") if kind == "battle" or kind == "capture" else Color("7dffa3")
+		# Contact is decided by the authoritative tick, not by the order. Colour
+		# the ring from what the observer already sees on the map.
+		var contested := _province_holds_hostile_formation(province_id)
+		var ring := Color("ff9f43") if contested else Color("7dffa3")
 		draw_arc(position, 16.0, 0.0, TAU, 32, ring, 2.6)
 	if occupied:
 		_draw_battalion_counter(position, battalion, color, selected)
@@ -386,18 +453,15 @@ func _draw_management_panel() -> void:
 			]
 			y = _draw_button(key, line, x, y, true, Color("1f3d2c"))
 			construct_count += 1
-		var targets: Array = front_by_origin.get(selected_province_id, [])
+		var targets: Array = orders_by_formation.get(selected_strategic_formation_id, [])
 		if not targets.is_empty():
 			y += 4.0
-			y = _panel_line("TARGETS (click map or button)", x, y, Color("ffd27a"), 12)
+			y = _panel_line("MOVEMENT ORDERS (click map or button)", x, y, Color("ffd27a"), 12)
 			var shown := 0
 			for option: Dictionary in targets:
-				var tid := String(option.get("target", ""))
-				var label := "%s  %s" % [
-					String(option.get("kind", "")).to_upper(),
-					option.get("target_name", tid),
-				]
-				y = _draw_button("move:%s" % tid, label, x, y, writeback, Color("2a3d28") if String(option.get("kind", "")) == "move" else Color("4a2f18"))
+				var tid := String(option.get("target_province_id", ""))
+				var label := "MOVE  %s" % option.get("target_province_name", tid)
+				y = _draw_button("move:%s" % tid, label, x, y, writeback, Color("2a3d28"))
 				shown += 1
 				if shown >= 6:
 					break
@@ -427,6 +491,17 @@ func _draw_management_panel() -> void:
 		shown_obj += 1
 		if shown_obj >= 4:
 			break
+
+
+func _province_holds_hostile_formation(province_id: String) -> bool:
+	var campaign: Dictionary = snapshot.get("campaign", {})
+	var current := String(campaign.get("current_faction", ""))
+	for force: Dictionary in snapshot.get("strategic_formations", []):
+		if String(force.get("province_id", "")) != province_id:
+			continue
+		if String(force.get("faction", "")) != current:
+			return true
+	return false
 
 
 func _province_name(province_id: String) -> String:
@@ -588,6 +663,9 @@ func _handle_button(button_id: String) -> void:
 	if button_id == "handoff":
 		_queue_and_apply([{"op": "handoff", "work_root": "live", "backup_root": "backups"}])
 		return
+	if button_id == "cancel_move_order":
+		_cancel_graph_move_order()
+		return
 	if button_id.begins_with("move:"):
 		_issue_move(button_id.trim_prefix("move:"))
 		return
@@ -606,10 +684,46 @@ func _issue_move(target_province_id: String) -> void:
 	var option: Dictionary = legal_targets.get(target_province_id, {})
 	if option.is_empty():
 		return
+	_issue_graph_move_order(option)
+
+
+func _issue_graph_move_order(option: Dictionary) -> void:
+	## Graph-native order dispatch (#206). The command carries the strategic
+	## formation ID and the authenticated node/edge path; it never names a
+	## battalion or a polygon neighbour.
+	var formation_id := String(option.get("formation_id", ""))
+	var path_node_ids: Array = option.get("path_node_ids", [])
+	var path_edge_ids: Array = option.get("path_edge_ids", [])
+	if formation_id.is_empty() or path_node_ids.size() < 2 or path_edge_ids.is_empty():
+		# Never fall back to province adjacency: refuse instead of guessing.
+		status_message = "Order refused: snapshot option carries no graph path authority."
+		queue_redraw()
+		return
+	# Draft then commit as one authoritative batch. Neither op self-commits, so a
+	# rejected commit discards the draft with the rest of the batch.
+	_queue_and_apply([
+		{
+			"op": "issue_move_order",
+			"formation": formation_id,
+			"path_node_ids": path_node_ids.duplicate(),
+			"path_edge_ids": path_edge_ids.duplicate(),
+		},
+		{
+			"op": "commit_move_orders",
+			"faction": String(option.get("faction", "")),
+			"locked_stance": String(option.get("locked_stance", "operational")),
+		},
+	])
+
+
+func _cancel_graph_move_order() -> void:
+	if selected_strategic_formation_id.is_empty():
+		status_message = "Select a strategic formation before cancelling its order."
+		queue_redraw()
+		return
 	_queue_and_apply([{
-		"op": "move",
-		"battalion": String(option.get("battalion_id", "")),
-		"province": target_province_id,
+		"op": "cancel_move_order",
+		"formation": selected_strategic_formation_id,
 	}])
 
 

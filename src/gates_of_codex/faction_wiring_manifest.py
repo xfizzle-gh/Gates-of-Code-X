@@ -65,6 +65,7 @@ def _apply_audit_adjustments(
 ) -> None:
     allowed = {
         "component_exact_unit_additions",
+        "component_selector_exclusions",
         "actor_component_removals",
         "actor_note_additions",
     }
@@ -97,6 +98,44 @@ def _apply_audit_adjustments(
         if not isinstance(units, list) or not units or not all(isinstance(unit, str) and unit for unit in units):
             raise FactionWiringError(f"Audit adjustment for {component_id} has invalid units")
         selector["units"] = list(dict.fromkeys([*selector.get("units", []), *units]))
+
+    for adjustment in adjustments.get("component_selector_exclusions", []):
+        required = {"component_id", "selector_index", "exclude_regex", "reason"}
+        if not isinstance(adjustment, Mapping) or set(adjustment) != required:
+            raise FactionWiringError("Component selector-exclusion audit adjustment has invalid fields")
+        component_id = adjustment["component_id"]
+        component = components.get(component_id)
+        if component is None:
+            raise FactionWiringError(f"Audit adjustment references unknown component {component_id}")
+        selector_index = adjustment["selector_index"]
+        if isinstance(selector_index, bool) or not isinstance(selector_index, int):
+            raise FactionWiringError(
+                f"Audit adjustment selector index is invalid for {component_id}: {selector_index}"
+            )
+        selectors = component.get("selectors", [])
+        if selector_index < 0 or selector_index >= len(selectors):
+            raise FactionWiringError(
+                f"Audit adjustment selector index is invalid for {component_id}: {selector_index}"
+            )
+        selector = selectors[selector_index]
+        if selector.get("kind") not in {"research_branch", "prefix"}:
+            raise FactionWiringError(
+                f"Selector exclusion for {component_id} must target a selector supporting exclude_regex"
+            )
+        pattern = adjustment["exclude_regex"]
+        reason = adjustment["reason"]
+        if not isinstance(pattern, str) or not pattern or not isinstance(reason, str) or not reason:
+            raise FactionWiringError(f"Selector exclusion for {component_id} is incomplete")
+        try:
+            re.compile(pattern, re.I)
+        except re.error as exc:
+            raise FactionWiringError(
+                f"Selector exclusion regex is invalid for {component_id}: {exc}"
+            ) from exc
+        existing = str(selector.get("exclude_regex", "") or "")
+        selector["exclude_regex"] = (
+            f"(?:{existing})|(?:{pattern})" if existing else pattern
+        )
 
     for adjustment in adjustments.get("actor_component_removals", []):
         required = {"actor_id", "components", "reason"}

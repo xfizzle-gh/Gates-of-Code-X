@@ -1563,6 +1563,9 @@ func _fit_to_focus(force: bool) -> void:
 	for battalion: Dictionary in snapshot.get("battalions", []):
 		if String(battalion.get("faction", "")) == current:
 			ids[String(battalion.get("province_id", ""))] = true
+	for option: Dictionary in snapshot.get("operational_orders", []):
+		ids[String(option.get("origin_province_id", ""))] = true
+		ids[String(option.get("target_province_id", ""))] = true
 	for option: Dictionary in snapshot.get("front_options", []):
 		ids[String(option.get("origin", ""))] = true
 		ids[String(option.get("target", ""))] = true

@@ -48,7 +48,60 @@ func _run_all() -> void:
 	var initial_actions: Array = Array(scene.enabled_action_button_ids())
 	_check(initial_actions.has("auto_resolve"), "modal keeps existing proceed action")
 	_check(initial_actions.has("handoff"), "modal keeps existing handoff action")
-	_check(initial_actions.has("import_battle"), "handed-off modal exposes verified import action")
+	# P5 (#176): import is blocked until Verify Result accepts this exact save.
+	_check(
+		not initial_actions.has("import_battle"),
+		"unverified handoff cannot expose import"
+	)
+	_check(initial_actions.has("verify_result"), "handed-off modal exposes verify action")
+	scene.last_verified_save_path = "completed.sav"
+	scene.last_verification_ok = true
+	_check(
+		Array(scene.enabled_action_button_ids()).has("import_battle"),
+		"verified handoff exposes import action"
+	)
+	scene.last_verified_save_path = "some-other.sav"
+	_check(
+		not Array(scene.enabled_action_button_ids()).has("import_battle"),
+		"verification of a different save cannot unlock import"
+	)
+	scene.last_verified_save_path = "completed.sav"
+
+	# The button list is not the dispatch path. Drive a real modal click through
+	# _handle_button and require the runner to actually receive verify_result:
+	# an enabled-looking button that _queue_and_apply rejects is a dead control.
+	var work_dir := OS.get_user_data_dir().path_join("p5_modal_dispatch")
+	DirAccess.make_dir_recursive_absolute(work_dir)
+	scene.snapshot["control"] = {
+		"enabled": true,
+		"campaign_path": work_dir.path_join("campaign.json"),
+		"snapshot_path": work_dir.path_join("snapshot.json"),
+		"commands_path": work_dir.path_join("commands.json"),
+	}
+	scene.last_verification_ok = false
+	scene.last_verified_save_path = ""
+	var commands_path: String = scene.snapshot["control"]["commands_path"]
+	if FileAccess.file_exists(commands_path):
+		DirAccess.remove_absolute(commands_path)
+	scene._handle_button("verify_result")
+	# The queued command file is written only after every modal/presentation gate
+	# has admitted the op, so its contents prove the click was not rejected.
+	_check(
+		FileAccess.file_exists(commands_path),
+		"modal Verify Result click passes the gates and queues a command (status: %s)" % String(scene.status_message)
+	)
+	var dispatched_op := ""
+	if FileAccess.file_exists(commands_path):
+		var queued: Variant = JSON.parse_string(FileAccess.open(commands_path, FileAccess.READ).get_as_text())
+		if queued is Dictionary:
+			var rows: Array = (queued as Dictionary).get("commands", [])
+			if not rows.is_empty() and rows[0] is Dictionary:
+				dispatched_op = String((rows[0] as Dictionary).get("op", ""))
+	_check(dispatched_op == "verify_result", "modal dispatch carries verify_result op, got '%s'" % dispatched_op)
+	_check(
+		not Array(scene.enabled_action_button_ids()).has("import_battle"),
+		"import stays blocked while verification is pending"
+	)
 	_check(not initial_actions.has("end_turn"), "modal blocks end turn")
 	_check(not initial_actions.has("run_ai"), "modal blocks AI resolution")
 	_check(not initial_actions.has("refresh"), "modal blocks refresh interaction")

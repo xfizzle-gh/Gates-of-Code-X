@@ -13,7 +13,6 @@ var portrait_cache: Dictionary = {}
 var hovered_unit_tooltip := ""
 var stack_panel_expanded := true
 var unit_scroll_offset := 0
-var selected_strategic_formation_id := ""
 var _collapse_button_rect := Rect2()
 var _scroll_up_rect := Rect2()
 var _scroll_down_rect := Rect2()
@@ -143,7 +142,26 @@ func _draw_management_panel() -> void:
 	y = _draw_button("end_turn", "End turn (E)", x, y, writeback and not has_battle)
 	y = _draw_button("run_ai", "Run AI + advance", x, y, writeback and not has_battle)
 	y = _draw_button("auto_resolve", "Auto-resolve battle (A)", x, y, writeback and has_battle, Color("4a2f18"))
-	y = _draw_button("handoff", "Handoff to GoH (H)", x, y, writeback and has_battle, Color("5a2418"))
+	y = _draw_button("handoff", "Launch Battle in GoH (H)", x, y, writeback and has_battle, Color("5a2418"))
+	if not last_handoff_save_path.is_empty():
+		y = _draw_button("verify_result", "Verify Result", x, y, writeback, Color("243140"))
+		y = _draw_button(
+			"import_battle",
+			"Import Result",
+			x,
+			y,
+			writeback and can_import_verified_result(),
+			Color("24402c")
+		)
+		var handoff_status := handoff_status_label()
+		if not handoff_status.is_empty():
+			y = _panel_line(
+				handoff_status,
+				x,
+				y,
+				Color("9fe7a8") if can_import_verified_result() else Color("ffd27a"),
+				11
+			)
 	if operational_presenter != null and operational_presenter.can_replay_last_contact():
 		y = _draw_button("replay_contact", "Replay last contact", x, y, true, Color("243140"))
 	if operational_presenter != null and operational_presenter.is_active():
@@ -240,7 +258,24 @@ func _draw_pending_battle_modal() -> void:
 	var writeback := bool(snapshot.get("control", {}).get("enabled", false))
 	var button_y := top + 304.0
 	button_y = _draw_button("auto_resolve", "Auto-resolve battle (A)", left, button_y, writeback, Color("4a2f18"))
-	button_y = _draw_button("handoff", "Handoff to GoH (H)", left, button_y, writeback, Color("5a2418"))
+	button_y = _draw_button("handoff", "Launch Battle in GoH (H)", left, button_y, writeback, Color("5a2418"))
+	button_y = _draw_button(
+		"verify_result",
+		"Verify Result",
+		left,
+		button_y,
+		writeback and not last_handoff_save_path.is_empty(),
+		Color("243140")
+	)
+	var modal_handoff_status := handoff_status_label()
+	if not modal_handoff_status.is_empty():
+		_draw_panel_text(
+			modal_handoff_status,
+			Vector2(left, button_y + 4.0),
+			12,
+			Color("9fe7a8") if can_import_verified_result() else Color("ffd27a")
+		)
+		button_y += 20.0
 	button_y = _draw_button(
 		"import_battle",
 		"Import verified GoH result (I)",
@@ -249,7 +284,7 @@ func _draw_pending_battle_modal() -> void:
 		writeback \
 			and bool(snapshot.get("pending_battle", {}).get("started", false)) \
 			and String(snapshot.get("pending_battle", {}).get("id", "")) == last_handoff_battle_id \
-			and not last_handoff_save_path.is_empty(),
+			and can_import_verified_result(),
 		Color("264a34")
 	)
 	button_y = _draw_button(
@@ -456,31 +491,58 @@ func _draw_stack_section(panel_x: float, top: float, available_h: float) -> void
 
 
 func _draw_targets_and_objectives(x: float, y: float) -> float:
-	y = _panel_heading("TARGETS", x, y)
+	## Graph-native movement surface (#206). Targets are the backend's validated
+	## strategic-formation orders; province polygon adjacency is not consulted.
+	y = _panel_heading("MOVEMENT ORDERS", x, y)
 	var writeback := bool(snapshot.get("control", {}).get("enabled", false))
-	var options: Array = front_by_origin.get(selected_province_id, [])
+	var options: Array = orders_by_formation.get(selected_strategic_formation_id, [])
+	var order: Dictionary = selected_formation_move_order()
+	var order_status := String(order.get("status", ""))
+	if not order_status.is_empty():
+		y = _panel_line(
+			"Standing order: %s -> %s" % [
+				order_status.to_upper(),
+				_province_name(_order_destination_province(order)),
+			],
+			x,
+			y,
+			Color(0.95, 0.84, 0.42, 1.0),
+			12
+		)
 	if options.is_empty():
-		y = _panel_line("No legal moves for selected battalion.", x, y, Color(0.7, 0.75, 0.8), 12)
+		if order_status in ["committed", "active"]:
+			y = _panel_line(
+				"Order locked until it resolves — no new order this turn.",
+				x, y, Color(0.7, 0.75, 0.8), 12
+			)
+		elif selected_strategic_formation_id.is_empty():
+			y = _panel_line("Select a strategic formation.", x, y, Color(0.7, 0.75, 0.8), 12)
+		else:
+			y = _panel_line(
+				"No legal graph moves for this formation.",
+				x, y, Color(0.7, 0.75, 0.8), 12
+			)
 	else:
 		var shown := 0
 		for option: Dictionary in options:
 			if shown >= 4:
-				y = _panel_line("+ more targets in list…", x, y, Color(0.65, 0.7, 0.75), 11)
+				y = _panel_line(
+					"+%s more reachable — click the map to order." % (options.size() - shown),
+					x, y, Color(0.65, 0.7, 0.75), 11
+				)
 				break
-			var tid := String(option.get("target", ""))
-			var label := "%s  %s" % [
-				String(option.get("kind", "move")).to_upper(),
-				String(option.get("target_name", tid)),
-			]
+			var tid := String(option.get("target_province_id", ""))
 			y = _draw_button(
 				"move:%s" % tid,
-				label,
+				"MOVE  %s" % String(option.get("target_province_name", tid)),
 				x,
 				y,
 				writeback,
-				Color("2a3d28") if String(option.get("kind", "")) == "move" else Color("4a2f18")
+				Color("2a3d28")
 			)
 			shown += 1
+	if order_status == "draft":
+		y = _draw_button("cancel_move_order", "Cancel movement order", x, y, writeback, Color("3d2a28"))
 	y += 6.0
 	y = _panel_heading("OBJECTIVES", x, y)
 	for objective: Dictionary in snapshot.get("objectives", []):
@@ -496,6 +558,21 @@ func _draw_targets_and_objectives(x: float, y: float) -> float:
 			12
 		)
 	return y
+
+
+func _order_destination_province(order: Dictionary) -> String:
+	var nodes: Array = order.get("path_node_ids", [])
+	if nodes.is_empty():
+		return ""
+	var destination_node := String(nodes[nodes.size() - 1])
+	for option: Dictionary in snapshot.get("operational_orders", []):
+		if String(option.get("target_node_id", "")) == destination_node:
+			return String(option.get("target_province_id", ""))
+	# A locked order has no live option naming its destination, so read the
+	# province straight off the graph node instead of guessing from the id.
+	var nodes_index: Dictionary = _operational_graph_index().get("nodes", {})
+	var node_row: Dictionary = nodes_index.get(destination_node, {})
+	return String(node_row.get("province_id", destination_node))
 
 
 func _draw_formation_tab(rect: Rect2, force_id: String) -> void:
