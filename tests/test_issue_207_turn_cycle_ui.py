@@ -4,6 +4,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from gates_of_codex import frontend
 from gates_of_codex.frontend_fastpath import (
@@ -11,6 +12,7 @@ from gates_of_codex.frontend_fastpath import (
     write_frontend_snapshot_fast,
 )
 from gates_of_codex.scenario import build_scenario
+from gates_of_codex.turn_cycle import end_player_round
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -53,40 +55,51 @@ class FrontendFastPathTests(unittest.TestCase):
         self.assertIn("_strategic.reachable_supply_provinces = previous_reachable", source)
 
 
-class PlayerTurnCyclePresentationTests(unittest.TestCase):
+class PlayerTurnCycleTests(unittest.TestCase):
+    def test_one_player_round_returns_control_after_all_ai_seats(self) -> None:
+        state = build_scenario("legacy_goe_europe")
+        starting_turn = state.turn_number
+        selected = state.selected_faction
+
+        # This test is about turn orchestration, not AI decision quality. Keep AI
+        # mutation inert while exercising the real CampaignEngine turn order.
+        with patch(
+            "gates_of_codex.turn_cycle.StrategicAI.take_turn",
+            autospec=True,
+            return_value=[],
+        ):
+            report = end_player_round(state)
+
+        self.assertFalse(report["pending_battle"])
+        self.assertEqual(selected, state.current_faction)
+        self.assertEqual(selected.value, report["current_faction"])
+        self.assertEqual(["ukr", "rusa", "prc"], report["ai_factions"])
+        self.assertEqual(starting_turn + 1, state.turn_number)
+
     def test_main_scene_uses_responsiveness_layer_and_retains_stack_contract(self) -> None:
         scene = (ROOT / "godot/main.tscn").read_text(encoding="utf-8")
         self.assertIn('path="res://scripts/main_perf.gd"', scene)
         self.assertIn('path="res://scripts/main_stack_panel.gd"', scene)
         self.assertIn("metadata/_stack_panel_contract", scene)
 
-    def test_end_turn_composes_ai_cycle_in_one_backend_batch(self) -> None:
+    def test_end_turn_dispatches_one_backend_player_round_operation(self) -> None:
         source = (ROOT / "godot/scripts/main_perf.gd").read_text(encoding="utf-8")
         self.assertIn('if button_id == "end_turn":', source)
-        self.assertIn('_queue_and_apply(commands)', source)
-        self.assertIn('{"op": "end_turn"}', source)
-        self.assertIn('"op": "run_ai"', source)
-        self.assertIn('"advance_turn": true', source)
-        self.assertIn('PLAYER_TURN_ORDER := ["nato", "ukr", "rusa", "prc"]', source)
+        self.assertIn('_queue_and_apply([{"op": "end_player_round"}])', source)
         self.assertIn('End turn + AI cycle (E)', source)
+        # Godot must not duplicate canonical faction order or orchestrate AI
+        # itself. Python owns the whole round behind one file-backed operation.
+        self.assertNotIn('PLAYER_TURN_ORDER', source)
+        self.assertNotIn('"op": "run_ai"', source)
 
-    def test_round_batch_uses_batch_aware_operational_presenter(self) -> None:
-        main_source = (ROOT / "godot/scripts/main_perf.gd").read_text(encoding="utf-8")
-        adapter = (
-            ROOT / "godot/scripts/presentation/operational_resolution_presenter_batch.gd"
-        ).read_text(encoding="utf-8")
-        self.assertIn(
-            'res://scripts/presentation/operational_resolution_presenter_batch.gd',
-            main_source,
-        )
-        self.assertIn(
-            "operational_presenter = BatchOperationalResolutionPresenterScript.new()",
-            main_source,
-        )
-        self.assertIn('for result_variant: Variant in payload.get("results", [])', adapter)
-        self.assertIn('presentation.get("movements", [])', adapter)
-        self.assertIn("movements.append", adapter)
-        self.assertIn('presentation.get("battle_finalization", {})', adapter)
+    def test_backend_player_round_uses_existing_campaign_and_ai_authority(self) -> None:
+        source = (ROOT / "src/gates_of_codex/turn_cycle.py").read_text(encoding="utf-8")
+        self.assertIn("CampaignEngine(state)", source)
+        self.assertIn("StrategicAI(state).take_turn(faction)", source)
+        self.assertIn("engine.end_turn()", source)
+        self.assertIn("state.pending_battle is None", source)
+        self.assertIn("state.current_faction != selected", source)
+        self.assertNotIn("TURN_ORDER =", source)
 
     def test_overlay_has_no_all_province_ambient_label_scan(self) -> None:
         source = (ROOT / "godot/scripts/main_perf.gd").read_text(encoding="utf-8")
@@ -98,13 +111,18 @@ class PlayerTurnCyclePresentationTests(unittest.TestCase):
 
 
 class RuntimeEntrypointTests(unittest.TestCase):
-    def test_console_and_python_module_install_fast_writer(self) -> None:
+    def test_console_and_python_module_install_responsiveness_layer(self) -> None:
         pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
         module = (ROOT / "src/gates_of_codex/__main__.py").read_text(encoding="utf-8")
+        runtime = (ROOT / "src/gates_of_codex/fast_entrypoint.py").read_text(
+            encoding="utf-8"
+        )
         self.assertIn(
             'gates-of-codex = "gates_of_codex.fast_entrypoint:main"', pyproject
         )
         self.assertIn("from .fast_entrypoint import main", module)
+        self.assertIn("install_frontend_fast_path()", runtime)
+        self.assertIn("install_frontend_turn_cycle_op()", runtime)
 
 
 if __name__ == "__main__":
