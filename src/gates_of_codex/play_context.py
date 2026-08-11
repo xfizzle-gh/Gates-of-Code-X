@@ -78,7 +78,7 @@ def resolve_status_template(
             ordinary.append(candidate)
     if same_campaign:
         return same_campaign[0].resolve()
-    if len(ordinary) == 1:
+    if len(ordinary) == 1 and not foreign_generated:
         # The documented first-run setup is "create and save one normal Conquest
         # with the intended mod stack", which carries the player's own name rather
         # than ours. A single candidate is that save; it is not a silent choice
@@ -86,7 +86,7 @@ def resolve_status_template(
         # Foreign generated saves are ignored here — they must never be adopted,
         # but they also must not block an ordinary first-run template.
         return ordinary[0].resolve()
-    if ordinary:
+    if ordinary and not foreign_generated:
         listed = ", ".join(path.name for path in ordinary[:5])
         raise RuntimeError(
             f"Refusing to pick a saveinfo template by modification time among "
