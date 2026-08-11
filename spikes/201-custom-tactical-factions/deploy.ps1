@@ -6,7 +6,8 @@
     [string]$CodeXRoot = "",
     [string]$AiOverhaulRoot = "",
     [switch]$Restore,
-    [switch]$SkipParentMaterialize
+    [switch]$SkipParentMaterialize,
+    [switch]$ForceDiscardBackup
 )
 
 Set-StrictMode -Version Latest
@@ -14,11 +15,24 @@ $ErrorActionPreference = "Stop"
 
 $spikeRoot = $PSScriptRoot
 $resourceRoot = Join-Path $spikeRoot "resource"
+if (-not (Test-Path -LiteralPath $GatesRoot)) {
+    New-Item -ItemType Directory -Force -Path $GatesRoot | Out-Null
+}
 $gates = (Resolve-Path -LiteralPath $GatesRoot).Path
 $backupRoot = Join-Path $spikeRoot ".deploy-backup"
+
+function Write-Utf8NoBomFile([string]$Path, [string]$Content) {
+    $parent = Split-Path -Parent $Path
+    if ($parent -and -not (Test-Path -LiteralPath $parent)) {
+        New-Item -ItemType Directory -Force -Path $parent | Out-Null
+    }
+    [IO.File]::WriteAllText($Path, $Content, (New-Object Text.UTF8Encoding $false))
+}
 $manifestPath = Join-Path $backupRoot "deployed-files.txt"
+$ledgerPath = Join-Path $backupRoot "original-ledger.json"
 $parentManifestPath = Join-Path $backupRoot "parent-materialized.json"
 $evidencePath = Join-Path $backupRoot "deploy-evidence.json"
+$statePath = Join-Path $backupRoot "deploy-state.json"
 
 # Parent conquest files required by roster_conquest.set (not vendored in git).
 $ParentConquestFiles = @(
@@ -91,37 +105,11 @@ function Get-SpikeRelatives {
     }
 }
 
-function Backup-TargetFile([string]$TargetPath, [string]$RelUnix) {
-    $bak = Join-Path $backupRoot ($RelUnix -replace '/', '\')
-    $bakParent = Split-Path -Parent $bak
-    if (-not (Test-Path -LiteralPath $bakParent)) {
-        New-Item -ItemType Directory -Force -Path $bakParent | Out-Null
-    }
-    if (Test-Path -LiteralPath $TargetPath) {
-        Copy-Item -LiteralPath $TargetPath -Destination $bak -Force
-        return $true
-    }
-    return $false
-}
-
-function Copy-ToGates([string]$SourcePath, [string]$RelUnix) {
-    $dst = Join-Path $gates ($RelUnix -replace '/', '\')
-    Backup-TargetFile -TargetPath $dst -RelUnix $RelUnix | Out-Null
-    $dstParent = Split-Path -Parent $dst
-    if (-not (Test-Path -LiteralPath $dstParent)) {
-        New-Item -ItemType Directory -Force -Path $dstParent | Out-Null
-    }
-    Copy-Item -LiteralPath $SourcePath -Destination $dst -Force
-    Write-Host "deployed $RelUnix"
-    return $dst
-}
-
 function Find-ParentFile {
     param(
         [string]$FileName,
         [hashtable]$Stack
     )
-    # Prefer AI Overhaul overlay, then Code:X. West81 rarely owns modern conquest bodies.
     $searchOrder = @($Stack.AiOverhaul, $Stack.CodeX, $Stack.West81) | Where-Object { $_ }
     foreach ($root in $searchOrder) {
         $candidate = Join-Path $root ("resource\set\multiplayer\units\conquest\" + $FileName)
@@ -153,45 +141,278 @@ function Get-ArmyIdMap([string[]]$Roots) {
     return $map
 }
 
-if ($Restore) {
-    if (-not (Test-Path -LiteralPath $manifestPath)) {
-        throw "No deploy backup manifest at $manifestPath"
+function Test-UnconsumedBackup {
+    if (-not (Test-Path -LiteralPath $backupRoot)) {
+        return $false
     }
-    $rels = Get-Content -LiteralPath $manifestPath
+    if (-not (Test-Path -LiteralPath $ledgerPath)) {
+        # Incomplete/stale backup tree without ledger: treat as blocking residue.
+        return $true
+    }
+    if (Test-Path -LiteralPath $statePath) {
+        try {
+            $state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
+            if ($state.status -eq "restored") {
+                return $false
+            }
+            if ($state.status -eq "deployed" -or $state.status -eq "in_progress") {
+                return $true
+            }
+        }
+        catch {
+            return $true
+        }
+    }
+    # Ledger present without restored marker => unconsumed.
+    return $true
+}
+
+function Write-DeployState([string]$Status, [string]$Message = "") {
+    $obj = @{
+        status        = $Status
+        message       = $Message
+        timestampUtc  = (Get-Date).ToUniversalTime().ToString("o")
+        gatesRoot     = [string]$gates
+    }
+    $json = ConvertTo-Json -InputObject $obj -Depth 4
+    Write-Utf8NoBomFile -Path $statePath -Content $json
+}
+
+function Save-OriginalLedger($Ledger) {
+    $rows = New-Object System.Collections.ArrayList
+    foreach ($key in ($Ledger.Keys | Sort-Object)) {
+        $entry = $Ledger[$key]
+        [void]$rows.Add(@{
+                rel     = [string]$key
+                existed = [bool]$entry.existed
+                bakRel  = [string]$entry.bakRel
+                sha256  = [string]$entry.sha256
+            })
+    }
+    # PS 5.1 ConvertTo-Json collapses single-element arrays; force a JSON array.
+    if ($rows.Count -eq 0) {
+        $json = "[]"
+    }
+    elseif ($rows.Count -eq 1) {
+        $json = "[" + (ConvertTo-Json -InputObject $rows[0] -Depth 5 -Compress) + "]"
+    }
+    else {
+        $json = ConvertTo-Json -InputObject @($rows.ToArray()) -Depth 5
+    }
+    Write-Utf8NoBomFile -Path $ledgerPath -Content $json
+}
+
+function Import-OriginalLedger {
+    $map = @{}
+    if (-not (Test-Path -LiteralPath $ledgerPath)) {
+        return $map
+    }
+    $raw = Get-Content -LiteralPath $ledgerPath -Raw
+    if (-not $raw -or $raw.Trim() -eq "" -or $raw.Trim() -eq "[]") {
+        return $map
+    }
+    $rows = $raw | ConvertFrom-Json
+    foreach ($row in @($rows)) {
+        if ($null -eq $row) { continue }
+        $map[[string]$row.rel] = @{
+            existed = [bool]$row.existed
+            bakRel  = [string]$row.bakRel
+            sha256  = [string]$row.sha256
+        }
+    }
+    return $map
+}
+
+function Register-OriginalState {
+    param(
+        [hashtable]$Ledger,
+        [string]$RelUnix,
+        [string]$TargetPath
+    )
+    # First-write wins: never overwrite an original ledger entry during one deploy.
+    if ($Ledger.ContainsKey($RelUnix)) {
+        return
+    }
+    $bakRel = $RelUnix
+    $bakPath = Join-Path $backupRoot ($bakRel -replace '/', '\')
+    $bakParent = Split-Path -Parent $bakPath
+    if (-not (Test-Path -LiteralPath $bakParent)) {
+        New-Item -ItemType Directory -Force -Path $bakParent | Out-Null
+    }
+    if (Test-Path -LiteralPath $TargetPath -PathType Leaf) {
+        Copy-Item -LiteralPath $TargetPath -Destination $bakPath -Force
+        $Ledger[$RelUnix] = @{
+            existed = $true
+            bakRel  = $bakRel
+            sha256  = (Get-Sha256 $TargetPath)
+        }
+    }
+    else {
+        # Originally absent: no content backup; restore deletes the target.
+        $marker = $bakPath + ".absent"
+        Write-Utf8NoBomFile -Path $marker -Content "originally-absent"
+        $Ledger[$RelUnix] = @{
+            existed = $false
+            bakRel  = $bakRel
+            sha256  = ""
+        }
+    }
+}
+
+function Copy-ToGatesSafe {
+    param(
+        [hashtable]$Ledger,
+        [string]$SourcePath,
+        [string]$RelUnix
+    )
+    $dst = Join-Path $gates ($RelUnix -replace '/', '\')
+    Register-OriginalState -Ledger $Ledger -RelUnix $RelUnix -TargetPath $dst
+    # Persist ledger before mutation so crash/failure can still roll back.
+    Save-OriginalLedger -Ledger $Ledger
+    $dstParent = Split-Path -Parent $dst
+    if (-not (Test-Path -LiteralPath $dstParent)) {
+        New-Item -ItemType Directory -Force -Path $dstParent | Out-Null
+    }
+    Copy-Item -LiteralPath $SourcePath -Destination $dst -Force
+    Write-Host "deployed $RelUnix"
+    return $dst
+}
+
+function Invoke-RestoreFromLedger {
+    param(
+        [string]$Reason = ""
+    )
+    if (-not (Test-Path -LiteralPath $ledgerPath)) {
+        throw "No original ledger at $ledgerPath"
+    }
+    $ledger = Import-OriginalLedger
+    $rels = @()
+    if (Test-Path -LiteralPath $manifestPath) {
+        $rels = @(Get-Content -LiteralPath $manifestPath | Where-Object { $_ -and $_.Trim() })
+    }
+    if ($rels.Count -eq 0) {
+        $rels = @($ledger.Keys)
+    }
     foreach ($rel in $rels) {
+        $rel = [string]$rel
         $target = Join-Path $gates ($rel -replace '/', '\')
-        $bak = Join-Path $backupRoot ($rel -replace '/', '\')
-        if (Test-Path -LiteralPath $bak) {
+        $entry = $null
+        if ($ledger.ContainsKey($rel)) {
+            $entry = $ledger[$rel]
+        }
+        if ($null -eq $entry) {
+            # Unknown rel in manifest: if present, leave it (should not happen).
+            continue
+        }
+        if ($entry.existed) {
+            $bak = Join-Path $backupRoot ($entry.bakRel -replace '/', '\')
+            if (-not (Test-Path -LiteralPath $bak -PathType Leaf)) {
+                throw "Missing original backup content for $rel at $bak"
+            }
             $parent = Split-Path -Parent $target
             if (-not (Test-Path -LiteralPath $parent)) {
                 New-Item -ItemType Directory -Force -Path $parent | Out-Null
             }
             Copy-Item -LiteralPath $bak -Destination $target -Force
         }
-        elseif (Test-Path -LiteralPath $target) {
-            Remove-Item -LiteralPath $target -Force
+        else {
+            if (Test-Path -LiteralPath $target) {
+                Remove-Item -LiteralPath $target -Force
+            }
         }
     }
-    Write-Host "Restored Gates root from spike backup"
+    Write-DeployState -Status "restored" -Message $Reason
+    if ($Reason) {
+        Write-Host "Restored Gates root from original ledger ($Reason)"
+    }
+    else {
+        Write-Host "Restored Gates root from original ledger"
+    }
+}
+
+function Assert-ArmyIdsSafe {
+    param(
+        [string[]]$Roots
+    )
+    $idMap = Get-ArmyIdMap -Roots $Roots
+    $idCollisions = @()
+    foreach ($entry in $PrototypeArmyIds.GetEnumerator()) {
+        $id = [int]$entry.Value
+        if ($id -lt 0 -or $id -gt 99) {
+            throw "Army id out of range for $($entry.Key): $id"
+        }
+        $owners = @()
+        if ($idMap.ContainsKey($id)) {
+            $owners = @($idMap[$id] | ForEach-Object { "{0} @ {1}" -f $_.Army, $_.Root })
+        }
+        $foreign = @($owners | Where-Object { $_ -notmatch [regex]::Escape([string]$entry.Key) })
+        if ($foreign.Count -gt 0) {
+            $idCollisions += ("{0} id {1} collides with: {2}" -f $entry.Key, $id, ($foreign -join "; "))
+        }
+    }
+    $dupProto = $PrototypeArmyIds.Values | Group-Object | Where-Object { $_.Count -gt 1 }
+    if ($dupProto) {
+        throw "Prototype army IDs are not unique within spike"
+    }
+    if ($idCollisions.Count -gt 0) {
+        throw ("Army ID collisions in effective stack:`n - " + ($idCollisions -join "`n - "))
+    }
+}
+
+function Assert-RosterIncludes {
+    $rosterPath = Join-Path $gates "resource\set\multiplayer\units\roster_conquest.set"
+    if (-not (Test-Path -LiteralPath $rosterPath)) {
+        throw "Missing deployed roster_conquest.set"
+    }
+    $rosterText = [IO.File]::ReadAllText($rosterPath)
+    $includeMatches = [regex]::Matches($rosterText, '\(include\s+"([^"]+)"\)')
+    $missingIncludes = @()
+    foreach ($m in $includeMatches) {
+        $inc = $m.Groups[1].Value -replace '/', '\'
+        $full = Join-Path $gates ("resource\set\multiplayer\units\" + $inc)
+        if (-not (Test-Path -LiteralPath $full -PathType Leaf)) {
+            $missingIncludes += $inc
+        }
+    }
+    if ($missingIncludes.Count -gt 0) {
+        throw ("roster_conquest.set unresolved includes:`n - " + ($missingIncludes -join "`n - "))
+    }
+}
+
+# -------------------- Restore path --------------------
+if ($Restore) {
+    if (-not (Test-Path -LiteralPath $ledgerPath)) {
+        throw "No deploy original ledger at $ledgerPath (nothing safe to restore)"
+    }
+    Invoke-RestoreFromLedger -Reason "explicit -Restore"
     exit 0
 }
 
+# -------------------- Deploy path --------------------
 if (-not (Test-Path -LiteralPath $resourceRoot)) {
     throw "Missing spike resource tree: $resourceRoot"
 }
 
 $stack = Resolve-StackRoots -WorkshopRoot $WorkshopRoot -West81Root $West81Root -CodeXRoot $CodeXRoot -AiOverhaulRoot $AiOverhaulRoot
 
-# Fresh backup directory each deploy
-if (Test-Path -LiteralPath $backupRoot) {
+# Refuse to destroy an unconsumed original-state backup.
+if (Test-UnconsumedBackup) {
+    if (-not $ForceDiscardBackup) {
+        throw @"
+Unconsumed #201 deploy backup already exists at:
+  $backupRoot
+Restore first:
+  $($MyInvocation.MyCommand.Path) -GatesRoot `"$gates`" -Restore
+Or, only if you intentionally discard recovery state:
+  ... -ForceDiscardBackup
+"@
+    }
+    Write-Host "WARNING: discarding unconsumed backup due to -ForceDiscardBackup"
     Remove-Item -LiteralPath $backupRoot -Recurse -Force
 }
-New-Item -ItemType Directory -Force -Path $backupRoot | Out-Null
 
-$deployedRels = New-Object System.Collections.ArrayList
-$parentRecords = New-Object System.Collections.ArrayList
-
-# 1) Materialize parent conquest files needed by final-layer roster
+# -------- Preflight (no Gates mutation yet) --------
+$parentPlan = New-Object System.Collections.ArrayList
 if (-not $SkipParentMaterialize) {
     if (-not $stack.CodeX -and -not $stack.AiOverhaul) {
         throw "Parent materialization requires -WorkshopRoot or explicit -CodeXRoot/-AiOverhaulRoot (read-only sources)."
@@ -202,115 +423,129 @@ if (-not $SkipParentMaterialize) {
             throw "Missing required parent conquest file in stack: $name"
         }
         $rel = "resource/set/multiplayer/units/conquest/$name"
-        $dst = Copy-ToGates -SourcePath $src -RelUnix $rel
-        [void]$deployedRels.Add($rel)
-        [void]$parentRecords.Add([pscustomobject]@{
-                file       = $name
-                rel        = $rel
-                source     = $src
-                sha256     = (Get-Sha256 $src)
-                destSha256 = (Get-Sha256 $dst)
+        [void]$parentPlan.Add([pscustomobject]@{
+                file   = $name
+                rel    = $rel
+                source = $src
+                sha256 = (Get-Sha256 $src)
             })
-        Write-Host ("parent {0} <= {1} sha256={2}" -f $name, $src, (Get-Sha256 $src))
     }
-    $parentJson = ConvertTo-Json -InputObject @($parentRecords.ToArray()) -Depth 5
-    Set-Content -LiteralPath $parentManifestPath -Value $parentJson -Encoding UTF8
 }
 
-# 2) Install GOC prototype files from spike
 $spikeRels = @(Get-SpikeRelatives)
-foreach ($rel in $spikeRels) {
-    $srcRel = $rel -replace '^resource/', ''
-    $src = Join-Path $resourceRoot ($srcRel -replace '/', '\')
-    Copy-ToGates -SourcePath $src -RelUnix $rel | Out-Null
-    if (-not ($deployedRels -contains $rel)) {
-        [void]$deployedRels.Add($rel)
+if ($spikeRels.Count -lt 1) {
+    throw "Spike resource tree produced no files"
+}
+
+# Preflight army IDs against read-only parents + current Gates (before we write).
+$preflightRoots = @($stack.West81, $stack.CodeX, $stack.AiOverhaul, $gates) | Where-Object { $_ }
+Assert-ArmyIdsSafe -Roots $preflightRoots
+
+# -------- Begin mutation with original ledger --------
+# Clear only consumed/restored residue after preflight succeeds.
+if (Test-Path -LiteralPath $backupRoot) {
+    Remove-Item -LiteralPath $backupRoot -Recurse -Force
+}
+New-Item -ItemType Directory -Force -Path $backupRoot | Out-Null
+Write-DeployState -Status "in_progress" -Message "starting deploy"
+$ledger = @{}
+$deployedRels = New-Object System.Collections.ArrayList
+$parentRecords = New-Object System.Collections.ArrayList
+
+try {
+    # 1) Materialize parent conquest files
+    if (-not $SkipParentMaterialize) {
+        foreach ($item in $parentPlan) {
+            $dst = Copy-ToGatesSafe -Ledger $ledger -SourcePath $item.source -RelUnix $item.rel
+            [void]$deployedRels.Add($item.rel)
+            [void]$parentRecords.Add([pscustomobject]@{
+                    file       = $item.file
+                    rel        = $item.rel
+                    source     = $item.source
+                    sha256     = $item.sha256
+                    destSha256 = (Get-Sha256 $dst)
+                })
+            Write-Host ("parent {0} <= {1} sha256={2}" -f $item.file, $item.source, $item.sha256)
+        }
+        $parentJson = ConvertTo-Json -InputObject @($parentRecords.ToArray()) -Depth 5
+        Write-Utf8NoBomFile -Path $parentManifestPath -Content $parentJson
     }
-}
 
-@($deployedRels) | Set-Content -LiteralPath $manifestPath -Encoding UTF8
-
-# 3) Verify every roster_conquest.set include resolves under Gates
-$rosterPath = Join-Path $gates "resource\set\multiplayer\units\roster_conquest.set"
-if (-not (Test-Path -LiteralPath $rosterPath)) {
-    throw "Missing deployed roster_conquest.set"
-}
-$rosterText = [IO.File]::ReadAllText($rosterPath)
-$includeMatches = [regex]::Matches($rosterText, '\(include\s+"([^"]+)"\)')
-$missingIncludes = @()
-foreach ($m in $includeMatches) {
-    $inc = $m.Groups[1].Value -replace '/', '\'
-    $full = Join-Path $gates ("resource\set\multiplayer\units\" + $inc)
-    if (-not (Test-Path -LiteralPath $full -PathType Leaf)) {
-        $missingIncludes += $inc
+    # 2) Install GOC prototype files from spike
+    foreach ($rel in $spikeRels) {
+        $srcRel = $rel -replace '^resource/', ''
+        $src = Join-Path $resourceRoot ($srcRel -replace '/', '\')
+        Copy-ToGatesSafe -Ledger $ledger -SourcePath $src -RelUnix $rel | Out-Null
+        if (-not ($deployedRels -contains $rel)) {
+            [void]$deployedRels.Add($rel)
+        }
     }
-}
-if ($missingIncludes.Count -gt 0) {
-    throw ("roster_conquest.set unresolved includes:`n - " + ($missingIncludes -join "`n - "))
-}
 
-# 4) Verify GOC army IDs unique in effective stack (parents read-only + Gates after deploy)
-$auditRoots = @($stack.West81, $stack.CodeX, $stack.AiOverhaul, $gates) | Where-Object { $_ }
-$idMap = Get-ArmyIdMap -Roots $auditRoots
-$idCollisions = @()
-foreach ($entry in $PrototypeArmyIds.GetEnumerator()) {
-    $id = [int]$entry.Value
-    $owners = @()
-    if ($idMap.ContainsKey($id)) {
-        $owners = @($idMap[$id] | ForEach-Object { "{0} @ {1}" -f $_.Army, $_.Root })
+    Write-Utf8NoBomFile -Path $manifestPath -Content ((@($deployedRels) -join "`n") + "`n")
+    Save-OriginalLedger -Ledger $ledger
+
+    # 3) Post-copy validation
+    Assert-RosterIncludes
+    $auditRoots = @($stack.West81, $stack.CodeX, $stack.AiOverhaul, $gates) | Where-Object { $_ }
+    Assert-ArmyIdsSafe -Roots $auditRoots
+
+    $protoIds = @{}
+    foreach ($entry in $PrototypeArmyIds.GetEnumerator()) {
+        $protoIds[[string]$entry.Key] = [int]$entry.Value
     }
-    # Expect exactly the prototype army name on Gates (and no foreign army on same id).
-    $foreign = @($owners | Where-Object { $_ -notmatch [regex]::Escape($entry.Key) })
-    if ($foreign.Count -gt 0) {
-        $idCollisions += ("{0} id {1} collides with: {2}" -f $entry.Key, $id, ($foreign -join "; "))
+    $stackOut = @{
+        West81     = [string]$stack.West81
+        CodeX      = [string]$stack.CodeX
+        AiOverhaul = [string]$stack.AiOverhaul
     }
-}
-# Also ensure prototype ids are pairwise unique
-$dupProto = $PrototypeArmyIds.Values | Group-Object | Where-Object { $_.Count -gt 1 }
-if ($dupProto) {
-    throw "Prototype army IDs are not unique within spike"
-}
-if ($idCollisions.Count -gt 0) {
-    throw ("Army ID collisions in effective stack:`n - " + ($idCollisions -join "`n - "))
-}
-
-# 5) Range check
-foreach ($entry in $PrototypeArmyIds.GetEnumerator()) {
-    $id = [int]$entry.Value
-    if ($id -lt 0 -or $id -gt 99) {
-        throw "Army id out of range for $($entry.Key): $id"
+    $evidenceObj = @{
+        timestampUtc      = (Get-Date).ToUniversalTime().ToString("o")
+        gatesRoot         = [string]$gates
+        stack             = $stackOut
+        parentFiles       = @($parentRecords.ToArray())
+        spikeFileCount    = [int]@($spikeRels).Count
+        deployedFileCount = [int]$deployedRels.Count
+        rosterIncludesOk  = $true
+        prototypeArmyIds  = $protoIds
+        armyIdAuditRoots  = @($auditRoots | ForEach-Object { [string]$_ })
+        originalLedger    = $ledgerPath
+        notes             = @(
+            "West81/CodeX/AI Overhaul were treated as read-only sources.",
+            "Only required parent conquest text files were copied into Gates.",
+            "Original Gates bytes are snapshotted on first write only (duplicate paths do not clobber originals).",
+            "No native GoH PASS is claimed by this deploy helper."
+        )
     }
-}
+    $evidenceJson = ConvertTo-Json -InputObject $evidenceObj -Depth 6
+    Write-Utf8NoBomFile -Path $evidencePath -Content $evidenceJson
+    Write-DeployState -Status "deployed" -Message "deploy complete"
 
-$protoIds = @{}
-foreach ($entry in $PrototypeArmyIds.GetEnumerator()) {
-    $protoIds[[string]$entry.Key] = [int]$entry.Value
+    Write-Host "Deployed $($deployedRels.Count) files into $gates"
+    Write-Host "Original ledger: $ledgerPath"
+    Write-Host "Parent materialization records: $parentManifestPath"
+    Write-Host "Deploy evidence: $evidencePath"
+    Write-Host "Restore with: $($MyInvocation.MyCommand.Path) -GatesRoot `"$gates`" -Restore"
 }
-$stackOut = @{
-    West81     = [string]$stack.West81
-    CodeX      = [string]$stack.CodeX
-    AiOverhaul = [string]$stack.AiOverhaul
+catch {
+    $err = $_
+    Write-Host "Deploy failed; attempting automatic rollback from original ledger..."
+    try {
+        if ($ledger.Count -gt 0) {
+            Save-OriginalLedger -Ledger $ledger
+            Write-Utf8NoBomFile -Path $manifestPath -Content ((@($deployedRels) -join "`n") + "`n")
+        }
+        if (Test-Path -LiteralPath $ledgerPath) {
+            Invoke-RestoreFromLedger -Reason ("auto-rollback: " + $err.Exception.Message)
+            Write-DeployState -Status "failed_rolled_back" -Message $err.Exception.Message
+        }
+        else {
+            Write-DeployState -Status "failed_no_ledger" -Message $err.Exception.Message
+        }
+    }
+    catch {
+        Write-Host ("Rollback also failed: " + $_.Exception.Message)
+        Write-DeployState -Status "failed_partial" -Message ($err.Exception.Message + " | rollback: " + $_.Exception.Message)
+        throw ("Deploy failed and rollback failed. Manual inspection required. Original error: " + $err.Exception.Message)
+    }
+    throw
 }
-$evidenceObj = @{
-    timestampUtc      = (Get-Date).ToUniversalTime().ToString("o")
-    gatesRoot         = [string]$gates
-    stack             = $stackOut
-    parentFiles       = @($parentRecords.ToArray())
-    spikeFileCount    = [int]@($spikeRels).Count
-    deployedFileCount = [int]$deployedRels.Count
-    rosterIncludesOk  = $true
-    prototypeArmyIds  = $protoIds
-    armyIdAuditRoots  = @($auditRoots | ForEach-Object { [string]$_ })
-    notes             = @(
-        "West81/CodeX/AI Overhaul were treated as read-only sources.",
-        "Only required parent conquest text files were copied into Gates.",
-        "No native GoH PASS is claimed by this deploy helper."
-    )
-}
-$evidenceJson = ConvertTo-Json -InputObject $evidenceObj -Depth 6
-Set-Content -LiteralPath $evidencePath -Value $evidenceJson -Encoding UTF8
-
-Write-Host "Deployed $($deployedRels.Count) files into $gates"
-Write-Host "Parent materialization records: $parentManifestPath"
-Write-Host "Deploy evidence: $evidencePath"
-Write-Host "Restore with: $($MyInvocation.MyCommand.Path) -GatesRoot `"$gates`" -Restore"

@@ -31,13 +31,15 @@ cd spikes\201-custom-tactical-factions
 
 What deploy does:
 
-1. Treats West81 / Code:X / AI Overhaul as **read-only**
-2. Copies only the parent `units/conquest/*.set` files required by `roster_conquest.set` into Gates
-3. Installs GOC prototype files
-4. Records SHA-256 + source path for each parent file under `.deploy-backup/`
-5. Verifies roster includes resolve
-6. Audits GOC army IDs for collisions in the effective stack
-7. Backs up overwritten Gates files (restore supported)
+1. Prefights parent sources + army ID collisions **before** mutating Gates
+2. Treats West81 / Code:X / AI Overhaul as **read-only**
+3. Copies only the parent `units/conquest/*.set` files required by `roster_conquest.set` into Gates
+4. Installs GOC prototype files
+5. Records a first-write **original ledger** (existed vs absent) under `.deploy-backup/` — duplicate writes (e.g. `settings.set` parent then spike) do **not** clobber the original Gates backup
+6. Records SHA-256 + source path for each parent file
+7. Verifies roster includes resolve; on failure, auto-rolls back from the original ledger
+8. Refuses a second deploy while an unconsumed backup exists (restore first, or explicit `-ForceDiscardBackup`)
+9. `-Restore` restores original-existing files and deletes originally-absent ones
 
 Optional standalone last-mod path (idempotent; does **not** mutate `conquest.lua`):
 
