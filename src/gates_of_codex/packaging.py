@@ -62,13 +62,18 @@ def application_version() -> str:
 def package_root(start: str | Path | None = None) -> Path:
     """Return the repository or installed package root used for provenance."""
     if start is not None:
-        return Path(start).expanduser().resolve(strict=False)
-    # Prefer the repository root (two parents above this module: src/gates_of_codex).
+        return Path(start)
+    # A source module resolves to the checkout; installed and frozen modules
+    # resolve to the package directory containing the embedded stamp.
     here = Path(__file__).resolve()
     candidate = here.parents[2]
-    if (candidate / "pyproject.toml").is_file() or (candidate / ".git").exists():
+    if _is_source_checkout(candidate):
         return candidate
-    return here.parents[1]
+    return here.parent
+
+
+def _is_source_checkout(root: Path) -> bool:
+    return (root / "pyproject.toml").is_file() and (root / ".git").exists()
 
 
 def resolve_source_commit(
@@ -78,23 +83,10 @@ def resolve_source_commit(
 ) -> str:
     """Derive the exact source commit for display and evidence.
 
-    Order of authority:
-    1. ``GATES_OF_CODEX_SOURCE_COMMIT`` when set to a 40-char hex digest
-       (packaged installs stamp this at build time);
-    2. ``SOURCE_COMMIT`` file beside the package root;
-    3. ``git rev-parse HEAD`` when the package root is a git checkout;
-    4. otherwise fail closed — packaging must not invent a commit.
+    Packaged installs and frozen applications require an adjacent
+    ``SOURCE_COMMIT``. Source checkouts may use the environment as a test seam,
+    then fall back to ``git rev-parse HEAD``.
     """
-    env = os.environ if environ is None else environ
-    stamped = str(env.get(PROVENANCE_ENV, "")).strip().lower()
-    if stamped:
-        if not _is_commit_sha(stamped):
-            raise PackagingError(
-                f"{PROVENANCE_ENV} must be a 40-character lowercase hex commit, "
-                f"got {stamped!r}"
-            )
-        return stamped
-
     root_path = package_root(root)
     marker = root_path / PROVENANCE_FILE_NAME
     if marker.is_file():
@@ -105,28 +97,34 @@ def resolve_source_commit(
             )
         return value
 
-    git_dir = root_path / ".git"
-    if git_dir.exists():
-        try:
-            completed = subprocess.run(
-                ["git", "-C", str(root_path), "rev-parse", "HEAD"],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-        except (OSError, subprocess.CalledProcessError) as exc:
+    if not _is_source_checkout(root_path):
+        raise PackagingError(
+            f"Installed package is missing embedded {PROVENANCE_FILE_NAME}: {root_path}"
+        )
+    test_value = str(
+        (os.environ if environ is None else environ).get(PROVENANCE_ENV, "")
+    ).strip().lower()
+    if test_value:
+        if not _is_commit_sha(test_value):
             raise PackagingError(
-                f"Unable to resolve source commit from git at {root_path}: {exc}"
-            ) from exc
-        value = completed.stdout.strip().lower()
-        if not _is_commit_sha(value):
-            raise PackagingError(f"git rev-parse returned a non-commit value: {value!r}")
-        return value
-
-    raise PackagingError(
-        "Package provenance is unavailable: set "
-        f"{PROVENANCE_ENV}, ship a {PROVENANCE_FILE_NAME} file, or run from a git checkout"
-    )
+                f"{PROVENANCE_ENV} must be a 40-character lowercase hex commit"
+            )
+        return test_value
+    try:
+        completed = subprocess.run(
+            ["git", "-C", str(root_path), "rev-parse", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise PackagingError(
+            f"Unable to resolve source commit from git at {root_path}: {exc}"
+        ) from exc
+    value = completed.stdout.strip().lower()
+    if not _is_commit_sha(value):
+        raise PackagingError(f"git rev-parse returned a non-commit value: {value!r}")
+    return value
 
 
 def package_identity(

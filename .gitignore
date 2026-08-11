@@ -63,3 +63,4 @@ docs/earth3-crop/hydrography_audit/reference/ne_10m_lakes/
 # P6 packaging stamp (installer-written)
 /SOURCE_COMMIT
 
+/src/gates_of_codex/SOURCE_COMMIT

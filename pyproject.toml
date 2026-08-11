@@ -30,4 +30,4 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-gates_of_codex = ["py.typed", "data/*", "data/earth3_v1/*.json"]
+gates_of_codex = ["py.typed", "SOURCE_COMMIT", "data/*", "data/earth3_v1/*.json"]

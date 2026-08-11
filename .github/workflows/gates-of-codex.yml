@@ -26,8 +26,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Stamp package provenance
+        id: provenance
+        shell: pwsh
+        run: |
+          $stamp = & .\tools\stamp_package_provenance.ps1
+          "commit=$($stamp.Commit)" >> $env:GITHUB_OUTPUT
       - name: Install
         run: python -m pip install -e ".[earth3]"
+      - name: Assert installed provenance
+        shell: pwsh
+        run: python -c 'import sys; from gates_of_codex.packaging import package_identity; assert package_identity().source_commit == sys.argv[1]' '${{ steps.provenance.outputs.commit }}'
       - name: Verify partition and run shard
         run: python tools/run_python_test_shard.py --verify-partition --shard ${{ matrix.shard }}
       - name: Campaign CLI smoke test
@@ -36,6 +45,10 @@ jobs:
       - name: Live acceptance CLI smoke test
         if: matrix.shard == 'core'
         run: gates-of-codex-live --help
+      - name: Cleanup package provenance
+        if: always()
+        shell: pwsh
+        run: Remove-Item -LiteralPath src\gates_of_codex\SOURCE_COMMIT -Force -ErrorAction SilentlyContinue
 
   python-shards-ubuntu-313:
     name: python-shard (ubuntu-latest, 3.13, ${{ matrix.shard }})
@@ -49,8 +62,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+      - name: Stamp package provenance
+        id: provenance
+        shell: pwsh
+        run: |
+          $stamp = & .\tools\stamp_package_provenance.ps1
+          "commit=$($stamp.Commit)" >> $env:GITHUB_OUTPUT
       - name: Install
         run: python -m pip install -e ".[earth3]"
+      - name: Assert installed provenance
+        shell: pwsh
+        run: python -c 'import sys; from gates_of_codex.packaging import package_identity; assert package_identity().source_commit == sys.argv[1]' '${{ steps.provenance.outputs.commit }}'
       - name: Verify partition and run shard
         run: python tools/run_python_test_shard.py --verify-partition --shard ${{ matrix.shard }}
       - name: Campaign CLI smoke test
@@ -59,6 +81,10 @@ jobs:
       - name: Live acceptance CLI smoke test
         if: matrix.shard == 'core'
         run: gates-of-codex-live --help
+      - name: Cleanup package provenance
+        if: always()
+        shell: pwsh
+        run: Remove-Item -LiteralPath src\gates_of_codex\SOURCE_COMMIT -Force -ErrorAction SilentlyContinue
 
   python-shards-windows-311:
     name: python-shard (windows-latest, 3.11, ${{ matrix.shard }})
@@ -72,8 +98,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Stamp package provenance
+        id: provenance
+        shell: pwsh
+        run: |
+          $stamp = & .\tools\stamp_package_provenance.ps1
+          "commit=$($stamp.Commit)" >> $env:GITHUB_OUTPUT
       - name: Install
         run: python -m pip install -e ".[earth3]"
+      - name: Assert installed provenance
+        shell: pwsh
+        run: python -c 'import sys; from gates_of_codex.packaging import package_identity; assert package_identity().source_commit == sys.argv[1]' '${{ steps.provenance.outputs.commit }}'
       - name: Verify partition and run shard
         run: python tools/run_python_test_shard.py --verify-partition --shard ${{ matrix.shard }}
       - name: Campaign CLI smoke test
@@ -104,6 +139,10 @@ jobs:
           if (-not (Test-Path -LiteralPath (Join-Path $deploy ".goc-deployment-manifest.json") -PathType Leaf)) {
             throw "Workshop deployment did not write its manifest"
           }
+      - name: Cleanup package provenance
+        if: always()
+        shell: pwsh
+        run: Remove-Item -LiteralPath src\gates_of_codex\SOURCE_COMMIT -Force -ErrorAction SilentlyContinue
 
   python-shards-windows-313:
     name: python-shard (windows-latest, 3.13, ${{ matrix.shard }})
@@ -117,8 +156,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+      - name: Stamp package provenance
+        id: provenance
+        shell: pwsh
+        run: |
+          $stamp = & .\tools\stamp_package_provenance.ps1
+          "commit=$($stamp.Commit)" >> $env:GITHUB_OUTPUT
       - name: Install
         run: python -m pip install -e ".[earth3]"
+      - name: Assert installed provenance
+        shell: pwsh
+        run: python -c 'import sys; from gates_of_codex.packaging import package_identity; assert package_identity().source_commit == sys.argv[1]' '${{ steps.provenance.outputs.commit }}'
       - name: Verify partition and run shard
         run: python tools/run_python_test_shard.py --verify-partition --shard ${{ matrix.shard }}
       - name: Campaign CLI smoke test
@@ -127,6 +175,10 @@ jobs:
       - name: Live acceptance CLI smoke test
         if: matrix.shard == 'core'
         run: gates-of-codex-live --help
+      - name: Cleanup package provenance
+        if: always()
+        shell: pwsh
+        run: Remove-Item -LiteralPath src\gates_of_codex\SOURCE_COMMIT -Force -ErrorAction SilentlyContinue
 
   test-ubuntu-311:
     name: test (ubuntu-latest, 3.11)
@@ -247,8 +299,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Stamp package provenance
+        id: provenance
+        shell: pwsh
+        run: |
+          $stamp = & .\tools\stamp_package_provenance.ps1
+          "commit=$($stamp.Commit)" >> $env:GITHUB_OUTPUT
       - name: Install Python package for P4 snapshot generation
         run: python -m pip install -e ".[earth3]"
+      - name: Assert installed provenance
+        shell: pwsh
+        run: python -c 'import sys; from gates_of_codex.packaging import package_identity; assert package_identity().source_commit == sys.argv[1]' '${{ steps.provenance.outputs.commit }}'
       - name: Generate P4 production Earth3 snapshot through the player shell
         run: |
           set -euo pipefail
@@ -532,6 +593,10 @@ jobs:
               assert p.stat().st_size > 50_000, (p, p.stat().st_size)
               print("ok", p.name, f"{w}x{h}", p.stat().st_size)
           PY
+      - name: Cleanup package provenance
+        if: always()
+        shell: pwsh
+        run: Remove-Item -LiteralPath src\gates_of_codex\SOURCE_COMMIT -Force -ErrorAction SilentlyContinue
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -550,11 +615,71 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Stamp package provenance
+        id: provenance
+        shell: pwsh
+        run: |
+          $stamp = & .\tools\stamp_package_provenance.ps1
+          "commit=$($stamp.Commit)" >> $env:GITHUB_OUTPUT
       - run: python -m pip install . pyinstaller
+      - name: Assert installed provenance
+        shell: pwsh
+        run: python -c 'import sys; from gates_of_codex.packaging import package_identity; assert package_identity().source_commit == sys.argv[1]' '${{ steps.provenance.outputs.commit }}'
       - name: Build campaign application
-        run: python -m PyInstaller --noconfirm --clean --onefile --windowed --name GatesOfCodeX run_gates_of_codex.py
+        run: python -m PyInstaller --noconfirm --clean --onefile --windowed --name GatesOfCodeX --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" run_gates_of_codex.py
       - name: Build live acceptance console
-        run: python -m PyInstaller --noconfirm --clean --onefile --console --name GatesOfCodeXLive run_gates_of_codex_live.py
+        run: python -m PyInstaller --noconfirm --clean --onefile --console --name GatesOfCodeXLive --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" run_gates_of_codex_live.py
+      - name: Smoke frozen runtime provenance
+        shell: pwsh
+        run: |
+          $expectedCommit = '${{ steps.provenance.outputs.commit }}'
+          $probeRoot = Join-Path $env:RUNNER_TEMP ("gates-of-codex-frozen-probe-" + [guid]::NewGuid().ToString("N"))
+          New-Item -ItemType Directory -Path $probeRoot | Out-Null
+          try {
+            $probeScript = Join-Path $probeRoot "provenance_probe.py"
+            $probeBody = @'
+          import sys
+
+          from gates_of_codex.packaging import package_identity
+
+          expected = sys.argv[1]
+          actual = package_identity().source_commit
+          if actual != expected:
+              raise SystemExit(f"Frozen runtime provenance mismatch: expected {expected}, got {actual}")
+          print(actual)
+          '@
+            [System.IO.File]::WriteAllText($probeScript, $probeBody, [System.Text.UTF8Encoding]::new($false))
+            $probeDist = Join-Path $probeRoot "dist"
+            $probeWork = Join-Path $probeRoot "build"
+            python -m PyInstaller --noconfirm --clean --onefile --console --name GatesOfCodeXProvenanceProbe --distpath $probeDist --workpath $probeWork --specpath $probeRoot --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" $probeScript
+            if ($LASTEXITCODE -ne 0) { throw "Unable to build frozen provenance probe." }
+            Remove-Item Env:GATES_OF_CODEX_SOURCE_COMMIT -ErrorAction SilentlyContinue
+            & (Join-Path $probeDist "GatesOfCodeXProvenanceProbe.exe") $expectedCommit | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "Frozen runtime provenance mismatch." }
+          }
+          finally {
+            Remove-Item -LiteralPath $probeRoot -Recurse -Force -ErrorAction SilentlyContinue
+          }
+      - name: Smoke frozen provenance
+        shell: pwsh
+        run: |
+          $expectedCommit = '${{ steps.provenance.outputs.commit }}'
+          foreach ($executable in @("dist\GatesOfCodeX.exe", "dist\GatesOfCodeXLive.exe")) {
+            $archive = (pyi-archive_viewer -l $executable | Out-String)
+            $entry = [regex]::Match($archive, 'gates_of_codex[\\/]SOURCE_COMMIT').Value
+            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($entry)) {
+              throw "Frozen executable is missing provenance: $executable"
+            }
+            $extracted = (@("X $entry", "", "Q") | pyi-archive_viewer $executable | Out-String)
+            if ($LASTEXITCODE -ne 0 -or $extracted -notmatch [regex]::Escape($expectedCommit)) {
+              throw "Frozen executable provenance does not match $expectedCommit`: $executable"
+            }
+          }
+          .\dist\GatesOfCodeXLive.exe --help | Out-Null
+      - name: Cleanup package provenance
+        if: always()
+        shell: pwsh
+        run: Remove-Item -LiteralPath src\gates_of_codex\SOURCE_COMMIT -Force -ErrorAction SilentlyContinue
       - uses: actions/upload-artifact@v4
         with:
           name: GatesOfCodeX-Windows
