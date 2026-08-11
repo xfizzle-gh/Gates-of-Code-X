@@ -419,12 +419,19 @@ def _apply_handoff(campaign: Path, state, raw: dict[str, Any]) -> CommandResult:
     backup_root = Path(str(raw.get("backup_root", root / "backups")))
     if not backup_root.is_absolute():
         backup_root = (root / backup_root).resolve()
+    template_raw = str(
+        raw.get("template_save")
+        or raw.get("status_template_path")
+        or state.map_metadata.get("status_template_path")
+        or ""
+    ).strip()
     result = prepare_stack_handoff(
         campaign,
         map_name=str(raw["map"]) if raw.get("map") else None,
         work_root=work_root,
         backup_root=backup_root,
         launch=bool(raw.get("launch", False)),
+        status_template_path=template_raw or None,
     )
     visible = result.visible_campaign_name or result.manifest.visible_campaign_name
     return CommandResult(

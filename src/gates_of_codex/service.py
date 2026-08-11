@@ -105,7 +105,22 @@ class GatesOfCodeXService:
         if not stack:
             raise ValueError("No Code:X resource stack was configured")
         catalog = self.scanner.scan_stack(stack)
-        if state.catalog_signature and state.catalog_signature != catalog.signature:
+        # Earth3 P2/P3 stores an actor-content digest in ``catalog_signature``
+        # (see earth3_bootstrap), not the Code:X stack scan signature. The
+        # stack scan still drives export/import integrity via the manifest.
+        # Comparing the two identity systems blocked every Earth3 handoff.
+        earth3_actor_identity = bool(
+            isinstance(state.map_metadata.get("earth3_bootstrap"), dict)
+            or (
+                isinstance(state.map_metadata.get("actor_content_runtime"), dict)
+                and state.map_metadata["actor_content_runtime"].get("earth3_bootstrap_id")
+            )
+        )
+        if (
+            state.catalog_signature
+            and not earth3_actor_identity
+            and state.catalog_signature != catalog.signature
+        ):
             raise ValueError("Installed Code:X mod stack differs from the campaign catalog")
 
         template_path = Path(status_template_path).resolve() if status_template_path else None
