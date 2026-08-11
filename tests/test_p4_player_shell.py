@@ -318,6 +318,31 @@ class Earth3ProductionLaunchTests(unittest.TestCase):
 
 
 class PlayerCommandAuthorityTests(unittest.TestCase):
+    def test_run_play_uses_explicit_environment_for_maintenance_authority(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            home = root / "explicit-home"
+            environ = _environ(home)
+            with patch.dict(
+                os.environ,
+                {"GATES_OF_CODEX_HOME": str(root / "unrelated-ambient-home")},
+                clear=False,
+            ):
+                created = run_play(
+                    _play_args(
+                        "--new",
+                        "--campaign",
+                        str(home / "campaigns" / "legacy"),
+                        "--no-launch",
+                        "--scenario",
+                        LEGACY_SCENARIO,
+                    ),
+                    environ=environ,
+                )
+            maintenance = _read_json(created.snapshot_path)["control"]["maintenance"]
+
+        self.assertTrue(maintenance["reset_available"], maintenance)
+
     """Mutation semantics proved through the real player flow, map-independent."""
 
     def test_legal_command_mutates_the_campaign_exactly_once(self) -> None:

@@ -10,7 +10,6 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / "src") not in sys.path:
@@ -359,11 +358,7 @@ class P6GoldenPathTests(unittest.TestCase):
                     "--no-launch",
                 ]
             )
-            # Production receives this value as a process environment variable.
-            # Keep run_play's explicit mapping and ambient safety classifier on
-            # the same managed-home authority while the snapshot is published.
-            with mock.patch.dict(os.environ, environ, clear=False):
-                play = run_play(args, environ=environ)
+            play = run_play(args, environ=environ)
             campaign = Path(play.campaign_path)
             snapshot = Path(play.snapshot_path)
             self.assertEqual("earth3_europe_mediterranean", play.map_id)

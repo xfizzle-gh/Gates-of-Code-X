@@ -572,11 +572,21 @@ def continue_campaign(
     return state
 
 
-def publish_snapshot(state: CampaignState, paths: CampaignPaths) -> Path:
+def publish_snapshot(
+    state: CampaignState,
+    paths: CampaignPaths,
+    *,
+    environ: Mapping[str, str] | None = None,
+) -> Path:
     """Regenerate the frontend snapshot from authoritative campaign state."""
     from .frontend_commands import clear_commands
 
-    written = write_frontend_snapshot(state, paths.snapshot, campaign_path=paths.campaign)
+    written = write_frontend_snapshot(
+        state,
+        paths.snapshot,
+        campaign_path=paths.campaign,
+        environ=environ,
+    )
     # A launch must never inherit a stale queue from an interrupted session.
     clear_commands(paths.commands)
     return written
@@ -758,7 +768,7 @@ def run_play(
             state.code_x_directory = codex_layer
         save_campaign(state, paths.campaign)
 
-    snapshot = publish_snapshot(state, paths)
+    snapshot = publish_snapshot(state, paths, environ=environ)
     write_last_campaign(paths.campaign, environ=environ)
 
     result = PlayResult(

@@ -6,6 +6,7 @@ import sys
 import tempfile
 from dataclasses import asdict
 from pathlib import Path
+from typing import Mapping
 
 from .earth3_campaign import (
     CAMPAIGN_DATASET_IDENTIFIER,
@@ -97,6 +98,7 @@ def build_frontend_snapshot(
     *,
     campaign_path: str | Path | None = None,
     snapshot_path: str | Path | None = None,
+    environ: Mapping[str, str] | None = None,
 ) -> dict:
     # Frontend export is a pure projection. Existing helper functions may normalize
     # derived state, so operate only on a detached copy.
@@ -378,7 +380,9 @@ def build_frontend_snapshot(
         "pending_battle": _pending_battle(state),
         "front_options": front_options,
         "operational_orders": operational_orders,
-        "control": _control_block(state, campaign_path, snapshot_path),
+        "control": _control_block(
+            state, campaign_path, snapshot_path, environ=environ
+        ),
         "province_names": dict(
             state.map_metadata.get("province_names") or province_name_coverage(state)
         ),
@@ -790,6 +794,7 @@ def write_frontend_snapshot(
     path: str | Path,
     *,
     campaign_path: str | Path | None = None,
+    environ: Mapping[str, str] | None = None,
 ) -> Path:
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -799,6 +804,7 @@ def write_frontend_snapshot(
                 state,
                 campaign_path=campaign_path,
                 snapshot_path=destination,
+                environ=environ,
             ),
             indent=2,
             ensure_ascii=False,
@@ -1114,7 +1120,11 @@ def _application_block(state: CampaignState, campaign_path: str | Path | None) -
     return block
 
 
-def _maintenance_block(campaign_path: str | Path | None) -> dict:
+def _maintenance_block(
+    campaign_path: str | Path | None,
+    *,
+    environ: Mapping[str, str] | None = None,
+) -> dict:
     """Authenticated campaign-bound maintenance capabilities for Godot."""
     disabled = {
         "restore_available": False,
@@ -1134,10 +1144,10 @@ def _maintenance_block(campaign_path: str | Path | None) -> dict:
     try:
         assert_path_inside(
             campaign.parent,
-            managed_campaigns_root(),
+            managed_campaigns_root(environ),
             label="campaign directory",
         )
-        latest = latest_managed_backup(campaign)
+        latest = latest_managed_backup(campaign, environ=environ)
     except PackagingError:
         # Non-player-managed development fixtures have no destructive controls.
         return disabled
@@ -1187,13 +1197,15 @@ def _control_block(
     state: CampaignState,
     campaign_path: str | Path | None,
     snapshot_path: str | Path | None,
+    *,
+    environ: Mapping[str, str] | None = None,
 ) -> dict:
     snapshot = Path(snapshot_path).resolve() if snapshot_path else None
     campaign = Path(campaign_path).resolve() if campaign_path else None
     commands = snapshot.with_name("frontend_commands.json") if snapshot is not None else None
     return {
         "play": _player_launch_block(state, campaign_path),
-        "maintenance": _maintenance_block(campaign_path),
+        "maintenance": _maintenance_block(campaign_path, environ=environ),
         "enabled": campaign is not None and snapshot is not None,
         "campaign_path": str(campaign) if campaign else "",
         "snapshot_path": str(snapshot) if snapshot else "",
