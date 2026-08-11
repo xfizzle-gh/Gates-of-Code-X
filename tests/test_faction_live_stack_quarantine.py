@@ -1,16 +1,21 @@
 from __future__ import annotations
 
 import re
+import tempfile
 import unittest
+from pathlib import Path
 
-from gates_of_codex.faction_wiring_compiler import _apply_live_stack_quarantine
-from gates_of_codex.faction_wiring_manifest import load_faction_manifest, validate_faction_manifest
+from gates_of_codex.faction_wiring_compiler import FactionWiringCompiler
+from gates_of_codex.faction_wiring_manifest import (
+    _canonical_sha256,
+    load_faction_manifest,
+    validate_faction_manifest,
+)
 
 
 class FactionLiveStackQuarantineTests(unittest.TestCase):
     def _manifest(self):
         manifest = load_faction_manifest()
-        _apply_live_stack_quarantine(manifest)
         validate_faction_manifest(manifest)
         return manifest
 
@@ -36,6 +41,17 @@ class FactionLiveStackQuarantineTests(unittest.TestCase):
         self.assertEqual("rusa", kpa["source_side"])
         self.assertEqual("2022vdv106", kpa["root"])
         self.assertEqual("^kor_", kpa["include_regex"])
+
+    def test_compiler_and_earth3_loader_share_exact_manifest_identity(self) -> None:
+        expected_manifest = self._manifest()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "stack-root"
+            root.mkdir()
+            compiler = FactionWiringCompiler([root])
+        self.assertEqual(
+            _canonical_sha256(expected_manifest),
+            _canonical_sha256(compiler.manifest),
+        )
 
 
 if __name__ == "__main__":
