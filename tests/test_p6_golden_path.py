@@ -315,6 +315,14 @@ class P6GoldenPathTests(unittest.TestCase):
             'GODOT_BIN="$HOME/godot" python -m unittest tests.test_p6_golden_path -v',
             workflow,
         )
+        self.assertIn(
+            'str(root / "home" / "campaigns" / "earth3_v1")',
+            workflow,
+        )
+        self.assertIn(
+            'assert snapshot["control"]["maintenance"]["reset_available"]',
+            workflow,
+        )
 
     def test_production_earth3_handoff_import_and_continuation(self) -> None:
         from gates_of_codex.acceptance import fingerprint_save

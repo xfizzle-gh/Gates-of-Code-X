@@ -316,6 +316,7 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
+          import json
           import os
           import sys
           from pathlib import Path
@@ -328,13 +329,20 @@ jobs:
           environ = dict(os.environ)
           environ["GATES_OF_CODEX_HOME"] = str(root / "home")
           args = build_play_parser().parse_args(
-              ["--new", "--campaign", str(root / "campaign"), "--no-launch"]
+              [
+                  "--new",
+                  "--campaign",
+                  str(root / "home" / "campaigns" / "earth3_v1"),
+                  "--no-launch",
+              ]
           )
           # The runner has no installed Gates of Hell stack, so catalog authority
           # is injected the same way the P2 bootstrap tests inject it. Everything
           # downstream is the real production player-launch path.
           result = run_play(args, environ=environ, resolved_catalog=_resolved_catalog())
           assert result.map_id == "earth3_europe_mediterranean", result.map_id
+          snapshot = json.loads(Path(result.snapshot_path).read_text(encoding="utf-8"))
+          assert snapshot["control"]["maintenance"]["reset_available"]
           Path("p4-snapshot-path.txt").write_text(result.snapshot_path, encoding="utf-8")
           print("generated", result.snapshot_path)
           PY
