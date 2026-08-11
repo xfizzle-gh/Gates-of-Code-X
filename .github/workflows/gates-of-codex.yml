@@ -282,6 +282,12 @@ jobs:
           "$HOME/godot" --headless --path . --audio-driver Dummy \
             -s res://scripts/tools/player_shell_test.gd -- \
             "--snapshot=$(cat ../p4-snapshot-path.txt)"
+      - name: Godot graph-native movement dispatch test (#206)
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --audio-driver Dummy \
+            -s res://scripts/tools/graph_movement_scene_test.gd
       - name: Godot map CI check (draw path + viewport smoke)
         working-directory: godot
         run: |

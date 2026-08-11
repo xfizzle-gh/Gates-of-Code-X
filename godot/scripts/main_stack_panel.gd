@@ -13,7 +13,6 @@ var portrait_cache: Dictionary = {}
 var hovered_unit_tooltip := ""
 var stack_panel_expanded := true
 var unit_scroll_offset := 0
-var selected_strategic_formation_id := ""
 var _collapse_button_rect := Rect2()
 var _scroll_up_rect := Rect2()
 var _scroll_down_rect := Rect2()
@@ -492,31 +491,58 @@ func _draw_stack_section(panel_x: float, top: float, available_h: float) -> void
 
 
 func _draw_targets_and_objectives(x: float, y: float) -> float:
-	y = _panel_heading("TARGETS", x, y)
+	## Graph-native movement surface (#206). Targets are the backend's validated
+	## strategic-formation orders; province polygon adjacency is not consulted.
+	y = _panel_heading("MOVEMENT ORDERS", x, y)
 	var writeback := bool(snapshot.get("control", {}).get("enabled", false))
-	var options: Array = front_by_origin.get(selected_province_id, [])
+	var options: Array = orders_by_formation.get(selected_strategic_formation_id, [])
+	var order: Dictionary = selected_formation_move_order()
+	var order_status := String(order.get("status", ""))
+	if not order_status.is_empty():
+		y = _panel_line(
+			"Standing order: %s -> %s" % [
+				order_status.to_upper(),
+				_province_name(_order_destination_province(order)),
+			],
+			x,
+			y,
+			Color(0.95, 0.84, 0.42, 1.0),
+			12
+		)
 	if options.is_empty():
-		y = _panel_line("No legal moves for selected battalion.", x, y, Color(0.7, 0.75, 0.8), 12)
+		if order_status in ["committed", "active"]:
+			y = _panel_line(
+				"Order locked until it resolves — no new order this turn.",
+				x, y, Color(0.7, 0.75, 0.8), 12
+			)
+		elif selected_strategic_formation_id.is_empty():
+			y = _panel_line("Select a strategic formation.", x, y, Color(0.7, 0.75, 0.8), 12)
+		else:
+			y = _panel_line(
+				"No legal graph moves for this formation.",
+				x, y, Color(0.7, 0.75, 0.8), 12
+			)
 	else:
 		var shown := 0
 		for option: Dictionary in options:
 			if shown >= 4:
-				y = _panel_line("+ more targets in list…", x, y, Color(0.65, 0.7, 0.75), 11)
+				y = _panel_line(
+					"+%s more reachable — click the map to order." % (options.size() - shown),
+					x, y, Color(0.65, 0.7, 0.75), 11
+				)
 				break
-			var tid := String(option.get("target", ""))
-			var label := "%s  %s" % [
-				String(option.get("kind", "move")).to_upper(),
-				String(option.get("target_name", tid)),
-			]
+			var tid := String(option.get("target_province_id", ""))
 			y = _draw_button(
 				"move:%s" % tid,
-				label,
+				"MOVE  %s" % String(option.get("target_province_name", tid)),
 				x,
 				y,
 				writeback,
-				Color("2a3d28") if String(option.get("kind", "")) == "move" else Color("4a2f18")
+				Color("2a3d28")
 			)
 			shown += 1
+	if order_status == "draft":
+		y = _draw_button("cancel_move_order", "Cancel movement order", x, y, writeback, Color("3d2a28"))
 	y += 6.0
 	y = _panel_heading("OBJECTIVES", x, y)
 	for objective: Dictionary in snapshot.get("objectives", []):
@@ -532,6 +558,21 @@ func _draw_targets_and_objectives(x: float, y: float) -> float:
 			12
 		)
 	return y
+
+
+func _order_destination_province(order: Dictionary) -> String:
+	var nodes: Array = order.get("path_node_ids", [])
+	if nodes.is_empty():
+		return ""
+	var destination_node := String(nodes[nodes.size() - 1])
+	for option: Dictionary in snapshot.get("operational_orders", []):
+		if String(option.get("target_node_id", "")) == destination_node:
+			return String(option.get("target_province_id", ""))
+	# A locked order has no live option naming its destination, so read the
+	# province straight off the graph node instead of guessing from the id.
+	var nodes_index: Dictionary = _operational_graph_index().get("nodes", {})
+	var node_row: Dictionary = nodes_index.get(destination_node, {})
+	return String(node_row.get("province_id", destination_node))
 
 
 func _draw_formation_tab(rect: Rect2, force_id: String) -> void:

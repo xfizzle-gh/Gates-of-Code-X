@@ -231,6 +231,9 @@ def commit_move_orders_detailed(
     locked = str(locked_stance)
     turn = int(state.turn_number)
     rejected: list[dict[str, str]] = []
+    # Authenticate the graph once for the whole pass. Exact-byte authentication
+    # is expensive by design; re-running it per formation is pure waste.
+    graph = load_operational_graph_for_state(state)
     # Phase A — legality only (no capacity).
     valid: list[tuple[StrategicFormation, OperationalMoveOrder]] = []
     for force in sorted(
@@ -244,7 +247,7 @@ def commit_move_orders_detailed(
             continue
         try:
             validate_order_legality_for_commit(
-                state, force, order, locked_stance=locked
+                state, force, order, locked_stance=locked, graph=graph
             )
         except ValueError as exc:
             reason = classify_commit_rejection(exc)
@@ -266,6 +269,7 @@ def commit_move_orders_detailed(
             force,
             dest,
             include_drafts=False,
+            graph=graph,
         ):
             force.move_order = _as_blocked(order)
             rejected.append(
@@ -339,13 +343,21 @@ def validate_order_legality_for_commit(
     order: OperationalMoveOrder,
     *,
     locked_stance: str,
+    graph: dict[str, Any] | None = None,
 ) -> None:
-    """Phase-A gates: path legality + stance (no capacity)."""
+    """Phase-A gates: path legality + stance (no capacity).
+
+    ``graph`` may be supplied by callers that already authenticated and loaded
+    the operational graph, so a batch of candidate orders is validated against
+    one authority load instead of re-authenticating per candidate. Omitting it
+    keeps the original self-loading behaviour.
+    """
     if locked_stance not in _APPROVED_STANCES:
         raise ValueError(
             f"locked_stance must be one of {sorted(_APPROVED_STANCES)}, got {locked_stance!r}"
         )
-    graph = load_operational_graph_for_state(state)
+    if graph is None:
+        graph = load_operational_graph_for_state(state)
     if graph is None:
         raise ValueError("no_graph")
     node_ids, edge_ids, edges_by_id, nodes_by_id = _indexes(graph)
@@ -1293,8 +1305,13 @@ def can_reserve_destination(
     *,
     batch_reservations: dict[str, int] | None = None,
     include_drafts: bool = False,
+    graph: dict[str, Any] | None = None,
 ) -> bool:
-    """True if force may claim destination without exceeding friendly capacity."""
+    """True if force may claim destination without exceeding friendly capacity.
+
+    ``graph`` is an optional already-authenticated graph used only to read the
+    stack cap; omitting it keeps the original self-loading behaviour.
+    """
     from .operational_contact import (
         formation_at_node_id,
         max_friendly_formations_per_node,
@@ -1311,7 +1328,7 @@ def can_reserve_destination(
         batch_reservations=batch_reservations,
         include_drafts=include_drafts,
     )
-    return used < max_friendly_formations_per_node(state)
+    return used < max_friendly_formations_per_node(state, graph=graph)
 
 
 def _validate_order_against_graph(

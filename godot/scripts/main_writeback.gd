@@ -91,6 +91,8 @@ func _load_snapshot(path: String) -> void:
 		factions_by_id.clear()
 		front_by_origin.clear()
 		all_front_by_origin.clear()
+		orders_by_formation.clear()
+		order_formations_by_province.clear()
 		legal_targets.clear()
 		focus_province_ids.clear()
 		button_rects.clear()
@@ -157,11 +159,15 @@ func _try_build_snapshot_state(path: String) -> Dictionary:
 	if not stack_err.is_empty():
 		return {"ok": false, "error": stack_err}
 
+	var indexed_orders := index_operational_orders(candidate)
+
 	return {
 		"ok": true,
 		"error": "",
 		"path": path,
 		"snapshot": candidate,
+		"orders_by_formation": indexed_orders.get("by_formation", {}),
+		"order_formations_by_province": indexed_orders.get("by_province", {}),
 		"provinces_by_id": tmp_provinces,
 		"battalions_by_province": tmp_battalions_by_province,
 		"battalion_stacks_by_province": tmp_stacks,
@@ -189,6 +195,8 @@ func _commit_snapshot_state(
 	factions_by_id = built.get("factions_by_id", {})
 	front_by_origin = built.get("front_by_origin", {})
 	all_front_by_origin = built.get("all_front_by_origin", {})
+	orders_by_formation = built.get("orders_by_formation", {})
+	order_formations_by_province = built.get("order_formations_by_province", {})
 	legal_targets.clear()
 	focus_province_ids.clear()
 	button_rects.clear()
@@ -235,9 +243,16 @@ func _validate_battalion_stack_contract() -> bool:
 
 
 func _rebuild_legal_targets() -> void:
+	## Movement authority is graph-native: legal targets come from the backend's
+	## validated strategic-formation orders. Battalion selection below is stack
+	## presentation only and never produces a movement command.
 	legal_targets.clear()
 	for origin in all_front_by_origin.keys():
 		front_by_origin[origin] = (all_front_by_origin[origin] as Array).duplicate()
+
+	_ensure_order_formation_selection()
+	for option: Dictionary in orders_by_formation.get(selected_strategic_formation_id, []):
+		legal_targets[String(option.get("target_province_id", ""))] = option
 
 	var stack: Array = battalion_stacks_by_province.get(selected_province_id, [])
 	if stack.is_empty():
@@ -252,7 +267,7 @@ func _rebuild_legal_targets() -> void:
 				selected_battalion_id = candidate_id
 				break
 	if selected_battalion_id.is_empty():
-		selected_battalion_id = String((stack[0] as Dictionary).get("id", ""))
+		selected_battalion_id = _default_battalion_for_selection(stack)
 
 	var representative: Dictionary = battalions_by_id.get(selected_battalion_id, {})
 	if not representative.is_empty():
@@ -263,8 +278,17 @@ func _rebuild_legal_targets() -> void:
 		if String(option.get("battalion_id", "")) != selected_battalion_id:
 			continue
 		selected_options.append(option)
-		legal_targets[String(option.get("target", ""))] = option
 	front_by_origin[selected_province_id] = selected_options
+
+
+func _default_battalion_for_selection(stack: Array) -> String:
+	## Prefer a battalion belonging to the ordering formation so the stack panel
+	## shows the force whose orders are on screen.
+	if not selected_strategic_formation_id.is_empty():
+		for battalion: Dictionary in stack:
+			if String(battalion.get("strategic_formation_id", "")) == selected_strategic_formation_id:
+				return String(battalion.get("id", ""))
+	return String((stack[0] as Dictionary).get("id", ""))
 
 
 func _battalion_has_option(battalion_id: String, options: Array) -> bool:
@@ -313,6 +337,7 @@ func _command_mutates_state(button_id: String) -> bool:
 		"import_battle",
 		"new_campaign",
 		"continue_campaign",
+		"cancel_move_order",
 	]
 
 
@@ -563,6 +588,13 @@ func enabled_action_button_ids() -> PackedStringArray:
 			["run_ai", writeback],
 			["skip_presentation", operational_presenter.is_active()],
 		])
+		# Graph-native movement orders for the selected strategic formation.
+		for option: Dictionary in orders_by_formation.get(selected_strategic_formation_id, []):
+			candidates.append([
+				"move:%s" % String(option.get("target_province_id", "")),
+				writeback,
+			])
+		candidates.append(["cancel_move_order", writeback and _selected_order_is_cancellable()])
 	for entry in candidates:
 		var button_id := String(entry[0])
 		var allow := bool(entry[1])
@@ -571,6 +603,25 @@ func enabled_action_button_ids() -> PackedStringArray:
 		if allow:
 			ids.append(button_id)
 	return ids
+
+
+func selected_formation_move_order() -> Dictionary:
+	## Authoritative order state for the selected formation, straight from the
+	## snapshot. Never inferred from what the UI last dispatched.
+	if selected_strategic_formation_id.is_empty():
+		return {}
+	for force: Dictionary in snapshot.get("strategic_formations", []):
+		if String(force.get("id", "")) != selected_strategic_formation_id:
+			continue
+		var order: Variant = force.get("move_order")
+		return (order as Dictionary).duplicate(true) if order is Dictionary else {}
+	return {}
+
+
+func _selected_order_is_cancellable() -> bool:
+	## Only drafts may be cancelled; committed and active orders are locked by
+	## the backend and the control must not pretend otherwise.
+	return String(selected_formation_move_order().get("status", "")) == "draft"
 
 
 func is_pending_battle_modal_active() -> bool:

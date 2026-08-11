@@ -35,7 +35,7 @@ from .supply import (
 )
 
 
-FRONTEND_SCHEMA_VERSION = 15
+FRONTEND_SCHEMA_VERSION = 16
 FRONTEND_PYTHON_MODULE = "gates_of_codex"
 LEGACY_GOE_MAP_ID = "goe_europe_alpha_graph_v1"
 _LEGACY_GOE_COMPATIBILITY_ALIASES = ("goe_europe", "interim_goe_europe")
@@ -161,14 +161,22 @@ def build_frontend_snapshot(
         if len(human_factions) != 1:
             raise ValueError("fog_of_war_requires_single_human_faction")
         option_faction = human_factions[0]
-    front_options = (
-        list_front_options(state, option_faction)
-        if not state.fog_of_war_enabled or state.current_faction == option_faction
-        else []
+    options_visible = (
+        not state.fog_of_war_enabled or state.current_faction == option_faction
+    )
+    front_options = list_front_options(state, option_faction) if options_visible else []
+    # Graph-native player movement authority (#206). Legacy province adjacency
+    # above is retained only for non-graph scenarios; it never gates these rows.
+    from .operational_order_options import list_operational_move_options
+
+    operational_orders = (
+        list_operational_move_options(state, option_faction) if options_visible else []
     )
     from .presentation import build_stack_presentations
 
-    stack_payload = build_stack_presentations(state, front_options)
+    stack_payload = build_stack_presentations(
+        state, front_options, operational_options=operational_orders
+    )
     battalion_presentations = stack_payload["battalions"]
     strategic_formation_presentations = stack_payload.get("strategic_formations", {})
 
@@ -369,6 +377,7 @@ def build_frontend_snapshot(
         "strategic_formation_presentations": strategic_formation_presentations,
         "pending_battle": _pending_battle(state),
         "front_options": front_options,
+        "operational_orders": operational_orders,
         "control": _control_block(state, campaign_path, snapshot_path),
         "province_names": dict(
             state.map_metadata.get("province_names") or province_name_coverage(state)
@@ -612,6 +621,16 @@ def _apply_s11_frontend_filter(snapshot: dict, state: CampaignState) -> dict:
         for row in snapshot.get("front_options", [])
         if row.get("battalion_id") in actionable_battalions
         and all(item in allowed_battalions for item in row.get("enemies", []))
+    ]
+    # Graph orders only ever describe the observer's own formations, and carry no
+    # enemy identity. Filter explicitly anyway so a future producer change cannot
+    # turn this block into an observation leak.
+    snapshot["operational_orders"] = [
+        row
+        for row in snapshot.get("operational_orders", [])
+        if observer_has_turn
+        and row.get("formation_id") in fully_observed_subjects
+        and str(row.get("faction", "")) == observer.value
     ]
 
     if not _observer_participates_in_pending_battle(state, coalition):
