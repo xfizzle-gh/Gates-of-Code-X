@@ -1,0 +1,46 @@
+; Disposable #201 spike units for goc_dprk. Do not ship as production content.
+
+{"goc_dprk_test_rifle(goc_dprk)"
+	{charge {delay 0}{interval 0}}
+	{content "mp/rusa/2022s/kor_rifleman mp/rusa/2022s/kor_rifleman mp/rusa/2022s/kor_rifleman mp/rusa/2022s/kor_medic"}
+	{tags "conquest conquestonly goc_dprk 2022s"}
+	{level 1}
+	{cost 140}
+	{cp 4}
+	{cw 0}
+	{research_stage 1}
+	{research_stage_max 99}
+	{squad_cost_factor 1}
+	{round_multiple 5.0}
+	{button "inf1"}
+}
+
+{"goc_dprk_test_at(goc_dprk)"
+	{charge {delay 0}{interval 0}}
+	{content "mp/rusa/2022s/kor_squadlead mp/rusa/2022s/kor_antitank_rpg7 mp/rusa/2022s/kor_antitank_rpg7"}
+	{tags "conquest conquestonly goc_dprk 2022s"}
+	{level 1}
+	{cost 130}
+	{cp 3}
+	{cw 0}
+	{research_stage 1}
+	{research_stage_max 99}
+	{squad_cost_factor 1}
+	{round_multiple 5.0}
+	{button "inf2"}
+}
+
+{"goc_dprk_test_vehicle(goc_dprk)"
+	{charge {delay 0}{interval 0}}
+	{content "bmp-1_rus ( mp/rusa/2022s/rus_vehicleman mp/rusa/2022s/rus_vehicleman mp/rusa/2022s/rus_vehicleman )"}
+	{tags "conquest conquestonly goc_dprk 2022s"}
+	{level 1}
+	{cost 280}
+	{cp 6}
+	{cw 2}
+	{research_stage 1}
+	{research_stage_max 99}
+	{squad_cost_factor 1}
+	{round_multiple 5.0}
+	{button "vehicles"}
+}

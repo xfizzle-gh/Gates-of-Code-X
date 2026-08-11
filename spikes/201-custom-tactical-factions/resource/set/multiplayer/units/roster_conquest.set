@@ -1,5 +1,5 @@
 ;sdl
-; Gates #201 additive roster: Code:X/AIO pool + goc_usa/goc_fra
+; Gates #201 additive roster: Code:X/AIO pool + goc_* prototypes
 ; Only includes files present under multiplayer/units/conquest/
 {units
 	(include "conquest/settings.set")
@@ -11,6 +11,9 @@
 	(include "conquest/inf_csa_era1960.set")
 	(include "conquest/inf_goc_usa.set")
 	(include "conquest/inf_goc_fra.set")
+	(include "conquest/inf_goc_srb.set")
+	(include "conquest/inf_goc_rus.set")
+	(include "conquest/inf_goc_dprk.set")
 
 	(include "conquest/units_ukr.set")
 	(include "conquest/units_rusa.set")
@@ -20,4 +23,7 @@
 	(include "conquest/units_prc_era1960.set")
 	(include "conquest/units_goc_usa.set")
 	(include "conquest/units_goc_fra.set")
+	(include "conquest/units_goc_srb.set")
+	(include "conquest/units_goc_rus.set")
+	(include "conquest/units_goc_dprk.set")
 }

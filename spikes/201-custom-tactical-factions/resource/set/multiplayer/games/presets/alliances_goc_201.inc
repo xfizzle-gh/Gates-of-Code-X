@@ -10,5 +10,8 @@
 	{armies "rusa"}
 	{armies "prc"}
 	{armies "goc_fra"}
+	{armies "goc_srb"}
+	{armies "goc_rus"}
+	{armies "goc_dprk"}
 	{icon "/interface/pages/multi/flag_rusa"}
 }

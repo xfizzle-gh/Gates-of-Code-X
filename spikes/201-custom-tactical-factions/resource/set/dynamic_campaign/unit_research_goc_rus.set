@@ -1,0 +1,19 @@
+  {IconGap 30}
+
+;// Disposable #201 isolated research tree - only GOC test units + DC stages.
+
+;// REINFORCEMENTS & DEFENSE LEVELS
+	{ tech "reinforcement_stage_1"		requires ""							costs 0  position 0 0}
+	{ tech "reinforcement_stage_2"		requires "reinforcement_stage_1"	costs 1  position 1 0}
+	{ tech "reinforcement_stage_3"		requires "reinforcement_stage_2"	costs 2  position 2 0}
+	{ tech "reinforcement_stage_4"		requires "reinforcement_stage_3"	costs 5  position 3 0}
+	{ tech "reinforcement_stage_5"		requires "reinforcement_stage_4"	costs 7  position 4 0}
+	
+	{ tech "defense_level_1"			requires "reinforcement_stage_2"	costs 1  position 7 0}
+	{ tech "defense_level_2"			requires "defense_level_1"			costs 5  position 8 0}
+	{ tech "defense_level_3"			requires "defense_level_2"			costs 7  position 9 0}
+
+;// GOC test pool only
+	{"goc_rus_test_rifle(goc_rus)"			requires ""				costs 1 position 1 2}
+	{"goc_rus_test_at(goc_rus)"			requires "goc_rus_test_rifle(goc_rus)"				costs 1 position 3 2}
+	{"goc_rus_test_vehicle(goc_rus)"			requires "goc_rus_test_rifle(goc_rus)"				costs 2 position 5 2}

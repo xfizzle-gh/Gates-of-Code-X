@@ -1,0 +1,6 @@
+; #201 spike inf costs for goc_rus test pool.
+{"mp/rusa/2022s/rus_rifleman"		("rusa_regular" side(goc_rus)) {cost 10.5}}
+{"mp/rusa/2022s/rus_medic"		("rusa_radioman" side(goc_rus)) {cost 14}}
+{"mp/rusa/2022s/rus_squadlead"		("rusa_regular" side(goc_rus)) {cost 14}}
+{"mp/rusa/2022s/rus_antitank"		("rusa_regular" side(goc_rus)) {cost 10.5}}
+{"mp/rusa/2022s/rus_vehicleman"		("rusa_crew" side(goc_rus)) {cost 10}}

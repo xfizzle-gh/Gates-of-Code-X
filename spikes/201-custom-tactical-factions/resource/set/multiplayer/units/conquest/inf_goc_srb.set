@@ -1,0 +1,6 @@
+; #201 spike inf costs for goc_srb test pool.
+{"mp/rusa/2022s/Serb_rifleman"		("rusa_banner" side(goc_srb)) {cost 17.5}}
+{"mp/rusa/2022s/Serb_medic"		("rusa_banner" side(goc_srb)) {cost 21}}
+{"mp/rusa/2022s/Serb_squadlead"		("rusa_banner" side(goc_srb)) {cost 28}}
+{"mp/rusa/2022s/Serb_antitank"		("rusa_banner" side(goc_srb)) {cost 21}}
+{"mp/rusa/2022s/rus_vehicleman"		("rusa_crew" side(goc_srb)) {cost 10.5}}

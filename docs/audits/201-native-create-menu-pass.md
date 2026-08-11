@@ -150,8 +150,20 @@ If owner accepts PASS:
 - Adapt #172 compiler to emit `goc_*` where proven; do not delete four-side path yet.
 - Add deploy recipe/tooling so final layer always has complete includes + registration.
 
+## Follow-up on this branch (Tests B/C fixtures)
+
+After independent review comment `5253018721`:
+
+1. `deploy_standalone.ps1` is idempotent (validate-only; no `conquest.lua` mutation).
+2. Research trees are tiny isolated GOC test pools (no NATO blob).
+3. Test B (`goc_srb`/`goc_rus`) and Test C (`goc_dprk`) prototype seams added.
+4. `deploy.ps1` materializes parent `units/conquest` files from the installed stack with SHA-256 evidence.
+5. Native owner procedure: `docs/audits/201-native-test-handoff.md`.
+
+**Still not a #201 PASS** until owner completes native B/C (and A regression) with logs/saves.
+
 ## Next
 
-1. Independent review of this branch + notes (this PR).  
-2. Owner close/disposition on #201.  
+1. Owner native A regression + B + C per handoff doc.  
+2. Owner disposition on #201.  
 3. Only then: production wiring / extra nations / compiler changes.

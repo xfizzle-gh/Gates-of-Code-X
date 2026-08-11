@@ -1187,3 +1187,15 @@ msgstr ""
 msgctxt "mp/alliance/east"
 msgid "East"
 msgstr ""
+
+msgctxt "mp/army/goc_srb"
+msgid "GOC Serbia spike"
+msgstr "GOC Serbia spike"
+
+msgctxt "mp/army/goc_rus"
+msgid "GOC Russia spike"
+msgstr "GOC Russia spike"
+
+msgctxt "mp/army/goc_dprk"
+msgid "GOC DPRK spike"
+msgstr "GOC DPRK spike"

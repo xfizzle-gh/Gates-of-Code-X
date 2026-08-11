@@ -189,7 +189,7 @@ local function setVarsInMissionScript()
 	-- Keep in sync with dcg/player_nation side map (1 rusa .. 8 pol)
 	local nationMap = { rusa = 1, ukr = 2, nato = 3, csa = 4, sov = 5, prc = 6, frg = 7, pol = 8,
 		-- legacy / alias ids
-		rus = 1, ger = 2, fin = 3, usa = 3, eng = 3, jap = 6 , goc_usa = 9, goc_fra = 10 }
+		rus = 1, ger = 2, fin = 3, usa = 3, eng = 3, jap = 6 , goc_usa = 9, goc_fra = 10, goc_srb = 11, goc_rus = 12, goc_dprk = 13 }
 	local difficultyMap = { easy = 1, normal = 2, hard = 3, heroic = 4 }
 	local spawnMap = { a = 1, b = 2}
 	local playerSpawnNameMap = {
@@ -197,7 +197,7 @@ local function setVarsInMissionScript()
 		b1 = 5, b2 = 6, b3 = 7, b4 = 8,
 	}
 	-- Opposite-alliance guess for MI when {type side} fails (West vs East).
-	local eastNations = { rusa = true, sov = true, prc = true, pol = true, rus = true, jap = true , goc_fra = true }
+	local eastNations = { rusa = true, sov = true, prc = true, pol = true, rus = true, jap = true , goc_fra = true, goc_srb = true, goc_rus = true, goc_dprk = true }
 	local westNations = { nato = true, ukr = true, csa = true, frg = true, usa = true, eng = true, ger = true, fin = true, goc_usa = true }
 
 	BotApi.Scene:SetVar("bot_army", nationMap[botNation] or 0)

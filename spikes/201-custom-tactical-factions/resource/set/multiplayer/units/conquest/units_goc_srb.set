@@ -1,0 +1,46 @@
+; Disposable #201 spike units for goc_srb. Do not ship as production content.
+
+{"goc_srb_test_rifle(goc_srb)"
+	{charge {delay 0}{interval 0}}
+	{content "mp/rusa/2022s/Serb_rifleman mp/rusa/2022s/Serb_rifleman mp/rusa/2022s/Serb_rifleman mp/rusa/2022s/Serb_medic"}
+	{tags "conquest conquestonly goc_srb 2022s"}
+	{level 1}
+	{cost 110}
+	{cp 4}
+	{cw 0}
+	{research_stage 1}
+	{research_stage_max 99}
+	{squad_cost_factor 1}
+	{round_multiple 5.0}
+	{button "inf1"}
+}
+
+{"goc_srb_test_at(goc_srb)"
+	{charge {delay 0}{interval 0}}
+	{content "mp/rusa/2022s/Serb_squadlead mp/rusa/2022s/Serb_antitank mp/rusa/2022s/Serb_antitank"}
+	{tags "conquest conquestonly goc_srb 2022s"}
+	{level 1}
+	{cost 95}
+	{cp 3}
+	{cw 0}
+	{research_stage 1}
+	{research_stage_max 99}
+	{squad_cost_factor 1}
+	{round_multiple 5.0}
+	{button "inf2"}
+}
+
+{"goc_srb_test_vehicle(goc_srb)"
+	{charge {delay 0}{interval 0}}
+	{content "bmp-1_rus ( mp/rusa/2022s/rus_vehicleman mp/rusa/2022s/rus_vehicleman mp/rusa/2022s/rus_vehicleman )"}
+	{tags "conquest conquestonly goc_srb 2022s"}
+	{level 1}
+	{cost 280}
+	{cp 6}
+	{cw 2}
+	{research_stage 1}
+	{research_stage_max 99}
+	{squad_cost_factor 1}
+	{round_multiple 5.0}
+	{button "vehicles"}
+}

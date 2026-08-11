@@ -1,0 +1,6 @@
+; #201 spike inf costs for goc_dprk test pool.
+{"mp/rusa/2022s/kor_rifleman"		("rusa_spetsnaz" side(goc_dprk)) {cost 28}}
+{"mp/rusa/2022s/kor_medic"		("rusa_spetsnaz" side(goc_dprk)) {cost 32}}
+{"mp/rusa/2022s/kor_squadlead"		("rusa_spetsnaz" side(goc_dprk)) {cost 36}}
+{"mp/rusa/2022s/kor_antitank_rpg7"		("rusa_spetsnaz" side(goc_dprk)) {cost 36}}
+{"mp/rusa/2022s/rus_vehicleman"		("rusa_crew" side(goc_dprk)) {cost 10.5}}

@@ -1,0 +1,46 @@
+; Disposable #201 spike units for goc_rus. Do not ship as production content.
+
+{"goc_rus_test_rifle(goc_rus)"
+	{charge {delay 0}{interval 0}}
+	{content "mp/rusa/2022s/rus_rifleman mp/rusa/2022s/rus_rifleman mp/rusa/2022s/rus_rifleman mp/rusa/2022s/rus_medic"}
+	{tags "conquest conquestonly goc_rus 2022s"}
+	{level 1}
+	{cost 105}
+	{cp 4}
+	{cw 0}
+	{research_stage 1}
+	{research_stage_max 99}
+	{squad_cost_factor 1}
+	{round_multiple 5.0}
+	{button "inf1"}
+}
+
+{"goc_rus_test_at(goc_rus)"
+	{charge {delay 0}{interval 0}}
+	{content "mp/rusa/2022s/rus_squadlead mp/rusa/2022s/rus_antitank mp/rusa/2022s/rus_antitank"}
+	{tags "conquest conquestonly goc_rus 2022s"}
+	{level 1}
+	{cost 90}
+	{cp 3}
+	{cw 0}
+	{research_stage 1}
+	{research_stage_max 99}
+	{squad_cost_factor 1}
+	{round_multiple 5.0}
+	{button "inf2"}
+}
+
+{"goc_rus_test_vehicle(goc_rus)"
+	{charge {delay 0}{interval 0}}
+	{content "btr-82a ( mp/rusa/2022s/rus_vehicleman mp/rusa/2022s/rus_vehicleman mp/rusa/2022s/rus_vehicleman )"}
+	{tags "conquest conquestonly goc_rus 2022s"}
+	{level 1}
+	{cost 220}
+	{cp 4}
+	{cw 2}
+	{research_stage 1}
+	{research_stage_max 99}
+	{squad_cost_factor 1}
+	{round_multiple 5.0}
+	{button "vehicles"}
+}
