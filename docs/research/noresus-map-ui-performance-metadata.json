@@ -1,0 +1,37 @@
+{
+  "schema": "gates-of-codex.noresus-map-ui-static-study.v1",
+  "reference": {
+    "workshop_item": "3180617465",
+    "archive_sha256": "c58a1da76c65b682236d868f6790dcbf6ef9707365d4dcfc883ab59111034659",
+    "execution_status": "static_only"
+  },
+  "map": {
+    "main_background": {"path": "map/mappa.jpg", "width": 5000, "height": 4532, "mode": "RGB"},
+    "minimap": {"path": "map/mini_mappa.jpg", "width": 250, "height": 227, "mode": "RGB"},
+    "minimap_grayscale": {"path": "map/mini_mappa_n.jpg", "width": 250, "height": 227},
+    "strategic_region_count": 639,
+    "region_boundary_model": "pixel_coordinate_polylines",
+    "region_anchor_columns": ["ic1", "ic2", "ic3", "ic4", "ic5"]
+  },
+  "observed_icon_dimensions": {
+    "formation_symbols": [33, 17],
+    "flags_typical": [32, 16],
+    "capital": [18, 18],
+    "resource_icons_typical": [27, 27],
+    "research_typical": [22, 22],
+    "air_support": [36, 36]
+  },
+  "current_gates_comparison": {
+    "earth3_provinces": 3514,
+    "earth3_land_selectable": 3299,
+    "earth3_water_metadata": 215,
+    "earth3_mesh_count_after_pr_c": 4,
+    "earth3_process_draw_calls_after_pr_c_approx": 3778,
+    "earth3_idle_frame_ms_after_pr_c": 52.4,
+    "earth3_pan_frame_ms_after_pr_c": 50.3,
+    "earth3_zoom_frame_ms_after_pr_c": 65.6,
+    "backend_command_cycle_observed_seconds": [20, 40],
+    "frontend_snapshot_observed_mb_approx": 14.0
+  },
+  "conclusion": "NORESUS primarily reduces the presentation problem through a static raster map, sparse fixed-size sprite overlays, a small independent minimap, and 639 coarse strategic regions. Gates should retain Earth3 polygon authority while benchmarking a cached/tiled raster presentation layer, batched original icon atlas, sparse dynamic overlays, and label/layer LOD. Backend snapshot latency is a separate #207 problem."
+}
