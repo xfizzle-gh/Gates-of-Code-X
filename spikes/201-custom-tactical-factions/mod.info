@@ -1,0 +1,7 @@
+{mod
+	{name "GOC 201 Custom Faction Spike"}
+	{tags "multiplayer conquest dynamic_campaign development"}
+	{desc "Disposable #201 custom-faction Dynamic Conquest test pack. Load after West-81, Code-X, and Code:X AI Overhaul. Owns the Conquest picker/CTF while enabled; do not enable other Conquest faction replacement packs at the same time."}
+	{minGameVersion "any"}
+	{maxGameVersion "any"}
+}
