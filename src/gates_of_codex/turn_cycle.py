@@ -12,7 +12,7 @@ the selected faction or a pending battle interrupts the cycle.
 from typing import Any
 
 from .campaign import CampaignEngine
-from .models import CampaignState, Faction
+from .models import CampaignState
 from .strategic_ai import StrategicAI
 
 
@@ -29,6 +29,11 @@ def end_player_round(state: CampaignState) -> dict[str, Any]:
     attempting another turn, preserving the normal modal battle gate.
     """
 
+    from .observation import (
+        ObservationMutationContext,
+        merge_observation_mutation_contexts,
+    )
+
     if state.pending_battle is not None:
         raise RuntimeError("Cannot end player round with a pending battle")
 
@@ -40,6 +45,7 @@ def end_player_round(state: CampaignState) -> dict[str, Any]:
     engine = CampaignEngine(state)
     starting_turn = int(state.turn_number)
     ai_factions: list[str] = []
+    observation_context = ObservationMutationContext()
 
     # The human has finished planning. Move to the first active AI seat.
     if state.current_faction == selected:
@@ -62,7 +68,12 @@ def end_player_round(state: CampaignState) -> dict[str, Any]:
             engine.end_turn()
             steps += 1
             continue
-        StrategicAI(state).take_turn(faction)
+        ai = StrategicAI(state)
+        ai.take_turn(faction)
+        observation_context = merge_observation_mutation_contexts(
+            observation_context,
+            ai.observation_context,
+        )
         ai_factions.append(faction.value)
         if state.pending_battle is not None:
             break
@@ -74,6 +85,10 @@ def end_player_round(state: CampaignState) -> dict[str, Any]:
             "Player round did not return to selected faction within canonical turn order"
         )
 
+    observation_context = merge_observation_mutation_contexts(
+        observation_context,
+        engine.observation_context,
+    )
     return {
         "selected_faction": selected.value,
         "current_faction": state.current_faction.value,
@@ -81,6 +96,10 @@ def end_player_round(state: CampaignState) -> dict[str, Any]:
         "starting_turn": starting_turn,
         "turn_number": int(state.turn_number),
         "pending_battle": state.pending_battle is not None,
+        # ``apply_frontend_commands`` consumes and removes this private key
+        # before publishing the command result, exactly like the existing
+        # ``run_ai`` path. Combining AI seats must not lose S11 witness state.
+        "_observation_context": observation_context,
     }
 
 
