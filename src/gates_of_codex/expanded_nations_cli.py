@@ -56,6 +56,7 @@ def _parser() -> argparse.ArgumentParser:
     matrix.add_argument("--stack-config", required=True)
     matrix.add_argument("--gates-root")
     matrix.add_argument("--source-head", required=True)
+    matrix.add_argument("--source-repo", help="implementation git checkout for exact-head proof")
     matrix.add_argument("--json-output", required=True)
     matrix.add_argument("--markdown-output", required=True)
     cost = subparsers.add_parser(
@@ -148,6 +149,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.stack_config,
             gates_root=args.gates_root,
             source_head=args.source_head,
+            source_repo=getattr(args, "source_repo", None),
         )
         write_projection_matrix_evidence(
             matrix,

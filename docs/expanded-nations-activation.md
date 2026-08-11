@@ -74,8 +74,9 @@ Matrix generation must begin in Core mode. It activates and semantically verifie
 
 py -3.11 -m gates_of_codex.expanded_nations_cli matrix `
   --stack-config .\config\mod-stack.windows.json `
-  --gates-root . `
+  --gates-root $env:GATES_CODEX_ROOT `
   --source-head (git rev-parse HEAD).Trim() `
+  --source-repo . `
   --json-output .\docs\audits\expanded-nations-projection-signatures.json `
   --markdown-output .\docs\audits\expanded-nations-projection-matrix.md
 ```
