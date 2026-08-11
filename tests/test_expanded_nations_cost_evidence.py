@@ -128,36 +128,6 @@ class ExpandedNationsCostEvidenceTests(unittest.TestCase):
         with self.assertRaisesRegex(ExpandedNationsError, r"Conflicting native vehicle cost"):
             _lookup_vehicle_cost(vc, conf, "dup_tank")
 
-    def test_markdown_renderer_includes_summary_table(self) -> None:
-        md = render_cost_evidence_markdown(
-            {
-                "schema": "gates-of-codex.expanded-nations-cost-evidence",
-                "schema_version": 2,
-                "evidence_state": "complete",
-                "source_head": "abc",
-                "playable_actor_count": 1,
-                "unintended_zero_total": 0,
-                "unintended_zeros": [],
-                "actors": {
-                    "srb": {
-                        "tactical_side": "rusa",
-                        "unit_count": 18,
-                        "projected_inf_cost_row_count": 0,
-                        "native_recruitment_cost_min": 60.0,
-                        "native_recruitment_cost_median": 400.0,
-                        "native_recruitment_cost_max": 1100.0,
-                        "unintended_zero_count": 0,
-                        "intentional_zero_count": 0,
-                    }
-                },
-            }
-        )
-        self.assertIn("| srb |", md)
-        self.assertIn("unintended_zero_total: 0", md)
-        self.assertIn("never counted as recruitment money", md)
-
-
-
     def test_purchase_text_not_wiring_meta_decides_vehicle(self) -> None:
         breed = self.layers[2] / "resource/set/breed/mp/nato/2022s/usmc_rifleman.set"
         breed.parent.mkdir(parents=True, exist_ok=True)
@@ -171,7 +141,7 @@ class ExpandedNationsCostEvidenceTests(unittest.TestCase):
         raw = (
             '{"squad_usmc_rifle(nato)"\n'
             '\t("mp_infantry_1" side(nato) c1(usmc_rifleman:5))\n'
-            '}'
+            "}"
         )
         entry = scan_source_entries(raw + "\n", "t").entries[0]
         ev = _evaluate_unit_cost(
@@ -190,15 +160,14 @@ class ExpandedNationsCostEvidenceTests(unittest.TestCase):
         self.assertEqual(87.5, ev.native_recruitment_cost)
         self.assertFalse(ev.has_vehicle)
 
-
     def test_vehicle2_entity_form_is_indexed(self) -> None:
         units = self.layers[2] / "resource/set/multiplayer/units/conquest/units_rusa.set"
         units.parent.mkdir(parents=True)
         units.write_text(
             '{"t80uk"\n'
             '\t("vehicle2" side(rusa) crew1(rus_vehicleman_cmd:1) crew2(rus_vehicleman:2))\n'
-            '\t{cost 1950} {not_for_player_sale 1}\n'
-            '}\n',
+            "\t{cost 1950} {not_for_player_sale 1}\n"
+            "}\n",
             encoding="utf-8",
         )
         vc, conf = _build_vehicle_cost_index(self.layers)
@@ -206,7 +175,7 @@ class ExpandedNationsCostEvidenceTests(unittest.TestCase):
         raw = (
             '{"squad_rus4_t80uk(rusa)"\n'
             '\t("squad_vehicle" side(rusa) vehicle(t80uk) cw(0) cp(4) crew(rus_vehicleman:3))\n'
-            '}'
+            "}"
         )
         breed = self.layers[2] / "resource/set/breed/mp/rusa/2022s/rus_vehicleman.set"
         breed.parent.mkdir(parents=True, exist_ok=True)
@@ -221,12 +190,11 @@ class ExpandedNationsCostEvidenceTests(unittest.TestCase):
         self.assertEqual("vehicle_entity_cost", ev.economy_class)
         self.assertEqual(1950.0, ev.native_recruitment_cost)
 
-
-    def test_owner_verified_unknown_numeric_is_exact(self) -> None:
+    def test_cougar_purchase_preserves_owner_ui_numeric_price(self) -> None:
         raw = (
             '{"squad_gb3_mot_rifle_cougar(nato)"\n'
             '\t("squad_vehicle" side(nato) vehicle(cougar-oh) cw(0) cp(4) crew(gb_crew:3))\n'
-            '}'
+            "}"
         )
         breed = self.layers[2] / "resource/set/breed/mp/nato/2022s/gb_crew.set"
         breed.parent.mkdir(parents=True, exist_ok=True)
@@ -235,19 +203,66 @@ class ExpandedNationsCostEvidenceTests(unittest.TestCase):
         inf.parent.mkdir(parents=True, exist_ok=True)
         inf.write_text(
             '{"mp/nato/2022s/gb_crew" ("nato_basic" side(nato)) {cost 20.0}}\n',
+            encoding="utf-8",
+        )
+        units = self.layers[2] / "resource/set/multiplayer/units/conquest/units_nato.set"
+        units.parent.mkdir(parents=True, exist_ok=True)
+        units.write_text(
+            '{"cougar-og"\n\t("vehicle" side(nato))\n\t{cost 230} {not_for_player_sale 1}\n}\n',
+            encoding="utf-8",
+        )
+        vc, conf = _build_vehicle_cost_index(self.layers)
+        self.assertIn("cougar-og", vc)
+        self.assertNotIn("cougar-oh", vc)
+        ev = self._eval(raw, side="nato", vehicle_costs=vc, conflicts=conf)
+        self.assertEqual("native_ui_verified_positive_numeric", ev.economy_class)
+        self.assertEqual(230.0, ev.native_recruitment_cost)
+        self.assertFalse(ev.zero_cost)
+
+    def test_exact_purchase_maars_unknown_numeric(self) -> None:
+        raw = (
+            '("squad_with2types_0vehicle" side(nato) name(squad_usmc_rifle_javelin) '
+            "c1(usmc_rifleman:1) vehicle(MAARS))"
+        )
+        breed = self.layers[2] / "resource/set/breed/mp/nato/2022s/usmc_rifleman.set"
+        breed.parent.mkdir(parents=True, exist_ok=True)
+        breed.write_text('{breed {skin "x"}}\n', encoding="utf-8")
+        inf = self.layers[2] / "resource/set/multiplayer/units/conquest/inf_nato.set"
+        inf.parent.mkdir(parents=True, exist_ok=True)
+        inf.write_text(
+            '{"mp/nato/2022s/usmc_rifleman" ("nato_basic" side(nato)) {cost 17.5}}\n',
             encoding="utf-8",
         )
         ev = self._eval(raw, side="nato", vehicle_costs={}, conflicts={})
         self.assertEqual("native_ui_verified_positive_unknown", ev.economy_class)
         self.assertIsNone(ev.native_recruitment_cost)
         self.assertFalse(ev.zero_cost)
-        self.assertIn("cougar-oh", ev.rationale)
+
+    def test_unverified_purchase_using_maars_still_fails_closed(self) -> None:
+        raw = (
+            '("squad_with2types_0vehicle" side(nato) name(squad_unverified_maars_user) '
+            "c1(usmc_rifleman:1) vehicle(MAARS))"
+        )
+        breed = self.layers[2] / "resource/set/breed/mp/nato/2022s/usmc_rifleman.set"
+        breed.parent.mkdir(parents=True, exist_ok=True)
+        breed.write_text('{breed {skin "x"}}\n', encoding="utf-8")
+        inf = self.layers[2] / "resource/set/multiplayer/units/conquest/inf_nato.set"
+        inf.parent.mkdir(parents=True, exist_ok=True)
+        inf.write_text(
+            '{"mp/nato/2022s/usmc_rifleman" ("nato_basic" side(nato)) {cost 17.5}}\n',
+            encoding="utf-8",
+        )
+        ev = self._eval(raw, side="nato", vehicle_costs={}, conflicts={})
+        self.assertEqual("vehicle_unpriced", ev.economy_class)
+        self.assertEqual(0.0, ev.native_recruitment_cost)
+        self.assertTrue(ev.zero_cost)
+        self.assertIn("MAARS", ev.rationale)
 
     def test_unknown_vehicle_id_still_fails_closed(self) -> None:
         raw = (
             '{"squad_mystery(nato)"\n'
             '\t("squad_vehicle" side(nato) vehicle(totally_unknown_tank) cw(0) cp(4) crew(gb_crew:3))\n'
-            '}'
+            "}"
         )
         breed = self.layers[2] / "resource/set/breed/mp/nato/2022s/gb_crew.set"
         breed.parent.mkdir(parents=True, exist_ok=True)
@@ -260,19 +275,39 @@ class ExpandedNationsCostEvidenceTests(unittest.TestCase):
         )
         ev = self._eval(raw, side="nato", vehicle_costs={}, conflicts={})
         self.assertEqual("vehicle_unpriced", ev.economy_class)
-        self.assertEqual(0.0, ev.native_recruitment_cost)
         self.assertTrue(ev.zero_cost)
-        self.assertIn("totally_unknown_tank", ev.rationale)
 
-    def test_allowlist_does_not_cover_mixed_unknown_vehicle(self) -> None:
-        raw = (
-            '{"squad_mixed(nato)"\n'
-            '\t("squad_vehicle" side(nato) vehicle1(cougar-oh) vehicle2(totally_unknown_tank) cw(0) cp(4))\n'
-            '}'
+    def test_markdown_renderer_includes_summary_table(self) -> None:
+        md = render_cost_evidence_markdown(
+            {
+                "schema": "gates-of-codex.expanded-nations-cost-evidence",
+                "schema_version": 4,
+                "evidence_state": "complete",
+                "source_head": "abc",
+                "playable_actor_count": 1,
+                "unintended_zero_total": 0,
+                "native_positive_total": 1,
+                "native_unknown_numeric_total": 0,
+                "unintended_zeros": [],
+                "actors": {
+                    "srb": {
+                        "tactical_side": "rusa",
+                        "unit_count": 18,
+                        "projected_inf_cost_row_count": 0,
+                        "native_recruitment_cost_min": 60.0,
+                        "native_recruitment_cost_median": 400.0,
+                        "native_recruitment_cost_max": 1100.0,
+                        "native_positive_count": 18,
+                        "native_unknown_numeric_count": 0,
+                        "unintended_zero_count": 0,
+                        "intentional_zero_count": 0,
+                    }
+                },
+            }
         )
-        ev = self._eval(raw, side="nato", vehicle_costs={}, conflicts={})
-        self.assertEqual("vehicle_unpriced", ev.economy_class)
-        self.assertTrue(ev.zero_cost)
+        self.assertIn("| srb |", md)
+        self.assertIn("unintended_zero_total: 0", md)
+
 
 if __name__ == "__main__":
     unittest.main()

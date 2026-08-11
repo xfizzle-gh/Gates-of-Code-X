@@ -35,7 +35,7 @@ from .goh_source import scan_source_entries
 from .modstack import normalize_stack, resource_root
 
 COST_EVIDENCE_SCHEMA = "gates-of-codex.expanded-nations-cost-evidence"
-COST_EVIDENCE_VERSION = 3
+COST_EVIDENCE_VERSION = 4
 
 _MEMBER_RE = re.compile(
     r"\bc\d+\s*\(\s*([A-Za-z0-9_./+-]+)\s*:\s*(\d+)\s*\)",
@@ -49,17 +49,23 @@ _VEHICLE_COST_RE = re.compile(
 )
 _VEHICLE_CALL_RE = re.compile(r"\bvehicle\d*\s*\(\s*([^)\s]+)\s*\)", re.IGNORECASE)
 
-# Owner-native-UI verified: these exact vehicle IDs display a positive recruitment
-# money price in GoH, but the installed stack has no parseable money-cost row under
-# that exact ID. Keep the exception exact; do not invent numeric prices.
-_NATIVE_UI_VERIFIED_POSITIVE_UNKNOWN_VEHICLE_IDS = frozenset({
-    "cougar-oh",
-    "m2a2_ods_bradley_arat_rus",
-    "novator",
-    "m109_paladin_n",
-    "m270_n_clu",
-    "maars",
-})
+# Owner-native-UI verified purchase exceptions only.
+# Keyed by exact activated purchase ID (with optional side-suffix variants listed
+# explicitly). Value is (expected_vehicle_id, optional_numeric_price).
+# - numeric price set: preserve owner UI money value without inventing stack rows
+# - numeric price None: positive price confirmed, exact number unknown
+# Do not broaden to bare vehicle-ID allowlists.
+_NATIVE_UI_VERIFIED_PURCHASE_VEHICLE_LEDGER: Mapping[str, tuple[str, float | None]] = {
+    "squad_gb3_mot_rifle_cougar(nato)": ("cougar-oh", 230.0),
+    "squad_rus155_m2a2_2022(rusa)": ("m2a2_ods_bradley_arat_rus", None),
+    "squad_ukr93_razv_novator(ukr)": ("novator", None),
+    "squad_tank1_m109(nato)": ("m109_paladin_n", None),
+    "squad_tank1_m270(nato)": ("m270_n_clu", None),
+    "squad_usmc_rifle_javelin": ("maars", None),
+    "squad_usmc_rifle_javelin(nato)": ("maars", None),
+    "squad_usmc_rifle_m3": ("maars", None),
+    "squad_usmc_rifle_m3(nato)": ("maars", None),
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -366,6 +372,39 @@ def generate_cost_evidence_from_stack_config(
     )
 
 
+
+def _native_ui_purchase_exception(
+    entry_name: str,
+    vehicle_names: Sequence[str],
+) -> tuple[str, float | None] | None:
+    """Return (expected_vehicle, optional_price) for an exact purchase exception."""
+
+    candidates = [entry_name]
+    if "(" in entry_name:
+        candidates.append(entry_name.split("(", 1)[0])
+    else:
+        # also try common side suffixes when activated name lacks them
+        pass
+    for key in candidates:
+        row = _NATIVE_UI_VERIFIED_PURCHASE_VEHICLE_LEDGER.get(key)
+        if row is None:
+            # case-insensitive purchase key match
+            for ledger_key, ledger_val in _NATIVE_UI_VERIFIED_PURCHASE_VEHICLE_LEDGER.items():
+                if ledger_key.casefold() == key.casefold():
+                    row = ledger_val
+                    break
+        if row is None:
+            continue
+        expected_vehicle, price = row
+        veh_folded = {n.casefold() for n in vehicle_names}
+        if expected_vehicle.casefold() not in veh_folded:
+            continue
+        # Exception only when this expected vehicle is among the unresolved set
+        # and no extra non-allowlisted vehicle bodies are present.
+        return expected_vehicle, price
+    return None
+
+
 def _evaluate_unit_cost(
     *,
     entry_name: str,
@@ -481,23 +520,41 @@ def _evaluate_unit_cost(
         intentional = False
     elif has_vehicle:
         gap_names = list(missing_vehicles or vehicle_names)
-        gap_folded = {n.casefold() for n in gap_names}
-        allow_folded = {n.casefold() for n in _NATIVE_UI_VERIFIED_POSITIVE_UNKNOWN_VEHICLE_IDS}
+        exception = None
         if (
             gap_names
-            and gap_folded <= allow_folded
             and vehicle_lookup_error is None
             and purchase_cost in (None, 0.0)
             and vehicle_entity_cost is None
         ):
-            economy = "native_ui_verified_positive_unknown"
-            native = None
-            rationale = (
-                "owner native-UI verified positive recruitment money with no parseable "
-                f"exact vehicle money row for {', '.join(gap_names)}; numeric price unknown"
-            )
-            zero = False
-            intentional = False
+            exception = _native_ui_purchase_exception(entry_name, gap_names)
+            # Require the exception vehicle set to match exactly the unresolved bodies.
+            if exception is not None:
+                expected_vehicle, _price = exception
+                if {n.casefold() for n in gap_names} != {expected_vehicle.casefold()}:
+                    exception = None
+        if exception is not None:
+            expected_vehicle, ui_price = exception
+            if ui_price is not None and ui_price > 0:
+                economy = "native_ui_verified_positive_numeric"
+                native = float(ui_price)
+                rationale = (
+                    "owner native-UI verified exact recruitment money for purchase "
+                    f"{entry_name} / vehicle {expected_vehicle}; stack lacks parseable "
+                    f"exact vehicle money row (preserved UI price {ui_price:g})"
+                )
+                zero = False
+                intentional = False
+            else:
+                economy = "native_ui_verified_positive_unknown"
+                native = None
+                rationale = (
+                    "owner native-UI verified positive recruitment money for purchase "
+                    f"{entry_name} / vehicle {expected_vehicle}; numeric price unknown "
+                    "and stack lacks parseable exact vehicle money row"
+                )
+                zero = False
+                intentional = False
         else:
             economy = "vehicle_unpriced"
             native = 0.0
