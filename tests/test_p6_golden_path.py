@@ -372,7 +372,7 @@ class P6GoldenPathTests(unittest.TestCase):
             self.assertTrue(snapshot.is_file())
             snapshot_payload = json.loads(snapshot.read_text(encoding="utf-8"))
             maintenance = snapshot_payload["control"]["maintenance"]
-            self.assertTrue(maintenance["destructive_controls_allowed"], maintenance)
+            self.assertTrue(maintenance["reset_available"], maintenance)
             self.assertIn(
                 "reset_test_campaign", snapshot_payload["control"]["supported_ops"]
             )
