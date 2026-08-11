@@ -1,6 +1,3 @@
--- Overlay on CodeX Conquest AI Overhaul 1.5 (3636883799) conquest.lua
--- AI Overhaul remains in mod load order; this file only extends nationMap for #201.
--- Adds goc_usa=9, goc_fra=10 (and westNations hints).
 require([[/script/multiplayer/modes/utility]])
 require([[/script/multiplayer/modes/utility_ce]])
 
@@ -192,9 +189,7 @@ local function setVarsInMissionScript()
 	-- Keep in sync with dcg/player_nation side map (1 rusa .. 8 pol)
 	local nationMap = { rusa = 1, ukr = 2, nato = 3, csa = 4, sov = 5, prc = 6, frg = 7, pol = 8,
 		-- legacy / alias ids
-		rus = 1, ger = 2, fin = 3, usa = 3, eng = 3, jap = 6,
-		-- #201 disposable custom tactical factions
-		goc_usa = 9, goc_fra = 10 }
+		rus = 1, ger = 2, fin = 3, usa = 3, eng = 3, jap = 6 , goc_usa = 9, goc_fra = 10 }
 	local difficultyMap = { easy = 1, normal = 2, hard = 3, heroic = 4 }
 	local spawnMap = { a = 1, b = 2}
 	local playerSpawnNameMap = {
@@ -202,9 +197,8 @@ local function setVarsInMissionScript()
 		b1 = 5, b2 = 6, b3 = 7, b4 = 8,
 	}
 	-- Opposite-alliance guess for MI when {type side} fails (West vs East).
-	local eastNations = { rusa = true, sov = true, prc = true, pol = true, rus = true, jap = true }
-	local westNations = { nato = true, ukr = true, csa = true, frg = true, usa = true, eng = true, ger = true, fin = true,
-		goc_usa = true, goc_fra = true }
+	local eastNations = { rusa = true, sov = true, prc = true, pol = true, rus = true, jap = true , goc_fra = true }
+	local westNations = { nato = true, ukr = true, csa = true, frg = true, usa = true, eng = true, ger = true, fin = true, goc_usa = true }
 
 	BotApi.Scene:SetVar("bot_army", nationMap[botNation] or 0)
 	-- Hint only: MI dcg/player_nation remains authority when side matches.
@@ -264,7 +258,7 @@ local waveUnitTotal
 -- local waveUnitTotal = math.random(adjustedMin, adjustedMax)
 if printDebug then print("Print: waveUnitTotal", waveUnitTotal) end
 
--- 定义每个师的优先级调整乘数
+-- å®šä¹‰æ¯ä¸ªå¸ˆçš„ä¼˜å…ˆçº§è°ƒæ•´ä¹˜æ•°
 local divisions = {
     ["inf_div"] = { attackerMultiplier = 10, defenderMultiplier = 5, mechMultiplier = 0.25,
 					infantryMultiplier = 1.5, signallerMultiplier = 1.0, cannonMultiplier = 0.5, artMultiplier = 0.5, tankMultiplier = 0.75, 
@@ -300,21 +294,21 @@ local divisions = {
 				     }
 }
 
--- 选择一个师（根据实际需求选择）
+-- é€‰æ‹©ä¸€ä¸ªå¸ˆï¼ˆæ ¹æ®å®žé™…éœ€æ±‚é€‰æ‹©ï¼‰
 local divisionNames = {"inf_div", "art_div", "tank_div", "heavytank_div", "air_div", "standard_div", "mech_div", "unique_div"}
 
 -- local divisionsWithProbability = {
-    -- {name = "inf_div", probability = 10},  -- 10% 概率
-    -- {name = "art_div", probability = 10},  -- 10% 概率
-    -- {name = "tank_div", probability = 20}, -- 15% 概率
-    -- {name = "heavytank_div", probability = 15}, -- 15% 概率
-    -- {name = "air_div", probability = 10},  -- 10% 概率
-    -- {name = "standard_div", probability = 15}, -- 15% 概率
-    -- {name = "mech_div", probability = 10},  -- 10% 概率
-    -- {name = "unique_div", probability = 10},  -- 10% 概率（特殊）
+    -- {name = "inf_div", probability = 10},  -- 10% æ¦‚çŽ‡
+    -- {name = "art_div", probability = 10},  -- 10% æ¦‚çŽ‡
+    -- {name = "tank_div", probability = 20}, -- 15% æ¦‚çŽ‡
+    -- {name = "heavytank_div", probability = 15}, -- 15% æ¦‚çŽ‡
+    -- {name = "air_div", probability = 10},  -- 10% æ¦‚çŽ‡
+    -- {name = "standard_div", probability = 15}, -- 15% æ¦‚çŽ‡
+    -- {name = "mech_div", probability = 10},  -- 10% æ¦‚çŽ‡
+    -- {name = "unique_div", probability = 10},  -- 10% æ¦‚çŽ‡ï¼ˆç‰¹æ®Šï¼‰
 -- }
 
--- 加权随机选择函数
+-- åŠ æƒéšæœºé€‰æ‹©å‡½æ•°
 -- local function selectDivisionWithProbability(divisions)
     -- local totalProbability = 0
     -- for _, div in ipairs(divisions) do
@@ -332,12 +326,12 @@ local divisionNames = {"inf_div", "art_div", "tank_div", "heavytank_div", "air_d
 -- end
 
 -- local selectedDivision = divisionNames[math.random(#divisionNames)]
--- 基础随机选择
+-- åŸºç¡€éšæœºé€‰æ‹©
 local function selectRandomDivision()
     return divisionNames[math.random(#divisionNames)]
 end
 
--- 根据波次选择师
+-- æ ¹æ®æ³¢æ¬¡é€‰æ‹©å¸ˆ
 -- local function selectDivisionBasedOnWave(waveNumber)
     -- if waveNumber == 3 then
         -- return "art_div"
@@ -350,13 +344,13 @@ end
     -- end
 -- end
 
--- 示例：初始随机选择师
-local currentDivision = selectRandomDivision()  -- 初始随机选择师
+-- ç¤ºä¾‹ï¼šåˆå§‹éšæœºé€‰æ‹©å¸ˆ
+local currentDivision = selectRandomDivision()  -- åˆå§‹éšæœºé€‰æ‹©å¸ˆ
 
--- 获取该师的优先级调整参数
+-- èŽ·å–è¯¥å¸ˆçš„ä¼˜å…ˆçº§è°ƒæ•´å‚æ•°
 local divisionParams = divisions[currentDivision]-- [selectedDivision]
 
--- 获取该师的讲述人系统
+-- èŽ·å–è¯¥å¸ˆçš„è®²è¿°äººç³»ç»Ÿ
 local function setDocVarsInNattorSpeak(currentDivision)
 	
 	local divisionsOnAi = { inf_div = 1, art_div = 2, tank_div = 3, heavytank_div = 4, air_div = 5, standard_div = 6, mech_div = 7, unique_div = 8}
@@ -378,20 +372,20 @@ local function setDocVarsInNattorSpeak(currentDivision)
 end
 
 local waveNumberExtraUnits = {
-    [3] = 3,  -- waveNumber 为 3 时，额外增加 5
-    [5] = 5, -- waveNumber 为 5 时，额外增加 7
-    [7] = 7, -- waveNumber 为 7 时，额外增加 10
-    [10] = 10, -- waveNumber 为 10 时，额外增加 13
-    [13] = 13, -- waveNumber 为 13 时，额外增加 15
-    [15] = 15, -- waveNumber 为 15 时，额外增加 17
+    [3] = 3,  -- waveNumber ä¸º 3 æ—¶ï¼Œé¢å¤–å¢žåŠ  5
+    [5] = 5, -- waveNumber ä¸º 5 æ—¶ï¼Œé¢å¤–å¢žåŠ  7
+    [7] = 7, -- waveNumber ä¸º 7 æ—¶ï¼Œé¢å¤–å¢žåŠ  10
+    [10] = 10, -- waveNumber ä¸º 10 æ—¶ï¼Œé¢å¤–å¢žåŠ  13
+    [13] = 13, -- waveNumber ä¸º 13 æ—¶ï¼Œé¢å¤–å¢žåŠ  15
+    [15] = 15, -- waveNumber ä¸º 15 æ—¶ï¼Œé¢å¤–å¢žåŠ  17
 }
 
--- 自定义四舍五入函数
+-- è‡ªå®šä¹‰å››èˆäº”å…¥å‡½æ•°
 function math.round(x)
     return math.floor(x + 0.5)
 end
 
--- 计算 waveUnitTotal 的函数
+-- è®¡ç®— waveUnitTotal çš„å‡½æ•°
 function calculateWaveUnitTotal()-- (currentDivision, waveNumber, botDefender)
 	local ExtraUnitsValue = math.round((waveNumberExtraUnits[waveNumber] or 0) * ActiveDifficultySettings.waveGrowthScale)
 	local divisionParams = divisions[currentDivision]
@@ -797,7 +791,7 @@ end
 
 -- Attack missions often never raise PrepTimeOver. Publish prep_inform once the
 -- human is confirmed attacker so MI attack probes are not gated forever.
--- NOTE: must stay ABOVE OnGameQuant — a local defined after its caller resolves
+-- NOTE: must stay ABOVE OnGameQuant â€” a local defined after its caller resolves
 -- to a nil global at call time and hard-crashes the bot on its first quant.
 -- botDefender is THIS BOT's role: true means the bot defends, so the human is the
 -- ATTACKER (SetVar("user_is_defender", botDefender and 0 or 1) right above, and
@@ -863,7 +857,7 @@ function IsSquadInScript(squad)
 	return false
 end
 
--- MI/repair only — alert must not block a forced spawn kick.
+-- MI/repair only â€” alert must not block a forced spawn kick.
 local function IsSquadReserved(squad)
 	return BotApi.Scene:IsSquadTagged(squad, "_lua_mi") or BotApi.Scene:IsSquadTagged(squad, "repairing")
 end
@@ -992,7 +986,7 @@ function OnPrepTimeOver()
 	BotApi.Scene:SetVar("prep_inform", 1)
 	if printDebug then print("Print: prep_inform set to 1, Player defense prep is over.") end
 
-	-- When player was defending, bot is attacker — release attack start for CE scripts.
+	-- When player was defending, bot is attacker â€” release attack start for CE scripts.
 	if not botDefender and not ai_attack_started then
 		ai_attack_started = true
 		BotApi.Scene:SetVar("ai_attack_started", 1)

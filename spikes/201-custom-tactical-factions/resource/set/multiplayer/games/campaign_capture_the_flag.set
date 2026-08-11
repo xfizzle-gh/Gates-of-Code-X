@@ -3,56 +3,45 @@
 		{value "conquest"}
 		{available "all infantry sniper armor light medium heavy artillery airborne mechanized"}
 	}
-	{unitLimits ""}
-	{chargeFactors
-		{value "*=0"}
-		{customize "0;0.5;1.0;1.5;2.0;2.5;5.0;10.0"}
-	}
-	{budgets
-		{vehicle
-			{mode "standard"}
-			{resource
-				{start %mpStart}
-				{finish %mpFinish}
-				{growTime 1}
-				{growTable "1"}
-				{payback
-					{cp "0 10 20 30 40 51"}
-					{restore "0 0 0 0 0 0"}
-				}
-			}
-			{buttons "inf1 inf2 empl vehicles tanks"}
-		}
-	}
-	{balancingFactorBonus {cp %cp} {mpStart 1.0} {mpFinish 1.0} {payback %payback}}
+	(include "presets/global_parameters/unitlimits_gos_ai.inc")
+	(include "presets/global_parameters/budgets_gos_ai.inc")
+	{balancingFactorBonus {cp %cp} {mpStart 1.0} {mpFinish 1.0} {payback %payback}} ;// overridden in dynamic campaign difficulty files
 )
 
 {game
 	{order -1}
-	{parameters "points_table_player=0/0.000,0.333/0.416,0.5/0.555,0.667/0.667,1.00/0.833;points_table_ai=0/0.000,0.333/0.139,0.50/0.167,0.667/0.208,1.00/0.277;flag_capture_time=75;flag_release_time=25;flag_capture_factor=0.9;kill_score_multiplier=0"}
+	{parameters	"points_table_player=0/0.000,0.33/0.375,0.50/0.450,0.66/0.560,1.00/0.750;points_table_ai=0/0.000,0.33/0.375,0.50/0.450,0.66/0.560,1.00/0.750;flag_capture_time=75;flag_release_time=25;flag_capture_factor=0.9;kill_score_multiplier=0.60"}
+	;for score of 900 (flag ticks @ full hold; kills add mix via kill_score_multiplier):
+	;30 min 	= 0.500
+	;25 min 	= 0.600
+	;20 min 	= 0.750
+	;15 min 	= 1.000
 	{settings
-		{difficulty multiplayer}
-		{scoreFinal 900}
-		{preparationTime 1200}
-		{pauseDuringPreparation false}
-		{impregnableTimeout 10}
-		{floraRespawn 0}
-		{friendlyFire 0}
-		{showPiercing 1}
-		{showDamageReports 1}
-		{enableBots 1}
-		{randomSpawnPoints 1}
-		{useManualCharge none}
+		{difficulty				multiplayer}
+		{scoreFinal				900}
+		{preparationTime		480}	; seconds (8 min). Official prep phase when player defends (v1.064+)
+		{pauseDuringPreparation	false}	; simulation runs during prep
+		{impregnableTimeout		5}	; seconds
+		{floraRespawn			0}
+		{friendlyFire			0}
+		{showPiercing			1}
+		{showDamageReports		1}
+		{enableBots				1}
+		{randomSpawnPoints		1}
+		{useManualCharge		none}
 	}
 	{teamSettings
 		{teamsMode normal}
 		{armySelectionMode alliance}
 		{teams
-			{"a"}
-			{"b"}
+			{"a"
+				{minTeamSlots 7}
+				{aiTeamPlayers 1}
+			}
+			{"b" {minTeamSlots 1}}
 		}
 		{alliances
-			(include "presets/alliances_goc_201.inc")
+			(include "presets/alliances_generic.inc")
 		}
 	}
 	{ranked
@@ -68,12 +57,22 @@
 					{value "conquest"}
 					{available "all infantry sniper armor light medium heavy artillery airborne mechanized"}
 				}
+				(include "presets/global_parameters/unitlimits_gos_player.inc")
+				(include "presets/global_parameters/budgets_gos.inc")
 			}
 			{bots
-				{easy ("bot_state" cp(1.00) mpStart(1) mpFinish(1) payback(0.0))}
-				{normal ("bot_state" cp(1.00) mpStart(1) mpFinish(1) payback(0.0))}
-				{hard ("bot_state" cp(1.00) mpStart(1) mpFinish(1) payback(0.0))}
-				{heroic ("bot_state" cp(1.00) mpStart(1) mpFinish(1) payback(0.0))}
+				{easy
+					("bot_state" cp(1.00) mpStart(1) mpFinish(1) payback(0.0))
+				}
+				{normal
+					("bot_state" cp(1.00) mpStart(1) mpFinish(1) payback(0.0))
+				}
+				{hard
+					("bot_state" cp(1.00) mpStart(1) mpFinish(1) payback(0.0))
+				}
+				{heroic
+					("bot_state" cp(1.00) mpStart(1) mpFinish(1) payback(0.0))
+				}
 			}
 		}
 	}
