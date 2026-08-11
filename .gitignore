@@ -59,3 +59,7 @@ docs/earth3-crop/hydrography_audit/reference/ne_10m_lakes/
 /resource/set/dynamic_campaign/unit_research_prc.set
 /resource/interface/scene/portrait_squad/goc_serb_*.png
 /resource/interface/scene/portrait_squad/3rd_assault_*(nato)_*.png
+
+# P6 packaging stamp (installer-written)
+/SOURCE_COMMIT
+

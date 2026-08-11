@@ -1082,21 +1082,16 @@ def _earth3_strategic_map_block(state: CampaignState) -> dict:
 
 
 def _application_version() -> str:
-    from importlib.metadata import PackageNotFoundError, version
+    from .packaging import application_version
 
-    try:
-        return version("gates-of-codex")
-    except PackageNotFoundError:
-        from . import __version__
-
-        return str(__version__)
+    return application_version()
 
 
 def _application_block(state: CampaignState, campaign_path: str | Path | None) -> dict:
     """Player-facing application identity shown by the Godot strategic shell."""
     campaign = Path(campaign_path).resolve() if campaign_path else None
     metadata = state.map_metadata
-    return {
+    block = {
         "name": "Gates of CodeX",
         "version": _application_version(),
         "scenario_id": str(metadata.get("scenario_id", "")),
@@ -1110,6 +1105,18 @@ def _application_block(state: CampaignState, campaign_path: str | Path | None) -
         "difficulty": state.difficulty,
         "fog_of_war_enabled": bool(state.fog_of_war_enabled),
     }
+    # P6 provenance: exact source commit when resolvable. Fail open only for
+    # the display block when provenance is unavailable so older snapshots still
+    # load; packaging installers stamp SOURCE_COMMIT so production always has it.
+    try:
+        from .packaging import packaging_application_fields
+
+        block.update(packaging_application_fields())
+    except Exception:  # noqa: BLE001 - display-only; packaging stamps enforce install time
+        block.setdefault("source_commit", "")
+        block.setdefault("source_commit_short", "")
+        block.setdefault("package_root", "")
+    return block
 
 
 def _player_launch_block(state: CampaignState, campaign_path: str | Path | None) -> dict:
@@ -1177,6 +1184,8 @@ def _control_block(
             "handoff",
             "verify_result",
             "import_battle",
+            "restore_backup",
+            "reset_test_campaign",
             "refresh",
         ],
     }

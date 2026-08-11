@@ -16,7 +16,9 @@ from .strategic_ai import StrategicAI
 #: Commands that commit to the campaign file through their own service-level
 #: transaction instead of the in-memory batch. They may never share a batch with
 #: other operations because the batch rollback cannot undo them.
-SELF_COMMITTING_OPS = frozenset({"handoff", "import_battle"})
+SELF_COMMITTING_OPS = frozenset(
+    {"handoff", "import_battle", "restore_backup", "reset_test_campaign"}
+)
 
 #: Read-only actions. They mutate nothing, so they are never recorded in the
 #: exactly-once ledger: a player must be able to re-verify a result after
@@ -206,6 +208,12 @@ def apply_frontend_commands(
             elif op == "import_battle":
                 result = _apply_import_battle(campaign, state, raw)
                 state = load_campaign(campaign)
+            elif op == "restore_backup":
+                result = _apply_restore_backup(campaign, state, raw)
+                state = load_campaign(campaign)
+            elif op == "reset_test_campaign":
+                result = _apply_reset_test_campaign(campaign, state, raw)
+                # Campaign directory may no longer exist after reset.
             else:
                 result = _apply_one(state, op, raw)
         except Exception as exc:  # noqa: BLE001 - surface operator errors in result list
@@ -242,13 +250,34 @@ def apply_frontend_commands(
     if any(not item.ok for item in results):
         # Rejected batch: discard every in-memory mutation. The campaign file and
         # the published snapshot both remain at the previously accepted state.
-        return _apply_report(
-            load_campaign(campaign),
-            campaign,
-            ok=False,
-            snapshot="",
-            results=results,
-        )
+        # reset_test_campaign may have already removed the campaign file; report
+        # without requiring a reload in that case.
+        if campaign.is_file():
+            return _apply_report(
+                load_campaign(campaign),
+                campaign,
+                ok=False,
+                snapshot="",
+                results=results,
+            )
+        return {
+            "ok": False,
+            "campaign_path": str(campaign),
+            "snapshot_path": "",
+            "commands_applied": 0,
+            "results": [asdict(item) for item in results],
+        }
+
+    # reset_test_campaign deletes the managed campaign; there is nothing left to
+    # ledger or snapshot-publish.
+    if any(item.op == "reset_test_campaign" for item in results):
+        return {
+            "ok": True,
+            "campaign_path": str(campaign),
+            "snapshot_path": "",
+            "commands_applied": len(results),
+            "results": [asdict(item) for item in results],
+        }
 
     _store_command_ledger(state, ledger)
     save_campaign(
@@ -597,6 +626,52 @@ def _apply_import_battle(
                 imported.finalization_report,
             ),
         },
+    )
+
+
+def _apply_restore_backup(campaign: Path, state, raw: dict[str, Any]) -> CommandResult:
+    """Restore a managed campaign backup. Self-committing and path-contained."""
+    from .packaging import PackagingError, restore_managed_backup
+
+    backup = str(raw.get("backup") or raw.get("backup_directory") or "").strip()
+    if not backup:
+        raise ValueError("restore_backup requires backup directory")
+    try:
+        restored = restore_managed_backup(backup, expected_campaign=campaign)
+    except PackagingError as exc:
+        raise ValueError(str(exc)) from exc
+    return CommandResult(
+        op="restore_backup",
+        ok=True,
+        detail=f"restored {len(restored)} file(s)",
+        data={
+            "backup_directory": backup,
+            "restored": [str(path) for path in restored],
+        },
+    )
+
+
+def _apply_reset_test_campaign(campaign: Path, state, raw: dict[str, Any]) -> CommandResult:
+    """Reset the managed test campaign directory. Self-committing and path-contained."""
+    from .packaging import PackagingError, reset_test_campaign
+
+    create_backup = bool(raw.get("create_backup", True))
+    scenario_id = str(
+        raw.get("scenario_id") or state.map_metadata.get("scenario_id") or "earth3_v1"
+    )
+    try:
+        report = reset_test_campaign(
+            campaign,
+            scenario_id=scenario_id,
+            create_backup=create_backup,
+        )
+    except PackagingError as exc:
+        raise ValueError(str(exc)) from exc
+    return CommandResult(
+        op="reset_test_campaign",
+        ok=True,
+        detail="test campaign reset",
+        data=report,
     )
 
 

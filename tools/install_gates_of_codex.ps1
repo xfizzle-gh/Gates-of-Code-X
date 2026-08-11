@@ -179,9 +179,29 @@ if (-not $NoWorkshopDeploy) {
     & $DeployScript -SourceRoot $Root -TargetRoot $WorkshopTestTarget
 }
 
+# P6 provenance stamp: exact source commit for the installed tree.
+$SourceCommit = ""
+try {
+    $SourceCommit = (& git -C $Root rev-parse HEAD 2>$null | Select-Object -Last 1)
+}
+catch {
+    $SourceCommit = ""
+}
+if (-not [string]::IsNullOrWhiteSpace($SourceCommit) -and $SourceCommit -match '^[0-9a-fA-F]{40}$') {
+    $StampPath = Join-Path $Root "SOURCE_COMMIT"
+    Set-Content -LiteralPath $StampPath -Value $SourceCommit.Trim().ToLowerInvariant() -Encoding ascii
+    Write-Host "Stamped package provenance: $SourceCommit"
+    if ($BuildExecutable) {
+        $DistStamp = Join-Path $Root "dist\SOURCE_COMMIT"
+        if (Test-Path -LiteralPath (Join-Path $Root "dist") -PathType Container) {
+            Set-Content -LiteralPath $DistStamp -Value $SourceCommit.Trim().ToLowerInvariant() -Encoding ascii
+        }
+    }
+}
+
 Write-Host "Installed. Run:"
 Write-Host "  $Venv\Scripts\gates-of-codex.exe doctor"
-Write-Host "  $Venv\Scripts\gates-of-codex.exe ui"
+Write-Host "  $Venv\Scripts\gates-of-codex.exe play --new --stack-config config\mod-stack.windows.json"
 Write-Host "  $Venv\Scripts\gates-of-codex-live.exe validate --help"
 if (-not $NoWorkshopDeploy) {
     Write-Host "Workshop test deployment: $WorkshopTestTarget"
