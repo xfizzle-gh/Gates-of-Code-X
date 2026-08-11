@@ -39,6 +39,9 @@ func _run_all() -> void:
 	await _test_duplicate_move()
 	await _test_different_command_rejected_while_busy()
 	await _test_mutating_buttons_disabled_while_busy()
+	await _test_maintenance_confirmation_and_busy_guards()
+	await _test_restore_discards_stale_frontend_state()
+	await _test_reset_enters_new_campaign_state()
 	await _test_pan_zoom_and_process_during_slow_command()
 	await _test_success_reloads_once_and_restores_selection()
 	await _test_backend_failure_preserves_snapshot()
@@ -145,6 +148,20 @@ func _base_snapshot_dict(snapshot_path: String) -> Dictionary:
 			"snapshot_path": snapshot_path,
 			"python_executable": "",
 			"python_module": "gates_of_codex",
+			"play": {
+				"enabled": true,
+				"new_args": ["play", "--new", "--force-new"],
+				"continue_args": ["play", "--continue"],
+			},
+			"maintenance": {
+				"restore_available": true,
+				"latest_backup": {
+					"backup_directory": _dir.path_join("backups/latest"),
+					"campaign_path": _campaign_path,
+					"created_at_utc": "2026-08-11T12:00:00+00:00",
+				},
+				"reset_available": true,
+			},
 		},
 	}
 
@@ -245,6 +262,68 @@ func _test_mutating_buttons_disabled_while_busy() -> void:
 	await _wait_until(func() -> bool: return not _client.is_command_busy())
 	var idle_ids: PackedStringArray = _client.enabled_action_button_ids()
 	_assert_true("end_turn restored after idle", idle_ids.has("end_turn"))
+
+
+func _test_maintenance_confirmation_and_busy_guards() -> void:
+	await _setup_client()
+	var initial: PackedStringArray = _client.enabled_action_button_ids()
+	_assert_true("restore enabled with authenticated descriptor", initial.has("restore_backup"), str(initial))
+	_assert_true("reset enabled while idle", initial.has("reset_test_campaign"), str(initial))
+	_client._handle_button("restore_backup")
+	_assert_true("restore first click only confirms", _client.restore_confirm_pending and _fake.start_count == 0)
+	_client._handle_button("fit")
+	_assert_true("other action cancels restore confirmation", not _client.restore_confirm_pending)
+	_fake.scripted_results = [
+		{"exit_code": 0, "output_text": "{\"ok\":true,\"results\":[{\"op\":\"restore_backup\",\"ok\":true,\"data\":{}}]}", "delay_sec": 0.35},
+	]
+	_client._handle_button("restore_backup")
+	_client._handle_button("restore_backup")
+	_assert_eq("restore second click submits once", _fake.start_count, 1)
+	var busy: PackedStringArray = _client.enabled_action_button_ids()
+	_assert_true("restore disabled while busy", not busy.has("restore_backup"), str(busy))
+	_assert_true("reset disabled while busy", not busy.has("reset_test_campaign"), str(busy))
+	await _wait_until(func() -> bool: return not _client.is_command_busy())
+
+
+func _test_restore_discards_stale_frontend_state() -> void:
+	await _setup_client()
+	_client.selected_province_id = "Warszawa"
+	_client.selected_battalion_id = "alpha-battalion"
+	_client.last_handoff_save_path = "stale.sav"
+	_client.last_handoff_battle_id = "stale-battle"
+	_client.last_verified_save_path = "stale.sav"
+	_client.last_verification_ok = true
+	_fake.scripted_results = [
+		{"exit_code": 0, "output_text": "{\"ok\":true,\"results\":[{\"op\":\"restore_backup\",\"ok\":true,\"data\":{}}]}", "delay_sec": 0.15},
+	]
+	_client._queue_and_apply([{"op": "restore_backup", "backup_directory": "bound"}])
+	await _wait_until(func() -> bool: return not _client.is_command_busy())
+	_assert_eq("restore clears selected province", _client.selected_province_id, "")
+	_assert_eq("restore clears selected battalion", _client.selected_battalion_id, "")
+	_assert_eq("restore clears stale handoff", _client.last_handoff_save_path, "")
+	_assert_true("restore clears stale verification", not _client.last_verification_ok)
+
+
+func _test_reset_enters_new_campaign_state() -> void:
+	await _setup_client()
+	_client.selected_province_id = "Warszawa"
+	_fake.scripted_results = [
+		{
+			"exit_code": 0,
+			"output_text": "{\"ok\":true,\"results\":[{\"op\":\"reset_test_campaign\",\"ok\":true,\"data\":{\"campaign_deleted\":true,\"next_player_state\":\"new_campaign\"}}]}",
+			"delay_sec": 0.15,
+		},
+	]
+	_client._handle_button("reset_test_campaign")
+	_assert_true("reset first click only confirms", _client.reset_confirm_pending and _fake.start_count == 0)
+	_client._handle_button("reset_test_campaign")
+	await _wait_until(func() -> bool: return not _client.is_command_busy())
+	_assert_true("reset clears campaign model", _client.provinces_by_id.is_empty())
+	_assert_eq("reset clears selection", _client.selected_province_id, "")
+	_assert_true("reset disables writeback", not bool(_client.snapshot.get("control", {}).get("enabled", true)))
+	_assert_true("reset preserves new campaign", _client.can_start_new_campaign())
+	_assert_true("reset removes continue", not _client.can_continue_campaign())
+	_assert_eq("reset status", _client.status_message, "Campaign reset - start New Campaign.")
 
 
 func _test_pan_zoom_and_process_during_slow_command() -> void:
