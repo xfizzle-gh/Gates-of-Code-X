@@ -549,7 +549,7 @@ msgstr ""
 
 
 msgctxt "main_menu2/dynamic_campaign/ukr472022"
-msgid "47th Separate Mechanized Brigade â€œMaguraâ€"
+msgid "47th Separate Mechanized Brigade “Magura”"
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/ukr212022"
@@ -856,7 +856,7 @@ msgid "106-YA GV VOZDUSHNO-DESANTNAYA DIV."
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/2022vdv106_inf"
-msgid "ì œ11êµ°ë‹¨ [ì¡°ì„ ë¯¼ì£¼ì£¼ì˜ì¸ë¯¼ê³µí™”êµ­]"
+msgid "제11군단 [조선민주주의인민공화국]"
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/2022gru_razv"
@@ -977,27 +977,27 @@ msgstr ""
 
 
 msgctxt "main_menu2/dynamic_campaign/2022tank1"
-msgid "1st ABCT â€Raiderâ€"
+msgid "1st ABCT ”Raider”"
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/2022tank1inf"
-msgid "7th Inf.Reg â€Cottonbalersâ€"
+msgid "7th Inf.Reg ”Cottonbalers”"
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/2022tank1rec"
-msgid "RSTA â€Warpaintâ€"
+msgid "RSTA ”Warpaint”"
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/2022tank1art"
-msgid "9th FA Rgt. â€Battlekingsâ€"
+msgid "9th FA Rgt. ”Battlekings”"
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/2022tank1mech"
-msgid "69th Arm Rgt. â€Speed&Powerâ€[MECH]"
+msgid "69th Arm Rgt. ”Speed&Power”[MECH]"
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/2022tank1tank"
-msgid "69th Arm Rgt. â€Speed&Powerâ€"
+msgid "69th Arm Rgt. ”Speed&Power”"
 msgstr ""
 
 
@@ -1025,7 +1025,7 @@ msgstr ""
 
 
 msgctxt "main_menu2/dynamic_campaign/2022dsk"
-msgid "Division Schnelle KrÃ¤fte"
+msgid "Division Schnelle Kräfte"
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/2022dskinf"
@@ -1033,7 +1033,7 @@ msgid "GebJgBrig 23"
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/2022ksk"
-msgid "Kommando SpezialkrÃ¤fte"
+msgid "Kommando Spezialkräfte"
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/2022dskhel"
@@ -1068,67 +1068,67 @@ msgstr ""
 
 
 msgctxt "main_menu2/dynamic_campaign/VIVO50"
-msgid "ç–¯ç‹‚æ˜ŸæœŸå››!Væˆ‘50è§£é”åˆæˆæ—…"
+msgid "疯狂星期四!V我50解锁合成旅"
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/pla122"
-msgid "ä¸­å›½äººæ°‘è§£æ”¾å†›é™†å†›åˆæˆç¬¬ä¸€ä¸€äºŒæ—…â€è‹±å‹‡èƒœåˆ©â€"
+msgid "中国人民解放军陆军合成第一一二旅”英勇胜利”"
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/pla122inf"
-msgid "æ­¥å…µ"
+msgid "步兵"
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/pla122rec"
-msgid "ä¾¦æŸ¥"
+msgid "侦查"
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/pla122mech"
-msgid "æœºæ¢°åŒ–æ­¥å…µ"
+msgid "机械化步兵"
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/pla122tank"
-msgid "å¦å…‹"
+msgid "坦克"
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/pla122art"
-msgid "ç«ç‚®"
+msgid "火炮"
 msgstr ""
 
 
 
 
 msgctxt "main_menu2/dynamic_campaign/pla139"
-msgid "ä¸­å›½äººæ°‘è§£æ”¾å†›é™†å†›åˆæˆç¬¬ä¸€ä¸‰ä¹æ—…â€åŽå±±çŒ›è™Žâ€"
+msgid "中国人民解放军陆军合成第一三九旅”华山猛虎”"
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/pla139inf"
-msgid "æ­¥å…µ"
+msgid "步兵"
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/pla139heil"
-msgid "é™†èˆª"
+msgid "陆航"
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/pla139mech"
-msgid "æœºæ¢°åŒ–æ­¥å…µ"
+msgid "机械化步兵"
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/pla139tank"
-msgid "å¦å…‹"
+msgid "坦克"
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/pla139art"
-msgid "ç«ç‚®"
+msgid "火炮"
 msgstr ""
 
 
 msgctxt "main_menu2/dynamic_campaign/pla2022_tnak"
-msgid "å¦å…‹[é€šç”¨]"
+msgid "坦克[通用]"
 msgstr ""
 
 msgctxt "main_menu2/dynamic_campaign/pla2022_art"
-msgid "ç«ç‚®[é€šç”¨]"
+msgid "火炮[通用]"
 msgstr ""
 
 
@@ -1173,9 +1173,17 @@ msgid "HEIL"
 msgstr ""
 
 msgctxt "mp/army/goc_usa"
-msgid "GOC USA (spike)"
+msgid "GOC USA spike"
 msgstr ""
 
 msgctxt "mp/army/goc_fra"
-msgid "GOC France (spike)"
+msgid "GOC France spike"
+msgstr ""
+
+msgctxt "mp/alliance/west"
+msgid "West"
+msgstr ""
+
+msgctxt "mp/alliance/east"
+msgid "East"
 msgstr ""

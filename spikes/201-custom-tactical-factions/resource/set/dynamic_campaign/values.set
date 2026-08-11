@@ -1,4 +1,4 @@
-; #201 spike values.set — replacement pack (GaW/MW style)
+; #201 spike values — Code:X region keys, goc-only matchups
 {Regions
 	{Europe
 		{AvailableMatchups
@@ -7,18 +7,6 @@
 		}
 	}
 	{Asia
-		{AvailableMatchups
-			"goc_usa goc_fra"
-			"goc_fra goc_usa"
-		}
-	}
-	{Ostfront
-		{AvailableMatchups
-			"goc_usa goc_fra"
-			"goc_fra goc_usa"
-		}
-	}
-	{West
 		{AvailableMatchups
 			"goc_usa goc_fra"
 			"goc_fra goc_usa"
