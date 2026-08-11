@@ -10,6 +10,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / "src") not in sys.path:
@@ -358,13 +359,23 @@ class P6GoldenPathTests(unittest.TestCase):
                     "--no-launch",
                 ]
             )
-            play = run_play(args, environ=environ)
+            # Production receives this value as a process environment variable.
+            # Keep run_play's explicit mapping and ambient safety classifier on
+            # the same managed-home authority while the snapshot is published.
+            with mock.patch.dict(os.environ, environ, clear=False):
+                play = run_play(args, environ=environ)
             campaign = Path(play.campaign_path)
             snapshot = Path(play.snapshot_path)
             self.assertEqual("earth3_europe_mediterranean", play.map_id)
             self.assertEqual(5, len(play.stack_layers))
             self.assertTrue(campaign.is_file())
             self.assertTrue(snapshot.is_file())
+            snapshot_payload = json.loads(snapshot.read_text(encoding="utf-8"))
+            maintenance = snapshot_payload["control"]["maintenance"]
+            self.assertTrue(maintenance["destructive_controls_allowed"], maintenance)
+            self.assertIn(
+                "reset_test_campaign", snapshot_payload["control"]["supported_ops"]
+            )
             _consume_snapshot_in_godot(self, snapshot)
 
             state = load_campaign(campaign)
