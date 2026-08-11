@@ -451,7 +451,7 @@ class OperationalS2PositionTests(unittest.TestCase):
             )
             snapshot = build_frontend_snapshot(state)
             self.assertEqual(FRONTEND_SCHEMA_VERSION, snapshot["schema_version"])
-            self.assertEqual(14, snapshot["schema_version"])
+            self.assertEqual(15, snapshot["schema_version"])
             force_row = snapshot["strategic_formations"][0]
             self.assertEqual(PositionMode.AT_NODE.value, force_row["position"]["mode"])
             self.assertEqual(stable_node_id("a", "anchor"), force_row["position"]["node_id"])

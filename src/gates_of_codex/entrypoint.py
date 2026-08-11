@@ -377,6 +377,10 @@ def main(argv: list[str] | None = None) -> int:
         return _run_generate_europe_mediterranean_from_goe(remainder)
     if command == "generate-em-operational-graph":
         return _run_generate_em_operational_graph(remainder)
+    if command == "play":
+        from .player_shell import main as play_main
+
+        return play_main(remainder)
     if command == "new":
         return _run_new(remainder)
     if command == "export-battle":
