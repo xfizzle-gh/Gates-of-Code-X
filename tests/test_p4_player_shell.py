@@ -38,6 +38,7 @@ from gates_of_codex.frontend_commands import (
     apply_frontend_commands,
     read_command_ledger,
 )
+from gates_of_codex.packaging import backup_managed_campaign
 from gates_of_codex.player_shell import (
     PLAYER_LAUNCH_KEY,
     PlayerShellError,
@@ -516,6 +517,155 @@ class PlayerCommandAuthorityTests(unittest.TestCase):
         self.assertEqual(
             str(Path(created.campaign_path)), snapshot["control"]["campaign_path"]
         )
+
+    def test_restore_reloads_the_backed_up_ledger_timeline(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            home = root / "home"
+            environ = _environ(home)
+            with patch.dict(os.environ, environ, clear=False):
+                created = run_play(
+                    _play_args(
+                        "--new",
+                        "--campaign",
+                        str(home / "campaigns" / "legacy"),
+                        "--no-launch",
+                        "--scenario",
+                        LEGACY_SCENARIO,
+                    ),
+                    environ=environ,
+                )
+                first = apply_frontend_commands(
+                    created.campaign_path,
+                    commands=[{"op": "end_turn", "command_id": "before-backup"}],
+                    snapshot_path=created.snapshot_path,
+                )
+                self.assertTrue(first["ok"], first)
+                backup = backup_managed_campaign(
+                    created.campaign_path, environ=environ
+                )
+                future = apply_frontend_commands(
+                    created.campaign_path,
+                    commands=[{"op": "end_turn", "command_id": "future-only"}],
+                    snapshot_path=created.snapshot_path,
+                )
+                self.assertTrue(future["ok"], future)
+
+                restored = apply_frontend_commands(
+                    created.campaign_path,
+                    commands=[
+                        {
+                            "op": "restore_backup",
+                            "backup_directory": backup.backup_directory,
+                            "command_id": "restore-now",
+                        }
+                    ],
+                    snapshot_path=created.snapshot_path,
+                )
+                self.assertTrue(restored["ok"], restored)
+                restored_ids = [
+                    row["command_id"]
+                    for row in read_command_ledger(
+                        load_campaign(created.campaign_path)
+                    )["entries"]
+                ]
+                self.assertEqual(["before-backup", "restore-now"], restored_ids)
+
+                accepted_again = apply_frontend_commands(
+                    created.campaign_path,
+                    commands=[{"op": "end_turn", "command_id": "future-only"}],
+                    snapshot_path=created.snapshot_path,
+                )
+                duplicate_restore = apply_frontend_commands(
+                    created.campaign_path,
+                    commands=[
+                        {"op": "restore_backup", "command_id": "restore-now"}
+                    ],
+                    snapshot_path=created.snapshot_path,
+                )
+
+        self.assertTrue(accepted_again["ok"], accepted_again)
+        self.assertEqual(1, accepted_again["commands_applied"])
+        self.assertTrue(duplicate_restore["ok"], duplicate_restore)
+        self.assertEqual(0, duplicate_restore["commands_applied"])
+        self.assertTrue(duplicate_restore["results"][0]["data"]["duplicate"])
+
+    def test_snapshot_exposes_only_authenticated_current_campaign_backup(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            home = root / "home"
+            environ = _environ(home)
+            with patch.dict(os.environ, environ, clear=False):
+                created = run_play(
+                    _play_args(
+                        "--new",
+                        "--campaign",
+                        str(home / "campaigns" / "legacy"),
+                        "--no-launch",
+                        "--scenario",
+                        LEGACY_SCENARIO,
+                    ),
+                    environ=environ,
+                )
+                before = _read_json(created.snapshot_path)
+                backup = backup_managed_campaign(
+                    created.campaign_path, environ=environ
+                )
+                refreshed = apply_frontend_commands(
+                    created.campaign_path,
+                    commands=[{"op": "refresh", "command_id": "backup-refresh"}],
+                    snapshot_path=created.snapshot_path,
+                )
+                after = _read_json(created.snapshot_path)
+
+        self.assertFalse(
+            before["control"]["maintenance"]["restore_available"]
+        )
+        maintenance = after["control"]["maintenance"]
+        self.assertTrue(refreshed["ok"], refreshed)
+        self.assertTrue(maintenance["restore_available"])
+        self.assertTrue(maintenance["reset_available"])
+        self.assertEqual(
+            Path(backup.backup_directory).resolve(),
+            Path(maintenance["latest_backup"]["backup_directory"]).resolve(),
+        )
+
+    def test_reset_is_terminal_and_does_not_refresh_deleted_campaign(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            home = root / "home"
+            environ = _environ(home)
+            with patch.dict(os.environ, environ, clear=False):
+                created = run_play(
+                    _play_args(
+                        "--new",
+                        "--campaign",
+                        str(home / "campaigns" / "legacy"),
+                        "--no-launch",
+                        "--scenario",
+                        LEGACY_SCENARIO,
+                    ),
+                    environ=environ,
+                )
+                result = apply_frontend_commands(
+                    created.campaign_path,
+                    commands=[
+                        {
+                            "op": "reset_test_campaign",
+                            "command_id": "reset-now",
+                        }
+                    ],
+                    snapshot_path=created.snapshot_path,
+                )
+
+        self.assertTrue(result["ok"], result)
+        self.assertEqual("", result["snapshot_path"])
+        lifecycle = result["results"][0]["data"]
+        self.assertTrue(lifecycle["campaign_deleted"])
+        self.assertEqual("new_campaign", lifecycle["next_player_state"])
+        self.assertFalse(Path(created.campaign_path).exists())
+        self.assertFalse(Path(created.snapshot_path).exists())
+        self.assertIsNone(read_last_campaign(environ=environ))
 
     def test_launch_clears_a_stale_command_queue(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

@@ -1105,18 +1105,47 @@ def _application_block(state: CampaignState, campaign_path: str | Path | None) -
         "difficulty": state.difficulty,
         "fog_of_war_enabled": bool(state.fog_of_war_enabled),
     }
-    # P6 provenance: exact source commit when resolvable. Fail open only for
-    # the display block when provenance is unavailable so older snapshots still
-    # load; packaging installers stamp SOURCE_COMMIT so production always has it.
-    try:
-        from .packaging import packaging_application_fields
+    # Exact provenance is part of the player-visible package identity. Installed
+    # or frozen runtimes without their embedded stamp must fail snapshot creation
+    # rather than publish an authoritative-looking blank commit.
+    from .packaging import packaging_application_fields
 
-        block.update(packaging_application_fields())
-    except Exception:  # noqa: BLE001 - display-only; packaging stamps enforce install time
-        block.setdefault("source_commit", "")
-        block.setdefault("source_commit_short", "")
-        block.setdefault("package_root", "")
+    block.update(packaging_application_fields())
     return block
+
+
+def _maintenance_block(campaign_path: str | Path | None) -> dict:
+    """Authenticated campaign-bound maintenance capabilities for Godot."""
+    disabled = {
+        "restore_available": False,
+        "latest_backup": None,
+        "reset_available": False,
+    }
+    if campaign_path is None:
+        return disabled
+    from .packaging import (
+        PackagingError,
+        assert_path_inside,
+        latest_managed_backup,
+        managed_campaigns_root,
+    )
+
+    campaign = Path(campaign_path).expanduser().resolve(strict=False)
+    try:
+        assert_path_inside(
+            campaign.parent,
+            managed_campaigns_root(),
+            label="campaign directory",
+        )
+        latest = latest_managed_backup(campaign)
+    except PackagingError:
+        # Non-player-managed development fixtures have no destructive controls.
+        return disabled
+    return {
+        "restore_available": latest is not None,
+        "latest_backup": latest,
+        "reset_available": True,
+    }
 
 
 def _player_launch_block(state: CampaignState, campaign_path: str | Path | None) -> dict:
@@ -1164,6 +1193,7 @@ def _control_block(
     commands = snapshot.with_name("frontend_commands.json") if snapshot is not None else None
     return {
         "play": _player_launch_block(state, campaign_path),
+        "maintenance": _maintenance_block(campaign_path),
         "enabled": campaign is not None and snapshot is not None,
         "campaign_path": str(campaign) if campaign else "",
         "snapshot_path": str(snapshot) if snapshot else "",

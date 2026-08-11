@@ -211,6 +211,12 @@ def apply_frontend_commands(
             elif op == "restore_backup":
                 result = _apply_restore_backup(campaign, state, raw)
                 state = load_campaign(campaign)
+                # Restore replaces the campaign timeline. Discard the ledger and
+                # observation mutations loaded from the abandoned future before
+                # recording this restore command into the restored authority.
+                ledger = read_command_ledger(state)
+                observation_context = ObservationMutationContext()
+                before_presentations = _formation_presentation_rows(state)
             elif op == "reset_test_campaign":
                 result = _apply_reset_test_campaign(campaign, state, raw)
                 # Campaign directory may no longer exist after reset.
@@ -631,11 +637,23 @@ def _apply_import_battle(
 
 def _apply_restore_backup(campaign: Path, state, raw: dict[str, Any]) -> CommandResult:
     """Restore a managed campaign backup. Self-committing and path-contained."""
-    from .packaging import PackagingError, restore_managed_backup
+    from .packaging import (
+        PackagingError,
+        latest_managed_backup,
+        restore_managed_backup,
+    )
 
     backup = str(raw.get("backup") or raw.get("backup_directory") or "").strip()
     if not backup:
-        raise ValueError("restore_backup requires backup directory")
+        descriptor = latest_managed_backup(campaign)
+        if descriptor is None:
+            raise ValueError("No authenticated backup exists for this campaign")
+        backup = descriptor["backup_directory"]
+    else:
+        descriptor = {
+            "backup_directory": str(Path(backup).expanduser().resolve(strict=False)),
+            "campaign_path": str(campaign.resolve(strict=False)),
+        }
     try:
         restored = restore_managed_backup(backup, expected_campaign=campaign)
     except PackagingError as exc:
@@ -645,7 +663,8 @@ def _apply_restore_backup(campaign: Path, state, raw: dict[str, Any]) -> Command
         ok=True,
         detail=f"restored {len(restored)} file(s)",
         data={
-            "backup_directory": backup,
+            "backup_directory": descriptor["backup_directory"],
+            "backup": descriptor,
             "restored": [str(path) for path in restored],
         },
     )
