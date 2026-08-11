@@ -369,13 +369,14 @@ class ManagedRestoreResetTests(unittest.TestCase):
                 expected_campaign=campaign,
                 environ=env,
             )
-            self.assertTrue(any(path == campaign for path in restored))
-            if os.name == "nt":
-                for path in restored:
-                    self.assertEqual(
-                        (campaign.parent / path.name).resolve(strict=False),
-                        path.resolve(strict=False),
-                    )
+            self.assertTrue(
+                any(os.path.samefile(path, campaign) for path in restored)
+            )
+            for path in restored:
+                self.assertTrue(
+                    os.path.samefile(path, campaign.parent / path.name),
+                    (path, campaign.parent / path.name),
+                )
             payload = json.loads(campaign.read_text(encoding="utf-8"))
             self.assertEqual("original", payload["marker"])
 
@@ -712,15 +713,19 @@ class ManagedRestoreResetTests(unittest.TestCase):
                 "gates_of_codex.packaging._replace_directory",
                 side_effect=fail_publish_and_rollback,
             ):
-                with self.assertRaisesRegex(
-                    PackagingError, str(rollback).replace("\\", "\\\\")
-                ):
+                with self.assertRaises(PackagingError) as raised:
                     restore_managed_backup(
                         record.backup_directory,
                         expected_campaign=campaign,
                         environ=env,
                     )
             self.assertTrue(rollback.is_dir())
+            retained = Path(
+                str(raised.exception)
+                .split("original tree retained at ", 1)[1]
+                .splitlines()[0]
+            )
+            self.assertTrue(os.path.samefile(retained, rollback), (retained, rollback))
             self.assertEqual(before, self._tree_bytes(rollback))
 
     def test_stage_cleanup_failure_does_not_mask_preserved_rollback(self) -> None:
@@ -758,9 +763,7 @@ class ManagedRestoreResetTests(unittest.TestCase):
                 "gates_of_codex.packaging._remove_sibling_directory",
                 side_effect=fail_stage_cleanup,
             ):
-                with self.assertRaisesRegex(
-                    PackagingError, str(rollback).replace("\\", "\\\\")
-                ):
+                with self.assertRaises(PackagingError) as raised:
                     restore_managed_backup(
                         record.backup_directory,
                         expected_campaign=campaign,
@@ -768,6 +771,12 @@ class ManagedRestoreResetTests(unittest.TestCase):
                     )
 
             self.assertTrue(rollback.is_dir())
+            retained = Path(
+                str(raised.exception)
+                .split("original tree retained at ", 1)[1]
+                .splitlines()[0]
+            )
+            self.assertTrue(os.path.samefile(retained, rollback), (retained, rollback))
             self.assertEqual(before, self._tree_bytes(rollback))
 
     def test_reset_test_campaign_only_clears_managed_known_files(self) -> None:
