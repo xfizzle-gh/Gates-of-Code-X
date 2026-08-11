@@ -25,9 +25,12 @@ class FrontendFastPathTests(unittest.TestCase):
 
     def test_fast_writer_is_atomic_machine_json_with_same_payload(self) -> None:
         state = build_scenario("legacy_goe_europe")
-        expected = build_frontend_snapshot_fast(state)
         with tempfile.TemporaryDirectory() as temporary:
             destination = Path(temporary) / "campaign_snapshot.json"
+            expected = build_frontend_snapshot_fast(
+                state,
+                snapshot_path=destination,
+            )
             write_frontend_snapshot_fast(state, destination)
             text = destination.read_text(encoding="utf-8")
             self.assertTrue(text.endswith("\n"))
@@ -49,9 +52,11 @@ class FrontendFastPathTests(unittest.TestCase):
 
 
 class PlayerTurnCyclePresentationTests(unittest.TestCase):
-    def test_main_scene_uses_responsiveness_layer(self) -> None:
+    def test_main_scene_uses_responsiveness_layer_and_retains_stack_contract(self) -> None:
         scene = (ROOT / "godot/main.tscn").read_text(encoding="utf-8")
         self.assertIn('path="res://scripts/main_perf.gd"', scene)
+        self.assertIn('path="res://scripts/main_stack_panel.gd"', scene)
+        self.assertIn("metadata/_stack_panel_contract", scene)
 
     def test_end_turn_composes_ai_cycle_in_one_backend_batch(self) -> None:
         source = (ROOT / "godot/scripts/main_perf.gd").read_text(encoding="utf-8")
