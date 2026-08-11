@@ -104,6 +104,53 @@ class PlayerTurnCycleTests(unittest.TestCase):
         self.assertEqual(starting_turn + 1, state.turn_number)
         self.assertIn("_observation_context", report)
 
+    def test_earth3_round_synchronizes_actor_runtime_for_real_ai_seats(self) -> None:
+        from gates_of_codex.frontend_commands import _apply_one
+        from gates_of_codex.operational_order_options import (
+            list_operational_move_options,
+        )
+        from gates_of_codex.strategic_actors import ACTOR_RUNTIME_KEY
+        from test_p5_graph_native_movement import (
+            CONTACT_NODE,
+            PLAYER_FORMATION,
+            _earth3_state,
+        )
+
+        state = _earth3_state()
+        option = next(
+            row
+            for row in list_operational_move_options(state, state.selected_faction)
+            if row["formation_id"] == PLAYER_FORMATION
+            and row["target_node_id"] == CONTACT_NODE
+        )
+        issued = _apply_one(
+            state,
+            "issue_move_order",
+            {
+                "formation": option["formation_id"],
+                "path_node_ids": list(option["path_node_ids"]),
+                "path_edge_ids": list(option["path_edge_ids"]),
+            },
+        )
+        committed = _apply_one(
+            state,
+            "commit_move_orders",
+            {
+                "faction": state.selected_faction.value,
+                "locked_stance": option["locked_stance"],
+            },
+        )
+        self.assertTrue(issued.ok, issued.detail)
+        self.assertTrue(committed.ok, committed.detail)
+
+        report = end_player_round(state)
+
+        self.assertEqual(["ukr", "rusa"], report["ai_factions"])
+        self.assertEqual(state.selected_faction, state.current_faction)
+        runtime = state.map_metadata[ACTOR_RUNTIME_KEY]
+        current_actor = runtime["actors"][runtime["current_actor_id"]]
+        self.assertEqual(state.current_faction.value, current_actor["tactical_side"])
+
     def test_main_scene_uses_responsiveness_layer_and_retains_stack_contract(self) -> None:
         scene = (ROOT / "godot/main.tscn").read_text(encoding="utf-8")
         self.assertIn('path="res://scripts/main_perf.gd"', scene)

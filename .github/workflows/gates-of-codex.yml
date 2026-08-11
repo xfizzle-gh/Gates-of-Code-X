@@ -310,6 +310,8 @@ jobs:
       - name: Assert installed provenance
         shell: pwsh
         run: python -c 'import sys; from gates_of_codex.packaging import package_identity; assert package_identity().source_commit == sys.argv[1]' '${{ steps.provenance.outputs.commit }}'
+      - name: P6 production Earth3 golden path (real stack + Godot + handoff/import)
+        run: GODOT_BIN="$HOME/godot" python -m unittest tests.test_p6_golden_path -v
       - name: Generate P4 production Earth3 snapshot through the player shell
         run: |
           set -euo pipefail
