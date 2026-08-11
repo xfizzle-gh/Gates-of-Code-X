@@ -90,6 +90,8 @@
 	}
 	{Asia
 		{AvailableMatchups
+			"goc_usa goc_fra"
+			"goc_fra goc_usa"
 			"ukr rusa"					
 			"rusa ukr" 
 			"ukr sov"		
@@ -113,6 +115,8 @@
 	}
 	{Test
 		{AvailableMatchups
+			"goc_usa goc_fra"
+			"goc_fra goc_usa"
 
 			"frg pol"
 			"fin ger"

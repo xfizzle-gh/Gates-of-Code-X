@@ -1,0 +1,1181 @@
+﻿#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Call to Arms (dlg_mp)\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"X-Generator: Poedit 2.4.2\n"
+
+msgctxt "mp/scene/hint_requires/radio_sov"
+msgid "Requires Basic Command Vehicle"
+msgstr ""
+
+msgctxt "mp/scene/hint_requires/radio_sov_moto"
+msgid "Requires Doctrine Command Vehicle"
+msgstr ""
+
+msgctxt "mp/scene/hint_requires/radio_sov_vdv"
+msgid "Requires Doctrine Command Vehicle"
+msgstr ""
+
+;;;;;;;;;;;;;;;;
+
+msgctxt "mp/presets/unit/era1950"
+msgid "1950s[<c(ff1200)>NOT YET SUPPORTED</c>]"
+msgstr ""
+
+msgctxt "mp/presets/unit/era1960"
+msgid "1960s"
+msgstr ""
+
+msgctxt "mp/presets/unit/era1970"
+msgid "1970s[<c(ff1200)>NOT YET SUPPORTED</c>]"
+msgstr ""
+
+msgctxt "mp/presets/unit/era1980"
+msgid "1980s[<c(ff1200)>NOT YET SUPPORTED</c>]"
+msgstr ""
+
+;;;;;;;;;;;;;;;;;
+
+
+msgctxt "mp/presets/unit/early"
+msgid "Early[<c(ff1200)>NOT YET SUPPORTED</c>]"
+msgstr ""
+
+msgctxt "mp/presets/unit/mid"
+msgid "Mid"
+msgstr ""
+
+msgctxt "mp/presets/unit/late"
+msgid "Late[<c(ff1200)>NOT YET SUPPORTED</c>]"
+msgstr ""
+
+msgctxt "mp/lobby/army_mode/alliance"
+msgid "Alliance"
+msgstr ""
+
+msgctxt "mp/alliance/nato"
+msgid "NATO"
+msgstr ""
+
+msgctxt "mp/alliance/warsaw"
+msgid "Warsaw Pact"
+msgstr ""
+
+msgctxt "mp/alliance/eastpact"
+msgid "East-Asian Pact"
+msgstr ""
+
+msgctxt "mp/alliance/seato"
+msgid "SEATO"
+msgstr ""
+
+msgctxt "mp/alliance/axis"
+msgid "Axis [<c(c9a6ff)>WW2</c>]"
+msgstr ""
+
+msgctxt "mp/alliance/allies"
+msgid "Allies [<c(c9a6ff)>WW2</c>]"
+msgstr ""
+
+msgctxt "mp/alliance/usa"
+msgid "USA [<c(c9a6ff)>WW2</c>]"
+msgstr ""
+
+msgctxt "mp/army/ger"
+msgid "German Reich [<c(c9a6ff)>WW2</c>]"
+msgstr ""
+
+msgctxt "mp/army/rus"
+msgid "USSR [<c(c9a6ff)>WW2</c>]"
+msgstr ""
+
+msgctxt "mp/army/fin"
+msgid "Finland [<c(c9a6ff)>WW2</c>]"
+msgstr ""
+
+msgctxt "mp/army/usa"
+msgid "USA [<c(c9a6ff)>WW2</c>]"
+msgstr ""
+
+msgctxt "mp/army/finland"
+msgid "Finland [<c(c9a6ff)>WW2</c>]"
+msgstr ""
+
+msgctxt "mp/army/ukr"
+msgid "Ukraine"
+msgstr ""
+
+msgctxt "mp/army/csa"
+msgid "USA"
+msgstr ""
+
+
+msgctxt "mp/army/sov"
+msgid "Sovit"
+msgstr ""
+
+msgctxt "mp/army/rusa"
+msgid "Russian Federation"
+msgstr ""
+
+msgctxt "mp/army/nato"
+msgid "NATO[<c(c9a6ff)>WIP TESTING</c>]"
+msgstr ""
+
+msgctxt "mp/army/frg"
+msgid "West Germany"
+msgstr ""
+
+msgctxt "mp/army/ukr47"
+msgid "47th Mechanized Brigade[WIP]"
+msgstr ""
+
+msgctxt "mp/army/uk"
+msgid "United Kingdom"
+msgstr ""
+
+msgctxt "mp/army/pol"
+msgid "Polish People's Republic"
+msgstr ""
+
+msgctxt "mp/army/gdr"
+msgid "German Democratic Republic"
+msgstr ""
+
+msgctxt "mp/army/prc"
+msgid "PLAGF"
+msgstr ""
+
+msgctxt "mp/army/fra"
+msgid "French Fifth Republic"
+msgstr ""
+
+msgctxt "mp/army/cze"
+msgid "Czechoslovak Socialist Republic"
+msgstr ""
+
+msgctxt "mp/army/yug"
+msgid "SFR Yugoslavia"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/region_hint_europe"
+msgid "Europe"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/region_hint_asia"
+msgid "Asia"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/region_hint_test"
+msgid "WIP Quarantine"
+msgstr ""
+
+; DYNAMIC CAMPAIGN RESEARCH TREE TECHS
+
+
+
+msgctxt "main_menu2/dynamic_campaign/sov_inf_1960"
+msgid "Squads (1960s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/sov_guards_1960"
+msgid "Guards (1960s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/sov_artillery_1960"
+msgid "Artillery (1960s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/sov_vdv_1960"
+msgid "VDV (1960s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/sov_tanks_1960"
+msgid "Tanks (1960s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/sov_afv_1960"
+msgid "AFVs (1960s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/sov_trucks_1960"
+msgid "Logistics (1960s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/sov_heli_1960"
+msgid "Helicopters (1960s)"
+msgstr ""
+
+
+msgctxt "main_menu2/dynamic_campaign/sov_era_1970"
+msgid "1970s Era"
+msgstr ""
+
+
+msgctxt "main_menu2/dynamic_campaign/sov_inf_1970"
+msgid "Infantry (1970s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/sov_guards_1970"
+msgid "Guards (1970s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/sov_artillery_1970"
+msgid "Artillery (1970s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/sov_vdv_1970"
+msgid "VDV (1970s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/sov_tanks_1970"
+msgid "Tanks (1970s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/sov_afv_1970"
+msgid "AFVs (1970s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/sov_trucks_1970"
+msgid "Logistics (1970s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/sov_heli_1970"
+msgid "Helicopters (1970s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/sov_vmf_1970"
+msgid "VMF (1970s)"
+msgstr ""
+
+
+
+
+msgctxt "main_menu2/dynamic_campaign/radio_1_sov"
+msgid "Radio Supports (I)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/radio_2_sov"
+msgid "Radio Supports (II)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/radio_3_sov"
+msgid "Radio Supports (III)"
+msgstr ""
+
+
+
+msgctxt "main_menu2/dynamic_campaign/radio_1_csa"
+msgid "Radio Supports (I)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/radio_2_csa"
+msgid "Radio Supports (II)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/radio_3_csa"
+msgid "Radio Supports (III)"
+msgstr ""
+
+
+msgctxt "main_menu2/dynamic_campaign/radio_1_ukr"
+msgid "Radio Supports (I)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/radio_2_ukr"
+msgid "Radio Supports (II)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/radio_3_ukr"
+msgid "Radio Supports (III)"
+msgstr ""
+
+
+
+
+msgctxt "main_menu2/dynamic_campaign/csa_inf_1960"
+msgid "Squads (1960s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/csa_acav_1960"
+msgid "Armored Infantry (1960s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/csa_artillery_1960"
+msgid "Artillery (1960s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/csa_aircav_1960"
+msgid "Airborne (1960s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/csa_tanks_1960"
+msgid "Tanks (1960s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/csa_afv_1960"
+msgid "AFVs (1960s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/csa_trucks_1960"
+msgid "Logistics (1960s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/csa_heli_1960"
+msgid "Helicopters (1960s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/csa_usmc_1960"
+msgid "USMC (1960s)"
+msgstr ""
+
+
+
+
+msgctxt "main_menu2/dynamic_campaign/csa_era_1970"
+msgid "1970s Era"
+msgstr ""
+
+
+msgctxt "main_menu2/dynamic_campaign/csa_inf_1970"
+msgid "Infantry (1970s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/csa_acav_1970"
+msgid "Armored Cavalry (1970s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/csa_artillery_1970"
+msgid "Artillery (1970s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/csa_aircav_1970"
+msgid "Air Cavalry(1970s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/csa_tanks_1970"
+msgid "Tanks (1970s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/csa_afv_1970"
+msgid "AFVs (1970s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/csa_trucks_1970"
+msgid "Logistics (1970s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/csa_heli_1970"
+msgid "Helicopters (1970s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/csa_usmc_1970"
+msgid "USMC (1970s)"
+msgstr ""
+
+
+msgctxt "main_menu2/dynamic_campaign/radio_1_prc"
+msgid "Radio Supports (I)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/radio_2_prc"
+msgid "Radio Supports (II)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/radio_3_prc"
+msgid "Radio Supports (III)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/prc_inf_1960"
+msgid "Squads (1960s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/prc_guards_1960"
+msgid "Veterans (1960s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/prc_artillery_1960"
+msgid "Artillery (1960s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/prc_tanks_1960"
+msgid "Tanks (1960s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/prc_afv_1960"
+msgid "AFVs (1960s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/prc_trucks_1960"
+msgid "Logistics (1960s)"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022wgn"
+msgid "PMC Wagner"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022vdv"
+msgid "VDV Airborne"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus"
+msgid "Russian Ground Forces"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus_sso_gru_"
+msgid "Russian Federal Security Agency"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/azov2022"
+msgid "Azov Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/kra2022"
+msgid "Brave Group"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr2022"
+msgid "Ukraine Ground Forces"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ildu2022"
+msgid "I.L.D.U"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/nato2022"
+msgid "NATO"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022spz"
+msgid "Spetsnaz GRU"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/tank2022"
+msgid "Tanks"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/utank2022"
+msgid "Tanks"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022sto"
+msgid "Storm-V"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/azov32022"
+msgid "3rd Separate Assault Brigade"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/arty2022"
+msgid "Ukraine Artillery Troops"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/rarty2022"
+msgid "Russia Artillery Troops"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022mar"
+msgid "Marine Expeditionary Force"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022nrf"
+msgid "NATO Response Force"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022nrft"
+msgid "Tank"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022nrfa"
+msgid "Artillery"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022ger"
+msgid "Bundeswehr"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022heil"
+msgid "Heilcopter"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rng"
+msgid "Ranger"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022br"
+msgid "British Army"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022cav"
+msgid "Armoured cavalry"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022lud"
+msgid "LPR/DNR"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/spd2022"
+msgid "Sparta Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/spde2022"
+msgid "80th Separate Guards Reconnaissance Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/dpr2022"
+msgid "100th Separate Guards Motor Rifle Brigade"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/dpre2022"
+msgid "110th Separate Guards Motor Rifle Brigade"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/vos2022"
+msgid "Vostok Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/vose2022"
+msgid "114th Separate Guards Motor Rifle Brigade"
+msgstr ""
+
+
+msgctxt "main_menu2/dynamic_campaign/ukr472022"
+msgid "47th Separate Mechanized Brigade â€œMaguraâ€"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr212022"
+msgid "21st Separate Mechanized Brigade"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr722022"
+msgid "72nd Separate Mechanized Brigade Black Zaporozhians"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr932022"
+msgid "93rd Separate Mechanized Brigade Kholodnyi Yar"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr252022"
+msgid "25th Separate Airborne Sicheslav Brigade"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr822022"
+msgid "82nd Separate Air Assault Bukovynska Brigade"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/hurmo2022"
+msgid "International Legion of HUR MO"
+msgstr ""
+
+
+
+msgctxt "main_menu2/dynamic_campaign/azov3_ildu"
+msgid "1st International Rifle Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/azov3_assault"
+msgid "1st Assault Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/azov3_razv"
+msgid "Reconnaissance Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/azov3_tank"
+msgid "Tank Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/azov3_mech"
+msgid "1st Mechanized Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/azov3_arty"
+msgid "Artillery Group"
+msgstr ""
+
+
+
+
+msgctxt "main_menu2/dynamic_campaign/ukr47_inf"
+msgid "26th Rifle Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr47_assault"
+msgid "25th Assault Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr47_razv"
+msgid "Reconnaissance Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr47_mech"
+msgid "3rd Mechanized Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr47_tank"
+msgid "Tank Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr47_arty"
+msgid "Artillery Group"
+msgstr ""
+
+
+msgctxt "main_menu2/dynamic_campaign/ukr93demon"
+msgid "Alcatraz Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr93_arty"
+msgid "Artillery Group"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr93_mech"
+msgid "1st Mechanized Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr93_razv"
+msgid "Reconnaissance Company"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr93_antitank"
+msgid "93rd Anti-Tank Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr93_tank"
+msgid "Tank Battalion"
+msgstr ""
+
+
+msgctxt "main_menu2/dynamic_campaign/ukr3_inf"
+msgid "1st Rifle Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr3_mech"
+msgid "1st Mechanized Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr3_arty"
+msgid "Artillery Group"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr3_tank"
+msgid "11th Separate Tank Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr32022"
+msgid "3rd Heavy Mechanized Brigade"
+msgstr ""
+
+
+
+
+msgctxt "main_menu2/dynamic_campaign/ukr952022"
+msgid "8th Air Assault Corps"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr95_mech"
+msgid "1st Air Assault Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr95_helo"
+msgid "4th Airmobile Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr95_tank"
+msgid "Tank Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr13_mot"
+msgid "13th Air Assault Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr95_arty"
+msgid "148th Artillery Battalion"
+msgstr ""
+
+
+
+msgctxt "main_menu2/dynamic_campaign/kra_mech"
+msgid "4th Assault Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/kra_tank"
+msgid "Tank Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/kra_arty"
+msgid "Artillery Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/hurmo"
+msgid "HUR MO"
+msgstr ""
+
+
+
+msgctxt "main_menu2/dynamic_campaign/2022rus90"
+msgid "90-YA GV. TANK. DIV."
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus90_inf"
+msgid "228th GV. Motostrelki REGI."
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus90_mech"
+msgid  "Motostrlk POLK"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus90_tank"
+msgid "6th GV. Tank REGI."
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus90_arty"
+msgid "400th GV. Artillery REGI."
+msgstr ""
+
+
+
+
+msgctxt "main_menu2/dynamic_campaign/2022rus150"
+msgid "150-YA GV. MOT. DIV."
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus150_inf"
+msgid "103th GV. Motostrelki REGI."
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus150_mech"
+msgid  "Motostrlk POLK"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus150_tank"
+msgid "68th GV. Tank REGI."
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus150_arty"
+msgid "381th GV. Artillery REGI."
+msgstr ""
+
+
+
+
+
+
+msgctxt "main_menu2/dynamic_campaign/2022rusldpr"
+msgid "51-YA GV. Combined Arms"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus114_inf"
+msgid "114-YA GV. Motostrelki BRIG."
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus80_razv"
+msgid  "80-YA GV. Razvedka POLK"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus110_mech"
+msgid "110-YA GV. Motostrelki BRIG."
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus2_tank"
+msgid "10-YA GV. Uman Tank. POLK"
+msgstr ""
+
+
+msgctxt "main_menu2/dynamic_campaign/2022rus10_arty"
+msgid "14-YA GV. Artillery BRIG."
+msgstr ""
+
+
+
+msgctxt "main_menu2/dynamic_campaign/2022rus155"
+msgid "155-YA O.G BRIGADA MORSKOY PEKHOTY"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus155_inf"
+msgid "59-YA Morskaya Gruppa"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus155_tank"
+msgid  "Tank Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus155_arty"
+msgid "Artillery Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus155_mech"
+msgid  "Motostrlk POLK"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus155_heil"
+msgid  "Heilcopter"
+msgstr ""
+
+
+
+
+
+msgctxt "main_menu2/dynamic_campaign/2022vdv76"
+msgid "76-YA GV VOZDUSHNO-DESANTNAYA DIV."
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022vdv76_inf"
+msgid "104-YA GV Dsh. POLK"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022vdv45_razv"
+msgid  "45-YA GV SPET. BRIG."
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022vdv76_tank"
+msgid "124-YA OTD. TANK. Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022vdv76_arty"
+msgid "1140-YA GV. Arti. POLK"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022vdv76_mech"
+msgid "Motostrlk POLK"
+msgstr ""
+
+
+
+msgctxt "main_menu2/dynamic_campaign/2022vdv106"
+msgid "106-YA GV VOZDUSHNO-DESANTNAYA DIV."
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022vdv106_inf"
+msgid "ì œ11êµ°ë‹¨ [ì¡°ì„ ë¯¼ì£¼ì£¼ì˜ì¸ë¯¼ê³µí™”êµ­]"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022gru_razv"
+msgid  "2-YA GV SPET. BRIG."
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022vdv106_mech"
+msgid "137-YA GV DESANT. POLK"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022vdv106_arty"
+msgid "1182-YA GV. Arti. POLK"
+msgstr ""
+
+
+msgctxt "main_menu2/dynamic_campaign/ukr672022"
+msgid "67th Mechanized Brigade"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr67_inf"
+msgid "27th Rifle Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr67_mech"
+msgid "3rd Mechanized Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr67_tank"
+msgid "Tank Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr67_arty"
+msgid "Artillery Group"
+msgstr ""
+
+
+
+msgctxt "main_menu2/dynamic_campaign/2022rus4"
+msgid "4-YA GV. TANK. DIV."
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus4_inf"
+msgid "423th GV. Motostrelki REGI."
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus4_mech"
+msgid  "Motostrlk POLK"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus4_tank"
+msgid "12th GV. Tank REGI."
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus4_arty"
+msgid "275th GV. Artillery REGI."
+msgstr ""
+
+
+msgctxt "main_menu2/dynamic_campaign/ukr21_inf"
+msgid "34th Rifle Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr21_mech"
+msgid "1st Mechanized Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr21_tank"
+msgid "Tank Battalion"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/ukr21_arty"
+msgid "Artillery Group"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022rus344"
+msgid "344-YA COSRP"
+msgstr ""
+
+
+msgctxt "main_menu2/dynamic_campaign/2022marinf"
+msgid "1st MAR Reg"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022marrec"
+msgid "1st Recon Bn"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022martank"
+msgid "3rd AABn"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022marart"
+msgid "11th MAR Reg[ARTY]"
+msgstr ""
+
+
+
+
+msgctxt "main_menu2/dynamic_campaign/2022sck2"
+msgid "2nd Cavalry Rgt."
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022sck2inf"
+msgid "Apache Troop[S.I.T]"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022sck2rec"
+msgid "Nemesis Troop[S.C.S.T]"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022sck2mot"
+msgid "Mot.Apache Troop[S.I.T]"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022sck2art"
+msgid "Archer Battery[ARTY]"
+msgstr ""
+
+
+msgctxt "main_menu2/dynamic_campaign/2022tank1"
+msgid "1st ABCT â€Raiderâ€"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022tank1inf"
+msgid "7th Inf.Reg â€Cottonbalersâ€"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022tank1rec"
+msgid "RSTA â€Warpaintâ€"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022tank1art"
+msgid "9th FA Rgt. â€Battlekingsâ€"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022tank1mech"
+msgid "69th Arm Rgt. â€Speed&Powerâ€[MECH]"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022tank1tank"
+msgid "69th Arm Rgt. â€Speed&Powerâ€"
+msgstr ""
+
+
+
+
+msgctxt "main_menu2/dynamic_campaign/2022pz10"
+msgid "1. PzDiv"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022pz10inf"
+msgid "P.Z.GD BN 33[INF]"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022pz10mech"
+msgid "MECH INF"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022pz10tank"
+msgid "Panzerlehr BN 93"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022pz10arty"
+msgid "Artillerielehr BN 325"
+msgstr ""
+
+
+msgctxt "main_menu2/dynamic_campaign/2022dsk"
+msgid "Division Schnelle KrÃ¤fte"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022dskinf"
+msgid "GebJgBrig 23"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022ksk"
+msgid "Kommando SpezialkrÃ¤fte"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022dskhel"
+msgid "KHRGT 36"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022luft"
+msgid "LLBrig 1"
+msgstr ""
+
+
+msgctxt "main_menu2/dynamic_campaign/2022uk3"
+msgid "3rd (UK) Division"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022uk3inf"
+msgid "20th ARM.BRIG[INF]"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022uk3rec"
+msgid "3rd DRSB"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022uk3mech"
+msgid "MECH INF"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022uk3tank"
+msgid "20th ARM.BRIG[TANK]"
+msgstr ""
+
+
+
+msgctxt "main_menu2/dynamic_campaign/VIVO50"
+msgid "ç–¯ç‹‚æ˜ŸæœŸå››!Væˆ‘50è§£é”åˆæˆæ—…"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/pla122"
+msgid "ä¸­å›½äººæ°‘è§£æ”¾å†›é™†å†›åˆæˆç¬¬ä¸€ä¸€äºŒæ—…â€è‹±å‹‡èƒœåˆ©â€"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/pla122inf"
+msgid "æ­¥å…µ"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/pla122rec"
+msgid "ä¾¦æŸ¥"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/pla122mech"
+msgid "æœºæ¢°åŒ–æ­¥å…µ"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/pla122tank"
+msgid "å¦å…‹"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/pla122art"
+msgid "ç«ç‚®"
+msgstr ""
+
+
+
+
+msgctxt "main_menu2/dynamic_campaign/pla139"
+msgid "ä¸­å›½äººæ°‘è§£æ”¾å†›é™†å†›åˆæˆç¬¬ä¸€ä¸‰ä¹æ—…â€åŽå±±çŒ›è™Žâ€"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/pla139inf"
+msgid "æ­¥å…µ"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/pla139heil"
+msgid "é™†èˆª"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/pla139mech"
+msgid "æœºæ¢°åŒ–æ­¥å…µ"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/pla139tank"
+msgid "å¦å…‹"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/pla139art"
+msgid "ç«ç‚®"
+msgstr ""
+
+
+msgctxt "main_menu2/dynamic_campaign/pla2022_tnak"
+msgid "å¦å…‹[é€šç”¨]"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/pla2022_art"
+msgid "ç«ç‚®[é€šç”¨]"
+msgstr ""
+
+
+msgctxt "main_menu2/dynamic_campaign/2022efp"
+msgid "EFP-BGP"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022efpmech"
+msgid "MECH.INF"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022efptank"
+msgid "TANK"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022efparty"
+msgid "ARTY"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022efpinf"
+msgid "INF"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022arf"
+msgid "ARF COMMAND"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022arfinf"
+msgid "INF"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022arfmech"
+msgid "MECH.INF"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022arftank"
+msgid "TANK"
+msgstr ""
+
+msgctxt "main_menu2/dynamic_campaign/2022arfheil"
+msgid "HEIL"
+msgstr ""
+
+msgctxt "mp/army/goc_usa"
+msgid "GOC USA (spike)"
+msgstr ""
+
+msgctxt "mp/army/goc_fra"
+msgid "GOC France (spike)"
+msgstr ""
