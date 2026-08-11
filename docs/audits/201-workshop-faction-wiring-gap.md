@@ -137,3 +137,13 @@ Priority order from GaW/MW:
 3. Ship minimal `mp/goc_usa` / `mp/goc_fra` breed aliases if explicit content paths fail spawn.
 4. Own `conquest.lua` nationMap entries if AI Overhaul rejects unknown sides after load.
 5. Only then consider `{delete}` of Code:X army files via mod.info (breaks Core four-side while spike enabled — acceptable for disposable test).
+
+## conquest.lua (added from GatesOfEuropa 3717998771)
+
+Snagged `resource/script/multiplayer/modes/conquest.lua` from Workshop **3717998771** (GatesOfEuropa) and extended `nationMap`:
+
+- retained GOE ids: rus/ger/fin/usa/eng
+- added Code:X modern ids (AI Overhaul numbering): rusa/ukr/nato/csa/sov/prc/frg/pol
+- added spike nations: `goc_usa = 9`, `goc_fra = 10`
+
+Shipped under spike `resource/script/multiplayer/modes/conquest.lua` and standalone mini-mod.
