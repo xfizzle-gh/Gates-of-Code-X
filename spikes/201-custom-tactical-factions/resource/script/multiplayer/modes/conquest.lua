@@ -203,10 +203,8 @@ local function setVarsInMissionScript()
 	}
 	-- Opposite-alliance guess for MI when {type side} fails (West vs East).
 	local eastNations = { rusa = true, sov = true, prc = true, pol = true, rus = true, jap = true }
-	local westNations = { nato = true, ukr = true, csa = true, frg = true, usa = true, eng = true, ger = true, fin = true
-		goc_usa = true,
-		goc_fra = true,
-}
+	local westNations = { nato = true, ukr = true, csa = true, frg = true, usa = true, eng = true, ger = true, fin = true,
+		goc_usa = true, goc_fra = true }
 
 	BotApi.Scene:SetVar("bot_army", nationMap[botNation] or 0)
 	-- Hint only: MI dcg/player_nation remains authority when side matches.
