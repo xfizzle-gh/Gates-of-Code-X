@@ -12,12 +12,25 @@ from .expanded_nations_models import (
 )
 from .modstack import resource_root
 
-# Cross-side infantry reuse is intentionally opt-in.  The engine resolves a
-# squad member through the projected tactical side, so copying a ukr purchase
-# into nato without also materializing its breed namespace crashes the native
-# UI/battle spawner.  Spain is the only approved cross-side infantry component
-# in the current Phase 1 actor set.
-_CROSS_SIDE_BREED_COMPONENTS = frozenset({"spain_3rd_assault_legion"})
+# Cross-side breed reuse is intentionally opt-in. The engine resolves a squad
+# member through the projected tactical side, so a source-side purchase rendered
+# onto goc_* must also materialize the exact source breed namespace beneath the
+# goc_* side. Keep this list tied to explicitly approved components only.
+#
+# Phase 1: Spain's audited Ukrainian infantry subset.
+# Phase 2 #191: NATO fallback/bridge plus the CZE/SVK DANA equipment identity.
+# These components are the accepted #190 authority for the eight playable
+# Western/Northern/Central goc_* actors; broad or substring-derived components
+# are deliberately not authorized here.
+_CROSS_SIDE_BREED_COMPONENTS = frozenset(
+    {
+        "spain_3rd_assault_legion",
+        "nato_full_fallback",
+        "nato_common_infantry_bridge",
+        "cze_equipment_identity",
+        "svk_equipment_identity",
+    }
+)
 _INCLUDE_RE = re.compile(r'\(\s*include\s+"([^"]+)"\s*\)', re.IGNORECASE)
 _TEXT_SUFFIXES = frozenset({".set", ".inc"})
 _UTF8_BOM = b"\xef\xbb\xbf"
@@ -29,12 +42,12 @@ def project_actor_breed_files(
 ) -> dict[Path, bytes]:
     """Mirror approved source-side soldier breeds into the actor target side.
 
-    GoH resolves a projected squad member beneath ``mp/<side>/<period>``.  A
+    GoH resolves a projected squad member beneath ``mp/<side>/<period>``. A
     purchase definition can therefore be syntactically valid after a side
     rewrite while still crashing when its source-side soldier breed is absent
-    under the target side.  For explicitly approved cross-side components,
+    under the target side. For explicitly approved cross-side components,
     mirror the exact source breed payload bytes and their local include closure
-    into managed final-layer paths.  Existing target-side definitions always
+    into managed final-layer paths. Existing target-side definitions always
     win and are never overwritten.
     """
 
@@ -145,11 +158,15 @@ def _mirror_source_closure(
         raise ExpandedNationsError(
             f"Cross-side breed source resolves from an active generated projection: {source_path}"
         )
-    # A UTF-8 BOM is meaningful only at the beginning of a file.  The managed
+    # A UTF-8 BOM is meaningful only at the beginning of a file. The managed
     # provenance header necessarily becomes the beginning, so strip only that
     # BOM and preserve every remaining source byte exactly, including CRLF/LF
     # choice and terminal-newline state.
-    source_payload = source_bytes[len(_UTF8_BOM):] if source_bytes.startswith(_UTF8_BOM) else source_bytes
+    source_payload = (
+        source_bytes[len(_UTF8_BOM):]
+        if source_bytes.startswith(_UTF8_BOM)
+        else source_bytes
+    )
     header = (
         f"{GENERATED_MARKER}\n"
         f"; cross-side-breed-source={source_side}/{source_relative.as_posix()}\n"

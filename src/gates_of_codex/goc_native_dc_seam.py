@@ -20,6 +20,7 @@ from .expanded_nations_actor_sources import (
     normalize_actor_purchase_ids,
     project_actor_units,
 )
+from .expanded_nations_breeds import project_actor_breed_files
 from .expanded_nations_inf_costs import project_actor_inf_cost_rows
 from .expanded_nations_models import (
     BROAD_ROSTER_INCLUDES,
@@ -47,6 +48,8 @@ _NATION_MAP_CORE = (
 _NATION_MAP_ALIASES = "rus = 1, ger = 2, fin = 3, usa = 3, eng = 3, jap = 6"
 
 _ROSTER_RELATIVE = "resource/set/multiplayer/units/roster_conquest.set"
+_RESOLVED_UNIT_RE = re.compile(r"^;\s*resolved_unit=(.+?)\s*$", re.MULTILINE)
+_LUA_PURCHASE_RE = re.compile(r'\bunit\s*=\s*"([^"]+)"')
 
 
 def playable_west_sides() -> tuple[str, ...]:
@@ -252,6 +255,14 @@ def _lua_type_for_unit(unit: Mapping[str, Any]) -> list[str]:
 
 
 def render_purchase_lua_from_actor(actor: Mapping[str, Any]) -> str:
+    """Render AI purchases from already-normalized native purchase IDs.
+
+    ``normalize_actor_purchase_ids`` is the sole ID authority. In particular,
+    block-form definitions such as ``vz_77_dana`` remain bare IDs while macro
+    purchases carry the engine-derived ``name(goc_side)`` suffix. Never infer
+    or append a suffix here: doing so creates an AI ID that has no matching
+    unit/research definition.
+    """
     side = str(actor["tactical_side"])
     units = sorted(actor.get("units") or [], key=lambda row: str(row["unit_name"]))
     lines = [
@@ -261,23 +272,7 @@ def render_purchase_lua_from_actor(actor: Mapping[str, Any]) -> str:
         "\t\tUnits = {",
     ]
     for index, unit in enumerate(units):
-        unit_name = str(unit["unit_name"])
-        # Macro purchases use name(side); block IDs may already include side.
-        if "(" not in unit_name:
-            purchase_id = f"{unit_name}({side})"
-        else:
-            # Remap trailing core side to target goc side when present.
-            purchase_id = re.sub(
-                r"\((nato|ukr|rusa|prc|sov|csa|frg)\)$",
-                f"({side})",
-                unit_name,
-                flags=re.I,
-            )
-            if not purchase_id.endswith(f"({side})"):
-                # Already a bare or non-core parenthetical; keep compiler name and
-                # rely on projected body identity. Prefer explicit goc side suffix.
-                base = unit_name.split("(", 1)[0]
-                purchase_id = f"{base}({side})"
+        purchase_id = str(unit["unit_name"])
         tags = _lua_type_for_unit(unit)
         tag_lit = ", ".join(f'"{item}"' for item in tags)
         priority = max(0.2, 2.5 - (index * 0.02))
@@ -424,7 +419,6 @@ def committed_seam_relpaths() -> list[str]:
 
 
 def expected_seam_relpaths() -> list[str]:
-    # Backward-compatible name used by tests.
     return committed_seam_relpaths()
 
 
@@ -450,6 +444,56 @@ def _select_playable_actors(payload: Mapping[str, Any]) -> dict[str, dict[str, A
     return selected
 
 
+def _is_managed_breed_projection(path: Path) -> bool:
+    try:
+        head = path.read_bytes()[:512].decode("utf-8-sig", errors="replace")
+    except OSError:
+        return False
+    return GENERATED_MARKER in head
+
+
+def _replace_actor_breed_namespace(
+    root: Path,
+    side: str,
+    outputs: Mapping[Path, bytes],
+) -> tuple[list[str], int]:
+    """Replace only managed files in one goc_* breed namespace."""
+    relative_root = Path("resource/set/breed/mp") / side
+    side_root = root / relative_root
+    desired = {(root / relative).resolve() for relative in outputs}
+    removed = 0
+
+    if side_root.is_dir():
+        for path in sorted(
+            (candidate for candidate in side_root.rglob("*") if candidate.is_file()),
+            key=lambda item: item.as_posix(),
+            reverse=True,
+        ):
+            if path.resolve() in desired:
+                continue
+            if not _is_managed_breed_projection(path):
+                continue
+            path.unlink()
+            removed += 1
+        for directory in sorted(
+            (candidate for candidate in side_root.rglob("*") if candidate.is_dir()),
+            key=lambda item: len(item.parts),
+            reverse=True,
+        ):
+            try:
+                directory.rmdir()
+            except OSError:
+                pass
+
+    written: list[str] = []
+    for relative, data in sorted(outputs.items(), key=lambda item: item[0].as_posix()):
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+        written.append(relative.as_posix())
+    return written, removed
+
+
 def materialize_native_dc_seam(
     repo_root: str | Path,
     *,
@@ -463,7 +507,11 @@ def materialize_native_dc_seam(
     roots = normalize_stack(resource_stack)
     if not roots:
         raise GocArmyRegistryError("Native DC materialize requires an ordered resource stack")
-    payload = dict(resolved_payload) if resolved_payload is not None else FactionWiringCompiler(roots).compile()
+    payload = (
+        dict(resolved_payload)
+        if resolved_payload is not None
+        else FactionWiringCompiler(roots).compile()
+    )
     if int(payload.get("error_count") or 0) != 0:
         raise GocArmyRegistryError(
             f"Resolved catalog has {payload.get('error_count')} error(s); refuse native DC materialize"
@@ -489,7 +537,6 @@ def materialize_native_dc_seam(
         render_ctf_set(),
     )
     _write("resource/set/dynamic_campaign/values.set", render_values_set())
-    # Runtime-only roster (gitignored).
     _write(_ROSTER_RELATIVE, render_roster_conquest())
     _write(
         "resource/localizations/default/interface/text/dlg_mp_goc_phase2.pot",
@@ -497,6 +544,8 @@ def materialize_native_dc_seam(
     )
 
     unit_counts: dict[str, int] = {}
+    breed_counts: dict[str, int] = {}
+    stale_breed_files_removed: dict[str, int] = {}
     for side, actor in sorted(actors_by_side.items()):
         projected_units, projected_body = project_actor_units(actor, roots, root)
         native_actor = normalize_actor_purchase_ids(actor, projected_units)
@@ -505,6 +554,15 @@ def materialize_native_dc_seam(
                 f"Actor {native_actor['actor_id']} projected {len(projected_units)} "
                 f"units, catalog unit_count={native_actor['unit_count']}"
             )
+
+        breed_outputs = project_actor_breed_files(native_actor, roots)
+        breed_written, breed_removed = _replace_actor_breed_namespace(
+            root,
+            side,
+            breed_outputs,
+        )
+        written.extend(breed_written)
+
         inf_rows, inf_body = project_actor_inf_cost_rows(native_actor, roots)
         research_nodes = project_research_nodes(native_actor)
         _write(
@@ -524,7 +582,9 @@ def materialize_native_dc_seam(
             render_purchase_lua_from_actor(native_actor),
         )
         unit_counts[side] = len(projected_units)
-        _ = inf_rows  # projection validates; body is authoritative on disk
+        breed_counts[side] = len(breed_outputs)
+        stale_breed_files_removed[side] = breed_removed
+        _ = inf_rows
 
     if aio_conquest_lua is None:
         raise GocArmyRegistryError(
@@ -557,6 +617,8 @@ def materialize_native_dc_seam(
         "written": sorted(set(written)),
         "playable_sides": list(playable_goc_sides()),
         "unit_counts": unit_counts,
+        "breed_counts": breed_counts,
+        "stale_breed_files_removed": stale_breed_files_removed,
         "flag_copies": flag_copies,
         "removed_obsolete_alliance_fragment": removed,
         "roster_path": _ROSTER_RELATIVE,
@@ -569,21 +631,24 @@ def validate_repo_native_dc_seam(repo_root: str | Path) -> list[str]:
     root = Path(repo_root)
     problems: list[str] = []
 
-    # Roster must remain runtime-only / gitignored contract.
     roster_path = root / _ROSTER_RELATIVE
     gitignore = (root / ".gitignore").read_text(encoding="utf-8")
     if "/resource/set/multiplayer/units/roster_conquest.set" not in gitignore:
         problems.append("roster_conquest.set missing from .gitignore (must stay runtime-only)")
-    # If present on disk, it must be the multi-faction renderer output (not bootstrap).
+    if "/resource/set/breed/mp/goc_*/" not in gitignore:
+        problems.append("runtime goc_* breed projections missing from .gitignore")
     if roster_path.is_file():
         roster_text = roster_path.read_text(encoding="utf-8", errors="ignore")
         expected = render_roster_conquest()
         if roster_text != expected:
-            # Allow expanded-nations single-actor roster while still requiring core completeness
             for rel in CANONICAL_INF_INCLUDES:
                 if rel not in roster_text and "goc_active_actor_units" not in roster_text:
                     problems.append(f"on-disk roster missing canonical include {rel}")
-            for rel in ("conquest/inf_sov_era1960.set", "conquest/inf_frg_era1960.set", "conquest/units_frg_era1960.set"):
+            for rel in (
+                "conquest/inf_sov_era1960.set",
+                "conquest/inf_frg_era1960.set",
+                "conquest/units_frg_era1960.set",
+            ):
                 if rel not in roster_text and "goc_active_actor_units" not in roster_text:
                     problems.append(f"on-disk roster missing core include {rel}")
         for side in playable_goc_sides():
@@ -617,9 +682,23 @@ def validate_repo_native_dc_seam(repo_root: str | Path) -> list[str]:
         if rel.endswith(".lua") and "/units/" in rel:
             if "Repeat" not in text or "Units" not in text:
                 problems.append(f"purchase lua schema invalid: {rel}")
-            # Reject disposable bootstrap markers.
             if "usmc_rifleman" in text or "_test_rifle" in text:
                 problems.append(f"purchase lua still uses bootstrap prototype content: {rel}")
+            side = Path(rel).parent.name
+            units_path = root / "resource/set/multiplayer/units/conquest" / f"units_{side}.set"
+            if units_path.is_file():
+                resolved_ids = set(
+                    _RESOLVED_UNIT_RE.findall(
+                        units_path.read_text(encoding="utf-8", errors="ignore")
+                    )
+                )
+                lua_ids = set(_LUA_PURCHASE_RE.findall(text))
+                if resolved_ids != lua_ids:
+                    problems.append(
+                        f"native purchase ID mismatch for {side}: "
+                        f"missing_in_lua={sorted(resolved_ids - lua_ids)}; "
+                        f"extra_in_lua={sorted(lua_ids - resolved_ids)}"
+                    )
         if rel.endswith("units_goc_cze.set"):
             if "vz_77_dana" not in text:
                 problems.append("goc_cze units pack missing #190 authority unit vz_77_dana")
@@ -632,7 +711,6 @@ def validate_repo_native_dc_seam(repo_root: str | Path) -> list[str]:
             if "bootstrap" in text.lower() and "Disposable #201" in text:
                 problems.append(f"production units pack still labeled disposable spike: {rel}")
             if GENERATED_MARKER not in text and "Deterministic rendering" not in text:
-                # Allow either marker style after regeneration.
                 if "usmc_rifleman" in text:
                     problems.append(f"units pack looks like bootstrap prototype: {rel}")
 
@@ -640,7 +718,6 @@ def validate_repo_native_dc_seam(repo_root: str | Path) -> list[str]:
     if obsolete.is_file():
         problems.append("obsolete alliances_goc_production_west.inc still present")
 
-    # Renderer self-check for complete core roster.
     rendered = render_roster_conquest()
     for rel in CANONICAL_INF_INCLUDES:
         if rel not in rendered:
