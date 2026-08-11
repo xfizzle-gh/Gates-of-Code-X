@@ -675,6 +675,68 @@ class ResultVerificationAndImportTests(unittest.TestCase):
                 self.assertFalse(row["ok"], (field_name, verified))
                 self.assertIn(message, row["detail"], (field_name, row))
 
+    def test_padded_identity_is_refused_by_the_shared_gate_before_content(
+        self,
+    ) -> None:
+        """Padded-but-otherwise-correct identities must fail the shared gate.
+
+        ``import_battle`` compares raw ``battle_id`` and resolves raw path fields.
+        Stripping before equality would let ``" <correct-id> "`` pass this gate
+        while Import still rejects it — exactly the Verify/Import divergence the
+        shared helper exists to prevent. End-to-end whitespace tests are not
+        enough: downstream ``verify_tactical_result`` can still make the final
+        verdict fail closed. These shapes prove the gate itself owns the refusal
+        and names the mismatched binding before content verification runs.
+        """
+        from dataclasses import replace as dc_replace
+
+        from gates_of_codex.frontend_commands import apply_frontend_commands
+        from gates_of_codex.service import GatesOfCodeXService
+
+        def shapes(manifest):
+            return {
+                "padded battle_id": (
+                    dc_replace(manifest, battle_id=f" {manifest.battle_id} "),
+                    "belongs to battle",
+                ),
+                "padded campaign_path": (
+                    dc_replace(
+                        manifest, campaign_path=f" {manifest.campaign_path} "
+                    ),
+                    "belongs to campaign",
+                ),
+                "padded save_path": (
+                    dc_replace(manifest, save_path=f" {manifest.save_path} "),
+                    "belongs to tactical save",
+                ),
+            }
+
+        for label in (
+            "padded battle_id",
+            "padded campaign_path",
+            "padded save_path",
+        ):
+            with self.subTest(shape=label), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                campaign_path, save_path = self._prepared(root)
+                service = GatesOfCodeXService()
+                sidecar = service.manifest_path(save_path)
+                manifest = service.load_manifest(sidecar)
+                mutated, message = shapes(manifest)[label]
+                service.write_manifest(mutated, sidecar)
+
+                verified = apply_frontend_commands(
+                    campaign_path,
+                    commands=[{"op": "verify_result", "command_id": f"p-{label}"}],
+                    snapshot_path=None,
+                )
+
+                row = verified["results"][0]
+                self.assertFalse(row["ok"], (label, verified))
+                self.assertIn(message, row["detail"], (label, row))
+                # Gate-owned refusal, not a content/stack verdict with verified=false.
+                self.assertNotIn("verified", row.get("data") or {}, (label, row))
+
     def test_a_result_with_no_pending_battle_cannot_be_verified(self) -> None:
         """An imported battle must not stay verifiable against an empty slot.
 

@@ -468,38 +468,43 @@ def _assert_manifest_binds_result(
     Every binding is required to be **present**. Treating an empty field as
     "nothing to check" made an unbound manifest verify, which is precisely the
     manifest that should never unlock Import.
+
+    ``.strip()`` is used only to detect empty/whitespace-only values. Equality
+    and path resolution use the original unstripped fields, matching
+    ``import_battle`` exactly so a padded-but-otherwise-correct identity cannot
+    pass this gate and then be refused by Import.
     """
-    manifest_battle = str(getattr(manifest, "battle_id", "") or "").strip()
-    manifest_campaign = str(getattr(manifest, "campaign_path", "") or "").strip()
-    manifest_save = str(getattr(manifest, "save_path", "") or "").strip()
+    raw_battle = str(getattr(manifest, "battle_id", "") or "")
+    raw_campaign = str(getattr(manifest, "campaign_path", "") or "")
+    raw_save = str(getattr(manifest, "save_path", "") or "")
     # Compare resolved against resolved, exactly as ``import_battle`` does, so a
     # caller passing a relative campaign path cannot produce a false mismatch.
     campaign_file = Path(campaign).resolve()
 
-    if not manifest_campaign:
+    if not raw_campaign.strip():
         raise ValueError("Handoff manifest does not name a campaign")
-    if Path(manifest_campaign).resolve() != campaign_file:
+    if Path(raw_campaign).resolve() != campaign_file:
         raise ValueError(
-            f"Handoff manifest belongs to campaign {manifest_campaign!r}, "
+            f"Handoff manifest belongs to campaign {raw_campaign!r}, "
             f"not {str(campaign_file)!r}"
         )
 
-    if not manifest_save:
+    if not raw_save.strip():
         raise ValueError("Handoff manifest does not name a tactical save")
-    if Path(manifest_save).resolve() != save_file:
+    if Path(raw_save).resolve() != save_file:
         raise ValueError(
-            f"Handoff manifest belongs to tactical save {manifest_save!r}, "
+            f"Handoff manifest belongs to tactical save {raw_save!r}, "
             f"not {str(save_file)!r}"
         )
 
     pending = state.pending_battle
     if pending is None:
         raise ValueError("No pending battle to verify this result against")
-    if not manifest_battle:
+    if not raw_battle.strip():
         raise ValueError("Handoff manifest does not name a battle")
-    if manifest_battle != pending.battle_id:
+    if raw_battle != pending.battle_id:
         raise ValueError(
-            f"Handoff manifest belongs to battle {manifest_battle!r}, "
+            f"Handoff manifest belongs to battle {raw_battle!r}, "
             f"but the pending battle is {pending.battle_id!r}"
         )
 
