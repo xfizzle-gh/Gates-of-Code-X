@@ -87,4 +87,12 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          [scriptblock]::Create((Get-Content -Raw '.\tools\activate_expanded_nation.ps1')) | Out-Null
+          [scriptblock]::Create((Get-Content -Raw '.\\tools\\activate_expanded_nation.ps1')) | Out-Null
+      - name: Temporary exact-head source snapshot for #192 controller
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase2-source-snapshot
+          path: |
+            .
+            !.git/**
+          include-hidden-files: true
