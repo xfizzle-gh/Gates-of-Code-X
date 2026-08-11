@@ -49,3 +49,14 @@ Under `resource/`:
 ## Known partial risks
 
 AI Overhaul `nationMap` / `player_nation` do not list `goc_*`. Support-wave MI may degrade for unknown sides even if roster/research/army registration succeed. Record that boundary honestly.
+## Standalone mini-mod (GaW/MW method)
+
+Workshop packs that work (GaW 3701399761, MW 3692035814) **replace** alliances/values/roster rather than appending onto Code:X.
+
+A disposable local mod was generated at:
+
+`Call to Arms - Gates of Hell\mods\goc_201_faction_spike`
+
+Enable **GOC 201 Custom Faction Spike** in the GoH mod manager (keep Code:X for shared settings/breeds), disable conflicting conquest packs if needed, restart, then create DC **GOC USA spike** vs **GOC France spike**.
+
+See `docs/audits/201-workshop-faction-wiring-gap.md`.
