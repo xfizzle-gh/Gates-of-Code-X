@@ -1,4 +1,4 @@
-﻿#, fuzzy
+#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: Call to Arms (dlg_mp)\n"

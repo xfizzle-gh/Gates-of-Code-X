@@ -1,4 +1,4 @@
-﻿;sdl
+;sdl
 ; #201 disposable spike roster overlay. Isolated test factions only.
 ; Keeps Core Code:X four-side includes and adds goc_usa/goc_fra test pools.
 {units

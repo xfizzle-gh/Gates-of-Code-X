@@ -1,4 +1,4 @@
-﻿{"West"
+{"West"
 	{title "mp/alliance/west"}
 	{armies "nato"}
 	{armies "ukr"}

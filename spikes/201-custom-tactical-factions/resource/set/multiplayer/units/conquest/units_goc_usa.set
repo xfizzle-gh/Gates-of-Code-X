@@ -1,4 +1,4 @@
-﻿; Disposable #201 spike units for goc_usa. Do not ship as production content.
+; Disposable #201 spike units for goc_usa. Do not ship as production content.
 ; Breeds intentionally reuse mp/nato paths; army identity is goc_usa.
 
 {"goc_usa_test_rifle(goc_usa)"

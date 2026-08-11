@@ -1,4 +1,4 @@
-﻿{IconGap 30}
+{IconGap 30}
 { tech "reinforcement_stage_1" requires "" costs 0 position 0 0}
 { tech "reinforcement_stage_2" requires "reinforcement_stage_1" costs 1 position 1 0}
 { tech "reinforcement_stage_3" requires "reinforcement_stage_2" costs 2 position 2 0}

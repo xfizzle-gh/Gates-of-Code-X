@@ -1,4 +1,4 @@
-﻿; Disposable #201 spike units for goc_fra. Do not ship as production content.
+; Disposable #201 spike units for goc_fra. Do not ship as production content.
 
 {"goc_fra_test_rifle(goc_fra)"
 	{charge {delay 0}{interval 0}}
