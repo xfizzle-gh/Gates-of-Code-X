@@ -1,53 +1,37 @@
-# Gates of CodeX Phase 2 (#191) army labels
-msgid ""
-msgstr ""
-"Content-Type: text/plain; charset=UTF-8\n"
+# #191 production army labels (merge into dlg_mp2.pot on deploy if needed)
 
-msgctxt "mp/army/goc_bel"
-msgid "Belgium"
-msgstr "Belgium"
-
-msgctxt "mp/army/goc_prt"
-msgid "Portugal"
-msgstr "Portugal"
-
-msgctxt "mp/army/goc_cze"
-msgid "Czechia"
-msgstr "Czechia"
-
-msgctxt "mp/army/goc_svk"
-msgid "Slovakia"
-msgstr "Slovakia"
-
-msgctxt "mp/army/goc_hun"
-msgid "Hungary"
-msgstr "Hungary"
-
-msgctxt "mp/army/goc_ltu"
-msgid "Lithuania"
-msgstr "Lithuania"
-
-msgctxt "mp/army/goc_lva"
-msgid "Latvia"
-msgstr "Latvia"
-
-msgctxt "mp/army/goc_est"
-msgid "Estonia"
-msgstr "Estonia"
-
-msgctxt "mp/army/goc_aut"
-msgid "Austria"
+msgid "mp/army/goc_aut"
 msgstr "Austria"
 
-msgctxt "mp/army/goc_che"
-msgid "Switzerland"
+msgid "mp/army/goc_bel"
+msgstr "Belgium"
+
+msgid "mp/army/goc_che"
 msgstr "Switzerland"
 
-msgctxt "mp/army/goc_irl"
-msgid "Ireland"
+msgid "mp/army/goc_cze"
+msgstr "Czechia"
+
+msgid "mp/army/goc_est"
+msgstr "Estonia"
+
+msgid "mp/army/goc_hun"
+msgstr "Hungary"
+
+msgid "mp/army/goc_irl"
 msgstr "Ireland"
 
-msgctxt "mp/army/goc_isl"
-msgid "Iceland"
+msgid "mp/army/goc_isl"
 msgstr "Iceland"
 
+msgid "mp/army/goc_ltu"
+msgstr "Lithuania"
+
+msgid "mp/army/goc_lva"
+msgstr "Latvia"
+
+msgid "mp/army/goc_prt"
+msgstr "Portugal"
+
+msgid "mp/army/goc_svk"
+msgstr "Slovakia"

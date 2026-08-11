@@ -30,7 +30,7 @@ class StrategicActorMigrationTest(unittest.TestCase):
         validate_strategic_actor_runtime(state)
         for force in state.strategic_formations.values():
             self.assertIn(force.actor_id, actors)
-            self.assertEqual(actors[force.actor_id].tactical_side, force.faction)
+            self.assertEqual(actors[force.actor_id].tactical_side.campaign_faction(), force.faction)
 
     def test_save_load_round_trip_preserves_actor_runtime(self) -> None:
         state = load_bundled_scenario("legacy_goe_europe")
@@ -59,6 +59,9 @@ class BundledStrategicActorTest(unittest.TestCase):
         self.assertEqual(actors["wagner"].host_actor_id, "rus")
         self.assertEqual(actors["bel"].tactical_side.value, "goc_bel")
         self.assertEqual(actors["bel"].tactical_side.campaign_faction(), Faction.NATO)
+        # Identity equality only — never equal to mapped campaign Faction.
+        self.assertNotEqual(actors["bel"].tactical_side, Faction.NATO)
+        self.assertEqual(hash(actors["bel"].tactical_side), hash("goc_bel"))
         self.assertFalse(actors["aut"].playable)
         self.assertEqual(actors["aut"].roster_class, "strategic_only")
         validate_strategic_actor_runtime(state)
@@ -84,7 +87,7 @@ class BundledStrategicActorTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             assign_province_actor(state, province.province_id, "dprk")
         self.assertIn(ACTOR_RUNTIME_KEY, state.map_metadata)
-        self.assertEqual(actors["fra"].tactical_side, province.owner)
+        self.assertEqual(actors["fra"].tactical_side.campaign_faction(), province.owner)
 
 
 if __name__ == "__main__":

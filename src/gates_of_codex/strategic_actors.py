@@ -107,9 +107,9 @@ ACTOR_ALIASES = {
 class EngineTacticalSide:
     """Engine/DC army token (core side or production goc_*).
 
-    Campaign province/force ownership still uses core Faction values. Equality
-    against Faction compares the mapped campaign faction so existing ownership
-    checks keep working for GOC production armies.
+    Equality and hashing are identity/token-based only. Campaign province and
+    force ownership use core Faction values via explicit ``campaign_faction()``
+    conversion at ownership call sites — never via cross-type equality.
     """
 
     __slots__ = ("value",)
@@ -132,8 +132,6 @@ class EngineTacticalSide:
     def __eq__(self, other: object) -> bool:
         if isinstance(other, EngineTacticalSide):
             return self.value == other.value
-        if isinstance(other, Faction):
-            return self.campaign_faction() == other
         if isinstance(other, str):
             return self.value == other
         return NotImplemented

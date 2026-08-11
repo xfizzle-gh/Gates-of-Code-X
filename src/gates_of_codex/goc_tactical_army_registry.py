@@ -65,6 +65,11 @@ def validate_goc_army_registry(payload: Mapping[str, Any]) -> None:
             raise GocArmyRegistryError(f"Army {token} missing actor_id")
         if "playable" not in row:
             raise GocArmyRegistryError(f"Army {token} missing playable flag")
+        nation_map = row.get("nation_map_id")
+        if not isinstance(nation_map, int) or isinstance(nation_map, bool):
+            raise GocArmyRegistryError(f"Army {token} missing integer nation_map_id")
+        if nation_map < 1 or nation_map > 99:
+            raise GocArmyRegistryError(f"Army {token} nation_map_id out of range")
 
 
 def registered_goc_sides() -> frozenset[str]:
@@ -149,6 +154,117 @@ def render_army_set(side: str) -> str:
     )
 
 
+def playable_goc_sides() -> tuple[str, ...]:
+    armies = load_goc_army_registry()["armies"]
+    return tuple(
+        sorted(
+            token
+            for token, row in armies.items()
+            if bool(row.get("playable"))
+        )
+    )
+
+
+def nation_map_id(side: str) -> int:
+    row = army_row(side)
+    value = row.get("nation_map_id")
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise GocArmyRegistryError(f"Army {side} missing integer nation_map_id")
+    return value
+
+
+_ARMY_ID_RE = re.compile(r"\{id\s+(\d+)\}")
+_ARMY_SET_IN_PAK_RE = re.compile(
+    r"(?:^|/)(?:resource/)?set/multiplayer/armies/([^/]+)\.set$",
+    re.IGNORECASE,
+)
+
+
+def iter_stack_army_definitions(
+    roots: Iterable[str | Path],
+) -> list[dict[str, Any]]:
+    """Enumerate army token→id mappings from loose files and ZIP-format .pak archives.
+
+    Covers the accepted five-layer authority model: Vanilla (PAK), West81, Code:X,
+    AIO, and Gates. Non-ZIP containers are reported as unscanned.
+    """
+    import zipfile
+
+    found: list[dict[str, Any]] = []
+    for root in roots:
+        root_path = Path(root)
+        label = str(root_path)
+        armies_dir = root_path / "resource" / "set" / "multiplayer" / "armies"
+        if armies_dir.is_dir():
+            for path in sorted(armies_dir.glob("*.set")):
+                text = path.read_text(encoding="utf-8", errors="ignore")
+                match = _ARMY_ID_RE.search(text)
+                if not match:
+                    continue
+                found.append(
+                    {
+                        "root": label,
+                        "source": "loose",
+                        "path": str(path),
+                        "token": path.stem,
+                        "numeric_id": int(match.group(1)),
+                    }
+                )
+        pak_candidates: list[Path] = []
+        direct = root_path / "resource" / "gamelogic.pak"
+        if direct.is_file():
+            pak_candidates.append(direct)
+        resource_dir = root_path / "resource"
+        if resource_dir.is_dir():
+            pak_candidates.extend(sorted(resource_dir.glob("*.pak")))
+        if root_path.is_dir():
+            pak_candidates.extend(sorted(root_path.glob("*.pak")))
+        seen_pak: set[Path] = set()
+        for pak in pak_candidates:
+            resolved = pak.resolve()
+            if resolved in seen_pak or not pak.is_file():
+                continue
+            seen_pak.add(resolved)
+            try:
+                archive = zipfile.ZipFile(pak)
+            except zipfile.BadZipFile:
+                found.append(
+                    {
+                        "root": label,
+                        "source": "pak_unreadable",
+                        "path": str(pak),
+                        "token": "",
+                        "numeric_id": -1,
+                        "note": "not_zip_or_corrupt",
+                    }
+                )
+                continue
+            with archive:
+                for name in archive.namelist():
+                    normalized = name.replace("\\", "/")
+                    match_name = _ARMY_SET_IN_PAK_RE.search(normalized)
+                    if not match_name:
+                        continue
+                    token = match_name.group(1)
+                    try:
+                        text = archive.read(name).decode("utf-8", errors="ignore")
+                    except KeyError:
+                        continue
+                    match = _ARMY_ID_RE.search(text)
+                    if not match:
+                        continue
+                    found.append(
+                        {
+                            "root": label,
+                            "source": "pak",
+                            "path": f"{pak}!{normalized}",
+                            "token": token,
+                            "numeric_id": int(match.group(1)),
+                        }
+                    )
+    return found
+
+
 def audit_numeric_ids_against_stack(army_roots: Iterable[str | Path]) -> list[str]:
     """Return collision messages for registry IDs found under foreign army names."""
     registry = load_goc_army_registry()
@@ -156,22 +272,44 @@ def audit_numeric_ids_against_stack(army_roots: Iterable[str | Path]) -> list[st
         int(row["numeric_id"]): token for token, row in registry["armies"].items()
     }
     collisions: list[str] = []
-    for root in army_roots:
-        armies_dir = Path(root) / "resource" / "set" / "multiplayer" / "armies"
-        if not armies_dir.is_dir():
+    for entry in iter_stack_army_definitions(army_roots):
+        if entry.get("source") == "pak_unreadable":
             continue
-        for path in armies_dir.glob("*.set"):
-            text = path.read_text(encoding="utf-8", errors="ignore")
-            match = re.search(r"\{id\s+(\d+)\}", text)
-            if not match:
-                continue
-            numeric_id = int(match.group(1))
-            if numeric_id not in owned:
-                continue
-            token = owned[numeric_id]
-            if path.stem != token:
-                collisions.append(
-                    f"id {numeric_id} owned by registry token {token} but found as "
-                    f"{path.stem} under {root}"
-                )
+        numeric_id = int(entry["numeric_id"])
+        if numeric_id not in owned:
+            continue
+        token = owned[numeric_id]
+        found_token = str(entry.get("token") or "")
+        if found_token != token:
+            collisions.append(
+                f"id {numeric_id} owned by registry token {token} but found as "
+                f"{found_token or '<unknown>'} under {entry['path']}"
+            )
     return collisions
+
+
+def collect_stack_army_id_inventory(
+    army_roots: Iterable[str | Path],
+) -> dict[str, Any]:
+    """Build a deterministic inventory used as collision-audit evidence."""
+    entries = iter_stack_army_definitions(army_roots)
+    by_id: dict[int, list[dict[str, str]]] = {}
+    unscanned: list[str] = []
+    for entry in entries:
+        if entry.get("source") == "pak_unreadable":
+            unscanned.append(str(entry["path"]))
+            continue
+        numeric_id = int(entry["numeric_id"])
+        by_id.setdefault(numeric_id, []).append(
+            {
+                "token": str(entry["token"]),
+                "source": str(entry["source"]),
+                "path": str(entry["path"]),
+            }
+        )
+    return {
+        "observed_ids": sorted(by_id),
+        "by_id": {str(key): value for key, value in sorted(by_id.items())},
+        "unscanned_non_zip_paks": sorted(unscanned),
+        "entry_count": sum(len(v) for v in by_id.values()),
+    }

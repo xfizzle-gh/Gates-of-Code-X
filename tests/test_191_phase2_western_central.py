@@ -12,16 +12,29 @@ from gates_of_codex.faction_wiring import (
     load_faction_manifest,
     validate_faction_manifest,
 )
+from gates_of_codex.goc_native_dc_seam import (
+    expected_seam_relpaths,
+    playable_west_sides,
+    render_alliances_generic,
+    render_purchase_lua,
+    unit_id,
+    validate_repo_native_dc_seam,
+)
 from gates_of_codex.goc_tactical_army_registry import (
     GocArmyRegistryError,
     army_numeric_id,
     audit_numeric_ids_against_stack,
+    collect_stack_army_id_inventory,
     load_goc_army_registry,
+    nation_map_id,
+    playable_goc_sides,
     registered_goc_sides,
     render_army_set,
     supported_tactical_sides,
     validate_goc_army_registry,
 )
+from gates_of_codex.models import Faction
+from gates_of_codex.strategic_actors import EngineTacticalSide
 from gates_of_codex.expanded_nations_models import (
     ExpandedNationsError,
     research_relative_for_side,
@@ -94,18 +107,110 @@ class GocArmyRegistryTests(unittest.TestCase):
             on_disk = path.read_text(encoding="utf-8")
             self.assertEqual(on_disk, text)
 
-    def test_stack_collision_audit_against_live_workshop_if_present(self) -> None:
+    def test_stack_collision_audit_against_full_five_layer_stack_if_present(self) -> None:
         workshop = Path(r"E:\Steam\steamapps\workshop\content\400750")
+        vanilla = Path(r"E:\Steam\steamapps\common\Call to Arms - Gates of Hell")
         roots = [
-            workshop / "2897299509",
-            workshop / "3261086933",
-            workshop / "3696721120",
+            vanilla,
+            workshop / "2897299509",  # West81
+            workshop / "3261086933",  # Code:X
+            workshop / "3636883799",  # AIO
+            workshop / "3696721120",  # Gates
         ]
-        if not all(r.is_dir() for r in roots):
-            self.skipTest("live workshop stack not present")
+        if not all(r.exists() for r in roots):
+            self.skipTest("full five-layer live stack not present")
+        inventory = collect_stack_army_id_inventory(roots)
+        self.assertGreater(inventory["entry_count"], 0)
+        # Vanilla ZIP .pak must contribute or at least be openable (no unscanned corrupt paks required).
+        self.assertIsInstance(inventory["unscanned_non_zip_paks"], list)
+        observed = set(inventory["observed_ids"])
+        for reserved in range(0, 14):
+            self.assertIn(reserved, observed)
+        allocated = {
+            int(row["numeric_id"])
+            for row in load_goc_army_registry()["armies"].values()
+        }
+        foreign_hits = observed & allocated
+        # Own tokens on Gates are fine; foreign tokens on allocated IDs are not.
         collisions = audit_numeric_ids_against_stack(roots)
-        # Foreign names on production IDs must not exist. Same-token goc_* files are OK.
         self.assertEqual(collisions, [])
+        for numeric_id in allocated:
+            holders = inventory["by_id"].get(str(numeric_id), [])
+            for holder in holders:
+                self.assertTrue(
+                    str(holder["token"]).startswith("goc_"),
+                    msg=f"allocated id {numeric_id} held by non-goc token {holder}",
+                )
+
+    def test_nation_map_ids_unique_and_outside_core_spike(self) -> None:
+        ids = [nation_map_id(side) for side in registered_goc_sides()]
+        self.assertEqual(len(ids), len(set(ids)))
+        for value in ids:
+            self.assertGreaterEqual(value, 14)
+            self.assertNotIn(value, set(range(1, 9)))
+            self.assertNotIn(value, {9, 10, 11, 12, 13})
+
+
+class EngineTacticalSideContractTests(unittest.TestCase):
+    def test_equality_is_identity_only_and_hash_stable(self) -> None:
+        side = EngineTacticalSide("goc_bel")
+        self.assertEqual(side, EngineTacticalSide("goc_bel"))
+        self.assertEqual(side, "goc_bel")
+        self.assertNotEqual(side, Faction.NATO)
+        self.assertEqual(side.campaign_faction(), Faction.NATO)
+        self.assertEqual(hash(side), hash("goc_bel"))
+        # Equal objects must share hash (identity pair).
+        self.assertEqual(hash(side), hash(EngineTacticalSide("goc_bel")))
+
+
+class NativeDcSeamTests(unittest.TestCase):
+    def test_committed_seam_is_complete_and_active(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        problems = validate_repo_native_dc_seam(root)
+        self.assertEqual(problems, [])
+        for rel in expected_seam_relpaths():
+            self.assertTrue((root / rel).is_file(), rel)
+        alliances = (root / "resource/set/multiplayer/games/presets/alliances_generic.inc").read_text(
+            encoding="utf-8"
+        )
+        self.assertEqual(alliances, render_alliances_generic())
+        for side in playable_goc_sides():
+            self.assertIn(side, playable_west_sides())
+            lua = (
+                root
+                / "resource/script/multiplayer/units"
+                / side
+                / f"conquest.{side}.lua"
+            ).read_text(encoding="utf-8")
+            self.assertEqual(lua, render_purchase_lua(side))
+            self.assertIn("Repeat", lua)
+            self.assertIn(unit_id(side, "rifle"), lua)
+            research = (
+                root / "resource/set/dynamic_campaign" / f"unit_research_{side}.set"
+            ).read_text(encoding="utf-8")
+            self.assertIn(unit_id(side, "rifle"), research)
+            units = (
+                root / "resource/set/multiplayer/units/conquest" / f"units_{side}.set"
+            ).read_text(encoding="utf-8")
+            self.assertIn(side, units)
+            self.assertIn(f"({side})", units)
+        # Strategic-only armies stay registered but out of the alliance picker.
+        for token in ("goc_aut", "goc_che", "goc_irl", "goc_isl"):
+            self.assertNotIn(f'{{armies "{token}"}}', alliances)
+            self.assertTrue(
+                (root / "resource/set/multiplayer/armies" / f"{token}.set").is_file()
+            )
+        obsolete = root / "resource/set/multiplayer/games/presets/alliances_goc_production_west.inc"
+        self.assertFalse(obsolete.exists())
+        conquest = (root / "resource/script/multiplayer/modes/conquest.lua").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("goc_bel = 14", conquest)
+        self.assertIn("goc_bel = true", conquest)
+        ctf = (
+            root / "resource/set/multiplayer/games/campaign_capture_the_flag.set"
+        ).read_text(encoding="utf-8")
+        self.assertIn('presets/alliances_generic.inc', ctf)
 
 
 class Phase191ManifestTests(unittest.TestCase):
