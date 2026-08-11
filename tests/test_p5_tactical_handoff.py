@@ -560,6 +560,196 @@ class ResultVerificationAndImportTests(unittest.TestCase):
         self.assertIn("other-campaign.json", imported["results"][0]["detail"])
         self.assertEqual(before, after)
 
+    def test_verify_and_import_agree_on_every_unbound_manifest_shape(self) -> None:
+        """Verify must refuse exactly what Import refuses.
+
+        ``import_battle`` is the reference contract and requires all three
+        bindings — campaign, tactical save, pending battle — to match exactly.
+        Verify previously treated an *absent* value as "nothing to check" and
+        never looked at ``save_path`` at all, so an unbound manifest could be
+        certified and light up Import for a result the import authority would
+        then reject. Each shape below is driven through both commands, and the
+        campaign must stay byte-identical either way.
+        """
+        from dataclasses import replace as dc_replace
+
+        from gates_of_codex.frontend_commands import apply_frontend_commands
+        from gates_of_codex.service import GatesOfCodeXService
+        from gates_of_codex.state_io import load_campaign, save_campaign
+
+        def unbound_shapes(root: Path, save_path: Path):
+            return {
+                "empty battle_id": lambda m: dc_replace(m, battle_id=""),
+                "empty campaign_path": lambda m: dc_replace(m, campaign_path=""),
+                "empty save_path": lambda m: dc_replace(m, save_path=""),
+                "whitespace battle_id": lambda m: dc_replace(m, battle_id="   "),
+                "foreign save_path": lambda m: dc_replace(
+                    m, save_path=str(root / "someone-elses-battle.sav")
+                ),
+            }
+
+        for label in (
+            "empty battle_id",
+            "empty campaign_path",
+            "empty save_path",
+            "whitespace battle_id",
+            "foreign save_path",
+        ):
+            with self.subTest(shape=label), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                campaign_path, save_path = self._prepared(root)
+                # Normalize serialization before sampling the baseline bytes.
+                save_campaign(load_campaign(campaign_path), campaign_path)
+
+                service = GatesOfCodeXService()
+                sidecar = service.manifest_path(save_path)
+                manifest = service.load_manifest(sidecar)
+                mutate = unbound_shapes(root, save_path)[label]
+                # Always write back to the sidecar beside the save under test:
+                # the default destination follows manifest.save_path, which some
+                # of these shapes deliberately point elsewhere.
+                service.write_manifest(mutate(manifest), sidecar)
+
+                before = campaign_path.read_bytes()
+                verified = apply_frontend_commands(
+                    campaign_path,
+                    commands=[{"op": "verify_result", "command_id": f"v-{label}"}],
+                    snapshot_path=None,
+                )
+                imported = apply_frontend_commands(
+                    campaign_path,
+                    commands=[{"op": "import_battle", "command_id": f"i-{label}"}],
+                    snapshot_path=None,
+                )
+                after = campaign_path.read_bytes()
+
+                row = verified["results"][0]
+                self.assertFalse(row["ok"], (label, verified))
+                # The field Godot's ``_capture_verification`` reads must never
+                # report success for a manifest Import refuses, whichever layer
+                # does the refusing.
+                self.assertNotEqual(True, row.get("data", {}).get("verified"), label)
+                self.assertFalse(imported["ok"], (label, imported))
+                self.assertEqual(before, after, label)
+
+    def test_binding_is_refused_by_the_shared_gate_before_content_verification(
+        self,
+    ) -> None:
+        """The guarantee must not rest on the downstream verifier agreeing.
+
+        ``verify_tactical_result`` independently checks the same three bindings,
+        so an unbound manifest already produced ``verified: False``. That made
+        the fail-open gate latent rather than reachable — but it left the shared
+        identity contract depending on an undocumented coupling between two
+        verifiers, and only ``verify_stack_result`` runs when a stack is
+        configured. The gate now refuses first, and says which binding failed.
+        """
+        from dataclasses import replace as dc_replace
+
+        from gates_of_codex.frontend_commands import apply_frontend_commands
+        from gates_of_codex.service import GatesOfCodeXService
+
+        expected = {
+            "battle_id": "does not name a battle",
+            "campaign_path": "does not name a campaign",
+            "save_path": "does not name a tactical save",
+        }
+        for field_name, message in expected.items():
+            with self.subTest(field=field_name), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                campaign_path, save_path = self._prepared(root)
+                service = GatesOfCodeXService()
+                sidecar = service.manifest_path(save_path)
+                manifest = service.load_manifest(sidecar)
+                service.write_manifest(
+                    dc_replace(manifest, **{field_name: ""}), sidecar
+                )
+
+                verified = apply_frontend_commands(
+                    campaign_path,
+                    commands=[{"op": "verify_result", "command_id": f"g-{field_name}"}],
+                    snapshot_path=None,
+                )
+
+                row = verified["results"][0]
+                self.assertFalse(row["ok"], (field_name, verified))
+                self.assertIn(message, row["detail"], (field_name, row))
+
+    def test_a_result_with_no_pending_battle_cannot_be_verified(self) -> None:
+        """An imported battle must not stay verifiable against an empty slot.
+
+        This locks the end-to-end contract, not one layer: the refusal may come
+        from save-path resolution or from the binding gate, but a campaign with
+        no pending battle must never certify a result.
+        """
+        from gates_of_codex.frontend_commands import apply_frontend_commands
+        from gates_of_codex.state_io import load_campaign
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            campaign_path, save_path = self._prepared(root)
+            accepted = apply_frontend_commands(
+                campaign_path,
+                commands=[{"op": "import_battle", "command_id": "imp-clear"}],
+                snapshot_path=None,
+            )
+            self.assertTrue(accepted["ok"], accepted)
+            self.assertIsNone(load_campaign(campaign_path).pending_battle)
+
+            before = campaign_path.read_bytes()
+            replayed = apply_frontend_commands(
+                campaign_path,
+                commands=[
+                    {
+                        "op": "verify_result",
+                        "save_path": str(save_path),
+                        "command_id": "v-no-pending",
+                    }
+                ],
+                snapshot_path=None,
+            )
+            after = campaign_path.read_bytes()
+
+        self.assertFalse(replayed["results"][0]["ok"], replayed)
+        self.assertEqual(before, after)
+
+    def test_the_exact_bound_manifest_still_verifies_and_imports(self) -> None:
+        """The tightened binding must not refuse the genuine handoff."""
+        from gates_of_codex.frontend_commands import apply_frontend_commands
+        from gates_of_codex.service import GatesOfCodeXService
+        from gates_of_codex.state_io import load_campaign
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            campaign_path, save_path = self._prepared(root)
+            service = GatesOfCodeXService()
+            manifest = service.load_manifest(service.manifest_path(save_path))
+            # The genuine sidecar names all three bindings.
+            self.assertTrue(manifest.battle_id)
+            self.assertEqual(
+                Path(manifest.campaign_path).resolve(), Path(campaign_path).resolve()
+            )
+            self.assertEqual(
+                Path(manifest.save_path).resolve(), Path(save_path).resolve()
+            )
+
+            verified = apply_frontend_commands(
+                campaign_path,
+                commands=[{"op": "verify_result", "command_id": "v-exact"}],
+                snapshot_path=None,
+            )
+            imported = apply_frontend_commands(
+                campaign_path,
+                commands=[{"op": "import_battle", "command_id": "i-exact"}],
+                snapshot_path=None,
+            )
+            cleared = load_campaign(campaign_path).pending_battle
+
+        self.assertTrue(verified["results"][0]["ok"], verified)
+        self.assertTrue(verified["results"][0]["data"]["verified"], verified)
+        self.assertTrue(imported["ok"], imported)
+        self.assertIsNone(cleared)
+
     def test_accepted_import_clears_the_pending_battle_exactly_once(self) -> None:
         from gates_of_codex.frontend_commands import apply_frontend_commands
         from gates_of_codex.state_io import load_campaign

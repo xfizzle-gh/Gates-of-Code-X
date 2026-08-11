@@ -451,6 +451,59 @@ def _resolve_result_save_path(state, raw: dict[str, Any]) -> str:
     return save_path
 
 
+def _assert_manifest_binds_result(
+    manifest,
+    *,
+    campaign: Path,
+    save_file: Path,
+    state,
+) -> None:
+    """Fail closed unless the manifest names this campaign, save and battle.
+
+    ``GatesOfCodeXService.import_battle`` is the reference contract: it requires
+    all three bindings to match exactly. This mirrors it so a manifest cannot be
+    certified by ``verify_result`` and then refused by the import authority,
+    which is the one divergence the shared helper exists to prevent.
+
+    Every binding is required to be **present**. Treating an empty field as
+    "nothing to check" made an unbound manifest verify, which is precisely the
+    manifest that should never unlock Import.
+    """
+    manifest_battle = str(getattr(manifest, "battle_id", "") or "").strip()
+    manifest_campaign = str(getattr(manifest, "campaign_path", "") or "").strip()
+    manifest_save = str(getattr(manifest, "save_path", "") or "").strip()
+    # Compare resolved against resolved, exactly as ``import_battle`` does, so a
+    # caller passing a relative campaign path cannot produce a false mismatch.
+    campaign_file = Path(campaign).resolve()
+
+    if not manifest_campaign:
+        raise ValueError("Handoff manifest does not name a campaign")
+    if Path(manifest_campaign).resolve() != campaign_file:
+        raise ValueError(
+            f"Handoff manifest belongs to campaign {manifest_campaign!r}, "
+            f"not {str(campaign_file)!r}"
+        )
+
+    if not manifest_save:
+        raise ValueError("Handoff manifest does not name a tactical save")
+    if Path(manifest_save).resolve() != save_file:
+        raise ValueError(
+            f"Handoff manifest belongs to tactical save {manifest_save!r}, "
+            f"not {str(save_file)!r}"
+        )
+
+    pending = state.pending_battle
+    if pending is None:
+        raise ValueError("No pending battle to verify this result against")
+    if not manifest_battle:
+        raise ValueError("Handoff manifest does not name a battle")
+    if manifest_battle != pending.battle_id:
+        raise ValueError(
+            f"Handoff manifest belongs to battle {manifest_battle!r}, "
+            f"but the pending battle is {pending.battle_id!r}"
+        )
+
+
 def _verify_result(campaign: Path, state, save_path: str):
     """Verify a played GoH save against the exact campaign and pending battle.
 
@@ -462,23 +515,14 @@ def _verify_result(campaign: Path, state, save_path: str):
     from .stack_acceptance import verify_stack_result
 
     service = GatesOfCodeXService()
-    manifest = service.load_manifest(service.manifest_path(save_path))
-    pending = state.pending_battle
-    # Bind the result to this campaign and this battle before anything else.
-    # A field the manifest does not carry is skipped rather than assumed,
-    # matching how the rest of the manifest contract treats absent values.
-    manifest_battle = str(getattr(manifest, "battle_id", "") or "")
-    manifest_campaign = str(getattr(manifest, "campaign_path", "") or "")
-    if pending is not None and manifest_battle and manifest_battle != pending.battle_id:
-        raise ValueError(
-            f"Handoff manifest belongs to battle {manifest_battle!r}, "
-            f"but the pending battle is {pending.battle_id!r}"
-        )
-    if manifest_campaign and Path(manifest_campaign).resolve() != campaign:
-        raise ValueError(
-            f"Handoff manifest belongs to campaign {manifest_campaign!r}, "
-            f"not {str(campaign)!r}"
-        )
+    save_file = Path(save_path).resolve()
+    manifest = service.load_manifest(service.manifest_path(save_file))
+    # Bind the result to this campaign, this tactical save and this battle before
+    # anything else, using exactly the three bindings ``import_battle`` enforces.
+    # An absent value proves nothing, so it is a refusal rather than a skipped
+    # check: a manifest that cannot name what it belongs to must never be able to
+    # certify a result the import authority would then reject.
+    _assert_manifest_binds_result(manifest, campaign=campaign, save_file=save_file, state=state)
     resource_stack = (
         state.map_metadata.get("resource_stack", []) or manifest.resource_stack
     )
