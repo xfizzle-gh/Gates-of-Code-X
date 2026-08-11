@@ -75,11 +75,23 @@ def require_operational_retreat_graph(state: CampaignState) -> dict:
                 # the equivalent authored land kind while preserving the
                 # original graph bytes and gameplay interpretation.
                 validation_edge = replace(edge, kind=EdgeKind.ROAD.value)
-            validation_edge.validate(
-                node_ids=node_ids,
-                province_ids=province_ids,
-                node_province=node_province,
-            )
+            if edge.authority == EdgeAuthority.APPROVED.value:
+                # P3 edges are already gated by authenticated allowlist load
+                # (load_operational_graph_for_state). edge.validate() always
+                # raises for APPROVED authority because it expects that
+                # allowlist step — re-running it here made every Earth3
+                # battle import fail closed after a successful handoff.
+                validation_edge._validate_structure(
+                    node_ids=node_ids,
+                    province_ids=province_ids,
+                    node_province=node_province,
+                )
+            else:
+                validation_edge.validate(
+                    node_ids=node_ids,
+                    province_ids=province_ids,
+                    node_province=node_province,
+                )
     except (
         AttributeError,
         KeyError,
