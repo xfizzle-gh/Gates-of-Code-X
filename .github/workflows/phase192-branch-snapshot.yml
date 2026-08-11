@@ -1,0 +1,27 @@
+name: Phase 192 branch snapshot
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    if: github.head_ref == 'feat/189-expanded-nations-phase2'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Upload exact PR branch source
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase192-branch-source
+          path: |
+            .
+            !.git/**
+          include-hidden-files: true
