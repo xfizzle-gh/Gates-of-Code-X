@@ -33,7 +33,7 @@ class FrontendFastPathTests(unittest.TestCase):
             self.assertTrue(text.endswith("\n"))
             self.assertEqual(expected, json.loads(text))
             # The runtime snapshot is machine data. Pretty-print indentation was
-            # pure disk/parse overhead on the ~14 MB Earth3 snapshot.
+            # pure disk/parse overhead on the multi-megabyte Earth3 snapshot.
             self.assertNotIn("\n  \"", text)
 
     def test_fast_path_explicitly_deduplicates_construction_traversals(self) -> None:
@@ -62,6 +62,24 @@ class PlayerTurnCyclePresentationTests(unittest.TestCase):
         self.assertIn('"advance_turn": true', source)
         self.assertIn('PLAYER_TURN_ORDER := ["nato", "ukr", "rusa", "prc"]', source)
         self.assertIn('End turn + AI cycle (E)', source)
+
+    def test_round_batch_uses_batch_aware_operational_presenter(self) -> None:
+        main_source = (ROOT / "godot/scripts/main_perf.gd").read_text(encoding="utf-8")
+        adapter = (
+            ROOT / "godot/scripts/presentation/operational_resolution_presenter_batch.gd"
+        ).read_text(encoding="utf-8")
+        self.assertIn(
+            'res://scripts/presentation/operational_resolution_presenter_batch.gd',
+            main_source,
+        )
+        self.assertIn(
+            "operational_presenter = BatchOperationalResolutionPresenterScript.new()",
+            main_source,
+        )
+        self.assertIn('for result_variant: Variant in payload.get("results", [])', adapter)
+        self.assertIn('presentation.get("movements", [])', adapter)
+        self.assertIn("movements.append", adapter)
+        self.assertIn('presentation.get("battle_finalization", {})', adapter)
 
     def test_overlay_has_no_all_province_ambient_label_scan(self) -> None:
         source = (ROOT / "godot/scripts/main_perf.gd").read_text(encoding="utf-8")
