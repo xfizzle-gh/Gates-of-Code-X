@@ -43,7 +43,9 @@ class FrontendFastPathTests(unittest.TestCase):
         source = (ROOT / "src/gates_of_codex/frontend_fastpath.py").read_text(
             encoding="utf-8"
         )
-        self.assertIn("selected_reachable = _reachable_supply_provinces", source)
+        self.assertIn("selected_reachable: set[str] | None = None", source)
+        self.assertIn("_ORIGINAL_STRATEGIC_REACHABLE(candidate, faction)", source)
+        self.assertIn("projection_identity = candidate_identity", source)
         self.assertIn("_strategic.ensure_strategic_layer = _already_initialized", source)
         self.assertIn("_strategic.reachable_supply_provinces = _snapshot_reachable", source)
         self.assertIn("finally:", source)
