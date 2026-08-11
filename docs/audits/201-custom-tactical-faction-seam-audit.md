@@ -72,3 +72,9 @@ Does **not** edit upstream Workshop packages in place; only the final Gates laye
 - No Phase 1 production path changes  
 - No full national content  
 - Spike files isolated under `spikes/201-...`  
+
+## Native launch crash (first deploy)
+
+`Invalid army identifier (must be in range [0, 99])` (`mp_gamemisc.cpp:182`)
+
+Engine hard-limits numeric `{id N}` to **0..99**. Spike IDs 100/101 crashed on launch. Retargeted to **90/91**.
