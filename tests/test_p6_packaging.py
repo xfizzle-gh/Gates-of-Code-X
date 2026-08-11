@@ -191,13 +191,26 @@ class PackagingProvenanceTests(unittest.TestCase):
             )
             self.assertEqual(expected_jobs, workflow.count("id: provenance"), relative)
             self.assertIn("steps.provenance.outputs.commit", workflow, relative)
+            static_add_data = (
+                '--add-data "src\\gates_of_codex\\SOURCE_COMMIT;gates_of_codex"'
+            )
+            resolved_add_data = '--add-data "$sourceCommit;gates_of_codex"'
             self.assertEqual(
                 3,
-                workflow.count(
-                    '--add-data "src\\gates_of_codex\\SOURCE_COMMIT;gates_of_codex"'
-                ),
+                workflow.count(static_add_data) + workflow.count(resolved_add_data),
                 relative,
             )
+            if resolved_add_data in workflow:
+                self.assertIn(
+                    '$sourceCommit = (Resolve-Path -LiteralPath "src\\gates_of_codex\\SOURCE_COMMIT").Path',
+                    workflow,
+                    relative,
+                )
+                self.assertIn(
+                    '--specpath $probeRoot --add-data "$sourceCommit;gates_of_codex"',
+                    workflow,
+                    relative,
+                )
             self.assertIn("if: always()", workflow, relative)
             self.assertIn(
                 "Remove-Item -LiteralPath src\\gates_of_codex\\SOURCE_COMMIT -Force",
