@@ -64,7 +64,11 @@ def stage_player_one_hop_from_rusa(
     player = state.strategic_formations.get(formation_id)
     if player is None:
         raise NativeAcceptanceStageError(f"missing player formation: {formation_id}")
-    if player.faction != Faction.NATO or not player.is_player_controlled:
+    # The native shortcut targets one explicit strategic formation on the
+    # selected human NATO side. `is_player_controlled` is battalion/bootstrap
+    # presentation metadata and is not strategic movement authority; Vilnius is
+    # intentionally movable by the NATO player even though that flag is false.
+    if player.faction != Faction.NATO:
         raise NativeAcceptanceStageError(f"formation is not the intended player NATO force: {formation_id}")
     if player.move_order is not None:
         raise NativeAcceptanceStageError(
