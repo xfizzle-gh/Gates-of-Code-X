@@ -75,6 +75,104 @@ class FactionAuditAdjustmentTest(unittest.TestCase):
         self.assertIn("nato_common_support", finland["components"])
         self.assertTrue(any("broad Soviet legacy pool" in note for note in finland["notes"]))
 
+    def test_soviet_legacy_core_is_heavy_equipment_only(self) -> None:
+        manifest = load_faction_manifest()
+        validate_faction_manifest(manifest)
+        component = manifest["components"]["soviet_legacy_core"]
+        actual = {
+            unit
+            for selector in component["selectors"]
+            if selector["kind"] == "exact"
+            for unit in selector["units"]
+        }
+        self.assertEqual(
+            {
+                "btr-60pb",
+                "btr-80",
+                "bmp-1",
+                "bmp1p",
+                "bmp2",
+                "mtlb",
+                "t55a",
+                "t55am",
+                "t72a",
+                "t72b",
+                "122mm_d-30",
+                "bm-21_grad",
+                "zsu-23-4m",
+                "ural375",
+                "ural375_ammo",
+            },
+            actual,
+        )
+        self.assertTrue(
+            {
+                "squad_rifle_con",
+                "squad_rifle_moto2_con(sov)",
+                "squad_rifle_mech2_con(sov)",
+                "squad_guards_con",
+                "squad_engineer_moto_con(sov)",
+                "squad_medic_moto_con(sov)",
+            }.isdisjoint(actual)
+        )
+        actors = {actor["actor_id"]: actor for actor in manifest["actors"]}
+        self.assertIn("serbia_infantry", actors["srb"]["components"])
+        self.assertIn("kpa_infantry", actors["dprk"]["components"])
+        self.assertIn("donbas_native", actors["donbas"]["components"])
+        self.assertIn("belarus_modern_support", actors["blr"]["components"])
+
+    def test_spain_uses_only_the_approved_3rd_assault_legion_infantry_subset(self) -> None:
+        manifest = load_faction_manifest()
+        validate_faction_manifest(manifest)
+        actors = {actor["actor_id"]: actor for actor in manifest["actors"]}
+        spain = actors["esp"]
+        self.assertEqual(
+            ["spain_3rd_assault_legion", "nato_fallback_heavy", "nato_common_support"],
+            spain["components"],
+        )
+        self.assertNotIn("nato_full_fallback", spain["components"])
+        component = manifest["components"]["spain_3rd_assault_legion"]
+        selector = component["selectors"][0]
+        self.assertEqual("exact", selector["kind"])
+        self.assertEqual("ukr", selector["source_side"])
+        self.assertEqual(
+            {
+                "3rd_assault_mg3",
+                "3rd_assault_at",
+                "3rd_assault_javelin",
+                "3rd_assault_saperi",
+                "3rd_assault_saperi_at",
+                "3rd_assault_decepticons",
+                "squad_3rd_rozv_hatred(ukr)",
+            },
+            set(selector["units"]),
+        )
+        self.assertEqual(
+            {"2022nrft", "2022nrfa"},
+            {
+                selector["root"]
+                for selector in manifest["components"]["nato_fallback_heavy"]["selectors"]
+            },
+        )
+
+    def test_ukraine_uses_native_codex_branches_without_duplicate_ildu_component(self) -> None:
+        manifest = load_faction_manifest()
+        validate_faction_manifest(manifest)
+        actors = {actor["actor_id"]: actor for actor in manifest["actors"]}
+        ukraine = actors["ukr"]
+        self.assertEqual(["ukraine_regular"], ukraine["components"])
+        self.assertEqual("native", ukraine["research"]["mode"])
+        self.assertNotIn("ukraine_ildu", ukraine["components"])
+        roots = {
+            selector["root"]
+            for selector in manifest["components"]["ukraine_regular"]["selectors"]
+            if selector["kind"] == "research_branch"
+        }
+        self.assertIn("azov32022", roots)
+        compatibility_pool = manifest["components"]["ukraine_ildu"]
+        self.assertIn("Compatibility-only", compatibility_pool["description"])
+        self.assertNotIn("ukraine_ildu", actors["esp"]["components"])
+
     def test_audit_notes_are_applied_without_duplicates(self) -> None:
         first = load_faction_manifest()
         second = load_faction_manifest()

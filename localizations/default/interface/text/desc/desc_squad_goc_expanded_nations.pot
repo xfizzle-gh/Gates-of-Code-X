@@ -1,0 +1,38 @@
+; Gates of Code:X Expanded Nations squad presentation.
+
+msgctxt "desc/squad/goc_serb_rifle(rusa)"
+msgid  "Serbian Rifle Squad"
+msgstr ""
+
+msgctxt "desc/squad/goc_serb_at(rusa)"
+msgid  "Serbian Anti-Tank Squad"
+msgstr ""
+
+msgctxt "desc/squad/goc_serb_recon(rusa)"
+msgid  "Serbian Reconnaissance Squad"
+msgstr ""
+
+; Exact Code:X source labels copied from the corresponding Ukraine purchase IDs.
+msgctxt "desc/squad/3rd_assault_at(nato)"
+msgid  "3-я OShBr SHTURMOVYKY[RPG-7]"
+msgstr ""
+
+msgctxt "desc/squad/3rd_assault_decepticons(nato)"
+msgid  "3-я OShBr SPETSPIDROZDIL ”Decepticons”"
+msgstr ""
+
+msgctxt "desc/squad/3rd_assault_javelin(nato)"
+msgid  "3-я OShBr SHTURMOVYKY[JAVELIN]"
+msgstr ""
+
+msgctxt "desc/squad/3rd_assault_mg3(nato)"
+msgid  "3-я OShBr SHTURMOVYKY[MG3]"
+msgstr ""
+
+msgctxt "desc/squad/3rd_assault_saperi(nato)"
+msgid  "3-я OShBr SAPERI"
+msgstr ""
+
+msgctxt "desc/squad/3rd_assault_saperi_at(nato)"
+msgid  "3-я OShBr SAPERI[RSHG-2]"
+msgstr ""
