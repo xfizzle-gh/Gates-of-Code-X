@@ -643,6 +643,7 @@ jobs:
         shell: pwsh
         run: |
           $expectedCommit = '${{ steps.provenance.outputs.commit }}'
+          $sourceCommit = (Resolve-Path -LiteralPath "src\gates_of_codex\SOURCE_COMMIT").Path
           $probeRoot = Join-Path $env:RUNNER_TEMP ("gates-of-codex-frozen-probe-" + [guid]::NewGuid().ToString("N"))
           New-Item -ItemType Directory -Path $probeRoot | Out-Null
           try {
@@ -661,7 +662,7 @@ jobs:
             [System.IO.File]::WriteAllText($probeScript, $probeBody, [System.Text.UTF8Encoding]::new($false))
             $probeDist = Join-Path $probeRoot "dist"
             $probeWork = Join-Path $probeRoot "build"
-            python -m PyInstaller --noconfirm --clean --onefile --console --name GatesOfCodeXProvenanceProbe --distpath $probeDist --workpath $probeWork --specpath $probeRoot --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" $probeScript
+            python -m PyInstaller --noconfirm --clean --onefile --console --name GatesOfCodeXProvenanceProbe --distpath $probeDist --workpath $probeWork --specpath $probeRoot --add-data "$sourceCommit;gates_of_codex" $probeScript
             if ($LASTEXITCODE -ne 0) { throw "Unable to build frozen provenance probe." }
             Remove-Item Env:GATES_OF_CODEX_SOURCE_COMMIT -ErrorAction SilentlyContinue
             & (Join-Path $probeDist "GatesOfCodeXProvenanceProbe.exe") $expectedCommit | Out-Null
