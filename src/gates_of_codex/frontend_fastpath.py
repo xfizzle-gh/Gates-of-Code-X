@@ -26,7 +26,7 @@ calculations still use the unmodified supply module functions.
 import json
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from . import frontend as _frontend
 from . import strategic as _strategic
@@ -41,6 +41,7 @@ def build_frontend_snapshot_fast(
     *,
     campaign_path: str | Path | None = None,
     snapshot_path: str | Path | None = None,
+    environ: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """Build the normal snapshot while deduplicating per-province setup work."""
 
@@ -74,6 +75,7 @@ def build_frontend_snapshot_fast(
             state,
             campaign_path=campaign_path,
             snapshot_path=snapshot_path,
+            environ=environ,
         )
     finally:
         _strategic.ensure_strategic_layer = previous_ensure
@@ -85,6 +87,7 @@ def write_frontend_snapshot_fast(
     path: str | Path,
     *,
     campaign_path: str | Path | None = None,
+    environ: Mapping[str, str] | None = None,
 ) -> Path:
     """Atomically publish compact JSON for the unchanged frontend schema."""
 
@@ -96,6 +99,7 @@ def write_frontend_snapshot_fast(
                 state,
                 campaign_path=campaign_path,
                 snapshot_path=destination,
+                environ=environ,
             ),
             ensure_ascii=False,
             separators=(",", ":"),

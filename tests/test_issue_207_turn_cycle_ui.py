@@ -40,6 +40,44 @@ class FrontendFastPathTests(unittest.TestCase):
             self.assertEqual(expected, json.loads(text))
             self.assertNotIn("\n  \"", text)
 
+    def test_fast_path_preserves_explicit_environment_contract(self) -> None:
+        state = build_scenario("legacy_goe_europe")
+        environ = {"GATES_OF_CODEX_HOME": "managed-home"}
+        with patch.object(
+            frontend,
+            "build_frontend_snapshot",
+            return_value={"ok": True},
+        ) as build:
+            self.assertEqual(
+                {"ok": True},
+                build_frontend_snapshot_fast(state, environ=environ),
+            )
+        build.assert_called_once_with(
+            state,
+            campaign_path=None,
+            snapshot_path=None,
+            environ=environ,
+        )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            destination = Path(temporary) / "campaign_snapshot.json"
+            with patch.object(
+                frontend_fastpath,
+                "build_frontend_snapshot_fast",
+                return_value={"ok": True},
+            ) as fast_build:
+                write_frontend_snapshot_fast(
+                    state,
+                    destination,
+                    environ=environ,
+                )
+            fast_build.assert_called_once_with(
+                state,
+                campaign_path=None,
+                snapshot_path=destination,
+                environ=environ,
+            )
+
     def test_construction_reachability_runs_once_per_snapshot(self) -> None:
         state = build_scenario("legacy_goe_europe")
         original = frontend_fastpath._ORIGINAL_STRATEGIC_REACHABLE
