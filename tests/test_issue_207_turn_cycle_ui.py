@@ -6,7 +6,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from gates_of_codex import frontend
+from gates_of_codex import frontend, frontend_fastpath
+from gates_of_codex.campaign import CampaignEngine
 from gates_of_codex.frontend_fastpath import (
     build_frontend_snapshot_fast,
     write_frontend_snapshot_fast,
@@ -37,11 +38,30 @@ class FrontendFastPathTests(unittest.TestCase):
             text = destination.read_text(encoding="utf-8")
             self.assertTrue(text.endswith("\n"))
             self.assertEqual(expected, json.loads(text))
-            # The runtime snapshot is machine data. Pretty-print indentation was
-            # pure disk/parse overhead on the multi-megabyte Earth3 snapshot.
             self.assertNotIn("\n  \"", text)
 
-    def test_fast_path_explicitly_deduplicates_construction_traversals(self) -> None:
+    def test_construction_reachability_runs_once_per_snapshot(self) -> None:
+        state = build_scenario("legacy_goe_europe")
+        original = frontend_fastpath._ORIGINAL_STRATEGIC_REACHABLE
+        calls: list[tuple[int, str]] = []
+
+        def counted(candidate, faction):
+            calls.append((id(candidate), faction.value))
+            return original(candidate, faction)
+
+        with patch.object(
+            frontend_fastpath,
+            "_ORIGINAL_STRATEGIC_REACHABLE",
+            side_effect=counted,
+        ):
+            build_frontend_snapshot_fast(state)
+
+        selected_calls = [
+            row for row in calls if row[1] == state.selected_faction.value
+        ]
+        self.assertEqual(1, len(selected_calls), selected_calls)
+
+    def test_fast_path_restores_scoped_helpers(self) -> None:
         source = (ROOT / "src/gates_of_codex/frontend_fastpath.py").read_text(
             encoding="utf-8"
         )
@@ -60,6 +80,13 @@ class PlayerTurnCycleTests(unittest.TestCase):
         state = build_scenario("legacy_goe_europe")
         starting_turn = state.turn_number
         selected = state.selected_faction
+        expected_ai = [
+            faction.value
+            for faction in CampaignEngine.TURN_ORDER
+            if faction != selected
+            and faction.value in state.factions
+            and not state.factions[faction.value].is_eliminated
+        ]
 
         # This test is about turn orchestration, not AI decision quality. Keep AI
         # mutation inert while exercising the real CampaignEngine turn order.
@@ -73,7 +100,7 @@ class PlayerTurnCycleTests(unittest.TestCase):
         self.assertFalse(report["pending_battle"])
         self.assertEqual(selected, state.current_faction)
         self.assertEqual(selected.value, report["current_faction"])
-        self.assertEqual(["ukr", "rusa", "prc"], report["ai_factions"])
+        self.assertEqual(expected_ai, report["ai_factions"])
         self.assertEqual(starting_turn + 1, state.turn_number)
 
     def test_main_scene_uses_responsiveness_layer_and_retains_stack_contract(self) -> None:
