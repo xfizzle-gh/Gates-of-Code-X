@@ -60,3 +60,9 @@ A disposable local mod was generated at:
 Enable **GOC 201 Custom Faction Spike** in the GoH mod manager (keep Code:X for shared settings/breeds), disable conflicting conquest packs if needed, restart, then create DC **GOC USA spike** vs **GOC France spike**.
 
 See `docs/audits/201-workshop-faction-wiring-gap.md`.
+
+## settings.set / common.set / inf
+
+- **settings.set**: Code:X `conquest/settings.set` (macros). Roster includes it from the stack. **Do not copy** into Gates — would override the whole macro table. There is **no** `common.set` in Code:X conquest units (that name is not used here).
+- **inf_goc_usa.set / inf_goc_fra.set**: personnel cost/CP rows for breeds used by the spike purchases.
+- **units_goc_*.set**: purchase definitions.

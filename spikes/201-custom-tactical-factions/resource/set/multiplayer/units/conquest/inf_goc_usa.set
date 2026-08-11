@@ -1,0 +1,8 @@
+; #201 spike inf costs for goc_usa test pool.
+; Breed paths reuse Code:X nato assets; side tag is goc_usa for DC identity.
+
+{"mp/nato/2022s/usmc_rifleman"		("nato_basic" side(goc_usa)) {cost 13.5}}
+{"mp/nato/2022s/usmc_medic"		("nato_medic" side(goc_usa)) {cost 14.0}}
+{"mp/nato/2022s/usmc_teamlead"		("nato_basic" side(goc_usa)) {cost 10.5}}
+{"mp/nato/2022s/usmc_antitank_smaw"	("nato_basic" side(goc_usa)) {cost 40.0}}
+{"mp/nato/2022s/usmc_vehicleman"	("nato_supporter" side(goc_usa)) {cost 10.5}}

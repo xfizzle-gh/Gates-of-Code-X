@@ -1,0 +1,7 @@
+; #201 spike inf costs for goc_fra test pool.
+
+{"mp/nato/2022s/nato_rifleman"		("nato_basic" side(goc_fra)) {cost 15.5}}
+{"mp/nato/2022s/nato_medic"		("nato_medic" side(goc_fra)) {cost 14.0}}
+{"mp/nato/2022s/nato_teamlead"		("nato_basic" side(goc_fra)) {cost 15.5}}
+{"mp/nato/2022s/nato_antitank"		("nato_basic" side(goc_fra)) {cost 40.0}}
+{"mp/nato/2022s/usmc_vehicleman"	("nato_supporter" side(goc_fra)) {cost 10.5}}
