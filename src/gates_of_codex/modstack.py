@@ -273,6 +273,59 @@ def stack_signature(values: Iterable[str | Path]) -> str:
     return digest.hexdigest()
 
 
+class UnrepresentableStackLayer(ValueError):
+    """A required mod layer has no known GoH dependency representation.
+
+    Raised instead of guessing. A save whose ``{mods}`` block does not describe
+    what actually loads is the defect #166 exists to prevent, so an export that
+    cannot represent a layer must fail before mutating anything.
+    """
+
+
+def stack_dependency_tokens(values: Iterable[str | Path]) -> list[str]:
+    """Return the exact ordered GoH saveinfo dependency tokens for a stack.
+
+    Every layer carrying a ``mod.info`` is a required mod layer and must have a
+    known representation. Today the only representation proven by captured engine
+    saves is the Workshop form ``mod_<workshopId>:0``; the id is read from the
+    layer's own path, never hardcoded. A vanilla resource root carries no
+    ``mod.info`` and is exempt.
+
+    Unlike :func:`stack_mod_tokens`, an unrepresentable mod layer raises rather
+    than being silently skipped.
+    """
+    tokens: list[str] = []
+    seen: set[str] = set()
+    unrepresentable: list[Path] = []
+    for root in normalize_stack(values):
+        if not (root / "mod.info").is_file():
+            # Vanilla resource root: exempt, contributes no dependency row.
+            continue
+        workshop_id = ""
+        for part in root.parts:
+            if part.isdigit() and len(part) >= 8:
+                workshop_id = part
+        if not workshop_id:
+            unrepresentable.append(root)
+            continue
+        if workshop_id in seen:
+            continue
+        seen.add(workshop_id)
+        tokens.append(f"mod_{workshop_id}:0")
+    if unrepresentable:
+        detail = "; ".join(
+            f"{_mod_info_name(root) or root.name} at {root}" for root in unrepresentable
+        )
+        raise UnrepresentableStackLayer(
+            "Cannot represent required mod layer(s) in the save dependency list: "
+            f"{detail}. Only Steam Workshop layers have a proven GoH saveinfo "
+            "representation. Mount the layer from its Workshop folder so its id "
+            "can be read, or supply an explicit representation. Refusing to export "
+            "a dependency list that does not describe what actually loads."
+        )
+    return tokens
+
+
 def stack_to_strings(values: Iterable[str | Path]) -> list[str]:
     return [str(path) for path in normalize_stack(values)]
 

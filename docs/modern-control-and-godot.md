@@ -39,7 +39,13 @@ The document contains:
 - `battalion_stacks`, a deterministic `province_id -> [battalion_id, ...]` contract
 - `occupied_by_battalions` on each province, with legacy `occupied_by` retaining the first sorted ID
 - pending-battle state
-- `front_options` legal move/attack rows containing the acting `battalion_id`
+- `operational_orders` legal graph routes for the acting faction's strategic
+  formations, each carrying `formation_id`, `path_node_ids` and `path_edge_ids`
+  from the authenticated operational graph. This is the movement surface the
+  Godot scene selects and issues from.
+- `front_options` legacy province-adjacency move/attack rows containing the
+  acting `battalion_id`. Retained for scenarios without operational graph
+  authority; graph-native campaigns leave it empty and never move through it.
 - `control` write-back paths and the exact `python_executable` / `python_module`
 
 Godot does not read or mutate Python internals directly. The snapshot is the stable interface between the strategic backend and the presentation layer.
@@ -51,6 +57,14 @@ Godot writes operator actions to `frontend_commands.json` next to the snapshot:
 ```json
 {
   "commands": [
+    {
+      "op": "issue_move_order",
+      "formation": "sf_pol_vilnius",
+      "path_node_ids": ["op-node-e3_0442-anchor", "op-node-e3_0456-anchor"],
+      "path_edge_ids": ["op-edge-corridor-op-node-e3_0442-anchor__op-node-e3_0456-anchor"]
+    },
+    {"op": "commit_move_orders", "faction": "nato", "locked_stance": "operational"},
+    {"op": "cancel_move_order", "formation": "sf_pol_vilnius"},
     {"op": "move", "battalion": "formation-04", "province": "Nowogrodek"},
     {"op": "end_turn"},
     {"op": "run_ai", "faction": "ukr", "advance_turn": true},

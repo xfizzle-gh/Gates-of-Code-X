@@ -41,6 +41,20 @@ class ExpandedNationsProjectionTests(unittest.TestCase):
             'c1(nato_rifleman:5))\n',
             encoding="utf-8",
         )
+        # Virtual cost projection requires resolvable breeds + priced rows.
+        for side in ("nato", "ukr", "rusa"):
+            breed = self.layers[2] / f"resource/set/breed/mp/{side}/2022s/fixture.set"
+            breed.parent.mkdir(parents=True, exist_ok=True)
+            breed.write_text('{breed {skin "fixture"}}\n', encoding="utf-8")
+            inf = self.layers[2] / f"resource/set/multiplayer/units/conquest/inf_{side}.set"
+            inf.parent.mkdir(parents=True, exist_ok=True)
+            row = (
+                f'{{"mp/{side}/2022s/fixture" ("{side}_basic" side({side})) ' 
+                f'{{cost 10.0}}}}\n'
+            )
+            existing = inf.read_text(encoding="utf-8") if inf.is_file() else ""
+            if f"mp/{side}/2022s/fixture" not in existing:
+                inf.write_text(existing + row, encoding="utf-8")
         self.payload = _payload()
 
     def tearDown(self) -> None:

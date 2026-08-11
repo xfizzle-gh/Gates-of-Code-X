@@ -11,6 +11,10 @@ from .expanded_nations import (
     launch_expanded_nation,
     verify_actor_projection,
 )
+from .expanded_nations_cost_evidence import (
+    generate_cost_evidence_from_stack_config,
+    write_cost_evidence,
+)
 from .expanded_nations_matrix import (
     generate_projection_matrix_from_stack_config,
     write_projection_matrix_evidence,
@@ -52,8 +56,19 @@ def _parser() -> argparse.ArgumentParser:
     matrix.add_argument("--stack-config", required=True)
     matrix.add_argument("--gates-root")
     matrix.add_argument("--source-head", required=True)
+    matrix.add_argument("--source-repo", help="implementation git checkout for exact-head proof")
     matrix.add_argument("--json-output", required=True)
     matrix.add_argument("--markdown-output", required=True)
+    cost = subparsers.add_parser(
+        "cost-evidence",
+        help="generate exact-stack native recruitment-cost evidence for all playable actors",
+    )
+    cost.add_argument("--stack-config", required=True)
+    cost.add_argument("--gates-root")
+    cost.add_argument("--source-head", required=True)
+    cost.add_argument("--source-repo", help="implementation git checkout for exact-head proof")
+    cost.add_argument("--json-output", required=True)
+    cost.add_argument("--markdown-output", required=True)
     return parser
 
 
@@ -100,11 +115,41 @@ def main(argv: Sequence[str] | None = None) -> int:
         changed = deactivate_actor_projection(args.gates_root)
         print(json.dumps({"ok": True, "mode": "core", "projection_removed": changed}, indent=2))
         return 0
+    if args.command == "cost-evidence":
+        matrix = generate_cost_evidence_from_stack_config(
+            args.stack_config,
+            gates_root=args.gates_root,
+            source_head=args.source_head,
+            source_repo=getattr(args, "source_repo", None),
+        )
+        write_cost_evidence(
+            matrix,
+            json_output=args.json_output,
+            markdown_output=args.markdown_output,
+        )
+        print(
+            json.dumps(
+                {
+                    "ok": True,
+                    "evidence_state": matrix["evidence_state"],
+                    "playable_actor_count": matrix["playable_actor_count"],
+                    "unintended_zero_total": matrix["unintended_zero_total"],
+                    "native_positive_total": matrix.get("native_positive_total"),
+                    "native_unknown_numeric_total": matrix.get("native_unknown_numeric_total"),
+                    "source_head": matrix["source_head"],
+                    "json_output": args.json_output,
+                    "markdown_output": args.markdown_output,
+                },
+                indent=2,
+            )
+        )
+        return 0
     if args.command == "matrix":
         matrix = generate_projection_matrix_from_stack_config(
             args.stack_config,
             gates_root=args.gates_root,
             source_head=args.source_head,
+            source_repo=getattr(args, "source_repo", None),
         )
         write_projection_matrix_evidence(
             matrix,

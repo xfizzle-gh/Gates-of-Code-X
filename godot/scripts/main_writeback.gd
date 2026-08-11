@@ -14,6 +14,15 @@ var _busy_status := ""
 var _last_command_gen_handled := 0
 ## Test/observability: increments only on successful live snapshot commit after a command.
 var snapshot_commit_count := 0
+## Player-shell state. New Campaign replaces authoritative state, so it always
+## requires a second confirming press.
+var new_campaign_confirm_pending := false
+## P5: Import Result stays unavailable until Verify Result accepts this save.
+var last_verified_save_path := ""
+var last_verification_ok := false
+var last_verification_detail := ""
+var _command_sequence := 0
+var _session_token := ""
 
 
 func _ready() -> void:
@@ -82,6 +91,8 @@ func _load_snapshot(path: String) -> void:
 		factions_by_id.clear()
 		front_by_origin.clear()
 		all_front_by_origin.clear()
+		orders_by_formation.clear()
+		order_formations_by_province.clear()
 		legal_targets.clear()
 		focus_province_ids.clear()
 		button_rects.clear()
@@ -148,11 +159,15 @@ func _try_build_snapshot_state(path: String) -> Dictionary:
 	if not stack_err.is_empty():
 		return {"ok": false, "error": stack_err}
 
+	var indexed_orders := index_operational_orders(candidate)
+
 	return {
 		"ok": true,
 		"error": "",
 		"path": path,
 		"snapshot": candidate,
+		"orders_by_formation": indexed_orders.get("by_formation", {}),
+		"order_formations_by_province": indexed_orders.get("by_province", {}),
 		"provinces_by_id": tmp_provinces,
 		"battalions_by_province": tmp_battalions_by_province,
 		"battalion_stacks_by_province": tmp_stacks,
@@ -180,6 +195,8 @@ func _commit_snapshot_state(
 	factions_by_id = built.get("factions_by_id", {})
 	front_by_origin = built.get("front_by_origin", {})
 	all_front_by_origin = built.get("all_front_by_origin", {})
+	orders_by_formation = built.get("orders_by_formation", {})
+	order_formations_by_province = built.get("order_formations_by_province", {})
 	legal_targets.clear()
 	focus_province_ids.clear()
 	button_rects.clear()
@@ -226,9 +243,16 @@ func _validate_battalion_stack_contract() -> bool:
 
 
 func _rebuild_legal_targets() -> void:
+	## Movement authority is graph-native: legal targets come from the backend's
+	## validated strategic-formation orders. Battalion selection below is stack
+	## presentation only and never produces a movement command.
 	legal_targets.clear()
 	for origin in all_front_by_origin.keys():
 		front_by_origin[origin] = (all_front_by_origin[origin] as Array).duplicate()
+
+	_ensure_order_formation_selection()
+	for option: Dictionary in orders_by_formation.get(selected_strategic_formation_id, []):
+		legal_targets[String(option.get("target_province_id", ""))] = option
 
 	var stack: Array = battalion_stacks_by_province.get(selected_province_id, [])
 	if stack.is_empty():
@@ -243,7 +267,7 @@ func _rebuild_legal_targets() -> void:
 				selected_battalion_id = candidate_id
 				break
 	if selected_battalion_id.is_empty():
-		selected_battalion_id = String((stack[0] as Dictionary).get("id", ""))
+		selected_battalion_id = _default_battalion_for_selection(stack)
 
 	var representative: Dictionary = battalions_by_id.get(selected_battalion_id, {})
 	if not representative.is_empty():
@@ -254,8 +278,17 @@ func _rebuild_legal_targets() -> void:
 		if String(option.get("battalion_id", "")) != selected_battalion_id:
 			continue
 		selected_options.append(option)
-		legal_targets[String(option.get("target", ""))] = option
 	front_by_origin[selected_province_id] = selected_options
+
+
+func _default_battalion_for_selection(stack: Array) -> String:
+	## Prefer a battalion belonging to the ordering formation so the stack panel
+	## shows the force whose orders are on screen.
+	if not selected_strategic_formation_id.is_empty():
+		for battalion: Dictionary in stack:
+			if String(battalion.get("strategic_formation_id", "")) == selected_strategic_formation_id:
+				return String(battalion.get("id", ""))
+	return String((stack[0] as Dictionary).get("id", ""))
 
 
 func _battalion_has_option(battalion_id: String, options: Array) -> bool:
@@ -290,13 +323,167 @@ func _draw_province(province: Dictionary) -> void:
 func _command_mutates_state(button_id: String) -> bool:
 	if button_id in ["fit", "replay_contact", "skip_presentation"]:
 		return false
+	if button_id == "verify_result":
+		# Read-only verification: never mutates campaign or snapshot.
+		return false
 	if button_id.begins_with("move:") or button_id.begins_with("construct:"):
 		return true
-	return button_id in ["refresh", "end_turn", "run_ai", "auto_resolve", "handoff", "import_battle"]
+	return button_id in [
+		"refresh",
+		"end_turn",
+		"run_ai",
+		"auto_resolve",
+		"handoff",
+		"import_battle",
+		"new_campaign",
+		"continue_campaign",
+		"cancel_move_order",
+	]
+
+
+func next_command_id(op: String) -> String:
+	## Stable per-session identity used by the backend exactly-once ledger.
+	if _session_token.is_empty():
+		_session_token = "%d-%d" % [
+			int(Time.get_unix_time_from_system()),
+			int(Time.get_ticks_usec()),
+		]
+	_command_sequence += 1
+	return "%s:%s:%d" % [_session_token, op, _command_sequence]
+
+
+func _stamp_command_ids(commands: Array) -> Array:
+	## Every mutation carries an identity so a replay cannot apply twice.
+	var stamped: Array = []
+	for item in commands:
+		if not item is Dictionary:
+			continue
+		var entry: Dictionary = (item as Dictionary).duplicate(true)
+		var existing := String(entry.get("command_id", "")).strip_edges()
+		if existing.is_empty():
+			entry["command_id"] = next_command_id(String(entry.get("op", "command")))
+		stamped.append(entry)
+	return stamped
+
+
+func can_import_verified_result() -> bool:
+	## P5: import is unavailable until Verify Result accepted this exact save.
+	return last_verification_ok \
+		and not last_handoff_save_path.is_empty() \
+		and last_verified_save_path == last_handoff_save_path
+
+
+func handoff_status_label() -> String:
+	if last_handoff_save_path.is_empty():
+		return ""
+	if can_import_verified_result():
+		return "Result verified - ready to import."
+	if not last_verification_detail.is_empty():
+		return "Verification failed: %s" % last_verification_detail
+	return "Awaiting Verify Result."
+
+
+func _capture_verification(payload: Dictionary) -> void:
+	var results: Array = payload.get("results", [])
+	for item in results:
+		if not item is Dictionary:
+			continue
+		var row: Dictionary = item as Dictionary
+		if String(row.get("op", "")) != "verify_result":
+			continue
+		var data: Dictionary = row.get("data", {})
+		last_verified_save_path = String(data.get("save_path", ""))
+		last_verification_ok = bool(data.get("verified", false))
+		var errors: Array = data.get("errors", [])
+		last_verification_detail = "" if last_verification_ok else ", ".join(errors.slice(0, 3))
+
+
+func player_launch_block() -> Dictionary:
+	var control: Dictionary = snapshot.get("control", {})
+	var play: Variant = control.get("play", {})
+	if play is Dictionary:
+		return (play as Dictionary).duplicate(true)
+	return {}
+
+
+func can_start_new_campaign() -> bool:
+	var play := player_launch_block()
+	return bool(play.get("enabled", false)) \
+		and not (play.get("new_args", []) as Array).is_empty() \
+		and not is_command_busy()
+
+
+func can_continue_campaign() -> bool:
+	var play := player_launch_block()
+	return bool(play.get("enabled", false)) \
+		and not (play.get("continue_args", []) as Array).is_empty() \
+		and not is_command_busy()
+
+
+func _run_player_launch(op: String, args_key: String) -> void:
+	_ensure_command_runner()
+	var play := player_launch_block()
+	if not bool(play.get("enabled", false)):
+		status_message = "Player launch unavailable — re-export the frontend with a campaign path."
+		queue_redraw()
+		return
+	var raw_args: Array = play.get(args_key, [])
+	if raw_args.is_empty():
+		status_message = "Player launch arguments missing for %s." % op
+		queue_redraw()
+		return
+	if is_command_busy():
+		status_message = "Busy — wait for %s to finish." % command_runner.current_op()
+		queue_redraw()
+		return
+	var launch_args: Array = []
+	for value in raw_args:
+		launch_args.append(String(value))
+	var control: Dictionary = snapshot.get("control", {})
+	var snapshot_path := String(control.get("snapshot_path", ""))
+	var candidates := _backend_launch_candidates(control, launch_args)
+	# The launcher rewrites the authoritative campaign and republishes the
+	# snapshot; the runner reports the same way an apply-frontend batch does.
+	var marker: Array = [{"op": op, "command_id": next_command_id(op)}]
+	var start: Dictionary = command_runner.try_start_candidates(
+		marker,
+		candidates,
+		snapshot_path if not snapshot_path.is_empty() else snapshot_source_path
+	)
+	if not bool(start.get("ok", false)):
+		status_message = "Unable to start player launch: %s" % String(start.get("reason", "rejected"))
+		queue_redraw()
+		return
+	_busy_status = "Running %s..." % op
+	status_message = _busy_status
+	set_process(true)
+	queue_redraw()
 
 
 func _handle_button(button_id: String) -> void:
 	_ensure_operational_presenter()
+	if button_id != "new_campaign":
+		new_campaign_confirm_pending = false
+	if button_id == "new_campaign":
+		if not can_start_new_campaign():
+			status_message = "New Campaign unavailable right now."
+			queue_redraw()
+			return
+		if not new_campaign_confirm_pending:
+			new_campaign_confirm_pending = true
+			status_message = "New Campaign replaces the current campaign — press again to confirm."
+			queue_redraw()
+			return
+		new_campaign_confirm_pending = false
+		_run_player_launch("new_campaign", "new_args")
+		return
+	if button_id == "continue_campaign":
+		if not can_continue_campaign():
+			status_message = "Continue Campaign unavailable right now."
+			queue_redraw()
+			return
+		_run_player_launch("continue_campaign", "continue_args")
+		return
 	if button_id == "replay_contact":
 		if operational_presenter.replay_last_contact():
 			status_message = "Replaying last contact - presentation only."
@@ -309,13 +496,27 @@ func _handle_button(button_id: String) -> void:
 		status_message = "Operational presentation skipped to authoritative endpoints."
 		queue_redraw()
 		return
+	if button_id == "verify_result":
+		if last_handoff_save_path.is_empty():
+			status_message = "Nothing to verify - hand a battle off to Gates of Hell first."
+			queue_redraw()
+			return
+		_queue_and_apply([{
+			"op": "verify_result",
+			"save_path": last_handoff_save_path,
+		}])
+		return
 	if button_id == "import_battle":
+		if not can_import_verified_result():
+			status_message = "Verify Result must accept this save before it can be imported."
+			queue_redraw()
+			return
 		_queue_and_apply([{
 			"op": "import_battle",
 			"save_path": last_handoff_save_path,
 		}])
 		return
-	if is_pending_battle_modal_active() and button_id not in ["auto_resolve", "handoff", "import_battle"]:
+	if is_pending_battle_modal_active() and button_id not in ["auto_resolve", "handoff", "import_battle", "verify_result"]:
 		status_message = "Operational resolution paused - resolve or hand off the pending battle."
 		queue_redraw()
 		return
@@ -344,7 +545,7 @@ func _issue_move(target_province_id: String) -> void:
 
 func _draw_button(id: String, label: String, x: float, y: float, enabled: bool, fill := Color("1a2a38")) -> float:
 	var allow := enabled
-	if is_pending_battle_modal_active() and id not in ["auto_resolve", "handoff", "import_battle", "replay_contact", "skip_presentation"]:
+	if is_pending_battle_modal_active() and id not in ["auto_resolve", "handoff", "import_battle", "verify_result", "replay_contact", "skip_presentation", "new_campaign", "continue_campaign"]:
 		allow = false
 	if operational_presenter != null and operational_presenter.is_active() and _command_mutates_state(id):
 		allow = false
@@ -364,23 +565,36 @@ func enabled_action_button_ids() -> PackedStringArray:
 		and String(pending.get("id", "")) == last_handoff_battle_id \
 		and not last_handoff_save_path.is_empty()
 	_ensure_operational_presenter()
-	var candidates: Array = []
+	var play := player_launch_block()
+	var play_enabled := bool(play.get("enabled", false))
+	var candidates: Array = [
+		["new_campaign", play_enabled and not (play.get("new_args", []) as Array).is_empty()],
+		["continue_campaign", play_enabled and not (play.get("continue_args", []) as Array).is_empty()],
+	]
 	if has_battle:
-		candidates = [
+		candidates.append_array([
 			["auto_resolve", writeback],
 			["handoff", writeback],
-			["import_battle", can_import],
+			["verify_result", writeback and not last_handoff_save_path.is_empty()],
+			["import_battle", can_import and can_import_verified_result()],
 			["replay_contact", operational_presenter.can_replay_last_contact()],
 			["skip_presentation", operational_presenter.is_active()],
-		]
+		])
 	else:
-		candidates = [
+		candidates.append_array([
 			["fit", true],
 			["refresh", writeback],
 			["end_turn", writeback],
 			["run_ai", writeback],
 			["skip_presentation", operational_presenter.is_active()],
-		]
+		])
+		# Graph-native movement orders for the selected strategic formation.
+		for option: Dictionary in orders_by_formation.get(selected_strategic_formation_id, []):
+			candidates.append([
+				"move:%s" % String(option.get("target_province_id", "")),
+				writeback,
+			])
+		candidates.append(["cancel_move_order", writeback and _selected_order_is_cancellable()])
 	for entry in candidates:
 		var button_id := String(entry[0])
 		var allow := bool(entry[1])
@@ -389,6 +603,25 @@ func enabled_action_button_ids() -> PackedStringArray:
 		if allow:
 			ids.append(button_id)
 	return ids
+
+
+func selected_formation_move_order() -> Dictionary:
+	## Authoritative order state for the selected formation, straight from the
+	## snapshot. Never inferred from what the UI last dispatched.
+	if selected_strategic_formation_id.is_empty():
+		return {}
+	for force: Dictionary in snapshot.get("strategic_formations", []):
+		if String(force.get("id", "")) != selected_strategic_formation_id:
+			continue
+		var order: Variant = force.get("move_order")
+		return (order as Dictionary).duplicate(true) if order is Dictionary else {}
+	return {}
+
+
+func _selected_order_is_cancellable() -> bool:
+	## Only drafts may be cancelled; committed and active orders are locked by
+	## the backend and the control must not pretend otherwise.
+	return String(selected_formation_move_order().get("status", "")) == "draft"
 
 
 func is_pending_battle_modal_active() -> bool:
@@ -434,11 +667,11 @@ func _queue_and_apply(commands: Array) -> void:
 	_ensure_command_runner()
 	_ensure_operational_presenter()
 	var requested_op := FrontendCommandRunnerScript.primary_op(commands)
-	if is_pending_battle_modal_active() and requested_op not in ["auto_resolve", "handoff", "import_battle"]:
+	if is_pending_battle_modal_active() and requested_op not in ["auto_resolve", "handoff", "import_battle", "verify_result"]:
 		status_message = "Operational resolution paused - pending battle is modal."
 		queue_redraw()
 		return
-	if operational_presenter.is_active() and requested_op not in ["handoff", "import_battle"]:
+	if operational_presenter.is_active() and requested_op not in ["handoff", "import_battle", "verify_result"]:
 		status_message = "Operational presentation active - Skip or wait for completion."
 		queue_redraw()
 		return
@@ -464,7 +697,10 @@ func _queue_and_apply(commands: Array) -> void:
 		queue_redraw()
 		return
 
-	var payload := {"commands": commands}
+	# Identity is stamped only on the queued payload. In-flight duplicate
+	# suppression above still compares the raw command shape, while the backend
+	# ledger uses these ids to guarantee a replayed queue applies exactly once.
+	var payload := {"commands": _stamp_command_ids(commands)}
 	var file := FileAccess.open(commands_path, FileAccess.WRITE)
 	if file == null:
 		status_message = "Unable to write commands: %s" % commands_path
@@ -601,6 +837,7 @@ func _on_command_finished(
 
 	# Apply output side-effects only after candidate is valid.
 	_parse_apply_output(output_text)
+	_capture_verification(backend_payload)
 	_commit_snapshot_state(built, previous_selected, previous_battalion, true)
 	_ensure_operational_presenter()
 	operational_presenter.begin_transition(

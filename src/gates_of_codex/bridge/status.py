@@ -32,7 +32,10 @@ class BattleStatusOptions:
     manual_control_mode: int = 3
     selected_map_point: str = "point_0_0"
     region: str = "ostfront"
-    mods: list[str] = field(default_factory=list)
+    # ``None`` means the caller did not specify dependencies and the template
+    # block is preserved. An explicit list -- including an empty one -- always
+    # replaces it, so a handoff can never inherit template dependencies (#166).
+    mods: list[str] | None = None
     preserve_template_map_point: bool = True
     preserve_template_campaign_options: bool = True
 
@@ -124,7 +127,7 @@ class StatusBuilder:
 
         text = self._set_presence(text, "attacking", pending.player_is_attacker)
         text = self._replace_block(text, "unlockedResearch", [f'{{"{value}"}}' for value in options.research])
-        if options.mods:
+        if options.mods is not None:
             text = self._replace_block(text, "mods", [self._quoted(value) for value in options.mods])
         if options.map_name:
             text = self._set_selected_point_map(text, options.map_name)
@@ -143,7 +146,7 @@ class StatusBuilder:
             f'\t{{gameVersion "{options.game_version}"}}',
             f"\t{{timestamp {timestamp}}}",
         ]
-        if options.mods:
+        if options.mods is not None:
             lines.append("\t{mods")
             lines.extend(f'\t\t"{value}"' for value in options.mods)
             lines.append("\t}")

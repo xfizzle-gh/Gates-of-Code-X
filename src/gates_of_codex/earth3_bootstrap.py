@@ -1434,10 +1434,30 @@ def validate_earth3_bootstrap_campaign_state(state: CampaignState) -> None:
     if not is_earth3_p2_campaign(state):
         return
     footprint = earth3_p2_footprint(state)
-    if state.map_metadata.get("operational_graph") not in (None, ""):
-        raise Earth3BootstrapError("Earth3 P2 cannot enable an operational graph")
-    if state.map_metadata.get("operational_maneuver_enabled") is not False:
-        raise Earth3BootstrapError("Earth3 P2 operational maneuver must remain disabled")
+    from .earth3_operational import (
+        P3_AUTHORITY_METADATA_KEY,
+        P3_MIGRATION_METADATA_KEY,
+    )
+
+    # Provinces a force may legitimately stand in. P2 has no movement authority
+    # at all, so the eleven-province footprint is also the occupiable set there.
+    # P3 grants graph maneuver: pinning forces to their start provinces would
+    # make every legal graph order fail validation the moment it resolved, which
+    # is exactly what left the Earth3 player with no reachable movement (#206).
+    occupiable = footprint
+    if P3_AUTHORITY_METADATA_KEY in state.map_metadata:
+        from .earth3_operational import validate_earth3_p3_campaign_extension
+
+        occupiable = footprint | validate_earth3_p3_campaign_extension(state)
+    else:
+        if P3_MIGRATION_METADATA_KEY in state.map_metadata:
+            raise Earth3BootstrapError(
+                "Earth3 P3 migration provenance requires the P3 authority marker"
+            )
+        if state.map_metadata.get("operational_graph") not in (None, ""):
+            raise Earth3BootstrapError("Earth3 P2 cannot enable an operational graph")
+        if state.map_metadata.get("operational_maneuver_enabled") is not False:
+            raise Earth3BootstrapError("Earth3 P2 operational maneuver must remain disabled")
     for province in state.provinces.values():
         expected_actionable = province.province_id in footprint
         if province.metadata.get("scenario_actionable") is not expected_actionable:
@@ -1447,10 +1467,10 @@ def validate_earth3_bootstrap_campaign_state(state: CampaignState) -> None:
         if not expected_actionable and province.metadata.get("owner_actor_id"):
             raise Earth3BootstrapError(f"province {province.province_id} actor ownership is outside footprint")
     for force in state.strategic_formations.values():
-        if force.province_id not in footprint:
+        if force.province_id not in occupiable:
             raise Earth3BootstrapError(f"formation {force.strategic_formation_id} is outside footprint")
     for battalion in state.battalions.values():
-        if battalion.province_id not in footprint:
+        if battalion.province_id not in occupiable:
             raise Earth3BootstrapError(f"battalion {battalion.battalion_id} is outside footprint")
     for objective in state.map_metadata.get("operational_objectives", []):
         targets = objective.get("targets", [])

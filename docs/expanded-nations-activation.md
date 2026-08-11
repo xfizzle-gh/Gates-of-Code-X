@@ -23,6 +23,12 @@ Hosted actors cannot be selected independently. Purchase IDs are canonicalized t
 
 No upstream Workshop tree is modified. Upstream purchase definitions are read from the installed stack and projected into ignored runtime files under the final Gates layer. Those generated files are not committed or deployed by the tracked-file Workshop deployment script.
 
+### Code:X passthrough (`prc`)
+
+`prc` is the sole playable owner of the native Code:X `prc` tactical side. Activating PRC does **not** clone purchase definitions into `goc_active_actor_units.set` and does **not** rewrite `unit_research_prc.set` or replace the Core roster. Gates writes only reversible bookkeeping under `live/expanded_nations/active.json` with `activation_mode=codex_passthrough`, and the engine inherits Code:X PRC roster/research unchanged.
+
+Switching away from PRC to another Expanded actor installs that actor's normal projection and removes any prior managed overlays. Core restoration deletes the passthrough manifest and leaves no generated purchase bodies behind.
+
 ## Windows activation
 
 Set or pass the five roots required by `config/mod-stack.windows.json`, then run from the repository root:
@@ -68,8 +74,9 @@ Matrix generation must begin in Core mode. It activates and semantically verifie
 
 py -3.11 -m gates_of_codex.expanded_nations_cli matrix `
   --stack-config .\config\mod-stack.windows.json `
-  --gates-root . `
+  --gates-root $env:GATES_CODEX_ROOT `
   --source-head (git rev-parse HEAD).Trim() `
+  --source-repo . `
   --json-output .\docs\audits\expanded-nations-projection-signatures.json `
   --markdown-output .\docs\audits\expanded-nations-projection-matrix.md
 ```

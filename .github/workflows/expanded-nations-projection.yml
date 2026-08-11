@@ -33,6 +33,9 @@ jobs:
           tests.test_expanded_nations
           tests.test_expanded_nations_audit_regressions
           tests.test_expanded_nations_compile_boundary
+          tests.test_expanded_nations_cross_side_breeds
+          tests.test_expanded_nations_inf_costs
+          tests.test_expanded_nations_cost_evidence
           tests.test_expanded_nations_legacy_side_conflicts
           tests.test_expanded_nations_matrix
           tests.test_expanded_nations_native_contracts
@@ -48,8 +51,10 @@ jobs:
           python -m py_compile
           src/gates_of_codex/expanded_nations.py
           src/gates_of_codex/expanded_nations_actor_sources.py
+          src/gates_of_codex/expanded_nations_breeds.py
           src/gates_of_codex/expanded_nations_cli.py
           src/gates_of_codex/expanded_nations_compile.py
+          src/gates_of_codex/expanded_nations_inf_costs.py
           src/gates_of_codex/expanded_nations_matrix.py
           src/gates_of_codex/expanded_nations_models.py
           src/gates_of_codex/expanded_nations_native_verify.py
@@ -64,6 +69,8 @@ jobs:
           tests/test_expanded_nations.py
           tests/test_expanded_nations_audit_regressions.py
           tests/test_expanded_nations_compile_boundary.py
+          tests/test_expanded_nations_cross_side_breeds.py
+          tests/test_expanded_nations_inf_costs.py
           tests/test_expanded_nations_legacy_side_conflicts.py
           tests/test_expanded_nations_matrix.py
           tests/test_expanded_nations_native_contracts.py

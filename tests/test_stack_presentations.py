@@ -169,7 +169,7 @@ class StackPresentationTests(unittest.TestCase):
         first = snapshot["battalion_presentations"][self.first.battalion_id]
         second = snapshot["battalion_presentations"][self.second.battalion_id]
 
-        self.assertEqual(14, snapshot["schema_version"])
+        self.assertEqual(16, snapshot["schema_version"])
         self.assertEqual(2, stack["battalion_count"])
         self.assertEqual(
             snapshot["battalion_stacks"][self.first.province_id],

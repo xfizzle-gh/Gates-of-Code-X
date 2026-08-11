@@ -503,7 +503,7 @@ class OperationalS6InterceptionTests(unittest.TestCase):
             self.assertEqual(500, reloaded.pending_battle.encounter_progress_milli)
             self.assertEqual([500, 0], reloaded.pending_battle.encounter_pixel)
             snap = build_frontend_snapshot(reloaded)
-            self.assertEqual(14, snap["schema_version"])
+            self.assertEqual(16, snap["schema_version"])
             self.assertEqual(FRONTEND_SCHEMA_VERSION, snap["schema_version"])
             pb = snap["pending_battle"]
             self.assertEqual(edge, pb["encounter_edge_id"])

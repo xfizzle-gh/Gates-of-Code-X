@@ -13,12 +13,85 @@ from .strategic import build_infrastructure
 from .strategic_ai import StrategicAI
 
 
+#: Commands that commit to the campaign file through their own service-level
+#: transaction instead of the in-memory batch. They may never share a batch with
+#: other operations because the batch rollback cannot undo them.
+SELF_COMMITTING_OPS = frozenset({"handoff", "import_battle"})
+
+#: Read-only actions. They mutate nothing, so they are never recorded in the
+#: exactly-once ledger: a player must be able to re-verify a result after
+#: replaying a battle and get a fresh verdict rather than a "duplicate" reply.
+READ_ONLY_OPS = frozenset({"verify_result"})
+
+#: Campaign-metadata key holding the exactly-once command ledger.
+COMMAND_LEDGER_KEY = "frontend_command_ledger"
+
+#: Retained ledger entries. Bounded so the campaign file cannot grow without
+#: limit; replay protection therefore covers the most recent applications.
+COMMAND_LEDGER_LIMIT = 512
+
+
 @dataclass(slots=True)
 class CommandResult:
     op: str
     ok: bool
     detail: str = ""
     data: dict[str, Any] = field(default_factory=dict)
+
+
+def read_command_ledger(state) -> dict[str, Any]:
+    """Return the normalized exactly-once ledger carried by the campaign."""
+    raw = state.map_metadata.get(COMMAND_LEDGER_KEY)
+    entries: list[dict[str, Any]] = []
+    sequence = 0
+    if isinstance(raw, dict):
+        sequence = int(raw.get("sequence", 0) or 0)
+        for item in raw.get("entries", []) or []:
+            if not isinstance(item, dict):
+                continue
+            command_id = str(item.get("command_id", "")).strip()
+            if not command_id:
+                continue
+            entries.append(
+                {
+                    "command_id": command_id,
+                    "op": str(item.get("op", "")),
+                    "sequence": int(item.get("sequence", 0) or 0),
+                }
+            )
+    return {"sequence": sequence, "entries": entries}
+
+
+def ledger_contains(ledger: dict[str, Any], command_id: str) -> bool:
+    identity = str(command_id).strip()
+    if not identity:
+        return False
+    return any(entry["command_id"] == identity for entry in ledger["entries"])
+
+
+def _ledger_record(ledger: dict[str, Any], command_id: str, op: str) -> None:
+    identity = str(command_id).strip()
+    if not identity or ledger_contains(ledger, identity):
+        return
+    ledger["sequence"] = int(ledger["sequence"]) + 1
+    ledger["entries"].append(
+        {"command_id": identity, "op": str(op), "sequence": ledger["sequence"]}
+    )
+    if len(ledger["entries"]) > COMMAND_LEDGER_LIMIT:
+        del ledger["entries"][: len(ledger["entries"]) - COMMAND_LEDGER_LIMIT]
+
+
+def _store_command_ledger(state, ledger: dict[str, Any]) -> None:
+    if not ledger["entries"]:
+        return
+    state.map_metadata[COMMAND_LEDGER_KEY] = {
+        "sequence": int(ledger["sequence"]),
+        "entries": [dict(entry) for entry in ledger["entries"]],
+    }
+
+
+def _command_identity(raw: dict[str, Any]) -> str:
+    return str(raw.get("command_id") or raw.get("id") or "").strip()
 
 
 class _FrontendReportingCampaignEngine(CampaignEngine):
@@ -85,6 +158,7 @@ def apply_frontend_commands(
     command_file = Path(commands_path).resolve() if commands_path else None
     pending = list(commands) if commands is not None else read_commands(command_file) if command_file else []
     state = load_campaign(campaign)
+    ledger = read_command_ledger(state)
     results: list[CommandResult] = []
     from .observation import (
         ObservationMutationContext,
@@ -92,13 +166,43 @@ def apply_frontend_commands(
     )
     observation_context = ObservationMutationContext()
 
+    batch_error = _batch_rejection(pending)
+    if batch_error:
+        # Reject before touching the campaign so a malformed batch can never
+        # publish partial authoritative state.
+        if command_file is not None:
+            clear_commands(command_file)
+        return _apply_report(
+            state,
+            campaign,
+            ok=False,
+            snapshot="",
+            results=[CommandResult(op="batch", ok=False, detail=batch_error)],
+        )
+
     for raw in pending:
         op = str(raw.get("op", "")).strip().lower()
+        command_id = _command_identity(raw)
+        if command_id and op not in READ_ONLY_OPS and ledger_contains(ledger, command_id):
+            # Replay of an already-accepted command. Never apply it a second
+            # time; report success so the caller converges on current state.
+            results.append(
+                CommandResult(
+                    op=op or "unknown",
+                    ok=True,
+                    detail=f"duplicate command_id {command_id} ignored",
+                    data={"command_id": command_id, "duplicate": True},
+                )
+            )
+            continue
         before_presentations = _formation_presentation_rows(state)
         try:
             if op == "handoff":
                 result = _apply_handoff(campaign, state, raw)
                 state = load_campaign(campaign)
+            elif op == "verify_result":
+                # Read-only: no reload, no mutation, safe in any batch.
+                result = _apply_verify_result(campaign, state, raw)
             elif op == "import_battle":
                 result = _apply_import_battle(campaign, state, raw)
                 state = load_campaign(campaign)
@@ -123,10 +227,30 @@ def apply_frontend_commands(
             if battle_finalization is not None:
                 presentation["battle_finalization"] = battle_finalization
             result.data["operational_presentation"] = presentation
+            if command_id and op not in READ_ONLY_OPS:
+                _ledger_record(ledger, command_id, op)
+                result.data["command_id"] = command_id
         results.append(result)
         if not result.ok:
             break
 
+    if command_file is not None:
+        # The queue is an inbox: consumed batches never remain readable, so a
+        # rejected batch cannot be silently reapplied by a later run.
+        clear_commands(command_file)
+
+    if any(not item.ok for item in results):
+        # Rejected batch: discard every in-memory mutation. The campaign file and
+        # the published snapshot both remain at the previously accepted state.
+        return _apply_report(
+            load_campaign(campaign),
+            campaign,
+            ok=False,
+            snapshot="",
+            results=results,
+        )
+
+    _store_command_ledger(state, ledger)
     save_campaign(
         state,
         campaign,
@@ -136,21 +260,68 @@ def apply_frontend_commands(
     if snapshot_path:
         from .frontend import write_frontend_snapshot
 
-        snapshot = str(
-            write_frontend_snapshot(
+        try:
+            snapshot = str(
+                write_frontend_snapshot(
+                    state,
+                    snapshot_path,
+                    campaign_path=campaign,
+                ).resolve()
+            )
+        except Exception as exc:  # noqa: BLE001 - authoritative state is already committed
+            # The campaign is authoritative and already committed atomically.
+            # Publishing the derived snapshot failed, so the caller keeps the
+            # previously accepted presentation until the next refresh.
+            report = _apply_report(
                 state,
-                snapshot_path,
-                campaign_path=campaign,
-            ).resolve()
-        )
-    if command_file is not None:
-        clear_commands(command_file)
+                campaign,
+                ok=False,
+                snapshot="",
+                results=results,
+            )
+            report["snapshot_publish_failed"] = str(exc)
+            return report
 
+    return _apply_report(state, campaign, ok=True, snapshot=snapshot, results=results)
+
+
+def _batch_rejection(pending: list[dict[str, Any]]) -> str:
+    """Return a rejection reason when the batch cannot be applied atomically."""
+    ops = [str(raw.get("op", "")).strip().lower() for raw in pending]
+    self_committing = sorted({op for op in ops if op in SELF_COMMITTING_OPS})
+    if self_committing and len(ops) > 1:
+        return (
+            f"{', '.join(self_committing)} must be submitted alone; "
+            f"batched with {len(ops) - 1} other command(s)"
+        )
+    identities = [_command_identity(raw) for raw in pending]
+    seen = {value for value in identities if value}
+    if len(seen) != len([value for value in identities if value]):
+        return "batch contains duplicate command_id values"
+    return ""
+
+
+def _apply_report(
+    state,
+    campaign: Path,
+    *,
+    ok: bool,
+    snapshot: str,
+    results: list[CommandResult],
+) -> dict[str, Any]:
     return {
-        "ok": all(item.ok for item in results) if results else True,
+        "ok": ok,
         "campaign_path": str(campaign),
         "snapshot_path": snapshot,
-        "commands_applied": len([item for item in results if item.ok]),
+        "commands_applied": len(
+            [
+                item
+                for item in results
+                if item.ok and not bool(item.data.get("duplicate"))
+            ]
+        )
+        if ok
+        else 0,
         "results": [asdict(item) for item in results],
         "pending_battle": state.pending_battle.battle_id if state.pending_battle else None,
         "current_faction": state.current_faction.value,
@@ -248,12 +419,19 @@ def _apply_handoff(campaign: Path, state, raw: dict[str, Any]) -> CommandResult:
     backup_root = Path(str(raw.get("backup_root", root / "backups")))
     if not backup_root.is_absolute():
         backup_root = (root / backup_root).resolve()
+    template_raw = str(
+        raw.get("template_save")
+        or raw.get("status_template_path")
+        or state.map_metadata.get("status_template_path")
+        or ""
+    ).strip()
     result = prepare_stack_handoff(
         campaign,
         map_name=str(raw["map"]) if raw.get("map") else None,
         work_root=work_root,
         backup_root=backup_root,
         launch=bool(raw.get("launch", False)),
+        status_template_path=template_raw or None,
     )
     visible = result.visible_campaign_name or result.manifest.visible_campaign_name
     return CommandResult(
@@ -270,42 +448,136 @@ def _apply_handoff(campaign: Path, state, raw: dict[str, Any]) -> CommandResult:
     )
 
 
-def _apply_import_battle(
+def _resolve_result_save_path(state, raw: dict[str, Any]) -> str:
+    pending = state.pending_battle
+    if pending is None:
+        raise ValueError("No pending battle to verify")
+    save_path = str(raw.get("save_path") or pending.exported_save_path or "").strip()
+    if not save_path:
+        raise ValueError("Pending battle has no handed-off GoH save path")
+    return save_path
+
+
+def _assert_manifest_binds_result(
+    manifest,
+    *,
     campaign: Path,
+    save_file: Path,
     state,
-    raw: dict[str, Any],
-) -> CommandResult:
+) -> None:
+    """Fail closed unless the manifest names this campaign, save and battle.
+
+    ``GatesOfCodeXService.import_battle`` is the reference contract: it requires
+    all three bindings to match exactly. This mirrors it so a manifest cannot be
+    certified by ``verify_result`` and then refused by the import authority,
+    which is the one divergence the shared helper exists to prevent.
+
+    Every binding is required to be **present**. Treating an empty field as
+    "nothing to check" made an unbound manifest verify, which is precisely the
+    manifest that should never unlock Import.
+
+    ``.strip()`` is used only to detect empty/whitespace-only values. Equality
+    and path resolution use the original unstripped fields, matching
+    ``import_battle`` exactly so a padded-but-otherwise-correct identity cannot
+    pass this gate and then be refused by Import.
+    """
+    raw_battle = str(getattr(manifest, "battle_id", "") or "")
+    raw_campaign = str(getattr(manifest, "campaign_path", "") or "")
+    raw_save = str(getattr(manifest, "save_path", "") or "")
+    # Compare resolved against resolved, exactly as ``import_battle`` does, so a
+    # caller passing a relative campaign path cannot produce a false mismatch.
+    campaign_file = Path(campaign).resolve()
+
+    if not raw_campaign.strip():
+        raise ValueError("Handoff manifest does not name a campaign")
+    if Path(raw_campaign).resolve() != campaign_file:
+        raise ValueError(
+            f"Handoff manifest belongs to campaign {raw_campaign!r}, "
+            f"not {str(campaign_file)!r}"
+        )
+
+    if not raw_save.strip():
+        raise ValueError("Handoff manifest does not name a tactical save")
+    if Path(raw_save).resolve() != save_file:
+        raise ValueError(
+            f"Handoff manifest belongs to tactical save {raw_save!r}, "
+            f"not {str(save_file)!r}"
+        )
+
+    pending = state.pending_battle
+    if pending is None:
+        raise ValueError("No pending battle to verify this result against")
+    if not raw_battle.strip():
+        raise ValueError("Handoff manifest does not name a battle")
+    if raw_battle != pending.battle_id:
+        raise ValueError(
+            f"Handoff manifest belongs to battle {raw_battle!r}, "
+            f"but the pending battle is {pending.battle_id!r}"
+        )
+
+
+def _verify_result(campaign: Path, state, save_path: str):
+    """Verify a played GoH save against the exact campaign and pending battle.
+
+    Shared by the standalone ``verify_result`` action and by ``import_battle``,
+    so the player-facing check and the import gate can never diverge.
+    """
     from .acceptance import verify_tactical_result
     from .service import GatesOfCodeXService
     from .stack_acceptance import verify_stack_result
 
-    pending = state.pending_battle
-    if pending is None:
-        raise ValueError("No pending battle to import")
-    save_path = str(raw.get("save_path") or pending.exported_save_path or "").strip()
-    if not save_path:
-        raise ValueError("Pending battle has no handed-off GoH save path")
-
     service = GatesOfCodeXService()
-    manifest = service.load_manifest(service.manifest_path(save_path))
+    save_file = Path(save_path).resolve()
+    manifest = service.load_manifest(service.manifest_path(save_file))
+    # Bind the result to this campaign, this tactical save and this battle before
+    # anything else, using exactly the three bindings ``import_battle`` enforces.
+    # An absent value proves nothing, so it is a refusal rather than a skipped
+    # check: a manifest that cannot name what it belongs to must never be able to
+    # certify a result the import authority would then reject.
+    _assert_manifest_binds_result(manifest, campaign=campaign, save_file=save_file, state=state)
     resource_stack = (
         state.map_metadata.get("resource_stack", []) or manifest.resource_stack
     )
     stack_config = state.map_metadata.get("stack_config")
     if resource_stack or state.code_x_directory:
-        verification = verify_stack_result(
+        return verify_stack_result(
             campaign,
             save_path=save_path,
             code_x_directory=state.code_x_directory or None,
             resource_stack=resource_stack or None,
             stack_config=stack_config or None,
         )
-    else:
-        verification = verify_tactical_result(
-            campaign,
-            save_path=save_path,
-            code_x_directory=None,
-        )
+    return verify_tactical_result(campaign, save_path=save_path, code_x_directory=None)
+
+
+def _apply_verify_result(campaign: Path, state, raw: dict[str, Any]) -> CommandResult:
+    """Verify a played result without importing it. Never mutates the campaign."""
+    save_path = _resolve_result_save_path(state, raw)
+    verification = _verify_result(campaign, state, save_path)
+    errors = list(getattr(verification, "errors", []) or [])
+    return CommandResult(
+        op="verify_result",
+        ok=True,
+        detail="verified" if verification.ok else "verification failed",
+        data={
+            "verified": bool(verification.ok),
+            "save_path": save_path,
+            "battle_id": state.pending_battle.battle_id if state.pending_battle else "",
+            "errors": errors,
+        },
+    )
+
+
+def _apply_import_battle(
+    campaign: Path,
+    state,
+    raw: dict[str, Any],
+) -> CommandResult:
+    from .service import GatesOfCodeXService
+
+    save_path = _resolve_result_save_path(state, raw)
+    service = GatesOfCodeXService()
+    verification = _verify_result(campaign, state, save_path)
     if not verification.ok:
         detail = "; ".join(verification.errors) or "unknown verification failure"
         raise ValueError(f"GoH result verification failed: {detail}")

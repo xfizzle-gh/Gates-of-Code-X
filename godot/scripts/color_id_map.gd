@@ -350,6 +350,9 @@ func _target_dicts_equal(left: Dictionary, right: Dictionary) -> bool:
 		var ropt: Dictionary = right[key]
 		if String(lopt.get("kind", "")) != String(ropt.get("kind", "")):
 			return false
+		# Graph orders carry no kind; the edge identity is what changes.
+		if String(lopt.get("edge_id", "")) != String(ropt.get("edge_id", "")):
+			return false
 	return true
 
 

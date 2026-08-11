@@ -1,0 +1,3045 @@
+{
+  "schema": "gates-of-codex.operational-graph",
+  "schema_version": 2,
+  "map_id": "earth3_europe_mediterranean",
+  "rules": {
+    "ticks_per_strategic_turn": 10,
+    "capture_hold_ticks": 2,
+    "max_friendly_formations_per_node": 3,
+    "capture_mode": "control_site_node_only",
+    "interception_mode": "swept_movement",
+    "formation_is_movement_authority": true,
+    "authored_crossings_traversable_v1": true,
+    "enforce_port_requirements": false,
+    "enforce_blockades": false
+  },
+  "sites": [
+    {
+      "site_id": "site_berlin_command",
+      "display_name": "Berlin Command",
+      "kind": "command",
+      "province_id": "e3_0592",
+      "pixel": [
+        1938,
+        1769
+      ],
+      "route_node_id": "op-node-e3_0592-anchor",
+      "control_weight_milli": 1000,
+      "capture_threshold_milli": 1000,
+      "tags": [
+        "earth3_p2_site_intent"
+      ],
+      "facilities": [
+        "supply_hub"
+      ],
+      "owner_faction": "deu",
+      "authority": "authored",
+      "metadata": {
+        "source": "frozen_earth3_p2_site_intent",
+        "supply_hub_intent": true
+      }
+    },
+    {
+      "site_id": "site_donetsk_objective",
+      "display_name": "Donetsk Objective",
+      "kind": "objective",
+      "province_id": "e3_3380",
+      "pixel": [
+        3120,
+        2117
+      ],
+      "route_node_id": "op-node-e3_3380-anchor",
+      "control_weight_milli": 1000,
+      "capture_threshold_milli": 1000,
+      "tags": [
+        "earth3_p2_site_intent"
+      ],
+      "facilities": [],
+      "owner_faction": "rus",
+      "authority": "authored",
+      "metadata": {
+        "source": "frozen_earth3_p2_site_intent",
+        "supply_hub_intent": false
+      }
+    },
+    {
+      "site_id": "site_kyiv_command",
+      "display_name": "Kyiv Command",
+      "kind": "command",
+      "province_id": "e3_1937",
+      "pixel": [
+        2759,
+        1922
+      ],
+      "route_node_id": "op-node-e3_1937-anchor",
+      "control_weight_milli": 1000,
+      "capture_threshold_milli": 1000,
+      "tags": [
+        "earth3_p2_site_intent"
+      ],
+      "facilities": [
+        "supply_hub"
+      ],
+      "owner_faction": "ukr",
+      "authority": "authored",
+      "metadata": {
+        "source": "frozen_earth3_p2_site_intent",
+        "supply_hub_intent": true
+      }
+    },
+    {
+      "site_id": "site_luhansk_objective",
+      "display_name": "Luhansk Objective",
+      "kind": "objective",
+      "province_id": "e3_2794",
+      "pixel": [
+        3188,
+        2084
+      ],
+      "route_node_id": "op-node-e3_2794-anchor",
+      "control_weight_milli": 1000,
+      "capture_threshold_milli": 1000,
+      "tags": [
+        "earth3_p2_site_intent"
+      ],
+      "facilities": [],
+      "owner_faction": "rus",
+      "authority": "authored",
+      "metadata": {
+        "source": "frozen_earth3_p2_site_intent",
+        "supply_hub_intent": false
+      }
+    },
+    {
+      "site_id": "site_odesa_port",
+      "display_name": "Odesa Port",
+      "kind": "port",
+      "province_id": "e3_1749",
+      "pixel": [
+        2749,
+        2227
+      ],
+      "route_node_id": "op-node-e3_1749-anchor",
+      "control_weight_milli": 1000,
+      "capture_threshold_milli": 1000,
+      "tags": [
+        "earth3_p2_site_intent"
+      ],
+      "facilities": [
+        "supply_hub"
+      ],
+      "owner_faction": "ukr",
+      "authority": "authored",
+      "metadata": {
+        "source": "frozen_earth3_p2_site_intent",
+        "supply_hub_intent": true
+      }
+    },
+    {
+      "site_id": "site_riga_depot",
+      "display_name": "Riga Depot",
+      "kind": "depot",
+      "province_id": "e3_0504",
+      "pixel": [
+        2457,
+        1388
+      ],
+      "route_node_id": "op-node-e3_0504-anchor",
+      "control_weight_milli": 1000,
+      "capture_threshold_milli": 1000,
+      "tags": [
+        "earth3_p2_site_intent"
+      ],
+      "facilities": [
+        "supply_hub"
+      ],
+      "owner_faction": "usa",
+      "authority": "authored",
+      "metadata": {
+        "source": "frozen_earth3_p2_site_intent",
+        "supply_hub_intent": true
+      }
+    },
+    {
+      "site_id": "site_rostov_depot",
+      "display_name": "Rostov Depot",
+      "kind": "depot",
+      "province_id": "e3_2793",
+      "pixel": [
+        3202,
+        2154
+      ],
+      "route_node_id": "op-node-e3_2793-anchor",
+      "control_weight_milli": 1000,
+      "capture_threshold_milli": 1000,
+      "tags": [
+        "earth3_p2_site_intent"
+      ],
+      "facilities": [
+        "supply_hub"
+      ],
+      "owner_faction": "rus",
+      "authority": "authored",
+      "metadata": {
+        "source": "frozen_earth3_p2_site_intent",
+        "supply_hub_intent": true
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "node_id": "op-node-e3_0391-anchor",
+      "display_name": "e3_0391 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2231,
+        1654
+      ],
+      "province_id": "e3_0391",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0395-anchor",
+      "display_name": "e3_0395 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2298,
+        1635
+      ],
+      "province_id": "e3_0395",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0399-anchor",
+      "display_name": "e3_0399 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2388,
+        1638
+      ],
+      "province_id": "e3_0399",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0402-anchor",
+      "display_name": "e3_0402 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2168,
+        1663
+      ],
+      "province_id": "e3_0402",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0405-anchor",
+      "display_name": "e3_0405 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2134,
+        1677
+      ],
+      "province_id": "e3_0405",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0412-anchor",
+      "display_name": "e3_0412 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2067,
+        1708
+      ],
+      "province_id": "e3_0412",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0430-anchor",
+      "display_name": "e3_0430 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2516,
+        1450
+      ],
+      "province_id": "e3_0430",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0442-anchor",
+      "display_name": "e3_0442 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2498,
+        1585
+      ],
+      "province_id": "e3_0442",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0449-anchor",
+      "display_name": "e3_0449 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2090,
+        1714
+      ],
+      "province_id": "e3_0449",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0455-anchor",
+      "display_name": "e3_0455 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2571,
+        1639
+      ],
+      "province_id": "e3_0455",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0456-anchor",
+      "display_name": "e3_0456 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2539,
+        1608
+      ],
+      "province_id": "e3_0456",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0493-anchor",
+      "display_name": "e3_0493 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2419,
+        1627
+      ],
+      "province_id": "e3_0493",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0498-anchor",
+      "display_name": "e3_0498 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2499,
+        1412
+      ],
+      "province_id": "e3_0498",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0504-anchor",
+      "display_name": "e3_0504 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2457,
+        1388
+      ],
+      "province_id": "e3_0504",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": true,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0505-anchor",
+      "display_name": "e3_0505 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2481,
+        1361
+      ],
+      "province_id": "e3_0505",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0513-anchor",
+      "display_name": "e3_0513 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2472,
+        1168
+      ],
+      "province_id": "e3_0513",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0514-anchor",
+      "display_name": "e3_0514 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2487,
+        1202
+      ],
+      "province_id": "e3_0514",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0518-anchor",
+      "display_name": "e3_0518 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2459,
+        1254
+      ],
+      "province_id": "e3_0518",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0519-anchor",
+      "display_name": "e3_0519 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2464,
+        1221
+      ],
+      "province_id": "e3_0519",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0523-anchor",
+      "display_name": "e3_0523 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2474,
+        1283
+      ],
+      "province_id": "e3_0523",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0567-anchor",
+      "display_name": "e3_0567 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2024,
+        1732
+      ],
+      "province_id": "e3_0567",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0581-anchor",
+      "display_name": "e3_0581 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        1993,
+        1745
+      ],
+      "province_id": "e3_0581",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0592-anchor",
+      "display_name": "e3_0592 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        1938,
+        1769
+      ],
+      "province_id": "e3_0592",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": true,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_0593-anchor",
+      "display_name": "e3_0593 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        1965,
+        1766
+      ],
+      "province_id": "e3_0593",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_1208-anchor",
+      "display_name": "e3_1208 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2859,
+        2203
+      ],
+      "province_id": "e3_1208",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_1209-anchor",
+      "display_name": "e3_1209 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2900,
+        2171
+      ],
+      "province_id": "e3_1209",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_1747-anchor",
+      "display_name": "e3_1747 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2969,
+        2128
+      ],
+      "province_id": "e3_1747",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_1749-anchor",
+      "display_name": "e3_1749 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2749,
+        2227
+      ],
+      "province_id": "e3_1749",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": true,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_1816-anchor",
+      "display_name": "e3_1816 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2452,
+        1617
+      ],
+      "province_id": "e3_1816",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_1818-anchor",
+      "display_name": "e3_1818 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2519,
+        1534
+      ],
+      "province_id": "e3_1818",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_1819-anchor",
+      "display_name": "e3_1819 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2512,
+        1493
+      ],
+      "province_id": "e3_1819",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_1836-anchor",
+      "display_name": "e3_1836 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2618,
+        1745
+      ],
+      "province_id": "e3_1836",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_1837-anchor",
+      "display_name": "e3_1837 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2591,
+        1683
+      ],
+      "province_id": "e3_1837",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_1849-anchor",
+      "display_name": "e3_1849 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2689,
+        1824
+      ],
+      "province_id": "e3_1849",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_1851-anchor",
+      "display_name": "e3_1851 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2642,
+        1790
+      ],
+      "province_id": "e3_1851",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_1876-anchor",
+      "display_name": "e3_1876 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2809,
+        2195
+      ],
+      "province_id": "e3_1876",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_1936-anchor",
+      "display_name": "e3_1936 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2730,
+        2169
+      ],
+      "province_id": "e3_1936",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_1937-anchor",
+      "display_name": "e3_1937 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2759,
+        1922
+      ],
+      "province_id": "e3_1937",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": true,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_1938-anchor",
+      "display_name": "e3_1938 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2733,
+        1878
+      ],
+      "province_id": "e3_1938",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_1943-anchor",
+      "display_name": "e3_1943 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2934,
+        2137
+      ],
+      "province_id": "e3_1943",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_1944-anchor",
+      "display_name": "e3_1944 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2755,
+        1963
+      ],
+      "province_id": "e3_1944",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_1947-anchor",
+      "display_name": "e3_1947 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2757,
+        2119
+      ],
+      "province_id": "e3_1947",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_1951-anchor",
+      "display_name": "e3_1951 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        3148,
+        2125
+      ],
+      "province_id": "e3_1951",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_1961-anchor",
+      "display_name": "e3_1961 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2979,
+        2061
+      ],
+      "province_id": "e3_1961",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_1962-anchor",
+      "display_name": "e3_1962 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2998,
+        2112
+      ],
+      "province_id": "e3_1962",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_2042-anchor",
+      "display_name": "e3_2042 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2474,
+        1331
+      ],
+      "province_id": "e3_2042",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_2062-anchor",
+      "display_name": "e3_2062 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2732,
+        1987
+      ],
+      "province_id": "e3_2062",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_2171-anchor",
+      "display_name": "e3_2171 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2269,
+        1648
+      ],
+      "province_id": "e3_2171",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_2175-anchor",
+      "display_name": "e3_2175 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2344,
+        1641
+      ],
+      "province_id": "e3_2175",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_2298-anchor",
+      "display_name": "e3_2298 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2200,
+        1658
+      ],
+      "province_id": "e3_2298",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_2330-anchor",
+      "display_name": "e3_2330 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2744,
+        2072
+      ],
+      "province_id": "e3_2330",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_2331-anchor",
+      "display_name": "e3_2331 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2739,
+        2026
+      ],
+      "province_id": "e3_2331",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_2634-anchor",
+      "display_name": "e3_2634 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2617,
+        1707
+      ],
+      "province_id": "e3_2634",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_2793-anchor",
+      "display_name": "e3_2793 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        3202,
+        2154
+      ],
+      "province_id": "e3_2793",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": true,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_2794-anchor",
+      "display_name": "e3_2794 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        3188,
+        2084
+      ],
+      "province_id": "e3_2794",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_2795-anchor",
+      "display_name": "e3_2795 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        3040,
+        2094
+      ],
+      "province_id": "e3_2795",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_2796-anchor",
+      "display_name": "e3_2796 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        3080,
+        2121
+      ],
+      "province_id": "e3_2796",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_2800-anchor",
+      "display_name": "e3_2800 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2916,
+        2034
+      ],
+      "province_id": "e3_2800",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_2808-anchor",
+      "display_name": "e3_2808 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2794,
+        1955
+      ],
+      "province_id": "e3_2808",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_2809-anchor",
+      "display_name": "e3_2809 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2838,
+        1988
+      ],
+      "province_id": "e3_2809",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_2810-anchor",
+      "display_name": "e3_2810 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2892,
+        1993
+      ],
+      "province_id": "e3_2810",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_3379-anchor",
+      "display_name": "e3_3379 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        3156,
+        2159
+      ],
+      "province_id": "e3_3379",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_3380-anchor",
+      "display_name": "e3_3380 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        3120,
+        2117
+      ],
+      "province_id": "e3_3380",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    },
+    {
+      "node_id": "op-node-e3_3480-anchor",
+      "display_name": "e3_3480 operational anchor",
+      "kind": "anchor",
+      "pixel": [
+        2767,
+        2197
+      ],
+      "province_id": "e3_3480",
+      "site_id": null,
+      "terrain": "unknown",
+      "is_hub": false,
+      "authority": "authored",
+      "metadata": {
+        "role": "earth3_p3_province_anchor",
+        "source": "frozen_earth3_centroid"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0391-anchor__op-node-e3_2171-anchor",
+      "a": "op-node-e3_0391-anchor",
+      "b": "op-node-e3_2171-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 38,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0391",
+        "e3_2171"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0391-anchor__op-node-e3_2298-anchor",
+      "a": "op-node-e3_0391-anchor",
+      "b": "op-node-e3_2298-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 31,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0391",
+        "e3_2298"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0395-anchor__op-node-e3_2171-anchor",
+      "a": "op-node-e3_0395-anchor",
+      "b": "op-node-e3_2171-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 32,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0395",
+        "e3_2171"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0395-anchor__op-node-e3_2175-anchor",
+      "a": "op-node-e3_0395-anchor",
+      "b": "op-node-e3_2175-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 46,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0395",
+        "e3_2175"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0399-anchor__op-node-e3_0493-anchor",
+      "a": "op-node-e3_0399-anchor",
+      "b": "op-node-e3_0493-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 33,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0399",
+        "e3_0493"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0399-anchor__op-node-e3_2175-anchor",
+      "a": "op-node-e3_0399-anchor",
+      "b": "op-node-e3_2175-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 44,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0399",
+        "e3_2175"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0402-anchor__op-node-e3_0405-anchor",
+      "a": "op-node-e3_0402-anchor",
+      "b": "op-node-e3_0405-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 37,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0402",
+        "e3_0405"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0402-anchor__op-node-e3_2298-anchor",
+      "a": "op-node-e3_0402-anchor",
+      "b": "op-node-e3_2298-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 32,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0402",
+        "e3_2298"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0405-anchor__op-node-e3_0449-anchor",
+      "a": "op-node-e3_0405-anchor",
+      "b": "op-node-e3_0449-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 57,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0405",
+        "e3_0449"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0412-anchor__op-node-e3_0449-anchor",
+      "a": "op-node-e3_0412-anchor",
+      "b": "op-node-e3_0449-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 24,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0412",
+        "e3_0449"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0412-anchor__op-node-e3_0567-anchor",
+      "a": "op-node-e3_0412-anchor",
+      "b": "op-node-e3_0567-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 49,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0412",
+        "e3_0567"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0430-anchor__op-node-e3_0498-anchor",
+      "a": "op-node-e3_0430-anchor",
+      "b": "op-node-e3_0498-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 42,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0430",
+        "e3_0498"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0430-anchor__op-node-e3_1819-anchor",
+      "a": "op-node-e3_0430-anchor",
+      "b": "op-node-e3_1819-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 43,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0430",
+        "e3_1819"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0442-anchor__op-node-e3_0456-anchor",
+      "a": "op-node-e3_0442-anchor",
+      "b": "op-node-e3_0456-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 47,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0442",
+        "e3_0456"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0442-anchor__op-node-e3_1816-anchor",
+      "a": "op-node-e3_0442-anchor",
+      "b": "op-node-e3_1816-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 56,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0442",
+        "e3_1816"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0442-anchor__op-node-e3_1818-anchor",
+      "a": "op-node-e3_0442-anchor",
+      "b": "op-node-e3_1818-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 55,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0442",
+        "e3_1818"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0455-anchor__op-node-e3_0456-anchor",
+      "a": "op-node-e3_0455-anchor",
+      "b": "op-node-e3_0456-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 45,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0455",
+        "e3_0456"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0455-anchor__op-node-e3_1837-anchor",
+      "a": "op-node-e3_0455-anchor",
+      "b": "op-node-e3_1837-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 48,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0455",
+        "e3_1837"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0493-anchor__op-node-e3_1816-anchor",
+      "a": "op-node-e3_0493-anchor",
+      "b": "op-node-e3_1816-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 34,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0493",
+        "e3_1816"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0498-anchor__op-node-e3_0504-anchor",
+      "a": "op-node-e3_0498-anchor",
+      "b": "op-node-e3_0504-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 48,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0498",
+        "e3_0504"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0504-anchor__op-node-e3_0505-anchor",
+      "a": "op-node-e3_0504-anchor",
+      "b": "op-node-e3_0505-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 36,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0504",
+        "e3_0505"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0505-anchor__op-node-e3_2042-anchor",
+      "a": "op-node-e3_0505-anchor",
+      "b": "op-node-e3_2042-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 31,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0505",
+        "e3_2042"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0513-anchor__op-node-e3_0514-anchor",
+      "a": "op-node-e3_0513-anchor",
+      "b": "op-node-e3_0514-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 37,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0513",
+        "e3_0514"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0514-anchor__op-node-e3_0519-anchor",
+      "a": "op-node-e3_0514-anchor",
+      "b": "op-node-e3_0519-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 30,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0514",
+        "e3_0519"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0518-anchor__op-node-e3_0519-anchor",
+      "a": "op-node-e3_0518-anchor",
+      "b": "op-node-e3_0519-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 33,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0518",
+        "e3_0519"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0518-anchor__op-node-e3_0523-anchor",
+      "a": "op-node-e3_0518-anchor",
+      "b": "op-node-e3_0523-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 33,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0518",
+        "e3_0523"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0523-anchor__op-node-e3_2042-anchor",
+      "a": "op-node-e3_0523-anchor",
+      "b": "op-node-e3_2042-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 48,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0523",
+        "e3_2042"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0567-anchor__op-node-e3_0581-anchor",
+      "a": "op-node-e3_0567-anchor",
+      "b": "op-node-e3_0581-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 34,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0567",
+        "e3_0581"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0581-anchor__op-node-e3_0593-anchor",
+      "a": "op-node-e3_0581-anchor",
+      "b": "op-node-e3_0593-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 35,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0581",
+        "e3_0593"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_0592-anchor__op-node-e3_0593-anchor",
+      "a": "op-node-e3_0592-anchor",
+      "b": "op-node-e3_0593-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 27,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_0592",
+        "e3_0593"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1208-anchor__op-node-e3_1209-anchor",
+      "a": "op-node-e3_1208-anchor",
+      "b": "op-node-e3_1209-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 52,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1208",
+        "e3_1209"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1208-anchor__op-node-e3_1876-anchor",
+      "a": "op-node-e3_1208-anchor",
+      "b": "op-node-e3_1876-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 51,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1208",
+        "e3_1876"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1209-anchor__op-node-e3_1943-anchor",
+      "a": "op-node-e3_1209-anchor",
+      "b": "op-node-e3_1943-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 48,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1209",
+        "e3_1943"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1747-anchor__op-node-e3_1943-anchor",
+      "a": "op-node-e3_1747-anchor",
+      "b": "op-node-e3_1943-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 36,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1747",
+        "e3_1943"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1747-anchor__op-node-e3_1962-anchor",
+      "a": "op-node-e3_1747-anchor",
+      "b": "op-node-e3_1962-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 33,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1747",
+        "e3_1962"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1749-anchor__op-node-e3_1936-anchor",
+      "a": "op-node-e3_1749-anchor",
+      "b": "op-node-e3_1936-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 61,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1749",
+        "e3_1936"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1749-anchor__op-node-e3_3480-anchor",
+      "a": "op-node-e3_1749-anchor",
+      "b": "op-node-e3_3480-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 35,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1749",
+        "e3_3480"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1818-anchor__op-node-e3_1819-anchor",
+      "a": "op-node-e3_1818-anchor",
+      "b": "op-node-e3_1819-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 42,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1818",
+        "e3_1819"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1836-anchor__op-node-e3_1851-anchor",
+      "a": "op-node-e3_1836-anchor",
+      "b": "op-node-e3_1851-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 51,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1836",
+        "e3_1851"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1836-anchor__op-node-e3_2634-anchor",
+      "a": "op-node-e3_1836-anchor",
+      "b": "op-node-e3_2634-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 38,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1836",
+        "e3_2634"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1837-anchor__op-node-e3_2634-anchor",
+      "a": "op-node-e3_1837-anchor",
+      "b": "op-node-e3_2634-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 35,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1837",
+        "e3_2634"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1849-anchor__op-node-e3_1851-anchor",
+      "a": "op-node-e3_1849-anchor",
+      "b": "op-node-e3_1851-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 58,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1849",
+        "e3_1851"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1849-anchor__op-node-e3_1938-anchor",
+      "a": "op-node-e3_1849-anchor",
+      "b": "op-node-e3_1938-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 70,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1849",
+        "e3_1938"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1876-anchor__op-node-e3_3480-anchor",
+      "a": "op-node-e3_1876-anchor",
+      "b": "op-node-e3_3480-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 42,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1876",
+        "e3_3480"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1936-anchor__op-node-e3_1947-anchor",
+      "a": "op-node-e3_1936-anchor",
+      "b": "op-node-e3_1947-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 57,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1936",
+        "e3_1947"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1937-anchor__op-node-e3_1938-anchor",
+      "a": "op-node-e3_1937-anchor",
+      "b": "op-node-e3_1938-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 51,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1937",
+        "e3_1938"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1937-anchor__op-node-e3_1944-anchor",
+      "a": "op-node-e3_1937-anchor",
+      "b": "op-node-e3_1944-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 41,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1937",
+        "e3_1944"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1937-anchor__op-node-e3_2808-anchor",
+      "a": "op-node-e3_1937-anchor",
+      "b": "op-node-e3_2808-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 48,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1937",
+        "e3_2808"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1944-anchor__op-node-e3_2062-anchor",
+      "a": "op-node-e3_1944-anchor",
+      "b": "op-node-e3_2062-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 33,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1944",
+        "e3_2062"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1947-anchor__op-node-e3_2330-anchor",
+      "a": "op-node-e3_1947-anchor",
+      "b": "op-node-e3_2330-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 49,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1947",
+        "e3_2330"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1951-anchor__op-node-e3_3379-anchor",
+      "a": "op-node-e3_1951-anchor",
+      "b": "op-node-e3_3379-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 35,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1951",
+        "e3_3379"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1951-anchor__op-node-e3_3380-anchor",
+      "a": "op-node-e3_1951-anchor",
+      "b": "op-node-e3_3380-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 29,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1951",
+        "e3_3380"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1961-anchor__op-node-e3_1962-anchor",
+      "a": "op-node-e3_1961-anchor",
+      "b": "op-node-e3_1962-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 54,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1961",
+        "e3_1962"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1961-anchor__op-node-e3_2800-anchor",
+      "a": "op-node-e3_1961-anchor",
+      "b": "op-node-e3_2800-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 69,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1961",
+        "e3_2800"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_1962-anchor__op-node-e3_2795-anchor",
+      "a": "op-node-e3_1962-anchor",
+      "b": "op-node-e3_2795-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 46,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_1962",
+        "e3_2795"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_2062-anchor__op-node-e3_2331-anchor",
+      "a": "op-node-e3_2062-anchor",
+      "b": "op-node-e3_2331-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 40,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_2062",
+        "e3_2331"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_2330-anchor__op-node-e3_2331-anchor",
+      "a": "op-node-e3_2330-anchor",
+      "b": "op-node-e3_2331-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 46,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_2330",
+        "e3_2331"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_2793-anchor__op-node-e3_2794-anchor",
+      "a": "op-node-e3_2793-anchor",
+      "b": "op-node-e3_2794-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 71,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_2793",
+        "e3_2794"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_2793-anchor__op-node-e3_3379-anchor",
+      "a": "op-node-e3_2793-anchor",
+      "b": "op-node-e3_3379-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 46,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_2793",
+        "e3_3379"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_2794-anchor__op-node-e3_3380-anchor",
+      "a": "op-node-e3_2794-anchor",
+      "b": "op-node-e3_3380-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 76,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_2794",
+        "e3_3380"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_2795-anchor__op-node-e3_2796-anchor",
+      "a": "op-node-e3_2795-anchor",
+      "b": "op-node-e3_2796-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 48,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_2795",
+        "e3_2796"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_2796-anchor__op-node-e3_3380-anchor",
+      "a": "op-node-e3_2796-anchor",
+      "b": "op-node-e3_3380-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 40,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_2796",
+        "e3_3380"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_2800-anchor__op-node-e3_2810-anchor",
+      "a": "op-node-e3_2800-anchor",
+      "b": "op-node-e3_2810-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 48,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_2800",
+        "e3_2810"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_2808-anchor__op-node-e3_2809-anchor",
+      "a": "op-node-e3_2808-anchor",
+      "b": "op-node-e3_2809-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 55,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_2808",
+        "e3_2809"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    },
+    {
+      "edge_id": "op-edge-corridor-op-node-e3_2809-anchor__op-node-e3_2810-anchor",
+      "a": "op-node-e3_2809-anchor",
+      "b": "op-node-e3_2810-anchor",
+      "kind": "corridor",
+      "authority": "approved",
+      "length_px": 54,
+      "base_move_points_milli": 1000,
+      "movement_cost_milli": 1000,
+      "requires_port": false,
+      "can_be_blockaded": false,
+      "traversal_enabled": true,
+      "bidirectional": true,
+      "province_ids": [
+        "e3_2809",
+        "e3_2810"
+      ],
+      "legacy_crossing_type": null,
+      "metadata": {
+        "approval_comment_id": 5234226059,
+        "batch_id": "earth3-p3-first-playable-corridors-v1",
+        "rollback_batch_id": "p3-batch-001",
+        "source": "owner_approved_earth3_p3_corridor",
+        "supply_capable": true
+      }
+    }
+  ],
+  "metadata": {
+    "allowlist_sha256": "08901e371baa34688429afc9a6f06cc6361da13eac6eb9907901b47c9c233965",
+    "approval_comment_id": 5234226059,
+    "authority_schema_version": 1,
+    "batch_id": "earth3-p3-first-playable-corridors-v1",
+    "disabled_candidate_edge_count": 8690,
+    "disabled_candidate_ids_sha256": "a7d52fbe2abd1d9b32349ad42e8e00876e3f4727411f58a5e640a3b8a75bbdcf",
+    "proposal_commit": "1c51766f4c099d3307db70cffec815772b314d21",
+    "rollback_batch_id": "p3-batch-001"
+  }
+}

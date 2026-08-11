@@ -99,6 +99,18 @@ def ensure_operational_positions(state: CampaignState) -> dict:
     If the graph cannot be resolved, leave formation positions, schema_version,
     and map_metadata completely unchanged.
     """
+    from .earth3_operational import (
+        P3_AUTHORITY_METADATA_KEY,
+        P3_MIGRATION_METADATA_KEY,
+        validate_earth3_p3_campaign_extension,
+    )
+
+    # Authenticated Earth3 P3 saves are mutable campaign state, never a source
+    # for initialization repair.  Validate them before any generic migration.
+    if P3_AUTHORITY_METADATA_KEY in state.map_metadata:
+        validate_earth3_p3_campaign_extension(state)
+        return dict(state.map_metadata[P3_MIGRATION_METADATA_KEY])
+
     from .force_migration import ensure_strategic_formations
 
     ensure_strategic_formations(state)
@@ -164,8 +176,25 @@ def resolve_display_pixel(
 
 def load_operational_graph_for_state(state: CampaignState) -> dict[str, Any] | None:
     """Resolve operational graph via map metadata / asset contract (not package path)."""
+    from .earth3_operational import (
+        EARTH3_MAP_ID,
+        P3_AUTHORITY_METADATA_KEY,
+        Earth3OperationalAuthorityError,
+        load_authenticated_p3_graph_for_state,
+    )
+
+    map_metadata = state.map_metadata
+    map_id = getattr(state, "map_id", None)
+    if P3_AUTHORITY_METADATA_KEY in map_metadata:
+        if map_id != EARTH3_MAP_ID:
+            raise Earth3OperationalAuthorityError(
+                "Earth3 P3 state authority marker requires the exact Earth3 map identity"
+            )
+        return load_authenticated_p3_graph_for_state(state)
+    if map_id == EARTH3_MAP_ID:
+        return load_authenticated_p3_graph_for_state(state)
     return load_operational_graph_payload(
-        map_id=str(state.map_id),
+        map_id=str(map_id),
         map_metadata=state.map_metadata,
     )
 
@@ -311,7 +340,14 @@ def _graph_candidate_paths(
 
 @lru_cache(maxsize=8)
 def _read_graph_json(path: str) -> dict[str, Any]:
-    return json.loads(Path(path).read_text(encoding="utf-8"))
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    if isinstance(payload, dict):
+        for edge in payload.get("edges") or []:
+            if isinstance(edge, dict) and edge.get("authority") == "approved":
+                raise ValueError(
+                    "approved edges require the authenticated Earth3 P3 loader"
+                )
+    return payload
 
 
 def clear_operational_graph_cache() -> None:

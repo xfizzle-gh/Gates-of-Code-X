@@ -285,6 +285,7 @@ def projection_signature(
     value = {
         "schema": ACTIVATION_SCHEMA,
         "schema_version": ACTIVATION_VERSION,
+        "activation_mode": str(actor.get("activation_mode") or "expanded"),
         "actor_id": actor["actor_id"],
         "tactical_side": actor["tactical_side"],
         "wiring_signature": payload["wiring_signature"],

@@ -87,6 +87,9 @@ def build_projection_matrix(
             rows[actor_id] = {
                 "display_name": result.display_name,
                 "tactical_side": result.tactical_side,
+                "activation_mode": str(
+                    manifest.get("activation_mode") or "expanded"
+                ),
                 "unit_count": result.unit_count,
                 "opponent_entry_count": int(manifest["opponent_entry_count"]),
                 "research_node_count": result.research_node_count,
@@ -129,14 +132,22 @@ def generate_projection_matrix_from_stack_config(
     *,
     gates_root: str | Path | None = None,
     source_head: str = "",
+    source_repo: str | Path | None = None,
 ) -> dict[str, Any]:
     roots, payload = compile_resolved_factions(stack_config)
     final_root = Path(gates_root).expanduser().resolve() if gates_root else roots[-1]
-    _verify_git_exact_head(final_root, source_head)
+    # Implementation checkout may differ from the live Workshop deploy root used
+    # as the final activation layer.
+    repo_root = (
+        Path(source_repo).expanduser().resolve()
+        if source_repo
+        else Path(__file__).resolve().parents[2]
+    )
+    _verify_git_exact_head(repo_root, source_head)
     return build_projection_matrix(
         payload,
         roots,
-        gates_root=gates_root,
+        gates_root=final_root,
         source_head=source_head,
     )
 
@@ -278,7 +289,13 @@ def load_projection_matrix(path: str | Path) -> dict[str, Any]:
                 "projection_signature",
                 "managed_files",
             }
-            if set(row) != required or not row["projection_signature"]:
+            optional = {"activation_mode"}
+            keys = set(row)
+            if not required.issubset(keys) or (keys - required - optional):
+                raise ExpandedNationsError(
+                    f"Complete projection matrix row is malformed: {actor_id}"
+                )
+            if not row["projection_signature"]:
                 raise ExpandedNationsError(
                     f"Complete projection matrix row is malformed: {actor_id}"
                 )

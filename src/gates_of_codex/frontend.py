@@ -35,7 +35,7 @@ from .supply import (
 )
 
 
-FRONTEND_SCHEMA_VERSION = 14
+FRONTEND_SCHEMA_VERSION = 16
 FRONTEND_PYTHON_MODULE = "gates_of_codex"
 LEGACY_GOE_MAP_ID = "goe_europe_alpha_graph_v1"
 _LEGACY_GOE_COMPATIBILITY_ALIASES = ("goe_europe", "interim_goe_europe")
@@ -161,20 +161,29 @@ def build_frontend_snapshot(
         if len(human_factions) != 1:
             raise ValueError("fog_of_war_requires_single_human_faction")
         option_faction = human_factions[0]
-    front_options = (
-        list_front_options(state, option_faction)
-        if not state.fog_of_war_enabled or state.current_faction == option_faction
-        else []
+    options_visible = (
+        not state.fog_of_war_enabled or state.current_faction == option_faction
+    )
+    front_options = list_front_options(state, option_faction) if options_visible else []
+    # Graph-native player movement authority (#206). Legacy province adjacency
+    # above is retained only for non-graph scenarios; it never gates these rows.
+    from .operational_order_options import list_operational_move_options
+
+    operational_orders = (
+        list_operational_move_options(state, option_faction) if options_visible else []
     )
     from .presentation import build_stack_presentations
 
-    stack_payload = build_stack_presentations(state, front_options)
+    stack_payload = build_stack_presentations(
+        state, front_options, operational_options=operational_orders
+    )
     battalion_presentations = stack_payload["battalions"]
     strategic_formation_presentations = stack_payload.get("strategic_formations", {})
 
     snapshot = {
         "schema": "gates-of-codex.frontend",
         "schema_version": FRONTEND_SCHEMA_VERSION,
+        "application": _application_block(state, campaign_path),
         "campaign": {
             "name": state.campaign_name,
             "turn_number": state.turn_number,
@@ -368,7 +377,8 @@ def build_frontend_snapshot(
         "strategic_formation_presentations": strategic_formation_presentations,
         "pending_battle": _pending_battle(state),
         "front_options": front_options,
-        "control": _control_block(campaign_path, snapshot_path),
+        "operational_orders": operational_orders,
+        "control": _control_block(state, campaign_path, snapshot_path),
         "province_names": dict(
             state.map_metadata.get("province_names") or province_name_coverage(state)
         ),
@@ -611,6 +621,16 @@ def _apply_s11_frontend_filter(snapshot: dict, state: CampaignState) -> dict:
         for row in snapshot.get("front_options", [])
         if row.get("battalion_id") in actionable_battalions
         and all(item in allowed_battalions for item in row.get("enemies", []))
+    ]
+    # Graph orders only ever describe the observer's own formations, and carry no
+    # enemy identity. Filter explicitly anyway so a future producer change cannot
+    # turn this block into an observation leak.
+    snapshot["operational_orders"] = [
+        row
+        for row in snapshot.get("operational_orders", [])
+        if observer_has_turn
+        and row.get("formation_id") in fully_observed_subjects
+        and str(row.get("faction", "")) == observer.value
     ]
 
     if not _observer_participates_in_pending_battle(state, coalition):
@@ -1061,11 +1081,82 @@ def _earth3_strategic_map_block(state: CampaignState) -> dict:
     }
 
 
-def _control_block(campaign_path: str | Path | None, snapshot_path: str | Path | None) -> dict:
+def _application_version() -> str:
+    from importlib.metadata import PackageNotFoundError, version
+
+    try:
+        return version("gates-of-codex")
+    except PackageNotFoundError:
+        from . import __version__
+
+        return str(__version__)
+
+
+def _application_block(state: CampaignState, campaign_path: str | Path | None) -> dict:
+    """Player-facing application identity shown by the Godot strategic shell."""
+    campaign = Path(campaign_path).resolve() if campaign_path else None
+    metadata = state.map_metadata
+    return {
+        "name": "Gates of CodeX",
+        "version": _application_version(),
+        "scenario_id": str(metadata.get("scenario_id", "")),
+        "scenario_status": str(metadata.get("scenario_status", "")),
+        "scenario_display_name": str(metadata.get("scenario_display_name", "")),
+        "map_id": state.map_id,
+        "campaign_path": str(campaign) if campaign else "",
+        "campaign_name": state.campaign_name,
+        "turn_number": state.turn_number,
+        "selected_faction": state.selected_faction.value,
+        "difficulty": state.difficulty,
+        "fog_of_war_enabled": bool(state.fog_of_war_enabled),
+    }
+
+
+def _player_launch_block(state: CampaignState, campaign_path: str | Path | None) -> dict:
+    """Arguments the Godot shell replays to run New/Continue Campaign.
+
+    The launcher owns campaign creation and continuation; the snapshot only
+    carries the already-persisted launch settings so the frontend never invents
+    a scenario, stack, or path of its own.
+    """
+    campaign = Path(campaign_path).resolve() if campaign_path else None
+    if campaign is None:
+        return {"enabled": False, "new_args": [], "continue_args": []}
+    metadata = state.map_metadata
+    scenario_id = str(metadata.get("scenario_id", "")).strip()
+    shared: list[str] = ["--campaign", str(campaign), "--no-launch"]
+    if scenario_id:
+        shared.extend(["--scenario", scenario_id])
+    new_args = ["play", "--new", "--force-new", *shared]
+    new_args.extend(["--faction", state.selected_faction.value])
+    new_args.extend(["--difficulty", state.difficulty])
+    new_args.extend(["--fog-of-war", "on" if state.fog_of_war_enabled else "off"])
+    for flag, value in (
+        ("--stack-config", metadata.get("stack_config")),
+        ("--game", state.game_directory),
+        ("--profile", state.profile_directory),
+        ("--tactical-map", metadata.get("preferred_map")),
+    ):
+        text = str(value or "").strip()
+        if text:
+            new_args.extend([flag, text])
+    return {
+        "enabled": True,
+        "new_args": new_args,
+        "continue_args": ["play", "--continue", *shared],
+    }
+
+
+def _control_block(
+    state: CampaignState,
+    campaign_path: str | Path | None,
+    snapshot_path: str | Path | None,
+) -> dict:
     snapshot = Path(snapshot_path).resolve() if snapshot_path else None
     campaign = Path(campaign_path).resolve() if campaign_path else None
     commands = snapshot.with_name("frontend_commands.json") if snapshot is not None else None
     return {
+        "play": _player_launch_block(state, campaign_path),
         "enabled": campaign is not None and snapshot is not None,
         "campaign_path": str(campaign) if campaign else "",
         "snapshot_path": str(snapshot) if snapshot else "",
@@ -1084,6 +1175,8 @@ def _control_block(campaign_path: str | Path | None, snapshot_path: str | Path |
             "construct",
             "repair",
             "handoff",
+            "verify_result",
+            "import_battle",
             "refresh",
         ],
     }

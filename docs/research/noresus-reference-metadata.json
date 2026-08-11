@@ -1,0 +1,149 @@
+{
+  "readme_contract": {
+    "describes_automatic_goh_launch": true,
+    "describes_external_strategic_layer": true,
+    "describes_generated_noresus_battle": true,
+    "describes_mod_activation": true,
+    "describes_return_and_update": true
+  },
+  "reference": {
+    "archive_bytes": 239133688,
+    "archive_filename": "3180617465.zip",
+    "archive_sha256": "c58a1da76c65b682236d868f6790dcbf6ef9707365d4dcfc883ab59111034659",
+    "extension_counts": {
+      ".all": 1,
+      ".anm": 33,
+      ".ce": 5,
+      ".dds": 32,
+      ".def": 79,
+      ".dl": 5,
+      ".ebm": 271,
+      ".goh": 5,
+      ".html": 4,
+      ".inc": 56,
+      ".info": 204,
+      ".jpg": 230,
+      ".lua": 5,
+      ".mdl": 9,
+      ".mi": 73,
+      ".mtl": 31,
+      ".nc": 4,
+      ".ne": 5,
+      ".nv": 1,
+      ".par": 1,
+      ".ply": 214,
+      ".png": 3315,
+      ".pot": 42,
+      ".rar": 1,
+      ".reg": 1,
+      ".set": 5218,
+      ".sql": 1,
+      ".tga": 225,
+      ".txt": 25,
+      ".vol": 60,
+      ".xml": 2,
+      "<none>": 3
+    },
+    "file_count": 10161,
+    "identity": {
+      "desc": "Conquest\\Enhanced Campaign 1.9.3.4",
+      "max_game_version": "any",
+      "min_game_version": "any",
+      "name": "NORESUS - Strategic Map"
+    },
+    "workshop_id": "3180617465"
+  },
+  "runtime": {
+    "config": {
+      "AI_attack": "true",
+      "AI_attack_interval": "1.0 3.0",
+      "AI_move": "true",
+      "AI_move_interval": "1.0 3.0",
+      "attrition_time": "5",
+      "btg_fog": "true",
+      "cooperative": "false",
+      "maps_per_front": "true",
+      "max_battles": "1",
+      "money": "50",
+      "para": "650",
+      "supply_time": "true",
+      "troops": "5",
+      "warehouse": "550"
+    },
+    "nested_archive": {
+      "bytes": 3506470,
+      "entries": {
+        "READ ME FIRST.txt": {"bytes": 3171, "sha256": "66cf82e70d3f69ff2c8fa2e000122016db15bdc2f1b0a05202b6ada12c6ae486"},
+        "System.Data.SQLite.dll": {"bytes": 450232, "sha256": "77dac4e1aa63161d6aff363030a801945d6b8d5b823a6b460b2c2be9ec38d3b7"},
+        "conquest.txt": {"bytes": 1306, "sha256": "0439cfe7ee7a2788d54f559082da151b2fb88576b2682b8d39f15b79063f76e2"},
+        "noresus-anag.db": {"bytes": 8192, "sha256": "3d1f68f0ec3f28e023b6fae42bb3972f62b03fdb56511e51a5c3987b0aa8a024"},
+        "noresus-conquest.exe": {"bytes": 1213952, "sha256": "d7e70e19b4b9a563beced75f1fe796a7c127f7248907110541e8d3fbe2fa0c6f"},
+        "noresus-project.db": {"bytes": 4886528, "sha256": "07f9fd097c98f65f407a144dc54f25ca4a443b11ccf9d5f87ab8340c4e5e4c98"},
+        "noresus-save.db": {"bytes": 24576, "sha256": "f9b2f678cc49419247c2b622c60136fbcb0d91cf3093ec8de5c93f9f59654b8a"},
+        "x64/SQLite.Interop.dll": {"bytes": 2005688, "sha256": "1111916dc329a13bd627b2cd90c9b2263de9923fd0bb6059c69c52332f360c37"},
+        "x86/SQLite.Interop.dll": {"bytes": 1592504, "sha256": "553693b15bda4bbf7788bee09b8bd325ffe4db151686f432194c58e15b9b4f1e"}
+      },
+      "sha256": "667b970467a747580e17058f92e82e0e62402bd9ec84273f5a35723e3161fd0e",
+      "zip_compatible": true
+    },
+    "sqlite": {
+      "noresus-anag.db": {
+        "anagrafica": {
+          "row_count": 0,
+          "columns": [
+            {"name": "btg", "type": "INTEGER"}, {"name": "stato", "type": "INTEGER"}, {"name": "faz", "type": "TEXT"},
+            {"name": "periodo", "type": "TEXT"}, {"name": "tipo_btg", "type": "INTEGER"}, {"name": "plotone", "type": "INTEGER"},
+            {"name": "tipo_plt", "type": "TEXT"}, {"name": "squadra", "type": "TEXT"}, {"name": "tipo_sq", "type": "TEXT"},
+            {"name": "nome", "type": "TEXT"}, {"name": "ind", "type": "INTEGER"}, {"name": "battaglie", "type": "INTEGER"},
+            {"name": "grado", "type": "INTEGER"}, {"name": "ik_tot", "type": "INTEGER"}, {"name": "ik_batt", "type": "INTEGER"},
+            {"name": "tk_tot", "type": "INTEGER"}, {"name": "tk_batt", "type": "INTEGER"}, {"name": "score", "type": "REAL"},
+            {"name": "veterancy", "type": "INTEGER"}, {"name": "tag", "type": "TEXT"}
+          ]
+        }
+      },
+      "noresus-project.db": {
+        "compagnie": {"row_count": 0, "columns": [{"name":"cod","type":"INTEGER"},{"name":"side","type":"varchar(3)"},{"name":"period","type":"varchar(15)"},{"name":"name","type":"varchar(50)"},{"name":"tipo","type":"varchar(3)"},{"name":"cost","type":"TEXT"},{"name":"cp","type":"TEXT"}]},
+        "parametri1": {"row_count": 1, "columns": [{"name":"velocita","type":"TEXT"},{"name":"online","type":"TEXT"},{"name":"coop","type":"TEXT"}]},
+        "regionborder": {"row_count": 639, "columns": [{"name":"regione","type":"varchar(30)"},{"name":"confini","type":"TEXT"},{"name":"front","type":"INTEGER"}]},
+        "truppe": {"row_count": 0, "columns": [{"name":"cod","type":"INTEGER"},{"name":"side","type":"varchar(3)"},{"name":"period","type":"varchar(15)"},{"name":"name","type":"varchar(50)"},{"name":"cost","type":"INTEGER"}]}
+      },
+      "noresus-save.db": {
+        "battaglioni": {
+          "row_count": 0,
+          "columns": [
+            {"name":"id","type":"INTEGER"},{"name":"costo","type":"INTEGER"},{"name":"fazione","type":"INTEGER"},{"name":"nome","type":"varchar(25)"},{"name":"regione","type":"varchar(25)"},{"name":"contenuto","type":"TEXT"},{"name":"fronte","type":"INTEGER"},{"name":"data_fine","type":"TEXT"},{"name":"insegna","type":"varchar(7)"},{"name":"stato","type":"INTEGER"},{"name":"reg_da","type":"INTEGER"},{"name":"origine","type":"varchar(25)"},{"name":"data_iniz","type":"TEXT"},{"name":"tipo","type":"varchar(3)"},{"name":"descr","type":"varchar(25)"},{"name":"slot","type":"varchar(9)"},{"name":"data_assedio","type":"TEXT"},{"name":"min_stage","type":"INTEGER"},{"name":"vis","type":"INTEGER"},{"name":"nazione","type":"varchar(50)"},{"name":"cod_reg","type":"INTEGER"},{"name":"contenuto2","type":"TEXT"},{"name":"contenuto3","type":"TEXT"},{"name":"campo2","type":"TEXT"},{"name":"ap","type":"INTEGER"},{"name":"battalion_stats","type":"TEXT"},{"name":"resupply_cost","type":"REAL"},{"name":"sub_type","type":"TEXT"}
+          ]
+        },
+        "datamap": {"row_count": 0, "columns": [{"name":"cod","type":"INTEGER"},{"name":"regione","type":"varchar(25)"},{"name":"nazione","type":"varchar(25)"},{"name":"confini","type":"varchar(100)"},{"name":"slot","type":"INTEGER"},{"name":"patria","type":"INTEGER"},{"name":"fazione","type":"INTEGER"},{"name":"capitale","type":"INTEGER"},{"name":"fronte","type":"INTEGER"},{"name":"data_resa","type":"TEXT"},{"name":"warehouse","type":"INTEGER"},{"name":"risorse","type":"INTEGER"},{"name":"industrie","type":"INTEGER"},{"name":"ic1","type":"varchar(9)"},{"name":"ic2","type":"varchar(9)"},{"name":"ic3","type":"varchar(9)"},{"name":"ic4","type":"varchar(9)"},{"name":"ic5","type":"varchar(9)"},{"name":"nuova_naz","type":"varchar(25)"},{"name":"depo","type":"INTEGER"},{"name":"btg","type":"INTEGER"},{"name":"mappa","type":"varchar(25)"}]},
+        "parametri2": {"row_count": 1, "columns": [{"name":"fazione","type":"INTEGER"},{"name":"campagna","type":"INTEGER"},{"name":"start_map","type":"TEXT"},{"name":"ger_btg","type":"INTEGER"},{"name":"rus_btg","type":"INTEGER"},{"name":"usa_btg","type":"INTEGER"},{"name":"bot_btg","type":"INTEGER"},{"name":"durata_camp","type":"INTEGER"},{"name":"alluminio","type":"TEXT"},{"name":"acciaio","type":"TEXT"},{"name":"cromo","type":"TEXT"},{"name":"tungsteno","type":"TEXT"},{"name":"gomma","type":"TEXT"},{"name":"petrolio","type":"TEXT"},{"name":"diffic_scelta","type":"INTEGER"},{"name":"econ_scelta","type":"INTEGER"},{"name":"prod_scelta","type":"INTEGER"},{"name":"manpower_spesi","type":"INTEGER"},{"name":"crediti_spesi","type":"INTEGER"},{"name":"mese_corrente","type":"INTEGER"},{"name":"equip","type":"INTEGER"}]},
+        "player_career": {"row_count": 1, "columns": [{"name":"rank","type":"INTEGER"},{"name":"total_score","type":"NUMERIC"},{"name":"prev_rank_score_requirements","type":"NUMERIC"},{"name":"next_rank_score_requirements","type":"NUMERIC"},{"name":"battles_tot","type":"INTEGER"},{"name":"battles_won","type":"INTEGER"},{"name":"battles_lost","type":"INTEGER"},{"name":"ik_tot","type":"INTEGER"},{"name":"tk_tot","type":"INTEGER"},{"name":"last_rank","type":"INTEGER"},{"name":"last_medal","type":"INTEGER"},{"name":"medal","type":"INTEGER"}]}
+      }
+    }
+  },
+  "source_hashes": {
+    "NORESUS CONQUEST ENHANCED.rar": {"bytes": 3506470, "present": true, "sha256": "667b970467a747580e17058f92e82e0e62402bd9ec84273f5a35723e3161fd0e"},
+    "datamap_reset.sql": {"bytes": 109717, "present": true, "sha256": "a42592e2bc707b0c767ebb34b6781eb4cea68a61fc3d5a7de224b493ef02074b"},
+    "resource/script/multiplayer/modes/bot.ai_logic.lua": {"bytes": 20391, "present": true, "sha256": "65d42c4b22b1948e2786a1e0b78ef0a91338867dc5cb0af1019fc23a61da928d"},
+    "resource/script/multiplayer/modes/bot.strategies.lua": {"bytes": 10686, "present": true, "sha256": "15af6c380a3289e59fc4817d5ef34a3ee5eb79ab620acaf384da944664091d67"},
+    "resource/script/multiplayer/modes/conquest.lua": {"bytes": 15133, "present": true, "sha256": "fb80f6bfbbfd289630f323a54475ad0a51258c9493356ff8e19b0835231a131f"},
+    "units_prod.txt": {"bytes": 38626, "present": true, "sha256": "6e4823bff0f56e253d82123c01638849bb356901bd8dd1aa2535603ba429d109"}
+  },
+  "strategic_map": {
+    "adjacency": {"average_degree": 5.021909, "isolated": [{"id": 24, "name": "Reykjavik"}], "max_degree": 10, "median_degree": 5},
+    "bytes": 109717,
+    "capital_count": 29,
+    "faction_counts": {"0": 1, "1": 215, "2": 140, "3": 283},
+    "front_counts": {"1": 196, "2": 308, "3": 135},
+    "map_coordinate_range": {"sample_points": 3195, "x": [36, 4983], "y": [61, 4518]},
+    "nation_counts": {"BELGIUM":3,"BULGARIA":6,"DENMARK":4,"ENGLAND":43,"ESTONIA":1,"FINLAND":17,"FRANCE":85,"GERMANY":45,"GREECE":9,"HUNGARY":7,"IRAQ":9,"IRELAND":4,"ITALY":50,"LATVIA":6,"LITHUANIA":3,"NETHERLANDS":3,"NORWAY":12,"PERSIA":9,"POLAND":29,"PORTUGAL":5,"ROMANIA":17,"SAUDI ARABIA":8,"SLOVAKIA":4,"SOVIET UNION":172,"SPAIN":27,"SWEDEN":19,"SWITZERLAND":4,"TURKEY":20,"YUGOSLAVIA":18},
+    "present": true,
+    "region_count": 639,
+    "sha256": "a42592e2bc707b0c767ebb34b6781eb4cea68a61fc3d5a7de224b493ef02074b"
+  },
+  "tactical_scripts": {
+    "ai_logic": {"has_strategy_force_counts": true, "mentions_division_roster_specific_values": true, "sha256": "65d42c4b22b1948e2786a1e0b78ef0a91338867dc5cb0af1019fc23a61da928d"},
+    "conquest": {"sha256": "fb80f6bfbbfd289630f323a54475ad0a51258c9493356ff8e19b0835231a131f", "spawn_seconds": {"between_spawns_max":30,"between_spawns_min":30,"between_waves_max":105,"between_waves_min":75,"first_attacker_max":0,"first_attacker_min":0,"first_defender_max":7,"first_defender_min":5}, "wave_counter_enabled": true, "wave_units": {"max":3,"min":3}},
+    "strategies": {"battalion_type_strategy_indexes": {"ART":[2],"HT":[4,5],"INF":[1,3,6],"LT":[5],"MEC":[6],"MOT":[1,6],"MT":[5]}, "sha256": "15af6c380a3289e59fc4817d5ef34a3ee5eb79ab620acaf384da944664091d67"}
+  },
+  "unit_catalog": {"bytes":38626,"field_count":6,"present":true,"row_count":746,"sha256":"6e4823bff0f56e253d82123c01638849bb356901bd8dd1aa2535603ba429d109","side_counts":{"eng":17,"fin":112,"fra":12,"ger":204,"hun":20,"ita":17,"pol":12,"rus":198,"usa":154}}
+}
