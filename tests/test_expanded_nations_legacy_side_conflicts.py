@@ -84,7 +84,7 @@ class ExpandedNationsLegacySideConflictTests(unittest.TestCase):
     def test_full_activation_preserves_source_backed_legacy_native_side(self) -> None:
         activate_actor_projection(_payload(), self.layers, "srb")
         manifest = verify_actor_projection(self.gates)
-        self.assertEqual(manifest["schema_version"], 3)
+        self.assertEqual(manifest["schema_version"], 4)
 
         expected_names = {
             "squad_pzgren_moto2_con_nato(frg)",

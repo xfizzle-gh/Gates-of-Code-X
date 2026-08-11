@@ -14,6 +14,7 @@ from .expanded_nations import (
     deactivate_actor_projection,
     verify_actor_projection,
 )
+from .expanded_nations_actor_sources import project_actor_units
 from .expanded_nations_breeds import _resolve_source_breed
 from .expanded_nations_inf_costs import (
     _COST_RE,
@@ -24,13 +25,16 @@ from .expanded_nations_inf_costs import (
     _SOURCE_NATIVE_UNPRICED_PATHS,
 )
 from .expanded_nations_models import (
+    ACTIVATION_MODE_CODEX_PASSTHROUGH,
     MANIFEST_RELATIVE,
     UNITS_RELATIVE,
     ExpandedNationsError,
     all_managed_candidates,
+    manifest_activation_mode,
     pretty_json,
     validate_payload,
 )
+from .expanded_nations_render import render_units_file
 from .goh_source import scan_source_entries
 from .modstack import normalize_stack, resource_root
 
@@ -136,11 +140,22 @@ def build_cost_evidence_matrix(
                 payload, roots, actor_id, gates_root=final_root
             )
             manifest = verify_actor_projection(final_root)
-            units_text = (final_root / UNITS_RELATIVE).read_text(encoding="utf-8")
-            roster_text = (
-                final_root / "resource/set/multiplayer/units/roster_conquest.set"
-            ).read_text(encoding="utf-8")
-            effective_index = _index_with_projected_rows(source_index, roster_text)
+            mode = manifest_activation_mode(manifest)
+            if mode == ACTIVATION_MODE_CODEX_PASSTHROUGH:
+                # Read-only cost scan of inherited stack purchases. Do not install
+                # cloned goc_active_actor_units bodies for passthrough actors.
+                projected_units, projected_body = project_actor_units(
+                    actor, roots, final_root
+                )
+                units_text = render_units_file(actor, projected_units, projected_body)
+                roster_text = ""
+                effective_index = source_index
+            else:
+                units_text = (final_root / UNITS_RELATIVE).read_text(encoding="utf-8")
+                roster_text = (
+                    final_root / "resource/set/multiplayer/units/roster_conquest.set"
+                ).read_text(encoding="utf-8")
+                effective_index = _index_with_projected_rows(source_index, roster_text)
 
             unit_meta = {
                 str(u.get("unit_name")): u for u in actor.get("units", [])
@@ -204,6 +219,7 @@ def build_cost_evidence_matrix(
                 "actor_id": actor_id,
                 "display_name": result.display_name,
                 "tactical_side": result.tactical_side,
+                "activation_mode": mode,
                 "unit_count": result.unit_count,
                 "research_node_count": result.research_node_count,
                 "projection_signature": result.projection_signature,

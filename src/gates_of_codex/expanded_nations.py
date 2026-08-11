@@ -19,6 +19,8 @@ from .expanded_nations_inf_costs import (
     verify_actor_inf_cost_rows,
 )
 from .expanded_nations_models import (
+    ACTIVATION_MODE_CODEX_PASSTHROUGH,
+    ACTIVATION_MODE_EXPANDED,
     ACTIVATION_SCHEMA,
     ACTIVATION_VERSION,
     MANIFEST_RELATIVE,
@@ -30,6 +32,8 @@ from .expanded_nations_models import (
     ActivationResult,
     ExpandedNationsError,
     ManagedFile,
+    activation_mode_for_actor,
+    is_codex_passthrough_actor,
     pretty_json,
     select_actor,
     sha256_bytes,
@@ -133,6 +137,13 @@ def activate_actor_projection(
         raise ExpandedNationsError(
             f"Actor {actor_id} has unsupported tactical side {side}"
         )
+    if is_codex_passthrough_actor(str(actor["actor_id"])):
+        return _activate_codex_passthrough(
+            payload,
+            actor,
+            side=side,
+            final_root=final_root,
+        )
 
     projected_units, projected_body = project_actor_units(
         actor,
@@ -174,8 +185,12 @@ def activate_actor_projection(
         **presentation_outputs,
         **breed_outputs,
     }
+    signature_actor = {
+        **dict(native_actor),
+        "activation_mode": ACTIVATION_MODE_EXPANDED,
+    }
     signature = projection_signature(
-        native_actor,
+        signature_actor,
         payload,
         outputs,
         projected_units,
@@ -190,6 +205,7 @@ def activate_actor_projection(
     manifest_payload = {
         "schema": ACTIVATION_SCHEMA,
         "schema_version": ACTIVATION_VERSION,
+        "activation_mode": ACTIVATION_MODE_EXPANDED,
         "actor_id": native_actor["actor_id"],
         "display_name": native_actor["display_name"],
         "tactical_side": side,
@@ -256,3 +272,88 @@ def launch_expanded_nation(
     )
     launch_game(game_directory, list(extra_args or ()))
     return result
+
+
+def _activate_codex_passthrough(
+    payload: Mapping[str, Any],
+    actor: Mapping[str, Any],
+    *,
+    side: str,
+    final_root: Path,
+) -> ActivationResult:
+    """Activate a sole native Code:X side without cloning roster/research.
+
+    PRC already owns tactical_side=prc in upstream Code:X. Copying its purchases
+    into goc_active_actor_units.set re-hosts vehicle macros outside their native
+    include/define environment and crashes Dynamic Conquest. Passthrough keeps
+    reversible bookkeeping only and inherits stack roster/research unchanged.
+    """
+
+    actor_id = str(actor["actor_id"])
+    if activation_mode_for_actor(actor_id) != ACTIVATION_MODE_CODEX_PASSTHROUGH:
+        raise ExpandedNationsError(
+            f"Actor {actor_id} is not authorized for Code:X passthrough activation"
+        )
+    if side != "prc":
+        raise ExpandedNationsError(
+            f"Code:X passthrough actor {actor_id} must use tactical_side=prc, got {side}"
+        )
+
+    unit_count = int(actor["unit_count"])
+    research_node_count = int(actor["research_node_count"])
+    outputs: dict[Path, bytes] = {}
+    signature = projection_signature(
+        {
+            "actor_id": actor_id,
+            "display_name": actor["display_name"],
+            "tactical_side": side,
+            "activation_mode": ACTIVATION_MODE_CODEX_PASSTHROUGH,
+        },
+        payload,
+        outputs,
+        (),
+    )
+    manifest_payload = {
+        "schema": ACTIVATION_SCHEMA,
+        "schema_version": ACTIVATION_VERSION,
+        "activation_mode": ACTIVATION_MODE_CODEX_PASSTHROUGH,
+        "actor_id": actor_id,
+        "display_name": actor["display_name"],
+        "tactical_side": side,
+        "playable": bool(actor["playable"]),
+        "unit_count": unit_count,
+        "opponent_entry_count": 0,
+        "research_node_count": research_node_count,
+        "wiring_signature": payload["wiring_signature"],
+        "stack_signature": payload["stack_signature"],
+        "projection_signature": signature,
+        "files": [],
+        "units": [],
+        "opponent_units": [],
+        "research_nodes": [],
+        "inf_cost_rows": [],
+        "presentation_files": [],
+        "breed_files": [],
+        "passthrough_policy": (
+            "inherit_codex_prc_roster_and_research; "
+            "do_not_clone_purchase_definitions"
+        ),
+    }
+    verify_projection_artifacts(outputs, manifest_payload)
+    install_projection(
+        final_root,
+        outputs,
+        pretty_json(manifest_payload).encode("utf-8"),
+        post_commit_verify=lambda: verify_actor_projection(final_root),
+    )
+    return ActivationResult(
+        actor_id=actor_id,
+        display_name=str(actor["display_name"]),
+        tactical_side=side,
+        unit_count=unit_count,
+        research_node_count=research_node_count,
+        wiring_signature=str(payload["wiring_signature"]),
+        projection_signature=signature,
+        manifest_path=str(final_root / MANIFEST_RELATIVE),
+        files=(),
+    )

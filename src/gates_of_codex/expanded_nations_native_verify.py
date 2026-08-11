@@ -13,10 +13,12 @@ from .expanded_nations_actor_sources import (
 )
 from .expanded_nations_inf_costs import verify_actor_inf_cost_rows
 from .expanded_nations_models import (
+    ACTIVATION_MODE_CODEX_PASSTHROUGH,
     ExpandedNationsError,
     MANIFEST_RELATIVE,
     ROSTER_RELATIVE,
     UNITS_RELATIVE,
+    manifest_activation_mode,
     safe_target,
     sha256_bytes,
 )
@@ -59,6 +61,16 @@ def verify_projection_artifacts(
     manifest: Mapping[str, Any],
 ) -> None:
     """Verify native purchase IDs, definition closure, and projected personnel costs."""
+
+    if manifest_activation_mode(manifest) == ACTIVATION_MODE_CODEX_PASSTHROUGH:
+        # Passthrough inherits Code:X roster/research; no generated purchase bodies
+        # are present to close macros against.
+        _verify_projection_artifacts(outputs, manifest)
+        if outputs or manifest.get("files"):
+            raise ExpandedNationsError(
+                "Code:X passthrough activation must not materialize purchase projections"
+            )
+        return
 
     verification_outputs, verification_manifest = _legacy_verification_view(
         outputs,

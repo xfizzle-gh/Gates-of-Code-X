@@ -8,6 +8,7 @@ from typing import Any, Mapping
 from .faction_wiring_scan import _side_from_filename, _side_from_name
 from .goh_source import scan_source_entries
 from .expanded_nations_models import (
+    ACTIVATION_MODE_CODEX_PASSTHROUGH,
     ACTIVATION_SCHEMA,
     ACTIVATION_VERSION,
     BREED_ROOT_RELATIVE,
@@ -19,7 +20,10 @@ from .expanded_nations_models import (
     RESEARCH_RELATIVE,
     ROSTER_RELATIVE,
     UNITS_RELATIVE,
+    all_managed_candidates,
+    managed_relatives_for_manifest,
     managed_relatives_for_side,
+    manifest_activation_mode,
     presentation_relatives_for_actor,
     safe_target,
     sha256_bytes,
@@ -73,8 +77,12 @@ def verify_projection_artifacts(
         or manifest.get("schema_version") != ACTIVATION_VERSION
     ):
         raise ExpandedNationsError("Unsupported activation manifest payload")
+    mode = manifest_activation_mode(manifest)
+    if mode == ACTIVATION_MODE_CODEX_PASSTHROUGH:
+        _verify_codex_passthrough_artifacts(outputs, manifest)
+        return
     side = str(manifest.get("tactical_side", ""))
-    expected = set(managed_relatives_for_side(side))
+    expected = set(managed_relatives_for_manifest(manifest))
     expected.update(_manifest_presentation_relatives(manifest))
     expected.update(_manifest_breed_relatives(manifest))
     if set(outputs) != expected:
@@ -141,6 +149,48 @@ def verify_projection_artifacts(
     _verify_research(research_text, manifest)
     _verify_presentation(outputs, manifest)
     _verify_breed_projection(outputs, manifest)
+
+
+def _verify_codex_passthrough_artifacts(
+    outputs: Mapping[Path, bytes],
+    manifest: Mapping[str, Any],
+) -> None:
+    if outputs:
+        raise ExpandedNationsError(
+            "Code:X passthrough activation must not materialize projection artifacts"
+        )
+    if manifest.get("files"):
+        raise ExpandedNationsError(
+            "Code:X passthrough activation must not manage projection files"
+        )
+    if str(manifest.get("actor_id", "")) != "prc":
+        raise ExpandedNationsError(
+            "Code:X passthrough activation is only authorized for actor prc"
+        )
+    if str(manifest.get("tactical_side", "")) != "prc":
+        raise ExpandedNationsError(
+            "Code:X passthrough activation requires tactical_side=prc"
+        )
+    if int(manifest.get("opponent_entry_count", -1)) != 0:
+        raise ExpandedNationsError(
+            "Code:X passthrough activation must not project opponent isolation files"
+        )
+    if list(manifest.get("units") or []):
+        raise ExpandedNationsError(
+            "Code:X passthrough activation must not clone actor purchase units"
+        )
+    if list(manifest.get("research_nodes") or []):
+        raise ExpandedNationsError(
+            "Code:X passthrough activation must not rebuild actor research nodes"
+        )
+    if int(manifest.get("unit_count", -1)) <= 0:
+        raise ExpandedNationsError(
+            "Code:X passthrough activation requires positive inherited unit_count"
+        )
+    if int(manifest.get("research_node_count", -1)) <= 0:
+        raise ExpandedNationsError(
+            "Code:X passthrough activation requires positive inherited research_node_count"
+        )
 
 
 def _verify_actor_units(
@@ -491,7 +541,17 @@ def load_manifest(path: Path) -> dict[str, Any]:
         or payload.get("schema_version") != ACTIVATION_VERSION
     ):
         raise ExpandedNationsError(f"Unsupported activation manifest: {path}")
-    if not isinstance(payload.get("files"), list) or not payload["files"]:
+    if not isinstance(payload.get("files"), list):
+        raise ExpandedNationsError(
+            f"Activation manifest files must be a list: {path}"
+        )
+    mode = manifest_activation_mode(payload)
+    if mode == ACTIVATION_MODE_CODEX_PASSTHROUGH:
+        if payload["files"]:
+            raise ExpandedNationsError(
+                f"Code:X passthrough activation must not manage projection files: {path}"
+            )
+    elif not payload["files"]:
         raise ExpandedNationsError(
             f"Activation manifest has no managed files: {path}"
         )
@@ -499,7 +559,26 @@ def load_manifest(path: Path) -> dict[str, Any]:
 
 
 def verify_manifest_files(root: Path, manifest: Mapping[str, Any]) -> None:
-    allowed_paths = set(managed_relatives_for_side(str(manifest["tactical_side"])))
+    mode = manifest_activation_mode(manifest)
+    if mode == ACTIVATION_MODE_CODEX_PASSTHROUGH:
+        if manifest.get("files"):
+            raise ExpandedNationsError(
+                "Code:X passthrough activation must not manage projection files"
+            )
+        occupied = [
+            path
+            for path in all_managed_candidates(root)
+            if path.is_file()
+            and GENERATED_MARKER
+            in path.read_text(encoding="utf-8-sig", errors="replace")
+        ]
+        if occupied:
+            raise ExpandedNationsError(
+                "Code:X passthrough activation found leftover managed projection files: "
+                + ", ".join(str(path) for path in occupied)
+            )
+        return
+    allowed_paths = set(managed_relatives_for_manifest(manifest))
     allowed_paths.update(_manifest_presentation_relatives(manifest))
     allowed_paths.update(_manifest_breed_relatives(manifest))
     allowed = {item.as_posix() for item in allowed_paths}

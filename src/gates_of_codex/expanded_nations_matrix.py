@@ -87,6 +87,9 @@ def build_projection_matrix(
             rows[actor_id] = {
                 "display_name": result.display_name,
                 "tactical_side": result.tactical_side,
+                "activation_mode": str(
+                    manifest.get("activation_mode") or "expanded"
+                ),
                 "unit_count": result.unit_count,
                 "opponent_entry_count": int(manifest["opponent_entry_count"]),
                 "research_node_count": result.research_node_count,
@@ -278,7 +281,13 @@ def load_projection_matrix(path: str | Path) -> dict[str, Any]:
                 "projection_signature",
                 "managed_files",
             }
-            if set(row) != required or not row["projection_signature"]:
+            optional = {"activation_mode"}
+            keys = set(row)
+            if not required.issubset(keys) or (keys - required - optional):
+                raise ExpandedNationsError(
+                    f"Complete projection matrix row is malformed: {actor_id}"
+                )
+            if not row["projection_signature"]:
                 raise ExpandedNationsError(
                     f"Complete projection matrix row is malformed: {actor_id}"
                 )
