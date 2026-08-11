@@ -2,95 +2,21 @@ extends "res://scripts/main_stack_panel.gd"
 
 ## Post-P5 responsiveness layer (#207).
 ##
-## Two deliberately presentation/command-surface-only changes live here:
-## 1. Player End Turn is one backend batch: end the human turn, run every active
-##    AI faction in canonical order, and return control to the selected faction.
-##    One batch means one campaign load, one save, and one snapshot publication.
+## 1. Player End Turn submits one backend operation. Python owns the canonical
+##    human -> AI -> human cycle and stops cleanly if a pending battle appears.
+##    The file-backed bridge therefore pays for one load/save/snapshot cycle.
 ## 2. The polygon/color-ID overlay never scans/draws ambient province names.
-##    Selected, hovered, occupied and legal-target labels remain. This keeps the
-##    useful tactical labels while preventing thousands of draw_string/collision
-##    operations at high zoom.
+##    Selected, hovered, occupied and legal-target labels remain.
 ##
 ## This script does not alter operational graph authority or campaign rules.
-
-const PLAYER_TURN_ORDER := ["nato", "ukr", "rusa", "prc"]
-const BatchOperationalResolutionPresenterScript = preload(
-	"res://scripts/presentation/operational_resolution_presenter_batch.gd"
-)
-
-
-func _ensure_operational_presenter() -> void:
-	## Use the batch-aware presentation adapter so the single player-round command
-	## still animates movement resolved by later operations in the batch.
-	if operational_presenter != null:
-		return
-	operational_presenter = BatchOperationalResolutionPresenterScript.new()
-	if not InputMap.has_action("skip_operational_presentation"):
-		InputMap.add_action("skip_operational_presentation")
-		var event := InputEventKey.new()
-		event.physical_keycode = KEY_SPACE
-		InputMap.action_add_event("skip_operational_presentation", event)
 
 
 func _handle_button(button_id: String) -> void:
 	if button_id == "end_turn":
-		var commands := player_end_turn_commands()
-		if commands.is_empty():
-			status_message = "End turn unavailable: no active player faction."
-			queue_redraw()
-			return
-		var ai_turns := 0
-		for command: Dictionary in commands:
-			if String(command.get("op", "")) == "run_ai":
-				ai_turns += 1
-		status_message = "Ending turn + resolving %d AI turn(s)..." % ai_turns
-		_queue_and_apply(commands)
+		status_message = "Ending turn + resolving AI round..."
+		_queue_and_apply([{"op": "end_player_round"}])
 		return
 	super._handle_button(button_id)
-
-
-func player_end_turn_commands() -> Array:
-	## Build the exact batch represented by one player-facing End Turn press.
-	## Existing backend ops remain authoritative; this only composes them so the
-	## expensive file-backed apply/snapshot cycle happens once instead of once per
-	## faction. If a save is already sitting on an AI faction, the same button
-	## resumes from that faction and still returns to the selected player.
-	var campaign: Dictionary = snapshot.get("campaign", {})
-	var selected := String(campaign.get("selected_faction", ""))
-	var current := String(campaign.get("current_faction", ""))
-	var active: Array = []
-	for faction_id: String in PLAYER_TURN_ORDER:
-		var row: Dictionary = factions_by_id.get(faction_id, {})
-		if row.is_empty() or bool(row.get("is_eliminated", false)):
-			continue
-		active.append(faction_id)
-	if active.is_empty() or not active.has(selected) or not active.has(current):
-		return []
-
-	var commands: Array = []
-	var cursor := current
-	if cursor == selected:
-		commands.append({"op": "end_turn"})
-		cursor = _next_active_faction(active, cursor)
-
-	var guard := 0
-	while cursor != selected and guard < active.size():
-		commands.append({
-			"op": "run_ai",
-			"faction": cursor,
-			"advance_turn": true,
-		})
-		cursor = _next_active_faction(active, cursor)
-		guard += 1
-
-	return commands
-
-
-func _next_active_faction(active: Array, faction_id: String) -> String:
-	var index := active.find(faction_id)
-	if index < 0 or active.is_empty():
-		return ""
-	return String(active[(index + 1) % active.size()])
 
 
 func _draw_button(id: String, label: String, x: float, y: float, enabled: bool, fill := Color("1a2a38")) -> float:
