@@ -4,7 +4,7 @@ Status: **LIVE-STACK AUDIT COMPLETE (CORRECTED)**
 Parent: #189 · Audit issue: #190 · Branch: `feat/189-expanded-nations-phase2`  
 Prior rejected head: `de6a6bb5226e20c7f5855ae721f3e7e0ca625b5d`  
 Repository head at audit: `de6a6bb5226e20c7f5855ae721f3e7e0ca625b5d`  
-Source corpus SHA-256: `81b9f93cb78221aec94e8f890011dd2cb7f145202127e941c41ea244c7386e96`  
+Source corpus SHA-256: `7bed54220b3d5f5dac5e449c70f025b87a41a9020cd47221b548706fc2757d6e`  
 Source manifest: `docs/audits/expanded-nations-phase2-source-manifest.json`  
 
 ## BLOCKER 1 — #201 restore + Gates quarantine
@@ -39,15 +39,62 @@ Every logical breed/unit/research/entity ID is resolved once through:
 `Vanilla → West81 → Code:X → AI Overhaul → Gates` (Gates goc_*/#201 quarantined).
 Duplicate overlay sightings are recorded in `provenance_chain` / `overlay_sightings` and **not** counted as multiple national units.
 
+## BLOCKER — Vanilla PAK authority (corrected)
+
+Vanilla is **not** loose files under the install root. Authoritative candidate-relevant surfaces live in ZIP-format `.pak` containers.
+
+```text
+Vanilla root: E:\Steam\steamapps\common\Call to Arms - Gates of Hell
+Format: zip (.pak)
+Relevant members inspected: 8255
+inventory_sha256: e7aa31e9fed1d79e5dc13fab44dc56aac07e24b8dbfa11683001f32d67348f97
+bucket_counts: {"breeds": 5126, "units": 52, "research": 17, "entities": 2675, "localization": 360, "scripts": 25}
+definition_counts: {"breeds": 3033, "units": 4709, "research": 17, "entities": 2675, "loc_files": 360}
+corpus_sha256 (updated): 7bed54220b3d5f5dac5e449c70f025b87a41a9020cd47221b548706fc2757d6e
+```
+
+### Containers authenticated
+
+| Container | Size | SHA-256 | Total members | Relevant members |
+|---|---:|---|---:|---:|
+| `resource/gamelogic.pak` | 13020381 | `b3455a2aa5e521d297fa4488343351e60471bb4dd867eee69768db4fde6c82c6` | 8949 | 5220 |
+| `resource/properties.pak` | 72914051 | `ac8bbf1d258942461a90970cc5d67cfd3240df8d552d7792a738419901174be1` | 1785 | 0 |
+| `localizations/default.pak` | 2745724 | `ffeaf4960631ae1438300dbf2d6bbcfcf70cbbee349723aa065377926af6b06f` | 361 | 360 |
+| `resource/entity/entity.pak` | 132568134 | `f9bb43f6beb43c17d3d0248998ef389e8808f21ecd1d5f45996513fd89ff798c` | 2919 | 120 |
+| `resource/entity/-vehicle.pak` | 5558189301 | `c00c21d73c35157c2b0af6e8d7b5fb8f7bbdbfd13e11f2a67a0e9fe5db435684` | 113317 | 2443 |
+| `resource/entity/humanskin.pak` | 1736783258 | `477248263846e297d62a90aecff25291953abf639efbae7bd06f6f5975c7722b` | 23485 | 46 |
+| `resource/entity/inventory.pak` | 347020643 | `aa58e3ff28bb715d5c53c72a88dc36c8fc42e1f742a5a0d85baf8e8993bc6cff` | 12383 | 66 |
+| `resource/dlc1.pak` | 3936616544 | `b57e06ad0446399a3f265b82f9f8c2f7a272b0c91aeda2361042992ef6322034` | 483 | 0 |
+| `resource/dlc2.pak` | 1222754249 | `8444b129a4a4337aa2366905e4463937f762ec9944794ca7c30da8c6e3e0b967` | 109 | 0 |
+| `resource/dlc3.pak` | 4648172452 | `eae4db546d3f68bf8518579b80667ede11431ea36c2fdd47931043ca42456159` | 504 | 0 |
+| `resource/dlc4.pak` | 2225677934 | `6ba8eeba1da50ecb6c3787ab8659deb4d353981dfe27f9ee668d26848ea543f2` | 492 | 0 |
+| `resource/dlc5.pak` | 141367026 | `199e6ee3d1480ca6cbb34b3ddc3400f639600996c1ee0120c1d9f88f27c8accd` | 42 | 0 |
+| `resource/_dlc7.pak` | 4578105264 | `a073f53fb9dbe8ce87e5a865c50432e81337cb0e229f4df7f131620e89085c6c` | 482 | 0 |
+
+### Effective precedence
+
+`Vanilla (pak members) → West81 → Code:X → AIO → Gates (goc_*/#201 quarantined)`
+
+Vanilla definitions participate as the base layer. Overlay mods still win when they redefine the same logical ID.
+
+### Vanilla impact on dispositions
+
+- **No disposition changes.**
+- Vanilla `gamelogic.pak` contains WWII-era multiplayer factions (`eng`/`fin`/`ger`/`rus`/`usa` conquest inf/units sets, 5126 breed members, DC duration/resource sets) plus localization.
+- Under the same strict attribution rules used for mod layers (generic shared equipment unattributed; Israel Spike export not IDF roster; false-friend rejects retained), **no accepted distinctive modern Phase-2 national packages** were found for the 37 candidates.
+- Therefore negative/fallback dispositions remain implementation-relevant absences against the **complete five-layer** stack, not merely against loose-file emptiness.
+
+Prior `files=0` / empty-corpus Vanilla inventory SHA is **withdrawn** as a completed Vanilla audit; it only reflected the absence of loose files.
+
 ## Exact audit environment
 
 ```text
-vanilla: root=E:\Steam\steamapps\common\Call to Arms - Gates of Hell files=0 inventory_sha256=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 mod_info_sha256=None
+vanilla: root=E:\Steam\steamapps\common\Call to Arms - Gates of Hell format=zip_pak relevant_members=8255 inventory_sha256=e7aa31e9fed1d79e5dc13fab44dc56aac07e24b8dbfa11683001f32d67348f97
 west81: root=E:\Steam\steamapps\workshop\content\400750\2897299509 files=2834 inventory_sha256=e0cf446bc1e14e849bab8f8c3e4eb8ff2a5e2291c7fc4e3e441c96d9ac4c8d49 mod_info_sha256=eb50ad1d70c99ee3381c28bf92985565146f03745b55e905e82f5ba6b3d91c9a
 codex: root=E:\Steam\steamapps\workshop\content\400750\3261086933 files=2603 inventory_sha256=344102b78c7a4575f7dd4f2a04449a0e8e8b69637786734b53284d500135aa27 mod_info_sha256=1e46dad6e520c9cea20c2cd69d02ca0b71bfd58ea370893b5de8b1514d9ab6c3
 aio: root=E:\Steam\steamapps\workshop\content\400750\3636883799 files=179 inventory_sha256=65545a2b76f2b1eb4de318c16f7accdaa9c6043089d58b0755b5cfdaa7c0fa02 mod_info_sha256=1cfe26b426459f77c3cd56cdeb21d75b2dc16d63524b0e88da2773016f4ecfa0
 gates: root=E:\Steam\steamapps\workshop\content\400750\3696721120 files=36 inventory_sha256=1c5f12510a80ba29b896e177293f6765d6a87735672975e5d6d4921dc4bfdccf mod_info_sha256=f0b232f51847833deec5575c9254a43ec8650eedb62f930e71bc07cc09eb4e69
-corpus_sha256=81b9f93cb78221aec94e8f890011dd2cb7f145202127e941c41ea244c7386e96
+corpus_sha256=7bed54220b3d5f5dac5e449c70f025b87a41a9020cd47221b548706fc2757d6e
 ```
 
 ## Disposition matrix (effective IDs)
