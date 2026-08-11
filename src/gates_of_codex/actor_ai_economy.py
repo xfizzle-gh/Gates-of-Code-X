@@ -27,7 +27,7 @@ def run_actor_ai_economy(state: CampaignState, faction: Faction) -> list[dict]:
     actor_ids = sorted(
         actor.actor_id
         for actor in actors.values()
-        if actor.tactical_side == faction
+        if actor.tactical_side.campaign_faction() == faction
         and not actor.is_human_controlled
         and not actor.is_eliminated
     )

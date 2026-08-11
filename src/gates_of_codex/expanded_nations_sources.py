@@ -12,7 +12,6 @@ from .expanded_nations_models import (
     ExpandedNationsError,
     ProjectedOpponentUnit,
     ProjectedUnit,
-    SUPPORTED_TACTICAL_SIDES,
     sha256_bytes,
 )
 
@@ -35,6 +34,13 @@ _GENERATED_SOURCE_NAMES = frozenset(
         "unit_research_prc.set",
     }
 )
+
+
+def _is_generated_research_name(name: str) -> bool:
+    lower = name.lower()
+    if lower in _GENERATED_SOURCE_NAMES:
+        return True
+    return lower.startswith("unit_research_goc_") and lower.endswith(".set")
 _SOVIET_RUSA_CREW_ALIASES: Mapping[str, str] = {
     "grd_vehicleman": "rus_vehicleman",
     "sup_tankman": "rus_vehicleman",
@@ -386,6 +392,9 @@ def _rename_entry(raw: str, entry: SourceEntry, canonical_name: str) -> str:
 
 def _is_generated_source_reference(source_reference: str) -> bool:
     normalized = source_reference.replace("\\", "/").lower()
+    base = normalized.rsplit("/", 1)[-1].rsplit(":", 1)[-1]
+    if _is_generated_research_name(base):
+        return True
     return any(
         normalized.endswith("/" + name) or normalized.endswith(":" + name)
         for name in _GENERATED_SOURCE_NAMES

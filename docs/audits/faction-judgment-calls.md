@@ -185,3 +185,14 @@ This closes the earlier repository-level gap where the actor economy could purch
 - **Paradrop indirection:** `paradrop_supply_prc` uses the West81 display token `ammo_pallet`, while its explicit `airstrike:flare_paradrop_ammo` interaction spawns `paradrop_ammo_pallet`. The definition index records that source-proven action-to-spawn alias and still requires the terminal parachute entity to exist.
 - **Confidence:** High for the effective West81 provenance and the need to separate it; medium for the historical/reserve gameplay framing.
 - **Best alternative:** Replace individual reserve rows with authoritative Code:X definitions when equivalent modern or historically accurate PRC content is supplied, then remove those rows from the legacy component rather than copying upstream definitions into Gates.
+
+## Phase 2 / #191 Western-Northern-Central (accepted #190 selectors)
+
+| Actor | Disposition | Components | Tactical ID | Notes |
+|---|---|---|---|---|
+| bel/prt/hun/ltu/lva/est | coalition_fallback | nato_full_fallback | goc_* | Explicit NATO coalition fallback; not full-national |
+| cze | national_hybrid | cze_equipment_identity + nato_common_infantry_bridge | goc_cze | Exact DANA only; infantry is bridge gap-fill |
+| svk | national_hybrid | svk_equipment_identity + nato_common_infantry_bridge | goc_svk | Shared DANA; not SK-exclusive infantry |
+| aut/che/irl/isl | strategic_only | (none) | goc_* | Non-playable; no roster/research |
+
+Production army numeric IDs: 70–81 in `goc_tactical_army_registry.json`. Reserved 90–94 for disposable #201 spike. Core nato/ukr/rusa/prc unchanged.

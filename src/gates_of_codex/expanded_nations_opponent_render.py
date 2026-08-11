@@ -7,7 +7,7 @@ from .expanded_nations_models import (
     BROAD_ROSTER_INCLUDES,
     ExpandedNationsError,
     ProjectedOpponentUnit,
-    SUPPORTED_TACTICAL_SIDES,
+    supported_tactical_sides,
     sha256_bytes,
     side_family,
 )
@@ -31,7 +31,7 @@ def project_opponent_units(
 ) -> tuple[list[ProjectedOpponentUnit], str]:
     """Flatten, filter, and canonicalize opponent purchase definitions."""
 
-    if selected_side not in SUPPORTED_TACTICAL_SIDES:
+    if selected_side not in supported_tactical_sides():
         raise ExpandedNationsError(f"Unsupported selected tactical side: {selected_side}")
     selected_family = side_family(selected_side)
 

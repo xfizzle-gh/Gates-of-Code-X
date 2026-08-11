@@ -48,7 +48,8 @@ class BundledStrategicActorTest(unittest.TestCase):
     def test_installs_all_audited_actors_and_selects_france(self) -> None:
         state = load_bundled_scenario("legacy_goe_europe")
         actors = install_bundled_strategic_actors(state, selected_actor_id="fra")
-        self.assertEqual(len(actors), 24)
+        # Phase 1 (24) + #191 Western/Northern/Central (12)
+        self.assertEqual(len(actors), 36)
         self.assertEqual(state.selected_faction, Faction.NATO)
         self.assertEqual(state.current_faction, Faction.NATO)
         self.assertTrue(actors["fra"].is_human_controlled)
@@ -56,6 +57,10 @@ class BundledStrategicActorTest(unittest.TestCase):
         self.assertEqual(actors["ukr_ildu"].host_actor_id, "ukr")
         self.assertEqual(actors["kpa_expeditionary"].host_actor_id, "rus")
         self.assertEqual(actors["wagner"].host_actor_id, "rus")
+        self.assertEqual(actors["bel"].tactical_side.value, "goc_bel")
+        self.assertEqual(actors["bel"].tactical_side.campaign_faction(), Faction.NATO)
+        self.assertFalse(actors["aut"].playable)
+        self.assertEqual(actors["aut"].roster_class, "strategic_only")
         validate_strategic_actor_runtime(state)
 
     def test_north_korea_selects_russian_tactical_side(self) -> None:

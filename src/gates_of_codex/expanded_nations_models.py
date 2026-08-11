@@ -11,7 +11,9 @@ ACTIVATION_SCHEMA = "gates-of-codex.expanded-nations-activation"
 ACTIVATION_VERSION = 4
 RESOLVED_SCHEMA = "gates-of-codex.resolved-factions"
 RESOLVED_VERSION = 1
-SUPPORTED_TACTICAL_SIDES = ("nato", "ukr", "rusa", "prc")
+# Core Code:X sides. Production GOC armies are loaded from the army registry.
+CORE_TACTICAL_SIDES = ("nato", "ukr", "rusa", "prc")
+SUPPORTED_TACTICAL_SIDES = CORE_TACTICAL_SIDES  # compat alias; prefer supported_tactical_sides()
 ACTIVATION_MODE_EXPANDED = "expanded"
 ACTIVATION_MODE_CODEX_PASSTHROUGH = "codex_passthrough"
 # Sole native Code:X tactical-side owners that must inherit stack roster/research
@@ -26,8 +28,20 @@ MANIFEST_RELATIVE = Path("live/expanded_nations/active.json")
 BREED_ROOT_RELATIVE = Path("resource/set/breed/mp")
 RESEARCH_RELATIVE = {
     side: Path(f"resource/set/dynamic_campaign/unit_research_{side}.set")
-    for side in SUPPORTED_TACTICAL_SIDES
+    for side in CORE_TACTICAL_SIDES
 }
+
+
+def supported_tactical_sides() -> tuple[str, ...]:
+    from .goc_tactical_army_registry import registered_goc_sides
+
+    return tuple(CORE_TACTICAL_SIDES) + tuple(sorted(registered_goc_sides()))
+
+
+def research_relative_for_side(side: str) -> Path:
+    from .goc_tactical_army_registry import research_relative_for_side as _path
+
+    return _path(side)
 
 CANONICAL_INF_INCLUDES = (
     "conquest/inf_ukr.set", "conquest/inf_rusa.set", "conquest/inf_nato.set",
@@ -191,9 +205,13 @@ def select_actor(payload: Mapping[str, Any], actor_id: str) -> Mapping[str, Any]
 
 
 def side_family(side: str) -> frozenset[str]:
-    if side not in TACTICAL_SIDE_FAMILIES:
-        raise ExpandedNationsError(f"Unsupported tactical side family: {side}")
-    return TACTICAL_SIDE_FAMILIES[side]
+    from .goc_tactical_army_registry import is_goc_tactical_side, side_family_for
+
+    if side in TACTICAL_SIDE_FAMILIES:
+        return TACTICAL_SIDE_FAMILIES[side]
+    if is_goc_tactical_side(side):
+        return side_family_for(side)
+    raise ExpandedNationsError(f"Unsupported tactical side family: {side}")
 
 
 def presentation_relatives_for_actor(actor_id: str) -> tuple[Path, ...]:
@@ -234,13 +252,13 @@ def manifest_activation_mode(manifest: Mapping[str, Any]) -> str:
 
 
 def managed_relatives_for_side(side: str) -> tuple[Path, ...]:
-    if side not in RESEARCH_RELATIVE:
+    if side not in supported_tactical_sides():
         raise ExpandedNationsError(f"Unsupported manifest tactical side: {side}")
     return (
         ROSTER_RELATIVE,
         UNITS_RELATIVE,
         OPPONENT_UNITS_RELATIVE,
-        RESEARCH_RELATIVE[side],
+        research_relative_for_side(side),
     )
 
 
@@ -257,7 +275,7 @@ def all_managed_candidates(root: Path) -> list[Path]:
         ROSTER_RELATIVE,
         UNITS_RELATIVE,
         OPPONENT_UNITS_RELATIVE,
-        *RESEARCH_RELATIVE.values(),
+        *(research_relative_for_side(side) for side in supported_tactical_sides()),
         *presentation_relatives_for_actor("srb"),
         *presentation_relatives_for_actor("esp"),
     }

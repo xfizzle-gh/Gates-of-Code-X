@@ -9,7 +9,7 @@ from .expanded_nations_models import (
     BROAD_ROSTER_INCLUDES,
     ExpandedNationsError,
     ProjectedOpponentUnit,
-    SUPPORTED_TACTICAL_SIDES,
+    supported_tactical_sides,
     sha256_bytes,
 )
 from .faction_wiring_scan import _side_from_filename, _side_from_name
@@ -40,7 +40,7 @@ def project_opponent_units(
     side-less include cannot reintroduce the selected tactical side.
     """
 
-    if selected_side not in SUPPORTED_TACTICAL_SIDES:
+    if selected_side not in supported_tactical_sides():
         raise ExpandedNationsError(f"Unsupported selected tactical side: {selected_side}")
     projected: list[ProjectedOpponentUnit] = []
     rendered_entries: list[str] = []

@@ -1,0 +1,53 @@
+# Gates of CodeX Phase 2 (#191) army labels
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgctxt "mp/army/goc_bel"
+msgid "Belgium"
+msgstr "Belgium"
+
+msgctxt "mp/army/goc_prt"
+msgid "Portugal"
+msgstr "Portugal"
+
+msgctxt "mp/army/goc_cze"
+msgid "Czechia"
+msgstr "Czechia"
+
+msgctxt "mp/army/goc_svk"
+msgid "Slovakia"
+msgstr "Slovakia"
+
+msgctxt "mp/army/goc_hun"
+msgid "Hungary"
+msgstr "Hungary"
+
+msgctxt "mp/army/goc_ltu"
+msgid "Lithuania"
+msgstr "Lithuania"
+
+msgctxt "mp/army/goc_lva"
+msgid "Latvia"
+msgstr "Latvia"
+
+msgctxt "mp/army/goc_est"
+msgid "Estonia"
+msgstr "Estonia"
+
+msgctxt "mp/army/goc_aut"
+msgid "Austria"
+msgstr "Austria"
+
+msgctxt "mp/army/goc_che"
+msgid "Switzerland"
+msgstr "Switzerland"
+
+msgctxt "mp/army/goc_irl"
+msgid "Ireland"
+msgstr "Ireland"
+
+msgctxt "mp/army/goc_isl"
+msgid "Iceland"
+msgstr "Iceland"
+

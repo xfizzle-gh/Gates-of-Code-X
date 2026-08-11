@@ -1,0 +1,42 @@
+{
+  "schema": "gates-of-codex.goc-tactical-army-registry",
+  "schema_version": 1,
+  "description": "Production Gates-owned Dynamic Conquest army token registry. Numeric IDs are collision-checked against the audited live stack and reserved bands.",
+  "engine_id_range": [0, 99],
+  "reserved_bands": {
+    "codex_west81_observed": {
+      "ids": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+      "reason": "Observed West81/Code:X army numeric IDs in the installed stack audit"
+    },
+    "spike_201_prototypes": {
+      "ids": [90, 91, 92, 93, 94],
+      "reason": "Disposable #201 spike prototypes (goc_usa/fra/srb/rus/dprk); not production allocation"
+    }
+  },
+  "production_band": {
+    "start": 70,
+    "end": 89,
+    "reason": "Gates production Expanded Nations army IDs"
+  },
+  "armies": {
+    "goc_bel": {"numeric_id": 70, "actor_id": "bel", "coalition": "west", "playable": true, "issue": 191},
+    "goc_prt": {"numeric_id": 71, "actor_id": "prt", "coalition": "west", "playable": true, "issue": 191},
+    "goc_cze": {"numeric_id": 72, "actor_id": "cze", "coalition": "west", "playable": true, "issue": 191},
+    "goc_svk": {"numeric_id": 73, "actor_id": "svk", "coalition": "west", "playable": true, "issue": 191},
+    "goc_hun": {"numeric_id": 74, "actor_id": "hun", "coalition": "west", "playable": true, "issue": 191},
+    "goc_ltu": {"numeric_id": 75, "actor_id": "ltu", "coalition": "west", "playable": true, "issue": 191},
+    "goc_lva": {"numeric_id": 76, "actor_id": "lva", "coalition": "west", "playable": true, "issue": 191},
+    "goc_est": {"numeric_id": 77, "actor_id": "est", "coalition": "west", "playable": true, "issue": 191},
+    "goc_aut": {"numeric_id": 78, "actor_id": "aut", "coalition": "west", "playable": false, "issue": 191},
+    "goc_che": {"numeric_id": 79, "actor_id": "che", "coalition": "west", "playable": false, "issue": 191},
+    "goc_irl": {"numeric_id": 80, "actor_id": "irl", "coalition": "west", "playable": false, "issue": 191},
+    "goc_isl": {"numeric_id": 81, "actor_id": "isl", "coalition": "west", "playable": false, "issue": 191}
+  },
+  "stack_collision_audit": {
+    "date_utc": "2026-08-11",
+    "stack": ["West81/2897299509", "CodeX/3261086933", "Gates/3696721120"],
+    "observed_used_ids": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 90, 91],
+    "allocated_ids": [70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81],
+    "result": "no_collision"
+  }
+}

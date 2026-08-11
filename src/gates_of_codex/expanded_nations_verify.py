@@ -17,7 +17,6 @@ from .expanded_nations_models import (
     GENERATED_MARKER,
     MANIFEST_RELATIVE,
     OPPONENT_UNITS_RELATIVE,
-    RESEARCH_RELATIVE,
     ROSTER_RELATIVE,
     UNITS_RELATIVE,
     all_managed_candidates,
@@ -25,6 +24,7 @@ from .expanded_nations_models import (
     managed_relatives_for_side,
     manifest_activation_mode,
     presentation_relatives_for_actor,
+    research_relative_for_side,
     safe_target,
     sha256_bytes,
     side_family,
@@ -113,7 +113,7 @@ def verify_projection_artifacts(
         ROSTER_RELATIVE,
         UNITS_RELATIVE,
         OPPONENT_UNITS_RELATIVE,
-        RESEARCH_RELATIVE[side],
+        research_relative_for_side(side),
     }
     texts = {
         relative: outputs[relative].decode("utf-8-sig")
@@ -122,7 +122,7 @@ def verify_projection_artifacts(
     roster = texts[ROSTER_RELATIVE]
     actor_text = texts[UNITS_RELATIVE]
     opponent_text = texts[OPPONENT_UNITS_RELATIVE]
-    research_text = texts[RESEARCH_RELATIVE[side]]
+    research_text = texts[research_relative_for_side(side)]
     if any(
         GENERATED_MARKER not in value
         for value in (roster, actor_text, opponent_text, research_text)
