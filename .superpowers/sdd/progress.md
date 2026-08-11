@@ -39,3 +39,9 @@
 - Earlier Task 4 test counts are historical evidence only; all post-takeover tests remain unclaimed until the final exact-head GitHub Actions run executes.
 - Final exact-head CI and the external independent audit remain the only P3 acceptance gates.
 - PR #187 remains draft and unmerged. No P4 work was started.
+
+## P6 audit hardening — 2026-08-11
+
+- Task 1: complete (`aa0c15c..34faa13`, spec compliant, task quality approved; exact-head Windows wheel/PyInstaller execution deferred to CI).
+- Current governing plan: `docs/superpowers/plans/2026-08-11-p6-audit-hardening.md`.
+- PR #216 must remain draft, unmerged, and not ready until exact-head CI and independent re-audit accept the new SHA.
