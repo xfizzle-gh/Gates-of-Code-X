@@ -102,6 +102,7 @@ class PlayerTurnCycleTests(unittest.TestCase):
         self.assertEqual(selected.value, report["current_faction"])
         self.assertEqual(expected_ai, report["ai_factions"])
         self.assertEqual(starting_turn + 1, state.turn_number)
+        self.assertIn("_observation_context", report)
 
     def test_main_scene_uses_responsiveness_layer_and_retains_stack_contract(self) -> None:
         scene = (ROOT / "godot/main.tscn").read_text(encoding="utf-8")
@@ -122,10 +123,13 @@ class PlayerTurnCycleTests(unittest.TestCase):
     def test_backend_player_round_uses_existing_campaign_and_ai_authority(self) -> None:
         source = (ROOT / "src/gates_of_codex/turn_cycle.py").read_text(encoding="utf-8")
         self.assertIn("CampaignEngine(state)", source)
-        self.assertIn("StrategicAI(state).take_turn(faction)", source)
+        self.assertIn("ai = StrategicAI(state)", source)
+        self.assertIn("ai.take_turn(faction)", source)
         self.assertIn("engine.end_turn()", source)
         self.assertIn("state.pending_battle is None", source)
         self.assertIn("state.current_faction != selected", source)
+        self.assertIn("ai.observation_context", source)
+        self.assertIn('"_observation_context": observation_context', source)
         self.assertNotIn("TURN_ORDER =", source)
 
     def test_overlay_has_no_all_province_ambient_label_scan(self) -> None:
