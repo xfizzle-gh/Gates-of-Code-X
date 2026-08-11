@@ -178,6 +178,11 @@ func _verify_player_actions(snapshot: Dictionary) -> void:
 	_assert_true("new_campaign_available", _client.can_start_new_campaign())
 	_assert_true("continue_campaign_available", _client.can_continue_campaign())
 
+	# A production snapshot can begin with an operational presentation in flight.
+	# State-mutating maintenance controls must stay hidden until that lifecycle is
+	# complete, so finish it before checking the idle player controls.
+	if _client.operational_presenter != null and _client.operational_presenter.is_active():
+		_client._handle_button("skip_presentation")
 	var ids: PackedStringArray = _client.enabled_action_button_ids()
 	_assert_true("new_campaign_button_exposed", ids.has("new_campaign"), str(ids))
 	_assert_true("continue_campaign_button_exposed", ids.has("continue_campaign"), str(ids))
