@@ -49,11 +49,12 @@ def project_actor_breed_files(
     may add exact component IDs through ``authorized_components``.
 
     Top-level breed names remain at the exact target paths used by squad member
-    lookup. Local include dependencies are copied into a source-side-qualified
-    closure namespace and the projected include paths are rewritten to that
-    closure. This preserves each source side's exact dependency bytes without
-    forcing unrelated source families (for example NATO and UKR ``ability.inc``)
-    to overwrite one another beneath the target actor.
+    lookup. Single-source actors preserve the accepted flat include-closure
+    layout. When an actor legitimately mixes multiple source sides, local include
+    dependencies are copied into source-side-qualified closure namespaces and the
+    projected include paths are rewritten to those closures. This preserves each
+    source side's exact dependency bytes without forcing unrelated source
+    families (for example NATO and UKR ``ability.inc``) to overwrite one another.
     """
 
     target_side = str(actor.get("tactical_side", "")).lower()
@@ -62,6 +63,17 @@ def project_actor_breed_files(
     authorized = set(_CROSS_SIDE_BREED_COMPONENTS)
     if authorized_components is not None:
         authorized.update(str(component) for component in authorized_components if str(component))
+
+    authorized_source_sides = {
+        str(unit.get("source_side", "")).lower()
+        for unit in actor.get("units", [])
+        if str(unit.get("component_id", "")) in authorized
+        and str(unit.get("source_side", "")).lower()
+        and str(unit.get("source_side", "")).lower() != target_side
+        and isinstance(unit.get("members"), Mapping)
+        and bool(unit.get("members"))
+    }
+    namespace_dependencies = len(authorized_source_sides) > 1
 
     for unit in sorted(actor.get("units", []), key=lambda row: str(row.get("unit_name", ""))):
         component_id = str(unit.get("component_id", ""))
@@ -94,6 +106,7 @@ def project_actor_breed_files(
                 mirrored_sources=mirrored_sources,
                 active=set(),
                 root_breed=True,
+                namespace_dependencies=namespace_dependencies,
             )
 
     return dict(sorted(outputs.items(), key=lambda item: item[0].as_posix()))
@@ -144,8 +157,9 @@ def _projected_destination(
     source_side: str,
     source_relative: Path,
     root_breed: bool,
+    namespace_dependencies: bool,
 ) -> Path:
-    if root_breed:
+    if root_breed or not namespace_dependencies:
         return BREED_ROOT_RELATIVE / target_side / source_relative
 
     parts = source_relative.parts
@@ -180,6 +194,7 @@ def _mirror_source_closure(
     mirrored_sources: dict[Path, Path],
     active: set[Path],
     root_breed: bool,
+    namespace_dependencies: bool,
 ) -> None:
     resolved = source_path.resolve()
     if resolved in active:
@@ -193,6 +208,7 @@ def _mirror_source_closure(
         source_side=source_side,
         source_relative=source_relative,
         root_breed=root_breed,
+        namespace_dependencies=namespace_dependencies,
     )
     if _effective_target_exists(roots, destination):
         return
@@ -223,6 +239,7 @@ def _mirror_source_closure(
             source_side=source_side,
             source_relative=dependency_relative,
             root_breed=False,
+            namespace_dependencies=namespace_dependencies,
         )
         _mirror_source_closure(
             roots,
@@ -235,6 +252,7 @@ def _mirror_source_closure(
             mirrored_sources=mirrored_sources,
             active=next_active,
             root_breed=False,
+            namespace_dependencies=namespace_dependencies,
         )
         include_rewrites[include] = _relative_include(destination.parent, dependency_destination)
 
