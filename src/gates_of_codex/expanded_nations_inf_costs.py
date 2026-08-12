@@ -87,6 +87,7 @@ _SOURCE_CONFLICT_DISPOSITIONS: Mapping[str, tuple[str, float]] = {
 # containing purchase still has positive personnel-cost coverage from another member.
 _SOURCE_NATIVE_UNPRICED_PATHS = frozenset({
     "mp/ukr/2022s/azov3_antitank_javelin",
+    "mp/ukr/2022s/nato_antitank_pzf3",
     "mp/rusa/2022s/kor_crew",
     "mp/rusa/2022s/kor_crew_ags",
     "mp/rusa/2022s/kor_crew_nsv",
@@ -682,4 +683,3 @@ def _positive_cost(entry: SourceEntry, source_reference: str) -> float:
             f"Native inf row {entry.name} has non-positive cost {cost} in {source_reference}"
         )
     return cost
-
