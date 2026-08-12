@@ -425,11 +425,24 @@ def _initial_controller(state: CampaignState, site: dict[str, Any]) -> str | Non
         runtime = state.map_metadata.get("strategic_actor_runtime")
         actors = runtime.get("actors") if isinstance(runtime, dict) else None
         actor = actors.get(owner_id) if isinstance(actors, dict) else None
-        tactical_side = actor.get("tactical_side") if isinstance(actor, dict) else None
-        if isinstance(tactical_side, str) and tactical_side in state.factions:
-            return tactical_side
+        if isinstance(actor, dict):
+            campaign_faction = actor.get("campaign_faction")
+            if isinstance(campaign_faction, str):
+                try:
+                    return Faction(campaign_faction).value
+                except ValueError:
+                    pass
+            tactical_side = actor.get("tactical_side")
+            if isinstance(tactical_side, str):
+                from .strategic_actors import EngineTacticalSide
+
+                try:
+                    return EngineTacticalSide(tactical_side).campaign_faction().value
+                except ValueError:
+                    pass
         # Preserve legacy graph behavior for non-actor owner strings. Earth3 P3
-        # actor IDs are always resolved above through authenticated P2 runtime.
+        # actor IDs are resolved above through authenticated P2 runtime without
+        # collapsing their strategic or Expanded tactical identity globally.
         return owner_id
     province_id = str(site.get("province_id") or "")
     province = state.provinces.get(province_id)
