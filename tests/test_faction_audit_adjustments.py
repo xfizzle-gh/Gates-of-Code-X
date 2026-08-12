@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import unittest
 
 from gates_of_codex.faction_wiring_manifest import load_faction_manifest, validate_faction_manifest
@@ -121,32 +122,42 @@ class FactionAuditAdjustmentTest(unittest.TestCase):
         self.assertIn("donbas_native", actors["donbas"]["components"])
         self.assertIn("belarus_modern_support", actors["blr"]["components"])
 
-    def test_spain_uses_only_the_approved_3rd_assault_legion_infantry_subset(self) -> None:
+    def test_spain_uses_owner_approved_ildu_infantry_without_azov(self) -> None:
         manifest = load_faction_manifest()
         validate_faction_manifest(manifest)
         actors = {actor["actor_id"]: actor for actor in manifest["actors"]}
         spain = actors["esp"]
         self.assertEqual(
-            ["spain_3rd_assault_legion", "nato_fallback_heavy", "nato_common_support"],
+            ["ukraine_ildu", "nato_fallback_heavy", "nato_common_support"],
             spain["components"],
         )
+        self.assertNotIn("spain_3rd_assault_legion", spain["components"])
         self.assertNotIn("nato_full_fallback", spain["components"])
-        component = manifest["components"]["spain_3rd_assault_legion"]
-        selector = component["selectors"][0]
-        self.assertEqual("exact", selector["kind"])
-        self.assertEqual("ukr", selector["source_side"])
-        self.assertEqual(
-            {
-                "3rd_assault_mg3",
-                "3rd_assault_at",
-                "3rd_assault_javelin",
-                "3rd_assault_saperi",
-                "3rd_assault_saperi_at",
-                "3rd_assault_decepticons",
-                "squad_3rd_rozv_hatred(ukr)",
-            },
-            set(selector["units"]),
+        self.assertTrue(
+            any("must not recruit Azov/3rd Assault" in note for note in spain["notes"])
         )
+
+        component = manifest["components"]["ukraine_ildu"]
+        selector = component["selectors"][0]
+        self.assertEqual("virtual", selector["kind"])
+        expected_names = {
+            "goc_ildu_rifle(ukr)",
+            "goc_ildu_at(ukr)",
+            "goc_ildu_javelin(ukr)",
+            "goc_ildu_recon(ukr)",
+            "goc_ildu_engineer(ukr)",
+            "goc_ildu_manpads(ukr)",
+        }
+        units = selector["units"]
+        self.assertEqual(expected_names, {unit["name"] for unit in units})
+        for unit in units:
+            self.assertEqual("ukr", unit["source_side"])
+            self.assertTrue(unit["members"])
+            self.assertTrue(all(member.startswith("nato_") for member in unit["members"]))
+        serialized = json.dumps(units, sort_keys=True).lower()
+        self.assertNotIn("azov3", serialized)
+        self.assertNotIn("3rd_assault", serialized)
+
         self.assertEqual(
             {"2022nrft", "2022nrfa"},
             {
@@ -171,13 +182,15 @@ class FactionAuditAdjustmentTest(unittest.TestCase):
         self.assertIn("azov32022", roots)
         compatibility_pool = manifest["components"]["ukraine_ildu"]
         self.assertIn("Compatibility-only", compatibility_pool["description"])
-        self.assertNotIn("ukraine_ildu", actors["esp"]["components"])
+        self.assertIn("ukraine_ildu", actors["esp"]["components"])
+        self.assertEqual("ukr_ildu", actors["ukr_ildu"]["actor_id"])
+        self.assertEqual(["ukraine_ildu"], actors["ukr_ildu"]["components"])
 
     def test_audit_notes_are_applied_without_duplicates(self) -> None:
         first = load_faction_manifest()
         second = load_faction_manifest()
         self.assertEqual(first, second)
-        for actor_id in ("fin", "can"):
+        for actor_id in ("fin", "can", "esp"):
             actor = next(actor for actor in first["actors"] if actor["actor_id"] == actor_id)
             self.assertEqual(len(actor["notes"]), len(set(actor["notes"])))
 
