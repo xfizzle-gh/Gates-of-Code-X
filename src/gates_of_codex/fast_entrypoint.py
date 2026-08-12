@@ -7,11 +7,13 @@ from pathlib import Path
 
 
 def _install_fast_paths() -> None:
+    from .command_cycle_perf import install_command_cycle_perf_path
     from .frontend_fastpath import install_frontend_fast_path
     from .turn_cycle import install_frontend_turn_cycle_op
 
     install_frontend_fast_path()
     install_frontend_turn_cycle_op()
+    install_command_cycle_perf_path()
 
 
 def _prepare_godot_project(
