@@ -29,6 +29,7 @@ SUPPORTED_OPS = frozenset(
     {"end_player_round", "issue_move_order", "cancel_move_order", "verify_result"}
 )
 IDLE_TIMEOUT_SECONDS = 900.0
+APPLY_RESPONSE_TIMEOUT_SECONDS = 600.0
 
 
 def _session_path(campaign: Path) -> Path:
@@ -131,8 +132,36 @@ def _apply_invocation(argv: Sequence[str]) -> tuple[Path, Path | None, Path | No
     return campaign, snapshot, commands
 
 
+def _ambiguous_daemon_payload() -> str:
+    return json.dumps(
+        {
+            "ok": False,
+            "campaign_path": "",
+            "snapshot_path": "",
+            "commands_applied": 0,
+            "results": [
+                {
+                    "op": "persistent_backend",
+                    "ok": False,
+                    "detail": (
+                        "Persistent backend response was lost after dispatch; "
+                        "command outcome is ambiguous. Reload campaign state before retrying."
+                    ),
+                    "data": {},
+                }
+            ],
+        },
+        separators=(",", ":"),
+    )
+
+
 def try_forward_apply_frontend(argv: Sequence[str]) -> tuple[int, str] | None:
-    """Forward an apply-frontend invocation to a healthy daemon when possible."""
+    """Forward an apply-frontend invocation to a healthy daemon when possible.
+
+    A stale/unreachable session falls back before dispatch. Once an apply request
+    has been sent, response loss never triggers automatic one-shot replay because
+    that could race a command which actually committed but lost its reply.
+    """
 
     parsed = _apply_invocation(argv)
     if parsed is None:
@@ -141,6 +170,15 @@ def try_forward_apply_frontend(argv: Sequence[str]) -> tuple[int, str] | None:
     session = _read_session(campaign)
     if session is None:
         return None
+
+    ping = _request(session, {"action": "ping"}, timeout=0.4)
+    if not ping or ping.get("ok") is not True:
+        try:
+            _session_path(campaign).unlink()
+        except OSError:
+            pass
+        return None
+
     response = _request(
         session,
         {
@@ -149,14 +187,14 @@ def try_forward_apply_frontend(argv: Sequence[str]) -> tuple[int, str] | None:
             "snapshot_path": str(snapshot) if snapshot is not None else "",
             "commands_path": str(commands) if commands is not None else "",
         },
-        timeout=30.0,
+        timeout=APPLY_RESPONSE_TIMEOUT_SECONDS,
     )
     if response is None:
         try:
             _session_path(campaign).unlink()
         except OSError:
             pass
-        return None
+        return 0, _ambiguous_daemon_payload()
     if not bool(response.get("handled", False)):
         _request(session, {"action": "invalidate"}, timeout=1.0)
         return None
@@ -284,7 +322,7 @@ def run_session_backend(argv: Sequence[str]) -> int:
                 continue
             last_activity = time.monotonic()
             with connection:
-                connection.settimeout(30.0)
+                connection.settimeout(APPLY_RESPONSE_TIMEOUT_SECONDS)
                 stream = connection.makefile("rwb")
                 raw = stream.readline(4 * 1024 * 1024)
                 response: dict[str, Any]
