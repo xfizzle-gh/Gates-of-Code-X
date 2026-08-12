@@ -30,14 +30,36 @@ func _timing_suffix(payload: Dictionary) -> String:
 	]
 
 
+func _round_timing_suffix(payload: Dictionary) -> String:
+	var data := _result_data(payload, "end_player_round")
+	var perf: Variant = data.get("perf_turn_cycle", {})
+	if not perf is Dictionary:
+		return ""
+	var row := perf as Dictionary
+	if not row.has("ai_take_turn_total_ms"):
+		return ""
+	return "[round: AI %.2fs, advance %.2fs, actors %.2fs]" % [
+		float(row.get("ai_take_turn_total_ms", 0.0)) / 1000.0,
+		float(row.get("advance_turn_total_ms", 0.0)) / 1000.0,
+		float(row.get("actor_runtime_total_ms", 0.0)) / 1000.0,
+	]
+
+
 func _append_backend_timing(payload: Dictionary) -> void:
+	var pieces: Array[String] = []
 	var suffix := _timing_suffix(payload)
-	if suffix.is_empty():
+	if not suffix.is_empty():
+		pieces.append(suffix)
+	var round_suffix := _round_timing_suffix(payload)
+	if not round_suffix.is_empty():
+		pieces.append(round_suffix)
+	if pieces.is_empty():
 		return
+	var text := " ".join(pieces)
 	if status_message.is_empty():
-		status_message = suffix
+		status_message = text
 	else:
-		status_message += " " + suffix
+		status_message += " " + text
 	queue_redraw()
 
 
