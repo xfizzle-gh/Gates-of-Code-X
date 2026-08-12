@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import unittest
+from unittest.mock import patch
 
 from gates_of_codex import command_cycle_perf
 from gates_of_codex.models import CampaignState, Faction, FactionState, Province
@@ -68,12 +69,14 @@ class RuntimeSerializationParityTests(unittest.TestCase):
 
     def test_runtime_encoder_does_not_call_to_dict_for_schema_11(self) -> None:
         state = self._state(schema_version=11)
-
-        def forbidden_to_dict():
-            raise AssertionError("schema-11 runtime serialization must not materialize asdict")
-
-        state.to_dict = forbidden_to_dict  # type: ignore[method-assign]
-        payload = command_cycle_perf._runtime_state_json(state)
+        with patch.object(
+            CampaignState,
+            "to_dict",
+            side_effect=AssertionError(
+                "schema-11 runtime serialization must not materialize asdict"
+            ),
+        ):
+            payload = command_cycle_perf._runtime_state_json(state)
         self.assertEqual("serialization-parity", json.loads(payload)["campaign_name"])
 
 
