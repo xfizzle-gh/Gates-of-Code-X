@@ -30,8 +30,7 @@ _EXTERNAL_AUTHORITY = (
         "godot/assets/maps/earth3_europe_mediterranean",
     ),
     (
-        "godot/assets/maps/earth3_europe_mediterranean/p3_authority/"
-        "p3_operational_graph.json",
+        "godot/assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json",
         "godot/assets/maps/earth3_europe_mediterranean/p3_authority",
     ),
     ("docs/audits/p3-first-corridor-route-inventory.json", "docs/audits"),

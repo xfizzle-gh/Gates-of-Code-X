@@ -46,7 +46,7 @@ def configure_frozen_earth3_authority() -> Path | None:
     earth3_campaign._default_authority_root = bundled_p1_root
 
     current_loader = earth3_operational.load_authenticated_p3_graph
-    if not bool(getattr(current_loader, "_goc_frozen_authority_wrapper", False)):
+    if getattr(current_loader, "_goc_frozen_authority_wrapper", False) is not True:
         original_loader = current_loader
 
         @functools.wraps(original_loader)
