@@ -45,7 +45,7 @@ import time
 from dataclasses import fields, is_dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from . import frontend as _frontend
 from . import frontend_commands as _commands
@@ -121,13 +121,7 @@ def _milliseconds(seconds: float) -> float:
 
 
 def _runtime_json_default(value: Any) -> Any:
-    """Expose dataclass fields without recursively cloning their payloads.
-
-    ``json`` already walks dictionaries/lists recursively. Returning a shallow
-    field mapping for each dataclass lets the encoder traverse the authoritative
-    object graph directly, instead of ``dataclasses.asdict`` first deep-copying
-    every nested dictionary/list (including the multi-megabyte Earth3 metadata).
-    """
+    """Expose dataclass fields without recursively cloning their payloads."""
 
     if is_dataclass(value) and not isinstance(value, type):
         return {field.name: getattr(value, field.name) for field in fields(value)}
@@ -141,10 +135,6 @@ def _runtime_json_default(value: Any) -> Any:
 def _runtime_state_json(state) -> str:
     """Return byte-equivalent compact JSON semantics without schema-11 asdict."""
 
-    # CampaignState.to_dict() has compatibility pruning for pre-S11 saves. Keep
-    # that exact historical path for legacy state. Current Earth3 is S11+, where
-    # to_dict() is otherwise just dataclasses.asdict(self), an avoidable full
-    # campaign clone immediately before encoding.
     source = state if int(getattr(state, "schema_version", 0)) >= 11 else state.to_dict()
     return json.dumps(
         source,
@@ -155,20 +145,34 @@ def _runtime_state_json(state) -> str:
     )
 
 
+def _timed_save_step(
+    timings: dict[str, float] | None,
+    name: str,
+    action: Callable[[], Any],
+) -> Any:
+    started = time.perf_counter()
+    try:
+        return action()
+    finally:
+        if timings is not None:
+            timings[name] = timings.get(name, 0.0) + (time.perf_counter() - started)
+
+
 def _compact_save_campaign(
     state,
     path: str | Path,
     *,
     observation_context=None,
+    subphase_seconds: dict[str, float] | None = None,
 ) -> Path:
     """Runtime-equivalent ``save_campaign`` with deterministic compact JSON.
 
     Keep every authoritative normalization, observation refresh, validation, and
-    atomic replace step from ``state_io.save_campaign``. Only insignificant JSON
-    whitespace changes. Keys remain sorted and UTF-8 remains unescaped.
+    atomic replace step from ``state_io.save_campaign``. The save subphases are
+    timed independently so #207 optimization is based on native evidence rather
+    than aggregate guesses.
     """
 
-    from .force_migration import ensure_strategic_formations
     from .observation import ensure_s11_schema, refresh_all_observer_knowledge
     from .operational_capture import ensure_site_control_state
     from .operational_movement import ensure_move_orders
@@ -176,30 +180,47 @@ def _compact_save_campaign(
     from .operational_supply import refresh_operational_supply
     from .strategic import ensure_strategic_layer
 
-    ensure_strategic_layer(state)
-    ensure_strategic_formations(state)
-    ensure_operational_positions(state)
-    ensure_move_orders(state)
-    ensure_site_control_state(state)
-    refresh_operational_supply(state, consume_grace=False)
-    ensure_s11_schema(state)
-    refresh_all_observer_knowledge(state, observation_context)
-    state.validate()
+    # ensure_strategic_layer already invokes ensure_strategic_formations. Do not
+    # run the same full formation normalization a second time during every save.
+    _timed_save_step(subphase_seconds, "strategic", lambda: ensure_strategic_layer(state))
+    _timed_save_step(subphase_seconds, "positions", lambda: ensure_operational_positions(state))
+    _timed_save_step(subphase_seconds, "orders", lambda: ensure_move_orders(state))
+    _timed_save_step(subphase_seconds, "site_control", lambda: ensure_site_control_state(state))
+    _timed_save_step(
+        subphase_seconds,
+        "supply",
+        lambda: refresh_operational_supply(state, consume_grace=False),
+    )
+    _timed_save_step(subphase_seconds, "s11_schema", lambda: ensure_s11_schema(state))
+    _timed_save_step(
+        subphase_seconds,
+        "observer_refresh",
+        lambda: refresh_all_observer_knowledge(state, observation_context),
+    )
+    _timed_save_step(subphase_seconds, "validate", state.validate)
 
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
-    payload = _runtime_state_json(state) + "\n"
-    with tempfile.NamedTemporaryFile(
-        mode="w",
-        encoding="utf-8",
-        prefix=f".{destination.name}.",
-        suffix=".tmp",
-        dir=destination.parent,
-        delete=False,
-    ) as temporary:
-        temporary.write(payload)
-        temporary_path = Path(temporary.name)
-    temporary_path.replace(destination)
+    payload = _timed_save_step(
+        subphase_seconds,
+        "encode",
+        lambda: _runtime_state_json(state) + "\n",
+    )
+
+    def write_atomic() -> None:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            prefix=f".{destination.name}.",
+            suffix=".tmp",
+            dir=destination.parent,
+            delete=False,
+        ) as temporary:
+            temporary.write(payload)
+            temporary_path = Path(temporary.name)
+        temporary_path.replace(destination)
+
+    _timed_save_step(subphase_seconds, "write", write_atomic)
     return destination
 
 
@@ -243,14 +264,7 @@ def measured_apply_frontend_commands(
     commands_path: str | Path | None = None,
     snapshot_path: str | Path | None = None,
 ) -> dict[str, Any]:
-    """Run the existing command engine and attach phase telemetry.
-
-    The existing command engine remains responsible for validation, mutation,
-    exactly-once ledger handling, persistence, and result construction. This
-    wrapper substitutes proven presentation no-ops, the semantically equivalent
-    compact runtime writer, a bounded bulk presentation projection, a bounded
-    end-round runtime patch, and a command-scoped authenticated P3 graph snapshot.
-    """
+    """Run the existing command engine and attach phase telemetry."""
 
     from . import earth3_operational as _earth3_operational
     from .frontend_runtime_patch import build_frontend_runtime_patch
@@ -271,13 +285,12 @@ def measured_apply_frontend_commands(
         "save": 0.0,
         "snapshot": 0.0,
     }
+    save_subphase_seconds: dict[str, float] = {}
     p3_auth_cache: dict[str, dict[str, Any]] = {}
     p3_auth_stats = {"loads": 0, "hits": 0}
     runtime_patch: dict[str, Any] | None = None
 
     def scoped_p3_auth(*, repository_root=None):
-        # Keep explicit roots separate from the default frozen/repository root.
-        # The first request for each root uses the real fail-closed loader.
         cache_key = (
             "<default>"
             if repository_root is None
@@ -308,6 +321,7 @@ def measured_apply_frontend_commands(
                 state,
                 path,
                 observation_context=observation_context,
+                subphase_seconds=save_subphase_seconds,
             )
         finally:
             phase_seconds["save"] += time.perf_counter() - started
@@ -321,9 +335,6 @@ def measured_apply_frontend_commands(
     ):
         nonlocal runtime_patch
         if read_only_fast_path or snapshot_fast_path:
-            # The previous snapshot remains valid on disk. For move-order draft
-            # changes, Godot consumes the authoritative move_order returned in
-            # the command result and updates only that live presentation field.
             return Path(path)
         if runtime_patch_fast_path:
             started = time.perf_counter()
@@ -392,11 +403,13 @@ def measured_apply_frontend_commands(
         "read_only_fast_path": bool(read_only_fast_path),
         "snapshot_fast_path": bool(snapshot_fast_path),
         "compact_save_path": not read_only_fast_path,
-        # Diagnostic-only flags/counters are intentionally not added to
-        # timing_keys(), preserving the stable public timing-key tuple.
         "runtime_patch_fast_path": bool(runtime_patch_fast_path),
         "p3_auth_loads": int(p3_auth_stats["loads"]),
         "p3_auth_cache_hits": int(p3_auth_stats["hits"]),
+        **{
+            f"save_{name}_ms": _milliseconds(seconds)
+            for name, seconds in sorted(save_subphase_seconds.items())
+        },
     }
     return result
 
