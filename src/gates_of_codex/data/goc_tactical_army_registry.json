@@ -38,9 +38,9 @@
     }
   },
   "production_band": {
-    "start": 55,
+    "start": 14,
     "end": 99,
-    "reason": "Gates production Expanded Nations army IDs (#191-#193). Engine range remains 0-99; #201 spike 90-94 stay reserved and must not be allocated."
+    "reason": "Gates production Expanded Nations army IDs (#191-#194). Reserved: observed 0-13 and spike 90-94."
   },
   "allocation_sub_bands": {
     "phase2_193_near_east_africa_strategic_only": {
@@ -62,15 +62,24 @@
       "reason": "Balkans/Eastern Europe primary production identities"
     },
     "phase2_192_balkans_east_tail": {
-      "ids": [95, 96],
+      "ids": [
+        95,
+        96
+      ],
       "issue": 192,
       "reason": "Balkans/Eastern Europe tail IDs after reserved spike band 90-94"
+    },
+    "phase1_expanded_tactical_ids": {
+      "start": 14,
+      "end": 33,
+      "issue": 194,
+      "reason": "Phase 1 Expanded-mode Gates tactical IDs (Core transport family preserved separately)"
     }
   },
   "nation_map_band": {
     "start": 14,
-    "end": 50,
-    "reason": "AIO conquest.lua nationMap indices after core 1-8 and spike 9-13"
+    "end": 70,
+    "reason": "nationMap indices for production GOC armies"
   },
   "armies": {
     "goc_bel": {
@@ -79,7 +88,8 @@
       "actor_id": "bel",
       "coalition": "west",
       "playable": true,
-      "issue": 191
+      "issue": 191,
+      "dc_menu_playable": true
     },
     "goc_prt": {
       "numeric_id": 71,
@@ -87,7 +97,8 @@
       "actor_id": "prt",
       "coalition": "west",
       "playable": true,
-      "issue": 191
+      "issue": 191,
+      "dc_menu_playable": true
     },
     "goc_cze": {
       "numeric_id": 72,
@@ -95,7 +106,8 @@
       "actor_id": "cze",
       "coalition": "west",
       "playable": true,
-      "issue": 191
+      "issue": 191,
+      "dc_menu_playable": true
     },
     "goc_svk": {
       "numeric_id": 73,
@@ -103,7 +115,8 @@
       "actor_id": "svk",
       "coalition": "west",
       "playable": true,
-      "issue": 191
+      "issue": 191,
+      "dc_menu_playable": true
     },
     "goc_hun": {
       "numeric_id": 74,
@@ -111,7 +124,8 @@
       "actor_id": "hun",
       "coalition": "west",
       "playable": true,
-      "issue": 191
+      "issue": 191,
+      "dc_menu_playable": true
     },
     "goc_ltu": {
       "numeric_id": 75,
@@ -119,7 +133,8 @@
       "actor_id": "ltu",
       "coalition": "west",
       "playable": true,
-      "issue": 191
+      "issue": 191,
+      "dc_menu_playable": true
     },
     "goc_lva": {
       "numeric_id": 76,
@@ -127,7 +142,8 @@
       "actor_id": "lva",
       "coalition": "west",
       "playable": true,
-      "issue": 191
+      "issue": 191,
+      "dc_menu_playable": true
     },
     "goc_est": {
       "numeric_id": 77,
@@ -135,7 +151,8 @@
       "actor_id": "est",
       "coalition": "west",
       "playable": true,
-      "issue": 191
+      "issue": 191,
+      "dc_menu_playable": true
     },
     "goc_aut": {
       "numeric_id": 78,
@@ -143,7 +160,8 @@
       "actor_id": "aut",
       "coalition": "west",
       "playable": false,
-      "issue": 191
+      "issue": 191,
+      "dc_menu_playable": false
     },
     "goc_che": {
       "numeric_id": 79,
@@ -151,7 +169,8 @@
       "actor_id": "che",
       "coalition": "west",
       "playable": false,
-      "issue": 191
+      "issue": 191,
+      "dc_menu_playable": false
     },
     "goc_irl": {
       "numeric_id": 80,
@@ -159,7 +178,8 @@
       "actor_id": "irl",
       "coalition": "west",
       "playable": false,
-      "issue": 191
+      "issue": 191,
+      "dc_menu_playable": false
     },
     "goc_isl": {
       "numeric_id": 81,
@@ -167,7 +187,8 @@
       "actor_id": "isl",
       "coalition": "west",
       "playable": false,
-      "issue": 191
+      "issue": 191,
+      "dc_menu_playable": false
     },
     "goc_grc": {
       "numeric_id": 82,
@@ -175,7 +196,8 @@
       "actor_id": "grc",
       "coalition": "west",
       "playable": true,
-      "issue": 192
+      "issue": 192,
+      "dc_menu_playable": true
     },
     "goc_rou": {
       "numeric_id": 83,
@@ -183,7 +205,8 @@
       "actor_id": "rou",
       "coalition": "west",
       "playable": true,
-      "issue": 192
+      "issue": 192,
+      "dc_menu_playable": true
     },
     "goc_bgr": {
       "numeric_id": 84,
@@ -191,7 +214,8 @@
       "actor_id": "bgr",
       "coalition": "west",
       "playable": true,
-      "issue": 192
+      "issue": 192,
+      "dc_menu_playable": true
     },
     "goc_hrv": {
       "numeric_id": 85,
@@ -199,7 +223,8 @@
       "actor_id": "hrv",
       "coalition": "west",
       "playable": true,
-      "issue": 192
+      "issue": 192,
+      "dc_menu_playable": true
     },
     "goc_svn": {
       "numeric_id": 86,
@@ -207,7 +232,8 @@
       "actor_id": "svn",
       "coalition": "west",
       "playable": false,
-      "issue": 192
+      "issue": 192,
+      "dc_menu_playable": false
     },
     "goc_bih": {
       "numeric_id": 87,
@@ -215,7 +241,8 @@
       "actor_id": "bih",
       "coalition": "west",
       "playable": false,
-      "issue": 192
+      "issue": 192,
+      "dc_menu_playable": false
     },
     "goc_mne": {
       "numeric_id": 88,
@@ -223,7 +250,8 @@
       "actor_id": "mne",
       "coalition": "west",
       "playable": false,
-      "issue": 192
+      "issue": 192,
+      "dc_menu_playable": false
     },
     "goc_alb": {
       "numeric_id": 89,
@@ -231,7 +259,8 @@
       "actor_id": "alb",
       "coalition": "west",
       "playable": false,
-      "issue": 192
+      "issue": 192,
+      "dc_menu_playable": false
     },
     "goc_mkd": {
       "numeric_id": 95,
@@ -239,7 +268,8 @@
       "actor_id": "mkd",
       "coalition": "west",
       "playable": false,
-      "issue": 192
+      "issue": 192,
+      "dc_menu_playable": false
     },
     "goc_mda": {
       "numeric_id": 96,
@@ -247,7 +277,8 @@
       "actor_id": "mda",
       "coalition": "east",
       "playable": false,
-      "issue": 192
+      "issue": 192,
+      "dc_menu_playable": false
     },
     "goc_geo": {
       "numeric_id": 55,
@@ -255,7 +286,8 @@
       "actor_id": "geo",
       "coalition": "west",
       "playable": false,
-      "issue": 193
+      "issue": 193,
+      "dc_menu_playable": false
     },
     "goc_arm": {
       "numeric_id": 56,
@@ -263,7 +295,8 @@
       "actor_id": "arm",
       "coalition": "east",
       "playable": false,
-      "issue": 193
+      "issue": 193,
+      "dc_menu_playable": false
     },
     "goc_aze": {
       "numeric_id": 57,
@@ -271,7 +304,8 @@
       "actor_id": "aze",
       "coalition": "west",
       "playable": false,
-      "issue": 193
+      "issue": 193,
+      "dc_menu_playable": false
     },
     "goc_isr": {
       "numeric_id": 58,
@@ -279,7 +313,8 @@
       "actor_id": "isr",
       "coalition": "west",
       "playable": false,
-      "issue": 193
+      "issue": 193,
+      "dc_menu_playable": false
     },
     "goc_lbn": {
       "numeric_id": 59,
@@ -287,7 +322,8 @@
       "actor_id": "lbn",
       "coalition": "west",
       "playable": false,
-      "issue": 193
+      "issue": 193,
+      "dc_menu_playable": false
     },
     "goc_syr": {
       "numeric_id": 60,
@@ -295,7 +331,8 @@
       "actor_id": "syr",
       "coalition": "east",
       "playable": false,
-      "issue": 193
+      "issue": 193,
+      "dc_menu_playable": false
     },
     "goc_jor": {
       "numeric_id": 61,
@@ -303,7 +340,8 @@
       "actor_id": "jor",
       "coalition": "west",
       "playable": false,
-      "issue": 193
+      "issue": 193,
+      "dc_menu_playable": false
     },
     "goc_irq": {
       "numeric_id": 62,
@@ -311,7 +349,8 @@
       "actor_id": "irq",
       "coalition": "west",
       "playable": false,
-      "issue": 193
+      "issue": 193,
+      "dc_menu_playable": false
     },
     "goc_mar": {
       "numeric_id": 63,
@@ -319,7 +358,8 @@
       "actor_id": "mar",
       "coalition": "west",
       "playable": false,
-      "issue": 193
+      "issue": 193,
+      "dc_menu_playable": false
     },
     "goc_dza": {
       "numeric_id": 64,
@@ -327,7 +367,8 @@
       "actor_id": "dza",
       "coalition": "east",
       "playable": false,
-      "issue": 193
+      "issue": 193,
+      "dc_menu_playable": false
     },
     "goc_tun": {
       "numeric_id": 65,
@@ -335,7 +376,8 @@
       "actor_id": "tun",
       "coalition": "west",
       "playable": false,
-      "issue": 193
+      "issue": 193,
+      "dc_menu_playable": false
     },
     "goc_lby": {
       "numeric_id": 66,
@@ -343,7 +385,8 @@
       "actor_id": "lby",
       "coalition": "east",
       "playable": false,
-      "issue": 193
+      "issue": 193,
+      "dc_menu_playable": false
     },
     "goc_egy": {
       "numeric_id": 67,
@@ -351,7 +394,8 @@
       "actor_id": "egy",
       "coalition": "west",
       "playable": false,
-      "issue": 193
+      "issue": 193,
+      "dc_menu_playable": false
     },
     "goc_cyp": {
       "numeric_id": 68,
@@ -359,7 +403,8 @@
       "actor_id": "cyp",
       "coalition": "west",
       "playable": false,
-      "issue": 193
+      "issue": 193,
+      "dc_menu_playable": false
     },
     "goc_mlt": {
       "numeric_id": 69,
@@ -367,7 +412,208 @@
       "actor_id": "mlt",
       "coalition": "west",
       "playable": false,
-      "issue": 193
+      "issue": 193,
+      "dc_menu_playable": false
+    },
+    "goc_usa": {
+      "numeric_id": 14,
+      "nation_map_id": 51,
+      "actor_id": "usa",
+      "coalition": "west",
+      "playable": true,
+      "issue": 194,
+      "core_transport_side": "nato",
+      "dc_menu_playable": false
+    },
+    "goc_gbr": {
+      "numeric_id": 15,
+      "nation_map_id": 52,
+      "actor_id": "gbr",
+      "coalition": "west",
+      "playable": true,
+      "issue": 194,
+      "core_transport_side": "nato",
+      "dc_menu_playable": false
+    },
+    "goc_deu": {
+      "numeric_id": 16,
+      "nation_map_id": 53,
+      "actor_id": "deu",
+      "coalition": "west",
+      "playable": true,
+      "issue": 194,
+      "core_transport_side": "nato",
+      "dc_menu_playable": false
+    },
+    "goc_fra": {
+      "numeric_id": 17,
+      "nation_map_id": 54,
+      "actor_id": "fra",
+      "coalition": "west",
+      "playable": true,
+      "issue": 194,
+      "core_transport_side": "nato",
+      "dc_menu_playable": false
+    },
+    "goc_pol": {
+      "numeric_id": 18,
+      "nation_map_id": 55,
+      "actor_id": "pol",
+      "coalition": "west",
+      "playable": true,
+      "issue": 194,
+      "core_transport_side": "nato",
+      "dc_menu_playable": false
+    },
+    "goc_ita": {
+      "numeric_id": 19,
+      "nation_map_id": 56,
+      "actor_id": "ita",
+      "coalition": "west",
+      "playable": true,
+      "issue": 194,
+      "core_transport_side": "nato",
+      "dc_menu_playable": false
+    },
+    "goc_fin": {
+      "numeric_id": 20,
+      "nation_map_id": 57,
+      "actor_id": "fin",
+      "coalition": "west",
+      "playable": true,
+      "issue": 194,
+      "core_transport_side": "nato",
+      "dc_menu_playable": false
+    },
+    "goc_swe": {
+      "numeric_id": 21,
+      "nation_map_id": 58,
+      "actor_id": "swe",
+      "coalition": "west",
+      "playable": true,
+      "issue": 194,
+      "core_transport_side": "nato",
+      "dc_menu_playable": false
+    },
+    "goc_nld": {
+      "numeric_id": 22,
+      "nation_map_id": 59,
+      "actor_id": "nld",
+      "coalition": "west",
+      "playable": true,
+      "issue": 194,
+      "core_transport_side": "nato",
+      "dc_menu_playable": false
+    },
+    "goc_can": {
+      "numeric_id": 23,
+      "nation_map_id": 60,
+      "actor_id": "can",
+      "coalition": "west",
+      "playable": true,
+      "issue": 194,
+      "core_transport_side": "nato",
+      "dc_menu_playable": false
+    },
+    "goc_nor": {
+      "numeric_id": 24,
+      "nation_map_id": 61,
+      "actor_id": "nor",
+      "coalition": "west",
+      "playable": true,
+      "issue": 194,
+      "core_transport_side": "nato",
+      "dc_menu_playable": false
+    },
+    "goc_dnk": {
+      "numeric_id": 25,
+      "nation_map_id": 62,
+      "actor_id": "dnk",
+      "coalition": "west",
+      "playable": true,
+      "issue": 194,
+      "core_transport_side": "nato",
+      "dc_menu_playable": false
+    },
+    "goc_esp": {
+      "numeric_id": 26,
+      "nation_map_id": 63,
+      "actor_id": "esp",
+      "coalition": "west",
+      "playable": true,
+      "issue": 194,
+      "core_transport_side": "nato",
+      "dc_menu_playable": false
+    },
+    "goc_tur": {
+      "numeric_id": 27,
+      "nation_map_id": 64,
+      "actor_id": "tur",
+      "coalition": "west",
+      "playable": true,
+      "issue": 194,
+      "core_transport_side": "nato",
+      "dc_menu_playable": false
+    },
+    "goc_rus": {
+      "numeric_id": 28,
+      "nation_map_id": 65,
+      "actor_id": "rus",
+      "coalition": "east",
+      "playable": true,
+      "issue": 194,
+      "core_transport_side": "rusa",
+      "dc_menu_playable": false
+    },
+    "goc_ukr": {
+      "numeric_id": 29,
+      "nation_map_id": 66,
+      "actor_id": "ukr",
+      "coalition": "west",
+      "playable": true,
+      "issue": 194,
+      "core_transport_side": "ukr",
+      "dc_menu_playable": false
+    },
+    "goc_dprk": {
+      "numeric_id": 30,
+      "nation_map_id": 67,
+      "actor_id": "dprk",
+      "coalition": "east",
+      "playable": true,
+      "issue": 194,
+      "core_transport_side": "rusa",
+      "dc_menu_playable": false
+    },
+    "goc_donbas": {
+      "numeric_id": 31,
+      "nation_map_id": 68,
+      "actor_id": "donbas",
+      "coalition": "east",
+      "playable": true,
+      "issue": 194,
+      "core_transport_side": "rusa",
+      "dc_menu_playable": false
+    },
+    "goc_blr": {
+      "numeric_id": 32,
+      "nation_map_id": 69,
+      "actor_id": "blr",
+      "coalition": "east",
+      "playable": true,
+      "issue": 194,
+      "core_transport_side": "rusa",
+      "dc_menu_playable": false
+    },
+    "goc_srb": {
+      "numeric_id": 33,
+      "nation_map_id": 70,
+      "actor_id": "srb",
+      "coalition": "east",
+      "playable": true,
+      "issue": 194,
+      "core_transport_side": "rusa",
+      "dc_menu_playable": false
     }
   },
   "stack_collision_audit": {
@@ -409,6 +655,26 @@
       91
     ],
     "allocated_ids": [
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
       55,
       56,
       57,
@@ -454,7 +720,8 @@
       "IDs 70-81 were absent from all five layers at audit time.",
       "#192 allocation 82-89 and 95-96 is disjoint from the complete accepted observed inventory [0-13, 90, 91].",
       "#201 spike IDs 90-94 remain reserved and are not production allocation authority.",
-      "#193 allocation 55-69 is disjoint from observed inventory [0-13, 90, 91] and prior production 70-89/95-96; spike 90-94 remain reserved."
+      "#193 allocation 55-69 is disjoint from observed inventory [0-13, 90, 91] and prior production 70-89/95-96; spike 90-94 remain reserved.",
+      "#194 Phase 1 Expanded-mode IDs 14-33 assigned; Core nato/ukr/rusa/prc transport families preserved as core_transport_side metadata."
     ]
   }
 }

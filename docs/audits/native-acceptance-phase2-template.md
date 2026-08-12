@@ -2,260 +2,144 @@
 
 Status: **harness only** — owner performs live GoH runs; independent auditor reviews evidence.
 
-## Exact-head gate
-
-- Implementation head: `<sha>`
-- Static matrix signature: `<matrix_signature>`
-- PR #195 must remain draft until final independent audit of this head + native evidence.
-
 ## Architecture
 
-- Distinct Gates-owned tactical faction IDs for production GOC armies.
-- Core `nato` / `ukr` / `rusa` / `prc` preserved.
-- Do not mix four-side-only overlay architecture with production goc_* IDs.
+- Expanded-mode production uses distinct Gates-owned `goc_*` tactical IDs.
+- Phase 1 source/core transport families (`nato`/`ukr`/`rusa`/`prc`) remain the frozen roster boundary labels.
+- Core Code:X sides remain available via Core restore; do not mix architectures.
 
-## Representative families (minimum)
+## Playable family checklist
 
-### phase1_full_national_nato
-- Representative actor: `usa`
-- Tactical side: `nato`
-- Roster class: `full_national`
-- Notes: Phase 1 USA full national; Core transport nato
-- [ ] install/activate via supported Gates path
-- [ ] brand-new Conquest/tactical test launches
-- [ ] roster + research open without crash
-- [ ] purchase infantry/support/vehicle/artillery where present
-- [ ] positive personnel/unit costs
-- [ ] battle start; representative units spawn
-- [ ] opposing AI purchases only from intended actor/profile
-- [ ] save/load succeeds
-- [ ] battle completion rewrites cleanly
-- [ ] game.log has no new materialization/faction errors
+- [ ] install_or_activate_via_supported_gates_path
+- [ ] launch_brand_new_conquest_or_tactical_test
+- [ ] roster_and_research_open_without_crash
+- [ ] purchase_representative_infantry_support_vehicle_artillery_where_present
+- [ ] prove_positive_personnel_and_unit_costs
+- [ ] start_battle_and_prove_representative_units_spawn
+- [ ] prove_opposing_ai_purchases_only_from_intended_actor_profile
+- [ ] save_load_succeeds
+- [ ] battle_completion_rewrites_cleanly
+- [ ] game_log_has_no_new_materialization_or_faction_errors
+
+## Strategic-only checklist
+
+- [ ] actor_appears_in_strategic_ownership_or_diplomacy_where_applicable
+- [ ] actor_survives_save_load
+- [ ] actor_cannot_be_selected_as_independent_playable
+- [ ] actor_cannot_install_or_purchase_fabricated_national_roster
+- [ ] local_neutral_battles_may_use_issue_48_garrisons_without_recruitment_transfer
+- [ ] no_research_nodes_or_ai_purchase_authority
+
+## Representative families
+
+### phase1_full_national_west (`playable`)
+- Actor: `usa`
+- Expanded tactical side: `goc_usa`
+- Source family: `nato`
+- Notes: Phase 1 USA full national on Gates ID; source family nato
 - Evidence paths: logs=… screenshots=… saves=…
 
-### phase1_national_hybrid_nato
-- Representative actor: `fra`
-- Tactical side: `nato`
-- Roster class: `national_hybrid`
-- Notes: France ARF/DSK hybrid boundary
-- [ ] install/activate via supported Gates path
-- [ ] brand-new Conquest/tactical test launches
-- [ ] roster + research open without crash
-- [ ] purchase infantry/support/vehicle/artillery where present
-- [ ] positive personnel/unit costs
-- [ ] battle start; representative units spawn
-- [ ] opposing AI purchases only from intended actor/profile
-- [ ] save/load succeeds
-- [ ] battle completion rewrites cleanly
-- [ ] game.log has no new materialization/faction errors
+### phase1_national_hybrid_west (`playable`)
+- Actor: `fra`
+- Expanded tactical side: `goc_fra`
+- Source family: `nato`
+- Notes: France ARF/DSK hybrid on Gates ID for same-family USA-vs-France proof
 - Evidence paths: logs=… screenshots=… saves=…
 
-### phase1_spain_3rd_assault
-- Representative actor: `esp`
-- Tactical side: `nato`
-- Roster class: `coalition_fallback`
+### phase1_spain_3rd_assault (`playable`)
+- Actor: `esp`
+- Expanded tactical side: `goc_esp`
+- Source family: `nato`
 - Notes: Spain seven-unit 3rd Assault allocation
-- [ ] install/activate via supported Gates path
-- [ ] brand-new Conquest/tactical test launches
-- [ ] roster + research open without crash
-- [ ] purchase infantry/support/vehicle/artillery where present
-- [ ] positive personnel/unit costs
-- [ ] battle start; representative units spawn
-- [ ] opposing AI purchases only from intended actor/profile
-- [ ] save/load succeeds
-- [ ] battle completion rewrites cleanly
-- [ ] game.log has no new materialization/faction errors
 - Evidence paths: logs=… screenshots=… saves=…
 
-### phase1_ukraine_core
-- Representative actor: `ukr`
-- Tactical side: `ukr`
-- Roster class: `full_national`
+### phase1_ukraine_core (`playable`)
+- Actor: `ukr`
+- Expanded tactical side: `goc_ukr`
+- Source family: `ukr`
 - Notes: Ukraine without duplicate ILDU wrappers
-- [ ] install/activate via supported Gates path
-- [ ] brand-new Conquest/tactical test launches
-- [ ] roster + research open without crash
-- [ ] purchase infantry/support/vehicle/artillery where present
-- [ ] positive personnel/unit costs
-- [ ] battle start; representative units spawn
-- [ ] opposing AI purchases only from intended actor/profile
-- [ ] save/load succeeds
-- [ ] battle completion rewrites cleanly
-- [ ] game.log has no new materialization/faction errors
 - Evidence paths: logs=… screenshots=… saves=…
 
-### phase1_russia_core
-- Representative actor: `rus`
-- Tactical side: `rusa`
-- Roster class: `full_national`
+### phase1_russia_core (`playable`)
+- Actor: `rus`
+- Expanded tactical side: `goc_rus`
+- Source family: `rusa`
 - Notes: Russia with KPA/Wagner hosted separation
-- [ ] install/activate via supported Gates path
-- [ ] brand-new Conquest/tactical test launches
-- [ ] roster + research open without crash
-- [ ] purchase infantry/support/vehicle/artillery where present
-- [ ] positive personnel/unit costs
-- [ ] battle start; representative units spawn
-- [ ] opposing AI purchases only from intended actor/profile
-- [ ] save/load succeeds
-- [ ] battle completion rewrites cleanly
-- [ ] game.log has no new materialization/faction errors
 - Evidence paths: logs=… screenshots=… saves=…
 
-### phase1_proxy_dprk
-- Representative actor: `dprk`
-- Tactical side: `rusa`
-- Roster class: `proxy_hybrid`
-- Notes: DPRK isolation on rusa transport
-- [ ] install/activate via supported Gates path
-- [ ] brand-new Conquest/tactical test launches
-- [ ] roster + research open without crash
-- [ ] purchase infantry/support/vehicle/artillery where present
-- [ ] positive personnel/unit costs
-- [ ] battle start; representative units spawn
-- [ ] opposing AI purchases only from intended actor/profile
-- [ ] save/load succeeds
-- [ ] battle completion rewrites cleanly
-- [ ] game.log has no new materialization/faction errors
+### phase1_proxy_dprk (`playable`)
+- Actor: `dprk`
+- Expanded tactical side: `goc_dprk`
+- Source family: `rusa`
+- Notes: DPRK isolation on Gates ID; source family rusa
 - Evidence paths: logs=… screenshots=… saves=…
 
-### phase1_proxy_serbia
-- Representative actor: `srb`
-- Tactical side: `rusa`
-- Roster class: `proxy_hybrid`
-- Notes: Serbia isolation
-- [ ] install/activate via supported Gates path
-- [ ] brand-new Conquest/tactical test launches
-- [ ] roster + research open without crash
-- [ ] purchase infantry/support/vehicle/artillery where present
-- [ ] positive personnel/unit costs
-- [ ] battle start; representative units spawn
-- [ ] opposing AI purchases only from intended actor/profile
-- [ ] save/load succeeds
-- [ ] battle completion rewrites cleanly
-- [ ] game.log has no new materialization/faction errors
+### phase1_proxy_serbia (`playable`)
+- Actor: `srb`
+- Expanded tactical side: `goc_srb`
+- Source family: `rusa`
+- Notes: Serbia isolation for srb-vs-rus same-family proof
 - Evidence paths: logs=… screenshots=… saves=…
 
-### phase1_prc_passthrough
-- Representative actor: `prc`
-- Tactical side: `prc`
-- Roster class: `full_national`
-- Notes: PRC modern vs legacy/reserve; codex_passthrough activation
-- [ ] install/activate via supported Gates path
-- [ ] brand-new Conquest/tactical test launches
-- [ ] roster + research open without crash
-- [ ] purchase infantry/support/vehicle/artillery where present
-- [ ] positive personnel/unit costs
-- [ ] battle start; representative units spawn
-- [ ] opposing AI purchases only from intended actor/profile
-- [ ] save/load succeeds
-- [ ] battle completion rewrites cleanly
-- [ ] game.log has no new materialization/faction errors
+### phase1_prc_passthrough (`playable`)
+- Actor: `prc`
+- Expanded tactical side: `prc`
+- Source family: `prc`
+- Notes: PRC Code:X passthrough retains native prc side
 - Evidence paths: logs=… screenshots=… saves=…
 
-### phase2_goc_nato_full_fallback
-- Representative actor: `bel`
-- Tactical side: `goc_bel`
-- Roster class: `coalition_fallback`
-- Notes: Production goc_* coalition_fallback family (#191/#192)
-- [ ] install/activate via supported Gates path
-- [ ] brand-new Conquest/tactical test launches
-- [ ] roster + research open without crash
-- [ ] purchase infantry/support/vehicle/artillery where present
-- [ ] positive personnel/unit costs
-- [ ] battle start; representative units spawn
-- [ ] opposing AI purchases only from intended actor/profile
-- [ ] save/load succeeds
-- [ ] battle completion rewrites cleanly
-- [ ] game.log has no new materialization/faction errors
+### phase2_goc_nato_full_fallback (`playable`)
+- Actor: `bel`
+- Expanded tactical side: `goc_bel`
+- Source family: `nato`
+- Notes: Production goc_* coalition_fallback family
 - Evidence paths: logs=… screenshots=… saves=…
 
-### phase2_goc_national_hybrid_dana
-- Representative actor: `cze`
-- Tactical side: `goc_cze`
-- Roster class: `national_hybrid`
+### phase2_goc_national_hybrid_dana (`playable`)
+- Actor: `cze`
+- Expanded tactical side: `goc_cze`
+- Source family: `nato`
 - Notes: DANA equipment identity + infantry bridge
-- [ ] install/activate via supported Gates path
-- [ ] brand-new Conquest/tactical test launches
-- [ ] roster + research open without crash
-- [ ] purchase infantry/support/vehicle/artillery where present
-- [ ] positive personnel/unit costs
-- [ ] battle start; representative units spawn
-- [ ] opposing AI purchases only from intended actor/profile
-- [ ] save/load succeeds
-- [ ] battle completion rewrites cleanly
-- [ ] game.log has no new materialization/faction errors
 - Evidence paths: logs=… screenshots=… saves=…
 
-### phase2_strategic_only
-- Representative actor: `egy`
-- Tactical side: `goc_egy`
-- Roster class: `strategic_only`
-- Notes: Strategic-only ownership; no fabricated recruitment
-- [ ] install/activate via supported Gates path
-- [ ] brand-new Conquest/tactical test launches
-- [ ] roster + research open without crash
-- [ ] purchase infantry/support/vehicle/artillery where present
-- [ ] positive personnel/unit costs
-- [ ] battle start; representative units spawn
-- [ ] opposing AI purchases only from intended actor/profile
-- [ ] save/load succeeds
-- [ ] battle completion rewrites cleanly
-- [ ] game.log has no new materialization/faction errors
+### phase2_strategic_only (`strategic_only`)
+- Actor: `egy`
+- Expanded tactical side: `goc_egy`
+- Source family: `nato`
+- Notes: Strategic-only ownership; fabricated national recruitment must remain impossible
 - Evidence paths: logs=… screenshots=… saves=…
 
 ## Required battle pairs
 
-### usa_vs_fra_shared_nato_transport
-- Attacker: `usa`
-- Defender: `fra`
-- Purpose: Same historical NATO transport family without generic NATO leakage
-- [ ] both-side AI purchase isolation proven
-- [ ] no generic transport-side leakage
+### usa_vs_fra_gates_ids_shared_nato_source_family
+- Attacker: `usa` / `goc_usa`
+- Defender: `fra` / `goc_fra`
+- Purpose: Same source family without generic Core nato side leakage
 - Evidence paths: …
 
-### srb_vs_rus_shared_rusa_transport
-- Attacker: `srb`
-- Defender: `rus`
-- Purpose: Same historical RUSA transport family isolation
-- [ ] both-side AI purchase isolation proven
-- [ ] no generic transport-side leakage
+### srb_vs_rus_gates_ids_shared_rusa_source_family
+- Attacker: `srb` / `goc_srb`
+- Defender: `rus` / `goc_rus`
+- Purpose: Same source family without generic Core rusa side leakage
 - Evidence paths: …
 
 ### usa_vs_dprk_cross_coalition
-- Attacker: `usa`
-- Defender: `dprk`
-- Purpose: Cross-coalition pair
-- [ ] both-side AI purchase isolation proven
-- [ ] no generic transport-side leakage
+- Attacker: `usa` / `goc_usa`
+- Defender: `dprk` / `goc_dprk`
+- Purpose: Cross-coalition pair on distinct Gates IDs
 - Evidence paths: …
 
 ### regional_garrison_48
-- Attacker: `usa`
-- Defender: `issue_48_regional_local_garrison`
-- Purpose: Regional/local garrison profile from #48 without sovereign recruitment transfer
-- [ ] both-side AI purchase isolation proven
-- [ ] no generic transport-side leakage
+- Attacker: `usa` / `goc_usa`
+- Defender: `issue_48_regional_local_garrison` / `issue_48_regional_local_garrison`
+- Purpose: Regional/local garrison without sovereign recruitment transfer
 - Evidence paths: …
-
-## Strategic-only checks
-
-- [ ] strategic-only actors appear in ownership/diplomacy where applicable
-- [ ] survive save/load
-- [ ] cannot install/purchase fabricated national roster
-- [ ] #48 regional garrison battles do not transfer units into sovereign recruitment
 
 ## Core restoration
 
 ```text
 python -m gates_of_codex.expanded_nations_cli core --gates-root <GATES_ROOT>
-# or: .\tools\activate_expanded_nation.ps1 -Core
 ```
 
-- [ ] Core mode restored
-- [ ] `nato` / `ukr` / `rusa` / `prc` retain original Code:X roster/research/AI behavior
-- [ ] no stale Gates Expanded Nations runtime projections remain
-
-## Final independent audit
-
-- Reviewer must not rely only on implementer summary
-- Verdict: approve | approve with non-blocking notes | request changes
+- [ ] Core restored; `nato`/`ukr`/`rusa`/`prc` retain original Code:X behavior
+- [ ] no stale Gates Expanded Nations projections remain

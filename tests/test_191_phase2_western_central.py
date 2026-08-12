@@ -28,6 +28,7 @@ from gates_of_codex.goc_tactical_army_registry import (
     army_numeric_id,
     audit_numeric_ids_against_stack,
     collect_stack_army_id_inventory,
+    dc_menu_goc_sides,
     load_goc_army_registry,
     nation_map_id,
     playable_goc_sides,
@@ -191,7 +192,7 @@ class NativeDcSeamTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertEqual(alliances, render_alliances_generic())
-        for side in playable_goc_sides():
+        for side in dc_menu_goc_sides():
             self.assertIn(side, playable_west_sides())
             lua = (
                 root
@@ -249,9 +250,13 @@ class Phase191ManifestTests(unittest.TestCase):
         actors = {a["actor_id"]: a for a in manifest["actors"]}
         self.assertTrue(PHASE1_ACTORS.issubset(set(actors)))
         self.assertTrue(ALL_191.issubset(set(actors)))
-        # Phase 1 sides unchanged
+        # Phase 1 Expanded-mode sides are Gates-owned goc_* IDs (PRC passthrough stays prc).
         for actor_id in PHASE1_ACTORS:
-            self.assertIn(actors[actor_id]["tactical_side"], {"nato", "ukr", "rusa", "prc"})
+            side = actors[actor_id]["tactical_side"]
+            if actor_id == "prc":
+                self.assertEqual(side, "prc")
+            else:
+                self.assertTrue(str(side).startswith("goc_"), actor_id)
 
     def test_191_playable_mapping_and_components(self) -> None:
         manifest = load_faction_manifest()

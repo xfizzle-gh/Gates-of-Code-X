@@ -49,7 +49,7 @@ class ActorEconomyTest(unittest.TestCase):
         names = {offer.unit_name for offer in offers}
         self.assertEqual(names, {"fixture_fra"})
         self.assertNotIn("fixture_deu", names)
-        self.assertTrue(all(offer.tactical_side == "nato" for offer in offers))
+        self.assertTrue(all(offer.tactical_side == "goc_fra" for offer in offers))
 
     def test_north_korea_cannot_recruit_russian_unit(self) -> None:
         force = _force_for_side(self.state, Faction.RUSSIA)

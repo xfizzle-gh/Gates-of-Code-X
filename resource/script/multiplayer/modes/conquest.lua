@@ -187,7 +187,7 @@ local function setVarsInMissionScript()
 	local botNation = BotApi.Instance.army
 	local botDifficulty = BotApi.Instance.difficulty
 	-- Keep in sync with dcg/player_nation side map (1 rusa .. 8 pol)
-	local nationMap = { rusa = 1, ukr = 2, nato = 3, csa = 4, sov = 5, prc = 6, frg = 7, pol = 8, goc_bel = 14, goc_bgr = 28, goc_cze = 16, goc_est = 21, goc_grc = 26, goc_hrv = 29, goc_hun = 18, goc_ltu = 19, goc_lva = 20, goc_prt = 15, goc_rou = 27, goc_svk = 17,
+	local nationMap = { rusa = 1, ukr = 2, nato = 3, csa = 4, sov = 5, prc = 6, frg = 7, pol = 8, goc_bel = 14, goc_bgr = 28, goc_blr = 69, goc_can = 60, goc_cze = 16, goc_deu = 53, goc_dnk = 62, goc_donbas = 68, goc_dprk = 67, goc_esp = 63, goc_est = 21, goc_fin = 57, goc_fra = 54, goc_gbr = 52, goc_grc = 26, goc_hrv = 29, goc_hun = 18, goc_ita = 56, goc_ltu = 19, goc_lva = 20, goc_nld = 59, goc_nor = 61, goc_pol = 55, goc_prt = 15, goc_rou = 27, goc_rus = 65, goc_srb = 70, goc_svk = 17, goc_swe = 58, goc_tur = 64, goc_ukr = 66, goc_usa = 51,
 		-- legacy / alias ids
 		rus = 1, ger = 2, fin = 3, usa = 3, eng = 3, jap = 6 }
 	local difficultyMap = { easy = 1, normal = 2, hard = 3, heroic = 4 }

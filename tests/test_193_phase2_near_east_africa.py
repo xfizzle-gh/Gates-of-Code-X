@@ -162,10 +162,10 @@ class Phase193RegistryTests(unittest.TestCase):
         self.assertFalse(set(EXPECTED_NUMERIC.values()) & {95, 96})
         # Declared production band must include #193 and exclude reserved spike IDs.
         band = registry["production_band"]
-        self.assertEqual(int(band["start"]), 55)
+        self.assertEqual(int(band["start"]), 14)
         self.assertEqual(int(band["end"]), 99)
         for numeric_id in all_ids:
-            self.assertGreaterEqual(numeric_id, 55)
+            self.assertGreaterEqual(numeric_id, 14)
             self.assertLessEqual(numeric_id, 99)
             self.assertNotIn(numeric_id, set(range(90, 95)))
         sub = registry["allocation_sub_bands"]["phase2_193_near_east_africa_strategic_only"]
@@ -184,7 +184,7 @@ class Phase193RegistryTests(unittest.TestCase):
     def test_validator_rejects_id_outside_declared_production_band(self) -> None:
         registry = json.loads(json.dumps(load_goc_army_registry()))
         registry["armies"]["goc_bad"] = {
-            "numeric_id": 40,
+            "numeric_id": 5,
             "nation_map_id": 99,
             "actor_id": "bad",
             "coalition": "west",

@@ -71,6 +71,15 @@ def _parser() -> argparse.ArgumentParser:
     )
     static_matrix.add_argument("--repo-root", default=".")
     static_matrix.add_argument("--source-head", default="")
+    static_matrix.add_argument(
+        "--stack-config",
+        help="optional mod-stack config used to compile resolved unit/research counts",
+    )
+    static_matrix.add_argument(
+        "--require-resolved-counts",
+        action="store_true",
+        help="fail if playable actors lack resolved/pack unit and research counts",
+    )
     static_matrix.add_argument("--json-output", required=True)
     static_matrix.add_argument("--markdown-output", required=True)
     cost = subparsers.add_parser(
@@ -187,10 +196,28 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         return 0
     if args.command == "static-matrix":
-        matrix = build_static_actor_matrix(
-            repo_root=args.repo_root,
-            source_head=args.source_head,
-        )
+        resolved_payload = None
+        if getattr(args, "stack_config", None):
+            # Compile via FactionWiringCompiler directly so committed production
+            # research packs under a Gates checkout do not trip activation-path guards.
+            from .faction_wiring_compiler import FactionWiringCompiler
+            from .modstack import load_stack_config
+
+            roots = load_stack_config(args.stack_config)
+            resolved_payload = FactionWiringCompiler(roots).compile()
+        try:
+            matrix = build_static_actor_matrix(
+                repo_root=args.repo_root,
+                source_head=args.source_head,
+                resolved_payload=resolved_payload,
+                require_resolved_counts=bool(
+                    getattr(args, "require_resolved_counts", False)
+                    or getattr(args, "stack_config", None)
+                ),
+            )
+        except ValueError as exc:
+            print(json.dumps({"ok": False, "error": str(exc)}, indent=2))
+            return 2
         problems = validate_static_actor_matrix(matrix)
         if problems:
             print(json.dumps({"ok": False, "problems": problems}, indent=2))
@@ -209,6 +236,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     "counts": matrix["counts"],
                     "matrix_signature": matrix["matrix_signature"],
                     "source_head": matrix.get("source_head"),
+                    "resolved_payload_present": matrix["authority"]["resolved_payload_present"],
                     "json_output": args.json_output,
                     "markdown_output": args.markdown_output,
                     "native_status": matrix["native_harness"]["status"],

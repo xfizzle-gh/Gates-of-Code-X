@@ -4,7 +4,7 @@
     "display_name": "United States",
     "actor_type": "sovereign",
     "coalition_id": "atlantic",
-    "tactical_side": "nato",
+    "tactical_side": "goc_usa",
     "playable": true,
     "roster_class": "full_national",
     "components": [
@@ -21,7 +21,8 @@
       "artillery"
     ],
     "notes": [
-      "USMC, Stryker, and armored branches remain separate doctrine paths."
+      "USMC, Stryker, and armored branches remain separate doctrine paths.",
+      "#194 Expanded-mode tactical identity goc_usa (source/core transport family was nato); Core four sides unchanged."
     ]
   },
   {
@@ -29,7 +30,7 @@
     "display_name": "United Kingdom",
     "actor_type": "sovereign",
     "coalition_id": "atlantic",
-    "tactical_side": "nato",
+    "tactical_side": "goc_gbr",
     "playable": true,
     "roster_class": "full_national",
     "components": [
@@ -46,7 +47,8 @@
       "artillery"
     ],
     "notes": [
-      "British branch is national; shared support is used only for explicit gaps."
+      "British branch is national; shared support is used only for explicit gaps.",
+      "#194 Expanded-mode tactical identity goc_gbr (source/core transport family was nato); Core four sides unchanged."
     ]
   },
   {
@@ -54,7 +56,7 @@
     "display_name": "Germany",
     "actor_type": "sovereign",
     "coalition_id": "atlantic",
-    "tactical_side": "nato",
+    "tactical_side": "goc_deu",
     "playable": true,
     "roster_class": "full_national",
     "components": [
@@ -71,7 +73,8 @@
       "artillery"
     ],
     "notes": [
-      "YPR/CV9030 coalition stepping-stones are filtered from the national roster."
+      "YPR/CV9030 coalition stepping-stones are filtered from the national roster.",
+      "#194 Expanded-mode tactical identity goc_deu (source/core transport family was nato); Core four sides unchanged."
     ]
   },
   {
@@ -79,7 +82,7 @@
     "display_name": "France",
     "actor_type": "sovereign",
     "coalition_id": "atlantic",
-    "tactical_side": "nato",
+    "tactical_side": "goc_fra",
     "playable": true,
     "roster_class": "national_hybrid",
     "components": [
@@ -97,7 +100,8 @@
       "artillery"
     ],
     "notes": [
-      "ARF line infantry is temporary; fr_* Code:X personnel remain elite/SOF rather than line infantry."
+      "ARF line infantry is temporary; fr_* Code:X personnel remain elite/SOF rather than line infantry.",
+      "#194 Expanded-mode tactical identity goc_fra (source/core transport family was nato); Core four sides unchanged."
     ]
   },
   {
@@ -105,7 +109,7 @@
     "display_name": "Poland",
     "actor_type": "sovereign",
     "coalition_id": "atlantic",
-    "tactical_side": "nato",
+    "tactical_side": "goc_pol",
     "playable": true,
     "roster_class": "national_hybrid",
     "components": [
@@ -123,7 +127,8 @@
       "artillery"
     ],
     "notes": [
-      "EFP British and US elements are excluded from the Polish national core."
+      "EFP British and US elements are excluded from the Polish national core.",
+      "#194 Expanded-mode tactical identity goc_pol (source/core transport family was nato); Core four sides unchanged."
     ]
   },
   {
@@ -131,7 +136,7 @@
     "display_name": "Italy",
     "actor_type": "sovereign",
     "coalition_id": "atlantic",
-    "tactical_side": "nato",
+    "tactical_side": "goc_ita",
     "playable": true,
     "roster_class": "national_hybrid",
     "components": [
@@ -149,7 +154,8 @@
       "artillery"
     ],
     "notes": [
-      "Italian armor defines the faction while NATO-common infantry and support fill audited gaps."
+      "Italian armor defines the faction while NATO-common infantry and support fill audited gaps.",
+      "#194 Expanded-mode tactical identity goc_ita (source/core transport family was nato); Core four sides unchanged."
     ]
   },
   {
@@ -157,7 +163,7 @@
     "display_name": "Finland",
     "actor_type": "sovereign",
     "coalition_id": "atlantic",
-    "tactical_side": "nato",
+    "tactical_side": "goc_fin",
     "playable": true,
     "roster_class": "national_hybrid",
     "components": [
@@ -176,7 +182,8 @@
       "artillery"
     ],
     "notes": [
-      "West81 equipment is explicitly reserve/legacy content."
+      "West81 equipment is explicitly reserve/legacy content.",
+      "#194 Expanded-mode tactical identity goc_fin (source/core transport family was nato); Core four sides unchanged."
     ]
   },
   {
@@ -184,7 +191,7 @@
     "display_name": "Sweden",
     "actor_type": "sovereign",
     "coalition_id": "atlantic",
-    "tactical_side": "nato",
+    "tactical_side": "goc_swe",
     "playable": true,
     "roster_class": "national_hybrid",
     "components": [
@@ -202,7 +209,8 @@
       "artillery"
     ],
     "notes": [
-      "CV90/Strv equipment provides national identity."
+      "CV90/Strv equipment provides national identity.",
+      "#194 Expanded-mode tactical identity goc_swe (source/core transport family was nato); Core four sides unchanged."
     ]
   },
   {
@@ -210,7 +218,7 @@
     "display_name": "Netherlands",
     "actor_type": "sovereign",
     "coalition_id": "atlantic",
-    "tactical_side": "nato",
+    "tactical_side": "goc_nld",
     "playable": true,
     "roster_class": "national_hybrid",
     "components": [
@@ -228,7 +236,8 @@
       "artillery"
     ],
     "notes": [
-      "YPR/CV9035 equipment provides national identity."
+      "YPR/CV9035 equipment provides national identity.",
+      "#194 Expanded-mode tactical identity goc_nld (source/core transport family was nato); Core four sides unchanged."
     ]
   },
   {
@@ -236,7 +245,7 @@
     "display_name": "Canada",
     "actor_type": "sovereign",
     "coalition_id": "atlantic",
-    "tactical_side": "nato",
+    "tactical_side": "goc_can",
     "playable": true,
     "roster_class": "national_hybrid",
     "components": [
@@ -254,7 +263,8 @@
       "artillery"
     ],
     "notes": [
-      "Canadian armor is supplemented by NATO-common systems."
+      "Canadian armor is supplemented by NATO-common systems.",
+      "#194 Expanded-mode tactical identity goc_can (source/core transport family was nato); Core four sides unchanged."
     ]
   },
   {
@@ -262,7 +272,7 @@
     "display_name": "Norway",
     "actor_type": "sovereign",
     "coalition_id": "atlantic",
-    "tactical_side": "nato",
+    "tactical_side": "goc_nor",
     "playable": true,
     "roster_class": "coalition_fallback",
     "components": [
@@ -278,7 +288,8 @@
       "artillery"
     ],
     "notes": [
-      "No complete national Code:X branch was audited; roster is explicitly labeled NATO coalition fallback."
+      "No complete national Code:X branch was audited; roster is explicitly labeled NATO coalition fallback.",
+      "#194 Expanded-mode tactical identity goc_nor (source/core transport family was nato); Core four sides unchanged."
     ]
   },
   {
@@ -286,7 +297,7 @@
     "display_name": "Denmark",
     "actor_type": "sovereign",
     "coalition_id": "atlantic",
-    "tactical_side": "nato",
+    "tactical_side": "goc_dnk",
     "playable": true,
     "roster_class": "coalition_fallback",
     "components": [
@@ -302,7 +313,8 @@
       "artillery"
     ],
     "notes": [
-      "No complete national Code:X branch was audited; roster is explicitly labeled NATO coalition fallback."
+      "No complete national Code:X branch was audited; roster is explicitly labeled NATO coalition fallback.",
+      "#194 Expanded-mode tactical identity goc_dnk (source/core transport family was nato); Core four sides unchanged."
     ]
   },
   {
@@ -310,7 +322,7 @@
     "display_name": "Spain",
     "actor_type": "sovereign",
     "coalition_id": "atlantic",
-    "tactical_side": "nato",
+    "tactical_side": "goc_esp",
     "playable": true,
     "roster_class": "coalition_fallback",
     "components": [
@@ -328,7 +340,8 @@
       "artillery"
     ],
     "notes": [
-      "Spain uses the audited 3rd Assault Brigade international-legion infantry subset, with NATO coalition armor/artillery/support filling non-infantry gaps. Other foreign-volunteer content is reserved for regional neutral encounters."
+      "Spain uses the audited 3rd Assault Brigade international-legion infantry subset, with NATO coalition armor/artillery/support filling non-infantry gaps. Other foreign-volunteer content is reserved for regional neutral encounters.",
+      "#194 Expanded-mode tactical identity goc_esp (source/core transport family was nato); Core four sides unchanged."
     ]
   },
   {
@@ -336,7 +349,7 @@
     "display_name": "Turkey",
     "actor_type": "sovereign",
     "coalition_id": "atlantic",
-    "tactical_side": "nato",
+    "tactical_side": "goc_tur",
     "playable": true,
     "roster_class": "coalition_fallback",
     "components": [
@@ -352,7 +365,8 @@
       "artillery"
     ],
     "notes": [
-      "No complete national Code:X branch was audited; roster is explicitly labeled NATO coalition fallback."
+      "No complete national Code:X branch was audited; roster is explicitly labeled NATO coalition fallback.",
+      "#194 Expanded-mode tactical identity goc_tur (source/core transport family was nato); Core four sides unchanged."
     ]
   },
   {
@@ -360,7 +374,7 @@
     "display_name": "Russia",
     "actor_type": "sovereign",
     "coalition_id": "eurasian",
-    "tactical_side": "rusa",
+    "tactical_side": "goc_rus",
     "playable": true,
     "roster_class": "full_national",
     "components": [
@@ -378,7 +392,8 @@
       "artillery"
     ],
     "notes": [
-      "Foreign and PMC components remain separate research subtrees even when available to Russia."
+      "Foreign and PMC components remain separate research subtrees even when available to Russia.",
+      "#194 Expanded-mode tactical identity goc_rus (source/core transport family was rusa); Core four sides unchanged."
     ]
   },
   {
@@ -386,7 +401,7 @@
     "display_name": "Ukraine",
     "actor_type": "sovereign",
     "coalition_id": "ukrainian",
-    "tactical_side": "ukr",
+    "tactical_side": "goc_ukr",
     "playable": true,
     "roster_class": "full_national",
     "components": [
@@ -402,7 +417,8 @@
       "artillery"
     ],
     "notes": [
-      "Ukraine uses its native Code:X Ukrainian branches directly, including the existing 3rd Assault / international-volunteer content. No duplicate generated ILDU wrapper subtree is added."
+      "Ukraine uses its native Code:X Ukrainian branches directly, including the existing 3rd Assault / international-volunteer content. No duplicate generated ILDU wrapper subtree is added.",
+      "#194 Expanded-mode tactical identity goc_ukr (source/core transport family was ukr); Core four sides unchanged."
     ]
   },
   {
@@ -436,7 +452,7 @@
     "display_name": "North Korea",
     "actor_type": "sovereign",
     "coalition_id": "eurasian",
-    "tactical_side": "rusa",
+    "tactical_side": "goc_dprk",
     "playable": true,
     "roster_class": "proxy_hybrid",
     "components": [
@@ -453,7 +469,8 @@
       "artillery"
     ],
     "notes": [
-      "Code:X Korean infantry is national authority; West81 Soviet-pattern equipment supplies legacy heavy forces."
+      "Code:X Korean infantry is national authority; West81 Soviet-pattern equipment supplies legacy heavy forces.",
+      "#194 Expanded-mode tactical identity goc_dprk (source/core transport family was rusa); Core four sides unchanged."
     ]
   },
   {
@@ -461,7 +478,7 @@
     "display_name": "Donbas Forces",
     "actor_type": "separatist",
     "coalition_id": "eurasian",
-    "tactical_side": "rusa",
+    "tactical_side": "goc_donbas",
     "playable": true,
     "roster_class": "proxy_hybrid",
     "components": [
@@ -479,7 +496,8 @@
       "artillery"
     ],
     "notes": [
-      "Lud/LDPR, Sparta, and Vostok are combined into one initial tactical actor."
+      "Lud/LDPR, Sparta, and Vostok are combined into one initial tactical actor.",
+      "#194 Expanded-mode tactical identity goc_donbas (source/core transport family was rusa); Core four sides unchanged."
     ]
   },
   {
@@ -487,7 +505,7 @@
     "display_name": "Belarus",
     "actor_type": "sovereign",
     "coalition_id": "eurasian",
-    "tactical_side": "rusa",
+    "tactical_side": "goc_blr",
     "playable": true,
     "roster_class": "proxy_hybrid",
     "components": [
@@ -504,7 +522,8 @@
       "artillery"
     ],
     "notes": [
-      "Constructed hybrid because Code:X has no dedicated Belarus breed or conquest package."
+      "Constructed hybrid because Code:X has no dedicated Belarus breed or conquest package.",
+      "#194 Expanded-mode tactical identity goc_blr (source/core transport family was rusa); Core four sides unchanged."
     ]
   },
   {
@@ -512,7 +531,7 @@
     "display_name": "Serbia",
     "actor_type": "sovereign",
     "coalition_id": "nonaligned",
-    "tactical_side": "rusa",
+    "tactical_side": "goc_srb",
     "playable": true,
     "roster_class": "proxy_hybrid",
     "components": [
@@ -529,7 +548,8 @@
       "artillery"
     ],
     "notes": [
-      "Serb_* personnel seed is combined with explicit Balkan/Eastern legacy equipment."
+      "Serb_* personnel seed is combined with explicit Balkan/Eastern legacy equipment.",
+      "#194 Expanded-mode tactical identity goc_srb (source/core transport family was rusa); Core four sides unchanged."
     ]
   },
   {
@@ -537,7 +557,7 @@
     "display_name": "International Legion for the Defence of Ukraine",
     "actor_type": "volunteer",
     "coalition_id": "ukrainian",
-    "tactical_side": "ukr",
+    "tactical_side": "goc_ukr",
     "playable": false,
     "roster_class": "nonstate",
     "components": [
@@ -552,7 +572,8 @@
       "anti_armor"
     ],
     "notes": [
-      "Compatibility-only non-playable foreign-volunteer record retained for existing data while its wrapper pool is reserved for future regional neutral-encounter allocation; it is not included in Ukraine's sovereign roster."
+      "Compatibility-only non-playable foreign-volunteer record retained for existing data while its wrapper pool is reserved for future regional neutral-encounter allocation; it is not included in Ukraine's sovereign roster.",
+      "#194 Expanded-mode tactical identity goc_ukr (source/core transport family was ukr); Core four sides unchanged."
     ],
     "host_actor_id": "ukr"
   },
@@ -561,7 +582,7 @@
     "display_name": "KPA Expeditionary Corps",
     "actor_type": "auxiliary",
     "coalition_id": "eurasian",
-    "tactical_side": "rusa",
+    "tactical_side": "goc_rus",
     "playable": false,
     "roster_class": "nonstate",
     "components": [
@@ -575,7 +596,8 @@
       "infantry"
     ],
     "notes": [
-      "Russian-hosted contingent using the same canonical Korean squads as North Korea."
+      "Russian-hosted contingent using the same canonical Korean squads as North Korea.",
+      "#194 Expanded-mode tactical identity goc_rus (source/core transport family was rusa); Core four sides unchanged."
     ],
     "host_actor_id": "rus"
   },
@@ -584,7 +606,7 @@
     "display_name": "Wagner / Russian PMC Forces",
     "actor_type": "pmc",
     "coalition_id": "eurasian",
-    "tactical_side": "rusa",
+    "tactical_side": "goc_rus",
     "playable": false,
     "roster_class": "nonstate",
     "components": [
@@ -598,7 +620,8 @@
       "infantry"
     ],
     "notes": [
-      "Non-state military actor for contracts, events, or temporary province control."
+      "Non-state military actor for contracts, events, or temporary province control.",
+      "#194 Expanded-mode tactical identity goc_rus (source/core transport family was rusa); Core four sides unchanged."
     ],
     "host_actor_id": "rus"
   },

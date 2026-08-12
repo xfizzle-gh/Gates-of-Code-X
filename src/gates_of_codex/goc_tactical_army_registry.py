@@ -173,13 +173,18 @@ def campaign_faction_token_for_side(side: str) -> str:
     if token in CORE_TACTICAL_SIDES or token == "neutral":
         return token
     if is_goc_tactical_side(token):
-        coalition = str(army_row(token).get("coalition") or "").strip().lower()
+        row = army_row(token)
+        transport = str(row.get("core_transport_side") or "").strip().lower()
+        if transport in CORE_TACTICAL_SIDES:
+            return transport
+        coalition = str(row.get("coalition") or "").strip().lower()
         if coalition == "west":
             return "nato"
         if coalition == "east":
             return "rusa"
         raise GocArmyRegistryError(
-            f"GOC army {token} missing west/east coalition for campaign faction mapping"
+            f"GOC army {token} missing core_transport_side/west/east coalition "
+            "for campaign faction mapping"
         )
     raise GocArmyRegistryError(f"Unsupported tactical side for campaign faction: {token}")
 
@@ -203,6 +208,22 @@ def playable_goc_sides() -> tuple[str, ...]:
             token
             for token, row in armies.items()
             if bool(row.get("playable"))
+        )
+    )
+
+
+def dc_menu_goc_sides() -> tuple[str, ...]:
+    """Playable GOC sides that ship committed multi-faction Dynamic Conquest packs.
+
+    Expanded-mode actor activation may use additional playable goc_* identities
+    without requiring every identity to appear in the multi-faction DC create menu.
+    """
+    armies = load_goc_army_registry()["armies"]
+    return tuple(
+        sorted(
+            token
+            for token, row in armies.items()
+            if bool(row.get("playable")) and bool(row.get("dc_menu_playable"))
         )
     )
 

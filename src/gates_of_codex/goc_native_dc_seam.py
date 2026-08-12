@@ -32,6 +32,7 @@ from .faction_wiring_compiler import FactionWiringCompiler
 from .goc_tactical_army_registry import (
     GocArmyRegistryError,
     army_row,
+    dc_menu_goc_sides,
     load_goc_army_registry,
     nation_map_id,
     playable_goc_sides,
@@ -55,7 +56,7 @@ _LUA_PURCHASE_RE = re.compile(r'\bunit\s*=\s*"([^"]+)"')
 def playable_west_sides() -> tuple[str, ...]:
     return tuple(
         side
-        for side in playable_goc_sides()
+        for side in dc_menu_goc_sides()
         if str(army_row(side).get("coalition") or "").lower() == "west"
     )
 
@@ -63,7 +64,7 @@ def playable_west_sides() -> tuple[str, ...]:
 def playable_east_sides() -> tuple[str, ...]:
     return tuple(
         side
-        for side in playable_goc_sides()
+        for side in dc_menu_goc_sides()
         if str(army_row(side).get("coalition") or "").lower() == "east"
     )
 
@@ -123,7 +124,7 @@ def _matchup_pairs() -> list[str]:
     ]
     for left, right in core_pairs:
         pairs.append(f'"{left} {right}"')
-    for side in playable_goc_sides():
+    for side in dc_menu_goc_sides():
         coalition = str(army_row(side).get("coalition") or "").lower()
         opponents = CORE_EAST if coalition == "west" else CORE_WEST
         for opp in opponents:
@@ -141,7 +142,7 @@ def _matchup_pairs() -> list[str]:
 def render_values_set() -> str:
     matchups = "\n\t\t\t".join(_matchup_pairs())
     test_extras = "\n\t\t\t".join(
-        f'"{side} rusa"\n\t\t\t"rusa {side}"' for side in playable_goc_sides()
+        f'"{side} rusa"\n\t\t\t"rusa {side}"' for side in dc_menu_goc_sides()
     )
     return (
         "; Gates production GOC values.set (#191)\n"
@@ -176,7 +177,7 @@ def render_roster_conquest() -> str:
 
     Uses the same canonical core include lists as Expanded Nations. Runtime-only.
     """
-    sides = playable_goc_sides()
+    sides = dc_menu_goc_sides()
     lines = [
         ";sdl",
         GENERATED_MARKER,
@@ -431,7 +432,7 @@ def committed_seam_relpaths() -> list[str]:
     ]
     for side in sorted(load_goc_army_registry()["armies"]):
         paths.append(f"resource/set/multiplayer/armies/{side}.set")
-    for side in playable_goc_sides():
+    for side in dc_menu_goc_sides():
         paths.extend(
             [
                 f"resource/set/multiplayer/units/conquest/inf_{side}.set",
@@ -676,7 +677,7 @@ def validate_repo_native_dc_seam(repo_root: str | Path) -> list[str]:
             ):
                 if rel not in roster_text and "goc_active_actor_units" not in roster_text:
                     problems.append(f"on-disk roster missing core include {rel}")
-        for side in playable_goc_sides():
+        for side in dc_menu_goc_sides():
             if f"inf_{side}.set" not in roster_text and "goc_active_actor_units" not in roster_text:
                 problems.append(f"native multi-faction roster missing {side}")
 
@@ -697,10 +698,11 @@ def validate_repo_native_dc_seam(repo_root: str | Path) -> list[str]:
             if "presets/alliances_generic.inc" not in text:
                 problems.append("CTF does not include alliances_generic.inc")
         if rel.endswith("values.set"):
-            for side in playable_goc_sides():
+            for side in dc_menu_goc_sides():
                 if side not in text:
                     problems.append(f"values.set missing matchups for {side}")
         if rel.endswith("conquest.lua"):
+            # nationMap should include every playable Expanded-mode goc identity.
             for side in playable_goc_sides():
                 if side not in text:
                     problems.append(f"conquest.lua missing {side}")

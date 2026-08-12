@@ -57,8 +57,12 @@ class BundledStrategicActorTest(unittest.TestCase):
         self.assertEqual(actors["ukr_ildu"].host_actor_id, "ukr")
         self.assertEqual(actors["kpa_expeditionary"].host_actor_id, "rus")
         self.assertEqual(actors["wagner"].host_actor_id, "rus")
+        self.assertEqual(actors["usa"].tactical_side.value, "goc_usa")
+        self.assertEqual(actors["fra"].tactical_side.value, "goc_fra")
+        self.assertEqual(actors["usa"].tactical_side.campaign_faction(), Faction.NATO)
+        self.assertEqual(actors["ukr"].tactical_side.campaign_faction(), Faction.UKRAINE)
+        self.assertEqual(actors["rus"].tactical_side.campaign_faction(), Faction.RUSSIA)
         self.assertEqual(actors["bel"].tactical_side.value, "goc_bel")
-        self.assertEqual(actors["bel"].tactical_side.campaign_faction(), Faction.NATO)
         # Identity equality only — never equal to mapped campaign Faction.
         self.assertNotEqual(actors["bel"].tactical_side, Faction.NATO)
         self.assertEqual(hash(actors["bel"].tactical_side), hash("goc_bel"))
