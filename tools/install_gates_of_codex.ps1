@@ -174,12 +174,6 @@ try {
     & $VenvPython -m pip install --upgrade pip
     & $VenvPython -m pip install --upgrade $Root
 
-    # Installed wheels live under <venv>\Lib\site-packages, while the frozen
-    # Earth3 authority contracts intentionally resolve fixed files from
-    # Path(__file__).parents[2] == <venv>\Lib. Stage only the exact authenticated
-    # P1/P3 runtime authority files at those fixed paths. This keeps the authority
-    # loaders unchanged and fail-closed while making the documented source install
-    # a real production surface rather than a repository-only accident.
     $InstalledAuthorityRoot = Join-Path $Venv "Lib"
     foreach ($Relative in $AuthorityRelativeFiles) {
         $Source = Join-Path $Root $Relative
@@ -234,8 +228,8 @@ try {
         }
         Push-Location $Root
         try {
-            & $VenvPython -m PyInstaller --noconfirm --clean --onefile --windowed --name GatesOfCodeX @AuthorityAddDataArgs --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" run_gates_of_codex.py
-            & $VenvPython -m PyInstaller --noconfirm --clean --onefile --name GatesOfCodeXLive @AuthorityAddDataArgs --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" run_gates_of_codex_live.py
+            & $VenvPython -m PyInstaller --noconfirm --clean --onefile --windowed --name GatesOfCodeX --collect-data gates_of_codex @AuthorityAddDataArgs --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" run_gates_of_codex.py
+            & $VenvPython -m PyInstaller --noconfirm --clean --onefile --name GatesOfCodeXLive --collect-data gates_of_codex @AuthorityAddDataArgs --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" run_gates_of_codex_live.py
         }
         finally {
             Pop-Location
@@ -246,7 +240,7 @@ try {
             if ($LASTEXITCODE -ne 0 -or $Archive -notmatch 'SOURCE_COMMIT') {
                 throw "Frozen executable is missing embedded provenance: $Executable"
             }
-            foreach ($RequiredName in @("production_authority.json", "p3_operational_authority.json", "map_manifest.json", "polygon_dataset.json", "dataset_meta.json", "p3_operational_graph.json", "p3-first-corridor-route-inventory.json", "sites.json")) {
+            foreach ($RequiredName in @("production_authority.json", "p3_operational_authority.json", "map_manifest.json", "polygon_dataset.json", "dataset_meta.json", "p3_operational_graph.json", "p3-first-corridor-route-inventory.json", "sites.json", "bootstrap.json", "formations.json")) {
                 if ($Archive -notmatch [regex]::Escape($RequiredName)) {
                     throw "Frozen executable is missing Earth3 runtime authority $RequiredName`: $Executable"
                 }
