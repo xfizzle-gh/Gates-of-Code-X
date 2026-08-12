@@ -3,12 +3,20 @@ from __future__ import annotations
 """Measured command-cycle wrapper for the P8 responsiveness lane (#207).
 
 The frontend command contract remains file-backed and authoritative. This module
-adds phase timings around the existing implementation without changing command
-semantics, and removes one proven redundant path: ``verify_result`` is read-only,
-so it must not rewrite the campaign or republish the full frontend snapshot.
+adds phase timings around the existing implementation while removing redundant
+presentation work where the command result already contains enough information
+for Godot to update its live view safely.
 
-All mutating commands still execute the existing load -> mutate -> save -> full
-snapshot publication path until native timings identify the next dominant phase.
+Two fast paths are intentionally narrow:
+
+* ``verify_result`` is read-only, so it does not rewrite the campaign or publish
+  a frontend snapshot.
+* ``issue_move_order`` / ``cancel_move_order`` still load, mutate, ledger, and
+  save the authoritative campaign, but skip rebuilding the multi-megabyte
+  frontend snapshot. Godot patches only the returned move-order field in memory.
+
+All other mutating commands retain the existing load -> mutate -> save -> full
+snapshot publication path.
 """
 
 import time
@@ -19,6 +27,8 @@ from . import frontend as _frontend
 from . import frontend_commands as _commands
 
 
+_SNAPSHOT_PATCH_OPS = frozenset({"issue_move_order", "cancel_move_order"})
+
 _TIMING_KEYS = (
     "load_ms",
     "mutate_ms",
@@ -28,6 +38,7 @@ _TIMING_KEYS = (
     "campaign_bytes",
     "snapshot_bytes",
     "read_only_fast_path",
+    "snapshot_fast_path",
 )
 
 
@@ -47,6 +58,15 @@ def _verify_only(commands: list[dict[str, Any]]) -> bool:
         return False
     return all(
         str(item.get("op", "")).strip().lower() in _commands.READ_ONLY_OPS
+        for item in commands
+    )
+
+
+def _snapshot_patch_only(commands: list[dict[str, Any]]) -> bool:
+    if not commands:
+        return False
+    return all(
+        str(item.get("op", "")).strip().lower() in _SNAPSHOT_PATCH_OPS
         for item in commands
     )
 
@@ -74,15 +94,14 @@ def measured_apply_frontend_commands(
 ) -> dict[str, Any]:
     """Run the existing command engine and attach phase telemetry.
 
-    ``verify_result`` is the only current read-only frontend operation. For that
-    operation the existing command engine is still used, including manifest,
-    battle, stack, and save verification. Only its redundant final campaign save
-    and snapshot publication are replaced with no-ops. The command queue is still
-    cleared by the underlying implementation exactly as before.
+    The existing command engine remains responsible for validation, mutation,
+    exactly-once ledger handling, persistence, and result construction. This
+    wrapper only substitutes no-op publication at proven presentation seams.
     """
 
     requested = _requested_commands(commands, commands_path)
     read_only_fast_path = _verify_only(requested)
+    snapshot_fast_path = _snapshot_patch_only(requested)
 
     original_load = _commands.load_campaign
     original_save = _commands.save_campaign
@@ -121,7 +140,10 @@ def measured_apply_frontend_commands(
         campaign_path=None,
         environ=None,
     ):
-        if read_only_fast_path:
+        if read_only_fast_path or snapshot_fast_path:
+            # The previous snapshot remains valid on disk. For move-order draft
+            # changes, Godot consumes the authoritative move_order returned in
+            # the command result and updates only that live presentation field.
             return Path(path)
         started = time.perf_counter()
         try:
@@ -169,6 +191,7 @@ def measured_apply_frontend_commands(
         "campaign_bytes": _size(campaign_path),
         "snapshot_bytes": _size(snapshot_path),
         "read_only_fast_path": bool(read_only_fast_path),
+        "snapshot_fast_path": bool(snapshot_fast_path),
     }
     return result
 
