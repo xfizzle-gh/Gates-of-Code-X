@@ -37,7 +37,7 @@ class ActorEconomyTest(unittest.TestCase):
 
     def test_installs_all_actor_content_and_records_grandfathered_units(self) -> None:
         runtime = self.state.map_metadata[ACTOR_CONTENT_KEY]
-        self.assertEqual(runtime["actor_count"], 46)
+        self.assertEqual(runtime["actor_count"], 61)
         self.assertTrue(runtime["migration_exceptions"])
         self.assertTrue(all("grandfathered" in item["reason"] for item in runtime["migration_exceptions"]))
         validate_actor_content_runtime(self.state)

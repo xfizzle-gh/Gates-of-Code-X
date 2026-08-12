@@ -27,6 +27,8 @@ class BundledManifestContractTest(unittest.TestCase):
             "bel", "prt", "cze", "svk", "hun", "ltu", "lva", "est",
             "aut", "che", "irl", "isl",
             "grc", "rou", "bgr", "hrv", "svn", "bih", "mne", "alb", "mkd", "mda",
+            "geo", "arm", "aze", "isr", "lbn", "syr", "jor", "irq", "mar", "dza",
+            "tun", "lby", "egy", "cyp", "mlt",
         }
         self.assertEqual(set(actors), expected)
         from gates_of_codex.faction_wiring_models import supported_tactical_sides
@@ -35,6 +37,8 @@ class BundledManifestContractTest(unittest.TestCase):
         nonplayable = {
             "ukr_ildu", "kpa_expeditionary", "wagner", "aut", "che", "irl", "isl",
             "svn", "bih", "mne", "alb", "mkd", "mda",
+            "geo", "arm", "aze", "isr", "lbn", "syr", "jor", "irq", "mar", "dza",
+            "tun", "lby", "egy", "cyp", "mlt",
         }
         self.assertTrue(all(actors[actor_id]["playable"] for actor_id in expected - nonplayable))
         self.assertTrue(all(not actors[actor_id]["playable"] for actor_id in nonplayable))

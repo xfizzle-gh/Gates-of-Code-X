@@ -2,14 +2,38 @@
   "schema": "gates-of-codex.goc-tactical-army-registry",
   "schema_version": 1,
   "description": "Production Gates-owned Dynamic Conquest army token registry. Numeric IDs are collision-checked against the accepted five-layer stack (Vanilla ZIP .pak, West81, Code:X, AIO, Gates).",
-  "engine_id_range": [0, 99],
+  "engine_id_range": [
+    0,
+    99
+  ],
   "reserved_bands": {
     "codex_west81_observed": {
-      "ids": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+      "ids": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
       "reason": "Observed West81/Code:X/Vanilla army numeric IDs in the installed stack audit"
     },
     "spike_201_prototypes": {
-      "ids": [90, 91, 92, 93, 94],
+      "ids": [
+        90,
+        91,
+        92,
+        93,
+        94
+      ],
       "reason": "Disposable #201 spike prototypes (goc_usa/fra/srb/rus/dprk); not production allocation"
     }
   },
@@ -20,36 +44,316 @@
   },
   "nation_map_band": {
     "start": 14,
-    "end": 35,
+    "end": 50,
     "reason": "AIO conquest.lua nationMap indices after core 1-8 and spike 9-13"
   },
   "armies": {
-    "goc_bel": {"numeric_id": 70, "nation_map_id": 14, "actor_id": "bel", "coalition": "west", "playable": true, "issue": 191},
-    "goc_prt": {"numeric_id": 71, "nation_map_id": 15, "actor_id": "prt", "coalition": "west", "playable": true, "issue": 191},
-    "goc_cze": {"numeric_id": 72, "nation_map_id": 16, "actor_id": "cze", "coalition": "west", "playable": true, "issue": 191},
-    "goc_svk": {"numeric_id": 73, "nation_map_id": 17, "actor_id": "svk", "coalition": "west", "playable": true, "issue": 191},
-    "goc_hun": {"numeric_id": 74, "nation_map_id": 18, "actor_id": "hun", "coalition": "west", "playable": true, "issue": 191},
-    "goc_ltu": {"numeric_id": 75, "nation_map_id": 19, "actor_id": "ltu", "coalition": "west", "playable": true, "issue": 191},
-    "goc_lva": {"numeric_id": 76, "nation_map_id": 20, "actor_id": "lva", "coalition": "west", "playable": true, "issue": 191},
-    "goc_est": {"numeric_id": 77, "nation_map_id": 21, "actor_id": "est", "coalition": "west", "playable": true, "issue": 191},
-    "goc_aut": {"numeric_id": 78, "nation_map_id": 22, "actor_id": "aut", "coalition": "west", "playable": false, "issue": 191},
-    "goc_che": {"numeric_id": 79, "nation_map_id": 23, "actor_id": "che", "coalition": "west", "playable": false, "issue": 191},
-    "goc_irl": {"numeric_id": 80, "nation_map_id": 24, "actor_id": "irl", "coalition": "west", "playable": false, "issue": 191},
-    "goc_isl": {"numeric_id": 81, "nation_map_id": 25, "actor_id": "isl", "coalition": "west", "playable": false, "issue": 191},
-    "goc_grc": {"numeric_id": 82, "nation_map_id": 26, "actor_id": "grc", "coalition": "west", "playable": true, "issue": 192},
-    "goc_rou": {"numeric_id": 83, "nation_map_id": 27, "actor_id": "rou", "coalition": "west", "playable": true, "issue": 192},
-    "goc_bgr": {"numeric_id": 84, "nation_map_id": 28, "actor_id": "bgr", "coalition": "west", "playable": true, "issue": 192},
-    "goc_hrv": {"numeric_id": 85, "nation_map_id": 29, "actor_id": "hrv", "coalition": "west", "playable": true, "issue": 192},
-    "goc_svn": {"numeric_id": 86, "nation_map_id": 30, "actor_id": "svn", "coalition": "west", "playable": false, "issue": 192},
-    "goc_bih": {"numeric_id": 87, "nation_map_id": 31, "actor_id": "bih", "coalition": "west", "playable": false, "issue": 192},
-    "goc_mne": {"numeric_id": 88, "nation_map_id": 32, "actor_id": "mne", "coalition": "west", "playable": false, "issue": 192},
-    "goc_alb": {"numeric_id": 89, "nation_map_id": 33, "actor_id": "alb", "coalition": "west", "playable": false, "issue": 192},
-    "goc_mkd": {"numeric_id": 95, "nation_map_id": 34, "actor_id": "mkd", "coalition": "west", "playable": false, "issue": 192},
-    "goc_mda": {"numeric_id": 96, "nation_map_id": 35, "actor_id": "mda", "coalition": "east", "playable": false, "issue": 192}
+    "goc_bel": {
+      "numeric_id": 70,
+      "nation_map_id": 14,
+      "actor_id": "bel",
+      "coalition": "west",
+      "playable": true,
+      "issue": 191
+    },
+    "goc_prt": {
+      "numeric_id": 71,
+      "nation_map_id": 15,
+      "actor_id": "prt",
+      "coalition": "west",
+      "playable": true,
+      "issue": 191
+    },
+    "goc_cze": {
+      "numeric_id": 72,
+      "nation_map_id": 16,
+      "actor_id": "cze",
+      "coalition": "west",
+      "playable": true,
+      "issue": 191
+    },
+    "goc_svk": {
+      "numeric_id": 73,
+      "nation_map_id": 17,
+      "actor_id": "svk",
+      "coalition": "west",
+      "playable": true,
+      "issue": 191
+    },
+    "goc_hun": {
+      "numeric_id": 74,
+      "nation_map_id": 18,
+      "actor_id": "hun",
+      "coalition": "west",
+      "playable": true,
+      "issue": 191
+    },
+    "goc_ltu": {
+      "numeric_id": 75,
+      "nation_map_id": 19,
+      "actor_id": "ltu",
+      "coalition": "west",
+      "playable": true,
+      "issue": 191
+    },
+    "goc_lva": {
+      "numeric_id": 76,
+      "nation_map_id": 20,
+      "actor_id": "lva",
+      "coalition": "west",
+      "playable": true,
+      "issue": 191
+    },
+    "goc_est": {
+      "numeric_id": 77,
+      "nation_map_id": 21,
+      "actor_id": "est",
+      "coalition": "west",
+      "playable": true,
+      "issue": 191
+    },
+    "goc_aut": {
+      "numeric_id": 78,
+      "nation_map_id": 22,
+      "actor_id": "aut",
+      "coalition": "west",
+      "playable": false,
+      "issue": 191
+    },
+    "goc_che": {
+      "numeric_id": 79,
+      "nation_map_id": 23,
+      "actor_id": "che",
+      "coalition": "west",
+      "playable": false,
+      "issue": 191
+    },
+    "goc_irl": {
+      "numeric_id": 80,
+      "nation_map_id": 24,
+      "actor_id": "irl",
+      "coalition": "west",
+      "playable": false,
+      "issue": 191
+    },
+    "goc_isl": {
+      "numeric_id": 81,
+      "nation_map_id": 25,
+      "actor_id": "isl",
+      "coalition": "west",
+      "playable": false,
+      "issue": 191
+    },
+    "goc_grc": {
+      "numeric_id": 82,
+      "nation_map_id": 26,
+      "actor_id": "grc",
+      "coalition": "west",
+      "playable": true,
+      "issue": 192
+    },
+    "goc_rou": {
+      "numeric_id": 83,
+      "nation_map_id": 27,
+      "actor_id": "rou",
+      "coalition": "west",
+      "playable": true,
+      "issue": 192
+    },
+    "goc_bgr": {
+      "numeric_id": 84,
+      "nation_map_id": 28,
+      "actor_id": "bgr",
+      "coalition": "west",
+      "playable": true,
+      "issue": 192
+    },
+    "goc_hrv": {
+      "numeric_id": 85,
+      "nation_map_id": 29,
+      "actor_id": "hrv",
+      "coalition": "west",
+      "playable": true,
+      "issue": 192
+    },
+    "goc_svn": {
+      "numeric_id": 86,
+      "nation_map_id": 30,
+      "actor_id": "svn",
+      "coalition": "west",
+      "playable": false,
+      "issue": 192
+    },
+    "goc_bih": {
+      "numeric_id": 87,
+      "nation_map_id": 31,
+      "actor_id": "bih",
+      "coalition": "west",
+      "playable": false,
+      "issue": 192
+    },
+    "goc_mne": {
+      "numeric_id": 88,
+      "nation_map_id": 32,
+      "actor_id": "mne",
+      "coalition": "west",
+      "playable": false,
+      "issue": 192
+    },
+    "goc_alb": {
+      "numeric_id": 89,
+      "nation_map_id": 33,
+      "actor_id": "alb",
+      "coalition": "west",
+      "playable": false,
+      "issue": 192
+    },
+    "goc_mkd": {
+      "numeric_id": 95,
+      "nation_map_id": 34,
+      "actor_id": "mkd",
+      "coalition": "west",
+      "playable": false,
+      "issue": 192
+    },
+    "goc_mda": {
+      "numeric_id": 96,
+      "nation_map_id": 35,
+      "actor_id": "mda",
+      "coalition": "east",
+      "playable": false,
+      "issue": 192
+    },
+    "goc_geo": {
+      "numeric_id": 55,
+      "nation_map_id": 36,
+      "actor_id": "geo",
+      "coalition": "west",
+      "playable": false,
+      "issue": 193
+    },
+    "goc_arm": {
+      "numeric_id": 56,
+      "nation_map_id": 37,
+      "actor_id": "arm",
+      "coalition": "east",
+      "playable": false,
+      "issue": 193
+    },
+    "goc_aze": {
+      "numeric_id": 57,
+      "nation_map_id": 38,
+      "actor_id": "aze",
+      "coalition": "west",
+      "playable": false,
+      "issue": 193
+    },
+    "goc_isr": {
+      "numeric_id": 58,
+      "nation_map_id": 39,
+      "actor_id": "isr",
+      "coalition": "west",
+      "playable": false,
+      "issue": 193
+    },
+    "goc_lbn": {
+      "numeric_id": 59,
+      "nation_map_id": 40,
+      "actor_id": "lbn",
+      "coalition": "west",
+      "playable": false,
+      "issue": 193
+    },
+    "goc_syr": {
+      "numeric_id": 60,
+      "nation_map_id": 41,
+      "actor_id": "syr",
+      "coalition": "east",
+      "playable": false,
+      "issue": 193
+    },
+    "goc_jor": {
+      "numeric_id": 61,
+      "nation_map_id": 42,
+      "actor_id": "jor",
+      "coalition": "west",
+      "playable": false,
+      "issue": 193
+    },
+    "goc_irq": {
+      "numeric_id": 62,
+      "nation_map_id": 43,
+      "actor_id": "irq",
+      "coalition": "west",
+      "playable": false,
+      "issue": 193
+    },
+    "goc_mar": {
+      "numeric_id": 63,
+      "nation_map_id": 44,
+      "actor_id": "mar",
+      "coalition": "west",
+      "playable": false,
+      "issue": 193
+    },
+    "goc_dza": {
+      "numeric_id": 64,
+      "nation_map_id": 45,
+      "actor_id": "dza",
+      "coalition": "east",
+      "playable": false,
+      "issue": 193
+    },
+    "goc_tun": {
+      "numeric_id": 65,
+      "nation_map_id": 46,
+      "actor_id": "tun",
+      "coalition": "west",
+      "playable": false,
+      "issue": 193
+    },
+    "goc_lby": {
+      "numeric_id": 66,
+      "nation_map_id": 47,
+      "actor_id": "lby",
+      "coalition": "east",
+      "playable": false,
+      "issue": 193
+    },
+    "goc_egy": {
+      "numeric_id": 67,
+      "nation_map_id": 48,
+      "actor_id": "egy",
+      "coalition": "west",
+      "playable": false,
+      "issue": 193
+    },
+    "goc_cyp": {
+      "numeric_id": 68,
+      "nation_map_id": 49,
+      "actor_id": "cyp",
+      "coalition": "west",
+      "playable": false,
+      "issue": 193
+    },
+    "goc_mlt": {
+      "numeric_id": 69,
+      "nation_map_id": 50,
+      "actor_id": "mlt",
+      "coalition": "west",
+      "playable": false,
+      "issue": 193
+    }
   },
   "stack_collision_audit": {
     "date_utc": "2026-08-11",
-    "authority_order": ["Vanilla", "West81", "Code:X", "AIO", "Gates"],
+    "authority_order": [
+      "Vanilla",
+      "West81",
+      "Code:X",
+      "AIO",
+      "Gates"
+    ],
     "stack_roots": [
       "E:/Steam/steamapps/common/Call to Arms - Gates of Hell",
       "E:/Steam/steamapps/workshop/content/400750/2897299509",
@@ -61,15 +365,71 @@
       "loose resource/set/multiplayer/armies/*.set",
       "ZIP-format .pak entries matching set/multiplayer/armies/*.set (including Vanilla gamelogic.pak)"
     ],
-    "observed_used_ids": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 90, 91],
-    "allocated_ids": [70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 95, 96],
+    "observed_used_ids": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      90,
+      91
+    ],
+    "allocated_ids": [
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89,
+      95,
+      96
+    ],
     "result": "no_collision",
     "notes": [
       "AIO has no armies directory; still scanned for .pak/loose army sets.",
       "Vanilla gamelogic.pak is ZIP-readable and was included.",
       "IDs 70-81 were absent from all five layers at audit time.",
       "#192 allocation 82-89 and 95-96 is disjoint from the complete accepted observed inventory [0-13, 90, 91].",
-      "#201 spike IDs 90-94 remain reserved and are not production allocation authority."
+      "#201 spike IDs 90-94 remain reserved and are not production allocation authority.",
+      "#193 allocation 55-69 is disjoint from observed inventory [0-13, 90, 91] and prior production 70-89/95-96; spike 90-94 remain reserved."
     ]
   }
 }

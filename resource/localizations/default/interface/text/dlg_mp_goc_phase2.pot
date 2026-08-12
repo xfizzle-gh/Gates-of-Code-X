@@ -3,8 +3,14 @@
 msgid "mp/army/goc_alb"
 msgstr "Albania"
 
+msgid "mp/army/goc_arm"
+msgstr "Armenia"
+
 msgid "mp/army/goc_aut"
 msgstr "Austria"
+
+msgid "mp/army/goc_aze"
+msgstr "Azerbaijan"
 
 msgid "mp/army/goc_bel"
 msgstr "Belgium"
@@ -18,11 +24,23 @@ msgstr "Bosnia and Herzegovina"
 msgid "mp/army/goc_che"
 msgstr "Switzerland"
 
+msgid "mp/army/goc_cyp"
+msgstr "Cyprus"
+
 msgid "mp/army/goc_cze"
 msgstr "Czechia"
 
+msgid "mp/army/goc_dza"
+msgstr "Algeria"
+
+msgid "mp/army/goc_egy"
+msgstr "Egypt"
+
 msgid "mp/army/goc_est"
 msgstr "Estonia"
+
+msgid "mp/army/goc_geo"
+msgstr "Georgia"
 
 msgid "mp/army/goc_grc"
 msgstr "Greece"
@@ -36,8 +54,23 @@ msgstr "Hungary"
 msgid "mp/army/goc_irl"
 msgstr "Ireland"
 
+msgid "mp/army/goc_irq"
+msgstr "Iraq"
+
 msgid "mp/army/goc_isl"
 msgstr "Iceland"
+
+msgid "mp/army/goc_isr"
+msgstr "Israel"
+
+msgid "mp/army/goc_jor"
+msgstr "Jordan"
+
+msgid "mp/army/goc_lbn"
+msgstr "Lebanon"
+
+msgid "mp/army/goc_lby"
+msgstr "Libya"
 
 msgid "mp/army/goc_ltu"
 msgstr "Lithuania"
@@ -45,11 +78,17 @@ msgstr "Lithuania"
 msgid "mp/army/goc_lva"
 msgstr "Latvia"
 
+msgid "mp/army/goc_mar"
+msgstr "Morocco"
+
 msgid "mp/army/goc_mda"
 msgstr "Moldova"
 
 msgid "mp/army/goc_mkd"
 msgstr "North Macedonia"
+
+msgid "mp/army/goc_mlt"
+msgstr "Malta"
 
 msgid "mp/army/goc_mne"
 msgstr "Montenegro"
@@ -65,3 +104,9 @@ msgstr "Slovakia"
 
 msgid "mp/army/goc_svn"
 msgstr "Slovenia"
+
+msgid "mp/army/goc_syr"
+msgstr "Syria"
+
+msgid "mp/army/goc_tun"
+msgstr "Tunisia"

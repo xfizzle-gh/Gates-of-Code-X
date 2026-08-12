@@ -195,4 +195,26 @@ This closes the earlier repository-level gap where the actor economy could purch
 | svk | national_hybrid | svk_equipment_identity + nato_common_infantry_bridge | goc_svk | Shared DANA; not SK-exclusive infantry |
 | aut/che/irl/isl | strategic_only | (none) | goc_* | Non-playable; no roster/research |
 
-Production army numeric IDs: 70–81 in `goc_tactical_army_registry.json`. Reserved 90–94 for disposable #201 spike. Core nato/ukr/rusa/prc unchanged.
+Production army numeric IDs: 70ï¿½81 in `goc_tactical_army_registry.json`. Reserved 90ï¿½94 for disposable #201 spike. Core nato/ukr/rusa/prc unchanged.
+
+## Phase 2 / #193 Near East-Caucasus-North Africa (accepted #190 selectors)
+
+| Actor | Disposition | Components | Tactical ID | Notes |
+|---|---|---|---|---|
+| geo | strategic_only | (none) | goc_geo | theatre_present; non-playable; coalition family nato alignment only |
+| arm | strategic_only | (none) | goc_arm | theatre_present; non-playable; coalition family rusa alignment only |
+| aze | strategic_only | (none) | goc_aze | theatre_present; non-playable; coalition family nato alignment only |
+| isr | strategic_only | (none) | goc_isr | theatre_present; non-playable; coalition family nato alignment only |
+| lbn | strategic_only | (none) | goc_lbn | theatre_present; non-playable; coalition family nato alignment only |
+| syr | strategic_only | (none) | goc_syr | theatre_present; non-playable; coalition family rusa alignment only |
+| jor | strategic_only | (none) | goc_jor | theatre_present; non-playable; coalition family nato alignment only |
+| irq | strategic_only | (none) | goc_irq | theatre_present; non-playable; coalition family nato alignment only |
+| mar | strategic_only | (none) | goc_mar | theatre_present; non-playable; coalition family nato alignment only |
+| dza | strategic_only | (none) | goc_dza | theatre_present; non-playable; coalition family rusa alignment only |
+| tun | strategic_only | (none) | goc_tun | theatre_present; non-playable; coalition family nato alignment only |
+| lby | strategic_only | (none) | goc_lby | theatre_present; non-playable; coalition family rusa alignment only |
+| egy | strategic_only | (none) | goc_egy | theatre_present; non-playable; coalition family nato alignment only |
+| cyp | strategic_only | (none) | goc_cyp | theatre_present; non-playable; coalition family nato alignment only |
+| mlt | strategic_only | (none) | goc_mlt | theatre_present; non-playable; coalition family nato alignment only |
+
+Production army numeric IDs: 55-69 in goc_tactical_army_registry.json. No roster/research/purchase fabrication. #48 remains encounter authority.

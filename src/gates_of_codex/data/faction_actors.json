@@ -1119,5 +1119,335 @@
       "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
       "Local/neutral garrison content remains outside sovereign recruitment authority."
     ]
+  },
+  {
+    "actor_id": "geo",
+    "display_name": "Georgia",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_geo",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Georgia (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_geo; provisional coalition family nato is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "arm",
+    "display_name": "Armenia",
+    "actor_type": "sovereign",
+    "coalition_id": "eurasian",
+    "tactical_side": "goc_arm",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Armenia (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_arm; provisional coalition family rusa is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "aze",
+    "display_name": "Azerbaijan",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_aze",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Azerbaijan (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_aze; provisional coalition family nato is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "isr",
+    "display_name": "Israel",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_isr",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Israel (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_isr; provisional coalition family nato is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "lbn",
+    "display_name": "Lebanon",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_lbn",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Lebanon (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_lbn; provisional coalition family nato is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "syr",
+    "display_name": "Syria",
+    "actor_type": "sovereign",
+    "coalition_id": "eurasian",
+    "tactical_side": "goc_syr",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Syria (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_syr; provisional coalition family rusa is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "jor",
+    "display_name": "Jordan",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_jor",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Jordan (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_jor; provisional coalition family nato is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "irq",
+    "display_name": "Iraq",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_irq",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Iraq (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_irq; provisional coalition family nato is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "mar",
+    "display_name": "Morocco",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_mar",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Morocco (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_mar; provisional coalition family nato is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "dza",
+    "display_name": "Algeria",
+    "actor_type": "sovereign",
+    "coalition_id": "eurasian",
+    "tactical_side": "goc_dza",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Algeria (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_dza; provisional coalition family rusa is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "tun",
+    "display_name": "Tunisia",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_tun",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Tunisia (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_tun; provisional coalition family nato is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "lby",
+    "display_name": "Libya",
+    "actor_type": "sovereign",
+    "coalition_id": "eurasian",
+    "tactical_side": "goc_lby",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Libya (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_lby; provisional coalition family rusa is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "egy",
+    "display_name": "Egypt",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_egy",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Egypt (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_egy; provisional coalition family nato is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "cyp",
+    "display_name": "Cyprus",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_cyp",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Cyprus (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_cyp; provisional coalition family nato is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "mlt",
+    "display_name": "Malta",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_mlt",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Malta (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_mlt; provisional coalition family nato is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
   }
 ]

@@ -396,6 +396,21 @@ def render_dlg_mp_keys() -> str:
         "alb": "Albania",
         "mkd": "North Macedonia",
         "mda": "Moldova",
+        "geo": "Georgia",
+        "arm": "Armenia",
+        "aze": "Azerbaijan",
+        "isr": "Israel",
+        "lbn": "Lebanon",
+        "syr": "Syria",
+        "jor": "Jordan",
+        "irq": "Iraq",
+        "mar": "Morocco",
+        "dza": "Algeria",
+        "tun": "Tunisia",
+        "lby": "Libya",
+        "egy": "Egypt",
+        "cyp": "Cyprus",
+        "mlt": "Malta",
     }
     for side in sorted(registry):
         actor = registry[side]["actor_id"]
