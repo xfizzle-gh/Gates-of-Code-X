@@ -1,10 +1,19 @@
-# #191 production army labels (merge into dlg_mp2.pot on deploy if needed)
+# #191/#192 production army labels (merge into dlg_mp2.pot on deploy if needed)
+
+msgid "mp/army/goc_alb"
+msgstr "Albania"
 
 msgid "mp/army/goc_aut"
 msgstr "Austria"
 
 msgid "mp/army/goc_bel"
 msgstr "Belgium"
+
+msgid "mp/army/goc_bgr"
+msgstr "Bulgaria"
+
+msgid "mp/army/goc_bih"
+msgstr "Bosnia and Herzegovina"
 
 msgid "mp/army/goc_che"
 msgstr "Switzerland"
@@ -14,6 +23,12 @@ msgstr "Czechia"
 
 msgid "mp/army/goc_est"
 msgstr "Estonia"
+
+msgid "mp/army/goc_grc"
+msgstr "Greece"
+
+msgid "mp/army/goc_hrv"
+msgstr "Croatia"
 
 msgid "mp/army/goc_hun"
 msgstr "Hungary"
@@ -30,8 +45,23 @@ msgstr "Lithuania"
 msgid "mp/army/goc_lva"
 msgstr "Latvia"
 
+msgid "mp/army/goc_mda"
+msgstr "Moldova"
+
+msgid "mp/army/goc_mkd"
+msgstr "North Macedonia"
+
+msgid "mp/army/goc_mne"
+msgstr "Montenegro"
+
 msgid "mp/army/goc_prt"
 msgstr "Portugal"
 
+msgid "mp/army/goc_rou"
+msgstr "Romania"
+
 msgid "mp/army/goc_svk"
 msgstr "Slovakia"
+
+msgid "mp/army/goc_svn"
+msgstr "Slovenia"

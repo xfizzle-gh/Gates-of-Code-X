@@ -885,5 +885,239 @@
       "Non-playable: no fabricated roster/research.",
       "#201 identity token goc_isl (registry numeric_id 81)."
     ]
+  },
+  {
+    "actor_id": "grc",
+    "display_name": "Greece",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_grc",
+    "playable": true,
+    "roster_class": "coalition_fallback",
+    "components": [
+      "nato_full_fallback"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Greece Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "#190 disposition coalition_fallback; exact accepted components: ['nato_full_fallback'].",
+      "#190/#201 accepted tactical identity goc_grc; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+      "No distinctive national source package was proven; roster is explicitly labeled coalition fallback.",
+      "Do not infer national equipment or widen beyond the accepted nato_full_fallback selector."
+    ]
+  },
+  {
+    "actor_id": "rou",
+    "display_name": "Romania",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_rou",
+    "playable": true,
+    "roster_class": "coalition_fallback",
+    "components": [
+      "nato_full_fallback"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Romania Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "#190 disposition coalition_fallback; exact accepted components: ['nato_full_fallback'].",
+      "#190/#201 accepted tactical identity goc_rou; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+      "No distinctive national source package was proven; roster is explicitly labeled coalition fallback.",
+      "Do not infer national equipment or widen beyond the accepted nato_full_fallback selector."
+    ]
+  },
+  {
+    "actor_id": "bgr",
+    "display_name": "Bulgaria",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_bgr",
+    "playable": true,
+    "roster_class": "coalition_fallback",
+    "components": [
+      "nato_full_fallback"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Bulgaria Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "#190 disposition coalition_fallback; exact accepted components: ['nato_full_fallback'].",
+      "#190/#201 accepted tactical identity goc_bgr; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+      "No distinctive national source package was proven; roster is explicitly labeled coalition fallback.",
+      "Do not infer national equipment or widen beyond the accepted nato_full_fallback selector."
+    ]
+  },
+  {
+    "actor_id": "hrv",
+    "display_name": "Croatia",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_hrv",
+    "playable": true,
+    "roster_class": "coalition_fallback",
+    "components": [
+      "nato_full_fallback"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Croatia Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "#190 disposition coalition_fallback; exact accepted components: ['nato_full_fallback'].",
+      "#190/#201 accepted tactical identity goc_hrv; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+      "No distinctive national source package was proven; roster is explicitly labeled coalition fallback.",
+      "Do not infer national equipment or widen beyond the accepted nato_full_fallback selector."
+    ]
+  },
+  {
+    "actor_id": "svn",
+    "display_name": "Slovenia",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_svn",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Slovenia (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_svn; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison content remains outside sovereign recruitment authority."
+    ]
+  },
+  {
+    "actor_id": "bih",
+    "display_name": "Bosnia and Herzegovina",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_bih",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Bosnia and Herzegovina (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_bih; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison content remains outside sovereign recruitment authority."
+    ]
+  },
+  {
+    "actor_id": "mne",
+    "display_name": "Montenegro",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_mne",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Montenegro (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_mne; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison content remains outside sovereign recruitment authority."
+    ]
+  },
+  {
+    "actor_id": "alb",
+    "display_name": "Albania",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_alb",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Albania (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_alb; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison content remains outside sovereign recruitment authority."
+    ]
+  },
+  {
+    "actor_id": "mkd",
+    "display_name": "North Macedonia",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_mkd",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "North Macedonia (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_mkd; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison content remains outside sovereign recruitment authority."
+    ]
+  },
+  {
+    "actor_id": "mda",
+    "display_name": "Moldova",
+    "actor_type": "sovereign",
+    "coalition_id": "eurasian",
+    "tactical_side": "goc_mda",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Moldova (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_mda; provisional coalition family `rusa` is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison content remains outside sovereign recruitment authority."
+    ]
   }
 ]

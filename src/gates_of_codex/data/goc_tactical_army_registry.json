@@ -15,12 +15,12 @@
   },
   "production_band": {
     "start": 70,
-    "end": 89,
-    "reason": "Gates production Expanded Nations army IDs"
+    "end": 99,
+    "reason": "Gates production Expanded Nations army IDs; #201 reserved 90-94 are excluded"
   },
   "nation_map_band": {
     "start": 14,
-    "end": 29,
+    "end": 35,
     "reason": "AIO conquest.lua nationMap indices after core 1-8 and spike 9-13"
   },
   "armies": {
@@ -35,7 +35,17 @@
     "goc_aut": {"numeric_id": 78, "nation_map_id": 22, "actor_id": "aut", "coalition": "west", "playable": false, "issue": 191},
     "goc_che": {"numeric_id": 79, "nation_map_id": 23, "actor_id": "che", "coalition": "west", "playable": false, "issue": 191},
     "goc_irl": {"numeric_id": 80, "nation_map_id": 24, "actor_id": "irl", "coalition": "west", "playable": false, "issue": 191},
-    "goc_isl": {"numeric_id": 81, "nation_map_id": 25, "actor_id": "isl", "coalition": "west", "playable": false, "issue": 191}
+    "goc_isl": {"numeric_id": 81, "nation_map_id": 25, "actor_id": "isl", "coalition": "west", "playable": false, "issue": 191},
+    "goc_grc": {"numeric_id": 82, "nation_map_id": 26, "actor_id": "grc", "coalition": "west", "playable": true, "issue": 192},
+    "goc_rou": {"numeric_id": 83, "nation_map_id": 27, "actor_id": "rou", "coalition": "west", "playable": true, "issue": 192},
+    "goc_bgr": {"numeric_id": 84, "nation_map_id": 28, "actor_id": "bgr", "coalition": "west", "playable": true, "issue": 192},
+    "goc_hrv": {"numeric_id": 85, "nation_map_id": 29, "actor_id": "hrv", "coalition": "west", "playable": true, "issue": 192},
+    "goc_svn": {"numeric_id": 86, "nation_map_id": 30, "actor_id": "svn", "coalition": "west", "playable": false, "issue": 192},
+    "goc_bih": {"numeric_id": 87, "nation_map_id": 31, "actor_id": "bih", "coalition": "west", "playable": false, "issue": 192},
+    "goc_mne": {"numeric_id": 88, "nation_map_id": 32, "actor_id": "mne", "coalition": "west", "playable": false, "issue": 192},
+    "goc_alb": {"numeric_id": 89, "nation_map_id": 33, "actor_id": "alb", "coalition": "west", "playable": false, "issue": 192},
+    "goc_mkd": {"numeric_id": 95, "nation_map_id": 34, "actor_id": "mkd", "coalition": "west", "playable": false, "issue": 192},
+    "goc_mda": {"numeric_id": 96, "nation_map_id": 35, "actor_id": "mda", "coalition": "east", "playable": false, "issue": 192}
   },
   "stack_collision_audit": {
     "date_utc": "2026-08-11",
@@ -52,12 +62,14 @@
       "ZIP-format .pak entries matching set/multiplayer/armies/*.set (including Vanilla gamelogic.pak)"
     ],
     "observed_used_ids": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 90, 91],
-    "allocated_ids": [70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81],
+    "allocated_ids": [70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 95, 96],
     "result": "no_collision",
     "notes": [
       "AIO has no armies directory; still scanned for .pak/loose army sets.",
       "Vanilla gamelogic.pak is ZIP-readable and was included.",
-      "IDs 70-81 were absent from all five layers at audit time."
+      "IDs 70-81 were absent from all five layers at audit time.",
+      "#192 allocation 82-89 and 95-96 is disjoint from the complete accepted observed inventory [0-13, 90, 91].",
+      "#201 spike IDs 90-94 remain reserved and are not production allocation authority."
     ]
   }
 }

@@ -369,7 +369,7 @@ def patch_conquest_lua(aio_text: str) -> str:
 
 def render_dlg_mp_keys() -> str:
     lines = [
-        "# #191 production army labels (merge into dlg_mp2.pot on deploy if needed)",
+        "# #191/#192 production army labels (merge into dlg_mp2.pot on deploy if needed)",
         "",
     ]
     registry = load_goc_army_registry()["armies"]
@@ -386,6 +386,16 @@ def render_dlg_mp_keys() -> str:
         "che": "Switzerland",
         "irl": "Ireland",
         "isl": "Iceland",
+        "grc": "Greece",
+        "rou": "Romania",
+        "bgr": "Bulgaria",
+        "hrv": "Croatia",
+        "svn": "Slovenia",
+        "bih": "Bosnia and Herzegovina",
+        "mne": "Montenegro",
+        "alb": "Albania",
+        "mkd": "North Macedonia",
+        "mda": "Moldova",
     }
     for side in sorted(registry):
         actor = registry[side]["actor_id"]
