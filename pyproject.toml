@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gates-of-codex"
-version = "0.15.0"
+version = "0.16.0"
 description = "A clean-room strategic campaign bridge for Call to Arms: Gates of Hell and Code:X"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -23,6 +23,9 @@ gates-of-codex-actors = "gates_of_codex.strategic_actor_cli:main"
 gates-of-codex-actor-economy = "gates_of_codex.actor_economy_cli:main"
 gates-of-codex-expanded = "gates_of_codex.expanded_nations_cli:main"
 
+[project.entry-points.pyinstaller40]
+hook-dirs = "gates_of_codex.__pyinstaller:get_hook_dirs"
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 
@@ -30,4 +33,10 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-gates_of_codex = ["py.typed", "data/*", "data/earth3_v1/*.json"]
+gates_of_codex = [
+    "py.typed",
+    "SOURCE_COMMIT",
+    "data/*",
+    "data/earth3_v1/*.json",
+    "pyinstaller_hooks/*.py",
+]

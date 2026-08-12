@@ -11,8 +11,8 @@ extends SceneTree
 ## godot --headless --path godot -s res://scripts/tools/player_shell_test.gd -- \
 ##   --snapshot=<generated production snapshot>
 
-const MainScript = preload("res://scripts/main_stack_panel.gd")
 const FakeRunnerScript = preload("res://scripts/tools/fake_command_runner.gd")
+const MainScene = preload("res://main.tscn")
 
 const EARTH3_MAP_ID := "earth3_europe_mediterranean"
 const LEGACY_MAP_IDS := [
@@ -39,7 +39,7 @@ func _run_all() -> void:
 		quit(2)
 		return
 
-	_client = MainScript.new()
+	_client = MainScene.instantiate()
 	_client.name = "PlayerShellClient"
 	root.add_child(_client)
 	await create_timer(0.05).timeout
@@ -135,6 +135,14 @@ func _verify_player_identity(snapshot: Dictionary) -> void:
 		"application_version_present",
 		not String(application.get("version", "")).strip_edges().is_empty()
 	)
+	var commit := String(application.get("source_commit", ""))
+	var commit_pattern := RegEx.new()
+	commit_pattern.compile("^[0-9a-f]{40}$")
+	_assert_true(
+		"exact_source_commit_present",
+		commit_pattern.search(commit) != null,
+		commit
+	)
 	_assert_true(
 		"scenario_is_earth3_v1",
 		String(application.get("scenario_id", "")) == "earth3_v1",
@@ -170,9 +178,21 @@ func _verify_player_actions(snapshot: Dictionary) -> void:
 	_assert_true("new_campaign_available", _client.can_start_new_campaign())
 	_assert_true("continue_campaign_available", _client.can_continue_campaign())
 
+	# A production snapshot can begin with an operational presentation in flight.
+	# State-mutating maintenance controls must stay hidden until that lifecycle is
+	# complete, so finish it before checking the idle player controls.
+	if _client.operational_presenter != null and _client.operational_presenter.is_active():
+		_client._handle_button("skip_presentation")
 	var ids: PackedStringArray = _client.enabled_action_button_ids()
 	_assert_true("new_campaign_button_exposed", ids.has("new_campaign"), str(ids))
 	_assert_true("continue_campaign_button_exposed", ids.has("continue_campaign"), str(ids))
+	_assert_true("reset_campaign_button_exposed", ids.has("reset_test_campaign"), str(ids))
+	var maintenance: Dictionary = snapshot.get("control", {}).get("maintenance", {})
+	_assert_true(
+		"restore_matches_authenticated_backup_availability",
+		ids.has("restore_backup") == bool(maintenance.get("restore_available", false)),
+		str(maintenance)
+	)
 
 	# New Campaign replaces authoritative state and must confirm before running.
 	_client._handle_button("new_campaign")
@@ -219,7 +239,7 @@ func _verify_mutation_guard() -> void:
 
 	var ids: PackedStringArray = _client.enabled_action_button_ids()
 	var still_enabled: Array = []
-	for guarded in ["end_turn", "run_ai", "refresh", "new_campaign", "continue_campaign"]:
+	for guarded in ["end_turn", "run_ai", "refresh", "new_campaign", "continue_campaign", "restore_backup", "reset_test_campaign"]:
 		if ids.has(guarded):
 			still_enabled.append(guarded)
 	_assert_true(

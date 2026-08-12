@@ -17,6 +17,8 @@ var snapshot_commit_count := 0
 ## Player-shell state. New Campaign replaces authoritative state, so it always
 ## requires a second confirming press.
 var new_campaign_confirm_pending := false
+var restore_confirm_pending := false
+var reset_confirm_pending := false
 ## P5: Import Result stays unavailable until Verify Result accepts this save.
 var last_verified_save_path := ""
 var last_verification_ok := false
@@ -81,6 +83,7 @@ func command_busy_label() -> String:
 func _load_snapshot(path: String) -> void:
 	## Initial / explicit load. Clears then rebuilds. Command completion uses
 	## transactional _try_build_snapshot_state + _commit_snapshot_state instead.
+	_cancel_maintenance_confirmations()
 	var built: Dictionary = _try_build_snapshot_state(path)
 	if not bool(built.get("ok", false)):
 		provinces_by_id.clear()
@@ -337,8 +340,42 @@ func _command_mutates_state(button_id: String) -> bool:
 		"import_battle",
 		"new_campaign",
 		"continue_campaign",
+		"restore_backup",
+		"reset_test_campaign",
 		"cancel_move_order",
 	]
+
+
+func _cancel_maintenance_confirmations() -> void:
+	restore_confirm_pending = false
+	reset_confirm_pending = false
+
+
+func _maintenance_block() -> Dictionary:
+	var control: Dictionary = snapshot.get("control", {})
+	var maintenance: Variant = control.get("maintenance", {})
+	return (maintenance as Dictionary).duplicate(true) if maintenance is Dictionary else {}
+
+
+func can_restore_latest_backup() -> bool:
+	var maintenance := _maintenance_block()
+	var latest: Variant = maintenance.get("latest_backup", null)
+	return bool(snapshot.get("control", {}).get("enabled", false)) \
+		and bool(maintenance.get("restore_available", false)) \
+		and latest is Dictionary \
+		and not String((latest as Dictionary).get("backup_directory", "")).is_empty() \
+		and not is_pending_battle_modal_active() \
+		and (operational_presenter == null or not operational_presenter.is_active()) \
+		and not is_command_busy()
+
+
+func can_reset_test_campaign() -> bool:
+	var maintenance := _maintenance_block()
+	return bool(snapshot.get("control", {}).get("enabled", false)) \
+		and bool(maintenance.get("reset_available", false)) \
+		and not is_pending_battle_modal_active() \
+		and (operational_presenter == null or not operational_presenter.is_active()) \
+		and not is_command_busy()
 
 
 func next_command_id(op: String) -> String:
@@ -366,20 +403,39 @@ func _stamp_command_ids(commands: Array) -> Array:
 	return stamped
 
 
+func _pending_battle_snapshot() -> Dictionary:
+	var pending: Variant = snapshot.get("pending_battle", null)
+	return (pending as Dictionary) if pending is Dictionary else {}
+
+
+func _pending_battle_handoff_ready() -> bool:
+	var pending := _pending_battle_snapshot()
+	return not pending.is_empty() and bool(pending.get("started", false))
+
+
+func _pending_battle_id() -> String:
+	return String(_pending_battle_snapshot().get("id", ""))
+
+
 func can_import_verified_result() -> bool:
-	## P5: import is unavailable until Verify Result accepted this exact save.
+	## P5: import is unavailable until Verify Result accepted this exact pending battle.
+	var pending_id := _pending_battle_id()
 	return last_verification_ok \
-		and not last_handoff_save_path.is_empty() \
-		and last_verified_save_path == last_handoff_save_path
+		and not last_verified_save_path.is_empty() \
+		and not pending_id.is_empty() \
+		and pending_id == last_handoff_battle_id \
+		and (last_handoff_save_path.is_empty() or last_verified_save_path == last_handoff_save_path)
 
 
 func handoff_status_label() -> String:
-	if last_handoff_save_path.is_empty():
+	if last_handoff_save_path.is_empty() and not _pending_battle_handoff_ready():
 		return ""
 	if can_import_verified_result():
 		return "Result verified - ready to import."
 	if not last_verification_detail.is_empty():
 		return "Verification failed: %s" % last_verification_detail
+	if last_handoff_save_path.is_empty():
+		return "Battle handed off - ready to verify."
 	return "Awaiting Verify Result."
 
 
@@ -392,7 +448,20 @@ func _capture_verification(payload: Dictionary) -> void:
 		if String(row.get("op", "")) != "verify_result":
 			continue
 		var data: Dictionary = row.get("data", {})
+		var verified_battle_id := String(data.get("battle_id", ""))
+		var pending_id := _pending_battle_id()
+		if verified_battle_id.is_empty() or pending_id.is_empty() or verified_battle_id != pending_id:
+			last_verified_save_path = ""
+			last_verification_ok = false
+			last_verification_detail = "Verification result does not match the pending battle."
+			continue
 		last_verified_save_path = String(data.get("save_path", ""))
+		last_handoff_battle_id = verified_battle_id
+		if last_handoff_save_path.is_empty():
+			# A reloaded Godot shell does not retain the transient handoff command
+			# payload. The backend resolves the save from authoritative pending-battle
+			# state and returns that exact bound path here.
+			last_handoff_save_path = last_verified_save_path
 		last_verification_ok = bool(data.get("verified", false))
 		var errors: Array = data.get("errors", [])
 		last_verification_detail = "" if last_verification_ok else ", ".join(errors.slice(0, 3))
@@ -462,8 +531,44 @@ func _run_player_launch(op: String, args_key: String) -> void:
 
 func _handle_button(button_id: String) -> void:
 	_ensure_operational_presenter()
+	if button_id not in ["restore_backup", "reset_test_campaign"]:
+		_cancel_maintenance_confirmations()
 	if button_id != "new_campaign":
 		new_campaign_confirm_pending = false
+	if button_id == "restore_backup":
+		reset_confirm_pending = false
+		if not can_restore_latest_backup():
+			restore_confirm_pending = false
+			status_message = "Restore unavailable - no authenticated backup for this campaign."
+			queue_redraw()
+			return
+		if not restore_confirm_pending:
+			restore_confirm_pending = true
+			status_message = "Restore replaces current campaign state - press again to confirm."
+			queue_redraw()
+			return
+		var latest: Dictionary = _maintenance_block().get("latest_backup", {})
+		restore_confirm_pending = false
+		_queue_and_apply([{
+			"op": "restore_backup",
+			"backup_directory": String(latest.get("backup_directory", "")),
+		}])
+		return
+	if button_id == "reset_test_campaign":
+		restore_confirm_pending = false
+		if not can_reset_test_campaign():
+			reset_confirm_pending = false
+			status_message = "Reset Test Campaign unavailable right now."
+			queue_redraw()
+			return
+		if not reset_confirm_pending:
+			reset_confirm_pending = true
+			status_message = "Reset deletes this test campaign - press again to confirm."
+			queue_redraw()
+			return
+		reset_confirm_pending = false
+		_queue_and_apply([{"op": "reset_test_campaign"}])
+		return
 	if button_id == "new_campaign":
 		if not can_start_new_campaign():
 			status_message = "New Campaign unavailable right now."
@@ -497,14 +602,14 @@ func _handle_button(button_id: String) -> void:
 		queue_redraw()
 		return
 	if button_id == "verify_result":
-		if last_handoff_save_path.is_empty():
+		if not _pending_battle_handoff_ready() and last_handoff_save_path.is_empty():
 			status_message = "Nothing to verify - hand a battle off to Gates of Hell first."
 			queue_redraw()
 			return
-		_queue_and_apply([{
-			"op": "verify_result",
-			"save_path": last_handoff_save_path,
-		}])
+		var verify_command := {"op": "verify_result"}
+		if not last_handoff_save_path.is_empty():
+			verify_command["save_path"] = last_handoff_save_path
+		_queue_and_apply([verify_command])
 		return
 	if button_id == "import_battle":
 		if not can_import_verified_result():
@@ -513,7 +618,7 @@ func _handle_button(button_id: String) -> void:
 			return
 		_queue_and_apply([{
 			"op": "import_battle",
-			"save_path": last_handoff_save_path,
+			"save_path": last_verified_save_path,
 		}])
 		return
 	if is_pending_battle_modal_active() and button_id not in ["auto_resolve", "handoff", "import_battle", "verify_result"]:
@@ -560,10 +665,8 @@ func enabled_action_button_ids() -> PackedStringArray:
 	var writeback := bool(snapshot.get("control", {}).get("enabled", false))
 	var has_battle := snapshot.get("pending_battle") != null
 	var pending: Dictionary = snapshot.get("pending_battle", {}) if has_battle else {}
-	var can_import := writeback \
-		and bool(pending.get("started", false)) \
-		and String(pending.get("id", "")) == last_handoff_battle_id \
-		and not last_handoff_save_path.is_empty()
+	var handoff_ready := bool(pending.get("started", false)) or not last_handoff_save_path.is_empty()
+	var can_import := writeback and handoff_ready and can_import_verified_result()
 	_ensure_operational_presenter()
 	var play := player_launch_block()
 	var play_enabled := bool(play.get("enabled", false))
@@ -575,8 +678,8 @@ func enabled_action_button_ids() -> PackedStringArray:
 		candidates.append_array([
 			["auto_resolve", writeback],
 			["handoff", writeback],
-			["verify_result", writeback and not last_handoff_save_path.is_empty()],
-			["import_battle", can_import and can_import_verified_result()],
+			["verify_result", writeback and handoff_ready],
+			["import_battle", can_import],
 			["replay_contact", operational_presenter.can_replay_last_contact()],
 			["skip_presentation", operational_presenter.is_active()],
 		])
@@ -586,6 +689,8 @@ func enabled_action_button_ids() -> PackedStringArray:
 			["refresh", writeback],
 			["end_turn", writeback],
 			["run_ai", writeback],
+			["restore_backup", can_restore_latest_backup()],
+			["reset_test_campaign", can_reset_test_campaign()],
 			["skip_presentation", operational_presenter.is_active()],
 		])
 		# Graph-native movement orders for the selected strategic formation.
@@ -599,6 +704,8 @@ func enabled_action_button_ids() -> PackedStringArray:
 		var button_id := String(entry[0])
 		var allow := bool(entry[1])
 		if is_command_busy() and _command_mutates_state(button_id):
+			allow = false
+		if operational_presenter.is_active() and _command_mutates_state(button_id):
 			allow = false
 		if allow:
 			ids.append(button_id)
@@ -666,6 +773,7 @@ func _backend_launch_candidates(control: Dictionary, apply_args: Array) -> Array
 func _queue_and_apply(commands: Array) -> void:
 	_ensure_command_runner()
 	_ensure_operational_presenter()
+	_cancel_maintenance_confirmations()
 	var requested_op := FrontendCommandRunnerScript.primary_op(commands)
 	if is_pending_battle_modal_active() and requested_op not in ["auto_resolve", "handoff", "import_battle", "verify_result"]:
 		status_message = "Operational resolution paused - pending battle is modal."
@@ -788,6 +896,68 @@ func _fail_command(op: String, detail: String) -> void:
 	_clear_busy_ui()
 
 
+func _result_data(payload: Dictionary, op: String) -> Dictionary:
+	for item in payload.get("results", []):
+		if item is Dictionary and String(item.get("op", "")) == op:
+			var data: Variant = item.get("data", {})
+			return (data as Dictionary).duplicate(true) if data is Dictionary else {}
+	return {}
+
+
+func _clear_campaign_runtime() -> void:
+	provinces_by_id.clear()
+	battalions_by_province.clear()
+	battalion_stacks_by_province.clear()
+	battalions_by_id.clear()
+	formations_by_id.clear()
+	factions_by_id.clear()
+	front_by_origin.clear()
+	all_front_by_origin.clear()
+	orders_by_formation.clear()
+	order_formations_by_province.clear()
+	legal_targets.clear()
+	focus_province_ids.clear()
+	button_rects.clear()
+	selected_province_id = ""
+	selected_battalion_id = ""
+	selected_strategic_formation_id = ""
+	last_handoff_save_path = ""
+	last_handoff_battle_id = ""
+	last_verified_save_path = ""
+	last_verification_ok = false
+	last_verification_detail = ""
+
+
+func _enter_new_campaign_state(payload: Dictionary) -> void:
+	var retained_play: Dictionary = player_launch_block()
+	var retained_application: Dictionary = snapshot.get("application", {}).duplicate(true)
+	_clear_campaign_runtime()
+	snapshot = {
+		"application": retained_application,
+		"control": {
+			"enabled": false,
+			"play": {
+				"enabled": true,
+				"new_args": (retained_play.get("new_args", []) as Array).duplicate(),
+				"continue_args": [],
+			},
+			"maintenance": {
+				"restore_available": false,
+				"latest_backup": null,
+				"reset_available": false,
+			},
+		},
+	}
+	_cancel_maintenance_confirmations()
+	var lifecycle := _result_data(payload, "reset_test_campaign")
+	if bool(lifecycle.get("campaign_deleted", false)) \
+	and String(lifecycle.get("next_player_state", "")) == "new_campaign":
+		status_message = "Campaign reset - start New Campaign."
+	else:
+		status_message = "Campaign reset completed - start New Campaign."
+	_clear_busy_ui()
+
+
 func _on_command_finished(
 	generation: int,
 	success: bool,
@@ -819,13 +989,19 @@ func _on_command_finished(
 		_fail_command(op, payload_fail)
 		return
 
+	var backend_payload := _backend_payload(output_text)
+	# Reset is terminal: the campaign and its snapshot no longer exist. Never
+	# try to reload the deleted snapshot or retain stale campaign presentation.
+	if op == "reset_test_campaign":
+		_enter_new_campaign_state(backend_payload)
+		return
+
 	# 3) Transactional snapshot replacement — never clear live state first.
-	var previous_selected := selected_province_id
-	var previous_battalion := selected_battalion_id
+	var previous_selected := "" if op == "restore_backup" else selected_province_id
+	var previous_battalion := "" if op == "restore_backup" else selected_battalion_id
 	var previous_scale := view_scale
 	var previous_offset := view_offset
 	var previous_snapshot := snapshot.duplicate(true)
-	var backend_payload := _backend_payload(output_text)
 	var load_path := snapshot_path if not snapshot_path.is_empty() else snapshot_source_path
 	var built: Dictionary = _try_build_snapshot_state(load_path)
 	if not bool(built.get("ok", false)):
@@ -838,14 +1014,30 @@ func _on_command_finished(
 	# Apply output side-effects only after candidate is valid.
 	_parse_apply_output(output_text)
 	_capture_verification(backend_payload)
+	if op == "restore_backup":
+		last_handoff_save_path = ""
+		last_handoff_battle_id = ""
+		last_verified_save_path = ""
+		last_verification_ok = false
+		last_verification_detail = ""
 	_commit_snapshot_state(built, previous_selected, previous_battalion, true)
 	_ensure_operational_presenter()
-	operational_presenter.begin_transition(
-		previous_snapshot,
-		snapshot,
-		backend_payload,
-		_operational_graph_index()
-	)
+	if op == "restore_backup":
+		# A default selection created while loading is still pre-command UI state.
+		# Restore starts a fresh presentation session with no retained selection.
+		selected_province_id = ""
+		selected_battalion_id = ""
+		selected_strategic_formation_id = ""
+		legal_targets.clear()
+		focus_province_ids.clear()
+		operational_presenter.begin_session(snapshot, _operational_graph_index())
+	else:
+		operational_presenter.begin_transition(
+			previous_snapshot,
+			snapshot,
+			backend_payload,
+			_operational_graph_index()
+		)
 	view_scale = previous_scale
 	view_offset = previous_offset
 	if status_message.is_empty():
