@@ -416,6 +416,17 @@ def run_session_backend(argv: Sequence[str]) -> int:
                                     commands_path=commands_path,
                                     snapshot_path=(Path(request_snapshot) if request_snapshot else snapshot),
                                 )
+                            except Exception:
+                                # The leased object may have been mutated before the
+                                # command raised, including after a canonical save but
+                                # before runtime-patch publication completed. Never
+                                # retain that object or its old fingerprint. Re-raise
+                                # so the daemon closes and the client reports the
+                                # post-dispatch outcome as ambiguous rather than
+                                # replaying a possibly committed mutation.
+                                cached_state = None
+                                cached_fingerprint = None
+                                raise
                             finally:
                                 commands_module.load_campaign = original_loader
                                 perf._compact_save_campaign = original_compact_save
