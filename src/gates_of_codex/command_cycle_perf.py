@@ -19,14 +19,18 @@ Fast paths are intentionally narrow:
   compact JSON. Pretty whitespace is not authority, and removing it reduces both
   write volume and the next command's cold-read volume on production Earth3.
 * operational movement presentation resolves the authenticated graph once per
-  before/after projection instead of once per formation. The graph authority is
-  still authenticated on every projection; only repeated presentation lookups
-  inside that same projection reuse the already-authenticated payload.
+  before/after projection instead of once per formation.
+* one frontend command uses one authenticated P3 graph snapshot. The first P3
+  authority request still performs the full fail-closed fixed-file authentication;
+  later requests during that same atomic command reuse a detached copy. The cache
+  is discarded and the authority loader restored before the command returns, so
+  the next command authenticates again.
 
 All other mutating commands retain the existing load -> mutate -> save -> full
 snapshot publication path.
 """
 
+import copy
 import json
 import tempfile
 import time
@@ -50,6 +54,8 @@ _TIMING_KEYS = (
     "read_only_fast_path",
     "snapshot_fast_path",
     "compact_save_path",
+    "p3_auth_loads",
+    "p3_auth_cache_hits",
 )
 
 
@@ -150,17 +156,7 @@ def _compact_save_campaign(
 
 
 def _bulk_formation_presentation_rows(state) -> dict[str, dict[str, Any]]:
-    """Build movement-presentation rows with one graph authentication.
-
-    ``frontend_commands._formation_presentation_rows`` historically called
-    ``resolve_display_pixel`` once for every strategic formation. On authenticated
-    Earth3 each call re-authenticates the fixed P3 files, so the before/after
-    movement presentation pass multiplied that cost by the formation count.
-
-    This helper authenticates the exact same graph once for this projection and
-    then resolves every formation from that payload. There is no persistent or
-    cross-command graph cache and no change to the authority loader itself.
-    """
+    """Build movement-presentation rows with one graph authentication."""
 
     from .operational_movement import move_order_to_dict
     from .operational_position import (
@@ -204,8 +200,11 @@ def measured_apply_frontend_commands(
     The existing command engine remains responsible for validation, mutation,
     exactly-once ledger handling, persistence, and result construction. This
     wrapper substitutes proven presentation no-ops, the semantically equivalent
-    compact runtime writer, and a bounded bulk presentation projection.
+    compact runtime writer, a bounded bulk presentation projection, and a
+    command-scoped authenticated P3 graph snapshot.
     """
+
+    from . import earth3_operational as _earth3_operational
 
     requested = _requested_commands(commands, commands_path)
     read_only_fast_path = _verify_only(requested)
@@ -215,12 +214,32 @@ def measured_apply_frontend_commands(
     original_save = _commands.save_campaign
     original_snapshot = _frontend.write_frontend_snapshot
     original_presentation_rows = _commands._formation_presentation_rows
+    original_p3_auth = _earth3_operational.load_authenticated_p3_graph
 
     phase_seconds = {
         "load": 0.0,
         "save": 0.0,
         "snapshot": 0.0,
     }
+    p3_auth_cache: dict[str, dict[str, Any]] = {}
+    p3_auth_stats = {"loads": 0, "hits": 0}
+
+    def scoped_p3_auth(*, repository_root=None):
+        # Keep explicit roots separate from the default frozen/repository root.
+        # The first request for each root uses the real fail-closed loader.
+        cache_key = (
+            "<default>"
+            if repository_root is None
+            else str(Path(repository_root).expanduser().resolve(strict=False))
+        )
+        cached = p3_auth_cache.get(cache_key)
+        if cached is not None:
+            p3_auth_stats["hits"] += 1
+            return copy.deepcopy(cached)
+        graph = original_p3_auth(repository_root=repository_root)
+        p3_auth_stats["loads"] += 1
+        p3_auth_cache[cache_key] = copy.deepcopy(graph)
+        return copy.deepcopy(graph)
 
     def timed_load(path):
         started = time.perf_counter()
@@ -269,6 +288,7 @@ def measured_apply_frontend_commands(
     _commands.save_campaign = timed_save
     _commands._formation_presentation_rows = _bulk_formation_presentation_rows
     _frontend.write_frontend_snapshot = timed_snapshot
+    _earth3_operational.load_authenticated_p3_graph = scoped_p3_auth
 
     started_total = time.perf_counter()
     try:
@@ -284,6 +304,8 @@ def measured_apply_frontend_commands(
         _commands.save_campaign = original_save
         _commands._formation_presentation_rows = original_presentation_rows
         _frontend.write_frontend_snapshot = original_snapshot
+        _earth3_operational.load_authenticated_p3_graph = original_p3_auth
+        p3_auth_cache.clear()
 
     measured_seconds = (
         phase_seconds["load"]
@@ -304,6 +326,8 @@ def measured_apply_frontend_commands(
         "read_only_fast_path": bool(read_only_fast_path),
         "snapshot_fast_path": bool(snapshot_fast_path),
         "compact_save_path": not read_only_fast_path,
+        "p3_auth_loads": int(p3_auth_stats["loads"]),
+        "p3_auth_cache_hits": int(p3_auth_stats["hits"]),
     }
     return result
 
