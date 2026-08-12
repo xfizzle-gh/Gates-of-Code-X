@@ -6,6 +6,7 @@ import tempfile
 import threading
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from gates_of_codex import persistent_backend
 
@@ -47,7 +48,7 @@ class PersistentBackendTransportTests(unittest.TestCase):
 
             server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server.bind(("127.0.0.1", 0))
-            server.listen(1)
+            server.listen(2)
             port = int(server.getsockname()[1])
             token = "test-token"
             descriptor = {
@@ -66,6 +67,13 @@ class PersistentBackendTransportTests(unittest.TestCase):
             expected_stdout = '{"ok":true,"timings":{"load_ms":0.0}}'
 
             def serve() -> None:
+                ping_connection, _ = server.accept()
+                with ping_connection:
+                    stream = ping_connection.makefile("rwb")
+                    request = json.loads(stream.readline().decode("utf-8"))
+                    self.assertEqual("ping", request["action"])
+                    stream.write(b'{"handled":true,"exit_code":0,"stdout":"","ok":true}\n')
+                    stream.flush()
                 connection, _ = server.accept()
                 with connection:
                     stream = connection.makefile("rwb")
@@ -104,6 +112,35 @@ class PersistentBackendTransportTests(unittest.TestCase):
             worker.join(timeout=2.0)
             self.assertEqual((0, expected_stdout), result)
 
+    def test_lost_reply_after_dispatch_never_falls_back_to_replay(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            campaign = Path(temporary) / "campaign.json"
+            campaign.write_text("{}\n", encoding="utf-8")
+            session = {
+                "schema": persistent_backend.SESSION_SCHEMA,
+                "schema_version": persistent_backend.SESSION_SCHEMA_VERSION,
+                "campaign_path": str(campaign.resolve()),
+                "port": 12345,
+                "token": "token",
+            }
+            with (
+                patch.object(persistent_backend, "_read_session", return_value=session),
+                patch.object(
+                    persistent_backend,
+                    "_request",
+                    side_effect=[{"ok": True}, None],
+                ),
+            ):
+                result = persistent_backend.try_forward_apply_frontend(
+                    ["apply-frontend", str(campaign)]
+                )
+            self.assertIsNotNone(result)
+            assert result is not None
+            self.assertEqual(0, result[0])
+            payload = json.loads(result[1])
+            self.assertFalse(payload["ok"])
+            self.assertIn("ambiguous", payload["results"][0]["detail"].lower())
+
     def test_fingerprint_detects_same_size_external_rewrite(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "campaign.json"
@@ -129,6 +166,7 @@ class PersistentBackendTransportTests(unittest.TestCase):
         self.assertIn('socket.create_connection(("127.0.0.1", port)', source)
         self.assertIn("hashlib.sha256", source)
         self.assertIn("copy.deepcopy(cached_state)", source)
+        self.assertIn("_ambiguous_daemon_payload", source)
         self.assertNotIn("import pickle", source)
         self.assertNotIn("import marshal", source)
 
@@ -161,6 +199,7 @@ class PersistentBackendRuntimeWiringTests(unittest.TestCase):
         )
         main_block = source.split("def main(", 1)[1].split("def player_main(", 1)[0]
         self.assertIn('arguments[:1] == ["session-backend"]', main_block)
+        self.assertIn("install_runtime_contracts()", main_block)
         self.assertIn("run_session_backend(arguments[1:])", main_block)
         self.assertLess(
             main_block.index('arguments[:1] == ["session-backend"]'),
