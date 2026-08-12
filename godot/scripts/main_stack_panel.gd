@@ -78,6 +78,13 @@ func _draw_management_panel() -> void:
 		12
 	)
 	y = _panel_line(
+		"Commit: %s" % String(application.get("source_commit", "")),
+		x,
+		y,
+		Color(0.55, 0.72, 0.86, 1.0),
+		10
+	)
+	y = _panel_line(
 		"Scenario: %s" % _scenario_label(application, campaign),
 		x,
 		y,
@@ -132,6 +139,23 @@ func _draw_management_panel() -> void:
 		y,
 		play_enabled and not (play.get("continue_args", []) as Array).is_empty(),
 		Color("243140")
+	)
+	var maintenance: Dictionary = control.get("maintenance", {})
+	y = _draw_button(
+		"restore_backup",
+		"Confirm Restore Latest Backup" if restore_confirm_pending else "Restore Latest Backup",
+		x,
+		y,
+		writeback and bool(maintenance.get("restore_available", false)),
+		Color("5a3f18") if restore_confirm_pending else Color("243140")
+	)
+	y = _draw_button(
+		"reset_test_campaign",
+		"Confirm Reset Test Campaign" if reset_confirm_pending else "Reset Test Campaign",
+		x,
+		y,
+		writeback and bool(maintenance.get("reset_available", false)),
+		Color("5a2418") if reset_confirm_pending else Color("243140")
 	)
 	if not play_enabled:
 		y = _panel_line("Launcher unavailable — start via 'gates-of-codex play'.", x, y, Color("ff8e72"), 11)

@@ -24,6 +24,12 @@ func _draw_button(id: String, label: String, x: float, y: float, enabled: bool, 
 		label = "End turn + AI cycle (E)"
 	elif id == "run_ai":
 		label = "Run current AI only"
+	elif id == "verify_result" and _pending_battle_handoff_ready():
+		# A fresh Godot process no longer has the transient handoff command
+		# payload, but the authoritative pending battle persists started=true and
+		# exported_save_path. The backend can resolve that exact save itself, so
+		# the rendered control must match enabled_action_button_ids().
+		enabled = enabled or bool(snapshot.get("control", {}).get("enabled", false))
 	return super._draw_button(id, label, x, y, enabled, fill)
 
 

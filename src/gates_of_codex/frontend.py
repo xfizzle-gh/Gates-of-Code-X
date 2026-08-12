@@ -6,6 +6,7 @@ import sys
 import tempfile
 from dataclasses import asdict
 from pathlib import Path
+from typing import Mapping
 
 from .earth3_campaign import (
     CAMPAIGN_DATASET_IDENTIFIER,
@@ -97,6 +98,7 @@ def build_frontend_snapshot(
     *,
     campaign_path: str | Path | None = None,
     snapshot_path: str | Path | None = None,
+    environ: Mapping[str, str] | None = None,
 ) -> dict:
     # Frontend export is a pure projection. Existing helper functions may normalize
     # derived state, so operate only on a detached copy.
@@ -378,7 +380,9 @@ def build_frontend_snapshot(
         "pending_battle": _pending_battle(state),
         "front_options": front_options,
         "operational_orders": operational_orders,
-        "control": _control_block(state, campaign_path, snapshot_path),
+        "control": _control_block(
+            state, campaign_path, snapshot_path, environ=environ
+        ),
         "province_names": dict(
             state.map_metadata.get("province_names") or province_name_coverage(state)
         ),
@@ -790,6 +794,7 @@ def write_frontend_snapshot(
     path: str | Path,
     *,
     campaign_path: str | Path | None = None,
+    environ: Mapping[str, str] | None = None,
 ) -> Path:
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -799,6 +804,7 @@ def write_frontend_snapshot(
                 state,
                 campaign_path=campaign_path,
                 snapshot_path=destination,
+                environ=environ,
             ),
             indent=2,
             ensure_ascii=False,
@@ -1082,21 +1088,16 @@ def _earth3_strategic_map_block(state: CampaignState) -> dict:
 
 
 def _application_version() -> str:
-    from importlib.metadata import PackageNotFoundError, version
+    from .packaging import application_version
 
-    try:
-        return version("gates-of-codex")
-    except PackageNotFoundError:
-        from . import __version__
-
-        return str(__version__)
+    return application_version()
 
 
 def _application_block(state: CampaignState, campaign_path: str | Path | None) -> dict:
     """Player-facing application identity shown by the Godot strategic shell."""
     campaign = Path(campaign_path).resolve() if campaign_path else None
     metadata = state.map_metadata
-    return {
+    block = {
         "name": "Gates of CodeX",
         "version": _application_version(),
         "scenario_id": str(metadata.get("scenario_id", "")),
@@ -1109,6 +1110,51 @@ def _application_block(state: CampaignState, campaign_path: str | Path | None) -
         "selected_faction": state.selected_faction.value,
         "difficulty": state.difficulty,
         "fog_of_war_enabled": bool(state.fog_of_war_enabled),
+    }
+    # Exact provenance is part of the player-visible package identity. Installed
+    # or frozen runtimes without their embedded stamp must fail snapshot creation
+    # rather than publish an authoritative-looking blank commit.
+    from .packaging import packaging_application_fields
+
+    block.update(packaging_application_fields())
+    return block
+
+
+def _maintenance_block(
+    campaign_path: str | Path | None,
+    *,
+    environ: Mapping[str, str] | None = None,
+) -> dict:
+    """Authenticated campaign-bound maintenance capabilities for Godot."""
+    disabled = {
+        "restore_available": False,
+        "latest_backup": None,
+        "reset_available": False,
+    }
+    if campaign_path is None:
+        return disabled
+    from .packaging import (
+        PackagingError,
+        assert_path_inside,
+        latest_managed_backup,
+        managed_campaigns_root,
+    )
+
+    campaign = Path(campaign_path).expanduser().resolve(strict=False)
+    try:
+        assert_path_inside(
+            campaign.parent,
+            managed_campaigns_root(environ),
+            label="campaign directory",
+        )
+        latest = latest_managed_backup(campaign, environ=environ)
+    except PackagingError:
+        # Non-player-managed development fixtures have no destructive controls.
+        return disabled
+    return {
+        "restore_available": latest is not None,
+        "latest_backup": latest,
+        "reset_available": True,
     }
 
 
@@ -1151,12 +1197,15 @@ def _control_block(
     state: CampaignState,
     campaign_path: str | Path | None,
     snapshot_path: str | Path | None,
+    *,
+    environ: Mapping[str, str] | None = None,
 ) -> dict:
     snapshot = Path(snapshot_path).resolve() if snapshot_path else None
     campaign = Path(campaign_path).resolve() if campaign_path else None
     commands = snapshot.with_name("frontend_commands.json") if snapshot is not None else None
     return {
         "play": _player_launch_block(state, campaign_path),
+        "maintenance": _maintenance_block(campaign_path, environ=environ),
         "enabled": campaign is not None and snapshot is not None,
         "campaign_path": str(campaign) if campaign else "",
         "snapshot_path": str(snapshot) if snapshot else "",
@@ -1177,6 +1226,8 @@ def _control_block(
             "handoff",
             "verify_result",
             "import_battle",
+            "restore_backup",
+            "reset_test_campaign",
             "refresh",
         ],
     }

@@ -13,6 +13,17 @@ $ProgressPreference = "SilentlyContinue"
 $Root = Split-Path -Parent $PSScriptRoot
 $Venv = Join-Path $Root ".venv"
 $VenvPython = Join-Path $Venv "Scripts\python.exe"
+$StampScript = Join-Path $PSScriptRoot "stamp_package_provenance.ps1"
+$AuthorityRelativeFiles = @(
+    "config\earth3\production_authority.json",
+    "config\earth3\p3_operational_authority.json",
+    "godot\assets\maps\earth3_europe_mediterranean\map_manifest.json",
+    "godot\assets\maps\earth3_europe_mediterranean\polygon_dataset.json",
+    "godot\assets\maps\earth3_europe_mediterranean\dataset_meta.json",
+    "godot\assets\maps\earth3_europe_mediterranean\p3_authority\p3_operational_graph.json",
+    "docs\audits\p3-first-corridor-route-inventory.json",
+    "src\gates_of_codex\data\earth3_v1\sites.json"
+)
 
 function Test-SupportedPython {
     param(
@@ -152,37 +163,171 @@ if ($null -eq $runtime) {
     }
 }
 
-& $VenvPython -m pip install --upgrade pip
-& $VenvPython -m pip install --upgrade $Root
+$StampPath = $null
+try {
+    $Stamp = & $StampScript -Root $Root
+    $StampPath = (Resolve-Path -LiteralPath $Stamp.StampPath).Path
+    $SourceCommit = $Stamp.Commit
+    $SourceCommitPath = (Resolve-Path -LiteralPath $StampPath).Path
+    Write-Host "Stamped package provenance: $SourceCommit"
 
-if ($BuildExecutable) {
-    & $VenvPython -m pip install --upgrade pyinstaller
-    Push-Location $Root
+    & $VenvPython -m pip install --upgrade pip
+    & $VenvPython -m pip install --upgrade $Root
+
+    $InstalledAuthorityRoot = Join-Path $Venv "Lib"
+    foreach ($Relative in $AuthorityRelativeFiles) {
+        $Source = Join-Path $Root $Relative
+        if (-not (Test-Path -LiteralPath $Source -PathType Leaf)) {
+            throw "Required Earth3 runtime authority file is missing: $Source"
+        }
+        $Destination = Join-Path $InstalledAuthorityRoot $Relative
+        $DestinationParent = Split-Path -Parent $Destination
+        New-Item -ItemType Directory -Force -Path $DestinationParent | Out-Null
+        Copy-Item -LiteralPath $Source -Destination $Destination -Force
+    }
+
+    & $VenvPython -c "from gates_of_codex.earth3_campaign import load_earth3_authority; from gates_of_codex.earth3_operational import load_authenticated_p3_graph; a=load_earth3_authority(); g=load_authenticated_p3_graph(); assert a.production_asset_version == 'earth3_production_v1'; assert len(g['nodes']) == 64 and len(g['edges']) == 65"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Installed Earth3 P1/P3 authority smoke failed."
+    }
+
+    $SmokeRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("gates-of-codex-provenance-" + [guid]::NewGuid().ToString("N"))
+    New-Item -ItemType Directory -Path $SmokeRoot | Out-Null
+    $PreviousHome = $env:GATES_OF_CODEX_HOME
     try {
-        & $VenvPython -m PyInstaller --noconfirm --clean --onefile --windowed --name GatesOfCodeX run_gates_of_codex.py
-        & $VenvPython -m PyInstaller --noconfirm --clean --onefile --name GatesOfCodeXLive run_gates_of_codex_live.py
+        $env:GATES_OF_CODEX_HOME = $SmokeRoot
+        $SmokeCampaign = Join-Path $SmokeRoot "campaign.json"
+        $SmokeOutput = & (Join-Path $Venv "Scripts\gates-of-codex.exe") play --new --scenario legacy_goe_europe --campaign $SmokeCampaign --no-launch --json
+        if ($LASTEXITCODE -ne 0) {
+            throw "Installed CLI provenance smoke failed."
+        }
+        $SmokeResult = ($SmokeOutput | Out-String) | ConvertFrom-Json
+        $Snapshot = Get-Content -Raw -LiteralPath $SmokeResult.snapshot_path | ConvertFrom-Json
+        if ($Snapshot.application.source_commit -ne $SourceCommit) {
+            throw "Installed CLI snapshot provenance mismatch: expected $SourceCommit, got $($Snapshot.application.source_commit)."
+        }
     }
     finally {
-        Pop-Location
+        if ($null -eq $PreviousHome) {
+            Remove-Item Env:GATES_OF_CODEX_HOME -ErrorAction SilentlyContinue
+        }
+        else {
+            $env:GATES_OF_CODEX_HOME = $PreviousHome
+        }
+        Remove-Item -LiteralPath $SmokeRoot -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    if ($BuildExecutable) {
+        & $VenvPython -m pip install --upgrade pyinstaller
+        $ArchiveViewer = Join-Path $Venv "Scripts\pyi-archive_viewer.exe"
+        $AuthorityAddDataArgs = @()
+        foreach ($Relative in $AuthorityRelativeFiles) {
+            $AuthoritySource = (Resolve-Path -LiteralPath (Join-Path $Root $Relative)).Path
+            $AuthorityDestination = (Split-Path -Parent $Relative) -replace '\\', '/'
+            $AuthorityAddDataArgs += @("--add-data", "$AuthoritySource;$AuthorityDestination")
+        }
+        Push-Location $Root
+        try {
+            & $VenvPython -m PyInstaller --noconfirm --clean --onefile --windowed --name GatesOfCodeX --collect-data gates_of_codex @AuthorityAddDataArgs --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" run_gates_of_codex.py
+            & $VenvPython -m PyInstaller --noconfirm --clean --onefile --name GatesOfCodeXLive --collect-data gates_of_codex @AuthorityAddDataArgs --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" run_gates_of_codex_live.py
+        }
+        finally {
+            Pop-Location
+        }
+        foreach ($Executable in @("dist\GatesOfCodeX.exe", "dist\GatesOfCodeXLive.exe")) {
+            $ExecutablePath = Join-Path $Root $Executable
+            $Archive = (& $ArchiveViewer -l $ExecutablePath | Out-String)
+            if ($LASTEXITCODE -ne 0 -or $Archive -notmatch 'SOURCE_COMMIT') {
+                throw "Frozen executable is missing embedded provenance: $Executable"
+            }
+            foreach ($RequiredName in @("production_authority.json", "p3_operational_authority.json", "map_manifest.json", "polygon_dataset.json", "dataset_meta.json", "p3_operational_graph.json", "p3-first-corridor-route-inventory.json", "sites.json", "bootstrap.json", "formations.json")) {
+                if ($Archive -notmatch [regex]::Escape($RequiredName)) {
+                    throw "Frozen executable is missing Earth3 runtime authority $RequiredName`: $Executable"
+                }
+            }
+            $Verified = $false
+            foreach ($Entry in @("gates_of_codex\SOURCE_COMMIT", "gates_of_codex/SOURCE_COMMIT")) {
+                $Extracted = (@("X $Entry", "", "Q") | & $ArchiveViewer $ExecutablePath | Out-String)
+                if ($LASTEXITCODE -eq 0 -and $Extracted -match [regex]::Escape($SourceCommit)) {
+                    $Verified = $true
+                    break
+                }
+            }
+            if (-not $Verified) {
+                throw "Frozen executable provenance does not match $SourceCommit`: $Executable"
+            }
+        }
+        $ProbeRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("gates-of-codex-frozen-probe-" + [guid]::NewGuid().ToString("N"))
+        New-Item -ItemType Directory -Path $ProbeRoot | Out-Null
+        try {
+            $ProbeScript = Join-Path $ProbeRoot "provenance_probe.py"
+            $ProbeBody = @'
+import sys
+
+from gates_of_codex.packaging import package_identity
+
+expected = sys.argv[1]
+actual = package_identity().source_commit
+if actual != expected:
+    raise SystemExit(f"Frozen runtime provenance mismatch: expected {expected}, got {actual}")
+print(actual)
+'@
+            [System.IO.File]::WriteAllText(
+                $ProbeScript,
+                $ProbeBody,
+                [System.Text.UTF8Encoding]::new($false)
+            )
+            $ProbeDist = Join-Path $ProbeRoot "dist"
+            $ProbeWork = Join-Path $ProbeRoot "build"
+            Push-Location $Root
+            try {
+                & $VenvPython -m PyInstaller --noconfirm --clean --onefile --console --name GatesOfCodeXProvenanceProbe --distpath $ProbeDist --workpath $ProbeWork --specpath $ProbeRoot --add-data "$SourceCommitPath;gates_of_codex" $ProbeScript
+                if ($LASTEXITCODE -ne 0) { throw "Unable to build frozen provenance probe." }
+            }
+            finally {
+                Pop-Location
+            }
+            $PreviousCommitEnvironment = $env:GATES_OF_CODEX_SOURCE_COMMIT
+            try {
+                Remove-Item Env:GATES_OF_CODEX_SOURCE_COMMIT -ErrorAction SilentlyContinue
+                & (Join-Path $ProbeDist "GatesOfCodeXProvenanceProbe.exe") $SourceCommit | Out-Null
+                if ($LASTEXITCODE -ne 0) { throw "Frozen runtime provenance mismatch." }
+            }
+            finally {
+                if ($null -ne $PreviousCommitEnvironment) {
+                    $env:GATES_OF_CODEX_SOURCE_COMMIT = $PreviousCommitEnvironment
+                }
+            }
+        }
+        finally {
+            Remove-Item -LiteralPath $ProbeRoot -Recurse -Force -ErrorAction SilentlyContinue
+        }
+        & (Join-Path $Root "dist\GatesOfCodeXLive.exe") --help | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw "Frozen live executable smoke failed." }
+    }
+
+    if (-not $NoWorkshopDeploy) {
+        if ([string]::IsNullOrWhiteSpace($WorkshopTestTarget)) {
+            throw "A dedicated Workshop test target is required. Pass -WorkshopTestTarget, set GATES_CODEX_DEPLOY_ROOT, or use -NoWorkshopDeploy."
+        }
+        $DeployScript = Join-Path $PSScriptRoot "deploy_workshop_test.ps1"
+        if (-not (Test-Path -LiteralPath $DeployScript -PathType Leaf)) {
+            throw "Workshop deployment script not found: $DeployScript"
+        }
+        Write-Host "Synchronizing Gates of CodeX test item to $WorkshopTestTarget"
+        & $DeployScript -SourceRoot $Root -TargetRoot $WorkshopTestTarget -SourceCommit $SourceCommit
+    }
+
+    Write-Host "Installed. Run:"
+    Write-Host "  $Venv\Scripts\gates-of-codex.exe doctor"
+    Write-Host "  $Venv\Scripts\gates-of-codex.exe play --new --stack-config config\mod-stack.windows.json"
+    Write-Host "  $Venv\Scripts\gates-of-codex-live.exe validate --help"
+    if (-not $NoWorkshopDeploy) {
+        Write-Host "Workshop test deployment: $WorkshopTestTarget"
     }
 }
-
-if (-not $NoWorkshopDeploy) {
-    if ([string]::IsNullOrWhiteSpace($WorkshopTestTarget)) {
-        throw "A dedicated Workshop test target is required. Pass -WorkshopTestTarget, set GATES_CODEX_DEPLOY_ROOT, or use -NoWorkshopDeploy."
+finally {
+    if ($null -ne $StampPath -and (Test-Path -LiteralPath $StampPath -PathType Leaf)) {
+        Remove-Item -LiteralPath $StampPath -Force
     }
-    $DeployScript = Join-Path $PSScriptRoot "deploy_workshop_test.ps1"
-    if (-not (Test-Path -LiteralPath $DeployScript -PathType Leaf)) {
-        throw "Workshop deployment script not found: $DeployScript"
-    }
-    Write-Host "Synchronizing Gates of CodeX test item to $WorkshopTestTarget"
-    & $DeployScript -SourceRoot $Root -TargetRoot $WorkshopTestTarget
-}
-
-Write-Host "Installed. Run:"
-Write-Host "  $Venv\Scripts\gates-of-codex.exe doctor"
-Write-Host "  $Venv\Scripts\gates-of-codex.exe ui"
-Write-Host "  $Venv\Scripts\gates-of-codex-live.exe validate --help"
-if (-not $NoWorkshopDeploy) {
-    Write-Host "Workshop test deployment: $WorkshopTestTarget"
 }

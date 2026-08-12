@@ -14,6 +14,7 @@ from typing import Any
 from .campaign import CampaignEngine
 from .models import CampaignState
 from .strategic_ai import StrategicAI
+from .strategic_actors import ensure_strategic_actor_runtime
 
 
 PLAYER_ROUND_OP = "end_player_round"
@@ -50,6 +51,7 @@ def end_player_round(state: CampaignState) -> dict[str, Any]:
     # The human has finished planning. Move to the first active AI seat.
     if state.current_faction == selected:
         engine.end_turn()
+        ensure_strategic_actor_runtime(state)
 
     # Resume/cycle every active non-player faction. CampaignEngine owns the
     # canonical TURN_ORDER and skips eliminated factions when advancing.
@@ -66,6 +68,7 @@ def end_player_round(state: CampaignState) -> dict[str, Any]:
             # Defensive recovery for malformed/legacy current-faction pointers;
             # the engine will advance to the next active seat.
             engine.end_turn()
+            ensure_strategic_actor_runtime(state)
             steps += 1
             continue
         ai = StrategicAI(state)
@@ -78,6 +81,7 @@ def end_player_round(state: CampaignState) -> dict[str, Any]:
         if state.pending_battle is not None:
             break
         engine.end_turn()
+        ensure_strategic_actor_runtime(state)
         steps += 1
 
     if state.pending_battle is None and state.current_faction != selected:
