@@ -15,10 +15,9 @@ from .modstack import resource_root
 # Cross-side breed reuse is intentionally opt-in. The engine resolves a squad
 # member through the projected tactical side, so a source-side purchase rendered
 # onto goc_* must also materialize the exact source breed namespace beneath the
-# goc_* side. The legacy allowlist below preserves previously accepted explicit
-# exceptions. Production actors may additionally authorize only component IDs
-# that are explicitly present in that actor's accepted component manifest; unit
-# rows whose component is absent from the actor authority remain fail-closed.
+# goc_* side. Keep the shared/default authorization deliberately narrow. Callers
+# with a separately audited actor authority may pass additional exact component
+# IDs explicitly; substring-derived or implicit cross-side reuse remains blocked.
 _CROSS_SIDE_BREED_COMPONENTS = frozenset(
     {
         "spain_3rd_assault_legion",
@@ -36,32 +35,29 @@ _UTF8_BOM = b"\xef\xbb\xbf"
 def project_actor_breed_files(
     actor: Mapping[str, Any],
     roots: Sequence[Path],
+    *,
+    authorized_components: Sequence[str] | None = None,
 ) -> dict[Path, bytes]:
     """Mirror approved source-side soldier breeds into the actor target side.
 
     GoH resolves a projected squad member beneath ``mp/<side>/<period>``. A
     purchase definition can therefore be syntactically valid after a side
     rewrite while still crashing when its source-side soldier breed is absent
-    under the target side. Authorization is fail-closed: a cross-side unit must
-    belong either to the legacy explicit allowlist or to a component explicitly
-    listed on the accepted actor authority. The exact source breed payload and
-    its local include closure are mirrored; existing parent target-side
-    definitions always win and are never overwritten.
+    under the target side. Authorization is fail-closed. The shared default is
+    the legacy explicit allowlist; a caller with separately audited authority
+    may add exact component IDs through ``authorized_components``.
     """
 
     target_side = str(actor.get("tactical_side", "")).lower()
     outputs: dict[Path, bytes] = {}
     mirrored_sources: dict[Path, Path] = {}
-    actor_components = {
-        str(component)
-        for component in (actor.get("components") or [])
-        if str(component)
-    }
-    authorized_components = _CROSS_SIDE_BREED_COMPONENTS | actor_components
+    authorized = set(_CROSS_SIDE_BREED_COMPONENTS)
+    if authorized_components is not None:
+        authorized.update(str(component) for component in authorized_components if str(component))
 
     for unit in sorted(actor.get("units", []), key=lambda row: str(row.get("unit_name", ""))):
         component_id = str(unit.get("component_id", ""))
-        if component_id not in authorized_components:
+        if component_id not in authorized:
             continue
         source_side = str(unit.get("source_side", "")).lower()
         if not source_side or source_side == target_side:

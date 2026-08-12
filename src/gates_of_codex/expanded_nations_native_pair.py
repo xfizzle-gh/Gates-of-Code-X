@@ -285,7 +285,11 @@ def _project_pair_breeds(
             raise ExpandedNationsError(
                 f"Native-pair actor {actor_id}/{side} has no authorized personnel-bearing source units"
             )
-        outputs = project_actor_breed_files(actor, roots)
+        outputs = project_actor_breed_files(
+            actor,
+            roots,
+            authorized_components=sorted(components),
+        )
         if not outputs:
             raise ExpandedNationsError(
                 f"Native-pair actor {actor_id}/{side} projected zero personnel breed files"
