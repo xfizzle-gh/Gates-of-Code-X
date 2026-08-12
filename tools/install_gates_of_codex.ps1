@@ -158,6 +158,7 @@ try {
     $Stamp = & $StampScript -Root $Root
     $StampPath = (Resolve-Path -LiteralPath $Stamp.StampPath).Path
     $SourceCommit = $Stamp.Commit
+    $SourceCommitPath = (Resolve-Path -LiteralPath $StampPath).Path
     Write-Host "Stamped package provenance: $SourceCommit"
 
     & $VenvPython -m pip install --upgrade pip
@@ -203,12 +204,18 @@ try {
         foreach ($Executable in @("dist\GatesOfCodeX.exe", "dist\GatesOfCodeXLive.exe")) {
             $ExecutablePath = Join-Path $Root $Executable
             $Archive = (& $ArchiveViewer -l $ExecutablePath | Out-String)
-            $Entry = [regex]::Match($Archive, 'gates_of_codex[\\/]SOURCE_COMMIT').Value
-            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($Entry)) {
+            if ($LASTEXITCODE -ne 0 -or $Archive -notmatch 'SOURCE_COMMIT') {
                 throw "Frozen executable is missing embedded provenance: $Executable"
             }
-            $Extracted = (@("X $Entry", "", "Q") | & $ArchiveViewer $ExecutablePath | Out-String)
-            if ($LASTEXITCODE -ne 0 -or $Extracted -notmatch [regex]::Escape($SourceCommit)) {
+            $Verified = $false
+            foreach ($Entry in @("gates_of_codex\SOURCE_COMMIT", "gates_of_codex/SOURCE_COMMIT")) {
+                $Extracted = (@("X $Entry", "", "Q") | & $ArchiveViewer $ExecutablePath | Out-String)
+                if ($LASTEXITCODE -eq 0 -and $Extracted -match [regex]::Escape($SourceCommit)) {
+                    $Verified = $true
+                    break
+                }
+            }
+            if (-not $Verified) {
                 throw "Frozen executable provenance does not match $SourceCommit`: $Executable"
             }
         }
@@ -236,7 +243,7 @@ print(actual)
             $ProbeWork = Join-Path $ProbeRoot "build"
             Push-Location $Root
             try {
-                & $VenvPython -m PyInstaller --noconfirm --clean --onefile --console --name GatesOfCodeXProvenanceProbe --distpath $ProbeDist --workpath $ProbeWork --specpath $ProbeRoot --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" $ProbeScript
+                & $VenvPython -m PyInstaller --noconfirm --clean --onefile --console --name GatesOfCodeXProvenanceProbe --distpath $ProbeDist --workpath $ProbeWork --specpath $ProbeRoot --add-data "$SourceCommitPath;gates_of_codex" $ProbeScript
                 if ($LASTEXITCODE -ne 0) { throw "Unable to build frozen provenance probe." }
             }
             finally {

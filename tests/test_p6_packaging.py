@@ -161,19 +161,37 @@ class PackagingProvenanceTests(unittest.TestCase):
         )
         stamp_call = "& $StampScript -Root $Root"
         package_install = "-m pip install --upgrade $Root"
+        static_add_data = '--add-data "src\\gates_of_codex\\SOURCE_COMMIT;gates_of_codex"'
+        installer_resolved_add_data = '--add-data "$SourceCommitPath;gates_of_codex"'
         self.assertIn(stamp_call, installer)
         self.assertLess(installer.index(stamp_call), installer.index(package_install))
         self.assertEqual(
             3,
-            installer.count(
-                '--add-data "src\\gates_of_codex\\SOURCE_COMMIT;gates_of_codex"'
-            ),
+            installer.count(static_add_data) + installer.count(installer_resolved_add_data),
+        )
+        self.assertEqual(1, installer.count(installer_resolved_add_data))
+        self.assertIn(
+            "$SourceCommitPath = (Resolve-Path -LiteralPath $StampPath).Path",
+            installer,
+        )
+        self.assertIn(
+            '--specpath $ProbeRoot --add-data "$SourceCommitPath;gates_of_codex"',
+            installer,
+        )
+        self.assertNotIn(
+            '--specpath $ProbeRoot --add-data "src\\gates_of_codex\\SOURCE_COMMIT;gates_of_codex"',
+            installer,
         )
         self.assertIn("finally", installer)
         self.assertIn("Remove-Item -LiteralPath $StampPath -Force", installer)
         self.assertIn("$Snapshot.application.source_commit", installer)
         self.assertEqual(1, installer.count("pyi-archive_viewer.exe"))
         self.assertIn("[regex]::Escape($SourceCommit)", installer)
+        self.assertIn(
+            'foreach ($Entry in @("gates_of_codex\\SOURCE_COMMIT", "gates_of_codex/SOURCE_COMMIT"))',
+            installer,
+        )
+        self.assertNotIn("[regex]::Match($Archive, 'gates_of_codex", installer)
         self.assertIn("GatesOfCodeXProvenanceProbe", installer)
         self.assertIn("Frozen runtime provenance mismatch", installer)
 
@@ -191,26 +209,28 @@ class PackagingProvenanceTests(unittest.TestCase):
             )
             self.assertEqual(expected_jobs, workflow.count("id: provenance"), relative)
             self.assertIn("steps.provenance.outputs.commit", workflow, relative)
-            static_add_data = (
-                '--add-data "src\\gates_of_codex\\SOURCE_COMMIT;gates_of_codex"'
-            )
             resolved_add_data = '--add-data "$sourceCommit;gates_of_codex"'
             self.assertEqual(
                 3,
                 workflow.count(static_add_data) + workflow.count(resolved_add_data),
                 relative,
             )
-            if resolved_add_data in workflow:
-                self.assertIn(
-                    '$sourceCommit = (Resolve-Path -LiteralPath "src\\gates_of_codex\\SOURCE_COMMIT").Path',
-                    workflow,
-                    relative,
-                )
-                self.assertIn(
-                    '--specpath $probeRoot --add-data "$sourceCommit;gates_of_codex"',
-                    workflow,
-                    relative,
-                )
+            self.assertEqual(1, workflow.count(resolved_add_data), relative)
+            self.assertIn(
+                '$sourceCommit = (Resolve-Path -LiteralPath "src\\gates_of_codex\\SOURCE_COMMIT").Path',
+                workflow,
+                relative,
+            )
+            self.assertIn(
+                '--specpath $probeRoot --add-data "$sourceCommit;gates_of_codex"',
+                workflow,
+                relative,
+            )
+            self.assertNotIn(
+                '--specpath $probeRoot --add-data "src\\gates_of_codex\\SOURCE_COMMIT;gates_of_codex"',
+                workflow,
+                relative,
+            )
             self.assertIn("if: always()", workflow, relative)
             self.assertIn(
                 "Remove-Item -LiteralPath src\\gates_of_codex\\SOURCE_COMMIT -Force",
@@ -225,6 +245,12 @@ class PackagingProvenanceTests(unittest.TestCase):
             self.assertIn("package_identity().source_commit", workflow, relative)
             self.assertIn("pyi-archive_viewer -l", workflow, relative)
             self.assertIn("[regex]::Escape($expectedCommit)", workflow, relative)
+            self.assertIn(
+                'foreach ($entry in @("gates_of_codex\\SOURCE_COMMIT", "gates_of_codex/SOURCE_COMMIT"))',
+                workflow,
+                relative,
+            )
+            self.assertNotIn("[regex]::Match($archive, 'gates_of_codex", workflow, relative)
             self.assertIn("GatesOfCodeXProvenanceProbe", workflow, relative)
             self.assertIn("Frozen runtime provenance mismatch", workflow, relative)
 

@@ -40,6 +40,7 @@ jobs:
         shell: pwsh
         run: |
           $expectedCommit = '${{ steps.provenance.outputs.commit }}'
+          $sourceCommit = (Resolve-Path -LiteralPath "src\gates_of_codex\SOURCE_COMMIT").Path
           $probeRoot = Join-Path $env:RUNNER_TEMP ("gates-of-codex-frozen-probe-" + [guid]::NewGuid().ToString("N"))
           New-Item -ItemType Directory -Path $probeRoot | Out-Null
           try {
@@ -58,7 +59,7 @@ jobs:
             [System.IO.File]::WriteAllText($probeScript, $probeBody, [System.Text.UTF8Encoding]::new($false))
             $probeDist = Join-Path $probeRoot "dist"
             $probeWork = Join-Path $probeRoot "build"
-            python -m PyInstaller --noconfirm --clean --onefile --console --name GatesOfCodeXProvenanceProbe --distpath $probeDist --workpath $probeWork --specpath $probeRoot --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" $probeScript
+            python -m PyInstaller --noconfirm --clean --onefile --console --name GatesOfCodeXProvenanceProbe --distpath $probeDist --workpath $probeWork --specpath $probeRoot --add-data "$sourceCommit;gates_of_codex" $probeScript
             if ($LASTEXITCODE -ne 0) { throw "Unable to build frozen provenance probe." }
             Remove-Item Env:GATES_OF_CODEX_SOURCE_COMMIT -ErrorAction SilentlyContinue
             & (Join-Path $probeDist "GatesOfCodeXProvenanceProbe.exe") $expectedCommit | Out-Null
@@ -73,12 +74,18 @@ jobs:
           $expectedCommit = '${{ steps.provenance.outputs.commit }}'
           foreach ($executable in @("dist\GatesOfCodeX.exe", "dist\GatesOfCodeXLive.exe")) {
             $archive = (pyi-archive_viewer -l $executable | Out-String)
-            $entry = [regex]::Match($archive, 'gates_of_codex[\\/]SOURCE_COMMIT').Value
-            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($entry)) {
+            if ($LASTEXITCODE -ne 0 -or $archive -notmatch 'SOURCE_COMMIT') {
               throw "Frozen executable is missing provenance: $executable"
             }
-            $extracted = (@("X $entry", "", "Q") | pyi-archive_viewer $executable | Out-String)
-            if ($LASTEXITCODE -ne 0 -or $extracted -notmatch [regex]::Escape($expectedCommit)) {
+            $verified = $false
+            foreach ($entry in @("gates_of_codex\SOURCE_COMMIT", "gates_of_codex/SOURCE_COMMIT")) {
+              $extracted = (@("X $entry", "", "Q") | pyi-archive_viewer $executable | Out-String)
+              if ($LASTEXITCODE -eq 0 -and $extracted -match [regex]::Escape($expectedCommit)) {
+                $verified = $true
+                break
+              }
+            }
+            if (-not $verified) {
               throw "Frozen executable provenance does not match $expectedCommit`: $executable"
             }
           }
