@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from gates_of_codex.expanded_nations_actor_sources import project_actor_units
 from gates_of_codex.expanded_nations_models import PORTRAIT_ROOT_RELATIVE
 from gates_of_codex.expanded_nations_opponent_render import project_opponent_units
 from gates_of_codex.expanded_nations_presentation import project_actor_presentation
@@ -103,6 +104,46 @@ class ExpandedNationsNativeContractTests(unittest.TestCase):
         self.assertEqual(6, projected[0].cost)
         self.assertEqual(4, projected[1].cost)
         self.assertEqual(10, sum(row.cost for row in projected))
+
+    def test_virtual_wrapper_lookup_uses_catalog_source_side_before_target_projection(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            layers = [root / name for name in ("vanilla", "west81", "codex", "ai", "gates")]
+            for layer in layers:
+                (layer / "resource").mkdir(parents=True)
+
+            wrapper = (
+                layers[-1]
+                / "resource/set/multiplayer/units/conquest/units_goc_national_wrappers.set"
+            )
+            wrapper.parent.mkdir(parents=True, exist_ok=True)
+            wrapper.write_text(
+                '("squad_with2types_conquest" side(ukr) period(2022s) '
+                'min_stage(1) max_stage(99) name(goc_ildu_at) '
+                'c1(nato_squadlead:1) c2(nato_antitank:2))\n',
+                encoding="utf-8",
+            )
+
+            actor = {
+                "actor_id": "esp",
+                "tactical_side": "goc_esp",
+                "units": [
+                    {
+                        "unit_name": "goc_ildu_at(ukr)",
+                        "tactical_side": "goc_esp",
+                        "source_side": "ukr",
+                        "materializable": True,
+                        "virtual": True,
+                        "source_files": [],
+                    }
+                ],
+            }
+
+            projected, body = project_actor_units(actor, layers, layers[-1])
+            self.assertEqual(["goc_ildu_at(goc_esp)"], [row.unit_name for row in projected])
+            self.assertIn("side(goc_esp)", body)
+            self.assertIn("name(goc_ildu_at)", body)
+            self.assertIn("actor_unit=goc_ildu_at(ukr)", body)
 
     def test_serbia_portraits_are_copied_from_installed_codex(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
