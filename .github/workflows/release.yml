@@ -44,8 +44,8 @@ jobs:
             "--add-data", "$((Resolve-Path 'docs\audits\p3-first-corridor-route-inventory.json').Path);docs/audits",
             "--add-data", "$((Resolve-Path 'src\gates_of_codex\data\earth3_v1\sites.json').Path);src/gates_of_codex/data/earth3_v1"
           )
-          python -m PyInstaller --noconfirm --clean --onefile --windowed --name GatesOfCodeX @authorityData --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" run_gates_of_codex.py
-          python -m PyInstaller --noconfirm --clean --onefile --console --name GatesOfCodeXLive @authorityData --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" run_gates_of_codex_live.py
+          python -m PyInstaller --noconfirm --clean --onefile --windowed --name GatesOfCodeX --collect-data gates_of_codex @authorityData --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" run_gates_of_codex.py
+          python -m PyInstaller --noconfirm --clean --onefile --console --name GatesOfCodeXLive --collect-data gates_of_codex @authorityData --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" run_gates_of_codex_live.py
       - name: Smoke frozen runtime provenance
         shell: pwsh
         run: |
@@ -90,7 +90,9 @@ jobs:
             "dataset_meta.json",
             "p3_operational_graph.json",
             "p3-first-corridor-route-inventory.json",
-            "sites.json"
+            "sites.json",
+            "bootstrap.json",
+            "formations.json"
           )
           foreach ($executable in @("dist\GatesOfCodeX.exe", "dist\GatesOfCodeXLive.exe")) {
             $archive = (pyi-archive_viewer -l $executable | Out-String)
