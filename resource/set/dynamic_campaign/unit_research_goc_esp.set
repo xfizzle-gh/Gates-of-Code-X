@@ -2,7 +2,7 @@
 ; actor_id=esp
 ; display_name=Spain
 ; tactical_side=goc_esp
-; research_node_count=50
+; research_node_count=49
 {IconGap 30}
 
 ; Standard Conquest reinforcement and defense progression.
@@ -18,101 +18,99 @@
 ; Actor-scoped native purchase progression.
 ; goc-node {"cost":10,"engine_id":"2s1_n","key":"actor:esp:generated:unit:2s1-n","required_engine_id":"","unlock_unit":"2s1_n"}
 {"2s1_n" requires "" costs 10 position 1 3}
-; goc-node {"cost":7,"engine_id":"3rd_assault_at(goc_esp)","key":"actor:esp:generated:unit:3rd-assault-at","required_engine_id":"","unlock_unit":"3rd_assault_at(goc_esp)"}
-{"3rd_assault_at(goc_esp)" requires "" costs 7 position 3 3}
-; goc-node {"cost":4,"engine_id":"3rd_assault_decepticons(goc_esp)","key":"actor:esp:generated:unit:3rd-assault-decepticons","required_engine_id":"","unlock_unit":"3rd_assault_decepticons(goc_esp)"}
-{"3rd_assault_decepticons(goc_esp)" requires "" costs 4 position 5 3}
-; goc-node {"cost":4,"engine_id":"3rd_assault_javelin(goc_esp)","key":"actor:esp:generated:unit:3rd-assault-javelin","required_engine_id":"","unlock_unit":"3rd_assault_javelin(goc_esp)"}
-{"3rd_assault_javelin(goc_esp)" requires "" costs 4 position 7 3}
-; goc-node {"cost":7,"engine_id":"3rd_assault_mg3(goc_esp)","key":"actor:esp:generated:unit:3rd-assault-mg3","required_engine_id":"","unlock_unit":"3rd_assault_mg3(goc_esp)"}
-{"3rd_assault_mg3(goc_esp)" requires "" costs 7 position 9 3}
-; goc-node {"cost":4,"engine_id":"3rd_assault_saperi_at(goc_esp)","key":"actor:esp:generated:unit:3rd-assault-saperi-at","required_engine_id":"","unlock_unit":"3rd_assault_saperi_at(goc_esp)"}
-{"3rd_assault_saperi_at(goc_esp)" requires "" costs 4 position 11 3}
 ; goc-node {"cost":7,"engine_id":"aaleo_n","key":"actor:esp:generated:unit:aaleo-n","required_engine_id":"","unlock_unit":"aaleo_n"}
-{"aaleo_n" requires "" costs 7 position 13 3}
-; goc-node {"cost":4,"engine_id":"arf_tow(goc_esp)","key":"actor:esp:generated:unit:arf-tow","required_engine_id":"","unlock_unit":"arf_tow(goc_esp)"}
-{"arf_tow(goc_esp)" requires "" costs 4 position 15 3}
+{"aaleo_n" requires "" costs 7 position 3 3}
+; goc-node {"cost":7,"engine_id":"arf_tow(goc_esp)","key":"actor:esp:generated:unit:arf-tow","required_engine_id":"","unlock_unit":"arf_tow(goc_esp)"}
+{"arf_tow(goc_esp)" requires "" costs 7 position 5 3}
 ; goc-node {"cost":5,"engine_id":"as90","key":"actor:esp:generated:unit:as90","required_engine_id":"","unlock_unit":"as90"}
-{"as90" requires "" costs 5 position 17 3}
+{"as90" requires "" costs 5 position 7 3}
 ; goc-node {"cost":14,"engine_id":"c1_ariete_pso","key":"actor:esp:generated:unit:c1-ariete-pso","required_engine_id":"","unlock_unit":"c1_ariete_pso"}
-{"c1_ariete_pso" requires "" costs 14 position 19 3}
+{"c1_ariete_pso" requires "" costs 14 position 9 3}
 ; goc-node {"cost":5,"engine_id":"cv_90_mk_iv","key":"actor:esp:generated:unit:cv-90-mk-iv","required_engine_id":"","unlock_unit":"cv_90_mk_iv"}
-{"cv_90_mk_iv" requires "" costs 5 position 21 3}
+{"cv_90_mk_iv" requires "" costs 5 position 11 3}
 ; goc-node {"cost":3,"engine_id":"cv_9030","key":"actor:esp:generated:unit:cv-9030","required_engine_id":"","unlock_unit":"cv_9030"}
-{"cv_9030" requires "" costs 3 position 23 3}
+{"cv_9030" requires "" costs 3 position 13 3}
 ; goc-node {"cost":3,"engine_id":"cv_9035","key":"actor:esp:generated:unit:cv-9035","required_engine_id":"","unlock_unit":"cv_9035"}
-{"cv_9035" requires "" costs 3 position 25 3}
-; goc-node {"cost":6,"engine_id":"hawkeye_105_mws_n","key":"actor:esp:generated:unit:hawkeye-105-mws-n","required_engine_id":"","unlock_unit":"hawkeye_105_mws_n"}
-{"hawkeye_105_mws_n" requires "" costs 6 position 27 3}
+{"cv_9035" requires "" costs 3 position 15 3}
+; goc-node {"cost":3,"engine_id":"goc_ildu_at(goc_esp)","key":"actor:esp:generated:unit:goc-ildu-at-ukr","required_engine_id":"","unlock_unit":"goc_ildu_at(goc_esp)"}
+{"goc_ildu_at(goc_esp)" requires "" costs 3 position 17 3}
+; goc-node {"cost":6,"engine_id":"goc_ildu_recon(goc_esp)","key":"actor:esp:generated:unit:goc-ildu-recon-ukr","required_engine_id":"","unlock_unit":"goc_ildu_recon(goc_esp)"}
+{"goc_ildu_recon(goc_esp)" requires "" costs 6 position 19 3}
+; goc-node {"cost":3,"engine_id":"goc_ildu_rifle(goc_esp)","key":"actor:esp:generated:unit:goc-ildu-rifle-ukr","required_engine_id":"","unlock_unit":"goc_ildu_rifle(goc_esp)"}
+{"goc_ildu_rifle(goc_esp)" requires "" costs 3 position 21 3}
+; goc-node {"cost":5,"engine_id":"hawkeye_105_mws_n","key":"actor:esp:generated:unit:hawkeye-105-mws-n","required_engine_id":"","unlock_unit":"hawkeye_105_mws_n"}
+{"hawkeye_105_mws_n" requires "" costs 5 position 23 3}
 ; goc-node {"cost":12,"engine_id":"leclerc","key":"actor:esp:generated:unit:leclerc","required_engine_id":"","unlock_unit":"leclerc"}
-{"leclerc" requires "" costs 12 position 1 5}
+{"leclerc" requires "" costs 12 position 25 3}
 ; goc-node {"cost":4,"engine_id":"leclerc_azur","key":"actor:esp:generated:unit:leclerc-azur","required_engine_id":"","unlock_unit":"leclerc_azur"}
-{"leclerc_azur" requires "" costs 4 position 3 5}
+{"leclerc_azur" requires "" costs 4 position 27 3}
 ; goc-node {"cost":4,"engine_id":"leclerc_sxxi","key":"actor:esp:generated:unit:leclerc-sxxi","required_engine_id":"","unlock_unit":"leclerc_sxxi"}
-{"leclerc_sxxi" requires "" costs 4 position 5 5}
+{"leclerc_sxxi" requires "" costs 4 position 1 5}
 ; goc-node {"cost":3,"engine_id":"leopard_1a5_n","key":"actor:esp:generated:unit:leopard-1a5-n","required_engine_id":"","unlock_unit":"leopard_1a5_n"}
-{"leopard_1a5_n" requires "" costs 3 position 7 5}
+{"leopard_1a5_n" requires "" costs 3 position 3 5}
 ; goc-node {"cost":12,"engine_id":"leopard-2a5","key":"actor:esp:generated:unit:leopard-2a5","required_engine_id":"","unlock_unit":"leopard-2a5"}
-{"leopard-2a5" requires "" costs 12 position 9 5}
+{"leopard-2a5" requires "" costs 12 position 5 5}
 ; goc-node {"cost":4,"engine_id":"leopard_2a7+","key":"actor:esp:generated:unit:leopard-2a7","required_engine_id":"","unlock_unit":"leopard_2a7+"}
-{"leopard_2a7+" requires "" costs 4 position 11 5}
+{"leopard_2a7+" requires "" costs 4 position 7 5}
 ; goc-node {"cost":1,"engine_id":"leopard_c2_mexas","key":"actor:esp:generated:unit:leopard-c2-mexas","required_engine_id":"","unlock_unit":"leopard_c2_mexas"}
-{"leopard_c2_mexas" requires "" costs 1 position 13 5}
+{"leopard_c2_mexas" requires "" costs 1 position 9 5}
 ; goc-node {"cost":8,"engine_id":"leopord_2a4_ger","key":"actor:esp:generated:unit:leopord-2a4-ger","required_engine_id":"","unlock_unit":"leopord_2a4_ger"}
-{"leopord_2a4_ger" requires "" costs 8 position 15 5}
+{"leopord_2a4_ger" requires "" costs 8 position 11 5}
 ; goc-node {"cost":2,"engine_id":"leopord_2a4m","key":"actor:esp:generated:unit:leopord-2a4m","required_engine_id":"","unlock_unit":"leopord_2a4m"}
-{"leopord_2a4m" requires "" costs 2 position 17 5}
+{"leopord_2a4m" requires "" costs 2 position 13 5}
 ; goc-node {"cost":4,"engine_id":"leopord_2a6_n","key":"actor:esp:generated:unit:leopord-2a6-n","required_engine_id":"","unlock_unit":"leopord_2a6_n"}
-{"leopord_2a6_n" requires "" costs 4 position 19 5}
+{"leopord_2a6_n" requires "" costs 4 position 15 5}
 ; goc-node {"cost":5,"engine_id":"m142_himars_atacams","key":"actor:esp:generated:unit:m142-himars-atacams","required_engine_id":"","unlock_unit":"m142_himars_atacams"}
-{"m142_himars_atacams" requires "" costs 5 position 21 5}
+{"m142_himars_atacams" requires "" costs 5 position 17 5}
 ; goc-node {"cost":5,"engine_id":"m142_himarser","key":"actor:esp:generated:unit:m142-himarser","required_engine_id":"","unlock_unit":"m142_himarser"}
-{"m142_himarser" requires "" costs 5 position 23 5}
+{"m142_himarser" requires "" costs 5 position 19 5}
 ; goc-node {"cost":12,"engine_id":"m1a1_n","key":"actor:esp:generated:unit:m1a1-n","required_engine_id":"","unlock_unit":"m1a1_n"}
-{"m1a1_n" requires "" costs 12 position 25 5}
+{"m1a1_n" requires "" costs 12 position 21 5}
 ; goc-node {"cost":12,"engine_id":"m1a2_sepv1","key":"actor:esp:generated:unit:m1a2-sepv1","required_engine_id":"","unlock_unit":"m1a2_sepv1"}
-{"m1a2_sepv1" requires "" costs 12 position 27 5}
+{"m1a2_sepv1" requires "" costs 12 position 23 5}
 ; goc-node {"cost":12,"engine_id":"m1a2_sepv2","key":"actor:esp:generated:unit:m1a2-sepv2","required_engine_id":"","unlock_unit":"m1a2_sepv2"}
-{"m1a2_sepv2" requires "" costs 12 position 1 7}
-; goc-node {"cost":7,"engine_id":"mq9_nato_recon","key":"actor:esp:generated:unit:mq9-nato-recon","required_engine_id":"","unlock_unit":"mq9_nato_recon"}
-{"mq9_nato_recon" requires "" costs 7 position 3 7}
+{"m1a2_sepv2" requires "" costs 12 position 25 5}
+; goc-node {"cost":4,"engine_id":"mq9_nato_recon","key":"actor:esp:generated:unit:mq9-nato-recon","required_engine_id":"","unlock_unit":"mq9_nato_recon"}
+{"mq9_nato_recon" requires "" costs 4 position 27 5}
 ; goc-node {"cost":5,"engine_id":"mrls_atacms_n","key":"actor:esp:generated:unit:mrls-atacms-n","required_engine_id":"","unlock_unit":"mrls_atacms_n"}
-{"mrls_atacms_n" requires "" costs 5 position 5 7}
+{"mrls_atacms_n" requires "" costs 5 position 1 7}
 ; goc-node {"cost":10,"engine_id":"otomatic","key":"actor:esp:generated:unit:otomatic","required_engine_id":"","unlock_unit":"otomatic"}
-{"otomatic" requires "" costs 10 position 7 7}
+{"otomatic" requires "" costs 10 position 3 7}
 ; goc-node {"cost":5,"engine_id":"rm_70","key":"actor:esp:generated:unit:rm-70","required_engine_id":"","unlock_unit":"rm_70"}
-{"rm_70" requires "" costs 5 position 9 7}
+{"rm_70" requires "" costs 5 position 5 7}
 ; goc-node {"cost":5,"engine_id":"roland","key":"actor:esp:generated:unit:roland","required_engine_id":"","unlock_unit":"roland"}
-{"roland" requires "" costs 5 position 11 7}
-; goc-node {"cost":4,"engine_id":"squad_3rd_rozv_hatred(goc_esp)","key":"actor:esp:generated:unit:squad-3rd-rozv-hatred-ukr","required_engine_id":"","unlock_unit":"squad_3rd_rozv_hatred(goc_esp)"}
-{"squad_3rd_rozv_hatred(goc_esp)" requires "" costs 4 position 13 7}
+{"roland" requires "" costs 5 position 7 7}
 ; goc-node {"cost":7,"engine_id":"strf9040c_n","key":"actor:esp:generated:unit:strf9040c-n","required_engine_id":"","unlock_unit":"strf9040c_n"}
-{"strf9040c_n" requires "" costs 7 position 15 7}
+{"strf9040c_n" requires "" costs 7 position 9 7}
 ; goc-node {"cost":4,"engine_id":"strv_122_n","key":"actor:esp:generated:unit:strv-122-n","required_engine_id":"","unlock_unit":"strv_122_n"}
-{"strv_122_n" requires "" costs 4 position 17 7}
+{"strv_122_n" requires "" costs 4 position 11 7}
 ; goc-node {"cost":2,"engine_id":"t_55m_fin","key":"actor:esp:generated:unit:t-55m-fin","required_engine_id":"","unlock_unit":"t_55m_fin"}
-{"t_55m_fin" requires "" costs 2 position 19 7}
+{"t_55m_fin" requires "" costs 2 position 13 7}
 ; goc-node {"cost":5,"engine_id":"vz_77_dana","key":"actor:esp:generated:unit:vz-77-dana","required_engine_id":"","unlock_unit":"vz_77_dana"}
-{"vz_77_dana" requires "" costs 5 position 21 7}
+{"vz_77_dana" requires "" costs 5 position 15 7}
 ; goc-node {"cost":7,"engine_id":"105mm_m119","key":"actor:esp:generated:unit:105mm-m119","required_engine_id":"","unlock_unit":"105mm_m119"}
-{"105mm_m119" requires "" costs 7 position 23 7}
-; goc-node {"cost":3,"engine_id":"3rd_assault_saperi(goc_esp)","key":"actor:esp:generated:unit:3rd-assault-saperi","required_engine_id":"","unlock_unit":"3rd_assault_saperi(goc_esp)"}
-{"3rd_assault_saperi(goc_esp)" requires "" costs 3 position 25 7}
+{"105mm_m119" requires "" costs 7 position 17 7}
 ; goc-node {"cost":3,"engine_id":"arf_m120(goc_esp)","key":"actor:esp:generated:unit:arf-m120","required_engine_id":"","unlock_unit":"arf_m120(goc_esp)"}
-{"arf_m120(goc_esp)" requires "" costs 3 position 27 7}
+{"arf_m120(goc_esp)" requires "" costs 3 position 19 7}
 ; goc-node {"cost":3,"engine_id":"arf_m252(goc_esp)","key":"actor:esp:generated:unit:arf-m252","required_engine_id":"","unlock_unit":"arf_m252(goc_esp)"}
-{"arf_m252(goc_esp)" requires "" costs 3 position 1 9}
+{"arf_m252(goc_esp)" requires "" costs 3 position 21 7}
 ; goc-node {"cost":3,"engine_id":"arf_m2hb(goc_esp)","key":"actor:esp:generated:unit:arf-m2hb","required_engine_id":"","unlock_unit":"arf_m2hb(goc_esp)"}
-{"arf_m2hb(goc_esp)" requires "" costs 3 position 3 9}
+{"arf_m2hb(goc_esp)" requires "" costs 3 position 23 7}
 ; goc-node {"cost":3,"engine_id":"arf_mk19(goc_esp)","key":"actor:esp:generated:unit:arf-mk19","required_engine_id":"","unlock_unit":"arf_mk19(goc_esp)"}
-{"arf_mk19(goc_esp)" requires "" costs 3 position 5 9}
+{"arf_mk19(goc_esp)" requires "" costs 3 position 25 7}
 ; goc-node {"cost":5,"engine_id":"fh70_new","key":"actor:esp:generated:unit:fh70-new","required_engine_id":"","unlock_unit":"fh70_new"}
-{"fh70_new" requires "" costs 5 position 7 9}
-; goc-node {"cost":11,"engine_id":"m1097_avenger(goc_esp)","key":"actor:esp:generated:unit:m1097-avenger-nato","required_engine_id":"","unlock_unit":"m1097_avenger(goc_esp)"}
-{"m1097_avenger(goc_esp)" requires "" costs 11 position 9 9}
+{"fh70_new" requires "" costs 5 position 27 7}
+; goc-node {"cost":3,"engine_id":"goc_ildu_engineer(goc_esp)","key":"actor:esp:generated:unit:goc-ildu-engineer-ukr","required_engine_id":"","unlock_unit":"goc_ildu_engineer(goc_esp)"}
+{"goc_ildu_engineer(goc_esp)" requires "" costs 3 position 1 9}
+; goc-node {"cost":8,"engine_id":"goc_ildu_javelin(goc_esp)","key":"actor:esp:generated:unit:goc-ildu-javelin-ukr","required_engine_id":"","unlock_unit":"goc_ildu_javelin(goc_esp)"}
+{"goc_ildu_javelin(goc_esp)" requires "" costs 8 position 3 9}
+; goc-node {"cost":11,"engine_id":"m1097_avenger","key":"actor:esp:generated:unit:m1097-avenger","required_engine_id":"","unlock_unit":"m1097_avenger"}
+{"m1097_avenger" requires "" costs 11 position 5 9}
 ; goc-node {"cost":11,"engine_id":"m270_n","key":"actor:esp:generated:unit:m270-n","required_engine_id":"","unlock_unit":"m270_n"}
-{"m270_n" requires "" costs 11 position 11 9}
+{"m270_n" requires "" costs 11 position 7 9}
 ; goc-node {"cost":5,"engine_id":"m777a1","key":"actor:esp:generated:unit:m777a1","required_engine_id":"","unlock_unit":"m777a1"}
-{"m777a1" requires "" costs 5 position 13 9}
+{"m777a1" requires "" costs 5 position 9 9}
 ; goc-node {"cost":3,"engine_id":"mq9_nato","key":"actor:esp:generated:unit:mq9-nato","required_engine_id":"","unlock_unit":"mq9_nato"}
-{"mq9_nato" requires "" costs 3 position 15 9}
+{"mq9_nato" requires "" costs 3 position 11 9}
+; goc-node {"cost":11,"engine_id":"goc_ildu_manpads(goc_esp)","key":"actor:esp:generated:unit:goc-ildu-manpads-ukr","required_engine_id":"","unlock_unit":"goc_ildu_manpads(goc_esp)"}
+{"goc_ildu_manpads(goc_esp)" requires "" costs 11 position 13 9}
