@@ -9,6 +9,7 @@ end the human faction, execute each AI faction, and stop when control returns to
 the selected faction or a pending battle interrupts the cycle.
 """
 
+import time
 from typing import Any
 
 from .campaign import CampaignEngine
@@ -18,6 +19,10 @@ from .strategic_actors import ensure_strategic_actor_runtime
 
 
 PLAYER_ROUND_OP = "end_player_round"
+
+
+def _ms(seconds: float) -> float:
+    return round(max(0.0, seconds) * 1000.0, 3)
 
 
 def end_player_round(state: CampaignState) -> dict[str, Any]:
@@ -47,11 +52,23 @@ def end_player_round(state: CampaignState) -> dict[str, Any]:
     starting_turn = int(state.turn_number)
     ai_factions: list[str] = []
     observation_context = ObservationMutationContext()
+    perf = {
+        "selected_end_turn_ms": 0.0,
+        "selected_actor_runtime_ms": 0.0,
+        "ai_take_turn_ms": {},
+        "ai_end_turn_ms": {},
+        "ai_actor_runtime_ms": {},
+    }
 
     # The human has finished planning. Move to the first active AI seat.
     if state.current_faction == selected:
+        started = time.perf_counter()
         engine.end_turn()
+        perf["selected_end_turn_ms"] = _ms(time.perf_counter() - started)
+
+        started = time.perf_counter()
         ensure_strategic_actor_runtime(state)
+        perf["selected_actor_runtime_ms"] = _ms(time.perf_counter() - started)
 
     # Resume/cycle every active non-player faction. CampaignEngine owns the
     # canonical TURN_ORDER and skips eliminated factions when advancing.
@@ -67,12 +84,26 @@ def end_player_round(state: CampaignState) -> dict[str, Any]:
         if faction_state is None or faction_state.is_eliminated:
             # Defensive recovery for malformed/legacy current-faction pointers;
             # the engine will advance to the next active seat.
+            started = time.perf_counter()
             engine.end_turn()
+            perf["ai_end_turn_ms"][faction.value] = _ms(
+                time.perf_counter() - started
+            )
+
+            started = time.perf_counter()
             ensure_strategic_actor_runtime(state)
+            perf["ai_actor_runtime_ms"][faction.value] = _ms(
+                time.perf_counter() - started
+            )
             steps += 1
             continue
+
         ai = StrategicAI(state)
+        started = time.perf_counter()
         ai.take_turn(faction)
+        perf["ai_take_turn_ms"][faction.value] = _ms(
+            time.perf_counter() - started
+        )
         observation_context = merge_observation_mutation_contexts(
             observation_context,
             ai.observation_context,
@@ -80,8 +111,18 @@ def end_player_round(state: CampaignState) -> dict[str, Any]:
         ai_factions.append(faction.value)
         if state.pending_battle is not None:
             break
+
+        started = time.perf_counter()
         engine.end_turn()
+        perf["ai_end_turn_ms"][faction.value] = _ms(
+            time.perf_counter() - started
+        )
+
+        started = time.perf_counter()
         ensure_strategic_actor_runtime(state)
+        perf["ai_actor_runtime_ms"][faction.value] = _ms(
+            time.perf_counter() - started
+        )
         steps += 1
 
     if state.pending_battle is None and state.current_faction != selected:
@@ -93,6 +134,20 @@ def end_player_round(state: CampaignState) -> dict[str, Any]:
         observation_context,
         engine.observation_context,
     )
+    perf["ai_take_turn_total_ms"] = round(
+        sum(float(value) for value in perf["ai_take_turn_ms"].values()), 3
+    )
+    perf["advance_turn_total_ms"] = round(
+        float(perf["selected_end_turn_ms"])
+        + sum(float(value) for value in perf["ai_end_turn_ms"].values()),
+        3,
+    )
+    perf["actor_runtime_total_ms"] = round(
+        float(perf["selected_actor_runtime_ms"])
+        + sum(float(value) for value in perf["ai_actor_runtime_ms"].values()),
+        3,
+    )
+
     return {
         "selected_faction": selected.value,
         "current_faction": state.current_faction.value,
@@ -100,6 +155,7 @@ def end_player_round(state: CampaignState) -> dict[str, Any]:
         "starting_turn": starting_turn,
         "turn_number": int(state.turn_number),
         "pending_battle": state.pending_battle is not None,
+        "perf_turn_cycle": perf,
         # ``apply_frontend_commands`` consumes and removes this private key
         # before publishing the command result, exactly like the existing
         # ``run_ai`` path. Combining AI seats must not lose S11 witness state.
