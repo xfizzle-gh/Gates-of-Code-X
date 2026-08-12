@@ -17,13 +17,13 @@ EXPECTED_ILDU_IDS = {
     "goc_ildu_engineer(goc_esp)",
     "goc_ildu_manpads(goc_esp)",
 }
-ILDU_BREEDS = {
+ILDU_PRICED_BREEDS = {
     "nato_squadlead", "nato_seniorrifleman", "nato_rifleman", "nato_rifleman1",
     "nato_rifleman2", "nato_grenadier", "nato_mg", "nato_mgassist", "nato_medic",
-    "nato_antitank", "nato_antitank_pzf3", "nato_atassist", "nato_javelin",
-    "nato_sniper", "nato_spotter", "nato_eng", "nato_manpad_operator",
-    "nato_manpad_supporter",
+    "nato_antitank", "nato_atassist", "nato_javelin", "nato_sniper", "nato_spotter",
+    "nato_eng", "nato_manpad_operator", "nato_manpad_supporter",
 }
+ILDU_NATIVE_UNPRICED_BREEDS = {"nato_antitank_pzf3"}
 FORBIDDEN_SPAIN_TOKENS = ("azov3", "3rd_assault", "squad_3rd_rozv_hatred")
 _RESOLVED_UNIT_RE = re.compile(r"^;\s*resolved_unit=(.+?)\s*$", re.MULTILINE)
 _GOC_NODE_RE = re.compile(r"^;\s*goc-node\s+(\{.*\})\s*$", re.MULTILINE)
@@ -80,8 +80,8 @@ class Phase194SpainIlduAuthorityTests(unittest.TestCase):
         self.assertEqual(unit_ids, purchase_ids)
         self.assertEqual(49, len(unit_ids))
 
-    def test_inf_pack_has_positive_rows_for_every_ildu_personnel_breed(self) -> None:
-        rows: dict[str, float] = {}
+    def test_inf_pack_preserves_exact_ildu_native_cost_authority(self) -> None:
+        rows: dict[str, dict] = {}
         for line in self.inf.splitlines():
             stripped = line.strip()
             if not stripped.startswith(_INF_MARKER):
@@ -91,12 +91,30 @@ class Phase194SpainIlduAuthorityTests(unittest.TestCase):
             if not target.startswith("mp/goc_esp/"):
                 continue
             breed = target.rsplit("/", 1)[-1]
-            rows[breed] = float(metadata["cost"])
+            rows[breed] = metadata
 
-        missing = sorted(ILDU_BREEDS - set(rows))
+        missing = sorted(ILDU_PRICED_BREEDS - set(rows))
         self.assertEqual([], missing, f"Spain ILDU personnel costs missing: {missing}")
-        for breed in sorted(ILDU_BREEDS):
-            self.assertGreater(rows[breed], 0.0, breed)
+        for breed in sorted(ILDU_PRICED_BREEDS):
+            self.assertGreater(float(rows[breed]["cost"]), 0.0, breed)
+
+        for breed in ILDU_NATIVE_UNPRICED_BREEDS:
+            self.assertNotIn(
+                breed,
+                rows,
+                f"Spain ILDU native-unpriced breed gained fabricated cost authority: {breed}",
+            )
+
+        expected_authority = {
+            "nato_atassist": ("mp/ukr/2022s/ukr_atassist", 7.0),
+            "nato_mgassist": ("mp/ukr/2022s/ukr_lmgassist", 7.0),
+            "nato_manpad_operator": ("mp/ukr/2022s/ukr_manpad_operator", 17.5),
+            "nato_manpad_supporter": ("mp/ukr/2022s/ukr_manpad_supporter", 17.5),
+            "nato_medic": ("mp/nato/2022s/nato_medic", 28.0),
+        }
+        for breed, (source_path, cost) in expected_authority.items():
+            self.assertEqual(source_path, rows[breed]["source_path"], breed)
+            self.assertEqual(cost, float(rows[breed]["cost"]), breed)
 
     def test_units_header_records_current_owner_components(self) -> None:
         self.assertIn("components=ukraine_ildu,nato_fallback_heavy,nato_common_support", self.units)
