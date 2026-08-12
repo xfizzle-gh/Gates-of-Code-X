@@ -33,12 +33,18 @@ def end_player_round(state: CampaignState) -> dict[str, Any]:
     AI turns are taken through ``StrategicAI`` and advancement always goes
     through ``CampaignEngine.end_turn``. A pending battle stops the loop without
     attempting another turn, preserving the normal modal battle gate.
+
+    Production operational campaigns reuse the already-validated campaign engine
+    as the AI driver's movement engine. This avoids constructing and fully
+    validating the same 3.5k-province state once per AI seat. Legacy adjacency AI
+    retains one engine per AI to preserve its independent seeded battle RNG.
     """
 
     from .observation import (
         ObservationMutationContext,
         merge_observation_mutation_contexts,
     )
+    from .operational_ai import operational_graph_authority_present
 
     if state.pending_battle is not None:
         raise RuntimeError("Cannot end player round with a pending battle")
@@ -48,17 +54,31 @@ def end_player_round(state: CampaignState) -> dict[str, Any]:
     if selected_state is None or selected_state.is_eliminated:
         raise RuntimeError(f"Selected faction is not active: {selected.value}")
 
+    engine_started = time.perf_counter()
     engine = CampaignEngine(state)
+    engine_init_ms = _ms(time.perf_counter() - engine_started)
     starting_turn = int(state.turn_number)
     ai_factions: list[str] = []
     observation_context = ObservationMutationContext()
     perf = {
+        "engine_init_ms": engine_init_ms,
         "selected_end_turn_ms": 0.0,
         "selected_actor_runtime_ms": 0.0,
         "ai_take_turn_ms": {},
         "ai_end_turn_ms": {},
         "ai_actor_runtime_ms": {},
+        "shared_operational_ai": False,
     }
+
+    # On graph-native campaigns StrategicAI never uses CampaignEngine's legacy
+    # move/attack RNG path. Reuse the engine already validated above rather than
+    # paying CampaignEngine.__init__ + full state validation once per AI seat.
+    shared_operational_ai = (
+        StrategicAI(state, engine=engine)
+        if operational_graph_authority_present(state)
+        else None
+    )
+    perf["shared_operational_ai"] = shared_operational_ai is not None
 
     # The human has finished planning. Move to the first active AI seat.
     if state.current_faction == selected:
@@ -98,7 +118,7 @@ def end_player_round(state: CampaignState) -> dict[str, Any]:
             steps += 1
             continue
 
-        ai = StrategicAI(state)
+        ai = shared_operational_ai or StrategicAI(state)
         started = time.perf_counter()
         ai.take_turn(faction)
         perf["ai_take_turn_ms"][faction.value] = _ms(
