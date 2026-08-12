@@ -1,6 +1,7 @@
 param(
     [string]$SourceRoot = (Split-Path -Parent $PSScriptRoot),
     [string]$TargetRoot = $env:GATES_CODEX_DEPLOY_ROOT,
+    [string]$SourceCommit = "",
     [switch]$DryRun
 )
 
@@ -39,6 +40,11 @@ function Test-SafeRelativePath {
         }
     }
     return $true
+}
+
+function Test-CommitSha {
+    param([string]$Value)
+    return -not [string]::IsNullOrWhiteSpace($Value) -and $Value -match '^[0-9a-fA-F]{40}$'
 }
 
 $Source = Resolve-Directory -Path $SourceRoot
@@ -132,9 +138,22 @@ foreach ($relative in $tracked) {
     $copied++
 }
 
-$commit = (& $git.Source -C $Source rev-parse HEAD 2>$null | Select-Object -First 1)
-if ($LASTEXITCODE -ne 0) {
-    $commit = "unknown"
+$gitCommit = (& $git.Source -C $Source rev-parse --verify HEAD 2>$null | Select-Object -First 1)
+$gitCommitOk = $LASTEXITCODE -eq 0 -and (Test-CommitSha -Value $gitCommit)
+if (Test-CommitSha -Value $SourceCommit) {
+    $commit = $SourceCommit.ToLowerInvariant()
+    if ($gitCommitOk -and $gitCommit.Trim().ToLowerInvariant() -ne $commit) {
+        throw "Deployment source commit mismatch: stamped $commit, git reports $($gitCommit.Trim().ToLowerInvariant())."
+    }
+}
+elseif (-not [string]::IsNullOrWhiteSpace($SourceCommit)) {
+    throw "Deployment SourceCommit is not an exact 40-character commit SHA: $SourceCommit"
+}
+elseif ($gitCommitOk) {
+    $commit = $gitCommit.Trim().ToLowerInvariant()
+}
+else {
+    throw "Unable to authenticate deployment source commit with git rev-parse HEAD."
 }
 
 $manifest = [ordered]@{
