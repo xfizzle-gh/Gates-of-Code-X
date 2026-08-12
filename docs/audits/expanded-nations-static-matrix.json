@@ -266,7 +266,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "57ed2c03ef9c43b8419c1a11942501bd9ea1d567058bec4f95fcdc68e93da3a8",
+      "actor_authority_signature": "a73ad016129484ac4e20f7a4f39d0f275b42a6a2a328c89c71b12eb3f276cb57",
       "actor_id": "bel",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -293,8 +293,8 @@
         "resource/script/multiplayer/units/goc_bel/conquest.goc_bel.lua": "0660f2f630933686081f2522ec39b06e28c0f906f78f990658ba8d6dc7485149",
         "resource/set/dynamic_campaign/unit_research_goc_bel.set": "8a1146a7c3a766ff08e19a15014b8be790a7ff370d8f6832e3d02f089cbc7a56",
         "resource/set/multiplayer/armies/goc_bel.set": "0a7b3aa1d7e876a4e3c37edce61e94557a4688ab73f0aa93b09fa66c2899f23f",
-        "resource/set/multiplayer/units/conquest/inf_goc_bel.set": "a0b6cfc24919c2cf09886923a68553a9ddec17a3614a4550ffa4d0c46ea43194",
-        "resource/set/multiplayer/units/conquest/units_goc_bel.set": "1eec916ccc20d0e751aa56d35f5aa6a71c0609e840a201055e1a63d6a0c2e334"
+        "resource/set/multiplayer/units/conquest/inf_goc_bel.set": "a748932f2751a83076c27c3f309aa270c24b67d882faafa041a993dc543a9c4c",
+        "resource/set/multiplayer/units/conquest/units_goc_bel.set": "a1b870a96bb7bf03422c43b4c79c4118f6e4710b5c5fae320383a29e7005ab48"
       },
       "modern_unit_count": 55,
       "native_acceptance_status": "not_run",
@@ -345,7 +345,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "b771f27aa9fc1c59ddd25cabf3eb92608e1be825ae2959dbf11805d95580a50e",
+      "actor_authority_signature": "95b6ad861b19d487b03fb4feb306d2d4191377fadd0e346bc71b0dc0be53ccfe",
       "actor_id": "bgr",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -372,8 +372,8 @@
         "resource/script/multiplayer/units/goc_bgr/conquest.goc_bgr.lua": "56c6057f1ec5cb76f01957733dcc910cb481ee9fa7f3f3a0008050c71b704377",
         "resource/set/dynamic_campaign/unit_research_goc_bgr.set": "ecf202e942584e38bdc914c6e3736a9645485f9495dbb7a5b0d0845578676f06",
         "resource/set/multiplayer/armies/goc_bgr.set": "8cb10a425a2988310196ec7c4ea161e670f7ee0bd42057d24bec8affcc0bbbed",
-        "resource/set/multiplayer/units/conquest/inf_goc_bgr.set": "9f27bb38cafe7b427e8fe335433f17baec5f8b1618dad829e81cb50f036a6e5b",
-        "resource/set/multiplayer/units/conquest/units_goc_bgr.set": "de2fd87d2e5857f463134553a7065d686232f2144315aff7eb60a97f1fb238a0"
+        "resource/set/multiplayer/units/conquest/inf_goc_bgr.set": "a96c1a49fc34b64d49809d71121fbf4b8d0f36e6b5ca231b66951732ad2fec68",
+        "resource/set/multiplayer/units/conquest/units_goc_bgr.set": "381edfa53dc23afe2ea2b51bcae9aa9c4bc5219b91b182fc47d56993de15cf09"
       },
       "modern_unit_count": 55,
       "native_acceptance_status": "not_run",
@@ -491,7 +491,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "29dfef09da3458b880bb23a62323b7994eb3df532238214c5037a6f7d307cab6",
+      "actor_authority_signature": "119923ae789112f7b877dcf19c3f52c3aeb800838e649ac655496e9796bc445b",
       "actor_id": "blr",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -516,7 +516,11 @@
       "legacy_unit_count": 15,
       "managed_file_hashes": {
         "resource/interface/pages/multi/flag_goc_blr.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
-        "resource/set/multiplayer/armies/goc_blr.set": "e3ec98b577101a494c16018a8c58701c8a00dda06291ae8769fa52e69b9aafa5"
+        "resource/script/multiplayer/units/goc_blr/conquest.goc_blr.lua": "09f2ad2f3b528976a99b8abc8e7442f8c6dad3fdd44c6bef78058f91c0a2937f",
+        "resource/set/dynamic_campaign/unit_research_goc_blr.set": "097642dda3e88c03eac2d742713c0a1c0fd01afd39e74c804583ad9fd486855e",
+        "resource/set/multiplayer/armies/goc_blr.set": "e3ec98b577101a494c16018a8c58701c8a00dda06291ae8769fa52e69b9aafa5",
+        "resource/set/multiplayer/units/conquest/inf_goc_blr.set": "f6c920fc3ab00c9b7a6b646942dab9123341c289e04366d88185565986f32f97",
+        "resource/set/multiplayer/units/conquest/units_goc_blr.set": "458075fb10a144c4a33bf49ee0646f7cec5da023c803447b4341df2a34990774"
       },
       "modern_unit_count": 15,
       "native_acceptance_status": "not_run",
@@ -550,7 +554,7 @@
           "actor_id": "blr",
           "coalition": "east",
           "core_transport_side": "rusa",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 69,
           "numeric_id": 32,
@@ -567,7 +571,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "e86fb1f5845ef33067a726eb7a2a7041d3b8bcaf1d92c953e576ab55e28fb859",
+      "actor_authority_signature": "e73209201158bd6e8cf032075fc9f74beb72ee1a3c73c77c47563e0b75300f07",
       "actor_id": "can",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -593,7 +597,11 @@
       "legacy_unit_count": 0,
       "managed_file_hashes": {
         "resource/interface/pages/multi/flag_goc_can.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
-        "resource/set/multiplayer/armies/goc_can.set": "a861b200afb6cebe3b60dcd229598509cc01e1efa7f8cac805fbb37c1eb210e2"
+        "resource/script/multiplayer/units/goc_can/conquest.goc_can.lua": "df178e62d53035ca60aa0c87b7e4efbaacebaf447c49f4918a7bbed62fdfd705",
+        "resource/set/dynamic_campaign/unit_research_goc_can.set": "b68b4b6d71ebf2e892666a32a880df3ec4e08659a2b6f73d72553e857cd719e4",
+        "resource/set/multiplayer/armies/goc_can.set": "a861b200afb6cebe3b60dcd229598509cc01e1efa7f8cac805fbb37c1eb210e2",
+        "resource/set/multiplayer/units/conquest/inf_goc_can.set": "d1045ec35f47987cef731550fb20d44aa9f79375ebb32d3abd6ab800579cef65",
+        "resource/set/multiplayer/units/conquest/units_goc_can.set": "340e9a0ac3b210c11b9a710df0fb4eb79a90698f73304b7f8dc36ac2daf62d30"
       },
       "modern_unit_count": 21,
       "native_acceptance_status": "not_run",
@@ -627,7 +635,7 @@
           "actor_id": "can",
           "coalition": "west",
           "core_transport_side": "nato",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 60,
           "numeric_id": 23,
@@ -777,7 +785,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "8b215ca4737bf2c816b32c7d4d57a042af7c0db314fbec40db8f49811cd7cc02",
+      "actor_authority_signature": "9ef1ff28bd0411be14794dd0bce8976f1ffca5924fa37c5a1732842ddfb3836f",
       "actor_id": "cze",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -805,8 +813,8 @@
         "resource/script/multiplayer/units/goc_cze/conquest.goc_cze.lua": "bc21d84f22177671e98b3f0f2b1caa9896eb6d892d7e5e4f6f8f24ef0a123833",
         "resource/set/dynamic_campaign/unit_research_goc_cze.set": "46cccc3319eb35c110f5a33c0fbed6efceb3911210cbab9aae34f885e6610f71",
         "resource/set/multiplayer/armies/goc_cze.set": "6482ffa398df66b95306fc310d4dfe5bc14331377b8774367ecb40125d91d3a3",
-        "resource/set/multiplayer/units/conquest/inf_goc_cze.set": "6326d4452bd9a98a2669a32cd8292130aab3f805f59ea569fa5bac0b11023f12",
-        "resource/set/multiplayer/units/conquest/units_goc_cze.set": "c6e2729330d3f7e9e1085b37c594293328a6b2a2e2cfea61804984bae293b6c0"
+        "resource/set/multiplayer/units/conquest/inf_goc_cze.set": "1803e9e9d7ffff7001a82ccd47c39cf3a7cdd65e8328ae1095fd7d2f303e42b2",
+        "resource/set/multiplayer/units/conquest/units_goc_cze.set": "d498e8348c322057be3d3b3e81bd5043e8b2019ac86c9d7e114ed0f2e5bddf16"
       },
       "modern_unit_count": 8,
       "native_acceptance_status": "not_run",
@@ -857,7 +865,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "7e88c1a3513a15c795655c8ae03956d16fbf3d2db1bb3b0882411691b991b33c",
+      "actor_authority_signature": "f59fc1dca8d52d4c47970f6a476c872e29b282ba52b2fd7540fbc507739c1302",
       "actor_id": "deu",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -882,7 +890,11 @@
       "legacy_unit_count": 0,
       "managed_file_hashes": {
         "resource/interface/pages/multi/flag_goc_deu.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
-        "resource/set/multiplayer/armies/goc_deu.set": "dd834600e37fe22d540cca2302b8759ffae37562bca7f1e06fd990e7b4a4512d"
+        "resource/script/multiplayer/units/goc_deu/conquest.goc_deu.lua": "dc310718dd62a5c43fcdb6ed30101cfe7d4df3d7fd741c09b48b73e7c096f75b",
+        "resource/set/dynamic_campaign/unit_research_goc_deu.set": "82d95461a6f2a9b9be04ff0d7cce5dab1b5ee22ec340fd38da3970e6d19b6174",
+        "resource/set/multiplayer/armies/goc_deu.set": "dd834600e37fe22d540cca2302b8759ffae37562bca7f1e06fd990e7b4a4512d",
+        "resource/set/multiplayer/units/conquest/inf_goc_deu.set": "f24dc58e47ce6ce5d48e63c61333587dffe431a873287cf4f770857a956591e7",
+        "resource/set/multiplayer/units/conquest/units_goc_deu.set": "9623a6d3a28e87641142efe9dfcc8590395094d80bf3268c5a8053146d0f5f5c"
       },
       "modern_unit_count": 29,
       "native_acceptance_status": "not_run",
@@ -916,7 +928,7 @@
           "actor_id": "deu",
           "coalition": "west",
           "core_transport_side": "nato",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 53,
           "numeric_id": 16,
@@ -933,7 +945,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "5465e90543e4f01db195092f0b54e456e16bbc665d806fc5f47d3eb4abebef00",
+      "actor_authority_signature": "e7250390a77e97bd8d5ac6f0e2330e018b74328bb864fb77f29124a2c0b2bf8b",
       "actor_id": "dnk",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -957,7 +969,11 @@
       "legacy_unit_count": 0,
       "managed_file_hashes": {
         "resource/interface/pages/multi/flag_goc_dnk.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
-        "resource/set/multiplayer/armies/goc_dnk.set": "2239764a1c159181deaaef8e48d8772cec92127c9ce31250382710b9275732de"
+        "resource/script/multiplayer/units/goc_dnk/conquest.goc_dnk.lua": "7cd88a1394af83c2284c6757f2dc0389f2e452f7db056b8e16cbed07969f9f78",
+        "resource/set/dynamic_campaign/unit_research_goc_dnk.set": "09f3bc37be6841c31af240a43bff7723ea99bfa01dad8d2654721638d0fa7d7c",
+        "resource/set/multiplayer/armies/goc_dnk.set": "2239764a1c159181deaaef8e48d8772cec92127c9ce31250382710b9275732de",
+        "resource/set/multiplayer/units/conquest/inf_goc_dnk.set": "48d6ad2f21cef94a0068b83b3bf7a81d5b0f82dc1e42a38a569e10337d7b37c0",
+        "resource/set/multiplayer/units/conquest/units_goc_dnk.set": "ecc54ddcca18439f3338ac8d88f5727b5dd5a5de04f5be78b5c7becf46fc4634"
       },
       "modern_unit_count": 55,
       "native_acceptance_status": "not_run",
@@ -991,7 +1007,7 @@
           "actor_id": "dnk",
           "coalition": "west",
           "core_transport_side": "nato",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 62,
           "numeric_id": 25,
@@ -1008,7 +1024,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "c9333a32de0e71901c03d0222377b3b09cc6a0c08e2f54f2be921f3e6d2b7bde",
+      "actor_authority_signature": "0005c2528102f3bf73cd0cc4bb67811a3d06714687ee0e72e00b25038945f765",
       "actor_id": "donbas",
       "actor_type": "separatist",
       "ai_purchase_authority": {
@@ -1034,7 +1050,11 @@
       "legacy_unit_count": 15,
       "managed_file_hashes": {
         "resource/interface/pages/multi/flag_goc_donbas.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
-        "resource/set/multiplayer/armies/goc_donbas.set": "6fe3e10ea44aae975239f9127bbaed333e087234cacc7eeb932a2ab0ca582890"
+        "resource/script/multiplayer/units/goc_donbas/conquest.goc_donbas.lua": "597a7353e2643736a28c7db2d5639fabd7d3926a41c47a9416bde95e99917c87",
+        "resource/set/dynamic_campaign/unit_research_goc_donbas.set": "0df63484e9a76b76bc24d7f344657cf5ff0b4d02216776200cd3493e5c8ea424",
+        "resource/set/multiplayer/armies/goc_donbas.set": "6fe3e10ea44aae975239f9127bbaed333e087234cacc7eeb932a2ab0ca582890",
+        "resource/set/multiplayer/units/conquest/inf_goc_donbas.set": "e481aaa6786390585583d47c8aea5982df231b485f4841ffc56cdee740faa640",
+        "resource/set/multiplayer/units/conquest/units_goc_donbas.set": "68954cefb2b895e2291c9927762932d6de563b66e227f1c1ae0a2b868f07f636"
       },
       "modern_unit_count": 30,
       "native_acceptance_status": "not_run",
@@ -1068,7 +1088,7 @@
           "actor_id": "donbas",
           "coalition": "east",
           "core_transport_side": "rusa",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 68,
           "numeric_id": 31,
@@ -1085,7 +1105,7 @@
       "virtual_unit_count": 5
     },
     {
-      "actor_authority_signature": "c86b3d632eeed421d3ea12bee917529890fc6777243f3d7a3197b4fbedba3713",
+      "actor_authority_signature": "3ac8cae2370e44988682f64e5ebcdaad8888e0a72d000619cb4427f4aa3b01ea",
       "actor_id": "dprk",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -1110,7 +1130,11 @@
       "legacy_unit_count": 15,
       "managed_file_hashes": {
         "resource/interface/pages/multi/flag_goc_dprk.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
-        "resource/set/multiplayer/armies/goc_dprk.set": "6dd35856965d742df8e98232a7beb05ff5b0aa62c1139b9e43c000704ee02818"
+        "resource/script/multiplayer/units/goc_dprk/conquest.goc_dprk.lua": "0e1df418786ec36ab9658c72e9a18b150bbf019c6f51fa302ef5e47028df7a2a",
+        "resource/set/dynamic_campaign/unit_research_goc_dprk.set": "f546a7ff4197d88fc890305df0cbce4d35d08bd1eebed3ad2d550dd685a15858",
+        "resource/set/multiplayer/armies/goc_dprk.set": "6dd35856965d742df8e98232a7beb05ff5b0aa62c1139b9e43c000704ee02818",
+        "resource/set/multiplayer/units/conquest/inf_goc_dprk.set": "4e610a2d7fc97d480d498e16f83be43701db3788e87b80edde67d645356db1ce",
+        "resource/set/multiplayer/units/conquest/units_goc_dprk.set": "b876bfac633e3fd3a041ede135d60d6e2157a30acdc2a8d846b7d3f6958bf144"
       },
       "modern_unit_count": 5,
       "native_acceptance_status": "not_run",
@@ -1144,7 +1168,7 @@
           "actor_id": "dprk",
           "coalition": "east",
           "core_transport_side": "rusa",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 67,
           "numeric_id": 30,
@@ -1295,7 +1319,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "de5a221540b80b8293b09593b3eff6c598824d1d6816ef12e2a90a0f76c57f15",
+      "actor_authority_signature": "a12c632db2da52a38aab8dcc76186dff55cfdabd4980128ca9c4c7c91b9cdb6e",
       "actor_id": "esp",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -1321,7 +1345,11 @@
       "legacy_unit_count": 0,
       "managed_file_hashes": {
         "resource/interface/pages/multi/flag_goc_esp.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
-        "resource/set/multiplayer/armies/goc_esp.set": "0ea57b426af331e6151af59b0f27acce8213df6ec5b61e30ac85dd97fdd5e88e"
+        "resource/script/multiplayer/units/goc_esp/conquest.goc_esp.lua": "649da6da32ac7d0ddb5ddf463fdd3d0f63034f1bfbdbe3cf4b8d9ae6b40ac9ec",
+        "resource/set/dynamic_campaign/unit_research_goc_esp.set": "ea49272f1d57957892f1d8db59eeddac729c6503bbfe375e9e7eef24a9562842",
+        "resource/set/multiplayer/armies/goc_esp.set": "0ea57b426af331e6151af59b0f27acce8213df6ec5b61e30ac85dd97fdd5e88e",
+        "resource/set/multiplayer/units/conquest/inf_goc_esp.set": "cc424e0cfc04cc2117d5774999c8ffaa61fd1e68e399b8035bb843e4d9b6d40f",
+        "resource/set/multiplayer/units/conquest/units_goc_esp.set": "172352201b176416530408fa6e8797e57518a5f678047477e7d245c47dc9c7a9"
       },
       "modern_unit_count": 50,
       "native_acceptance_status": "not_run",
@@ -1355,7 +1383,7 @@
           "actor_id": "esp",
           "coalition": "west",
           "core_transport_side": "nato",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 63,
           "numeric_id": 26,
@@ -1372,7 +1400,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "3572afd96c3104c34009e33f9dc6d00bcd088477854fe6408d13692ba8c8db30",
+      "actor_authority_signature": "3715905394439f8e62fe25ce50d02bf92facb1f57e07307c14a093ef0882ba08",
       "actor_id": "est",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -1399,8 +1427,8 @@
         "resource/script/multiplayer/units/goc_est/conquest.goc_est.lua": "a352fcaf8cae8a66f50e74793f5cb5732a368ec50820588786dc19e793171982",
         "resource/set/dynamic_campaign/unit_research_goc_est.set": "6378767ef41d2f2efc873f929b16b5745c91c2732f4633c8c578112690e068df",
         "resource/set/multiplayer/armies/goc_est.set": "5c18e1b5b54ea33dee8d72de6b34352a70dde9b24b5f1bf472fb5c6b8e2a3e6c",
-        "resource/set/multiplayer/units/conquest/inf_goc_est.set": "6d9d21996660705799d970c09ced4e4f435fb26a448ca05e75cc87fb30ca209d",
-        "resource/set/multiplayer/units/conquest/units_goc_est.set": "5e91bdc443e6789588a6d9afa166485400c9b917a79716a373cdc650b59d9f10"
+        "resource/set/multiplayer/units/conquest/inf_goc_est.set": "6ff0c11a02650bd44c539b425a4082b7bf9450eb15b13df353c89678adc2d47d",
+        "resource/set/multiplayer/units/conquest/units_goc_est.set": "750881dc31f4297ab6a84e83758cab59a2d3b932b0e43104c81a6490fba18ecf"
       },
       "modern_unit_count": 55,
       "native_acceptance_status": "not_run",
@@ -1450,7 +1478,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "2a1e29a8ba7bb5bdd7ba1b9783383f930c9259b8875fc58c414c0f1c36122d51",
+      "actor_authority_signature": "b6dba245040a66a7966c22c207eed126e408c27a79dcb69ae3ae2d2c1c5b5e89",
       "actor_id": "fin",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -1476,7 +1504,11 @@
       "legacy_unit_count": 0,
       "managed_file_hashes": {
         "resource/interface/pages/multi/flag_goc_fin.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
-        "resource/set/multiplayer/armies/goc_fin.set": "b84ac0e1a9621f67d64f46842b64db75ca4191763f7da4a04dc18a0b2fe7506d"
+        "resource/script/multiplayer/units/goc_fin/conquest.goc_fin.lua": "6ab54bb4ebe35181f50dd845fb5949cdbae16c49a2204dbcb5f41ad9dc18ec7d",
+        "resource/set/dynamic_campaign/unit_research_goc_fin.set": "abd2cee7d28be11da52876a51afb8ab8ef191123696427c54b713334a6079e91",
+        "resource/set/multiplayer/armies/goc_fin.set": "b84ac0e1a9621f67d64f46842b64db75ca4191763f7da4a04dc18a0b2fe7506d",
+        "resource/set/multiplayer/units/conquest/inf_goc_fin.set": "f9f9d77e08c486c4152eb4d1ad6eae94b66472a4137ee09be2784aba9d649e42",
+        "resource/set/multiplayer/units/conquest/units_goc_fin.set": "1d507858fe31e8751bca7d9ff2a5bae448fd98adc6229e648b51810049c430c5"
       },
       "modern_unit_count": 22,
       "native_acceptance_status": "not_run",
@@ -1510,7 +1542,7 @@
           "actor_id": "fin",
           "coalition": "west",
           "core_transport_side": "nato",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 57,
           "numeric_id": 20,
@@ -1528,7 +1560,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "b2f16c45a3edc3bee1db92360b5cac5269f00785f7b88f74ddad68390abc8cc2",
+      "actor_authority_signature": "8dc42772138fbaddf6a71ec6c37ed606c88177d683a69bfc533c40cfe567e837",
       "actor_id": "fra",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -1554,7 +1586,11 @@
       "legacy_unit_count": 0,
       "managed_file_hashes": {
         "resource/interface/pages/multi/flag_goc_fra.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
-        "resource/set/multiplayer/armies/goc_fra.set": "8d7f515d8387813108e23686be7b203a9084b28dcdb6d1d76bf3643c6cbd0fe3"
+        "resource/script/multiplayer/units/goc_fra/conquest.goc_fra.lua": "0e3db96e333529bc0724f209de07655c8d964cc91bcf7f016aaf0497c98b5801",
+        "resource/set/dynamic_campaign/unit_research_goc_fra.set": "526ae7532eb8d0f39a21d9c8124557ae4c8804bb1ae4f5907bc5f4fe5b5ecf21",
+        "resource/set/multiplayer/armies/goc_fra.set": "8d7f515d8387813108e23686be7b203a9084b28dcdb6d1d76bf3643c6cbd0fe3",
+        "resource/set/multiplayer/units/conquest/inf_goc_fra.set": "00d6872d7411c628b7730f7089947efdd80bd7914705f4c5a7efad8358aa6478",
+        "resource/set/multiplayer/units/conquest/units_goc_fra.set": "6a0f5feb502b3e512ad3f68e9907949424435d49962f80b64d71e33ff93ca221"
       },
       "modern_unit_count": 28,
       "native_acceptance_status": "not_run",
@@ -1588,7 +1624,7 @@
           "actor_id": "fra",
           "coalition": "west",
           "core_transport_side": "nato",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 54,
           "numeric_id": 17,
@@ -1606,7 +1642,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "530be035369a11de425903b5d29fdc40abce894a8d2d9fecd7fba6413b319e17",
+      "actor_authority_signature": "d49b095f7490732d3b14839c02dc09788696e9317502c6105733bb62236e5a6c",
       "actor_id": "gbr",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -1631,7 +1667,11 @@
       "legacy_unit_count": 0,
       "managed_file_hashes": {
         "resource/interface/pages/multi/flag_goc_gbr.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
-        "resource/set/multiplayer/armies/goc_gbr.set": "830b8d90aae4a5992ab0683faa4c6974a179f319bc5e6151ed1f6b4d03d3cf7d"
+        "resource/script/multiplayer/units/goc_gbr/conquest.goc_gbr.lua": "394277da4d6d2482d67c93b621bab47bd9d2d2da6999d1b3b24f22b294481d83",
+        "resource/set/dynamic_campaign/unit_research_goc_gbr.set": "cf53925d15faf12f12555eb2cfb624edb1a8bd18cbcc52115549b5572b43ca13",
+        "resource/set/multiplayer/armies/goc_gbr.set": "830b8d90aae4a5992ab0683faa4c6974a179f319bc5e6151ed1f6b4d03d3cf7d",
+        "resource/set/multiplayer/units/conquest/inf_goc_gbr.set": "a08552535efb83605d39a525f9e3066aceefc43fb059e2bcecf1658884cb18a6",
+        "resource/set/multiplayer/units/conquest/units_goc_gbr.set": "42692d754dad7503a1118129ac3c1d9f05ba7f59adb26f1bc7f39f7c0dc546f1"
       },
       "modern_unit_count": 33,
       "native_acceptance_status": "not_run",
@@ -1665,7 +1705,7 @@
           "actor_id": "gbr",
           "coalition": "west",
           "core_transport_side": "nato",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 52,
           "numeric_id": 15,
@@ -1749,7 +1789,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "50794d127064b77020dafee185e6eec42d311594a7003046fd3e647d57c4418f",
+      "actor_authority_signature": "a59358f6aa1a5178aeacda4cba874523e90e6205aefa8ec9d2d5cab87e33ef0c",
       "actor_id": "grc",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -1776,8 +1816,8 @@
         "resource/script/multiplayer/units/goc_grc/conquest.goc_grc.lua": "9146b3acf0954daf49f61af6d5c16ccca828ae94f82765644fb2ed98fccf7b97",
         "resource/set/dynamic_campaign/unit_research_goc_grc.set": "41cdbdc5816dc93c2e2bef37dece172832a4ca2cec6ff2fde06b4f05ec284bb4",
         "resource/set/multiplayer/armies/goc_grc.set": "e3d91389c0c16f2cd6baf70898eaed9a95fe0137426e2f352919deb3161e547f",
-        "resource/set/multiplayer/units/conquest/inf_goc_grc.set": "057bd17a56afa2e2bfc1a47c6d72885e7a30d23cc7628e3ebf34ea80c17b335b",
-        "resource/set/multiplayer/units/conquest/units_goc_grc.set": "f6a33864f359eada1d0c8ced83b755b52166b972268ceae60b696e62266f11ee"
+        "resource/set/multiplayer/units/conquest/inf_goc_grc.set": "5ef72fe7cc453bab53ff2b9d3b4b21603325e156ff14983cb6e817b6471e98b9",
+        "resource/set/multiplayer/units/conquest/units_goc_grc.set": "b3e552ce475da535762af6ddfd239569d1caa157753c096c1193c53ccd9c9716"
       },
       "modern_unit_count": 55,
       "native_acceptance_status": "not_run",
@@ -1829,7 +1869,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "7ea61533e2d6d497fcb7de162f2bad7c47227ea77d416ed3c775f61b37029d34",
+      "actor_authority_signature": "af7befbebf96c920d5726262fd3674a7c1cd7a4a937a09d22ae7ae0eb4211957",
       "actor_id": "hrv",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -1856,8 +1896,8 @@
         "resource/script/multiplayer/units/goc_hrv/conquest.goc_hrv.lua": "5b064c3808822e08052e76c4267bb8aba02e57323fa617eaade9e5951aff8489",
         "resource/set/dynamic_campaign/unit_research_goc_hrv.set": "c30b4be4eb9f9e84f14bbb7147b4df097222d4712c44b7287e9abdd20e4394af",
         "resource/set/multiplayer/armies/goc_hrv.set": "f7ffa6d1ecad72fc089a84412971ffd1412d3c35af09d6d812e6ab39bd6b0140",
-        "resource/set/multiplayer/units/conquest/inf_goc_hrv.set": "ebc9cb0b2cb8a2977213831778c5620d39a12743e5ba3cc8ce8a6299bbcfe9be",
-        "resource/set/multiplayer/units/conquest/units_goc_hrv.set": "d7f445471e625fbc406112e60736aeee22c19744d293a0a787544c00bb1412bb"
+        "resource/set/multiplayer/units/conquest/inf_goc_hrv.set": "2c877a412699cfde8f0ae38a211d063d0e914ff26795926021db3ee19d145d19",
+        "resource/set/multiplayer/units/conquest/units_goc_hrv.set": "e4cd1eb7be2de3171c3419e39a8a826bf56f60fda0b8744a71c5cf821f83d301"
       },
       "modern_unit_count": 55,
       "native_acceptance_status": "not_run",
@@ -1909,7 +1949,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "7104fffc1f5f101565ae4bff07738e50afe11e66769158d7fae7b00cc5987e25",
+      "actor_authority_signature": "4b793c9c9fcfbb58d35774b1cf4a3ce594b16f408d943076ac3174e3977faa16",
       "actor_id": "hun",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -1936,8 +1976,8 @@
         "resource/script/multiplayer/units/goc_hun/conquest.goc_hun.lua": "73d4dcd19454a0dbdfc1366dfd3e19686d88b070ab3e5b79b8090599ae7cc60a",
         "resource/set/dynamic_campaign/unit_research_goc_hun.set": "0187c3fd3bd2f017274844618a51993aa6ee7ab70e8f28ebfc9508a0ade813a3",
         "resource/set/multiplayer/armies/goc_hun.set": "69f3ed7354a4e5519be209693e06cd266fc4cd964501f0700894d132ed8e294a",
-        "resource/set/multiplayer/units/conquest/inf_goc_hun.set": "856fbb8d9266c236e0df2efd353c49c5aa0b483fcaff9e97c959f4b3e39c7c17",
-        "resource/set/multiplayer/units/conquest/units_goc_hun.set": "3731acd959efb4b9a7fda9501f5f89039e43faaa60a00393754feffd2e82fca2"
+        "resource/set/multiplayer/units/conquest/inf_goc_hun.set": "1a9f0841cc1dc341826b0da3f1304f7e654cf22832e3042dff7b2f08a382f60a",
+        "resource/set/multiplayer/units/conquest/units_goc_hun.set": "a6bb8dfc2584af38b2b157ecf652347dce4aab65cce518520a991ece9d7b617f"
       },
       "modern_unit_count": 55,
       "native_acceptance_status": "not_run",
@@ -2251,7 +2291,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "007c04082f8c53375d8b1a6c6a1047f5a105131ad334c6fbbf378d596cba76f9",
+      "actor_authority_signature": "e28cafb4b095f3788368300c985dd7c35cb023f53b93922f3c70c8be013bae71",
       "actor_id": "ita",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -2277,7 +2317,11 @@
       "legacy_unit_count": 0,
       "managed_file_hashes": {
         "resource/interface/pages/multi/flag_goc_ita.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
-        "resource/set/multiplayer/armies/goc_ita.set": "e3e9651dc6357ab8799db4ef2850693f0e39e189114620f54946b5d0169f54a6"
+        "resource/script/multiplayer/units/goc_ita/conquest.goc_ita.lua": "f3ca6aa876f0d3f4e36e7746f04342478e8a8f63b63efb07c3ef950030fd0b25",
+        "resource/set/dynamic_campaign/unit_research_goc_ita.set": "2efa4383e41d8bb46fec85a9d1146c5ad79526da12583249b76a5c020c27eeee",
+        "resource/set/multiplayer/armies/goc_ita.set": "e3e9651dc6357ab8799db4ef2850693f0e39e189114620f54946b5d0169f54a6",
+        "resource/set/multiplayer/units/conquest/inf_goc_ita.set": "6632408d614a3edba98086a8586078bac31a1ce47050880b3d938a8e85459b0b",
+        "resource/set/multiplayer/units/conquest/units_goc_ita.set": "7123e5321165ac0839a99377ddc0643195d38ec57c62b52ebcd1ce749b12d075"
       },
       "modern_unit_count": 26,
       "native_acceptance_status": "not_run",
@@ -2311,7 +2355,7 @@
           "actor_id": "ita",
           "coalition": "west",
           "core_transport_side": "nato",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 56,
           "numeric_id": 19,
@@ -2442,7 +2486,7 @@
           "actor_id": "rus",
           "coalition": "east",
           "core_transport_side": "rusa",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 65,
           "numeric_id": 28,
@@ -2593,7 +2637,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "1c5c67f0bb4e404800c9cfd50460b1d2c0a0e4c5c4361c08d96b24f1a26d7f5d",
+      "actor_authority_signature": "6eaaaeba2cd58266c5b20dbb83f3f8aef4328f03ca6e49e30a50edbde60bfc14",
       "actor_id": "ltu",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -2620,8 +2664,8 @@
         "resource/script/multiplayer/units/goc_ltu/conquest.goc_ltu.lua": "62542cfac0073d76580cf1c6af10b21a1c0bd60b24414b49bb4fa0d53ecaaf54",
         "resource/set/dynamic_campaign/unit_research_goc_ltu.set": "bc3d6e6e3f657d9283f873de4289dbfd49c5910c67213f4eb824453ff3c944c3",
         "resource/set/multiplayer/armies/goc_ltu.set": "aba48a0b62745a6c9f1305c6b96f55baf0300e3b52f5cd104f386d52c34deb52",
-        "resource/set/multiplayer/units/conquest/inf_goc_ltu.set": "cf56f4fa313f690654db884f5405dc737f13a85e1008ffc294635ff84f7425ca",
-        "resource/set/multiplayer/units/conquest/units_goc_ltu.set": "c74e86db68446f9fbd8bf2294c9c9eee6f7295b03c4089b7da5173db86cf46b7"
+        "resource/set/multiplayer/units/conquest/inf_goc_ltu.set": "29bd7cca7c51e5dcfa0c1dd06a34273c06158152125ec8ca8d6f652906788569",
+        "resource/set/multiplayer/units/conquest/units_goc_ltu.set": "25622473d0d3b20f8b91ee216da90f814b35d338f70fc7f0fad39d96b8d8fcae"
       },
       "modern_unit_count": 55,
       "native_acceptance_status": "not_run",
@@ -2671,7 +2715,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "d0245632c3efbcdf8e74331cc385085197bebe22c640fe76cbd15ae4a560c453",
+      "actor_authority_signature": "c7aac0f647d8be66003b157d307a600f43967be50697f16e3c01fa56da79e42e",
       "actor_id": "lva",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -2698,8 +2742,8 @@
         "resource/script/multiplayer/units/goc_lva/conquest.goc_lva.lua": "ca2592078dd1ae34a5c0915ae4a06c091985973e2c4d9447416d0172c0228d99",
         "resource/set/dynamic_campaign/unit_research_goc_lva.set": "b8298063453cfc490eb17002397348db11f1cbb9bdf3bab2e65aae7b4193f1ee",
         "resource/set/multiplayer/armies/goc_lva.set": "1b6b575f7eaa3612e82700ac20a38efa5be3b1c013f77494be588d3fd02d904c",
-        "resource/set/multiplayer/units/conquest/inf_goc_lva.set": "1a097144bf66fd5da946bc13774c6a9c7143a6e9a894e04803aa45a06279a414",
-        "resource/set/multiplayer/units/conquest/units_goc_lva.set": "57acc41e5ec810660afd38b7ce53115fa97d536e4f1cb0e53f70ff71ee38a3c1"
+        "resource/set/multiplayer/units/conquest/inf_goc_lva.set": "09dfc701b5e7044848be7cf263387eb8703ec3cfdd5834bd266760f13036b23f",
+        "resource/set/multiplayer/units/conquest/units_goc_lva.set": "8ecfb51f4de7057e9bea158345977e53b99f05733163708cb74e802e6bcba85d"
       },
       "modern_unit_count": 55,
       "native_acceptance_status": "not_run",
@@ -3081,7 +3125,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "9e02b08b7541b023a2f3eb5fb96c7decd4bfbba3240261e73799ae48d825425a",
+      "actor_authority_signature": "3f6971b80385baa90a430a7f29273a53e48a7901d9e06bb6ccab99ef8ec6ecb5",
       "actor_id": "nld",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -3107,7 +3151,11 @@
       "legacy_unit_count": 0,
       "managed_file_hashes": {
         "resource/interface/pages/multi/flag_goc_nld.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
-        "resource/set/multiplayer/armies/goc_nld.set": "8ed852ebcc931cb0ea0acbecdbb7082ebf69e740a66ab29f80b717869f5ab7a7"
+        "resource/script/multiplayer/units/goc_nld/conquest.goc_nld.lua": "c5c496d04ef56deacd7980d2bf13b5e214376296dbca35c7db1c3f2b33d63e60",
+        "resource/set/dynamic_campaign/unit_research_goc_nld.set": "5d148a506a6854eb9258dedb479c1565dc01c1a10a3fb6ee72490203769d0549",
+        "resource/set/multiplayer/armies/goc_nld.set": "8ed852ebcc931cb0ea0acbecdbb7082ebf69e740a66ab29f80b717869f5ab7a7",
+        "resource/set/multiplayer/units/conquest/inf_goc_nld.set": "24790b54619dd05175b20f6b1cc3b678281aa9c78b92a61c22ed34ab680023c6",
+        "resource/set/multiplayer/units/conquest/units_goc_nld.set": "1626a0ada8fcc52156a30562a72eb689b8f38bcfe43d889c994262377d45f3ec"
       },
       "modern_unit_count": 22,
       "native_acceptance_status": "not_run",
@@ -3141,7 +3189,7 @@
           "actor_id": "nld",
           "coalition": "west",
           "core_transport_side": "nato",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 59,
           "numeric_id": 22,
@@ -3158,7 +3206,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "64f645924778e5cc59896df4e9c62bafd42dc5aae73e9b4f0496633cc400335a",
+      "actor_authority_signature": "f06b337c0a7f02b5571371181fa6e8012d858fe7a77512adf2baf756301a61fc",
       "actor_id": "nor",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -3182,7 +3230,11 @@
       "legacy_unit_count": 0,
       "managed_file_hashes": {
         "resource/interface/pages/multi/flag_goc_nor.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
-        "resource/set/multiplayer/armies/goc_nor.set": "6ca50e027a92e927e892849aec55a55383c3715487afd525d1721c787fe2da30"
+        "resource/script/multiplayer/units/goc_nor/conquest.goc_nor.lua": "d0fb47f076e996ca8483c07e82bd6f103f48ebca1733c6c9f2ac2fc9dc1fa0ec",
+        "resource/set/dynamic_campaign/unit_research_goc_nor.set": "dae50a1d7d321c6a66d1605b2a88f5c3de92b74a714b13bbe059c0f7f48b450c",
+        "resource/set/multiplayer/armies/goc_nor.set": "6ca50e027a92e927e892849aec55a55383c3715487afd525d1721c787fe2da30",
+        "resource/set/multiplayer/units/conquest/inf_goc_nor.set": "78fb24738817e305d0b6665e814d454393f24ae906e3d0152e4c35966e965adc",
+        "resource/set/multiplayer/units/conquest/units_goc_nor.set": "dcabdde8629e08160006a4e43f3b7ce1e650ff85276bb0bf41af5b366d54b7bd"
       },
       "modern_unit_count": 55,
       "native_acceptance_status": "not_run",
@@ -3216,7 +3268,7 @@
           "actor_id": "nor",
           "coalition": "west",
           "core_transport_side": "nato",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 61,
           "numeric_id": 24,
@@ -3233,7 +3285,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "dbb6d45abb0155b9c6a7139a33cdc2b7083d7bd70ab669912780e5ece373a579",
+      "actor_authority_signature": "20c1ac7b8697bc3c2991152b96bcdf5c0c8c26f7f49650e98cf6ea47d576ac16",
       "actor_id": "pol",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -3259,7 +3311,11 @@
       "legacy_unit_count": 0,
       "managed_file_hashes": {
         "resource/interface/pages/multi/flag_goc_pol.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
-        "resource/set/multiplayer/armies/goc_pol.set": "ebb1e51107aa3e9789ef0a8859d09908ab9a16f5188e52f3c23bcfa3a74c6af8"
+        "resource/script/multiplayer/units/goc_pol/conquest.goc_pol.lua": "71b3c80114126e59648c024f7ecdf220b8074d47fd8239e2d5b5f1db9f44b771",
+        "resource/set/dynamic_campaign/unit_research_goc_pol.set": "e88ebee80fe74fa86b1677bec503c8dcfd148c9821efb3edbbd43a9910ee3038",
+        "resource/set/multiplayer/armies/goc_pol.set": "ebb1e51107aa3e9789ef0a8859d09908ab9a16f5188e52f3c23bcfa3a74c6af8",
+        "resource/set/multiplayer/units/conquest/inf_goc_pol.set": "57df36db74856f4ba5b64068afca951210c4b0d303bd13c00e825dba081bc8e8",
+        "resource/set/multiplayer/units/conquest/units_goc_pol.set": "75d058cca27070dfb9db978c32902fb02be30a51b39b4a2f03f2051a1fae6b8d"
       },
       "modern_unit_count": 25,
       "native_acceptance_status": "not_run",
@@ -3293,7 +3349,7 @@
           "actor_id": "pol",
           "coalition": "west",
           "core_transport_side": "nato",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 55,
           "numeric_id": 18,
@@ -3374,7 +3430,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "30a6bd3cb5702289e523e9c471c4051ca252f566d10ae9327b531e95fe8871a6",
+      "actor_authority_signature": "aaec453ab6623e260b216c4ee807d455659006c2af2dc97481c4efa0dc95fbc8",
       "actor_id": "prt",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -3401,8 +3457,8 @@
         "resource/script/multiplayer/units/goc_prt/conquest.goc_prt.lua": "eabf7f195060ec473001fedbc2315d8eff1438bbbf49ad78716bdc893d7335dc",
         "resource/set/dynamic_campaign/unit_research_goc_prt.set": "dba11fe43f2fc65550cb1fef1d98430d417c3f5a7e0697c630ecd4342f98e392",
         "resource/set/multiplayer/armies/goc_prt.set": "16c07362efae50ea6ee5b490cc03105b896f8dab6418eaac03e5f7af0fc51ccf",
-        "resource/set/multiplayer/units/conquest/inf_goc_prt.set": "05dee535247911e9ba7a5cf792cb9048004fabd4a8c849f4ff648b06143ce732",
-        "resource/set/multiplayer/units/conquest/units_goc_prt.set": "8eaeaa08f483382ea3ab922611682077be8c27a155031574eada76696038af83"
+        "resource/set/multiplayer/units/conquest/inf_goc_prt.set": "0348a5d7a8010f8007deb8f8b4f6f9245574d6edd7d1a9876f210f9629cc407a",
+        "resource/set/multiplayer/units/conquest/units_goc_prt.set": "a3fcd030999af3393e9aa406cbdebf6d600dc1cdeb541c377ac1f9a011e0ecee"
       },
       "modern_unit_count": 55,
       "native_acceptance_status": "not_run",
@@ -3452,7 +3508,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "9336df4815d7951bf3430e6763c4c1658fca4878e4ba7ae58b1ad79cf5f7c7f8",
+      "actor_authority_signature": "e75c1378ccd84f523873e9ac79701d77b828b0017b80411e7e346c32b0b9b47f",
       "actor_id": "rou",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -3479,8 +3535,8 @@
         "resource/script/multiplayer/units/goc_rou/conquest.goc_rou.lua": "b5eccf75f26d2b71e35dbf18265bfa011544a9d2c4bebdad57f94cda7a6b1c71",
         "resource/set/dynamic_campaign/unit_research_goc_rou.set": "a06097156556556281ce8f2edc4f19243807f756d1e9fad8b4bd2754520c206a",
         "resource/set/multiplayer/armies/goc_rou.set": "fb70e29a44a3803dff644a0316d55a63849d7457875ec7a62a89d4eba1f9fe86",
-        "resource/set/multiplayer/units/conquest/inf_goc_rou.set": "d247f5b9c93a2f01719bf81a7afc36aab443077d8a05802edeace3450d1b00e1",
-        "resource/set/multiplayer/units/conquest/units_goc_rou.set": "5614c3c0f790f0961d97547fdbed0833d30b447e38639b69584dee01b3ed72ba"
+        "resource/set/multiplayer/units/conquest/inf_goc_rou.set": "68b708d97df96f2cb649cc6f456525e7b9de3dce9ad1bb0e67749fec31b9fc7e",
+        "resource/set/multiplayer/units/conquest/units_goc_rou.set": "af22b0d8f8d6bfc96cf60a6f0bbab4d9d11d3563a2b7e5f0291ea04990a0937b"
       },
       "modern_unit_count": 55,
       "native_acceptance_status": "not_run",
@@ -3532,7 +3588,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "39ed64a874a63e9153729cff04ea3a5891c44a426a59850c18ac4eba1adf5786",
+      "actor_authority_signature": "7af56ecfa7b8106eecbf5b32982ef84bd89e1f252fe914f67141a51e1d222769",
       "actor_id": "rus",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -3558,7 +3614,11 @@
       "legacy_unit_count": 0,
       "managed_file_hashes": {
         "resource/interface/pages/multi/flag_goc_rus.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
-        "resource/set/multiplayer/armies/goc_rus.set": "975e38e6b396a8d419cc6afbb71bf52a5d74001d068ae084fca2bbe74a448972"
+        "resource/script/multiplayer/units/goc_rus/conquest.goc_rus.lua": "8a45df8e1a8d37cd098c0819d1ac0fe4944188ded5e43102332f5cd954f4b8e2",
+        "resource/set/dynamic_campaign/unit_research_goc_rus.set": "4573ea949b9d280be3141f8292d0545fe6a79a2bc22a8a415cfb9b00bc6239df",
+        "resource/set/multiplayer/armies/goc_rus.set": "975e38e6b396a8d419cc6afbb71bf52a5d74001d068ae084fca2bbe74a448972",
+        "resource/set/multiplayer/units/conquest/inf_goc_rus.set": "3f6012725c4357c192688debee699ad4bbcab217c60e71c45e270581c990633e",
+        "resource/set/multiplayer/units/conquest/units_goc_rus.set": "ee013426b1ea1ade706545e3e2b8d604bf1ea1ea96f55d9113bdaae6a7795b80"
       },
       "modern_unit_count": 210,
       "native_acceptance_status": "not_run",
@@ -3592,7 +3652,7 @@
           "actor_id": "rus",
           "coalition": "east",
           "core_transport_side": "rusa",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 65,
           "numeric_id": 28,
@@ -3609,7 +3669,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "8d9a2909b267c21d4b74d1ea5193deea7429954e42e37d6f5d79c1e4224b4b31",
+      "actor_authority_signature": "98b9ce4ca0c6c1ccf299cdcf3c703b68f968896e489b9d790ab76103f951f33c",
       "actor_id": "srb",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -3634,7 +3694,11 @@
       "legacy_unit_count": 15,
       "managed_file_hashes": {
         "resource/interface/pages/multi/flag_goc_srb.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
-        "resource/set/multiplayer/armies/goc_srb.set": "c7f974831354b40aa54cbfd480cc877b088ff7dd12166b056e721d5be0f54cb5"
+        "resource/script/multiplayer/units/goc_srb/conquest.goc_srb.lua": "3e6f100d59c8109004b32fabb7d6f850fa3946702d80e3ec4027be01182583d0",
+        "resource/set/dynamic_campaign/unit_research_goc_srb.set": "2c0afb5a2b3f72fbb1114a009a2fdde58c9cd7f4c4cb99ce03e073521c30740d",
+        "resource/set/multiplayer/armies/goc_srb.set": "c7f974831354b40aa54cbfd480cc877b088ff7dd12166b056e721d5be0f54cb5",
+        "resource/set/multiplayer/units/conquest/inf_goc_srb.set": "e9611c574c832386e8ec21b627f38d4a01271cdbff027be8d7bc038856105aa8",
+        "resource/set/multiplayer/units/conquest/units_goc_srb.set": "d7589d996c690e68e44a244bbe0970c35157055e504d96a08dd18a352e9b146e"
       },
       "modern_unit_count": 3,
       "native_acceptance_status": "not_run",
@@ -3668,7 +3732,7 @@
           "actor_id": "srb",
           "coalition": "east",
           "core_transport_side": "rusa",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 70,
           "numeric_id": 33,
@@ -3685,7 +3749,7 @@
       "virtual_unit_count": 3
     },
     {
-      "actor_authority_signature": "36d69d2b733ac336057006e4a597e877cde4a0e3f61e5b4d60be00a05b70cf43",
+      "actor_authority_signature": "06d1e6f2d6dd84a10c63cafb92e5e49ac1800a0210e0eadba99b71420e338b61",
       "actor_id": "svk",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -3713,8 +3777,8 @@
         "resource/script/multiplayer/units/goc_svk/conquest.goc_svk.lua": "1ed66880a715014cca71785c92caef11767009ea8241ae9f364da912b2d026fd",
         "resource/set/dynamic_campaign/unit_research_goc_svk.set": "960370d2cfc751a2cf624d49b13b1db12e071415ffeeca032f5b4e40c114e2e2",
         "resource/set/multiplayer/armies/goc_svk.set": "e357edddf56e4ee4d5b98dcaf5550d2d9dba66ad60ae2522e1e1c78861386b9d",
-        "resource/set/multiplayer/units/conquest/inf_goc_svk.set": "4ee8e53cfa8478fb6fe8a7e8302507550d6df3b94c10087d0e5388e5e90ee5c0",
-        "resource/set/multiplayer/units/conquest/units_goc_svk.set": "20daeaa9e8374c574cbb9fc270836e60af26af98386abdb7cea97b0c79ab8900"
+        "resource/set/multiplayer/units/conquest/inf_goc_svk.set": "0716efd0014fe376139969282496318e420a779eaa76c938424e55cee3edd838",
+        "resource/set/multiplayer/units/conquest/units_goc_svk.set": "96f4a48bde5682ad8850bbada41c50203bd93fd3e248bc513ba2fc6dd5ff020f"
       },
       "modern_unit_count": 8,
       "native_acceptance_status": "not_run",
@@ -3830,7 +3894,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "52210d231f8a3f68ea89c3383704cbec7aba12c0c60c9a7f8fcbbce0c0897455",
+      "actor_authority_signature": "7e7c0a87a43dcd262f3b4fd1c9fc63fb4d0568561d43b61ca89a3c18bcc8457c",
       "actor_id": "swe",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -3856,7 +3920,11 @@
       "legacy_unit_count": 0,
       "managed_file_hashes": {
         "resource/interface/pages/multi/flag_goc_swe.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
-        "resource/set/multiplayer/armies/goc_swe.set": "de577a017509348889a9d3e770c85dcbe196aad7dffc343295a74ece81320198"
+        "resource/script/multiplayer/units/goc_swe/conquest.goc_swe.lua": "cac62c8339aa5a516de6a6f24f53fccd0719c59621850cd3b8b66deb300d721e",
+        "resource/set/dynamic_campaign/unit_research_goc_swe.set": "4b4cdae25f673e1f6fde0d490e95519d574daf8467c05b96a3f8df08ea3d8067",
+        "resource/set/multiplayer/armies/goc_swe.set": "de577a017509348889a9d3e770c85dcbe196aad7dffc343295a74ece81320198",
+        "resource/set/multiplayer/units/conquest/inf_goc_swe.set": "be95bf1c0ec6c680ed962da8bf24b919249c9969494e3953d51f2d83bcf93677",
+        "resource/set/multiplayer/units/conquest/units_goc_swe.set": "853973b333a7d5a8765aeebbca058cdd3c385ef989006b18bd01934572dd1b59"
       },
       "modern_unit_count": 24,
       "native_acceptance_status": "not_run",
@@ -3890,7 +3958,7 @@
           "actor_id": "swe",
           "coalition": "west",
           "core_transport_side": "nato",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 58,
           "numeric_id": 21,
@@ -4041,7 +4109,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "4f8b22b30fd244c192b07474b89c8f77300e84d4a19574fc60dbfaaa91745c91",
+      "actor_authority_signature": "c66fd7aaf4ca61e328b0274627110f2fcc24fb03cb48c6e8183d2262bca13585",
       "actor_id": "tur",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -4065,7 +4133,11 @@
       "legacy_unit_count": 0,
       "managed_file_hashes": {
         "resource/interface/pages/multi/flag_goc_tur.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
-        "resource/set/multiplayer/armies/goc_tur.set": "feae05dc14f0524b993836eab21959fbd9c68318d294b5804672b2dfea2cef62"
+        "resource/script/multiplayer/units/goc_tur/conquest.goc_tur.lua": "52adaf827753fc36b62e43a15b462d356ea3298cfb72aac1756cf33719a37223",
+        "resource/set/dynamic_campaign/unit_research_goc_tur.set": "01c21d1ecb441fc07baa7dc6b313bda1bf3c348178648cd6fd2bcced4c177e1f",
+        "resource/set/multiplayer/armies/goc_tur.set": "feae05dc14f0524b993836eab21959fbd9c68318d294b5804672b2dfea2cef62",
+        "resource/set/multiplayer/units/conquest/inf_goc_tur.set": "367def7a2d92aa2f61af586501da438f0e9635487ef82c5b29a616fa51e513b7",
+        "resource/set/multiplayer/units/conquest/units_goc_tur.set": "21661fc698b74534067d44628f0c9342cc1874ca3d0a5262b06943967cc1b2c2"
       },
       "modern_unit_count": 55,
       "native_acceptance_status": "not_run",
@@ -4099,7 +4171,7 @@
           "actor_id": "tur",
           "coalition": "west",
           "core_transport_side": "nato",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 64,
           "numeric_id": 27,
@@ -4116,7 +4188,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "2f3e3bbd49ab15411a0b3fef36bdd0cb6d20ab68f0858691063c7ca267341e3d",
+      "actor_authority_signature": "d7b14f4341196466567c53eb70ce9b92486e8aafdf329d5195defb0b3cbab0db",
       "actor_id": "ukr",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -4140,7 +4212,11 @@
       "legacy_unit_count": 0,
       "managed_file_hashes": {
         "resource/interface/pages/multi/flag_goc_ukr.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
-        "resource/set/multiplayer/armies/goc_ukr.set": "77308a95af2bb39cd07aa391e8a250d0b4bb4a248a8402bbcaa00c4ab0c35f12"
+        "resource/script/multiplayer/units/goc_ukr/conquest.goc_ukr.lua": "9ef1f20a42ba03f15982a5fa8efbcd74a3ccf1df5db3c1bfb9f90ef22f474e7b",
+        "resource/set/dynamic_campaign/unit_research_goc_ukr.set": "5d57e6e214195473e38e7a255c4ad65d15d52b4b5f6f57f703d75c6664b38602",
+        "resource/set/multiplayer/armies/goc_ukr.set": "77308a95af2bb39cd07aa391e8a250d0b4bb4a248a8402bbcaa00c4ab0c35f12",
+        "resource/set/multiplayer/units/conquest/inf_goc_ukr.set": "5d37bd7eb13f4577ff87580bf631d57a4b3a49aa6a0e1cd035b3fb35bed21877",
+        "resource/set/multiplayer/units/conquest/units_goc_ukr.set": "be2b0f58210d77290949e6896fd9f4810ac89cafc6e7b2ee2572bca42f6cc022"
       },
       "modern_unit_count": 179,
       "native_acceptance_status": "not_run",
@@ -4174,7 +4250,7 @@
           "actor_id": "ukr",
           "coalition": "west",
           "core_transport_side": "ukr",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 66,
           "numeric_id": 29,
@@ -4239,7 +4315,7 @@
           "actor_id": "ukr",
           "coalition": "west",
           "core_transport_side": "ukr",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 66,
           "numeric_id": 29,
@@ -4256,7 +4332,7 @@
       "virtual_unit_count": 6
     },
     {
-      "actor_authority_signature": "1f05eb8c3e6a2fc96838f15d26a9458b1d552ca9d5c1ce041dc22b35fa05812c",
+      "actor_authority_signature": "2effc6d4c564f912c90b4b55b944651874a3183cec5021d78d50aa94125a677d",
       "actor_id": "usa",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -4281,7 +4357,11 @@
       "legacy_unit_count": 0,
       "managed_file_hashes": {
         "resource/interface/pages/multi/flag_goc_usa.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
-        "resource/set/multiplayer/armies/goc_usa.set": "888a6efb7adc5587d5e72a2626338fb0fbd3b4425b330a34e66f6e62ac36b2d4"
+        "resource/script/multiplayer/units/goc_usa/conquest.goc_usa.lua": "ff1dec5454032f4c4e9055c5c18891c1db48a47a87a01e0da14155f6c211e247",
+        "resource/set/dynamic_campaign/unit_research_goc_usa.set": "8798f8994dd3a531a400ef2117be8ee546973e903386d678d01d2e8d3709bfde",
+        "resource/set/multiplayer/armies/goc_usa.set": "888a6efb7adc5587d5e72a2626338fb0fbd3b4425b330a34e66f6e62ac36b2d4",
+        "resource/set/multiplayer/units/conquest/inf_goc_usa.set": "ab94abfd845da871bb0cff090fccc70b345984c0e53decc6daa5ea4d8fa400c5",
+        "resource/set/multiplayer/units/conquest/units_goc_usa.set": "a8ef131f3db8a1fb23c10403cdf269921d567cd24bbf609e4d57f273fb008a49"
       },
       "modern_unit_count": 74,
       "native_acceptance_status": "not_run",
@@ -4315,7 +4395,7 @@
           "actor_id": "usa",
           "coalition": "west",
           "core_transport_side": "nato",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 51,
           "numeric_id": 14,
@@ -4379,7 +4459,7 @@
           "actor_id": "rus",
           "coalition": "east",
           "core_transport_side": "rusa",
-          "dc_menu_playable": false,
+          "dc_menu_playable": true,
           "issue": 194,
           "nation_map_id": 65,
           "numeric_id": 28,
@@ -4548,7 +4628,7 @@
     "strategic_only_actor_count": 25
   },
   "evidence_state": "static_pre_native",
-  "matrix_signature": "3953ed50de47b0cf4afc51d41a9c8ae5583e2662c92f5871b38eb1b964633b59",
+  "matrix_signature": "61427243f671c1da60bb1a2ba0329f1190ea45e571ee1efcdc74e6d8ddf7728d",
   "native_harness": {
     "core_restore_command": "python -m gates_of_codex.expanded_nations_cli core --gates-root <GATES_ROOT>",
     "playable_checklist": [
@@ -4798,5 +4878,5 @@
   },
   "schema": "gates-of-codex.expanded-nations-static-matrix",
   "schema_version": 2,
-  "source_head": "1f7bc68996ebd023d470851ef8cb3de6021cbfa7"
+  "source_head": "2fd6f96cdb72920ad12b8c0421bee753937b80d4"
 }

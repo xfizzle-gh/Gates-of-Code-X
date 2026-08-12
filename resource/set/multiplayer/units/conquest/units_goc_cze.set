@@ -9,7 +9,7 @@
 ; Source definitions projected from the installed stack; not bootstrap prototypes.
 
 ; source_define=generic_mp_shared_unit
-; source=3:3696721120/set/multiplayer/units/2022s/doctrine_settings.set
+; source=4:3696721120/set/multiplayer/units/2022s/doctrine_settings.set
 ; source_define_sha256=19b1c11ab5bb25eafa7fd961a751237f16ffae59c239edaeb67713930a47d31b
 (define "generic_mp_shared_unit"
 	{level 1}
@@ -23,7 +23,7 @@
 )
 
 ; source_define=mp_shared_infantry_7
-; source=3:3696721120/set/multiplayer/units/2022s/doctrine_settings.set
+; source=4:3696721120/set/multiplayer/units/2022s/doctrine_settings.set
 ; source_define_sha256=42bca7337ed38130535a5231f4f773fc59d64ec8c8953fec105b9197a0f7599f
 (define "mp_shared_infantry_7"
 	("generic_mp_shared_unit" t(%side %period) factor(%factor))
@@ -33,21 +33,21 @@
 ; resolved_unit=squad_arf_at(goc_cze)
 ; actor_unit=squad_arf_at(nato)
 ; source_entry=squad_arf_at
-; source=2:3636883799/set/multiplayer/units/conquest/units_nato.set
+; source=3:3636883799/set/multiplayer/units/conquest/units_nato.set
 ; source_sha256=22d492073d7243ae6c21f93ec9a20aa287ec98ef2bfd92e32bec822788d2ab95
 ("squad_with3types_conquest" side(goc_cze) period(2022s) min_stage(1) max_stage(99) name(squad_arf_at) 	c1(nato_teamlead:2) c2(nato_antitank:2) c3(nato_grenadier:2))
 
 ; resolved_unit=squad_arf_mg(goc_cze)
 ; actor_unit=squad_arf_mg(nato)
 ; source_entry=squad_arf_mg
-; source=2:3636883799/set/multiplayer/units/conquest/units_nato.set
+; source=3:3636883799/set/multiplayer/units/conquest/units_nato.set
 ; source_sha256=0317831206653618eb917fe1b39772d2d6613c5699adb227888aadcc1936892b
 ("squad_with3types_conquest" side(goc_cze) period(2022s) min_stage(1) max_stage(99) name(squad_arf_mg) 	c1(nato_teamlead:2) c2(nato_mg_mg3:2) c3(nato_grenadier:2))
 
 ; resolved_unit=squad_arf_rifle(goc_cze)
 ; actor_unit=squad_arf_rifle(nato)
 ; source_entry=squad_arf_rifle(nato)
-; source=3:3696721120/set/multiplayer/units/2022s/minimal_units.set
+; source=4:3696721120/set/multiplayer/units/2022s/minimal_units.set
 ; source_sha256=64a62943bf9cf821feae01f51aa344c73ee4128d8edb24162de4c0c8b1ce6544
 {"squad_arf_rifle(goc_cze)"
 	("mp_shared_infantry_7" side(goc_cze) period(2022s) factor(0.70) c1(nato_squadlead:1) c2(nato_teamlead:1) c3(nato_rifleman:2) c4(nato_grenadier:1) c5(nato_mg_mg3:2) c6(nato_antitank:1) c7(nato_medic:1))
@@ -56,7 +56,7 @@
 ; resolved_unit=squad_arf_rifle_spike(goc_cze)
 ; actor_unit=squad_arf_rifle_spike(nato)
 ; source_entry=squad_arf_rifle_spike(nato)
-; source=3:3696721120/set/multiplayer/units/2022s/minimal_units.set
+; source=4:3696721120/set/multiplayer/units/2022s/minimal_units.set
 ; source_sha256=453817c4b5f4c7dc26a57d3c852d6369adac1eb176e8161ea604e306fa957ccd
 {"squad_arf_rifle_spike(goc_cze)"
 	("mp_shared_infantry_7" side(goc_cze) period(2022s) factor(0.80) c1(nato_squadlead:1) c2(nato_teamlead:1) c3(nato_rifleman:2) c4(nato_grenadier:1) c5(nato_mg_mg3:1) c6(nato_antitank_spike:1) c7(nato_medic:1))
@@ -65,27 +65,27 @@
 ; resolved_unit=squad_arf_scout(goc_cze)
 ; actor_unit=squad_arf_scout(nato)
 ; source_entry=squad_arf_scout
-; source=2:3636883799/set/multiplayer/units/conquest/units_nato.set
+; source=3:3636883799/set/multiplayer/units/conquest/units_nato.set
 ; source_sha256=4cb6e3aedf143b28ce7753860c24a81dc4d2914000354d55238a39d2ae10e4cb
 ("squad_with3types_conquest" side(goc_cze) period(2022s) min_stage(1) max_stage(99) name(squad_arf_scout) 	c1(nato_squadlead:2) c2(nato_spotter:2) c3(nato_antitank:1))
 
 ; resolved_unit=squad_dsk_eng(goc_cze)
 ; actor_unit=squad_dsk_eng
 ; source_entry=squad_dsk_eng
-; source=3:3696721120/set/multiplayer/units/conquest/units_nato.set
+; source=4:3696721120/set/multiplayer/units/conquest/units_nato.set
 ; source_sha256=920c25dd0a85d9cb411c45cd9ca44e7515781f1afa34dbb56eecc54dcb48b556
 ("squad_with1types_conquest" side(goc_cze) period(2022s) min_stage(1) max_stage(99) name(squad_dsk_eng) 	c1(fj_eng:5))
 
 ; resolved_unit=squad_dsk_eng_at(goc_cze)
 ; actor_unit=squad_dsk_eng_at
 ; source_entry=squad_dsk_eng_at
-; source=3:3696721120/set/multiplayer/units/conquest/units_nato.set
+; source=4:3696721120/set/multiplayer/units/conquest/units_nato.set
 ; source_sha256=80902fe437f8e94910bedd0b0b84d43daf824372cdaacc94d9499da09e436b13
 ("squad_with1types_conquest" side(goc_cze) period(2022s) min_stage(1) max_stage(99) name(squad_dsk_eng_at) 	c1(fj_eng_at:5))
 
 ; resolved_unit=vz_77_dana
 ; source_entry=vz_77_dana
-; source=3:3696721120/set/multiplayer/units/conquest/units_nato.set
+; source=4:3696721120/set/multiplayer/units/conquest/units_nato.set
 ; source_sha256=41ea14812a9ba81078513f5d042a1df7ec3690f543c15dd342f8e7292eccf4a7
 {"vz_77_dana"
 	("vehicle" period(2022s) min_stage(12) max_stage(99) side(goc_cze) crew(nato_supcrew:4) cw(0) cp(26))

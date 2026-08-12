@@ -397,8 +397,45 @@ def _opponent_availability_count(
     )
 
 
+def manifest_authority_fingerprint(repo_root: str | Path | None = None) -> str:
+    """Fingerprint current authored actor/side/component authority for snapshot binding."""
+    root = Path(repo_root).resolve() if repo_root else _repo_root()
+    manifest = load_faction_manifest()
+    validate_faction_manifest(manifest)
+    registry = load_goc_army_registry()
+    payload = {
+        "actors": [
+            {
+                "actor_id": row["actor_id"],
+                "tactical_side": row["tactical_side"],
+                "playable": bool(row["playable"]),
+                "roster_class": row["roster_class"],
+                "components": list(row.get("components") or []),
+                "research_mode": (row.get("research") or {}).get("mode"),
+                "host_actor_id": row.get("host_actor_id"),
+            }
+            for row in sorted(manifest["actors"], key=lambda item: str(item["actor_id"]))
+        ],
+        "goc_armies": {
+            token: {
+                "numeric_id": int(row["numeric_id"]),
+                "actor_id": row["actor_id"],
+                "playable": bool(row.get("playable")),
+                "dc_menu_playable": bool(row.get("dc_menu_playable")),
+                "coalition": row.get("coalition"),
+                "core_transport_side": row.get("core_transport_side"),
+            }
+            for token, row in sorted(registry["armies"].items())
+        },
+    }
+    return _sha256_text(_canonical_json(payload))
+
+
 def load_resolved_static_snapshot(repo_root: str | Path | None = None) -> dict[str, Any] | None:
-    """Load committed resolved count snapshot for stack-free CI/static evidence."""
+    """Load committed resolved count snapshot for stack-free CI/static evidence.
+
+    Fail-closed: snapshot must match current manifest/registry authority fingerprint.
+    """
     root = Path(repo_root).resolve() if repo_root else _repo_root()
     path = root / "docs/audits/expanded-nations-resolved-static-snapshot.json"
     if not path.is_file():
@@ -406,6 +443,26 @@ def load_resolved_static_snapshot(repo_root: str | Path | None = None) -> dict[s
     payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict) or not isinstance(payload.get("actors"), list):
         raise ValueError("resolved static snapshot is malformed")
+    expected_fp = manifest_authority_fingerprint(root)
+    actual_fp = str(payload.get("manifest_authority_fingerprint") or "")
+    if actual_fp != expected_fp:
+        raise ValueError(
+            "resolved static snapshot is stale relative to current manifest/registry "
+            f"authority (snapshot={actual_fp[:12] or 'missing'} "
+            f"current={expected_fp[:12]})"
+        )
+    # Actor tactical sides must still match current manifest exactly.
+    manifest = load_faction_manifest()
+    expected_sides = {
+        str(row["actor_id"]): str(row["tactical_side"]) for row in manifest["actors"]
+    }
+    snapshot_sides = {
+        str(row.get("actor_id")): str(row.get("tactical_side"))
+        for row in payload["actors"]
+        if isinstance(row, Mapping)
+    }
+    if snapshot_sides != expected_sides:
+        raise ValueError("resolved static snapshot actor/side map does not match manifest")
     return payload
 
 

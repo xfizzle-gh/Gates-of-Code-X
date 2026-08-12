@@ -423,7 +423,7 @@
       "playable": true,
       "issue": 194,
       "core_transport_side": "nato",
-      "dc_menu_playable": false
+      "dc_menu_playable": true
     },
     "goc_gbr": {
       "numeric_id": 15,
@@ -433,7 +433,7 @@
       "playable": true,
       "issue": 194,
       "core_transport_side": "nato",
-      "dc_menu_playable": false
+      "dc_menu_playable": true
     },
     "goc_deu": {
       "numeric_id": 16,
@@ -443,7 +443,7 @@
       "playable": true,
       "issue": 194,
       "core_transport_side": "nato",
-      "dc_menu_playable": false
+      "dc_menu_playable": true
     },
     "goc_fra": {
       "numeric_id": 17,
@@ -453,7 +453,7 @@
       "playable": true,
       "issue": 194,
       "core_transport_side": "nato",
-      "dc_menu_playable": false
+      "dc_menu_playable": true
     },
     "goc_pol": {
       "numeric_id": 18,
@@ -463,7 +463,7 @@
       "playable": true,
       "issue": 194,
       "core_transport_side": "nato",
-      "dc_menu_playable": false
+      "dc_menu_playable": true
     },
     "goc_ita": {
       "numeric_id": 19,
@@ -473,7 +473,7 @@
       "playable": true,
       "issue": 194,
       "core_transport_side": "nato",
-      "dc_menu_playable": false
+      "dc_menu_playable": true
     },
     "goc_fin": {
       "numeric_id": 20,
@@ -483,7 +483,7 @@
       "playable": true,
       "issue": 194,
       "core_transport_side": "nato",
-      "dc_menu_playable": false
+      "dc_menu_playable": true
     },
     "goc_swe": {
       "numeric_id": 21,
@@ -493,7 +493,7 @@
       "playable": true,
       "issue": 194,
       "core_transport_side": "nato",
-      "dc_menu_playable": false
+      "dc_menu_playable": true
     },
     "goc_nld": {
       "numeric_id": 22,
@@ -503,7 +503,7 @@
       "playable": true,
       "issue": 194,
       "core_transport_side": "nato",
-      "dc_menu_playable": false
+      "dc_menu_playable": true
     },
     "goc_can": {
       "numeric_id": 23,
@@ -513,7 +513,7 @@
       "playable": true,
       "issue": 194,
       "core_transport_side": "nato",
-      "dc_menu_playable": false
+      "dc_menu_playable": true
     },
     "goc_nor": {
       "numeric_id": 24,
@@ -523,7 +523,7 @@
       "playable": true,
       "issue": 194,
       "core_transport_side": "nato",
-      "dc_menu_playable": false
+      "dc_menu_playable": true
     },
     "goc_dnk": {
       "numeric_id": 25,
@@ -533,7 +533,7 @@
       "playable": true,
       "issue": 194,
       "core_transport_side": "nato",
-      "dc_menu_playable": false
+      "dc_menu_playable": true
     },
     "goc_esp": {
       "numeric_id": 26,
@@ -543,7 +543,7 @@
       "playable": true,
       "issue": 194,
       "core_transport_side": "nato",
-      "dc_menu_playable": false
+      "dc_menu_playable": true
     },
     "goc_tur": {
       "numeric_id": 27,
@@ -553,7 +553,7 @@
       "playable": true,
       "issue": 194,
       "core_transport_side": "nato",
-      "dc_menu_playable": false
+      "dc_menu_playable": true
     },
     "goc_rus": {
       "numeric_id": 28,
@@ -563,7 +563,7 @@
       "playable": true,
       "issue": 194,
       "core_transport_side": "rusa",
-      "dc_menu_playable": false
+      "dc_menu_playable": true
     },
     "goc_ukr": {
       "numeric_id": 29,
@@ -573,7 +573,7 @@
       "playable": true,
       "issue": 194,
       "core_transport_side": "ukr",
-      "dc_menu_playable": false
+      "dc_menu_playable": true
     },
     "goc_dprk": {
       "numeric_id": 30,
@@ -583,7 +583,7 @@
       "playable": true,
       "issue": 194,
       "core_transport_side": "rusa",
-      "dc_menu_playable": false
+      "dc_menu_playable": true
     },
     "goc_donbas": {
       "numeric_id": 31,
@@ -593,7 +593,7 @@
       "playable": true,
       "issue": 194,
       "core_transport_side": "rusa",
-      "dc_menu_playable": false
+      "dc_menu_playable": true
     },
     "goc_blr": {
       "numeric_id": 32,
@@ -603,7 +603,7 @@
       "playable": true,
       "issue": 194,
       "core_transport_side": "rusa",
-      "dc_menu_playable": false
+      "dc_menu_playable": true
     },
     "goc_srb": {
       "numeric_id": 33,
@@ -613,7 +613,7 @@
       "playable": true,
       "issue": 194,
       "core_transport_side": "rusa",
-      "dc_menu_playable": false
+      "dc_menu_playable": true
     }
   },
   "stack_collision_audit": {

@@ -432,7 +432,8 @@ def committed_seam_relpaths() -> list[str]:
     ]
     for side in sorted(load_goc_army_registry()["armies"]):
         paths.append(f"resource/set/multiplayer/armies/{side}.set")
-    for side in dc_menu_goc_sides():
+    # Every playable Expanded-mode goc_* identity requires committed native packs.
+    for side in playable_goc_sides():
         paths.extend(
             [
                 f"resource/set/multiplayer/units/conquest/inf_{side}.set",

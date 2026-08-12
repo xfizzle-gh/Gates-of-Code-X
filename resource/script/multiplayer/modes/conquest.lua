@@ -197,8 +197,8 @@ local function setVarsInMissionScript()
 		b1 = 5, b2 = 6, b3 = 7, b4 = 8,
 	}
 	-- Opposite-alliance guess for MI when {type side} fails (West vs East).
-	local eastNations = { rusa = true, sov = true, prc = true, pol = true, rus = true, jap = true }
-	local westNations = { nato = true, ukr = true, csa = true, frg = true, usa = true, eng = true, ger = true, fin = true, goc_bel = true, goc_bgr = true, goc_cze = true, goc_est = true, goc_grc = true, goc_hrv = true, goc_hun = true, goc_ltu = true, goc_lva = true, goc_prt = true, goc_rou = true, goc_svk = true }
+	local eastNations = { rusa = true, sov = true, prc = true, pol = true, rus = true, jap = true, goc_blr = true, goc_donbas = true, goc_dprk = true, goc_rus = true, goc_srb = true }
+	local westNations = { nato = true, ukr = true, csa = true, frg = true, usa = true, eng = true, ger = true, fin = true, goc_bel = true, goc_bgr = true, goc_can = true, goc_cze = true, goc_deu = true, goc_dnk = true, goc_esp = true, goc_est = true, goc_fin = true, goc_fra = true, goc_gbr = true, goc_grc = true, goc_hrv = true, goc_hun = true, goc_ita = true, goc_ltu = true, goc_lva = true, goc_nld = true, goc_nor = true, goc_pol = true, goc_prt = true, goc_rou = true, goc_svk = true, goc_swe = true, goc_tur = true, goc_ukr = true, goc_usa = true }
 
 	BotApi.Scene:SetVar("bot_army", nationMap[botNation] or 0)
 	-- Hint only: MI dcg/player_nation remains authority when side matches.

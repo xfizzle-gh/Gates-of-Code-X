@@ -360,6 +360,27 @@ def _entry_name_matches(entry_name: str, unit_name: str, source_side: str) -> bo
     entry_side = (entry_match.group("side") or "").lower()
     unit_side = (unit_match.group("side") or "").lower()
     allowed = {"", source_side.lower()}
+    # Catalog/virtual wrappers often keep the source-family parenthetical
+    # (e.g. goc_sparta_recon(rusa)) while Expanded-mode projects onto goc_rus.
+    try:
+        from .goc_tactical_army_registry import (
+            campaign_faction_token_for_side,
+            is_goc_tactical_side,
+        )
+
+        if is_goc_tactical_side(source_side):
+            family = campaign_faction_token_for_side(source_side)
+            allowed.add(family)
+            if family == "rusa":
+                allowed.update({"rusa", "sov", "csa"})
+            elif family == "nato":
+                allowed.update({"nato", "frg"})
+            elif family == "ukr":
+                allowed.add("ukr")
+            elif family == "prc":
+                allowed.add("prc")
+    except Exception:
+        pass
     return entry_side in allowed and unit_side in allowed
 
 

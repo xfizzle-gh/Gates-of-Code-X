@@ -153,11 +153,9 @@ def project_actor_inf_cost_rows(
         unit_has_positive_cost = False
         used_allowlisted_unpriced = False
         unit_name = str(unit.get("unit_name", "<unnamed>"))
-        cross_side = (
-            str(unit.get("component_id", "")) in _CROSS_SIDE_BREED_COMPONENTS
-            and source_side
-            and source_side != target_side
-        )
+        # Any source_side != Expanded target side must remap personnel-cost rows into
+        # the target goc_* namespace (not only explicitly listed cross-side components).
+        cross_side = bool(source_side and source_side != target_side)
         requires_coverage = _unit_requires_positive_coverage(unit, target_side)
 
         for breed in sorted(str(name) for name in members):
@@ -202,6 +200,13 @@ def project_actor_inf_cost_rows(
                 continue
             if authority is None:
                 if _is_allowlisted_unpriced(source_path) or _is_allowlisted_unpriced(target_path):
+                    used_allowlisted_unpriced = True
+                    continue
+                # Vehicle/arty crew tokens are frequently unpriced in native Code:X and
+                # ride entity economy. Treat them as allowlisted unpriced companions so
+                # cross-side goc_* packs can still materialize when infantry members are
+                # priced (or when the unit is only crew-bearing equipment).
+                if _is_unpriced_crew_breed(breed) and not bool(unit.get("virtual")):
                     used_allowlisted_unpriced = True
                     continue
                 if requires_coverage:
@@ -273,6 +278,15 @@ def project_actor_inf_cost_rows(
         if not unit_has_positive_cost and (
             requires_coverage or used_allowlisted_unpriced
         ):
+            member_names = [str(name) for name in members]
+            if (
+                used_allowlisted_unpriced
+                and member_names
+                and all(_is_unpriced_crew_breed(name) for name in member_names)
+                and not bool(unit.get("virtual"))
+            ):
+                # Crew-only equipment relies on entity economy in native Code:X.
+                continue
             raise ExpandedNationsError(
                 f"Infantry unit {unit_name} has no positive native Conquest inf cost coverage"
             )
@@ -413,7 +427,13 @@ def _unit_requires_positive_coverage(unit: Mapping[str, Any], target_side: str) 
     component_id = str(unit.get("component_id", ""))
     source_side = str(unit.get("source_side", "") or target_side).lower()
     if component_id in _CROSS_SIDE_BREED_COMPONENTS and source_side and source_side != target_side:
-        return True
+        # Cross-side infantry/virtual purchases must have priced personnel rows.
+        # Vehicle/artillery crews are often unpriced in native Code:X and rely on
+        # entity economy; do not fail the whole actor pack on those crew gaps.
+        if bool(unit.get("virtual")):
+            return True
+        category = str(unit.get("category") or "").lower()
+        return category in {"infantry", ""}
     return bool(unit.get("virtual"))
 
 
@@ -427,6 +447,22 @@ def _is_allowlisted_unpriced(path: str) -> bool:
             if alt.casefold() == folded:
                 return True
     return False
+
+
+def _is_unpriced_crew_breed(breed: str) -> bool:
+    token = str(breed or "").casefold()
+    return any(
+        marker in token
+        for marker in (
+            "supcrew",
+            "vehicleman",
+            "_crew",
+            "crew_",
+            "pilot",
+            "driver",
+            "gunner",
+        )
+    )
 
 
 def _period_variants(path: str) -> tuple[str, ...]:
@@ -517,6 +553,9 @@ def _build_effective_inf_index(
             continue
         within_priority: dict[str, list[_IndexedInfRow]] = {}
         for path in sorted(conquest.glob("inf*.set"), key=lambda item: item.as_posix().casefold()):
+            # Never treat Expanded-mode projected goc_* packs as native cost authority.
+            if path.name.casefold().startswith("inf_goc_"):
+                continue
             try:
                 text = path.read_text(encoding="utf-8-sig")
             except UnicodeDecodeError as exc:

@@ -7,6 +7,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from gates_of_codex.expanded_nations_battle_pair import (
+    materialize_battle_pair,
+    render_battle_pair_alliances,
+)
 from gates_of_codex.expanded_nations_static_matrix import (
     NATIVE_REPRESENTATIVE_FAMILIES,
     PHASE1_ACTORS,
@@ -19,11 +23,13 @@ from gates_of_codex.expanded_nations_static_matrix import (
     STATIC_MATRIX_SCHEMA,
     STRATEGIC_ONLY_CHECKLIST,
     build_static_actor_matrix,
+    manifest_authority_fingerprint,
     render_native_acceptance_template,
     validate_static_actor_matrix,
     write_static_matrix_evidence,
     _canonical_file_digest,
 )
+from gates_of_codex.goc_tactical_army_registry import playable_goc_sides
 from gates_of_codex.faction_wiring import load_faction_manifest, validate_faction_manifest
 from gates_of_codex.goc_tactical_army_registry import load_goc_army_registry
 from gates_of_codex.models import Faction
@@ -150,6 +156,11 @@ class Phase194StaticMatrixTests(unittest.TestCase):
         self.assertTrue(json_path.is_file())
         self.assertTrue(snap_path.is_file())
         self.assertTrue(template_path.is_file())
+        snap = json.loads(snap_path.read_text(encoding="utf-8"))
+        self.assertEqual(
+            snap.get("manifest_authority_fingerprint"),
+            manifest_authority_fingerprint(ROOT),
+        )
         checked = json.loads(json_path.read_text(encoding="utf-8"))
         live = build_static_actor_matrix(
             repo_root=ROOT,
@@ -162,6 +173,23 @@ class Phase194StaticMatrixTests(unittest.TestCase):
         self.assertIn("Strategic-only checklist", template)
         self.assertIn("goc_usa", template)
         self.assertIn("goc_fra", template)
+
+    def test_all_playable_goc_sides_have_committed_native_packs(self) -> None:
+        for side in playable_goc_sides():
+            for rel in (
+                f"resource/set/multiplayer/units/conquest/inf_{side}.set",
+                f"resource/set/multiplayer/units/conquest/units_{side}.set",
+                f"resource/set/dynamic_campaign/unit_research_{side}.set",
+                f"resource/script/multiplayer/units/{side}/conquest.{side}.lua",
+            ):
+                self.assertTrue((ROOT / rel).is_file(), rel)
+
+    def test_battle_pair_alliances_stage_both_gates_ids(self) -> None:
+        text = render_battle_pair_alliances("goc_usa", "goc_fra")
+        self.assertIn('{armies "goc_usa"}', text)
+        self.assertIn('{armies "goc_fra"}', text)
+        self.assertIn('"West"', text)
+        self.assertIn('"East"', text)
 
 
 class Phase194RuntimeAndManifestTests(unittest.TestCase):
