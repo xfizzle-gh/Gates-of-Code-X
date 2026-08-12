@@ -158,6 +158,30 @@ def _timed_save_step(
             timings[name] = timings.get(name, 0.0) + (time.perf_counter() - started)
 
 
+def _ensure_runtime_operational_positions(state) -> Any:
+    """Normalize positions only when the save path can actually repair them.
+
+    For an authenticated Earth3 P3 campaign, ``ensure_operational_positions`` is
+    deliberately validate-only: it immediately runs
+    ``validate_earth3_p3_campaign_extension`` and returns without mutating the
+    campaign. The final ``state.validate()`` in this same authoritative save runs
+    ``validate_earth3_bootstrap_campaign_state``, which invokes that exact P3
+    extension validator again after all save-time normalizers have completed.
+
+    Repeating the earlier validate-only pass cost roughly one native second per
+    save. Skip only that duplicate P3 pass. Non-P3 and migratable campaigns still
+    execute ``ensure_operational_positions(state)`` normally.
+    """
+
+    from .earth3_operational import P3_AUTHORITY_METADATA_KEY
+    from .operational_position import ensure_operational_positions
+
+    metadata = getattr(state, "map_metadata", {})
+    if isinstance(metadata, dict) and P3_AUTHORITY_METADATA_KEY in metadata:
+        return None
+    return ensure_operational_positions(state)
+
+
 def _compact_save_campaign(
     state,
     path: str | Path,
@@ -176,14 +200,17 @@ def _compact_save_campaign(
     from .observation import ensure_s11_schema, refresh_all_observer_knowledge
     from .operational_capture import ensure_site_control_state
     from .operational_movement import ensure_move_orders
-    from .operational_position import ensure_operational_positions
     from .operational_supply import refresh_operational_supply
     from .strategic import ensure_strategic_layer
 
     # ensure_strategic_layer already invokes ensure_strategic_formations. Do not
     # run the same full formation normalization a second time during every save.
     _timed_save_step(subphase_seconds, "strategic", lambda: ensure_strategic_layer(state))
-    _timed_save_step(subphase_seconds, "positions", lambda: ensure_operational_positions(state))
+    _timed_save_step(
+        subphase_seconds,
+        "positions",
+        lambda: _ensure_runtime_operational_positions(state),
+    )
     _timed_save_step(subphase_seconds, "orders", lambda: ensure_move_orders(state))
     _timed_save_step(subphase_seconds, "site_control", lambda: ensure_site_control_state(state))
     _timed_save_step(
