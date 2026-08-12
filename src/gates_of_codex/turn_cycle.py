@@ -9,6 +9,7 @@ end the human faction, execute each AI faction, and stop when control returns to
 the selected faction or a pending battle interrupts the cycle.
 """
 
+import random
 import time
 from typing import Any
 
@@ -25,7 +26,33 @@ def _ms(seconds: float) -> float:
     return round(max(0.0, seconds) * 1000.0, 3)
 
 
-def end_player_round(state: CampaignState) -> dict[str, Any]:
+def _prevalidated_campaign_engine(state: CampaignState) -> CampaignEngine:
+    """Build the round engine without revalidating an already-authoritative state.
+
+    The frontend command engine enters ``end_player_round`` with state obtained
+    from ``load_campaign`` or the persistent daemon's still-valid lease of that
+    same state. Both paths have already completed the full normalization and
+    validation contract. Re-running ``CampaignEngine.__init__`` here previously
+    repeated that full validation immediately before the round, costing roughly
+    two seconds on production Earth3.
+
+    Keep this constructor private to the frontend-round seam. Direct callers of
+    ``end_player_round`` still use the normal validating CampaignEngine path.
+    """
+
+    engine = CampaignEngine.__new__(CampaignEngine)
+    engine.state = state
+    engine._random = random.Random()  # type: ignore[attr-defined]
+    engine._removal_witnesses_by_formation = {}  # type: ignore[attr-defined]
+    engine._confirmed_removed_by_observer = {}  # type: ignore[attr-defined]
+    return engine
+
+
+def end_player_round(
+    state: CampaignState,
+    *,
+    prevalidated: bool = False,
+) -> dict[str, Any]:
     """Advance from the current seat back to the selected human faction.
 
     If called on the selected faction, that faction is ended first. If a save is
@@ -36,8 +63,12 @@ def end_player_round(state: CampaignState) -> dict[str, Any]:
 
     Production operational campaigns reuse the already-validated campaign engine
     as the AI driver's movement engine. This avoids constructing and fully
-    validating the same 3.5k-province state once per AI seat. Legacy adjacency AI
-    retains one engine per AI to preserve its independent seeded battle RNG.
+    validating the same 3.5k-province state once per AI seat. The installed
+    frontend command seam also marks its loaded/leased state as prevalidated, so
+    the round engine itself does not repeat the same full validation a second
+    time. Direct callers retain the validating constructor by default. Legacy
+    adjacency AI retains one engine per AI to preserve its independent seeded
+    battle RNG.
     """
 
     from .observation import (
@@ -55,13 +86,18 @@ def end_player_round(state: CampaignState) -> dict[str, Any]:
         raise RuntimeError(f"Selected faction is not active: {selected.value}")
 
     engine_started = time.perf_counter()
-    engine = CampaignEngine(state)
+    engine = (
+        _prevalidated_campaign_engine(state)
+        if prevalidated
+        else CampaignEngine(state)
+    )
     engine_init_ms = _ms(time.perf_counter() - engine_started)
     starting_turn = int(state.turn_number)
     ai_factions: list[str] = []
     observation_context = ObservationMutationContext()
     perf = {
         "engine_init_ms": engine_init_ms,
+        "engine_prevalidated": bool(prevalidated),
         "selected_end_turn_ms": 0.0,
         "selected_actor_runtime_ms": 0.0,
         "ai_take_turn_ms": {},
@@ -71,8 +107,8 @@ def end_player_round(state: CampaignState) -> dict[str, Any]:
     }
 
     # On graph-native campaigns StrategicAI never uses CampaignEngine's legacy
-    # move/attack RNG path. Reuse the engine already validated above rather than
-    # paying CampaignEngine.__init__ + full state validation once per AI seat.
+    # move/attack RNG path. Reuse the round engine rather than paying another
+    # CampaignEngine.__init__ + full state validation once per AI seat.
     shared_operational_ai = (
         StrategicAI(state, engine=engine)
         if operational_graph_authority_present(state)
@@ -204,7 +240,11 @@ def install_frontend_turn_cycle_op() -> None:
     ):
         if op != PLAYER_ROUND_OP:
             return current(state, op, raw)
-        data = end_player_round(state)
+        # apply_frontend_commands obtained this state from authoritative
+        # load_campaign, or the persistent backend leased the same still-valid
+        # state after a successful authoritative save. Do not immediately repeat
+        # the full CampaignEngine constructor validation.
+        data = end_player_round(state, prevalidated=True)
         return commands.CommandResult(
             op=PLAYER_ROUND_OP,
             ok=True,

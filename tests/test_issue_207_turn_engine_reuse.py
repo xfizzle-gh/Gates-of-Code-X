@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
 from gates_of_codex import strategic_ai, turn_cycle
 from gates_of_codex.models import Faction
 from gates_of_codex.observation import ObservationMutationContext
+
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class StrategicAIEngineReuseTests(unittest.TestCase):
@@ -30,6 +34,24 @@ class StrategicAIEngineReuseTests(unittest.TestCase):
 
 
 class PlayerRoundEngineReuseTests(unittest.TestCase):
+    def test_prevalidated_engine_factory_skips_validating_constructor(self) -> None:
+        state = SimpleNamespace()
+        with patch.object(
+            turn_cycle.CampaignEngine,
+            "__init__",
+            side_effect=AssertionError("validating CampaignEngine.__init__ must not run"),
+        ):
+            engine = turn_cycle._prevalidated_campaign_engine(state)  # type: ignore[arg-type]
+        self.assertIs(state, engine.state)
+        self.assertEqual({}, engine._removal_witnesses_by_formation)
+        self.assertEqual({}, engine._confirmed_removed_by_observer)
+
+    def test_frontend_round_seam_marks_loaded_state_prevalidated(self) -> None:
+        source = (ROOT / "src/gates_of_codex/turn_cycle.py").read_text(encoding="utf-8")
+        install_block = source.split("def install_frontend_turn_cycle_op()", 1)[1]
+        self.assertIn("end_player_round(state, prevalidated=True)", install_block)
+        self.assertIn('"engine_prevalidated": bool(prevalidated)', source)
+
     def test_operational_round_reuses_one_validated_engine_for_all_ai_seats(self) -> None:
         state = SimpleNamespace(
             pending_battle=None,
@@ -108,6 +130,7 @@ class PlayerRoundEngineReuseTests(unittest.TestCase):
         self.assertEqual(13, state.turn_number)
         perf = result["perf_turn_cycle"]
         self.assertTrue(perf["shared_operational_ai"])
+        self.assertFalse(perf["engine_prevalidated"])
         self.assertIn("engine_init_ms", perf)
 
 
