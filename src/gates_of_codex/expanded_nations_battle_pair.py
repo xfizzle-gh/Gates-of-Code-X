@@ -1,7 +1,9 @@
 """Two-sided Expanded Nations battle-pair install for #194 native harness.
 
-Installs both actors' independent native packs plus pair-specific alliance and
-matchup overlays into the engine-consumed resource paths under a Gates root.
+Installs both actors' independent native packs plus every runtime-critical
+Dynamic Conquest surface into the engine-consumed resource paths under a Gates
+root. The install is transactional: any prior live files are backed up and
+restored, while files that did not exist before the pair are removed on restore.
 """
 from __future__ import annotations
 
@@ -11,7 +13,12 @@ import shutil
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from .expanded_nations_models import ExpandedNationsError, GENERATED_MARKER
+from .expanded_nations_models import (
+    BROAD_ROSTER_INCLUDES,
+    CANONICAL_INF_INCLUDES,
+    ExpandedNationsError,
+    GENERATED_MARKER,
+)
 from .faction_wiring_manifest import load_faction_manifest
 from .goc_native_dc_seam import (
     materialize_native_dc_seam,
@@ -22,14 +29,21 @@ from .goc_native_dc_seam import (
 from .goc_tactical_army_registry import army_row, is_goc_tactical_side, playable_goc_sides
 
 BATTLE_PAIR_SCHEMA = "gates-of-codex.expanded-nations-battle-pair"
-BATTLE_PAIR_VERSION = 2
+BATTLE_PAIR_VERSION = 3
 BATTLE_PAIR_MANIFEST_RELATIVE = Path("live/expanded_nations/battle_pair/active.json")
 BATTLE_PAIR_BACKUP_DIR = Path("live/expanded_nations/battle_pair/backup")
+
+ROSTER_CONQUEST_REL = "resource/set/multiplayer/units/roster_conquest.set"
+CONQUEST_LUA_REL = "resource/script/multiplayer/modes/conquest.lua"
 
 ENGINE_OVERLAY_RELS = (
     "resource/set/multiplayer/games/presets/alliances_generic.inc",
     "resource/set/dynamic_campaign/values.set",
     "resource/set/multiplayer/games/campaign_capture_the_flag.set",
+)
+ENGINE_RUNTIME_RELS = ENGINE_OVERLAY_RELS + (
+    ROSTER_CONQUEST_REL,
+    CONQUEST_LUA_REL,
 )
 
 
@@ -66,6 +80,7 @@ def _pack_relpaths(side: str) -> tuple[str, ...]:
         f"resource/set/dynamic_campaign/unit_research_{side}.set",
         f"resource/script/multiplayer/units/{side}/conquest.{side}.lua",
         f"resource/set/multiplayer/armies/{side}.set",
+        f"resource/interface/pages/multi/flag_{side}.tga",
     )
 
 
@@ -142,6 +157,38 @@ def render_battle_pair_ctf() -> str:
     return f"{GENERATED_MARKER}\n" + render_ctf_set()
 
 
+def render_battle_pair_roster(attacker_side: str, defender_side: str) -> str:
+    """Render the runtime roster selector for exactly this two-sided pair.
+
+    Core inherited includes remain available because many approved projected
+    definitions reference lower-layer personnel/support closure. Only the two
+    Expanded actor packs are added; the selector never references GOC packs that
+    were not installed into the live destination.
+    """
+    pair_sides = tuple(dict.fromkeys((attacker_side, defender_side)))
+    lines = [
+        ";sdl",
+        GENERATED_MARKER,
+        "; mode=native_battle_pair_dc",
+        f"; pair={attacker_side}_vs_{defender_side}",
+        "; owner=expanded_nations_battle_pair.materialize_battle_pair",
+        "{units",
+        '\t(include "conquest/settings.set")',
+        "",
+    ]
+    lines.extend(f'\t(include "{path}")' for path in CANONICAL_INF_INCLUDES)
+    for side in pair_sides:
+        if side != "prc":
+            lines.append(f'\t(include "conquest/inf_{side}.set")')
+    lines.append("")
+    lines.extend(f'\t(include "{path}")' for path in BROAD_ROSTER_INCLUDES)
+    for side in pair_sides:
+        if side != "prc":
+            lines.append(f'\t(include "conquest/units_{side}.set")')
+    lines.extend(["}", ""])
+    return "\n".join(lines)
+
+
 def _copy_pack_file(source_root: Path, dest_root: Path, rel: str) -> None:
     src = source_root / rel
     if not src.is_file():
@@ -155,15 +202,14 @@ def _backup_existing(dest: Path, rel: str, backup_root: Path) -> dict[str, Any] 
     path = dest / rel
     if not path.is_file():
         return None
-    # Refuse unmanaged overwrite unless content is already a managed GOC marker
-    # or we are restoring from a prior battle-pair/native-multi overlay.
-    text_head = path.read_text(encoding="utf-8", errors="ignore")[:512]
+    text_head = path.read_bytes()[:512].decode("utf-8", errors="ignore")
     managed = GENERATED_MARKER in text_head or path.name in {
         "alliances_generic.inc",
         "values.set",
         "campaign_capture_the_flag.set",
+        "roster_conquest.set",
+        "conquest.lua",
     }
-    # Always backup existing engine overlay / pack before pair install.
     backup_path = backup_root / rel
     backup_path.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(path, backup_path)
@@ -192,12 +238,13 @@ def materialize_battle_pair(
     output_root: str | Path | None = None,
     source_pack_root: str | Path | None = None,
 ) -> dict[str, Any]:
-    """Install a two-sided battle pair into engine-consumed resource paths.
+    """Install a complete two-sided battle pair into engine-consumed paths.
 
-    When ``output_root`` differs from ``repo_root``, packs are copied from the
-    source pack root (default: repo_root) into the destination and overlays are
-    written only under the destination. The source repo is never mutated in that
-    case.
+    When ``output_root`` differs from ``repo_root``, committed packs and the
+    patched production conquest.lua are copied from the source checkout into the
+    live destination. The pair-specific roster selector and matchup overlays are
+    generated in the live destination. All destination mutations are recorded so
+    ``restore_battle_pair`` can return the live layer to its exact prior state.
     """
     if attacker_actor_id == defender_actor_id:
         raise ExpandedNationsError("Battle pair requires two distinct actors")
@@ -206,14 +253,17 @@ def materialize_battle_pair(
     dest.mkdir(parents=True, exist_ok=True)
     mutate_source = dest == source_root
 
+    # A rerun over an active live pair must first restore the original live
+    # state. This also cleans schema-v2 installs that left copied packs behind.
+    if not mutate_source and (dest / BATTLE_PAIR_MANIFEST_RELATIVE).is_file():
+        restore_battle_pair(dest)
+
     manifest_actors = {row["actor_id"]: row for row in load_faction_manifest()["actors"]}
     attacker = _actor_row(manifest_actors, attacker_actor_id)
     defender = _actor_row(manifest_actors, defender_actor_id)
     attacker_side = str(attacker["tactical_side"])
     defender_side = str(defender["tactical_side"])
 
-    # If installing into the source repo itself and packs are missing, optionally
-    # materialize the full native seam first (requires stack + aio path).
     if mutate_source and resource_stack is not None and aio_conquest_lua is not None:
         materialize_native_dc_seam(
             source_root,
@@ -226,15 +276,9 @@ def materialize_battle_pair(
         pack_rels.extend(_pack_relpaths(side))
     pack_rels = sorted(set(pack_rels))
 
-    # Destination must receive its own pack copies; never claim success from source-only presence.
-    for rel in pack_rels:
-        if mutate_source:
-            if not (dest / rel).is_file():
-                raise ExpandedNationsError(
-                    f"Battle-pair materialize missing native pack in destination: {rel}"
-                )
-        else:
-            _copy_pack_file(source_root, dest, rel)
+    for rel in pack_rels + [CONQUEST_LUA_REL]:
+        if not (source_root / rel).is_file():
+            raise ExpandedNationsError(f"Battle-pair source runtime file missing: {rel}")
 
     backup_root = dest / BATTLE_PAIR_BACKUP_DIR
     if backup_root.exists():
@@ -243,21 +287,32 @@ def materialize_battle_pair(
 
     backups: list[dict[str, Any]] = []
     installed: dict[str, str] = {}
+    preserve_installed: list[str] = []
 
-    # Backup then write engine overlays.
-    overlays = {
+    # Copy the pair's committed actor/runtime files into the live Workshop root.
+    # If source==destination they are source-owned and must survive pair restore.
+    for rel in pack_rels + [CONQUEST_LUA_REL]:
+        if mutate_source:
+            preserve_installed.append(rel)
+            installed[rel] = _file_sha256(dest / rel)
+            continue
+        prior = _backup_existing(dest, rel, backup_root)
+        if prior is not None:
+            backups.append(prior)
+        _copy_pack_file(source_root, dest, rel)
+        installed[rel] = _file_sha256(dest / rel)
+
+    generated_runtime = {
         ENGINE_OVERLAY_RELS[0]: render_battle_pair_alliances(attacker_side, defender_side),
         ENGINE_OVERLAY_RELS[1]: render_battle_pair_values(attacker_side, defender_side),
         ENGINE_OVERLAY_RELS[2]: render_battle_pair_ctf(),
+        ROSTER_CONQUEST_REL: render_battle_pair_roster(attacker_side, defender_side),
     }
-    for rel, text in overlays.items():
+    for rel, text in generated_runtime.items():
         prior = _backup_existing(dest, rel, backup_root)
         if prior is not None:
             backups.append(prior)
         installed[rel] = _write_text(dest / rel, text)
-
-    for rel in pack_rels:
-        installed[rel] = _file_sha256(dest / rel)
 
     pair_id = f"{attacker_actor_id}_vs_{defender_actor_id}"
     manifest = {
@@ -271,27 +326,22 @@ def materialize_battle_pair(
         "pack_sides": sorted({attacker_side, defender_side}),
         "independent_authority": True,
         "engine_overlay_paths": list(ENGINE_OVERLAY_RELS),
+        "engine_runtime_paths": list(ENGINE_RUNTIME_RELS),
+        "preserve_installed_files": sorted(preserve_installed),
         "installed_files": {
             rel: {"sha256": digest} for rel, digest in sorted(installed.items())
         },
         "backups": backups,
         "notes": [
             "Each side keeps distinct units/research/purchase Lua packs.",
+            "Pair install owns roster_conquest.set and patched conquest.lua in the live root.",
             "Pair overlays replace engine-consumed alliances/values/CTF for simultaneous selection.",
-            "restore_battle_pair restores prior overlays or multi-faction native defaults.",
+            "restore_battle_pair restores exact prior live files and removes newly installed files.",
         ],
     }
     manifest_path = dest / BATTLE_PAIR_MANIFEST_RELATIVE
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
-    manifest_bytes = (json.dumps(manifest, indent=2, sort_keys=True) + "\n").encode("utf-8")
-    manifest_path.write_bytes(manifest_bytes)
-    manifest["manifest_sha256"] = hashlib.sha256(manifest_bytes).hexdigest()
-    # Rewrite with self hash bound after first serialize of content fields.
-    content_for_hash = {
-        key: value
-        for key, value in manifest.items()
-        if key != "manifest_sha256"
-    }
+    content_for_hash = dict(manifest)
     manifest["manifest_sha256"] = _sha256_text(
         json.dumps(content_for_hash, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     )
@@ -320,7 +370,7 @@ def materialize_battle_pair(
 
 
 def verify_battle_pair(gates_root: str | Path) -> list[str]:
-    """Verify active battle-pair install against its manifest hashes and matchups."""
+    """Verify the complete live pair install against manifest hashes/authority."""
     root = Path(gates_root).resolve()
     manifest_path = root / BATTLE_PAIR_MANIFEST_RELATIVE
     problems: list[str] = []
@@ -342,15 +392,23 @@ def verify_battle_pair(gates_root: str | Path) -> list[str]:
         problems.append("battle-pair installed_files malformed")
         installed = {}
 
+    # Every claimed installed file must actually exist and match exactly. This
+    # closes the old false-green where only three overlays were checked while the
+    # live roster selector and conquest.lua remained stale/missing.
+    for rel, metadata in installed.items():
+        path = root / str(rel)
+        if not path.is_file():
+            problems.append(f"missing installed runtime file {rel}")
+            continue
+        expected = metadata.get("sha256") if isinstance(metadata, Mapping) else None
+        if expected and _file_sha256(path) != expected:
+            problems.append(f"tampered installed runtime file {rel}")
+
     for rel in ENGINE_OVERLAY_RELS:
         path = root / rel
         if not path.is_file():
             problems.append(f"missing engine overlay {rel}")
             continue
-        expected = (installed.get(rel) or {}).get("sha256")
-        actual = _file_sha256(path)
-        if expected and actual != expected:
-            problems.append(f"tampered engine overlay {rel}")
         text = path.read_text(encoding="utf-8", errors="ignore")
         if GENERATED_MARKER not in text:
             problems.append(f"engine overlay missing generated marker: {rel}")
@@ -361,38 +419,71 @@ def verify_battle_pair(gates_root: str | Path) -> list[str]:
                 problems.append(f"alliances missing defender {defender_side}")
         if rel.endswith("values.set"):
             if f'"{attacker_side} {defender_side}"' not in text:
-                problems.append(
-                    f"values.set missing matchup {attacker_side} {defender_side}"
-                )
+                problems.append(f"values.set missing matchup {attacker_side} {defender_side}")
             if f'"{defender_side} {attacker_side}"' not in text:
-                problems.append(
-                    f"values.set missing matchup {defender_side} {attacker_side}"
-                )
+                problems.append(f"values.set missing matchup {defender_side} {attacker_side}")
         if rel.endswith("campaign_capture_the_flag.set"):
             if "presets/alliances_generic.inc" not in text:
                 problems.append("CTF does not include alliances_generic.inc")
+
+    roster_path = root / ROSTER_CONQUEST_REL
+    if not roster_path.is_file():
+        problems.append("live roster_conquest.set missing")
+    else:
+        roster = roster_path.read_text(encoding="utf-8", errors="ignore")
+        if GENERATED_MARKER not in roster or "mode=native_battle_pair_dc" not in roster:
+            problems.append("live roster_conquest.set is not the managed battle-pair selector")
+        for side in (attacker_side, defender_side):
+            if side != "prc":
+                if f'inf_{side}.set' not in roster:
+                    problems.append(f"live roster missing inf pack for {side}")
+                if f'units_{side}.set' not in roster:
+                    problems.append(f"live roster missing units pack for {side}")
+        allowed = {attacker_side, defender_side}
+        for side in playable_goc_sides():
+            if side in allowed:
+                continue
+            if f'inf_{side}.set' in roster or f'units_{side}.set' in roster:
+                problems.append(f"live pair roster references uninstalled side {side}")
+
+    conquest_path = root / CONQUEST_LUA_REL
+    if not conquest_path.is_file():
+        problems.append("live patched conquest.lua missing")
+    else:
+        conquest = conquest_path.read_text(encoding="utf-8", errors="ignore")
+        if "local nationMap" not in conquest:
+            problems.append("live conquest.lua missing nationMap")
+        for side in (attacker_side, defender_side):
+            if side != "prc" and side not in conquest:
+                problems.append(f"live conquest.lua missing {side}")
 
     for side in (attacker_side, defender_side):
         for rel in _pack_relpaths(side):
             path = root / rel
             if not path.is_file():
                 problems.append(f"missing pack {rel}")
-                continue
-            expected = (installed.get(rel) or {}).get("sha256")
-            actual = _file_sha256(path)
-            if expected and actual != expected:
-                problems.append(f"tampered pack {rel}")
 
     return problems
 
 
 def restore_battle_pair(gates_root: str | Path) -> dict[str, Any]:
-    """Remove battle-pair overlays and restore prior backups or multi-faction defaults."""
+    """Restore the exact pre-pair live state, including schema-v2 installs."""
     root = Path(gates_root).resolve()
     manifest_path = root / BATTLE_PAIR_MANIFEST_RELATIVE
     backup_root = root / BATTLE_PAIR_BACKUP_DIR
     restored: list[str] = []
     removed: list[str] = []
+    preserved_tampered: list[str] = []
+
+    manifest: dict[str, Any] = {}
+    if manifest_path.is_file():
+        try:
+            payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+            if isinstance(payload, dict):
+                manifest = payload
+        except json.JSONDecodeError:
+            manifest = {}
+
     backups_by_rel: dict[str, Path] = {}
     if backup_root.is_dir():
         for path in backup_root.rglob("*"):
@@ -400,23 +491,44 @@ def restore_battle_pair(gates_root: str | Path) -> dict[str, Any]:
                 rel = path.relative_to(backup_root).as_posix()
                 backups_by_rel[rel] = path
 
-    for rel in ENGINE_OVERLAY_RELS:
+    installed = manifest.get("installed_files") or {}
+    if not isinstance(installed, Mapping):
+        installed = {}
+    preserve = set(manifest.get("preserve_installed_files") or [])
+
+    # Restore every file that existed before install. For files that the manifest
+    # says we installed into an originally absent path, remove them. This logic
+    # also cleans old schema-v2 pair packs, which were recorded in installed_files
+    # but never removed by the former restore implementation.
+    for rel in sorted(set(installed) | set(backups_by_rel)):
         target = root / rel
         if rel in backups_by_rel:
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(backups_by_rel[rel], target)
             restored.append(rel)
-        elif target.is_file():
-            # Fall back to multi-faction native defaults when no prior file existed.
-            if rel.endswith("alliances_generic.inc"):
-                _write_text(target, render_alliances_generic())
-                restored.append(rel)
-            elif rel.endswith("values.set"):
-                _write_text(target, render_values_set())
-                restored.append(rel)
-            elif rel.endswith("campaign_capture_the_flag.set"):
-                _write_text(target, render_ctf_set())
-                restored.append(rel)
+            continue
+        if rel in preserve:
+            continue
+        if target.is_file():
+            expected = None
+            metadata = installed.get(rel)
+            if isinstance(metadata, Mapping):
+                expected = metadata.get("sha256")
+            if expected and _file_sha256(target) != expected:
+                preserved_tampered.append(rel)
+                continue
+            target.unlink()
+            removed.append(rel)
+
+    # Compatibility fallback for a damaged/legacy manifest that has backups but
+    # no installed_files entry for the three original overlays.
+    for rel, backup in sorted(backups_by_rel.items()):
+        if rel in restored:
+            continue
+        target = root / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(backup, target)
+        restored.append(rel)
 
     if manifest_path.is_file():
         manifest_path.unlink()
@@ -426,9 +538,10 @@ def restore_battle_pair(gates_root: str | Path) -> dict[str, Any]:
         removed.append(BATTLE_PAIR_BACKUP_DIR.as_posix())
 
     return {
-        "ok": True,
+        "ok": not preserved_tampered,
         "restored": restored,
         "removed": removed,
+        "preserved_tampered": preserved_tampered,
         "gates_root": str(root),
     }
 
