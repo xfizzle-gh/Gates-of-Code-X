@@ -139,6 +139,39 @@ class Phase194StaticMatrixTests(unittest.TestCase):
         self.assertEqual(len(REQUIRED_BATTLE_PAIRS), 4)
         self.assertEqual(len(NATIVE_REPRESENTATIVE_FAMILIES), 11)
 
+    def test_spain_representative_family_tracks_owner_ildu_ruling(self) -> None:
+        spain = next(
+            row
+            for row in NATIVE_REPRESENTATIVE_FAMILIES
+            if row["representative_actor_id"] == "esp"
+        )
+        self.assertEqual(
+            spain["family_id"],
+            "phase1_spain_ildu_nato_fallback",
+        )
+        self.assertEqual(
+            spain["expanded_tactical_side"],
+            "goc_esp",
+        )
+        self.assertEqual(
+            spain["source_compatibility_family"],
+            "nato",
+        )
+        self.assertIn("ILDU", spain["notes"])
+        self.assertIn("forbidden", spain["notes"].lower())
+        self.assertNotIn(
+            "seven-unit 3rd Assault allocation",
+            spain["notes"],
+        )
+        self.assertEqual(
+            self.by_id["esp"]["components"],
+            [
+                "ukraine_ildu",
+                "nato_fallback_heavy",
+                "nato_common_support",
+            ],
+        )
+
     def test_canonical_file_digest_is_newline_stable(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "sample.set"

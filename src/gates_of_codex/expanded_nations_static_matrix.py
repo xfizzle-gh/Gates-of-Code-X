@@ -79,13 +79,16 @@ NATIVE_REPRESENTATIVE_FAMILIES = (
         "notes": "France ARF/DSK hybrid on Gates ID for same-family USA-vs-France proof",
     },
     {
-        "family_id": "phase1_spain_3rd_assault",
+        "family_id": "phase1_spain_ildu_nato_fallback",
         "representative_actor_id": "esp",
         "expanded_tactical_side": "goc_esp",
         "source_compatibility_family": "nato",
         "roster_class": "coalition_fallback",
         "checklist": "playable",
-        "notes": "Spain seven-unit 3rd Assault allocation",
+        "notes": (
+            "Spain ILDU NATO-personnel wrappers from Ukraine authority plus "
+            "approved NATO heavy/support fallback; Azov/3rd Assault forbidden"
+        ),
     },
     {
         "family_id": "phase1_ukraine_core",
