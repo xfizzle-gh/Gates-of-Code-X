@@ -8,12 +8,14 @@ from pathlib import Path
 
 def _install_fast_paths() -> None:
     from .command_cycle_perf import install_command_cycle_perf_path
+    from .command_scoped_p2_auth import install_command_scoped_p2_auth
     from .frontend_fastpath import install_frontend_fast_path
     from .turn_cycle import install_frontend_turn_cycle_op
 
     install_frontend_fast_path()
     install_frontend_turn_cycle_op()
     install_command_cycle_perf_path()
+    install_command_scoped_p2_auth()
 
 
 def _prepare_godot_project(
