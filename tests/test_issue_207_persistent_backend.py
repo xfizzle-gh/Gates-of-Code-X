@@ -159,14 +159,65 @@ class PersistentBackendTransportTests(unittest.TestCase):
         for op in ("handoff", "import_battle", "restore_backup", "reset_test_campaign"):
             self.assertNotIn(op, persistent_backend.SUPPORTED_OPS)
 
-    def test_persistent_backend_uses_json_socket_transport_not_pickle(self) -> None:
+    def test_direct_cache_loader_leases_once_then_uses_canonical_loader(self) -> None:
+        cached = object()
+        canonical = object()
+        calls: list[Path] = []
+
+        def original_loader(path):
+            calls.append(Path(path))
+            return canonical
+
+        loader = persistent_backend._direct_cache_loader(cached, original_loader)
+        first = loader(Path("campaign.json"))
+        second = loader(Path("campaign.json"))
+
+        self.assertIs(cached, first)
+        self.assertIs(canonical, second)
+        self.assertEqual([Path("campaign.json")], calls)
+
+    def test_cache_survival_requires_success_and_persistence_for_mutation(self) -> None:
+        ok = {"ok": True}
+        failed = {"ok": False}
+        self.assertTrue(
+            persistent_backend._cache_can_survive_report(
+                ok,
+                ["verify_result"],
+                persisted=False,
+            )
+        )
+        self.assertTrue(
+            persistent_backend._cache_can_survive_report(
+                ok,
+                ["end_player_round"],
+                persisted=True,
+            )
+        )
+        self.assertFalse(
+            persistent_backend._cache_can_survive_report(
+                ok,
+                ["end_player_round"],
+                persisted=False,
+            )
+        )
+        self.assertFalse(
+            persistent_backend._cache_can_survive_report(
+                failed,
+                ["end_player_round"],
+                persisted=True,
+            )
+        )
+
+    def test_persistent_backend_uses_direct_lease_without_full_state_clone(self) -> None:
         source = (ROOT / "src/gates_of_codex/persistent_backend.py").read_text(
             encoding="utf-8"
         )
         self.assertIn('socket.create_connection(("127.0.0.1", port)', source)
         self.assertIn("hashlib.sha256", source)
-        self.assertIn("copy.deepcopy(cached_state)", source)
+        self.assertIn("_direct_cache_loader", source)
+        self.assertIn("_cache_can_survive_report", source)
         self.assertIn("_ambiguous_daemon_payload", source)
+        self.assertNotIn("copy.deepcopy(", source)
         self.assertNotIn("import pickle", source)
         self.assertNotIn("import marshal", source)
 

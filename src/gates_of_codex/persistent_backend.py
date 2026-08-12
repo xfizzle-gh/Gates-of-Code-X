@@ -9,7 +9,6 @@ returned. Unsupported/self-committing operations fall back to the normal one-sho
 backend and invalidate the daemon cache first.
 """
 
-import copy
 import hashlib
 import json
 import os
@@ -274,6 +273,41 @@ def _command_ops(commands_path: Path | None) -> list[str]:
     return [str(row.get("op", "")).strip().lower() for row in read_commands(commands_path)]
 
 
+def _direct_cache_loader(cached_state, original_loader):
+    """Lease the validated daemon state to exactly one command load.
+
+    The first load receives the cached object itself, avoiding a full campaign
+    clone on every command. A second load in the same command is the command
+    engine's rollback/reporting path after failure, so it must reload canonical
+    disk state instead of exposing the possibly mutated leased object.
+    """
+
+    load_count = 0
+
+    def load(path):
+        nonlocal load_count
+        load_count += 1
+        if load_count == 1:
+            return cached_state
+        return original_loader(path)
+
+    return load
+
+
+def _cache_can_survive_report(
+    report: dict[str, Any],
+    ops: Sequence[str],
+    *,
+    persisted: bool,
+) -> bool:
+    """Retain daemon state only when its canonical relationship is proven."""
+
+    if not bool(report.get("ok", False)):
+        return False
+    read_only = bool(ops) and all(op == "verify_result" for op in ops)
+    return read_only or persisted
+
+
 def run_session_backend(argv: Sequence[str]) -> int:
     """Serve bounded frontend commands while retaining a validated campaign copy."""
 
@@ -356,24 +390,25 @@ def run_session_backend(argv: Sequence[str]) -> int:
                             if cached_state is None or cached_fingerprint != current_fingerprint:
                                 cached_state = load_campaign(campaign)
                                 cached_fingerprint = current_fingerprint
-                            working_state = copy.deepcopy(cached_state)
-                            captured_state: dict[str, Any] = {"value": None}
+
+                            persisted = False
                             original_loader = commands_module.load_campaign
                             original_compact_save = perf._compact_save_campaign
 
-                            def cached_loader(_path):
-                                return copy.deepcopy(working_state)
-
                             def capturing_save(state, path, *, observation_context=None):
+                                nonlocal persisted
                                 result = original_compact_save(
                                     state,
                                     path,
                                     observation_context=observation_context,
                                 )
-                                captured_state["value"] = copy.deepcopy(state)
+                                persisted = True
                                 return result
 
-                            commands_module.load_campaign = cached_loader
+                            commands_module.load_campaign = _direct_cache_loader(
+                                cached_state,
+                                original_loader,
+                            )
                             perf._compact_save_campaign = capturing_save
                             try:
                                 report = perf.measured_apply_frontend_commands(
@@ -384,12 +419,21 @@ def run_session_backend(argv: Sequence[str]) -> int:
                             finally:
                                 commands_module.load_campaign = original_loader
                                 perf._compact_save_campaign = original_compact_save
-                            if bool(report.get("ok", False)) and captured_state["value"] is not None:
-                                cached_state = captured_state["value"]
+
+                            if _cache_can_survive_report(report, ops, persisted=persisted):
+                                # The leased object is the same state normalized by
+                                # the authoritative save. No second full-state clone
+                                # is required. Re-fingerprint the canonical file so
+                                # the next request still detects external mutation.
                                 cached_fingerprint = _fingerprint(campaign)
-                            elif not bool(report.get("ok", False)):
+                            else:
+                                # A failed or unexpectedly unpersisted mutating
+                                # command may have touched the leased object. Never
+                                # reuse it. The next supported request reloads the
+                                # canonical file through the normal validated path.
                                 cached_state = None
                                 cached_fingerprint = None
+
                             response = {
                                 "handled": True,
                                 "exit_code": 0,
