@@ -4,15 +4,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from gates_of_codex.expanded_nations_models import (
-    PORTRAIT_ROOT_RELATIVE,
-    SPAIN_PRESENTATION_UNITS,
-)
+from gates_of_codex.expanded_nations_models import PORTRAIT_ROOT_RELATIVE
 from gates_of_codex.expanded_nations_opponent_render import project_opponent_units
 from gates_of_codex.expanded_nations_presentation import project_actor_presentation
 from gates_of_codex.expanded_nations_render import project_research_nodes
 from gates_of_codex.expanded_nations_sources import _project_source_raw
-from gates_of_codex.expanded_nations_models import ExpandedNationsError
 
 
 class ExpandedNationsNativeContractTests(unittest.TestCase):
@@ -136,35 +132,7 @@ class ExpandedNationsNativeContractTests(unittest.TestCase):
             self.assertIn(expected, outputs)
             self.assertTrue(outputs[expected].startswith(b"\x89PNG"))
 
-    def test_spain_3rd_assault_portraits_are_copied_from_ukraine_source_ids(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            layers = [root / name for name in ("vanilla", "west81", "codex", "ai", "gates")]
-            for layer in layers:
-                (layer / "resource").mkdir(parents=True)
-            portrait_root = layers[2] / "resource/interface/scene/portrait_squad"
-            portrait_root.mkdir(parents=True)
-            png = b"\x89PNG\r\n\x1a\nspain"
-            for target in SPAIN_PRESENTATION_UNITS:
-                source = target.replace("(nato)", "(ukr)")
-                for index in range(4):
-                    (portrait_root / f"{source}_{index:02d}.png").write_bytes(
-                        png + target.encode("utf-8") + bytes([index])
-                    )
-            actor = {
-                "actor_id": "esp",
-                "units": [{"unit_name": unit} for unit in SPAIN_PRESENTATION_UNITS],
-            }
-
-            outputs = project_actor_presentation(actor, layers)
-
-            self.assertEqual(24, len(outputs))
-            expected = PORTRAIT_ROOT_RELATIVE / "3rd_assault_mg3(nato)_00.png"
-            self.assertIn(expected, outputs)
-            self.assertTrue(outputs[expected].startswith(b"\x89PNG"))
-            self.assertFalse(any("(ukr)" in path.name for path in outputs))
-
-    def test_spain_presentation_fails_closed_on_partial_projected_family(self) -> None:
+    def test_spain_special_portrait_projection_is_deferred(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             layers = [root / name for name in ("vanilla", "west81", "codex", "ai", "gates")]
@@ -172,15 +140,18 @@ class ExpandedNationsNativeContractTests(unittest.TestCase):
                 (layer / "resource").mkdir(parents=True)
             actor = {
                 "actor_id": "esp",
-                "units": [{"unit_name": SPAIN_PRESENTATION_UNITS[0]}],
+                "units": [
+                    {"unit_name": "goc_ildu_rifle(goc_esp)"},
+                    {"unit_name": "goc_ildu_at(goc_esp)"},
+                    {"unit_name": "goc_ildu_javelin(goc_esp)"},
+                    {"unit_name": "goc_ildu_recon(goc_esp)"},
+                    {"unit_name": "goc_ildu_engineer(goc_esp)"},
+                    {"unit_name": "goc_ildu_manpads(goc_esp)"},
+                ],
             }
-            with self.assertRaisesRegex(
-                ExpandedNationsError,
-                "Spain presentation requires all canonical projected card families",
-            ):
-                project_actor_presentation(actor, layers)
+            self.assertEqual({}, project_actor_presentation(actor, layers))
 
-    def test_expanded_nations_squad_localization_is_committed(self) -> None:
+    def test_expanded_nations_serbia_localization_is_committed(self) -> None:
         root = Path(__file__).resolve().parents[1]
         path = (
             root
@@ -194,25 +165,9 @@ class ExpandedNationsNativeContractTests(unittest.TestCase):
         ):
             self.assertIn(f'msgctxt "desc/squad/{unit}"', text)
 
-        expected_spain = {
-            "3rd_assault_at(nato)": "3-я OShBr SHTURMOVYKY[RPG-7]",
-            "3rd_assault_decepticons(nato)": "3-я OShBr SPETSPIDROZDIL ”Decepticons”",
-            "3rd_assault_javelin(nato)": "3-я OShBr SHTURMOVYKY[JAVELIN]",
-            "3rd_assault_mg3(nato)": "3-я OShBr SHTURMOVYKY[MG3]",
-            "3rd_assault_saperi(nato)": "3-я OShBr SAPERI",
-            "3rd_assault_saperi_at(nato)": "3-я OShBr SAPERI[RSHG-2]",
-        }
-        for unit, label in expected_spain.items():
-            self.assertIn(f'msgctxt "desc/squad/{unit}"', text)
-            self.assertIn(f'msgid  "{label}"', text)
-
         ignore = (root / ".gitignore").read_text(encoding="utf-8")
         self.assertIn(
             "/resource/interface/scene/portrait_squad/goc_serb_*.png",
-            ignore,
-        )
-        self.assertIn(
-            "/resource/interface/scene/portrait_squad/3rd_assault_*(nato)_*.png",
             ignore,
         )
 
