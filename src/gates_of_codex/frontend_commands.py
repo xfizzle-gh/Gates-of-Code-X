@@ -28,6 +28,11 @@ READ_ONLY_OPS = frozenset({"verify_result"})
 #: Campaign-metadata key holding the exactly-once command ledger.
 COMMAND_LEDGER_KEY = "frontend_command_ledger"
 
+#: Persisted binding between the current strategic pending battle and the exact
+#: GoH-profile save that the game rewrites. ``pending_battle.exported_save_path``
+#: is the isolated source/export archive, not the installed acceptance target.
+PENDING_HANDOFF_BINDING_KEY = "pending_battle_handoff"
+
 #: Retained ledger entries. Bounded so the campaign file cannot grow without
 #: limit; replay protection therefore covers the most recent applications.
 COMMAND_LEDGER_LIMIT = 512
@@ -170,8 +175,6 @@ def apply_frontend_commands(
 
     batch_error = _batch_rejection(pending)
     if batch_error:
-        # Reject before touching the campaign so a malformed batch can never
-        # publish partial authoritative state.
         if command_file is not None:
             clear_commands(command_file)
         return _apply_report(
@@ -186,8 +189,6 @@ def apply_frontend_commands(
         op = str(raw.get("op", "")).strip().lower()
         command_id = _command_identity(raw)
         if command_id and op not in READ_ONLY_OPS and ledger_contains(ledger, command_id):
-            # Replay of an already-accepted command. Never apply it a second
-            # time; report success so the caller converges on current state.
             results.append(
                 CommandResult(
                     op=op or "unknown",
@@ -203,7 +204,6 @@ def apply_frontend_commands(
                 result = _apply_handoff(campaign, state, raw)
                 state = load_campaign(campaign)
             elif op == "verify_result":
-                # Read-only: no reload, no mutation, safe in any batch.
                 result = _apply_verify_result(campaign, state, raw)
             elif op == "import_battle":
                 result = _apply_import_battle(campaign, state, raw)
@@ -211,15 +211,11 @@ def apply_frontend_commands(
             elif op == "restore_backup":
                 result = _apply_restore_backup(campaign, state, raw)
                 state = load_campaign(campaign)
-                # Restore replaces the campaign timeline. Discard the ledger and
-                # observation mutations loaded from the abandoned future before
-                # recording this restore command into the restored authority.
                 ledger = read_command_ledger(state)
                 observation_context = ObservationMutationContext()
                 before_presentations = _formation_presentation_rows(state)
             elif op == "reset_test_campaign":
                 result = _apply_reset_test_campaign(campaign, state, raw)
-                # Campaign directory may no longer exist after reset.
             else:
                 result = _apply_one(state, op, raw)
         except Exception as exc:  # noqa: BLE001 - surface operator errors in result list
@@ -249,15 +245,9 @@ def apply_frontend_commands(
             break
 
     if command_file is not None:
-        # The queue is an inbox: consumed batches never remain readable, so a
-        # rejected batch cannot be silently reapplied by a later run.
         clear_commands(command_file)
 
     if any(not item.ok for item in results):
-        # Rejected batch: discard every in-memory mutation. The campaign file and
-        # the published snapshot both remain at the previously accepted state.
-        # reset_test_campaign may have already removed the campaign file; report
-        # without requiring a reload in that case.
         if campaign.is_file():
             return _apply_report(
                 load_campaign(campaign),
@@ -274,8 +264,6 @@ def apply_frontend_commands(
             "results": [asdict(item) for item in results],
         }
 
-    # reset_test_campaign deletes the managed campaign; there is nothing left to
-    # ledger or snapshot-publish.
     if any(item.op == "reset_test_campaign" for item in results):
         return {
             "ok": True,
@@ -304,9 +292,6 @@ def apply_frontend_commands(
                 ).resolve()
             )
         except Exception as exc:  # noqa: BLE001 - authoritative state is already committed
-            # The campaign is authoritative and already committed atomically.
-            # Publishing the derived snapshot failed, so the caller keeps the
-            # previously accepted presentation until the next refresh.
             report = _apply_report(
                 state,
                 campaign,
@@ -321,7 +306,6 @@ def apply_frontend_commands(
 
 
 def _batch_rejection(pending: list[dict[str, Any]]) -> str:
-    """Return a rejection reason when the batch cannot be applied atomically."""
     ops = [str(raw.get("op", "")).strip().lower() for raw in pending]
     self_committing = sorted({op for op in ops if op in SELF_COMMITTING_OPS})
     if self_committing and len(ops) > 1:
@@ -483,11 +467,72 @@ def _apply_handoff(campaign: Path, state, raw: dict[str, Any]) -> CommandResult:
     )
 
 
+def _session_installed_save_path(pending) -> str:
+    """Recover an installed GoH save from the authenticated handoff session.
+
+    P6 heads before the persisted binding fix stored only the isolated export path
+    on ``PendingBattle``. The handoff session still records the profile-installed
+    save. Recovery is deliberately fail-closed: the installed sidecar must exist
+    and bind its own save path and battle id before it can be selected. Campaign
+    identity is checked immediately afterwards by ``_verify_result``.
+    """
+    raw_export = str(getattr(pending, "exported_save_path", "") or "").strip()
+    if not raw_export:
+        return ""
+    from .service import GatesOfCodeXService
+
+    service = GatesOfCodeXService()
+    export_save = Path(raw_export).expanduser().resolve()
+    session_path = service.manifest_path(export_save).with_suffix(".session.json")
+    if not session_path.is_file():
+        return ""
+    try:
+        payload = json.loads(session_path.read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError, TypeError):
+        return ""
+    installed_raw = str(payload.get("installed_save_path") or "").strip()
+    if not installed_raw:
+        return ""
+    installed = Path(installed_raw).expanduser().resolve()
+    manifest_path = service.manifest_path(installed)
+    if not manifest_path.is_file():
+        return ""
+    try:
+        manifest = service.load_manifest(manifest_path)
+    except (OSError, ValueError, TypeError):
+        return ""
+    if str(getattr(manifest, "battle_id", "") or "") != str(
+        getattr(pending, "battle_id", "") or ""
+    ):
+        return ""
+    manifest_save = str(getattr(manifest, "save_path", "") or "").strip()
+    if not manifest_save or Path(manifest_save).expanduser().resolve() != installed:
+        return ""
+    return str(installed)
+
+
 def _resolve_result_save_path(state, raw: dict[str, Any]) -> str:
     pending = state.pending_battle
     if pending is None:
         raise ValueError("No pending battle to verify")
-    save_path = str(raw.get("save_path") or pending.exported_save_path or "").strip()
+
+    explicit = str(raw.get("save_path") or "").strip()
+    if explicit:
+        return explicit
+
+    metadata = getattr(state, "map_metadata", {}) or {}
+    binding = metadata.get(PENDING_HANDOFF_BINDING_KEY, {})
+    if isinstance(binding, dict):
+        bound_battle = str(binding.get("battle_id") or "").strip()
+        installed = str(binding.get("installed_save_path") or "").strip()
+        if bound_battle == str(pending.battle_id) and installed:
+            return installed
+
+    recovered = _session_installed_save_path(pending)
+    if recovered:
+        return recovered
+
+    save_path = str(getattr(pending, "exported_save_path", "") or "").strip()
     if not save_path:
         raise ValueError("Pending battle has no handed-off GoH save path")
     return save_path
@@ -500,27 +545,9 @@ def _assert_manifest_binds_result(
     save_file: Path,
     state,
 ) -> None:
-    """Fail closed unless the manifest names this campaign, save and battle.
-
-    ``GatesOfCodeXService.import_battle`` is the reference contract: it requires
-    all three bindings to match exactly. This mirrors it so a manifest cannot be
-    certified by ``verify_result`` and then refused by the import authority,
-    which is the one divergence the shared helper exists to prevent.
-
-    Every binding is required to be **present**. Treating an empty field as
-    "nothing to check" made an unbound manifest verify, which is precisely the
-    manifest that should never unlock Import.
-
-    ``.strip()`` is used only to detect empty/whitespace-only values. Equality
-    and path resolution use the original unstripped fields, matching
-    ``import_battle`` exactly so a padded-but-otherwise-correct identity cannot
-    pass this gate and then be refused by Import.
-    """
     raw_battle = str(getattr(manifest, "battle_id", "") or "")
     raw_campaign = str(getattr(manifest, "campaign_path", "") or "")
     raw_save = str(getattr(manifest, "save_path", "") or "")
-    # Compare resolved against resolved, exactly as ``import_battle`` does, so a
-    # caller passing a relative campaign path cannot produce a false mismatch.
     campaign_file = Path(campaign).resolve()
 
     if not raw_campaign.strip():
@@ -552,11 +579,6 @@ def _assert_manifest_binds_result(
 
 
 def _verify_result(campaign: Path, state, save_path: str):
-    """Verify a played GoH save against the exact campaign and pending battle.
-
-    Shared by the standalone ``verify_result`` action and by ``import_battle``,
-    so the player-facing check and the import gate can never diverge.
-    """
     from .acceptance import verify_tactical_result
     from .service import GatesOfCodeXService
     from .stack_acceptance import verify_stack_result
@@ -564,11 +586,6 @@ def _verify_result(campaign: Path, state, save_path: str):
     service = GatesOfCodeXService()
     save_file = Path(save_path).resolve()
     manifest = service.load_manifest(service.manifest_path(save_file))
-    # Bind the result to this campaign, this tactical save and this battle before
-    # anything else, using exactly the three bindings ``import_battle`` enforces.
-    # An absent value proves nothing, so it is a refusal rather than a skipped
-    # check: a manifest that cannot name what it belongs to must never be able to
-    # certify a result the import authority would then reject.
     _assert_manifest_binds_result(manifest, campaign=campaign, save_file=save_file, state=state)
     resource_stack = (
         state.map_metadata.get("resource_stack", []) or manifest.resource_stack
@@ -586,7 +603,6 @@ def _verify_result(campaign: Path, state, save_path: str):
 
 
 def _apply_verify_result(campaign: Path, state, raw: dict[str, Any]) -> CommandResult:
-    """Verify a played result without importing it. Never mutates the campaign."""
     save_path = _resolve_result_save_path(state, raw)
     verification = _verify_result(campaign, state, save_path)
     errors = list(getattr(verification, "errors", []) or [])
@@ -636,7 +652,6 @@ def _apply_import_battle(
 
 
 def _apply_restore_backup(campaign: Path, state, raw: dict[str, Any]) -> CommandResult:
-    """Restore a managed campaign backup. Self-committing and path-contained."""
     from .packaging import (
         PackagingError,
         latest_managed_backup,
@@ -671,7 +686,6 @@ def _apply_restore_backup(campaign: Path, state, raw: dict[str, Any]) -> Command
 
 
 def _apply_reset_test_campaign(campaign: Path, state, raw: dict[str, Any]) -> CommandResult:
-    """Reset the managed test campaign directory. Self-committing and path-contained."""
     from .packaging import PackagingError, reset_test_campaign
 
     create_backup = bool(raw.get("create_backup", True))
