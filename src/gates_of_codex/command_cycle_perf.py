@@ -54,8 +54,6 @@ _TIMING_KEYS = (
     "read_only_fast_path",
     "snapshot_fast_path",
     "compact_save_path",
-    "p3_auth_loads",
-    "p3_auth_cache_hits",
 )
 
 
@@ -326,6 +324,9 @@ def measured_apply_frontend_commands(
         "read_only_fast_path": bool(read_only_fast_path),
         "snapshot_fast_path": bool(snapshot_fast_path),
         "compact_save_path": not read_only_fast_path,
+        # Diagnostic-only counters are intentionally not added to timing_keys(),
+        # preserving the stable public timing-key tuple while still exposing the
+        # proof needed for this optimization in command reports.
         "p3_auth_loads": int(p3_auth_stats["loads"]),
         "p3_auth_cache_hits": int(p3_auth_stats["hits"]),
     }
