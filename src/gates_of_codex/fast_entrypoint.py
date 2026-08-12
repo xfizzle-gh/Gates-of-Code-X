@@ -74,6 +74,18 @@ def _prepare_godot_project(
         )
 
 
+def _write_forwarded_result(result: tuple[int, str] | None) -> int | None:
+    if result is None:
+        return None
+    exit_code, output = result
+    if output:
+        sys.stdout.write(output)
+        if not output.endswith("\n"):
+            sys.stdout.write("\n")
+        sys.stdout.flush()
+    return int(exit_code)
+
+
 def install_runtime_contracts() -> None:
     """Install player/package runtime seams that cannot be inferred by Godot.
 
@@ -99,6 +111,14 @@ def install_runtime_contracts() -> None:
             project_directory: Path,
         ):
             _prepare_godot_project(godot_executable, project_directory)
+            # Performance-only session. Failure falls back to the existing
+            # one-shot authoritative backend without blocking player launch.
+            try:
+                from .persistent_backend import ensure_backend_session
+
+                ensure_backend_session(snapshot.with_name("campaign.json"), snapshot)
+            except Exception:  # noqa: BLE001 - correctness fallback remains available
+                pass
             return original_launch(
                 snapshot=snapshot,
                 godot_executable=godot_executable,
@@ -150,8 +170,24 @@ def install_runtime_contracts() -> None:
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Runtime CLI wrapper for the post-P5 responsiveness layer (#207)."""
-    _install_fast_paths()
     arguments = list(sys.argv[1:] if argv is None else argv)
+
+    if arguments[:1] == ["apply-frontend"]:
+        from .persistent_backend import try_forward_apply_frontend
+
+        forwarded = _write_forwarded_result(try_forward_apply_frontend(arguments))
+        if forwarded is not None:
+            return forwarded
+
+    if arguments[:1] == ["session-backend"]:
+        _install_fast_paths()
+        from .frozen_runtime import configure_frozen_earth3_authority
+        from .persistent_backend import run_session_backend
+
+        configure_frozen_earth3_authority()
+        return run_session_backend(arguments[1:])
+
+    _install_fast_paths()
     if getattr(sys, "frozen", False) or (
         argv is None and arguments[:1] in (["play"], ["apply-frontend"])
     ):
@@ -163,13 +199,6 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 def player_main(argv: Sequence[str] | None = None) -> int:
     """Run the packaged player shell while retaining backend CLI compatibility."""
-    _install_fast_paths()
-    if getattr(sys, "frozen", False) or argv is None:
-        install_runtime_contracts()
-    from .frozen_runtime import configure_frozen_earth3_authority
-    from .player_shell import main as player_shell_main, read_last_campaign
-
-    configure_frozen_earth3_authority()
     arguments = list(sys.argv[1:] if argv is None else argv)
 
     # The Godot write-back contract historically launches the recorded Python
@@ -178,6 +207,21 @@ def player_main(argv: Sequence[str] | None = None) -> int:
     # that prefix so a packaged player can still serve as a fail-safe backend.
     if len(arguments) >= 2 and arguments[:2] == ["-m", "gates_of_codex"]:
         arguments = arguments[2:]
+
+    if arguments[:1] == ["apply-frontend"]:
+        from .persistent_backend import try_forward_apply_frontend
+
+        forwarded = _write_forwarded_result(try_forward_apply_frontend(arguments))
+        if forwarded is not None:
+            return forwarded
+
+    _install_fast_paths()
+    if getattr(sys, "frozen", False) or argv is None:
+        install_runtime_contracts()
+    from .frozen_runtime import configure_frozen_earth3_authority
+    from .player_shell import main as player_shell_main, read_last_campaign
+
+    configure_frozen_earth3_authority()
 
     if not arguments:
         arguments = ["--continue"] if read_last_campaign() is not None else ["--new"]
