@@ -47,6 +47,7 @@ jobs:
           tests.test_191_native_projection_invariants
           tests.test_191_committed_inf_namespace
           tests.test_192_phase2_balkans_east
+          tests.test_193_phase2_near_east_africa
           -v
       - name: CLI smoke
         run: python -m gates_of_codex.expanded_nations_cli --help
@@ -89,6 +90,7 @@ jobs:
           tests/test_191_native_projection_invariants.py
           tests/test_191_committed_inf_namespace.py
           tests/test_192_phase2_balkans_east.py
+          tests/test_193_phase2_near_east_africa.py
 
   powershell:
     runs-on: windows-latest

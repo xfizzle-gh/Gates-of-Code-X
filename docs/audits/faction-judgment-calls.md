@@ -217,4 +217,4 @@ Production army numeric IDs: 70�81 in `goc_tactical_army_registry.json`. Reser
 | cyp | strategic_only | (none) | goc_cyp | theatre_present; non-playable; coalition family nato alignment only |
 | mlt | strategic_only | (none) | goc_mlt | theatre_present; non-playable; coalition family nato alignment only |
 
-Production army numeric IDs: 55-69 in goc_tactical_army_registry.json. No roster/research/purchase fabrication. #48 remains encounter authority.
+Production army numeric IDs: 55-69 (sub-band of declared production_band 55-99) in goc_tactical_army_registry.json. No roster/research/purchase fabrication. #48 remains encounter authority.

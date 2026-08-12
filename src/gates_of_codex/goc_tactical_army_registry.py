@@ -29,6 +29,19 @@ def load_goc_army_registry() -> dict[str, Any]:
     return payload
 
 
+def _band_ids(band: Mapping[str, Any]) -> set[int]:
+    ids: set[int] = set()
+    if "ids" in band:
+        ids.update(int(x) for x in (band.get("ids") or []))
+    if "start" in band and "end" in band:
+        start = int(band["start"])
+        end = int(band["end"])
+        if end < start:
+            raise GocArmyRegistryError(f"Invalid band range {start}-{end}")
+        ids.update(range(start, end + 1))
+    return ids
+
+
 def validate_goc_army_registry(payload: Mapping[str, Any]) -> None:
     if payload.get("schema") != REGISTRY_SCHEMA:
         raise GocArmyRegistryError("Unsupported GOC army registry schema")
@@ -36,11 +49,36 @@ def validate_goc_army_registry(payload: Mapping[str, Any]) -> None:
     if not isinstance(armies, dict) or not armies:
         raise GocArmyRegistryError("GOC army registry requires a non-empty armies object")
     lo, hi = payload.get("engine_id_range", [0, 99])
+    production_band = payload.get("production_band")
+    if not isinstance(production_band, dict):
+        raise GocArmyRegistryError("GOC army registry requires production_band")
+    try:
+        prod_lo = int(production_band["start"])
+        prod_hi = int(production_band["end"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise GocArmyRegistryError("production_band requires integer start/end") from exc
+    if prod_lo < int(lo) or prod_hi > int(hi) or prod_hi < prod_lo:
+        raise GocArmyRegistryError(
+            f"production_band {prod_lo}-{prod_hi} outside engine range {lo}-{hi}"
+        )
     used_ids: dict[int, str] = {}
     reserved: set[int] = set()
     for band in (payload.get("reserved_bands") or {}).values():
         if isinstance(band, dict):
-            reserved.update(int(x) for x in band.get("ids") or [])
+            reserved |= _band_ids(band)
+    # Optional documented sub-bands must sit inside production_band and outside reserved.
+    for name, band in (payload.get("allocation_sub_bands") or {}).items():
+        if not isinstance(band, dict):
+            raise GocArmyRegistryError(f"allocation_sub_bands.{name} must be an object")
+        for numeric_id in _band_ids(band):
+            if numeric_id < prod_lo or numeric_id > prod_hi:
+                raise GocArmyRegistryError(
+                    f"allocation_sub_bands.{name} id {numeric_id} outside production_band"
+                )
+            if numeric_id in reserved:
+                raise GocArmyRegistryError(
+                    f"allocation_sub_bands.{name} id {numeric_id} collides with reserved band"
+                )
     for token, row in armies.items():
         if not SAFE_ARMY_RE.fullmatch(token):
             raise GocArmyRegistryError(f"Invalid GOC army token: {token}")
@@ -51,6 +89,10 @@ def validate_goc_army_registry(payload: Mapping[str, Any]) -> None:
             raise GocArmyRegistryError(f"Army {token} numeric_id must be an int")
         if numeric_id < int(lo) or numeric_id > int(hi):
             raise GocArmyRegistryError(f"Army {token} id {numeric_id} outside engine range")
+        if numeric_id < prod_lo or numeric_id > prod_hi:
+            raise GocArmyRegistryError(
+                f"Army {token} id {numeric_id} outside production_band {prod_lo}-{prod_hi}"
+            )
         if numeric_id in reserved:
             raise GocArmyRegistryError(
                 f"Army {token} id {numeric_id} collides with reserved band"

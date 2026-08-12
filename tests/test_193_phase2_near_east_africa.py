@@ -160,6 +160,18 @@ class Phase193RegistryTests(unittest.TestCase):
         self.assertFalse(set(EXPECTED_NUMERIC.values()) & set(range(90, 95)))
         self.assertFalse(set(EXPECTED_NUMERIC.values()) & set(range(70, 90)))
         self.assertFalse(set(EXPECTED_NUMERIC.values()) & {95, 96})
+        # Declared production band must include #193 and exclude reserved spike IDs.
+        band = registry["production_band"]
+        self.assertEqual(int(band["start"]), 55)
+        self.assertEqual(int(band["end"]), 99)
+        for numeric_id in all_ids:
+            self.assertGreaterEqual(numeric_id, 55)
+            self.assertLessEqual(numeric_id, 99)
+            self.assertNotIn(numeric_id, set(range(90, 95)))
+        sub = registry["allocation_sub_bands"]["phase2_193_near_east_africa_strategic_only"]
+        self.assertEqual(int(sub["start"]), 55)
+        self.assertEqual(int(sub["end"]), 69)
+        self.assertEqual(int(sub["issue"]), 193)
         # Baseline #191/#192 tokens remain present with prior IDs.
         self.assertTrue(BASELINE_191_192.issubset(rows))
         self.assertEqual(army_numeric_id("goc_bel"), 70)
@@ -168,6 +180,27 @@ class Phase193RegistryTests(unittest.TestCase):
         self.assertEqual(audit["result"], "no_collision")
         observed = set(int(value) for value in audit["observed_used_ids"])
         self.assertFalse(observed & set(EXPECTED_NUMERIC.values()))
+
+    def test_validator_rejects_id_outside_declared_production_band(self) -> None:
+        registry = json.loads(json.dumps(load_goc_army_registry()))
+        registry["armies"]["goc_bad"] = {
+            "numeric_id": 40,
+            "nation_map_id": 99,
+            "actor_id": "bad",
+            "coalition": "west",
+            "playable": False,
+            "issue": 193,
+        }
+        with self.assertRaises(Exception):
+            validate_goc_army_registry(registry)
+
+    def test_committed_flags_are_tga_not_png(self) -> None:
+        for side in STRATEGIC_193.values():
+            path = ROOT / "resource/interface/pages/multi" / f"flag_{side}.tga"
+            data = path.read_bytes()
+            self.assertFalse(data.startswith(b"\x89PNG"), side)
+            # Uncompressed true-color TGA signature used by existing placeholders.
+            self.assertEqual(data[0:3], b"\x00\x00\x02", side)
 
     def test_registry_all_non_playable_and_coalition_mapping(self) -> None:
         rows = load_goc_army_registry()["armies"]

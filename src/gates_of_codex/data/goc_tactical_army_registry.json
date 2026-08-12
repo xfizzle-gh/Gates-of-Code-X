@@ -38,9 +38,34 @@
     }
   },
   "production_band": {
-    "start": 70,
+    "start": 55,
     "end": 99,
-    "reason": "Gates production Expanded Nations army IDs; #201 reserved 90-94 are excluded"
+    "reason": "Gates production Expanded Nations army IDs (#191-#193). Engine range remains 0-99; #201 spike 90-94 stay reserved and must not be allocated."
+  },
+  "allocation_sub_bands": {
+    "phase2_193_near_east_africa_strategic_only": {
+      "start": 55,
+      "end": 69,
+      "issue": 193,
+      "reason": "Near East/Caucasus/North Africa strategic-only production identities"
+    },
+    "phase2_191_western_central": {
+      "start": 70,
+      "end": 81,
+      "issue": 191,
+      "reason": "Western/Northern/Central European production identities"
+    },
+    "phase2_192_balkans_east_primary": {
+      "start": 82,
+      "end": 89,
+      "issue": 192,
+      "reason": "Balkans/Eastern Europe primary production identities"
+    },
+    "phase2_192_balkans_east_tail": {
+      "ids": [95, 96],
+      "issue": 192,
+      "reason": "Balkans/Eastern Europe tail IDs after reserved spike band 90-94"
+    }
   },
   "nation_map_band": {
     "start": 14,
