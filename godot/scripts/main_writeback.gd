@@ -403,20 +403,39 @@ func _stamp_command_ids(commands: Array) -> Array:
 	return stamped
 
 
+func _pending_battle_snapshot() -> Dictionary:
+	var pending: Variant = snapshot.get("pending_battle", null)
+	return (pending as Dictionary) if pending is Dictionary else {}
+
+
+func _pending_battle_handoff_ready() -> bool:
+	var pending := _pending_battle_snapshot()
+	return not pending.is_empty() and bool(pending.get("started", false))
+
+
+func _pending_battle_id() -> String:
+	return String(_pending_battle_snapshot().get("id", ""))
+
+
 func can_import_verified_result() -> bool:
-	## P5: import is unavailable until Verify Result accepted this exact save.
+	## P5: import is unavailable until Verify Result accepted this exact pending battle.
+	var pending_id := _pending_battle_id()
 	return last_verification_ok \
-		and not last_handoff_save_path.is_empty() \
-		and last_verified_save_path == last_handoff_save_path
+		and not last_verified_save_path.is_empty() \
+		and not pending_id.is_empty() \
+		and pending_id == last_handoff_battle_id \
+		and (last_handoff_save_path.is_empty() or last_verified_save_path == last_handoff_save_path)
 
 
 func handoff_status_label() -> String:
-	if last_handoff_save_path.is_empty():
+	if last_handoff_save_path.is_empty() and not _pending_battle_handoff_ready():
 		return ""
 	if can_import_verified_result():
 		return "Result verified - ready to import."
 	if not last_verification_detail.is_empty():
 		return "Verification failed: %s" % last_verification_detail
+	if last_handoff_save_path.is_empty():
+		return "Battle handed off - ready to verify."
 	return "Awaiting Verify Result."
 
 
@@ -429,7 +448,20 @@ func _capture_verification(payload: Dictionary) -> void:
 		if String(row.get("op", "")) != "verify_result":
 			continue
 		var data: Dictionary = row.get("data", {})
+		var verified_battle_id := String(data.get("battle_id", ""))
+		var pending_id := _pending_battle_id()
+		if verified_battle_id.is_empty() or pending_id.is_empty() or verified_battle_id != pending_id:
+			last_verified_save_path = ""
+			last_verification_ok = false
+			last_verification_detail = "Verification result does not match the pending battle."
+			continue
 		last_verified_save_path = String(data.get("save_path", ""))
+		last_handoff_battle_id = verified_battle_id
+		if last_handoff_save_path.is_empty():
+			# A reloaded Godot shell does not retain the transient handoff command
+			# payload. The backend resolves the save from authoritative pending-battle
+			# state and returns that exact bound path here.
+			last_handoff_save_path = last_verified_save_path
 		last_verification_ok = bool(data.get("verified", false))
 		var errors: Array = data.get("errors", [])
 		last_verification_detail = "" if last_verification_ok else ", ".join(errors.slice(0, 3))
@@ -570,14 +602,14 @@ func _handle_button(button_id: String) -> void:
 		queue_redraw()
 		return
 	if button_id == "verify_result":
-		if last_handoff_save_path.is_empty():
+		if not _pending_battle_handoff_ready() and last_handoff_save_path.is_empty():
 			status_message = "Nothing to verify - hand a battle off to Gates of Hell first."
 			queue_redraw()
 			return
-		_queue_and_apply([{
-			"op": "verify_result",
-			"save_path": last_handoff_save_path,
-		}])
+		var verify_command := {"op": "verify_result"}
+		if not last_handoff_save_path.is_empty():
+			verify_command["save_path"] = last_handoff_save_path
+		_queue_and_apply([verify_command])
 		return
 	if button_id == "import_battle":
 		if not can_import_verified_result():
@@ -586,7 +618,7 @@ func _handle_button(button_id: String) -> void:
 			return
 		_queue_and_apply([{
 			"op": "import_battle",
-			"save_path": last_handoff_save_path,
+			"save_path": last_verified_save_path,
 		}])
 		return
 	if is_pending_battle_modal_active() and button_id not in ["auto_resolve", "handoff", "import_battle", "verify_result"]:
@@ -633,10 +665,8 @@ func enabled_action_button_ids() -> PackedStringArray:
 	var writeback := bool(snapshot.get("control", {}).get("enabled", false))
 	var has_battle := snapshot.get("pending_battle") != null
 	var pending: Dictionary = snapshot.get("pending_battle", {}) if has_battle else {}
-	var can_import := writeback \
-		and bool(pending.get("started", false)) \
-		and String(pending.get("id", "")) == last_handoff_battle_id \
-		and not last_handoff_save_path.is_empty()
+	var handoff_ready := bool(pending.get("started", false)) or not last_handoff_save_path.is_empty()
+	var can_import := writeback and handoff_ready and can_import_verified_result()
 	_ensure_operational_presenter()
 	var play := player_launch_block()
 	var play_enabled := bool(play.get("enabled", false))
@@ -648,8 +678,8 @@ func enabled_action_button_ids() -> PackedStringArray:
 		candidates.append_array([
 			["auto_resolve", writeback],
 			["handoff", writeback],
-			["verify_result", writeback and not last_handoff_save_path.is_empty()],
-			["import_battle", can_import and can_import_verified_result()],
+			["verify_result", writeback and handoff_ready],
+			["import_battle", can_import],
 			["replay_contact", operational_presenter.can_replay_last_contact()],
 			["skip_presentation", operational_presenter.is_active()],
 		])
