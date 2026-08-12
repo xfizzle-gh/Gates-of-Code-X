@@ -78,6 +78,7 @@ def project_actor_units(
 
     for unit in sorted(actor["units"], key=lambda row: str(row["unit_name"])):
         actor_unit_name = str(unit["unit_name"])
+        source_side = str(unit.get("source_side") or side).lower()
         if str(unit.get("tactical_side", "")).lower() != side:
             raise ExpandedNationsError(
                 f"Actor {actor['actor_id']} unit {actor_unit_name} targets "
@@ -97,7 +98,7 @@ def project_actor_units(
         if unit.get("virtual"):
             entry, source_reference = _find_virtual_source_entry(
                 actor_unit_name,
-                side,
+                source_side,
                 gates_root,
                 cache,
             )
@@ -162,7 +163,7 @@ def project_actor_units(
         projected_raw = _project_source_raw(
             renamed_raw,
             unit_name=projected_unit_name,
-            source_side=str(unit.get("source_side") or side).lower(),
+            source_side=source_side,
             target_side=side,
         )
         projected_scan = scan_source_entries(
@@ -582,7 +583,7 @@ def _effective_define(
 
 def _find_virtual_source_entry(
     unit_name: str,
-    side: str,
+    source_side: str,
     gates_root: Path,
     cache: dict[Path, tuple[SourceEntry, ...]],
 ) -> tuple[SourceEntry, str]:
@@ -591,7 +592,7 @@ def _find_virtual_source_entry(
     matches = [
         entry
         for entry in entries
-        if _entry_name_matches(entry.name, unit_name, side)
+        if _entry_name_matches(entry.name, unit_name, source_side)
     ]
     if len(matches) != 1:
         raise ExpandedNationsError(
