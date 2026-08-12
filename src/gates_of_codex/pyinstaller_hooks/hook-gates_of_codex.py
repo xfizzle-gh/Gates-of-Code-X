@@ -1,19 +1,21 @@
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 from PyInstaller.utils.hooks import collect_data_files
 
 # Package-owned Earth3 bootstrap JSON is always collected. The eight files below
 # live outside the Python package but are authenticated runtime authority and must
-# be present in both supported Windows executables. Keeping this in the package's
-# PyInstaller hook makes CI, release, and installer builds share one minimum
-# packaging contract even when an individual build command does not spell out
-# --collect-data/--add-data itself.
+# be present in every frozen Gates of CodeX runtime that imports the package.
+#
+# Do not gate this contract on sys.argv or the apparent entrypoint. PyInstaller
+# executes hooks from its analysis process, where the original product script is
+# not guaranteed to remain visible in sys.argv. Windows run #990 proved that such
+# detection can silently skip the external authority while still processing this
+# hook. Requiring the repository root whenever the hook runs makes every supported
+# CI/release/installer build share one fail-closed packaging contract.
 datas = collect_data_files("gates_of_codex")
 
-_PRODUCT_ENTRYPOINTS = {"run_gates_of_codex.py", "run_gates_of_codex_live.py"}
 _EXTERNAL_AUTHORITY = (
     ("config/earth3/production_authority.json", "config/earth3"),
     ("config/earth3/p3_operational_authority.json", "config/earth3"),
@@ -38,30 +40,26 @@ _EXTERNAL_AUTHORITY = (
 )
 
 
-def _is_product_executable_build() -> bool:
-    return any(Path(argument).name in _PRODUCT_ENTRYPOINTS for argument in sys.argv[1:])
-
-
 def _project_root() -> Path:
-    candidates = [Path.cwd()]
-    for argument in sys.argv[1:]:
-        candidate = Path(argument)
-        if candidate.suffix.lower() == ".py":
-            candidates.append(candidate.absolute().parent)
-    for candidate in candidates:
-        for root in (candidate, *candidate.parents):
-            if (
-                (root / "pyproject.toml").is_file()
-                and (root / "config/earth3/production_authority.json").is_file()
-            ):
-                return root.resolve()
-    raise RuntimeError("Gates of CodeX PyInstaller build cannot resolve the project root")
+    # Every supported product packaging surface invokes PyInstaller from the
+    # repository (or a child directory). Resolve only that explicit filesystem
+    # relationship instead of inferring intent from PyInstaller process argv.
+    candidate = Path.cwd().resolve()
+    for root in (candidate, *candidate.parents):
+        if (
+            (root / "pyproject.toml").is_file()
+            and (root / "config/earth3/production_authority.json").is_file()
+        ):
+            return root
+    raise RuntimeError(
+        "Gates of CodeX PyInstaller build cannot resolve the repository root "
+        "required for authenticated Earth3 runtime authority"
+    )
 
 
-if _is_product_executable_build():
-    root = _project_root()
-    for relative, destination in _EXTERNAL_AUTHORITY:
-        source = root / relative
-        if not source.is_file():
-            raise RuntimeError(f"Required Earth3 runtime authority is missing: {source}")
-        datas.append((str(source), destination))
+root = _project_root()
+for relative, destination in _EXTERNAL_AUTHORITY:
+    source = root / relative
+    if not source.is_file():
+        raise RuntimeError(f"Required Earth3 runtime authority is missing: {source}")
+    datas.append((str(source), destination))

@@ -116,6 +116,13 @@ class P6NativePackagingTests(unittest.TestCase):
         self.assertIn('hook-dirs = "gates_of_codex.__pyinstaller:get_hook_dirs"', pyproject)
         self.assertIn("pyinstaller_hooks", registration)
         self.assertIn('collect_data_files("gates_of_codex")', hook)
+        # The hook itself is the shared CI/release/installer contract. It must
+        # always attach external authority when PyInstaller analyzes the package;
+        # run #990 proved that trying to infer the entrypoint from hook-time argv
+        # silently skips these files even though the hook is loaded.
+        self.assertNotIn("_is_product_executable_build", hook)
+        self.assertIn("root = _project_root()", hook)
+        self.assertIn("for relative, destination in _EXTERNAL_AUTHORITY:", hook)
         for relative in AUTHORITY_FILES:
             self.assertIn(relative.replace("\\", "/"), hook)
 
