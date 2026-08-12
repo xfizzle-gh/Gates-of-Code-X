@@ -63,7 +63,6 @@ docs/earth3-crop/hydrography_audit/reference/ne_10m_lakes/
 # Runtime-only breed namespace mirrors for production goc_* tactical sides.
 /resource/set/breed/mp/goc_*/
 /resource/interface/scene/portrait_squad/goc_serb_*.png
-/resource/interface/scene/portrait_squad/3rd_assault_*(nato)_*.png
 
 # P6 packaging stamp (installer-written)
 /SOURCE_COMMIT
