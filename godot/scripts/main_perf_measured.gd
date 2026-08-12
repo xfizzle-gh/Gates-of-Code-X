@@ -3,15 +3,20 @@ extends "res://scripts/main_perf.gd"
 ## P8/#207 native timing layer.
 ##
 ## Most mutating commands continue through the existing transactional
-## full-snapshot replacement path. Two narrow fast paths avoid known redundant
+## full-snapshot replacement path. Three narrow fast paths avoid known redundant
 ## presentation work:
 ##
 ## * verify_result is read-only and consumes the backend verdict directly.
 ## * issue/cancel move-order commands still persist authoritatively in Python,
 ##   but update only the returned move_order field in the live Godot snapshot.
-##   The multi-megabyte frontend snapshot is rebuilt by the next full mutation.
+## * end_player_round still persists authoritatively in Python, but consumes a
+##   bounded runtime patch instead of reparsing/replacing the static Earth3 map
+##   payload. The patch is validated into a detached candidate before commit.
 
 const LIGHTWEIGHT_ORDER_OPS := ["issue_move_order", "cancel_move_order"]
+const RUNTIME_PATCH_OPS := ["end_player_round"]
+const RUNTIME_PATCH_SCHEMA := "gates-of-codex.frontend-runtime-patch"
+const RUNTIME_PATCH_SCHEMA_VERSION := 1
 
 
 func _timing_suffix(payload: Dictionary) -> String:
@@ -71,6 +76,10 @@ func _is_lightweight_order_op(op: String) -> bool:
 	return op in LIGHTWEIGHT_ORDER_OPS
 
 
+func _is_runtime_patch_op(op: String) -> bool:
+	return op in RUNTIME_PATCH_OPS
+
+
 func _apply_move_order_result_patch(
 	op: String,
 	commands: Array,
@@ -111,6 +120,152 @@ func _apply_move_order_result_patch(
 	_rebuild_legal_targets()
 	_rebuild_focus_set()
 	return true
+
+
+func _copy_variant(value: Variant) -> Variant:
+	if value is Dictionary:
+		return (value as Dictionary).duplicate(true)
+	if value is Array:
+		return (value as Array).duplicate(true)
+	return value
+
+
+func _merge_dictionary_patch(base_value: Variant, patch_value: Variant) -> Dictionary:
+	var merged: Dictionary = {}
+	if base_value is Dictionary:
+		merged = (base_value as Dictionary).duplicate(true)
+	if not patch_value is Dictionary:
+		return merged
+	for key: Variant in (patch_value as Dictionary).keys():
+		merged[key] = _copy_variant((patch_value as Dictionary).get(key))
+	return merged
+
+
+func _merge_rows_by_id(base_value: Variant, patch_value: Variant) -> Array:
+	var rows: Array = []
+	if base_value is Array:
+		rows = (base_value as Array).duplicate(true)
+	if not patch_value is Array:
+		return rows
+	var index_by_id: Dictionary = {}
+	for idx in range(rows.size()):
+		var candidate: Variant = rows[idx]
+		if not candidate is Dictionary:
+			continue
+		var identity := String((candidate as Dictionary).get("id", ""))
+		if not identity.is_empty():
+			index_by_id[identity] = idx
+	for item: Variant in patch_value as Array:
+		if not item is Dictionary:
+			continue
+		var patch_row := item as Dictionary
+		var identity := String(patch_row.get("id", ""))
+		if identity.is_empty():
+			continue
+		if index_by_id.has(identity):
+			var idx := int(index_by_id[identity])
+			var merged := (rows[idx] as Dictionary).duplicate(true)
+			for key: Variant in patch_row.keys():
+				merged[key] = _copy_variant(patch_row.get(key))
+			rows[idx] = merged
+		else:
+			index_by_id[identity] = rows.size()
+			rows.append(patch_row.duplicate(true))
+	return rows
+
+
+func _build_runtime_patch_state(patch: Dictionary) -> Dictionary:
+	## Build the same temporary index shape as _try_build_snapshot_state, but from
+	## an in-memory candidate. Live presentation state is untouched until the
+	## candidate passes schema + stack validation and _commit_snapshot_state runs.
+	if String(patch.get("schema", "")) != RUNTIME_PATCH_SCHEMA:
+		return {"ok": false, "error": "Unsupported runtime patch schema."}
+	if int(patch.get("schema_version", 0)) != RUNTIME_PATCH_SCHEMA_VERSION:
+		return {"ok": false, "error": "Unsupported runtime patch version."}
+
+	var candidate := snapshot.duplicate(true)
+	if String(candidate.get("schema", "")) != "gates-of-codex.frontend":
+		return {"ok": false, "error": "Live snapshot schema is not patchable."}
+
+	var merge_value: Variant = patch.get("merge", {})
+	if not merge_value is Dictionary:
+		return {"ok": false, "error": "Runtime patch merge block is malformed."}
+	var merge := merge_value as Dictionary
+	candidate["application"] = _merge_dictionary_patch(
+		candidate.get("application", {}), merge.get("application", {})
+	)
+	candidate["campaign"] = _merge_dictionary_patch(
+		candidate.get("campaign", {}), merge.get("campaign", {})
+	)
+	candidate["provinces"] = _merge_rows_by_id(
+		candidate.get("provinces", []), merge.get("provinces", [])
+	)
+	candidate["formations"] = _merge_rows_by_id(
+		candidate.get("formations", []), merge.get("formations", [])
+	)
+
+	var replace_value: Variant = patch.get("replace", {})
+	if not replace_value is Dictionary:
+		return {"ok": false, "error": "Runtime patch replace block is malformed."}
+	for key: Variant in (replace_value as Dictionary).keys():
+		candidate[key] = _copy_variant((replace_value as Dictionary).get(key))
+
+	var tmp_provinces: Dictionary = {}
+	var tmp_battalions_by_province: Dictionary = {}
+	var tmp_stacks: Dictionary = {}
+	var tmp_battalions_by_id: Dictionary = {}
+	var tmp_formations: Dictionary = {}
+	var tmp_factions: Dictionary = {}
+	var tmp_front: Dictionary = {}
+	var tmp_all_front: Dictionary = {}
+
+	for province: Dictionary in candidate.get("provinces", []):
+		tmp_provinces[String(province.get("id", ""))] = province
+	for battalion: Dictionary in candidate.get("battalions", []):
+		var battalion_id := String(battalion.get("id", ""))
+		var province_id := String(battalion.get("province_id", ""))
+		tmp_battalions_by_id[battalion_id] = battalion
+		if not tmp_stacks.has(province_id):
+			tmp_stacks[province_id] = []
+		(tmp_stacks[province_id] as Array).append(battalion)
+	for province_id: Variant in tmp_stacks.keys():
+		var stack: Array = tmp_stacks[province_id]
+		stack.sort_custom(Callable(self, "_battalion_id_less_than"))
+		if not stack.is_empty():
+			tmp_battalions_by_province[province_id] = stack[0]
+	for formation: Dictionary in candidate.get("formations", []):
+		tmp_formations[String(formation.get("id", ""))] = formation
+	for faction: Dictionary in candidate.get("factions", []):
+		tmp_factions[String(faction.get("id", ""))] = faction
+	for option: Dictionary in candidate.get("front_options", []):
+		var origin := String(option.get("origin", ""))
+		if not tmp_all_front.has(origin):
+			tmp_all_front[origin] = []
+		(tmp_all_front[origin] as Array).append(option)
+	for origin: Variant in tmp_all_front.keys():
+		tmp_front[origin] = (tmp_all_front[origin] as Array).duplicate()
+
+	var stack_err := _validate_battalion_stack_contract_on(candidate, tmp_stacks)
+	if not stack_err.is_empty():
+		return {"ok": false, "error": stack_err}
+
+	var indexed_orders := index_operational_orders(candidate)
+	return {
+		"ok": true,
+		"error": "",
+		"path": snapshot_source_path,
+		"snapshot": candidate,
+		"orders_by_formation": indexed_orders.get("by_formation", {}),
+		"order_formations_by_province": indexed_orders.get("by_province", {}),
+		"provinces_by_id": tmp_provinces,
+		"battalions_by_province": tmp_battalions_by_province,
+		"battalion_stacks_by_province": tmp_stacks,
+		"battalions_by_id": tmp_battalions_by_id,
+		"formations_by_id": tmp_formations,
+		"factions_by_id": tmp_factions,
+		"front_by_origin": tmp_front,
+		"all_front_by_origin": tmp_all_front,
+	}
 
 
 func _consume_fast_command_result(
@@ -155,6 +310,72 @@ func _consume_fast_command_result(
 	queue_redraw()
 
 
+func _consume_runtime_patch_result(
+	generation: int,
+	success: bool,
+	exit_code: int,
+	output_text: String,
+	commands: Array,
+	op: String
+) -> void:
+	if not is_inside_tree():
+		return
+	if generation <= _last_command_gen_handled:
+		return
+	_last_command_gen_handled = generation
+	_busy_status = ""
+
+	if not success or exit_code != 0:
+		var detail := output_text.strip_edges()
+		if detail.is_empty():
+			detail = "backend exit %s" % exit_code
+		_fail_command(op, detail)
+		return
+	var payload_fail := _payload_failure_detail(output_text)
+	if not payload_fail.is_empty():
+		_fail_command(op, payload_fail)
+		return
+
+	var backend_payload := _backend_payload(output_text)
+	var patch_value: Variant = backend_payload.get("frontend_patch", null)
+	if not patch_value is Dictionary:
+		_fail_command(op, "backend succeeded without a runtime frontend patch")
+		return
+
+	var previous_selected := selected_province_id
+	var previous_battalion := selected_battalion_id
+	var previous_scale := view_scale
+	var previous_offset := view_offset
+	var previous_snapshot := snapshot.duplicate(true)
+	var built := _build_runtime_patch_state(patch_value as Dictionary)
+	if not bool(built.get("ok", false)):
+		_fail_command(op, String(built.get("error", "invalid runtime patch")))
+		view_scale = previous_scale
+		view_offset = previous_offset
+		return
+
+	_parse_apply_output(output_text)
+	_capture_verification(backend_payload)
+	_commit_snapshot_state(built, previous_selected, previous_battalion, true)
+	_ensure_operational_presenter()
+	operational_presenter.begin_transition(
+		previous_snapshot,
+		snapshot,
+		backend_payload,
+		_operational_graph_index()
+	)
+	view_scale = previous_scale
+	view_offset = previous_offset
+	if status_message.is_empty():
+		status_message = "Applied %s." % op
+	if snapshot.get("pending_battle") != null:
+		status_message += " Pending battle ready - Auto-resolve or Handoff."
+	_fit_to_focus(false)
+	_clear_busy_ui()
+	_append_backend_timing(backend_payload)
+	queue_redraw()
+
+
 func _on_command_finished(
 	generation: int,
 	success: bool,
@@ -169,6 +390,16 @@ func _on_command_finished(
 
 	if op == "verify_result" or _is_lightweight_order_op(op):
 		_consume_fast_command_result(
+			generation,
+			success,
+			exit_code,
+			output_text,
+			commands,
+			op
+		)
+		return
+	if _is_runtime_patch_op(op):
+		_consume_runtime_patch_result(
 			generation,
 			success,
 			exit_code,

@@ -14,6 +14,10 @@ Fast paths are intentionally narrow:
 * ``issue_move_order`` / ``cancel_move_order`` still load, mutate, ledger, and
   save the authoritative campaign, but skip rebuilding the multi-megabyte
   frontend snapshot. Godot patches only the returned move-order field in memory.
+* ``end_player_round`` still performs the full authoritative save, but publishes
+  a bounded runtime patch instead of rebuilding/re-writing the static Earth3
+  frontend snapshot. Godot validates the patch into a candidate copy before
+  atomically replacing its live dynamic state.
 * runtime campaign saves preserve the exact normalization/validation/atomic
   publication contract of ``state_io.save_campaign`` but use deterministic
   compact JSON. Pretty whitespace is not authority, and removing it reduces both
@@ -26,7 +30,7 @@ Fast paths are intentionally narrow:
   is discarded and the authority loader restored before the command returns, so
   the next command authenticates again.
 
-All other mutating commands retain the existing load -> mutate -> save -> full
+Other mutating commands retain the existing load -> mutate -> save -> full
 snapshot publication path.
 """
 
@@ -42,6 +46,7 @@ from . import frontend_commands as _commands
 
 
 _SNAPSHOT_PATCH_OPS = frozenset({"issue_move_order", "cancel_move_order"})
+_RUNTIME_PATCH_OPS = frozenset({"end_player_round"})
 
 _TIMING_KEYS = (
     "load_ms",
@@ -82,6 +87,15 @@ def _snapshot_patch_only(commands: list[dict[str, Any]]) -> bool:
         return False
     return all(
         str(item.get("op", "")).strip().lower() in _SNAPSHOT_PATCH_OPS
+        for item in commands
+    )
+
+
+def _runtime_patch_only(commands: list[dict[str, Any]]) -> bool:
+    if not commands:
+        return False
+    return all(
+        str(item.get("op", "")).strip().lower() in _RUNTIME_PATCH_OPS
         for item in commands
     )
 
@@ -198,15 +212,17 @@ def measured_apply_frontend_commands(
     The existing command engine remains responsible for validation, mutation,
     exactly-once ledger handling, persistence, and result construction. This
     wrapper substitutes proven presentation no-ops, the semantically equivalent
-    compact runtime writer, a bounded bulk presentation projection, and a
-    command-scoped authenticated P3 graph snapshot.
+    compact runtime writer, a bounded bulk presentation projection, a bounded
+    end-round runtime patch, and a command-scoped authenticated P3 graph snapshot.
     """
 
     from . import earth3_operational as _earth3_operational
+    from .frontend_runtime_patch import build_frontend_runtime_patch
 
     requested = _requested_commands(commands, commands_path)
     read_only_fast_path = _verify_only(requested)
     snapshot_fast_path = _snapshot_patch_only(requested)
+    runtime_patch_fast_path = _runtime_patch_only(requested)
 
     original_load = _commands.load_campaign
     original_save = _commands.save_campaign
@@ -221,6 +237,7 @@ def measured_apply_frontend_commands(
     }
     p3_auth_cache: dict[str, dict[str, Any]] = {}
     p3_auth_stats = {"loads": 0, "hits": 0}
+    runtime_patch: dict[str, Any] | None = None
 
     def scoped_p3_auth(*, repository_root=None):
         # Keep explicit roots separate from the default frozen/repository root.
@@ -266,11 +283,24 @@ def measured_apply_frontend_commands(
         campaign_path=None,
         environ=None,
     ):
+        nonlocal runtime_patch
         if read_only_fast_path or snapshot_fast_path:
             # The previous snapshot remains valid on disk. For move-order draft
             # changes, Godot consumes the authoritative move_order returned in
             # the command result and updates only that live presentation field.
             return Path(path)
+        if runtime_patch_fast_path:
+            started = time.perf_counter()
+            try:
+                runtime_patch = build_frontend_runtime_patch(
+                    state,
+                    campaign_path=campaign_path,
+                    snapshot_path=path,
+                    environ=environ,
+                )
+                return Path(path)
+            finally:
+                phase_seconds["snapshot"] += time.perf_counter() - started
         started = time.perf_counter()
         try:
             return original_snapshot(
@@ -313,6 +343,8 @@ def measured_apply_frontend_commands(
     mutate_seconds = max(0.0, total_seconds - measured_seconds)
 
     result = dict(report)
+    if runtime_patch is not None:
+        result["frontend_patch"] = runtime_patch
     result["timings"] = {
         "load_ms": _milliseconds(phase_seconds["load"]),
         "mutate_ms": _milliseconds(mutate_seconds),
@@ -324,9 +356,9 @@ def measured_apply_frontend_commands(
         "read_only_fast_path": bool(read_only_fast_path),
         "snapshot_fast_path": bool(snapshot_fast_path),
         "compact_save_path": not read_only_fast_path,
-        # Diagnostic-only counters are intentionally not added to timing_keys(),
-        # preserving the stable public timing-key tuple while still exposing the
-        # proof needed for this optimization in command reports.
+        # Diagnostic-only flags/counters are intentionally not added to
+        # timing_keys(), preserving the stable public timing-key tuple.
+        "runtime_patch_fast_path": bool(runtime_patch_fast_path),
         "p3_auth_loads": int(p3_auth_stats["loads"]),
         "p3_auth_cache_hits": int(p3_auth_stats["hits"]),
     }
