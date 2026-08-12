@@ -95,9 +95,9 @@ class CommandScopedP3AuthorityTests(unittest.TestCase):
         self.assertEqual(3, report["timings"]["p3_auth_loads"])
         self.assertEqual(1, report["timings"]["p3_auth_cache_hits"])
 
-    def test_timing_contract_includes_command_scoped_authority_counts(self) -> None:
-        self.assertIn("p3_auth_loads", command_cycle_perf.timing_keys())
-        self.assertIn("p3_auth_cache_hits", command_cycle_perf.timing_keys())
+    def test_public_timing_key_contract_remains_unchanged(self) -> None:
+        self.assertNotIn("p3_auth_loads", command_cycle_perf.timing_keys())
+        self.assertNotIn("p3_auth_cache_hits", command_cycle_perf.timing_keys())
 
 
 if __name__ == "__main__":
