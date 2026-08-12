@@ -24,8 +24,8 @@ def _prepare_godot_project(
 
     Owner-native P6 acceptance proved that launching a freshly deployed project
     directly can race Godot's first filesystem/class scan and leave the main scene
-    black with unresolved GDScript inheritance.  The same project renders normally
-    once the canonical headless import finishes.  Treat that import as a required
+    black with unresolved GDScript inheritance. The same project renders normally
+    once the canonical headless import finishes. Treat that import as a required
     player-launch phase rather than asking the player to repair the cache manually.
     """
     arguments = [
@@ -75,12 +75,16 @@ def _prepare_godot_project(
 def install_runtime_contracts() -> None:
     """Install player/package runtime seams that cannot be inferred by Godot.
 
-    This layer is intentionally idempotent.  Source `gates-of-codex play` uses the
-    first-run Godot import guard.  Frozen builds additionally publish a stable
-    Godot `res://` map path and route write-back through the sibling console
-    executable so command JSON remains observable to the Godot command runner.
+    This layer is intentionally idempotent. Source `gates-of-codex play` uses the
+    first-run Godot import guard and the explicit tactical-template/handoff
+    contract. Frozen builds additionally publish a stable Godot `res://` map path
+    and route write-back through the sibling console executable so command JSON
+    remains observable to the Godot command runner.
     """
     from . import player_shell
+    from .p6_handoff_runtime import install_p6_handoff_runtime_contracts
+
+    install_p6_handoff_runtime_contracts()
 
     current_launch = player_shell.launch_strategic_application
     if not getattr(current_launch, "_goc_preimport_guard", False):
@@ -133,7 +137,7 @@ def install_runtime_contracts() -> None:
         def frozen_earth3_map(state):
             block = original_map(state)
             # Never persist the transient PyInstaller _MEIPASS path into the
-            # campaign snapshot.  The separately deployed Godot project owns the
+            # campaign snapshot. The separately deployed Godot project owns the
             # presentation copy of this already-authenticated Earth3 manifest.
             block["manifest_path"] = f"res://{CAMPAIGN_MANIFEST_IDENTIFIER}"
             return block
@@ -147,7 +151,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     _install_fast_paths()
     arguments = list(sys.argv[1:] if argv is None else argv)
     if getattr(sys, "frozen", False) or (
-        argv is None and arguments[:1] == ["play"]
+        argv is None and arguments[:1] in (["play"], ["apply-frontend"])
     ):
         install_runtime_contracts()
     from .entrypoint import main as application_main
@@ -167,8 +171,8 @@ def player_main(argv: Sequence[str] | None = None) -> int:
     arguments = list(sys.argv[1:] if argv is None else argv)
 
     # The Godot write-back contract historically launches the recorded Python
-    # runtime as `<exe> -m gates_of_codex <command>`.  In a frozen package the
-    # recorded runtime is an executable, not python.exe.  Accept and normalize
+    # runtime as `<exe> -m gates_of_codex <command>`. In a frozen package the
+    # recorded runtime is an executable, not python.exe. Accept and normalize
     # that prefix so a packaged player can still serve as a fail-safe backend.
     if len(arguments) >= 2 and arguments[:2] == ["-m", "gates_of_codex"]:
         arguments = arguments[2:]
