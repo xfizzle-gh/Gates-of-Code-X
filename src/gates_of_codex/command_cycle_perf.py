@@ -18,6 +18,10 @@ Fast paths are intentionally narrow:
   publication contract of ``state_io.save_campaign`` but use deterministic
   compact JSON. Pretty whitespace is not authority, and removing it reduces both
   write volume and the next command's cold-read volume on production Earth3.
+* operational movement presentation resolves the authenticated graph once per
+  before/after projection instead of once per formation. The graph authority is
+  still authenticated on every projection; only repeated presentation lookups
+  inside that same projection reuse the already-authenticated payload.
 
 All other mutating commands retain the existing load -> mutate -> save -> full
 snapshot publication path.
@@ -145,6 +149,49 @@ def _compact_save_campaign(
     return destination
 
 
+def _bulk_formation_presentation_rows(state) -> dict[str, dict[str, Any]]:
+    """Build movement-presentation rows with one graph authentication.
+
+    ``frontend_commands._formation_presentation_rows`` historically called
+    ``resolve_display_pixel`` once for every strategic formation. On authenticated
+    Earth3 each call re-authenticates the fixed P3 files, so the before/after
+    movement presentation pass multiplied that cost by the formation count.
+
+    This helper authenticates the exact same graph once for this projection and
+    then resolves every formation from that payload. There is no persistent or
+    cross-command graph cache and no change to the authority loader itself.
+    """
+
+    from .operational_movement import move_order_to_dict
+    from .operational_position import (
+        _pixel_from_position,
+        load_operational_graph_for_state,
+        position_to_dict,
+    )
+
+    graph = load_operational_graph_for_state(state)
+    rows: dict[str, dict[str, Any]] = {}
+    for force in sorted(
+        state.strategic_formations.values(),
+        key=lambda value: value.strategic_formation_id,
+    ):
+        pixel = None
+        if force.position is not None and graph is not None:
+            pixel = _pixel_from_position(force.position, graph)
+        if pixel is None:
+            province = state.provinces.get(force.province_id)
+            if province is not None:
+                pixel = [int(round(province.x)), int(round(province.y))]
+        order = move_order_to_dict(force.move_order) or {}
+        rows[force.strategic_formation_id] = {
+            "position": position_to_dict(force.position),
+            "pixel": pixel,
+            "path_node_ids": list(order.get("path_node_ids") or []),
+            "path_edge_ids": list(order.get("path_edge_ids") or []),
+        }
+    return rows
+
+
 def measured_apply_frontend_commands(
     campaign_path: str | Path,
     *,
@@ -156,8 +203,8 @@ def measured_apply_frontend_commands(
 
     The existing command engine remains responsible for validation, mutation,
     exactly-once ledger handling, persistence, and result construction. This
-    wrapper substitutes proven presentation no-ops and the semantically
-    equivalent compact runtime writer described above.
+    wrapper substitutes proven presentation no-ops, the semantically equivalent
+    compact runtime writer, and a bounded bulk presentation projection.
     """
 
     requested = _requested_commands(commands, commands_path)
@@ -167,6 +214,7 @@ def measured_apply_frontend_commands(
     original_load = _commands.load_campaign
     original_save = _commands.save_campaign
     original_snapshot = _frontend.write_frontend_snapshot
+    original_presentation_rows = _commands._formation_presentation_rows
 
     phase_seconds = {
         "load": 0.0,
@@ -219,6 +267,7 @@ def measured_apply_frontend_commands(
 
     _commands.load_campaign = timed_load
     _commands.save_campaign = timed_save
+    _commands._formation_presentation_rows = _bulk_formation_presentation_rows
     _frontend.write_frontend_snapshot = timed_snapshot
 
     started_total = time.perf_counter()
@@ -233,6 +282,7 @@ def measured_apply_frontend_commands(
         total_seconds = time.perf_counter() - started_total
         _commands.load_campaign = original_load
         _commands.save_campaign = original_save
+        _commands._formation_presentation_rows = original_presentation_rows
         _frontend.write_frontend_snapshot = original_snapshot
 
     measured_seconds = (
