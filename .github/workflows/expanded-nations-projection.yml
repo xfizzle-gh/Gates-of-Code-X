@@ -48,6 +48,7 @@ jobs:
           tests.test_191_committed_inf_namespace
           tests.test_192_phase2_balkans_east
           tests.test_193_phase2_near_east_africa
+          tests.test_194_static_matrix
           -v
       - name: CLI smoke
         run: python -m gates_of_codex.expanded_nations_cli --help
@@ -91,6 +92,8 @@ jobs:
           tests/test_191_committed_inf_namespace.py
           tests/test_192_phase2_balkans_east.py
           tests/test_193_phase2_near_east_africa.py
+          tests/test_194_static_matrix.py
+          src/gates_of_codex/expanded_nations_static_matrix.py
 
   powershell:
     runs-on: windows-latest

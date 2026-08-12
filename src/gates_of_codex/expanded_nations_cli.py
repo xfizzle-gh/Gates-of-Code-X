@@ -19,6 +19,11 @@ from .expanded_nations_matrix import (
     generate_projection_matrix_from_stack_config,
     write_projection_matrix_evidence,
 )
+from .expanded_nations_static_matrix import (
+    build_static_actor_matrix,
+    validate_static_actor_matrix,
+    write_static_matrix_evidence,
+)
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -59,6 +64,15 @@ def _parser() -> argparse.ArgumentParser:
     matrix.add_argument("--source-repo", help="implementation git checkout for exact-head proof")
     matrix.add_argument("--json-output", required=True)
     matrix.add_argument("--markdown-output", required=True)
+
+    static_matrix = subparsers.add_parser(
+        "static-matrix",
+        help="#194 static/pre-native matrix from committed authority (no live activation)",
+    )
+    static_matrix.add_argument("--repo-root", default=".")
+    static_matrix.add_argument("--source-head", default="")
+    static_matrix.add_argument("--json-output", required=True)
+    static_matrix.add_argument("--markdown-output", required=True)
     cost = subparsers.add_parser(
         "cost-evidence",
         help="generate exact-stack native recruitment-cost evidence for all playable actors",
@@ -167,6 +181,37 @@ def main(argv: Sequence[str] | None = None) -> int:
                     "stack_signature": matrix["stack_signature"],
                     "json_output": args.json_output,
                     "markdown_output": args.markdown_output,
+                },
+                indent=2,
+            )
+        )
+        return 0
+    if args.command == "static-matrix":
+        matrix = build_static_actor_matrix(
+            repo_root=args.repo_root,
+            source_head=args.source_head,
+        )
+        problems = validate_static_actor_matrix(matrix)
+        if problems:
+            print(json.dumps({"ok": False, "problems": problems}, indent=2))
+            return 2
+        write_static_matrix_evidence(
+            matrix,
+            json_output=args.json_output,
+            markdown_output=args.markdown_output,
+        )
+        print(
+            json.dumps(
+                {
+                    "ok": True,
+                    "mode": "static_pre_native",
+                    "evidence_state": matrix["evidence_state"],
+                    "counts": matrix["counts"],
+                    "matrix_signature": matrix["matrix_signature"],
+                    "source_head": matrix.get("source_head"),
+                    "json_output": args.json_output,
+                    "markdown_output": args.markdown_output,
+                    "native_status": matrix["native_harness"]["status"],
                 },
                 indent=2,
             )

@@ -1,0 +1,3638 @@
+{
+  "actors": [
+    {
+      "actor_authority_signature": "b2ac5e2b55c9c22996aa1c085b4dc9a9d098e9646747b7fcac0b0b74bf83344d",
+      "actor_id": "alb",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Albania",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_alb.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_alb.set": "028e9ec56badf192880e14ca7d7acfb841d8f0b6934c7c30bd14c848aa947bc0"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "alb",
+          "coalition": "west",
+          "issue": 192,
+          "nation_map_id": 33,
+          "numeric_id": 89,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; exact accepted components: [].",
+          "#190/#201 accepted tactical identity goc_alb; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+          "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+          "Local/neutral garrison content remains outside sovereign recruitment authority."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_alb",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "beb55db1a5ecf784ec3c2f45663b2bbaf69adde20629d9e9c835bdcfb03fa807",
+      "actor_id": "arm",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "rusa",
+      "coalition_id": "eurasian",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Armenia",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_arm.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_arm.set": "cfae66e7887811119fcdbc783355f71ef5c7c0c5482f4099d5c85e8b4f261eb0"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "rusa",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "arm",
+          "coalition": "east",
+          "issue": 193,
+          "nation_map_id": 37,
+          "numeric_id": 56,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; exact accepted components: [].",
+          "#190/#201 accepted tactical identity goc_arm; provisional coalition family rusa is transport/alignment only, not source provenance.",
+          "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+          "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+          "theatre_present=true from accepted #190 ledger; issue #193."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_arm",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "7cd827a7b70ac937d8d8a4349ccda469424a7d5dac7e5e8fabe85cddcc2ef1c3",
+      "actor_id": "aut",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Austria",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_aut.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_aut.set": "222ca05aa6b37267180a08f1f4fe1c5ad40b95d93a85873b846df40c7e5ab826"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "aut",
+          "coalition": "west",
+          "issue": 191,
+          "nation_map_id": 22,
+          "numeric_id": 78,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; no distinctive national source content.",
+          "Non-playable: no recruitment roster/research installation authorized.",
+          "#201 identity token goc_aut (registry numeric_id 78) reserved for future tactical wiring."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_aut",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "598b562833c36fc6fed0e5ec9b2b7501eeca14414b4f941ef794782298aa5283",
+      "actor_id": "aze",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Azerbaijan",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_aze.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_aze.set": "45a6e413f5ff0c0679e8ef5b815fe8afcc046929dba3cfd8390a8808980d5f46"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "aze",
+          "coalition": "west",
+          "issue": 193,
+          "nation_map_id": 38,
+          "numeric_id": 57,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; exact accepted components: [].",
+          "#190/#201 accepted tactical identity goc_aze; provisional coalition family nato is transport/alignment only, not source provenance.",
+          "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+          "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+          "theatre_present=true from accepted #190 ledger; issue #193."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_aze",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "dcb30ef17fbace30279154afdac367cd565bbe3caac20f5f20fda8bb6cf33716",
+      "actor_id": "bel",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "count_source": "committed_native_packs",
+      "display_name": "Belgium",
+      "disposition": "coalition_fallback",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_bel.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/script/multiplayer/units/goc_bel/conquest.goc_bel.lua": "20d35a4683b120cd13097d4273d099b45d1b880aef65ffbe41c5c4e5f7a72996",
+        "resource/set/dynamic_campaign/unit_research_goc_bel.set": "8a1146a7c3a766ff08e19a15014b8be790a7ff370d8f6832e3d02f089cbc7a56",
+        "resource/set/multiplayer/armies/goc_bel.set": "0a7b3aa1d7e876a4e3c37edce61e94557a4688ab73f0aa93b09fa66c2899f23f",
+        "resource/set/multiplayer/units/conquest/inf_goc_bel.set": "ef7cf5c316f43df9e61a28aede05827cabc08f79405d8a2e404b14a505e71460",
+        "resource/set/multiplayer/units/conquest/units_goc_bel.set": "1eec916ccc20d0e751aa56d35f5aa6a71c0609e840a201055e1a63d6a0c2e334"
+      },
+      "modern_unit_count": 55,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": false,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": 55,
+      "roster_class": "coalition_fallback",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "bel",
+          "coalition": "west",
+          "issue": 191,
+          "nation_map_id": 14,
+          "numeric_id": 70,
+          "playable": true
+        },
+        "notes": [
+          "#190 disposition coalition_fallback; component nato_full_fallback only.",
+          "#201 production tactical ID goc_bel (registry numeric_id 70).",
+          "No distinctive national Code:X package; explicitly labeled NATO coalition fallback."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "goc_bel",
+      "unit_count": 55,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "f860714f2dbf8f0ffb97e93279808f9723d5d58025333189a8b3d48ae58b8a37",
+      "actor_id": "bgr",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "count_source": "committed_native_packs",
+      "display_name": "Bulgaria",
+      "disposition": "coalition_fallback",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_bgr.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/script/multiplayer/units/goc_bgr/conquest.goc_bgr.lua": "fe5bda6b7d1da88874595b4351cb135f3dc4465d088a84784a62d47970520966",
+        "resource/set/dynamic_campaign/unit_research_goc_bgr.set": "a24914b000b5f0385a48f796cf3b4eb2aa1391f1874a9209d7f4229ae1e7e449",
+        "resource/set/multiplayer/armies/goc_bgr.set": "b3d479293e50d849ec6f74d76f5f00b23c13e23a0cff79e44f958bb1509a9eb3",
+        "resource/set/multiplayer/units/conquest/inf_goc_bgr.set": "2e1061af7c7f812166d2406353295487f3818cc697c8f85c4c70c4ffaf9a09b0",
+        "resource/set/multiplayer/units/conquest/units_goc_bgr.set": "37657cca6f6f6521819a9894dcd3f9f47646bd0a7eed023395aa5eada90abad9"
+      },
+      "modern_unit_count": 55,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": false,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": 55,
+      "roster_class": "coalition_fallback",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "bgr",
+          "coalition": "west",
+          "issue": 192,
+          "nation_map_id": 28,
+          "numeric_id": 84,
+          "playable": true
+        },
+        "notes": [
+          "#190 disposition coalition_fallback; exact accepted components: ['nato_full_fallback'].",
+          "#190/#201 accepted tactical identity goc_bgr; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+          "No distinctive national source package was proven; roster is explicitly labeled coalition fallback.",
+          "Do not infer national equipment or widen beyond the accepted nato_full_fallback selector."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "goc_bgr",
+      "unit_count": 55,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "c73592dc6078d70b5bbca5320117e8c606dc91b49fef711e98fa15c594218c5b",
+      "actor_id": "bih",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Bosnia and Herzegovina",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_bih.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_bih.set": "ba06b097dd848a8084ff0debdab724561f59f2c03ac17019c129371c5950cbe9"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "bih",
+          "coalition": "west",
+          "issue": 192,
+          "nation_map_id": 31,
+          "numeric_id": 87,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; exact accepted components: [].",
+          "#190/#201 accepted tactical identity goc_bih; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+          "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+          "Local/neutral garrison content remains outside sovereign recruitment authority."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_bih",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "229cbe7596ac34a4c3a3f1e94150444b955d9d9796d0810629c13e49250d6fc5",
+      "actor_id": "blr",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "rusa",
+      "coalition_id": "eurasian",
+      "components": [
+        "soviet_legacy_core",
+        "belarus_modern_support"
+      ],
+      "count_source": "pending_stack_compile",
+      "display_name": "Belarus",
+      "disposition": "proxy_hybrid",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": null,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": true,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "hybrid",
+      "research_node_count": null,
+      "roster_class": "proxy_hybrid",
+      "source_compatibility_family": "rusa",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "Constructed hybrid because Code:X has no dedicated Belarus breed or conquest package."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "rusa",
+      "unit_count": null,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "753f64f0d0a0d9f900f3e47d14f8c0bbc0478168887a900940b595d84ee9f94b",
+      "actor_id": "can",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_common_infantry",
+        "canada_national",
+        "nato_common_support"
+      ],
+      "count_source": "pending_stack_compile",
+      "display_name": "Canada",
+      "disposition": "national_hybrid",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": null,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": true,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": null,
+      "roster_class": "national_hybrid",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "Canadian armor is supplemented by NATO-common systems.",
+          "Second self-audit added the directly source-backed Canadian Leopard 2A4M progression."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "nato",
+      "unit_count": null,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "4a607b4c30da9d59ad3584f71f0e810c588b3d36f17d73576ca3a41b1b05db1d",
+      "actor_id": "che",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Switzerland",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_che.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_che.set": "09c1e798047059a45408ca76f5fd8b464ca828f9c8bbd9dd33358e1a0934b93a"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "che",
+          "coalition": "west",
+          "issue": 191,
+          "nation_map_id": 23,
+          "numeric_id": 79,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only.",
+          "Non-playable: no fabricated roster/research.",
+          "#201 identity token goc_che (registry numeric_id 79)."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_che",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "1e6a70447db29f7f56ceb1b1899884de4f30378a078a83fc05338df4e1e65b20",
+      "actor_id": "cyp",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Cyprus",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_cyp.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_cyp.set": "fee11d335806432ae0b27c25d2162ce734b921a053d4a7e7d8c85d63906abeb7"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "cyp",
+          "coalition": "west",
+          "issue": 193,
+          "nation_map_id": 49,
+          "numeric_id": 68,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; exact accepted components: [].",
+          "#190/#201 accepted tactical identity goc_cyp; provisional coalition family nato is transport/alignment only, not source provenance.",
+          "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+          "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+          "theatre_present=true from accepted #190 ledger; issue #193."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_cyp",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "b0ca0e359c44b2a896cd8f5dff610307fd35d23fee267ef9f7f3e941c8a0438a",
+      "actor_id": "cze",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "cze_equipment_identity",
+        "nato_common_infantry_bridge"
+      ],
+      "count_source": "committed_native_packs",
+      "display_name": "Czechia",
+      "disposition": "national_hybrid",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_cze.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/script/multiplayer/units/goc_cze/conquest.goc_cze.lua": "bce215b7f1462cb883aa8dd6f557c6ee7cbe6f656287da68ad9405d06adc5200",
+        "resource/set/dynamic_campaign/unit_research_goc_cze.set": "46cccc3319eb35c110f5a33c0fbed6efceb3911210cbab9aae34f885e6610f71",
+        "resource/set/multiplayer/armies/goc_cze.set": "6482ffa398df66b95306fc310d4dfe5bc14331377b8774367ecb40125d91d3a3",
+        "resource/set/multiplayer/units/conquest/inf_goc_cze.set": "051e5e51493d95ab0e7c08fe63b498809efdf78ebcb25c88a199babd4cfc6d52",
+        "resource/set/multiplayer/units/conquest/units_goc_cze.set": "c6e2729330d3f7e9e1085b37c594293328a6b2a2e2cfea61804984bae293b6c0"
+      },
+      "modern_unit_count": 8,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": false,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": 8,
+      "roster_class": "national_hybrid",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "cze",
+          "coalition": "west",
+          "issue": 191,
+          "nation_map_id": 16,
+          "numeric_id": 72,
+          "playable": true
+        },
+        "notes": [
+          "#190 national_hybrid: exact unit vz_77_dana only; national_infantry_present=false in audit.",
+          "Infantry is explicit nato_common_infantry_bridge gap-fill, not Czech national personnel.",
+          "#201 production tactical ID goc_cze (registry numeric_id 72).",
+          "Cross-side: vz_77_dana source-tagged nato; projected onto goc_cze at activation."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "goc_cze",
+      "unit_count": 8,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "28cb38befeb3d94097186fcf566c63ac1f0b0ea55b5bd46357fd23f9cb6a0d4b",
+      "actor_id": "deu",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_german_forces",
+        "nato_common_support"
+      ],
+      "count_source": "pending_stack_compile",
+      "display_name": "Germany",
+      "disposition": "full_national",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": null,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": true,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "hybrid",
+      "research_node_count": null,
+      "roster_class": "full_national",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "YPR/CV9030 coalition stepping-stones are filtered from the national roster."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "nato",
+      "unit_count": null,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "754d1cfbe1b42068fe596f4a8ced0b011b0a6ea90edfd2b813059cbc410d8d2f",
+      "actor_id": "dnk",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "count_source": "pending_stack_compile",
+      "display_name": "Denmark",
+      "disposition": "coalition_fallback",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": null,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": true,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": null,
+      "roster_class": "coalition_fallback",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "No complete national Code:X branch was audited; roster is explicitly labeled NATO coalition fallback."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "nato",
+      "unit_count": null,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "b7105410669e80eca8bffdcc1e6ea7515836e3830408c647d0d9a0ccddc91147",
+      "actor_id": "donbas",
+      "actor_type": "separatist",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "rusa",
+      "coalition_id": "eurasian",
+      "components": [
+        "donbas_native",
+        "donbas_latent",
+        "soviet_legacy_core"
+      ],
+      "count_source": "pending_stack_compile",
+      "display_name": "Donbas Forces",
+      "disposition": "proxy_hybrid",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": null,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": true,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "hybrid",
+      "research_node_count": null,
+      "roster_class": "proxy_hybrid",
+      "source_compatibility_family": "rusa",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "Lud/LDPR, Sparta, and Vostok are combined into one initial tactical actor."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "rusa",
+      "unit_count": null,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "3c0d40c4c4469577700e134f0e100eb5634300ef962bca0a81b61896e6ac0eef",
+      "actor_id": "dprk",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "rusa",
+      "coalition_id": "eurasian",
+      "components": [
+        "kpa_infantry",
+        "soviet_legacy_core"
+      ],
+      "count_source": "pending_stack_compile",
+      "display_name": "North Korea",
+      "disposition": "proxy_hybrid",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": null,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": true,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": null,
+      "roster_class": "proxy_hybrid",
+      "source_compatibility_family": "rusa",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "Code:X Korean infantry is national authority; West81 Soviet-pattern equipment supplies legacy heavy forces."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "rusa",
+      "unit_count": null,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "2526c1b95f51093cc7df51c2e959e11749879ce9ad5c9b1478446a52bd89d9ce",
+      "actor_id": "dza",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "rusa",
+      "coalition_id": "eurasian",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Algeria",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_dza.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_dza.set": "01b3d23780d982b2b543ef178734b9708f8ba11a0b6134c9ef99ab1bd77dbcde"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "rusa",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "dza",
+          "coalition": "east",
+          "issue": 193,
+          "nation_map_id": 45,
+          "numeric_id": 64,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; exact accepted components: [].",
+          "#190/#201 accepted tactical identity goc_dza; provisional coalition family rusa is transport/alignment only, not source provenance.",
+          "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+          "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+          "theatre_present=true from accepted #190 ledger; issue #193."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_dza",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "f6416f00bf1dd966480f0e32b9aa240d74cc5e8d0f261df6b01f4e1feb320826",
+      "actor_id": "egy",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Egypt",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_egy.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_egy.set": "057a78826596846a16bc71c9d96723fdc2712315bb4832e5d33cd949efc87e65"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "egy",
+          "coalition": "west",
+          "issue": 193,
+          "nation_map_id": 48,
+          "numeric_id": 67,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; exact accepted components: [].",
+          "#190/#201 accepted tactical identity goc_egy; provisional coalition family nato is transport/alignment only, not source provenance.",
+          "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+          "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+          "theatre_present=true from accepted #190 ledger; issue #193."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_egy",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "c38e8ccf5fdea10772c6bbfb239c84edc762bc6d66ccaabaa4237f015b7a8ad9",
+      "actor_id": "esp",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "spain_3rd_assault_legion",
+        "nato_fallback_heavy",
+        "nato_common_support"
+      ],
+      "count_source": "pending_stack_compile",
+      "display_name": "Spain",
+      "disposition": "coalition_fallback",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": null,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": true,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": null,
+      "roster_class": "coalition_fallback",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "Spain uses the audited 3rd Assault Brigade international-legion infantry subset, with NATO coalition armor/artillery/support filling non-infantry gaps. Other foreign-volunteer content is reserved for regional neutral encounters."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "nato",
+      "unit_count": null,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "f6e9f7427ea15f93a6f9b27437b3e77e5a9fec6a396c31394aa299d1b225fe09",
+      "actor_id": "est",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "count_source": "committed_native_packs",
+      "display_name": "Estonia",
+      "disposition": "coalition_fallback",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_est.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/script/multiplayer/units/goc_est/conquest.goc_est.lua": "3e3289e4e9cd6b6c27717cf511e6d89ade7596d7bd18e7a47377d01609b2c658",
+        "resource/set/dynamic_campaign/unit_research_goc_est.set": "6378767ef41d2f2efc873f929b16b5745c91c2732f4633c8c578112690e068df",
+        "resource/set/multiplayer/armies/goc_est.set": "5c18e1b5b54ea33dee8d72de6b34352a70dde9b24b5f1bf472fb5c6b8e2a3e6c",
+        "resource/set/multiplayer/units/conquest/inf_goc_est.set": "f38110036feeeb2fb45e7e3631e1ffff7fab96f67127db413f0676c4aff9da93",
+        "resource/set/multiplayer/units/conquest/units_goc_est.set": "5e91bdc443e6789588a6d9afa166485400c9b917a79716a373cdc650b59d9f10"
+      },
+      "modern_unit_count": 55,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": false,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": 55,
+      "roster_class": "coalition_fallback",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "est",
+          "coalition": "west",
+          "issue": 191,
+          "nation_map_id": 21,
+          "numeric_id": 77,
+          "playable": true
+        },
+        "notes": [
+          "#190 disposition coalition_fallback.",
+          "#201 production tactical ID goc_est (registry numeric_id 77)."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "goc_est",
+      "unit_count": 55,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "ea7020a9730224de5a10972ea07982050e6b77ff041f197e4b9610e9a6e03263",
+      "actor_id": "fin",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_common_infantry",
+        "finland_national",
+        "nato_common_support"
+      ],
+      "count_source": "pending_stack_compile",
+      "display_name": "Finland",
+      "disposition": "national_hybrid",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": null,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": true,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": null,
+      "roster_class": "national_hybrid",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "West81 equipment is explicitly reserve/legacy content.",
+          "Second self-audit removed the broad Soviet legacy pool; only directly selected Finnish/Nordic equipment and NATO-common gap filling remain."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "nato",
+      "unit_count": null,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "36d6324041fa1a6be6a0008f7a87d35274de61ff4be1e556b5c856dcb2b420ad",
+      "actor_id": "fra",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_common_infantry",
+        "france_national",
+        "nato_common_support"
+      ],
+      "count_source": "pending_stack_compile",
+      "display_name": "France",
+      "disposition": "national_hybrid",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": null,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": true,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": null,
+      "roster_class": "national_hybrid",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "ARF line infantry is temporary; fr_* Code:X personnel remain elite/SOF rather than line infantry.",
+          "Native France acceptance restored the canonical ARF rifle, SPIKE, machine-gun, anti-tank, scout, and DSK engineer squads required by the temporary line-infantry policy."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "nato",
+      "unit_count": null,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "4f5939b13d6b40edcf8609e680b133a8abb2fc731033fadbab534924c36f2625",
+      "actor_id": "gbr",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_british_forces",
+        "nato_common_support"
+      ],
+      "count_source": "pending_stack_compile",
+      "display_name": "United Kingdom",
+      "disposition": "full_national",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": null,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": true,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "hybrid",
+      "research_node_count": null,
+      "roster_class": "full_national",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "British branch is national; shared support is used only for explicit gaps."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "nato",
+      "unit_count": null,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "c85d602e03b239b6cbd3ae27a3eb660a1a2283fb498d41c92b894934768bb8d8",
+      "actor_id": "geo",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Georgia",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_geo.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_geo.set": "87422cfe897d595db648865c613a6cee102cbd04563a45f3dd2656dd06e72957"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "geo",
+          "coalition": "west",
+          "issue": 193,
+          "nation_map_id": 36,
+          "numeric_id": 55,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; exact accepted components: [].",
+          "#190/#201 accepted tactical identity goc_geo; provisional coalition family nato is transport/alignment only, not source provenance.",
+          "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+          "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+          "theatre_present=true from accepted #190 ledger; issue #193."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_geo",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "b759634a2a8dd7edb9b4def467d095eb3f2c72d6a5e386c68a1d387a5809ab03",
+      "actor_id": "grc",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "count_source": "committed_native_packs",
+      "display_name": "Greece",
+      "disposition": "coalition_fallback",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_grc.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/script/multiplayer/units/goc_grc/conquest.goc_grc.lua": "254436c9fde4c96aeb4497225ddd883c776a8996a35af10839a303679cdb8e87",
+        "resource/set/dynamic_campaign/unit_research_goc_grc.set": "840a5514a1fd5ed929a42998c2aaf06e5b2485993e77bc5b273f8d965a5ca499",
+        "resource/set/multiplayer/armies/goc_grc.set": "29ed4f9b286a4240e7e9a4b49ccd21e54877ae37fad60bece40119bd3bd62d94",
+        "resource/set/multiplayer/units/conquest/inf_goc_grc.set": "ed5b87813de082efdbed0262bef53d1fa63d209b03d718e8b95def08c0e1198f",
+        "resource/set/multiplayer/units/conquest/units_goc_grc.set": "c0aeb58132f1623996c09311b7d024bd92c595e5ea0dd6fe3206ae435392e04b"
+      },
+      "modern_unit_count": 55,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": false,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": 55,
+      "roster_class": "coalition_fallback",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "grc",
+          "coalition": "west",
+          "issue": 192,
+          "nation_map_id": 26,
+          "numeric_id": 82,
+          "playable": true
+        },
+        "notes": [
+          "#190 disposition coalition_fallback; exact accepted components: ['nato_full_fallback'].",
+          "#190/#201 accepted tactical identity goc_grc; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+          "No distinctive national source package was proven; roster is explicitly labeled coalition fallback.",
+          "Do not infer national equipment or widen beyond the accepted nato_full_fallback selector."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "goc_grc",
+      "unit_count": 55,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "9ddb7beb67cf1893d90a6e4bc1445c0855465663bc0294b0a11ad30940c1a4c8",
+      "actor_id": "hrv",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "count_source": "committed_native_packs",
+      "display_name": "Croatia",
+      "disposition": "coalition_fallback",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_hrv.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/script/multiplayer/units/goc_hrv/conquest.goc_hrv.lua": "ea72d45983955eea5fe243d4cd9990f7c76e086c7516d878b78994550a15e063",
+        "resource/set/dynamic_campaign/unit_research_goc_hrv.set": "0ed87990ed8f517ed8bc3a457b7b94230fbdeb8e6a9ad6250e6cac8346609244",
+        "resource/set/multiplayer/armies/goc_hrv.set": "0617a7306317060e847847c7649b24135d87f1b7d52c636ac4bfeca0de8200c9",
+        "resource/set/multiplayer/units/conquest/inf_goc_hrv.set": "084a32855659c3e080d084c29aef4e1ef4f3acdfd2f3236377ab44c89479eafd",
+        "resource/set/multiplayer/units/conquest/units_goc_hrv.set": "ef369691d004415cd602fb76a2b24056f0adf3bb159130683c762d64aead0304"
+      },
+      "modern_unit_count": 55,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": false,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": 55,
+      "roster_class": "coalition_fallback",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "hrv",
+          "coalition": "west",
+          "issue": 192,
+          "nation_map_id": 29,
+          "numeric_id": 85,
+          "playable": true
+        },
+        "notes": [
+          "#190 disposition coalition_fallback; exact accepted components: ['nato_full_fallback'].",
+          "#190/#201 accepted tactical identity goc_hrv; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+          "No distinctive national source package was proven; roster is explicitly labeled coalition fallback.",
+          "Do not infer national equipment or widen beyond the accepted nato_full_fallback selector."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "goc_hrv",
+      "unit_count": 55,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "2905faaac65b684d318fbb78a57c96ffeaf0303d90b4d1a15618586603c6feff",
+      "actor_id": "hun",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "count_source": "committed_native_packs",
+      "display_name": "Hungary",
+      "disposition": "coalition_fallback",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_hun.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/script/multiplayer/units/goc_hun/conquest.goc_hun.lua": "be5791a9bfbeb0b45922e67f9917b46c0f959383e5c56b7effc931a01f121e4e",
+        "resource/set/dynamic_campaign/unit_research_goc_hun.set": "0187c3fd3bd2f017274844618a51993aa6ee7ab70e8f28ebfc9508a0ade813a3",
+        "resource/set/multiplayer/armies/goc_hun.set": "69f3ed7354a4e5519be209693e06cd266fc4cd964501f0700894d132ed8e294a",
+        "resource/set/multiplayer/units/conquest/inf_goc_hun.set": "bf3f305cc3124c6cba41c1875523364e6e9266345e7d3bcc84aad7299c7d9423",
+        "resource/set/multiplayer/units/conquest/units_goc_hun.set": "3731acd959efb4b9a7fda9501f5f89039e43faaa60a00393754feffd2e82fca2"
+      },
+      "modern_unit_count": 55,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": false,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": 55,
+      "roster_class": "coalition_fallback",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "hun",
+          "coalition": "west",
+          "issue": 191,
+          "nation_map_id": 18,
+          "numeric_id": 74,
+          "playable": true
+        },
+        "notes": [
+          "#190 disposition coalition_fallback; no distinctive national package.",
+          "#201 production tactical ID goc_hun (registry numeric_id 74)."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "goc_hun",
+      "unit_count": 55,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "5375b35b2a1a528c0c233b2e058d3fc464e5433d24fe6b416d0a3e8fa64b602f",
+      "actor_id": "irl",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Ireland",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_irl.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_irl.set": "573fc8b8335891d8d322b47da4c9c876358b4a0b70e3e07f19574726179332a4"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "irl",
+          "coalition": "west",
+          "issue": 191,
+          "nation_map_id": 24,
+          "numeric_id": 80,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only.",
+          "Non-playable: no fabricated roster/research.",
+          "#201 identity token goc_irl (registry numeric_id 80)."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_irl",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "b268f93057701f2c8a21eea2b844fe61292bbee53c70b8589eba126d68fd3057",
+      "actor_id": "irq",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Iraq",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_irq.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_irq.set": "31721bc43f3272a45f6e91207c05d0502b39c7999b5b47066c929befd9939c73"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "irq",
+          "coalition": "west",
+          "issue": 193,
+          "nation_map_id": 43,
+          "numeric_id": 62,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; exact accepted components: [].",
+          "#190/#201 accepted tactical identity goc_irq; provisional coalition family nato is transport/alignment only, not source provenance.",
+          "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+          "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+          "theatre_present=true from accepted #190 ledger; issue #193."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_irq",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "b8951ddbaf4617411addeae2a3e23bafd82488e7d03edefe6b75ff72301107ea",
+      "actor_id": "isl",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Iceland",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_isl.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_isl.set": "13bd370e383efde951aed238eb448c4f918b048eb8e9a83d509149ee055520c1"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "isl",
+          "coalition": "west",
+          "issue": 191,
+          "nation_map_id": 25,
+          "numeric_id": 81,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; no standing army content expected.",
+          "Non-playable: no fabricated roster/research.",
+          "#201 identity token goc_isl (registry numeric_id 81)."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_isl",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "460c313a95e9485939e6a7cf76db095ea21cd4f0353c6737ffabe2751dc7638e",
+      "actor_id": "isr",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Israel",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_isr.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_isr.set": "bdca1fdc072a8a1d113d3a54d8f383c9478de99429b659c57ee5f6bc60d04721"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "isr",
+          "coalition": "west",
+          "issue": 193,
+          "nation_map_id": 39,
+          "numeric_id": 58,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; exact accepted components: [].",
+          "#190/#201 accepted tactical identity goc_isr; provisional coalition family nato is transport/alignment only, not source provenance.",
+          "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+          "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+          "theatre_present=true from accepted #190 ledger; issue #193."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_isr",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "9cc6252c08b7355d1c29f6ddd578556fbe89fa2bc8da8348b0a320b34548d81e",
+      "actor_id": "ita",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_common_infantry",
+        "italy_national",
+        "nato_common_support"
+      ],
+      "count_source": "pending_stack_compile",
+      "display_name": "Italy",
+      "disposition": "national_hybrid",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": null,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": true,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": null,
+      "roster_class": "national_hybrid",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "Italian armor defines the faction while NATO-common infantry and support fill audited gaps."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "nato",
+      "unit_count": null,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "6802dd200f72d3843f6b6d92f6d7b35e5fc87d5cb5348aa495d716637b2d157b",
+      "actor_id": "jor",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Jordan",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_jor.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_jor.set": "4d99c3e6c3ecd7cda9b9d73beaa5176b08da8befc4a590782abc9b5bf3214b0c"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "jor",
+          "coalition": "west",
+          "issue": 193,
+          "nation_map_id": 42,
+          "numeric_id": 61,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; exact accepted components: [].",
+          "#190/#201 accepted tactical identity goc_jor; provisional coalition family nato is transport/alignment only, not source provenance.",
+          "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+          "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+          "theatre_present=true from accepted #190 ledger; issue #193."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_jor",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "4efb0818ef286e6466b1617d21051c26563433b035201317fb01761bc5a74398",
+      "actor_id": "kpa_expeditionary",
+      "actor_type": "auxiliary",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "rusa",
+      "coalition_id": "eurasian",
+      "components": [
+        "kpa_infantry"
+      ],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "KPA Expeditionary Corps",
+      "disposition": "nonstate",
+      "host_actor_id": "rus",
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": true,
+      "playable": false,
+      "required_categories": [
+        "infantry"
+      ],
+      "research_mode": "native",
+      "research_node_count": 0,
+      "roster_class": "nonstate",
+      "source_compatibility_family": "rusa",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "Russian-hosted contingent using the same canonical Korean squads as North Korea."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "rusa",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "68dbe16d4672c7cdd3f08283c67f015a19cd28502ff96e726c3900cf7bf1d745",
+      "actor_id": "lbn",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Lebanon",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_lbn.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_lbn.set": "5682be55f47d0ffe840315567bed26f775e78ab6b6f7d67a0f9089f6b22457f7"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "lbn",
+          "coalition": "west",
+          "issue": 193,
+          "nation_map_id": 40,
+          "numeric_id": 59,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; exact accepted components: [].",
+          "#190/#201 accepted tactical identity goc_lbn; provisional coalition family nato is transport/alignment only, not source provenance.",
+          "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+          "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+          "theatre_present=true from accepted #190 ledger; issue #193."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_lbn",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "49cfbe990e8fbab3b7604b863024fb6455846886dfdbe7e0953aca99324eebb2",
+      "actor_id": "lby",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "rusa",
+      "coalition_id": "eurasian",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Libya",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_lby.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_lby.set": "130177d431450c41b048aeef4456e7d861665dd7d3dbc555e699c2b4026477fa"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "rusa",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "lby",
+          "coalition": "east",
+          "issue": 193,
+          "nation_map_id": 47,
+          "numeric_id": 66,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; exact accepted components: [].",
+          "#190/#201 accepted tactical identity goc_lby; provisional coalition family rusa is transport/alignment only, not source provenance.",
+          "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+          "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+          "theatre_present=true from accepted #190 ledger; issue #193."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_lby",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "edcd6ad61343d2959059d541742f5b90e1e3284a212568b2dbadf1dde1afff8a",
+      "actor_id": "ltu",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "count_source": "committed_native_packs",
+      "display_name": "Lithuania",
+      "disposition": "coalition_fallback",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_ltu.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/script/multiplayer/units/goc_ltu/conquest.goc_ltu.lua": "90b7e93555a859752125e2b78b6b6a1a5ce60226868c1b9e928be35955483923",
+        "resource/set/dynamic_campaign/unit_research_goc_ltu.set": "bc3d6e6e3f657d9283f873de4289dbfd49c5910c67213f4eb824453ff3c944c3",
+        "resource/set/multiplayer/armies/goc_ltu.set": "aba48a0b62745a6c9f1305c6b96f55baf0300e3b52f5cd104f386d52c34deb52",
+        "resource/set/multiplayer/units/conquest/inf_goc_ltu.set": "d9d66387f344ef348185d07b1e0a4222bd8d472ca4a61951e8be63005debe4e7",
+        "resource/set/multiplayer/units/conquest/units_goc_ltu.set": "c74e86db68446f9fbd8bf2294c9c9eee6f7295b03c4089b7da5173db86cf46b7"
+      },
+      "modern_unit_count": 55,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": false,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": 55,
+      "roster_class": "coalition_fallback",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "ltu",
+          "coalition": "west",
+          "issue": 191,
+          "nation_map_id": 19,
+          "numeric_id": 75,
+          "playable": true
+        },
+        "notes": [
+          "#190 disposition coalition_fallback.",
+          "#201 production tactical ID goc_ltu (registry numeric_id 75)."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "goc_ltu",
+      "unit_count": 55,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "a15a6394c33cfb38ae234f8b0a2352736dae06fd10bc66483f8a4e79f9887e9d",
+      "actor_id": "lva",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "count_source": "committed_native_packs",
+      "display_name": "Latvia",
+      "disposition": "coalition_fallback",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_lva.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/script/multiplayer/units/goc_lva/conquest.goc_lva.lua": "c44a59ced141045e05f5f1bfe8dc47724463aa3317036b6555ca0d0578470af0",
+        "resource/set/dynamic_campaign/unit_research_goc_lva.set": "b8298063453cfc490eb17002397348db11f1cbb9bdf3bab2e65aae7b4193f1ee",
+        "resource/set/multiplayer/armies/goc_lva.set": "1b6b575f7eaa3612e82700ac20a38efa5be3b1c013f77494be588d3fd02d904c",
+        "resource/set/multiplayer/units/conquest/inf_goc_lva.set": "2915078193edd4ad0a9603305c7d8f86be1cb4eb35f4a775e6c8ae294586f141",
+        "resource/set/multiplayer/units/conquest/units_goc_lva.set": "57acc41e5ec810660afd38b7ce53115fa97d536e4f1cb0e53f70ff71ee38a3c1"
+      },
+      "modern_unit_count": 55,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": false,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": 55,
+      "roster_class": "coalition_fallback",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "lva",
+          "coalition": "west",
+          "issue": 191,
+          "nation_map_id": 20,
+          "numeric_id": 76,
+          "playable": true
+        },
+        "notes": [
+          "#190 disposition coalition_fallback.",
+          "#201 production tactical ID goc_lva (registry numeric_id 76)."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "goc_lva",
+      "unit_count": 55,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "d7ef23edba4d42078325c2e6526457c5805219664c7cb5f9cc328469b6348ef7",
+      "actor_id": "mar",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Morocco",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_mar.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_mar.set": "94c80d7bea6ed0c2f73293a0e33ef96dafeccdb1e7ae6cc7f737a278982a9a4a"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "mar",
+          "coalition": "west",
+          "issue": 193,
+          "nation_map_id": 44,
+          "numeric_id": 63,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; exact accepted components: [].",
+          "#190/#201 accepted tactical identity goc_mar; provisional coalition family nato is transport/alignment only, not source provenance.",
+          "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+          "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+          "theatre_present=true from accepted #190 ledger; issue #193."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_mar",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "4cf93ce9deda426c39908b9100aafff238644ac1a7f2e2fb5a74988d6472b873",
+      "actor_id": "mda",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "rusa",
+      "coalition_id": "eurasian",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Moldova",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_mda.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_mda.set": "36b0c1af8407c533ef95b3eab925f2949a361d8148b00478e19222eed9c2e307"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "rusa",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "mda",
+          "coalition": "east",
+          "issue": 192,
+          "nation_map_id": 35,
+          "numeric_id": 96,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; exact accepted components: [].",
+          "#190/#201 accepted tactical identity goc_mda; provisional coalition family `rusa` is transport/alignment only, not source provenance.",
+          "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+          "Local/neutral garrison content remains outside sovereign recruitment authority."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_mda",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "243e339b5f718a25555b1e0c98d14b62b784b7c420adf7fbeb4a3d3c05deb332",
+      "actor_id": "mkd",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "North Macedonia",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_mkd.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_mkd.set": "0a634302a1aa5b16d591eb93300d26c0ec915c6c6f478864339b31c5480b268e"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "mkd",
+          "coalition": "west",
+          "issue": 192,
+          "nation_map_id": 34,
+          "numeric_id": 95,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; exact accepted components: [].",
+          "#190/#201 accepted tactical identity goc_mkd; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+          "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+          "Local/neutral garrison content remains outside sovereign recruitment authority."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_mkd",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "f3d89e49212f1aecba8d78f8b90a225668d0a327f1bf20b608ddf043cf256257",
+      "actor_id": "mlt",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Malta",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_mlt.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_mlt.set": "ddadc25c6ec98c731e33c6df48f4e6ab72428aa4b7717665ebd1c0d6f9b7a983"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "mlt",
+          "coalition": "west",
+          "issue": 193,
+          "nation_map_id": 50,
+          "numeric_id": 69,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; exact accepted components: [].",
+          "#190/#201 accepted tactical identity goc_mlt; provisional coalition family nato is transport/alignment only, not source provenance.",
+          "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+          "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+          "theatre_present=true from accepted #190 ledger; issue #193."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_mlt",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "196d997c358dc75e0078e1e6dbfcde287433986cf92cf745978e3b5aee7cc7dc",
+      "actor_id": "mne",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Montenegro",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_mne.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_mne.set": "edba2493c43575de6ddc0d8e5f90cd379044b75d5fc7ebd48fedb085f0ee1e3b"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "mne",
+          "coalition": "west",
+          "issue": 192,
+          "nation_map_id": 32,
+          "numeric_id": 88,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; exact accepted components: [].",
+          "#190/#201 accepted tactical identity goc_mne; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+          "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+          "Local/neutral garrison content remains outside sovereign recruitment authority."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_mne",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "07553a2bcb30a5b3989cfdd6630dfbe92cfddbd94726cd6f36a1ba6b0108cba8",
+      "actor_id": "nld",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_common_infantry",
+        "netherlands_national",
+        "nato_common_support"
+      ],
+      "count_source": "pending_stack_compile",
+      "display_name": "Netherlands",
+      "disposition": "national_hybrid",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": null,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": true,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "ifv",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": null,
+      "roster_class": "national_hybrid",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "YPR/CV9035 equipment provides national identity."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "nato",
+      "unit_count": null,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "899c8fe2ad2f001da9949e1e02be38b7fd57a818183ba6a0eb295f5ff215610f",
+      "actor_id": "nor",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "count_source": "pending_stack_compile",
+      "display_name": "Norway",
+      "disposition": "coalition_fallback",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": null,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": true,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": null,
+      "roster_class": "coalition_fallback",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "No complete national Code:X branch was audited; roster is explicitly labeled NATO coalition fallback."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "nato",
+      "unit_count": null,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "6dea7a942926994ae63cdaecc0e920f761ea60665975f9113004a5413a1ed0fc",
+      "actor_id": "pol",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_common_infantry",
+        "poland_national",
+        "nato_common_support"
+      ],
+      "count_source": "pending_stack_compile",
+      "display_name": "Poland",
+      "disposition": "national_hybrid",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": null,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": true,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": null,
+      "roster_class": "national_hybrid",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "EFP British and US elements are excluded from the Polish national core."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "nato",
+      "unit_count": null,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "23c984c87dbb8c11847cead22fb5a63addd57dd5416e52ce10badd3e7b5a4e92",
+      "actor_id": "prc",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "prc",
+      "coalition_id": "prc_aligned",
+      "components": [
+        "prc_regular",
+        "prc_legacy_reserve"
+      ],
+      "count_source": "pending_stack_compile",
+      "display_name": "People's Republic of China",
+      "disposition": "full_national",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": null,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": true,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "native",
+      "research_node_count": null,
+      "roster_class": "full_national",
+      "source_compatibility_family": "prc",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "Modern PLA content remains Code:X authoritative.",
+          "West81-backed historical equipment is isolated in the PRC Legacy / Reserve Equipment research branch."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "prc",
+      "unit_count": null,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "f80fc27bd54363ba89c328935dede04ad1767505785da95be073b374a0649163",
+      "actor_id": "prt",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "count_source": "committed_native_packs",
+      "display_name": "Portugal",
+      "disposition": "coalition_fallback",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_prt.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/script/multiplayer/units/goc_prt/conquest.goc_prt.lua": "0b557e9f6ed495991dd9ef300daefb594161fad69d400d91aa101d36fcfa47aa",
+        "resource/set/dynamic_campaign/unit_research_goc_prt.set": "dba11fe43f2fc65550cb1fef1d98430d417c3f5a7e0697c630ecd4342f98e392",
+        "resource/set/multiplayer/armies/goc_prt.set": "16c07362efae50ea6ee5b490cc03105b896f8dab6418eaac03e5f7af0fc51ccf",
+        "resource/set/multiplayer/units/conquest/inf_goc_prt.set": "66ccecef828a5598ba7d564dc9d7a3da68182cedee17a410a9b721c8f19e248c",
+        "resource/set/multiplayer/units/conquest/units_goc_prt.set": "8eaeaa08f483382ea3ab922611682077be8c27a155031574eada76696038af83"
+      },
+      "modern_unit_count": 55,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": false,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": 55,
+      "roster_class": "coalition_fallback",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "prt",
+          "coalition": "west",
+          "issue": 191,
+          "nation_map_id": 15,
+          "numeric_id": 71,
+          "playable": true
+        },
+        "notes": [
+          "#190 disposition coalition_fallback; component nato_full_fallback only.",
+          "#201 production tactical ID goc_prt (registry numeric_id 71)."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "goc_prt",
+      "unit_count": 55,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "9d636ab02e99783b25abd897642ae0971e6905bf7febd5cc03cc51060027b603",
+      "actor_id": "rou",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "count_source": "committed_native_packs",
+      "display_name": "Romania",
+      "disposition": "coalition_fallback",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_rou.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/script/multiplayer/units/goc_rou/conquest.goc_rou.lua": "c2d553dcc2fd3862eb5955fc80c64d3849b2e969f92491113bbb12c9187f0229",
+        "resource/set/dynamic_campaign/unit_research_goc_rou.set": "e59ac3a71ab0825ef3436f42892978526072ddd3f63f195d745f189e249ed1fc",
+        "resource/set/multiplayer/armies/goc_rou.set": "d66cf79ed7ac258676c9cb941aa924cb80899b16038fc23b2b7992cabf942ae9",
+        "resource/set/multiplayer/units/conquest/inf_goc_rou.set": "c2d59f3db2598a57be07d5dca1f2c2a52bf644a194ee430bf5af4f58dc3b13dd",
+        "resource/set/multiplayer/units/conquest/units_goc_rou.set": "ede4d160dda062ee6cb44964f2ef781cef45c9444a005cc27e8418b59a9de528"
+      },
+      "modern_unit_count": 55,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": false,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": 55,
+      "roster_class": "coalition_fallback",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "rou",
+          "coalition": "west",
+          "issue": 192,
+          "nation_map_id": 27,
+          "numeric_id": 83,
+          "playable": true
+        },
+        "notes": [
+          "#190 disposition coalition_fallback; exact accepted components: ['nato_full_fallback'].",
+          "#190/#201 accepted tactical identity goc_rou; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+          "No distinctive national source package was proven; roster is explicitly labeled coalition fallback.",
+          "Do not infer national equipment or widen beyond the accepted nato_full_fallback selector."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "goc_rou",
+      "unit_count": 55,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "bebde7c1a1a1fd0d38702f5221a0bc7c1d8a0dd1226d080ddbcff7833ed62d76",
+      "actor_id": "rus",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "rusa",
+      "coalition_id": "eurasian",
+      "components": [
+        "russia_regular",
+        "wagner_native",
+        "kpa_infantry"
+      ],
+      "count_source": "pending_stack_compile",
+      "display_name": "Russia",
+      "disposition": "full_national",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": null,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": true,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "hybrid",
+      "research_node_count": null,
+      "roster_class": "full_national",
+      "source_compatibility_family": "rusa",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "Foreign and PMC components remain separate research subtrees even when available to Russia."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "rusa",
+      "unit_count": null,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "f2f55e4d3d87fd3c8bb832c4c44e882131b0d819319b6451be4cb1623bfc67a6",
+      "actor_id": "srb",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "rusa",
+      "coalition_id": "nonaligned",
+      "components": [
+        "serbia_infantry",
+        "soviet_legacy_core"
+      ],
+      "count_source": "pending_stack_compile",
+      "display_name": "Serbia",
+      "disposition": "proxy_hybrid",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": null,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": true,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": null,
+      "roster_class": "proxy_hybrid",
+      "source_compatibility_family": "rusa",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "Serb_* personnel seed is combined with explicit Balkan/Eastern legacy equipment."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "rusa",
+      "unit_count": null,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "d81a2e438763cde90d761ae49201ea9628620a4b0e28e43f5213a7b649e3006d",
+      "actor_id": "svk",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "svk_equipment_identity",
+        "nato_common_infantry_bridge"
+      ],
+      "count_source": "committed_native_packs",
+      "display_name": "Slovakia",
+      "disposition": "national_hybrid",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_svk.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/script/multiplayer/units/goc_svk/conquest.goc_svk.lua": "f9a095f6e9f0756c56998d4019e8479235df331ad2fef982cbc894447adda153",
+        "resource/set/dynamic_campaign/unit_research_goc_svk.set": "960370d2cfc751a2cf624d49b13b1db12e071415ffeeca032f5b4e40c114e2e2",
+        "resource/set/multiplayer/armies/goc_svk.set": "e357edddf56e4ee4d5b98dcaf5550d2d9dba66ad60ae2522e1e1c78861386b9d",
+        "resource/set/multiplayer/units/conquest/inf_goc_svk.set": "9f5421d1c9f45c7ad094d3c305b0c50f8f60e53cbdef8ff4b318630a7d73d7c6",
+        "resource/set/multiplayer/units/conquest/units_goc_svk.set": "20daeaa9e8374c574cbb9fc270836e60af26af98386abdb7cea97b0c79ab8900"
+      },
+      "modern_unit_count": 8,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": false,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": 8,
+      "roster_class": "national_hybrid",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "svk",
+          "coalition": "west",
+          "issue": 191,
+          "nation_map_id": 17,
+          "numeric_id": 73,
+          "playable": true
+        },
+        "notes": [
+          "#190 national_hybrid: shared DANA-family vz_77_dana (not SK-exclusive).",
+          "Infantry is explicit nato_common_infantry_bridge gap-fill only.",
+          "#201 production tactical ID goc_svk (registry numeric_id 73)."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "goc_svk",
+      "unit_count": 8,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "2d032d141b89718bcfdebb1b85435d2c0584a54007a20c97e1aaf0d7371d6202",
+      "actor_id": "svn",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Slovenia",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_svn.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_svn.set": "43ca27247a4ceac1b2bbf9e79caa90964715f92f651793a85cfdf79dbe7f5b4b"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "svn",
+          "coalition": "west",
+          "issue": 192,
+          "nation_map_id": 30,
+          "numeric_id": 86,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; exact accepted components: [].",
+          "#190/#201 accepted tactical identity goc_svn; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+          "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+          "Local/neutral garrison content remains outside sovereign recruitment authority."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_svn",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "61d0d3566ed025b2c8c6aea5693d874dbadc442e6d666b7826cabe8950fdbfed",
+      "actor_id": "swe",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_common_infantry",
+        "sweden_national",
+        "nato_common_support"
+      ],
+      "count_source": "pending_stack_compile",
+      "display_name": "Sweden",
+      "disposition": "national_hybrid",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": null,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": true,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": null,
+      "roster_class": "national_hybrid",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "CV90/Strv equipment provides national identity."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "nato",
+      "unit_count": null,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "283cc3b2897a99d05bf69156c34ab867ffea5d6fd68214ee330bc91615a23b75",
+      "actor_id": "syr",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "rusa",
+      "coalition_id": "eurasian",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Syria",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_syr.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_syr.set": "5c2ab703dd4cdf3f8efa8ea70ec4f62a41419a228fd2800b3e8402590b3c2065"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "rusa",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "syr",
+          "coalition": "east",
+          "issue": 193,
+          "nation_map_id": 41,
+          "numeric_id": 60,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; exact accepted components: [].",
+          "#190/#201 accepted tactical identity goc_syr; provisional coalition family rusa is transport/alignment only, not source provenance.",
+          "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+          "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+          "theatre_present=true from accepted #190 ledger; issue #193."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_syr",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "e1bf56eb5e87e817bda544425326e609fedc403f13d2476576d926f7376b3425",
+      "actor_id": "tun",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Tunisia",
+      "disposition": "strategic_only",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {
+        "resource/interface/pages/multi/flag_goc_tun.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
+        "resource/set/multiplayer/armies/goc_tun.set": "2314c3a906bd24a4613b5600376ae61f2c1c809b77d31c5d2bd29c8345dae68a"
+      },
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": false,
+      "playable": false,
+      "required_categories": [],
+      "research_mode": "none",
+      "research_node_count": 0,
+      "roster_class": "strategic_only",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": {
+          "actor_id": "tun",
+          "coalition": "west",
+          "issue": 193,
+          "nation_map_id": 46,
+          "numeric_id": 65,
+          "playable": false
+        },
+        "notes": [
+          "#190 disposition strategic_only; exact accepted components: [].",
+          "#190/#201 accepted tactical identity goc_tun; provisional coalition family nato is transport/alignment only, not source provenance.",
+          "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+          "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+          "theatre_present=true from accepted #190 ledger; issue #193."
+        ]
+      },
+      "strategic_only": true,
+      "tactical_side": "goc_tun",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "0783a99443fcff40f8f94bed322634c462f300ebe142cec136028441543f2777",
+      "actor_id": "tur",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_full_fallback"
+      ],
+      "count_source": "pending_stack_compile",
+      "display_name": "Turkey",
+      "disposition": "coalition_fallback",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": null,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": true,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "generated",
+      "research_node_count": null,
+      "roster_class": "coalition_fallback",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "No complete national Code:X branch was audited; roster is explicitly labeled NATO coalition fallback."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "nato",
+      "unit_count": null,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "d7001400a0084fd4084be340b4a038f53adc483d70298afc610bf221d26668c5",
+      "actor_id": "ukr",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "ukr",
+      "coalition_id": "ukrainian",
+      "components": [
+        "ukraine_regular"
+      ],
+      "count_source": "pending_stack_compile",
+      "display_name": "Ukraine",
+      "disposition": "full_national",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": null,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": true,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "native",
+      "research_node_count": null,
+      "roster_class": "full_national",
+      "source_compatibility_family": "ukr",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "Ukraine uses its native Code:X Ukrainian branches directly, including the existing 3rd Assault / international-volunteer content. No duplicate generated ILDU wrapper subtree is added."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "ukr",
+      "unit_count": null,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "5faf1d7398f2db5f5fec64044917311eb27b355f3095655b716374e2439aac71",
+      "actor_id": "ukr_ildu",
+      "actor_type": "volunteer",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "ukr",
+      "coalition_id": "ukrainian",
+      "components": [
+        "ukraine_ildu"
+      ],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "International Legion for the Defence of Ukraine",
+      "disposition": "nonstate",
+      "host_actor_id": "ukr",
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": true,
+      "playable": false,
+      "required_categories": [
+        "infantry",
+        "anti_armor"
+      ],
+      "research_mode": "generated",
+      "research_node_count": 0,
+      "roster_class": "nonstate",
+      "source_compatibility_family": "ukr",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "Compatibility-only non-playable foreign-volunteer record retained for existing data while its wrapper pool is reserved for future regional neutral-encounter allocation; it is not included in Ukraine's sovereign roster."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "ukr",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "83b747212618f3147665c1701e214a5f79c64256e30cd911a3e234625532df92",
+      "actor_id": "usa",
+      "actor_type": "sovereign",
+      "ai_purchase_authority": {
+        "may_purchase": true,
+        "may_research": true,
+        "notes": "Purchases authorized by StrategicFormation.actor_id + compiled actor roster",
+        "profile": "actor_scoped_ai_economy",
+        "scope": "strategic_actor_id"
+      },
+      "campaign_faction": "nato",
+      "coalition_id": "atlantic",
+      "components": [
+        "nato_us_forces",
+        "nato_common_support"
+      ],
+      "count_source": "pending_stack_compile",
+      "display_name": "United States",
+      "disposition": "full_national",
+      "host_actor_id": null,
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": null,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "pending_projection_matrix",
+      "phase1_actor": true,
+      "playable": true,
+      "required_categories": [
+        "infantry",
+        "tank",
+        "artillery"
+      ],
+      "research_mode": "native",
+      "research_node_count": null,
+      "roster_class": "full_national",
+      "source_compatibility_family": "nato",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "USMC, Stryker, and armored branches remain separate doctrine paths."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "nato",
+      "unit_count": null,
+      "virtual_unit_count": 0
+    },
+    {
+      "actor_authority_signature": "da96c1dca16842098b496c4f6e8a10db73373643837e4f9c42c96de20650d649",
+      "actor_id": "wagner",
+      "actor_type": "pmc",
+      "ai_purchase_authority": {
+        "may_purchase": false,
+        "may_research": false,
+        "notes": "Non-playable/strategic-only actors have no recruitment or research authority",
+        "profile": "none",
+        "scope": "none"
+      },
+      "campaign_faction": "rusa",
+      "coalition_id": "eurasian",
+      "components": [
+        "wagner_native"
+      ],
+      "count_source": "strategic_only_or_nonplayable_zero",
+      "display_name": "Wagner / Russian PMC Forces",
+      "disposition": "nonstate",
+      "host_actor_id": "rus",
+      "legacy_unit_count": 0,
+      "managed_file_hashes": {},
+      "modern_unit_count": 0,
+      "native_acceptance_status": "not_run",
+      "opponent_availability_count": null,
+      "opponent_availability_status": "not_applicable_strategic_only",
+      "phase1_actor": true,
+      "playable": false,
+      "required_categories": [
+        "infantry"
+      ],
+      "research_mode": "native",
+      "research_node_count": 0,
+      "roster_class": "nonstate",
+      "source_compatibility_family": "rusa",
+      "source_provenance_summary": {
+        "goc_registry": null,
+        "notes": [
+          "Non-state military actor for contracts, events, or temporary province control."
+        ]
+      },
+      "strategic_only": false,
+      "tactical_side": "rusa",
+      "unit_count": 0,
+      "virtual_unit_count": 0
+    }
+  ],
+  "architecture": {
+    "core_sides_preserved": [
+      "nato",
+      "ukr",
+      "rusa",
+      "prc"
+    ],
+    "issue_201_status": "partial_owner_approved_for_production_goc_ids",
+    "mixed_architecture_forbidden": true,
+    "owner_disposition": "distinct_gates_owned_tactical_faction_ids"
+  },
+  "authority": {
+    "goc_allocated_ids": [
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89,
+      95,
+      96
+    ],
+    "goc_production_band": {
+      "end": 99,
+      "reason": "Gates production Expanded Nations army IDs (#191-#193). Engine range remains 0-99; #201 spike 90-94 stay reserved and must not be allocated.",
+      "start": 55
+    },
+    "manifest_actor_ids": [
+      "alb",
+      "arm",
+      "aut",
+      "aze",
+      "bel",
+      "bgr",
+      "bih",
+      "blr",
+      "can",
+      "che",
+      "cyp",
+      "cze",
+      "deu",
+      "dnk",
+      "donbas",
+      "dprk",
+      "dza",
+      "egy",
+      "esp",
+      "est",
+      "fin",
+      "fra",
+      "gbr",
+      "geo",
+      "grc",
+      "hrv",
+      "hun",
+      "irl",
+      "irq",
+      "isl",
+      "isr",
+      "ita",
+      "jor",
+      "kpa_expeditionary",
+      "lbn",
+      "lby",
+      "ltu",
+      "lva",
+      "mar",
+      "mda",
+      "mkd",
+      "mlt",
+      "mne",
+      "nld",
+      "nor",
+      "pol",
+      "prc",
+      "prt",
+      "rou",
+      "rus",
+      "srb",
+      "svk",
+      "svn",
+      "swe",
+      "syr",
+      "tun",
+      "tur",
+      "ukr",
+      "ukr_ildu",
+      "usa",
+      "wagner"
+    ]
+  },
+  "counts": {
+    "actor_count": 61,
+    "hosted_actor_count": 3,
+    "phase1_actor_count": 24,
+    "playable_actor_count": 33,
+    "registered_goc_side_count": 37,
+    "strategic_only_actor_count": 25
+  },
+  "evidence_state": "static_pre_native",
+  "matrix_signature": "e677570464fe2c2174d0ba2daebaece30a619adb55b12c280ad34cbe2e0b6bcb",
+  "native_harness": {
+    "core_restore_command": "python -m gates_of_codex.expanded_nations_cli core --gates-root <GATES_ROOT>",
+    "representative_families": [
+      {
+        "family_id": "phase1_full_national_nato",
+        "notes": "Phase 1 USA full national; Core transport nato",
+        "representative_actor_id": "usa",
+        "roster_class": "full_national",
+        "tactical_side": "nato"
+      },
+      {
+        "family_id": "phase1_national_hybrid_nato",
+        "notes": "France ARF/DSK hybrid boundary",
+        "representative_actor_id": "fra",
+        "roster_class": "national_hybrid",
+        "tactical_side": "nato"
+      },
+      {
+        "family_id": "phase1_spain_3rd_assault",
+        "notes": "Spain seven-unit 3rd Assault allocation",
+        "representative_actor_id": "esp",
+        "roster_class": "coalition_fallback",
+        "tactical_side": "nato"
+      },
+      {
+        "family_id": "phase1_ukraine_core",
+        "notes": "Ukraine without duplicate ILDU wrappers",
+        "representative_actor_id": "ukr",
+        "roster_class": "full_national",
+        "tactical_side": "ukr"
+      },
+      {
+        "family_id": "phase1_russia_core",
+        "notes": "Russia with KPA/Wagner hosted separation",
+        "representative_actor_id": "rus",
+        "roster_class": "full_national",
+        "tactical_side": "rusa"
+      },
+      {
+        "family_id": "phase1_proxy_dprk",
+        "notes": "DPRK isolation on rusa transport",
+        "representative_actor_id": "dprk",
+        "roster_class": "proxy_hybrid",
+        "tactical_side": "rusa"
+      },
+      {
+        "family_id": "phase1_proxy_serbia",
+        "notes": "Serbia isolation",
+        "representative_actor_id": "srb",
+        "roster_class": "proxy_hybrid",
+        "tactical_side": "rusa"
+      },
+      {
+        "family_id": "phase1_prc_passthrough",
+        "notes": "PRC modern vs legacy/reserve; codex_passthrough activation",
+        "representative_actor_id": "prc",
+        "roster_class": "full_national",
+        "tactical_side": "prc"
+      },
+      {
+        "family_id": "phase2_goc_nato_full_fallback",
+        "notes": "Production goc_* coalition_fallback family (#191/#192)",
+        "representative_actor_id": "bel",
+        "roster_class": "coalition_fallback",
+        "tactical_side": "goc_bel"
+      },
+      {
+        "family_id": "phase2_goc_national_hybrid_dana",
+        "notes": "DANA equipment identity + infantry bridge",
+        "representative_actor_id": "cze",
+        "roster_class": "national_hybrid",
+        "tactical_side": "goc_cze"
+      },
+      {
+        "family_id": "phase2_strategic_only",
+        "notes": "Strategic-only ownership; no fabricated recruitment",
+        "representative_actor_id": "egy",
+        "roster_class": "strategic_only",
+        "tactical_side": "goc_egy"
+      }
+    ],
+    "required_battle_pairs": [
+      {
+        "attacker_actor_id": "usa",
+        "defender_actor_id": "fra",
+        "pair_id": "usa_vs_fra_shared_nato_transport",
+        "purpose": "Same historical NATO transport family without generic NATO leakage"
+      },
+      {
+        "attacker_actor_id": "srb",
+        "defender_actor_id": "rus",
+        "pair_id": "srb_vs_rus_shared_rusa_transport",
+        "purpose": "Same historical RUSA transport family isolation"
+      },
+      {
+        "attacker_actor_id": "usa",
+        "defender_actor_id": "dprk",
+        "pair_id": "usa_vs_dprk_cross_coalition",
+        "purpose": "Cross-coalition pair"
+      },
+      {
+        "attacker_actor_id": "usa",
+        "defender_actor_id": null,
+        "defender_profile": "issue_48_regional_local_garrison",
+        "pair_id": "regional_garrison_48",
+        "purpose": "Regional/local garrison profile from #48 without sovereign recruitment transfer"
+      }
+    ],
+    "status": "harness_defined_native_runs_pending_owner"
+  },
+  "phase1_regression": {
+    "required_actor_ids": [
+      "usa",
+      "gbr",
+      "deu",
+      "fra",
+      "pol",
+      "ita",
+      "fin",
+      "swe",
+      "nld",
+      "can",
+      "nor",
+      "dnk",
+      "esp",
+      "tur",
+      "rus",
+      "ukr",
+      "prc",
+      "dprk",
+      "donbas",
+      "blr",
+      "srb",
+      "ukr_ildu",
+      "kpa_expeditionary",
+      "wagner"
+    ],
+    "required_hosts": {
+      "kpa_expeditionary": "rus",
+      "ukr_ildu": "ukr",
+      "wagner": "rus"
+    },
+    "required_tactical_sides": {
+      "blr": "rusa",
+      "can": "nato",
+      "deu": "nato",
+      "dnk": "nato",
+      "donbas": "rusa",
+      "dprk": "rusa",
+      "esp": "nato",
+      "fin": "nato",
+      "fra": "nato",
+      "gbr": "nato",
+      "ita": "nato",
+      "kpa_expeditionary": "rusa",
+      "nld": "nato",
+      "nor": "nato",
+      "pol": "nato",
+      "prc": "prc",
+      "rus": "rusa",
+      "srb": "rusa",
+      "swe": "nato",
+      "tur": "nato",
+      "ukr": "ukr",
+      "ukr_ildu": "ukr",
+      "usa": "nato",
+      "wagner": "rusa"
+    }
+  },
+  "schema": "gates-of-codex.expanded-nations-static-matrix",
+  "schema_version": 1,
+  "source_head": "a58c7145dfe119f91769b51a5d3b61e9961f5def"
+}
