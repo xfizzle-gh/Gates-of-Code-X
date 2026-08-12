@@ -14,6 +14,16 @@ $Root = Split-Path -Parent $PSScriptRoot
 $Venv = Join-Path $Root ".venv"
 $VenvPython = Join-Path $Venv "Scripts\python.exe"
 $StampScript = Join-Path $PSScriptRoot "stamp_package_provenance.ps1"
+$AuthorityRelativeFiles = @(
+    "config\earth3\production_authority.json",
+    "config\earth3\p3_operational_authority.json",
+    "godot\assets\maps\earth3_europe_mediterranean\map_manifest.json",
+    "godot\assets\maps\earth3_europe_mediterranean\polygon_dataset.json",
+    "godot\assets\maps\earth3_europe_mediterranean\dataset_meta.json",
+    "godot\assets\maps\earth3_europe_mediterranean\p3_authority\p3_operational_graph.json",
+    "docs\audits\p3-first-corridor-route-inventory.json",
+    "src\gates_of_codex\data\earth3_v1\sites.json"
+)
 
 function Test-SupportedPython {
     param(
@@ -164,6 +174,29 @@ try {
     & $VenvPython -m pip install --upgrade pip
     & $VenvPython -m pip install --upgrade $Root
 
+    # Installed wheels live under <venv>\Lib\site-packages, while the frozen
+    # Earth3 authority contracts intentionally resolve fixed files from
+    # Path(__file__).parents[2] == <venv>\Lib. Stage only the exact authenticated
+    # P1/P3 runtime authority files at those fixed paths. This keeps the authority
+    # loaders unchanged and fail-closed while making the documented source install
+    # a real production surface rather than a repository-only accident.
+    $InstalledAuthorityRoot = Join-Path $Venv "Lib"
+    foreach ($Relative in $AuthorityRelativeFiles) {
+        $Source = Join-Path $Root $Relative
+        if (-not (Test-Path -LiteralPath $Source -PathType Leaf)) {
+            throw "Required Earth3 runtime authority file is missing: $Source"
+        }
+        $Destination = Join-Path $InstalledAuthorityRoot $Relative
+        $DestinationParent = Split-Path -Parent $Destination
+        New-Item -ItemType Directory -Force -Path $DestinationParent | Out-Null
+        Copy-Item -LiteralPath $Source -Destination $Destination -Force
+    }
+
+    & $VenvPython -c "from gates_of_codex.earth3_campaign import load_earth3_authority; from gates_of_codex.earth3_operational import load_authenticated_p3_graph; a=load_earth3_authority(); g=load_authenticated_p3_graph(); assert a.production_asset_version == 'earth3_production_v1'; assert len(g['nodes']) == 64 and len(g['edges']) == 65"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Installed Earth3 P1/P3 authority smoke failed."
+    }
+
     $SmokeRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("gates-of-codex-provenance-" + [guid]::NewGuid().ToString("N"))
     New-Item -ItemType Directory -Path $SmokeRoot | Out-Null
     $PreviousHome = $env:GATES_OF_CODEX_HOME
@@ -193,10 +226,16 @@ try {
     if ($BuildExecutable) {
         & $VenvPython -m pip install --upgrade pyinstaller
         $ArchiveViewer = Join-Path $Venv "Scripts\pyi-archive_viewer.exe"
+        $AuthorityAddDataArgs = @()
+        foreach ($Relative in $AuthorityRelativeFiles) {
+            $AuthoritySource = (Resolve-Path -LiteralPath (Join-Path $Root $Relative)).Path
+            $AuthorityDestination = (Split-Path -Parent $Relative) -replace '\\', '/'
+            $AuthorityAddDataArgs += @("--add-data", "$AuthoritySource;$AuthorityDestination")
+        }
         Push-Location $Root
         try {
-            & $VenvPython -m PyInstaller --noconfirm --clean --onefile --windowed --name GatesOfCodeX --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" run_gates_of_codex.py
-            & $VenvPython -m PyInstaller --noconfirm --clean --onefile --name GatesOfCodeXLive --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" run_gates_of_codex_live.py
+            & $VenvPython -m PyInstaller --noconfirm --clean --onefile --windowed --name GatesOfCodeX @AuthorityAddDataArgs --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" run_gates_of_codex.py
+            & $VenvPython -m PyInstaller --noconfirm --clean --onefile --name GatesOfCodeXLive @AuthorityAddDataArgs --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" run_gates_of_codex_live.py
         }
         finally {
             Pop-Location
@@ -206,6 +245,11 @@ try {
             $Archive = (& $ArchiveViewer -l $ExecutablePath | Out-String)
             if ($LASTEXITCODE -ne 0 -or $Archive -notmatch 'SOURCE_COMMIT') {
                 throw "Frozen executable is missing embedded provenance: $Executable"
+            }
+            foreach ($RequiredName in @("production_authority.json", "p3_operational_authority.json", "map_manifest.json", "polygon_dataset.json", "dataset_meta.json", "p3_operational_graph.json", "p3-first-corridor-route-inventory.json", "sites.json")) {
+                if ($Archive -notmatch [regex]::Escape($RequiredName)) {
+                    throw "Frozen executable is missing Earth3 runtime authority $RequiredName`: $Executable"
+                }
             }
             $Verified = $false
             foreach ($Entry in @("gates_of_codex\SOURCE_COMMIT", "gates_of_codex/SOURCE_COMMIT")) {
@@ -277,7 +321,7 @@ print(actual)
             throw "Workshop deployment script not found: $DeployScript"
         }
         Write-Host "Synchronizing Gates of CodeX test item to $WorkshopTestTarget"
-        & $DeployScript -SourceRoot $Root -TargetRoot $WorkshopTestTarget
+        & $DeployScript -SourceRoot $Root -TargetRoot $WorkshopTestTarget -SourceCommit $SourceCommit
     }
 
     Write-Host "Installed. Run:"
