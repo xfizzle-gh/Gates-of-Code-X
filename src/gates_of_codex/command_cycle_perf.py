@@ -7,18 +7,24 @@ adds phase timings around the existing implementation while removing redundant
 presentation work where the command result already contains enough information
 for Godot to update its live view safely.
 
-Two fast paths are intentionally narrow:
+Fast paths are intentionally narrow:
 
 * ``verify_result`` is read-only, so it does not rewrite the campaign or publish
   a frontend snapshot.
 * ``issue_move_order`` / ``cancel_move_order`` still load, mutate, ledger, and
   save the authoritative campaign, but skip rebuilding the multi-megabyte
   frontend snapshot. Godot patches only the returned move-order field in memory.
+* runtime campaign saves preserve the exact normalization/validation/atomic
+  publication contract of ``state_io.save_campaign`` but use deterministic
+  compact JSON. Pretty whitespace is not authority, and removing it reduces both
+  write volume and the next command's cold-read volume on production Earth3.
 
 All other mutating commands retain the existing load -> mutate -> save -> full
 snapshot publication path.
 """
 
+import json
+import tempfile
 import time
 from pathlib import Path
 from typing import Any
@@ -39,6 +45,7 @@ _TIMING_KEYS = (
     "snapshot_bytes",
     "read_only_fast_path",
     "snapshot_fast_path",
+    "compact_save_path",
 )
 
 
@@ -85,6 +92,59 @@ def _milliseconds(seconds: float) -> float:
     return round(max(0.0, seconds) * 1000.0, 3)
 
 
+def _compact_save_campaign(
+    state,
+    path: str | Path,
+    *,
+    observation_context=None,
+) -> Path:
+    """Runtime-equivalent ``save_campaign`` with deterministic compact JSON.
+
+    Keep every authoritative normalization, observation refresh, validation, and
+    atomic replace step from ``state_io.save_campaign``. Only insignificant JSON
+    whitespace changes. Keys remain sorted and UTF-8 remains unescaped.
+    """
+
+    from .force_migration import ensure_strategic_formations
+    from .observation import ensure_s11_schema, refresh_all_observer_knowledge
+    from .operational_capture import ensure_site_control_state
+    from .operational_movement import ensure_move_orders
+    from .operational_position import ensure_operational_positions
+    from .operational_supply import refresh_operational_supply
+    from .strategic import ensure_strategic_layer
+
+    ensure_strategic_layer(state)
+    ensure_strategic_formations(state)
+    ensure_operational_positions(state)
+    ensure_move_orders(state)
+    ensure_site_control_state(state)
+    refresh_operational_supply(state, consume_grace=False)
+    ensure_s11_schema(state)
+    refresh_all_observer_knowledge(state, observation_context)
+    state.validate()
+
+    destination = Path(path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    payload = json.dumps(
+        state.to_dict(),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ) + "\n"
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        encoding="utf-8",
+        prefix=f".{destination.name}.",
+        suffix=".tmp",
+        dir=destination.parent,
+        delete=False,
+    ) as temporary:
+        temporary.write(payload)
+        temporary_path = Path(temporary.name)
+    temporary_path.replace(destination)
+    return destination
+
+
 def measured_apply_frontend_commands(
     campaign_path: str | Path,
     *,
@@ -96,7 +156,8 @@ def measured_apply_frontend_commands(
 
     The existing command engine remains responsible for validation, mutation,
     exactly-once ledger handling, persistence, and result construction. This
-    wrapper only substitutes no-op publication at proven presentation seams.
+    wrapper substitutes proven presentation no-ops and the semantically
+    equivalent compact runtime writer described above.
     """
 
     requested = _requested_commands(commands, commands_path)
@@ -125,7 +186,7 @@ def measured_apply_frontend_commands(
             return Path(path)
         started = time.perf_counter()
         try:
-            return original_save(
+            return _compact_save_campaign(
                 state,
                 path,
                 observation_context=observation_context,
@@ -192,6 +253,7 @@ def measured_apply_frontend_commands(
         "snapshot_bytes": _size(snapshot_path),
         "read_only_fast_path": bool(read_only_fast_path),
         "snapshot_fast_path": bool(snapshot_fast_path),
+        "compact_save_path": not read_only_fast_path,
     }
     return result
 
