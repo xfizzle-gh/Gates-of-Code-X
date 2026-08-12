@@ -24,6 +24,7 @@ class CommandCycleTelemetryTests(unittest.TestCase):
                 "snapshot_bytes",
                 "read_only_fast_path",
                 "snapshot_fast_path",
+                "compact_save_path",
             ),
             command_cycle_perf.timing_keys(),
         )
@@ -70,6 +71,11 @@ class CommandCycleTelemetryTests(unittest.TestCase):
                     "write_frontend_snapshot",
                     side_effect=AssertionError("verify_result must not publish snapshot"),
                 ),
+                patch.object(
+                    command_cycle_perf,
+                    "_compact_save_campaign",
+                    side_effect=AssertionError("verify_result must not compact-save campaign"),
+                ),
             ):
                 report = command_cycle_perf.measured_apply_frontend_commands(
                     campaign,
@@ -80,13 +86,14 @@ class CommandCycleTelemetryTests(unittest.TestCase):
             timings = report["timings"]
             self.assertTrue(timings["read_only_fast_path"])
             self.assertFalse(timings["snapshot_fast_path"])
+            self.assertFalse(timings["compact_save_path"])
             self.assertEqual(0.0, timings["save_ms"])
             self.assertEqual(0.0, timings["snapshot_ms"])
             self.assertEqual(campaign.stat().st_size, timings["campaign_bytes"])
             self.assertEqual(snapshot.stat().st_size, timings["snapshot_bytes"])
             self.assertGreaterEqual(timings["total_ms"], 0.0)
 
-    def test_move_order_saves_campaign_but_skips_full_snapshot_publication(self) -> None:
+    def test_move_order_compact_saves_campaign_but_skips_full_snapshot_publication(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             campaign = root / "campaign.json"
@@ -132,7 +139,7 @@ class CommandCycleTelemetryTests(unittest.TestCase):
 
             with (
                 patch.object(command_cycle_perf, "_ORIGINAL_APPLY", fake_apply),
-                patch.object(frontend_commands, "save_campaign", fake_save),
+                patch.object(command_cycle_perf, "_compact_save_campaign", fake_save),
                 patch.object(frontend, "write_frontend_snapshot", fake_snapshot),
             ):
                 report = command_cycle_perf.measured_apply_frontend_commands(
@@ -151,13 +158,14 @@ class CommandCycleTelemetryTests(unittest.TestCase):
             self.assertEqual(0, calls["snapshot"])
             self.assertFalse(report["timings"]["read_only_fast_path"])
             self.assertTrue(report["timings"]["snapshot_fast_path"])
+            self.assertTrue(report["timings"]["compact_save_path"])
             self.assertGreaterEqual(report["timings"]["save_ms"], 0.0)
             self.assertEqual(0.0, report["timings"]["snapshot_ms"])
             self.assertEqual(
                 '{"existing":true}\n', snapshot.read_text(encoding="utf-8")
             )
 
-    def test_non_patch_mutation_still_uses_existing_save_and_snapshot_path(self) -> None:
+    def test_non_patch_mutation_uses_compact_save_and_existing_snapshot_path(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             campaign = root / "campaign.json"
@@ -190,7 +198,7 @@ class CommandCycleTelemetryTests(unittest.TestCase):
 
             with (
                 patch.object(command_cycle_perf, "_ORIGINAL_APPLY", fake_apply),
-                patch.object(frontend_commands, "save_campaign", fake_save),
+                patch.object(command_cycle_perf, "_compact_save_campaign", fake_save),
                 patch.object(frontend, "write_frontend_snapshot", fake_snapshot),
             ):
                 report = command_cycle_perf.measured_apply_frontend_commands(
@@ -203,8 +211,33 @@ class CommandCycleTelemetryTests(unittest.TestCase):
             self.assertEqual(1, calls["snapshot"])
             self.assertFalse(report["timings"]["read_only_fast_path"])
             self.assertFalse(report["timings"]["snapshot_fast_path"])
+            self.assertTrue(report["timings"]["compact_save_path"])
             self.assertGreaterEqual(report["timings"]["save_ms"], 0.0)
             self.assertGreaterEqual(report["timings"]["snapshot_ms"], 0.0)
+
+    def test_compact_runtime_writer_preserves_authoritative_save_pipeline(self) -> None:
+        source = (ROOT / "src/gates_of_codex/command_cycle_perf.py").read_text(
+            encoding="utf-8"
+        )
+        compact = source.split("def _compact_save_campaign(", 1)[1].split(
+            "def measured_apply_frontend_commands(", 1
+        )[0]
+        for required in (
+            "ensure_strategic_layer(state)",
+            "ensure_strategic_formations(state)",
+            "ensure_operational_positions(state)",
+            "ensure_move_orders(state)",
+            "ensure_site_control_state(state)",
+            "refresh_operational_supply(state, consume_grace=False)",
+            "ensure_s11_schema(state)",
+            "refresh_all_observer_knowledge(state, observation_context)",
+            "state.validate()",
+            'sort_keys=True',
+            'separators=(\",\", \":\")',
+            "temporary_path.replace(destination)",
+        ):
+            self.assertIn(required, compact)
+        self.assertNotIn("indent=2", compact)
 
     def test_runtime_installer_registers_measured_wrapper(self) -> None:
         source = (ROOT / "src/gates_of_codex/fast_entrypoint.py").read_text(
