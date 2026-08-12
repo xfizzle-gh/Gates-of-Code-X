@@ -25,24 +25,50 @@ RUNTIME_PATCH_SCHEMA_VERSION = 1
 
 
 def _site_control_rows(state: CampaignState) -> list[dict[str, Any]]:
-    """Return the already-persisted dynamic site-control rows without re-running capture."""
+    """Return full display rows from persisted control state without advancing it."""
+
+    from .operational_position import load_operational_graph_for_state
 
     raw = state.map_metadata.get("operational_site_control", {})
     if not isinstance(raw, dict):
         return []
+    graph = load_operational_graph_for_state(state) or {}
+    sites_by_id = {
+        str(site.get("site_id")): site
+        for site in graph.get("sites", [])
+        if isinstance(site, dict) and str(site.get("site_id") or "")
+    }
+    nodes_by_id = {
+        str(node.get("node_id")): node
+        for node in graph.get("nodes", [])
+        if isinstance(node, dict) and str(node.get("node_id") or "")
+    }
     rows: list[dict[str, Any]] = []
     for site_id, value in sorted(raw.items()):
         if not isinstance(value, dict):
             continue
-        row = {"site_id": str(site_id)}
+        identity = str(site_id)
+        authored = sites_by_id.get(identity, {})
+        province_id = str(value.get("province_id") or authored.get("province_id") or "")
+        route_node_id = str(value.get("route_node_id") or authored.get("route_node_id") or "")
+        node = nodes_by_id.get(route_node_id, {})
+        pixel = authored.get("pixel") if isinstance(authored.get("pixel"), list) else node.get("pixel")
+        row: dict[str, Any] = {
+            "site_id": identity,
+            "display_name": str(
+                authored.get("display_name")
+                or (f"{province_id} control" if province_id else identity)
+            ),
+            "province_id": province_id,
+            "route_node_id": route_node_id,
+            "pixel": list(pixel) if isinstance(pixel, list) else [0, 0],
+        }
         for key in (
             "controller_faction",
             "claimant_faction",
             "claimant_formation_id",
             "progress_ticks",
             "required_ticks",
-            "province_id",
-            "route_node_id",
             "control_weight_milli",
             "authored_site_id",
             "site_kind",
@@ -109,20 +135,87 @@ def _dynamic_factions(state: CampaignState) -> list[dict[str, Any]]:
     return rows
 
 
+def _runtime_construction_options(
+    state: CampaignState,
+    province,
+    faction: Faction,
+    *,
+    reachable: set[str],
+    p2_campaign: bool,
+    p2_footprint: set[str],
+) -> list[dict[str, Any]]:
+    """Read-only equivalent of strategic.construction_options for hot publication.
+
+    The normal helper calls ensure_strategic_layer(), which scans every province.
+    Doing that once per operational province would recreate the exact 3.5k-map
+    work this patch is intended to avoid. The authoritative save immediately
+    before this projection has already normalized infrastructure and actor data.
+    """
+
+    from .earth3_bootstrap import earth3_p2_actor_resources
+    from .strategic import BUILDING_RULES
+
+    raw_levels = province.metadata.get("infrastructure", {})
+    if not isinstance(raw_levels, dict):
+        raw_levels = {}
+    levels = {
+        building: max(0, min(int(raw_levels.get(building, 0)), rules["max_level"]))
+        for building, rules in BUILDING_RULES.items()
+    }
+    outside_p2_footprint = p2_campaign and province.province_id not in p2_footprint
+    actor_scope = (
+        earth3_p2_actor_resources(state, province.province_id, faction)
+        if p2_campaign
+        and not outside_p2_footprint
+        and province.owner == faction
+        else None
+    )
+    available_resources = (
+        int(actor_scope[0]["resources"])
+        if actor_scope is not None
+        else (0 if p2_campaign else state.factions[faction.value].resources)
+    )
+    options: list[dict[str, Any]] = []
+    for building, rules in BUILDING_RULES.items():
+        level = levels[building]
+        cost = rules["base_cost"] * (level + 1)
+        reasons: list[str] = []
+        if outside_p2_footprint:
+            reasons.append("outside_scenario_footprint")
+        if p2_campaign and building == "supply_hub":
+            reasons.append("operational_supply_unavailable_until_p3")
+        if province.owner != faction:
+            reasons.append("province_not_owned")
+        if province.province_id not in reachable:
+            reasons.append("province_not_supplied")
+        if level >= rules["max_level"]:
+            reasons.append("maximum_level")
+        if available_resources < cost:
+            reasons.append("insufficient_resources")
+        options.append(
+            {
+                "building": building,
+                "level": level,
+                "next_level": min(level + 1, rules["max_level"]),
+                "max_level": rules["max_level"],
+                "cost": cost,
+                "available": not reasons,
+                "blocked_reasons": reasons,
+            }
+        )
+    return options
+
+
 def _dynamic_provinces(
     state: CampaignState,
     *,
     occupied: dict[str, list[str]],
 ) -> list[dict[str, Any]]:
-    """Project only mutable province fields.
+    """Project only mutable province fields across the static Earth3 map."""
 
-    Construction availability is recalculated only on the operational footprint.
-    The production Earth3 graph has a bounded node set, so the patch does not run
-    construction/supply logic across all ~3.5k static map polygons.
-    """
-
+    from .earth3_bootstrap import earth3_p2_footprint, is_earth3_p2_campaign
     from .operational_position import load_operational_graph_for_state
-    from .strategic import construction_options
+    from .supply import reachable_supply_provinces
 
     graph = load_operational_graph_for_state(state)
     operational_provinces = {
@@ -131,6 +224,9 @@ def _dynamic_provinces(
         if isinstance(node, dict) and str(node.get("province_id") or "")
     }
     selected = state.selected_faction
+    reachable = reachable_supply_provinces(state, selected)
+    p2_campaign = is_earth3_p2_campaign(state)
+    p2_footprint = set(earth3_p2_footprint(state)) if p2_campaign else set()
     rows: list[dict[str, Any]] = []
     for province in sorted(state.provinces.values(), key=lambda value: value.province_id):
         metadata = province.metadata if isinstance(province.metadata, dict) else {}
@@ -148,10 +244,13 @@ def _dynamic_provinces(
             row["infrastructure"] = copy.deepcopy(metadata.get("infrastructure", {}))
             row["fortification"] = int(province.fortification)
             row["resource_yield"] = int(province.resource_yield)
-            row["construction_options"] = (
-                construction_options(state, selected, province.province_id)
-                if province.owner == selected
-                else []
+            row["construction_options"] = _runtime_construction_options(
+                state,
+                province,
+                selected,
+                reachable=reachable,
+                p2_campaign=p2_campaign,
+                p2_footprint=p2_footprint,
             )
         rows.append(row)
     return rows
