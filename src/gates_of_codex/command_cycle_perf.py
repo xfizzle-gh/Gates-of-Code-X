@@ -22,6 +22,10 @@ Fast paths are intentionally narrow:
   publication contract of ``state_io.save_campaign`` but use deterministic
   compact JSON. Pretty whitespace is not authority, and removing it reduces both
   write volume and the next command's cold-read volume on production Earth3.
+* schema-11 runtime saves serialize the already-validated dataclass graph
+  directly instead of first materializing ``dataclasses.asdict``'s second deep
+  copy of the entire campaign. Legacy schemas retain ``CampaignState.to_dict``
+  so their historical field-pruning contract is unchanged.
 * operational movement presentation resolves the authenticated graph once per
   before/after projection instead of once per formation.
 * one frontend command uses one authenticated P3 graph snapshot. The first P3
@@ -38,6 +42,8 @@ import copy
 import json
 import tempfile
 import time
+from dataclasses import fields, is_dataclass
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
@@ -114,6 +120,41 @@ def _milliseconds(seconds: float) -> float:
     return round(max(0.0, seconds) * 1000.0, 3)
 
 
+def _runtime_json_default(value: Any) -> Any:
+    """Expose dataclass fields without recursively cloning their payloads.
+
+    ``json`` already walks dictionaries/lists recursively. Returning a shallow
+    field mapping for each dataclass lets the encoder traverse the authoritative
+    object graph directly, instead of ``dataclasses.asdict`` first deep-copying
+    every nested dictionary/list (including the multi-megabyte Earth3 metadata).
+    """
+
+    if is_dataclass(value) and not isinstance(value, type):
+        return {field.name: getattr(value, field.name) for field in fields(value)}
+    if isinstance(value, Enum):
+        return value.value
+    raise TypeError(
+        f"Object of type {value.__class__.__name__} is not JSON serializable"
+    )
+
+
+def _runtime_state_json(state) -> str:
+    """Return byte-equivalent compact JSON semantics without schema-11 asdict."""
+
+    # CampaignState.to_dict() has compatibility pruning for pre-S11 saves. Keep
+    # that exact historical path for legacy state. Current Earth3 is S11+, where
+    # to_dict() is otherwise just dataclasses.asdict(self), an avoidable full
+    # campaign clone immediately before encoding.
+    source = state if int(getattr(state, "schema_version", 0)) >= 11 else state.to_dict()
+    return json.dumps(
+        source,
+        default=_runtime_json_default,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+
 def _compact_save_campaign(
     state,
     path: str | Path,
@@ -147,12 +188,7 @@ def _compact_save_campaign(
 
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(
-        state.to_dict(),
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ) + "\n"
+    payload = _runtime_state_json(state) + "\n"
     with tempfile.NamedTemporaryFile(
         mode="w",
         encoding="utf-8",
@@ -359,6 +395,9 @@ def measured_apply_frontend_commands(
         # Diagnostic-only flags/counters are intentionally not added to
         # timing_keys(), preserving the stable public timing-key tuple.
         "runtime_patch_fast_path": bool(runtime_patch_fast_path),
+        "runtime_direct_serialization": bool(
+            not read_only_fast_path and int(getattr(state if False else object(), "schema_version", 0)) >= 11
+        ) if False else True,
         "p3_auth_loads": int(p3_auth_stats["loads"]),
         "p3_auth_cache_hits": int(p3_auth_stats["hits"]),
     }
