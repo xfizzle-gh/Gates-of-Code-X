@@ -34,8 +34,18 @@ jobs:
       - name: Build executables
         shell: pwsh
         run: |
-          python -m PyInstaller --noconfirm --clean --onefile --windowed --name GatesOfCodeX --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" run_gates_of_codex.py
-          python -m PyInstaller --noconfirm --clean --onefile --console --name GatesOfCodeXLive --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" run_gates_of_codex_live.py
+          $authorityData = @(
+            "--add-data", "$((Resolve-Path 'config\earth3\production_authority.json').Path);config/earth3",
+            "--add-data", "$((Resolve-Path 'config\earth3\p3_operational_authority.json').Path);config/earth3",
+            "--add-data", "$((Resolve-Path 'godot\assets\maps\earth3_europe_mediterranean\map_manifest.json').Path);godot/assets/maps/earth3_europe_mediterranean",
+            "--add-data", "$((Resolve-Path 'godot\assets\maps\earth3_europe_mediterranean\polygon_dataset.json').Path);godot/assets/maps/earth3_europe_mediterranean",
+            "--add-data", "$((Resolve-Path 'godot\assets\maps\earth3_europe_mediterranean\dataset_meta.json').Path);godot/assets/maps/earth3_europe_mediterranean",
+            "--add-data", "$((Resolve-Path 'godot\assets\maps\earth3_europe_mediterranean\p3_authority\p3_operational_graph.json').Path);godot/assets/maps/earth3_europe_mediterranean/p3_authority",
+            "--add-data", "$((Resolve-Path 'docs\audits\p3-first-corridor-route-inventory.json').Path);docs/audits",
+            "--add-data", "$((Resolve-Path 'src\gates_of_codex\data\earth3_v1\sites.json').Path);src/gates_of_codex/data/earth3_v1"
+          )
+          python -m PyInstaller --noconfirm --clean --onefile --windowed --name GatesOfCodeX --collect-data gates_of_codex @authorityData --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" run_gates_of_codex.py
+          python -m PyInstaller --noconfirm --clean --onefile --console --name GatesOfCodeXLive --collect-data gates_of_codex @authorityData --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" run_gates_of_codex_live.py
       - name: Smoke frozen runtime provenance
         shell: pwsh
         run: |
@@ -68,14 +78,31 @@ jobs:
           finally {
             Remove-Item -LiteralPath $probeRoot -Recurse -Force -ErrorAction SilentlyContinue
           }
-      - name: Smoke frozen provenance
+      - name: Smoke frozen provenance and Earth3 authority payload
         shell: pwsh
         run: |
           $expectedCommit = '${{ steps.provenance.outputs.commit }}'
+          $requiredAuthorityNames = @(
+            "production_authority.json",
+            "p3_operational_authority.json",
+            "map_manifest.json",
+            "polygon_dataset.json",
+            "dataset_meta.json",
+            "p3_operational_graph.json",
+            "p3-first-corridor-route-inventory.json",
+            "sites.json",
+            "bootstrap.json",
+            "formations.json"
+          )
           foreach ($executable in @("dist\GatesOfCodeX.exe", "dist\GatesOfCodeXLive.exe")) {
             $archive = (pyi-archive_viewer -l $executable | Out-String)
             if ($LASTEXITCODE -ne 0 -or $archive -notmatch 'SOURCE_COMMIT') {
               throw "Frozen executable is missing provenance: $executable"
+            }
+            foreach ($requiredName in $requiredAuthorityNames) {
+              if ($archive -notmatch [regex]::Escape($requiredName)) {
+                throw "Frozen executable is missing Earth3 runtime authority $requiredName`: $executable"
+              }
             }
             $verified = $false
             foreach ($entry in @("gates_of_codex\SOURCE_COMMIT", "gates_of_codex/SOURCE_COMMIT")) {
