@@ -395,9 +395,6 @@ def measured_apply_frontend_commands(
         # Diagnostic-only flags/counters are intentionally not added to
         # timing_keys(), preserving the stable public timing-key tuple.
         "runtime_patch_fast_path": bool(runtime_patch_fast_path),
-        "runtime_direct_serialization": bool(
-            not read_only_fast_path and int(getattr(state if False else object(), "schema_version", 0)) >= 11
-        ) if False else True,
         "p3_auth_loads": int(p3_auth_stats["loads"]),
         "p3_auth_cache_hits": int(p3_auth_stats["hits"]),
     }
