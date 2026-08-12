@@ -66,6 +66,7 @@ def _apply_audit_adjustments(
     allowed = {
         "component_exact_unit_additions",
         "component_selector_exclusions",
+        "actor_component_replacements",
         "actor_component_removals",
         "actor_note_additions",
     }
@@ -136,6 +137,36 @@ def _apply_audit_adjustments(
         selector["exclude_regex"] = (
             f"(?:{existing})|(?:{pattern})" if existing else pattern
         )
+
+    for adjustment in adjustments.get("actor_component_replacements", []):
+        required = {"actor_id", "from_component", "to_component", "reason"}
+        if not isinstance(adjustment, Mapping) or set(adjustment) != required:
+            raise FactionWiringError("Actor component-replacement adjustment has invalid fields")
+        actor_id = adjustment["actor_id"]
+        actor = actor_by_id.get(actor_id)
+        if actor is None:
+            raise FactionWiringError(f"Audit adjustment references unknown actor {actor_id}")
+        from_component = adjustment["from_component"]
+        to_component = adjustment["to_component"]
+        reason = adjustment["reason"]
+        if not all(isinstance(value, str) and value for value in (from_component, to_component, reason)):
+            raise FactionWiringError(f"Actor component replacement for {actor_id} is incomplete")
+        if from_component not in actor.get("components", []):
+            raise FactionWiringError(
+                f"Audit adjustment cannot replace absent component on {actor_id}: {from_component}"
+            )
+        if to_component not in components:
+            raise FactionWiringError(
+                f"Audit adjustment replacement for {actor_id} references unknown component {to_component}"
+            )
+        if to_component in actor.get("components", []) and to_component != from_component:
+            raise FactionWiringError(
+                f"Audit adjustment replacement would duplicate component on {actor_id}: {to_component}"
+            )
+        actor["components"] = [
+            to_component if component_id == from_component else component_id
+            for component_id in actor["components"]
+        ]
 
     for adjustment in adjustments.get("actor_component_removals", []):
         required = {"actor_id", "components", "reason"}
