@@ -35,6 +35,27 @@ func _timing_suffix(payload: Dictionary) -> String:
 	]
 
 
+func _save_timing_suffix(payload: Dictionary) -> String:
+	var timings: Variant = payload.get("timings", {})
+	if not timings is Dictionary:
+		return ""
+	var row := timings as Dictionary
+	if not row.has("save_validate_ms"):
+		return ""
+	return "[save: strat %.2f pos %.2f ord %.2f site %.2f supply %.2f s11 %.2f obs %.2f val %.2f enc %.2f write %.2f]" % [
+		float(row.get("save_strategic_ms", 0.0)) / 1000.0,
+		float(row.get("save_positions_ms", 0.0)) / 1000.0,
+		float(row.get("save_orders_ms", 0.0)) / 1000.0,
+		float(row.get("save_site_control_ms", 0.0)) / 1000.0,
+		float(row.get("save_supply_ms", 0.0)) / 1000.0,
+		float(row.get("save_s11_schema_ms", 0.0)) / 1000.0,
+		float(row.get("save_observer_refresh_ms", 0.0)) / 1000.0,
+		float(row.get("save_validate_ms", 0.0)) / 1000.0,
+		float(row.get("save_encode_ms", 0.0)) / 1000.0,
+		float(row.get("save_write_ms", 0.0)) / 1000.0,
+	]
+
+
 func _round_timing_suffix(payload: Dictionary) -> String:
 	var data := _result_data(payload, "end_player_round")
 	var perf: Variant = data.get("perf_turn_cycle", {})
@@ -43,7 +64,8 @@ func _round_timing_suffix(payload: Dictionary) -> String:
 	var row := perf as Dictionary
 	if not row.has("ai_take_turn_total_ms"):
 		return ""
-	return "[round: AI %.2fs, advance %.2fs, actors %.2fs]" % [
+	return "[round: engine %.2fs, AI %.2fs, advance %.2fs, actors %.2fs]" % [
+		float(row.get("engine_init_ms", 0.0)) / 1000.0,
 		float(row.get("ai_take_turn_total_ms", 0.0)) / 1000.0,
 		float(row.get("advance_turn_total_ms", 0.0)) / 1000.0,
 		float(row.get("actor_runtime_total_ms", 0.0)) / 1000.0,
@@ -55,6 +77,9 @@ func _append_backend_timing(payload: Dictionary) -> void:
 	var suffix := _timing_suffix(payload)
 	if not suffix.is_empty():
 		pieces.append(suffix)
+	var save_suffix := _save_timing_suffix(payload)
+	if not save_suffix.is_empty():
+		pieces.append(save_suffix)
 	var round_suffix := _round_timing_suffix(payload)
 	if not round_suffix.is_empty():
 		pieces.append(round_suffix)
