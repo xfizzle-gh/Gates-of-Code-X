@@ -2,8 +2,8 @@
 
 - schema: `gates-of-codex.expanded-nations-static-matrix` v2
 - evidence_state: `static_pre_native`
-- source_head: `1f91f452916579f63fffaf5efefe62cf63906769`
-- matrix_signature: `61427243f671c1da60bb1a2ba0329f1190ea45e571ee1efcdc74e6d8ddf7728d`
+- source_head: `b4ab9c38f38c87206bb0beab060c16af9121426a`
+- matrix_signature: `d2c66944a06efcdbb56b2f857c0b3482f1dbc0e3d3fb2dfbb884c843e10829a7`
 - architecture: `{"core_sides_preserved": ["nato", "ukr", "rusa", "prc"], "expanded_mode_uses_gates_ids": true, "issue_201_status": "partial_owner_approved_for_production_goc_ids", "mixed_architecture_forbidden": true, "owner_disposition": "distinct_gates_owned_tactical_faction_ids", "phase1_source_families_frozen": true}`
 - counts: `{"actor_count": 61, "hosted_actor_count": 3, "phase1_actor_count": 24, "playable_actor_count": 33, "registered_goc_side_count": 57, "strategic_only_actor_count": 25}`
 
@@ -15,7 +15,7 @@
 |---|---|---|---|---|---|
 | phase1_full_national_west | usa | `goc_usa` | `nato` | playable | Phase 1 USA full national on Gates ID; source family nato |
 | phase1_national_hybrid_west | fra | `goc_fra` | `nato` | playable | France ARF/DSK hybrid on Gates ID for same-family USA-vs-France proof |
-| phase1_spain_3rd_assault | esp | `goc_esp` | `nato` | playable | Spain seven-unit 3rd Assault allocation |
+| phase1_spain_ildu_nato_fallback | esp | `goc_esp` | `nato` | playable | Spain ILDU NATO-personnel wrappers from Ukraine authority plus approved NATO heavy/support fallback; Azov/3rd Assault forbidden |
 | phase1_ukraine_core | ukr | `goc_ukr` | `ukr` | playable | Ukraine without duplicate ILDU wrappers |
 | phase1_russia_core | rus | `goc_rus` | `rusa` | playable | Russia with KPA/Wagner hosted separation |
 | phase1_proxy_dprk | dprk | `goc_dprk` | `rusa` | playable | DPRK isolation on Gates ID; source family rusa |
@@ -80,7 +80,7 @@ Strategic-only:
 | dprk | True | proxy_hybrid | `goc_dprk` | `rusa` | 20 | 29 | 5 | 15 | 32 | actor_scoped_ai_economy | not_run |
 | dza | False | strategic_only | `goc_dza` | `rusa` | 0 | 0 | 0 | 0 | 0 | none | not_run |
 | egy | False | strategic_only | `goc_egy` | `nato` | 0 | 0 | 0 | 0 | 0 | none | not_run |
-| esp | True | coalition_fallback | `goc_esp` | `nato` | 50 | 63 | 50 | 0 | 32 | actor_scoped_ai_economy | not_run |
+| esp | True | coalition_fallback | `goc_esp` | `nato` | 49 | 63 | 49 | 0 | 32 | actor_scoped_ai_economy | not_run |
 | est | True | coalition_fallback | `goc_est` | `nato` | 55 | 64 | 55 | 0 | 32 | actor_scoped_ai_economy | not_run |
 | fin | True | national_hybrid | `goc_fin` | `nato` | 22 | 32 | 22 | 0 | 32 | actor_scoped_ai_economy | not_run |
 | fra | True | national_hybrid | `goc_fra` | `nato` | 28 | 36 | 28 | 0 | 32 | actor_scoped_ai_economy | not_run |

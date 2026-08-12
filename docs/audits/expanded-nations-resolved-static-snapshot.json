@@ -201,13 +201,13 @@
     {
       "actor_id": "esp",
       "legacy_unit_count": 0,
-      "modern_unit_count": 50,
+      "modern_unit_count": 49,
       "playable": true,
       "research_node_count": 63,
       "roster_class": "coalition_fallback",
       "tactical_side": "goc_esp",
-      "unit_count": 50,
-      "virtual_unit_count": 0
+      "unit_count": 49,
+      "virtual_unit_count": 6
     },
     {
       "actor_id": "est",
@@ -673,11 +673,11 @@
     }
   ],
   "error_count": 0,
-  "manifest_authority_fingerprint": "4681226ade2043cc5fde5eae3ae084d03635aade27ca96d2b2f81a478b9bc302",
-  "pack_count_authority_fingerprint": "ba112174eb5d9978d56db14a4bc9a4682cea60225b925b0d0262b24f8735efdf",
+  "manifest_authority_fingerprint": "e9a886cd81fd988ed9e8059d5c242a6d71eddf7896f18d0946d1c15ac2c1e401",
+  "pack_count_authority_fingerprint": "29e68078f32f87debbd93e01443794cf9280d8b9b148f8e05739b51f96ee12e3",
   "schema": "gates-of-codex.resolved-factions-static-snapshot",
   "schema_version": 2,
-  "stack_signature": "7da216589af196fb23d8dd205801750f8ad8e6dd31505027d10545c446d83a45",
+  "stack_signature": "72fe7543cff1e0fd053767f7d8daac6393e30269dbbd6490fb517b3a43bddd9e",
   "warning_count": 0,
-  "wiring_signature": "453051828ec6ed4b8987cdeeeb12fe8d069a50b6e4b73cd251f8b417859f9e07"
+  "wiring_signature": "79bd2067ce00db28cffa2a1823a7017837b0f81a0981e365fda365e369244255"
 }

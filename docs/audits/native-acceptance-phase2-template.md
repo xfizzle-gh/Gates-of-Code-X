@@ -46,11 +46,11 @@ Status: **harness only** — owner performs live GoH runs; independent auditor r
 - Notes: France ARF/DSK hybrid on Gates ID for same-family USA-vs-France proof
 - Evidence paths: logs=… screenshots=… saves=…
 
-### phase1_spain_3rd_assault (`playable`)
+### phase1_spain_ildu_nato_fallback (`playable`)
 - Actor: `esp`
 - Expanded tactical side: `goc_esp`
 - Source family: `nato`
-- Notes: Spain seven-unit 3rd Assault allocation
+- Notes: Spain ILDU NATO-personnel wrappers from Ukraine authority plus approved NATO heavy/support fallback; Azov/3rd Assault forbidden
 - Evidence paths: logs=… screenshots=… saves=…
 
 ### phase1_ukraine_core (`playable`)

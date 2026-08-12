@@ -1319,7 +1319,7 @@
       "virtual_unit_count": 0
     },
     {
-      "actor_authority_signature": "a12c632db2da52a38aab8dcc76186dff55cfdabd4980128ca9c4c7c91b9cdb6e",
+      "actor_authority_signature": "35ae51df7dd321b791eb158e65a1c311d4f95b5c476bdc65fecee960781315c9",
       "actor_id": "esp",
       "actor_type": "sovereign",
       "ai_purchase_authority": {
@@ -1332,7 +1332,7 @@
       "campaign_faction": "nato",
       "coalition_id": "atlantic",
       "components": [
-        "spain_3rd_assault_legion",
+        "ukraine_ildu",
         "nato_fallback_heavy",
         "nato_common_support"
       ],
@@ -1345,13 +1345,13 @@
       "legacy_unit_count": 0,
       "managed_file_hashes": {
         "resource/interface/pages/multi/flag_goc_esp.tga": "f4668e4f6e178ebac3f510ba6a849663decb4d9e93ffa1da45170f00ede1d960",
-        "resource/script/multiplayer/units/goc_esp/conquest.goc_esp.lua": "649da6da32ac7d0ddb5ddf463fdd3d0f63034f1bfbdbe3cf4b8d9ae6b40ac9ec",
-        "resource/set/dynamic_campaign/unit_research_goc_esp.set": "ea49272f1d57957892f1d8db59eeddac729c6503bbfe375e9e7eef24a9562842",
+        "resource/script/multiplayer/units/goc_esp/conquest.goc_esp.lua": "af644935121e43011852b64beada82f2fabf12bdfa13049d043bc65ebd9e6b0a",
+        "resource/set/dynamic_campaign/unit_research_goc_esp.set": "48b4ed6ae4dbc7dfa7ad6d2af9862aa9390f27c97e35efe75fe4c4b73278f917",
         "resource/set/multiplayer/armies/goc_esp.set": "0ea57b426af331e6151af59b0f27acce8213df6ec5b61e30ac85dd97fdd5e88e",
-        "resource/set/multiplayer/units/conquest/inf_goc_esp.set": "cc424e0cfc04cc2117d5774999c8ffaa61fd1e68e399b8035bb843e4d9b6d40f",
-        "resource/set/multiplayer/units/conquest/units_goc_esp.set": "172352201b176416530408fa6e8797e57518a5f678047477e7d245c47dc9c7a9"
+        "resource/set/multiplayer/units/conquest/inf_goc_esp.set": "afad742ebb70b236849f52c7524677212f0279a3c036d454283f3bd7ce37cd54",
+        "resource/set/multiplayer/units/conquest/units_goc_esp.set": "19e029b287295dfaa9814f7a3f11c5f23509c764f9a71e87be0f78976499a236"
       },
-      "modern_unit_count": 50,
+      "modern_unit_count": 49,
       "native_acceptance_status": "not_run",
       "native_checklist": [
         "install_or_activate_via_supported_gates_path",
@@ -1391,13 +1391,14 @@
         },
         "notes": [
           "Spain uses the audited 3rd Assault Brigade international-legion infantry subset, with NATO coalition armor/artillery/support filling non-infantry gaps. Other foreign-volunteer content is reserved for regional neutral encounters.",
-          "#194 Expanded-mode tactical identity goc_esp (source/core transport family was nato); Core four sides unchanged."
+          "#194 Expanded-mode tactical identity goc_esp (source/core transport family was nato); Core four sides unchanged.",
+          "Owner native #194 review superseded the prior Spain 3rd Assault allocation: Spain uses the NATO-personnel International Legion/ILDU wrapper pool from the Ukraine tree and must not recruit Azov/3rd Assault personnel."
         ]
       },
       "strategic_only": false,
       "tactical_side": "goc_esp",
-      "unit_count": 50,
-      "virtual_unit_count": 0
+      "unit_count": 49,
+      "virtual_unit_count": 6
     },
     {
       "actor_authority_signature": "3715905394439f8e62fe25ce50d02bf92facb1f57e07307c14a093ef0882ba08",
@@ -4628,7 +4629,7 @@
     "strategic_only_actor_count": 25
   },
   "evidence_state": "static_pre_native",
-  "matrix_signature": "61427243f671c1da60bb1a2ba0329f1190ea45e571ee1efcdc74e6d8ddf7728d",
+  "matrix_signature": "d2c66944a06efcdbb56b2f857c0b3482f1dbc0e3d3fb2dfbb884c843e10829a7",
   "native_harness": {
     "battle_pair_install_command": "python -m gates_of_codex.expanded_nations_cli battle-pair --attacker <ATTACKER_ACTOR_ID> --defender <DEFENDER_ACTOR_ID> --gates-root <GATES_ROOT> --source-repo <SOURCE_REPO>",
     "battle_pair_restore_command": "python -m gates_of_codex.expanded_nations_cli battle-pair-restore --gates-root <GATES_ROOT>",
@@ -4668,8 +4669,8 @@
       {
         "checklist": "playable",
         "expanded_tactical_side": "goc_esp",
-        "family_id": "phase1_spain_3rd_assault",
-        "notes": "Spain seven-unit 3rd Assault allocation",
+        "family_id": "phase1_spain_ildu_nato_fallback",
+        "notes": "Spain ILDU NATO-personnel wrappers from Ukraine authority plus approved NATO heavy/support fallback; Azov/3rd Assault forbidden",
         "representative_actor_id": "esp",
         "roster_class": "coalition_fallback",
         "source_compatibility_family": "nato"
@@ -4881,5 +4882,5 @@
   },
   "schema": "gates-of-codex.expanded-nations-static-matrix",
   "schema_version": 2,
-  "source_head": "1f91f452916579f63fffaf5efefe62cf63906769"
+  "source_head": "b4ab9c38f38c87206bb0beab060c16af9121426a"
 }
