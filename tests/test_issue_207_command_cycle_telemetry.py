@@ -23,6 +23,7 @@ class CommandCycleTelemetryTests(unittest.TestCase):
                 "campaign_bytes",
                 "snapshot_bytes",
                 "read_only_fast_path",
+                "snapshot_fast_path",
             ),
             command_cycle_perf.timing_keys(),
         )
@@ -36,9 +37,6 @@ class CommandCycleTelemetryTests(unittest.TestCase):
             snapshot.write_text('{"existing":true}\n', encoding="utf-8")
 
             def fake_apply(campaign_path, *, commands, commands_path, snapshot_path):
-                # The measured wrapper installs read-only no-op writers before
-                # delegating here. If they call the original sentinels below,
-                # this test fails.
                 frontend_commands.save_campaign(object(), campaign_path)
                 frontend.write_frontend_snapshot(
                     object(),
@@ -81,13 +79,85 @@ class CommandCycleTelemetryTests(unittest.TestCase):
 
             timings = report["timings"]
             self.assertTrue(timings["read_only_fast_path"])
+            self.assertFalse(timings["snapshot_fast_path"])
             self.assertEqual(0.0, timings["save_ms"])
             self.assertEqual(0.0, timings["snapshot_ms"])
             self.assertEqual(campaign.stat().st_size, timings["campaign_bytes"])
             self.assertEqual(snapshot.stat().st_size, timings["snapshot_bytes"])
             self.assertGreaterEqual(timings["total_ms"], 0.0)
 
-    def test_mutating_command_still_uses_existing_save_and_snapshot_path(self) -> None:
+    def test_move_order_saves_campaign_but_skips_full_snapshot_publication(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            campaign = root / "campaign.json"
+            snapshot = root / "campaign_snapshot.json"
+            campaign.write_text("{}\n", encoding="utf-8")
+            snapshot.write_text('{"existing":true}\n', encoding="utf-8")
+            calls = {"save": 0, "snapshot": 0}
+
+            def fake_save(_state, path, *, observation_context=None):
+                calls["save"] += 1
+                Path(path).write_text('{"saved":true}\n', encoding="utf-8")
+                return Path(path)
+
+            def fake_snapshot(_state, path, *, campaign_path=None, environ=None):
+                calls["snapshot"] += 1
+                Path(path).write_text('{"snapshot":true}\n', encoding="utf-8")
+                return Path(path)
+
+            def fake_apply(campaign_path, *, commands, commands_path, snapshot_path):
+                frontend_commands.save_campaign(object(), campaign_path)
+                frontend.write_frontend_snapshot(
+                    object(), snapshot_path, campaign_path=campaign_path
+                )
+                return {
+                    "ok": True,
+                    "campaign_path": str(campaign_path),
+                    "snapshot_path": str(snapshot_path),
+                    "commands_applied": 1,
+                    "results": [
+                        {
+                            "op": "issue_move_order",
+                            "ok": True,
+                            "detail": "draft order-1",
+                            "data": {
+                                "move_order": {
+                                    "order_id": "order-1",
+                                    "status": "draft",
+                                }
+                            },
+                        }
+                    ],
+                }
+
+            with (
+                patch.object(command_cycle_perf, "_ORIGINAL_APPLY", fake_apply),
+                patch.object(frontend_commands, "save_campaign", fake_save),
+                patch.object(frontend, "write_frontend_snapshot", fake_snapshot),
+            ):
+                report = command_cycle_perf.measured_apply_frontend_commands(
+                    campaign,
+                    commands=[
+                        {
+                            "op": "issue_move_order",
+                            "formation_id": "sf-test",
+                            "path_node_ids": ["a", "b"],
+                        }
+                    ],
+                    snapshot_path=snapshot,
+                )
+
+            self.assertEqual(1, calls["save"])
+            self.assertEqual(0, calls["snapshot"])
+            self.assertFalse(report["timings"]["read_only_fast_path"])
+            self.assertTrue(report["timings"]["snapshot_fast_path"])
+            self.assertGreaterEqual(report["timings"]["save_ms"], 0.0)
+            self.assertEqual(0.0, report["timings"]["snapshot_ms"])
+            self.assertEqual(
+                '{"existing":true}\n', snapshot.read_text(encoding="utf-8")
+            )
+
+    def test_non_patch_mutation_still_uses_existing_save_and_snapshot_path(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             campaign = root / "campaign.json"
@@ -132,6 +202,7 @@ class CommandCycleTelemetryTests(unittest.TestCase):
             self.assertEqual(1, calls["save"])
             self.assertEqual(1, calls["snapshot"])
             self.assertFalse(report["timings"]["read_only_fast_path"])
+            self.assertFalse(report["timings"]["snapshot_fast_path"])
             self.assertGreaterEqual(report["timings"]["save_ms"], 0.0)
             self.assertGreaterEqual(report["timings"]["snapshot_ms"], 0.0)
 
@@ -149,16 +220,28 @@ class GodotMeasuredCommandTests(unittest.TestCase):
         self.assertIn('path="res://scripts/main_perf_measured.gd"', scene)
         self.assertIn('path="res://scripts/main_stack_panel.gd"', scene)
 
-    def test_verify_result_does_not_reparse_unchanged_snapshot(self) -> None:
+    def test_fast_commands_do_not_reparse_unchanged_snapshot(self) -> None:
         source = (ROOT / "godot/scripts/main_perf_measured.gd").read_text(
             encoding="utf-8"
         )
-        verify_branch = source.split('if op != "verify_result":', 1)[1]
-        self.assertIn("super._on_command_finished", verify_branch)
-        self.assertIn("_capture_verification(backend_payload)", verify_branch)
-        self.assertIn("_append_backend_timing(backend_payload)", verify_branch)
+        self.assertIn('op == "verify_result" or _is_lightweight_order_op(op)', source)
+        self.assertIn("_capture_verification(backend_payload)", source)
+        self.assertIn("_apply_move_order_result_patch", source)
+        self.assertIn("_append_backend_timing(backend_payload)", source)
         self.assertNotIn("_try_build_snapshot_state", source)
-        self.assertIn("read-only", source)
+
+    def test_move_order_patch_is_bounded_to_returned_authoritative_order(self) -> None:
+        source = (ROOT / "godot/scripts/main_perf_measured.gd").read_text(
+            encoding="utf-8"
+        )
+        patch_block = source.split(
+            "func _apply_move_order_result_patch(", 1
+        )[1].split("func _consume_fast_command_result(", 1)[0]
+        self.assertIn('data.has("move_order")', patch_block)
+        self.assertIn('force["move_order"] = data.get("move_order", null)', patch_block)
+        self.assertIn('snapshot["strategic_formations"] = rows', patch_block)
+        self.assertNotIn('snapshot["provinces"]', patch_block)
+        self.assertNotIn('snapshot["battalions"]', patch_block)
 
     def test_godot_status_exposes_backend_phase_breakdown(self) -> None:
         source = (ROOT / "godot/scripts/main_perf_measured.gd").read_text(
