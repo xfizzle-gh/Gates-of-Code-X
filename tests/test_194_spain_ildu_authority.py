@@ -27,7 +27,7 @@ ILDU_BREEDS = {
 FORBIDDEN_SPAIN_TOKENS = ("azov3", "3rd_assault", "squad_3rd_rozv_hatred")
 _RESOLVED_UNIT_RE = re.compile(r"^;\s*resolved_unit=(.+?)\s*$", re.MULTILINE)
 _GOC_NODE_RE = re.compile(r"^;\s*goc-node\s+(\{.*\})\s*$", re.MULTILINE)
-_PURCHASE_RE = re.compile(r'^\s*\["([^"]+)"\]\s*=\s*\{', re.MULTILINE)
+_PURCHASE_RE = re.compile(r'\bunit\s*=\s*"([^"]+)"')
 _INF_MARKER = "; goc-inf-cost "
 
 
