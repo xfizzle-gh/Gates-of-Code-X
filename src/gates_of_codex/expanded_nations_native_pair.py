@@ -37,6 +37,8 @@ ALLIANCES_REL = "resource/set/multiplayer/games/presets/alliances_generic.inc"
 
 # Exact final-layer parent conquest set from the native #201 win. In
 # particular: no inf_frg_era1960, no inf_sov_era1960, no units_frg_era1960.
+# Supplemental parent inf metadata is admitted only when a selected committed
+# goc_* inf pack proves it projected a row from that exact parent authority.
 PARENT_NAMES = (
     "settings.set",
     "inf_ukr.set",
@@ -54,6 +56,9 @@ PARENT_NAMES = (
 PARENT_RELS = tuple(
     f"resource/set/multiplayer/units/conquest/{name}" for name in PARENT_NAMES
 )
+_INF_COST_MARKER = "; goc-inf-cost "
+_INF_PARENT_NAME_RE = re.compile(r"^inf_[A-Za-z0-9_.-]+\.set$", re.IGNORECASE)
+_EXPLICITLY_BLOCKED_PARENT_INF = frozenset({"inf_frg_era1960.set"})
 
 
 def _sha(path: Path) -> str:
@@ -131,6 +136,49 @@ def _find(roots: Sequence[Path], rel: str) -> Path:
     raise ExpandedNationsError(f"Required parent runtime file not found: {rel}")
 
 
+def _supplemental_parent_inf_names(source: Path, sides: Sequence[str]) -> tuple[str, ...]:
+    """Return exact parent inf metadata required by selected projected rows.
+
+    ``inf_goc_*`` cost rows retain the source row's first named define. Most are
+    satisfied by the baseline #201 parent inf files. When a selected actor uses
+    legacy metadata outside that baseline (Serbia's Soviet-era support is the
+    first native example), the provenance marker names the exact parent inf file
+    that owns those definitions. Materialize only those proven authorities.
+    """
+
+    required: set[str] = set()
+    baseline = {name.casefold() for name in PARENT_NAMES}
+    for side in dict.fromkeys(str(item) for item in sides if str(item) != "prc"):
+        path = source / f"resource/set/multiplayer/units/conquest/inf_{side}.set"
+        if not path.is_file():
+            raise ExpandedNationsError(f"Missing committed selected inf pack: {path}")
+        for lineno, line in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), start=1):
+            stripped = line.strip()
+            if not stripped.startswith(_INF_COST_MARKER):
+                continue
+            try:
+                metadata = json.loads(stripped[len(_INF_COST_MARKER) :])
+            except json.JSONDecodeError as exc:
+                raise ExpandedNationsError(
+                    f"Malformed inf-cost provenance in {path}:{lineno}: {exc}"
+                ) from exc
+            reference = str(metadata.get("source_reference") or "").replace("\\", "/")
+            name = reference.rsplit("/", 1)[-1]
+            if not _INF_PARENT_NAME_RE.fullmatch(name):
+                raise ExpandedNationsError(
+                    f"Invalid inf-cost source authority in {path}:{lineno}: {reference!r}"
+                )
+            folded = name.casefold()
+            if folded in baseline:
+                continue
+            if folded in _EXPLICITLY_BLOCKED_PARENT_INF:
+                raise ExpandedNationsError(
+                    f"Selected pair requires explicitly unapproved parent inf authority: {name}"
+                )
+            required.add(name)
+    return tuple(sorted(required, key=str.casefold))
+
+
 def _assignment(attacker: str, defender: str) -> tuple[str, str]:
     def coalition(side: str, default: str) -> str:
         if is_goc_tactical_side(side):
@@ -165,14 +213,14 @@ def _alliances(attacker: str, defender: str) -> str:
     )
 
 
-def _roster(attacker: str, defender: str) -> str:
-    inf = [x for x in PARENT_NAMES if x.startswith("inf_")]
-    units = [x for x in PARENT_NAMES if x.startswith("units_")]
+def _roster(attacker: str, defender: str, parent_names: Sequence[str] = PARENT_NAMES) -> str:
+    inf = [x for x in parent_names if x.startswith("inf_")]
+    units = [x for x in parent_names if x.startswith("units_")]
     sides = tuple(dict.fromkeys((attacker, defender)))
     lines = [
         ";sdl",
         GENERATED_MARKER,
-        "; native #194 final-layer roster; exact #201 include contract",
+        "; native #194 final-layer roster; exact #201 include contract plus selected inf authorities",
         "{units",
         '\t(include "conquest/settings.set")',
         "",
@@ -333,7 +381,17 @@ def install_native_pair(
     resolved = _resolved_pair_actors(roots, actor_sides, resolved_payload)
     breed_outputs = _project_pair_breeds(resolved, roots, actor_sides)
 
-    parent = {rel: _find(roots, rel) for rel in PARENT_RELS}
+    pack_rels = sorted(set(_pack_rels(attacker) + _pack_rels(defender)))
+    for rel in pack_rels:
+        if not (source / rel).is_file():
+            raise ExpandedNationsError(f"Missing committed pair pack: {rel}")
+
+    supplemental_inf_names = _supplemental_parent_inf_names(source, (attacker, defender))
+    parent_names = tuple(PARENT_NAMES) + supplemental_inf_names
+    parent_rels = tuple(
+        f"resource/set/multiplayer/units/conquest/{name}" for name in parent_names
+    )
+    parent = {rel: _find(roots, rel) for rel in parent_rels}
     parent[VALUES_REL] = _find(roots, VALUES_REL)
     parent[CTF_REL] = _find(roots, CTF_REL)
 
@@ -353,11 +411,6 @@ def install_native_pair(
         raise ExpandedNationsError(f"Missing committed production conquest.lua: {lua_src}")
     lua = _conquest(lua_src.read_text(encoding="utf-8-sig", errors="replace"), attacker, defender)
 
-    pack_rels = sorted(set(_pack_rels(attacker) + _pack_rels(defender)))
-    for rel in pack_rels:
-        if not (source / rel).is_file():
-            raise ExpandedNationsError(f"Missing committed pair pack: {rel}")
-
     backup_root = gates / BACKUP_REL
     if backup_root.exists():
         shutil.rmtree(backup_root)
@@ -373,7 +426,7 @@ def install_native_pair(
         touched.append(rel)
 
     try:
-        for rel in PARENT_RELS:
+        for rel in parent_rels:
             prep(rel)
             installed[rel] = _copy(parent[rel], gates / rel)
         for rel in pack_rels:
@@ -389,7 +442,7 @@ def install_native_pair(
             (CTF_REL, ctf),
             (ALLIANCES_REL, _alliances(attacker, defender)),
             (VALUES_REL, values),
-            (ROSTER_REL, _roster(attacker, defender)),
+            (ROSTER_REL, _roster(attacker, defender, parent_names)),
         ):
             prep(rel)
             installed[rel] = _write(gates / rel, text)
@@ -406,6 +459,7 @@ def install_native_pair(
             "source_repo": str(source),
             "workshop_root": str(workshop),
             "parent_roots": [str(x) for x in roots],
+            "supplemental_parent_inf": list(supplemental_inf_names),
             "parent_sources": [
                 {"relative_path": rel, "source_path": str(path), "sha256": _sha(path)}
                 for rel, path in sorted(parent.items())
@@ -468,6 +522,24 @@ def verify_native_pair(gates_root: str | Path) -> list[str]:
         elif meta.get("sha256") and _sha(target) != meta["sha256"]:
             problems.append(f"tampered installed file {rel}")
 
+    supplemental = manifest.get("supplemental_parent_inf") or []
+    if not isinstance(supplemental, list):
+        problems.append("supplemental parent inf manifest field is not a list")
+        supplemental = []
+    normalized_supplemental: list[str] = []
+    for raw in supplemental:
+        name = str(raw)
+        if not _INF_PARENT_NAME_RE.fullmatch(name):
+            problems.append(f"invalid supplemental parent inf name {name}")
+            continue
+        if name.casefold() in _EXPLICITLY_BLOCKED_PARENT_INF:
+            problems.append(f"blocked supplemental parent inf installed {name}")
+            continue
+        rel = f"resource/set/multiplayer/units/conquest/{name}"
+        if rel not in installed:
+            problems.append(f"supplemental parent inf not transactionally installed: {name}")
+        normalized_supplemental.append(name)
+
     breed_files = manifest.get("breed_files") or {}
     for side in (str(manifest.get("attacker_side") or ""), str(manifest.get("defender_side") or "")):
         if side.startswith("goc_"):
@@ -487,9 +559,12 @@ def verify_native_pair(gates_root: str | Path) -> list[str]:
         for include in _includes(text):
             if not (base / include).is_file():
                 problems.append(f"unresolved roster include {include}")
-        for banned in ("inf_frg_era1960.set", "inf_sov_era1960.set", "units_frg_era1960.set"):
+        for banned in ("inf_frg_era1960.set", "units_frg_era1960.set"):
             if banned in text:
                 problems.append(f"roster regressed to #201-excluded include {banned}")
+        for name in normalized_supplemental:
+            if f'include "conquest/{name}"' not in text:
+                problems.append(f"roster missing supplemental parent inf include {name}")
 
     ctf = gates / CTF_REL
     if ctf.is_file():
