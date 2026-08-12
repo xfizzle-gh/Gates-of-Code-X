@@ -2,7 +2,7 @@
 
 - schema: `gates-of-codex.expanded-nations-static-matrix` v1
 - evidence_state: `static_pre_native`
-- source_head: `a58c7145dfe119f91769b51a5d3b61e9961f5def`
+- source_head: `7cd756b9e6c7704bb16205d0e51404f417038a6a`
 - matrix_signature: `e677570464fe2c2174d0ba2daebaece30a619adb55b12c280ad34cbe2e0b6bcb`
 - architecture: `{"core_sides_preserved": ["nato", "ukr", "rusa", "prc"], "issue_201_status": "partial_owner_approved_for_production_goc_ids", "mixed_architecture_forbidden": true, "owner_disposition": "distinct_gates_owned_tactical_faction_ids"}`
 - counts: `{"actor_count": 61, "hosted_actor_count": 3, "phase1_actor_count": 24, "playable_actor_count": 33, "registered_goc_side_count": 37, "strategic_only_actor_count": 25}`
