@@ -35,14 +35,30 @@ class Phase194NativePair201RecipeTests(unittest.TestCase):
         settings.parent.mkdir(parents=True, exist_ok=True)
         settings.write_text("; aio effective settings\n", encoding="utf-8")
 
-        breed_root = codex / "resource/set/breed/mp/nato/2022s"
-        breed_root.mkdir(parents=True, exist_ok=True)
-        (breed_root / "shared.inc").write_text("; shared breed include\n", encoding="utf-8")
-        (breed_root / "nato_rifleman.set").write_text(
-            '(include "shared.inc")\n{breed rifleman}\n', encoding="utf-8"
+        nato_breed_root = codex / "resource/set/breed/mp/nato/2022s"
+        nato_breed_root.mkdir(parents=True, exist_ok=True)
+        (nato_breed_root / "shared.inc").write_text("; shared breed include\n", encoding="utf-8")
+        (nato_breed_root / "ability.inc").write_text(
+            "; NATO ability authority\n{ability nato}\n", encoding="utf-8"
         )
-        (breed_root / "nato_medic.set").write_text(
-            '(include "shared.inc")\n{breed medic}\n', encoding="utf-8"
+        (nato_breed_root / "nato_rifleman.set").write_text(
+            '(include "shared.inc")\n(include "ability.inc")\n{breed rifleman}\n',
+            encoding="utf-8",
+        )
+        (nato_breed_root / "nato_medic.set").write_text(
+            '(include "shared.inc")\n(include "ability.inc")\n{breed medic}\n',
+            encoding="utf-8",
+        )
+
+        ukr_breed_root = codex / "resource/set/breed/mp/ukr/2022s"
+        ukr_breed_root.mkdir(parents=True, exist_ok=True)
+        (ukr_breed_root / "ability.inc").write_text(
+            "; UKR ability authority - deliberately different bytes\n{ability ukr}\n",
+            encoding="utf-8",
+        )
+        (ukr_breed_root / "ukr_crew.set").write_text(
+            '(include "ability.inc")\n{breed crew}\n',
+            encoding="utf-8",
         )
 
         values = codex / VALUES_REL
@@ -127,7 +143,7 @@ class Phase194NativePair201RecipeTests(unittest.TestCase):
                     "actor_id": "fra",
                     "playable": True,
                     "tactical_side": "goc_fra",
-                    "components": ["nato_common_infantry"],
+                    "components": ["nato_common_infantry", "france_national"],
                     "units": [
                         {
                             "unit_name": "squad_fixture(goc_fra)",
@@ -135,7 +151,14 @@ class Phase194NativePair201RecipeTests(unittest.TestCase):
                             "source_side": "nato",
                             "period": "2022s",
                             "members": {"nato_medic": 1},
-                        }
+                        },
+                        {
+                            "unit_name": "amx10rc(goc_fra)",
+                            "component_id": "france_national",
+                            "source_side": "ukr",
+                            "period": "2022s",
+                            "members": {"ukr_crew": 1},
+                        },
                     ],
                 },
             ],
@@ -176,11 +199,43 @@ class Phase194NativePair201RecipeTests(unittest.TestCase):
             )
 
             usa_breed = gates / "resource/set/breed/mp/goc_usa/2022s/nato_rifleman.set"
-            fra_breed = gates / "resource/set/breed/mp/goc_fra/2022s/nato_medic.set"
-            for breed in (usa_breed, fra_breed):
+            fra_nato_breed = gates / "resource/set/breed/mp/goc_fra/2022s/nato_medic.set"
+            fra_ukr_breed = gates / "resource/set/breed/mp/goc_fra/2022s/ukr_crew.set"
+            for breed in (usa_breed, fra_nato_breed, fra_ukr_breed):
                 self.assertTrue(breed.is_file())
-                self.assertIn("cross-side-breed-source=nato/2022s/", breed.read_text(encoding="utf-8"))
-                self.assertTrue((breed.parent / "shared.inc").is_file())
+
+            self.assertIn(
+                "cross-side-breed-source=nato/2022s/",
+                fra_nato_breed.read_text(encoding="utf-8"),
+            )
+            self.assertIn(
+                "cross-side-breed-source=ukr/2022s/",
+                fra_ukr_breed.read_text(encoding="utf-8"),
+            )
+
+            fra_nato_ability = (
+                gates / "resource/set/breed/mp/goc_fra/2022s/_goc_source/nato/ability.inc"
+            )
+            fra_ukr_ability = (
+                gates / "resource/set/breed/mp/goc_fra/2022s/_goc_source/ukr/ability.inc"
+            )
+            fra_nato_shared = (
+                gates / "resource/set/breed/mp/goc_fra/2022s/_goc_source/nato/shared.inc"
+            )
+            for dependency in (fra_nato_ability, fra_ukr_ability, fra_nato_shared):
+                self.assertTrue(dependency.is_file(), dependency)
+
+            self.assertIn("NATO ability authority", fra_nato_ability.read_text(encoding="utf-8"))
+            self.assertIn("UKR ability authority", fra_ukr_ability.read_text(encoding="utf-8"))
+            self.assertNotEqual(fra_nato_ability.read_bytes(), fra_ukr_ability.read_bytes())
+            self.assertIn(
+                '(include "_goc_source/nato/ability.inc")',
+                fra_nato_breed.read_text(encoding="utf-8"),
+            )
+            self.assertIn(
+                '(include "_goc_source/ukr/ability.inc")',
+                fra_ukr_breed.read_text(encoding="utf-8"),
+            )
 
             ctf = (gates / CTF_REL).read_text(encoding="utf-8")
             self.assertIn("FULL_AIO_CTF_SENTINEL", ctf)
@@ -211,7 +266,10 @@ class Phase194NativePair201RecipeTests(unittest.TestCase):
             for rel in PARENT_RELS:
                 self.assertFalse((gates / rel).exists(), rel)
             self.assertFalse(usa_breed.exists())
-            self.assertFalse(fra_breed.exists())
+            self.assertFalse(fra_nato_breed.exists())
+            self.assertFalse(fra_ukr_breed.exists())
+            self.assertFalse(fra_nato_ability.exists())
+            self.assertFalse(fra_ukr_ability.exists())
 
 
 if __name__ == "__main__":

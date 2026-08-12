@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+import posixpath
 import re
 from typing import Any, Mapping, Sequence
 
@@ -29,7 +30,7 @@ _CROSS_SIDE_BREED_COMPONENTS = frozenset(
 )
 _INCLUDE_RE = re.compile(r'\(\s*include\s+"([^"]+)"\s*\)', re.IGNORECASE)
 _TEXT_SUFFIXES = frozenset({".set", ".inc"})
-_UTF8_BOM = b"\xef\xbb\xbf"
+_CLOSURE_DIR = "_goc_source"
 
 
 def project_actor_breed_files(
@@ -46,6 +47,13 @@ def project_actor_breed_files(
     under the target side. Authorization is fail-closed. The shared default is
     the legacy explicit allowlist; a caller with separately audited authority
     may add exact component IDs through ``authorized_components``.
+
+    Top-level breed names remain at the exact target paths used by squad member
+    lookup. Local include dependencies are copied into a source-side-qualified
+    closure namespace and the projected include paths are rewritten to that
+    closure. This preserves each source side's exact dependency bytes without
+    forcing unrelated source families (for example NATO and UKR ``ability.inc``)
+    to overwrite one another beneath the target actor.
     """
 
     target_side = str(actor.get("tactical_side", "")).lower()
@@ -85,6 +93,7 @@ def project_actor_breed_files(
                 outputs=outputs,
                 mirrored_sources=mirrored_sources,
                 active=set(),
+                root_breed=True,
             )
 
     return dict(sorted(outputs.items(), key=lambda item: item[0].as_posix()))
@@ -129,6 +138,36 @@ def _resolve_source_breed(
     )
 
 
+def _projected_destination(
+    *,
+    target_side: str,
+    source_side: str,
+    source_relative: Path,
+    root_breed: bool,
+) -> Path:
+    if root_breed:
+        return BREED_ROOT_RELATIVE / target_side / source_relative
+
+    parts = source_relative.parts
+    if len(parts) > 1:
+        return (
+            BREED_ROOT_RELATIVE
+            / target_side
+            / parts[0]
+            / _CLOSURE_DIR
+            / source_side
+            / Path(*parts[1:])
+        )
+    return BREED_ROOT_RELATIVE / target_side / _CLOSURE_DIR / source_side / source_relative
+
+
+def _relative_include(from_directory: Path, destination: Path) -> str:
+    return posixpath.relpath(
+        PurePosixPath(destination.as_posix()).as_posix(),
+        PurePosixPath(from_directory.as_posix()).as_posix(),
+    )
+
+
 def _mirror_source_closure(
     roots: Sequence[Path],
     *,
@@ -140,6 +179,7 @@ def _mirror_source_closure(
     outputs: dict[Path, bytes],
     mirrored_sources: dict[Path, Path],
     active: set[Path],
+    root_breed: bool,
 ) -> None:
     resolved = source_path.resolve()
     if resolved in active:
@@ -148,7 +188,12 @@ def _mirror_source_closure(
     if source_path.suffix.lower() not in _TEXT_SUFFIXES:
         raise ExpandedNationsError(f"Unsupported cross-side breed dependency: {source_path}")
 
-    destination = BREED_ROOT_RELATIVE / target_side / source_relative
+    destination = _projected_destination(
+        target_side=target_side,
+        source_side=source_side,
+        source_relative=source_relative,
+        root_breed=root_breed,
+    )
     if _effective_target_exists(roots, destination):
         return
 
@@ -158,17 +203,56 @@ def _mirror_source_closure(
         raise ExpandedNationsError(
             f"Cross-side breed source resolves from an active generated projection: {source_path}"
         )
-    source_payload = (
-        source_bytes[len(_UTF8_BOM):]
-        if source_bytes.startswith(_UTF8_BOM)
-        else source_bytes
-    )
+
+    include_rewrites: dict[str, str] = {}
+    next_active = {*active, resolved}
+    for include in sorted(set(_INCLUDE_RE.findall(source_text))):
+        include_path = Path(include.replace("\\", "/"))
+        if include_path.is_absolute():
+            continue
+        dependency = (source_path.parent / include_path).resolve()
+        try:
+            dependency_relative = dependency.relative_to(source_side_root.resolve())
+        except ValueError:
+            continue
+        if not dependency.is_file():
+            continue
+
+        dependency_destination = _projected_destination(
+            target_side=target_side,
+            source_side=source_side,
+            source_relative=dependency_relative,
+            root_breed=False,
+        )
+        _mirror_source_closure(
+            roots,
+            source_path=dependency,
+            source_side_root=source_side_root,
+            source_relative=dependency_relative,
+            source_side=source_side,
+            target_side=target_side,
+            outputs=outputs,
+            mirrored_sources=mirrored_sources,
+            active=next_active,
+            root_breed=False,
+        )
+        include_rewrites[include] = _relative_include(destination.parent, dependency_destination)
+
+    def replace_include(match: re.Match[str]) -> str:
+        original = match.group(1)
+        replacement = include_rewrites.get(original)
+        if replacement is None:
+            return match.group(0)
+        return f'(include "{replacement}")'
+
+    rendered_text = _INCLUDE_RE.sub(replace_include, source_text)
+    rendered_payload = rendered_text.encode("utf-8")
     header = (
         f"{GENERATED_MARKER}\n"
         f"; cross-side-breed-source={source_side}/{source_relative.as_posix()}\n"
         f"; cross-side-breed-source-sha256={sha256_bytes(source_bytes)}\n"
     ).encode("utf-8")
-    rendered = header + source_payload
+    rendered = header + rendered_payload
 
     previous_source = mirrored_sources.get(destination)
     if previous_source is not None and previous_source.resolve() != resolved:
@@ -183,30 +267,6 @@ def _mirror_source_closure(
         )
     outputs[destination] = rendered
     mirrored_sources[destination] = source_path
-
-    next_active = {*active, resolved}
-    for include in sorted(set(_INCLUDE_RE.findall(source_text))):
-        include_path = Path(include.replace("\\", "/"))
-        if include_path.is_absolute():
-            continue
-        dependency = (source_path.parent / include_path).resolve()
-        try:
-            dependency_relative = dependency.relative_to(source_side_root.resolve())
-        except ValueError:
-            continue
-        if not dependency.is_file():
-            continue
-        _mirror_source_closure(
-            roots,
-            source_path=dependency,
-            source_side_root=source_side_root,
-            source_relative=dependency_relative,
-            source_side=source_side,
-            target_side=target_side,
-            outputs=outputs,
-            mirrored_sources=mirrored_sources,
-            active=next_active,
-        )
 
 
 def _effective_target_exists(roots: Sequence[Path], destination: Path) -> bool:
