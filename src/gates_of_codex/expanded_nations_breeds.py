@@ -21,7 +21,7 @@ from .modstack import resource_root
 # IDs explicitly; substring-derived or implicit cross-side reuse remains blocked.
 _CROSS_SIDE_BREED_COMPONENTS = frozenset(
     {
-        "spain_3rd_assault_legion",
+        "ukraine_ildu",
         "nato_full_fallback",
         "nato_common_infantry_bridge",
         "cze_equipment_identity",
