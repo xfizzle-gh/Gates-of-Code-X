@@ -181,6 +181,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if arguments[:1] == ["session-backend"]:
         _install_fast_paths()
+        install_runtime_contracts()
         from .frozen_runtime import configure_frozen_earth3_authority
         from .persistent_backend import run_session_backend
 
