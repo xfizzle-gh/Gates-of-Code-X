@@ -56,6 +56,10 @@ func _append_backend_timing(payload: Dictionary) -> void:
 	if pieces.is_empty():
 		return
 	var text := " ".join(pieces)
+	# Native acceptance screenshots can lose the transient status line to normal
+	# map help/hover UI. Always emit the same timing payload to Godot's log so a
+	# completed command has durable performance evidence even if the HUD changes.
+	print("GOC_PERF " + text)
 	if status_message.is_empty():
 		status_message = text
 	else:
