@@ -19,8 +19,14 @@ from .modstack import resource_root
 # goc_* side. Keep the shared/default authorization deliberately narrow. Callers
 # with a separately audited actor authority may pass additional exact component
 # IDs explicitly; substring-derived or implicit cross-side reuse remains blocked.
+#
+# ``spain_3rd_assault_legion`` remains in this mechanical compatibility allowlist
+# solely so historical/adversarial projection fixtures continue to exercise the
+# legacy cross-side behavior. The current Spain manifest authority explicitly
+# replaces that component with ``ukraine_ildu`` and therefore cannot recruit it.
 _CROSS_SIDE_BREED_COMPONENTS = frozenset(
     {
+        "spain_3rd_assault_legion",
         "ukraine_ildu",
         "nato_full_fallback",
         "nato_common_infantry_bridge",
