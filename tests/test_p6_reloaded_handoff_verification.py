@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -27,9 +29,87 @@ class P6ReloadedHandoffVerificationTests(unittest.TestCase):
             exported_save_path=save_path,
             started=True,
         )
-        state = SimpleNamespace(pending_battle=pending)
+        state = SimpleNamespace(pending_battle=pending, map_metadata={})
 
         self.assertEqual(save_path, _resolve_result_save_path(state, {}))
+
+    def test_reloaded_handoff_recovers_profile_installed_save_from_session(self) -> None:
+        from gates_of_codex.frontend_commands import _resolve_result_save_path
+        from gates_of_codex.models import Faction, PendingBattle
+        from gates_of_codex.service import BattleExportManifest, GatesOfCodeXService
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            export_save = root / "home" / "live" / "battle-reload-2" / "campaign.sav"
+            installed = root / "profile" / "campaign" / "gates of codex result.sav"
+            export_save.parent.mkdir(parents=True)
+            installed.parent.mkdir(parents=True)
+            export_save.write_bytes(b"export")
+            installed.write_bytes(b"played-result")
+
+            service = GatesOfCodeXService()
+            manifest = BattleExportManifest(
+                battle_id="battle-reload-2",
+                campaign_path=str(root / "campaign.json"),
+                save_path=str(installed.resolve()),
+                catalog_signature="catalog",
+                played_games=0,
+                won_games=0,
+            )
+            service.write_manifest(manifest)
+            session_path = service.manifest_path(export_save).with_suffix(".session.json")
+            session_path.parent.mkdir(parents=True, exist_ok=True)
+            session_path.write_text(
+                json.dumps({"installed_save_path": str(installed.resolve())}),
+                encoding="utf-8",
+            )
+
+            pending = PendingBattle(
+                battle_id="battle-reload-2",
+                origin_province_id="origin",
+                target_province_id="target",
+                attacker_faction=Faction.NATO,
+                defender_faction=Faction.RUSSIA,
+                attacking_participants=[],
+                defending_participants=[],
+                player_faction=Faction.NATO,
+                player_is_attacker=True,
+                exported_save_path=str(export_save.resolve()),
+                started=True,
+            )
+            state = SimpleNamespace(pending_battle=pending, map_metadata={})
+
+            self.assertEqual(
+                str(installed.resolve()),
+                _resolve_result_save_path(state, {}),
+            )
+
+    def test_explicit_verified_save_still_overrides_recovery(self) -> None:
+        from gates_of_codex.frontend_commands import _resolve_result_save_path
+        from gates_of_codex.models import Faction, PendingBattle
+
+        pending = PendingBattle(
+            battle_id="battle-reload-3",
+            origin_province_id="origin",
+            target_province_id="target",
+            attacker_faction=Faction.NATO,
+            defender_faction=Faction.RUSSIA,
+            attacking_participants=[],
+            defending_participants=[],
+            player_faction=Faction.NATO,
+            player_is_attacker=True,
+            exported_save_path="export.sav",
+            started=True,
+        )
+        state = SimpleNamespace(pending_battle=pending, map_metadata={})
+
+        self.assertEqual(
+            "C:/profile/campaign/explicit.sav",
+            _resolve_result_save_path(
+                state,
+                {"save_path": "C:/profile/campaign/explicit.sav"},
+            ),
+        )
 
     def test_reloaded_started_battle_can_verify_without_transient_handoff_path(self) -> None:
         source = (ROOT / "godot/scripts/main_writeback.gd").read_text(encoding="utf-8")
