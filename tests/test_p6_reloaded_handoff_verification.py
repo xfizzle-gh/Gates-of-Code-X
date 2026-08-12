@@ -53,6 +53,22 @@ class P6ReloadedHandoffVerificationTests(unittest.TestCase):
             'verify_command["save_path"] = last_handoff_save_path', verify_block
         )
 
+    def test_rendered_verify_control_matches_persisted_handoff_readiness(self) -> None:
+        source = (ROOT / "godot/scripts/main_perf.gd").read_text(encoding="utf-8")
+
+        draw_block = source.split(
+            "func _draw_button(id: String, label: String, x: float, y: float, enabled: bool",
+            1,
+        )[1].split("func _draw_color_id_overlays()", 1)[0]
+        self.assertIn(
+            'elif id == "verify_result" and _pending_battle_handoff_ready():',
+            draw_block,
+        )
+        self.assertIn(
+            'enabled = enabled or bool(snapshot.get("control", {}).get("enabled", false))',
+            draw_block,
+        )
+
     def test_verified_backend_identity_rehydrates_import_binding(self) -> None:
         source = (ROOT / "godot/scripts/main_writeback.gd").read_text(encoding="utf-8")
 
