@@ -46,13 +46,13 @@ _SOURCE_COST_ALIASES: Mapping[str, str] = {
     "mp/nato/era2022/fj_eng_at": "mp/nato/2022s/fj_engineer_at",
 }
 
-# Deterministic same-side cost authority for breeds that exist without native inf rows.
-# Two evidence classes only (never fuzzy name matching):
-# 1) Same-role sister-formation: Donbas Vostok infantry breeds have no inf rows while the
-#    co-located Sparta (spd_*) formation on the same rusa side has complete native rows for
-#    the identical tactical roles (squadlead/rifleman/mg/at/medic/...).
-# 2) Same-equipment crew: Vostok mortar/SPG crews map to Code:X native rusa crew rows for
-#    the exact weapon systems (2B14, SPG-9), not unrelated roles.
+# Deterministic evidence-backed cost authority for real breeds without native inf rows.
+# Never fuzzy-match. Every mapping below is an exact owner-probed disposition:
+# 1) same-role sister-formation rows for Donbas Vostok infantry;
+# 2) same-equipment native crew rows for Vostok mortar/SPG crews;
+# 3) ILDU source-side equivalents from the exact installed stack. The Ukraine-native
+#    regular AT/LMMG assistants and MANPADS pair cover the same tactical roles, while
+#    ``nato_medic`` has only one exact same-name native row, on the NATO side.
 _SOURCE_COST_ROLE_MAP: Mapping[str, str] = {
     "mp/rusa/2022s/vostok_squadlead": "mp/rusa/2022s/spd_squadlead",
     "mp/rusa/2022s/vostok_seniorrifleman": "mp/rusa/2022s/spd_seniorrifleman",
@@ -65,6 +65,11 @@ _SOURCE_COST_ROLE_MAP: Mapping[str, str] = {
     "mp/rusa/2022s/vostok_medic": "mp/rusa/2022s/spd_medic",
     "mp/rusa/2022s/vostok_2b14crew": "mp/rusa/2022s/rus114_rez_2b14crew",
     "mp/rusa/2022s/vostok_spg9crew": "mp/rusa/2022s/rus114_rez_spg9crew",
+    "mp/ukr/2022s/nato_atassist": "mp/ukr/2022s/ukr_atassist",
+    "mp/ukr/2022s/nato_mgassist": "mp/ukr/2022s/ukr_lmgassist",
+    "mp/ukr/2022s/nato_manpad_operator": "mp/ukr/2022s/ukr_manpad_operator",
+    "mp/ukr/2022s/nato_manpad_supporter": "mp/ukr/2022s/ukr_manpad_supporter",
+    "mp/ukr/2022s/nato_medic": "mp/nato/2022s/nato_medic",
 }
 
 # Native GoH observation on the exact owner stack resolved one requested-path
