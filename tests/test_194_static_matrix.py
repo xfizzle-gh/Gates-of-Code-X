@@ -8,9 +8,13 @@ import unittest
 from pathlib import Path
 
 from gates_of_codex.expanded_nations_battle_pair import (
+    ENGINE_OVERLAY_RELS,
     materialize_battle_pair,
     render_battle_pair_alliances,
+    restore_battle_pair,
+    verify_battle_pair,
 )
+from gates_of_codex.expanded_nations_models import GENERATED_MARKER
 from gates_of_codex.expanded_nations_static_matrix import (
     NATIVE_REPRESENTATIVE_FAMILIES,
     PHASE1_ACTORS,
@@ -23,12 +27,15 @@ from gates_of_codex.expanded_nations_static_matrix import (
     STATIC_MATRIX_SCHEMA,
     STRATEGIC_ONLY_CHECKLIST,
     build_static_actor_matrix,
+    load_resolved_static_snapshot,
     manifest_authority_fingerprint,
+    pack_count_authority_fingerprint,
     render_native_acceptance_template,
     validate_static_actor_matrix,
     write_static_matrix_evidence,
     _canonical_file_digest,
 )
+from gates_of_codex.expanded_nations_cli import main as expanded_cli_main
 from gates_of_codex.goc_tactical_army_registry import playable_goc_sides
 from gates_of_codex.faction_wiring import load_faction_manifest, validate_faction_manifest
 from gates_of_codex.goc_tactical_army_registry import load_goc_army_registry
@@ -161,6 +168,12 @@ class Phase194StaticMatrixTests(unittest.TestCase):
             snap.get("manifest_authority_fingerprint"),
             manifest_authority_fingerprint(ROOT),
         )
+        self.assertEqual(
+            snap.get("pack_count_authority_fingerprint"),
+            pack_count_authority_fingerprint(ROOT),
+        )
+        loaded = load_resolved_static_snapshot(ROOT)
+        self.assertIsNotNone(loaded)
         checked = json.loads(json_path.read_text(encoding="utf-8"))
         live = build_static_actor_matrix(
             repo_root=ROOT,
@@ -173,6 +186,8 @@ class Phase194StaticMatrixTests(unittest.TestCase):
         self.assertIn("Strategic-only checklist", template)
         self.assertIn("goc_usa", template)
         self.assertIn("goc_fra", template)
+        harness = live["native_harness"]
+        self.assertIn("battle-pair", harness["battle_pair_install_command"])
 
     def test_all_playable_goc_sides_have_committed_native_packs(self) -> None:
         for side in playable_goc_sides():
@@ -190,6 +205,160 @@ class Phase194StaticMatrixTests(unittest.TestCase):
         self.assertIn('{armies "goc_fra"}', text)
         self.assertIn('"West"', text)
         self.assertIn('"East"', text)
+
+    def test_snapshot_rejects_component_selector_authority_drift(self) -> None:
+        snap_path = ROOT / "docs/audits/expanded-nations-resolved-static-snapshot.json"
+        original = snap_path.read_text(encoding="utf-8")
+        try:
+            payload = json.loads(original)
+            payload["manifest_authority_fingerprint"] = "0" * 64
+            snap_path.write_text(
+                json.dumps(payload, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+                newline="\n",
+            )
+            with self.assertRaisesRegex(ValueError, "stale relative to current manifest"):
+                load_resolved_static_snapshot(ROOT)
+        finally:
+            snap_path.write_text(original, encoding="utf-8", newline="\n")
+
+    def test_snapshot_rejects_pack_authority_drift(self) -> None:
+        snap_path = ROOT / "docs/audits/expanded-nations-resolved-static-snapshot.json"
+        original = snap_path.read_text(encoding="utf-8")
+        try:
+            payload = json.loads(original)
+            payload["pack_count_authority_fingerprint"] = "1" * 64
+            snap_path.write_text(
+                json.dumps(payload, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+                newline="\n",
+            )
+            with self.assertRaisesRegex(ValueError, "stale relative to committed pack"):
+                load_resolved_static_snapshot(ROOT)
+        finally:
+            snap_path.write_text(original, encoding="utf-8", newline="\n")
+
+    def test_snapshot_rejects_units_pack_tamper(self) -> None:
+        pack = ROOT / "resource/set/multiplayer/units/conquest/units_goc_usa.set"
+        original = pack.read_bytes()
+        try:
+            pack.write_bytes(original + b"\n; tamper\n")
+            with self.assertRaisesRegex(ValueError, "stale relative to committed pack"):
+                load_resolved_static_snapshot(ROOT)
+        finally:
+            pack.write_bytes(original)
+
+
+class Phase194BattlePairInstallTests(unittest.TestCase):
+    def _install_pair(self, dest: Path, attacker: str, defender: str) -> dict:
+        return materialize_battle_pair(
+            ROOT,
+            attacker_actor_id=attacker,
+            defender_actor_id=defender,
+            output_root=dest,
+            source_pack_root=ROOT,
+        )
+
+    def test_required_pairs_install_into_engine_paths(self) -> None:
+        pairs = (
+            ("usa", "fra", "goc_usa", "goc_fra"),
+            ("srb", "rus", "goc_srb", "goc_rus"),
+            ("usa", "dprk", "goc_usa", "goc_dprk"),
+        )
+        for attacker, defender, left, right in pairs:
+            with self.subTest(pair=f"{attacker}_vs_{defender}"):
+                with tempfile.TemporaryDirectory() as directory:
+                    dest = Path(directory)
+                    source_marker = ROOT / "resource/set/dynamic_campaign/values.set"
+                    before = source_marker.read_bytes() if source_marker.is_file() else None
+                    result = self._install_pair(dest, attacker, defender)
+                    self.assertTrue(result["ok"])
+                    self.assertTrue(result["source_unmodified"])
+                    if before is not None:
+                        self.assertEqual(source_marker.read_bytes(), before)
+                    for rel in ENGINE_OVERLAY_RELS:
+                        path = dest / rel
+                        self.assertTrue(path.is_file(), rel)
+                        text = path.read_text(encoding="utf-8")
+                        self.assertIn(GENERATED_MARKER, text)
+                    values = (dest / ENGINE_OVERLAY_RELS[1]).read_text(encoding="utf-8")
+                    self.assertIn(f'"{left} {right}"', values)
+                    self.assertIn(f'"{right} {left}"', values)
+                    alliances = (dest / ENGINE_OVERLAY_RELS[0]).read_text(encoding="utf-8")
+                    self.assertIn(f'{{armies "{left}"}}', alliances)
+                    self.assertIn(f'{{armies "{right}"}}', alliances)
+                    for side in (left, right):
+                        self.assertTrue(
+                            (
+                                dest
+                                / f"resource/set/multiplayer/units/conquest/units_{side}.set"
+                            ).is_file()
+                        )
+                    self.assertEqual(verify_battle_pair(dest), [])
+
+    def test_source_repo_unmodified_when_destination_differs(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            dest = Path(directory)
+            values = ROOT / "resource/set/dynamic_campaign/values.set"
+            alliances = ROOT / "resource/set/multiplayer/games/presets/alliances_generic.inc"
+            before_values = values.read_bytes()
+            before_alliances = alliances.read_bytes()
+            self._install_pair(dest, "usa", "fra")
+            self.assertEqual(values.read_bytes(), before_values)
+            self.assertEqual(alliances.read_bytes(), before_alliances)
+            self.assertFalse(
+                (ROOT / "live/expanded_nations/battle_pair/active.json").exists()
+            )
+
+    def test_tampered_pair_fails_verification(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            dest = Path(directory)
+            self._install_pair(dest, "usa", "fra")
+            target = dest / ENGINE_OVERLAY_RELS[1]
+            target.write_text(target.read_text(encoding="utf-8") + "\n; tamper\n", encoding="utf-8")
+            problems = verify_battle_pair(dest)
+            self.assertTrue(any("tampered" in item for item in problems), problems)
+
+    def test_restore_removes_pair_overlay(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            dest = Path(directory)
+            # Seed a prior multi-faction-looking overlay to prove restore.
+            prior = dest / ENGINE_OVERLAY_RELS[1]
+            prior.parent.mkdir(parents=True, exist_ok=True)
+            prior.write_text("; prior values\n", encoding="utf-8")
+            self._install_pair(dest, "srb", "rus")
+            self.assertIn("goc_srb", (dest / ENGINE_OVERLAY_RELS[1]).read_text(encoding="utf-8"))
+            result = restore_battle_pair(dest)
+            self.assertTrue(result["ok"])
+            self.assertEqual(
+                (dest / ENGINE_OVERLAY_RELS[1]).read_text(encoding="utf-8"),
+                "; prior values\n",
+            )
+            self.assertFalse(
+                (dest / "live/expanded_nations/battle_pair/active.json").is_file()
+            )
+
+    def test_cli_battle_pair_commands(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            dest = Path(directory)
+            rc = expanded_cli_main(
+                [
+                    "battle-pair",
+                    "--attacker",
+                    "usa",
+                    "--defender",
+                    "fra",
+                    "--gates-root",
+                    str(dest),
+                    "--source-repo",
+                    str(ROOT),
+                ]
+            )
+            self.assertEqual(rc, 0)
+            rc = expanded_cli_main(["battle-pair-verify", "--gates-root", str(dest)])
+            self.assertEqual(rc, 0)
+            rc = expanded_cli_main(["battle-pair-restore", "--gates-root", str(dest)])
+            self.assertEqual(rc, 0)
 
 
 class Phase194RuntimeAndManifestTests(unittest.TestCase):

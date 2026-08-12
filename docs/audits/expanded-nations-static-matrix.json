@@ -4630,6 +4630,9 @@
   "evidence_state": "static_pre_native",
   "matrix_signature": "61427243f671c1da60bb1a2ba0329f1190ea45e571ee1efcdc74e6d8ddf7728d",
   "native_harness": {
+    "battle_pair_install_command": "python -m gates_of_codex.expanded_nations_cli battle-pair --attacker <ATTACKER_ACTOR_ID> --defender <DEFENDER_ACTOR_ID> --gates-root <GATES_ROOT> --source-repo <SOURCE_REPO>",
+    "battle_pair_restore_command": "python -m gates_of_codex.expanded_nations_cli battle-pair-restore --gates-root <GATES_ROOT>",
+    "battle_pair_verify_command": "python -m gates_of_codex.expanded_nations_cli battle-pair-verify --gates-root <GATES_ROOT>",
     "core_restore_command": "python -m gates_of_codex.expanded_nations_cli core --gates-root <GATES_ROOT>",
     "playable_checklist": [
       "install_or_activate_via_supported_gates_path",
@@ -4878,5 +4881,5 @@
   },
   "schema": "gates-of-codex.expanded-nations-static-matrix",
   "schema_version": 2,
-  "source_head": "5d1fe4d7d785134bcd6587f7f909a377865bb454"
+  "source_head": "03dc3fc1a31dd134f56bde8f044804817f3b5374"
 }

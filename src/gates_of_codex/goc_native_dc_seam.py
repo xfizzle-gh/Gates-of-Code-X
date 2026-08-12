@@ -691,7 +691,10 @@ def validate_repo_native_dc_seam(repo_root: str | Path) -> list[str]:
         if rel.endswith("alliances_generic.inc"):
             for side in playable_west_sides():
                 if f'{{armies "{side}"}}' not in text:
-                    problems.append(f"alliances_generic missing {side}")
+                    problems.append(f"alliances_generic missing west {side}")
+            for side in playable_east_sides():
+                if f'{{armies "{side}"}}' not in text:
+                    problems.append(f"alliances_generic missing east {side}")
             for core in CORE_WEST + CORE_EAST:
                 if f'{{armies "{core}"}}' not in text:
                     problems.append(f"alliances_generic missing core {core}")
@@ -710,7 +713,7 @@ def validate_repo_native_dc_seam(repo_root: str | Path) -> list[str]:
         if rel.endswith(".lua") and "/units/" in rel:
             if "Repeat" not in text or "Units" not in text:
                 problems.append(f"purchase lua schema invalid: {rel}")
-            if "usmc_rifleman" in text or "_test_rifle" in text:
+            if "_test_rifle" in text or "bootstrap prototype" in text.lower():
                 problems.append(f"purchase lua still uses bootstrap prototype content: {rel}")
             side = Path(rel).parent.name
             units_path = root / "resource/set/multiplayer/units/conquest" / f"units_{side}.set"

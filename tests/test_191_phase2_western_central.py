@@ -18,6 +18,7 @@ from gates_of_codex.expanded_nations_models import (
 )
 from gates_of_codex.goc_native_dc_seam import (
     expected_seam_relpaths,
+    playable_east_sides,
     playable_west_sides,
     render_alliances_generic,
     render_roster_conquest,
@@ -192,8 +193,21 @@ class NativeDcSeamTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertEqual(alliances, render_alliances_generic())
+        west = set(playable_west_sides())
+        east = set(playable_east_sides())
         for side in dc_menu_goc_sides():
-            self.assertIn(side, playable_west_sides())
+            self.assertIn(side, west | east, side)
+            coalition = str(
+                load_goc_army_registry()["armies"][side].get("coalition") or ""
+            ).lower()
+            if coalition == "west":
+                self.assertIn(side, west)
+                self.assertNotIn(side, east)
+            elif coalition == "east":
+                self.assertIn(side, east)
+                self.assertNotIn(side, west)
+            else:
+                self.fail(f"dc_menu side {side} missing west/east coalition")
             lua = (
                 root
                 / "resource/script/multiplayer/units"
@@ -202,8 +216,9 @@ class NativeDcSeamTests(unittest.TestCase):
             ).read_text(encoding="utf-8")
             self.assertIn("Repeat", lua)
             self.assertIn("Units", lua)
-            self.assertNotIn("usmc_rifleman", lua)
+            # Bootstrap prototype tokens only — usmc_* breeds are legitimate USA content.
             self.assertNotIn("_test_rifle", lua)
+            self.assertNotIn("bootstrap prototype", lua.lower())
             research = (
                 root / "resource/set/dynamic_campaign" / f"unit_research_{side}.set"
             ).read_text(encoding="utf-8")
@@ -212,7 +227,7 @@ class NativeDcSeamTests(unittest.TestCase):
                 root / "resource/set/multiplayer/units/conquest" / f"units_{side}.set"
             ).read_text(encoding="utf-8")
             self.assertIn(f"side({side})", units)
-            self.assertNotIn("usmc_rifleman", units)
+            self.assertNotIn("_test_rifle", units)
             self.assertIn("Deterministic rendering of #190-approved", units)
         # #190 authority identity for national hybrids.
         cze = (

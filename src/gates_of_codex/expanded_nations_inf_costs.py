@@ -12,6 +12,11 @@ from .expanded_nations_breeds import (
 )
 from .expanded_nations_models import ExpandedNationsError, GENERATED_MARKER, sha256_bytes
 from .expanded_nations_sources import _rename_entry
+from .goc_tactical_army_registry import (
+    campaign_faction_token_for_side,
+    is_goc_tactical_side,
+    side_family_for,
+)
 from .goh_source import SourceEntry, scan_source_entries
 from .modstack import resource_root
 
@@ -153,9 +158,15 @@ def project_actor_inf_cost_rows(
         unit_has_positive_cost = False
         used_allowlisted_unpriced = False
         unit_name = str(unit.get("unit_name", "<unnamed>"))
-        # Any source_side != Expanded target side must remap personnel-cost rows into
-        # the target goc_* namespace (not only explicitly listed cross-side components).
-        cross_side = bool(source_side and source_side != target_side)
+        # Cross-side remap is authorized only for:
+        # 1) explicit opt-in components (_CROSS_SIDE_BREED_COMPONENTS), or
+        # 2) Core/source-family → actor-owned goc_* production namespace.
+        # Arbitrary Core-to-Core projection (e.g. ukr→nato) remains blocked.
+        cross_side = _authorized_cross_side_remap(
+            unit,
+            source_side=source_side,
+            target_side=target_side,
+        )
         requires_coverage = _unit_requires_positive_coverage(unit, target_side)
 
         for breed in sorted(str(name) for name in members):
@@ -411,6 +422,27 @@ def verify_actor_inf_cost_rows(
 
 
 
+def _authorized_cross_side_remap(
+    unit: Mapping[str, Any],
+    *,
+    source_side: str,
+    target_side: str,
+) -> bool:
+    """Return True when personnel-cost rows may remap into the target side namespace."""
+    if not source_side or source_side == target_side:
+        return False
+    component_id = str(unit.get("component_id", ""))
+    # Explicit opt-in components (Spain 3rd Assault, #191 bridges, DANA identity).
+    if component_id in _CROSS_SIDE_BREED_COMPONENTS:
+        return True
+    # Production Expanded packs: Core/source-family breeds remap into the actor's
+    # own registered goc_* namespace only. Never authorize arbitrary Core-to-Core.
+    if is_goc_tactical_side(target_side):
+        transport = campaign_faction_token_for_side(target_side)
+        return source_side in side_family_for(transport)
+    return False
+
+
 def _unit_requires_inf_cost_coverage(unit: Mapping[str, Any], target_side: str) -> bool:
     """Whether this unit participates in inf-cost projection.
 
@@ -424,9 +456,8 @@ def _unit_requires_inf_cost_coverage(unit: Mapping[str, Any], target_side: str) 
 
 
 def _unit_requires_positive_coverage(unit: Mapping[str, Any], target_side: str) -> bool:
-    component_id = str(unit.get("component_id", ""))
     source_side = str(unit.get("source_side", "") or target_side).lower()
-    if component_id in _CROSS_SIDE_BREED_COMPONENTS and source_side and source_side != target_side:
+    if _authorized_cross_side_remap(unit, source_side=source_side, target_side=target_side):
         # Cross-side infantry/virtual purchases must have priced personnel rows.
         # Vehicle/artillery crews are often unpriced in native Code:X and rely on
         # entity economy; do not fail the whole actor pack on those crew gaps.

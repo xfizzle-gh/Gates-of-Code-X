@@ -398,43 +398,65 @@ def _opponent_availability_count(
 
 
 def manifest_authority_fingerprint(repo_root: str | Path | None = None) -> str:
-    """Fingerprint current authored actor/side/component authority for snapshot binding."""
+    """Fingerprint full expanded authored authority for snapshot binding.
+
+    Includes complete load_faction_manifest() payload (schema, source_policy,
+    fully audit-adjusted components, actors) plus the tactical army registry.
+    """
     root = Path(repo_root).resolve() if repo_root else _repo_root()
     manifest = load_faction_manifest()
     validate_faction_manifest(manifest)
     registry = load_goc_army_registry()
     payload = {
-        "actors": [
-            {
-                "actor_id": row["actor_id"],
-                "tactical_side": row["tactical_side"],
-                "playable": bool(row["playable"]),
-                "roster_class": row["roster_class"],
-                "components": list(row.get("components") or []),
-                "research_mode": (row.get("research") or {}).get("mode"),
-                "host_actor_id": row.get("host_actor_id"),
-            }
-            for row in sorted(manifest["actors"], key=lambda item: str(item["actor_id"]))
-        ],
-        "goc_armies": {
-            token: {
-                "numeric_id": int(row["numeric_id"]),
-                "actor_id": row["actor_id"],
-                "playable": bool(row.get("playable")),
-                "dc_menu_playable": bool(row.get("dc_menu_playable")),
-                "coalition": row.get("coalition"),
-                "core_transport_side": row.get("core_transport_side"),
-            }
-            for token, row in sorted(registry["armies"].items())
+        "manifest": {
+            "schema": manifest.get("schema"),
+            "schema_version": manifest.get("schema_version"),
+            "source_policy": manifest.get("source_policy"),
+            "components": manifest.get("components"),
+            "actors": sorted(
+                list(manifest.get("actors") or []),
+                key=lambda item: str(item.get("actor_id") or ""),
+            ),
         },
+        "goc_army_registry": registry,
     }
     return _sha256_text(_canonical_json(payload))
+
+
+def pack_count_authority_fingerprint(repo_root: str | Path | None = None) -> str:
+    """Fingerprint committed playable GOC pack counts and canonical content hashes."""
+    root = Path(repo_root).resolve() if repo_root else _repo_root()
+    packs: dict[str, dict[str, Any]] = {}
+    for side in sorted(registered_goc_sides()):
+        row = army_row(side)
+        if not bool(row.get("playable")):
+            continue
+        if str(row.get("roster_class") or "") == "strategic_only":
+            continue
+        unit_rel = f"resource/set/multiplayer/units/conquest/units_{side}.set"
+        research_rel = f"resource/set/dynamic_campaign/unit_research_{side}.set"
+        inf_rel = f"resource/set/multiplayer/units/conquest/inf_{side}.set"
+        lua_rel = f"resource/script/multiplayer/units/{side}/conquest.{side}.lua"
+        unit_path = root / unit_rel
+        research_path = root / research_rel
+        packs[side] = {
+            "unit_count": _count_pack_units(root, side),
+            "research_node_count": _count_pack_research_nodes(root, side),
+            "files": {
+                rel: (_canonical_file_digest(root / rel) if (root / rel).is_file() else None)
+                for rel in (unit_rel, research_rel, inf_rel, lua_rel)
+            },
+            "unit_pack_present": unit_path.is_file(),
+            "research_pack_present": research_path.is_file(),
+        }
+    return _sha256_text(_canonical_json(packs))
 
 
 def load_resolved_static_snapshot(repo_root: str | Path | None = None) -> dict[str, Any] | None:
     """Load committed resolved count snapshot for stack-free CI/static evidence.
 
-    Fail-closed: snapshot must match current manifest/registry authority fingerprint.
+    Fail-closed: snapshot must match current full manifest/registry fingerprint and
+    committed playable pack count/hash authority.
     """
     root = Path(repo_root).resolve() if repo_root else _repo_root()
     path = root / "docs/audits/expanded-nations-resolved-static-snapshot.json"
@@ -451,6 +473,14 @@ def load_resolved_static_snapshot(repo_root: str | Path | None = None) -> dict[s
             f"authority (snapshot={actual_fp[:12] or 'missing'} "
             f"current={expected_fp[:12]})"
         )
+    expected_pack_fp = pack_count_authority_fingerprint(root)
+    actual_pack_fp = str(payload.get("pack_count_authority_fingerprint") or "")
+    if actual_pack_fp != expected_pack_fp:
+        raise ValueError(
+            "resolved static snapshot is stale relative to committed pack count "
+            f"authority (snapshot={actual_pack_fp[:12] or 'missing'} "
+            f"current={expected_pack_fp[:12]})"
+        )
     # Actor tactical sides must still match current manifest exactly.
     manifest = load_faction_manifest()
     expected_sides = {
@@ -463,6 +493,29 @@ def load_resolved_static_snapshot(repo_root: str | Path | None = None) -> dict[s
     }
     if snapshot_sides != expected_sides:
         raise ValueError("resolved static snapshot actor/side map does not match manifest")
+    # Playable GOC pack unit counts must match snapshot unit_count when packs exist.
+    # Research node counts may legitimately differ between full resolved compile
+    # authority and committed pack goc-node markers; pack hashes bind the pack bytes.
+    by_id = {
+        str(row.get("actor_id")): row
+        for row in payload["actors"]
+        if isinstance(row, Mapping)
+    }
+    for actor in manifest["actors"]:
+        if not actor.get("playable") or actor.get("roster_class") == "strategic_only":
+            continue
+        side = str(actor.get("tactical_side") or "")
+        if not is_goc_tactical_side(side):
+            continue
+        pack_units = _count_pack_units(root, side)
+        if pack_units is None:
+            continue
+        snap = by_id.get(str(actor["actor_id"])) or {}
+        if int(snap.get("unit_count") or -1) != pack_units:
+            raise ValueError(
+                f"resolved static snapshot unit_count mismatch for {actor['actor_id']}: "
+                f"snapshot={snap.get('unit_count')} pack={pack_units}"
+            )
     return payload
 
 
@@ -636,6 +689,19 @@ def build_static_actor_matrix(
             "strategic_only_checklist": list(STRATEGIC_ONLY_CHECKLIST),
             "core_restore_command": (
                 "python -m gates_of_codex.expanded_nations_cli core --gates-root <GATES_ROOT>"
+            ),
+            "battle_pair_install_command": (
+                "python -m gates_of_codex.expanded_nations_cli battle-pair "
+                "--attacker <ATTACKER_ACTOR_ID> --defender <DEFENDER_ACTOR_ID> "
+                "--gates-root <GATES_ROOT> --source-repo <SOURCE_REPO>"
+            ),
+            "battle_pair_verify_command": (
+                "python -m gates_of_codex.expanded_nations_cli battle-pair-verify "
+                "--gates-root <GATES_ROOT>"
+            ),
+            "battle_pair_restore_command": (
+                "python -m gates_of_codex.expanded_nations_cli battle-pair-restore "
+                "--gates-root <GATES_ROOT>"
             ),
             "status": "harness_defined_native_runs_pending_owner",
         },

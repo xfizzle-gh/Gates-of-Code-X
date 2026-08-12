@@ -673,7 +673,8 @@
     }
   ],
   "error_count": 0,
-  "manifest_authority_fingerprint": "f005d9b71210c2130a8d071ccb0c40c492090a474a004116e7688f78c4dcd0d7",
+  "manifest_authority_fingerprint": "4681226ade2043cc5fde5eae3ae084d03635aade27ca96d2b2f81a478b9bc302",
+  "pack_count_authority_fingerprint": "ba112174eb5d9978d56db14a4bc9a4682cea60225b925b0d0262b24f8735efdf",
   "schema": "gates-of-codex.resolved-factions-static-snapshot",
   "schema_version": 2,
   "stack_signature": "7da216589af196fb23d8dd205801750f8ad8e6dd31505027d10545c446d83a45",

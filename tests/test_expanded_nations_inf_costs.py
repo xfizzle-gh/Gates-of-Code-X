@@ -247,6 +247,62 @@ class ExpandedNationsInfCostTests(unittest.TestCase):
         self.assertEqual([], rows)
         self.assertEqual("", body)
 
+    def test_source_family_projects_into_registered_goc_namespace(self) -> None:
+        breed = self.layers[2] / "resource/set/breed/mp/nato/2022s/nato_rifleman.set"
+        breed.parent.mkdir(parents=True, exist_ok=True)
+        breed.write_text('{breed {skin "fixture"}}\n', encoding="utf-8")
+        self._write_inf(
+            "nato",
+            '{"mp/nato/2022s/nato_rifleman" ("nato_rifle" side(nato)) {cost 31.5}}',
+        )
+        actor = {
+            "actor_id": "usa",
+            "display_name": "United States",
+            "tactical_side": "goc_usa",
+            "units": [
+                {
+                    "unit_name": "rifle(goc_usa)",
+                    "component_id": "nato_us_forces",
+                    "source_side": "nato",
+                    "tactical_side": "goc_usa",
+                    "period": "2022s",
+                    "members": {"nato_rifleman": 1},
+                }
+            ],
+        }
+        rows, body = project_actor_inf_cost_rows(actor, self.layers)
+        self.assertEqual(1, len(rows))
+        self.assertEqual("mp/nato/2022s/nato_rifleman", rows[0].source_path)
+        self.assertEqual("mp/goc_usa/2022s/nato_rifleman", rows[0].target_path)
+        self.assertEqual("goc_usa", rows[0].target_side)
+        self.assertIn('"mp/goc_usa/2022s/nato_rifleman"', body)
+        self.assertIn("side(goc_usa)", body)
+
+    def test_unauthorized_core_cross_side_into_goc_is_blocked(self) -> None:
+        self._write_source_breed()
+        self._write_inf(
+            "ukr",
+            '{"mp/ukr/2022s/azov3_squadlead" ("ukr_elite" side(ukr)) {cost 36.5}}',
+        )
+        actor = {
+            "actor_id": "usa",
+            "display_name": "United States",
+            "tactical_side": "goc_usa",
+            "units": [
+                {
+                    "unit_name": "stolen(goc_usa)",
+                    "component_id": "nato_us_forces",
+                    "source_side": "ukr",
+                    "tactical_side": "goc_usa",
+                    "period": "2022s",
+                    "members": {"azov3_squadlead": 1},
+                }
+            ],
+        }
+        rows, body = project_actor_inf_cost_rows(actor, self.layers)
+        self.assertEqual([], rows)
+        self.assertEqual("", body)
+
     def test_unrelated_same_priority_conflict_does_not_block_projection(self) -> None:
         self._write_source_breed()
         self._write_inf(
