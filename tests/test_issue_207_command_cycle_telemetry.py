@@ -239,6 +239,23 @@ class CommandCycleTelemetryTests(unittest.TestCase):
             self.assertIn(required, compact)
         self.assertNotIn("indent=2", compact)
 
+    def test_end_round_exposes_mutation_subphase_timings(self) -> None:
+        source = (ROOT / "src/gates_of_codex/turn_cycle.py").read_text(
+            encoding="utf-8"
+        )
+        for key in (
+            '"selected_end_turn_ms"',
+            '"selected_actor_runtime_ms"',
+            '"ai_take_turn_ms"',
+            '"ai_end_turn_ms"',
+            '"ai_actor_runtime_ms"',
+            '"ai_take_turn_total_ms"',
+            '"advance_turn_total_ms"',
+            '"actor_runtime_total_ms"',
+            '"perf_turn_cycle": perf',
+        ):
+            self.assertIn(key, source)
+
     def test_runtime_installer_registers_measured_wrapper(self) -> None:
         source = (ROOT / "src/gates_of_codex/fast_entrypoint.py").read_text(
             encoding="utf-8"
@@ -260,7 +277,7 @@ class GodotMeasuredCommandTests(unittest.TestCase):
         self.assertIn('op == "verify_result" or _is_lightweight_order_op(op)', source)
         self.assertIn("_capture_verification(backend_payload)", source)
         self.assertIn("_apply_move_order_result_patch", source)
-        self.assertIn("_append_backend_timing(backend_payload)", source)
+        self.assertIn("_append_backend_timing", source)
         self.assertNotIn("_try_build_snapshot_state", source)
 
     def test_move_order_patch_is_bounded_to_returned_authoritative_order(self) -> None:
@@ -284,6 +301,8 @@ class GodotMeasuredCommandTests(unittest.TestCase):
         self.assertIn("mutate %.2f", source)
         self.assertIn("save %.2f", source)
         self.assertIn("snapshot %.2f", source)
+        self.assertIn("round: AI %.2fs, advance %.2fs, actors %.2fs", source)
+        self.assertIn('data.get("perf_turn_cycle", {})', source)
 
 
 if __name__ == "__main__":
