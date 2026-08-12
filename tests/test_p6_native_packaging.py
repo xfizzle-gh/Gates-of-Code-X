@@ -36,14 +36,18 @@ class P6NativePackagingTests(unittest.TestCase):
         self.assertIn("load_authenticated_p3_graph", installer)
         for relative in AUTHORITY_FILES:
             self.assertIn(f'"{relative}"', installer, relative)
+        self.assertEqual(2, installer.count("--collect-data gates_of_codex"))
         self.assertIn("@AuthorityAddDataArgs", installer)
         self.assertIn("Frozen executable is missing Earth3 runtime authority", installer)
+        self.assertIn("bootstrap.json", installer)
+        self.assertIn("formations.json", installer)
 
     def test_release_build_embeds_same_authenticated_authority_set(self) -> None:
         release = (ROOT / ".github" / "workflows" / "release.yml").read_text(
             encoding="utf-8"
         )
         self.assertIn("$authorityData = @(", release)
+        self.assertEqual(2, release.count("--collect-data gates_of_codex"))
         self.assertEqual(2, release.count("@authorityData --add-data"))
         self.assertIn("Smoke frozen provenance and Earth3 authority payload", release)
         required_names = (
@@ -55,6 +59,8 @@ class P6NativePackagingTests(unittest.TestCase):
             "p3_operational_graph.json",
             "p3-first-corridor-route-inventory.json",
             "sites.json",
+            "bootstrap.json",
+            "formations.json",
         )
         for name in required_names:
             self.assertIn(name, release, name)
