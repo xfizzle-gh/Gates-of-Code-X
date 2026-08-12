@@ -1,9 +1,10 @@
 """#194 native battle-pair installer using the owner-proven #201 GoH recipe.
 
 This is intentionally separate from the earlier evidence-only battle-pair
-materializer.  It stages a *real* final Gates Workshop layer: required parent
-conquest files are materialized, roster includes are self-contained, and the
-full parent Code:X/AIO Dynamic Conquest surfaces are preserved.
+materializer. It stages a real final Gates Workshop layer: required parent
+conquest files are materialized, roster includes are self-contained, the full
+parent Code:X/AIO Dynamic Conquest surfaces are preserved, and selected-pair
+cross-side personnel breeds are projected transactionally into the final layer.
 """
 from __future__ import annotations
 
@@ -16,13 +17,15 @@ import shutil
 from typing import Any, Mapping, Sequence
 
 from .expanded_nations_battle_pair import restore_battle_pair as restore_legacy_pair
+from .expanded_nations_breeds import project_actor_breed_files
 from .expanded_nations_models import ExpandedNationsError, GENERATED_MARKER
+from .faction_wiring_compiler import FactionWiringCompiler
 from .faction_wiring_manifest import load_faction_manifest
 from .goc_tactical_army_registry import army_row, is_goc_tactical_side
 from .modstack import KNOWN_WORKSHOP_ORDER
 
 SCHEMA = "gates-of-codex.expanded-nations-native-pair"
-VERSION = 1
+VERSION = 2
 MANIFEST_REL = Path("live/expanded_nations/native_pair/active.json")
 BACKUP_REL = Path("live/expanded_nations/native_pair/backup")
 
@@ -32,7 +35,7 @@ VALUES_REL = "resource/set/dynamic_campaign/values.set"
 CTF_REL = "resource/set/multiplayer/games/campaign_capture_the_flag.set"
 ALLIANCES_REL = "resource/set/multiplayer/games/presets/alliances_generic.inc"
 
-# Exact final-layer parent conquest set from the native #201 win.  In
+# Exact final-layer parent conquest set from the native #201 win. In
 # particular: no inf_frg_era1960, no inf_sov_era1960, no units_frg_era1960.
 PARENT_NAMES = (
     "settings.set",
@@ -66,6 +69,35 @@ def _actor(actor_id: str) -> Mapping[str, Any]:
     if side != "prc" and not is_goc_tactical_side(side):
         raise ExpandedNationsError(f"Actor lacks Gates tactical side: {actor_id} -> {side}")
     return row
+
+
+def _resolved_pair_actors(
+    roots: Sequence[Path],
+    expected: Mapping[str, str],
+    resolved_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Mapping[str, Any]]:
+    payload = dict(resolved_payload) if resolved_payload is not None else FactionWiringCompiler(roots).compile()
+    if int(payload.get("error_count") or 0) != 0:
+        raise ExpandedNationsError(
+            f"Resolved actor catalog has {payload.get('error_count')} error(s); refuse native pair"
+        )
+    by_id = {str(row.get("actor_id")): row for row in payload.get("actors", [])}
+    resolved: dict[str, Mapping[str, Any]] = {}
+    for actor_id, tactical_side in expected.items():
+        row = by_id.get(actor_id)
+        if row is None:
+            raise ExpandedNationsError(f"Resolved actor catalog missing {actor_id}")
+        if not row.get("playable"):
+            raise ExpandedNationsError(f"Resolved native-pair actor is not playable: {actor_id}")
+        if str(row.get("tactical_side") or "") != tactical_side:
+            raise ExpandedNationsError(
+                f"Resolved actor tactical side drift: {actor_id} -> {row.get('tactical_side')} expected {tactical_side}"
+            )
+        components = {str(item) for item in (row.get("components") or [])}
+        if tactical_side != "prc" and not components:
+            raise ExpandedNationsError(f"Resolved actor lacks approved components: {actor_id}")
+        resolved[actor_id] = row
+    return resolved
 
 
 def _pack_rels(side: str) -> tuple[str, ...]:
@@ -218,10 +250,54 @@ def _write(path: Path, text: str) -> str:
     return _sha(path)
 
 
+def _write_bytes(path: Path, data: bytes) -> str:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data)
+    return _sha(path)
+
+
 def _copy(src: Path, dst: Path) -> str:
     dst.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(src, dst)
     return _sha(dst)
+
+
+def _project_pair_breeds(
+    resolved: Mapping[str, Mapping[str, Any]],
+    roots: Sequence[Path],
+    actor_sides: Mapping[str, str],
+) -> dict[str, dict[Path, bytes]]:
+    result: dict[str, dict[Path, bytes]] = {}
+    for actor_id, side in actor_sides.items():
+        if side == "prc":
+            continue
+        actor = resolved[actor_id]
+        components = {str(item) for item in (actor.get("components") or [])}
+        cross_side_member_units = [
+            unit
+            for unit in (actor.get("units") or [])
+            if str(unit.get("source_side") or "").lower() != side.lower()
+            and isinstance(unit.get("members"), Mapping)
+            and bool(unit.get("members"))
+            and str(unit.get("component_id") or "") in components
+        ]
+        if not cross_side_member_units:
+            raise ExpandedNationsError(
+                f"Native-pair actor {actor_id}/{side} has no authorized personnel-bearing source units"
+            )
+        outputs = project_actor_breed_files(actor, roots)
+        if not outputs:
+            raise ExpandedNationsError(
+                f"Native-pair actor {actor_id}/{side} projected zero personnel breed files"
+            )
+        prefix = f"resource/set/breed/mp/{side}/"
+        for relative in outputs:
+            if not relative.as_posix().startswith(prefix):
+                raise ExpandedNationsError(
+                    f"Breed projection escaped actor namespace: {actor_id}: {relative.as_posix()}"
+                )
+        result[side] = outputs
+    return result
 
 
 def install_native_pair(
@@ -230,6 +306,8 @@ def install_native_pair(
     workshop_root: str | Path,
     attacker_actor: str,
     defender_actor: str,
+    *,
+    resolved_payload: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     source = Path(source_repo).resolve()
     gates = Path(gates_root).resolve()
@@ -238,7 +316,6 @@ def install_native_pair(
     if source == gates:
         raise ExpandedNationsError("Source checkout and live Gates root must differ")
 
-    # The previous schema-v3 harness may be active from an earlier native attempt.
     legacy = gates / "live/expanded_nations/battle_pair/active.json"
     if legacy.is_file():
         restore_legacy_pair(gates)
@@ -248,6 +325,9 @@ def install_native_pair(
     arow, drow = _actor(attacker_actor), _actor(defender_actor)
     attacker, defender = str(arow["tactical_side"]), str(drow["tactical_side"])
     roots = _roots(workshop)
+    actor_sides = {attacker_actor: attacker, defender_actor: defender}
+    resolved = _resolved_pair_actors(roots, actor_sides, resolved_payload)
+    breed_outputs = _project_pair_breeds(resolved, roots, actor_sides)
 
     parent = {rel: _find(roots, rel) for rel in PARENT_RELS}
     parent[VALUES_REL] = _find(roots, VALUES_REL)
@@ -295,6 +375,11 @@ def install_native_pair(
         for rel in pack_rels:
             prep(rel)
             installed[rel] = _copy(source / rel, gates / rel)
+        for side, outputs in sorted(breed_outputs.items()):
+            for relative, data in sorted(outputs.items(), key=lambda item: item[0].as_posix()):
+                rel = relative.as_posix()
+                prep(rel)
+                installed[rel] = _write_bytes(gates / rel, data)
         for rel, text in (
             (CONQUEST_LUA_REL, lua),
             (CTF_REL, ctf),
@@ -321,6 +406,11 @@ def install_native_pair(
                 {"relative_path": rel, "source_path": str(path), "sha256": _sha(path)}
                 for rel, path in sorted(parent.items())
             ],
+            "breed_files": {
+                side: [relative.as_posix() for relative in sorted(outputs, key=lambda path: path.as_posix())]
+                for side, outputs in sorted(breed_outputs.items())
+            },
+            "breed_counts": {side: len(outputs) for side, outputs in sorted(breed_outputs.items())},
             "installed_files": {rel: {"sha256": digest} for rel, digest in sorted(installed.items())},
             "backups": backups,
         }
@@ -331,8 +421,6 @@ def install_native_pair(
         if problems:
             raise ExpandedNationsError("Native-pair verification failed: " + "; ".join(problems))
     except Exception:
-        # Write a temporary manifest so the single restore authority can roll back
-        # every touched path, including originally absent files.
         temp = {
             "schema": SCHEMA,
             "schema_version": VERSION,
@@ -362,7 +450,11 @@ def verify_native_pair(gates_root: str | Path) -> list[str]:
     except json.JSONDecodeError as exc:
         return [f"native-pair manifest malformed: {exc}"]
     problems: list[str] = []
-    if manifest.get("schema") != SCHEMA or manifest.get("native_recipe") != "#201-final-layer-v1":
+    if (
+        manifest.get("schema") != SCHEMA
+        or manifest.get("schema_version") != VERSION
+        or manifest.get("native_recipe") != "#201-final-layer-v1"
+    ):
         problems.append("native-pair recipe/schema mismatch")
     installed = manifest.get("installed_files") or {}
     for rel, meta in installed.items():
@@ -371,6 +463,18 @@ def verify_native_pair(gates_root: str | Path) -> list[str]:
             problems.append(f"missing installed file {rel}")
         elif meta.get("sha256") and _sha(target) != meta["sha256"]:
             problems.append(f"tampered installed file {rel}")
+
+    breed_files = manifest.get("breed_files") or {}
+    for side in (str(manifest.get("attacker_side") or ""), str(manifest.get("defender_side") or "")):
+        if side.startswith("goc_"):
+            rows = breed_files.get(side) or []
+            if not rows:
+                problems.append(f"native pair missing personnel breed projection for {side}")
+            for rel in rows:
+                if not str(rel).startswith(f"resource/set/breed/mp/{side}/"):
+                    problems.append(f"breed manifest path escaped {side}: {rel}")
+                if rel not in installed:
+                    problems.append(f"breed manifest path not transactionally installed: {rel}")
 
     roster = gates / ROSTER_REL
     if roster.is_file():
