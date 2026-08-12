@@ -53,12 +53,11 @@ func _apply_move_order_result_patch(
 	if commands.is_empty() or not commands[0] is Dictionary:
 		return false
 	var command := commands[0] as Dictionary
-	var formation_id := String(
-		command.get("formation")
-		or command.get("formation_id")
-		or command.get("strategic_formation_id")
-		or ""
-	)
+	var formation_id := String(command.get("formation", ""))
+	if formation_id.is_empty():
+		formation_id = String(command.get("formation_id", ""))
+	if formation_id.is_empty():
+		formation_id = String(command.get("strategic_formation_id", ""))
 	if formation_id.is_empty():
 		return false
 
