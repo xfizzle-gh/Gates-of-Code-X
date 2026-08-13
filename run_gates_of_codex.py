@@ -50,6 +50,7 @@ os.environ.setdefault(
     "GATES_OF_CODEX_STARTUP_EPOCH_MS",
     f"{time.time() * 1000.0:.3f}",
 )
+os.environ.setdefault(STARTUP_LOG_ENV, str(_default_startup_log()))
 _install_windowed_output()
 
 from gates_of_codex.fast_entrypoint import player_main

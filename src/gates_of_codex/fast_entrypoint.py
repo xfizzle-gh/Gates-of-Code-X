@@ -14,10 +14,21 @@ from pathlib import Path
 
 STARTUP_TELEMETRY_ENV = "GATES_OF_CODEX_STARTUP_TELEMETRY"
 STARTUP_EPOCH_ENV = "GATES_OF_CODEX_STARTUP_EPOCH_MS"
+STARTUP_LOG_ENV = "GATES_OF_CODEX_STARTUP_LOG"
 STARTUP_LOG_PREFIX = "GOC_STARTUP"
 GODOT_IMPORT_STAMP_SCHEMA = "gates-of-codex.godot-import-cache"
-GODOT_IMPORT_STAMP_VERSION = 1
+GODOT_IMPORT_STAMP_VERSION = 2
 GODOT_IMPORT_STAMP_NAME = "gates_of_codex_import_cache.json"
+GODOT_FINGERPRINT_SKIP_DIRECTORIES = frozenset({".godot", ".import"})
+GODOT_FINGERPRINT_SKIP_SUFFIXES = (".import", ".uid")
+GODOT_FINGERPRINT_SKIP_NAMES = frozenset(
+    {
+        "campaign_snapshot.json",
+        "frontend_commands.json",
+        "commands.json",
+        "screenshot_log.txt",
+    }
+)
 
 
 def _startup_telemetry_enabled() -> bool:
@@ -116,8 +127,16 @@ def _hash_regular_file(digest, path: Path) -> None:
             digest.update(chunk)
 
 
+def _skip_godot_fingerprint_file(name: str) -> bool:
+    if name.endswith(GODOT_FINGERPRINT_SKIP_SUFFIXES):
+        return True
+    if name in GODOT_FINGERPRINT_SKIP_NAMES:
+        return True
+    return name.startswith("home_") and name.endswith(".png")
+
+
 def _godot_project_fingerprint(project_directory: Path) -> str | None:
-    """Hash the import-relevant project tree, excluding derived Godot caches."""
+    """Hash authored project sources, excluding generated Godot/runtime files."""
 
     project = project_directory.resolve(strict=False)
     if not (project / "project.godot").is_file():
@@ -129,17 +148,14 @@ def _godot_project_fingerprint(project_directory: Path) -> str | None:
             kept_directories: list[str] = []
             for name in sorted(directories):
                 candidate = root_path / name
-                if name == ".godot":
+                if name in GODOT_FINGERPRINT_SKIP_DIRECTORIES:
                     continue
                 if candidate.is_symlink():
                     return None
                 kept_directories.append(name)
             directories[:] = kept_directories
             for name in sorted(files):
-                # Godot's sidecar import metadata is derived from the source
-                # assets and may be rewritten by the import itself. Hash the
-                # actual source asset, not that generated cache record.
-                if name.endswith(".import"):
+                if _skip_godot_fingerprint_file(name):
                     continue
                 candidate = root_path / name
                 if candidate.is_symlink() or not candidate.is_file():
@@ -430,17 +446,18 @@ def _install_unchanged_continue_fast_path(player_shell) -> None:
         )
 
         try:
-            from .persistent_backend import probe_startup_reuse
+            from .persistent_backend import diagnose_startup_reuse
 
-            state = probe_startup_reuse(paths.campaign, paths.snapshot)
+            state, reuse_reason = diagnose_startup_reuse(paths.campaign, paths.snapshot)
         except Exception:  # noqa: BLE001 - full validated path is the fallback
             state = None
+            reuse_reason = "probe_exception"
         if not isinstance(state, dict):
             _emit_startup_timing(
                 "unchanged_continue_reuse",
                 duration_ms=(time.perf_counter() - started) * 1000.0,
                 reused=False,
-                reason="daemon_or_fingerprint_miss",
+                reason=str(reuse_reason or "daemon_or_fingerprint_miss"),
             )
             return original_run_play(
                 args,

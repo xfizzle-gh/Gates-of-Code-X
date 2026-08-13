@@ -208,7 +208,10 @@ class StartupRebaselineTests(unittest.TestCase):
 
     def test_probe_guard_refuses_daemon_state_when_maintenance_is_stale(self) -> None:
         fake_backend = types.SimpleNamespace(
-            probe_startup_reuse=lambda _campaign, _snapshot: {"turn_number": 1},
+            diagnose_startup_reuse=lambda _campaign, _snapshot: (
+                {"turn_number": 1},
+                "ok",
+            ),
         )
         startup_rebaseline._install_probe_maintenance_guard(fake_backend)
         with patch.object(
@@ -216,6 +219,12 @@ class StartupRebaselineTests(unittest.TestCase):
             "_marker_metadata_matches",
             return_value=False,
         ):
+            state, reason = fake_backend.diagnose_startup_reuse(
+                Path("campaign.json"),
+                Path("campaign_snapshot.json"),
+            )
+            self.assertIsNone(state)
+            self.assertEqual("maintenance_mismatch", reason)
             self.assertIsNone(
                 fake_backend.probe_startup_reuse(
                     Path("campaign.json"),

@@ -397,15 +397,13 @@ class FullStartupShortcutTests(unittest.TestCase):
                     snapshot,
                     environ=None,
                 )
-                payload = json.loads(cache.read_text(encoding="utf-8"))
-                expected_campaign = hashlib.sha256(original_campaign).hexdigest()
-                mutated_digest = hashlib.sha256(mutated_campaign).hexdigest()
-                self.assertEqual(expected_campaign, payload["campaign"]["sha256"])
-                self.assertNotEqual(mutated_digest, payload["campaign"]["sha256"])
-                self.assertEqual(
-                    hashlib.sha256(snapshot_bytes).hexdigest(),
-                    payload["snapshot"]["sha256"],
-                )
+                if cache.is_file():
+                    payload = json.loads(cache.read_text(encoding="utf-8"))
+                    mutated_digest = hashlib.sha256(mutated_campaign).hexdigest()
+                    self.assertNotEqual(
+                        mutated_digest,
+                        payload.get("campaign", {}).get("sha256"),
+                    )
                 with (
                     patch.object(
                         startup_cold_optimizations,
@@ -790,6 +788,103 @@ class FullStartupShortcutTests(unittest.TestCase):
             source.index("install_packaged_full_startup_shortcuts()"),
             source.index("raise SystemExit(player_main())"),
         )
+
+
+    def test_write_cache_refuses_when_captured_pair_no_longer_matches(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            home = root / "home"
+            campaign = root / "campaign.json"
+            snapshot = root / "campaign_snapshot.json"
+            campaign.write_text('{"turn":1}\n', encoding="utf-8")
+            snapshot.write_text('{"snapshot":1}\n', encoding="utf-8")
+            captured_campaign = startup_cold_optimizations._file_identity(campaign)
+            captured_snapshot = startup_cold_optimizations._file_identity(snapshot)
+            campaign.write_text('{"turn":2}\n', encoding="utf-8")
+            with (
+                patch.dict(os.environ, {"GATES_OF_CODEX_HOME": str(home)}),
+                patch.object(
+                    startup_cold_optimizations,
+                    "_source_commit",
+                    return_value="a" * 40,
+                ),
+                patch.object(
+                    startup_cold_optimizations,
+                    "_maintenance_signature",
+                    return_value="c" * 64,
+                ),
+            ):
+                self.assertFalse(
+                    startup_cold_optimizations._write_snapshot_cache(
+                        campaign,
+                        snapshot,
+                        environ=None,
+                        campaign_identity=captured_campaign,
+                        snapshot_identity=captured_snapshot,
+                    )
+                )
+                cache = startup_cold_optimizations._snapshot_cache_path(
+                    campaign,
+                    snapshot,
+                    environ=None,
+                )
+                self.assertFalse(cache.exists())
+
+
+class GodotImportFingerprintTests(unittest.TestCase):
+    def test_generated_runtime_files_do_not_change_import_fingerprint(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            (project / "project.godot").write_text("config_version=5\n", encoding="utf-8")
+            (project / "main.tscn").write_text("[gd_scene]\n", encoding="utf-8")
+            (project / "scripts").mkdir()
+            (project / "scripts" / "main.gd").write_text("extends Node\n", encoding="utf-8")
+            baseline = fast_entrypoint._godot_project_fingerprint(project)
+            self.assertIsNotNone(baseline)
+            (project / ".godot").mkdir()
+            (project / ".godot" / "global_script_class_cache.cfg").write_text(
+                "cache\n",
+                encoding="utf-8",
+            )
+            (project / "scripts" / "main.gd.uid").write_text("uid://abc\n", encoding="utf-8")
+            (project / "campaign_snapshot.json").write_text("{}\n", encoding="utf-8")
+            (project / "frontend_commands.json").write_text("{}\n", encoding="utf-8")
+            (project / "home_earth3.png").write_bytes(b"png")
+            (project / "main.tscn.import").write_text("remap\n", encoding="utf-8")
+            self.assertEqual(baseline, fast_entrypoint._godot_project_fingerprint(project))
+            (project / "scripts" / "main.gd").write_text("extends Node2D\n", encoding="utf-8")
+            changed_script = fast_entrypoint._godot_project_fingerprint(project)
+            self.assertNotEqual(baseline, changed_script)
+            (project / "scripts" / "main.gd").write_text("extends Node\n", encoding="utf-8")
+            (project / "main.tscn").write_text("[gd_scene load_steps=2]\n", encoding="utf-8")
+            self.assertNotEqual(baseline, fast_entrypoint._godot_project_fingerprint(project))
+
+
+class StartupReuseDiagnosisTests(unittest.TestCase):
+    def test_diagnose_reports_missing_session_descriptor(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            campaign = Path(temporary) / "campaign.json"
+            snapshot = Path(temporary) / "campaign_snapshot.json"
+            campaign.write_text("{}\n", encoding="utf-8")
+            snapshot.write_text("{}\n", encoding="utf-8")
+            with patch.object(
+                persistent_backend,
+                "_runtime_source_commit",
+                return_value="a" * 40,
+            ):
+                state, reason = persistent_backend.diagnose_startup_reuse(
+                    campaign,
+                    snapshot,
+                )
+            self.assertIsNone(state)
+            self.assertEqual("no_session_descriptor", reason)
+
+    def test_fast_path_emits_exact_reuse_rejection_reason(self) -> None:
+        source = (ROOT / "src/gates_of_codex/fast_entrypoint.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("diagnose_startup_reuse", source)
+        self.assertNotIn('reason="daemon_or_fingerprint_miss"', source)
 
 
 if __name__ == "__main__":

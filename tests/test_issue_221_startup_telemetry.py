@@ -106,8 +106,17 @@ class StartupTelemetryTests(unittest.TestCase):
         self.assertIn("super._ready()", script)
         self.assertIn("await get_tree().process_frame", script)
         self.assertIn('"first_usable_strategic_frame"', script)
-        self.assertIn('print("GOC_STARTUP "', script)
+        self.assertIn('print(line)', script)
+        self.assertIn("FileAccess.open", script)
+        self.assertIn("GATES_OF_CODEX_STARTUP_LOG", script)
         self.assertIn("res://scripts/main_startup_measured.gd", scene)
+
+    def test_packaged_runner_exports_startup_log_path(self) -> None:
+        source = (ROOT / "run_gates_of_codex.py").read_text(encoding="utf-8")
+        self.assertLess(
+            source.index('os.environ.setdefault(STARTUP_LOG_ENV'),
+            source.index("from gates_of_codex.fast_entrypoint import player_main"),
+        )
 
 
 if __name__ == "__main__":

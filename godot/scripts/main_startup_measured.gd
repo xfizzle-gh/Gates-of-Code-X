@@ -7,6 +7,7 @@ extends "res://scripts/main_perf_measured.gd"
 
 const STARTUP_TELEMETRY_ENV := "GATES_OF_CODEX_STARTUP_TELEMETRY"
 const STARTUP_EPOCH_ENV := "GATES_OF_CODEX_STARTUP_EPOCH_MS"
+const STARTUP_LOG_ENV := "GATES_OF_CODEX_STARTUP_LOG"
 
 
 func _ready() -> void:
@@ -23,4 +24,21 @@ func _ready() -> void:
 		"stage": "first_usable_strategic_frame",
 		"since_process_entry_ms": maxf(0.0, now_ms - started_ms),
 	}
-	print("GOC_STARTUP " + JSON.stringify(payload))
+	var line := "GOC_STARTUP " + JSON.stringify(payload)
+	print(line)
+	_append_startup_log(line)
+
+
+func _append_startup_log(line: String) -> void:
+	var path := OS.get_environment(STARTUP_LOG_ENV).strip_edges()
+	if path.is_empty():
+		return
+	var file := FileAccess.open(path, FileAccess.READ_WRITE)
+	if file == null:
+		file = FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		return
+	file.seek_end()
+	file.store_line(line)
+	file.flush()
+	file.close()

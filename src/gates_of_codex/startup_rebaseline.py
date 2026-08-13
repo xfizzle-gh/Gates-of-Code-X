@@ -238,23 +238,31 @@ def _install_daemon_rebaseline_response(persistent_backend) -> None:
 
 
 def _install_probe_maintenance_guard(persistent_backend) -> None:
-    current = persistent_backend.probe_startup_reuse
+    current = persistent_backend.diagnose_startup_reuse
     if getattr(current, "_goc_startup_maintenance_guard", False):
         return
 
-    def probe_startup_reuse_with_maintenance(campaign: Path, snapshot: Path):
-        state = current(campaign, snapshot)
+    def diagnose_startup_reuse_with_maintenance(campaign: Path, snapshot: Path):
+        state, reason = current(campaign, snapshot)
         if state is None:
-            return None
+            return None, reason
         if not _marker_metadata_matches(
             persistent_backend,
             campaign,
             snapshot,
         ):
-            return None
+            return None, "maintenance_mismatch"
+        return state, reason
+
+    def probe_startup_reuse_with_maintenance(campaign: Path, snapshot: Path):
+        state, _reason = persistent_backend.diagnose_startup_reuse(
+            campaign,
+            snapshot,
+        )
         return state
 
-    probe_startup_reuse_with_maintenance._goc_startup_maintenance_guard = True
+    diagnose_startup_reuse_with_maintenance._goc_startup_maintenance_guard = True
+    persistent_backend.diagnose_startup_reuse = diagnose_startup_reuse_with_maintenance
     persistent_backend.probe_startup_reuse = probe_startup_reuse_with_maintenance
 
 

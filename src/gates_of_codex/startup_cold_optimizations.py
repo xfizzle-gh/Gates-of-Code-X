@@ -227,15 +227,24 @@ def _write_snapshot_cache(
     if context is None or not campaign.is_file() or not snapshot.is_file():
         return False
     try:
-        if campaign_identity is None or snapshot_identity is None:
-            captured_campaign, captured_snapshot = _capture_published_pair_identities(
-                campaign,
-                snapshot,
+        current_campaign, current_snapshot = _capture_published_pair_identities(
+            campaign,
+            snapshot,
+        )
+        if campaign_identity is None:
+            campaign_identity = current_campaign
+        if snapshot_identity is None:
+            snapshot_identity = current_snapshot
+        if (
+            dict(campaign_identity) != current_campaign
+            or dict(snapshot_identity) != current_snapshot
+        ):
+            _emit(
+                "frontend_snapshot_cache_publish",
+                published=False,
+                reason="pair_mutated",
             )
-            if campaign_identity is None:
-                campaign_identity = captured_campaign
-            if snapshot_identity is None:
-                snapshot_identity = captured_snapshot
+            return False
         payload = dict(context)
         payload["campaign"] = dict(campaign_identity)
         payload["snapshot"] = dict(snapshot_identity)

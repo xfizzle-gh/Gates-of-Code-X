@@ -317,16 +317,23 @@ def _startup_reuse_response(
     }
 
 
-def probe_startup_reuse(campaign: Path, snapshot: Path) -> dict[str, Any] | None:
-    """Return daemon-proven validated state only for an untouched launch baseline."""
+def diagnose_startup_reuse(
+    campaign: Path,
+    snapshot: Path,
+) -> tuple[dict[str, Any] | None, str]:
+    """Return daemon-proven state or the exact reason reuse is unsafe."""
 
     campaign = campaign.expanduser().resolve(strict=False)
     snapshot = snapshot.expanduser().resolve(strict=False)
+    if _runtime_source_commit() is None:
+        return None, "runtime_source_commit_missing"
+    session_path = _session_path(campaign)
+    if not session_path.is_file():
+        return None, "no_session_descriptor"
     session = _read_session(campaign)
     if session is None:
-        if _session_path(campaign).is_file():
-            _drop_session_descriptor(campaign)
-        return None
+        _drop_session_descriptor(campaign)
+        return None, "session_descriptor_invalid"
     response = _request(
         session,
         {
@@ -338,11 +345,20 @@ def probe_startup_reuse(campaign: Path, snapshot: Path) -> dict[str, Any] | None
     )
     if response is None:
         _drop_session_descriptor(campaign)
-        return None
+        return None, "daemon_unready"
     if response.get("ok") is not True:
-        return None
+        return None, str(response.get("reason") or "reuse_rejected")
     state = response.get("state")
-    return dict(state) if isinstance(state, dict) else None
+    if not isinstance(state, dict):
+        return None, "reuse_state_invalid"
+    return dict(state), "ok"
+
+
+def probe_startup_reuse(campaign: Path, snapshot: Path) -> dict[str, Any] | None:
+    """Return daemon-proven validated state only for an untouched launch baseline."""
+
+    state, _reason = diagnose_startup_reuse(campaign, snapshot)
+    return state
 
 
 def ensure_backend_session(campaign: Path, snapshot: Path) -> bool:
