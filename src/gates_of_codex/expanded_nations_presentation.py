@@ -96,7 +96,7 @@ def render_actor_research_localization(actor: Mapping[str, Any]) -> str:
     lines = [
         'msgid ""',
         'msgstr ""',
-        f'"Project-Id-Version: Gates of Code:X { _po_escape(display_name) } Research\\n"',
+        f'"Project-Id-Version: Gates of Code:X {_po_escape(display_name)} Research\\n"',
         '"Language: en\\n"',
         '"MIME-Version: 1.0\\n"',
         '"Content-Type: text/plain; charset=UTF-8\\n"',
@@ -154,7 +154,7 @@ def _effective_portrait(name: str, roots: Sequence[Path]) -> Path | None:
     candidates = [name]
     match = name.rsplit("_", 1)
     if len(match) == 2 and match[1].lower().endswith(".png"):
-        candidates.append(f"{match[0]}({match[1] if False else 'rusa'})_{match[1]}")
+        candidates.append(f"{match[0]}(rusa)_{match[1]}")
     for root in reversed(roots):
         portrait_root = (
             root
