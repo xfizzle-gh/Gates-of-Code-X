@@ -678,10 +678,27 @@ def main(argv: Sequence[str] | None = None) -> int:
     from .packaging import PackagingError, enforce_packaged_backend_identity
 
     try:
-        arguments = enforce_packaged_backend_identity(arguments)
+        invocation = enforce_packaged_backend_identity(arguments)
     except PackagingError as exc:
         sys.stderr.write(f"{exc}\n")
         return 2
+    return dispatch_authenticated_packaged_invocation(invocation, process_argv=argv)
+
+
+def dispatch_authenticated_packaged_invocation(
+    invocation: object,
+    *,
+    process_argv: Sequence[str] | None = None,
+) -> int:
+    """Continue after the process identity boundary has already authenticated argv."""
+    from .packaging import AuthenticatedPackagedInvocation
+
+    if not isinstance(invocation, AuthenticatedPackagedInvocation):
+        raise TypeError(
+            "packaged dispatch requires AuthenticatedPackagedInvocation from "
+            "enforce_packaged_backend_identity"
+        )
+    arguments = list(invocation.arguments)
 
     if arguments[:1] == ["apply-frontend"]:
         from .persistent_backend import try_forward_apply_frontend
@@ -701,7 +718,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     _install_fast_paths()
     if getattr(sys, "frozen", False) or (
-        argv is None and arguments[:1] in (["play"], ["apply-frontend"])
+        process_argv is None and arguments[:1] in (["play"], ["apply-frontend"])
     ):
         install_runtime_contracts()
     from .entrypoint import main as application_main
@@ -725,10 +742,11 @@ def player_main(argv: Sequence[str] | None = None) -> int:
     from .packaging import PackagingError, enforce_packaged_backend_identity
 
     try:
-        arguments = enforce_packaged_backend_identity(arguments)
+        invocation = enforce_packaged_backend_identity(arguments)
     except PackagingError as exc:
         sys.stderr.write(f"{exc}\n")
         return 2
+    arguments = list(invocation.arguments)
 
     if arguments[:1] == ["apply-frontend"]:
         from .persistent_backend import try_forward_apply_frontend
@@ -756,6 +774,8 @@ def player_main(argv: Sequence[str] | None = None) -> int:
     # Explicit CLI subcommands belong to the general application entry point.
     # Player flags (`--new`, `--continue`, ...) remain direct player-shell input.
     if arguments and not arguments[0].startswith("-"):
-        return main(arguments)
+        return dispatch_authenticated_packaged_invocation(
+            invocation, process_argv=arguments
+        )
     _emit_startup_timing("player_shell_dispatch", mode=str(arguments[0] if arguments else ""))
     return player_shell_main(arguments)

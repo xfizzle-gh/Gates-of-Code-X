@@ -42,6 +42,14 @@ MANAGED_CAMPAIGNS_DIRNAME = "campaigns"
 MANAGED_BACKUPS_DIRNAME = "backups"
 
 
+@dataclass(frozen=True, slots=True)
+class AuthenticatedPackagedInvocation:
+    """Process-local proof that packaged-backend argv already passed identity."""
+
+    arguments: tuple[str, ...]
+    source_commit: str | None
+
+
 class PackagingError(RuntimeError):
     """Raised when packaging provenance or managed-path containment fails."""
 
@@ -797,16 +805,19 @@ def enforce_packaged_backend_identity(
     frozen: bool | None = None,
     root: str | Path | None = None,
     environ: Mapping[str, str] | None = None,
-) -> list[str]:
+) -> AuthenticatedPackagedInvocation:
     """Bind apply-frontend/session-backend to an exact packaged source commit.
 
     Frozen production commands require ``--expected-source-commit`` and compare
     it to this process's embedded stamp before any forwarding or mutation.
+    Public process entrypoints must call this once, then dispatch the returned
+    state internally. Do not feed the stripped arguments back into another
+    public entrypoint that repeats this external-boundary check.
     """
     remaining, expected = split_expected_source_commit(arguments)
     command = remaining[0] if remaining else ""
     if command not in _PACKAGED_IDENTITY_COMMANDS:
-        return remaining
+        return AuthenticatedPackagedInvocation(tuple(remaining), None)
     is_frozen = bool(getattr(sys, "frozen", False) if frozen is None else frozen)
     if expected is None:
         if is_frozen:
@@ -814,6 +825,6 @@ def enforce_packaged_backend_identity(
                 "Packaged apply-frontend/session-backend requires "
                 "--expected-source-commit from the windowed package"
             )
-        return remaining
-    require_expected_source_commit(expected, root=root, environ=environ)
-    return remaining
+        return AuthenticatedPackagedInvocation(tuple(remaining), None)
+    actual = require_expected_source_commit(expected, root=root, environ=environ)
+    return AuthenticatedPackagedInvocation(tuple(remaining), actual)

@@ -29,9 +29,14 @@ from gates_of_codex.earth3_operational import (
     P3_AUTHORITY_METADATA_KEY,
     Earth3OperationalAuthorityError,
 )
-from gates_of_codex.fast_entrypoint import _require_frozen_console_backend
+from gates_of_codex.fast_entrypoint import (
+    _require_frozen_console_backend,
+    dispatch_authenticated_packaged_invocation,
+    main as fast_entrypoint_main,
+)
 from gates_of_codex.frontend import FRONTEND_SCHEMA_VERSION, write_frontend_snapshot
 from gates_of_codex.packaging import (
+    AuthenticatedPackagedInvocation,
     PackagingError,
     enforce_packaged_backend_identity,
     resolve_source_commit,
@@ -231,7 +236,7 @@ class PackagedCommandAuthorityContractTests(unittest.TestCase):
         with patch(
             "gates_of_codex.packaging.resolve_source_commit", return_value=actual
         ):
-            remaining = enforce_packaged_backend_identity(
+            invocation = enforce_packaged_backend_identity(
                 [
                     "session-backend",
                     "campaign.json",
@@ -242,9 +247,11 @@ class PackagedCommandAuthorityContractTests(unittest.TestCase):
                 ],
                 frozen=True,
             )
+        self.assertIsInstance(invocation, AuthenticatedPackagedInvocation)
+        self.assertEqual(actual, invocation.source_commit)
         self.assertEqual(
-            ["session-backend", "campaign.json", "--snapshot", "snapshot.json"],
-            remaining,
+            ("session-backend", "campaign.json", "--snapshot", "snapshot.json"),
+            invocation.arguments,
         )
 
     def test_live_entry_rejects_mismatch_before_forward_or_auth(self) -> None:
@@ -269,6 +276,81 @@ class PackagedCommandAuthorityContractTests(unittest.TestCase):
         self.assertEqual(2, code)
         forward.assert_not_called()
         auth.assert_not_called()
+
+    def test_frozen_live_entry_dispatches_authenticated_state_not_public_main(
+        self,
+    ) -> None:
+        import run_gates_of_codex_live as live
+
+        actual = "f" * 40
+        captured: dict[str, object] = {}
+
+        def capture(invocation, **kwargs):
+            captured["invocation"] = invocation
+            captured["kwargs"] = kwargs
+            return 0
+
+        def public_main(_arguments):
+            raise AssertionError(
+                "public fast_entrypoint.main must not re-check stripped argv"
+            )
+
+        with (
+            patch.object(sys, "frozen", True, create=True),
+            patch(
+                "gates_of_codex.packaging.resolve_source_commit",
+                return_value=actual,
+            ),
+            patch.object(live, "_try_persistent_forward", return_value=None),
+            patch.object(live, "_authenticate_frozen_earth3"),
+            patch("gates_of_codex.fast_entrypoint.main", side_effect=public_main),
+            patch(
+                "gates_of_codex.fast_entrypoint.dispatch_authenticated_packaged_invocation",
+                side_effect=capture,
+            ),
+        ):
+            code = live.main(
+                [
+                    "apply-frontend",
+                    "campaign.json",
+                    "--expected-source-commit",
+                    actual,
+                ]
+            )
+        self.assertEqual(0, code)
+        invocation = captured["invocation"]
+        self.assertIsInstance(invocation, AuthenticatedPackagedInvocation)
+        self.assertEqual(actual, invocation.source_commit)
+        self.assertEqual(
+            ("apply-frontend", "campaign.json"),
+            invocation.arguments,
+        )
+        self.assertEqual(
+            ["apply-frontend", "campaign.json"],
+            list(captured["kwargs"]["process_argv"]),
+        )
+
+    def test_frozen_public_fast_entrypoint_still_requires_expected_commit(self) -> None:
+        with patch.object(sys, "frozen", True, create=True):
+            code = fast_entrypoint_main(["apply-frontend", "campaign.json"])
+        self.assertEqual(2, code)
+
+    def test_internal_dispatch_rejects_unauthenticated_argv(self) -> None:
+        with self.assertRaisesRegex(TypeError, "AuthenticatedPackagedInvocation"):
+            dispatch_authenticated_packaged_invocation(
+                ["apply-frontend", "campaign.json"]
+            )
+
+    def test_live_source_has_one_identity_boundary_then_internal_dispatch(self) -> None:
+        source = (ROOT / "run_gates_of_codex_live.py").read_text(encoding="utf-8")
+        self.assertIn("enforce_packaged_backend_identity(arguments)", source)
+        self.assertIn("dispatch_authenticated_packaged_invocation", source)
+        self.assertNotIn("import main as application_main", source)
+        self.assertNotIn("return application_main(arguments)", source)
+        self.assertLess(
+            source.index("enforce_packaged_backend_identity(arguments)"),
+            source.index("dispatch_authenticated_packaged_invocation"),
+        )
 
     def test_session_backend_launch_carries_windowed_package_commit(self) -> None:
         source = (ROOT / "src/gates_of_codex/persistent_backend.py").read_text(
