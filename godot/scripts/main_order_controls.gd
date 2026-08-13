@@ -15,6 +15,11 @@ var order_dispatch_count := 0
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	# Pending-battle modal input owns the entire viewport. Do not let the map
+	# split intercept clicks that happen to land left of the side-panel boundary.
+	if has_method("is_pending_battle_modal_active") and is_pending_battle_modal_active():
+		super._unhandled_input(event)
+		return
 	if event is InputEventMouseButton:
 		var mouse_button := event as InputEventMouseButton
 		var map_width := get_viewport_rect().size.x - PANEL_WIDTH
@@ -110,16 +115,32 @@ func _order_from_map(target_province_id: String) -> void:
 	_issue_move(target_province_id)
 
 
-func _selected_strategic_formation() -> Dictionary:
-	if selected_strategic_formation_id.is_empty():
+func _strategic_formation_by_id(formation_id: String) -> Dictionary:
+	if formation_id.is_empty():
 		return {}
 	for item: Variant in snapshot.get("strategic_formations", []):
 		if not item is Dictionary:
 			continue
 		var row := item as Dictionary
-		if String(row.get("id", "")) == selected_strategic_formation_id:
+		if String(row.get("id", "")) == formation_id:
 			return row
 	return {}
+
+
+func _selected_strategic_formation() -> Dictionary:
+	return _strategic_formation_by_id(selected_strategic_formation_id)
+
+
+func _command_formation_id(commands: Array) -> String:
+	if commands.is_empty() or not commands[0] is Dictionary:
+		return ""
+	var command := commands[0] as Dictionary
+	var formation_id := String(command.get("formation", ""))
+	if formation_id.is_empty():
+		formation_id = String(command.get("formation_id", ""))
+	if formation_id.is_empty():
+		formation_id = String(command.get("strategic_formation_id", ""))
+	return formation_id
 
 
 func _apply_move_order_result_patch(op: String, commands: Array, payload: Dictionary) -> bool:
@@ -127,9 +148,13 @@ func _apply_move_order_result_patch(op: String, commands: Array, payload: Dictio
 	if not applied:
 		return false
 	if op == "issue_move_order":
-		var formation := _selected_strategic_formation()
+		# Selection may change while the backend works. Bind acceptance feedback to
+		# the command that actually completed, not to whichever force is selected now.
+		var formation_id := _command_formation_id(commands)
+		var formation := _strategic_formation_by_id(formation_id)
+		var fallback_id := formation_id if not formation_id.is_empty() else selected_strategic_formation_id
 		status_message = "Order accepted and queued: %s." % String(
-			formation.get("display_name", selected_strategic_formation_id)
+			formation.get("display_name", fallback_id)
 		)
 	elif op == "cancel_move_order":
 		status_message = "Order cancelled."
