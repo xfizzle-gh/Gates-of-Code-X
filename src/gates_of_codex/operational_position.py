@@ -102,13 +102,13 @@ def ensure_operational_positions(state: CampaignState) -> dict:
     from .earth3_operational import (
         P3_AUTHORITY_METADATA_KEY,
         P3_MIGRATION_METADATA_KEY,
-        validate_earth3_p3_campaign_extension,
     )
+    from .earth3_fixture_authority import validate_earth3_operational_authority
 
     # Authenticated Earth3 P3 saves are mutable campaign state, never a source
     # for initialization repair.  Validate them before any generic migration.
     if P3_AUTHORITY_METADATA_KEY in state.map_metadata:
-        validate_earth3_p3_campaign_extension(state)
+        validate_earth3_operational_authority(state)
         return dict(state.map_metadata[P3_MIGRATION_METADATA_KEY])
 
     from .force_migration import ensure_strategic_formations

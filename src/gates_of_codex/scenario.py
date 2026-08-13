@@ -7,6 +7,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Callable
 
+from .earth3_fixture_authority import FIXTURE_SCENARIO_ID, apply_earth3_native_acceptance_fixture
 from .models import CampaignState
 from .state_io import campaign_from_dict
 
@@ -89,6 +90,23 @@ SCENARIO_REGISTRY = MappingProxyType(
             ),
             display_name="Legacy Europe–Mediterranean from GoE",
         ),
+        FIXTURE_SCENARIO_ID: ScenarioDefinition(
+            scenario_id=FIXTURE_SCENARIO_ID,
+            map_id="earth3_europe_mediterranean",
+            builder=_build_earth3,
+            status="debug",
+            required_asset_authority=(
+                "config/earth3/production_authority.json",
+                "config/earth3/p3_operational_authority.json",
+                "godot/assets/maps/earth3_europe_mediterranean/map_manifest.json",
+                "godot/assets/maps/earth3_europe_mediterranean/polygon_dataset.json",
+                "godot/assets/maps/earth3_europe_mediterranean/dataset_meta.json",
+                "godot/assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json",
+                "src/gates_of_codex/data/earth3_v1/*.json",
+                "src/gates_of_codex/data/earth3_native_acceptance/fixture_manifest.json",
+            ),
+            display_name="Earth3 Native Acceptance Fixture",
+        ),
     }
 )
 
@@ -120,6 +138,8 @@ def build_scenario(scenario_id: str = DEFAULT_SCENARIO_ID, **builder_options) ->
     state.map_metadata["scenario_required_asset_authority"] = list(
         definition.required_asset_authority
     )
+    if definition.scenario_id == FIXTURE_SCENARIO_ID:
+        apply_earth3_native_acceptance_fixture(state)
     return state
 
 

@@ -34,7 +34,7 @@ gates-of-codex play --continue
 | `--game <path>` | Gates of Hell install directory |
 | `--profile <path>` | Gates of Hell profile directory |
 | `--tactical-map <id>` | Preferred tactical map |
-| `--scenario <id>` | Defaults to `earth3_v1`; legacy scenarios must be named |
+| `--scenario <id>` | Defaults to `earth3_v1`; legacy scenarios and the debug `earth3_native_acceptance` fixture must be named |
 | `--godot <path>` | Godot 4 executable (or `GATES_OF_CODEX_GODOT`) |
 | `--godot-project <path>` | Godot project directory |
 | `--force-new` | Replace an existing campaign at the resolved path |

@@ -1464,9 +1464,9 @@ def validate_earth3_bootstrap_campaign_state(state: CampaignState) -> None:
     # is exactly what left the Earth3 player with no reachable movement (#206).
     occupiable = footprint
     if P3_AUTHORITY_METADATA_KEY in state.map_metadata:
-        from .earth3_operational import validate_earth3_p3_campaign_extension
+        from .earth3_fixture_authority import validate_earth3_operational_authority
 
-        occupiable = footprint | validate_earth3_p3_campaign_extension(state)
+        occupiable = footprint | validate_earth3_operational_authority(state)
     else:
         if P3_MIGRATION_METADATA_KEY in state.map_metadata:
             raise Earth3BootstrapError(
