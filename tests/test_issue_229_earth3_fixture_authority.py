@@ -10,13 +10,17 @@ from gates_of_codex.earth3_fixture_authority import (
     FIXTURE_AUTHORITY_KEY,
     FIXTURE_SCENARIO_ID,
     Earth3FixtureAuthorityError,
+    _require_exact_manifest,
     authored_fixture_authority_marker,
+    load_fixture_manifest,
     validate_earth3_native_acceptance_fixture,
     validate_earth3_operational_authority,
 )
 from gates_of_codex.earth3_operational import (
+    P3_MIGRATION_METADATA_KEY,
     P3_STARTING_FORMATION_IDS,
     Earth3OperationalAuthorityError,
+    authenticate_earth3_p3_base,
     validate_earth3_p3_campaign_extension,
 )
 from gates_of_codex.frontend import build_frontend_snapshot
@@ -194,8 +198,10 @@ class FixturePrimitiveTests(_CachedStates):
 
     def test_fixture_validation_rejects_actor_substitution(self) -> None:
         state = self._fixture_copy()
-        state.strategic_formations[PRC_FORMATION_ID].actor_id = "usa"
-        with self.assertRaisesRegex(Earth3FixtureAuthorityError, "actor/faction"):
+        force = state.strategic_formations[PRC_FORMATION_ID]
+        force.template_formation_id = "toe_sf_pol_vilnius"
+        force.faction = Faction.NATO
+        with self.assertRaisesRegex(Earth3FixtureAuthorityError, "substitution"):
             validate_earth3_native_acceptance_fixture(state)
 
     def test_fixture_validation_rejects_off_graph_position(self) -> None:
@@ -242,5 +248,89 @@ class ProductionIsolationTests(_CachedStates):
             build_scenario("not-a-scenario")
 
 
+class SharedP3BaseTests(_CachedStates):
+    def test_both_paths_reject_disabled_maneuver(self) -> None:
+        production = self._production_copy()
+        fixture = self._fixture_copy()
+        production.map_metadata["operational_maneuver_enabled"] = False
+        fixture.map_metadata["operational_maneuver_enabled"] = False
+        with self.assertRaisesRegex(Earth3OperationalAuthorityError, "operational maneuver"):
+            validate_earth3_p3_campaign_extension(production)
+        with self.assertRaisesRegex(Earth3OperationalAuthorityError, "operational maneuver"):
+            validate_earth3_native_acceptance_fixture(fixture)
+        with self.assertRaisesRegex(Earth3OperationalAuthorityError, "operational maneuver"):
+            validate_earth3_operational_authority(fixture)
+        self._assert_save_load_rejects(fixture)
+
+    def test_both_paths_reject_missing_p3_migration(self) -> None:
+        production = self._production_copy()
+        fixture = self._fixture_copy()
+        del production.map_metadata[P3_MIGRATION_METADATA_KEY]
+        del fixture.map_metadata[P3_MIGRATION_METADATA_KEY]
+        with self.assertRaisesRegex(Earth3OperationalAuthorityError, "migration provenance"):
+            validate_earth3_p3_campaign_extension(production)
+        with self.assertRaisesRegex(Earth3OperationalAuthorityError, "migration provenance"):
+            validate_earth3_native_acceptance_fixture(fixture)
+        self._assert_save_load_rejects(fixture)
+
+    def test_both_paths_reject_tampered_p3_migration(self) -> None:
+        production = self._production_copy()
+        fixture = self._fixture_copy()
+        production.map_metadata[P3_MIGRATION_METADATA_KEY]["placement"] = "tampered"
+        fixture.map_metadata[P3_MIGRATION_METADATA_KEY]["placement"] = "tampered"
+        with self.assertRaisesRegex(Earth3OperationalAuthorityError, "migration provenance"):
+            validate_earth3_p3_campaign_extension(production)
+        with self.assertRaisesRegex(Earth3OperationalAuthorityError, "migration provenance"):
+            validate_earth3_native_acceptance_fixture(fixture)
+        self._assert_save_load_rejects(fixture)
+
+    def test_both_paths_authenticate_the_same_p3_base(self) -> None:
+        production_base = authenticate_earth3_p3_base(self._production_copy())
+        fixture_base = authenticate_earth3_p3_base(self._fixture_copy())
+        self.assertEqual(production_base["graph_provinces"], fixture_base["graph_provinces"])
+        self.assertEqual(production_base["node_ids"], fixture_base["node_ids"])
+        self.assertTrue(self.production.map_metadata["operational_maneuver_enabled"] is True)
+        self.assertTrue(self.fixture.map_metadata["operational_maneuver_enabled"] is True)
+        self.assertEqual(
+            self.production.map_metadata[P3_MIGRATION_METADATA_KEY],
+            self.fixture.map_metadata[P3_MIGRATION_METADATA_KEY],
+        )
+
+    def _assert_save_load_rejects(self, state) -> None:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "campaign.json"
+            path.write_text(json.dumps(state.to_dict()), encoding="utf-8")
+            with self.assertRaises(Earth3OperationalAuthorityError):
+                campaign_from_dict(json.loads(path.read_text(encoding="utf-8")))
+
+
+class ManifestParserTests(unittest.TestCase):
+    def test_committed_manifest_is_exact(self) -> None:
+        manifest = load_fixture_manifest()
+        self.assertEqual(FIXTURE_SCENARIO_ID, manifest["fixture_id"])
+        self.assertIs(False, manifest["production_scenario"])
+        self.assertIsInstance(manifest["schema_version"], int)
+        self.assertNotIsInstance(manifest["schema_version"], bool)
+
+    def test_extra_field_is_rejected(self) -> None:
+        payload = load_fixture_manifest()
+        payload["debug"] = True
+        with self.assertRaisesRegex(Earth3FixtureAuthorityError, "fields are not exact"):
+            _require_exact_manifest(payload)
+
+    def test_coercible_wrong_types_are_rejected(self) -> None:
+        payload = load_fixture_manifest()
+        payload["schema_version"] = True
+        with self.assertRaisesRegex(Earth3FixtureAuthorityError, "must be an int"):
+            _require_exact_manifest(payload)
+        payload = load_fixture_manifest()
+        payload["production_scenario"] = 0
+        with self.assertRaisesRegex(Earth3FixtureAuthorityError, "must be a bool"):
+            _require_exact_manifest(payload)
+
+
 if __name__ == "__main__":
     unittest.main()
+

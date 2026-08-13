@@ -7,6 +7,7 @@ from typing import Any, Mapping
 
 from .earth3_operational import (
     P3_STARTING_FORMATION_IDS,
+    authenticate_earth3_p3_base,
     validate_earth3_p3_campaign_extension,
 )
 from .models import (
@@ -30,6 +31,30 @@ FIXTURE_SCHEMA = "gates-of-codex.earth3-native-acceptance-fixture"
 FIXTURE_SCHEMA_VERSION = 1
 FIXTURE_MANIFEST_RESOURCE = "earth3_native_acceptance/fixture_manifest.json"
 DEFAULT_SCENARIO_ID = "earth3_v1"
+FIXTURE_PURPOSE = "debug/native acceptance"
+
+_MANIFEST_FIELDS = (
+    "schema",
+    "schema_version",
+    "fixture_id",
+    "scenario_id",
+    "purpose",
+    "production_scenario",
+    "selected_existing_formations",
+    "fixture_prc_formation",
+)
+_SELECTED_FIELDS = ("nato", "ukr", "rusa")
+_PRC_FIELDS = (
+    "formation_id",
+    "commander_id",
+    "actor_id",
+    "faction",
+    "nation",
+    "display_name",
+    "province_id",
+    "roster",
+)
+_ROSTER_FIELDS = ("category", "quantity")
 
 _MARKER_FIELDS = (
     "schema",
@@ -50,12 +75,98 @@ def earth3_requires_stack(scenario_id: str) -> bool:
     return scenario_id in {DEFAULT_SCENARIO_ID, FIXTURE_SCENARIO_ID}
 
 
+def _require_exact_manifest(payload: Any) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        raise Earth3FixtureAuthorityError("fixture manifest must be an object")
+    if set(payload) != set(_MANIFEST_FIELDS):
+        raise Earth3FixtureAuthorityError("fixture manifest fields are not exact")
+    schema = _require_str(payload["schema"], "schema")
+    if schema != FIXTURE_SCHEMA:
+        raise Earth3FixtureAuthorityError("fixture manifest schema mismatch")
+    version = _require_int(payload["schema_version"], "schema_version")
+    if version != FIXTURE_SCHEMA_VERSION:
+        raise Earth3FixtureAuthorityError("fixture manifest schema_version mismatch")
+    fixture_id = _require_str(payload["fixture_id"], "fixture_id")
+    scenario_id = _require_str(payload["scenario_id"], "scenario_id")
+    if fixture_id != FIXTURE_SCENARIO_ID or scenario_id != FIXTURE_SCENARIO_ID:
+        raise Earth3FixtureAuthorityError("fixture manifest identity mismatch")
+    purpose = _require_str(payload["purpose"], "purpose")
+    if purpose != FIXTURE_PURPOSE:
+        raise Earth3FixtureAuthorityError("fixture manifest purpose mismatch")
+    production_scenario = _require_bool(payload["production_scenario"], "production_scenario")
+    if production_scenario is not False:
+        raise Earth3FixtureAuthorityError("fixture manifest must not be production")
+    selected = payload["selected_existing_formations"]
+    if not isinstance(selected, dict) or set(selected) != set(_SELECTED_FIELDS):
+        raise Earth3FixtureAuthorityError("fixture selected formations are not exact")
+    selected_out = {
+        key: _require_str(selected[key], f"selected_existing_formations.{key}")
+        for key in _SELECTED_FIELDS
+    }
+    prc = payload["fixture_prc_formation"]
+    if not isinstance(prc, dict) or set(prc) != set(_PRC_FIELDS):
+        raise Earth3FixtureAuthorityError("fixture PRC formation fields are not exact")
+    roster = prc["roster"]
+    if not isinstance(roster, list) or not roster:
+        raise Earth3FixtureAuthorityError("fixture PRC roster must be a non-empty array")
+    roster_out = []
+    for index, row in enumerate(roster):
+        if not isinstance(row, dict) or set(row) != set(_ROSTER_FIELDS):
+            raise Earth3FixtureAuthorityError(f"fixture PRC roster[{index}] fields are not exact")
+        roster_out.append(
+            {
+                "category": _require_str(row["category"], f"roster[{index}].category"),
+                "quantity": _require_int(row["quantity"], f"roster[{index}].quantity"),
+            }
+        )
+    prc_out = {
+        "formation_id": _require_str(prc["formation_id"], "formation_id"),
+        "commander_id": _require_str(prc["commander_id"], "commander_id"),
+        "actor_id": _require_str(prc["actor_id"], "actor_id"),
+        "faction": _require_str(prc["faction"], "faction"),
+        "nation": _require_str(prc["nation"], "nation"),
+        "display_name": _require_str(prc["display_name"], "display_name"),
+        "province_id": _require_str(prc["province_id"], "province_id"),
+        "roster": roster_out,
+    }
+    if prc_out["actor_id"] != "prc" or prc_out["faction"] != "prc":
+        raise Earth3FixtureAuthorityError("fixture PRC identity must remain prc")
+    if not prc_out["formation_id"].startswith("sf_fix_"):
+        raise Earth3FixtureAuthorityError("fixture PRC formation ID must be debug-only")
+    return {
+        "schema": schema,
+        "schema_version": version,
+        "fixture_id": fixture_id,
+        "scenario_id": scenario_id,
+        "purpose": purpose,
+        "production_scenario": production_scenario,
+        "selected_existing_formations": selected_out,
+        "fixture_prc_formation": prc_out,
+    }
+
+
+def _require_str(value: Any, label: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise Earth3FixtureAuthorityError(f"fixture manifest {label} must be a non-empty string")
+    return value
+
+
+def _require_int(value: Any, label: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise Earth3FixtureAuthorityError(f"fixture manifest {label} must be an int")
+    return value
+
+
+def _require_bool(value: Any, label: str) -> bool:
+    if not isinstance(value, bool):
+        raise Earth3FixtureAuthorityError(f"fixture manifest {label} must be a bool")
+    return value
+
+
 def load_fixture_manifest() -> dict[str, Any]:
     resource = files("gates_of_codex").joinpath("data").joinpath(FIXTURE_MANIFEST_RESOURCE)
     payload = json.loads(resource.read_text(encoding="utf-8"))
-    if not isinstance(payload, dict):
-        raise Earth3FixtureAuthorityError("fixture manifest must be an object")
-    return payload
+    return _require_exact_manifest(payload)
 
 
 def fixture_manifest_sha256() -> str:
@@ -65,12 +176,12 @@ def fixture_manifest_sha256() -> str:
 def authored_fixture_authority_marker() -> dict[str, Any]:
     manifest = load_fixture_manifest()
     return {
-        "schema": str(manifest["schema"]),
-        "schema_version": int(manifest["schema_version"]),
-        "fixture_id": str(manifest["fixture_id"]),
-        "scenario_id": str(manifest["scenario_id"]),
-        "purpose": str(manifest["purpose"]),
-        "production_scenario": bool(manifest["production_scenario"]),
+        "schema": manifest["schema"],
+        "schema_version": manifest["schema_version"],
+        "fixture_id": manifest["fixture_id"],
+        "scenario_id": manifest["scenario_id"],
+        "purpose": manifest["purpose"],
+        "production_scenario": manifest["production_scenario"],
         "manifest_sha256": fixture_manifest_sha256(),
     }
 
@@ -99,41 +210,28 @@ def validate_earth3_operational_authority(state: CampaignState) -> frozenset[str
 
 
 def validate_earth3_native_acceptance_fixture(state: CampaignState) -> frozenset[str]:
-    from .earth3_operational import (
-        EARTH3_MAP_ID,
-        P3_AUTHORITY_METADATA_KEY,
-        load_authenticated_p3_graph_for_state,
-    )
-    from .earth3_bootstrap import is_earth3_p2_campaign, load_earth3_bootstrap
-    from .operational_position import _graph_indexes, _position_is_valid
+    from .earth3_bootstrap import load_earth3_bootstrap
+    from .operational_position import _position_is_valid
 
     if str(state.map_metadata.get("scenario_id", "")) != FIXTURE_SCENARIO_ID:
         raise Earth3FixtureAuthorityError("fixture validator requires earth3_native_acceptance")
     _require_exact_marker(state)
-    if state.map_id != EARTH3_MAP_ID or not is_earth3_p2_campaign(state):
-        raise Earth3FixtureAuthorityError("fixture state must extend authenticated Earth3 P2/P3")
-    if P3_AUTHORITY_METADATA_KEY not in state.map_metadata:
-        raise Earth3FixtureAuthorityError("fixture state requires production P3 authority marker")
-
-    graph = load_authenticated_p3_graph_for_state(state)
-    if graph is None:
-        raise Earth3FixtureAuthorityError("authenticated P3 graph is unavailable")
-    node_ids, edge_ids, edges_by_id, nodes_by_id = _graph_indexes(graph)
-    graph_provinces = frozenset(
-        str(node.get("province_id") or "")
-        for node in nodes_by_id.values()
-        if node.get("province_id")
-    )
+    base = authenticate_earth3_p3_base(state)
+    node_ids = base["node_ids"]
+    edge_ids = base["edge_ids"]
+    edges_by_id = base["edges_by_id"]
+    nodes_by_id = base["nodes_by_id"]
+    graph_provinces = base["graph_provinces"]
 
     manifest = load_fixture_manifest()
     selected = manifest["selected_existing_formations"]
     required_existing = {
-        str(selected["nato"]),
-        str(selected["ukr"]),
-        str(selected["rusa"]),
+        selected["nato"],
+        selected["ukr"],
+        selected["rusa"],
     }
     prc_spec = manifest["fixture_prc_formation"]
-    prc_id = str(prc_spec["formation_id"])
+    prc_id = prc_spec["formation_id"]
     allowlist = set(P3_STARTING_FORMATION_IDS) | {prc_id}
     current_ids = set(state.strategic_formations)
     extra = current_ids - allowlist
