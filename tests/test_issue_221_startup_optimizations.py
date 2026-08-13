@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import os
@@ -324,6 +325,8 @@ class FullStartupShortcutTests(unittest.TestCase):
                 Path("campaign.json"),
                 Path("campaign_snapshot.json"),
                 environ=None,
+                campaign_identity={"path": "campaign.json", "size": 1, "sha256": "a" * 64},
+                snapshot_identity={"path": "campaign_snapshot.json", "size": 1, "sha256": "b" * 64},
             )
             waited = (time.perf_counter() - begun) * 1000.0
         self.assertLess(waited, 200.0)
@@ -331,6 +334,97 @@ class FullStartupShortcutTests(unittest.TestCase):
         release.set()
         for thread in list(startup_cold_optimizations._CACHE_WRITE_THREADS):
             thread.join(timeout=2.0)
+
+    def test_async_cache_write_does_not_bless_post_publish_campaign_mutation(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            home = root / "home"
+            campaign = root / "campaign.json"
+            snapshot = root / "campaign_snapshot.json"
+            original_campaign = b'{"turn":1}\n'
+            mutated_campaign = b'{"turn":2}\n'
+            snapshot_bytes = b'{"snapshot":1}\n'
+            campaign.write_bytes(original_campaign)
+            snapshot.write_bytes(snapshot_bytes)
+            published_campaign = startup_cold_optimizations._file_identity(campaign)
+            published_snapshot = startup_cold_optimizations._file_identity(snapshot)
+            original_atomic = startup_cold_optimizations._atomic_json
+            started = threading.Event()
+            release = threading.Event()
+
+            def paused_atomic(path, payload):
+                started.set()
+                self.assertTrue(release.wait(timeout=2.0))
+                return original_atomic(path, payload)
+
+            with (
+                patch.dict(os.environ, {"GATES_OF_CODEX_HOME": str(home)}),
+                patch.object(
+                    startup_cold_optimizations,
+                    "_source_commit",
+                    return_value="a" * 40,
+                ),
+                patch.object(
+                    startup_cold_optimizations,
+                    "_maintenance_signature",
+                    return_value="c" * 64,
+                ),
+                patch.object(
+                    startup_cold_optimizations,
+                    "_atomic_json",
+                    paused_atomic,
+                ),
+            ):
+                startup_cold_optimizations._schedule_snapshot_cache_write(
+                    campaign,
+                    snapshot,
+                    environ=None,
+                    campaign_identity=published_campaign,
+                    snapshot_identity=published_snapshot,
+                )
+                self.assertTrue(started.wait(timeout=2.0))
+                campaign.write_bytes(mutated_campaign)
+                self.assertEqual(len(original_campaign), len(mutated_campaign))
+                release.set()
+                for thread in list(startup_cold_optimizations._CACHE_WRITE_THREADS):
+                    thread.join(timeout=2.0)
+
+            with patch.dict(os.environ, {"GATES_OF_CODEX_HOME": str(home)}):
+                cache = startup_cold_optimizations._snapshot_cache_path(
+                    campaign,
+                    snapshot,
+                    environ=None,
+                )
+                payload = json.loads(cache.read_text(encoding="utf-8"))
+                expected_campaign = hashlib.sha256(original_campaign).hexdigest()
+                mutated_digest = hashlib.sha256(mutated_campaign).hexdigest()
+                self.assertEqual(expected_campaign, payload["campaign"]["sha256"])
+                self.assertNotEqual(mutated_digest, payload["campaign"]["sha256"])
+                self.assertEqual(
+                    hashlib.sha256(snapshot_bytes).hexdigest(),
+                    payload["snapshot"]["sha256"],
+                )
+                with (
+                    patch.object(
+                        startup_cold_optimizations,
+                        "_source_commit",
+                        return_value="a" * 40,
+                    ),
+                    patch.object(
+                        startup_cold_optimizations,
+                        "_maintenance_signature",
+                        return_value="c" * 64,
+                    ),
+                ):
+                    self.assertFalse(
+                        startup_cold_optimizations._snapshot_cache_valid(
+                            campaign,
+                            snapshot,
+                            environ=None,
+                        )
+                    )
 
     def test_same_size_snapshot_byte_change_invalidates_cache(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

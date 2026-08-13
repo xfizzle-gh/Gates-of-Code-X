@@ -189,11 +189,34 @@ def _snapshot_context(
     }
 
 
+def _capture_published_pair_identities(
+    campaign: Path,
+    snapshot: Path,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    started = time.perf_counter()
+    campaign_identity = _file_identity(campaign)
+    _emit(
+        "frontend_snapshot_campaign_hash",
+        duration_ms=(time.perf_counter() - started) * 1000.0,
+        role="publish",
+    )
+    started = time.perf_counter()
+    snapshot_identity = _file_identity(snapshot)
+    _emit(
+        "frontend_snapshot_snapshot_hash",
+        duration_ms=(time.perf_counter() - started) * 1000.0,
+        role="publish",
+    )
+    return campaign_identity, snapshot_identity
+
+
 def _write_snapshot_cache(
     campaign: Path,
     snapshot: Path,
     *,
     environ: Mapping[str, str] | None,
+    campaign_identity: Mapping[str, Any] | None = None,
+    snapshot_identity: Mapping[str, Any] | None = None,
 ) -> bool:
     context = _snapshot_context(
         campaign,
@@ -204,23 +227,18 @@ def _write_snapshot_cache(
     if context is None or not campaign.is_file() or not snapshot.is_file():
         return False
     try:
-        started = time.perf_counter()
-        campaign_identity = _file_identity(campaign)
-        _emit(
-            "frontend_snapshot_campaign_hash",
-            duration_ms=(time.perf_counter() - started) * 1000.0,
-            role="publish",
-        )
-        started = time.perf_counter()
-        snapshot_identity = _file_identity(snapshot)
-        _emit(
-            "frontend_snapshot_snapshot_hash",
-            duration_ms=(time.perf_counter() - started) * 1000.0,
-            role="publish",
-        )
+        if campaign_identity is None or snapshot_identity is None:
+            captured_campaign, captured_snapshot = _capture_published_pair_identities(
+                campaign,
+                snapshot,
+            )
+            if campaign_identity is None:
+                campaign_identity = captured_campaign
+            if snapshot_identity is None:
+                snapshot_identity = captured_snapshot
         payload = dict(context)
-        payload["campaign"] = campaign_identity
-        payload["snapshot"] = snapshot_identity
+        payload["campaign"] = dict(campaign_identity)
+        payload["snapshot"] = dict(snapshot_identity)
         started = time.perf_counter()
         _atomic_json(
             _snapshot_cache_path(campaign, snapshot, environ=environ),
@@ -262,13 +280,23 @@ def _schedule_snapshot_cache_write(
     snapshot: Path,
     *,
     environ: Mapping[str, str] | None,
+    campaign_identity: Mapping[str, Any],
+    snapshot_identity: Mapping[str, Any],
 ) -> None:
     campaign = campaign.expanduser().resolve(strict=False)
     snapshot = snapshot.expanduser().resolve(strict=False)
+    frozen_campaign = dict(campaign_identity)
+    frozen_snapshot = dict(snapshot_identity)
 
     def worker() -> None:
         try:
-            _write_snapshot_cache(campaign, snapshot, environ=environ)
+            _write_snapshot_cache(
+                campaign,
+                snapshot,
+                environ=environ,
+                campaign_identity=frozen_campaign,
+                snapshot_identity=frozen_snapshot,
+            )
         except Exception:
             return
 
@@ -550,11 +578,17 @@ def _install_player_full_path_shortcuts(player_shell, persistent_backend) -> Non
                 "frontend_snapshot_construct_write",
                 duration_ms=(time.perf_counter() - construct_started) * 1000.0,
             )
+            campaign_identity, snapshot_identity = _capture_published_pair_identities(
+                paths.campaign,
+                paths.snapshot,
+            )
             _forget_legacy_campaign_tree_cache(paths.snapshot)
             _schedule_snapshot_cache_write(
                 paths.campaign,
                 paths.snapshot,
                 environ=environ,
+                campaign_identity=campaign_identity,
+                snapshot_identity=snapshot_identity,
             )
         _UNCHANGED_CONTINUE_BASELINES.pop(id(state), None)
         if _LAUNCH_REQUESTED:
