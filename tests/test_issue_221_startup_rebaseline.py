@@ -5,7 +5,7 @@ import tempfile
 import types
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from gates_of_codex import persistent_backend, startup_rebaseline
 
@@ -222,6 +222,33 @@ class StartupRebaselineTests(unittest.TestCase):
                     Path("campaign_snapshot.json"),
                 )
             )
+
+    def test_pre_s11_continue_preserves_canonical_migration_save(self) -> None:
+        from gates_of_codex import state_io
+
+        for incoming_schema, expected_saves in ((10, 1), (11, 0)):
+            with self.subTest(incoming_schema=incoming_schema):
+                fake_state = object()
+                paths = types.SimpleNamespace(campaign=Path("campaign.json"))
+
+                def fake_continue(*, paths):
+                    del paths
+                    return state_io.campaign_from_dict(
+                        {"schema_version": incoming_schema}
+                    )
+
+                fake_shell = types.SimpleNamespace(continue_campaign=fake_continue)
+                startup_rebaseline._install_canonical_migration_save_guard(fake_shell)
+                fake_from_dict = Mock(return_value=fake_state)
+                with (
+                    patch.object(state_io, "campaign_from_dict", fake_from_dict),
+                    patch.object(state_io, "save_campaign") as save_campaign,
+                ):
+                    result = fake_shell.continue_campaign(paths=paths)
+                self.assertIs(fake_state, result)
+                self.assertEqual(expected_saves, save_campaign.call_count)
+                if expected_saves:
+                    save_campaign.assert_called_once_with(fake_state, paths.campaign)
 
     def test_both_packaged_runners_install_rebaseline_contract(self) -> None:
         player = (ROOT / "run_gates_of_codex.py").read_text(encoding="utf-8")

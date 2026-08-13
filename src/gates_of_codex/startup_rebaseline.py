@@ -258,6 +258,53 @@ def _install_probe_maintenance_guard(persistent_backend) -> None:
     persistent_backend.probe_startup_reuse = probe_startup_reuse_with_maintenance
 
 
+def _install_canonical_migration_save_guard(player_shell) -> None:
+    """Preserve the original Continue contract for campaigns migrated on load.
+
+    The optimized full path may elide an unchanged save. That is safe only when
+    the authoritative file was already on the current schema. Capture the raw
+    incoming discriminator at the existing JSON parse boundary, without a second
+    campaign read, and persist once if load-time migration raised it to schema 11.
+    """
+
+    current = player_shell.continue_campaign
+    if getattr(current, "_goc_canonical_migration_save_guard", False):
+        return
+
+    def continue_with_canonical_migration_save(*args, **kwargs):
+        from . import state_io
+        from .observation import S11_CAMPAIGN_SCHEMA_VERSION
+
+        paths = kwargs.get("paths")
+        original_from_dict = state_io.campaign_from_dict
+        incoming_schema: int | None = None
+
+        def capture_incoming_schema(data):
+            nonlocal incoming_schema
+            try:
+                incoming_schema = max(1, int(data.get("schema_version", 1)))
+            except (AttributeError, TypeError, ValueError):
+                incoming_schema = None
+            return original_from_dict(data)
+
+        state_io.campaign_from_dict = capture_incoming_schema
+        try:
+            state = current(*args, **kwargs)
+        finally:
+            state_io.campaign_from_dict = original_from_dict
+
+        if (
+            paths is not None
+            and incoming_schema is not None
+            and incoming_schema < S11_CAMPAIGN_SCHEMA_VERSION
+        ):
+            state_io.save_campaign(state, paths.campaign)
+        return state
+
+    continue_with_canonical_migration_save._goc_canonical_migration_save_guard = True
+    player_shell.continue_campaign = continue_with_canonical_migration_save
+
+
 def install_startup_rebaseline_contracts() -> None:
     global _INSTALLED
     if _INSTALLED:
@@ -267,4 +314,5 @@ def install_startup_rebaseline_contracts() -> None:
     _install_snapshot_rebaseline_marker(player_shell, persistent_backend)
     _install_daemon_rebaseline_response(persistent_backend)
     _install_probe_maintenance_guard(persistent_backend)
+    _install_canonical_migration_save_guard(player_shell)
     _INSTALLED = True
