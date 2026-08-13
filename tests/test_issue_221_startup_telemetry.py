@@ -26,6 +26,17 @@ class StartupTelemetryTests(unittest.TestCase):
             source.index("from gates_of_codex.fast_entrypoint import player_main"),
         )
 
+    def test_windowed_runner_installs_durable_output_before_application_import(self) -> None:
+        source = (ROOT / "run_gates_of_codex.py").read_text(encoding="utf-8")
+        application_import = source.index(
+            "from gates_of_codex.fast_entrypoint import player_main"
+        )
+        self.assertIn("def _install_windowed_output()", source)
+        self.assertIn("if sys.stdout is None:", source)
+        self.assertIn("if sys.stderr is None:", source)
+        self.assertIn("startup_telemetry.jsonl", source)
+        self.assertLess(source.index("\n_install_windowed_output()\n"), application_import)
+
     def test_startup_emitter_uses_durable_json_line(self) -> None:
         output = io.StringIO()
         with (
