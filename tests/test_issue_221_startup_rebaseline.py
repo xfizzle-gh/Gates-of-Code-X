@@ -32,6 +32,11 @@ class StartupRebaselineTests(unittest.TestCase):
                     "_runtime_source_commit",
                     return_value="a" * 40,
                 ),
+                patch.object(
+                    startup_rebaseline,
+                    "_current_maintenance_signature",
+                    return_value="maintenance-a",
+                ),
             ):
                 marker = startup_rebaseline._marker_path(campaign, snapshot)
                 self.assertNotEqual(campaign.parent, marker.parent)
@@ -101,6 +106,11 @@ class StartupRebaselineTests(unittest.TestCase):
                     "_runtime_source_commit",
                     return_value="b" * 40,
                 ),
+                patch.object(
+                    startup_rebaseline,
+                    "_current_maintenance_signature",
+                    return_value="maintenance-b",
+                ),
             ):
                 self.assertTrue(
                     startup_rebaseline._write_rebaseline_marker(
@@ -132,6 +142,86 @@ class StartupRebaselineTests(unittest.TestCase):
                     snapshot=snapshot,
                 )
                 self.assertFalse(refused["ok"])
+
+    def test_maintenance_change_invalidates_warm_reuse_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            campaign = root / "campaign.json"
+            snapshot = root / "campaign_snapshot.json"
+            campaign.write_text('{"turn":1}\n', encoding="utf-8")
+            snapshot.write_text('{"snapshot":1}\n', encoding="utf-8")
+
+            with (
+                patch.dict(
+                    os.environ,
+                    {"GATES_OF_CODEX_HOME": str(root / "home")},
+                ),
+                patch.object(
+                    persistent_backend,
+                    "_runtime_source_commit",
+                    return_value="c" * 40,
+                ),
+                patch.object(
+                    startup_rebaseline,
+                    "_current_maintenance_signature",
+                    return_value="maintenance-before",
+                ),
+            ):
+                self.assertTrue(
+                    startup_rebaseline._write_rebaseline_marker(
+                        persistent_backend,
+                        campaign,
+                        snapshot,
+                    )
+                )
+                self.assertTrue(
+                    startup_rebaseline._marker_metadata_matches(
+                        persistent_backend,
+                        campaign,
+                        snapshot,
+                    )
+                )
+
+            with (
+                patch.dict(
+                    os.environ,
+                    {"GATES_OF_CODEX_HOME": str(root / "home")},
+                ),
+                patch.object(
+                    persistent_backend,
+                    "_runtime_source_commit",
+                    return_value="c" * 40,
+                ),
+                patch.object(
+                    startup_rebaseline,
+                    "_current_maintenance_signature",
+                    return_value="maintenance-after",
+                ),
+            ):
+                self.assertFalse(
+                    startup_rebaseline._marker_metadata_matches(
+                        persistent_backend,
+                        campaign,
+                        snapshot,
+                    )
+                )
+
+    def test_probe_guard_refuses_daemon_state_when_maintenance_is_stale(self) -> None:
+        fake_backend = types.SimpleNamespace(
+            probe_startup_reuse=lambda _campaign, _snapshot: {"turn_number": 1},
+        )
+        startup_rebaseline._install_probe_maintenance_guard(fake_backend)
+        with patch.object(
+            startup_rebaseline,
+            "_marker_metadata_matches",
+            return_value=False,
+        ):
+            self.assertIsNone(
+                fake_backend.probe_startup_reuse(
+                    Path("campaign.json"),
+                    Path("campaign_snapshot.json"),
+                )
+            )
 
     def test_both_packaged_runners_install_rebaseline_contract(self) -> None:
         player = (ROOT / "run_gates_of_codex.py").read_text(encoding="utf-8")

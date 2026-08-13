@@ -35,6 +35,16 @@ def _marker_path(campaign: Path, snapshot: Path) -> Path:
     return player_home() / REBASELINE_DIRECTORY_NAME / f"{identity}.json"
 
 
+def _current_maintenance_signature(
+    campaign: Path,
+    *,
+    environ=None,
+) -> str:
+    from .startup_cold_optimizations import _maintenance_signature
+
+    return _maintenance_signature(campaign, environ=environ)
+
+
 def _fingerprint_record(persistent_backend, path: Path) -> dict[str, Any]:
     size, mtime_ns, sha256 = persistent_backend._fingerprint(path)
     return {
@@ -48,6 +58,8 @@ def _write_rebaseline_marker(
     persistent_backend,
     campaign: Path,
     snapshot: Path,
+    *,
+    environ=None,
 ) -> bool:
     campaign = campaign.expanduser().resolve(strict=False)
     snapshot = snapshot.expanduser().resolve(strict=False)
@@ -61,6 +73,10 @@ def _write_rebaseline_marker(
             "source_commit": source_commit,
             "campaign_path": str(campaign),
             "snapshot_path": str(snapshot),
+            "maintenance_signature": _current_maintenance_signature(
+                campaign,
+                environ=environ,
+            ),
             "campaign": _fingerprint_record(persistent_backend, campaign),
             "snapshot": _fingerprint_record(persistent_backend, snapshot),
         }
@@ -83,10 +99,12 @@ def _write_rebaseline_marker(
     return True
 
 
-def _rebaseline_marker_matches(
+def _marker_metadata_matches(
     persistent_backend,
     campaign: Path,
     snapshot: Path,
+    *,
+    environ=None,
 ) -> bool:
     campaign = campaign.expanduser().resolve(strict=False)
     snapshot = snapshot.expanduser().resolve(strict=False)
@@ -94,7 +112,7 @@ def _rebaseline_marker_matches(
     if source_commit is None:
         return False
     source = _marker_path(campaign, snapshot)
-    if not source.is_file() or not campaign.is_file() or not snapshot.is_file():
+    if not source.is_file():
         return False
     try:
         payload = json.loads(source.read_text(encoding="utf-8-sig"))
@@ -110,9 +128,41 @@ def _rebaseline_marker_matches(
             return False
         if str(payload.get("snapshot_path", "")) != str(snapshot):
             return False
+        current_maintenance = _current_maintenance_signature(
+            campaign,
+            environ=environ,
+        )
+        return str(payload.get("maintenance_signature", "")) == current_maintenance
+    except (OSError, TypeError, ValueError):
+        return False
+
+
+def _rebaseline_marker_matches(
+    persistent_backend,
+    campaign: Path,
+    snapshot: Path,
+) -> bool:
+    campaign = campaign.expanduser().resolve(strict=False)
+    snapshot = snapshot.expanduser().resolve(strict=False)
+    source = _marker_path(campaign, snapshot)
+    if (
+        not campaign.is_file()
+        or not snapshot.is_file()
+        or not _marker_metadata_matches(
+            persistent_backend,
+            campaign,
+            snapshot,
+        )
+    ):
+        return False
+    try:
+        payload = json.loads(source.read_text(encoding="utf-8-sig"))
         return (
-            payload.get("campaign") == _fingerprint_record(persistent_backend, campaign)
-            and payload.get("snapshot") == _fingerprint_record(persistent_backend, snapshot)
+            isinstance(payload, dict)
+            and payload.get("campaign")
+            == _fingerprint_record(persistent_backend, campaign)
+            and payload.get("snapshot")
+            == _fingerprint_record(persistent_backend, snapshot)
         )
     except (OSError, TypeError, ValueError):
         return False
@@ -159,6 +209,7 @@ def _install_snapshot_rebaseline_marker(player_shell, persistent_backend) -> Non
             persistent_backend,
             paths.campaign,
             paths.snapshot,
+            environ=environ,
         )
         return written
 
@@ -186,6 +237,27 @@ def _install_daemon_rebaseline_response(persistent_backend) -> None:
     persistent_backend._startup_reuse_response = startup_reuse_with_rebaseline
 
 
+def _install_probe_maintenance_guard(persistent_backend) -> None:
+    current = persistent_backend.probe_startup_reuse
+    if getattr(current, "_goc_startup_maintenance_guard", False):
+        return
+
+    def probe_startup_reuse_with_maintenance(campaign: Path, snapshot: Path):
+        state = current(campaign, snapshot)
+        if state is None:
+            return None
+        if not _marker_metadata_matches(
+            persistent_backend,
+            campaign,
+            snapshot,
+        ):
+            return None
+        return state
+
+    probe_startup_reuse_with_maintenance._goc_startup_maintenance_guard = True
+    persistent_backend.probe_startup_reuse = probe_startup_reuse_with_maintenance
+
+
 def install_startup_rebaseline_contracts() -> None:
     global _INSTALLED
     if _INSTALLED:
@@ -194,4 +266,5 @@ def install_startup_rebaseline_contracts() -> None:
 
     _install_snapshot_rebaseline_marker(player_shell, persistent_backend)
     _install_daemon_rebaseline_response(persistent_backend)
+    _install_probe_maintenance_guard(persistent_backend)
     _INSTALLED = True
