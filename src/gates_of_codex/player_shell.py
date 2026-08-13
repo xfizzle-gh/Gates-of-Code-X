@@ -27,6 +27,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from .earth3_fixture_authority import earth3_requires_stack
 from .frontend import write_frontend_snapshot
 from .models import CampaignState, Faction
 from .scenario import DEFAULT_SCENARIO_ID, build_scenario, get_scenario
@@ -503,7 +504,7 @@ def create_new_campaign(
     # Reject an illegal seat before paying for scenario construction.
     _check_faction(definition.scenario_id, faction)
     builder_options: dict[str, Any] = {}
-    if definition.scenario_id == DEFAULT_SCENARIO_ID:
+    if earth3_requires_stack(definition.scenario_id):
         if resolved_catalog is not None:
             builder_options["resolved_catalog"] = resolved_catalog
         else:
@@ -707,7 +708,8 @@ def run_play(
         profile_directory=profile_directory or None,
         # Only production Earth3 creation strictly requires the stack: it
         # materializes rosters from the exact active stack.
-        required=is_new and definition.scenario_id == DEFAULT_SCENARIO_ID
+        required=is_new
+        and earth3_requires_stack(definition.scenario_id)
         and resolved_catalog is None,
     )
     stack_config = (

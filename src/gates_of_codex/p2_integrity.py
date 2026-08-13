@@ -66,6 +66,23 @@ def earth3_p2_supply_disabled(state: CampaignState) -> bool:
     )
 
 
+def _persisted_scenario_identity(state: CampaignState) -> tuple[str, str]:
+    from .earth3_campaign import EARTH3_SCENARIO_ID
+    from .earth3_fixture_authority import (
+        FIXTURE_AUTHORITY_KEY,
+        FIXTURE_SCENARIO_ID,
+        authored_fixture_authority_marker,
+    )
+
+    marker = state.map_metadata.get(FIXTURE_AUTHORITY_KEY)
+    if (
+        str(state.map_metadata.get("scenario_id", "")) == FIXTURE_SCENARIO_ID
+        and marker == authored_fixture_authority_marker()
+    ):
+        return FIXTURE_SCENARIO_ID, "debug"
+    return EARTH3_SCENARIO_ID, "production"
+
+
 def validate_earth3_p2_integrity(state: CampaignState) -> None:
     """Validate immutable P1 authority and strict P2 actor ownership without mutation."""
     if not is_earth3_p2_campaign(state):
@@ -96,9 +113,10 @@ def _validate_persisted_p1_authority(state: CampaignState) -> None:
 
     authority = load_earth3_authority()
     production = authority.production
+    scenario_id, scenario_status = _persisted_scenario_identity(state)
     expected_metadata = {
-        "scenario_id": EARTH3_SCENARIO_ID,
-        "scenario_status": "production",
+        "scenario_id": scenario_id,
+        "scenario_status": scenario_status,
         "strategic_map_id": EARTH3_MAP_ID,
         "strategic_map_manifest": CAMPAIGN_MANIFEST_IDENTIFIER,
         "strategic_map_provenance": "earth3_production_authority",

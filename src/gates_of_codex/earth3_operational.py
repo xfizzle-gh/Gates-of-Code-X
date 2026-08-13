@@ -1145,7 +1145,9 @@ def migrate_earth3_p2_to_p3(state: CampaignState) -> CampaignState:
     if not is_earth3_p2_campaign(state):
         return state
     if P3_AUTHORITY_METADATA_KEY in state.map_metadata:
-        validate_earth3_p3_campaign_extension(state)
+        from .earth3_fixture_authority import validate_earth3_operational_authority
+
+        validate_earth3_operational_authority(state)
         return state
 
     validate_earth3_bootstrap_campaign_state(state)

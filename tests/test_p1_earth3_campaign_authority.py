@@ -126,6 +126,7 @@ class Earth3ScenarioRegistryTests(unittest.TestCase):
                 "earth3_v1",
                 "legacy_goe_europe",
                 "legacy_goe_europe_mediterranean",
+                "earth3_native_acceptance",
             ),
             scenario_ids(),
         )

@@ -191,9 +191,11 @@ def main(argv: list[str] | None = None) -> int:
             raise ValueError(
                 f"--codex is required when creating legacy scenario {definition.scenario_id}"
             )
+        from .earth3_fixture_authority import earth3_requires_stack
+
         builder_options = (
             {"stack_config": args.stack_config}
-            if definition.scenario_id == DEFAULT_SCENARIO_ID
+            if earth3_requires_stack(definition.scenario_id)
             else {}
         )
         state = build_scenario(args.scenario, **builder_options)
