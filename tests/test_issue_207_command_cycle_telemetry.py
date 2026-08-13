@@ -102,7 +102,13 @@ class CommandCycleTelemetryTests(unittest.TestCase):
             snapshot.write_text('{"existing":true}\n', encoding="utf-8")
             calls = {"save": 0, "snapshot": 0}
 
-            def fake_save(_state, path, *, observation_context=None):
+            def fake_save(
+                _state,
+                path,
+                *,
+                observation_context=None,
+                subphase_seconds=None,
+            ):
                 calls["save"] += 1
                 Path(path).write_text('{"saved":true}\n', encoding="utf-8")
                 return Path(path)
@@ -173,7 +179,13 @@ class CommandCycleTelemetryTests(unittest.TestCase):
             campaign.write_text("{}\n", encoding="utf-8")
             calls = {"save": 0, "snapshot": 0}
 
-            def fake_save(_state, path, *, observation_context=None):
+            def fake_save(
+                _state,
+                path,
+                *,
+                observation_context=None,
+                subphase_seconds=None,
+            ):
                 calls["save"] += 1
                 Path(path).write_text('{"saved":true}\n', encoding="utf-8")
                 return Path(path)
@@ -224,19 +236,18 @@ class CommandCycleTelemetryTests(unittest.TestCase):
         )[0]
         for required in (
             "ensure_strategic_layer(state)",
-            "ensure_strategic_formations(state)",
-            "ensure_operational_positions(state)",
+            "_ensure_runtime_operational_positions(state)",
             "ensure_move_orders(state)",
             "ensure_site_control_state(state)",
             "refresh_operational_supply(state, consume_grace=False)",
             "ensure_s11_schema(state)",
             "refresh_all_observer_knowledge(state, observation_context)",
-            "state.validate()",
-            'sort_keys=True',
-            'separators=(\",\", \":\")',
+            '"validate", state.validate',
+            "_runtime_state_json(state)",
             "temporary_path.replace(destination)",
         ):
             self.assertIn(required, compact)
+        self.assertNotIn("ensure_strategic_formations(state)", compact)
         self.assertNotIn("indent=2", compact)
 
     def test_end_round_exposes_mutation_subphase_timings(self) -> None:
@@ -274,11 +285,14 @@ class GodotMeasuredCommandTests(unittest.TestCase):
         source = (ROOT / "godot/scripts/main_perf_measured.gd").read_text(
             encoding="utf-8"
         )
-        self.assertIn('op == "verify_result" or _is_lightweight_order_op(op)', source)
-        self.assertIn("_capture_verification(backend_payload)", source)
-        self.assertIn("_apply_move_order_result_patch", source)
-        self.assertIn("_append_backend_timing", source)
-        self.assertNotIn("_try_build_snapshot_state", source)
+        fast_block = source.split("func _consume_fast_command_result(", 1)[1].split(
+            "func _consume_runtime_patch_result(", 1
+        )[0]
+        self.assertIn('op == "verify_result"', fast_block)
+        self.assertIn("_capture_verification(backend_payload)", fast_block)
+        self.assertIn("_apply_move_order_result_patch", fast_block)
+        self.assertIn("_append_backend_timing", fast_block)
+        self.assertNotIn("_try_build_snapshot_state", fast_block)
 
     def test_move_order_patch_is_bounded_to_returned_authoritative_order(self) -> None:
         source = (ROOT / "godot/scripts/main_perf_measured.gd").read_text(
@@ -301,7 +315,10 @@ class GodotMeasuredCommandTests(unittest.TestCase):
         self.assertIn("mutate %.2f", source)
         self.assertIn("save %.2f", source)
         self.assertIn("snapshot %.2f", source)
-        self.assertIn("round: AI %.2fs, advance %.2fs, actors %.2fs", source)
+        self.assertIn(
+            "round: engine %.2fs, AI %.2fs, advance %.2fs, actors %.2fs",
+            source,
+        )
         self.assertIn('data.get("perf_turn_cycle", {})', source)
 
 
