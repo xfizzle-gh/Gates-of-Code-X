@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 
 from gates_of_codex.frozen_runtime import configure_frozen_earth3_authority
+from gates_of_codex.startup_rebaseline import install_startup_rebaseline_contracts
 
 
 _ACCEPTANCE_COMMANDS = {
@@ -66,6 +67,7 @@ def main(argv: list[str] | None = None) -> int:
     windowed and is therefore not the authoritative write-back transport.
     """
     arguments = _normalize_arguments(list(sys.argv[1:] if argv is None else argv))
+    install_startup_rebaseline_contracts()
 
     # The persistent #207 backend authenticates once when the session starts.
     # Fast command clients forward before repeating the expensive frozen P1/P3
