@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from .expanded_nations_models import (
+    ACTIVE_RESEARCH_LOCALIZATION_RELATIVE,
     ExpandedNationsError,
     PORTRAIT_ROOT_RELATIVE,
 )
@@ -13,9 +13,6 @@ _SERBIA_PORTRAIT_SOURCES: Mapping[str, str] = {
     "goc_serb_at(rusa)": "rus4_inf_rifle_at",
     "goc_serb_recon(rusa)": "rus4_inf_razv",
 }
-_ACTIVE_RESEARCH_LOCALIZATION_RELATIVE = Path(
-    "localizations/default/interface/text/dcg_research_goc_active_actor.pot"
-)
 
 
 def project_actor_presentation(
@@ -42,7 +39,7 @@ def project_actor_presentation(
 
     outputs: dict[Path, bytes] = {}
     if actor.get("research_nodes"):
-        outputs[_ACTIVE_RESEARCH_LOCALIZATION_RELATIVE] = (
+        outputs[ACTIVE_RESEARCH_LOCALIZATION_RELATIVE] = (
             render_actor_research_localization(actor).encode("utf-8")
         )
 
