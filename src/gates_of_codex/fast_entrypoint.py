@@ -1,9 +1,93 @@
 from __future__ import annotations
 
+import functools
+import json
+import os
 import subprocess
 import sys
+import time
 from collections.abc import Sequence
 from pathlib import Path
+
+
+STARTUP_TELEMETRY_ENV = "GATES_OF_CODEX_STARTUP_TELEMETRY"
+STARTUP_EPOCH_ENV = "GATES_OF_CODEX_STARTUP_EPOCH_MS"
+STARTUP_LOG_PREFIX = "GOC_STARTUP"
+
+
+def _startup_telemetry_enabled() -> bool:
+    return str(os.environ.get(STARTUP_TELEMETRY_ENV, "")).strip() == "1"
+
+
+def _startup_epoch_ms() -> float:
+    raw = str(os.environ.get(STARTUP_EPOCH_ENV, "")).strip()
+    if raw:
+        try:
+            return float(raw)
+        except ValueError:
+            pass
+    value = time.time() * 1000.0
+    os.environ[STARTUP_EPOCH_ENV] = f"{value:.3f}"
+    return value
+
+
+def _emit_startup_timing(
+    stage: str,
+    *,
+    duration_ms: float | None = None,
+    **fields,
+) -> None:
+    if not _startup_telemetry_enabled():
+        return
+    payload = {
+        "stage": str(stage),
+        "since_process_entry_ms": round(
+            max(0.0, (time.time() * 1000.0) - _startup_epoch_ms()),
+            3,
+        ),
+    }
+    if duration_ms is not None:
+        payload["duration_ms"] = round(max(0.0, float(duration_ms)), 3)
+    payload.update(fields)
+    print(
+        f"{STARTUP_LOG_PREFIX} "
+        + json.dumps(payload, sort_keys=True, separators=(",", ":")),
+        flush=True,
+    )
+
+
+def _install_player_startup_timing(player_shell) -> None:
+    """Instrument stable player-shell phase boundaries without changing authority."""
+
+    stage_by_name = {
+        "read_last_campaign": "campaign_discovery",
+        "resolve_campaign_paths": "campaign_path_resolution",
+        "validate_stack": "stack_validation",
+        "find_godot_executable": "godot_executable_resolution",
+        "godot_project_directory": "godot_project_resolution",
+        "create_new_campaign": "campaign_create_validate_persist",
+        "continue_campaign": "campaign_load_validate_persist",
+        "publish_snapshot": "frontend_snapshot_build_write",
+        "write_last_campaign": "campaign_pointer_write",
+    }
+    for name, stage in stage_by_name.items():
+        current = getattr(player_shell, name)
+        if getattr(current, "_goc_startup_timed", False):
+            continue
+
+        @functools.wraps(current)
+        def timed(*args, __original=current, __stage=stage, **kwargs):
+            started = time.perf_counter()
+            try:
+                return __original(*args, **kwargs)
+            finally:
+                _emit_startup_timing(
+                    __stage,
+                    duration_ms=(time.perf_counter() - started) * 1000.0,
+                )
+
+        timed._goc_startup_timed = True  # type: ignore[attr-defined]
+        setattr(player_shell, name, timed)
 
 
 def _install_fast_paths() -> None:
@@ -41,6 +125,7 @@ def _prepare_godot_project(
         "--quit-after",
         "1",
     ]
+    started = time.perf_counter()
     try:
         completed = subprocess.run(
             arguments,
@@ -51,12 +136,19 @@ def _prepare_godot_project(
             timeout=max(1, timeout_seconds),
         )
     except subprocess.TimeoutExpired as exc:
+        _emit_startup_timing(
+            "godot_project_import",
+            duration_ms=(time.perf_counter() - started) * 1000.0,
+            ok=False,
+            reason="timeout",
+        )
         from .player_shell import PlayerShellError
 
         raise PlayerShellError(
             f"Godot project import timed out after {timeout_seconds}s: {project_directory}"
         ) from exc
 
+    elapsed_ms = (time.perf_counter() - started) * 1000.0
     output = "\n".join(
         part.strip()
         for part in (completed.stdout or "", completed.stderr or "")
@@ -68,12 +160,23 @@ def _prepare_godot_project(
         or "Parse Error:" in output
     )
     if completed.returncode != 0 or script_failure:
+        _emit_startup_timing(
+            "godot_project_import",
+            duration_ms=elapsed_ms,
+            ok=False,
+            returncode=int(completed.returncode),
+        )
         from .player_shell import PlayerShellError
 
         detail = output[-2400:] if output else f"exit code {completed.returncode}"
         raise PlayerShellError(
             "Godot project import failed before player launch: " + detail
         )
+    _emit_startup_timing(
+        "godot_project_import",
+        duration_ms=elapsed_ms,
+        ok=True,
+    )
 
 
 def _write_forwarded_result(result: tuple[int, str] | None) -> int | None:
@@ -101,6 +204,7 @@ def install_runtime_contracts() -> None:
     from .p6_handoff_runtime import install_p6_handoff_runtime_contracts
 
     install_p6_handoff_runtime_contracts()
+    _install_player_startup_timing(player_shell)
 
     current_launch = player_shell.launch_strategic_application
     if not getattr(current_launch, "_goc_preimport_guard", False):
@@ -115,17 +219,33 @@ def install_runtime_contracts() -> None:
             _prepare_godot_project(godot_executable, project_directory)
             # Performance-only session. Failure falls back to the existing
             # one-shot authoritative backend without blocking player launch.
+            backend_started = time.perf_counter()
+            backend_ready = False
             try:
                 from .persistent_backend import ensure_backend_session
 
-                ensure_backend_session(snapshot.with_name("campaign.json"), snapshot)
+                backend_ready = bool(
+                    ensure_backend_session(snapshot.with_name("campaign.json"), snapshot)
+                )
             except Exception:  # noqa: BLE001 - correctness fallback remains available
-                pass
-            return original_launch(
+                backend_ready = False
+            _emit_startup_timing(
+                "persistent_backend_start_health",
+                duration_ms=(time.perf_counter() - backend_started) * 1000.0,
+                established=backend_ready,
+            )
+            launch_started = time.perf_counter()
+            process = original_launch(
                 snapshot=snapshot,
                 godot_executable=godot_executable,
                 project_directory=project_directory,
             )
+            _emit_startup_timing(
+                "godot_process_launch",
+                duration_ms=(time.perf_counter() - launch_started) * 1000.0,
+                pid=int(process.pid),
+            )
+            return process
 
         launch_after_import._goc_preimport_guard = True  # type: ignore[attr-defined]
         player_shell.launch_strategic_application = launch_after_import
@@ -202,6 +322,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 def player_main(argv: Sequence[str] | None = None) -> int:
     """Run the packaged player shell while retaining backend CLI compatibility."""
+    _startup_epoch_ms()
+    _emit_startup_timing("player_main_enter")
     arguments = list(sys.argv[1:] if argv is None else argv)
 
     # The Godot write-back contract historically launches the recorded Python
@@ -224,7 +346,12 @@ def player_main(argv: Sequence[str] | None = None) -> int:
     from .frozen_runtime import configure_frozen_earth3_authority
     from .player_shell import main as player_shell_main, read_last_campaign
 
+    authority_started = time.perf_counter()
     configure_frozen_earth3_authority()
+    _emit_startup_timing(
+        "frozen_authority_configuration",
+        duration_ms=(time.perf_counter() - authority_started) * 1000.0,
+    )
 
     if not arguments:
         arguments = ["--continue"] if read_last_campaign() is not None else ["--new"]
@@ -233,4 +360,5 @@ def player_main(argv: Sequence[str] | None = None) -> int:
     # Player flags (`--new`, `--continue`, ...) remain direct player-shell input.
     if arguments and not arguments[0].startswith("-"):
         return main(arguments)
+    _emit_startup_timing("player_shell_dispatch", mode=str(arguments[0] if arguments else ""))
     return player_shell_main(arguments)
