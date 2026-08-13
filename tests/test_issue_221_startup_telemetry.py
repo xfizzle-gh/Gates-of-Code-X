@@ -82,6 +82,20 @@ class StartupTelemetryTests(unittest.TestCase):
         ):
             self.assertIn(stage, source)
 
+    def test_snapshot_cache_phases_are_split(self) -> None:
+        source = (
+            ROOT / "src/gates_of_codex/startup_cold_optimizations.py"
+        ).read_text(encoding="utf-8")
+        for stage in (
+            "frontend_snapshot_construct_write",
+            "frontend_snapshot_executable_identity",
+            "frontend_snapshot_campaign_hash",
+            "frontend_snapshot_snapshot_hash",
+            "frontend_snapshot_cache_publish",
+            "frontend_snapshot_cache",
+        ):
+            self.assertIn(stage, source)
+
     def test_godot_first_usable_frame_is_cross_process_timed(self) -> None:
         script = (ROOT / "godot/scripts/main_startup_measured.gd").read_text(
             encoding="utf-8"

@@ -20,7 +20,8 @@ from typing import Any, Mapping
 
 
 SNAPSHOT_CACHE_SCHEMA = "gates-of-codex.frontend-launch-cache"
-SNAPSHOT_CACHE_VERSION = 1
+SNAPSHOT_CACHE_VERSION = 2
+SNAPSHOT_CACHE_DIRECTORY_NAME = "frontend_launch_cache"
 SNAPSHOT_CACHE_FILE_NAME = ".goc-frontend-launch-cache.json"
 
 _INSTALLED = False
@@ -59,6 +60,16 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _stat_identity(path: Path) -> dict[str, Any]:
+    resolved = path.expanduser().resolve(strict=False)
+    metadata = resolved.stat()
+    return {
+        "path": str(resolved),
+        "size": int(metadata.st_size),
+        "mtime_ns": int(metadata.st_mtime_ns),
+    }
+
+
 def _file_identity(path: Path) -> dict[str, Any]:
     resolved = path.expanduser().resolve(strict=False)
     metadata = resolved.stat()
@@ -67,6 +78,19 @@ def _file_identity(path: Path) -> dict[str, Any]:
         "size": int(metadata.st_size),
         "sha256": _sha256_file(resolved),
     }
+
+
+def _size_path_matches(path: Path, stored: object) -> bool:
+    if not isinstance(stored, dict):
+        return False
+    try:
+        current = path.expanduser().resolve(strict=False)
+        metadata = current.stat()
+    except OSError:
+        return False
+    return stored.get("path") == str(current) and stored.get("size") == int(
+        metadata.st_size
+    )
 
 
 def _atomic_json(path: Path, payload: Mapping[str, Any]) -> None:
@@ -85,8 +109,33 @@ def _atomic_json(path: Path, payload: Mapping[str, Any]) -> None:
     temporary_path.replace(path)
 
 
-def _snapshot_cache_path(snapshot: Path) -> Path:
+def _snapshot_cache_path(
+    campaign: Path,
+    snapshot: Path,
+    *,
+    environ: Mapping[str, str] | None,
+) -> Path:
+    from .player_shell import player_home
+
+    campaign = campaign.expanduser().resolve(strict=False)
+    snapshot = snapshot.expanduser().resolve(strict=False)
+    identity = hashlib.sha256(
+        f"{campaign}\0{snapshot}".encode("utf-8")
+    ).hexdigest()
+    return player_home(environ) / SNAPSHOT_CACHE_DIRECTORY_NAME / f"{identity}.json"
+
+
+def _legacy_snapshot_cache_path(snapshot: Path) -> Path:
     return snapshot.resolve(strict=False).with_name(SNAPSHOT_CACHE_FILE_NAME)
+
+
+def _forget_legacy_campaign_tree_cache(snapshot: Path) -> None:
+    legacy = _legacy_snapshot_cache_path(snapshot)
+    try:
+        if legacy.is_file():
+            legacy.unlink()
+    except OSError:
+        return
 
 
 def _maintenance_signature(
@@ -106,6 +155,7 @@ def _snapshot_context(
     snapshot: Path,
     *,
     environ: Mapping[str, str] | None,
+    role: str | None = None,
 ) -> dict[str, Any] | None:
     commit = _source_commit()
     if commit is None:
@@ -116,7 +166,15 @@ def _snapshot_context(
     if not executable.is_file():
         return None
     try:
-        runtime_identity = _file_identity(executable)
+        started = time.perf_counter()
+        runtime_identity = _stat_identity(executable)
+        if role is not None:
+            _emit(
+                "frontend_snapshot_executable_identity",
+                duration_ms=(time.perf_counter() - started) * 1000.0,
+                method="stat",
+                role=role,
+            )
         maintenance = _maintenance_signature(campaign, environ=environ)
     except OSError:
         return None
@@ -138,14 +196,42 @@ def _write_snapshot_cache(
     *,
     environ: Mapping[str, str] | None,
 ) -> bool:
-    context = _snapshot_context(campaign, snapshot, environ=environ)
+    context = _snapshot_context(
+        campaign,
+        snapshot,
+        environ=environ,
+        role="publish",
+    )
     if context is None or not campaign.is_file() or not snapshot.is_file():
         return False
     try:
+        started = time.perf_counter()
+        campaign_identity = _file_identity(campaign)
+        _emit(
+            "frontend_snapshot_campaign_hash",
+            duration_ms=(time.perf_counter() - started) * 1000.0,
+            role="publish",
+        )
+        started = time.perf_counter()
+        snapshot_identity = _file_identity(snapshot)
+        _emit(
+            "frontend_snapshot_snapshot_hash",
+            duration_ms=(time.perf_counter() - started) * 1000.0,
+            role="publish",
+        )
         payload = dict(context)
-        payload["campaign"] = _file_identity(campaign)
-        payload["snapshot"] = _file_identity(snapshot)
-        _atomic_json(_snapshot_cache_path(snapshot), payload)
+        payload["campaign"] = campaign_identity
+        payload["snapshot"] = snapshot_identity
+        started = time.perf_counter()
+        _atomic_json(
+            _snapshot_cache_path(campaign, snapshot, environ=environ),
+            payload,
+        )
+        _forget_legacy_campaign_tree_cache(snapshot)
+        _emit(
+            "frontend_snapshot_cache_publish",
+            duration_ms=(time.perf_counter() - started) * 1000.0,
+        )
     except (OSError, ValueError, TypeError):
         return False
     return True
@@ -157,10 +243,15 @@ def _snapshot_cache_valid(
     *,
     environ: Mapping[str, str] | None,
 ) -> bool:
-    cache = _snapshot_cache_path(snapshot)
+    cache = _snapshot_cache_path(campaign, snapshot, environ=environ)
     if not campaign.is_file() or not snapshot.is_file() or not cache.is_file():
         return False
-    context = _snapshot_context(campaign, snapshot, environ=environ)
+    context = _snapshot_context(
+        campaign,
+        snapshot,
+        environ=environ,
+        role="validate",
+    )
     if context is None:
         return False
     try:
@@ -170,10 +261,29 @@ def _snapshot_cache_valid(
         for key, expected in context.items():
             if payload.get(key) != expected:
                 return False
-        return (
-            payload.get("campaign") == _file_identity(campaign)
-            and payload.get("snapshot") == _file_identity(snapshot)
+        stored_campaign = payload.get("campaign")
+        if not _size_path_matches(campaign, stored_campaign):
+            return False
+        started = time.perf_counter()
+        campaign_identity = _file_identity(campaign)
+        _emit(
+            "frontend_snapshot_campaign_hash",
+            duration_ms=(time.perf_counter() - started) * 1000.0,
+            role="validate",
         )
+        if stored_campaign != campaign_identity:
+            return False
+        stored_snapshot = payload.get("snapshot")
+        if not _size_path_matches(snapshot, stored_snapshot):
+            return False
+        started = time.perf_counter()
+        snapshot_identity = _file_identity(snapshot)
+        _emit(
+            "frontend_snapshot_snapshot_hash",
+            duration_ms=(time.perf_counter() - started) * 1000.0,
+            role="validate",
+        )
+        return stored_snapshot == snapshot_identity
     except (OSError, ValueError, TypeError):
         return False
 
@@ -384,7 +494,12 @@ def _install_player_full_path_shortcuts(player_shell, persistent_backend) -> Non
             clear_commands(paths.commands)
             written = paths.snapshot
         else:
+            construct_started = time.perf_counter()
             written = original_publish(state, paths, environ=environ)
+            _emit(
+                "frontend_snapshot_construct_write",
+                duration_ms=(time.perf_counter() - construct_started) * 1000.0,
+            )
             _write_snapshot_cache(
                 paths.campaign,
                 paths.snapshot,
