@@ -1,0 +1,235 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Gates of Code:X Expanded Nations Conquest\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgctxt "mp/army/goc_alb"
+msgid "Albania"
+msgstr "Albania"
+
+msgctxt "mp/army/goc_arm"
+msgid "Armenia"
+msgstr "Armenia"
+
+msgctxt "mp/army/goc_aut"
+msgid "Austria"
+msgstr "Austria"
+
+msgctxt "mp/army/goc_aze"
+msgid "Azerbaijan"
+msgstr "Azerbaijan"
+
+msgctxt "mp/army/goc_bel"
+msgid "Belgium"
+msgstr "Belgium"
+
+msgctxt "mp/army/goc_bgr"
+msgid "Bulgaria"
+msgstr "Bulgaria"
+
+msgctxt "mp/army/goc_bih"
+msgid "Bosnia and Herzegovina"
+msgstr "Bosnia and Herzegovina"
+
+msgctxt "mp/army/goc_blr"
+msgid "Belarus"
+msgstr "Belarus"
+
+msgctxt "mp/army/goc_can"
+msgid "Canada"
+msgstr "Canada"
+
+msgctxt "mp/army/goc_che"
+msgid "Switzerland"
+msgstr "Switzerland"
+
+msgctxt "mp/army/goc_cyp"
+msgid "Cyprus"
+msgstr "Cyprus"
+
+msgctxt "mp/army/goc_cze"
+msgid "Czechia"
+msgstr "Czechia"
+
+msgctxt "mp/army/goc_deu"
+msgid "Germany"
+msgstr "Germany"
+
+msgctxt "mp/army/goc_dnk"
+msgid "Denmark"
+msgstr "Denmark"
+
+msgctxt "mp/army/goc_donbas"
+msgid "Donbas Forces"
+msgstr "Donbas Forces"
+
+msgctxt "mp/army/goc_dprk"
+msgid "North Korea"
+msgstr "North Korea"
+
+msgctxt "mp/army/goc_dza"
+msgid "Algeria"
+msgstr "Algeria"
+
+msgctxt "mp/army/goc_egy"
+msgid "Egypt"
+msgstr "Egypt"
+
+msgctxt "mp/army/goc_esp"
+msgid "Spain"
+msgstr "Spain"
+
+msgctxt "mp/army/goc_est"
+msgid "Estonia"
+msgstr "Estonia"
+
+msgctxt "mp/army/goc_fin"
+msgid "Finland"
+msgstr "Finland"
+
+msgctxt "mp/army/goc_fra"
+msgid "France"
+msgstr "France"
+
+msgctxt "mp/army/goc_gbr"
+msgid "United Kingdom"
+msgstr "United Kingdom"
+
+msgctxt "mp/army/goc_geo"
+msgid "Georgia"
+msgstr "Georgia"
+
+msgctxt "mp/army/goc_grc"
+msgid "Greece"
+msgstr "Greece"
+
+msgctxt "mp/army/goc_hrv"
+msgid "Croatia"
+msgstr "Croatia"
+
+msgctxt "mp/army/goc_hun"
+msgid "Hungary"
+msgstr "Hungary"
+
+msgctxt "mp/army/goc_irl"
+msgid "Ireland"
+msgstr "Ireland"
+
+msgctxt "mp/army/goc_irq"
+msgid "Iraq"
+msgstr "Iraq"
+
+msgctxt "mp/army/goc_isl"
+msgid "Iceland"
+msgstr "Iceland"
+
+msgctxt "mp/army/goc_isr"
+msgid "Israel"
+msgstr "Israel"
+
+msgctxt "mp/army/goc_ita"
+msgid "Italy"
+msgstr "Italy"
+
+msgctxt "mp/army/goc_jor"
+msgid "Jordan"
+msgstr "Jordan"
+
+msgctxt "mp/army/goc_lbn"
+msgid "Lebanon"
+msgstr "Lebanon"
+
+msgctxt "mp/army/goc_lby"
+msgid "Libya"
+msgstr "Libya"
+
+msgctxt "mp/army/goc_ltu"
+msgid "Lithuania"
+msgstr "Lithuania"
+
+msgctxt "mp/army/goc_lva"
+msgid "Latvia"
+msgstr "Latvia"
+
+msgctxt "mp/army/goc_mar"
+msgid "Morocco"
+msgstr "Morocco"
+
+msgctxt "mp/army/goc_mda"
+msgid "Moldova"
+msgstr "Moldova"
+
+msgctxt "mp/army/goc_mkd"
+msgid "North Macedonia"
+msgstr "North Macedonia"
+
+msgctxt "mp/army/goc_mlt"
+msgid "Malta"
+msgstr "Malta"
+
+msgctxt "mp/army/goc_mne"
+msgid "Montenegro"
+msgstr "Montenegro"
+
+msgctxt "mp/army/goc_nld"
+msgid "Netherlands"
+msgstr "Netherlands"
+
+msgctxt "mp/army/goc_nor"
+msgid "Norway"
+msgstr "Norway"
+
+msgctxt "mp/army/goc_pol"
+msgid "Poland"
+msgstr "Poland"
+
+msgctxt "mp/army/goc_prt"
+msgid "Portugal"
+msgstr "Portugal"
+
+msgctxt "mp/army/goc_rou"
+msgid "Romania"
+msgstr "Romania"
+
+msgctxt "mp/army/goc_rus"
+msgid "Russia"
+msgstr "Russia"
+
+msgctxt "mp/army/goc_srb"
+msgid "Serbia"
+msgstr "Serbia"
+
+msgctxt "mp/army/goc_svk"
+msgid "Slovakia"
+msgstr "Slovakia"
+
+msgctxt "mp/army/goc_svn"
+msgid "Slovenia"
+msgstr "Slovenia"
+
+msgctxt "mp/army/goc_swe"
+msgid "Sweden"
+msgstr "Sweden"
+
+msgctxt "mp/army/goc_syr"
+msgid "Syria"
+msgstr "Syria"
+
+msgctxt "mp/army/goc_tun"
+msgid "Tunisia"
+msgstr "Tunisia"
+
+msgctxt "mp/army/goc_tur"
+msgid "Turkey"
+msgstr "Turkey"
+
+msgctxt "mp/army/goc_ukr"
+msgid "Ukraine"
+msgstr "Ukraine"
+
+msgctxt "mp/army/goc_usa"
+msgid "United States"
+msgstr "United States"
