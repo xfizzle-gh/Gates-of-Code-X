@@ -51,9 +51,11 @@ class PersistentBackendTransportTests(unittest.TestCase):
             server.listen(2)
             port = int(server.getsockname()[1])
             token = "test-token"
+            source_commit = "d" * 40
             descriptor = {
                 "schema": persistent_backend.SESSION_SCHEMA,
                 "schema_version": persistent_backend.SESSION_SCHEMA_VERSION,
+                "source_commit": source_commit,
                 "campaign_path": str(campaign.resolve()),
                 "snapshot_path": str(snapshot.resolve()),
                 "port": port,
@@ -72,6 +74,7 @@ class PersistentBackendTransportTests(unittest.TestCase):
                     stream = ping_connection.makefile("rwb")
                     request = json.loads(stream.readline().decode("utf-8"))
                     self.assertEqual("ping", request["action"])
+                    self.assertEqual(source_commit, request["source_commit"])
                     stream.write(b'{"handled":true,"exit_code":0,"stdout":"","ok":true}\n')
                     stream.flush()
                 connection, _ = server.accept()
@@ -79,6 +82,7 @@ class PersistentBackendTransportTests(unittest.TestCase):
                     stream = connection.makefile("rwb")
                     request = json.loads(stream.readline().decode("utf-8"))
                     self.assertEqual(token, request["token"])
+                    self.assertEqual(source_commit, request["source_commit"])
                     self.assertEqual("apply", request["action"])
                     stream.write(
                         (
@@ -99,16 +103,21 @@ class PersistentBackendTransportTests(unittest.TestCase):
 
             worker = threading.Thread(target=serve, daemon=True)
             worker.start()
-            result = persistent_backend.try_forward_apply_frontend(
-                [
-                    "apply-frontend",
-                    str(campaign),
-                    "--snapshot",
-                    str(snapshot),
-                    "--commands",
-                    str(commands),
-                ]
-            )
+            with patch.object(
+                persistent_backend,
+                "_runtime_source_commit",
+                return_value=source_commit,
+            ):
+                result = persistent_backend.try_forward_apply_frontend(
+                    [
+                        "apply-frontend",
+                        str(campaign),
+                        "--snapshot",
+                        str(snapshot),
+                        "--commands",
+                        str(commands),
+                    ]
+                )
             worker.join(timeout=2.0)
             self.assertEqual((0, expected_stdout), result)
 
@@ -217,6 +226,8 @@ class PersistentBackendTransportTests(unittest.TestCase):
         self.assertIn("_direct_cache_loader", source)
         self.assertIn("_cache_can_survive_report", source)
         self.assertIn("_ambiguous_daemon_payload", source)
+        self.assertIn("source_commit", source)
+        self.assertIn("resolve_source_commit", source)
         self.assertIn("subphase_seconds=None", source)
         self.assertIn("subphase_seconds=subphase_seconds", source)
         self.assertNotIn("copy.deepcopy(", source)
