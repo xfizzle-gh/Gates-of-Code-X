@@ -294,9 +294,10 @@ class PersistentBackendRuntimeWiringTests(unittest.TestCase):
             "launch_after_import._goc_preimport_guard", 1
         )[0]
         self.assertIn("ensure_backend_session", launch_block)
+        self.assertIn("process = original_launch", launch_block)
         self.assertLess(
             launch_block.index("ensure_backend_session"),
-            launch_block.index("return original_launch"),
+            launch_block.index("process = original_launch"),
         )
 
     def test_frozen_live_client_forwards_before_reauthenticating(self) -> None:

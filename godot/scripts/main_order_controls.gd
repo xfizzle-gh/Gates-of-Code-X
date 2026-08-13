@@ -1,4 +1,4 @@
-extends "res://scripts/main_perf_measured.gd"
+extends "res://scripts/main_startup_measured.gd"
 
 ## P8/#218 interaction contract.
 ## Left click is selection-only. Right click is the only map gesture that can
