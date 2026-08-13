@@ -17,9 +17,26 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
+# PowerShell 7.6 + StrictMode may try to read this automatic variable before a
+# native command has created it in the current scope. Initialize it explicitly
+# so the guarded git checks below remain deterministic.
+$global:LASTEXITCODE = 0
+
 $ManifestName = ".goc-deployment-manifest.json"
 $BackupMetadataName = ".goc-live-workshop-backup.json"
 $RuntimeRoots = @("mod.info", "resource", "localizations")
+
+# Native GoH v1.065 acceptance has only proven bounded custom-faction picker
+# registration. Do not deploy the committed all-faction registration surfaces
+# into the default live Workshop layer: they expose dozens of GOC armies at
+# once and can crash the Dynamic Conquest army selector. The explicit
+# native_dc_safe_profile stages a selected pair transactionally after this
+# Core-safe base deployment.
+$ExcludedNativeDcRegistration = @(
+    "resource/set/dynamic_campaign/values.set",
+    "resource/set/multiplayer/games/campaign_capture_the_flag.set",
+    "resource/set/multiplayer/games/presets/alliances_generic.inc"
+)
 
 function Resolve-Directory {
     param(
@@ -41,6 +58,19 @@ function Test-CommitSha {
     return -not [string]::IsNullOrWhiteSpace($Value) -and $Value -match '^[0-9a-fA-F]{40}$'
 }
 
+function Test-ExcludedNativeDcRegistration {
+    param([Parameter(Mandatory = $true)][string]$Relative)
+
+    $normalized = $Relative -replace '\\', '/'
+    if ($ExcludedNativeDcRegistration -contains $normalized) {
+        return $true
+    }
+    if ($normalized -match '^resource/set/multiplayer/armies/goc_[^/]+\.set$') {
+        return $true
+    }
+    return $false
+}
+
 function Get-RelativeRuntimeFiles {
     param([Parameter(Mandatory = $true)][string]$Source)
 
@@ -54,7 +84,16 @@ function Get-RelativeRuntimeFiles {
     if ($tracked.Count -eq 0) {
         throw "No tracked GoH runtime files were found under mod.info/resource/localizations."
     }
-    return $tracked
+
+    $safe = @(
+        $tracked | Where-Object {
+            -not (Test-ExcludedNativeDcRegistration -Relative $_)
+        }
+    )
+    if ($safe.Count -eq 0) {
+        throw "Core-safe Workshop deployment filter removed every tracked runtime file."
+    }
+    return $safe
 }
 
 if (-not $AcceptWorkshopMutation) {
@@ -134,7 +173,7 @@ $backupMetadata = [ordered]@{
 }
 $backupMetadata | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $backupDirectory $BackupMetadataName) -Encoding UTF8
 
-Write-Host "Replacing live Workshop item with exact tracked GoH runtime content from $commit"
+Write-Host "Replacing live Workshop item with Core-safe tracked GoH runtime content from $commit"
 Get-ChildItem -LiteralPath $Target -Force | Remove-Item -Recurse -Force
 
 $hashes = [ordered]@{}
@@ -165,20 +204,22 @@ foreach ($relative in $runtimeFiles) {
 $manifest = [ordered]@{
     schema = "gates-of-codex.live-workshop-deployment"
     schema_version = 1
-    deployment_kind = "owner_native_live_workshop"
+    deployment_kind = "core_safe_owner_native_live_workshop"
     source_root = $Source
     source_commit = $commit
     target_root = $Target
     backup_directory = $backupDirectory
     deployed_at_utc = [DateTime]::UtcNow.ToString("o")
     runtime_roots = $RuntimeRoots
+    excluded_native_dc_registration = @($ExcludedNativeDcRegistration) + @("resource/set/multiplayer/armies/goc_*.set")
     files = @($runtimeFiles)
     sha256 = $hashes
 }
 $manifestPath = Join-Path $Target $ManifestName
 $manifest | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $manifestPath -Encoding UTF8
 
-# Fail closed if anything other than the exact runtime set plus our manifest is present.
+# Fail closed if anything other than the exact Core-safe runtime set plus our
+# manifest is present.
 $expectedFiles = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
 foreach ($relative in $runtimeFiles) {
     [void]$expectedFiles.Add(($relative -replace '/', [System.IO.Path]::DirectorySeparatorChar))
@@ -195,6 +236,22 @@ if ($unexpected.Count -gt 0) {
     throw "Unexpected files remain in authoritative live Workshop target: $($unexpected -join ', ')"
 }
 
+# Prove the crash-prone all-faction registration did not leak into the base
+# deployment. A bounded profile may add selected GOC army files only after this
+# script has completed successfully.
+$unsafeLeaks = @(
+    Get-ChildItem -LiteralPath (Join-Path $Target "resource\set\multiplayer\armies") -Filter "goc_*.set" -File -ErrorAction SilentlyContinue
+)
+if ($unsafeLeaks.Count -gt 0) {
+    throw "Core-safe deployment leaked GOC army registration: $($unsafeLeaks.Name -join ', ')"
+}
+foreach ($relative in $ExcludedNativeDcRegistration) {
+    $target = Join-Path $Target ($relative -replace '/', '\')
+    if (Test-Path -LiteralPath $target -PathType Leaf) {
+        throw "Core-safe deployment leaked global Dynamic Conquest registration: $relative"
+    }
+}
+
 $result = [ordered]@{
     ok = $true
     source_commit = $commit
@@ -202,6 +259,7 @@ $result = [ordered]@{
     target_root = $Target
     backup_directory = $backupDirectory
     manifest = $manifestPath
+    deployment_kind = "core_safe_owner_native_live_workshop"
     copied_files = $runtimeFiles.Count
 }
 $result | ConvertTo-Json -Depth 5
