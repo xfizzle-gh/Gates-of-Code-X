@@ -226,23 +226,25 @@ def install_safe_profile(
     if not source.is_dir() or not gates.is_dir() or not workshop.is_dir():
         raise ExpandedNationsError("Source repo, Gates root, and Workshop root must all exist")
 
-    pair_result = install_native_pair(
-        source,
-        gates,
-        workshop,
-        attacker_actor,
-        defender_actor,
-    )
-    native_manifest = dict(pair_result["manifest"])
-    selected = _selected_goc_sides(native_manifest)
-    parent_roots = _parent_roots(workshop)
-
     backups: list[dict[str, Any]] = []
     installed: dict[str, dict[str, Any]] = {}
     quarantined: list[str] = []
     art_sources: dict[str, dict[str, str]] = {}
+    pair_installed = False
 
     try:
+        pair_result = install_native_pair(
+            source,
+            gates,
+            workshop,
+            attacker_actor,
+            defender_actor,
+        )
+        pair_installed = True
+        native_manifest = dict(pair_result["manifest"])
+        selected = _selected_goc_sides(native_manifest)
+        parent_roots = _parent_roots(workshop)
+
         armies_root = gates / "resource/set/multiplayer/armies"
         for path in sorted(armies_root.glob("goc_*.set")):
             if not path.is_file() or not _GOC_ARMY_RE.fullmatch(path.name):
@@ -260,22 +262,8 @@ def install_safe_profile(
 
         for side in selected:
             side_sources: dict[str, str] = {}
-            templates = list(_REQUIRED_ART_TEMPLATES)
-            found_flags = [
-                item
-                for item in (
-                    _find_parent_art(parent_roots, side, template)
-                    for template in _OPTIONAL_FLAG_TEMPLATES
-                )
-                if item is not None
-            ]
-            if not found_flags:
-                raise ExpandedNationsError(
-                    f"Cannot resolve Dynamic Conquest flag donor for {side}"
-                )
-
             art_items: list[tuple[str, Path, str]] = []
-            for template in templates:
+            for template in _REQUIRED_ART_TEMPLATES:
                 found = _find_parent_art(parent_roots, side, template)
                 if found is None:
                     raise ExpandedNationsError(
@@ -283,7 +271,17 @@ def install_safe_profile(
                     )
                 source_path, donor = found
                 art_items.append((template, source_path, donor))
-            for template, found in zip(_OPTIONAL_FLAG_TEMPLATES, found_flags):
+
+            found_flags: list[tuple[str, tuple[Path, str]]] = []
+            for template in _OPTIONAL_FLAG_TEMPLATES:
+                found = _find_parent_art(parent_roots, side, template)
+                if found is not None:
+                    found_flags.append((template, found))
+            if not found_flags:
+                raise ExpandedNationsError(
+                    f"Cannot resolve Dynamic Conquest flag donor for {side}"
+                )
+            for template, found in found_flags:
                 source_path, donor = found
                 art_items.append((template, source_path, donor))
 
@@ -335,7 +333,8 @@ def install_safe_profile(
                 manifest_path.unlink()
             if backup_root.exists():
                 shutil.rmtree(backup_root)
-            restore_native_pair(gates)
+            if pair_installed or (gates / NATIVE_PAIR_MANIFEST_REL).is_file():
+                restore_native_pair(gates)
         raise
 
     return {
