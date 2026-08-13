@@ -28,7 +28,6 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from .earth3_fixture_authority import earth3_requires_stack
-from .frontend import write_frontend_snapshot
 from .models import CampaignState, Faction
 from .scenario import DEFAULT_SCENARIO_ID, build_scenario, get_scenario
 from .starter import set_player_faction
@@ -580,9 +579,10 @@ def publish_snapshot(
     environ: Mapping[str, str] | None = None,
 ) -> Path:
     """Regenerate the frontend snapshot from authoritative campaign state."""
+    from . import frontend
     from .frontend_commands import clear_commands
 
-    written = write_frontend_snapshot(
+    written = frontend.write_frontend_snapshot(
         state,
         paths.snapshot,
         campaign_path=paths.campaign,
