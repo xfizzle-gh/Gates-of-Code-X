@@ -22,7 +22,13 @@ class RuntimePatchBackendTests(unittest.TestCase):
             snapshot.write_text('{"static":"unchanged"}\n', encoding="utf-8")
             calls = {"save": 0, "full_snapshot": 0, "runtime_patch": 0}
 
-            def fake_save(_state, path, *, observation_context=None):
+            def fake_save(
+                _state,
+                path,
+                *,
+                observation_context=None,
+                subphase_seconds=None,
+            ):
                 calls["save"] += 1
                 Path(path).write_text('{"saved":true}\n', encoding="utf-8")
                 return Path(path)
