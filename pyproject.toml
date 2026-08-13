@@ -38,5 +38,6 @@ gates_of_codex = [
     "SOURCE_COMMIT",
     "data/*",
     "data/earth3_v1/*.json",
+    "data/earth3_native_acceptance/*.json",
     "pyinstaller_hooks/*.py",
 ]

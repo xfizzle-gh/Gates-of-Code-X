@@ -1040,24 +1040,17 @@ def load_authenticated_p3_graph_for_state(
     return load_authenticated_p3_graph()
 
 
-def validate_earth3_p3_campaign_extension(state: CampaignState) -> frozenset[str]:
-    """Validate mutable P3 state against separately authenticated P2/P3 authority.
+def authenticate_earth3_p3_base(state: CampaignState) -> dict[str, Any]:
+    """Authenticate immutable non-formation P3 base contracts.
 
-    The exact eleven-force set is an initialization invariant enforced by
-    ``migrate_earth3_p2_to_p3``. Evolved P3 campaigns may legitimately lose
-    formations, but never gain or substitute an unapproved formation identity.
-    This validator is read-only and never recreates eliminated forces.
-
-    Returns the province ids anchored by the authenticated graph's nodes. That
-    set is derived here rather than re-loaded by the caller because graph
-    authentication is exact-byte and deliberately expensive.
+    Shared by production P3 validation and the native-acceptance fixture
+    validator. This does not authorize extra formations.
     """
     from .earth3_bootstrap import (
         is_earth3_p2_campaign,
-        load_earth3_bootstrap,
         validate_earth3_bootstrap_provenance,
     )
-    from .operational_position import _graph_indexes, _position_is_valid
+    from .operational_position import _graph_indexes
 
     if state.map_id != EARTH3_MAP_ID or not is_earth3_p2_campaign(state):
         raise Earth3OperationalAuthorityError(
@@ -1079,6 +1072,39 @@ def validate_earth3_p3_campaign_extension(state: CampaignState) -> frozenset[str
     if graph is None:
         raise Earth3OperationalAuthorityError("Earth3 P3 state authority marker missing")
     node_ids, edge_ids, edges_by_id, nodes_by_id = _graph_indexes(graph)
+    return {
+        "node_ids": node_ids,
+        "edge_ids": edge_ids,
+        "edges_by_id": edges_by_id,
+        "nodes_by_id": nodes_by_id,
+        "graph_provinces": frozenset(
+            str(node.get("province_id") or "")
+            for node in nodes_by_id.values()
+            if node.get("province_id")
+        ),
+    }
+
+
+def validate_earth3_p3_campaign_extension(state: CampaignState) -> frozenset[str]:
+    """Validate mutable P3 state against separately authenticated P2/P3 authority.
+
+    The exact eleven-force set is an initialization invariant enforced by
+    ``migrate_earth3_p2_to_p3``. Evolved P3 campaigns may legitimately lose
+    formations, but never gain or substitute an unapproved formation identity.
+    This validator is read-only and never recreates eliminated forces.
+
+    Returns the province ids anchored by the authenticated graph's nodes. That
+    set is derived here rather than re-loaded by the caller because graph
+    authentication is exact-byte and deliberately expensive.
+    """
+    from .earth3_bootstrap import load_earth3_bootstrap
+    from .operational_position import _position_is_valid
+
+    base = authenticate_earth3_p3_base(state)
+    node_ids = base["node_ids"]
+    edge_ids = base["edge_ids"]
+    edges_by_id = base["edges_by_id"]
+    nodes_by_id = base["nodes_by_id"]
 
     current_ids = set(state.strategic_formations)
     unknown_ids = current_ids - P3_STARTING_FORMATION_IDS
@@ -1145,7 +1171,9 @@ def migrate_earth3_p2_to_p3(state: CampaignState) -> CampaignState:
     if not is_earth3_p2_campaign(state):
         return state
     if P3_AUTHORITY_METADATA_KEY in state.map_metadata:
-        validate_earth3_p3_campaign_extension(state)
+        from .earth3_fixture_authority import validate_earth3_operational_authority
+
+        validate_earth3_operational_authority(state)
         return state
 
     validate_earth3_bootstrap_campaign_state(state)
