@@ -246,8 +246,11 @@ if ($unsafeLeaks.Count -gt 0) {
     throw "Core-safe deployment leaked GOC army registration: $($unsafeLeaks.Name -join ', ')"
 }
 foreach ($relative in $ExcludedNativeDcRegistration) {
-    $target = Join-Path $Target ($relative -replace '/', '\')
-    if (Test-Path -LiteralPath $target -PathType Leaf) {
+    # PowerShell variable names are case-insensitive.  Do not use `$target`
+    # here: that would overwrite the canonical `$Target` directory and corrupt
+    # the result JSON after an otherwise successful deployment.
+    $excludedTargetPath = Join-Path $Target ($relative -replace '/', '\')
+    if (Test-Path -LiteralPath $excludedTargetPath -PathType Leaf) {
         throw "Core-safe deployment leaked global Dynamic Conquest registration: $relative"
     }
 }
