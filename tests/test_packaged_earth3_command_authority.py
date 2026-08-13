@@ -31,6 +31,11 @@ from gates_of_codex.earth3_operational import (
 )
 from gates_of_codex.fast_entrypoint import _require_frozen_console_backend
 from gates_of_codex.frontend import FRONTEND_SCHEMA_VERSION, write_frontend_snapshot
+from gates_of_codex.packaging import (
+    PackagingError,
+    enforce_packaged_backend_identity,
+    resolve_source_commit,
+)
 from gates_of_codex.frontend_commands import apply_frontend_commands
 from gates_of_codex.models import Faction
 from gates_of_codex.operational_order_options import list_operational_move_options
@@ -109,6 +114,8 @@ class PackagedCommandAuthorityContractTests(unittest.TestCase):
             frozen_return, func.index('{"executable": "python"', frozen_return)
         )
         self.assertIn("Never ambient", func)
+        self.assertIn("--expected-source-commit", func)
+        self.assertIn("backend_source_commit", func)
 
     def test_windows_executable_runs_real_order_smoke(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
@@ -195,6 +202,86 @@ class PackagedCommandAuthorityContractTests(unittest.TestCase):
                         snapshot_path=snapshot,
                     )
 
+    def test_mismatched_expected_commit_fails_before_apply(self) -> None:
+        actual = "a" * 40
+        expected = "b" * 40
+        with patch(
+            "gates_of_codex.packaging.resolve_source_commit", return_value=actual
+        ):
+            with self.assertRaisesRegex(PackagingError, "source commit mismatch"):
+                enforce_packaged_backend_identity(
+                    [
+                        "apply-frontend",
+                        "campaign.json",
+                        "--expected-source-commit",
+                        expected,
+                    ],
+                    frozen=True,
+                )
+
+    def test_frozen_apply_frontend_requires_expected_commit(self) -> None:
+        with self.assertRaisesRegex(PackagingError, "--expected-source-commit"):
+            enforce_packaged_backend_identity(
+                ["apply-frontend", "campaign.json"],
+                frozen=True,
+            )
+
+    def test_matching_expected_commit_is_stripped_from_argv(self) -> None:
+        actual = "c" * 40
+        with patch(
+            "gates_of_codex.packaging.resolve_source_commit", return_value=actual
+        ):
+            remaining = enforce_packaged_backend_identity(
+                [
+                    "session-backend",
+                    "campaign.json",
+                    "--snapshot",
+                    "snapshot.json",
+                    "--expected-source-commit",
+                    actual,
+                ],
+                frozen=True,
+            )
+        self.assertEqual(
+            ["session-backend", "campaign.json", "--snapshot", "snapshot.json"],
+            remaining,
+        )
+
+    def test_live_entry_rejects_mismatch_before_forward_or_auth(self) -> None:
+        import run_gates_of_codex_live as live
+
+        with (
+            patch(
+                "gates_of_codex.packaging.resolve_source_commit",
+                return_value="d" * 40,
+            ),
+            patch.object(live, "_try_persistent_forward") as forward,
+            patch.object(live, "_authenticate_frozen_earth3") as auth,
+        ):
+            code = live.main(
+                [
+                    "apply-frontend",
+                    "campaign.json",
+                    "--expected-source-commit",
+                    "e" * 40,
+                ]
+            )
+        self.assertEqual(2, code)
+        forward.assert_not_called()
+        auth.assert_not_called()
+
+    def test_session_backend_launch_carries_windowed_package_commit(self) -> None:
+        source = (ROOT / "src/gates_of_codex/persistent_backend.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('"--expected-source-commit"', source)
+        self.assertIn("source_commit", source)
+        frozen = source.index("if getattr(sys, \"frozen\", False):")
+        self.assertLess(
+            frozen,
+            source.index('"--expected-source-commit"', frozen),
+        )
+
     def test_production_campaign_rejects_fixture_authority_marker(self) -> None:
         state = build_scenario("earth3_v1", resolved_catalog=_resolved_catalog())
         state.map_metadata[FIXTURE_AUTHORITY_KEY] = authored_fixture_authority_marker()
@@ -233,6 +320,7 @@ class PackagedEarth3RealOrderTests(unittest.TestCase):
                 control["python_module"] = "gates_of_codex"
                 control["backend_executable"] = str(live)
                 control["backend_kind"] = "frozen_console"
+                control["backend_source_commit"] = resolve_source_commit()
                 payload = json.loads(snapshot.read_text(encoding="utf-8"))
                 payload["control"] = control
                 snapshot.write_text(
@@ -250,6 +338,8 @@ class PackagedEarth3RealOrderTests(unittest.TestCase):
                         str(snapshot),
                         "--commands",
                         str(commands),
+                        "--expected-source-commit",
+                        control["backend_source_commit"],
                     ],
                     cwd=str(root),
                     capture_output=True,
@@ -323,6 +413,8 @@ class PackagedEarth3RealOrderTests(unittest.TestCase):
                     str(snapshot),
                     "--commands",
                     str(commands),
+                    "--expected-source-commit",
+                    resolve_source_commit(),
                 ],
                 cwd=str(root),
                 capture_output=True,
@@ -334,3 +426,53 @@ class PackagedEarth3RealOrderTests(unittest.TestCase):
             output = completed.stdout + completed.stderr
             self.assertNotEqual(0, completed.returncode, output)
             self.assertNotIn("Earth3 manifest missing", output)
+
+    @unittest.skipUnless(sys.platform == "win32", "packaged Live.exe is Windows-only")
+    def test_frozen_live_rejects_wrong_windowed_package_commit(self) -> None:
+        live = _live_executable()
+        if live is None:
+            raise unittest.SkipTest(
+                "GATES_OF_CODEX_LIVE_EXE is unset; windows-executable builds it"
+            )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            campaign = root / "campaign.json"
+            snapshot = root / "campaign_snapshot.json"
+            commands = root / "frontend_commands.json"
+            environ = {**os.environ, "GATES_OF_CODEX_HOME": str(root / "home")}
+            with patch.dict(os.environ, environ, clear=False):
+                state = build_scenario(
+                    "earth3_v1", resolved_catalog=_resolved_catalog()
+                )
+                save_campaign(state, campaign)
+                write_frontend_snapshot(state, snapshot, campaign_path=campaign)
+                _write_move_batch(commands, _first_nato_route(state))
+            before = campaign.read_bytes()
+            wrong = "0" * 40
+            if wrong == resolve_source_commit():
+                wrong = "1" * 40
+            completed = subprocess.run(
+                [
+                    str(live),
+                    "-m",
+                    "gates_of_codex",
+                    "apply-frontend",
+                    str(campaign),
+                    "--snapshot",
+                    str(snapshot),
+                    "--commands",
+                    str(commands),
+                    "--expected-source-commit",
+                    wrong,
+                ],
+                cwd=str(root),
+                capture_output=True,
+                text=True,
+                timeout=300,
+                check=False,
+                env=environ,
+            )
+            output = completed.stdout + completed.stderr
+            self.assertNotEqual(0, completed.returncode, output)
+            self.assertIn("source commit mismatch", output)
+            self.assertEqual(before, campaign.read_bytes())

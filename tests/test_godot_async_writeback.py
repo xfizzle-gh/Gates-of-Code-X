@@ -62,6 +62,7 @@ class GodotAsyncWritebackTests(unittest.TestCase):
         self.assertIn('["-m",python_module]', compact)
         self.assertIn('["-m","gates_of_codex"]', compact)
         self.assertIn('backend_kind=="frozen_console"', compact)
+        self.assertIn("--expected-source-commit", func)
 
     def test_busy_disables_mutating_controls(self) -> None:
         wb = (GODOT / "scripts/main_writeback.gd").read_text(encoding="utf-8")

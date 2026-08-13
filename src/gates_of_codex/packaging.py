@@ -12,8 +12,10 @@ import os
 import shutil
 import stat
 import subprocess
+import sys
 import tempfile
 import uuid
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -34,6 +36,8 @@ from .state_io import load_campaign
 
 PROVENANCE_ENV = "GATES_OF_CODEX_SOURCE_COMMIT"
 PROVENANCE_FILE_NAME = "SOURCE_COMMIT"
+EXPECTED_SOURCE_COMMIT_FLAG = "--expected-source-commit"
+_PACKAGED_IDENTITY_COMMANDS = frozenset({"apply-frontend", "session-backend"})
 MANAGED_CAMPAIGNS_DIRNAME = "campaigns"
 MANAGED_BACKUPS_DIRNAME = "backups"
 
@@ -728,7 +732,88 @@ def packaging_application_fields(
     }
 
 
-def _is_commit_sha(value: str) -> bool:
+def is_commit_sha(value: str) -> bool:
     if len(value) != 40:
         return False
     return all(character in "0123456789abcdef" for character in value)
+
+
+_is_commit_sha = is_commit_sha
+
+
+def split_expected_source_commit(
+    arguments: Sequence[str],
+) -> tuple[list[str], str | None]:
+    """Remove ``--expected-source-commit`` from argv and return the digest."""
+    remaining: list[str] = []
+    expected: str | None = None
+    index = 0
+    args = list(arguments)
+    while index < len(args):
+        token = args[index]
+        if token == EXPECTED_SOURCE_COMMIT_FLAG:
+            if index + 1 >= len(args):
+                raise PackagingError(
+                    f"{EXPECTED_SOURCE_COMMIT_FLAG} requires a 40-character commit"
+                )
+            value = str(args[index + 1]).strip().lower()
+            if not is_commit_sha(value):
+                raise PackagingError(
+                    f"{EXPECTED_SOURCE_COMMIT_FLAG} must be a 40-character lowercase hex commit"
+                )
+            if expected is not None and expected != value:
+                raise PackagingError("conflicting --expected-source-commit values")
+            expected = value
+            index += 2
+            continue
+        remaining.append(token)
+        index += 1
+    return remaining, expected
+
+
+def require_expected_source_commit(
+    expected: str,
+    *,
+    root: str | Path | None = None,
+    environ: Mapping[str, str] | None = None,
+) -> str:
+    """Fail closed when the caller-selected commit is not this runtime's stamp."""
+    digest = str(expected).strip().lower()
+    if not is_commit_sha(digest):
+        raise PackagingError(
+            "expected source commit must be a 40-character lowercase hex digest"
+        )
+    actual = resolve_source_commit(root=root, environ=environ)
+    if actual != digest:
+        raise PackagingError(
+            f"Packaged backend source commit mismatch: expected {digest}, got {actual}"
+        )
+    return actual
+
+
+def enforce_packaged_backend_identity(
+    arguments: Sequence[str],
+    *,
+    frozen: bool | None = None,
+    root: str | Path | None = None,
+    environ: Mapping[str, str] | None = None,
+) -> list[str]:
+    """Bind apply-frontend/session-backend to an exact packaged source commit.
+
+    Frozen production commands require ``--expected-source-commit`` and compare
+    it to this process's embedded stamp before any forwarding or mutation.
+    """
+    remaining, expected = split_expected_source_commit(arguments)
+    command = remaining[0] if remaining else ""
+    if command not in _PACKAGED_IDENTITY_COMMANDS:
+        return remaining
+    is_frozen = bool(getattr(sys, "frozen", False) if frozen is None else frozen)
+    if expected is None:
+        if is_frozen:
+            raise PackagingError(
+                "Packaged apply-frontend/session-backend requires "
+                "--expected-source-commit from the windowed package"
+            )
+        return remaining
+    require_expected_source_commit(expected, root=root, environ=environ)
+    return remaining

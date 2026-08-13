@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 
 from gates_of_codex.frozen_runtime import configure_frozen_earth3_authority
+from gates_of_codex.packaging import PackagingError, enforce_packaged_backend_identity
 from gates_of_codex.startup_rebaseline import install_startup_rebaseline_contracts
 
 
@@ -67,6 +68,11 @@ def main(argv: list[str] | None = None) -> int:
     windowed and is therefore not the authoritative write-back transport.
     """
     arguments = _normalize_arguments(list(sys.argv[1:] if argv is None else argv))
+    try:
+        arguments = enforce_packaged_backend_identity(arguments)
+    except PackagingError as exc:
+        sys.stderr.write(f"{exc}\n")
+        return 2
     install_startup_rebaseline_contracts()
 
     # The persistent #207 backend authenticates once when the session starts.

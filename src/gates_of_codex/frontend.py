@@ -837,7 +837,7 @@ def build_frontend_apply_invocation(control: dict) -> tuple[str, list[str]]:
         raise ValueError("control.python_module is required")
     if not campaign_path or not snapshot_path or not commands_path:
         raise ValueError("control campaign, snapshot, and commands paths are required")
-    return executable, [
+    arguments = [
         "-m",
         module,
         "apply-frontend",
@@ -847,6 +847,16 @@ def build_frontend_apply_invocation(control: dict) -> tuple[str, list[str]]:
         "--commands",
         commands_path,
     ]
+    if str(control.get("backend_kind", "")).strip() == "frozen_console":
+        from .packaging import EXPECTED_SOURCE_COMMIT_FLAG, is_commit_sha
+
+        expected = str(control.get("backend_source_commit", "")).strip().lower()
+        if not is_commit_sha(expected):
+            raise ValueError(
+                "control.backend_source_commit is required for frozen_console"
+            )
+        arguments.extend([EXPECTED_SOURCE_COMMIT_FLAG, expected])
+    return executable, arguments
 
 
 def _commander_display_name(state: CampaignState, commander_id: str | None) -> str:

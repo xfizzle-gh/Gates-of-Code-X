@@ -766,10 +766,15 @@ func _backend_launch_candidates(control: Dictionary, apply_args: Array) -> Array
 		var frozen_exe := backend_executable
 		if frozen_exe.is_empty():
 			frozen_exe = python_executable
+		var expected_commit := String(control.get("backend_source_commit", "")).strip_edges().to_lower()
 		if frozen_exe.is_empty() or not FileAccess.file_exists(frozen_exe):
+			return []
+		if expected_commit.length() != 40:
 			return []
 		var frozen_args: Array = ["-m", python_module]
 		frozen_args.append_array(apply_args)
+		frozen_args.append("--expected-source-commit")
+		frozen_args.append(expected_commit)
 		return [{"executable": frozen_exe, "args": frozen_args}]
 	var candidates: Array = []
 	if not python_executable.is_empty() and FileAccess.file_exists(python_executable):
