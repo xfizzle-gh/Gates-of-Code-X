@@ -21,9 +21,12 @@ import time
 from pathlib import Path
 from typing import Any, Sequence
 
+from .packaging import PackagingError, resolve_source_commit
+
+
 SESSION_FILE_NAME = ".goc-backend-session.json"
 SESSION_SCHEMA = "gates-of-codex.persistent-backend"
-SESSION_SCHEMA_VERSION = 1
+SESSION_SCHEMA_VERSION = 2
 SUPPORTED_OPS = frozenset(
     {"end_player_round", "issue_move_order", "cancel_move_order", "verify_result"}
 )
@@ -33,6 +36,22 @@ APPLY_RESPONSE_TIMEOUT_SECONDS = 600.0
 
 def _session_path(campaign: Path) -> Path:
     return campaign.resolve(strict=False).with_name(SESSION_FILE_NAME)
+
+
+def _runtime_source_commit() -> str | None:
+    """Return this process's immutable package provenance, or fail closed."""
+
+    try:
+        return resolve_source_commit()
+    except (PackagingError, OSError):
+        return None
+
+
+def _drop_session_descriptor(campaign: Path) -> None:
+    try:
+        _session_path(campaign).unlink()
+    except OSError:
+        pass
 
 
 def _fingerprint(path: Path) -> tuple[int, int, str]:
@@ -58,6 +77,9 @@ def _atomic_json(path: Path, payload: dict[str, Any]) -> None:
 
 
 def _read_session(campaign: Path) -> dict[str, Any] | None:
+    source_commit = _runtime_source_commit()
+    if source_commit is None:
+        return None
     source = _session_path(campaign)
     if not source.is_file():
         return None
@@ -71,6 +93,8 @@ def _read_session(campaign: Path) -> dict[str, Any] | None:
         return None
     if int(payload.get("schema_version", 0) or 0) != SESSION_SCHEMA_VERSION:
         return None
+    if str(payload.get("source_commit", "")).strip().lower() != source_commit:
+        return None
     if str(payload.get("campaign_path", "")) != str(campaign.resolve(strict=False)):
         return None
     return payload
@@ -82,6 +106,9 @@ def _request(
     *,
     timeout: float = 2.0,
 ) -> dict[str, Any] | None:
+    source_commit = _runtime_source_commit()
+    if source_commit is None:
+        return None
     try:
         port = int(session.get("port", 0))
         token = str(session.get("token", ""))
@@ -91,6 +118,7 @@ def _request(
         return None
     message = dict(payload)
     message["token"] = token
+    message["source_commit"] = source_commit
     try:
         with socket.create_connection(("127.0.0.1", port), timeout=timeout) as connection:
             connection.settimeout(timeout)
@@ -168,14 +196,13 @@ def try_forward_apply_frontend(argv: Sequence[str]) -> tuple[int, str] | None:
     campaign, snapshot, commands = parsed
     session = _read_session(campaign)
     if session is None:
+        if _session_path(campaign).is_file():
+            _drop_session_descriptor(campaign)
         return None
 
     ping = _request(session, {"action": "ping"}, timeout=0.4)
     if not ping or ping.get("ok") is not True:
-        try:
-            _session_path(campaign).unlink()
-        except OSError:
-            pass
+        _drop_session_descriptor(campaign)
         return None
 
     response = _request(
@@ -189,10 +216,7 @@ def try_forward_apply_frontend(argv: Sequence[str]) -> tuple[int, str] | None:
         timeout=APPLY_RESPONSE_TIMEOUT_SECONDS,
     )
     if response is None:
-        try:
-            _session_path(campaign).unlink()
-        except OSError:
-            pass
+        _drop_session_descriptor(campaign)
         return 0, _ambiguous_daemon_payload()
     if not bool(response.get("handled", False)):
         _request(session, {"action": "invalidate"}, timeout=1.0)
@@ -218,12 +242,12 @@ def ensure_backend_session(campaign: Path, snapshot: Path) -> bool:
 
     campaign = campaign.expanduser().resolve(strict=False)
     snapshot = snapshot.expanduser().resolve(strict=False)
+    if _runtime_source_commit() is None:
+        _drop_session_descriptor(campaign)
+        return False
     if _ping(campaign):
         return True
-    try:
-        _session_path(campaign).unlink()
-    except OSError:
-        pass
+    _drop_session_descriptor(campaign)
 
     if getattr(sys, "frozen", False):
         executable = Path(sys.executable).resolve().with_name("GatesOfCodeXLive.exe")
@@ -322,6 +346,9 @@ def run_session_backend(argv: Sequence[str]) -> int:
             snapshot = Path(arguments[index + 1]).expanduser().resolve(strict=False)
     if not campaign.is_file():
         return 2
+    source_commit = _runtime_source_commit()
+    if source_commit is None:
+        return 2
 
     from . import command_cycle_perf as perf
     from . import frontend_commands as commands_module
@@ -339,6 +366,7 @@ def run_session_backend(argv: Sequence[str]) -> int:
     descriptor = {
         "schema": SESSION_SCHEMA,
         "schema_version": SESSION_SCHEMA_VERSION,
+        "source_commit": source_commit,
         "campaign_path": str(campaign),
         "snapshot_path": str(snapshot) if snapshot is not None else "",
         "port": port,
@@ -366,6 +394,14 @@ def run_session_backend(argv: Sequence[str]) -> int:
                     request = {}
                 if not isinstance(request, dict) or request.get("token") != token:
                     response = {"handled": True, "exit_code": 2, "stdout": "", "ok": False}
+                elif request.get("source_commit") != source_commit:
+                    response = {
+                        "handled": False,
+                        "reason": "source_commit_mismatch",
+                        "exit_code": 2,
+                        "stdout": "",
+                        "ok": False,
+                    }
                 elif request.get("action") == "ping":
                     response = {"handled": True, "exit_code": 0, "stdout": "", "ok": True}
                 elif request.get("action") == "invalidate":
