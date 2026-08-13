@@ -205,7 +205,7 @@ class CommandCycleTelemetryTests(unittest.TestCase):
                     "campaign_path": str(campaign_path),
                     "snapshot_path": str(snapshot_path),
                     "commands_applied": 1,
-                    "results": [{"op": "end_player_round", "ok": True, "data": {}}],
+                    "results": [{"op": "end_turn", "ok": True, "data": {}}],
                 }
 
             with (
@@ -215,7 +215,7 @@ class CommandCycleTelemetryTests(unittest.TestCase):
             ):
                 report = command_cycle_perf.measured_apply_frontend_commands(
                     campaign,
-                    commands=[{"op": "end_player_round"}],
+                    commands=[{"op": "end_turn"}],
                     snapshot_path=snapshot,
                 )
 
