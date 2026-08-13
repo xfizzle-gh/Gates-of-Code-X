@@ -1,1 +1,1476 @@
-[{"actor_id":"usa","display_name":"United States","actor_type":"sovereign","coalition_id":"atlantic","tactical_side":"nato","playable":true,"roster_class":"full_national","components":["nato_us_forces","nato_common_support"],"research":{"mode":"native","display_name":"United States Armed Forces"},"required_categories":["infantry","tank","artillery"],"notes":["USMC, Stryker, and armored branches remain separate doctrine paths."]},{"actor_id":"gbr","display_name":"United Kingdom","actor_type":"sovereign","coalition_id":"atlantic","tactical_side":"nato","playable":true,"roster_class":"full_national","components":["nato_british_forces","nato_common_support"],"research":{"mode":"hybrid","display_name":"United Kingdom Armed Forces"},"required_categories":["infantry","tank","artillery"],"notes":["British branch is national; shared support is used only for explicit gaps."]},{"actor_id":"deu","display_name":"Germany","actor_type":"sovereign","coalition_id":"atlantic","tactical_side":"nato","playable":true,"roster_class":"full_national","components":["nato_german_forces","nato_common_support"],"research":{"mode":"hybrid","display_name":"Germany Armed Forces"},"required_categories":["infantry","tank","artillery"],"notes":["YPR/CV9030 coalition stepping-stones are filtered from the national roster."]},{"actor_id":"fra","display_name":"France","actor_type":"sovereign","coalition_id":"atlantic","tactical_side":"nato","playable":true,"roster_class":"national_hybrid","components":["nato_common_infantry","france_national","nato_common_support"],"research":{"mode":"generated","display_name":"France Armed Forces"},"required_categories":["infantry","tank","artillery"],"notes":["ARF line infantry is temporary; fr_* Code:X personnel remain elite/SOF rather than line infantry."]},{"actor_id":"pol","display_name":"Poland","actor_type":"sovereign","coalition_id":"atlantic","tactical_side":"nato","playable":true,"roster_class":"national_hybrid","components":["nato_common_infantry","poland_national","nato_common_support"],"research":{"mode":"generated","display_name":"Poland Armed Forces"},"required_categories":["infantry","tank","artillery"],"notes":["EFP British and US elements are excluded from the Polish national core."]},{"actor_id":"ita","display_name":"Italy","actor_type":"sovereign","coalition_id":"atlantic","tactical_side":"nato","playable":true,"roster_class":"national_hybrid","components":["nato_common_infantry","italy_national","nato_common_support"],"research":{"mode":"generated","display_name":"Italy Armed Forces"},"required_categories":["infantry","tank","artillery"],"notes":["Italian armor defines the faction while NATO-common infantry and support fill audited gaps."]},{"actor_id":"fin","display_name":"Finland","actor_type":"sovereign","coalition_id":"atlantic","tactical_side":"nato","playable":true,"roster_class":"national_hybrid","components":["nato_common_infantry","finland_national","nato_common_support","soviet_legacy_core"],"research":{"mode":"generated","display_name":"Finland Armed Forces"},"required_categories":["infantry","tank","artillery"],"notes":["West81 equipment is explicitly reserve/legacy content."]},{"actor_id":"swe","display_name":"Sweden","actor_type":"sovereign","coalition_id":"atlantic","tactical_side":"nato","playable":true,"roster_class":"national_hybrid","components":["nato_common_infantry","sweden_national","nato_common_support"],"research":{"mode":"generated","display_name":"Sweden Armed Forces"},"required_categories":["infantry","tank","artillery"],"notes":["CV90/Strv equipment provides national identity."]},{"actor_id":"nld","display_name":"Netherlands","actor_type":"sovereign","coalition_id":"atlantic","tactical_side":"nato","playable":true,"roster_class":"national_hybrid","components":["nato_common_infantry","netherlands_national","nato_common_support"],"research":{"mode":"generated","display_name":"Netherlands Armed Forces"},"required_categories":["infantry","ifv","artillery"],"notes":["YPR/CV9035 equipment provides national identity."]},{"actor_id":"can","display_name":"Canada","actor_type":"sovereign","coalition_id":"atlantic","tactical_side":"nato","playable":true,"roster_class":"national_hybrid","components":["nato_common_infantry","canada_national","nato_common_support"],"research":{"mode":"generated","display_name":"Canada Armed Forces"},"required_categories":["infantry","tank","artillery"],"notes":["Canadian armor is supplemented by NATO-common systems."]},{"actor_id":"nor","display_name":"Norway","actor_type":"sovereign","coalition_id":"atlantic","tactical_side":"nato","playable":true,"roster_class":"coalition_fallback","components":["nato_full_fallback"],"research":{"mode":"generated","display_name":"Norway Armed Forces"},"required_categories":["infantry","tank","artillery"],"notes":["No complete national Code:X branch was audited; roster is explicitly labeled NATO coalition fallback."]},{"actor_id":"dnk","display_name":"Denmark","actor_type":"sovereign","coalition_id":"atlantic","tactical_side":"nato","playable":true,"roster_class":"coalition_fallback","components":["nato_full_fallback"],"research":{"mode":"generated","display_name":"Denmark Armed Forces"},"required_categories":["infantry","tank","artillery"],"notes":["No complete national Code:X branch was audited; roster is explicitly labeled NATO coalition fallback."]},{"actor_id":"esp","display_name":"Spain","actor_type":"sovereign","coalition_id":"atlantic","tactical_side":"nato","playable":true,"roster_class":"coalition_fallback","components":["spain_3rd_assault_legion","nato_fallback_heavy","nato_common_support"],"research":{"mode":"generated","display_name":"Spain Armed Forces"},"required_categories":["infantry","tank","artillery"],"notes":["Spain uses the audited 3rd Assault Brigade international-legion infantry subset, with NATO coalition armor/artillery/support filling non-infantry gaps. Other foreign-volunteer content is reserved for regional neutral encounters."]},{"actor_id":"tur","display_name":"Turkey","actor_type":"sovereign","coalition_id":"atlantic","tactical_side":"nato","playable":true,"roster_class":"coalition_fallback","components":["nato_full_fallback"],"research":{"mode":"generated","display_name":"Turkey Armed Forces"},"required_categories":["infantry","tank","artillery"],"notes":["No complete national Code:X branch was audited; roster is explicitly labeled NATO coalition fallback."]},{"actor_id":"rus","display_name":"Russia","actor_type":"sovereign","coalition_id":"eurasian","tactical_side":"rusa","playable":true,"roster_class":"full_national","components":["russia_regular","wagner_native","kpa_infantry"],"research":{"mode":"hybrid","display_name":"Russia Armed Forces"},"required_categories":["infantry","tank","artillery"],"notes":["Foreign and PMC components remain separate research subtrees even when available to Russia."]},{"actor_id":"ukr","display_name":"Ukraine","actor_type":"sovereign","coalition_id":"ukrainian","tactical_side":"ukr","playable":true,"roster_class":"full_national","components":["ukraine_regular"],"research":{"mode":"native","display_name":"Ukraine Armed Forces"},"required_categories":["infantry","tank","artillery"],"notes":["Ukraine uses its native Code:X Ukrainian branches directly, including the existing 3rd Assault / international-volunteer content. No duplicate generated ILDU wrapper subtree is added."]},{"actor_id":"prc","display_name":"People's Republic of China","actor_type":"sovereign","coalition_id":"prc_aligned","tactical_side":"prc","playable":true,"roster_class":"full_national","components":["prc_regular","prc_legacy_reserve"],"research":{"mode":"native","display_name":"People's Republic of China Armed Forces"},"required_categories":["infantry","tank","artillery"],"notes":["Modern PLA content remains Code:X authoritative.","West81-backed historical equipment is isolated in the PRC Legacy / Reserve Equipment research branch."]},{"actor_id":"dprk","display_name":"North Korea","actor_type":"sovereign","coalition_id":"eurasian","tactical_side":"rusa","playable":true,"roster_class":"proxy_hybrid","components":["kpa_infantry","soviet_legacy_core"],"research":{"mode":"generated","display_name":"North Korea Armed Forces"},"required_categories":["infantry","tank","artillery"],"notes":["Code:X Korean infantry is national authority; West81 Soviet-pattern equipment supplies legacy heavy forces."]},{"actor_id":"donbas","display_name":"Donbas Forces","actor_type":"separatist","coalition_id":"eurasian","tactical_side":"rusa","playable":true,"roster_class":"proxy_hybrid","components":["donbas_native","donbas_latent","soviet_legacy_core"],"research":{"mode":"hybrid","display_name":"Donbas Forces Armed Forces"},"required_categories":["infantry","tank","artillery"],"notes":["Lud/LDPR, Sparta, and Vostok are combined into one initial tactical actor."]},{"actor_id":"blr","display_name":"Belarus","actor_type":"sovereign","coalition_id":"eurasian","tactical_side":"rusa","playable":true,"roster_class":"proxy_hybrid","components":["soviet_legacy_core","belarus_modern_support"],"research":{"mode":"hybrid","display_name":"Belarus Armed Forces"},"required_categories":["infantry","tank","artillery"],"notes":["Constructed hybrid because Code:X has no dedicated Belarus breed or conquest package."]},{"actor_id":"srb","display_name":"Serbia","actor_type":"sovereign","coalition_id":"nonaligned","tactical_side":"rusa","playable":true,"roster_class":"proxy_hybrid","components":["serbia_infantry","soviet_legacy_core"],"research":{"mode":"generated","display_name":"Serbia Armed Forces"},"required_categories":["infantry","tank","artillery"],"notes":["Serb_* personnel seed is combined with explicit Balkan/Eastern legacy equipment."]},{"actor_id":"ukr_ildu","display_name":"International Legion for the Defence of Ukraine","actor_type":"volunteer","coalition_id":"ukrainian","tactical_side":"ukr","playable":false,"roster_class":"nonstate","components":["ukraine_ildu"],"research":{"mode":"generated","display_name":"International Legion for the Defence of Ukraine Armed Forces"},"required_categories":["infantry","anti_armor"],"notes":["Compatibility-only non-playable foreign-volunteer record retained for existing data while its wrapper pool is reserved for future regional neutral-encounter allocation; it is not included in Ukraine's sovereign roster."],"host_actor_id":"ukr"},{"actor_id":"kpa_expeditionary","display_name":"KPA Expeditionary Corps","actor_type":"auxiliary","coalition_id":"eurasian","tactical_side":"rusa","playable":false,"roster_class":"nonstate","components":["kpa_infantry"],"research":{"mode":"native","display_name":"KPA Expeditionary Corps Armed Forces"},"required_categories":["infantry"],"notes":["Russian-hosted contingent using the same canonical Korean squads as North Korea."],"host_actor_id":"rus"},{"actor_id":"wagner","display_name":"Wagner / Russian PMC Forces","actor_type":"pmc","coalition_id":"eurasian","tactical_side":"rusa","playable":false,"roster_class":"nonstate","components":["wagner_native"],"research":{"mode":"native","display_name":"Wagner / Russian PMC Forces Armed Forces"},"required_categories":["infantry"],"notes":["Non-state military actor for contracts, events, or temporary province control."],"host_actor_id":"rus"}]
+[
+  {
+    "actor_id": "usa",
+    "display_name": "United States",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_usa",
+    "playable": true,
+    "roster_class": "full_national",
+    "components": [
+      "nato_us_forces",
+      "nato_common_support"
+    ],
+    "research": {
+      "mode": "native",
+      "display_name": "United States Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "USMC, Stryker, and armored branches remain separate doctrine paths.",
+      "#194 Expanded-mode tactical identity goc_usa (source/core transport family was nato); Core four sides unchanged."
+    ]
+  },
+  {
+    "actor_id": "gbr",
+    "display_name": "United Kingdom",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_gbr",
+    "playable": true,
+    "roster_class": "full_national",
+    "components": [
+      "nato_british_forces",
+      "nato_common_support"
+    ],
+    "research": {
+      "mode": "hybrid",
+      "display_name": "United Kingdom Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "British branch is national; shared support is used only for explicit gaps.",
+      "#194 Expanded-mode tactical identity goc_gbr (source/core transport family was nato); Core four sides unchanged."
+    ]
+  },
+  {
+    "actor_id": "deu",
+    "display_name": "Germany",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_deu",
+    "playable": true,
+    "roster_class": "full_national",
+    "components": [
+      "nato_german_forces",
+      "nato_common_support"
+    ],
+    "research": {
+      "mode": "hybrid",
+      "display_name": "Germany Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "YPR/CV9030 coalition stepping-stones are filtered from the national roster.",
+      "#194 Expanded-mode tactical identity goc_deu (source/core transport family was nato); Core four sides unchanged."
+    ]
+  },
+  {
+    "actor_id": "fra",
+    "display_name": "France",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_fra",
+    "playable": true,
+    "roster_class": "national_hybrid",
+    "components": [
+      "nato_common_infantry",
+      "france_national",
+      "nato_common_support"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "France Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "ARF line infantry is temporary; fr_* Code:X personnel remain elite/SOF rather than line infantry.",
+      "#194 Expanded-mode tactical identity goc_fra (source/core transport family was nato); Core four sides unchanged."
+    ]
+  },
+  {
+    "actor_id": "pol",
+    "display_name": "Poland",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_pol",
+    "playable": true,
+    "roster_class": "national_hybrid",
+    "components": [
+      "nato_common_infantry",
+      "poland_national",
+      "nato_common_support"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Poland Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "EFP British and US elements are excluded from the Polish national core.",
+      "#194 Expanded-mode tactical identity goc_pol (source/core transport family was nato); Core four sides unchanged."
+    ]
+  },
+  {
+    "actor_id": "ita",
+    "display_name": "Italy",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_ita",
+    "playable": true,
+    "roster_class": "national_hybrid",
+    "components": [
+      "nato_common_infantry",
+      "italy_national",
+      "nato_common_support"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Italy Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "Italian armor defines the faction while NATO-common infantry and support fill audited gaps.",
+      "#194 Expanded-mode tactical identity goc_ita (source/core transport family was nato); Core four sides unchanged."
+    ]
+  },
+  {
+    "actor_id": "fin",
+    "display_name": "Finland",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_fin",
+    "playable": true,
+    "roster_class": "national_hybrid",
+    "components": [
+      "nato_common_infantry",
+      "finland_national",
+      "nato_common_support",
+      "soviet_legacy_core"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Finland Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "West81 equipment is explicitly reserve/legacy content.",
+      "#194 Expanded-mode tactical identity goc_fin (source/core transport family was nato); Core four sides unchanged."
+    ]
+  },
+  {
+    "actor_id": "swe",
+    "display_name": "Sweden",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_swe",
+    "playable": true,
+    "roster_class": "national_hybrid",
+    "components": [
+      "nato_common_infantry",
+      "sweden_national",
+      "nato_common_support"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Sweden Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "CV90/Strv equipment provides national identity.",
+      "#194 Expanded-mode tactical identity goc_swe (source/core transport family was nato); Core four sides unchanged."
+    ]
+  },
+  {
+    "actor_id": "nld",
+    "display_name": "Netherlands",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_nld",
+    "playable": true,
+    "roster_class": "national_hybrid",
+    "components": [
+      "nato_common_infantry",
+      "netherlands_national",
+      "nato_common_support"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Netherlands Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "ifv",
+      "artillery"
+    ],
+    "notes": [
+      "YPR/CV9035 equipment provides national identity.",
+      "#194 Expanded-mode tactical identity goc_nld (source/core transport family was nato); Core four sides unchanged."
+    ]
+  },
+  {
+    "actor_id": "can",
+    "display_name": "Canada",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_can",
+    "playable": true,
+    "roster_class": "national_hybrid",
+    "components": [
+      "nato_common_infantry",
+      "canada_national",
+      "nato_common_support"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Canada Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "Canadian armor is supplemented by NATO-common systems.",
+      "#194 Expanded-mode tactical identity goc_can (source/core transport family was nato); Core four sides unchanged."
+    ]
+  },
+  {
+    "actor_id": "nor",
+    "display_name": "Norway",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_nor",
+    "playable": true,
+    "roster_class": "coalition_fallback",
+    "components": [
+      "nato_full_fallback"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Norway Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "No complete national Code:X branch was audited; roster is explicitly labeled NATO coalition fallback.",
+      "#194 Expanded-mode tactical identity goc_nor (source/core transport family was nato); Core four sides unchanged."
+    ]
+  },
+  {
+    "actor_id": "dnk",
+    "display_name": "Denmark",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_dnk",
+    "playable": true,
+    "roster_class": "coalition_fallback",
+    "components": [
+      "nato_full_fallback"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Denmark Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "No complete national Code:X branch was audited; roster is explicitly labeled NATO coalition fallback.",
+      "#194 Expanded-mode tactical identity goc_dnk (source/core transport family was nato); Core four sides unchanged."
+    ]
+  },
+  {
+    "actor_id": "esp",
+    "display_name": "Spain",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_esp",
+    "playable": true,
+    "roster_class": "coalition_fallback",
+    "components": [
+      "spain_3rd_assault_legion",
+      "nato_fallback_heavy",
+      "nato_common_support"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Spain Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "Spain uses the audited 3rd Assault Brigade international-legion infantry subset, with NATO coalition armor/artillery/support filling non-infantry gaps. Other foreign-volunteer content is reserved for regional neutral encounters.",
+      "#194 Expanded-mode tactical identity goc_esp (source/core transport family was nato); Core four sides unchanged."
+    ]
+  },
+  {
+    "actor_id": "tur",
+    "display_name": "Turkey",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_tur",
+    "playable": true,
+    "roster_class": "coalition_fallback",
+    "components": [
+      "nato_full_fallback"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Turkey Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "No complete national Code:X branch was audited; roster is explicitly labeled NATO coalition fallback.",
+      "#194 Expanded-mode tactical identity goc_tur (source/core transport family was nato); Core four sides unchanged."
+    ]
+  },
+  {
+    "actor_id": "rus",
+    "display_name": "Russia",
+    "actor_type": "sovereign",
+    "coalition_id": "eurasian",
+    "tactical_side": "goc_rus",
+    "playable": true,
+    "roster_class": "full_national",
+    "components": [
+      "russia_regular",
+      "wagner_native",
+      "kpa_infantry"
+    ],
+    "research": {
+      "mode": "hybrid",
+      "display_name": "Russia Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "Foreign and PMC components remain separate research subtrees even when available to Russia.",
+      "#194 Expanded-mode tactical identity goc_rus (source/core transport family was rusa); Core four sides unchanged."
+    ]
+  },
+  {
+    "actor_id": "ukr",
+    "display_name": "Ukraine",
+    "actor_type": "sovereign",
+    "coalition_id": "ukrainian",
+    "tactical_side": "goc_ukr",
+    "playable": true,
+    "roster_class": "full_national",
+    "components": [
+      "ukraine_regular"
+    ],
+    "research": {
+      "mode": "native",
+      "display_name": "Ukraine Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "Ukraine uses its native Code:X Ukrainian branches directly, including the existing 3rd Assault / international-volunteer content. No duplicate generated ILDU wrapper subtree is added.",
+      "#194 Expanded-mode tactical identity goc_ukr (source/core transport family was ukr); Core four sides unchanged."
+    ]
+  },
+  {
+    "actor_id": "prc",
+    "display_name": "People's Republic of China",
+    "actor_type": "sovereign",
+    "coalition_id": "prc_aligned",
+    "tactical_side": "prc",
+    "playable": true,
+    "roster_class": "full_national",
+    "components": [
+      "prc_regular",
+      "prc_legacy_reserve"
+    ],
+    "research": {
+      "mode": "native",
+      "display_name": "People's Republic of China Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "Modern PLA content remains Code:X authoritative.",
+      "West81-backed historical equipment is isolated in the PRC Legacy / Reserve Equipment research branch."
+    ]
+  },
+  {
+    "actor_id": "dprk",
+    "display_name": "North Korea",
+    "actor_type": "sovereign",
+    "coalition_id": "eurasian",
+    "tactical_side": "goc_dprk",
+    "playable": true,
+    "roster_class": "proxy_hybrid",
+    "components": [
+      "kpa_infantry",
+      "soviet_legacy_core"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "North Korea Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "Code:X Korean infantry is national authority; West81 Soviet-pattern equipment supplies legacy heavy forces.",
+      "#194 Expanded-mode tactical identity goc_dprk (source/core transport family was rusa); Core four sides unchanged."
+    ]
+  },
+  {
+    "actor_id": "donbas",
+    "display_name": "Donbas Forces",
+    "actor_type": "separatist",
+    "coalition_id": "eurasian",
+    "tactical_side": "goc_donbas",
+    "playable": true,
+    "roster_class": "proxy_hybrid",
+    "components": [
+      "donbas_native",
+      "donbas_latent",
+      "soviet_legacy_core"
+    ],
+    "research": {
+      "mode": "hybrid",
+      "display_name": "Donbas Forces Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "Lud/LDPR, Sparta, and Vostok are combined into one initial tactical actor.",
+      "#194 Expanded-mode tactical identity goc_donbas (source/core transport family was rusa); Core four sides unchanged."
+    ]
+  },
+  {
+    "actor_id": "blr",
+    "display_name": "Belarus",
+    "actor_type": "sovereign",
+    "coalition_id": "eurasian",
+    "tactical_side": "goc_blr",
+    "playable": true,
+    "roster_class": "proxy_hybrid",
+    "components": [
+      "soviet_legacy_core",
+      "belarus_modern_support"
+    ],
+    "research": {
+      "mode": "hybrid",
+      "display_name": "Belarus Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "Constructed hybrid because Code:X has no dedicated Belarus breed or conquest package.",
+      "#194 Expanded-mode tactical identity goc_blr (source/core transport family was rusa); Core four sides unchanged."
+    ]
+  },
+  {
+    "actor_id": "srb",
+    "display_name": "Serbia",
+    "actor_type": "sovereign",
+    "coalition_id": "nonaligned",
+    "tactical_side": "goc_srb",
+    "playable": true,
+    "roster_class": "proxy_hybrid",
+    "components": [
+      "serbia_infantry",
+      "soviet_legacy_core"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Serbia Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "Serb_* personnel seed is combined with explicit Balkan/Eastern legacy equipment.",
+      "#194 Expanded-mode tactical identity goc_srb (source/core transport family was rusa); Core four sides unchanged."
+    ]
+  },
+  {
+    "actor_id": "ukr_ildu",
+    "display_name": "International Legion for the Defence of Ukraine",
+    "actor_type": "volunteer",
+    "coalition_id": "ukrainian",
+    "tactical_side": "goc_ukr",
+    "playable": false,
+    "roster_class": "nonstate",
+    "components": [
+      "ukraine_ildu"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "International Legion for the Defence of Ukraine Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "anti_armor"
+    ],
+    "notes": [
+      "Compatibility-only non-playable foreign-volunteer record retained for existing data while its wrapper pool is reserved for future regional neutral-encounter allocation; it is not included in Ukraine's sovereign roster.",
+      "#194 Expanded-mode tactical identity goc_ukr (source/core transport family was ukr); Core four sides unchanged."
+    ],
+    "host_actor_id": "ukr"
+  },
+  {
+    "actor_id": "kpa_expeditionary",
+    "display_name": "KPA Expeditionary Corps",
+    "actor_type": "auxiliary",
+    "coalition_id": "eurasian",
+    "tactical_side": "goc_rus",
+    "playable": false,
+    "roster_class": "nonstate",
+    "components": [
+      "kpa_infantry"
+    ],
+    "research": {
+      "mode": "native",
+      "display_name": "KPA Expeditionary Corps Armed Forces"
+    },
+    "required_categories": [
+      "infantry"
+    ],
+    "notes": [
+      "Russian-hosted contingent using the same canonical Korean squads as North Korea.",
+      "#194 Expanded-mode tactical identity goc_rus (source/core transport family was rusa); Core four sides unchanged."
+    ],
+    "host_actor_id": "rus"
+  },
+  {
+    "actor_id": "wagner",
+    "display_name": "Wagner / Russian PMC Forces",
+    "actor_type": "pmc",
+    "coalition_id": "eurasian",
+    "tactical_side": "goc_rus",
+    "playable": false,
+    "roster_class": "nonstate",
+    "components": [
+      "wagner_native"
+    ],
+    "research": {
+      "mode": "native",
+      "display_name": "Wagner / Russian PMC Forces Armed Forces"
+    },
+    "required_categories": [
+      "infantry"
+    ],
+    "notes": [
+      "Non-state military actor for contracts, events, or temporary province control.",
+      "#194 Expanded-mode tactical identity goc_rus (source/core transport family was rusa); Core four sides unchanged."
+    ],
+    "host_actor_id": "rus"
+  },
+  {
+    "actor_id": "bel",
+    "display_name": "Belgium",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_bel",
+    "playable": true,
+    "roster_class": "coalition_fallback",
+    "components": [
+      "nato_full_fallback"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Belgium Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "#190 disposition coalition_fallback; component nato_full_fallback only.",
+      "#201 production tactical ID goc_bel (registry numeric_id 70).",
+      "No distinctive national Code:X package; explicitly labeled NATO coalition fallback."
+    ]
+  },
+  {
+    "actor_id": "prt",
+    "display_name": "Portugal",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_prt",
+    "playable": true,
+    "roster_class": "coalition_fallback",
+    "components": [
+      "nato_full_fallback"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Portugal Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "#190 disposition coalition_fallback; component nato_full_fallback only.",
+      "#201 production tactical ID goc_prt (registry numeric_id 71)."
+    ]
+  },
+  {
+    "actor_id": "cze",
+    "display_name": "Czechia",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_cze",
+    "playable": true,
+    "roster_class": "national_hybrid",
+    "components": [
+      "cze_equipment_identity",
+      "nato_common_infantry_bridge"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Czechia Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "artillery"
+    ],
+    "notes": [
+      "#190 national_hybrid: exact unit vz_77_dana only; national_infantry_present=false in audit.",
+      "Infantry is explicit nato_common_infantry_bridge gap-fill, not Czech national personnel.",
+      "#201 production tactical ID goc_cze (registry numeric_id 72).",
+      "Cross-side: vz_77_dana source-tagged nato; projected onto goc_cze at activation."
+    ]
+  },
+  {
+    "actor_id": "svk",
+    "display_name": "Slovakia",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_svk",
+    "playable": true,
+    "roster_class": "national_hybrid",
+    "components": [
+      "svk_equipment_identity",
+      "nato_common_infantry_bridge"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Slovakia Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "artillery"
+    ],
+    "notes": [
+      "#190 national_hybrid: shared DANA-family vz_77_dana (not SK-exclusive).",
+      "Infantry is explicit nato_common_infantry_bridge gap-fill only.",
+      "#201 production tactical ID goc_svk (registry numeric_id 73)."
+    ]
+  },
+  {
+    "actor_id": "hun",
+    "display_name": "Hungary",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_hun",
+    "playable": true,
+    "roster_class": "coalition_fallback",
+    "components": [
+      "nato_full_fallback"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Hungary Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "#190 disposition coalition_fallback; no distinctive national package.",
+      "#201 production tactical ID goc_hun (registry numeric_id 74)."
+    ]
+  },
+  {
+    "actor_id": "ltu",
+    "display_name": "Lithuania",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_ltu",
+    "playable": true,
+    "roster_class": "coalition_fallback",
+    "components": [
+      "nato_full_fallback"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Lithuania Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "#190 disposition coalition_fallback.",
+      "#201 production tactical ID goc_ltu (registry numeric_id 75)."
+    ]
+  },
+  {
+    "actor_id": "lva",
+    "display_name": "Latvia",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_lva",
+    "playable": true,
+    "roster_class": "coalition_fallback",
+    "components": [
+      "nato_full_fallback"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Latvia Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "#190 disposition coalition_fallback.",
+      "#201 production tactical ID goc_lva (registry numeric_id 76)."
+    ]
+  },
+  {
+    "actor_id": "est",
+    "display_name": "Estonia",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_est",
+    "playable": true,
+    "roster_class": "coalition_fallback",
+    "components": [
+      "nato_full_fallback"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Estonia Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "#190 disposition coalition_fallback.",
+      "#201 production tactical ID goc_est (registry numeric_id 77)."
+    ]
+  },
+  {
+    "actor_id": "aut",
+    "display_name": "Austria",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_aut",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Austria (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; no distinctive national source content.",
+      "Non-playable: no recruitment roster/research installation authorized.",
+      "#201 identity token goc_aut (registry numeric_id 78) reserved for future tactical wiring."
+    ]
+  },
+  {
+    "actor_id": "che",
+    "display_name": "Switzerland",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_che",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Switzerland (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only.",
+      "Non-playable: no fabricated roster/research.",
+      "#201 identity token goc_che (registry numeric_id 79)."
+    ]
+  },
+  {
+    "actor_id": "irl",
+    "display_name": "Ireland",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_irl",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Ireland (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only.",
+      "Non-playable: no fabricated roster/research.",
+      "#201 identity token goc_irl (registry numeric_id 80)."
+    ]
+  },
+  {
+    "actor_id": "isl",
+    "display_name": "Iceland",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_isl",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Iceland (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; no standing army content expected.",
+      "Non-playable: no fabricated roster/research.",
+      "#201 identity token goc_isl (registry numeric_id 81)."
+    ]
+  },
+  {
+    "actor_id": "grc",
+    "display_name": "Greece",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_grc",
+    "playable": true,
+    "roster_class": "coalition_fallback",
+    "components": [
+      "nato_full_fallback"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Greece Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "#190 disposition coalition_fallback; exact accepted components: ['nato_full_fallback'].",
+      "#190/#201 accepted tactical identity goc_grc; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+      "No distinctive national source package was proven; roster is explicitly labeled coalition fallback.",
+      "Do not infer national equipment or widen beyond the accepted nato_full_fallback selector."
+    ]
+  },
+  {
+    "actor_id": "rou",
+    "display_name": "Romania",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_rou",
+    "playable": true,
+    "roster_class": "coalition_fallback",
+    "components": [
+      "nato_full_fallback"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Romania Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "#190 disposition coalition_fallback; exact accepted components: ['nato_full_fallback'].",
+      "#190/#201 accepted tactical identity goc_rou; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+      "No distinctive national source package was proven; roster is explicitly labeled coalition fallback.",
+      "Do not infer national equipment or widen beyond the accepted nato_full_fallback selector."
+    ]
+  },
+  {
+    "actor_id": "bgr",
+    "display_name": "Bulgaria",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_bgr",
+    "playable": true,
+    "roster_class": "coalition_fallback",
+    "components": [
+      "nato_full_fallback"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Bulgaria Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "#190 disposition coalition_fallback; exact accepted components: ['nato_full_fallback'].",
+      "#190/#201 accepted tactical identity goc_bgr; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+      "No distinctive national source package was proven; roster is explicitly labeled coalition fallback.",
+      "Do not infer national equipment or widen beyond the accepted nato_full_fallback selector."
+    ]
+  },
+  {
+    "actor_id": "hrv",
+    "display_name": "Croatia",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_hrv",
+    "playable": true,
+    "roster_class": "coalition_fallback",
+    "components": [
+      "nato_full_fallback"
+    ],
+    "research": {
+      "mode": "generated",
+      "display_name": "Croatia Armed Forces"
+    },
+    "required_categories": [
+      "infantry",
+      "tank",
+      "artillery"
+    ],
+    "notes": [
+      "#190 disposition coalition_fallback; exact accepted components: ['nato_full_fallback'].",
+      "#190/#201 accepted tactical identity goc_hrv; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+      "No distinctive national source package was proven; roster is explicitly labeled coalition fallback.",
+      "Do not infer national equipment or widen beyond the accepted nato_full_fallback selector."
+    ]
+  },
+  {
+    "actor_id": "svn",
+    "display_name": "Slovenia",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_svn",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Slovenia (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_svn; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison content remains outside sovereign recruitment authority."
+    ]
+  },
+  {
+    "actor_id": "bih",
+    "display_name": "Bosnia and Herzegovina",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_bih",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Bosnia and Herzegovina (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_bih; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison content remains outside sovereign recruitment authority."
+    ]
+  },
+  {
+    "actor_id": "mne",
+    "display_name": "Montenegro",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_mne",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Montenegro (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_mne; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison content remains outside sovereign recruitment authority."
+    ]
+  },
+  {
+    "actor_id": "alb",
+    "display_name": "Albania",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_alb",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Albania (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_alb; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison content remains outside sovereign recruitment authority."
+    ]
+  },
+  {
+    "actor_id": "mkd",
+    "display_name": "North Macedonia",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_mkd",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "North Macedonia (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_mkd; provisional coalition family `nato` is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison content remains outside sovereign recruitment authority."
+    ]
+  },
+  {
+    "actor_id": "mda",
+    "display_name": "Moldova",
+    "actor_type": "sovereign",
+    "coalition_id": "eurasian",
+    "tactical_side": "goc_mda",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Moldova (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_mda; provisional coalition family `rusa` is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison content remains outside sovereign recruitment authority."
+    ]
+  },
+  {
+    "actor_id": "geo",
+    "display_name": "Georgia",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_geo",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Georgia (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_geo; provisional coalition family nato is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "arm",
+    "display_name": "Armenia",
+    "actor_type": "sovereign",
+    "coalition_id": "eurasian",
+    "tactical_side": "goc_arm",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Armenia (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_arm; provisional coalition family rusa is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "aze",
+    "display_name": "Azerbaijan",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_aze",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Azerbaijan (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_aze; provisional coalition family nato is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "isr",
+    "display_name": "Israel",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_isr",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Israel (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_isr; provisional coalition family nato is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "lbn",
+    "display_name": "Lebanon",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_lbn",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Lebanon (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_lbn; provisional coalition family nato is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "syr",
+    "display_name": "Syria",
+    "actor_type": "sovereign",
+    "coalition_id": "eurasian",
+    "tactical_side": "goc_syr",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Syria (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_syr; provisional coalition family rusa is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "jor",
+    "display_name": "Jordan",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_jor",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Jordan (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_jor; provisional coalition family nato is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "irq",
+    "display_name": "Iraq",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_irq",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Iraq (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_irq; provisional coalition family nato is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "mar",
+    "display_name": "Morocco",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_mar",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Morocco (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_mar; provisional coalition family nato is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "dza",
+    "display_name": "Algeria",
+    "actor_type": "sovereign",
+    "coalition_id": "eurasian",
+    "tactical_side": "goc_dza",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Algeria (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_dza; provisional coalition family rusa is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "tun",
+    "display_name": "Tunisia",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_tun",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Tunisia (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_tun; provisional coalition family nato is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "lby",
+    "display_name": "Libya",
+    "actor_type": "sovereign",
+    "coalition_id": "eurasian",
+    "tactical_side": "goc_lby",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Libya (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_lby; provisional coalition family rusa is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "egy",
+    "display_name": "Egypt",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_egy",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Egypt (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_egy; provisional coalition family nato is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "cyp",
+    "display_name": "Cyprus",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_cyp",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Cyprus (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_cyp; provisional coalition family nato is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  },
+  {
+    "actor_id": "mlt",
+    "display_name": "Malta",
+    "actor_type": "sovereign",
+    "coalition_id": "atlantic",
+    "tactical_side": "goc_mlt",
+    "playable": false,
+    "roster_class": "strategic_only",
+    "components": [],
+    "research": {
+      "mode": "none",
+      "display_name": "Malta (strategic only)"
+    },
+    "required_categories": [],
+    "notes": [
+      "#190 disposition strategic_only; exact accepted components: [].",
+      "#190/#201 accepted tactical identity goc_mlt; provisional coalition family nato is transport/alignment only, not source provenance.",
+      "Non-playable strategic identity only: no fabricated roster, research, or AI purchase authority.",
+      "Local/neutral garrison, Wagner/PMC, militia, and insurgent content remain outside sovereign recruitment authority (#48 encounters).",
+      "theatre_present=true from accepted #190 ledger; issue #193."
+    ]
+  }
+]

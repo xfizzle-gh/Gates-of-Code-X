@@ -12,6 +12,11 @@ from .expanded_nations_breeds import (
 )
 from .expanded_nations_models import ExpandedNationsError, GENERATED_MARKER, sha256_bytes
 from .expanded_nations_sources import _rename_entry
+from .goc_tactical_army_registry import (
+    campaign_faction_token_for_side,
+    is_goc_tactical_side,
+    side_family_for,
+)
 from .goh_source import SourceEntry, scan_source_entries
 from .modstack import resource_root
 
@@ -41,13 +46,13 @@ _SOURCE_COST_ALIASES: Mapping[str, str] = {
     "mp/nato/era2022/fj_eng_at": "mp/nato/2022s/fj_engineer_at",
 }
 
-# Deterministic same-side cost authority for breeds that exist without native inf rows.
-# Two evidence classes only (never fuzzy name matching):
-# 1) Same-role sister-formation: Donbas Vostok infantry breeds have no inf rows while the
-#    co-located Sparta (spd_*) formation on the same rusa side has complete native rows for
-#    the identical tactical roles (squadlead/rifleman/mg/at/medic/...).
-# 2) Same-equipment crew: Vostok mortar/SPG crews map to Code:X native rusa crew rows for
-#    the exact weapon systems (2B14, SPG-9), not unrelated roles.
+# Deterministic evidence-backed cost authority for real breeds without native inf rows.
+# Never fuzzy-match. Every mapping below is an exact owner-probed disposition:
+# 1) same-role sister-formation rows for Donbas Vostok infantry;
+# 2) same-equipment native crew rows for Vostok mortar/SPG crews;
+# 3) ILDU source-side equivalents from the exact installed stack. The Ukraine-native
+#    regular AT/LMMG assistants and MANPADS pair cover the same tactical roles, while
+#    ``nato_medic`` has only one exact same-name native row, on the NATO side.
 _SOURCE_COST_ROLE_MAP: Mapping[str, str] = {
     "mp/rusa/2022s/vostok_squadlead": "mp/rusa/2022s/spd_squadlead",
     "mp/rusa/2022s/vostok_seniorrifleman": "mp/rusa/2022s/spd_seniorrifleman",
@@ -60,6 +65,11 @@ _SOURCE_COST_ROLE_MAP: Mapping[str, str] = {
     "mp/rusa/2022s/vostok_medic": "mp/rusa/2022s/spd_medic",
     "mp/rusa/2022s/vostok_2b14crew": "mp/rusa/2022s/rus114_rez_2b14crew",
     "mp/rusa/2022s/vostok_spg9crew": "mp/rusa/2022s/rus114_rez_spg9crew",
+    "mp/ukr/2022s/nato_atassist": "mp/ukr/2022s/ukr_atassist",
+    "mp/ukr/2022s/nato_mgassist": "mp/ukr/2022s/ukr_lmgassist",
+    "mp/ukr/2022s/nato_manpad_operator": "mp/ukr/2022s/ukr_manpad_operator",
+    "mp/ukr/2022s/nato_manpad_supporter": "mp/ukr/2022s/ukr_manpad_supporter",
+    "mp/ukr/2022s/nato_medic": "mp/nato/2022s/nato_medic",
 }
 
 # Native GoH observation on the exact owner stack resolved one requested-path
@@ -82,6 +92,7 @@ _SOURCE_CONFLICT_DISPOSITIONS: Mapping[str, tuple[str, float]] = {
 # containing purchase still has positive personnel-cost coverage from another member.
 _SOURCE_NATIVE_UNPRICED_PATHS = frozenset({
     "mp/ukr/2022s/azov3_antitank_javelin",
+    "mp/ukr/2022s/nato_antitank_pzf3",
     "mp/rusa/2022s/kor_crew",
     "mp/rusa/2022s/kor_crew_ags",
     "mp/rusa/2022s/kor_crew_nsv",
@@ -153,10 +164,14 @@ def project_actor_inf_cost_rows(
         unit_has_positive_cost = False
         used_allowlisted_unpriced = False
         unit_name = str(unit.get("unit_name", "<unnamed>"))
-        cross_side = (
-            str(unit.get("component_id", "")) in _CROSS_SIDE_BREED_COMPONENTS
-            and source_side
-            and source_side != target_side
+        # Cross-side remap is authorized only for:
+        # 1) explicit opt-in components (_CROSS_SIDE_BREED_COMPONENTS), or
+        # 2) Core/source-family → actor-owned goc_* production namespace.
+        # Arbitrary Core-to-Core projection (e.g. ukr→nato) remains blocked.
+        cross_side = _authorized_cross_side_remap(
+            unit,
+            source_side=source_side,
+            target_side=target_side,
         )
         requires_coverage = _unit_requires_positive_coverage(unit, target_side)
 
@@ -202,6 +217,13 @@ def project_actor_inf_cost_rows(
                 continue
             if authority is None:
                 if _is_allowlisted_unpriced(source_path) or _is_allowlisted_unpriced(target_path):
+                    used_allowlisted_unpriced = True
+                    continue
+                # Vehicle/arty crew tokens are frequently unpriced in native Code:X and
+                # ride entity economy. Treat them as allowlisted unpriced companions so
+                # cross-side goc_* packs can still materialize when infantry members are
+                # priced (or when the unit is only crew-bearing equipment).
+                if _is_unpriced_crew_breed(breed) and not bool(unit.get("virtual")):
                     used_allowlisted_unpriced = True
                     continue
                 if requires_coverage:
@@ -273,6 +295,15 @@ def project_actor_inf_cost_rows(
         if not unit_has_positive_cost and (
             requires_coverage or used_allowlisted_unpriced
         ):
+            member_names = [str(name) for name in members]
+            if (
+                used_allowlisted_unpriced
+                and member_names
+                and all(_is_unpriced_crew_breed(name) for name in member_names)
+                and not bool(unit.get("virtual"))
+            ):
+                # Crew-only equipment relies on entity economy in native Code:X.
+                continue
             raise ExpandedNationsError(
                 f"Infantry unit {unit_name} has no positive native Conquest inf cost coverage"
             )
@@ -397,6 +428,27 @@ def verify_actor_inf_cost_rows(
 
 
 
+def _authorized_cross_side_remap(
+    unit: Mapping[str, Any],
+    *,
+    source_side: str,
+    target_side: str,
+) -> bool:
+    """Return True when personnel-cost rows may remap into the target side namespace."""
+    if not source_side or source_side == target_side:
+        return False
+    component_id = str(unit.get("component_id", ""))
+    # Explicit opt-in components (Spain 3rd Assault, #191 bridges, DANA identity).
+    if component_id in _CROSS_SIDE_BREED_COMPONENTS:
+        return True
+    # Production Expanded packs: Core/source-family breeds remap into the actor's
+    # own registered goc_* namespace only. Never authorize arbitrary Core-to-Core.
+    if is_goc_tactical_side(target_side):
+        transport = campaign_faction_token_for_side(target_side)
+        return source_side in side_family_for(transport)
+    return False
+
+
 def _unit_requires_inf_cost_coverage(unit: Mapping[str, Any], target_side: str) -> bool:
     """Whether this unit participates in inf-cost projection.
 
@@ -410,10 +462,15 @@ def _unit_requires_inf_cost_coverage(unit: Mapping[str, Any], target_side: str) 
 
 
 def _unit_requires_positive_coverage(unit: Mapping[str, Any], target_side: str) -> bool:
-    component_id = str(unit.get("component_id", ""))
     source_side = str(unit.get("source_side", "") or target_side).lower()
-    if component_id in _CROSS_SIDE_BREED_COMPONENTS and source_side and source_side != target_side:
-        return True
+    if _authorized_cross_side_remap(unit, source_side=source_side, target_side=target_side):
+        # Cross-side infantry/virtual purchases must have priced personnel rows.
+        # Vehicle/artillery crews are often unpriced in native Code:X and rely on
+        # entity economy; do not fail the whole actor pack on those crew gaps.
+        if bool(unit.get("virtual")):
+            return True
+        category = str(unit.get("category") or "").lower()
+        return category in {"infantry", ""}
     return bool(unit.get("virtual"))
 
 
@@ -427,6 +484,22 @@ def _is_allowlisted_unpriced(path: str) -> bool:
             if alt.casefold() == folded:
                 return True
     return False
+
+
+def _is_unpriced_crew_breed(breed: str) -> bool:
+    token = str(breed or "").casefold()
+    return any(
+        marker in token
+        for marker in (
+            "supcrew",
+            "vehicleman",
+            "_crew",
+            "crew_",
+            "pilot",
+            "driver",
+            "gunner",
+        )
+    )
 
 
 def _period_variants(path: str) -> tuple[str, ...]:
@@ -517,6 +590,9 @@ def _build_effective_inf_index(
             continue
         within_priority: dict[str, list[_IndexedInfRow]] = {}
         for path in sorted(conquest.glob("inf*.set"), key=lambda item: item.as_posix().casefold()):
+            # Never treat Expanded-mode projected goc_* packs as native cost authority.
+            if path.name.casefold().startswith("inf_goc_"):
+                continue
             try:
                 text = path.read_text(encoding="utf-8-sig")
             except UnicodeDecodeError as exc:
@@ -612,4 +688,3 @@ def _positive_cost(entry: SourceEntry, source_reference: str) -> float:
             f"Native inf row {entry.name} has non-positive cost {cost} in {source_reference}"
         )
     return cost
-

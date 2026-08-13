@@ -14,19 +14,6 @@ _SERBIA_PORTRAIT_SOURCES: Mapping[str, str] = {
     "goc_serb_recon(rusa)": "rus4_inf_razv",
 }
 
-# Exact installed Code:X probing proved that these six source-side Ukraine card
-# families own four native portraits each. Spain projects the purchases onto
-# tactical side NATO, so the native UI looks for the same card stem with a
-# ``(nato)`` suffix. Copy source bytes exactly; do not synthesize placeholder art.
-_SPAIN_PORTRAIT_SOURCES: Mapping[str, str] = {
-    "3rd_assault_at(nato)": "3rd_assault_at(ukr)",
-    "3rd_assault_decepticons(nato)": "3rd_assault_decepticons(ukr)",
-    "3rd_assault_javelin(nato)": "3rd_assault_javelin(ukr)",
-    "3rd_assault_mg3(nato)": "3rd_assault_mg3(ukr)",
-    "3rd_assault_saperi(nato)": "3rd_assault_saperi(ukr)",
-    "3rd_assault_saperi_at(nato)": "3rd_assault_saperi_at(ukr)",
-}
-
 
 def project_actor_presentation(
     actor: Mapping[str, Any],
@@ -35,21 +22,22 @@ def project_actor_presentation(
     """Materialize actor-specific squad portraits from the installed stack.
 
     Portrait source bytes remain owned by the installed upstream mod. The
-    activation transaction copies only the actor-specific card families needed
-    by the active projection, records their hashes in the activation manifest,
-    and removes them when another actor/Core mode replaces the projection.
+    activation transaction copies only explicitly approved actor-specific card
+    families, records their hashes in the activation manifest, and removes them
+    when another actor/Core mode replaces the projection.
+
+    Spain intentionally has no special portrait projection here. Owner #194
+    review replaced the old Azov/3rd Assault allocation with compatibility-only
+    ILDU wrappers and explicitly deferred missing ``goc_*`` UI/localization
+    assets as non-blocking presentation work.
     """
 
     actor_id = str(actor.get("actor_id", ""))
-    if actor_id == "srb":
-        sources = _SERBIA_PORTRAIT_SOURCES
-        label = "Serbia"
-    elif actor_id == "esp":
-        sources = _SPAIN_PORTRAIT_SOURCES
-        label = "Spain"
-    else:
+    if actor_id != "srb":
         return {}
 
+    sources = _SERBIA_PORTRAIT_SOURCES
+    label = "Serbia"
     actor_units = {str(row.get("unit_name", "")) for row in actor.get("units", [])}
     expected = set(sources)
     selected = expected & actor_units

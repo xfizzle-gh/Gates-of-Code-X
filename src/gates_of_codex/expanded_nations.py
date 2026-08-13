@@ -27,7 +27,8 @@ from .expanded_nations_models import (
     OPPONENT_UNITS_RELATIVE,
     RESEARCH_RELATIVE,
     ROSTER_RELATIVE,
-    SUPPORTED_TACTICAL_SIDES,
+    supported_tactical_sides,
+    research_relative_for_side,
     UNITS_RELATIVE,
     ActivationResult,
     ExpandedNationsError,
@@ -133,7 +134,7 @@ def activate_actor_projection(
 
     actor = select_actor(payload, actor_id)
     side = str(actor["tactical_side"])
-    if side not in SUPPORTED_TACTICAL_SIDES:
+    if side not in supported_tactical_sides():
         raise ExpandedNationsError(
             f"Actor {actor_id} has unsupported tactical side {side}"
         )
@@ -178,7 +179,7 @@ def activate_actor_projection(
             opponent_units,
             opponent_body,
         ).encode("utf-8"),
-        RESEARCH_RELATIVE[side]: render_research_file(
+        research_relative_for_side(side): render_research_file(
             native_actor,
             projected_research,
         ).encode("utf-8"),

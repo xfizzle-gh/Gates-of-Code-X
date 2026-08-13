@@ -37,7 +37,7 @@ class ActorEconomyTest(unittest.TestCase):
 
     def test_installs_all_actor_content_and_records_grandfathered_units(self) -> None:
         runtime = self.state.map_metadata[ACTOR_CONTENT_KEY]
-        self.assertEqual(runtime["actor_count"], 24)
+        self.assertEqual(runtime["actor_count"], 61)
         self.assertTrue(runtime["migration_exceptions"])
         self.assertTrue(all("grandfathered" in item["reason"] for item in runtime["migration_exceptions"]))
         validate_actor_content_runtime(self.state)
@@ -49,7 +49,7 @@ class ActorEconomyTest(unittest.TestCase):
         names = {offer.unit_name for offer in offers}
         self.assertEqual(names, {"fixture_fra"})
         self.assertNotIn("fixture_deu", names)
-        self.assertTrue(all(offer.tactical_side == "nato" for offer in offers))
+        self.assertTrue(all(offer.tactical_side == "goc_fra" for offer in offers))
 
     def test_north_korea_cannot_recruit_russian_unit(self) -> None:
         force = _force_for_side(self.state, Faction.RUSSIA)
@@ -124,9 +124,34 @@ def _resolved_payload() -> dict:
     actors = []
     for raw in manifest["actors"]:
         actor_id = raw["actor_id"]
+        strategic_only = raw.get("roster_class") == "strategic_only" or not raw.get("components")
+        if strategic_only:
+            actors.append({
+                "actor_id": actor_id,
+                "display_name": raw["display_name"],
+                "actor_type": raw["actor_type"],
+                "coalition_id": raw["coalition_id"],
+                "tactical_side": raw["tactical_side"],
+                "playable": raw["playable"],
+                "roster_class": raw["roster_class"],
+                "components": list(raw["components"]),
+                "unit_count": 0,
+                "modern_unit_count": 0,
+                "legacy_unit_count": 0,
+                "virtual_unit_count": 0,
+                "category_counts": {},
+                "required_categories": [],
+                "missing_categories": [],
+                "units": [],
+                "research_node_count": 0,
+                "research_nodes": [],
+                "notes": [],
+            })
+            continue
         unit_name = f"fixture_{actor_id}"
         root_key = f"actor:{actor_id}:root"
         unit_key = f"actor:{actor_id}:unit:{unit_name}"
+        component_id = raw["components"][0]
         actors.append({
             "actor_id": actor_id,
             "display_name": raw["display_name"],
@@ -146,7 +171,7 @@ def _resolved_payload() -> dict:
             "units": [{
                 "unit_name": unit_name,
                 "actor_id": actor_id,
-                "component_id": raw["components"][0],
+                "component_id": component_id,
                 "source_side": raw["tactical_side"],
                 "tactical_side": raw["tactical_side"],
                 "period": "2022s",
@@ -186,7 +211,7 @@ def _resolved_payload() -> dict:
                     "unlock_units": [unit_name],
                     "source_node": unit_name,
                     "source_file": "fixture.set",
-                    "component_id": raw["components"][0],
+                    "component_id": component_id,
                 },
             ],
             "notes": [],

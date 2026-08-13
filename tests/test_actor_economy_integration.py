@@ -54,9 +54,34 @@ def _resolved_payload() -> dict:
     actors = []
     for raw in manifest["actors"]:
         actor_id = raw["actor_id"]
+        strategic_only = raw.get("roster_class") == "strategic_only" or not raw.get("components")
+        if strategic_only:
+            actors.append({
+                "actor_id": actor_id,
+                "display_name": raw["display_name"],
+                "actor_type": raw["actor_type"],
+                "coalition_id": raw["coalition_id"],
+                "tactical_side": raw["tactical_side"],
+                "playable": raw["playable"],
+                "roster_class": raw["roster_class"],
+                "components": list(raw["components"]),
+                "unit_count": 0,
+                "modern_unit_count": 0,
+                "legacy_unit_count": 0,
+                "virtual_unit_count": 0,
+                "category_counts": {},
+                "required_categories": [],
+                "missing_categories": [],
+                "units": [],
+                "research_node_count": 0,
+                "research_nodes": [],
+                "notes": [],
+            })
+            continue
         unit_name = f"integration_{actor_id}"
         root_key = f"actor:{actor_id}:root"
         unit_key = f"actor:{actor_id}:unit:{unit_name}"
+        component_id = raw["components"][0]
         actors.append({
             "actor_id": actor_id,
             "display_name": raw["display_name"],
@@ -76,7 +101,7 @@ def _resolved_payload() -> dict:
             "units": [{
                 "unit_name": unit_name,
                 "actor_id": actor_id,
-                "component_id": raw["components"][0],
+                "component_id": component_id,
                 "source_side": raw["tactical_side"],
                 "tactical_side": raw["tactical_side"],
                 "period": "2022s",
@@ -116,7 +141,7 @@ def _resolved_payload() -> dict:
                     "unlock_units": [unit_name],
                     "source_node": unit_name,
                     "source_file": "integration.set",
-                    "component_id": raw["components"][0],
+                    "component_id": component_id,
                 },
             ],
             "notes": [],

@@ -10,8 +10,8 @@ from typing import Any, Mapping
 
 from .faction_wiring_models import (
     ACTOR_TYPES, MANIFEST_SCHEMA, MANIFEST_VERSION, PROVENANCE_POLICIES, RESEARCH_MODES,
-    ROSTER_CLASSES, SELECTOR_KINDS, SUPPORTED_TACTICAL_SIDES,
-    FactionWiringError, ResolvedResearchNode,
+    ROSTER_CLASSES, SELECTOR_KINDS,
+    FactionWiringError, ResolvedResearchNode, supported_tactical_sides,
 )
 
 
@@ -66,6 +66,7 @@ def _apply_audit_adjustments(
     allowed = {
         "component_exact_unit_additions",
         "component_selector_exclusions",
+        "actor_component_replacements",
         "actor_component_removals",
         "actor_note_additions",
     }
@@ -136,6 +137,36 @@ def _apply_audit_adjustments(
         selector["exclude_regex"] = (
             f"(?:{existing})|(?:{pattern})" if existing else pattern
         )
+
+    for adjustment in adjustments.get("actor_component_replacements", []):
+        required = {"actor_id", "from_component", "to_component", "reason"}
+        if not isinstance(adjustment, Mapping) or set(adjustment) != required:
+            raise FactionWiringError("Actor component-replacement adjustment has invalid fields")
+        actor_id = adjustment["actor_id"]
+        actor = actor_by_id.get(actor_id)
+        if actor is None:
+            raise FactionWiringError(f"Audit adjustment references unknown actor {actor_id}")
+        from_component = adjustment["from_component"]
+        to_component = adjustment["to_component"]
+        reason = adjustment["reason"]
+        if not all(isinstance(value, str) and value for value in (from_component, to_component, reason)):
+            raise FactionWiringError(f"Actor component replacement for {actor_id} is incomplete")
+        if from_component not in actor.get("components", []):
+            raise FactionWiringError(
+                f"Audit adjustment cannot replace absent component on {actor_id}: {from_component}"
+            )
+        if to_component not in components:
+            raise FactionWiringError(
+                f"Audit adjustment replacement for {actor_id} references unknown component {to_component}"
+            )
+        if to_component in actor.get("components", []) and to_component != from_component:
+            raise FactionWiringError(
+                f"Audit adjustment replacement would duplicate component on {actor_id}: {to_component}"
+            )
+        actor["components"] = [
+            to_component if component_id == from_component else component_id
+            for component_id in actor["components"]
+        ]
 
     for adjustment in adjustments.get("actor_component_removals", []):
         required = {"actor_id", "components", "reason"}
@@ -245,13 +276,35 @@ def validate_faction_manifest(manifest: Mapping[str, Any]) -> None:
         actor_ids.add(actor_id)
         if actor["actor_type"] not in ACTOR_TYPES:
             raise FactionWiringError(f"Actor {actor_id} has invalid actor_type")
-        if actor["tactical_side"] not in SUPPORTED_TACTICAL_SIDES:
+        allowed_sides = supported_tactical_sides()
+        if actor["tactical_side"] not in allowed_sides:
             raise FactionWiringError(f"Actor {actor_id} has unsupported tactical side")
         if actor["roster_class"] not in ROSTER_CLASSES:
             raise FactionWiringError(f"Actor {actor_id} has invalid roster_class")
-        if not actor["components"] or len(set(actor["components"])) != len(actor["components"]):
+        components = actor["components"]
+        if not isinstance(components, list) or len(set(components)) != len(components):
             raise FactionWiringError(f"Actor {actor_id} must have unique components")
-        unknown_components = set(actor["components"]) - set(manifest["components"])
+        if actor["roster_class"] == "strategic_only":
+            if actor.get("playable"):
+                raise FactionWiringError(
+                    f"Actor {actor_id} is strategic_only and must not be playable"
+                )
+            if components:
+                raise FactionWiringError(
+                    f"Actor {actor_id} is strategic_only and must not declare recruitment components"
+                )
+            if actor["research"].get("mode") != "none":
+                raise FactionWiringError(
+                    f"Actor {actor_id} is strategic_only and must use research.mode=none"
+                )
+            if actor.get("required_categories"):
+                raise FactionWiringError(
+                    f"Actor {actor_id} is strategic_only and must not require combat categories"
+                )
+        else:
+            if not components:
+                raise FactionWiringError(f"Actor {actor_id} must have unique components")
+        unknown_components = set(components) - set(manifest["components"])
         if unknown_components:
             raise FactionWiringError(f"Actor {actor_id} references unknown components {sorted(unknown_components)}")
         if set(actor["research"]) - {"mode", "display_name"} or "mode" not in actor["research"]:

@@ -43,6 +43,13 @@ jobs:
           tests.test_expanded_nations_native_squad_ids
           tests.test_faction_audit_adjustments
           tests.test_faction_wrapper_units
+          tests.test_191_phase2_western_central
+          tests.test_191_native_projection_invariants
+          tests.test_191_committed_inf_namespace
+          tests.test_192_phase2_balkans_east
+          tests.test_193_phase2_near_east_africa
+          tests.test_194_static_matrix
+          tests.test_194_spain_ildu_authority
           -v
       - name: CLI smoke
         run: python -m gates_of_codex.expanded_nations_cli --help
@@ -78,6 +85,17 @@ jobs:
           tests/test_expanded_nations_native_squad_ids.py
           tests/test_faction_audit_adjustments.py
           tests/test_faction_wrapper_units.py
+          src/gates_of_codex/goc_native_dc_seam.py
+          src/gates_of_codex/goc_tactical_army_registry.py
+          src/gates_of_codex/strategic_actors.py
+          tests/test_191_phase2_western_central.py
+          tests/test_191_native_projection_invariants.py
+          tests/test_191_committed_inf_namespace.py
+          tests/test_192_phase2_balkans_east.py
+          tests/test_193_phase2_near_east_africa.py
+          tests/test_194_static_matrix.py
+          tests/test_194_spain_ildu_authority.py
+          src/gates_of_codex/expanded_nations_static_matrix.py
 
   powershell:
     runs-on: windows-latest
@@ -87,4 +105,4 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          [scriptblock]::Create((Get-Content -Raw '.\tools\activate_expanded_nation.ps1')) | Out-Null
+          [scriptblock]::Create((Get-Content -Raw '.\\tools\\activate_expanded_nation.ps1')) | Out-Null

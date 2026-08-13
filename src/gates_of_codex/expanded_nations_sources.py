@@ -12,7 +12,6 @@ from .expanded_nations_models import (
     ExpandedNationsError,
     ProjectedOpponentUnit,
     ProjectedUnit,
-    SUPPORTED_TACTICAL_SIDES,
     sha256_bytes,
 )
 
@@ -35,6 +34,13 @@ _GENERATED_SOURCE_NAMES = frozenset(
         "unit_research_prc.set",
     }
 )
+
+
+def _is_generated_research_name(name: str) -> bool:
+    lower = name.lower()
+    if lower in _GENERATED_SOURCE_NAMES:
+        return True
+    return lower.startswith("unit_research_goc_") and lower.endswith(".set")
 _SOVIET_RUSA_CREW_ALIASES: Mapping[str, str] = {
     "grd_vehicleman": "rus_vehicleman",
     "sup_tankman": "rus_vehicleman",
@@ -354,6 +360,27 @@ def _entry_name_matches(entry_name: str, unit_name: str, source_side: str) -> bo
     entry_side = (entry_match.group("side") or "").lower()
     unit_side = (unit_match.group("side") or "").lower()
     allowed = {"", source_side.lower()}
+    # Catalog/virtual wrappers often keep the source-family parenthetical
+    # (e.g. goc_sparta_recon(rusa)) while Expanded-mode projects onto goc_rus.
+    try:
+        from .goc_tactical_army_registry import (
+            campaign_faction_token_for_side,
+            is_goc_tactical_side,
+        )
+
+        if is_goc_tactical_side(source_side):
+            family = campaign_faction_token_for_side(source_side)
+            allowed.add(family)
+            if family == "rusa":
+                allowed.update({"rusa", "sov", "csa"})
+            elif family == "nato":
+                allowed.update({"nato", "frg"})
+            elif family == "ukr":
+                allowed.add("ukr")
+            elif family == "prc":
+                allowed.add("prc")
+    except Exception:
+        pass
     return entry_side in allowed and unit_side in allowed
 
 
@@ -386,6 +413,9 @@ def _rename_entry(raw: str, entry: SourceEntry, canonical_name: str) -> str:
 
 def _is_generated_source_reference(source_reference: str) -> bool:
     normalized = source_reference.replace("\\", "/").lower()
+    base = normalized.rsplit("/", 1)[-1].rsplit(":", 1)[-1]
+    if _is_generated_research_name(base):
+        return True
     return any(
         normalized.endswith("/" + name) or normalized.endswith(":" + name)
         for name in _GENERATED_SOURCE_NAMES

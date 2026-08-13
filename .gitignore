@@ -49,7 +49,10 @@ godot/assets/maps/**/prototype/
 
 docs/earth3-crop/hydrography_audit/reference/ne_10m_lakes/
 
-# Expanded Nations generated final-layer projection files
+# Expanded Nations / native-DC generated final-layer projection files (runtime only).
+# Single owner for roster_conquest.set: generators write it; never commit it.
+# - expanded_nations activation: single-actor isolation roster
+# - goc_native_dc_seam materialize: multi-faction native DC roster (core + goc packs)
 /resource/set/multiplayer/units/roster_conquest.set
 /resource/set/multiplayer/units/conquest/goc_active_actor_units.set
 /resource/set/multiplayer/units/conquest/goc_opponent_units.set
@@ -57,10 +60,10 @@ docs/earth3-crop/hydrography_audit/reference/ne_10m_lakes/
 /resource/set/dynamic_campaign/unit_research_ukr.set
 /resource/set/dynamic_campaign/unit_research_rusa.set
 /resource/set/dynamic_campaign/unit_research_prc.set
+# Runtime-only breed namespace mirrors for production goc_* tactical sides.
+/resource/set/breed/mp/goc_*/
 /resource/interface/scene/portrait_squad/goc_serb_*.png
-/resource/interface/scene/portrait_squad/3rd_assault_*(nato)_*.png
 
 # P6 packaging stamp (installer-written)
 /SOURCE_COMMIT
-
 /src/gates_of_codex/SOURCE_COMMIT

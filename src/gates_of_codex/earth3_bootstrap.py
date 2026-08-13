@@ -31,6 +31,19 @@ BOOTSTRAP_ID = "earth3_v1_campaign_bootstrap"
 BOOTSTRAP_SCHEMA_VERSION = 1
 MOVEMENT_AUTHORITY = "p3_required"
 
+
+def _earth3_compat_tactical_side(tactical_side: str) -> str:
+    """Map Expanded-mode army tokens to Earth3 Core transport/campaign sides."""
+    token = str(tactical_side or "").strip().lower()
+    if token in {"nato", "ukr", "rusa", "prc", "neutral"}:
+        return token
+    try:
+        from .goc_tactical_army_registry import campaign_faction_token_for_side
+
+        return campaign_faction_token_for_side(token)
+    except Exception:
+        return token
+
 _FIXED_FILES = (
     "alliances.json",
     "bootstrap.json",
@@ -461,7 +474,11 @@ def _validate_bundle_content(
         actor = manifest_actors.get(actor_id)
         if actor is None:
             raise Earth3BootstrapError(f"P2 actor is not manifest-defined: {actor_id}")
-        if row["manifest_display_name"] != actor["display_name"] or row["tactical_side"] != actor["tactical_side"]:
+        # Earth3 P2 compatibility authority records Core transport sides
+        # (nato/ukr/rusa/prc). Expanded-mode production may use distinct goc_*
+        # tactical IDs; compare against the mapped campaign/core transport side.
+        compat_side = _earth3_compat_tactical_side(str(actor.get("tactical_side") or ""))
+        if row["manifest_display_name"] != actor["display_name"] or row["tactical_side"] != compat_side:
             raise Earth3BootstrapError(f"P2 actor identity mismatch: {actor_id}")
         if isinstance(row["resources"], bool) or not isinstance(row["resources"], int) or row["resources"] < 0:
             raise Earth3BootstrapError(f"P2 actor resources invalid: {actor_id}")
@@ -1321,7 +1338,8 @@ def earth3_p2_actor_resources(
     if not actor_id or not isinstance(runtime, dict) or actor_id not in runtime.get("actors", {}):
         raise Earth3BootstrapError(f"P2 province {province_id} has no actor-scoped economy")
     actor = runtime["actors"][actor_id]
-    if actor.get("tactical_side") != faction.value:
+    compat_side = _earth3_compat_tactical_side(str(actor.get("tactical_side") or ""))
+    if compat_side != faction.value:
         raise Earth3BootstrapError(f"P2 province {province_id} actor tactical side mismatch")
     return actor, actor_id
 
