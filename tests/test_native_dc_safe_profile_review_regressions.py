@@ -46,7 +46,12 @@ class NativeDcSafeProfileReviewRegressionTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "post-pair failure"):
             install_safe_profile(self.source, self.gates, self.workshop, "cze", "rus")
 
-        restore_mock.assert_called_once_with(self.gates)
+        # install_safe_profile canonicalizes gates_root with Path.resolve() before
+        # it mutates or rolls back.  On Windows CI the temp root can enter through
+        # an 8.3 alias (RUNNER~1) and resolve to the long-form runneradmin path,
+        # so assert the production canonical-path contract rather than the input
+        # spelling.
+        restore_mock.assert_called_once_with(self.gates.resolve())
 
     def _stage_pair_fixture(self) -> dict[str, object]:
         manifest = self._manifest()
