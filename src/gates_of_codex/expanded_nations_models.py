@@ -25,6 +25,9 @@ ROSTER_RELATIVE = Path("resource/set/multiplayer/units/roster_conquest.set")
 UNITS_RELATIVE = Path("resource/set/multiplayer/units/conquest/goc_active_actor_units.set")
 OPPONENT_UNITS_RELATIVE = Path("resource/set/multiplayer/units/conquest/goc_opponent_units.set")
 MANIFEST_RELATIVE = Path("live/expanded_nations/active.json")
+ACTIVE_RESEARCH_LOCALIZATION_RELATIVE = Path(
+    "localizations/default/interface/text/dcg_research_goc_active_actor.pot"
+)
 BREED_ROOT_RELATIVE = Path("resource/set/breed/mp")
 RESEARCH_RELATIVE = {
     side: Path(f"resource/set/dynamic_campaign/unit_research_{side}.set")
@@ -247,6 +250,7 @@ def managed_relatives_for_side(side: str) -> tuple[Path, ...]:
         UNITS_RELATIVE,
         OPPONENT_UNITS_RELATIVE,
         research_relative_for_side(side),
+        ACTIVE_RESEARCH_LOCALIZATION_RELATIVE,
     )
 
 
@@ -263,6 +267,7 @@ def all_managed_candidates(root: Path) -> list[Path]:
         ROSTER_RELATIVE,
         UNITS_RELATIVE,
         OPPONENT_UNITS_RELATIVE,
+        ACTIVE_RESEARCH_LOCALIZATION_RELATIVE,
         *(research_relative_for_side(side) for side in supported_tactical_sides()),
         *presentation_relatives_for_actor("srb"),
     }
