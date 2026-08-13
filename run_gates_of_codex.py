@@ -53,6 +53,10 @@ os.environ.setdefault(
 _install_windowed_output()
 
 from gates_of_codex.fast_entrypoint import player_main
+from gates_of_codex.startup_cold_optimizations import install_packaged_full_startup_shortcuts
+
+
+install_packaged_full_startup_shortcuts()
 
 
 if __name__ == "__main__":
