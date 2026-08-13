@@ -89,6 +89,11 @@ class Earth3Authority:
 
 
 def _default_authority_root() -> Path:
+    from .frozen_runtime import frozen_bundle_root
+
+    bundled = frozen_bundle_root()
+    if bundled is not None:
+        return bundled
     return Path(__file__).resolve().parents[2]
 
 

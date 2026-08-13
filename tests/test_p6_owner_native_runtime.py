@@ -115,6 +115,7 @@ class P6OwnerNativeRuntimeTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn('with_name("GatesOfCodeXLive.exe")', source)
+        self.assertIn("_require_frozen_console_backend", source)
         self.assertIn('block["python_executable"] = str(backend)', source)
         self.assertIn('block["backend_kind"] = "frozen_console"', source)
         self.assertIn('block["manifest_path"] = f"res://{CAMPAIGN_MANIFEST_IDENTIFIER}"', source)

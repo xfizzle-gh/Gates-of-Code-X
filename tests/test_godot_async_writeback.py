@@ -49,15 +49,19 @@ class GodotAsyncWritebackTests(unittest.TestCase):
     def test_backend_launch_fallback_order(self) -> None:
         wb = (GODOT / "scripts/main_writeback.gd").read_text(encoding="utf-8")
         self.assertIn("_backend_launch_candidates", wb)
-        # Authority markers in order a → b → c.
-        a = wb.index("python_executable")
-        b = wb.index('"gates-of-codex"')
-        c = wb.index('"python"')
-        self.assertLess(a, b)
-        self.assertLess(b, c)
+        func_start = wb.index("func _backend_launch_candidates")
+        func = wb[func_start:]
+        frozen = func.index('backend_kind == "frozen_console"')
+        frozen_return = func.index("return [", frozen)
+        ambient = func.index('{"executable": "gates-of-codex"', frozen_return)
+        python_fallback = func.index('{"executable": "python"', frozen_return)
+        self.assertLess(frozen, frozen_return)
+        self.assertLess(frozen_return, ambient)
+        self.assertLess(ambient, python_fallback)
         compact = wb.replace(" ", "")
         self.assertIn('["-m",python_module]', compact)
         self.assertIn('["-m","gates_of_codex"]', compact)
+        self.assertIn('backend_kind=="frozen_console"', compact)
 
     def test_busy_disables_mutating_controls(self) -> None:
         wb = (GODOT / "scripts/main_writeback.gd").read_text(encoding="utf-8")

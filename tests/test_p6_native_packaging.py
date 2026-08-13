@@ -133,6 +133,8 @@ class P6NativePackagingTests(unittest.TestCase):
         live_launcher = (ROOT / "run_gates_of_codex_live.py").read_text(encoding="utf-8")
         self.assertIn("GatesOfCodeXLive.exe", workflow)
         self.assertIn("--help", workflow)
+        self.assertIn("Packaged Earth3 real-order smoke", workflow)
+        self.assertIn("tests.test_packaged_earth3_command_authority", workflow)
         self.assertIn("_authenticate_frozen_earth3()", live_launcher)
         self.assertIn("load_earth3_authority", live_launcher)
         self.assertIn("load_authenticated_p3_graph", live_launcher)

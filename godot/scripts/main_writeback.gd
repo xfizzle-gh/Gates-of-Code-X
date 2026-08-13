@@ -751,14 +751,27 @@ func _operational_graph_index() -> Dictionary:
 
 func _backend_launch_candidates(control: Dictionary, apply_args: Array) -> Array:
 	## Authority order:
+	## frozen_console: exact sibling GatesOfCodeXLive.exe only. Never ambient.
+	## source/dev:
 	## a) control.python_executable + control.python_module
 	## b) installed gates-of-codex
 	## c) python -m gates_of_codex
-	var candidates: Array = []
 	var python_executable := String(control.get("python_executable", "")).strip_edges()
 	var python_module := String(control.get("python_module", "gates_of_codex")).strip_edges()
 	if python_module.is_empty():
 		python_module = "gates_of_codex"
+	var backend_kind := String(control.get("backend_kind", "")).strip_edges()
+	var backend_executable := String(control.get("backend_executable", "")).strip_edges()
+	if backend_kind == "frozen_console":
+		var frozen_exe := backend_executable
+		if frozen_exe.is_empty():
+			frozen_exe = python_executable
+		if frozen_exe.is_empty() or not FileAccess.file_exists(frozen_exe):
+			return []
+		var frozen_args: Array = ["-m", python_module]
+		frozen_args.append_array(apply_args)
+		return [{"executable": frozen_exe, "args": frozen_args}]
+	var candidates: Array = []
 	if not python_executable.is_empty() and FileAccess.file_exists(python_executable):
 		var a_args: Array = ["-m", python_module]
 		a_args.append_array(apply_args)

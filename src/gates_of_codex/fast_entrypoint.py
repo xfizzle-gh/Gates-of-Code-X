@@ -557,6 +557,16 @@ def _write_forwarded_result(result: tuple[int, str] | None) -> int | None:
     return int(exit_code)
 
 
+def _require_frozen_console_backend() -> Path:
+    backend = Path(sys.executable).resolve().with_name("GatesOfCodeXLive.exe")
+    if not backend.is_file():
+        raise RuntimeError(
+            "Packaged Gates of CodeX write-back requires the sibling "
+            f"GatesOfCodeXLive.exe console backend: {backend}"
+        )
+    return backend
+
+
 def install_runtime_contracts() -> None:
     """Install player/package runtime seams that cannot be inferred by Godot.
 
@@ -630,7 +640,7 @@ def install_runtime_contracts() -> None:
 
         def frozen_control(*args, **kwargs):
             block = original_control(*args, **kwargs)
-            backend = Path(sys.executable).resolve().with_name("GatesOfCodeXLive.exe")
+            backend = _require_frozen_console_backend()
             block["python_executable"] = str(backend)
             # Existing Godot write-back passes `-m <module>` before the command.
             # GatesOfCodeXLive accepts and strips this compatibility prefix.
