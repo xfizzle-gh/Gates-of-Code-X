@@ -79,6 +79,8 @@ class FixtureValidateContractTests(unittest.TestCase):
         self.assertIn("null identifier at", source)
         self.assertIn("non-string identifier at", source)
         self.assertIn("malformed 2-tuple reference", source)
+        self.assertIn("var snap_provinces := _require_array(snap, \"provinces\")", source)
+        self.assertNotIn("_require_array(snap, \"provinces\").size()", source)
         self.assertIn("_failed", source)
         self.assertNotIn("var a := String(", source)
         self.assertNotIn("var b := String(", source)
@@ -163,6 +165,21 @@ class FixtureValidateLiveTests(unittest.TestCase):
         self.assertNotIn("earth3_fixture_validate: PASS", output, output)
         self.assertIn("earth3_fixture_validate: FAIL", output)
         self.assertIn("null identifier", output)
+        self.assertNotEqual(0, completed.returncode, output)
+
+    def test_null_snapshot_provinces_fails_closed_without_pass(self) -> None:
+        snapshot = json.loads(PRODUCTION_SNAPSHOT.read_text(encoding="utf-8"))
+        self.assertIsInstance(snapshot["provinces"], list)
+        snapshot["provinces"] = None
+        with tempfile.TemporaryDirectory() as temporary:
+            corrupt = Path(temporary) / "null_provinces.json"
+            _write_json(corrupt, snapshot)
+            completed = _run_validator(f"--snapshot={corrupt.resolve().as_posix()}")
+        output = completed.stdout + completed.stderr
+        self.assertNotIn("SCRIPT ERROR", output, output)
+        self.assertNotIn("earth3_fixture_validate: PASS", output, output)
+        self.assertIn("earth3_fixture_validate: FAIL", output)
+        self.assertIn("provinces must be an array", output)
         self.assertNotEqual(0, completed.returncode, output)
 
 

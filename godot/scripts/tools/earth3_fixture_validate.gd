@@ -131,12 +131,13 @@ func _run() -> void:
 	if factions.size() < 2:
 		_fail("need opposing factions among battalions")
 		return
+	var snap_provinces := _require_array(snap, "provinces")
 	if _failed:
 		return
 
 	print(
 		"earth3_fixture_validate: PASS dataset=%s snap_provinces=%s refs=%s formations=%s edges=%s"
-		% [count, _require_array(snap, "provinces").size(), seen.size(), forms.size(), edges.size()]
+		% [count, snap_provinces.size(), seen.size(), forms.size(), edges.size()]
 	)
 	quit(0)
 
