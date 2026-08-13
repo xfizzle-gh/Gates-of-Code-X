@@ -20,6 +20,7 @@ from gates_of_codex.expanded_nations_matrix import (
     write_projection_matrix_evidence,
 )
 from gates_of_codex.expanded_nations_models import (
+    ACTIVE_RESEARCH_LOCALIZATION_RELATIVE,
     MANIFEST_RELATIVE,
     ExpandedNationsError,
     all_managed_candidates,
@@ -76,7 +77,11 @@ class ExpandedNationsMatrixTests(unittest.TestCase):
             self.assertEqual(1, row["unit_count"])
             self.assertEqual(1, row["research_node_count"])
             self.assertTrue(row["projection_signature"])
-            self.assertEqual(4, len(row["managed_files"]))
+            self.assertEqual(5, len(row["managed_files"]))
+            self.assertIn(
+                ACTIVE_RESEARCH_LOCALIZATION_RELATIVE.as_posix(),
+                row["managed_files"],
+            )
         self.assertFalse((self.gates / MANIFEST_RELATIVE).exists())
         self.assertFalse(
             any(path.exists() for path in all_managed_candidates(self.gates))
