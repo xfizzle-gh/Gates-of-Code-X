@@ -63,11 +63,12 @@ class StartupReuseAuthorityTests(unittest.TestCase):
             self.assertEqual("snapshot_changed_since_startup", changed["reason"])
 
             snapshot.write_text('{"snapshot":1}\n', encoding="utf-8")
+            restored_snapshot_fingerprint = persistent_backend._fingerprint(snapshot)
             advanced = persistent_backend._startup_reuse_response(
                 cached_state=state,
                 cached_fingerprint=(0, 0, "f" * 64),
                 startup_campaign_fingerprint=campaign_fingerprint,
-                startup_snapshot_fingerprint=snapshot_fingerprint,
+                startup_snapshot_fingerprint=restored_snapshot_fingerprint,
                 campaign=campaign,
                 snapshot=snapshot,
             )
