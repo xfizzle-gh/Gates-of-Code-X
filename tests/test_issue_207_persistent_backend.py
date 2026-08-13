@@ -121,6 +121,56 @@ class PersistentBackendTransportTests(unittest.TestCase):
             worker.join(timeout=2.0)
             self.assertEqual((0, expected_stdout), result)
 
+    def test_previous_build_daemon_is_rejected_before_ping_or_dispatch(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            campaign = root / "campaign.json"
+            snapshot = root / "campaign_snapshot.json"
+            commands = root / "frontend_commands.json"
+            campaign.write_text("{}\n", encoding="utf-8")
+            commands.write_text(
+                '{"commands":[{"op":"end_player_round"}]}\n',
+                encoding="utf-8",
+            )
+
+            old_commit = "a" * 40
+            current_commit = "b" * 40
+            descriptor = {
+                "schema": persistent_backend.SESSION_SCHEMA,
+                "schema_version": persistent_backend.SESSION_SCHEMA_VERSION,
+                "source_commit": old_commit,
+                "campaign_path": str(campaign.resolve()),
+                "snapshot_path": str(snapshot.resolve()),
+                "port": 12345,
+                "token": "old-build-token",
+                "pid": 1234,
+            }
+            session_path = persistent_backend._session_path(campaign)
+            persistent_backend._atomic_json(session_path, descriptor)
+
+            with (
+                patch.object(
+                    persistent_backend,
+                    "_runtime_source_commit",
+                    return_value=current_commit,
+                ),
+                patch.object(persistent_backend, "_request") as request,
+            ):
+                result = persistent_backend.try_forward_apply_frontend(
+                    [
+                        "apply-frontend",
+                        str(campaign),
+                        "--snapshot",
+                        str(snapshot),
+                        "--commands",
+                        str(commands),
+                    ]
+                )
+
+            self.assertIsNone(result)
+            request.assert_not_called()
+            self.assertFalse(session_path.exists())
+
     def test_lost_reply_after_dispatch_never_falls_back_to_replay(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             campaign = Path(temporary) / "campaign.json"
