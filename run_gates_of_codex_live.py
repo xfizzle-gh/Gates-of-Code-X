@@ -41,15 +41,41 @@ def _normalize_arguments(argv: list[str]) -> list[str]:
     return arguments
 
 
+def _try_persistent_forward(arguments: list[str]) -> int | None:
+    if arguments[:1] != ["apply-frontend"]:
+        return None
+    from gates_of_codex.persistent_backend import try_forward_apply_frontend
+
+    forwarded = try_forward_apply_frontend(arguments)
+    if forwarded is None:
+        return None
+    exit_code, output = forwarded
+    if output:
+        sys.stdout.write(output)
+        if not output.endswith("\n"):
+            sys.stdout.write("\n")
+        sys.stdout.flush()
+    return int(exit_code)
+
+
 def main(argv: list[str] | None = None) -> int:
     """Serve both live-acceptance commands and the packaged write-back backend.
 
     Godot needs a console-subsystem process for `apply-frontend` so the JSON
-    result remains capturable for handoff/verify/import state.  The player GUI is
+    result remains capturable for handoff/verify/import state. The player GUI is
     windowed and is therefore not the authoritative write-back transport.
     """
-    _authenticate_frozen_earth3()
     arguments = _normalize_arguments(list(sys.argv[1:] if argv is None else argv))
+
+    # The persistent #207 backend authenticates once when the session starts.
+    # Fast command clients forward before repeating the expensive frozen P1/P3
+    # startup checks. If no healthy session exists, preserve the original
+    # fail-closed one-shot path below.
+    forwarded = _try_persistent_forward(arguments)
+    if forwarded is not None:
+        return forwarded
+
+    _authenticate_frozen_earth3()
 
     if not arguments or arguments[0] in _ACCEPTANCE_COMMANDS or arguments[0] in {
         "-h",

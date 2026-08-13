@@ -22,10 +22,21 @@ class StrategicAction:
 
 
 class StrategicAI:
-    def __init__(self, state: CampaignState, *, random_seed: int = 0) -> None:
+    def __init__(
+        self,
+        state: CampaignState,
+        *,
+        random_seed: int = 0,
+        engine: CampaignEngine | None = None,
+    ) -> None:
         self.state = state
         self.random_seed = int(random_seed)
-        self.engine = CampaignEngine(state, random_seed=random_seed)
+        if engine is not None:
+            if engine.state is not state:
+                raise ValueError("StrategicAI engine must reference the same campaign state")
+            self.engine = engine
+        else:
+            self.engine = CampaignEngine(state, random_seed=random_seed)
 
     @property
     def observation_context(self):

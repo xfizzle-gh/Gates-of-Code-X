@@ -212,7 +212,8 @@ class PlayerTurnCycleTests(unittest.TestCase):
     def test_backend_player_round_uses_existing_campaign_and_ai_authority(self) -> None:
         source = (ROOT / "src/gates_of_codex/turn_cycle.py").read_text(encoding="utf-8")
         self.assertIn("CampaignEngine(state)", source)
-        self.assertIn("ai = StrategicAI(state)", source)
+        self.assertIn("StrategicAI(state, engine=engine)", source)
+        self.assertIn("ai = shared_operational_ai or StrategicAI(state)", source)
         self.assertIn("ai.take_turn(faction)", source)
         self.assertIn("engine.end_turn()", source)
         self.assertIn("state.pending_battle is None", source)
