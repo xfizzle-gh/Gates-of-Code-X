@@ -228,6 +228,7 @@ def activate_actor_projection(
                 presentation_outputs,
                 key=lambda item: item.as_posix(),
             )
+            if path.suffix.lower() == ".png"
         ],
         "breed_files": [
             path.as_posix()
