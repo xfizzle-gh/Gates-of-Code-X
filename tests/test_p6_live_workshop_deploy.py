@@ -20,7 +20,8 @@ class P6LiveWorkshopDeploymentContractTests(unittest.TestCase):
         self.assertIn("git.Source -C $Source ls-files -- mod.info resource localizations", source)
         self.assertIn("Get-FileHash -LiteralPath $sourcePath -Algorithm SHA256", source)
         self.assertIn("Get-FileHash -LiteralPath $destination -Algorithm SHA256", source)
-        self.assertIn('deployment_kind = "owner_native_live_workshop"', source)
+        self.assertIn('deployment_kind = "core_safe_owner_native_live_workshop"', source)
+        self.assertIn("excluded_native_dc_registration", source)
         self.assertIn("source_commit = $commit", source)
         self.assertIn("Unexpected files remain in authoritative live Workshop target", source)
 
