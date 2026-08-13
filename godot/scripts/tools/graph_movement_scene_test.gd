@@ -211,6 +211,7 @@ func _test_accept_feedback_stays_bound_to_dispatched_formation() -> void:
 	var ctx := _scene("p8_accept_owner")
 	var scene = ctx["scene"]
 	# Simulate changing selection while the backend finishes the sf-a command.
+	scene.selected_province_id = "prov-c"
 	scene.selected_strategic_formation_id = ""
 	var accepted := {
 		"formation_id": "sf-a",
