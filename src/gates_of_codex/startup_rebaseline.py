@@ -10,6 +10,7 @@ new derived launch baseline so the already-healthy daemon can serve later warm
 Continues without being restarted or weakening file/source provenance checks.
 """
 
+import hashlib
 import json
 import tempfile
 from pathlib import Path
@@ -18,13 +19,20 @@ from typing import Any
 
 REBASELINE_SCHEMA = "gates-of-codex.startup-rebaseline"
 REBASELINE_VERSION = 1
-REBASELINE_FILE_NAME = ".goc-startup-rebaseline.json"
+REBASELINE_DIRECTORY_NAME = "startup_rebaseline"
 
 _INSTALLED = False
 
 
-def _marker_path(snapshot: Path) -> Path:
-    return snapshot.expanduser().resolve(strict=False).with_name(REBASELINE_FILE_NAME)
+def _marker_path(campaign: Path, snapshot: Path) -> Path:
+    from .player_shell import player_home
+
+    campaign = campaign.expanduser().resolve(strict=False)
+    snapshot = snapshot.expanduser().resolve(strict=False)
+    identity = hashlib.sha256(
+        (str(campaign) + "\0" + str(snapshot)).encode("utf-8")
+    ).hexdigest()
+    return player_home() / REBASELINE_DIRECTORY_NAME / f"{identity}.json"
 
 
 def _fingerprint_record(persistent_backend, path: Path) -> dict[str, Any]:
@@ -56,7 +64,7 @@ def _write_rebaseline_marker(
             "campaign": _fingerprint_record(persistent_backend, campaign),
             "snapshot": _fingerprint_record(persistent_backend, snapshot),
         }
-        destination = _marker_path(snapshot)
+        destination = _marker_path(campaign, snapshot)
         destination.parent.mkdir(parents=True, exist_ok=True)
         body = json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n"
         with tempfile.NamedTemporaryFile(
@@ -85,7 +93,7 @@ def _rebaseline_marker_matches(
     source_commit = persistent_backend._runtime_source_commit()
     if source_commit is None:
         return False
-    source = _marker_path(snapshot)
+    source = _marker_path(campaign, snapshot)
     if not source.is_file() or not campaign.is_file() or not snapshot.is_file():
         return False
     try:

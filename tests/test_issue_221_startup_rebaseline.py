@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import tempfile
 import types
 import unittest
@@ -21,17 +22,29 @@ class StartupRebaselineTests(unittest.TestCase):
             campaign.write_text('{"turn":1}\n', encoding="utf-8")
             snapshot.write_text('{"snapshot":1}\n', encoding="utf-8")
 
-            with patch.object(
-                persistent_backend,
-                "_runtime_source_commit",
-                return_value="a" * 40,
+            with (
+                patch.dict(
+                    os.environ,
+                    {"GATES_OF_CODEX_HOME": str(root / "home")},
+                ),
+                patch.object(
+                    persistent_backend,
+                    "_runtime_source_commit",
+                    return_value="a" * 40,
+                ),
             ):
+                marker = startup_rebaseline._marker_path(campaign, snapshot)
+                self.assertNotEqual(campaign.parent, marker.parent)
                 self.assertTrue(
                     startup_rebaseline._write_rebaseline_marker(
                         persistent_backend,
                         campaign,
                         snapshot,
                     )
+                )
+                self.assertEqual(
+                    {"campaign.json", "campaign_snapshot.json"},
+                    {child.name for child in root.iterdir() if child.is_file()},
                 )
                 self.assertTrue(
                     startup_rebaseline._rebaseline_marker_matches(
@@ -78,10 +91,16 @@ class StartupRebaselineTests(unittest.TestCase):
                 "reason": "daemon_state_advanced_since_startup",
             }
 
-            with patch.object(
-                persistent_backend,
-                "_runtime_source_commit",
-                return_value="b" * 40,
+            with (
+                patch.dict(
+                    os.environ,
+                    {"GATES_OF_CODEX_HOME": str(root / "home")},
+                ),
+                patch.object(
+                    persistent_backend,
+                    "_runtime_source_commit",
+                    return_value="b" * 40,
+                ),
             ):
                 self.assertTrue(
                     startup_rebaseline._write_rebaseline_marker(
