@@ -30,6 +30,11 @@ class NativeDcLiveDeployGuardTests(unittest.TestCase):
         self.assertIn("Core-safe deployment leaked GOC army registration", self.script)
         self.assertIn("Core-safe deployment leaked global Dynamic Conquest registration", self.script)
 
+    def test_exclusion_probe_cannot_overwrite_canonical_target_variable(self) -> None:
+        self.assertIn("$excludedTargetPath = Join-Path $Target", self.script)
+        self.assertNotIn("$target = Join-Path $Target", self.script)
+        self.assertIn("target_root = $Target", self.script)
+
 
 if __name__ == "__main__":
     unittest.main()
