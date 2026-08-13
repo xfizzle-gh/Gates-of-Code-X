@@ -14,6 +14,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from pathlib import Path
 from typing import Any, Mapping
@@ -28,6 +29,7 @@ _INSTALLED = False
 _UNCHANGED_CONTINUE_BASELINES: dict[int, tuple[tuple[str, ...], str]] = {}
 _BACKEND_STARTING: set[str] = set()
 _LAUNCH_REQUESTED = False
+_CACHE_WRITE_THREADS: list[threading.Thread] = []
 
 
 def _emit(stage: str, *, duration_ms: float | None = None, **fields: Any) -> None:
@@ -234,6 +236,51 @@ def _write_snapshot_cache(
     return True
 
 
+def _cheap_cache_metadata(
+    campaign: Path,
+    snapshot: Path,
+    *,
+    environ: Mapping[str, str] | None,
+) -> dict[str, Any] | None:
+    commit = _source_commit()
+    if commit is None:
+        return None
+    from .player_shell import player_home
+
+    return {
+        "schema": SNAPSHOT_CACHE_SCHEMA,
+        "schema_version": SNAPSHOT_CACHE_VERSION,
+        "source_commit": commit,
+        "managed_home": str(player_home(environ)),
+        "campaign_path": str(campaign.resolve(strict=False)),
+        "snapshot_path": str(snapshot.resolve(strict=False)),
+    }
+
+
+def _schedule_snapshot_cache_write(
+    campaign: Path,
+    snapshot: Path,
+    *,
+    environ: Mapping[str, str] | None,
+) -> None:
+    campaign = campaign.expanduser().resolve(strict=False)
+    snapshot = snapshot.expanduser().resolve(strict=False)
+
+    def worker() -> None:
+        try:
+            _write_snapshot_cache(campaign, snapshot, environ=environ)
+        except Exception:
+            return
+
+    thread = threading.Thread(
+        target=worker,
+        name="goc-frontend-snapshot-cache",
+        daemon=True,
+    )
+    _CACHE_WRITE_THREADS.append(thread)
+    thread.start()
+
+
 def _snapshot_cache_valid(
     campaign: Path,
     snapshot: Path,
@@ -243,24 +290,33 @@ def _snapshot_cache_valid(
     cache = _snapshot_cache_path(campaign, snapshot, environ=environ)
     if not campaign.is_file() or not snapshot.is_file() or not cache.is_file():
         return False
-    context = _snapshot_context(
-        campaign,
-        snapshot,
-        environ=environ,
-        role="validate",
-    )
-    if context is None:
-        return False
     try:
         payload = json.loads(cache.read_text(encoding="utf-8-sig"))
         if not isinstance(payload, dict):
             return False
-        for key, expected in context.items():
+        cheap = _cheap_cache_metadata(campaign, snapshot, environ=environ)
+        if cheap is None:
+            return False
+        for key, expected in cheap.items():
             if payload.get(key) != expected:
                 return False
         stored_campaign = payload.get("campaign")
+        stored_snapshot = payload.get("snapshot")
         if not _size_path_matches(campaign, stored_campaign):
             return False
+        if not _size_path_matches(snapshot, stored_snapshot):
+            return False
+        context = _snapshot_context(
+            campaign,
+            snapshot,
+            environ=environ,
+            role="validate",
+        )
+        if context is None:
+            return False
+        for key, expected in context.items():
+            if payload.get(key) != expected:
+                return False
         started = time.perf_counter()
         campaign_identity = _file_identity(campaign)
         _emit(
@@ -269,9 +325,6 @@ def _snapshot_cache_valid(
             role="validate",
         )
         if stored_campaign != campaign_identity:
-            return False
-        stored_snapshot = payload.get("snapshot")
-        if not _size_path_matches(snapshot, stored_snapshot):
             return False
         started = time.perf_counter()
         snapshot_identity = _file_identity(snapshot)
@@ -497,7 +550,8 @@ def _install_player_full_path_shortcuts(player_shell, persistent_backend) -> Non
                 "frontend_snapshot_construct_write",
                 duration_ms=(time.perf_counter() - construct_started) * 1000.0,
             )
-            _write_snapshot_cache(
+            _forget_legacy_campaign_tree_cache(paths.snapshot)
+            _schedule_snapshot_cache_write(
                 paths.campaign,
                 paths.snapshot,
                 environ=environ,

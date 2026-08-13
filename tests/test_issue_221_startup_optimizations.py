@@ -5,6 +5,8 @@ import json
 import os
 import sys
 import tempfile
+import threading
+import time
 import types
 import unittest
 from contextlib import redirect_stdout
@@ -167,13 +169,18 @@ class FullStartupShortcutTests(unittest.TestCase):
                     "size": 1,
                     "sha256": "b" * 64,
                 },
-                "managed_home": str(home),
+                "managed_home": str(home.resolve()),
                 "campaign_path": str(campaign.resolve()),
                 "snapshot_path": str(snapshot.resolve()),
                 "maintenance_signature": "c" * 64,
             }
             with (
                 patch.dict(os.environ, {"GATES_OF_CODEX_HOME": str(home)}),
+                patch.object(
+                    startup_cold_optimizations,
+                    "_source_commit",
+                    return_value="a" * 40,
+                ),
                 patch.object(
                     startup_cold_optimizations,
                     "_snapshot_context",
@@ -231,6 +238,100 @@ class FullStartupShortcutTests(unittest.TestCase):
                     )
                 )
 
+    def test_campaign_size_mismatch_does_not_hash_executable_bytes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            home = root / "home"
+            campaign = root / "campaign.json"
+            snapshot = root / "campaign_snapshot.json"
+            campaign.write_text('{"turn":1}\n', encoding="utf-8")
+            snapshot.write_text('{"snapshot":1}\n', encoding="utf-8")
+            hashed: list[Path] = []
+            original = startup_cold_optimizations._sha256_file
+
+            def track(path: Path) -> str:
+                hashed.append(Path(path).expanduser().resolve(strict=False))
+                return original(path)
+
+            context = {
+                "schema": startup_cold_optimizations.SNAPSHOT_CACHE_SCHEMA,
+                "schema_version": startup_cold_optimizations.SNAPSHOT_CACHE_VERSION,
+                "source_commit": "a" * 40,
+                "runtime_executable": {
+                    "path": "runtime",
+                    "size": 1,
+                    "sha256": "b" * 64,
+                },
+                "managed_home": str(home.resolve()),
+                "campaign_path": str(campaign.resolve()),
+                "snapshot_path": str(snapshot.resolve()),
+                "maintenance_signature": "c" * 64,
+            }
+            with (
+                patch.dict(os.environ, {"GATES_OF_CODEX_HOME": str(home)}),
+                patch.object(
+                    startup_cold_optimizations,
+                    "_snapshot_context",
+                    return_value=context,
+                ),
+            ):
+                self.assertTrue(
+                    startup_cold_optimizations._write_snapshot_cache(
+                        campaign,
+                        snapshot,
+                        environ=None,
+                    )
+                )
+            campaign.write_text('{"turn":10}\n', encoding="utf-8")
+            with (
+                patch.dict(os.environ, {"GATES_OF_CODEX_HOME": str(home)}),
+                patch.object(
+                    startup_cold_optimizations,
+                    "_source_commit",
+                    return_value="a" * 40,
+                ),
+                patch.object(
+                    startup_cold_optimizations,
+                    "_sha256_file",
+                    side_effect=track,
+                ),
+            ):
+                self.assertFalse(
+                    startup_cold_optimizations._snapshot_cache_valid(
+                        campaign,
+                        snapshot,
+                        environ=None,
+                    )
+                )
+            self.assertEqual([], hashed)
+
+    def test_cache_metadata_write_does_not_block_the_caller(self) -> None:
+        started = threading.Event()
+        release = threading.Event()
+
+        def blocking_write(*_args, **_kwargs) -> bool:
+            started.set()
+            self.assertTrue(release.wait(timeout=2.0))
+            return True
+
+        with patch.object(
+            startup_cold_optimizations,
+            "_write_snapshot_cache",
+            blocking_write,
+        ):
+            begun = time.perf_counter()
+            startup_cold_optimizations._schedule_snapshot_cache_write(
+                Path("campaign.json"),
+                Path("campaign_snapshot.json"),
+                environ=None,
+            )
+            waited = (time.perf_counter() - begun) * 1000.0
+        self.assertLess(waited, 200.0)
+        self.assertTrue(started.wait(timeout=2.0))
+        release.set()
+        for thread in list(startup_cold_optimizations._CACHE_WRITE_THREADS):
+            thread.join(timeout=2.0)
+
     def test_same_size_snapshot_byte_change_invalidates_cache(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -248,13 +349,18 @@ class FullStartupShortcutTests(unittest.TestCase):
                     "size": 1,
                     "sha256": "b" * 64,
                 },
-                "managed_home": str(home),
+                "managed_home": str(home.resolve()),
                 "campaign_path": str(campaign.resolve()),
                 "snapshot_path": str(snapshot.resolve()),
                 "maintenance_signature": "c" * 64,
             }
             with (
                 patch.dict(os.environ, {"GATES_OF_CODEX_HOME": str(home)}),
+                patch.object(
+                    startup_cold_optimizations,
+                    "_source_commit",
+                    return_value="a" * 40,
+                ),
                 patch.object(
                     startup_cold_optimizations,
                     "_snapshot_context",
