@@ -60,16 +60,6 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _stat_identity(path: Path) -> dict[str, Any]:
-    resolved = path.expanduser().resolve(strict=False)
-    metadata = resolved.stat()
-    return {
-        "path": str(resolved),
-        "size": int(metadata.st_size),
-        "mtime_ns": int(metadata.st_mtime_ns),
-    }
-
-
 def _file_identity(path: Path) -> dict[str, Any]:
     resolved = path.expanduser().resolve(strict=False)
     metadata = resolved.stat()
@@ -167,15 +157,22 @@ def _snapshot_context(
         return None
     try:
         started = time.perf_counter()
-        runtime_identity = _stat_identity(executable)
+        runtime_identity = _file_identity(executable)
         if role is not None:
             _emit(
                 "frontend_snapshot_executable_identity",
                 duration_ms=(time.perf_counter() - started) * 1000.0,
-                method="stat",
+                method="sha256",
                 role=role,
             )
+        started = time.perf_counter()
         maintenance = _maintenance_signature(campaign, environ=environ)
+        if role is not None:
+            _emit(
+                "frontend_snapshot_maintenance_signature",
+                duration_ms=(time.perf_counter() - started) * 1000.0,
+                role=role,
+            )
     except OSError:
         return None
     return {

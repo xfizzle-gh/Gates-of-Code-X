@@ -89,6 +89,7 @@ class StartupTelemetryTests(unittest.TestCase):
         for stage in (
             "frontend_snapshot_construct_write",
             "frontend_snapshot_executable_identity",
+            "frontend_snapshot_maintenance_signature",
             "frontend_snapshot_campaign_hash",
             "frontend_snapshot_snapshot_hash",
             "frontend_snapshot_cache_publish",

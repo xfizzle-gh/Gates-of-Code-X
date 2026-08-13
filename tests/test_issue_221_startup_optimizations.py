@@ -165,7 +165,7 @@ class FullStartupShortcutTests(unittest.TestCase):
                 "runtime_executable": {
                     "path": "runtime",
                     "size": 1,
-                    "mtime_ns": 1,
+                    "sha256": "b" * 64,
                 },
                 "managed_home": str(home),
                 "campaign_path": str(campaign.resolve()),
@@ -231,7 +231,7 @@ class FullStartupShortcutTests(unittest.TestCase):
                     )
                 )
 
-    def test_snapshot_cache_does_not_hash_executable_bytes(self) -> None:
+    def test_same_size_snapshot_byte_change_invalidates_cache(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             home = root / "home"
@@ -239,77 +239,26 @@ class FullStartupShortcutTests(unittest.TestCase):
             snapshot = root / "campaign_snapshot.json"
             campaign.write_text('{"turn":1}\n', encoding="utf-8")
             snapshot.write_text('{"snapshot":1}\n', encoding="utf-8")
-            hashed: list[Path] = []
-            original = startup_cold_optimizations._sha256_file
-
-            def track(path: Path) -> str:
-                hashed.append(Path(path).expanduser().resolve(strict=False))
-                return original(path)
-
-            with (
-                patch.dict(os.environ, {"GATES_OF_CODEX_HOME": str(home)}),
-                patch.object(
-                    startup_cold_optimizations,
-                    "_source_commit",
-                    return_value="d" * 40,
-                ),
-                patch.object(
-                    startup_cold_optimizations,
-                    "_maintenance_signature",
-                    return_value="e" * 64,
-                ),
-                patch.object(
-                    startup_cold_optimizations,
-                    "_sha256_file",
-                    side_effect=track,
-                ),
-            ):
-                self.assertTrue(
-                    startup_cold_optimizations._write_snapshot_cache(
-                        campaign,
-                        snapshot,
-                        environ=None,
-                    )
-                )
-            executable = Path(sys.executable).expanduser().resolve(strict=False)
-            self.assertNotIn(executable, hashed)
-            self.assertEqual(
-                {campaign.resolve(), snapshot.resolve()},
-                set(hashed),
-            )
-
-    def test_executable_stat_change_invalidates_cache(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            home = root / "home"
-            campaign = root / "campaign.json"
-            snapshot = root / "campaign_snapshot.json"
-            campaign.write_text('{"turn":1}\n', encoding="utf-8")
-            snapshot.write_text('{"snapshot":1}\n', encoding="utf-8")
-            identity = {
-                "path": str(Path(sys.executable).resolve()),
-                "size": 10,
-                "mtime_ns": 100,
+            context = {
+                "schema": startup_cold_optimizations.SNAPSHOT_CACHE_SCHEMA,
+                "schema_version": startup_cold_optimizations.SNAPSHOT_CACHE_VERSION,
+                "source_commit": "a" * 40,
+                "runtime_executable": {
+                    "path": "runtime",
+                    "size": 1,
+                    "sha256": "b" * 64,
+                },
+                "managed_home": str(home),
+                "campaign_path": str(campaign.resolve()),
+                "snapshot_path": str(snapshot.resolve()),
+                "maintenance_signature": "c" * 64,
             }
-
-            def context(*_args, **_kwargs):
-                return {
-                    "schema": startup_cold_optimizations.SNAPSHOT_CACHE_SCHEMA,
-                    "schema_version": startup_cold_optimizations.SNAPSHOT_CACHE_VERSION,
-                    "source_commit": "f" * 40,
-                    "runtime_executable": dict(identity),
-                    "managed_home": str(home.resolve()),
-                    "campaign_path": str(campaign.resolve()),
-                    "snapshot_path": str(snapshot.resolve()),
-                    "maintenance_signature": "1" * 64,
-                }
-
             with (
                 patch.dict(os.environ, {"GATES_OF_CODEX_HOME": str(home)}),
                 patch.object(
                     startup_cold_optimizations,
                     "_snapshot_context",
-                    side_effect=context,
+                    return_value=context,
                 ),
             ):
                 self.assertTrue(
@@ -326,7 +275,124 @@ class FullStartupShortcutTests(unittest.TestCase):
                         environ=None,
                     )
                 )
-                identity["mtime_ns"] = 200
+                snapshot.write_text('{"snapshot":2}\n', encoding="utf-8")
+                self.assertEqual(
+                    len('{"snapshot":1}\n'),
+                    len(snapshot.read_text(encoding="utf-8")),
+                )
+                self.assertFalse(
+                    startup_cold_optimizations._snapshot_cache_valid(
+                        campaign,
+                        snapshot,
+                        environ=None,
+                    )
+                )
+
+    def test_same_size_different_executable_bytes_invalidate_cache(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            home = root / "home"
+            campaign = root / "campaign.json"
+            snapshot = root / "campaign_snapshot.json"
+            fake_exe = root / "GatesOfCodeX.exe"
+            campaign.write_text('{"turn":1}\n', encoding="utf-8")
+            snapshot.write_text('{"snapshot":1}\n', encoding="utf-8")
+            fake_exe.write_bytes(b"AAAA")
+            with (
+                patch.dict(os.environ, {"GATES_OF_CODEX_HOME": str(home)}),
+                patch.object(
+                    startup_cold_optimizations,
+                    "_source_commit",
+                    return_value="d" * 40,
+                ),
+                patch.object(
+                    startup_cold_optimizations,
+                    "_maintenance_signature",
+                    return_value="e" * 64,
+                ),
+                patch.object(
+                    startup_cold_optimizations.sys,
+                    "executable",
+                    str(fake_exe),
+                ),
+            ):
+                self.assertTrue(
+                    startup_cold_optimizations._write_snapshot_cache(
+                        campaign,
+                        snapshot,
+                        environ=None,
+                    )
+                )
+                self.assertTrue(
+                    startup_cold_optimizations._snapshot_cache_valid(
+                        campaign,
+                        snapshot,
+                        environ=None,
+                    )
+                )
+                fake_exe.write_bytes(b"BBBB")
+                self.assertEqual(4, fake_exe.stat().st_size)
+                self.assertFalse(
+                    startup_cold_optimizations._snapshot_cache_valid(
+                        campaign,
+                        snapshot,
+                        environ=None,
+                    )
+                )
+
+    def test_corrupt_or_incomplete_cache_metadata_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            home = root / "home"
+            campaign = root / "campaign.json"
+            snapshot = root / "campaign_snapshot.json"
+            campaign.write_text('{"turn":1}\n', encoding="utf-8")
+            snapshot.write_text('{"snapshot":1}\n', encoding="utf-8")
+            context = {
+                "schema": startup_cold_optimizations.SNAPSHOT_CACHE_SCHEMA,
+                "schema_version": startup_cold_optimizations.SNAPSHOT_CACHE_VERSION,
+                "source_commit": "a" * 40,
+                "runtime_executable": {
+                    "path": "runtime",
+                    "size": 1,
+                    "sha256": "b" * 64,
+                },
+                "managed_home": str(home),
+                "campaign_path": str(campaign.resolve()),
+                "snapshot_path": str(snapshot.resolve()),
+                "maintenance_signature": "c" * 64,
+            }
+            with (
+                patch.dict(os.environ, {"GATES_OF_CODEX_HOME": str(home)}),
+                patch.object(
+                    startup_cold_optimizations,
+                    "_snapshot_context",
+                    return_value=context,
+                ),
+            ):
+                self.assertTrue(
+                    startup_cold_optimizations._write_snapshot_cache(
+                        campaign,
+                        snapshot,
+                        environ=None,
+                    )
+                )
+                cache = startup_cold_optimizations._snapshot_cache_path(
+                    campaign,
+                    snapshot,
+                    environ=None,
+                )
+                payload = json.loads(cache.read_text(encoding="utf-8"))
+                del payload["snapshot"]
+                cache.write_text(json.dumps(payload), encoding="utf-8")
+                self.assertFalse(
+                    startup_cold_optimizations._snapshot_cache_valid(
+                        campaign,
+                        snapshot,
+                        environ=None,
+                    )
+                )
+                cache.write_text("{not-json", encoding="utf-8")
                 self.assertFalse(
                     startup_cold_optimizations._snapshot_cache_valid(
                         campaign,
@@ -352,7 +418,7 @@ class FullStartupShortcutTests(unittest.TestCase):
                 "runtime_executable": {
                     "path": "runtime",
                     "size": 1,
-                    "mtime_ns": 1,
+                    "sha256": "b" * 64,
                 },
                 "managed_home": str(home),
                 "campaign_path": str(campaign.resolve()),
@@ -414,19 +480,25 @@ class FullStartupShortcutTests(unittest.TestCase):
                     )
                 )
             stages = []
+            methods = []
             for line in output.getvalue().splitlines():
                 if not line.startswith("GOC_STARTUP "):
                     continue
-                stages.append(json.loads(line.split(" ", 1)[1])["stage"])
+                payload = json.loads(line.split(" ", 1)[1])
+                stages.append(payload["stage"])
+                if payload["stage"] == "frontend_snapshot_executable_identity":
+                    methods.append(payload.get("method"))
             self.assertEqual(
                 [
                     "frontend_snapshot_executable_identity",
+                    "frontend_snapshot_maintenance_signature",
                     "frontend_snapshot_campaign_hash",
                     "frontend_snapshot_snapshot_hash",
                     "frontend_snapshot_cache_publish",
                 ],
                 stages,
             )
+            self.assertEqual(["sha256"], methods)
 
     def test_publish_snapshot_uses_installed_frontend_writer(self) -> None:
         source = (ROOT / "src/gates_of_codex/player_shell.py").read_text(
