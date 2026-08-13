@@ -87,44 +87,47 @@ def _resolved_catalog(*, source_prefix: str = "fixture") -> dict:
                 "component_id": "",
             }
         ]
-        for category in ("infantry", "tank", "artillery"):
-            unit_name = f"{source_prefix}_{actor_id}_{category}"
-            unit_key = f"actor:{actor_id}:unit:{unit_name}"
-            units.append(
-                {
-                    "unit_name": unit_name,
-                    "actor_id": actor_id,
-                    "component_id": raw["components"][0],
-                    "source_side": raw["tactical_side"],
-                    "tactical_side": raw["tactical_side"],
-                    "period": "2022s",
-                    "category": category,
-                    "members": {"fixture_crew": 5} if category == "infantry" else {},
-                    "vehicles": [] if category == "infantry" else [f"fixture_{category}"],
-                    "actions": [],
-                    "materializable": True,
-                    "source_files": [f"{source_prefix}/{actor_id}/{category}.set"],
-                    "source_layer": "gates_codex",
-                    "source_priority": 4,
-                    "virtual": False,
-                    "tier": 1,
-                    "research_cost": 1,
-                }
-            )
-            nodes.append(
-                {
-                    "key": unit_key,
-                    "actor_id": actor_id,
-                    "node_type": "unit",
-                    "display_name": unit_name,
-                    "cost": 2,
-                    "prerequisites": [root_key],
-                    "unlock_units": [unit_name],
-                    "source_node": unit_name,
-                    "source_file": f"{source_prefix}/{actor_id}/{category}.set",
-                    "component_id": raw["components"][0],
-                }
-            )
+        strategic_only = raw.get("roster_class") == "strategic_only" or not raw.get("components")
+        if not strategic_only:
+            component_id = raw["components"][0]
+            for category in ("infantry", "tank", "artillery"):
+                unit_name = f"{source_prefix}_{actor_id}_{category}"
+                unit_key = f"actor:{actor_id}:unit:{unit_name}"
+                units.append(
+                    {
+                        "unit_name": unit_name,
+                        "actor_id": actor_id,
+                        "component_id": component_id,
+                        "source_side": raw["tactical_side"],
+                        "tactical_side": raw["tactical_side"],
+                        "period": "2022s",
+                        "category": category,
+                        "members": {"fixture_crew": 5} if category == "infantry" else {},
+                        "vehicles": [] if category == "infantry" else [f"fixture_{category}"],
+                        "actions": [],
+                        "materializable": True,
+                        "source_files": [f"{source_prefix}/{actor_id}/{category}.set"],
+                        "source_layer": "gates_codex",
+                        "source_priority": 4,
+                        "virtual": False,
+                        "tier": 1,
+                        "research_cost": 1,
+                    }
+                )
+                nodes.append(
+                    {
+                        "key": unit_key,
+                        "actor_id": actor_id,
+                        "node_type": "unit",
+                        "display_name": unit_name,
+                        "cost": 2,
+                        "prerequisites": [root_key],
+                        "unlock_units": [unit_name],
+                        "source_node": unit_name,
+                        "source_file": f"{source_prefix}/{actor_id}/{category}.set",
+                        "component_id": component_id,
+                    }
+                )
         actors.append(
             {
                 "actor_id": actor_id,
@@ -139,12 +142,16 @@ def _resolved_catalog(*, source_prefix: str = "fixture") -> dict:
                 "modern_unit_count": len(units),
                 "legacy_unit_count": 0,
                 "virtual_unit_count": 0,
-                "category_counts": {category: 1 for category in ("infantry", "tank", "artillery")},
+                "category_counts": (
+                    {}
+                    if strategic_only
+                    else {category: 1 for category in ("infantry", "tank", "artillery")}
+                ),
                 "required_categories": list(raw["required_categories"]),
                 "missing_categories": [],
                 "units": units,
                 "research_node_count": len(nodes),
-                "research_nodes": nodes,
+                "research_nodes": nodes if not strategic_only else [],
                 "notes": [],
             }
         )

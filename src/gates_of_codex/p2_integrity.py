@@ -221,6 +221,8 @@ def _validate_strict_actor_assignments(state: CampaignState) -> None:
     if not isinstance(raw_actors, dict) or not raw_actors:
         raise Earth3BootstrapError("Earth3 P2 strategic actor rows are missing")
 
+    from .goc_tactical_army_registry import campaign_faction_token_for_side
+
     actor_sides: dict[str, Faction] = {}
     for actor_id, raw_actor in raw_actors.items():
         if not isinstance(actor_id, str) or not actor_id:
@@ -228,7 +230,8 @@ def _validate_strict_actor_assignments(state: CampaignState) -> None:
         if not isinstance(raw_actor, Mapping) or raw_actor.get("actor_id") != actor_id:
             raise Earth3BootstrapError(f"Earth3 P2 actor key mismatch: {actor_id}")
         try:
-            actor_sides[actor_id] = Faction(str(raw_actor.get("tactical_side")))
+            engine_side = str(raw_actor.get("tactical_side") or "")
+            actor_sides[actor_id] = Faction(campaign_faction_token_for_side(engine_side))
         except ValueError as exc:
             raise Earth3BootstrapError(
                 f"Earth3 P2 actor tactical side is invalid: {actor_id}"

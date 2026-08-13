@@ -187,7 +187,11 @@ class PlayerTurnCycleTests(unittest.TestCase):
         self.assertEqual(state.selected_faction, state.current_faction)
         runtime = state.map_metadata[ACTOR_RUNTIME_KEY]
         current_actor = runtime["actors"][runtime["current_actor_id"]]
-        self.assertEqual(state.current_faction.value, current_actor["tactical_side"])
+        # Expanded actors retain distinct engine tactical IDs (for example
+        # goc_alb) while the strategic turn engine intentionally cycles the
+        # four Core campaign seats. Compare through the serialized campaign
+        # faction boundary rather than conflating those two identities.
+        self.assertEqual(state.current_faction.value, current_actor["campaign_faction"])
 
     def test_main_scene_uses_responsiveness_layer_and_retains_stack_contract(self) -> None:
         scene = (ROOT / "godot/main.tscn").read_text(encoding="utf-8")

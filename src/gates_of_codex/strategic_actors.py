@@ -7,6 +7,10 @@ from dataclasses import asdict, dataclass, field
 from typing import Any, Mapping
 
 from .faction_wiring_manifest import load_faction_manifest, validate_faction_manifest
+from .goc_tactical_army_registry import (
+    campaign_faction_token_for_side,
+    supported_tactical_sides,
+)
 from .models import CampaignState, Faction
 
 ACTOR_RUNTIME_SCHEMA_VERSION = 1
@@ -29,6 +33,7 @@ SUPPORTED_ROSTER_CLASSES = {
     "proxy_hybrid",
     "nonstate",
     "compatibility",
+    "strategic_only",
 }
 ACTOR_ALIASES = {
     "nato": "nato",
@@ -52,6 +57,30 @@ ACTOR_ALIASES = {
     "dnk": "dnk",
     "esp": "esp",
     "tur": "tur",
+    "bel": "bel",
+    "belgium": "bel",
+    "prt": "prt",
+    "portugal": "prt",
+    "cze": "cze",
+    "czech": "cze",
+    "svk": "svk",
+    "slovakia": "svk",
+    "hun": "hun",
+    "hungary": "hun",
+    "ltu": "ltu",
+    "lithuania": "ltu",
+    "lva": "lva",
+    "latvia": "lva",
+    "est": "est",
+    "estonia": "est",
+    "aut": "aut",
+    "austria": "aut",
+    "che": "che",
+    "switzerland": "che",
+    "irl": "irl",
+    "ireland": "irl",
+    "isl": "isl",
+    "iceland": "isl",
     "rusa": "rus",
     "rus": "rus",
     "russia": "rus",
@@ -71,8 +100,101 @@ ACTOR_ALIASES = {
     "serb": "srb",
     "srb": "srb",
     "wagner": "wagner",
+    "grc": "grc",
+    "greece": "grc",
+    "rou": "rou",
+    "romania": "rou",
+    "bgr": "bgr",
+    "bulgaria": "bgr",
+    "hrv": "hrv",
+    "croatia": "hrv",
+    "svn": "svn",
+    "slovenia": "svn",
+    "bih": "bih",
+    "bosnia": "bih",
+    "mne": "mne",
+    "montenegro": "mne",
+    "alb": "alb",
+    "albania": "alb",
+    "mkd": "mkd",
+    "macedonia": "mkd",
+    "north_macedonia": "mkd",
+    "mda": "mda",
+    "moldova": "mda",
+    "geo": "geo",
+    "georgia": "geo",
+    "arm": "arm",
+    "armenia": "arm",
+    "aze": "aze",
+    "azerbaijan": "aze",
+    "isr": "isr",
+    "israel": "isr",
+    "lbn": "lbn",
+    "lebanon": "lbn",
+    "syr": "syr",
+    "syria": "syr",
+    "jor": "jor",
+    "jordan": "jor",
+    "irq": "irq",
+    "iraq": "irq",
+    "mar": "mar",
+    "morocco": "mar",
+    "dza": "dza",
+    "algeria": "dza",
+    "tun": "tun",
+    "tunisia": "tun",
+    "lby": "lby",
+    "libya": "lby",
+    "egy": "egy",
+    "egypt": "egy",
+    "cyp": "cyp",
+    "cyprus": "cyp",
+    "mlt": "mlt",
+    "malta": "mlt",
     "ildu": "ukr_ildu",
 }
+
+
+class EngineTacticalSide:
+    """Engine/DC army token (core side or production goc_*).
+
+    Equality and hashing are identity/token-based only. Campaign province and
+    force ownership use core Faction values via explicit ``campaign_faction()``
+    conversion at ownership call sites — never via cross-type equality.
+    """
+
+    __slots__ = ("value",)
+
+    def __init__(self, value: str | Faction | EngineTacticalSide) -> None:
+        if isinstance(value, EngineTacticalSide):
+            token = value.value
+        elif isinstance(value, Faction):
+            token = value.value
+        else:
+            token = str(value or "").strip().lower()
+        allowed = set(supported_tactical_sides()) | {Faction.NEUTRAL.value}
+        if token not in allowed:
+            raise ValueError(f"Invalid tactical side: {token}")
+        self.value = token
+
+    def campaign_faction(self) -> Faction:
+        return Faction(campaign_faction_token_for_side(self.value))
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, EngineTacticalSide):
+            return self.value == other.value
+        if isinstance(other, str):
+            return self.value == other
+        return NotImplemented
+
+    def __hash__(self) -> int:
+        return hash(self.value)
+
+    def __str__(self) -> str:
+        return self.value
+
+    def __repr__(self) -> str:
+        return f"EngineTacticalSide({self.value!r})"
 
 
 @dataclass(slots=True)
@@ -82,7 +204,7 @@ class StrategicActorState:
     short_name: str
     actor_type: str
     coalition_id: str
-    tactical_side: Faction
+    tactical_side: EngineTacticalSide
     host_actor_id: str | None = None
     playable: bool = True
     roster_class: str = "compatibility"
@@ -90,6 +212,10 @@ class StrategicActorState:
     researched_keys: list[str] = field(default_factory=list)
     is_human_controlled: bool = False
     is_eliminated: bool = False
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.tactical_side, EngineTacticalSide):
+            self.tactical_side = EngineTacticalSide(self.tactical_side)
 
     def validate(self) -> None:
         if not re.fullmatch(r"[a-z][a-z0-9_]*", self.actor_id):
@@ -108,10 +234,13 @@ class StrategicActorState:
             raise ValueError(f"Strategic actor {self.actor_id} has negative resources")
         if len(self.researched_keys) != len(set(self.researched_keys)):
             raise ValueError(f"Strategic actor {self.actor_id} has duplicate research keys")
+        if not isinstance(self.tactical_side, EngineTacticalSide):
+            raise ValueError(f"Strategic actor {self.actor_id} has invalid tactical side type")
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
         payload["tactical_side"] = self.tactical_side.value
+        payload["campaign_faction"] = self.tactical_side.campaign_faction().value
         payload["researched_keys"] = sorted(set(self.researched_keys))
         return payload
 
@@ -123,7 +252,7 @@ class StrategicActorState:
             short_name=str(value.get("short_name") or value["display_name"]),
             actor_type=str(value.get("actor_type", "compatibility")),
             coalition_id=str(value.get("coalition_id", "unaligned")),
-            tactical_side=Faction(value["tactical_side"]),
+            tactical_side=EngineTacticalSide(value["tactical_side"]),
             host_actor_id=(None if value.get("host_actor_id") in (None, "") else str(value["host_actor_id"])),
             playable=bool(value.get("playable", True)),
             roster_class=str(value.get("roster_class", "compatibility")),
@@ -170,7 +299,7 @@ def ensure_strategic_actor_runtime(state: CampaignState) -> dict[str, StrategicA
         tactical_side=state.selected_faction,
         require_playable=True,
     )
-    state.selected_faction = actors[selected].tactical_side
+    state.selected_faction = actors[selected].tactical_side.campaign_faction()
 
     current = _runtime_actor_for_side_or_any(
         actors,
@@ -178,7 +307,7 @@ def ensure_strategic_actor_runtime(state: CampaignState) -> dict[str, StrategicA
         tactical_side=state.current_faction,
         require_playable=False,
     )
-    state.current_faction = actors[current].tactical_side
+    state.current_faction = actors[current].tactical_side.campaign_faction()
 
     _apply_human_control(state, actors, selected)
     _write_runtime(state, actors, selected_actor_id=selected, current_actor_id=current)
@@ -198,9 +327,9 @@ def install_bundled_strategic_actors(
     actors: dict[str, StrategicActorState] = {}
     for row in manifest["actors"]:
         actor_id = row["actor_id"]
-        side = Faction(row["tactical_side"])
+        side = EngineTacticalSide(row["tactical_side"])
         prior = existing.get(actor_id)
-        tactical_state = state.factions.get(side.value)
+        tactical_state = state.factions.get(side.campaign_faction().value)
         actors[actor_id] = StrategicActorState(
             actor_id=actor_id,
             display_name=row["display_name"],
@@ -225,8 +354,8 @@ def install_bundled_strategic_actors(
 
     _normalize_force_actor_ids(state, actors)
     _normalize_province_actor_ids(state, actors)
-    state.selected_faction = actors[selected].tactical_side
-    state.current_faction = actors[selected].tactical_side
+    state.selected_faction = actors[selected].tactical_side.campaign_faction()
+    state.current_faction = actors[selected].tactical_side.campaign_faction()
     _apply_human_control(state, actors, selected)
     _write_runtime(state, actors, selected_actor_id=selected, current_actor_id=selected)
     state.map_metadata[ACTOR_MIGRATION_KEY] = {
@@ -259,8 +388,8 @@ def set_selected_actor(state: CampaignState, actor_id: str) -> StrategicActorSta
     if not actor.playable:
         raise ValueError(f"Strategic actor {actor_id} is not independently playable")
     _apply_human_control(state, actors, actor_id)
-    state.selected_faction = actor.tactical_side
-    state.current_faction = actor.tactical_side
+    state.selected_faction = actor.tactical_side.campaign_faction()
+    state.current_faction = actor.tactical_side.campaign_faction()
     _write_runtime(state, actors, selected_actor_id=actor_id, current_actor_id=actor_id)
     validate_strategic_actor_runtime(state)
     return actor
@@ -286,9 +415,10 @@ def assign_province_actor(state: CampaignState, province_id: str, actor_id: str 
     actor = actors.get(actor_id)
     if actor is None:
         raise KeyError(f"Unknown strategic actor: {actor_id}")
-    if province.owner != actor.tactical_side:
+    if province.owner != actor.tactical_side.campaign_faction():
         raise ValueError(
-            f"Province {province_id} tactical owner {province.owner.value} does not match actor {actor_id} side {actor.tactical_side.value}"
+            f"Province {province_id} tactical owner {province.owner.value} does not match actor {actor_id} "
+            f"side {actor.tactical_side.value} (campaign {actor.tactical_side.campaign_faction().value})"
         )
     province.metadata["owner_actor_id"] = actor_id
 
@@ -299,9 +429,10 @@ def assign_strategic_formation_actor(state: CampaignState, formation_id: str, ac
     if actor is None:
         raise KeyError(f"Unknown strategic actor: {actor_id}")
     force = state.strategic_formations[formation_id]
-    if force.faction != actor.tactical_side:
+    if force.faction != actor.tactical_side.campaign_faction():
         raise ValueError(
-            f"Formation {formation_id} tactical side {force.faction.value} does not match actor {actor_id} side {actor.tactical_side.value}"
+            f"Formation {formation_id} tactical side {force.faction.value} does not match actor {actor_id} "
+            f"side {actor.tactical_side.value} (campaign {actor.tactical_side.campaign_faction().value})"
         )
     force.actor_id = actor_id
     validate_strategic_actor_runtime(state)
@@ -329,8 +460,12 @@ def validate_strategic_actor_runtime(state: CampaignState) -> None:
         actor.validate()
         if actor_id != actor.actor_id:
             raise ValueError(f"Strategic actor key mismatch: {actor_id}")
-        if actor.tactical_side.value not in state.factions:
-            raise ValueError(f"Strategic actor {actor_id} references missing tactical faction")
+        campaign_side = actor.tactical_side.campaign_faction().value
+        if campaign_side not in state.factions:
+            raise ValueError(
+                f"Strategic actor {actor_id} references missing campaign faction {campaign_side} "
+                f"(engine side {actor.tactical_side.value})"
+            )
         if actor.host_actor_id and actor.host_actor_id not in actors:
             raise ValueError(f"Strategic actor {actor_id} references missing host {actor.host_actor_id}")
         if actor.host_actor_id and actors[actor.host_actor_id].coalition_id != actor.coalition_id:
@@ -341,9 +476,9 @@ def validate_strategic_actor_runtime(state: CampaignState) -> None:
         raise ValueError("Campaign selected_actor_id must reference a playable actor")
     if current not in actors:
         raise ValueError("Campaign current_actor_id must reference an actor")
-    if state.selected_faction != actors[selected].tactical_side:
+    if state.selected_faction != actors[selected].tactical_side.campaign_faction():
         raise ValueError("Selected strategic actor tactical side does not match selected_faction")
-    if state.current_faction != actors[current].tactical_side:
+    if state.current_faction != actors[current].tactical_side.campaign_faction():
         raise ValueError("Current strategic actor tactical side does not match current_faction")
     human = sorted(actor.actor_id for actor in actors.values() if actor.is_human_controlled)
     if human != [selected]:
@@ -354,7 +489,7 @@ def validate_strategic_actor_runtime(state: CampaignState) -> None:
         actor = actors.get(force.actor_id)
         if actor is None:
             raise ValueError(f"Strategic formation {force.strategic_formation_id} references missing actor {force.actor_id}")
-        if actor.tactical_side != force.faction:
+        if actor.tactical_side.campaign_faction() != force.faction:
             raise ValueError(f"Strategic formation {force.strategic_formation_id} actor tactical-side mismatch")
     for province in state.provinces.values():
         actor_id = province.metadata.get("owner_actor_id")
@@ -363,7 +498,7 @@ def validate_strategic_actor_runtime(state: CampaignState) -> None:
         actor = actors.get(str(actor_id))
         if actor is None:
             raise ValueError(f"Province {province.province_id} references missing strategic actor {actor_id}")
-        if actor.tactical_side != province.owner:
+        if actor.tactical_side.campaign_faction() != province.owner:
             raise ValueError(f"Province {province.province_id} actor tactical-side mismatch")
 
 
@@ -386,7 +521,7 @@ def _compatibility_actors(state: CampaignState) -> dict[str, StrategicActorState
             short_name=display_names.get(side, side.value.upper()),
             actor_type="compatibility",
             coalition_id=_coalition_for_side(state, side),
-            tactical_side=side,
+            tactical_side=EngineTacticalSide(side),
             playable=True,
             roster_class="compatibility",
             resources=faction_state.resources,
@@ -424,10 +559,11 @@ def _apply_human_control(
     selected_actor_id: str,
 ) -> None:
     selected = actors[selected_actor_id]
+    selected_campaign = selected.tactical_side.campaign_faction()
     for actor in actors.values():
         actor.is_human_controlled = actor.actor_id == selected_actor_id
     for faction_state in state.factions.values():
-        faction_state.is_human_controlled = faction_state.faction == selected.tactical_side
+        faction_state.is_human_controlled = faction_state.faction == selected_campaign
 
 
 def _normalize_force_actor_ids(
@@ -458,6 +594,10 @@ def _normalize_province_actor_ids(
         province.metadata["owner_actor_id"] = candidate
 
 
+def _matches_campaign_side(actor: StrategicActorState, tactical_side: Faction) -> bool:
+    return actor.tactical_side.campaign_faction() == tactical_side
+
+
 def _resolve_actor_alias(
     value: str,
     actors: Mapping[str, StrategicActorState],
@@ -467,7 +607,7 @@ def _resolve_actor_alias(
     candidates = [raw, ACTOR_ALIASES.get(raw, "")]
     for candidate in candidates:
         actor = actors.get(candidate)
-        if actor is not None and actor.tactical_side == tactical_side:
+        if actor is not None and _matches_campaign_side(actor, tactical_side):
             return candidate
     return None
 
@@ -480,12 +620,16 @@ def _runtime_actor_for_side_or_any(
     require_playable: bool,
 ) -> str:
     candidate = actors.get(candidate_id)
-    if candidate is not None and candidate.tactical_side == tactical_side and (candidate.playable or not require_playable):
+    if (
+        candidate is not None
+        and _matches_campaign_side(candidate, tactical_side)
+        and (candidate.playable or not require_playable)
+    ):
         return candidate_id
     matching = sorted(
         actor.actor_id
         for actor in actors.values()
-        if actor.tactical_side == tactical_side and (actor.playable or not require_playable)
+        if _matches_campaign_side(actor, tactical_side) and (actor.playable or not require_playable)
     )
     if matching:
         return matching[0]
@@ -516,7 +660,7 @@ def _fallback_actor_for_side(
     matching = sorted(
         actor.actor_id
         for actor in actors.values()
-        if actor.tactical_side == tactical_side and actor.playable
+        if _matches_campaign_side(actor, tactical_side) and actor.playable
     )
     if not matching:
         raise ValueError(f"No playable strategic actor maps to tactical side {tactical_side.value}")

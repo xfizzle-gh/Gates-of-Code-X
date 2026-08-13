@@ -19,6 +19,16 @@ from .expanded_nations_matrix import (
     generate_projection_matrix_from_stack_config,
     write_projection_matrix_evidence,
 )
+from .expanded_nations_battle_pair import (
+    materialize_battle_pair,
+    restore_battle_pair,
+    verify_battle_pair,
+)
+from .expanded_nations_static_matrix import (
+    build_static_actor_matrix,
+    validate_static_actor_matrix,
+    write_static_matrix_evidence,
+)
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -59,6 +69,62 @@ def _parser() -> argparse.ArgumentParser:
     matrix.add_argument("--source-repo", help="implementation git checkout for exact-head proof")
     matrix.add_argument("--json-output", required=True)
     matrix.add_argument("--markdown-output", required=True)
+
+    static_matrix = subparsers.add_parser(
+        "static-matrix",
+        help="#194 static/pre-native matrix from committed authority (no live activation)",
+    )
+    static_matrix.add_argument("--repo-root", default=".")
+    static_matrix.add_argument("--source-head", default="")
+    static_matrix.add_argument(
+        "--stack-config",
+        help="optional mod-stack config used to compile resolved unit/research counts",
+    )
+    static_matrix.add_argument(
+        "--require-resolved-counts",
+        action="store_true",
+        help="fail if playable actors lack resolved/pack unit and research counts",
+    )
+    static_matrix.add_argument("--json-output", required=True)
+    static_matrix.add_argument("--markdown-output", required=True)
+
+    battle_pair = subparsers.add_parser(
+        "battle-pair",
+        help="#194 install two-sided Expanded battle pair into engine resource paths",
+    )
+    battle_pair.add_argument("--attacker", required=True, help="attacker actor_id (e.g. usa)")
+    battle_pair.add_argument("--defender", required=True, help="defender actor_id (e.g. fra)")
+    battle_pair.add_argument(
+        "--gates-root",
+        required=True,
+        help="destination Gates root receiving packs + engine overlays",
+    )
+    battle_pair.add_argument(
+        "--source-repo",
+        default=".",
+        help="source checkout providing committed goc_* packs (never mutated when distinct)",
+    )
+    battle_pair.add_argument(
+        "--stack-config",
+        help="optional stack config if packs must be materialized into the source repo first",
+    )
+    battle_pair.add_argument(
+        "--aio-conquest-lua",
+        help="required with --stack-config to materialize conquest.lua before pair install",
+    )
+
+    battle_pair_verify = subparsers.add_parser(
+        "battle-pair-verify",
+        help="verify the active #194 battle-pair install",
+    )
+    battle_pair_verify.add_argument("--gates-root", required=True)
+
+    battle_pair_restore = subparsers.add_parser(
+        "battle-pair-restore",
+        help="restore pre-pair overlays / multi-faction defaults and clear pair manifest",
+    )
+    battle_pair_restore.add_argument("--gates-root", required=True)
+
     cost = subparsers.add_parser(
         "cost-evidence",
         help="generate exact-stack native recruitment-cost evidence for all playable actors",
@@ -171,6 +237,86 @@ def main(argv: Sequence[str] | None = None) -> int:
                 indent=2,
             )
         )
+        return 0
+    if args.command == "static-matrix":
+        resolved_payload = None
+        if getattr(args, "stack_config", None):
+            # Compile via FactionWiringCompiler directly so committed production
+            # research packs under a Gates checkout do not trip activation-path guards.
+            from .faction_wiring_compiler import FactionWiringCompiler
+            from .modstack import load_stack_config
+
+            roots = load_stack_config(args.stack_config)
+            resolved_payload = FactionWiringCompiler(roots).compile()
+        try:
+            matrix = build_static_actor_matrix(
+                repo_root=args.repo_root,
+                source_head=args.source_head,
+                resolved_payload=resolved_payload,
+                require_resolved_counts=bool(
+                    getattr(args, "require_resolved_counts", False)
+                    or getattr(args, "stack_config", None)
+                ),
+            )
+        except ValueError as exc:
+            print(json.dumps({"ok": False, "error": str(exc)}, indent=2))
+            return 2
+        problems = validate_static_actor_matrix(matrix)
+        if problems:
+            print(json.dumps({"ok": False, "problems": problems}, indent=2))
+            return 2
+        write_static_matrix_evidence(
+            matrix,
+            json_output=args.json_output,
+            markdown_output=args.markdown_output,
+        )
+        print(
+            json.dumps(
+                {
+                    "ok": True,
+                    "mode": "static_pre_native",
+                    "evidence_state": matrix["evidence_state"],
+                    "counts": matrix["counts"],
+                    "matrix_signature": matrix["matrix_signature"],
+                    "source_head": matrix.get("source_head"),
+                    "resolved_payload_present": matrix["authority"]["resolved_payload_present"],
+                    "json_output": args.json_output,
+                    "markdown_output": args.markdown_output,
+                    "native_status": matrix["native_harness"]["status"],
+                },
+                indent=2,
+            )
+        )
+        return 0
+    if args.command == "battle-pair":
+        from .expanded_nations_models import ExpandedNationsError
+        from .modstack import load_stack_config
+
+        stack = None
+        if getattr(args, "stack_config", None):
+            stack = load_stack_config(args.stack_config)
+        try:
+            result = materialize_battle_pair(
+                args.source_repo,
+                attacker_actor_id=args.attacker,
+                defender_actor_id=args.defender,
+                resource_stack=stack,
+                aio_conquest_lua=getattr(args, "aio_conquest_lua", None),
+                output_root=args.gates_root,
+                source_pack_root=args.source_repo,
+            )
+        except ExpandedNationsError as exc:
+            print(json.dumps({"ok": False, "error": str(exc)}, indent=2))
+            return 2
+        print(json.dumps(result, indent=2))
+        return 0
+    if args.command == "battle-pair-verify":
+        problems = verify_battle_pair(args.gates_root)
+        print(json.dumps({"ok": not problems, "problems": problems}, indent=2))
+        return 0 if not problems else 2
+    if args.command == "battle-pair-restore":
+        result = restore_battle_pair(args.gates_root)
+        print(json.dumps(result, indent=2))
         return 0
     raise AssertionError(f"Unhandled command: {args.command}")
 

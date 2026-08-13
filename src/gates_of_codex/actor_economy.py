@@ -761,7 +761,7 @@ def _force_actor(
     actor = actors.get(force.actor_id)
     if actor is None:
         raise ValueError(f"Strategic formation {strategic_formation_id} has no valid actor")
-    if actor.tactical_side != force.faction:
+    if actor.tactical_side.campaign_faction() != force.faction:
         raise ValueError(f"Strategic formation {strategic_formation_id} actor tactical-side mismatch")
     return force, actor
 
@@ -776,12 +776,12 @@ def _actor_for_battalion(
         force = state.strategic_formations.get(battalion.strategic_formation_id)
         if force and force.actor_id in actors:
             actor = actors[force.actor_id]
-            if actor.tactical_side == battalion.faction:
+            if actor.tactical_side.campaign_faction() == battalion.faction:
                 return actor.actor_id
     matching = sorted(
         actor.actor_id
         for actor in actors.values()
-        if actor.tactical_side == battalion.faction and actor.playable
+        if actor.tactical_side.campaign_faction() == battalion.faction and actor.playable
     )
     if not matching:
         raise ValueError(f"Battalion {battalion_id} has no compatible strategic actor")

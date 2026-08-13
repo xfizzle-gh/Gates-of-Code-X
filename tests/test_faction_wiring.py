@@ -24,10 +24,24 @@ class BundledManifestContractTest(unittest.TestCase):
             "usa", "gbr", "deu", "fra", "pol", "ita", "fin", "swe", "nld", "can",
             "nor", "dnk", "esp", "tur", "rus", "ukr", "prc", "dprk", "donbas", "blr", "srb",
             "ukr_ildu", "kpa_expeditionary", "wagner",
+            "bel", "prt", "cze", "svk", "hun", "ltu", "lva", "est",
+            "aut", "che", "irl", "isl",
+            "grc", "rou", "bgr", "hrv", "svn", "bih", "mne", "alb", "mkd", "mda",
+            "geo", "arm", "aze", "isr", "lbn", "syr", "jor", "irq", "mar", "dza",
+            "tun", "lby", "egy", "cyp", "mlt",
         }
         self.assertEqual(set(actors), expected)
-        self.assertTrue(all(actor["tactical_side"] in {"nato", "ukr", "rusa", "prc"} for actor in actors.values()))
-        self.assertTrue(all(actors[actor_id]["playable"] for actor_id in expected - {"ukr_ildu", "kpa_expeditionary", "wagner"}))
+        from gates_of_codex.faction_wiring_models import supported_tactical_sides
+        allowed = supported_tactical_sides()
+        self.assertTrue(all(actor["tactical_side"] in allowed for actor in actors.values()))
+        nonplayable = {
+            "ukr_ildu", "kpa_expeditionary", "wagner", "aut", "che", "irl", "isl",
+            "svn", "bih", "mne", "alb", "mkd", "mda",
+            "geo", "arm", "aze", "isr", "lbn", "syr", "jor", "irq", "mar", "dza",
+            "tun", "lby", "egy", "cyp", "mlt",
+        }
+        self.assertTrue(all(actors[actor_id]["playable"] for actor_id in expected - nonplayable))
+        self.assertTrue(all(not actors[actor_id]["playable"] for actor_id in nonplayable))
         self.assertFalse(actors["ukr_ildu"]["playable"])
         self.assertEqual(actors["ukr_ildu"]["host_actor_id"], "ukr")
         self.assertEqual(actors["kpa_expeditionary"]["host_actor_id"], "rus")

@@ -30,7 +30,7 @@ class StrategicActorMigrationTest(unittest.TestCase):
         validate_strategic_actor_runtime(state)
         for force in state.strategic_formations.values():
             self.assertIn(force.actor_id, actors)
-            self.assertEqual(actors[force.actor_id].tactical_side, force.faction)
+            self.assertEqual(actors[force.actor_id].tactical_side.campaign_faction(), force.faction)
 
     def test_save_load_round_trip_preserves_actor_runtime(self) -> None:
         state = load_bundled_scenario("legacy_goe_europe")
@@ -48,7 +48,8 @@ class BundledStrategicActorTest(unittest.TestCase):
     def test_installs_all_audited_actors_and_selects_france(self) -> None:
         state = load_bundled_scenario("legacy_goe_europe")
         actors = install_bundled_strategic_actors(state, selected_actor_id="fra")
-        self.assertEqual(len(actors), 24)
+        # Phase 1 (24) + #191 (12) + #192 (10) + #193 (15)
+        self.assertEqual(len(actors), 61)
         self.assertEqual(state.selected_faction, Faction.NATO)
         self.assertEqual(state.current_faction, Faction.NATO)
         self.assertTrue(actors["fra"].is_human_controlled)
@@ -56,6 +57,25 @@ class BundledStrategicActorTest(unittest.TestCase):
         self.assertEqual(actors["ukr_ildu"].host_actor_id, "ukr")
         self.assertEqual(actors["kpa_expeditionary"].host_actor_id, "rus")
         self.assertEqual(actors["wagner"].host_actor_id, "rus")
+        self.assertEqual(actors["usa"].tactical_side.value, "goc_usa")
+        self.assertEqual(actors["fra"].tactical_side.value, "goc_fra")
+        self.assertEqual(actors["usa"].tactical_side.campaign_faction(), Faction.NATO)
+        self.assertEqual(actors["ukr"].tactical_side.campaign_faction(), Faction.UKRAINE)
+        self.assertEqual(actors["rus"].tactical_side.campaign_faction(), Faction.RUSSIA)
+        self.assertEqual(actors["bel"].tactical_side.value, "goc_bel")
+        # Identity equality only — never equal to mapped campaign Faction.
+        self.assertNotEqual(actors["bel"].tactical_side, Faction.NATO)
+        self.assertEqual(hash(actors["bel"].tactical_side), hash("goc_bel"))
+        self.assertFalse(actors["aut"].playable)
+        self.assertEqual(actors["aut"].roster_class, "strategic_only")
+        self.assertEqual(actors["grc"].tactical_side.value, "goc_grc")
+        self.assertTrue(actors["grc"].playable)
+        self.assertFalse(actors["mda"].playable)
+        self.assertEqual(actors["mda"].tactical_side.campaign_faction(), Faction.RUSSIA)
+        self.assertFalse(actors["egy"].playable)
+        self.assertEqual(actors["egy"].roster_class, "strategic_only")
+        self.assertEqual(actors["syr"].tactical_side.campaign_faction(), Faction.RUSSIA)
+        self.assertEqual(actors["isr"].tactical_side.campaign_faction(), Faction.NATO)
         validate_strategic_actor_runtime(state)
 
     def test_north_korea_selects_russian_tactical_side(self) -> None:
@@ -79,7 +99,7 @@ class BundledStrategicActorTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             assign_province_actor(state, province.province_id, "dprk")
         self.assertIn(ACTOR_RUNTIME_KEY, state.map_metadata)
-        self.assertEqual(actors["fra"].tactical_side, province.owner)
+        self.assertEqual(actors["fra"].tactical_side.campaign_faction(), province.owner)
 
 
 if __name__ == "__main__":

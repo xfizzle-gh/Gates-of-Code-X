@@ -92,6 +92,7 @@ class FactionActorMixin:
                     "research_label": components[component_id].research_label,
                 }
                 for component_id in actor["components"]
+                if component_id in components
             ],
             "unit_count": len(units),
             "modern_unit_count": modern_count,
@@ -116,6 +117,14 @@ class FactionActorMixin:
     ) -> list[ResolvedResearchNode]:
         actor_id = actor["actor_id"]
         mode = actor["research"]["mode"]
+        if mode == "none" or actor.get("roster_class") == "strategic_only":
+            if units:
+                from .faction_wiring_models import FactionWiringError
+
+                raise FactionWiringError(
+                    f"Actor {actor_id} is strategic_only/research.none but resolved recruitment units"
+                )
+            return []
         root_key = f"actor:{actor_id}:root"
         nodes: dict[str, ResolvedResearchNode] = {
             root_key: ResolvedResearchNode(

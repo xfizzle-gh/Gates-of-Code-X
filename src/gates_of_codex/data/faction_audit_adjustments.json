@@ -37,6 +37,14 @@
       "reason": "Owner native P5 acceptance on the exact Workshop stack found these purchase units resolve through kor_crew, whose live breed definition has an empty inventory item. The units are unusable and are excluded before normal breed validation."
     }
   ],
+  "actor_component_replacements": [
+    {
+      "actor_id": "esp",
+      "from_component": "spain_3rd_assault_legion",
+      "to_component": "ukraine_ildu",
+      "reason": "Owner native Spain review rejected Azov/3rd Assault personnel for Spain. Spain must use only the existing NATO-personnel International Legion/ILDU wrappers from the Ukraine tree while retaining its separately approved NATO heavy/support gap-fill components."
+    }
+  ],
   "actor_component_removals": [
     {
       "actor_id": "fin",
@@ -49,6 +57,9 @@
   "actor_note_additions": {
     "can": [
       "Second self-audit added the directly source-backed Canadian Leopard 2A4M progression."
+    ],
+    "esp": [
+      "Owner native #194 review superseded the prior Spain 3rd Assault allocation: Spain uses the NATO-personnel International Legion/ILDU wrapper pool from the Ukraine tree and must not recruit Azov/3rd Assault personnel."
     ],
     "fin": [
       "Second self-audit removed the broad Soviet legacy pool; only directly selected Finnish/Nordic equipment and NATO-common gap filling remain."

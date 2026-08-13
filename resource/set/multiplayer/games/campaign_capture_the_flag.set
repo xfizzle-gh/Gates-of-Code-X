@@ -1,0 +1,9 @@
+{Game
+	{name "campaign_capture_the_flag"}
+	{teamSettings
+		{armySelectionMode alliance}
+		{alliances
+			(include "presets/alliances_generic.inc")
+		}
+	}
+}

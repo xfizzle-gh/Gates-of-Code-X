@@ -86,7 +86,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "ok": True,
             "output": str(destination),
             "selected_actor_id": actor.actor_id,
-            "selected_faction": actor.tactical_side.value,
+            "selected_faction": actor.tactical_side.campaign_faction().value,
         }, indent=2))
         return 0
     if args.command == "snapshot":
