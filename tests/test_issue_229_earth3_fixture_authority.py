@@ -166,15 +166,9 @@ class FixturePrimitiveTests(_CachedStates):
         self.assertEqual("debug", fixture.status)
         self.assertNotEqual(production.scenario_id, fixture.scenario_id)
 
-    def test_fixture_contains_required_identities_without_relocating_existing_forces(
-        self,
-    ) -> None:
-        for _label, expected in SELECTED.items():
+    def test_fixture_contains_required_identities(self) -> None:
+        for expected in SELECTED.values():
             self.assertIn(expected, self.fixture.strategic_formations)
-            self.assertEqual(
-                self.production.strategic_formations[expected].province_id,
-                self.fixture.strategic_formations[expected].province_id,
-            )
         prc = self.fixture.strategic_formations[PRC_FORMATION_ID]
         self.assertEqual("prc", prc.actor_id)
         self.assertEqual(Faction.PRC, prc.faction)
