@@ -232,6 +232,135 @@ def _ping(campaign: Path) -> bool:
     return bool(response and response.get("ok") is True)
 
 
+def _startup_state_summary(state) -> dict[str, Any]:
+    metadata = state.map_metadata if isinstance(state.map_metadata, dict) else {}
+    launch = metadata.get("player_launch", {})
+    launch_record = dict(launch) if isinstance(launch, dict) else {}
+    resource_stack = metadata.get("resource_stack", [])
+    return {
+        "scenario_id": str(metadata.get("scenario_id", "")),
+        "map_id": str(state.map_id),
+        "selected_faction": str(state.selected_faction.value),
+        "difficulty": str(state.difficulty),
+        "fog_of_war": "on" if bool(state.fog_of_war_enabled) else "off",
+        "turn_number": int(state.turn_number),
+        "stack_config": str(metadata.get("stack_config", "") or ""),
+        "tactical_map": str(metadata.get("preferred_map", "") or ""),
+        "game_directory": str(state.game_directory or ""),
+        "profile_directory": str(state.profile_directory or ""),
+        "code_x_directory": str(state.code_x_directory or ""),
+        "resource_stack": list(resource_stack) if isinstance(resource_stack, list) else [],
+        "player_launch": launch_record,
+    }
+
+
+def _startup_reuse_response(
+    *,
+    cached_state,
+    cached_fingerprint: tuple[int, int, str] | None,
+    startup_campaign_fingerprint: tuple[int, int, str] | None,
+    startup_snapshot_fingerprint: tuple[int, int, str] | None,
+    campaign: Path,
+    snapshot: Path | None,
+) -> dict[str, Any]:
+    """Prove that the daemon's launch-time validated campaign/snapshot are intact."""
+
+    if (
+        cached_state is None
+        or cached_fingerprint is None
+        or startup_campaign_fingerprint is None
+        or startup_snapshot_fingerprint is None
+        or snapshot is None
+    ):
+        return {
+            "handled": True,
+            "exit_code": 0,
+            "ok": False,
+            "reason": "startup_baseline_unavailable",
+        }
+    try:
+        current_campaign_fingerprint = _fingerprint(campaign)
+        current_snapshot_fingerprint = _fingerprint(snapshot)
+    except OSError:
+        return {
+            "handled": True,
+            "exit_code": 0,
+            "ok": False,
+            "reason": "startup_files_unavailable",
+        }
+    if current_campaign_fingerprint != startup_campaign_fingerprint:
+        return {
+            "handled": True,
+            "exit_code": 0,
+            "ok": False,
+            "reason": "campaign_changed_since_startup",
+        }
+    if cached_fingerprint != startup_campaign_fingerprint:
+        return {
+            "handled": True,
+            "exit_code": 0,
+            "ok": False,
+            "reason": "daemon_state_advanced_since_startup",
+        }
+    if current_snapshot_fingerprint != startup_snapshot_fingerprint:
+        return {
+            "handled": True,
+            "exit_code": 0,
+            "ok": False,
+            "reason": "snapshot_changed_since_startup",
+        }
+    return {
+        "handled": True,
+        "exit_code": 0,
+        "ok": True,
+        "state": _startup_state_summary(cached_state),
+    }
+
+
+def diagnose_startup_reuse(
+    campaign: Path,
+    snapshot: Path,
+) -> tuple[dict[str, Any] | None, str]:
+    """Return daemon-proven state or the exact reason reuse is unsafe."""
+
+    campaign = campaign.expanduser().resolve(strict=False)
+    snapshot = snapshot.expanduser().resolve(strict=False)
+    if _runtime_source_commit() is None:
+        return None, "runtime_source_commit_missing"
+    session_path = _session_path(campaign)
+    if not session_path.is_file():
+        return None, "no_session_descriptor"
+    session = _read_session(campaign)
+    if session is None:
+        _drop_session_descriptor(campaign)
+        return None, "session_descriptor_invalid"
+    response = _request(
+        session,
+        {
+            "action": "startup_reuse",
+            "campaign_path": str(campaign),
+            "snapshot_path": str(snapshot),
+        },
+        timeout=0.8,
+    )
+    if response is None:
+        _drop_session_descriptor(campaign)
+        return None, "daemon_unready"
+    if response.get("ok") is not True:
+        return None, str(response.get("reason") or "reuse_rejected")
+    state = response.get("state")
+    if not isinstance(state, dict):
+        return None, "reuse_state_invalid"
+    return dict(state), "ok"
+
+
+def probe_startup_reuse(campaign: Path, snapshot: Path) -> dict[str, Any] | None:
+    """Return daemon-proven validated state only for an untouched launch baseline."""
+
+    state, _reason = diagnose_startup_reuse(campaign, snapshot)
+    return state
+
+
 def ensure_backend_session(campaign: Path, snapshot: Path) -> bool:
     """Start one daemon for the campaign if one is not already healthy.
 
@@ -356,6 +485,10 @@ def run_session_backend(argv: Sequence[str]) -> int:
 
     cached_state = load_campaign(campaign)
     cached_fingerprint = _fingerprint(campaign)
+    startup_campaign_fingerprint = cached_fingerprint
+    startup_snapshot_fingerprint = (
+        _fingerprint(snapshot) if snapshot is not None and snapshot.is_file() else None
+    )
     token = secrets.token_urlsafe(32)
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -404,6 +537,32 @@ def run_session_backend(argv: Sequence[str]) -> int:
                     }
                 elif request.get("action") == "ping":
                     response = {"handled": True, "exit_code": 0, "stdout": "", "ok": True}
+                elif request.get("action") == "startup_reuse":
+                    request_campaign = Path(
+                        str(request.get("campaign_path", ""))
+                    ).resolve(strict=False)
+                    request_snapshot_text = str(request.get("snapshot_path", "")).strip()
+                    request_snapshot = (
+                        Path(request_snapshot_text).resolve(strict=False)
+                        if request_snapshot_text
+                        else None
+                    )
+                    if request_campaign != campaign or request_snapshot != snapshot:
+                        response = {
+                            "handled": True,
+                            "exit_code": 0,
+                            "ok": False,
+                            "reason": "startup_path_mismatch",
+                        }
+                    else:
+                        response = _startup_reuse_response(
+                            cached_state=cached_state,
+                            cached_fingerprint=cached_fingerprint,
+                            startup_campaign_fingerprint=startup_campaign_fingerprint,
+                            startup_snapshot_fingerprint=startup_snapshot_fingerprint,
+                            campaign=campaign,
+                            snapshot=snapshot,
+                        )
                 elif request.get("action") == "invalidate":
                     cached_state = None
                     cached_fingerprint = None
