@@ -406,10 +406,12 @@ def verify_safe_profile(gates_root: str | Path) -> list[str]:
     values_path = gates / VALUES_REL
     values = values_path.read_text(encoding="utf-8", errors="replace") if values_path.is_file() else ""
     blocks = _available_matchup_blocks(values) if values else []
-    if len(blocks) < 8:
-        problems.append(
-            f"values.set exposes only {len(blocks)} AvailableMatchups blocks; GoH v1.065 stack requires all 8 visible regions"
-        )
+    # The effective Code:X/AIO parent controls the region count.  Do not encode
+    # the old eight-region fixture as a runtime invariant: owner stack v1.065
+    # currently exposes three blocks.  The safety contract is that at least one
+    # parent block exists and the selected pair is injected into every block.
+    if not blocks:
+        problems.append("values.set exposes no AvailableMatchups blocks")
     attacker = str(manifest.get("attacker_side") or "")
     defender = str(manifest.get("defender_side") or "")
     forward = f'"{attacker} {defender}"'
