@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import functools
+import hashlib
 import json
 import os
 import subprocess
 import sys
+import tempfile
 import time
 from collections.abc import Sequence
 from pathlib import Path
@@ -13,6 +15,9 @@ from pathlib import Path
 STARTUP_TELEMETRY_ENV = "GATES_OF_CODEX_STARTUP_TELEMETRY"
 STARTUP_EPOCH_ENV = "GATES_OF_CODEX_STARTUP_EPOCH_MS"
 STARTUP_LOG_PREFIX = "GOC_STARTUP"
+GODOT_IMPORT_STAMP_SCHEMA = "gates-of-codex.godot-import-cache"
+GODOT_IMPORT_STAMP_VERSION = 1
+GODOT_IMPORT_STAMP_NAME = "gates_of_codex_import_cache.json"
 
 
 def _startup_telemetry_enabled() -> bool:
@@ -102,20 +107,165 @@ def _install_fast_paths() -> None:
     install_command_scoped_p2_auth()
 
 
+def _hash_regular_file(digest, path: Path) -> None:
+    with path.open("rb") as stream:
+        while True:
+            chunk = stream.read(1024 * 1024)
+            if not chunk:
+                return
+            digest.update(chunk)
+
+
+def _godot_project_fingerprint(project_directory: Path) -> str | None:
+    """Hash the import-relevant project tree, excluding derived Godot caches."""
+
+    project = project_directory.resolve(strict=False)
+    if not (project / "project.godot").is_file():
+        return None
+    digest = hashlib.sha256()
+    try:
+        for root, directories, files in os.walk(project, followlinks=False):
+            root_path = Path(root)
+            kept_directories: list[str] = []
+            for name in sorted(directories):
+                candidate = root_path / name
+                if name == ".godot":
+                    continue
+                if candidate.is_symlink():
+                    return None
+                kept_directories.append(name)
+            directories[:] = kept_directories
+            for name in sorted(files):
+                # Godot's sidecar import metadata is derived from the source
+                # assets and may be rewritten by the import itself. Hash the
+                # actual source asset, not that generated cache record.
+                if name.endswith(".import"):
+                    continue
+                candidate = root_path / name
+                if candidate.is_symlink() or not candidate.is_file():
+                    return None
+                relative = candidate.relative_to(project).as_posix()
+                digest.update(relative.encode("utf-8"))
+                digest.update(b"\0")
+                digest.update(str(candidate.stat().st_size).encode("ascii"))
+                digest.update(b"\0")
+                _hash_regular_file(digest, candidate)
+                digest.update(b"\0")
+    except OSError:
+        return None
+    return digest.hexdigest()
+
+
+def _godot_executable_identity(godot_executable: Path) -> dict[str, object] | None:
+    try:
+        resolved = godot_executable.resolve(strict=True)
+        metadata = resolved.stat()
+    except OSError:
+        return None
+    return {
+        "path": str(resolved),
+        "size": int(metadata.st_size),
+        "mtime_ns": int(metadata.st_mtime_ns),
+    }
+
+
+def _godot_import_stamp_path(project_directory: Path) -> Path:
+    return project_directory.resolve(strict=False) / ".godot" / GODOT_IMPORT_STAMP_NAME
+
+
+def _read_godot_import_stamp(project_directory: Path) -> dict[str, object] | None:
+    source = _godot_import_stamp_path(project_directory)
+    if not source.is_file():
+        return None
+    try:
+        payload = json.loads(source.read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    if payload.get("schema") != GODOT_IMPORT_STAMP_SCHEMA:
+        return None
+    if int(payload.get("schema_version", 0) or 0) != GODOT_IMPORT_STAMP_VERSION:
+        return None
+    return payload
+
+
+def _write_godot_import_stamp(
+    project_directory: Path,
+    *,
+    source_commit: str,
+    project_fingerprint: str,
+    godot_identity: dict[str, object],
+) -> None:
+    destination = _godot_import_stamp_path(project_directory)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    body = json.dumps(
+        {
+            "schema": GODOT_IMPORT_STAMP_SCHEMA,
+            "schema_version": GODOT_IMPORT_STAMP_VERSION,
+            "source_commit": source_commit,
+            "project_fingerprint": project_fingerprint,
+            "godot_identity": godot_identity,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    ) + "\n"
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        encoding="utf-8",
+        prefix=f".{destination.name}.",
+        suffix=".tmp",
+        dir=destination.parent,
+        delete=False,
+    ) as temporary:
+        temporary.write(body)
+        temporary_path = Path(temporary.name)
+    temporary_path.replace(destination)
+
+
 def _prepare_godot_project(
     godot_executable: Path,
     project_directory: Path,
     *,
     timeout_seconds: int = 180,
 ) -> None:
-    """Synchronously import a clean Godot project before the interactive launch.
+    """Import only when exact source/project/runtime identity changed.
 
-    Owner-native P6 acceptance proved that launching a freshly deployed project
-    directly can race Godot's first filesystem/class scan and leave the main scene
-    black with unresolved GDScript inheritance. The same project renders normally
-    once the canonical headless import finishes. Treat that import as a required
-    player-launch phase rather than asking the player to repair the cache manually.
+    P6 proved that a clean project needs one synchronous import before the
+    interactive launch. #221 keeps that correctness guard but avoids repeating
+    the import for an unchanged project by hashing every source file and binding
+    the derived cache to the immutable packaged source commit and Godot binary.
+    Any missing/malformed identity falls back to the full import.
     """
+
+    fingerprint_started = time.perf_counter()
+    source_commit: str | None = None
+    try:
+        from .packaging import PackagingError, resolve_source_commit
+
+        source_commit = resolve_source_commit()
+    except (PackagingError, OSError):
+        source_commit = None
+    project_fingerprint = _godot_project_fingerprint(project_directory)
+    godot_identity = _godot_executable_identity(godot_executable)
+    fingerprint_ms = (time.perf_counter() - fingerprint_started) * 1000.0
+
+    if source_commit and project_fingerprint and godot_identity:
+        stamp = _read_godot_import_stamp(project_directory)
+        if (
+            stamp is not None
+            and str(stamp.get("source_commit", "")) == source_commit
+            and str(stamp.get("project_fingerprint", "")) == project_fingerprint
+            and stamp.get("godot_identity") == godot_identity
+        ):
+            _emit_startup_timing(
+                "godot_project_import",
+                duration_ms=fingerprint_ms,
+                ok=True,
+                cached=True,
+            )
+            return
+
     arguments = [
         str(godot_executable),
         "--headless",
@@ -138,8 +288,9 @@ def _prepare_godot_project(
     except subprocess.TimeoutExpired as exc:
         _emit_startup_timing(
             "godot_project_import",
-            duration_ms=(time.perf_counter() - started) * 1000.0,
+            duration_ms=(time.perf_counter() - started) * 1000.0 + fingerprint_ms,
             ok=False,
+            cached=False,
             reason="timeout",
         )
         from .player_shell import PlayerShellError
@@ -162,8 +313,9 @@ def _prepare_godot_project(
     if completed.returncode != 0 or script_failure:
         _emit_startup_timing(
             "godot_project_import",
-            duration_ms=elapsed_ms,
+            duration_ms=elapsed_ms + fingerprint_ms,
             ok=False,
+            cached=False,
             returncode=int(completed.returncode),
         )
         from .player_shell import PlayerShellError
@@ -172,11 +324,208 @@ def _prepare_godot_project(
         raise PlayerShellError(
             "Godot project import failed before player launch: " + detail
         )
+    if source_commit and project_fingerprint and godot_identity:
+        try:
+            _write_godot_import_stamp(
+                project_directory,
+                source_commit=source_commit,
+                project_fingerprint=project_fingerprint,
+                godot_identity=godot_identity,
+            )
+        except OSError:
+            # Cache publication is performance-only. A later launch simply pays
+            # for the canonical import again if the stamp cannot be persisted.
+            pass
     _emit_startup_timing(
         "godot_project_import",
-        duration_ms=elapsed_ms,
+        duration_ms=elapsed_ms + fingerprint_ms,
         ok=True,
+        cached=False,
     )
+
+
+def _fast_continue_state_compatible(
+    player_shell,
+    args,
+    state: dict[str, object],
+    *,
+    paths,
+    stack_layers: list[str],
+    stack_config: str,
+    game_directory: str,
+    profile_directory: str,
+    godot_executable: str,
+    godot_project: str,
+) -> bool:
+    if args.faction and str(args.faction) != str(state.get("selected_faction", "")):
+        return False
+    if args.difficulty and str(args.difficulty) != str(state.get("difficulty", "")):
+        return False
+    if args.fog_of_war and str(args.fog_of_war) != str(state.get("fog_of_war", "")):
+        return False
+    if game_directory and game_directory != str(state.get("game_directory", "")):
+        return False
+    if profile_directory and profile_directory != str(state.get("profile_directory", "")):
+        return False
+    tactical_override = str(args.tactical_map or "").strip()
+    if tactical_override and tactical_override != str(state.get("tactical_map", "")):
+        return False
+    if stack_config != str(state.get("stack_config", "")):
+        return False
+    if list(state.get("resource_stack", []) or []) != list(stack_layers):
+        return False
+    if stack_layers:
+        codex_layer = player_shell._codex_layer_from_stack(stack_layers)
+        if codex_layer != str(state.get("code_x_directory", "")):
+            return False
+    launch = state.get("player_launch", {})
+    if not isinstance(launch, dict):
+        return False
+    if str(launch.get("campaign_path", "")) != str(paths.campaign):
+        return False
+    if str(launch.get("snapshot_path", "")) != str(paths.snapshot):
+        return False
+    if str(launch.get("commands_path", "")) != str(paths.commands):
+        return False
+    if str(launch.get("godot_executable", "")) != godot_executable:
+        return False
+    if str(launch.get("godot_project", "")) != godot_project:
+        return False
+    return True
+
+
+def _install_unchanged_continue_fast_path(player_shell) -> None:
+    """Reuse an unchanged validated campaign/snapshot proven by the live daemon."""
+
+    current = player_shell.run_play
+    if getattr(current, "_goc_unchanged_continue_fast_path", False):
+        return
+    original_run_play = current
+
+    @functools.wraps(original_run_play)
+    def fast_run_play(args, *, environ=None, resolved_catalog=None):
+        started = time.perf_counter()
+        if bool(args.new) or bool(args.no_launch) or resolved_catalog is not None:
+            return original_run_play(
+                args,
+                environ=environ,
+                resolved_catalog=resolved_catalog,
+            )
+
+        scenario_id = str(args.scenario or player_shell.DEFAULT_SCENARIO_ID)
+        campaign_argument = args.campaign
+        if not campaign_argument:
+            remembered = player_shell.read_last_campaign(environ)
+            if remembered is None:
+                return original_run_play(
+                    args,
+                    environ=environ,
+                    resolved_catalog=resolved_catalog,
+                )
+            campaign_argument = str(remembered)
+        paths = player_shell.resolve_campaign_paths(
+            campaign_argument,
+            scenario_id=scenario_id,
+            environ=environ,
+        )
+
+        try:
+            from .persistent_backend import probe_startup_reuse
+
+            state = probe_startup_reuse(paths.campaign, paths.snapshot)
+        except Exception:  # noqa: BLE001 - full validated path is the fallback
+            state = None
+        if not isinstance(state, dict):
+            _emit_startup_timing(
+                "unchanged_continue_reuse",
+                duration_ms=(time.perf_counter() - started) * 1000.0,
+                reused=False,
+                reason="daemon_or_fingerprint_miss",
+            )
+            return original_run_play(
+                args,
+                environ=environ,
+                resolved_catalog=resolved_catalog,
+            )
+
+        game_directory = player_shell._require_directory(args.game, label="--game")
+        profile_directory = player_shell._require_directory(args.profile, label="--profile")
+        persisted_stack = str(state.get("stack_config", "") or "")
+        stack_config_argument = str(args.stack_config or "").strip() or persisted_stack
+        stack_layers = player_shell.validate_stack(
+            stack_config_argument or None,
+            game_directory=game_directory or None,
+            profile_directory=profile_directory or None,
+            required=False,
+        )
+        stack_config = (
+            str(Path(stack_config_argument).expanduser().resolve())
+            if stack_config_argument
+            else ""
+        )
+        godot_executable = str(
+            player_shell.find_godot_executable(args.godot, environ=environ)
+        )
+        godot_project = str(player_shell.godot_project_directory(args.godot_project))
+
+        if not _fast_continue_state_compatible(
+            player_shell,
+            args,
+            state,
+            paths=paths,
+            stack_layers=list(stack_layers),
+            stack_config=stack_config,
+            game_directory=game_directory,
+            profile_directory=profile_directory,
+            godot_executable=godot_executable,
+            godot_project=godot_project,
+        ):
+            _emit_startup_timing(
+                "unchanged_continue_reuse",
+                duration_ms=(time.perf_counter() - started) * 1000.0,
+                reused=False,
+                reason="launch_settings_changed",
+            )
+            return original_run_play(
+                args,
+                environ=environ,
+                resolved_catalog=resolved_catalog,
+            )
+
+        from .frontend_commands import clear_commands
+
+        clear_commands(paths.commands)
+        player_shell.write_last_campaign(paths.campaign, environ=environ)
+        result = player_shell.PlayResult(
+            mode="continue",
+            campaign_path=str(paths.campaign),
+            snapshot_path=str(paths.snapshot),
+            commands_path=str(paths.commands),
+            scenario_id=str(state.get("scenario_id", scenario_id)),
+            map_id=str(state.get("map_id", "")),
+            selected_faction=str(state.get("selected_faction", "")),
+            difficulty=str(state.get("difficulty", "")),
+            fog_of_war=str(state.get("fog_of_war", "off")),
+            turn_number=int(state.get("turn_number", 0) or 0),
+            godot_executable=godot_executable,
+            godot_project=godot_project,
+            stack_layers=list(stack_layers),
+        )
+        player_shell.launch_strategic_application(
+            snapshot=paths.snapshot,
+            godot_executable=Path(godot_executable),
+            project_directory=Path(godot_project),
+        )
+        result.launched = True
+        _emit_startup_timing(
+            "unchanged_continue_reuse",
+            duration_ms=(time.perf_counter() - started) * 1000.0,
+            reused=True,
+        )
+        return result
+
+    fast_run_play._goc_unchanged_continue_fast_path = True  # type: ignore[attr-defined]
+    player_shell.run_play = fast_run_play
 
 
 def _write_forwarded_result(result: tuple[int, str] | None) -> int | None:
@@ -249,6 +598,8 @@ def install_runtime_contracts() -> None:
 
         launch_after_import._goc_preimport_guard = True  # type: ignore[attr-defined]
         player_shell.launch_strategic_application = launch_after_import
+
+    _install_unchanged_continue_fast_path(player_shell)
 
     if not getattr(sys, "frozen", False):
         return
