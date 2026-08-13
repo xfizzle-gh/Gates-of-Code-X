@@ -387,8 +387,27 @@ jobs:
         working-directory: godot
         run: |
           set -euo pipefail
+          log="$(mktemp)"
+          set +e
           "$HOME/godot" --headless --path . --audio-driver Dummy \
-            -s res://scripts/tools/earth3_fixture_validate.gd
+            -s res://scripts/tools/earth3_fixture_validate.gd 2>&1 | tee "$log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if grep -E 'SCRIPT ERROR' "$log"; then
+            echo "earth3_fixture_validate: SCRIPT ERROR is a failure"
+            exit 1
+          fi
+          if grep -E 'earth3_fixture_validate: FAIL' "$log"; then
+            echo "earth3_fixture_validate: validator reported FAIL"
+            exit 1
+          fi
+          if ! grep -q 'earth3_fixture_validate: PASS' "$log"; then
+            echo "earth3_fixture_validate: missing PASS"
+            exit 1
+          fi
+          exit "$code"
+      - name: Earth3 fixture validate adversarial (#204)
+        run: GODOT_BIN="$HOME/godot" python -m unittest tests.test_issue_204_earth3_fixture_validate -v
       - name: Godot Earth3 water policy (non-selectable water)
         working-directory: godot
         run: |
