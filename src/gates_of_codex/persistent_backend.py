@@ -395,12 +395,19 @@ def run_session_backend(argv: Sequence[str]) -> int:
                             original_loader = commands_module.load_campaign
                             original_compact_save = perf._compact_save_campaign
 
-                            def capturing_save(state, path, *, observation_context=None):
+                            def capturing_save(
+                                state,
+                                path,
+                                *,
+                                observation_context=None,
+                                subphase_seconds=None,
+                            ):
                                 nonlocal persisted
                                 result = original_compact_save(
                                     state,
                                     path,
                                     observation_context=observation_context,
+                                    subphase_seconds=subphase_seconds,
                                 )
                                 persisted = True
                                 return result

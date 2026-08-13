@@ -217,6 +217,8 @@ class PersistentBackendTransportTests(unittest.TestCase):
         self.assertIn("_direct_cache_loader", source)
         self.assertIn("_cache_can_survive_report", source)
         self.assertIn("_ambiguous_daemon_payload", source)
+        self.assertIn("subphase_seconds=None", source)
+        self.assertIn("subphase_seconds=subphase_seconds", source)
         self.assertNotIn("copy.deepcopy(", source)
         self.assertNotIn("import pickle", source)
         self.assertNotIn("import marshal", source)
