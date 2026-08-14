@@ -109,7 +109,11 @@ class Earth3MovementRoutePresentationTests(unittest.TestCase):
         self.assertIn("scene._open_operational_graph()", production)
         view = GRAPH_VIEW.read_text(encoding="utf-8")
         self.assertIn("func presentation_res_path", view)
+        self.assertIn("func _approved_earth3_graph_path", view)
+        self.assertIn("func _is_earth3_context", view)
         self.assertIn('normalized.begins_with("godot/")', view)
+        self.assertIn("P3_GRAPH_RES", view)
+        self.assertIn("Earth3 rejects a wrong-but-existing EM graph", source)
 
 
 if __name__ == "__main__":

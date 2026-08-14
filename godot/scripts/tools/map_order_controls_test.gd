@@ -336,6 +336,7 @@ func _test_missing_and_malformed_graph_paths_fail_closed() -> void:
 
 func _test_unapproved_candidate_graph_is_not_fallback() -> void:
 	var view = OperationalGraphViewScript.new()
+	_check(FileAccess.file_exists(EM_CANDIDATE_GRAPH), "adversarial EM candidate graph exists on disk")
 	var resolved := view.resolve_path(EARTH3_MANIFEST, {
 		"strategic_map": {"map_id": "earth3_europe_mediterranean", "fallback": "none"},
 		"campaign": {"map_metadata": {}},
@@ -343,17 +344,33 @@ func _test_unapproved_candidate_graph_is_not_fallback() -> void:
 	_check_eq(resolved, "", "Earth3 without an approved graph path does not fall back")
 	_check(resolved != EM_CANDIDATE_GRAPH, "Earth3 does not select the EM candidate graph")
 	_check(resolved.find("operational/operational_graph.json") < 0, "Earth3 does not select a sibling candidate graph")
+	var existing_wrong := view.resolve_path(EARTH3_MANIFEST, {
+		"strategic_map": {
+			"map_id": "earth3_europe_mediterranean",
+			"operational_graph_path": EM_CANDIDATE_GRAPH,
+			"fallback": "none",
+		},
+		"campaign": {
+			"map_id": "earth3_europe_mediterranean",
+			"map_metadata": {
+				"operational_graph": EM_CANDIDATE_GRAPH,
+			},
+		},
+	})
+	_check_eq(existing_wrong, "", "Earth3 rejects a wrong-but-existing EM graph")
 	var ctx := _production_scene("p8_218_candidate_blocked", {
 		"strategic_map": {
 			"map_id": "earth3_europe_mediterranean",
+			"operational_graph_path": EM_CANDIDATE_GRAPH,
 			"fallback": "none",
 		},
 		"map_metadata": {
-			"operational_graph": "godot/assets/maps/earth3_europe_mediterranean/operational/operational_graph.json",
+			"operational_graph": EM_CANDIDATE_GRAPH,
 		},
 	})
 	_check(not ctx["scene"].operational_graph.is_ready, "unapproved Earth3 candidate path fails closed")
 	_check(ctx["scene"].operational_graph.path != EM_CANDIDATE_GRAPH, "failed Earth3 load does not swap in the EM graph")
+	_check_eq(ctx["scene"]._authoritative_route_map_pixels(_native_order()).size(), 0, "wrong-but-existing EM graph draws nothing")
 	_free(ctx)
 
 

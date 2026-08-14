@@ -7,6 +7,9 @@ extends RefCounted
 const EM_FROM_GOE_MANIFEST := "res://assets/maps/europe_mediterranean/from_goe/map_manifest.json"
 const INTERIM_GOE_MANIFEST := "res://assets/maps/europe/interim_goe/map_manifest.json"
 const EM_OPERATIONAL_GRAPH := "res://assets/maps/europe_mediterranean/from_goe/operational/operational_graph.json"
+const EARTH3_MANIFEST := "res://assets/maps/earth3_europe_mediterranean/map_manifest.json"
+const EARTH3_MAP_ID := "earth3_europe_mediterranean"
+const P3_GRAPH_RES := "res://assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json"
 
 var path := ""
 var error := ""
@@ -95,19 +98,26 @@ func _existing_presentation_path(raw_path: String) -> String:
 
 func resolve_path(map_manifest_path: String, snapshot: Dictionary = {}) -> String:
 	## Resolve operational graph without silently using EM data for unknown maps.
-	## Order:
+	## Earth3 production accepts only the authenticated P3 presentation graph.
+	## Other maps keep:
 	## 1) explicit snapshot.strategic_map.operational_graph_path
 	## 2) campaign.map_metadata.operational_graph (absolute or relative to manifest)
 	## 3) manifest-local operational/operational_graph.json when present
 	## 4) known EM/interim manifests only → committed EM operational graph
 	## else: empty (unresolved)
 	var contract: Dictionary = snapshot.get("strategic_map", {})
+	var campaign: Dictionary = snapshot.get("campaign", {})
+	var meta: Dictionary = campaign.get("map_metadata", {})
+	if _is_earth3_context(map_manifest_path, snapshot):
+		var approved := _approved_earth3_graph_path(String(contract.get("operational_graph_path", "")))
+		if approved.is_empty():
+			approved = _approved_earth3_graph_path(String(meta.get("operational_graph", "")))
+		return approved
+
 	var exported := _existing_presentation_path(String(contract.get("operational_graph_path", "")))
 	if not exported.is_empty():
 		return exported
 
-	var campaign: Dictionary = snapshot.get("campaign", {})
-	var meta: Dictionary = campaign.get("map_metadata", {})
 	var meta_graph := String(meta.get("operational_graph", "")).strip_edges()
 	if not meta_graph.is_empty():
 		var existing := _existing_presentation_path(meta_graph)
@@ -133,6 +143,32 @@ func resolve_path(map_manifest_path: String, snapshot: Dictionary = {}) -> Strin
 func resolve_default_path(map_manifest_path: String) -> String:
 	## Backward-compatible wrapper without snapshot context.
 	return resolve_path(map_manifest_path, {})
+
+
+func _is_earth3_context(map_manifest_path: String, snapshot: Dictionary) -> bool:
+	var contract: Dictionary = snapshot.get("strategic_map", {})
+	var campaign: Dictionary = snapshot.get("campaign", {})
+	var meta: Dictionary = campaign.get("map_metadata", {})
+	for map_id in [
+		String(contract.get("map_id", "")),
+		String(campaign.get("map_id", "")),
+		String(meta.get("strategic_map_id", "")),
+	]:
+		if map_id == EARTH3_MAP_ID:
+			return true
+	var manifest := map_manifest_path.replace("\\", "/").simplify_path()
+	if manifest == EARTH3_MANIFEST or manifest.ends_with("/earth3_europe_mediterranean/map_manifest.json"):
+		return true
+	return false
+
+
+func _approved_earth3_graph_path(raw_path: String) -> String:
+	var converted := presentation_res_path(raw_path)
+	if converted != P3_GRAPH_RES:
+		return ""
+	if FileAccess.file_exists(P3_GRAPH_RES):
+		return P3_GRAPH_RES
+	return ""
 
 
 func _is_known_em_or_interim_manifest(map_manifest_path: String) -> bool:
