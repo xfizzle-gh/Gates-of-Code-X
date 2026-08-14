@@ -1,0 +1,80 @@
+{
+  "schema": "gates-of-codex.issue-212-map-debug-attribution",
+  "schema_version": 1,
+  "issue": 212,
+  "measurement_head": "f8f1ff072bc0b9a89c82f210e506d56b372918f8",
+  "workflow_run_id": 31849403512,
+  "artifact_id": 9237017273,
+  "environment": {
+    "godot": "4.7.stable.official.5b4e0cb0f",
+    "os": "Ubuntu 24.04.4 LTS",
+    "renderer": "OpenGL Compatibility",
+    "device": "Mesa llvmpipe (LLVM 20.1.2, 256 bits)",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "frames_per_mode": 24
+  },
+  "map": {
+    "map_id": "earth3_europe_mediterranean",
+    "renderer": "polygon_mesh",
+    "province_count": 3514,
+    "debug_anchor_count": 3514
+  },
+  "modes": {
+    "debug_off": {
+      "draw_calls": {"avg": 205.0, "p50": 205, "p95": 205, "min": 205, "max": 205},
+      "primitives": {"avg": 456565.0, "p50": 456565, "p95": 456565, "min": 456565, "max": 456565},
+      "frame_time_ms": {"avg": 163.833, "p50": 161.558, "p95": 165.906, "min": 159.834, "max": 198.269},
+      "script_cpu_ms": {"avg": 166.187, "p50": 164.81, "p95": 170.838, "min": 163.319, "max": 170.838},
+      "node_count": {"avg": 12.0, "p50": 12, "p95": 12},
+      "object_count": {"avg": 1589.0, "p50": 1589, "p95": 1589},
+      "texture_mem_bytes": {"avg": 17764637.0, "p50": 17764637, "p95": 17764637},
+      "video_mem_bytes": {"avg": 46727449.0, "p50": 46727449, "p95": 46727449}
+    },
+    "debug_on": {
+      "draw_calls": {"avg": 3764.0, "p50": 3764, "p95": 3764, "min": 3764, "max": 3764},
+      "primitives": {"avg": 683074.58, "p50": 683075, "p95": 683075, "min": 683073, "max": 683075},
+      "frame_time_ms": {"avg": 259.535, "p50": 265.424, "p95": 279.382, "min": 228.485, "max": 280.675},
+      "script_cpu_ms": {"avg": 264.846, "p50": 276.238, "p95": 280.557, "min": 209.2, "max": 280.557},
+      "node_count": {"avg": 12.0, "p50": 12, "p95": 12},
+      "object_count": {"avg": 1615.33, "p50": 1617, "p95": 1617},
+      "texture_mem_bytes": {"avg": 17764637.0, "p50": 17764637, "p95": 17764637},
+      "video_mem_bytes": {"avg": 51296905.0, "p50": 51296905, "p95": 51296905}
+    },
+    "debug_off_restored": {
+      "draw_calls": {"avg": 205.0, "p50": 205, "p95": 205, "min": 205, "max": 205},
+      "primitives": {"avg": 456565.0, "p50": 456565, "p95": 456565, "min": 456565, "max": 456565},
+      "frame_time_ms": {"avg": 162.736, "p50": 160.581, "p95": 164.458, "min": 159.036, "max": 197.815},
+      "script_cpu_ms": {"avg": 167.815, "p50": 163.91, "p95": 164.65, "min": 163.603, "max": 253.301},
+      "node_count": {"avg": 12.0, "p50": 12, "p95": 12},
+      "object_count": {"avg": 1617.0, "p50": 1617, "p95": 1617},
+      "texture_mem_bytes": {"avg": 17764637.0, "p50": 17764637, "p95": 17764637},
+      "video_mem_bytes": {"avg": 46727449.0, "p50": 46727449, "p95": 46727449}
+    }
+  },
+  "attribution": {
+    "debug_draw_calls_p50_delta": 3559,
+    "debug_draw_calls_p95_delta": 3559,
+    "debug_frame_ms_p50_delta": 103.866,
+    "debug_frame_ms_p95_delta": 113.476
+  },
+  "picking": {
+    "parity": true,
+    "samples": [
+      {"expected": "e3_0000", "picked": "e3_0000", "match": true},
+      {"expected": "e3_0503", "picked": "e3_0503", "match": true},
+      {"expected": "e3_1009", "picked": "e3_1009", "match": true},
+      {"expected": "e3_2017", "picked": "e3_2017", "match": true},
+      {"expected": "e3_3003", "picked": "e3_3003", "match": true}
+    ]
+  },
+  "conclusion": {
+    "old_debug_enabled_draw_call_baseline_is_not_player_baseline": true,
+    "ordinary_debug_off_draw_call_p50": 205,
+    "debug_enabled_draw_call_p50": 3764,
+    "remaining_render_performance_work_required": true,
+    "absolute_ci_frame_time_is_native_acceptance_metric": false
+  }
+}
