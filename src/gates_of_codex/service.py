@@ -108,7 +108,20 @@ class GatesOfCodeXService:
         stack = resolve_stack(resource_stack or saved_stack, fallback=code_x_directory or state.code_x_directory)
         if not stack:
             raise ValueError("No Code:X resource stack was configured")
-        catalog = self.scanner.scan_stack(stack)
+        # The ordinary campaign catalog remains restricted to the four modern
+        # Code:X tactical sides. #48 neutral-garrison encounters are the one
+        # explicit exception: their authored legacy_reserve rows may reference
+        # West81 source namespaces such as sov/gdr/csa/frg. Those definitions
+        # are needed only to materialize the already-selected battle roster;
+        # they do not become strategic actors, research, or recruitment pools.
+        include_legacy_sources = (
+            str(getattr(state.pending_battle, "encounter_kind", "") or "").strip()
+            == "neutral_garrison"
+        )
+        catalog = self.scanner.scan_stack(
+            stack,
+            include_legacy_sources=include_legacy_sources,
+        )
         # Earth3 P2/P3 stores an actor-content digest in ``catalog_signature``
         # (see earth3_bootstrap), not the Code:X stack scan signature. The
         # stack scan still drives export/import integrity via the manifest.
