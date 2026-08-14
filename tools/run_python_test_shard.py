@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import os
 import platform
+import re
 import sys
 import unittest
 from collections import Counter, defaultdict
@@ -11,6 +12,7 @@ from pathlib import Path
 from typing import Iterable, Iterator
 
 ROOT = Path(__file__).resolve().parents[1]
+WORKFLOW_PATH = ROOT / ".github" / "workflows" / "gates-of-codex.yml"
 
 SHARDS = (
     "core",
@@ -18,12 +20,21 @@ SHARDS = (
     "p4-production-launch",
 )
 
+# job id, platform.system(), runs-on label, Python major/minor
 CI_CORE_LANES = (
-    ("Linux", (3, 11)),
-    ("Linux", (3, 13)),
-    ("Windows", (3, 11)),
-    ("Windows", (3, 13)),
+    ("python-shards-ubuntu-311", "Linux", "ubuntu-latest", (3, 11)),
+    ("python-shards-ubuntu-313", "Linux", "ubuntu-latest", (3, 13)),
+    ("python-shards-windows-311", "Windows", "windows-latest", (3, 11)),
+    ("python-shards-windows-313", "Windows", "windows-latest", (3, 13)),
 )
+
+
+class DiscoveryError(RuntimeError):
+    """Canonical unittest discovery failed before tests could be sharded."""
+
+
+class WorkflowLaneContractError(RuntimeError):
+    """The workflow no longer matches the Python core-lane contract."""
 
 
 def _module_name(test_id: str) -> str:
@@ -145,6 +156,71 @@ def partition_core_ci_lanes(
     return tuple(tuple(lane) for lane in lanes)
 
 
+def _workflow_job_blocks(text: str) -> dict[str, str]:
+    headers = list(re.finditer(r"(?m)^  ([A-Za-z0-9_-]+):\s*$", text))
+    blocks: dict[str, str] = {}
+    for index, match in enumerate(headers):
+        start = match.end()
+        end = headers[index + 1].start() if index + 1 < len(headers) else len(text)
+        blocks[match.group(1)] = text[start:end]
+    return blocks
+
+
+def verify_workflow_core_lane_contract(workflow_path: Path = WORKFLOW_PATH) -> None:
+    """Fail if workflow core jobs drift from the lane map used by Python.
+
+    This check deliberately reads the checked-in workflow rather than trusting
+    the Python constant alone. Removing a workflow job, removing ``core`` from
+    its shard matrix, changing its runner, or changing its Python version makes
+    every surviving ``--verify-partition`` invocation fail closed.
+    """
+
+    text = workflow_path.read_text(encoding="utf-8")
+    blocks = _workflow_job_blocks(text)
+
+    identities = [(system, version) for _, system, _, version in CI_CORE_LANES]
+    if len(set(identities)) != len(identities):
+        raise WorkflowLaneContractError(
+            f"CI_CORE_LANES contains duplicate runtime identities: {identities}"
+        )
+
+    for lane, (job_id, _system, runner, (major, minor)) in enumerate(CI_CORE_LANES):
+        block = blocks.get(job_id)
+        if block is None:
+            raise WorkflowLaneContractError(
+                f"Core lane {lane} workflow job is missing: {job_id}"
+            )
+
+        runners = re.findall(r"(?m)^    runs-on:\s*([^\s#]+)\s*$", block)
+        if runners != [runner]:
+            raise WorkflowLaneContractError(
+                f"Core lane {lane} {job_id} runs-on mismatch: "
+                f"expected {runner!r}, found {runners!r}"
+            )
+
+        versions = re.findall(
+            r"(?m)^\s+python-version:\s*[\"']?([^\"'\s#]+)[\"']?\s*$",
+            block,
+        )
+        expected_version = f"{major}.{minor}"
+        if versions != [expected_version]:
+            raise WorkflowLaneContractError(
+                f"Core lane {lane} {job_id} Python mismatch: "
+                f"expected {expected_version!r}, found {versions!r}"
+            )
+
+        shard_rows = re.findall(r"(?m)^        shard:\s*\[([^\]]+)\]\s*$", block)
+        if len(shard_rows) != 1:
+            raise WorkflowLaneContractError(
+                f"Core lane {lane} {job_id} must define exactly one inline shard matrix"
+            )
+        shards = {part.strip() for part in shard_rows[0].split(",")}
+        if "core" not in shards:
+            raise WorkflowLaneContractError(
+                f"Core lane {lane} {job_id} no longer schedules the core shard"
+            )
+
+
 def current_ci_core_lane() -> int | None:
     """Return this GitHub Actions runner's core lane, or None outside CI."""
 
@@ -152,16 +228,17 @@ def current_ci_core_lane() -> int | None:
         return None
 
     identity = (platform.system(), (sys.version_info.major, sys.version_info.minor))
-    try:
-        return CI_CORE_LANES.index(identity)
-    except ValueError as exc:
-        supported = ", ".join(
-            f"{system} {major}.{minor}"
-            for system, (major, minor) in CI_CORE_LANES
-        )
-        raise RuntimeError(
-            f"Unsupported GitHub Actions core lane {identity!r}; expected one of: {supported}"
-        ) from exc
+    for lane, (_job_id, system, _runner, version) in enumerate(CI_CORE_LANES):
+        if identity == (system, version):
+            return lane
+
+    supported = ", ".join(
+        f"{system} {major}.{minor}"
+        for _job_id, system, _runner, (major, minor) in CI_CORE_LANES
+    )
+    raise RuntimeError(
+        f"Unsupported GitHub Actions core lane {identity!r}; expected one of: {supported}"
+    )
 
 
 def _walk_suite(suite: unittest.TestSuite) -> Iterator[unittest.TestCase]:
@@ -183,9 +260,28 @@ def discover_tests(start_dir: Path) -> list[unittest.TestCase]:
     if root_text not in sys.path:
         sys.path.insert(0, root_text)
 
-    loader = unittest.defaultTestLoader
+    # A fresh loader is required here. ``unittest`` converts import/syntax errors
+    # during discovery into _FailedTest instances and records the real error text
+    # on TestLoader.errors. Those failures must abort before shard/lane filtering,
+    # otherwise an environment-specific _FailedTest could be assigned to another
+    # lane and silently disappear from the runner where discovery actually broke.
+    loader = unittest.TestLoader()
     suite = loader.discover(str(start_dir), pattern="test*.py")
-    return list(_walk_suite(suite))
+    tests = list(_walk_suite(suite))
+    failed_test_ids = [
+        test.id()
+        for test in tests
+        if test.__class__.__module__ == "unittest.loader"
+        and test.__class__.__name__ == "_FailedTest"
+    ]
+    if loader.errors or failed_test_ids:
+        detail = "\n\n".join(loader.errors) if loader.errors else ""
+        failed = ", ".join(failed_test_ids) if failed_test_ids else "<unknown>"
+        raise DiscoveryError(
+            "unittest discovery failed before CI sharding; "
+            f"failed_tests={failed}\n{detail}"
+        )
+    return tests
 
 
 def _partition_tests(
@@ -218,10 +314,10 @@ def print_partition(partition: dict[str, tuple[str, ...]]) -> None:
 
     core_lanes = partition_core_ci_lanes(partition["core"])
     for lane, ids in enumerate(core_lanes):
-        system, (major, minor) = CI_CORE_LANES[lane]
+        job_id, system, _runner, (major, minor) = CI_CORE_LANES[lane]
         print(
             "python-test-partition: "
-            f"core-lane={lane} runner={system}-{major}.{minor} "
+            f"core-lane={lane} job={job_id} runner={system}-{major}.{minor} "
             f"count={len(ids)} sha256={_digest(ids)}"
         )
 
@@ -240,8 +336,9 @@ def build_parser() -> argparse.ArgumentParser:
         "--verify-partition",
         action="store_true",
         help=(
-            "Prove every discovered test belongs to exactly one logical shard and "
-            "that core is exactly covered by the four existing CI matrix lanes."
+            "Prove every discovered test belongs to exactly one logical shard, "
+            "that core is exactly covered by the four existing CI matrix lanes, "
+            "and that the checked-in workflow still schedules all four lanes."
         ),
     )
     return parser
@@ -258,6 +355,10 @@ def main(argv: list[str] | None = None) -> int:
     if not start_dir.is_dir():
         raise SystemExit(f"Test discovery directory does not exist: {start_dir}")
 
+    if args.verify_partition or os.environ.get("GITHUB_ACTIONS", "").casefold() == "true":
+        verify_workflow_core_lane_contract()
+
+    # Discovery must complete successfully before any partition or lane is chosen.
     tests = discover_tests(start_dir)
     partition, selected = _partition_tests(tests)
     if args.verify_partition:
