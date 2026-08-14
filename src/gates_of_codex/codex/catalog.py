@@ -102,6 +102,12 @@ class CodeXCatalog:
 
 class CodeXCatalogScanner:
     FACTIONS = ("nato", "ukr", "rusa", "prc")
+    # These are source/content namespaces present in West81. They are not valid
+    # GoH tactical armies for Gates campaigns. They may be scanned only when an
+    # explicit caller needs source-backed legacy materialization (for example
+    # #48 encounter-only garrisons).
+    LEGACY_SOURCE_SIDES = ("sov", "gdr", "csa", "frg")
+    SOURCE_SIDES = (*FACTIONS, *LEGACY_SOURCE_SIDES)
     SOURCE_EXTENSIONS = {".set", ".goh"}
     _MACRO_MEMBER_RE = re.compile(r"\b(?:c\d+|crew\d*|member\d*|breed\d*)\(([^:()\s]+):(\d+)\)", re.I)
     _ENTITY_MACRO_HINTS = (
@@ -120,10 +126,18 @@ class CodeXCatalogScanner:
     def scan(self, code_x_directory: str | Path) -> CodeXCatalog:
         return self.scan_stack([code_x_directory])
 
-    def scan_stack(self, resource_stack: Iterable[str | Path]) -> CodeXCatalog:
+    def scan_stack(
+        self,
+        resource_stack: Iterable[str | Path],
+        *,
+        include_legacy_sources: bool = False,
+    ) -> CodeXCatalog:
         roots = normalize_stack(resource_stack)
         if not roots:
             raise ValueError("Code:X resource stack is empty")
+        accepted_sides = frozenset(
+            self.SOURCE_SIDES if include_legacy_sources else self.FACTIONS
+        )
         units: dict[str, UnitDefinition] = {}
         for layer_index, root in enumerate(roots):
             if not root.is_dir():
@@ -137,7 +151,14 @@ class CodeXCatalogScanner:
             lua_root = resources / "script/multiplayer/units"
             if lua_root.is_dir():
                 for path in sorted(lua_root.rglob("*.lua")):
-                    self._scan_lua(path, resources, layer_units, layer_index, root.name)
+                    self._scan_lua(
+                        path,
+                        resources,
+                        layer_units,
+                        layer_index,
+                        root.name,
+                        accepted_sides,
+                    )
 
             conquest_root = resources / "set/multiplayer/units/conquest"
             if conquest_root.is_dir():
@@ -146,7 +167,14 @@ class CodeXCatalogScanner:
                     for candidate in conquest_root.rglob("*")
                     if candidate.is_file() and candidate.suffix.lower() in self.SOURCE_EXTENSIONS
                 ):
-                    self._scan_source(path, resources, layer_units, layer_index, root.name)
+                    self._scan_source(
+                        path,
+                        resources,
+                        layer_units,
+                        layer_index,
+                        root.name,
+                        accepted_sides,
+                    )
 
             for name, overlay in layer_units.items():
                 existing = units.get(name)
@@ -164,6 +192,7 @@ class CodeXCatalogScanner:
         units: dict[str, UnitDefinition],
         layer_index: int,
         layer_name: str,
+        accepted_sides: frozenset[str],
     ) -> None:
         text = path.read_text(encoding="utf-8-sig", errors="replace")
         default_period = self._period_from_path(path)
@@ -173,7 +202,7 @@ class CodeXCatalogScanner:
         for entry in self._source_entries(text, source):
             side = self._side_from_name(entry.name) or self._call_value(entry.calls, "side") or default_side
             side = side.lower()
-            if side not in self.FACTIONS:
+            if side not in accepted_sides:
                 continue
             period = self._call_value(entry.calls, "period") or default_period
             name = self._canonical_name(entry.name, side, units)
@@ -213,13 +242,14 @@ class CodeXCatalogScanner:
         units: dict[str, UnitDefinition],
         layer_index: int,
         layer_name: str,
+        accepted_sides: frozenset[str],
     ) -> None:
         text = path.read_text(encoding="utf-8-sig", errors="replace")
         default_side = self._side_from_path(path)
         source = f"{layer_index}:{layer_name}/{path.relative_to(resources).as_posix()}"
         for name, body in self._lua_rows(text):
             side = self._side_from_name(name) or default_side
-            if side not in self.FACTIONS:
+            if side not in accepted_sides:
                 continue
             unit = units.setdefault(name, UnitDefinition(name=name, side=side))
             if source not in unit.source_files:
@@ -330,11 +360,12 @@ class CodeXCatalogScanner:
 
     @classmethod
     def _side_from_path(cls, path: Path) -> str:
+        pattern = "|".join(re.escape(side) for side in cls.SOURCE_SIDES)
         for part in path.parts:
             lowered = part.lower()
-            if lowered in cls.FACTIONS:
+            if lowered in cls.SOURCE_SIDES:
                 return lowered
-            match = re.search(r"(?:^|[_\-.])(nato|ukr|rusa|prc)(?:[_\-.]|$)", lowered)
+            match = re.search(rf"(?:^|[_\-.])({pattern})(?:[_\-.]|$)", lowered)
             if match:
                 return match.group(1)
         return ""
@@ -351,14 +382,16 @@ class CodeXCatalogScanner:
         match = re.search(rf"\b{re.escape(name)}\(([^)\s]+)\)", raw, flags=re.I)
         return match.group(1).strip('"') if match else ""
 
-    @staticmethod
-    def _side_from_name(name: str) -> str:
-        match = re.search(r'\((nato|ukr|rusa|prc)\)', name, flags=re.I)
+    @classmethod
+    def _side_from_name(cls, name: str) -> str:
+        pattern = "|".join(re.escape(side) for side in cls.SOURCE_SIDES)
+        match = re.search(rf'\(({pattern})\)', name, flags=re.I)
         return match.group(1).lower() if match else ""
 
-    @staticmethod
-    def _base_name(name: str) -> str:
-        return re.sub(r"\((nato|ukr|rusa|prc)\)$", "", name, flags=re.I)
+    @classmethod
+    def _base_name(cls, name: str) -> str:
+        pattern = "|".join(re.escape(side) for side in cls.SOURCE_SIDES)
+        return re.sub(rf"\(({pattern})\)$", "", name, flags=re.I)
 
     @staticmethod
     def _category(unit: UnitDefinition) -> str:
