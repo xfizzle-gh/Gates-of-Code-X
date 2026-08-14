@@ -304,6 +304,10 @@ class PersistentBackendRuntimeWiringTests(unittest.TestCase):
         source = (ROOT / "run_gates_of_codex_live.py").read_text(encoding="utf-8")
         main_block = source.split("def main(", 1)[1]
         self.assertLess(
+            main_block.index("enforce_packaged_backend_identity(arguments)"),
+            main_block.index("_try_persistent_forward(arguments)"),
+        )
+        self.assertLess(
             main_block.index("_try_persistent_forward(arguments)"),
             main_block.index("_authenticate_frozen_earth3()"),
         )

@@ -59,7 +59,10 @@ class P6OwnerNativeRuntimeTests(unittest.TestCase):
         shell_main = Mock(return_value=99)
         with (
             patch("gates_of_codex.fast_entrypoint._install_fast_paths"),
-            patch("gates_of_codex.fast_entrypoint.main", general_main),
+            patch(
+                "gates_of_codex.fast_entrypoint.dispatch_authenticated_packaged_invocation",
+                general_main,
+            ),
             patch("gates_of_codex.frozen_runtime.configure_frozen_earth3_authority"),
             patch("gates_of_codex.player_shell.main", shell_main),
             patch.object(sys, "frozen", False, create=True),
@@ -78,16 +81,20 @@ class P6OwnerNativeRuntimeTests(unittest.TestCase):
             )
 
         self.assertEqual(0, code)
-        general_main.assert_called_once_with(
-            [
+        general_main.assert_called_once()
+        invocation = general_main.call_args.args[0]
+        self.assertEqual(
+            (
                 "apply-frontend",
                 "campaign.json",
                 "--snapshot",
                 "campaign_snapshot.json",
                 "--commands",
                 "frontend_commands.json",
-            ]
+            ),
+            invocation.arguments,
         )
+        self.assertIsNone(invocation.source_commit)
         shell_main.assert_not_called()
 
     def test_direct_player_flags_stay_on_player_shell(self) -> None:
@@ -115,8 +122,10 @@ class P6OwnerNativeRuntimeTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn('with_name("GatesOfCodeXLive.exe")', source)
+        self.assertIn("_require_frozen_console_backend", source)
         self.assertIn('block["python_executable"] = str(backend)', source)
         self.assertIn('block["backend_kind"] = "frozen_console"', source)
+        self.assertIn('block["backend_source_commit"] = identity.source_commit', source)
         self.assertIn('block["manifest_path"] = f"res://{CAMPAIGN_MANIFEST_IDENTIFIER}"', source)
         self.assertIn("_prepare_godot_project", source)
 
@@ -125,8 +134,12 @@ class P6OwnerNativeRuntimeTests(unittest.TestCase):
         self.assertIn('"validate"', source)
         self.assertIn('"handoff"', source)
         self.assertIn('["-m", "gates_of_codex"]', source)
-        self.assertIn("from gates_of_codex.fast_entrypoint import main as application_main", source)
-        self.assertIn("return application_main(arguments)", source)
+        self.assertIn(
+            "dispatch_authenticated_packaged_invocation",
+            source,
+        )
+        self.assertIn("return dispatch_authenticated_packaged_invocation(", source)
+        self.assertNotIn("import main as application_main", source)
 
 
 if __name__ == "__main__":
