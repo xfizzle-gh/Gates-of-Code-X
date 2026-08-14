@@ -1071,6 +1071,31 @@ def _advance_formation_one_tick(
             origin_province_id=origin_province_id,
             origin_node_id=origin_node,
         )
+        if not contact.get("reason") and not contact.get("battle_id"):
+            from .neutral_garrison import maybe_attach_neutral_garrison
+
+            attacker = next(
+                (
+                    state.battalions[item]
+                    for item in force.battalion_ids
+                    if item in state.battalions
+                ),
+                None,
+            )
+            if attacker is not None:
+                garrison_battle = maybe_attach_neutral_garrison(
+                    state,
+                    force.province_id or dest_node,
+                    attacker=attacker,
+                    origin_province_id=origin_province_id,
+                    encounter_node_id=dest_node,
+                    attacker_formation_id=force.strategic_formation_id,
+                )
+                if garrison_battle is not None:
+                    force.move_order = _as_blocked(order)
+                    if contacts_out is not None:
+                        contacts_out.append(force.strategic_formation_id)
+                    return True
         if contact["reason"] == "enemy_contact":
             force.move_order = _as_blocked(order)
             if contacts_out is not None:

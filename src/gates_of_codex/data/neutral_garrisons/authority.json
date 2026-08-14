@@ -1,0 +1,305 @@
+{
+  "schema": "gates.neutral_garrison.v1",
+  "schema_version": 1,
+  "issue": 48,
+  "worldwide_fallback": false,
+  "adjacent_variation_threshold_milli": 62,
+  "regions": {
+    "north_africa": {
+      "adjacent_regions": ["middle_east"],
+      "export_side": "rusa",
+      "tactical_export_sides": ["rusa", "nato"]
+    },
+    "middle_east": {
+      "adjacent_regions": ["north_africa", "western_asia"],
+      "export_side": "rusa",
+      "tactical_export_sides": ["rusa", "nato"]
+    },
+    "balkans": {
+      "adjacent_regions": ["eastern_europe", "western_central_europe"],
+      "export_side": "rusa",
+      "tactical_export_sides": ["rusa", "nato"]
+    },
+    "western_central_europe": {
+      "adjacent_regions": ["balkans"],
+      "export_side": "nato",
+      "tactical_export_sides": ["nato", "rusa"]
+    },
+    "eastern_europe": {
+      "adjacent_regions": ["balkans", "western_asia"],
+      "export_side": "rusa",
+      "tactical_export_sides": ["rusa", "ukr"]
+    },
+    "western_asia": {
+      "adjacent_regions": ["balkans", "eastern_europe", "middle_east"],
+      "export_side": "rusa",
+      "tactical_export_sides": ["rusa", "nato"]
+    }
+  },
+  "pools": {
+    "north_africa.ordinary": {
+      "region": "north_africa",
+      "tier": "ordinary",
+      "units": [
+        {"unit_name": "wgn_22_2", "quantity": 2, "category": "infantry", "source_component": "wagner_native", "provenance": "legacy_reserve", "source_authority": "Code:X"},
+        {"unit_name": "ural375", "quantity": 1, "category": "vehicle", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "btr-60pb", "quantity": 1, "category": "ifv", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"}
+      ]
+    },
+    "north_africa.strategic": {
+      "region": "north_africa",
+      "tier": "strategic",
+      "units": [
+        {"unit_name": "wgn_22_2", "quantity": 2, "category": "infantry", "source_component": "wagner_native", "provenance": "legacy_reserve", "source_authority": "Code:X"},
+        {"unit_name": "wgn_22_3", "quantity": 1, "category": "infantry", "source_component": "wagner_native", "provenance": "legacy_reserve", "source_authority": "Code:X"},
+        {"unit_name": "ural375", "quantity": 1, "category": "vehicle", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "bmp-1", "quantity": 1, "category": "ifv", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "122mm_d-30", "quantity": 1, "category": "artillery", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"}
+      ]
+    },
+    "north_africa.capital": {
+      "region": "north_africa",
+      "tier": "capital",
+      "units": [
+        {"unit_name": "wgn_22_2", "quantity": 2, "category": "infantry", "source_component": "wagner_native", "provenance": "legacy_reserve", "source_authority": "Code:X"},
+        {"unit_name": "wgn_22_3", "quantity": 1, "category": "infantry", "source_component": "wagner_native", "provenance": "legacy_reserve", "source_authority": "Code:X"},
+        {"unit_name": "sto_22_1", "quantity": 1, "category": "infantry", "source_component": "wagner_native", "provenance": "legacy_reserve", "source_authority": "Code:X"},
+        {"unit_name": "ural375", "quantity": 1, "category": "vehicle", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "bmp-1", "quantity": 1, "category": "ifv", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "t55a", "quantity": 1, "category": "tank", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "122mm_d-30", "quantity": 1, "category": "artillery", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"}
+      ]
+    },
+    "middle_east.ordinary": {
+      "region": "middle_east",
+      "tier": "ordinary",
+      "units": [
+        {"unit_name": "rus90_inf_rifle", "quantity": 2, "category": "infantry", "source_component": "belarus_modern_support", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "ural375", "quantity": 1, "category": "vehicle", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "btr-60pb", "quantity": 1, "category": "ifv", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"}
+      ]
+    },
+    "middle_east.strategic": {
+      "region": "middle_east",
+      "tier": "strategic",
+      "units": [
+        {"unit_name": "rus90_inf_rifle", "quantity": 2, "category": "infantry", "source_component": "belarus_modern_support", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "rus90_inf_at", "quantity": 1, "category": "anti_armor", "source_component": "belarus_modern_support", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "ural375", "quantity": 1, "category": "vehicle", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "bmp-1", "quantity": 1, "category": "ifv", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "122mm_d-30", "quantity": 1, "category": "artillery", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"}
+      ]
+    },
+    "middle_east.capital": {
+      "region": "middle_east",
+      "tier": "capital",
+      "units": [
+        {"unit_name": "rus90_inf_rifle", "quantity": 2, "category": "infantry", "source_component": "belarus_modern_support", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "rus90_inf_at", "quantity": 1, "category": "anti_armor", "source_component": "belarus_modern_support", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "rus90_inf_mg", "quantity": 1, "category": "infantry", "source_component": "belarus_modern_support", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "ural375", "quantity": 1, "category": "vehicle", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "bmp-1", "quantity": 1, "category": "ifv", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "t55a", "quantity": 1, "category": "tank", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "122mm_d-30", "quantity": 1, "category": "artillery", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"}
+      ]
+    },
+    "balkans.ordinary": {
+      "region": "balkans",
+      "tier": "ordinary",
+      "units": [
+        {"unit_name": "goc_serb_rifle(rusa)", "quantity": 2, "category": "infantry", "source_component": "serbia_infantry", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "btr-60pb", "quantity": 1, "category": "ifv", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "122mm_d-30", "quantity": 1, "category": "artillery", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"}
+      ]
+    },
+    "balkans.strategic": {
+      "region": "balkans",
+      "tier": "strategic",
+      "units": [
+        {"unit_name": "goc_serb_rifle(rusa)", "quantity": 2, "category": "infantry", "source_component": "serbia_infantry", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "goc_serb_at(rusa)", "quantity": 1, "category": "anti_armor", "source_component": "serbia_infantry", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "btr-80", "quantity": 1, "category": "ifv", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "122mm_d-30", "quantity": 1, "category": "artillery", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"}
+      ]
+    },
+    "balkans.capital": {
+      "region": "balkans",
+      "tier": "capital",
+      "units": [
+        {"unit_name": "goc_serb_rifle(rusa)", "quantity": 2, "category": "infantry", "source_component": "serbia_infantry", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "goc_serb_at(rusa)", "quantity": 1, "category": "anti_armor", "source_component": "serbia_infantry", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "goc_serb_recon(rusa)", "quantity": 1, "category": "recon", "source_component": "serbia_infantry", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "btr-80", "quantity": 1, "category": "ifv", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "t55a", "quantity": 1, "category": "tank", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "122mm_d-30", "quantity": 1, "category": "artillery", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"}
+      ]
+    },
+    "western_central_europe.ordinary": {
+      "region": "western_central_europe",
+      "tier": "ordinary",
+      "units": [
+        {"unit_name": "squad_arf_rifle(nato)", "quantity": 2, "category": "infantry", "source_component": "nato_common_infantry", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "goc_ildu_rifle(ukr)", "quantity": 1, "category": "infantry", "source_component": "ukraine_ildu", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "arf_m252(nato)", "quantity": 1, "category": "artillery", "source_component": "nato_common_support", "provenance": "encounter_authorized", "source_authority": "Code:X"}
+      ]
+    },
+    "western_central_europe.strategic": {
+      "region": "western_central_europe",
+      "tier": "strategic",
+      "units": [
+        {"unit_name": "squad_arf_rifle(nato)", "quantity": 2, "category": "infantry", "source_component": "nato_common_infantry", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "goc_ildu_rifle(ukr)", "quantity": 1, "category": "infantry", "source_component": "ukraine_ildu", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "goc_ildu_at(ukr)", "quantity": 1, "category": "anti_armor", "source_component": "ukraine_ildu", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "arf_m252(nato)", "quantity": 1, "category": "artillery", "source_component": "nato_common_support", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "arf_tow(nato)", "quantity": 1, "category": "anti_armor", "source_component": "nato_common_support", "provenance": "encounter_authorized", "source_authority": "Code:X"}
+      ]
+    },
+    "western_central_europe.capital": {
+      "region": "western_central_europe",
+      "tier": "capital",
+      "units": [
+        {"unit_name": "squad_arf_rifle(nato)", "quantity": 2, "category": "infantry", "source_component": "nato_common_infantry", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "goc_ildu_rifle(ukr)", "quantity": 1, "category": "infantry", "source_component": "ukraine_ildu", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "goc_ildu_at(ukr)", "quantity": 1, "category": "anti_armor", "source_component": "ukraine_ildu", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "goc_ildu_recon(ukr)", "quantity": 1, "category": "recon", "source_component": "ukraine_ildu", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "arf_m252(nato)", "quantity": 1, "category": "artillery", "source_component": "nato_common_support", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "arf_tow(nato)", "quantity": 1, "category": "anti_armor", "source_component": "nato_common_support", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "105mm_m119", "quantity": 1, "category": "artillery", "source_component": "nato_common_support", "provenance": "encounter_authorized", "source_authority": "Code:X"}
+      ]
+    },
+    "eastern_europe_ukr_territorial.ordinary": {
+      "region": "eastern_europe",
+      "tier": "ordinary",
+      "units": [
+        {"unit_name": "squad_ukr93_mech_bmp1(ukr)", "quantity": 1, "category": "ifv", "source_component": "ukraine_regular", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "squad_ukr93_mt12_mtlb(ukr)", "quantity": 1, "category": "vehicle", "source_component": "ukraine_regular", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "btr80_ukr", "quantity": 1, "category": "ifv", "source_component": "ukraine_regular", "provenance": "encounter_authorized", "source_authority": "Code:X"}
+      ]
+    },
+    "eastern_europe_ukr_territorial.strategic": {
+      "region": "eastern_europe",
+      "tier": "strategic",
+      "units": [
+        {"unit_name": "squad_ukr93_mech_bmp1(ukr)", "quantity": 1, "category": "ifv", "source_component": "ukraine_regular", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "squad_ukr93_mt12_mtlb(ukr)", "quantity": 1, "category": "vehicle", "source_component": "ukraine_regular", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "btr80_ukr", "quantity": 1, "category": "ifv", "source_component": "ukraine_regular", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "122mm_d-30_ukr", "quantity": 1, "category": "artillery", "source_component": "ukraine_regular", "provenance": "encounter_authorized", "source_authority": "Code:X"}
+      ]
+    },
+    "eastern_europe_ukr_territorial.capital": {
+      "region": "eastern_europe",
+      "tier": "capital",
+      "units": [
+        {"unit_name": "squad_ukr93_mech_bmp1(ukr)", "quantity": 2, "category": "ifv", "source_component": "ukraine_regular", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "squad_ukr93_mt12_mtlb(ukr)", "quantity": 1, "category": "vehicle", "source_component": "ukraine_regular", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "btr80_ukr", "quantity": 1, "category": "ifv", "source_component": "ukraine_regular", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "bmp2_ukr", "quantity": 1, "category": "ifv", "source_component": "ukraine_regular", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "122mm_d-30_ukr", "quantity": 1, "category": "artillery", "source_component": "ukraine_regular", "provenance": "encounter_authorized", "source_authority": "Code:X"}
+      ]
+    },
+    "eastern_europe_ru_reserve.ordinary": {
+      "region": "eastern_europe",
+      "tier": "ordinary",
+      "units": [
+        {"unit_name": "rus90_inf_rifle", "quantity": 2, "category": "infantry", "source_component": "belarus_modern_support", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "mtlb", "quantity": 1, "category": "vehicle", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "btr-60pb", "quantity": 1, "category": "ifv", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"}
+      ]
+    },
+    "eastern_europe_ru_reserve.strategic": {
+      "region": "eastern_europe",
+      "tier": "strategic",
+      "units": [
+        {"unit_name": "rus90_inf_rifle", "quantity": 2, "category": "infantry", "source_component": "belarus_modern_support", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "rus90_inf_at", "quantity": 1, "category": "anti_armor", "source_component": "belarus_modern_support", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "mtlb", "quantity": 1, "category": "vehicle", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "t55a", "quantity": 1, "category": "tank", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "122mm_d-30", "quantity": 1, "category": "artillery", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"}
+      ]
+    },
+    "eastern_europe_ru_reserve.capital": {
+      "region": "eastern_europe",
+      "tier": "capital",
+      "units": [
+        {"unit_name": "rus90_inf_rifle", "quantity": 2, "category": "infantry", "source_component": "belarus_modern_support", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "rus90_inf_at", "quantity": 1, "category": "anti_armor", "source_component": "belarus_modern_support", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "rus90_inf_mg", "quantity": 1, "category": "infantry", "source_component": "belarus_modern_support", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "mtlb", "quantity": 1, "category": "vehicle", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "t55a", "quantity": 1, "category": "tank", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "bmp2", "quantity": 1, "category": "ifv", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "122mm_d-30", "quantity": 1, "category": "artillery", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"}
+      ]
+    },
+    "western_asia.ordinary": {
+      "region": "western_asia",
+      "tier": "ordinary",
+      "units": [
+        {"unit_name": "rus90_inf_rifle", "quantity": 2, "category": "infantry", "source_component": "belarus_modern_support", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "mtlb", "quantity": 1, "category": "vehicle", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "btr-80", "quantity": 1, "category": "ifv", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"}
+      ]
+    },
+    "western_asia.strategic": {
+      "region": "western_asia",
+      "tier": "strategic",
+      "units": [
+        {"unit_name": "rus90_inf_rifle", "quantity": 2, "category": "infantry", "source_component": "belarus_modern_support", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "rus90_inf_at", "quantity": 1, "category": "anti_armor", "source_component": "belarus_modern_support", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "mtlb", "quantity": 1, "category": "vehicle", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "bmp2", "quantity": 1, "category": "ifv", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "122mm_d-30", "quantity": 1, "category": "artillery", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"}
+      ]
+    },
+    "western_asia.capital": {
+      "region": "western_asia",
+      "tier": "capital",
+      "units": [
+        {"unit_name": "rus90_inf_rifle", "quantity": 2, "category": "infantry", "source_component": "belarus_modern_support", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "rus90_inf_at", "quantity": 1, "category": "anti_armor", "source_component": "belarus_modern_support", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "rus90_inf_mg", "quantity": 1, "category": "infantry", "source_component": "belarus_modern_support", "provenance": "encounter_authorized", "source_authority": "Code:X"},
+        {"unit_name": "mtlb", "quantity": 1, "category": "vehicle", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "bmp2", "quantity": 1, "category": "ifv", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "t72a", "quantity": 1, "category": "tank", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"},
+        {"unit_name": "122mm_d-30", "quantity": 1, "category": "artillery", "source_component": "soviet_legacy_core", "provenance": "legacy_reserve", "source_authority": "West81"}
+      ]
+    }
+  },
+  "provinces": [
+    {"province_id": "e3_0260", "source_id": 260, "location_key": "Paris", "neutral_garrison_region": "western_central_europe", "neutral_garrison_tier": "capital", "pool_family": "western_central_europe", "allowed_pool_tags": ["european_reserve", "foreign_volunteer", "western_central_europe"], "adjacent_variation_tags": ["balkans"]},
+    {"province_id": "e3_0825", "source_id": 825, "location_key": "London", "neutral_garrison_region": "western_central_europe", "neutral_garrison_tier": "capital", "pool_family": "western_central_europe", "allowed_pool_tags": ["european_reserve", "foreign_volunteer", "western_central_europe"], "adjacent_variation_tags": ["balkans"]},
+    {"province_id": "e3_2206", "source_id": 6561, "location_key": "Madrid", "neutral_garrison_region": "western_central_europe", "neutral_garrison_tier": "capital", "pool_family": "western_central_europe", "allowed_pool_tags": ["european_reserve", "foreign_volunteer", "western_central_europe"], "adjacent_variation_tags": ["balkans"]},
+    {"province_id": "e3_2400", "source_id": 6881, "location_key": "Rome", "neutral_garrison_region": "western_central_europe", "neutral_garrison_tier": "capital", "pool_family": "western_central_europe", "allowed_pool_tags": ["european_reserve", "foreign_volunteer", "western_central_europe"], "adjacent_variation_tags": ["balkans"]},
+    {"province_id": "e3_0011", "source_id": 11, "location_key": "Lisbon", "neutral_garrison_region": "western_central_europe", "neutral_garrison_tier": "capital", "pool_family": "western_central_europe", "allowed_pool_tags": ["european_reserve", "foreign_volunteer", "western_central_europe"], "adjacent_variation_tags": ["balkans"]},
+    {"province_id": "e3_1026", "source_id": 1049, "location_key": "Stockholm", "neutral_garrison_region": "western_central_europe", "neutral_garrison_tier": "strategic", "pool_family": "western_central_europe", "allowed_pool_tags": ["european_reserve", "foreign_volunteer", "western_central_europe"], "adjacent_variation_tags": ["balkans"]},
+    {"province_id": "e3_1348", "source_id": 1461, "location_key": "Helsinki", "neutral_garrison_region": "western_central_europe", "neutral_garrison_tier": "strategic", "pool_family": "western_central_europe", "allowed_pool_tags": ["european_reserve", "foreign_volunteer", "western_central_europe"], "adjacent_variation_tags": ["balkans"]},
+    {"province_id": "e3_0919", "source_id": 920, "location_key": "Dublin", "neutral_garrison_region": "western_central_europe", "neutral_garrison_tier": "strategic", "pool_family": "western_central_europe", "allowed_pool_tags": ["european_reserve", "foreign_volunteer", "western_central_europe"], "adjacent_variation_tags": ["balkans"]},
+    {"province_id": "e3_2893", "source_id": 11120, "location_key": "Kiruna_northern_Sweden", "neutral_garrison_region": "western_central_europe", "neutral_garrison_tier": "ordinary", "pool_family": "western_central_europe", "allowed_pool_tags": ["european_reserve", "foreign_volunteer", "western_central_europe"], "adjacent_variation_tags": ["balkans"]},
+    {"province_id": "e3_1345", "source_id": 1458, "location_key": "Rovaniemi_northern_Finland", "neutral_garrison_region": "western_central_europe", "neutral_garrison_tier": "ordinary", "pool_family": "western_central_europe", "allowed_pool_tags": ["european_reserve", "western_central_europe"], "adjacent_variation_tags": ["balkans"]},
+    {"province_id": "e3_1351", "source_id": 1464, "location_key": "Narvik_northern_Norway", "neutral_garrison_region": "western_central_europe", "neutral_garrison_tier": "ordinary", "pool_family": "western_central_europe", "allowed_pool_tags": ["european_reserve", "western_central_europe"], "adjacent_variation_tags": ["balkans"]},
+    {"province_id": "e3_0950", "source_id": 951, "location_key": "Reykjavik", "neutral_garrison_region": "western_central_europe", "neutral_garrison_tier": "ordinary", "pool_family": "western_central_europe", "allowed_pool_tags": ["european_reserve", "western_central_europe"], "adjacent_variation_tags": []},
+    {"province_id": "e3_0986", "source_id": 1009, "location_key": "Oslo", "neutral_garrison_region": "western_central_europe", "neutral_garrison_tier": "capital", "pool_family": "western_central_europe", "allowed_pool_tags": ["european_reserve", "foreign_volunteer", "western_central_europe"], "adjacent_variation_tags": ["balkans"]},
+    {"province_id": "e3_1368", "source_id": 2202, "location_key": "Athens", "neutral_garrison_region": "balkans", "neutral_garrison_tier": "capital", "pool_family": "balkans", "allowed_pool_tags": ["balkans", "irregular", "legacy_reserve"], "adjacent_variation_tags": ["eastern_europe"]},
+    {"province_id": "e3_1205", "source_id": 1268, "location_key": "Sevastopol", "neutral_garrison_region": "eastern_europe", "neutral_garrison_tier": "strategic", "pool_family": "eastern_europe_ukr_territorial", "allowed_pool_tags": ["eastern_europe", "ukr_territorial"], "adjacent_variation_tags": ["balkans"]},
+    {"province_id": "e3_2269", "source_id": 6627, "location_key": "Simferopol", "neutral_garrison_region": "eastern_europe", "neutral_garrison_tier": "ordinary", "pool_family": "eastern_europe_ukr_territorial", "allowed_pool_tags": ["eastern_europe", "ukr_territorial"], "adjacent_variation_tags": ["balkans"]},
+    {"province_id": "e3_2746", "source_id": 10805, "location_key": "Volgograd", "neutral_garrison_region": "eastern_europe", "neutral_garrison_tier": "strategic", "pool_family": "eastern_europe_ru_reserve", "allowed_pool_tags": ["eastern_europe", "legacy_reserve", "ru_reserve"], "adjacent_variation_tags": ["western_asia"]},
+    {"province_id": "e3_2813", "source_id": 10888, "location_key": "Saratov", "neutral_garrison_region": "eastern_europe", "neutral_garrison_tier": "ordinary", "pool_family": "eastern_europe_ru_reserve", "allowed_pool_tags": ["eastern_europe", "legacy_reserve", "ru_reserve"], "adjacent_variation_tags": ["western_asia"]},
+    {"province_id": "e3_2781", "source_id": 10854, "location_key": "Kazan", "neutral_garrison_region": "eastern_europe", "neutral_garrison_tier": "capital", "pool_family": "eastern_europe_ru_reserve", "allowed_pool_tags": ["eastern_europe", "legacy_reserve", "ru_reserve"], "adjacent_variation_tags": ["western_asia"]},
+    {"province_id": "e3_2722", "source_id": 10431, "location_key": "Tbilisi", "neutral_garrison_region": "western_asia", "neutral_garrison_tier": "capital", "pool_family": "western_asia", "allowed_pool_tags": ["legacy_reserve", "western_asia"], "adjacent_variation_tags": ["eastern_europe"]},
+    {"province_id": "e3_2725", "source_id": 10436, "location_key": "Yerevan", "neutral_garrison_region": "western_asia", "neutral_garrison_tier": "capital", "pool_family": "western_asia", "allowed_pool_tags": ["legacy_reserve", "western_asia"], "adjacent_variation_tags": ["eastern_europe"]},
+    {"province_id": "e3_1476", "source_id": 2654, "location_key": "Baku", "neutral_garrison_region": "western_asia", "neutral_garrison_tier": "capital", "pool_family": "western_asia", "allowed_pool_tags": ["legacy_reserve", "western_asia"], "adjacent_variation_tags": ["middle_east"]},
+    {"province_id": "e3_1373", "source_id": 2207, "location_key": "Ankara", "neutral_garrison_region": "western_asia", "neutral_garrison_tier": "capital", "pool_family": "western_asia", "allowed_pool_tags": ["legacy_reserve", "western_asia"], "adjacent_variation_tags": ["middle_east"]},
+    {"province_id": "e3_1092", "source_id": 1116, "location_key": "Istanbul", "neutral_garrison_region": "western_asia", "neutral_garrison_tier": "strategic", "pool_family": "western_asia", "allowed_pool_tags": ["legacy_reserve", "western_asia"], "adjacent_variation_tags": ["balkans"]},
+    {"province_id": "e3_1072", "source_id": 1096, "location_key": "Adana_southern_Turkey", "neutral_garrison_region": "western_asia", "neutral_garrison_tier": "ordinary", "pool_family": "western_asia", "allowed_pool_tags": ["legacy_reserve", "western_asia"], "adjacent_variation_tags": ["middle_east"]},
+    {"province_id": "e3_1490", "source_id": 2669, "location_key": "Cairo", "neutral_garrison_region": "north_africa", "neutral_garrison_tier": "capital", "pool_family": "north_africa", "allowed_pool_tags": ["legacy_reserve", "north_africa", "pmc"], "adjacent_variation_tags": ["middle_east"]},
+    {"province_id": "e3_1287", "source_id": 1399, "location_key": "Algiers", "neutral_garrison_region": "north_africa", "neutral_garrison_tier": "capital", "pool_family": "north_africa", "allowed_pool_tags": ["legacy_reserve", "north_africa", "pmc"], "adjacent_variation_tags": ["middle_east"]},
+    {"province_id": "e3_1408", "source_id": 2242, "location_key": "Tunis", "neutral_garrison_region": "north_africa", "neutral_garrison_tier": "capital", "pool_family": "north_africa", "allowed_pool_tags": ["legacy_reserve", "north_africa", "pmc"], "adjacent_variation_tags": ["middle_east"]},
+    {"province_id": "e3_1262", "source_id": 1365, "location_key": "Tripoli", "neutral_garrison_region": "north_africa", "neutral_garrison_tier": "capital", "pool_family": "north_africa", "allowed_pool_tags": ["legacy_reserve", "north_africa", "pmc"], "adjacent_variation_tags": ["middle_east"]},
+    {"province_id": "e3_1483", "source_id": 2662, "location_key": "Alexandria", "neutral_garrison_region": "north_africa", "neutral_garrison_tier": "ordinary", "pool_family": "north_africa", "allowed_pool_tags": ["legacy_reserve", "north_africa", "pmc"], "adjacent_variation_tags": ["middle_east"]},
+    {"province_id": "e3_1487", "source_id": 2666, "location_key": "Port_Said", "neutral_garrison_region": "north_africa", "neutral_garrison_tier": "strategic", "pool_family": "north_africa", "allowed_pool_tags": ["legacy_reserve", "north_africa"], "adjacent_variation_tags": ["middle_east"]},
+    {"province_id": "e3_1495", "source_id": 2683, "location_key": "Suez", "neutral_garrison_region": "north_africa", "neutral_garrison_tier": "strategic", "pool_family": "north_africa", "allowed_pool_tags": ["legacy_reserve", "north_africa"], "adjacent_variation_tags": ["middle_east"]},
+    {"province_id": "e3_2711", "source_id": 8065, "location_key": "Jerusalem", "neutral_garrison_region": "middle_east", "neutral_garrison_tier": "capital", "pool_family": "middle_east", "allowed_pool_tags": ["legacy_reserve", "middle_east"], "adjacent_variation_tags": ["western_asia"]},
+    {"province_id": "e3_2084", "source_id": 6087, "location_key": "Beirut", "neutral_garrison_region": "middle_east", "neutral_garrison_tier": "capital", "pool_family": "middle_east", "allowed_pool_tags": ["legacy_reserve", "middle_east"], "adjacent_variation_tags": ["western_asia"]},
+    {"province_id": "e3_1899", "source_id": 3719, "location_key": "Damascus", "neutral_garrison_region": "middle_east", "neutral_garrison_tier": "capital", "pool_family": "middle_east", "allowed_pool_tags": ["legacy_reserve", "middle_east"], "adjacent_variation_tags": ["western_asia"]},
+    {"province_id": "e3_1903", "source_id": 3723, "location_key": "Arish_Sinai", "neutral_garrison_region": "middle_east", "neutral_garrison_tier": "ordinary", "pool_family": "middle_east", "allowed_pool_tags": ["legacy_reserve", "middle_east"], "adjacent_variation_tags": ["north_africa"]}
+  ]
+}

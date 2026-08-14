@@ -39,5 +39,6 @@ gates_of_codex = [
     "data/*",
     "data/earth3_v1/*.json",
     "data/earth3_native_acceptance/*.json",
+    "data/neutral_garrisons/*.json",
     "pyinstaller_hooks/*.py",
 ]

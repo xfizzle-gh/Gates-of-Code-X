@@ -35,6 +35,9 @@ class Faction(StrEnum):
     NEUTRAL = "neutral"
 
 
+NEUTRAL_GARRISON_BATTALION_PREFIX = "garrison:"
+
+
 class InformationTier(StrEnum):
     UNKNOWN = "unknown"
     CONTACT = "contact"
@@ -611,6 +614,7 @@ class PendingBattle:
     encounter_edge_id: str = ""
     encounter_progress_milli: int | None = None
     encounter_pixel: list[int] = field(default_factory=list)
+    tactical_defender_side: str = ""
 
 
 @dataclass(slots=True)
@@ -751,7 +755,12 @@ class CampaignState:
                     raise ValueError(f"Battalion {key} references missing formation {battalion.formation_id}")
                 if formation.faction != battalion.faction:
                     raise ValueError(f"Battalion {key} faction does not match formation {formation.formation_id}")
-            if battalion.strategic_formation_id:
+            if key.startswith(NEUTRAL_GARRISON_BATTALION_PREFIX):
+                if battalion.faction != Faction.NEUTRAL:
+                    raise ValueError(f"Garrison battalion {key} must remain faction neutral")
+                if battalion.strategic_formation_id:
+                    raise ValueError(f"Garrison battalion {key} must not have a strategic formation")
+            elif battalion.strategic_formation_id:
                 force = self.strategic_formations.get(battalion.strategic_formation_id)
                 if force is None:
                     raise ValueError(

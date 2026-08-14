@@ -4,6 +4,7 @@ from .models import (
     Battalion,
     CampaignState,
     ForceEchelon,
+    NEUTRAL_GARRISON_BATTALION_PREFIX,
     StrategicFormation,
 )
 
@@ -67,6 +68,8 @@ def ensure_strategic_formations(state: CampaignState) -> dict:
             owned[battalion_id] = force.strategic_formation_id
 
     for battalion in sorted(state.battalions.values(), key=lambda value: value.battalion_id):
+        if battalion.battalion_id.startswith(NEUTRAL_GARRISON_BATTALION_PREFIX):
+            continue
         force_id = (
             battalion.strategic_formation_id
             or owned.get(battalion.battalion_id)
@@ -174,6 +177,12 @@ def _validate_authored_earth3_force_structure(state: CampaignState) -> None:
                 )
 
     for battalion_id, battalion in state.battalions.items():
+        if battalion_id.startswith(NEUTRAL_GARRISON_BATTALION_PREFIX):
+            if battalion.faction.value != "neutral" or battalion.strategic_formation_id:
+                raise ValueError(
+                    f"Garrison battalion {battalion_id} must stay formationless and neutral"
+                )
+            continue
         force_id = battalion.strategic_formation_id
         if not force_id:
             raise ValueError(
@@ -227,6 +236,8 @@ def _already_migrated(state: CampaignState) -> bool:
     if not state.strategic_formations:
         return False
     for battalion in state.battalions.values():
+        if battalion.battalion_id.startswith(NEUTRAL_GARRISON_BATTALION_PREFIX):
+            continue
         force_id = battalion.strategic_formation_id
         if not force_id:
             return False
