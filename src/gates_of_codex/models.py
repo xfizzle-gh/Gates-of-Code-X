@@ -614,6 +614,7 @@ class PendingBattle:
     encounter_edge_id: str = ""
     encounter_progress_milli: int | None = None
     encounter_pixel: list[int] = field(default_factory=list)
+    tactical_defender_side: str = ""
 
 
 @dataclass(slots=True)

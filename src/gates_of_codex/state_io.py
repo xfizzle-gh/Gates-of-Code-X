@@ -327,6 +327,7 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
                 pending_data.get("encounter_progress_milli")
             ),
             encounter_pixel=_parse_encounter_pixel(pending_data.get("encounter_pixel")),
+            tactical_defender_side=str(pending_data.get("tactical_defender_side", "") or ""),
         )
         _validate_encounter_contract(pending)
         _validate_pending_ambush_metadata(pending, battalions)
@@ -389,6 +390,9 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
         state, migrated_from_pre_s11=incoming_schema < 11
     )
     state.validate()
+    from .neutral_garrison import validate_neutral_garrison_runtime
+
+    validate_neutral_garrison_runtime(state)
     return state
 
 
@@ -422,6 +426,9 @@ def save_campaign(
     ensure_s11_schema(state)
     refresh_all_observer_knowledge(state, observation_context)
     state.validate()
+    from .neutral_garrison import validate_neutral_garrison_runtime
+
+    validate_neutral_garrison_runtime(state)
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
     payload = json.dumps(
@@ -538,6 +545,15 @@ def _validate_encounter_contract(pending: PendingBattle) -> None:
     edge_kinds = {"edge_cross", "edge_catchup"}
     node_kinds = {"node_contact", "node_simultaneous"}
 
+    tactical_side = str(getattr(pending, "tactical_defender_side", "") or "")
+    if tactical_side:
+        if tactical_side not in {"nato", "ukr", "rusa", "prc"}:
+            raise ValueError(f"tactical_defender_side is not a core Code:X side: {tactical_side}")
+        if tactical_side == pending.attacker_faction.value:
+            raise ValueError("tactical_defender_side must differ from attacker faction")
+        if pending.defender_faction.value != "neutral":
+            raise ValueError("tactical_defender_side requires strategic-neutral defender")
+
     if not kind:
         # Legacy adjacency battle: operational location fields must be empty.
         if node_id or edge_id or progress is not None or pixel:
@@ -575,6 +591,23 @@ def _validate_encounter_contract(pending: PendingBattle) -> None:
             raise ValueError(f"{kind} requires empty encounter_pixel")
         if not atk.strip() or not dfn.strip():
             raise ValueError(f"{kind} requires primary attacker and defender formation IDs")
+        return
+
+    if kind == "neutral_garrison":
+        if not node_id.strip():
+            raise ValueError("neutral_garrison requires nonempty encounter_node_id")
+        if edge_id:
+            raise ValueError("neutral_garrison requires empty encounter_edge_id")
+        if progress is not None:
+            raise ValueError("neutral_garrison requires empty encounter_progress_milli")
+        if pixel:
+            raise ValueError("neutral_garrison requires empty encounter_pixel")
+        if not atk.strip():
+            raise ValueError("neutral_garrison requires primary attacker formation ID")
+        if dfn.strip():
+            raise ValueError("neutral_garrison must not create a defender strategic formation")
+        if not tactical_side:
+            raise ValueError("neutral_garrison requires tactical_defender_side")
         return
 
     raise ValueError(f"unknown encounter_kind {kind!r}")

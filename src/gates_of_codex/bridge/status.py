@@ -6,6 +6,24 @@ from dataclasses import dataclass, field
 
 from ..models import PendingBattle
 
+_CORE_ARMIES = frozenset({"nato", "ukr", "rusa", "prc"})
+
+
+def pending_tactical_armies(pending: PendingBattle) -> tuple[str, str]:
+    """Resolve GoH {army}/{enemyArmy} without leaking strategic-neutral identity."""
+    player = str(pending.player_faction.value)
+    if pending.player_is_attacker:
+        enemy = str(pending.tactical_defender_side or pending.defender_faction.value)
+    else:
+        enemy = str(pending.attacker_faction.value)
+    if player not in _CORE_ARMIES:
+        raise ValueError(f"tactical player army is not a core Code:X side: {player}")
+    if enemy not in _CORE_ARMIES:
+        raise ValueError(f"tactical enemy army is not a core Code:X side: {enemy}")
+    if player == enemy:
+        raise ValueError(f"tactical armies must be distinct, got {player} vs {enemy}")
+    return player, enemy
+
 
 @dataclass(slots=True)
 class BattleStatusOptions:
@@ -90,8 +108,7 @@ class StatusBuilder:
 
     def _patch_template(self, pending: PendingBattle, options: BattleStatusOptions) -> str:
         text = self.validate(options.template_status)
-        player = pending.player_faction.value
-        enemy = pending.defender_faction.value if pending.player_is_attacker else pending.attacker_faction.value
+        player, enemy = pending_tactical_armies(pending)
         timestamp = options.timestamp or int(time.time())
 
         replacements = {
@@ -134,8 +151,7 @@ class StatusBuilder:
         return self.validate(text)
 
     def _build_fallback(self, pending: PendingBattle, options: BattleStatusOptions) -> str:
-        player = pending.player_faction.value
-        enemy = pending.defender_faction.value if pending.player_is_attacker else pending.attacker_faction.value
+        player, enemy = pending_tactical_armies(pending)
         timestamp = options.timestamp or int(time.time())
         own_alliance = "allies" if player in {"nato", "ukr"} else "axis"
         enemy_alliance = "axis" if own_alliance == "allies" else "allies"

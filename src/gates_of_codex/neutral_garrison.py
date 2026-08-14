@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
+from importlib.resources import files
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
@@ -18,8 +19,10 @@ from .models import (
 )
 
 
-AUTHORITY_RELATIVE = Path("src/gates_of_codex/data/neutral_garrisons/authority.json")
+AUTHORITY_PACKAGE = "gates_of_codex"
+AUTHORITY_RESOURCE = "data/neutral_garrisons/authority.json"
 AUTHORITY_SCHEMA = "gates.neutral_garrison.v1"
+ENCOUNTER_KIND_NEUTRAL_GARRISON = "neutral_garrison"
 AUTHORITY_SCHEMA_VERSION = 1
 RUNTIME_KEY = "neutral_garrison_runtime"
 RUNTIME_SCHEMA_VERSION = 1
@@ -40,7 +43,18 @@ _ALLOWED_TOP_LEVEL = frozenset(
         "provinces",
     }
 )
-_ALLOWED_REGION_FIELDS = frozenset({"adjacent_regions", "export_side"})
+_ALLOWED_REGION_FIELDS = frozenset({"adjacent_regions", "export_side", "tactical_export_sides"})
+_ALLOWED_RUNTIME_FIELDS = frozenset({"schema_version", "encounters", "provinces"})
+_ALLOWED_RUNTIME_PROVINCE_FIELDS = frozenset(
+    {
+        "condition",
+        "defeated",
+        "province_id",
+        "readiness_milli",
+        "roster",
+        "selection",
+    }
+)
 _ALLOWED_POOL_FIELDS = frozenset({"region", "tier", "units"})
 _ALLOWED_UNIT_FIELDS = frozenset(
     {
@@ -146,27 +160,44 @@ def is_garrison_battalion_id(battalion_id: str) -> bool:
 
 
 def authority_path(repo_root: str | Path | None = None) -> Path:
-    root = Path(repo_root) if repo_root is not None else Path(__file__).resolve().parents[2]
-    return (root / AUTHORITY_RELATIVE).resolve()
+    if repo_root is not None:
+        return (
+            Path(repo_root)
+            / "src"
+            / "gates_of_codex"
+            / "data"
+            / "neutral_garrisons"
+            / "authority.json"
+        ).resolve()
+    return Path(str(files(AUTHORITY_PACKAGE).joinpath(AUTHORITY_RESOURCE)))
 
 
 _AUTHORITY_CACHE: dict[str, dict[str, Any]] = {}
 
 
 def load_garrison_authority(path: str | Path | None = None) -> dict[str, Any]:
-    target = Path(path) if path is not None else authority_path()
-    cache_key = str(target)
-    cached = _AUTHORITY_CACHE.get(cache_key)
-    if cached is not None and path is None:
-        return cached
+    if path is None:
+        cached = _AUTHORITY_CACHE.get("installed")
+        if cached is not None:
+            return cached
+        resource = files(AUTHORITY_PACKAGE).joinpath(AUTHORITY_RESOURCE)
+        try:
+            raw = resource.read_bytes()
+        except (FileNotFoundError, OSError) as exc:
+            raise NeutralGarrisonError(
+                f"neutral garrison authority is missing from installed package: {AUTHORITY_RESOURCE}"
+            ) from exc
+        payload = _strict_json_object(raw, label=AUTHORITY_RESOURCE)
+        validate_garrison_authority(payload)
+        _AUTHORITY_CACHE["installed"] = payload
+        return payload
+    target = Path(path)
     try:
         raw = target.read_bytes()
     except OSError as exc:
         raise NeutralGarrisonError(f"neutral garrison authority is missing: {target}") from exc
     payload = _strict_json_object(raw, label=str(target))
     validate_garrison_authority(payload)
-    if path is None:
-        _AUTHORITY_CACHE[cache_key] = payload
     return payload
 
 
@@ -349,6 +380,25 @@ def garrison_is_defeated(state: CampaignState, province_id: str) -> bool:
     return bool(record.get("defeated"))
 
 
+def choose_tactical_defender_side(
+    region_id: str,
+    attacker_faction: Faction,
+    *,
+    authority: Mapping[str, Any] | None = None,
+) -> str:
+    payload = authority if authority is not None else load_garrison_authority()
+    region = payload["regions"].get(region_id)
+    if not isinstance(region, dict):
+        raise NeutralGarrisonError(f"unknown garrison region for tactical export: {region_id}")
+    attacker_side = attacker_faction.value
+    for side in region["tactical_export_sides"]:
+        if side != attacker_side:
+            return str(side)
+    raise NeutralGarrisonError(
+        f"no distinct tactical export side for {region_id} against {attacker_side}"
+    )
+
+
 def maybe_attach_neutral_garrison(
     state: CampaignState,
     province_id: str,
@@ -356,6 +406,9 @@ def maybe_attach_neutral_garrison(
     attacker: Battalion,
     authority: Mapping[str, Any] | None = None,
     catalog: Mapping[str, Any] | None = None,
+    origin_province_id: str | None = None,
+    encounter_node_id: str = "",
+    attacker_formation_id: str = "",
 ) -> PendingBattle | None:
     province = state.provinces.get(province_id)
     if province is None:
@@ -380,9 +433,15 @@ def maybe_attach_neutral_garrison(
         catalog=catalog,
     )
     battalion = _ensure_garrison_battalion(state, province, selection)
+    tactical_side = choose_tactical_defender_side(
+        selection.region,
+        attacker.faction,
+        authority=payload,
+    )
+    origin = origin_province_id if origin_province_id is not None else attacker.province_id
     pending = PendingBattle(
         battle_id=_deterministic_battle_id(state, province_id, selection.selection_signature),
-        origin_province_id=attacker.province_id,
+        origin_province_id=str(origin),
         target_province_id=province_id,
         attacker_faction=attacker.faction,
         defender_faction=Faction.NEUTRAL,
@@ -394,6 +453,10 @@ def maybe_attach_neutral_garrison(
         ],
         player_faction=state.selected_faction,
         player_is_attacker=attacker.faction == state.selected_faction,
+        encounter_node_id=str(encounter_node_id or ""),
+        encounter_kind=ENCOUNTER_KIND_NEUTRAL_GARRISON if encounter_node_id else "",
+        attacker_formation_id=str(attacker_formation_id or ""),
+        tactical_defender_side=tactical_side,
     )
     state.pending_battle = pending
     _store_encounter_record(state, pending.battle_id, selection)
@@ -451,7 +514,49 @@ def export_garrison_profile(state: CampaignState, pending: PendingBattle | None 
                 _store_encounter_record(state, battle.battle_id, _selection_from_runtime(payload))
     if not isinstance(payload, dict):
         return None
-    return json.loads(json.dumps(payload, sort_keys=True, separators=(",", ":")))
+    exported = json.loads(json.dumps(payload, sort_keys=True, separators=(",", ":")))
+    if battle is not None and battle.tactical_defender_side:
+        exported["strategic_defender_faction"] = Faction.NEUTRAL.value
+        exported["tactical_defender_side"] = battle.tactical_defender_side
+    return exported
+
+
+def validate_neutral_garrison_runtime(state: CampaignState) -> None:
+    raw = state.map_metadata.get(RUNTIME_KEY)
+    if raw is None:
+        _reject_unbound_garrison_battalions(state)
+        return
+    if not isinstance(raw, dict):
+        raise NeutralGarrisonError("neutral_garrison_runtime must be an object")
+    unknown = set(raw) - _ALLOWED_RUNTIME_FIELDS
+    if unknown:
+        raise NeutralGarrisonError(
+            f"neutral_garrison_runtime has unknown fields: {sorted(unknown)}"
+        )
+    if raw.get("schema_version") != RUNTIME_SCHEMA_VERSION:
+        raise NeutralGarrisonError("neutral_garrison_runtime schema_version is unsupported")
+    authority = load_garrison_authority()
+    provinces = raw.get("provinces") or {}
+    if not isinstance(provinces, dict):
+        raise NeutralGarrisonError("neutral_garrison_runtime provinces must be an object")
+    for province_id, record in sorted(provinces.items()):
+        _validate_runtime_province(state, str(province_id), record, authority=authority)
+    encounters = raw.get("encounters") or {}
+    if not isinstance(encounters, dict):
+        raise NeutralGarrisonError("neutral_garrison_runtime encounters must be an object")
+    for battle_id, payload in sorted(encounters.items()):
+        if not isinstance(payload, dict):
+            raise NeutralGarrisonError(f"garrison encounter {battle_id} is invalid")
+        province_id = str(payload.get("province_id") or "")
+        if province_id not in state.provinces:
+            raise NeutralGarrisonError(f"garrison encounter {battle_id} references missing province")
+        computed = select_neutral_garrison(
+            province_id,
+            authority=authority,
+            campaign_seed=campaign_garrison_seed(state),
+        )
+        _assert_selection_matches_authority(payload, computed)
+    _reject_unbound_garrison_battalions(state)
 
 
 def strategic_isolation_snapshot(state: CampaignState) -> dict[str, Any]:
@@ -501,12 +606,6 @@ def _selection_for_state(
     authority: Mapping[str, Any],
     catalog: Mapping[str, Any] | None,
 ) -> GarrisonSelection:
-    runtime_record = _runtime_province(state, province.province_id)
-    if runtime_record.get("selection"):
-        payload = runtime_record["selection"]
-        if not isinstance(payload, dict):
-            raise NeutralGarrisonError("persisted garrison selection is invalid")
-        return _selection_from_runtime(payload)
     source_id = province.metadata.get("source_id")
     row = _province_row(authority, province.province_id)
     if source_id not in (None, "") and int(source_id) != int(row["source_id"]):
@@ -519,7 +618,14 @@ def _selection_for_state(
         campaign_seed=campaign_garrison_seed(state),
         catalog=catalog,
     )
-    _store_province_selection(state, selection)
+    runtime_record = _runtime_province(state, province.province_id)
+    persisted = runtime_record.get("selection")
+    if persisted is not None:
+        if not isinstance(persisted, dict):
+            raise NeutralGarrisonError("persisted garrison selection is invalid")
+        _assert_selection_matches_authority(persisted, selection)
+    else:
+        _store_province_selection(state, selection)
     return selection
 
 
@@ -535,10 +641,19 @@ def _ensure_garrison_battalion(
             raise NeutralGarrisonError(f"{battalion_id} is not a neutral garrison")
         if existing.strategic_formation_id:
             raise NeutralGarrisonError(f"{battalion_id} must not have a strategic formation")
+        _assert_roster_subset(
+            [
+                {"unit_name": entry.unit_name, "quantity": entry.quantity, "category": entry.category}
+                for entry in existing.roster
+            ],
+            selection.units,
+            label=battalion_id,
+        )
         return existing
     runtime_record = _runtime_province(state, province.province_id)
     roster_payload = runtime_record.get("roster")
     if isinstance(roster_payload, list) and roster_payload:
+        _assert_roster_subset(roster_payload, selection.units, label=battalion_id)
         roster = [
             BattalionRosterEntry(
                 unit_name=str(item["unit_name"]),
@@ -630,6 +745,123 @@ def _mark_defeated(state: CampaignState, province_id: str) -> None:
     state.map_metadata[RUNTIME_KEY] = runtime
 
 
+def _assert_selection_matches_authority(
+    persisted: Mapping[str, Any],
+    computed: GarrisonSelection,
+) -> None:
+    expected = computed.to_canonical_dict()
+    unknown = set(persisted) - set(expected)
+    if unknown:
+        raise NeutralGarrisonError(
+            f"persisted garrison selection has unknown fields: {sorted(unknown)}"
+        )
+    for field in (
+        "authority_digest",
+        "pool_family",
+        "pool_id",
+        "profile_id",
+        "province_id",
+        "region",
+        "selection_signature",
+        "source_id",
+        "tier",
+        "units",
+    ):
+        if persisted.get(field) != expected.get(field):
+            raise NeutralGarrisonError(
+                f"persisted garrison {field} does not match current authority"
+            )
+
+
+def _assert_roster_subset(
+    roster: Iterable[Mapping[str, Any]],
+    template: Iterable[GarrisonUnit],
+    *,
+    label: str,
+) -> None:
+    allowed = {unit.unit_name: unit for unit in template}
+    seen: set[str] = set()
+    for item in roster:
+        if not isinstance(item, Mapping):
+            raise NeutralGarrisonError(f"{label} roster entry must be an object")
+        name = str(item.get("unit_name") or "")
+        quantity = item.get("quantity")
+        if name in seen:
+            raise NeutralGarrisonError(f"{label} roster repeats unit {name}")
+        seen.add(name)
+        if name not in allowed:
+            raise NeutralGarrisonError(f"{label} roster contains unauthorized unit {name}")
+        if not isinstance(quantity, int) or isinstance(quantity, bool) or quantity < 1:
+            raise NeutralGarrisonError(f"{label} roster quantity for {name} is invalid")
+        if quantity > allowed[name].quantity:
+            raise NeutralGarrisonError(
+                f"{label} roster quantity for {name} exceeds authored template"
+            )
+
+
+def _validate_runtime_province(
+    state: CampaignState,
+    province_id: str,
+    record: Any,
+    *,
+    authority: Mapping[str, Any],
+) -> None:
+    if not isinstance(record, dict):
+        raise NeutralGarrisonError(f"garrison runtime {province_id} must be an object")
+    unknown = set(record) - _ALLOWED_RUNTIME_PROVINCE_FIELDS
+    if unknown:
+        raise NeutralGarrisonError(
+            f"garrison runtime {province_id} has unknown fields: {sorted(unknown)}"
+        )
+    if str(record.get("province_id") or province_id) != province_id:
+        raise NeutralGarrisonError(f"garrison runtime province_id mismatch for {province_id}")
+    if province_id not in state.provinces:
+        raise NeutralGarrisonError(f"garrison runtime references missing province {province_id}")
+    computed = select_neutral_garrison(
+        province_id,
+        authority=authority,
+        campaign_seed=campaign_garrison_seed(state),
+    )
+    persisted = record.get("selection")
+    if persisted is not None:
+        if not isinstance(persisted, dict):
+            raise NeutralGarrisonError(f"garrison runtime {province_id} selection is invalid")
+        _assert_selection_matches_authority(persisted, computed)
+    roster = record.get("roster")
+    if roster is None:
+        roster = []
+    if not isinstance(roster, list):
+        raise NeutralGarrisonError(f"garrison runtime {province_id} roster must be an array")
+    defeated = bool(record.get("defeated"))
+    if defeated:
+        if roster:
+            raise NeutralGarrisonError(f"defeated garrison {province_id} must not retain a roster")
+    elif roster:
+        _assert_roster_subset(roster, computed.units, label=f"garrison runtime {province_id}")
+    battalion = state.battalions.get(garrison_battalion_id(province_id))
+    if battalion is not None and battalion.province_id != province_id:
+        raise NeutralGarrisonError(f"garrison battalion is not bound to {province_id}")
+
+
+def _reject_unbound_garrison_battalions(state: CampaignState) -> None:
+    runtime = state.map_metadata.get(RUNTIME_KEY)
+    known = set()
+    if isinstance(runtime, dict) and isinstance(runtime.get("provinces"), dict):
+        known = {str(key) for key in runtime["provinces"]}
+    for battalion_id, battalion in state.battalions.items():
+        if not is_garrison_battalion_id(battalion_id):
+            continue
+        expected = garrison_battalion_id(battalion.province_id)
+        if battalion_id != expected:
+            raise NeutralGarrisonError(
+                f"{battalion_id} is not bound to garrison:{battalion.province_id}"
+            )
+        if battalion.province_id not in known:
+            raise NeutralGarrisonError(
+                f"{battalion_id} has no authenticated garrison runtime record"
+            )
+
+
 def _selection_from_runtime(payload: Mapping[str, Any]) -> GarrisonSelection:
     units = tuple(_unit_from_payload(item) for item in payload.get("units") or ())
     if not units:
@@ -719,8 +951,24 @@ def _validate_region(region_id: str, region: Any, *, known_regions: set[str]) ->
         raise NeutralGarrisonError(f"garrison region {region_id} cannot be adjacent to itself")
     if any(item not in known_regions for item in adjacent):
         raise NeutralGarrisonError(f"garrison region {region_id} references unknown adjacent region")
-    if str(region.get("export_side")) not in _EXPORT_SIDES:
+    export_side = str(region.get("export_side") or "")
+    if export_side not in _EXPORT_SIDES:
         raise NeutralGarrisonError(f"garrison region {region_id} has invalid export_side")
+    sides = region.get("tactical_export_sides")
+    if not isinstance(sides, list) or len(sides) < 2:
+        raise NeutralGarrisonError(
+            f"garrison region {region_id} tactical_export_sides must list at least two sides"
+        )
+    if any(not isinstance(item, str) or item not in _EXPORT_SIDES for item in sides):
+        raise NeutralGarrisonError(
+            f"garrison region {region_id} tactical_export_sides must be core Code:X sides"
+        )
+    if len(set(sides)) != len(sides):
+        raise NeutralGarrisonError(f"garrison region {region_id} tactical_export_sides must be unique")
+    if sides[0] != export_side:
+        raise NeutralGarrisonError(
+            f"garrison region {region_id} tactical_export_sides must start with export_side"
+        )
 
 
 def _validate_pool(pool_id: str, pool: Any, *, known_regions: set[str]) -> None:

@@ -1087,6 +1087,9 @@ def _advance_formation_one_tick(
                     state,
                     force.province_id or dest_node,
                     attacker=attacker,
+                    origin_province_id=origin_province_id,
+                    encounter_node_id=dest_node,
+                    attacker_formation_id=force.strategic_formation_id,
                 )
                 if garrison_battle is not None:
                     force.move_order = _as_blocked(order)

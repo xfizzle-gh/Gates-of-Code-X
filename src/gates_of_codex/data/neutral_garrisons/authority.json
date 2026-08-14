@@ -7,27 +7,33 @@
   "regions": {
     "north_africa": {
       "adjacent_regions": ["middle_east"],
-      "export_side": "rusa"
+      "export_side": "rusa",
+      "tactical_export_sides": ["rusa", "nato"]
     },
     "middle_east": {
       "adjacent_regions": ["north_africa", "western_asia"],
-      "export_side": "rusa"
+      "export_side": "rusa",
+      "tactical_export_sides": ["rusa", "nato"]
     },
     "balkans": {
       "adjacent_regions": ["eastern_europe", "western_central_europe"],
-      "export_side": "rusa"
+      "export_side": "rusa",
+      "tactical_export_sides": ["rusa", "nato"]
     },
     "western_central_europe": {
       "adjacent_regions": ["balkans"],
-      "export_side": "nato"
+      "export_side": "nato",
+      "tactical_export_sides": ["nato", "rusa"]
     },
     "eastern_europe": {
       "adjacent_regions": ["balkans", "western_asia"],
-      "export_side": "rusa"
+      "export_side": "rusa",
+      "tactical_export_sides": ["rusa", "ukr"]
     },
     "western_asia": {
       "adjacent_regions": ["balkans", "eastern_europe", "middle_east"],
-      "export_side": "rusa"
+      "export_side": "rusa",
+      "tactical_export_sides": ["rusa", "nato"]
     }
   },
   "pools": {

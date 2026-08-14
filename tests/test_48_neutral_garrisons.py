@@ -3,26 +3,38 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
+import re
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 from gates_of_codex.campaign import CampaignEngine
 from gates_of_codex.faction_wiring import load_faction_manifest
+from gates_of_codex.bridge.archive import CampaignSaveArchive
+from gates_of_codex.force_migration import ensure_strategic_formations
 from gates_of_codex.models import (
     Battalion,
     BattalionRosterEntry,
     CampaignState,
     Faction,
     FactionState,
+    ForceEchelon,
+    Formation,
+    FormationKind,
     NEUTRAL_GARRISON_BATTALION_PREFIX,
     Province,
+    StrategicFormation,
 )
 from gates_of_codex.neutral_garrison import (
+    ENCOUNTER_KIND_NEUTRAL_GARRISON,
     NeutralGarrisonError,
     authority_digest,
     authority_path,
     campaign_garrison_seed,
+    choose_tactical_defender_side,
     export_garrison_profile,
     garrison_battalion_id,
     load_garrison_authority,
@@ -30,9 +42,29 @@ from gates_of_codex.neutral_garrison import (
     select_neutral_garrison,
     strategic_isolation_snapshot,
     validate_garrison_authority,
+    validate_neutral_garrison_runtime,
     validate_units_resolvable,
 )
+from gates_of_codex.operational_movement import (
+    activate_committed_orders,
+    advance_operational_tick,
+    commit_move_orders,
+    issue_move_order,
+)
+from gates_of_codex.operational_position import ensure_operational_positions
+from gates_of_codex.operational_schema import (
+    COST_MILLI_UNITY,
+    FormationOperationalPosition,
+    MoveOrderStatus,
+    PositionMode,
+    stable_edge_id,
+    stable_node_id,
+)
+from gates_of_codex.service import GatesOfCodeXService
 from gates_of_codex.state_io import load_campaign, save_campaign
+
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 PARIS = "e3_0260"
@@ -130,7 +162,11 @@ class NeutralGarrisonAuthorityTests(unittest.TestCase):
         with self.assertRaisesRegex(NeutralGarrisonError, "worldwide"):
             validate_garrison_authority(worldwide)
         generic = copy.deepcopy(self.authority)
-        generic["regions"]["neutral"] = {"adjacent_regions": [], "export_side": "nato"}
+        generic["regions"]["neutral"] = {
+            "adjacent_regions": [],
+            "export_side": "nato",
+            "tactical_export_sides": ["nato", "rusa"],
+        }
         with self.assertRaisesRegex(NeutralGarrisonError, "universal worldwide"):
             validate_garrison_authority(generic)
 
@@ -422,8 +458,12 @@ class NeutralGarrisonEncounterTests(unittest.TestCase):
             if unit["source_authority"] == "West81"
         ))
         self.assertNotIn("owner_actor_id", profile)
+        self.assertEqual("rusa", profile["tactical_defender_side"])
+        self.assertEqual("neutral", profile["strategic_defender_faction"])
+        self.assertEqual("rusa", pending.tactical_defender_side)
+        self.assertEqual(Faction.NEUTRAL, pending.defender_faction)
         self.assertFalse(any(force.actor_id for force in state.strategic_formations.values()))
-        self.assertEqual(Faction.NEUTRAL, state.provinces[PARIS].owner)
+        self.assertEqual(Faction.NEUTRAL, state.provinces[ATHENS].owner)
 
     def test_seed_is_explicit_campaign_state(self) -> None:
         state = self._state(seed="named-seed")
@@ -433,5 +473,393 @@ class NeutralGarrisonEncounterTests(unittest.TestCase):
         self.assertNotEqual(left.selection_signature, right.selection_signature)
 
 
+class NeutralGarrisonTacticalExportTests(unittest.TestCase):
+    def test_tactical_side_avoids_attacker_side(self) -> None:
+        self.assertEqual("rusa", choose_tactical_defender_side("western_central_europe", Faction.NATO))
+        self.assertEqual("nato", choose_tactical_defender_side("western_central_europe", Faction.RUSSIA))
+        self.assertEqual("rusa", choose_tactical_defender_side("balkans", Faction.NATO))
+        self.assertEqual("nato", choose_tactical_defender_side("balkans", Faction.RUSSIA))
+        self.assertEqual("ukr", choose_tactical_defender_side("eastern_europe", Faction.RUSSIA))
+
+    def test_service_export_uses_distinct_core_armies_and_garrison_roster(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            game = root / "game"
+            west = root / "2897299509"
+            codex = root / "3261086933"
+            ai = root / "3636883799"
+            gocx = root / "3700832981"
+            profile = root / "profile" / "campaign"
+            for path in (game, west, codex, ai, gocx, profile):
+                path.mkdir(parents=True)
+                (path / "resource").mkdir(exist_ok=True)
+            (game / "binaries/x64").mkdir(parents=True)
+            (game / "binaries/x64/gates_of_hell.exe").write_bytes(b"fixture")
+            (codex / "resource/set/multiplayer/units/conquest/2022s").mkdir(parents=True)
+            (codex / "resource/script/multiplayer/units/nato").mkdir(parents=True)
+            (codex / "resource/set/breed/mp/nato").mkdir(parents=True)
+            (codex / "resource/set/breed/mp/nato/rifleman_nato.set").write_text(
+                '{breed\n\t{inventory\n\t\t{item "rifle" filled}\n\t}\n}\n',
+                encoding="utf-8",
+            )
+            units = [
+                '{"rifle(nato)" {member "rifleman_nato" 2}}\n',
+                '{"squad_arf_rifle(nato)" {member "rifleman_nato" 2}}\n',
+                '{"goc_ildu_rifle(ukr)" {member "rifleman_nato" 2}}\n',
+                '{"arf_m252(nato)" {member "rifleman_nato" 1}}\n',
+                '{"goc_serb_rifle(rusa)" {member "rifleman_nato" 2}}\n',
+                '{"goc_serb_at(rusa)" {member "rifleman_nato" 2}}\n',
+                '{"goc_serb_recon(rusa)" {member "rifleman_nato" 2}}\n',
+                '{"btr-80" {member "rifleman_nato" 1}}\n',
+                '{"t55a" {member "rifleman_nato" 1}}\n',
+                '{"122mm_d-30" {member "rifleman_nato" 1}}\n',
+            ]
+            (codex / "resource/set/multiplayer/units/conquest/2022s/units.set").write_text(
+                "".join(units), encoding="utf-8"
+            )
+            (codex / "resource/script/multiplayer/units/nato/2022s.nato.lua").write_text(
+                '{priority=1, type={"Infantry","Squad"}, unit="rifle(nato)"},\n',
+                encoding="utf-8",
+            )
+            (codex / "mod.info").write_text('{name "Code:X"}\n', encoding="utf-8")
+            (west / "mod.info").write_text('{name "West-81"}\n', encoding="utf-8")
+            (ai / "mod.info").write_text('{name "CodeX Conquest AI Overhaul 1.5"}\n', encoding="utf-8")
+            (gocx / "mod.info").write_text('{name "Gates of CodeX"}\n', encoding="utf-8")
+            stack = [game, west, codex, ai, gocx]
+            cases = (
+                (KIRUNA, 11120, Faction.NATO, "nato", "rusa"),
+                (KIRUNA, 11120, Faction.RUSSIA, "rusa", "nato"),
+            )
+            for province_id, source_id, attacker_faction, army, enemy in cases:
+                with self.subTest(province_id=province_id, attacker=attacker_faction.value):
+                    campaign = root / f"campaign-{province_id}.json"
+                    state = CampaignState(
+                        campaign_name=f"export {province_id}",
+                        selected_faction=attacker_faction,
+                        current_faction=attacker_faction,
+                        game_directory=str(game),
+                        profile_directory=str(profile.parent),
+                        code_x_directory=str(codex),
+                        map_metadata={
+                            "neutral_garrison_seed": "export-seed",
+                            "resource_stack": [str(path) for path in stack],
+                        },
+                        factions={
+                            attacker_faction.value: FactionState(attacker_faction, researched_keys=[]),
+                            "neutral": FactionState(Faction.NEUTRAL, resources=0),
+                        },
+                        provinces={
+                            "home": Province("home", "Home", attacker_faction, [province_id]),
+                            province_id: Province(
+                                province_id,
+                                province_id,
+                                Faction.NEUTRAL,
+                                ["home"],
+                                metadata={"source_id": source_id},
+                            ),
+                        },
+                        battalions={
+                            "atk-1": Battalion(
+                                "atk-1",
+                                attacker_faction,
+                                "home",
+                                roster=[BattalionRosterEntry("rifle(nato)", 1, category="infantry")],
+                            )
+                        },
+                    )
+                    pending = maybe_attach_neutral_garrison(
+                        state, province_id, attacker=state.battalions["atk-1"]
+                    )
+                    self.assertEqual(Faction.NEUTRAL, pending.defender_faction)
+                    self.assertEqual(enemy, pending.tactical_defender_side)
+                    save_campaign(state, campaign)
+                    before = strategic_isolation_snapshot(load_campaign(campaign))
+                    manifest = GatesOfCodeXService().export_battle(
+                        campaign,
+                        code_x_directory=codex,
+                        save_path=root / f"{province_id}-{army}.sav",
+                        map_name="multi/2x2/live_test",
+                        resource_stack=stack,
+                    )
+                    self.assertIsNotNone(manifest.neutral_garrison)
+                    self.assertEqual(enemy, manifest.neutral_garrison["tactical_defender_side"])
+                    self.assertEqual("neutral", manifest.neutral_garrison["strategic_defender_faction"])
+                    status = CampaignSaveArchive().read(manifest.save_path).status
+                    scn = CampaignSaveArchive().read(manifest.save_path).campaign_scn
+                    self.assertRegex(status, rf"\{{army {army}\}}")
+                    self.assertRegex(status, rf"\{{enemyArmy {enemy}\}}")
+                    self.assertNotRegex(status, r"\{enemyArmy neutral\}")
+                    garrison = state.battalions[garrison_battalion_id(province_id)]
+                    for unit in garrison.roster:
+                        self.assertIn(unit.unit_name, scn)
+                    after = strategic_isolation_snapshot(load_campaign(campaign))
+                    self.assertEqual(before["factions"], after["factions"])
+                    self.assertEqual(before["provinces"][province_id], after["provinces"][province_id])
+
+
+class NeutralGarrisonPersistenceAuthTests(unittest.TestCase):
+    def _saved(self) -> tuple[Path, Path]:
+        tmp = Path(tempfile.mkdtemp())
+        state = NeutralGarrisonEncounterTests()._state(seed="tamper")
+        CampaignEngine(state, random_seed=1).move_or_attack("nato-1", ATHENS)
+        path = tmp / "campaign.json"
+        save_campaign(state, path)
+        return tmp, path
+
+    def _payload(self, path: Path) -> dict:
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    def test_digest_signature_pool_unit_and_quantity_tampering_fail_closed(self) -> None:
+        tmp, path = self._saved()
+        cases = {
+            "digest": ("authority_digest", "0" * 64),
+            "signature": ("selection_signature", "f" * 64),
+            "pool": ("pool_id", "north_africa.capital"),
+            "unit": None,
+            "quantity": None,
+        }
+        for label, edit in cases.items():
+            with self.subTest(label=label):
+                payload = self._payload(path)
+                record = payload["map_metadata"]["neutral_garrison_runtime"]["provinces"][ATHENS]
+                if label == "unit":
+                    record["selection"]["units"][0]["unit_name"] = "fabricated_unit"
+                elif label == "quantity":
+                    record["roster"] = [
+                        {
+                            "unit_name": record["selection"]["units"][0]["unit_name"],
+                            "quantity": record["selection"]["units"][0]["quantity"] + 5,
+                            "category": "infantry",
+                        }
+                    ]
+                else:
+                    field, value = edit
+                    record["selection"][field] = value
+                tampered = tmp / f"{label}.json"
+                tampered.write_text(json.dumps(payload), encoding="utf-8")
+                with self.assertRaises(NeutralGarrisonError):
+                    load_campaign(tampered)
+
+    def test_province_rebinding_fails_closed(self) -> None:
+        tmp, path = self._saved()
+        payload = self._payload(path)
+        runtime = payload["map_metadata"]["neutral_garrison_runtime"]
+        runtime["provinces"][PARIS] = runtime["provinces"].pop(ATHENS)
+        runtime["provinces"][PARIS]["province_id"] = PARIS
+        tampered = tmp / "rebind.json"
+        tampered.write_text(json.dumps(payload), encoding="utf-8")
+        with self.assertRaises(NeutralGarrisonError):
+            load_campaign(tampered)
+
+
+class NeutralGarrisonInstalledAuthorityTests(unittest.TestCase):
+    def test_non_editable_install_loads_garrison_authority(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = Path(tmp) / "site"
+            dest.mkdir()
+            subprocess.check_call(
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "install",
+                    "--no-deps",
+                    "--target",
+                    str(dest),
+                    str(ROOT),
+                ],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            packaged = dest / "gates_of_codex" / "data" / "neutral_garrisons" / "authority.json"
+            self.assertTrue(packaged.is_file(), packaged)
+            env = os.environ.copy()
+            env["PYTHONPATH"] = str(dest)
+            script = (
+                "from gates_of_codex.neutral_garrison import load_garrison_authority;"
+                "payload = load_garrison_authority();"
+                "assert payload['schema'] == 'gates.neutral_garrison.v1';"
+                "assert payload['worldwide_fallback'] is False;"
+                "print(payload['schema_version'])"
+            )
+            output = subprocess.check_output(
+                [sys.executable, "-c", script],
+                env=env,
+                cwd=str(dest),
+                text=True,
+            )
+            self.assertEqual("1", output.strip())
+
+
+class NeutralGarrisonOperationalContactTests(unittest.TestCase):
+    def _graph_state(self, tmp: Path) -> CampaignState:
+        home, dest = "home", KIRUNA
+        graph = {
+            "schema": "gates-of-codex.operational-graph",
+            "schema_version": 2,
+            "map_id": "garrison_op",
+            "rules": {
+                "ticks_per_strategic_turn": 10,
+                "max_friendly_formations_per_node": 3,
+            },
+            "sites": [],
+            "nodes": [
+                {
+                    "node_id": stable_node_id(home),
+                    "display_name": home,
+                    "pixel": [0, 0],
+                    "province_id": home,
+                    "site_id": None,
+                    "kind": "anchor",
+                    "terrain": "plain",
+                    "metadata": {},
+                },
+                {
+                    "node_id": stable_node_id(dest),
+                    "display_name": dest,
+                    "pixel": [100, 0],
+                    "province_id": dest,
+                    "site_id": None,
+                    "kind": "anchor",
+                    "terrain": "plain",
+                    "metadata": {},
+                },
+            ],
+            "edges": [
+                {
+                    "edge_id": stable_edge_id("corridor", stable_node_id(home), stable_node_id(dest)),
+                    "a": stable_node_id(home),
+                    "b": stable_node_id(dest),
+                    "kind": "corridor",
+                    "authority": "authored",
+                    "length_px": 100,
+                    "base_move_points_milli": COST_MILLI_UNITY,
+                    "movement_cost_milli": COST_MILLI_UNITY,
+                    "requires_port": False,
+                    "can_be_blockaded": False,
+                    "traversal_enabled": True,
+                    "bidirectional": True,
+                    "province_ids": [home, dest],
+                    "legacy_crossing_type": None,
+                    "metadata": {},
+                }
+            ],
+            "metadata": {},
+        }
+        graph_path = tmp / "operational_graph.json"
+        graph_path.write_text(json.dumps(graph), encoding="utf-8")
+        battalion = Battalion(
+            "bn-nato",
+            Faction.NATO,
+            home,
+            formation_id="toe-nato",
+            roster=[BattalionRosterEntry("tank(x)", 4, category="tank")],
+        )
+        force = StrategicFormation(
+            "sf-nato",
+            "NATO",
+            Faction.NATO,
+            home,
+            echelon=ForceEchelon.BATTALION,
+            battalion_ids=["bn-nato"],
+            template_formation_id="toe-nato",
+            position=FormationOperationalPosition(
+                mode=PositionMode.AT_NODE.value,
+                node_id=stable_node_id(home),
+                progress_milli=0,
+            ),
+        )
+        battalion.strategic_formation_id = "sf-nato"
+        state = CampaignState(
+            campaign_name="garrison op",
+            map_id="garrison_op",
+            map_metadata={
+                "operational_graph": str(graph_path.resolve()),
+                "operational_maneuver_enabled": True,
+                "neutral_garrison_seed": "graph-seed",
+            },
+            factions={
+                "nato": FactionState(Faction.NATO, resources=500, is_human_controlled=True),
+                "rusa": FactionState(Faction.RUSSIA, resources=500),
+            },
+            formations={
+                "toe-nato": Formation(
+                    "toe-nato",
+                    "NATO T",
+                    Faction.NATO,
+                    "usa",
+                    kind=FormationKind.ARMORED_BRIGADE,
+                )
+            },
+            provinces={
+                home: Province(home, "Home", Faction.NATO, [dest], x=0, y=0),
+                dest: Province(
+                    dest,
+                    "Kiruna",
+                    Faction.NEUTRAL,
+                    [home],
+                    x=100,
+                    y=0,
+                    metadata={"source_id": 11120},
+                ),
+            },
+            battalions={"bn-nato": battalion},
+            strategic_formations={"sf-nato": force},
+            schema_version=7,
+            selected_faction=Faction.NATO,
+            current_faction=Faction.NATO,
+        )
+        ensure_strategic_formations(state)
+        ensure_operational_positions(state)
+        return state
+
+    def _arrive(self, state: CampaignState) -> None:
+        home, dest = stable_node_id("home"), stable_node_id(KIRUNA)
+        edge = stable_edge_id("corridor", home, dest)
+        issue_move_order(state, "sf-nato", path_node_ids=[home, dest], path_edge_ids=[edge])
+        commit_move_orders(state)
+        activate_committed_orders(state)
+        advance_operational_tick(state)
+
+    def test_graph_arrival_preserves_origin_and_blocks_on_garrison(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            state = self._graph_state(Path(tmp))
+            self._arrive(state)
+            pending = state.pending_battle
+            self.assertIsNotNone(pending)
+            self.assertEqual(ENCOUNTER_KIND_NEUTRAL_GARRISON, pending.encounter_kind)
+            self.assertEqual("home", pending.origin_province_id)
+            self.assertEqual(KIRUNA, pending.target_province_id)
+            self.assertEqual(stable_node_id(KIRUNA), pending.encounter_node_id)
+            self.assertEqual("sf-nato", pending.attacker_formation_id)
+            self.assertEqual("", pending.defender_formation_id)
+            self.assertEqual(Faction.NEUTRAL, pending.defender_faction)
+            self.assertEqual("rusa", pending.tactical_defender_side)
+            mover = state.strategic_formations["sf-nato"]
+            self.assertEqual(MoveOrderStatus.BLOCKED.value, mover.move_order.status)
+
+    def test_graph_attacker_win_holds_destination_defender_win_retreats_home(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            state = self._graph_state(Path(tmp))
+            self._arrive(state)
+            CampaignEngine(state, random_seed=1).apply_battle_result(Faction.NATO)
+            mover = state.strategic_formations["sf-nato"]
+            self.assertEqual(KIRUNA, mover.province_id)
+            self.assertEqual(stable_node_id(KIRUNA), mover.position.node_id)
+            self.assertEqual(Faction.NEUTRAL, state.provinces[KIRUNA].owner)
+            self.assertNotIn(garrison_battalion_id(KIRUNA), state.battalions)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            state = self._graph_state(Path(tmp))
+            self._arrive(state)
+            CampaignEngine(state, random_seed=1).apply_battle_result(Faction.NEUTRAL)
+            mover = state.strategic_formations["sf-nato"]
+            self.assertEqual("home", mover.province_id)
+            self.assertEqual(stable_node_id("home"), mover.position.node_id)
+            self.assertEqual(Faction.NEUTRAL, state.provinces[KIRUNA].owner)
+            self.assertIn(garrison_battalion_id(KIRUNA), state.battalions)
+
+
 if __name__ == "__main__":
     unittest.main()
+
