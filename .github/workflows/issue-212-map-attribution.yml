@@ -1,0 +1,100 @@
+name: Issue 212 map attribution
+
+on:
+  pull_request:
+    paths:
+      - "godot/scripts/tools/map_debug_attribution_profiler.gd"
+      - ".github/workflows/issue-212-map-attribution.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: issue-212-map-attribution-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  debug-baseline-attribution:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system deps
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1 libxcursor1 libxinerama1 libxrandr2 libxi6 libx11-6
+      - name: Install Godot 4.7
+        run: |
+          set -euo pipefail
+          GODOT_VERSION=4.7-stable
+          curl -fsSL -o godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip
+          GODOT_BIN="$(find . -maxdepth 1 -type f -name 'Godot_v*_linux.x86_64' | head -n 1)"
+          install -m 755 "$GODOT_BIN" "$HOME/godot"
+          "$HOME/godot" --version
+      - name: Import Godot project
+        working-directory: godot
+        run: "$HOME/godot" --headless --path . --import --quit-after 1
+      - name: Measure ordinary vs debug presentation
+        run: |
+          set -euo pipefail
+          mkdir -p docs/research/noresus-map-performance
+          OUT="$(pwd)/docs/research/noresus-map-performance/draw-call-attribution.json"
+          log="$(mktemp)"
+          set +e
+          xvfb-run -a -s "-screen 0 1920x1080x24" \
+            "$HOME/godot" --path godot --audio-driver Dummy \
+            -s res://scripts/tools/map_debug_attribution_profiler.gd -- \
+            --snapshot=res://fixtures/snapshots/earth3_operational.json \
+            --fixture=res://fixtures/presentation/e3_operational.json \
+            --manifest=res://assets/maps/earth3_europe_mediterranean/map_manifest.json \
+            --width=1920 --height=1080 --frames=24 \
+            --out="$OUT" 2>&1 | tee "$log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' "$log"; then
+            echo "issue-212 attribution profiler: script error"
+            exit 1
+          fi
+          if ! grep -q 'map_debug_attribution_profiler: PASS' "$log"; then
+            echo "issue-212 attribution profiler: missing PASS"
+            exit 1
+          fi
+          exit "$code"
+      - name: Validate attribution evidence
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("docs/research/noresus-map-performance/draw-call-attribution.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          assert data.get("ok") is True, data
+          assert data.get("issue") == 212, data
+          assert data.get("map", {}).get("province_count") == 3514, data.get("map")
+          assert data.get("picking", {}).get("parity") is True, data.get("picking")
+          for row in data.get("picking", {}).get("before", []):
+              assert row.get("match") is True, row
+          modes = data.get("modes", {})
+          for key in ("debug_off", "debug_on", "debug_off_restored"):
+              assert key in modes, key
+              assert modes[key].get("draw_calls", {}).get("p50", 0) > 0, (key, modes[key])
+              assert modes[key].get("frame_time_ms", {}).get("p95", 0) > 0, (key, modes[key])
+          summary = {
+              "debug_off_draw_p50": modes["debug_off"]["draw_calls"]["p50"],
+              "debug_on_draw_p50": modes["debug_on"]["draw_calls"]["p50"],
+              "debug_off_frame_p95": modes["debug_off"]["frame_time_ms"]["p95"],
+              "debug_on_frame_p95": modes["debug_on"]["frame_time_ms"]["p95"],
+              "attribution": data.get("attribution", {}),
+          }
+          print("ISSUE212_PHASE_A", json.dumps(summary, sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: issue-212-map-attribution
+          path: docs/research/noresus-map-performance/draw-call-attribution.json
+          if-no-files-found: error
