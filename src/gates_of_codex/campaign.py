@@ -69,6 +69,16 @@ class CampaignEngine:
             self.state, battalion.faction, target.owner
         )
         if defender is None and friendly_or_neutral:
+            if target.owner == Faction.NEUTRAL:
+                from .neutral_garrison import maybe_attach_neutral_garrison
+
+                garrison_battle = maybe_attach_neutral_garrison(
+                    self.state,
+                    target_province_id,
+                    attacker=battalion,
+                )
+                if garrison_battle is not None:
+                    return MoveResult(moved=False, pending_battle=garrison_battle)
             battalion.province_id = target_province_id
             battalion.movement_remaining -= 1
             self._sync_strategic_formation_location(battalion)
@@ -350,6 +360,9 @@ class CampaignEngine:
             clear_retreat_origin_nodes(self.state)
 
         pending.completed = True
+        from .neutral_garrison import sync_neutral_garrison_after_battle
+
+        sync_neutral_garrison_after_battle(self.state, pending, winner)
         self.state.pending_battle = None
         from .strategic import evaluate_campaign_outcome
 

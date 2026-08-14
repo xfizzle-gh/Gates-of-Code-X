@@ -6,7 +6,7 @@ import re
 from dataclasses import asdict, dataclass, field, fields
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Iterable
 
 from .bridge.archive import CampaignSaveArchive
 from .bridge.result import BattleImportResult, BattleResultImporter
@@ -35,6 +35,7 @@ class BattleExportManifest:
     installed_size: int = 0
     installed_mtime_ns: int = 0
     installed_sha256: str = ""
+    neutral_garrison: dict[str, Any] | None = None
 
     @property
     def baseline(self) -> StatusResult:
@@ -72,7 +73,10 @@ class GatesOfCodeXService:
     def write_manifest(self, manifest: BattleExportManifest, path: str | Path | None = None) -> Path:
         destination = Path(path) if path else self.manifest_path(manifest.save_path)
         destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_text(json.dumps(asdict(manifest), indent=2) + "\n", encoding="utf-8")
+        payload = asdict(manifest)
+        if payload.get("neutral_garrison") is None:
+            payload.pop("neutral_garrison", None)
+        destination.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
         return destination
 
     def export_battle(
@@ -168,6 +172,8 @@ class GatesOfCodeXService:
         if code_x_directory:
             state.code_x_directory = str(Path(code_x_directory).resolve())
         save_campaign(state, campaign_file)
+        from .neutral_garrison import export_garrison_profile
+
         manifest = BattleExportManifest(
             battle_id=state.pending_battle.battle_id,
             campaign_path=str(campaign_file),
@@ -181,6 +187,7 @@ class GatesOfCodeXService:
             resource_stack=stack_to_strings(stack),
             status_template_path=str(template_path) if template_path else "",
             visible_campaign_name=visible_name,
+            neutral_garrison=export_garrison_profile(state, state.pending_battle),
         )
         self.write_manifest(manifest, manifest_destination)
         return manifest
