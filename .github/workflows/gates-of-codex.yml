@@ -357,8 +357,42 @@ jobs:
         working-directory: godot
         run: |
           set -euo pipefail
+          log="$(mktemp)"
+          set +e
           "$HOME/godot" --headless --path . --audio-driver Dummy \
-            -s res://scripts/tools/graph_movement_scene_test.gd
+            -s res://scripts/tools/graph_movement_scene_test.gd 2>&1 | tee "$log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' "$log"; then
+            echo "graph_movement_scene_test: SCRIPT ERROR is a failure"
+            exit 1
+          fi
+          if ! grep -q 'graph_movement_scene_test: PASS' "$log"; then
+            echo "graph_movement_scene_test: missing PASS"
+            exit 1
+          fi
+          exit "$code"
+      - name: Godot map order-controls test (#218)
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          log="$(mktemp)"
+          set +e
+          "$HOME/godot" --headless --path . --audio-driver Dummy \
+            -s res://scripts/tools/map_order_controls_test.gd 2>&1 | tee "$log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' "$log"; then
+            echo "map_order_controls_test: SCRIPT ERROR is a failure"
+            exit 1
+          fi
+          if ! grep -q 'map_order_controls_test: PASS' "$log"; then
+            echo "map_order_controls_test: missing PASS"
+            exit 1
+          fi
+          exit "$code"
+      - name: Godot movement-test compile-error harness
+        run: GODOT_BIN="$HOME/godot" python -m unittest tests.test_godot_script_error_harness -v
       - name: Godot map CI check (draw path + viewport smoke)
         working-directory: godot
         run: |
@@ -712,6 +746,11 @@ jobs:
             }
           }
           .\dist\GatesOfCodeXLive.exe --help | Out-Null
+      - name: Packaged Earth3 real-order smoke
+        shell: pwsh
+        env:
+          GATES_OF_CODEX_LIVE_EXE: ${{ github.workspace }}\dist\GatesOfCodeXLive.exe
+        run: python -m unittest tests.test_packaged_earth3_command_authority -v
       - name: Cleanup package provenance
         if: always()
         shell: pwsh

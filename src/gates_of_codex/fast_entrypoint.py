@@ -557,6 +557,16 @@ def _write_forwarded_result(result: tuple[int, str] | None) -> int | None:
     return int(exit_code)
 
 
+def _require_frozen_console_backend() -> Path:
+    backend = Path(sys.executable).resolve().with_name("GatesOfCodeXLive.exe")
+    if not backend.is_file():
+        raise RuntimeError(
+            "Packaged Gates of CodeX write-back requires the sibling "
+            f"GatesOfCodeXLive.exe console backend: {backend}"
+        )
+    return backend
+
+
 def install_runtime_contracts() -> None:
     """Install player/package runtime seams that cannot be inferred by Godot.
 
@@ -630,13 +640,17 @@ def install_runtime_contracts() -> None:
 
         def frozen_control(*args, **kwargs):
             block = original_control(*args, **kwargs)
-            backend = Path(sys.executable).resolve().with_name("GatesOfCodeXLive.exe")
+            backend = _require_frozen_console_backend()
+            from .packaging import package_identity
+
+            identity = package_identity()
             block["python_executable"] = str(backend)
             # Existing Godot write-back passes `-m <module>` before the command.
             # GatesOfCodeXLive accepts and strips this compatibility prefix.
             block["python_module"] = "gates_of_codex"
             block["backend_executable"] = str(backend)
             block["backend_kind"] = "frozen_console"
+            block["backend_source_commit"] = identity.source_commit
             return block
 
         frozen_control._goc_frozen_backend = True  # type: ignore[attr-defined]
@@ -661,6 +675,30 @@ def install_runtime_contracts() -> None:
 def main(argv: Sequence[str] | None = None) -> int:
     """Runtime CLI wrapper for the post-P5 responsiveness layer (#207)."""
     arguments = list(sys.argv[1:] if argv is None else argv)
+    from .packaging import PackagingError, enforce_packaged_backend_identity
+
+    try:
+        invocation = enforce_packaged_backend_identity(arguments)
+    except PackagingError as exc:
+        sys.stderr.write(f"{exc}\n")
+        return 2
+    return dispatch_authenticated_packaged_invocation(invocation, process_argv=argv)
+
+
+def dispatch_authenticated_packaged_invocation(
+    invocation: object,
+    *,
+    process_argv: Sequence[str] | None = None,
+) -> int:
+    """Continue after the process identity boundary has already authenticated argv."""
+    from .packaging import AuthenticatedPackagedInvocation
+
+    if not isinstance(invocation, AuthenticatedPackagedInvocation):
+        raise TypeError(
+            "packaged dispatch requires AuthenticatedPackagedInvocation from "
+            "enforce_packaged_backend_identity"
+        )
+    arguments = list(invocation.arguments)
 
     if arguments[:1] == ["apply-frontend"]:
         from .persistent_backend import try_forward_apply_frontend
@@ -680,7 +718,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     _install_fast_paths()
     if getattr(sys, "frozen", False) or (
-        argv is None and arguments[:1] in (["play"], ["apply-frontend"])
+        process_argv is None and arguments[:1] in (["play"], ["apply-frontend"])
     ):
         install_runtime_contracts()
     from .entrypoint import main as application_main
@@ -700,6 +738,15 @@ def player_main(argv: Sequence[str] | None = None) -> int:
     # that prefix so a packaged player can still serve as a fail-safe backend.
     if len(arguments) >= 2 and arguments[:2] == ["-m", "gates_of_codex"]:
         arguments = arguments[2:]
+
+    from .packaging import PackagingError, enforce_packaged_backend_identity
+
+    try:
+        invocation = enforce_packaged_backend_identity(arguments)
+    except PackagingError as exc:
+        sys.stderr.write(f"{exc}\n")
+        return 2
+    arguments = list(invocation.arguments)
 
     if arguments[:1] == ["apply-frontend"]:
         from .persistent_backend import try_forward_apply_frontend
@@ -727,6 +774,8 @@ def player_main(argv: Sequence[str] | None = None) -> int:
     # Explicit CLI subcommands belong to the general application entry point.
     # Player flags (`--new`, `--continue`, ...) remain direct player-shell input.
     if arguments and not arguments[0].startswith("-"):
-        return main(arguments)
+        return dispatch_authenticated_packaged_invocation(
+            invocation, process_argv=arguments
+        )
     _emit_startup_timing("player_shell_dispatch", mode=str(arguments[0] if arguments else ""))
     return player_shell_main(arguments)

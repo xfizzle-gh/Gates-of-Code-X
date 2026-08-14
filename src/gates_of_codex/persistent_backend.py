@@ -371,7 +371,8 @@ def ensure_backend_session(campaign: Path, snapshot: Path) -> bool:
 
     campaign = campaign.expanduser().resolve(strict=False)
     snapshot = snapshot.expanduser().resolve(strict=False)
-    if _runtime_source_commit() is None:
+    source_commit = _runtime_source_commit()
+    if source_commit is None:
         _drop_session_descriptor(campaign)
         return False
     if _ping(campaign):
@@ -386,6 +387,8 @@ def ensure_backend_session(campaign: Path, snapshot: Path) -> bool:
             str(campaign),
             "--snapshot",
             str(snapshot),
+            "--expected-source-commit",
+            source_commit,
         ]
     else:
         command = [
@@ -396,6 +399,8 @@ def ensure_backend_session(campaign: Path, snapshot: Path) -> bool:
             str(campaign),
             "--snapshot",
             str(snapshot),
+            "--expected-source-commit",
+            source_commit,
         ]
     creationflags = int(getattr(subprocess, "CREATE_NO_WINDOW", 0)) if os.name == "nt" else 0
     try:

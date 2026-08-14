@@ -270,7 +270,7 @@ class StartupRebaselineTests(unittest.TestCase):
         )
         self.assertLess(
             live.index("install_startup_rebaseline_contracts()"),
-            live.index("from gates_of_codex.fast_entrypoint import main as application_main"),
+            live.index("dispatch_authenticated_packaged_invocation"),
         )
 
 

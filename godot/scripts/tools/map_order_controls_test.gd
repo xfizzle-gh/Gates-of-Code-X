@@ -11,6 +11,10 @@ var failed := 0
 
 func _initialize() -> void:
 	print("map_order_controls_test: start")
+	if not _require_production_main():
+		push_error("map_order_controls_test: FAILED production MainScript")
+		quit(1)
+		return
 	_test_left_select_never_dispatches()
 	_test_right_click_dispatches_exactly_once()
 	_test_right_click_without_selection_or_route_dispatches_nothing()
@@ -25,6 +29,25 @@ func _initialize() -> void:
 	print("map_order_controls_test: passed=%s failed=0" % passed)
 	print("map_order_controls_test: PASS")
 	quit(0)
+
+
+func _require_production_main() -> bool:
+	if MainScript == null:
+		push_error("production MainScript failed to preload")
+		return false
+	if not (MainScript as Script).can_instantiate():
+		push_error("production MainScript cannot instantiate")
+		return false
+	var instance = MainScript.new()
+	if instance == null:
+		push_error("production MainScript instantiation returned null")
+		return false
+	var ok := instance.has_method("_order_from_map") and instance.has_method("_select_from_map")
+	instance.free()
+	if not ok:
+		push_error("production MainScript is missing required order-control methods")
+		return false
+	return true
 
 
 func _work_dir(name: String) -> String:
