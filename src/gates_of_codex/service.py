@@ -10,7 +10,7 @@ from typing import Any, Iterable
 
 from .bridge.archive import CampaignSaveArchive
 from .bridge.result import BattleImportResult, BattleResultImporter
-from .bridge.scn import CampaignScnBuilder
+from .bridge.scoped_scn import ParticipantScopedCampaignScnBuilder
 from .bridge.status import BattleStatusOptions, StatusBuilder, StatusResult
 from .campaign import CampaignEngine
 from .codex.catalog import CodeXCatalog, CodeXCatalogScanner
@@ -109,15 +109,16 @@ class GatesOfCodeXService:
         if not stack:
             raise ValueError("No Code:X resource stack was configured")
 
-        # Build the ordinary four-side catalog first. A legitimate #48 garrison
-        # may receive an export-local catalog that overlays only the exact
-        # West81 legacy IDs authenticated by its persisted authority profile.
-        # Every other participant is preflighted against this ordinary catalog
-        # before the expanded catalog is handed to CampaignScnBuilder, so the
-        # garrison exception cannot become a battle-wide content capability.
+        # Build the ordinary four-side catalog first. The authenticated #48
+        # garrison may receive a participant-local catalog overlay containing
+        # only its exact West81 legacy IDs. Every other participant remains on
+        # the ordinary catalog even when an ID collides by name (for example
+        # 122mm_d-30). Legacy crew/breed closure is pinned to the same West81
+        # source root as the authorized definition.
         neutral_garrison_profile = _authenticated_neutral_garrison_profile(state)
         catalog = self.scanner.scan_stack(stack)
-        export_catalog = catalog
+        participant_catalogs: dict[str, CodeXCatalog] = {}
+        pinned_unit_roots: dict[str, dict[str, Path]] = {}
         if neutral_garrison_profile is not None:
             legacy_unit_names = _authorized_west81_legacy_unit_names(neutral_garrison_profile)
             if legacy_unit_names:
@@ -128,11 +129,19 @@ class GatesOfCodeXService:
                     catalog,
                     authenticated_garrison_id=garrison_id,
                 )
-                export_catalog = self.scanner.scan_stack(
+                garrison_catalog = self.scanner.scan_stack(
                     stack,
                     legacy_unit_names=legacy_unit_names,
                     legacy_source_authority=CodeXCatalogScanner.WEST81_AUTHORITY,
                 )
+                _, west81_root = self.scanner._legacy_source_root(
+                    stack,
+                    source_authority=CodeXCatalogScanner.WEST81_AUTHORITY,
+                )
+                participant_catalogs[garrison_id] = garrison_catalog
+                pinned_unit_roots[garrison_id] = {
+                    unit_name: west81_root for unit_name in legacy_unit_names
+                }
 
         # Earth3 P2/P3 stores an actor-content digest in ``catalog_signature``
         # (see earth3_bootstrap), not the Code:X stack scan signature. The
@@ -186,7 +195,12 @@ class GatesOfCodeXService:
             mods=mod_tokens,
         )
         status_text = self.status.build(state.pending_battle, options)
-        scn_text = CampaignScnBuilder(export_catalog, resource_stack=stack).build(
+        scn_text = ParticipantScopedCampaignScnBuilder(
+            catalog,
+            resource_stack=stack,
+            participant_catalogs=participant_catalogs,
+            pinned_unit_roots=pinned_unit_roots,
+        ).build(
             state,
             state.pending_battle,
         )
@@ -386,12 +400,7 @@ def _validate_non_garrison_participants_against_catalog(
     *,
     authenticated_garrison_id: str,
 ) -> None:
-    """Keep the West81 exception participant-scoped.
-
-    The builder receives one export catalog, so every participant other than the
-    authenticated garrison is proven against the ordinary four-side catalog
-    before the garrison-only legacy definitions are admitted.
-    """
+    """Require every non-garrison participant to stay on the normal catalog."""
 
     invalid: list[str] = []
     participants = (*battle.attacking_participants, *battle.defending_participants)
