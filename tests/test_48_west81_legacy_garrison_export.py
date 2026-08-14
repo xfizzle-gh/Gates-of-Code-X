@@ -9,9 +9,11 @@ from gates_of_codex.codex.catalog import CodeXCatalogScanner
 from gates_of_codex.models import (
     Battalion,
     BattalionRosterEntry,
+    BattleParticipant,
     CampaignState,
     Faction,
     FactionState,
+    PendingBattle,
     Province,
 )
 from gates_of_codex.neutral_garrison import garrison_battalion_id, maybe_attach_neutral_garrison
@@ -21,6 +23,19 @@ from gates_of_codex.state_io import save_campaign
 
 ALEXANDRIA = "e3_1483"
 LEGACY_IDS = ("ural375", "btr-60pb", "bmp-1", "t55a")
+
+
+class RecordingScanner(CodeXCatalogScanner):
+    def __init__(self) -> None:
+        super().__init__()
+        self.legacy_flags: list[bool] = []
+
+    def scan_stack(self, resource_stack, *, include_legacy_sources: bool = False):
+        self.legacy_flags.append(include_legacy_sources)
+        return super().scan_stack(
+            resource_stack,
+            include_legacy_sources=include_legacy_sources,
+        )
 
 
 class West81LegacyGarrisonExportTests(unittest.TestCase):
@@ -85,6 +100,90 @@ class West81LegacyGarrisonExportTests(unittest.TestCase):
 
         return [game, west, codex, ai, gates], codex
 
+    def _garrison_state(self, stack: list[Path], codex: Path) -> CampaignState:
+        return CampaignState(
+            campaign_name="Issue 48 West81 native-shape regression",
+            selected_faction=Faction.NATO,
+            current_faction=Faction.NATO,
+            game_directory=str(stack[0]),
+            code_x_directory=str(codex),
+            map_metadata={
+                "neutral_garrison_seed": "west81-live-shape",
+                "resource_stack": [str(path) for path in stack],
+            },
+            factions={
+                "nato": FactionState(Faction.NATO, resources=500, researched_keys=[]),
+                "rusa": FactionState(Faction.RUSSIA, resources=500, researched_keys=[]),
+                "neutral": FactionState(Faction.NEUTRAL, resources=0),
+            },
+            provinces={
+                "home": Province("home", "Home", Faction.NATO, [ALEXANDRIA]),
+                ALEXANDRIA: Province(
+                    ALEXANDRIA,
+                    "Alexandria",
+                    Faction.NEUTRAL,
+                    ["home"],
+                    metadata={"source_id": 2662},
+                ),
+            },
+            battalions={
+                "atk": Battalion(
+                    "atk",
+                    Faction.NATO,
+                    "home",
+                    roster=[BattalionRosterEntry("rifle(nato)", 1, category="infantry")],
+                )
+            },
+        )
+
+    def _export_garrison(
+        self,
+        root: Path,
+        *,
+        graph_native: bool,
+    ) -> tuple[RecordingScanner, object, str]:
+        stack, codex = self._stack(root)
+        state = self._garrison_state(stack, codex)
+        pending = maybe_attach_neutral_garrison(
+            state,
+            ALEXANDRIA,
+            attacker=state.battalions["atk"],
+            encounter_node_id="node:e3_1483" if graph_native else "",
+            attacker_formation_id="sf-nato" if graph_native else "",
+        )
+        self.assertIsNotNone(pending)
+        self.assertEqual("rusa", pending.tactical_defender_side)
+        if graph_native:
+            self.assertEqual("neutral_garrison", pending.encounter_kind)
+            self.assertEqual("node:e3_1483", pending.encounter_node_id)
+        else:
+            # Legacy province adjacency deliberately has no operational marker.
+            self.assertEqual("", pending.encounter_kind)
+            self.assertEqual("", pending.encounter_node_id)
+
+        garrison = state.battalions[garrison_battalion_id(ALEXANDRIA)]
+        selected_names = {entry.unit_name for entry in garrison.roster}
+        self.assertIn("ural375", selected_names)
+        self.assertIn("btr-60pb", selected_names)
+
+        campaign = root / ("graph.json" if graph_native else "adjacency.json")
+        save = root / ("graph.sav" if graph_native else "adjacency.sav")
+        save_campaign(state, campaign)
+
+        service = GatesOfCodeXService()
+        scanner = RecordingScanner()
+        service.scanner = scanner
+        manifest = service.export_battle(
+            campaign,
+            code_x_directory=codex,
+            save_path=save,
+            map_name="multi/2x2/live_test",
+            resource_stack=stack,
+            mods=[],
+        )
+        contents = CampaignSaveArchive().read(manifest.save_path)
+        return scanner, manifest, contents.status + "\n" + contents.campaign_scn
+
     def test_legacy_source_sides_are_explicit_opt_in(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             stack, _ = self._stack(Path(tmp))
@@ -103,84 +202,105 @@ class West81LegacyGarrisonExportTests(unittest.TestCase):
             self.assertIn("122mm_d-30", normal.units)
             self.assertEqual("rusa", normal.units["122mm_d-30"].side)
 
-    def test_neutral_garrison_export_materializes_legacy_reserve_without_global_leak(self) -> None:
+    def test_legacy_adjacency_garrison_authenticates_without_encounter_marker(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            scanner, manifest, text = self._export_garrison(Path(tmp), graph_native=False)
+            self.assertEqual([True], scanner.legacy_flags)
+            self.assertIn("{enemyArmy rusa}", text)
+            self.assertNotIn("{enemyArmy neutral}", text)
+            self.assertIn('Entity "ural375"', text)
+            self.assertIn('Entity "btr-60pb"', text)
+            self.assertIsNotNone(manifest.neutral_garrison)
+            self.assertEqual("neutral", manifest.neutral_garrison["strategic_defender_faction"])
+            self.assertEqual("rusa", manifest.neutral_garrison["tactical_defender_side"])
+
+    def test_graph_native_garrison_uses_same_authenticated_export_boundary(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            scanner, manifest, text = self._export_garrison(Path(tmp), graph_native=True)
+            self.assertEqual([True], scanner.legacy_flags)
+            self.assertIn('Entity "ural375"', text)
+            self.assertIsNotNone(manifest.neutral_garrison)
+            self.assertEqual("rusa", manifest.neutral_garrison["tactical_defender_side"])
+
+    def test_normal_four_side_export_never_enables_legacy_scan(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             stack, codex = self._stack(root)
-            campaign = root / "campaign.json"
-            save = root / "alexandria.sav"
-            state = CampaignState(
-                campaign_name="Issue 48 West81 native-shape regression",
-                selected_faction=Faction.NATO,
-                current_faction=Faction.NATO,
-                game_directory=str(stack[0]),
-                code_x_directory=str(codex),
-                map_metadata={
-                    "neutral_garrison_seed": "west81-live-shape",
-                    "resource_stack": [str(path) for path in stack],
-                },
-                factions={
-                    "nato": FactionState(Faction.NATO, resources=500, researched_keys=[]),
-                    "neutral": FactionState(Faction.NEUTRAL, resources=0),
-                },
-                provinces={
-                    "home": Province("home", "Home", Faction.NATO, [ALEXANDRIA]),
-                    ALEXANDRIA: Province(
-                        ALEXANDRIA,
-                        "Alexandria",
-                        Faction.NEUTRAL,
-                        ["home"],
-                        metadata={"source_id": 2662},
-                    ),
-                },
-                battalions={
-                    "atk": Battalion(
-                        "atk",
-                        Faction.NATO,
-                        "home",
-                        roster=[BattalionRosterEntry("rifle(nato)", 1, category="infantry")],
-                    )
-                },
+            state = self._garrison_state(stack, codex)
+            state.provinces["enemy"] = Province("enemy", "Enemy", Faction.RUSSIA, ["home"])
+            state.provinces["home"].neighbors.append("enemy")
+            state.battalions["def"] = Battalion(
+                "def",
+                Faction.RUSSIA,
+                "enemy",
+                roster=[BattalionRosterEntry("rus90_inf_rifle", 1, category="infantry")],
             )
+            state.pending_battle = PendingBattle(
+                battle_id="ordinary-four-side",
+                origin_province_id="home",
+                target_province_id="enemy",
+                attacker_faction=Faction.NATO,
+                defender_faction=Faction.RUSSIA,
+                attacking_participants=[BattleParticipant("atk", Faction.NATO, "stage_1", True)],
+                defending_participants=[BattleParticipant("def", Faction.RUSSIA, "stage_2", True)],
+                player_faction=Faction.NATO,
+                player_is_attacker=True,
+                tactical_defender_side="rusa",
+            )
+            campaign = root / "ordinary.json"
+            save_campaign(state, campaign)
+            service = GatesOfCodeXService()
+            scanner = RecordingScanner()
+            service.scanner = scanner
+            manifest = service.export_battle(
+                campaign,
+                code_x_directory=codex,
+                save_path=root / "ordinary.sav",
+                map_name="multi/2x2/live_test",
+                resource_stack=stack,
+                mods=[],
+            )
+            self.assertEqual([False], scanner.legacy_flags)
+            self.assertIsNone(manifest.neutral_garrison)
 
+    def test_spoofed_encounter_marker_cannot_unlock_legacy_content(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            stack, codex = self._stack(root)
+            state = self._garrison_state(stack, codex)
             pending = maybe_attach_neutral_garrison(
                 state,
                 ALEXANDRIA,
                 attacker=state.battalions["atk"],
             )
             self.assertIsNotNone(pending)
-            self.assertEqual("neutral_garrison", pending.encounter_kind)
-            self.assertEqual("rusa", pending.tactical_defender_side)
-            garrison = state.battalions[garrison_battalion_id(ALEXANDRIA)]
-            selected_names = {entry.unit_name for entry in garrison.roster}
-            self.assertIn("ural375", selected_names)
-            self.assertIn("btr-60pb", selected_names)
 
-            # The ordinary strategic catalog stays four-side-only.
-            normal = CodeXCatalogScanner().scan_stack(stack)
-            self.assertNotIn("ural375", normal.units)
-            self.assertNotIn("btr-60pb", normal.units)
-
-            save_campaign(state, campaign)
-            manifest = GatesOfCodeXService().export_battle(
-                campaign,
-                code_x_directory=codex,
-                save_path=save,
-                map_name="multi/2x2/live_test",
-                resource_stack=stack,
-                mods=[],
+            state.battalions["spoof-neutral"] = Battalion(
+                "spoof-neutral",
+                Faction.NEUTRAL,
+                ALEXANDRIA,
+                roster=[BattalionRosterEntry("ural375", 1, category="vehicle")],
             )
-            contents = CampaignSaveArchive().read(manifest.save_path)
+            pending.defending_participants = [
+                BattleParticipant("spoof-neutral", Faction.NEUTRAL, "stage_2", True)
+            ]
+            pending.encounter_kind = "neutral_garrison"
 
-            self.assertIn("{enemyArmy rusa}", contents.status)
-            self.assertNotIn("{enemyArmy neutral}", contents.status)
-            self.assertIn("ural375", contents.campaign_scn)
-            self.assertIn("btr-60pb", contents.campaign_scn)
-            self.assertIn('Entity "ural375"', contents.campaign_scn)
-            self.assertIn('Entity "btr-60pb"', contents.campaign_scn)
-            self.assertIsNotNone(manifest.neutral_garrison)
-            self.assertEqual("neutral", manifest.neutral_garrison["strategic_defender_faction"])
-            self.assertEqual("rusa", manifest.neutral_garrison["tactical_defender_side"])
+            campaign = root / "spoof.json"
+            save_campaign(state, campaign)
+            service = GatesOfCodeXService()
+            scanner = RecordingScanner()
+            service.scanner = scanner
+            with self.assertRaisesRegex(ValueError, "ural375|absent from the Code:X catalog"):
+                service.export_battle(
+                    campaign,
+                    code_x_directory=codex,
+                    save_path=root / "spoof.sav",
+                    map_name="multi/2x2/live_test",
+                    resource_stack=stack,
+                    mods=[],
+                )
+            self.assertEqual([False], scanner.legacy_flags)
 
 
 if __name__ == "__main__":
