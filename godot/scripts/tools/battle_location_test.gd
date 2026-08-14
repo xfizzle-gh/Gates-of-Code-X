@@ -221,3 +221,21 @@ func _test_graph_fallback_safety() -> void:
 		}
 	})
 	_assert_eq("explicit snapshot graph path", path, GRAPH_PATH)
+
+	var p3_repo := "godot/assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json"
+	var p3_res := "res://assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json"
+	path = view.resolve_path(unknown, {
+		"campaign": {
+			"map_metadata": {
+				"operational_graph": p3_repo,
+			}
+		}
+	})
+	_assert_eq("repo-root godot/ prefix maps to res://assets", path, p3_res)
+	_assert_true("mapped P3 path exists", FileAccess.file_exists(path), path)
+	path = view.resolve_path(unknown, {
+		"strategic_map": {
+			"operational_graph_path": "res://godot/assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json",
+		}
+	})
+	_assert_eq("wrong res://godot/ conversion fails closed", path, "")

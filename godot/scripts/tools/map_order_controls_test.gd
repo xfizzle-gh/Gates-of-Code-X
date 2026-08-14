@@ -4,6 +4,17 @@ extends SceneTree
 
 const MainScript = preload("res://scripts/main_order_controls.gd")
 const FakeRunnerScript = preload("res://scripts/tools/fake_command_runner.gd")
+const OperationalGraphViewScript = preload("res://scripts/presentation/operational_graph_view.gd")
+
+const EARTH3_MANIFEST := "res://assets/maps/earth3_europe_mediterranean/map_manifest.json"
+const P3_GRAPH_RES := "res://assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json"
+const P3_GRAPH_REPO := "godot/assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json"
+const EM_CANDIDATE_GRAPH := "res://assets/maps/europe_mediterranean/from_goe/operational/operational_graph.json"
+const NATIVE_NODE_A := "op-node-e3_0442-anchor"
+const NATIVE_NODE_B := "op-node-e3_0456-anchor"
+const NATIVE_NODE_C := "op-node-e3_0455-anchor"
+const NATIVE_EDGE_AB := "op-edge-corridor-op-node-e3_0442-anchor__op-node-e3_0456-anchor"
+const NATIVE_EDGE_BC := "op-edge-corridor-op-node-e3_0455-anchor__op-node-e3_0456-anchor"
 
 var passed := 0
 var failed := 0
@@ -22,6 +33,11 @@ func _initialize() -> void:
 	_test_fast_patch_replaces_and_cancels_route_once()
 	_test_contact_blocked_order_is_labeled_interrupted()
 	_test_source_locks_mouse_split()
+	_test_production_p3_graph_loads_and_renders_native_route()
+	_test_production_repo_relative_graph_path_loads()
+	_test_missing_and_malformed_graph_paths_fail_closed()
+	_test_unapproved_candidate_graph_is_not_fallback()
+	_test_production_node_edge_mismatch_refuses_render()
 	if failed > 0:
 		push_error("map_order_controls_test: FAILED %s" % failed)
 		quit(1)
@@ -191,6 +207,163 @@ func _test_contact_blocked_order_is_labeled_interrupted() -> void:
 	var order := {"status": "blocked"}
 	scene.snapshot["pending_battle"] = {"attacker_formation_id": "sf-a"}
 	_check_eq(scene._order_phase(order), "INTERRUPTED BY CONTACT", "contact-blocked route reports interruption")
+	_free(ctx)
+
+
+func _native_order() -> Dictionary:
+	return {
+		"formation_id": "sf_pol_vilnius",
+		"status": "committed",
+		"path_node_ids": [NATIVE_NODE_A, NATIVE_NODE_B, NATIVE_NODE_C],
+		"path_edge_ids": [NATIVE_EDGE_AB, NATIVE_EDGE_BC],
+	}
+
+
+func _production_snapshot(graph_contract: Dictionary) -> Dictionary:
+	var order := _native_order()
+	return {
+		"schema": "gates-of-codex.frontend",
+		"schema_version": 16,
+		"campaign": {
+			"current_faction": "nato",
+			"selected_faction": "nato",
+			"map_id": "earth3_europe_mediterranean",
+			"map_metadata": graph_contract.get("map_metadata", {
+				"operational_graph": P3_GRAPH_REPO,
+			}),
+		},
+		"strategic_map": graph_contract.get("strategic_map", {
+			"map_id": "earth3_europe_mediterranean",
+			"operational_graph_path": P3_GRAPH_RES,
+			"fallback": "none",
+		}),
+		"provinces": [
+			{"id": "e3_0442", "display_name": "Vilnius", "owner": "nato", "x": 0, "y": 0},
+			{"id": "e3_0456", "display_name": "Hop", "owner": "neutral", "x": 20, "y": 0},
+			{"id": "e3_0455", "display_name": "Dest", "owner": "neutral", "x": 40, "y": 0},
+		],
+		"strategic_formations": [{
+			"id": "sf_pol_vilnius",
+			"display_name": "Vilnius Forward Brigade",
+			"faction": "nato",
+			"province_id": "e3_0442",
+			"move_order": order,
+		}],
+	}
+
+
+func _production_scene(name: String, graph_contract: Dictionary = {}) -> Dictionary:
+	var scene = MainScript.new()
+	var runner = FakeRunnerScript.new()
+	scene.command_runner = runner
+	scene.snapshot = _production_snapshot(graph_contract)
+	scene.map_manifest_source_path = EARTH3_MANIFEST
+	scene.selected_province_id = "e3_0442"
+	scene.selected_strategic_formation_id = "sf_pol_vilnius"
+	scene._open_operational_graph()
+	return {"scene": scene, "runner": runner, "name": name}
+
+
+func _assert_production_graph_ready(scene) -> void:
+	_check(scene.operational_graph != null, "production scene owns an operational graph view")
+	_check(scene.operational_graph.is_ready, "production graph loader marked the authenticated P3 graph ready")
+	_check_eq(scene.operational_graph.path, P3_GRAPH_RES, "production loader opened the exact P3 resource")
+	var nodes: Dictionary = scene.operational_graph.index.get("nodes", {})
+	var edges: Dictionary = scene.operational_graph.index.get("edges", {})
+	_check(nodes.has(NATIVE_NODE_A), "P3 graph contains Vilnius origin node")
+	_check(nodes.has(NATIVE_NODE_B), "P3 graph contains native hop node")
+	_check(nodes.has(NATIVE_NODE_C), "P3 graph contains native destination node")
+	_check(edges.has(NATIVE_EDGE_AB), "P3 graph contains native first corridor")
+	_check(edges.has(NATIVE_EDGE_BC), "P3 graph contains native second corridor")
+	_check(not nodes.has("node-a"), "production loader did not inject the artificial #218 index")
+
+
+func _test_production_p3_graph_loads_and_renders_native_route() -> void:
+	var ctx := _production_scene("p8_218_production_p3")
+	var scene = ctx["scene"]
+	_assert_production_graph_ready(scene)
+	var points: PackedVector2Array = scene._authoritative_route_map_pixels(_native_order())
+	_check_eq(points.size(), 3, "committed native order resolves every authoritative P3 node")
+	if points.size() == 3:
+		_check_eq(points[0], Vector2(2498, 1585), "route begins at exact Vilnius P3 pixel")
+		_check_eq(points[2], Vector2(2571, 1639), "route ends at exact destination P3 pixel")
+	var primitives: Dictionary = scene._route_presentation_primitives(points, scene.QUEUED_ROUTE_COLOR)
+	_check(primitives["lines"].size() >= 2, "production route layer emits the path line segments")
+	_check(primitives["chevrons"].size() >= 1, "production route layer emits directional chevron(s)")
+	_check(primitives.get("destination") != null, "production route layer emits a destination indicator")
+	_free(ctx)
+
+
+func _test_production_repo_relative_graph_path_loads() -> void:
+	var ctx := _production_scene("p8_218_repo_relative", {
+		"strategic_map": {
+			"map_id": "earth3_europe_mediterranean",
+			"fallback": "none",
+		},
+		"map_metadata": {
+			"operational_graph": P3_GRAPH_REPO,
+		},
+	})
+	_assert_production_graph_ready(ctx["scene"])
+	_free(ctx)
+
+
+func _test_missing_and_malformed_graph_paths_fail_closed() -> void:
+	var missing := _production_scene("p8_218_missing_graph", {
+		"strategic_map": {
+			"map_id": "earth3_europe_mediterranean",
+			"fallback": "none",
+		},
+		"map_metadata": {},
+	})
+	_check(not missing["scene"].operational_graph.is_ready, "missing graph path leaves the view unready")
+	_check_eq(missing["scene"]._authoritative_route_map_pixels(_native_order()).size(), 0, "missing graph draws nothing")
+	_free(missing)
+	var malformed := _production_scene("p8_218_malformed_graph", {
+		"strategic_map": {
+			"map_id": "earth3_europe_mediterranean",
+			"operational_graph_path": "res://godot/assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json",
+			"fallback": "none",
+		},
+		"map_metadata": {
+			"operational_graph": "../p3_authority/not-a-graph.json",
+		},
+	})
+	_check(not malformed["scene"].operational_graph.is_ready, "malformed graph path leaves the view unready")
+	_check_eq(malformed["scene"]._authoritative_route_map_pixels(_native_order()).size(), 0, "malformed graph draws nothing")
+	_free(malformed)
+
+
+func _test_unapproved_candidate_graph_is_not_fallback() -> void:
+	var view = OperationalGraphViewScript.new()
+	var resolved := view.resolve_path(EARTH3_MANIFEST, {
+		"strategic_map": {"map_id": "earth3_europe_mediterranean", "fallback": "none"},
+		"campaign": {"map_metadata": {}},
+	})
+	_check_eq(resolved, "", "Earth3 without an approved graph path does not fall back")
+	_check(resolved != EM_CANDIDATE_GRAPH, "Earth3 does not select the EM candidate graph")
+	_check(resolved.find("operational/operational_graph.json") < 0, "Earth3 does not select a sibling candidate graph")
+	var ctx := _production_scene("p8_218_candidate_blocked", {
+		"strategic_map": {
+			"map_id": "earth3_europe_mediterranean",
+			"fallback": "none",
+		},
+		"map_metadata": {
+			"operational_graph": "godot/assets/maps/earth3_europe_mediterranean/operational/operational_graph.json",
+		},
+	})
+	_check(not ctx["scene"].operational_graph.is_ready, "unapproved Earth3 candidate path fails closed")
+	_check(ctx["scene"].operational_graph.path != EM_CANDIDATE_GRAPH, "failed Earth3 load does not swap in the EM graph")
+	_free(ctx)
+
+
+func _test_production_node_edge_mismatch_refuses_render() -> void:
+	var ctx := _production_scene("p8_218_mismatch")
+	var scene = ctx["scene"]
+	_assert_production_graph_ready(scene)
+	var tampered := _native_order()
+	tampered["path_edge_ids"] = [NATIVE_EDGE_BC, NATIVE_EDGE_AB]
+	_check_eq(scene._authoritative_route_map_pixels(tampered).size(), 0, "P3 node/edge mismatch refuses to render")
 	_free(ctx)
 
 

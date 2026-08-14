@@ -272,16 +272,19 @@ func _draw_selected_order_route() -> void:
 		_draw_terminal_order_badge(formation, phase, _route_color(order))
 		return
 	var points := _route_screen_points(order)
-	if points.size() < 2:
+	var primitives := _route_presentation_primitives(points, _route_color(order))
+	if primitives.get("destination") == null:
 		return
 	var color := _route_color(order)
-	for idx in range(points.size() - 1):
-		var a := points[idx]
-		var b := points[idx + 1]
+	for item: Variant in primitives["lines"]:
+		var segment := item as Dictionary
+		var a: Vector2 = segment["a"]
+		var b: Vector2 = segment["b"]
 		draw_line(a, b, Color(color.r, color.g, color.b, 0.28), ROUTE_WIDTH + 4.0, true)
 		draw_line(a, b, color, ROUTE_WIDTH, true)
-		_draw_route_chevron(a, b, color)
-	var destination := points[points.size() - 1]
+	for chevron: Variant in primitives["chevrons"]:
+		draw_colored_polygon(chevron, color)
+	var destination: Vector2 = primitives["destination"]
 	draw_circle(destination, 10.0, Color(color.r, color.g, color.b, 0.2))
 	draw_arc(destination, 10.0, 0.0, TAU, 28, color, 2.5, true)
 	var owner_label := "%s  %s" % [
@@ -299,20 +302,46 @@ func _draw_selected_order_route() -> void:
 	)
 
 
-func _draw_route_chevron(a: Vector2, b: Vector2, color: Color) -> void:
+func _route_presentation_primitives(points: PackedVector2Array, color: Color) -> Dictionary:
+	var lines: Array = []
+	var chevrons: Array = []
+	if points.size() < 2:
+		return {"lines": lines, "chevrons": chevrons, "destination": null, "color": color}
+	for idx in range(points.size() - 1):
+		var a := points[idx]
+		var b := points[idx + 1]
+		lines.append({"a": a, "b": b})
+		var chevron := _route_chevron_points(a, b)
+		if chevron.size() == 3:
+			chevrons.append(chevron)
+	return {
+		"lines": lines,
+		"chevrons": chevrons,
+		"destination": points[points.size() - 1],
+		"color": color,
+	}
+
+
+func _route_chevron_points(a: Vector2, b: Vector2) -> PackedVector2Array:
 	var delta := b - a
 	if delta.length() < 12.0:
-		return
+		return PackedVector2Array()
 	var direction := delta.normalized()
 	var normal := Vector2(-direction.y, direction.x)
 	var center := a.lerp(b, 0.58)
 	var tip := center + direction * 7.0
 	var back := center - direction * 5.0
-	var triangle := PackedVector2Array([
+	return PackedVector2Array([
 		tip,
 		back + normal * 4.5,
 		back - normal * 4.5,
 	])
+
+
+func _draw_route_chevron(a: Vector2, b: Vector2, color: Color) -> void:
+	var triangle := _route_chevron_points(a, b)
+	if triangle.size() != 3:
+		return
 	draw_colored_polygon(triangle, color)
 
 

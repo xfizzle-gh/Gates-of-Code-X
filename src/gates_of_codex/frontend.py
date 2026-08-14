@@ -1029,6 +1029,27 @@ def _require_earth3_persisted_value(
         )
 
 
+def _godot_res_path_from_repo_relative(relative: str) -> str:
+    """Map a repo-root Earth3 asset path to the Godot project resource path."""
+    normalized = str(relative).replace("\\", "/").strip()
+    if normalized.startswith("./"):
+        normalized = normalized[2:]
+    if normalized.startswith("godot/"):
+        normalized = normalized[len("godot/") :]
+    if not normalized.startswith("assets/"):
+        return ""
+    return f"res://{normalized}"
+
+
+def _earth3_operational_graph_presentation_path(state: CampaignState) -> str:
+    from .earth3_operational import P3_GRAPH_RELATIVE_PATH
+
+    configured = state.map_metadata.get("operational_graph")
+    if configured != P3_GRAPH_RELATIVE_PATH:
+        return ""
+    return _godot_res_path_from_repo_relative(P3_GRAPH_RELATIVE_PATH)
+
+
 def _earth3_strategic_map_block(state: CampaignState) -> dict:
     if state.map_id != EARTH3_MAP_ID:
         raise Earth3AuthorityError(
@@ -1078,7 +1099,7 @@ def _earth3_strategic_map_block(state: CampaignState) -> dict:
         _require_earth3_persisted_value(state, field, expected)
 
     manifest_path = authority.root / EARTH3_MANIFEST_PATH
-    return {
+    block = {
         "enabled": True,
         "manifest_path": str(manifest_path),
         "configured": True,
@@ -1095,6 +1116,10 @@ def _earth3_strategic_map_block(state: CampaignState) -> dict:
         ),
         "fallback": "none",
     }
+    presentation_graph = _earth3_operational_graph_presentation_path(state)
+    if presentation_graph:
+        block["operational_graph_path"] = presentation_graph
+    return block
 
 
 def _application_version() -> str:

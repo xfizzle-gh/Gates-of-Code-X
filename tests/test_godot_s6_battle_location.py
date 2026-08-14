@@ -82,6 +82,8 @@ class S6BattleLocationContractTests(unittest.TestCase):
             "legacy mode",
             "unknown manifest no silent EM graph",
             "floor_div negative floor",
+            "repo-root godot/ prefix maps to res://assets",
+            "wrong res://godot/ conversion fails closed",
         ]
         for token in required:
             self.assertIn(token, src)

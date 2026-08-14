@@ -64,6 +64,35 @@ func open(graph_path: String) -> bool:
 	return true
 
 
+func presentation_res_path(raw_path: String) -> String:
+	## Map an explicit repo-root or Godot path to res:// without searching.
+	## Only `res://...`, `godot/assets/...`, and `assets/...` are accepted.
+	var normalized := raw_path.replace("\\", "/").strip_edges()
+	if normalized.begins_with("./"):
+		normalized = normalized.substr(2)
+	if normalized.begins_with("res://"):
+		return normalized.simplify_path()
+	if normalized.begins_with("godot/"):
+		normalized = normalized.substr(6)
+	if normalized.begins_with("assets/"):
+		return ("res://" + normalized).simplify_path()
+	return ""
+
+
+func _existing_presentation_path(raw_path: String) -> String:
+	var trimmed := raw_path.strip_edges()
+	if trimmed.is_empty():
+		return ""
+	if FileAccess.file_exists(trimmed):
+		return trimmed
+	var converted := presentation_res_path(trimmed)
+	if converted.is_empty() or converted == trimmed:
+		return ""
+	if FileAccess.file_exists(converted):
+		return converted
+	return ""
+
+
 func resolve_path(map_manifest_path: String, snapshot: Dictionary = {}) -> String:
 	## Resolve operational graph without silently using EM data for unknown maps.
 	## Order:
@@ -73,24 +102,21 @@ func resolve_path(map_manifest_path: String, snapshot: Dictionary = {}) -> Strin
 	## 4) known EM/interim manifests only → committed EM operational graph
 	## else: empty (unresolved)
 	var contract: Dictionary = snapshot.get("strategic_map", {})
-	var exported := String(contract.get("operational_graph_path", "")).strip_edges()
-	if not exported.is_empty() and FileAccess.file_exists(exported):
+	var exported := _existing_presentation_path(String(contract.get("operational_graph_path", "")))
+	if not exported.is_empty():
 		return exported
 
 	var campaign: Dictionary = snapshot.get("campaign", {})
 	var meta: Dictionary = campaign.get("map_metadata", {})
 	var meta_graph := String(meta.get("operational_graph", "")).strip_edges()
 	if not meta_graph.is_empty():
-		if FileAccess.file_exists(meta_graph):
-			return meta_graph
+		var existing := _existing_presentation_path(meta_graph)
+		if not existing.is_empty():
+			return existing
 		if not map_manifest_path.is_empty():
 			var rel := map_manifest_path.get_base_dir().path_join(meta_graph).simplify_path()
 			if FileAccess.file_exists(rel):
 				return rel
-			# Snapshot often lives under godot/; graph path may be assets/... from repo root.
-			var from_res := ("res://" + meta_graph.trim_prefix("./")).simplify_path()
-			if FileAccess.file_exists(from_res):
-				return from_res
 
 	if not map_manifest_path.is_empty():
 		var local := map_manifest_path.get_base_dir().path_join("operational/operational_graph.json").simplify_path()
