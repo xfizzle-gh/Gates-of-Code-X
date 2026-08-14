@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Iterable, Iterator, Sequence
 
 from ..goh_source import MacroCall, SourceEntry, scan_source_entries
-from ..modstack import normalize_stack, resource_root, stack_signature
+from ..modstack import MOD_INFO_NAME_RE, normalize_stack, resource_root, stack_signature
 
 
 @dataclass(slots=True)
@@ -102,12 +102,14 @@ class CodeXCatalog:
 
 class CodeXCatalogScanner:
     FACTIONS = ("nato", "ukr", "rusa", "prc")
-    # These are source/content namespaces present in West81. They are not valid
-    # GoH tactical armies for Gates campaigns. They may be scanned only when an
-    # explicit caller needs source-backed legacy materialization (for example
-    # #48 encounter-only garrisons).
+    # Source/content namespaces present in West81. They are not valid Gates
+    # tactical armies and are admitted only as exact, authority-scoped unit
+    # definitions for authenticated #48 garrison materialization.
     LEGACY_SOURCE_SIDES = ("sov", "gdr", "csa", "frg")
     SOURCE_SIDES = (*FACTIONS, *LEGACY_SOURCE_SIDES)
+    WEST81_AUTHORITY = "West81"
+    WEST81_WORKSHOP_ID = "2897299509"
+    WEST81_MOD_NAMES = frozenset({"West-81", "West81"})
     SOURCE_EXTENSIONS = {".set", ".goh"}
     _MACRO_MEMBER_RE = re.compile(r"\b(?:c\d+|crew\d*|member\d*|breed\d*)\(([^:()\s]+):(\d+)\)", re.I)
     _ENTITY_MACRO_HINTS = (
@@ -130,60 +132,148 @@ class CodeXCatalogScanner:
         self,
         resource_stack: Iterable[str | Path],
         *,
-        include_legacy_sources: bool = False,
+        legacy_unit_names: Iterable[str] | None = None,
+        legacy_source_authority: str = "",
     ) -> CodeXCatalog:
         roots = normalize_stack(resource_stack)
         if not roots:
             raise ValueError("Code:X resource stack is empty")
-        accepted_sides = frozenset(
-            self.SOURCE_SIDES if include_legacy_sources else self.FACTIONS
-        )
+
         units: dict[str, UnitDefinition] = {}
+        modern_sides = frozenset(self.FACTIONS)
         for layer_index, root in enumerate(roots):
             if not root.is_dir():
                 raise FileNotFoundError(f"Stack layer does not exist: {root}")
-            layer_units: dict[str, UnitDefinition] = {}
-            resources = resource_root(root)
-
-            # Lua rows provide the exact campaign/shop template IDs, including
-            # faction suffixes. Scan them first so GoH source macros can merge
-            # composition into those rows instead of creating duplicate aliases.
-            lua_root = resources / "script/multiplayer/units"
-            if lua_root.is_dir():
-                for path in sorted(lua_root.rglob("*.lua")):
-                    self._scan_lua(
-                        path,
-                        resources,
-                        layer_units,
-                        layer_index,
-                        root.name,
-                        accepted_sides,
-                    )
-
-            conquest_root = resources / "set/multiplayer/units/conquest"
-            if conquest_root.is_dir():
-                for path in sorted(
-                    candidate
-                    for candidate in conquest_root.rglob("*")
-                    if candidate.is_file() and candidate.suffix.lower() in self.SOURCE_EXTENSIONS
-                ):
-                    self._scan_source(
-                        path,
-                        resources,
-                        layer_units,
-                        layer_index,
-                        root.name,
-                        accepted_sides,
-                    )
-
+            layer_units = self._scan_layer(
+                root,
+                layer_index=layer_index,
+                accepted_sides=modern_sides,
+            )
             for name, overlay in layer_units.items():
                 existing = units.get(name)
                 units[name] = self._merge(existing, overlay) if existing else overlay
+
+        requested_legacy = frozenset(
+            str(name).strip()
+            for name in (legacy_unit_names or ())
+            if str(name).strip()
+        )
+        if requested_legacy:
+            layer_index, root = self._legacy_source_root(
+                roots,
+                source_authority=legacy_source_authority,
+            )
+            legacy_units = self._scan_layer(
+                root,
+                layer_index=layer_index,
+                accepted_sides=frozenset(self.LEGACY_SOURCE_SIDES),
+            )
+            missing = sorted(requested_legacy - set(legacy_units))
+            if missing:
+                raise ValueError(
+                    "Authorized West81 legacy unit definitions are missing: "
+                    + ", ".join(missing)
+                )
+            for name in sorted(requested_legacy):
+                definition = legacy_units[name]
+                if definition.side not in self.LEGACY_SOURCE_SIDES:
+                    raise ValueError(
+                        f"Authorized West81 legacy unit {name} resolved to non-legacy side {definition.side}"
+                    )
+                # Intentional replacement: for an authority-approved West81
+                # legacy ID, the West81 definition wins even if a later modern
+                # layer has a same-name row. This catalog is export-local and
+                # callers must still scope consumption to the authenticated
+                # garrison participant.
+                units[name] = definition
+        elif legacy_source_authority:
+            raise ValueError("legacy_source_authority requires explicit legacy_unit_names")
+
         return CodeXCatalog(
             units=units,
             signature=stack_signature(roots),
             resource_stack=[str(root) for root in roots],
         )
+
+    def _scan_layer(
+        self,
+        root: Path,
+        *,
+        layer_index: int,
+        accepted_sides: frozenset[str],
+    ) -> dict[str, UnitDefinition]:
+        layer_units: dict[str, UnitDefinition] = {}
+        resources = resource_root(root)
+
+        # Lua rows provide the exact campaign/shop template IDs, including
+        # faction suffixes. Scan them first so GoH source macros can merge
+        # composition into those rows instead of creating duplicate aliases.
+        lua_root = resources / "script/multiplayer/units"
+        if lua_root.is_dir():
+            for path in sorted(lua_root.rglob("*.lua")):
+                self._scan_lua(
+                    path,
+                    resources,
+                    layer_units,
+                    layer_index,
+                    root.name,
+                    accepted_sides,
+                )
+
+        conquest_root = resources / "set/multiplayer/units/conquest"
+        if conquest_root.is_dir():
+            for path in sorted(
+                candidate
+                for candidate in conquest_root.rglob("*")
+                if candidate.is_file() and candidate.suffix.lower() in self.SOURCE_EXTENSIONS
+            ):
+                self._scan_source(
+                    path,
+                    resources,
+                    layer_units,
+                    layer_index,
+                    root.name,
+                    accepted_sides,
+                )
+        return layer_units
+
+    @classmethod
+    def _legacy_source_root(
+        cls,
+        roots: Sequence[Path],
+        *,
+        source_authority: str,
+    ) -> tuple[int, Path]:
+        if source_authority != cls.WEST81_AUTHORITY:
+            raise ValueError(
+                f"Unsupported legacy source authority {source_authority!r}; only West81 is authorized"
+            )
+        matches: list[tuple[int, Path]] = []
+        for index, root in enumerate(roots):
+            mod_name = cls._mod_info_name(root)
+            if (
+                cls.WEST81_WORKSHOP_ID in root.parts
+                or root.name == cls.WEST81_WORKSHOP_ID
+                or mod_name in cls.WEST81_MOD_NAMES
+            ):
+                matches.append((index, root))
+        if len(matches) != 1:
+            detail = ", ".join(str(root) for _, root in matches) or "none"
+            raise ValueError(
+                "West81 legacy source authority must resolve to exactly one stack layer; "
+                f"matches={detail}"
+            )
+        return matches[0]
+
+    @classmethod
+    def _mod_info_name(cls, root: Path) -> str:
+        mod_info = root / "mod.info"
+        if not mod_info.is_file():
+            return ""
+        match = MOD_INFO_NAME_RE.search(
+            mod_info.read_text(encoding="utf-8-sig", errors="replace")
+        )
+        return match.group(1) if match else ""
 
     def _scan_source(
         self,
