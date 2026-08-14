@@ -13,7 +13,7 @@ from .bridge.result import BattleImportResult, BattleResultImporter
 from .bridge.scn import CampaignScnBuilder
 from .bridge.status import BattleStatusOptions, StatusBuilder, StatusResult
 from .campaign import CampaignEngine
-from .codex.catalog import CodeXCatalogScanner
+from .codex.catalog import CodeXCatalog, CodeXCatalogScanner
 from .modstack import resolve_stack, stack_mod_tokens, stack_to_strings
 from .state_io import load_campaign, save_campaign
 
@@ -109,16 +109,31 @@ class GatesOfCodeXService:
         if not stack:
             raise ValueError("No Code:X resource stack was configured")
 
-        # Legacy West81 source namespaces are an export-only exception for an
-        # authenticated #48 garrison participant. The operational
-        # ``encounter_kind`` marker is presentation/contact metadata and is not
-        # an authorization token: legacy province-adjacency battles have no
-        # operational node, while a spoofed marker must never unlock content.
+        # Build the ordinary four-side catalog first. A legitimate #48 garrison
+        # may receive an export-local catalog that overlays only the exact
+        # West81 legacy IDs authenticated by its persisted authority profile.
+        # Every other participant is preflighted against this ordinary catalog
+        # before the expanded catalog is handed to CampaignScnBuilder, so the
+        # garrison exception cannot become a battle-wide content capability.
         neutral_garrison_profile = _authenticated_neutral_garrison_profile(state)
-        catalog = self.scanner.scan_stack(
-            stack,
-            include_legacy_sources=neutral_garrison_profile is not None,
-        )
+        catalog = self.scanner.scan_stack(stack)
+        export_catalog = catalog
+        if neutral_garrison_profile is not None:
+            legacy_unit_names = _authorized_west81_legacy_unit_names(neutral_garrison_profile)
+            if legacy_unit_names:
+                garrison_id = _authenticated_garrison_battalion_id(neutral_garrison_profile)
+                _validate_non_garrison_participants_against_catalog(
+                    state,
+                    state.pending_battle,
+                    catalog,
+                    authenticated_garrison_id=garrison_id,
+                )
+                export_catalog = self.scanner.scan_stack(
+                    stack,
+                    legacy_unit_names=legacy_unit_names,
+                    legacy_source_authority=CodeXCatalogScanner.WEST81_AUTHORITY,
+                )
+
         # Earth3 P2/P3 stores an actor-content digest in ``catalog_signature``
         # (see earth3_bootstrap), not the Code:X stack scan signature. The
         # stack scan still drives export/import integrity via the manifest.
@@ -171,7 +186,10 @@ class GatesOfCodeXService:
             mods=mod_tokens,
         )
         status_text = self.status.build(state.pending_battle, options)
-        scn_text = CampaignScnBuilder(catalog, resource_stack=stack).build(state, state.pending_battle)
+        scn_text = CampaignScnBuilder(export_catalog, resource_stack=stack).build(
+            state,
+            state.pending_battle,
+        )
         destination = self.archive.write(destination, status=status_text, campaign_scn=scn_text)
         self.archive.validate(destination)
 
@@ -236,10 +254,10 @@ class GatesOfCodeXService:
 def _authenticated_neutral_garrison_profile(state: Any) -> dict[str, Any] | None:
     """Return the #48 export profile only for an authority-bound garrison battle.
 
-    This helper is the single admission boundary for legacy West81 source
-    namespaces. A string marker is deliberately insufficient: the pending
-    defender must be the exact ``garrison:<target>`` battalion and its persisted
-    #48 runtime/encounter selection must validate against current authority.
+    This helper is the admission boundary for the garrison exception. A string
+    marker is deliberately insufficient: the pending defender must be the exact
+    ``garrison:<target>`` battalion and its persisted #48 runtime/encounter
+    selection must validate against current authority.
     """
 
     from .models import Faction
@@ -325,6 +343,84 @@ def _authenticated_neutral_garrison_profile(state: Any) -> dict[str, Any] | None
     if profile.get("tactical_defender_side") != expected_side:
         return None
     return profile
+
+
+def _authorized_west81_legacy_unit_names(profile: dict[str, Any]) -> tuple[str, ...]:
+    """Return the exact West81 legacy IDs authorized by one authenticated profile."""
+
+    units = profile.get("units")
+    if not isinstance(units, list):
+        raise ValueError("Authenticated neutral-garrison profile has no unit authority")
+    names: list[str] = []
+    seen: set[str] = set()
+    for item in units:
+        if not isinstance(item, dict):
+            raise ValueError("Authenticated neutral-garrison unit authority is invalid")
+        if str(item.get("source_authority") or "") != CodeXCatalogScanner.WEST81_AUTHORITY:
+            continue
+        if str(item.get("provenance") or "") != "legacy_reserve":
+            raise ValueError("West81 garrison authority must retain legacy_reserve provenance")
+        name = str(item.get("unit_name") or "").strip()
+        if not name:
+            raise ValueError("West81 garrison authority contains an empty unit id")
+        if name in seen:
+            raise ValueError(f"West81 garrison authority repeats unit {name}")
+        seen.add(name)
+        names.append(name)
+    return tuple(sorted(names))
+
+
+def _authenticated_garrison_battalion_id(profile: dict[str, Any]) -> str:
+    from .neutral_garrison import garrison_battalion_id
+
+    province_id = str(profile.get("province_id") or "").strip()
+    if not province_id:
+        raise ValueError("Authenticated neutral-garrison profile has no province id")
+    return garrison_battalion_id(province_id)
+
+
+def _validate_non_garrison_participants_against_catalog(
+    state: Any,
+    battle: Any,
+    catalog: CodeXCatalog,
+    *,
+    authenticated_garrison_id: str,
+) -> None:
+    """Keep the West81 exception participant-scoped.
+
+    The builder receives one export catalog, so every participant other than the
+    authenticated garrison is proven against the ordinary four-side catalog
+    before the garrison-only legacy definitions are admitted.
+    """
+
+    invalid: list[str] = []
+    participants = (*battle.attacking_participants, *battle.defending_participants)
+    for participant in participants:
+        battalion_id = str(participant.battalion_id or "")
+        if battalion_id == authenticated_garrison_id:
+            continue
+        battalion = state.battalions.get(battalion_id)
+        if battalion is None:
+            invalid.append(f"{battalion_id}: battalion is missing")
+            continue
+        for entry in battalion.roster:
+            if entry.quantity <= 0:
+                continue
+            definition = catalog.units.get(entry.unit_name)
+            if definition is None:
+                invalid.append(
+                    f"{battalion_id}: {entry.unit_name} is outside the ordinary four-side catalog"
+                )
+            elif not definition.materializable:
+                invalid.append(
+                    f"{battalion_id}: {entry.unit_name} is not materializable in the ordinary four-side catalog"
+                )
+    if invalid:
+        details = "\n- ".join(sorted(set(invalid)))
+        raise ValueError(
+            "Non-garrison tactical participant cannot consume authenticated garrison legacy content:\n- "
+            + details
+        )
 
 
 def unique_acceptance_campaign_name(
