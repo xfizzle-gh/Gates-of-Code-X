@@ -28,7 +28,7 @@ from .operational_schema import FormationOperationalPosition, PositionMode, stab
 FIXTURE_SCENARIO_ID = "earth3_native_acceptance"
 FIXTURE_AUTHORITY_KEY = "earth3_native_acceptance_fixture_authority"
 FIXTURE_SCHEMA = "gates-of-codex.earth3-native-acceptance-fixture"
-FIXTURE_SCHEMA_VERSION = 1
+FIXTURE_SCHEMA_VERSION = 2
 FIXTURE_MANIFEST_RESOURCE = "earth3_native_acceptance/fixture_manifest.json"
 DEFAULT_SCENARIO_ID = "earth3_v1"
 FIXTURE_PURPOSE = "debug/native acceptance"
@@ -41,6 +41,7 @@ _MANIFEST_FIELDS = (
     "purpose",
     "production_scenario",
     "selected_existing_formations",
+    "compact_contact_layout",
     "fixture_prc_formation",
 )
 _SELECTED_FIELDS = ("nato", "ukr", "rusa")
@@ -133,6 +134,12 @@ def _require_exact_manifest(payload: Any) -> dict[str, Any]:
         raise Earth3FixtureAuthorityError("fixture PRC identity must remain prc")
     if not prc_out["formation_id"].startswith("sf_fix_"):
         raise Earth3FixtureAuthorityError("fixture PRC formation ID must be debug-only")
+    layout_out = _require_compact_contact_layout(
+        payload["compact_contact_layout"],
+        selected=selected_out,
+        prc_id=prc_out["formation_id"],
+        prc_province_id=prc_out["province_id"],
+    )
     return {
         "schema": schema,
         "schema_version": version,
@@ -141,6 +148,7 @@ def _require_exact_manifest(payload: Any) -> dict[str, Any]:
         "purpose": purpose,
         "production_scenario": production_scenario,
         "selected_existing_formations": selected_out,
+        "compact_contact_layout": layout_out,
         "fixture_prc_formation": prc_out,
     }
 
@@ -161,6 +169,29 @@ def _require_bool(value: Any, label: str) -> bool:
     if not isinstance(value, bool):
         raise Earth3FixtureAuthorityError(f"fixture manifest {label} must be a bool")
     return value
+
+
+def _require_compact_contact_layout(
+    payload: Any,
+    *,
+    selected: Mapping[str, str],
+    prc_id: str,
+    prc_province_id: str,
+) -> dict[str, str]:
+    expected_ids = {selected["nato"], selected["ukr"], selected["rusa"], prc_id}
+    if not isinstance(payload, dict) or set(payload) != expected_ids:
+        raise Earth3FixtureAuthorityError("fixture compact contact layout is not exact")
+    layout_out: dict[str, str] = {}
+    for formation_id in sorted(expected_ids):
+        layout_out[formation_id] = _require_str(
+            payload[formation_id],
+            f"compact_contact_layout.{formation_id}",
+        )
+    if layout_out[prc_id] != prc_province_id:
+        raise Earth3FixtureAuthorityError(
+            "fixture PRC layout province must match authored PRC province"
+        )
+    return layout_out
 
 
 def load_fixture_manifest() -> dict[str, Any]:
@@ -301,8 +332,10 @@ def apply_earth3_native_acceptance_fixture(state: CampaignState) -> CampaignStat
     manifest = load_fixture_manifest()
     spec = manifest["fixture_prc_formation"]
     _install_prc_formation(state, spec)
+    _apply_compact_contact_layout(state, manifest["compact_contact_layout"])
     state.map_metadata[FIXTURE_AUTHORITY_KEY] = authored_fixture_authority_marker()
     validate_earth3_native_acceptance_fixture(state)
+    _assert_start_layout(state, manifest["compact_contact_layout"])
     return state
 
 
@@ -341,8 +374,6 @@ def _validate_prc_formation(
         raise Earth3FixtureAuthorityError("fixture PRC template substitution is forbidden")
     if force.commander_id != str(spec["commander_id"]):
         raise Earth3FixtureAuthorityError("fixture PRC commander identity mismatch")
-    if force.province_id != str(spec["province_id"]):
-        raise Earth3FixtureAuthorityError("fixture PRC province is not the authored node province")
     if force.province_id not in graph_provinces:
         raise Earth3FixtureAuthorityError("fixture PRC province is outside authenticated P3 nodes")
     if expected_node not in node_ids:
@@ -356,8 +387,6 @@ def _validate_prc_formation(
         nodes_by_id=nodes_by_id,
     ):
         raise Earth3FixtureAuthorityError("fixture PRC position is not on the authenticated graph")
-    if force.position is None or force.position.node_id != expected_node:
-        raise Earth3FixtureAuthorityError("fixture PRC must occupy the authored P3 anchor")
     if expected_battalion not in state.battalions:
         raise Earth3FixtureAuthorityError("fixture PRC battalion is missing")
     battalion = state.battalions[expected_battalion]
@@ -374,6 +403,95 @@ def _validate_prc_formation(
     commander = state.commanders[commander_id]
     if commander.assigned_strategic_formation_id != formation_id:
         raise Earth3FixtureAuthorityError("fixture PRC commander assignment mismatch")
+
+
+def _assert_start_layout(state: CampaignState, layout: Mapping[str, str]) -> None:
+    base = authenticate_earth3_p3_base(state)
+    node_ids = base["node_ids"]
+    graph_provinces = base["graph_provinces"]
+    for formation_id, province_id in layout.items():
+        force = state.strategic_formations[formation_id]
+        expected_node = stable_node_id(province_id)
+        if province_id not in graph_provinces or expected_node not in node_ids:
+            raise Earth3FixtureAuthorityError(
+                f"fixture start layout is outside authenticated P3 nodes: {province_id}"
+            )
+        if force.province_id != province_id:
+            raise Earth3FixtureAuthorityError(
+                f"fixture start layout missed {formation_id} province"
+            )
+        if force.position is None or force.position.node_id != expected_node:
+            raise Earth3FixtureAuthorityError(
+                f"fixture start layout missed {formation_id} node"
+            )
+
+
+def _apply_compact_contact_layout(
+    state: CampaignState,
+    layout: Mapping[str, str],
+) -> None:
+    from .diplomacy import are_allied
+
+    occupied: dict[str, list[str]] = {}
+    for force in state.strategic_formations.values():
+        if force.position is None or not force.position.node_id:
+            continue
+        occupied.setdefault(str(force.position.node_id), []).append(
+            force.strategic_formation_id
+        )
+    for formation_id, province_id in layout.items():
+        force = state.strategic_formations.get(formation_id)
+        if force is None:
+            raise Earth3FixtureAuthorityError(
+                f"fixture layout formation missing: {formation_id}"
+            )
+        node_id = stable_node_id(province_id)
+        for occupant_id in occupied.get(node_id, []):
+            if occupant_id == formation_id:
+                continue
+            occupant = state.strategic_formations[occupant_id]
+            if not are_allied(state, force.faction, occupant.faction):
+                raise Earth3FixtureAuthorityError(
+                    f"fixture layout node {node_id} is occupied"
+                )
+        if (
+            force.province_id == province_id
+            and force.position is not None
+            and force.position.node_id == node_id
+        ):
+            continue
+        if force.position is not None and force.position.node_id:
+            old_node = str(force.position.node_id)
+            holders = occupied.get(old_node, [])
+            occupied[old_node] = [item for item in holders if item != formation_id]
+        _relocate_formation(state, force, province_id=province_id, node_id=node_id)
+        occupied.setdefault(node_id, []).append(formation_id)
+
+
+def _relocate_formation(
+    state: CampaignState,
+    force: StrategicFormation,
+    *,
+    province_id: str,
+    node_id: str,
+) -> None:
+    force.position = FormationOperationalPosition(
+        mode=PositionMode.AT_NODE.value,
+        node_id=node_id,
+        edge_id=None,
+        progress_milli=0,
+        facing_node_id=None,
+    )
+    force.province_id = province_id
+    force.movement_state = "at_anchor"
+    force.move_order = None
+    for battalion_id in force.battalion_ids:
+        battalion = state.battalions.get(battalion_id)
+        if battalion is None:
+            raise Earth3FixtureAuthorityError(
+                f"fixture layout formation references missing battalion: {battalion_id}"
+            )
+        battalion.province_id = province_id
 
 
 def _reject_production_ownership_mutation(state: CampaignState, bundle: Any) -> None:

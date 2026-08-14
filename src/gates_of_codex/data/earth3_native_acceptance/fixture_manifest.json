@@ -1,6 +1,6 @@
 {
   "schema": "gates-of-codex.earth3-native-acceptance-fixture",
-  "schema_version": 1,
+  "schema_version": 2,
   "fixture_id": "earth3_native_acceptance",
   "scenario_id": "earth3_native_acceptance",
   "purpose": "debug/native acceptance",
@@ -10,6 +10,12 @@
     "ukr": "sf_ukr_zaporizhzhia",
     "rusa": "sf_rus_donetsk"
   },
+  "compact_contact_layout": {
+    "sf_pol_vilnius": "e3_1961",
+    "sf_ukr_zaporizhzhia": "e3_1961",
+    "sf_rus_donetsk": "e3_3380",
+    "sf_fix_prc_acceptance": "e3_1747"
+  },
   "fixture_prc_formation": {
     "formation_id": "sf_fix_prc_acceptance",
     "commander_id": "cmd_fix_prc_acceptance",
@@ -17,7 +23,7 @@
     "faction": "prc",
     "nation": "People's Republic of China",
     "display_name": "PRC Acceptance Brigade",
-    "province_id": "e3_2795",
+    "province_id": "e3_1747",
     "roster": [
       {"category": "infantry", "quantity": 2},
       {"category": "tank", "quantity": 1},
