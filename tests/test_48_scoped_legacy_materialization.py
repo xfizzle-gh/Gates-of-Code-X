@@ -28,7 +28,12 @@ WEST81_LEGACY_IDS = ("ural375", "bmp-1", "t55a", "122mm_d-30")
 
 
 class ScopedLegacyMaterializationTests(unittest.TestCase):
-    def _stack(self, root: Path) -> tuple[list[Path], Path]:
+    def _stack(
+        self,
+        root: Path,
+        *,
+        shadow_west81_breed: bool = False,
+    ) -> tuple[list[Path], Path]:
         game = root / "game"
         west = root / "2897299509"
         codex = root / "3261086933"
@@ -84,15 +89,16 @@ class ScopedLegacyMaterializationTests(unittest.TestCase):
             encoding="utf-8",
         )
 
-        # Same-name later breed override: the authenticated garrison must not
-        # consume this file even though ordinary CampaignScnBuilder resolution
-        # would search the stack in reverse order.
-        gates_sov_breed = gates / "resource/set/breed/mp/sov"
-        gates_sov_breed.mkdir(parents=True)
-        gates_sov_breed.joinpath("sov_driver.set").write_text(
-            '{breed\n\t{inventory\n\t\t{item "later_override_marker" filled}\n\t}\n}\n',
-            encoding="utf-8",
-        )
+        if shadow_west81_breed:
+            # GoH resolves emitted relative breed tokens through the active mod
+            # stack. A later exact-path duplicate is therefore unsafe even when
+            # Python read the intended West81 file while constructing the save.
+            gates_sov_breed = gates / "resource/set/breed/mp/sov"
+            gates_sov_breed.mkdir(parents=True)
+            gates_sov_breed.joinpath("sov_driver.set").write_text(
+                '{breed\n\t{inventory\n\t\t{item "later_override_marker" filled}\n\t}\n}\n',
+                encoding="utf-8",
+            )
 
         for layer, label in (
             (west, "West81"),
@@ -177,21 +183,25 @@ class ScopedLegacyMaterializationTests(unittest.TestCase):
             )
         return matches[0].object_ids
 
-    def test_same_id_collision_and_same_name_breed_override_remain_participant_scoped(self) -> None:
+    def _attach_jerusalem_garrison(self, state: CampaignState):
+        pending = maybe_attach_neutral_garrison(
+            state,
+            JERUSALEM,
+            attacker=state.battalions["atk"],
+        )
+        self.assertIsNotNone(pending)
+        garrison = state.battalions[garrison_battalion_id(JERUSALEM)]
+        selected_names = {entry.unit_name for entry in garrison.roster}
+        self.assertIn("122mm_d-30", selected_names)
+        self.assertIn("ural375", selected_names)
+        return pending
+
+    def test_same_id_collision_remains_participant_scoped_without_runtime_shadow(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             stack, codex = self._stack(root)
             state = self._state(stack, codex)
-            pending = maybe_attach_neutral_garrison(
-                state,
-                JERUSALEM,
-                attacker=state.battalions["atk"],
-            )
-            self.assertIsNotNone(pending)
-            garrison = state.battalions[garrison_battalion_id(JERUSALEM)]
-            selected_names = {entry.unit_name for entry in garrison.roster}
-            self.assertIn("122mm_d-30", selected_names)
-            self.assertIn("ural375", selected_names)
+            self._attach_jerusalem_garrison(state)
 
             campaign = root / "jerusalem.json"
             save_campaign(state, campaign)
@@ -230,11 +240,35 @@ class ScopedLegacyMaterializationTests(unittest.TestCase):
                 for object_id in garrison_ids
             ))
 
-            # The legacy crew closure is bound to the West81 layer. A later
-            # same-name sov_driver file cannot replace its inventory payload.
             self.assertIn('item "west81_marker"', scn)
-            self.assertNotIn('item "later_override_marker"', scn)
             self.assertIn('item "modern_d30_marker"', scn)
+
+    def test_later_same_path_west81_breed_shadow_fails_closed_before_save_write(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            stack, codex = self._stack(root, shadow_west81_breed=True)
+            state = self._state(stack, codex)
+            self._attach_jerusalem_garrison(state)
+
+            campaign = root / "jerusalem-shadowed.json"
+            save_path = root / "jerusalem-shadowed.sav"
+            save_campaign(state, campaign)
+
+            with self.assertRaisesRegex(
+                ValueError,
+                "Authenticated West81 garrison breed path is shadowed by later active stack layer",
+            ):
+                GatesOfCodeXService().export_battle(
+                    campaign,
+                    code_x_directory=codex,
+                    save_path=save_path,
+                    map_name="multi/2x2/live_test",
+                    resource_stack=stack,
+                    mods=[],
+                )
+
+            self.assertFalse(save_path.exists())
+            self.assertFalse(GatesOfCodeXService.manifest_path(save_path).exists())
 
 
 if __name__ == "__main__":
