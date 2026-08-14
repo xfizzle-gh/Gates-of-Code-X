@@ -290,7 +290,9 @@ class S11FrontendTests(unittest.TestCase):
             snapshot = build_frontend_snapshot(state)
             pending = snapshot["pending_battle"]
             self.assertEqual({"operational_pause": True}, pending)
+            self.assertNotIn("encounter_progress_milli", pending)
             serialized = json.dumps(snapshot, sort_keys=True)
+            self.assertNotIn('"encounter_progress_milli"', serialized)
             for secret in (
                 "secret-battle-id",
                 "bn-recon-a",
@@ -299,7 +301,6 @@ class S11FrontendTests(unittest.TestCase):
                 "secret-target",
                 "secret-node",
                 "secret-edge",
-                "777",
                 "contact_initiator",
                 "ambush",
                 "secret-attacker-stage",

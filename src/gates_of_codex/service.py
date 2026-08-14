@@ -10,10 +10,10 @@ from typing import Any, Iterable
 
 from .bridge.archive import CampaignSaveArchive
 from .bridge.result import BattleImportResult, BattleResultImporter
-from .bridge.scn import CampaignScnBuilder
+from .bridge.scoped_scn import ParticipantScopedCampaignScnBuilder
 from .bridge.status import BattleStatusOptions, StatusBuilder, StatusResult
 from .campaign import CampaignEngine
-from .codex.catalog import CodeXCatalogScanner
+from .codex.catalog import CodeXCatalog, CodeXCatalogScanner
 from .modstack import resolve_stack, stack_mod_tokens, stack_to_strings
 from .state_io import load_campaign, save_campaign
 
@@ -108,7 +108,41 @@ class GatesOfCodeXService:
         stack = resolve_stack(resource_stack or saved_stack, fallback=code_x_directory or state.code_x_directory)
         if not stack:
             raise ValueError("No Code:X resource stack was configured")
+
+        # Build the ordinary four-side catalog first. The authenticated #48
+        # garrison may receive a participant-local catalog overlay containing
+        # only its exact West81 legacy IDs. Every other participant remains on
+        # the ordinary catalog even when an ID collides by name (for example
+        # 122mm_d-30). Legacy crew/breed closure is pinned to the same West81
+        # source root as the authorized definition.
+        neutral_garrison_profile = _authenticated_neutral_garrison_profile(state)
         catalog = self.scanner.scan_stack(stack)
+        participant_catalogs: dict[str, CodeXCatalog] = {}
+        pinned_unit_roots: dict[str, dict[str, Path]] = {}
+        if neutral_garrison_profile is not None:
+            legacy_unit_names = _authorized_west81_legacy_unit_names(neutral_garrison_profile)
+            if legacy_unit_names:
+                garrison_id = _authenticated_garrison_battalion_id(neutral_garrison_profile)
+                _validate_non_garrison_participants_against_catalog(
+                    state,
+                    state.pending_battle,
+                    catalog,
+                    authenticated_garrison_id=garrison_id,
+                )
+                garrison_catalog = self.scanner.scan_stack(
+                    stack,
+                    legacy_unit_names=legacy_unit_names,
+                    legacy_source_authority=CodeXCatalogScanner.WEST81_AUTHORITY,
+                )
+                _, west81_root = self.scanner._legacy_source_root(
+                    stack,
+                    source_authority=CodeXCatalogScanner.WEST81_AUTHORITY,
+                )
+                participant_catalogs[garrison_id] = garrison_catalog
+                pinned_unit_roots[garrison_id] = {
+                    unit_name: west81_root for unit_name in legacy_unit_names
+                }
+
         # Earth3 P2/P3 stores an actor-content digest in ``catalog_signature``
         # (see earth3_bootstrap), not the Code:X stack scan signature. The
         # stack scan still drives export/import integrity via the manifest.
@@ -161,7 +195,15 @@ class GatesOfCodeXService:
             mods=mod_tokens,
         )
         status_text = self.status.build(state.pending_battle, options)
-        scn_text = CampaignScnBuilder(catalog, resource_stack=stack).build(state, state.pending_battle)
+        scn_text = ParticipantScopedCampaignScnBuilder(
+            catalog,
+            resource_stack=stack,
+            participant_catalogs=participant_catalogs,
+            pinned_unit_roots=pinned_unit_roots,
+        ).build(
+            state,
+            state.pending_battle,
+        )
         destination = self.archive.write(destination, status=status_text, campaign_scn=scn_text)
         self.archive.validate(destination)
 
@@ -172,7 +214,6 @@ class GatesOfCodeXService:
         if code_x_directory:
             state.code_x_directory = str(Path(code_x_directory).resolve())
         save_campaign(state, campaign_file)
-        from .neutral_garrison import export_garrison_profile
 
         manifest = BattleExportManifest(
             battle_id=state.pending_battle.battle_id,
@@ -187,7 +228,7 @@ class GatesOfCodeXService:
             resource_stack=stack_to_strings(stack),
             status_template_path=str(template_path) if template_path else "",
             visible_campaign_name=visible_name,
-            neutral_garrison=export_garrison_profile(state, state.pending_battle),
+            neutral_garrison=neutral_garrison_profile,
         )
         self.write_manifest(manifest, manifest_destination)
         return manifest
@@ -222,6 +263,173 @@ class GatesOfCodeXService:
             observation_context=engine.observation_context,
         )
         return result
+
+
+def _authenticated_neutral_garrison_profile(state: Any) -> dict[str, Any] | None:
+    """Return the #48 export profile only for an authority-bound garrison battle.
+
+    This helper is the admission boundary for the garrison exception. A string
+    marker is deliberately insufficient: the pending defender must be the exact
+    ``garrison:<target>`` battalion and its persisted #48 runtime/encounter
+    selection must validate against current authority.
+    """
+
+    from .models import Faction
+    from .neutral_garrison import (
+        PROFILE_ID,
+        choose_tactical_defender_side,
+        export_garrison_profile,
+        garrison_battalion_id,
+        is_garrison_battalion_id,
+        validate_neutral_garrison_runtime,
+    )
+
+    battle = state.pending_battle
+    if battle is None:
+        return None
+    province_id = str(battle.target_province_id or "")
+    if not province_id:
+        return None
+    province = state.provinces.get(province_id)
+    if province is None or province.owner != Faction.NEUTRAL:
+        return None
+    if battle.defender_faction != Faction.NEUTRAL:
+        return None
+
+    expected_id = garrison_battalion_id(province_id)
+    matching = [
+        participant
+        for participant in battle.defending_participants
+        if participant.battalion_id == expected_id and participant.faction == Faction.NEUTRAL
+    ]
+    if len(matching) != 1:
+        return None
+    if any(
+        is_garrison_battalion_id(participant.battalion_id)
+        and participant.battalion_id != expected_id
+        for participant in battle.defending_participants
+    ):
+        return None
+
+    battalion = state.battalions.get(expected_id)
+    if (
+        battalion is None
+        or battalion.faction != Faction.NEUTRAL
+        or battalion.province_id != province_id
+        or bool(battalion.strategic_formation_id)
+    ):
+        return None
+
+    # load_campaign() already runs this validation; repeat it here because this
+    # helper is the authorization boundary and must remain safe if called with
+    # an in-memory state by tests or future callers.
+    validate_neutral_garrison_runtime(state)
+    profile = export_garrison_profile(state, battle)
+    if not isinstance(profile, dict):
+        return None
+    if profile.get("profile_id") != PROFILE_ID or profile.get("province_id") != province_id:
+        return None
+
+    units = profile.get("units")
+    if not isinstance(units, list) or not units:
+        return None
+    allowed: dict[str, int] = {}
+    for item in units:
+        if not isinstance(item, dict):
+            return None
+        name = str(item.get("unit_name") or "")
+        quantity = item.get("quantity")
+        if not name or not isinstance(quantity, int) or isinstance(quantity, bool) or quantity < 1:
+            return None
+        allowed[name] = quantity
+    for entry in battalion.roster:
+        if entry.quantity <= 0:
+            continue
+        if entry.unit_name not in allowed or entry.quantity > allowed[entry.unit_name]:
+            return None
+
+    region = str(profile.get("region") or "")
+    expected_side = choose_tactical_defender_side(region, battle.attacker_faction)
+    if not expected_side or battle.tactical_defender_side != expected_side:
+        return None
+    if profile.get("strategic_defender_faction") != Faction.NEUTRAL.value:
+        return None
+    if profile.get("tactical_defender_side") != expected_side:
+        return None
+    return profile
+
+
+def _authorized_west81_legacy_unit_names(profile: dict[str, Any]) -> tuple[str, ...]:
+    """Return the exact West81 legacy IDs authorized by one authenticated profile."""
+
+    units = profile.get("units")
+    if not isinstance(units, list):
+        raise ValueError("Authenticated neutral-garrison profile has no unit authority")
+    names: list[str] = []
+    seen: set[str] = set()
+    for item in units:
+        if not isinstance(item, dict):
+            raise ValueError("Authenticated neutral-garrison unit authority is invalid")
+        if str(item.get("source_authority") or "") != CodeXCatalogScanner.WEST81_AUTHORITY:
+            continue
+        if str(item.get("provenance") or "") != "legacy_reserve":
+            raise ValueError("West81 garrison authority must retain legacy_reserve provenance")
+        name = str(item.get("unit_name") or "").strip()
+        if not name:
+            raise ValueError("West81 garrison authority contains an empty unit id")
+        if name in seen:
+            raise ValueError(f"West81 garrison authority repeats unit {name}")
+        seen.add(name)
+        names.append(name)
+    return tuple(sorted(names))
+
+
+def _authenticated_garrison_battalion_id(profile: dict[str, Any]) -> str:
+    from .neutral_garrison import garrison_battalion_id
+
+    province_id = str(profile.get("province_id") or "").strip()
+    if not province_id:
+        raise ValueError("Authenticated neutral-garrison profile has no province id")
+    return garrison_battalion_id(province_id)
+
+
+def _validate_non_garrison_participants_against_catalog(
+    state: Any,
+    battle: Any,
+    catalog: CodeXCatalog,
+    *,
+    authenticated_garrison_id: str,
+) -> None:
+    """Require every non-garrison participant to stay on the normal catalog."""
+
+    invalid: list[str] = []
+    participants = (*battle.attacking_participants, *battle.defending_participants)
+    for participant in participants:
+        battalion_id = str(participant.battalion_id or "")
+        if battalion_id == authenticated_garrison_id:
+            continue
+        battalion = state.battalions.get(battalion_id)
+        if battalion is None:
+            invalid.append(f"{battalion_id}: battalion is missing")
+            continue
+        for entry in battalion.roster:
+            if entry.quantity <= 0:
+                continue
+            definition = catalog.units.get(entry.unit_name)
+            if definition is None:
+                invalid.append(
+                    f"{battalion_id}: {entry.unit_name} is outside the ordinary four-side catalog"
+                )
+            elif not definition.materializable:
+                invalid.append(
+                    f"{battalion_id}: {entry.unit_name} is not materializable in the ordinary four-side catalog"
+                )
+    if invalid:
+        details = "\n- ".join(sorted(set(invalid)))
+        raise ValueError(
+            "Non-garrison tactical participant cannot consume authenticated garrison legacy content:\n- "
+            + details
+        )
 
 
 def unique_acceptance_campaign_name(
