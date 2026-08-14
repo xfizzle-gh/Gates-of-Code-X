@@ -28,13 +28,21 @@ LEGACY_IDS = ("ural375", "btr-60pb", "bmp-1", "t55a")
 class RecordingScanner(CodeXCatalogScanner):
     def __init__(self) -> None:
         super().__init__()
-        self.legacy_flags: list[bool] = []
+        self.calls: list[tuple[tuple[str, ...], str]] = []
 
-    def scan_stack(self, resource_stack, *, include_legacy_sources: bool = False):
-        self.legacy_flags.append(include_legacy_sources)
+    def scan_stack(
+        self,
+        resource_stack,
+        *,
+        legacy_unit_names=None,
+        legacy_source_authority: str = "",
+    ):
+        names = tuple(sorted(str(name) for name in (legacy_unit_names or ())))
+        self.calls.append((names, legacy_source_authority))
         return super().scan_stack(
             resource_stack,
-            include_legacy_sources=include_legacy_sources,
+            legacy_unit_names=legacy_unit_names,
+            legacy_source_authority=legacy_source_authority,
         )
 
 
@@ -136,14 +144,7 @@ class West81LegacyGarrisonExportTests(unittest.TestCase):
             },
         )
 
-    def _export_garrison(
-        self,
-        root: Path,
-        *,
-        graph_native: bool,
-    ) -> tuple[RecordingScanner, object, str]:
-        stack, codex = self._stack(root)
-        state = self._garrison_state(stack, codex)
+    def _attach_garrison(self, state: CampaignState, *, graph_native: bool):
         pending = maybe_attach_neutral_garrison(
             state,
             ALEXANDRIA,
@@ -157,9 +158,19 @@ class West81LegacyGarrisonExportTests(unittest.TestCase):
             self.assertEqual("neutral_garrison", pending.encounter_kind)
             self.assertEqual("node:e3_1483", pending.encounter_node_id)
         else:
-            # Legacy province adjacency deliberately has no operational marker.
             self.assertEqual("", pending.encounter_kind)
             self.assertEqual("", pending.encounter_node_id)
+        return pending
+
+    def _export_garrison(
+        self,
+        root: Path,
+        *,
+        graph_native: bool,
+    ) -> tuple[RecordingScanner, object, str]:
+        stack, codex = self._stack(root)
+        state = self._garrison_state(stack, codex)
+        self._attach_garrison(state, graph_native=graph_native)
 
         garrison = state.battalions[garrison_battalion_id(ALEXANDRIA)]
         selected_names = {entry.unit_name for entry in garrison.roster}
@@ -184,12 +195,24 @@ class West81LegacyGarrisonExportTests(unittest.TestCase):
         contents = CampaignSaveArchive().read(manifest.save_path)
         return scanner, manifest, contents.status + "\n" + contents.campaign_scn
 
-    def test_legacy_source_sides_are_explicit_opt_in(self) -> None:
+    @staticmethod
+    def _west81_ids(profile: dict) -> tuple[str, ...]:
+        return tuple(sorted(
+            str(item["unit_name"])
+            for item in profile["units"]
+            if item.get("source_authority") == "West81"
+        ))
+
+    def test_legacy_source_sides_require_exact_ids_and_west81_authority(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             stack, _ = self._stack(Path(tmp))
             scanner = CodeXCatalogScanner()
             normal = scanner.scan_stack(stack)
-            legacy = scanner.scan_stack(stack, include_legacy_sources=True)
+            legacy = scanner.scan_stack(
+                stack,
+                legacy_unit_names=LEGACY_IDS,
+                legacy_source_authority="West81",
+            )
 
             for name in LEGACY_IDS:
                 with self.subTest(name=name):
@@ -198,14 +221,56 @@ class West81LegacyGarrisonExportTests(unittest.TestCase):
                     self.assertEqual("sov", legacy.units[name].side)
                     self.assertEqual([name], legacy.units[name].vehicles)
                     self.assertEqual({"sov_driver": 1}, legacy.units[name].members)
+                    self.assertTrue(legacy.units[name].source_files)
+                    self.assertTrue(all(
+                        source.startswith("1:2897299509/")
+                        for source in legacy.units[name].source_files
+                    ))
 
             self.assertIn("122mm_d-30", normal.units)
             self.assertEqual("rusa", normal.units["122mm_d-30"].side)
 
+    def test_later_non_west81_legacy_override_cannot_shadow_authorized_definition(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            stack, _ = self._stack(root)
+            gates = stack[-1]
+            conquest = gates / "resource/set/multiplayer/units/conquest"
+            conquest.mkdir(parents=True, exist_ok=True)
+            conquest.joinpath("spoof_sov.set").write_text(
+                '{"ural375"\n\t("vehicle" side(sov) crew(evil_driver:9))\n}\n',
+                encoding="utf-8",
+            )
+            evil_breed = gates / "resource/set/breed/mp/sov"
+            evil_breed.mkdir(parents=True, exist_ok=True)
+            evil_breed.joinpath("evil_driver.set").write_text(
+                '{breed\n\t{inventory\n\t\t{item "rifle" filled}\n\t}\n}\n',
+                encoding="utf-8",
+            )
+
+            catalog = CodeXCatalogScanner().scan_stack(
+                stack,
+                legacy_unit_names=("ural375",),
+                legacy_source_authority="West81",
+            )
+            definition = catalog.units["ural375"]
+            self.assertEqual("sov", definition.side)
+            self.assertEqual({"sov_driver": 1}, definition.members)
+            self.assertNotIn("evil_driver", definition.members)
+            self.assertTrue(definition.source_files)
+            self.assertTrue(all(
+                source.startswith("1:2897299509/")
+                for source in definition.source_files
+            ))
+
     def test_legacy_adjacency_garrison_authenticates_without_encounter_marker(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             scanner, manifest, text = self._export_garrison(Path(tmp), graph_native=False)
-            self.assertEqual([True], scanner.legacy_flags)
+            expected_ids = self._west81_ids(manifest.neutral_garrison)
+            self.assertEqual(
+                [((), ""), (expected_ids, "West81")],
+                scanner.calls,
+            )
             self.assertIn("{enemyArmy rusa}", text)
             self.assertNotIn("{enemyArmy neutral}", text)
             self.assertIn('Entity "ural375"', text)
@@ -217,12 +282,46 @@ class West81LegacyGarrisonExportTests(unittest.TestCase):
     def test_graph_native_garrison_uses_same_authenticated_export_boundary(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             scanner, manifest, text = self._export_garrison(Path(tmp), graph_native=True)
-            self.assertEqual([True], scanner.legacy_flags)
+            expected_ids = self._west81_ids(manifest.neutral_garrison)
+            self.assertEqual(
+                [((), ""), (expected_ids, "West81")],
+                scanner.calls,
+            )
             self.assertIn('Entity "ural375"', text)
             self.assertIsNotNone(manifest.neutral_garrison)
             self.assertEqual("rusa", manifest.neutral_garrison["tactical_defender_side"])
 
-    def test_normal_four_side_export_never_enables_legacy_scan(self) -> None:
+    def test_valid_garrison_does_not_authorize_legacy_unit_on_sovereign_attacker(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            stack, codex = self._stack(root)
+            state = self._garrison_state(stack, codex)
+            self._attach_garrison(state, graph_native=False)
+            state.battalions["atk"].roster.append(
+                BattalionRosterEntry("ural375", 1, category="vehicle")
+            )
+            campaign = root / "injected-attacker.json"
+            save_campaign(state, campaign)
+
+            service = GatesOfCodeXService()
+            scanner = RecordingScanner()
+            service.scanner = scanner
+            with self.assertRaisesRegex(
+                ValueError,
+                "Non-garrison tactical participant cannot consume authenticated garrison legacy content",
+            ):
+                service.export_battle(
+                    campaign,
+                    code_x_directory=codex,
+                    save_path=root / "injected-attacker.sav",
+                    map_name="multi/2x2/live_test",
+                    resource_stack=stack,
+                    mods=[],
+                )
+            # Fail closed before the authority-scoped legacy catalog is created.
+            self.assertEqual([((), "")], scanner.calls)
+
+    def test_normal_four_side_export_never_requests_legacy_units(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             stack, codex = self._stack(root)
@@ -259,7 +358,7 @@ class West81LegacyGarrisonExportTests(unittest.TestCase):
                 resource_stack=stack,
                 mods=[],
             )
-            self.assertEqual([False], scanner.legacy_flags)
+            self.assertEqual([((), "")], scanner.calls)
             self.assertIsNone(manifest.neutral_garrison)
 
     def test_spoofed_encounter_marker_cannot_unlock_legacy_content(self) -> None:
@@ -277,7 +376,7 @@ class West81LegacyGarrisonExportTests(unittest.TestCase):
 
             # The marker alone is not authority. Replace the authenticated
             # garrison participant with a non-garrison identity in-memory and
-            # prove the admission helper refuses it before any legacy scan.
+            # prove the admission helper refuses it.
             pending.encounter_kind = "neutral_garrison"
             pending.defending_participants = [
                 BattleParticipant("spoof-neutral", Faction.NEUTRAL, "stage_2", True)
@@ -285,12 +384,7 @@ class West81LegacyGarrisonExportTests(unittest.TestCase):
             profile = _authenticated_neutral_garrison_profile(state)
             self.assertIsNone(profile)
 
-            scanner = RecordingScanner()
-            catalog = scanner.scan_stack(
-                stack,
-                include_legacy_sources=profile is not None,
-            )
-            self.assertEqual([False], scanner.legacy_flags)
+            catalog = CodeXCatalogScanner().scan_stack(stack)
             for name in LEGACY_IDS:
                 with self.subTest(name=name):
                     self.assertNotIn(name, catalog.units)
