@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -655,7 +656,17 @@ class NeutralGarrisonPersistenceAuthTests(unittest.TestCase):
 class NeutralGarrisonInstalledAuthorityTests(unittest.TestCase):
     def test_non_editable_install_loads_garrison_authority(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            dest = Path(tmp) / "site"
+            root = Path(tmp)
+            source = root / "source"
+            source.mkdir()
+            shutil.copy2(ROOT / "pyproject.toml", source / "pyproject.toml")
+            shutil.copy2(ROOT / "README.md", source / "README.md")
+            (source / "src").mkdir()
+            shutil.copytree(
+                ROOT / "src" / "gates_of_codex",
+                source / "src" / "gates_of_codex",
+            )
+            dest = root / "site"
             dest.mkdir()
             subprocess.check_call(
                 [
@@ -666,7 +677,7 @@ class NeutralGarrisonInstalledAuthorityTests(unittest.TestCase):
                     "--no-deps",
                     "--target",
                     str(dest),
-                    str(ROOT),
+                    str(source),
                 ],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -862,4 +873,3 @@ class NeutralGarrisonOperationalContactTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
