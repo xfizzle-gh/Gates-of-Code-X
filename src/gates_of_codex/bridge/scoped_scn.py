@@ -189,7 +189,7 @@ class ParticipantScopedCampaignScnBuilder(CampaignScnBuilder):
         ]
         for path in candidates:
             if path.is_file():
-                return path
+                return self._validate_pinned_breed_path(path, pinned_root=pinned_root)
 
         breed_root = resources / "set/breed"
         matches = sorted(
@@ -198,7 +198,7 @@ class ParticipantScopedCampaignScnBuilder(CampaignScnBuilder):
             if path.stem.casefold() == breed.casefold()
         ) if breed_root.is_dir() else []
         if len(matches) == 1:
-            return matches[0]
+            return self._validate_pinned_breed_path(matches[0], pinned_root=pinned_root)
         if len(matches) > 1:
             detail = ", ".join(path.relative_to(resources).as_posix() for path in matches)
             raise ValueError(
@@ -207,6 +207,49 @@ class ParticipantScopedCampaignScnBuilder(CampaignScnBuilder):
         raise FileNotFoundError(
             f"Could not resolve pinned tactical breed {breed} in source root {pinned_root}"
         )
+
+    def _validate_pinned_breed_path(self, path: Path, *, pinned_root: Path) -> Path:
+        """Fail closed if GoH runtime overlay could replace a pinned breed.
+
+        ``campaign.scn`` stores a relative breed token (for example
+        ``mp/sov/sov_driver``), not the source mod root. Once serialized, GoH
+        resolves that token through the active mod stack. Therefore Python-side
+        source pinning is only authoritative when no later active layer contains
+        the same relative breed path.
+        """
+
+        resources = resource_root(pinned_root)
+        try:
+            relative = path.relative_to(resources)
+        except ValueError as exc:
+            raise ValueError(
+                f"Pinned tactical breed path is outside source root {pinned_root}: {path}"
+            ) from exc
+
+        matching_indices = [
+            index
+            for index, root in enumerate(self.roots)
+            if root == pinned_root
+        ]
+        if len(matching_indices) != 1:
+            raise ValueError(
+                "Pinned tactical source root must occur exactly once in the configured "
+                f"resource stack: {pinned_root}"
+            )
+
+        later_shadows = [
+            root
+            for root in self.roots[matching_indices[0] + 1 :]
+            if (resource_root(root) / relative).is_file()
+        ]
+        if later_shadows:
+            relative_text = relative.as_posix()
+            shadow_text = ", ".join(str(root) for root in later_shadows)
+            raise ValueError(
+                "Authenticated West81 garrison breed path is shadowed by later active "
+                f"stack layer(s): {relative_text} -> {shadow_text}"
+            )
+        return path
 
     def _human_scoped(
         self,
