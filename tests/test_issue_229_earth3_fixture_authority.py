@@ -172,7 +172,7 @@ class FixturePrimitiveTests(_CachedStates):
         prc = self.fixture.strategic_formations[PRC_FORMATION_ID]
         self.assertEqual("prc", prc.actor_id)
         self.assertEqual(Faction.PRC, prc.faction)
-        self.assertEqual("e3_2795", prc.province_id)
+        self.assertEqual("e3_1747", prc.province_id)
         self.assertIsNone(self.fixture.pending_battle)
 
     def test_fixture_does_not_mutate_production_ownership(self) -> None:

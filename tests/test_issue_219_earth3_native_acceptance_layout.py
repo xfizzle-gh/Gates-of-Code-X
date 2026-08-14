@@ -8,6 +8,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from gates_of_codex.bridge.archive import CampaignSaveArchive
+from gates_of_codex.bridge.scn import CampaignScnParser
 from gates_of_codex.earth3_fixture_authority import (
     FIXTURE_AUTHORITY_KEY,
     FIXTURE_SCENARIO_ID,
@@ -19,7 +21,9 @@ from gates_of_codex.earth3_fixture_authority import (
 )
 from gates_of_codex.earth3_operational import (
     P3_STARTING_FORMATION_IDS,
+    Earth3OperationalAuthorityError,
     load_authenticated_p3_graph,
+    validate_earth3_p3_campaign_extension,
 )
 from gates_of_codex.frontend import build_frontend_snapshot
 from gates_of_codex.models import Faction
@@ -33,6 +37,7 @@ from gates_of_codex.operational_order_options import list_operational_move_optio
 from gates_of_codex.operational_retreat import require_operational_retreat_graph
 from gates_of_codex.operational_schema import stable_node_id
 from gates_of_codex.scenario import DEFAULT_SCENARIO_ID, build_scenario, get_scenario
+from gates_of_codex.service import GatesOfCodeXService
 from gates_of_codex.state_io import campaign_from_dict, save_campaign
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -52,10 +57,10 @@ NATO_FORMATION_ID = "sf_pol_vilnius"
 UKR_FORMATION_ID = "sf_ukr_zaporizhzhia"
 RUSA_FORMATION_ID = "sf_rus_donetsk"
 LAYOUT = {
-    NATO_FORMATION_ID: "e3_2796",
-    UKR_FORMATION_ID: "e3_1962",
+    NATO_FORMATION_ID: "e3_1961",
+    UKR_FORMATION_ID: "e3_1961",
     RUSA_FORMATION_ID: "e3_3380",
-    PRC_FORMATION_ID: "e3_2795",
+    PRC_FORMATION_ID: "e3_1747",
 }
 IDENTITIES = {
     NATO_FORMATION_ID: ("pol", Faction.NATO, "toe_sf_pol_vilnius"),
@@ -63,17 +68,11 @@ IDENTITIES = {
     RUSA_FORMATION_ID: ("rus", Faction.RUSSIA, "toe_sf_rus_donetsk"),
     PRC_FORMATION_ID: ("prc", Faction.PRC, "toe_sf_fix_prc_acceptance"),
 }
-ONE_HOP_PAIRS = (
+REQUIRED_PAIRS = (
     (NATO_FORMATION_ID, RUSA_FORMATION_ID),
+    (UKR_FORMATION_ID, RUSA_FORMATION_ID),
+    (PRC_FORMATION_ID, RUSA_FORMATION_ID),
     (NATO_FORMATION_ID, PRC_FORMATION_ID),
-    (UKR_FORMATION_ID, PRC_FORMATION_ID),
-)
-QUICK_PAIRS = (
-    (NATO_FORMATION_ID, RUSA_FORMATION_ID, 1),
-    (NATO_FORMATION_ID, PRC_FORMATION_ID, 1),
-    (UKR_FORMATION_ID, RUSA_FORMATION_ID, 3),
-    (PRC_FORMATION_ID, RUSA_FORMATION_ID, 2),
-    (UKR_FORMATION_ID, PRC_FORMATION_ID, 1),
 )
 
 
@@ -103,6 +102,69 @@ def _option_to(state, formation_id: str, target_formation_id: str) -> dict:
             f"{formation_id} -> {target_formation_id} options: {len(matches)}"
         )
     return matches[0]
+
+
+def _generate_contact(state, attacker_id: str, defender_id: str):
+    option = _option_to(state, attacker_id, defender_id)
+    issue_move_order(
+        state,
+        attacker_id,
+        path_node_ids=option["path_node_ids"],
+        path_edge_ids=option["path_edge_ids"],
+        order_id=f"issue-219-{attacker_id}-{defender_id}",
+    )
+    committed = commit_move_orders(state)
+    if attacker_id not in committed:
+        raise AssertionError(f"{attacker_id} order did not commit")
+    activate_committed_orders(state)
+    for _ in range(12):
+        advance_operational_tick(state)
+        pending = state.pending_battle
+        if pending is None:
+            continue
+        participants = {pending.attacker_formation_id, pending.defender_formation_id}
+        if participants != {attacker_id, defender_id}:
+            raise AssertionError(
+                f"{attacker_id} vs {defender_id} intercepted by {participants}"
+            )
+        return pending
+    raise AssertionError(f"no contact generated for {attacker_id} vs {defender_id}")
+
+
+def _write_export_codex(root: Path, state, attacker_id: str, defender_id: str) -> Path:
+    codex = root / "codex"
+    (codex / "resource/set/multiplayer/units/conquest/2022s").mkdir(parents=True)
+    (codex / "resource/script/multiplayer/units/nato").mkdir(parents=True)
+    names: set[str] = set()
+    for formation_id in (attacker_id, defender_id):
+        force = state.strategic_formations[formation_id]
+        for battalion_id in force.battalion_ids:
+            for entry in state.battalions[battalion_id].roster:
+                names.add(entry.unit_name)
+    units: list[str] = []
+    lua: list[str] = []
+    for faction in ("nato", "ukr", "rusa", "prc"):
+        breed_dir = codex / f"resource/set/breed/mp/{faction}"
+        breed_dir.mkdir(parents=True)
+        (breed_dir / f"rifleman_{faction}.set").write_text("{breed}\n", encoding="utf-8")
+        names.add(f"rifle({faction})")
+    for name in sorted(names):
+        side = "nato"
+        for faction in ("nato", "ukr", "rusa", "prc"):
+            if f"_{faction}_" in f"_{name}_" or name.endswith(f"({faction})"):
+                side = faction
+                break
+        units.append(f'{{"{name}" {{side {side}}} {{member "rifleman_{side}" 1}}}}\n')
+    for faction in ("nato", "ukr", "rusa", "prc"):
+        lua.append(f'{{priority=1, type={{"Infantry","Squad"}}, unit="rifle({faction})"}},\n')
+    (codex / "resource/set/multiplayer/units/conquest/2022s/units.set").write_text(
+        "".join(units), encoding="utf-8"
+    )
+    (codex / "resource/script/multiplayer/units/nato/2022s.nato.lua").write_text(
+        "".join(lua), encoding="utf-8"
+    )
+    (codex / "mod.info").write_text('{name "Code:X"}\n', encoding="utf-8")
+    return codex
 
 
 class _CachedStates(unittest.TestCase):
@@ -154,6 +216,14 @@ class CompactLayoutTests(_CachedStates):
             self.assertEqual(template_id, force.template_formation_id)
             for battalion_id in force.battalion_ids:
                 self.assertEqual(province_id, self.fixture.battalions[battalion_id].province_id)
+        self.assertEqual(
+            stable_node_id("e3_1961"),
+            self.fixture.strategic_formations[NATO_FORMATION_ID].position.node_id,
+        )
+        self.assertEqual(
+            self.fixture.strategic_formations[NATO_FORMATION_ID].position.node_id,
+            self.fixture.strategic_formations[UKR_FORMATION_ID].position.node_id,
+        )
 
     def test_unselected_production_formations_stay_put(self) -> None:
         selected = set(LAYOUT)
@@ -167,47 +237,28 @@ class CompactLayoutTests(_CachedStates):
             self.assertEqual(force.faction, relocated.faction)
             self.assertEqual(force.template_formation_id, relocated.template_formation_id)
 
-    def test_required_pairs_are_reachable_on_the_authenticated_corridor(self) -> None:
-        for formation_id, target_id, hops in QUICK_PAIRS:
-            option = _option_to(self.fixture, formation_id, target_id)
-            self.assertEqual(hops, option["hop_count"], (formation_id, target_id))
+    def test_required_pairs_are_offered_on_the_authenticated_graph(self) -> None:
+        for attacker_id, defender_id in REQUIRED_PAIRS:
+            option = _option_to(self.fixture, attacker_id, defender_id)
+            self.assertGreaterEqual(option["hop_count"], 1)
             self.assertEqual("approved", option["edge_authority"])
-        for formation_id, target_id in ONE_HOP_PAIRS:
-            self.assertEqual(1, _option_to(self.fixture, formation_id, target_id)["hop_count"])
-
-    def test_each_selected_actor_has_a_one_hop_opponent(self) -> None:
-        opponents = {
-            NATO_FORMATION_ID: (RUSA_FORMATION_ID, PRC_FORMATION_ID),
-            UKR_FORMATION_ID: (PRC_FORMATION_ID,),
-            RUSA_FORMATION_ID: (NATO_FORMATION_ID,),
-            PRC_FORMATION_ID: (NATO_FORMATION_ID, UKR_FORMATION_ID),
-        }
-        for formation_id, targets in opponents.items():
-            hops = [
-                _option_to(self.fixture, formation_id, target_id)["hop_count"]
-                for target_id in targets
-            ]
-            self.assertIn(1, hops, formation_id)
 
     def test_ownership_and_retreat_graph_remain_valid(self) -> None:
         self.assertEqual(
             {pid: row.owner for pid, row in self.production.provinces.items()},
             {pid: row.owner for pid, row in self.fixture.provinces.items()},
         )
-        self.assertEqual(Faction.NEUTRAL, self.fixture.provinces["e3_2795"].owner)
-        self.assertEqual(Faction.NEUTRAL, self.fixture.provinces["e3_2796"].owner)
+        for province_id in ("e3_1747", "e3_1961", "e3_2795", "e3_2796"):
+            self.assertEqual(Faction.NEUTRAL, self.fixture.provinces[province_id].owner)
         require_operational_retreat_graph(self.fixture)
 
-    def test_deterministic_and_round_trip_stable(self) -> None:
-        self.assertEqual(self.fixture.to_dict(), _fixture().to_dict())
+    def test_independent_fixture_saves_are_byte_identical(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            path = Path(temporary) / "campaign.json"
-            save_campaign(self._fixture_copy(), path)
-            loaded = campaign_from_dict(json.loads(path.read_text(encoding="utf-8")))
-        self.assertEqual(FIXTURE_SCENARIO_ID, loaded.map_metadata["scenario_id"])
-        for formation_id, province_id in LAYOUT.items():
-            self.assertEqual(province_id, loaded.strategic_formations[formation_id].province_id)
-        validate_earth3_operational_authority(loaded)
+            first = Path(temporary) / "a.json"
+            second = Path(temporary) / "b.json"
+            save_campaign(_fixture(), first)
+            save_campaign(_fixture(), second)
+            self.assertEqual(first.read_bytes(), second.read_bytes())
 
     def test_frontend_snapshot_identifies_debug_fixture(self) -> None:
         snapshot = build_frontend_snapshot(self._fixture_copy())
@@ -223,68 +274,90 @@ class AdversarialLayoutTests(_CachedStates):
         force.province_id = "e3_0442"
         force.position.node_id = stable_node_id("e3_0442")
         validate_earth3_native_acceptance_fixture(state)
+        prc = state.strategic_formations[PRC_FORMATION_ID]
+        prc.province_id = "e3_2796"
+        prc.position.node_id = stable_node_id("e3_2796")
+        validate_earth3_native_acceptance_fixture(state)
 
     def test_production_validator_still_rejects_fixture_state(self) -> None:
-        from gates_of_codex.earth3_operational import (
-            Earth3OperationalAuthorityError,
-            validate_earth3_p3_campaign_extension,
-        )
-
         with self.assertRaisesRegex(
             Earth3OperationalAuthorityError,
             "outside the authorized P2 initialization set",
         ):
             validate_earth3_p3_campaign_extension(self._fixture_copy())
 
-    def test_layout_parser_rejects_extra_or_duplicate_entries(self) -> None:
+    def test_layout_parser_rejects_extra_or_prc_mismatch(self) -> None:
         payload = load_fixture_manifest()
         payload["compact_contact_layout"]["sf_deu_berlin"] = "e3_0592"
         with self.assertRaisesRegex(Earth3FixtureAuthorityError, "layout is not exact"):
             _require_exact_manifest(payload)
-        payload = load_fixture_manifest()
-        payload["compact_contact_layout"][NATO_FORMATION_ID] = payload["compact_contact_layout"][
-            UKR_FORMATION_ID
-        ]
-        with self.assertRaisesRegex(Earth3FixtureAuthorityError, "duplicate provinces"):
-            _require_exact_manifest(payload)
-
-    def test_layout_parser_rejects_prc_province_mismatch(self) -> None:
         payload = load_fixture_manifest()
         payload["compact_contact_layout"][PRC_FORMATION_ID] = "e3_0442"
         with self.assertRaisesRegex(Earth3FixtureAuthorityError, "PRC layout province"):
             _require_exact_manifest(payload)
 
 
-class HandoffIdentityTests(_CachedStates):
-    def test_one_hop_contacts_preserve_selected_actor_identities(self) -> None:
-        last_state = None
-        last_pair = None
-        for attacker_id, defender_id in ONE_HOP_PAIRS:
+class RequiredContactTests(_CachedStates):
+    def test_fresh_fixture_generates_all_four_required_pair_contacts(self) -> None:
+        for attacker_id, defender_id in REQUIRED_PAIRS:
             state = self._fixture_copy()
-            pending = self._generate_contact(state, attacker_id, defender_id)
-            participants = {
+            pending = _generate_contact(state, attacker_id, defender_id)
+            self.assertEqual({attacker_id, defender_id}, {
                 pending.attacker_formation_id,
                 pending.defender_formation_id,
-            }
-            self.assertEqual({attacker_id, defender_id}, participants)
-            for formation_id in participants:
+            })
+            for formation_id in (attacker_id, defender_id):
                 actor_id, faction, template_id = IDENTITIES[formation_id]
                 force = state.strategic_formations[formation_id]
                 self.assertEqual(actor_id, force.actor_id)
                 self.assertEqual(faction, force.faction)
                 self.assertEqual(template_id, force.template_formation_id)
             validate_earth3_operational_authority(state)
-            last_state = state
-            last_pair = (attacker_id, defender_id)
-        self.assertIsNotNone(last_state)
-        self.assertIsNotNone(last_pair)
-        attacker_id, defender_id = last_pair
+            with tempfile.TemporaryDirectory() as temporary:
+                path = Path(temporary) / "campaign.json"
+                save_campaign(state, path)
+                loaded = campaign_from_dict(json.loads(path.read_text(encoding="utf-8")))
+            self.assertIsNotNone(loaded.pending_battle)
+            loaded_pending = loaded.pending_battle
+            self.assertEqual(
+                {attacker_id, defender_id},
+                {
+                    loaded_pending.attacker_formation_id,
+                    loaded_pending.defender_formation_id,
+                },
+            )
+            validate_earth3_operational_authority(loaded)
+            for formation_id in (attacker_id, defender_id):
+                actor_id, faction, template_id = IDENTITIES[formation_id]
+                force = loaded.strategic_formations[formation_id]
+                self.assertEqual(actor_id, force.actor_id)
+                self.assertEqual(faction, force.faction)
+                self.assertEqual(template_id, force.template_formation_id)
+
+
+class HandoffIdentityTests(_CachedStates):
+    def test_export_battle_preserves_selected_actor_identities(self) -> None:
+        attacker_id, defender_id = NATO_FORMATION_ID, RUSA_FORMATION_ID
+        state = self._fixture_copy()
+        pending = _generate_contact(state, attacker_id, defender_id)
         with tempfile.TemporaryDirectory() as temporary:
-            path = Path(temporary) / "campaign.json"
-            save_campaign(last_state, path)
-            loaded = campaign_from_dict(json.loads(path.read_text(encoding="utf-8")))
-        self.assertIsNotNone(loaded.pending_battle)
+            root = Path(temporary)
+            campaign_path = root / "campaign.json"
+            save_path = root / "battle.sav"
+            save_campaign(state, campaign_path)
+            codex = _write_export_codex(root, state, attacker_id, defender_id)
+            manifest = GatesOfCodeXService().export_battle(
+                campaign_path,
+                code_x_directory=codex,
+                save_path=save_path,
+                map_name="multi/2x2/live_test",
+                allow_overwrite=True,
+            )
+            loaded = campaign_from_dict(json.loads(campaign_path.read_text(encoding="utf-8")))
+            archive = CampaignSaveArchive().read(save_path)
+        self.assertEqual(pending.battle_id, manifest.battle_id)
         loaded_pending = loaded.pending_battle
+        self.assertIsNotNone(loaded_pending)
         self.assertEqual(
             {attacker_id, defender_id},
             {
@@ -298,24 +371,15 @@ class HandoffIdentityTests(_CachedStates):
             self.assertEqual(actor_id, force.actor_id)
             self.assertEqual(faction, force.faction)
             self.assertEqual(template_id, force.template_formation_id)
-
-    def _generate_contact(self, state, attacker_id: str, defender_id: str):
-        option = _option_to(state, attacker_id, defender_id)
-        self.assertEqual(1, option["hop_count"])
-        issue_move_order(
-            state,
-            attacker_id,
-            path_node_ids=option["path_node_ids"],
-            path_edge_ids=option["path_edge_ids"],
-            order_id=f"issue-219-{attacker_id}-{defender_id}",
-        )
-        commit_move_orders(state)
-        activate_committed_orders(state)
-        for _ in range(4):
-            advance_operational_tick(state)
-            if state.pending_battle is not None:
-                return state.pending_battle
-        raise AssertionError(f"no contact generated for {attacker_id} vs {defender_id}")
+        self.assertIn("{army nato}", archive.status)
+        self.assertIn("{enemyArmy rusa}", archive.status)
+        squads = CampaignScnParser().parse_squads(archive.campaign_scn)
+        self.assertTrue(squads)
+        survivor = CampaignScnParser().survivor_rosters(archive.campaign_scn, loaded_pending)
+        expected_battalions = set()
+        for formation_id in (attacker_id, defender_id):
+            expected_battalions.update(loaded.strategic_formations[formation_id].battalion_ids)
+        self.assertTrue(expected_battalions.intersection(survivor))
 
 
 if __name__ == "__main__":

@@ -11,10 +11,10 @@
     "rusa": "sf_rus_donetsk"
   },
   "compact_contact_layout": {
-    "sf_pol_vilnius": "e3_2796",
-    "sf_ukr_zaporizhzhia": "e3_1962",
+    "sf_pol_vilnius": "e3_1961",
+    "sf_ukr_zaporizhzhia": "e3_1961",
     "sf_rus_donetsk": "e3_3380",
-    "sf_fix_prc_acceptance": "e3_2795"
+    "sf_fix_prc_acceptance": "e3_1747"
   },
   "fixture_prc_formation": {
     "formation_id": "sf_fix_prc_acceptance",
@@ -23,7 +23,7 @@
     "faction": "prc",
     "nation": "People's Republic of China",
     "display_name": "PRC Acceptance Brigade",
-    "province_id": "e3_2795",
+    "province_id": "e3_1747",
     "roster": [
       {"category": "infantry", "quantity": 2},
       {"category": "tank", "quantity": 1},
