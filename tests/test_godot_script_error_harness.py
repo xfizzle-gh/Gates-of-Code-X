@@ -91,6 +91,13 @@ class GodotScriptErrorHarnessContractTests(unittest.TestCase):
         self.assertIn("map_order_controls_test.gd", order)
         self.assertIn("SCRIPT ERROR", order)
         self.assertIn("map_order_controls_test: PASS", order)
+        map_source = MAP_TEST.read_text(encoding="utf-8")
+        self.assertIn("_test_production_p3_graph_loads_and_renders_native_route", map_source)
+        self.assertIn("scene._open_operational_graph()", map_source)
+        self.assertLess(
+            map_source.index("if not _require_production_main():"),
+            map_source.index("_test_production_p3_graph_loads_and_renders_native_route"),
+        )
         self.assertIn(
             'GODOT_BIN="$HOME/godot" python -m unittest tests.test_godot_script_error_harness -v',
             workflow,

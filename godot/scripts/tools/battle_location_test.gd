@@ -214,10 +214,45 @@ func _test_graph_fallback_safety() -> void:
 	path = view.resolve_path(em, {})
 	_assert_true("EM manifest resolves graph", path.ends_with("operational_graph.json"), path)
 
-	# Explicit snapshot path wins.
-	path = view.resolve_path(unknown, {
+	# Explicit snapshot path still wins for non-Earth3 maps.
+	var custom := "res://assets/maps/not-a-real-map/map_manifest.json"
+	path = view.resolve_path(custom, {
 		"strategic_map": {
 			"operational_graph_path": GRAPH_PATH,
 		}
 	})
 	_assert_eq("explicit snapshot graph path", path, GRAPH_PATH)
+
+	# An existing unapproved graph must not load for Earth3.
+	_assert_true("EM candidate exists", FileAccess.file_exists(GRAPH_PATH), GRAPH_PATH)
+	path = view.resolve_path(unknown, {
+		"strategic_map": {
+			"map_id": "earth3_europe_mediterranean",
+			"operational_graph_path": GRAPH_PATH,
+		},
+		"campaign": {
+			"map_id": "earth3_europe_mediterranean",
+			"map_metadata": {
+				"operational_graph": GRAPH_PATH,
+			}
+		}
+	})
+	_assert_eq("Earth3 rejects existing EM candidate", path, "")
+
+	var p3_repo := "godot/assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json"
+	var p3_res := "res://assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json"
+	path = view.resolve_path(unknown, {
+		"campaign": {
+			"map_metadata": {
+				"operational_graph": p3_repo,
+			}
+		}
+	})
+	_assert_eq("repo-root godot/ prefix maps to res://assets", path, p3_res)
+	_assert_true("mapped P3 path exists", FileAccess.file_exists(path), path)
+	path = view.resolve_path(unknown, {
+		"strategic_map": {
+			"operational_graph_path": "res://godot/assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json",
+		}
+	})
+	_assert_eq("wrong res://godot/ conversion fails closed", path, "")
