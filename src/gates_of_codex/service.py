@@ -108,19 +108,16 @@ class GatesOfCodeXService:
         stack = resolve_stack(resource_stack or saved_stack, fallback=code_x_directory or state.code_x_directory)
         if not stack:
             raise ValueError("No Code:X resource stack was configured")
-        # The ordinary campaign catalog remains restricted to the four modern
-        # Code:X tactical sides. #48 neutral-garrison encounters are the one
-        # explicit exception: their authored legacy_reserve rows may reference
-        # West81 source namespaces such as sov/gdr/csa/frg. Those definitions
-        # are needed only to materialize the already-selected battle roster;
-        # they do not become strategic actors, research, or recruitment pools.
-        include_legacy_sources = (
-            str(getattr(state.pending_battle, "encounter_kind", "") or "").strip()
-            == "neutral_garrison"
-        )
+
+        # Legacy West81 source namespaces are an export-only exception for an
+        # authenticated #48 garrison participant. The operational
+        # ``encounter_kind`` marker is presentation/contact metadata and is not
+        # an authorization token: legacy province-adjacency battles have no
+        # operational node, while a spoofed marker must never unlock content.
+        neutral_garrison_profile = _authenticated_neutral_garrison_profile(state)
         catalog = self.scanner.scan_stack(
             stack,
-            include_legacy_sources=include_legacy_sources,
+            include_legacy_sources=neutral_garrison_profile is not None,
         )
         # Earth3 P2/P3 stores an actor-content digest in ``catalog_signature``
         # (see earth3_bootstrap), not the Code:X stack scan signature. The
@@ -185,7 +182,6 @@ class GatesOfCodeXService:
         if code_x_directory:
             state.code_x_directory = str(Path(code_x_directory).resolve())
         save_campaign(state, campaign_file)
-        from .neutral_garrison import export_garrison_profile
 
         manifest = BattleExportManifest(
             battle_id=state.pending_battle.battle_id,
@@ -200,7 +196,7 @@ class GatesOfCodeXService:
             resource_stack=stack_to_strings(stack),
             status_template_path=str(template_path) if template_path else "",
             visible_campaign_name=visible_name,
-            neutral_garrison=export_garrison_profile(state, state.pending_battle),
+            neutral_garrison=neutral_garrison_profile,
         )
         self.write_manifest(manifest, manifest_destination)
         return manifest
@@ -235,6 +231,100 @@ class GatesOfCodeXService:
             observation_context=engine.observation_context,
         )
         return result
+
+
+def _authenticated_neutral_garrison_profile(state: Any) -> dict[str, Any] | None:
+    """Return the #48 export profile only for an authority-bound garrison battle.
+
+    This helper is the single admission boundary for legacy West81 source
+    namespaces. A string marker is deliberately insufficient: the pending
+    defender must be the exact ``garrison:<target>`` battalion and its persisted
+    #48 runtime/encounter selection must validate against current authority.
+    """
+
+    from .models import Faction
+    from .neutral_garrison import (
+        PROFILE_ID,
+        choose_tactical_defender_side,
+        export_garrison_profile,
+        garrison_battalion_id,
+        is_garrison_battalion_id,
+        validate_neutral_garrison_runtime,
+    )
+
+    battle = state.pending_battle
+    if battle is None:
+        return None
+    province_id = str(battle.target_province_id or "")
+    if not province_id:
+        return None
+    province = state.provinces.get(province_id)
+    if province is None or province.owner != Faction.NEUTRAL:
+        return None
+    if battle.defender_faction != Faction.NEUTRAL:
+        return None
+
+    expected_id = garrison_battalion_id(province_id)
+    matching = [
+        participant
+        for participant in battle.defending_participants
+        if participant.battalion_id == expected_id and participant.faction == Faction.NEUTRAL
+    ]
+    if len(matching) != 1:
+        return None
+    if any(
+        is_garrison_battalion_id(participant.battalion_id)
+        and participant.battalion_id != expected_id
+        for participant in battle.defending_participants
+    ):
+        return None
+
+    battalion = state.battalions.get(expected_id)
+    if (
+        battalion is None
+        or battalion.faction != Faction.NEUTRAL
+        or battalion.province_id != province_id
+        or bool(battalion.strategic_formation_id)
+    ):
+        return None
+
+    # load_campaign() already runs this validation; repeat it here because this
+    # helper is the authorization boundary and must remain safe if called with
+    # an in-memory state by tests or future callers.
+    validate_neutral_garrison_runtime(state)
+    profile = export_garrison_profile(state, battle)
+    if not isinstance(profile, dict):
+        return None
+    if profile.get("profile_id") != PROFILE_ID or profile.get("province_id") != province_id:
+        return None
+
+    units = profile.get("units")
+    if not isinstance(units, list) or not units:
+        return None
+    allowed: dict[str, int] = {}
+    for item in units:
+        if not isinstance(item, dict):
+            return None
+        name = str(item.get("unit_name") or "")
+        quantity = item.get("quantity")
+        if not name or not isinstance(quantity, int) or isinstance(quantity, bool) or quantity < 1:
+            return None
+        allowed[name] = quantity
+    for entry in battalion.roster:
+        if entry.quantity <= 0:
+            continue
+        if entry.unit_name not in allowed or entry.quantity > allowed[entry.unit_name]:
+            return None
+
+    region = str(profile.get("region") or "")
+    expected_side = choose_tactical_defender_side(region, battle.attacker_faction)
+    if not expected_side or battle.tactical_defender_side != expected_side:
+        return None
+    if profile.get("strategic_defender_faction") != Faction.NEUTRAL.value:
+        return None
+    if profile.get("tactical_defender_side") != expected_side:
+        return None
+    return profile
 
 
 def unique_acceptance_campaign_name(
