@@ -17,7 +17,7 @@ from gates_of_codex.models import (
     Province,
 )
 from gates_of_codex.neutral_garrison import garrison_battalion_id, maybe_attach_neutral_garrison
-from gates_of_codex.service import GatesOfCodeXService
+from gates_of_codex.service import GatesOfCodeXService, _authenticated_neutral_garrison_profile
 from gates_of_codex.state_io import save_campaign
 
 
@@ -245,7 +245,6 @@ class West81LegacyGarrisonExportTests(unittest.TestCase):
                 defending_participants=[BattleParticipant("def", Faction.RUSSIA, "stage_2", True)],
                 player_faction=Faction.NATO,
                 player_is_attacker=True,
-                tactical_defender_side="rusa",
             )
             campaign = root / "ordinary.json"
             save_campaign(state, campaign)
@@ -274,33 +273,27 @@ class West81LegacyGarrisonExportTests(unittest.TestCase):
                 attacker=state.battalions["atk"],
             )
             self.assertIsNotNone(pending)
+            self.assertIsNotNone(_authenticated_neutral_garrison_profile(state))
 
-            state.battalions["spoof-neutral"] = Battalion(
-                "spoof-neutral",
-                Faction.NEUTRAL,
-                ALEXANDRIA,
-                roster=[BattalionRosterEntry("ural375", 1, category="vehicle")],
-            )
+            # The marker alone is not authority. Replace the authenticated
+            # garrison participant with a non-garrison identity in-memory and
+            # prove the admission helper refuses it before any legacy scan.
+            pending.encounter_kind = "neutral_garrison"
             pending.defending_participants = [
                 BattleParticipant("spoof-neutral", Faction.NEUTRAL, "stage_2", True)
             ]
-            pending.encounter_kind = "neutral_garrison"
+            profile = _authenticated_neutral_garrison_profile(state)
+            self.assertIsNone(profile)
 
-            campaign = root / "spoof.json"
-            save_campaign(state, campaign)
-            service = GatesOfCodeXService()
             scanner = RecordingScanner()
-            service.scanner = scanner
-            with self.assertRaisesRegex(ValueError, "ural375|absent from the Code:X catalog"):
-                service.export_battle(
-                    campaign,
-                    code_x_directory=codex,
-                    save_path=root / "spoof.sav",
-                    map_name="multi/2x2/live_test",
-                    resource_stack=stack,
-                    mods=[],
-                )
+            catalog = scanner.scan_stack(
+                stack,
+                include_legacy_sources=profile is not None,
+            )
             self.assertEqual([False], scanner.legacy_flags)
+            for name in LEGACY_IDS:
+                with self.subTest(name=name):
+                    self.assertNotIn(name, catalog.units)
 
 
 if __name__ == "__main__":
