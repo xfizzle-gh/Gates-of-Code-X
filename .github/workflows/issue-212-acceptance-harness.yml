@@ -1,0 +1,127 @@
+name: Issue 212 acceptance harness
+
+on:
+  pull_request:
+    paths:
+      - "godot/scripts/tools/map_candidate_native_acceptance.gd"
+      - "godot/scripts/tools/map_candidate_native_acceptance_loaded.gd"
+      - "tools/run_issue212_native_acceptance.ps1"
+      - "docs/research/noresus-map-performance/production-switch-gate.json"
+      - ".github/workflows/issue-212-acceptance-harness.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: issue-212-acceptance-harness-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  acceptance-harness-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system deps
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1 libxcursor1 libxinerama1 libxrandr2 libxi6 libx11-6
+      - name: Install Godot 4.7
+        run: |
+          set -euo pipefail
+          GODOT_VERSION=4.7-stable
+          curl -fsSL -o godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip
+          GODOT_BIN="$(find . -maxdepth 1 -type f -name 'Godot_v*_linux.x86_64' | head -n 1)"
+          install -m 755 "$GODOT_BIN" "$HOME/godot"
+          "$HOME/godot" --version
+      - name: Import Godot project
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --import --quit-after 1
+      - name: Run bracketed acceptance harness smoke
+        run: |
+          set -euo pipefail
+          ROOT="$(pwd)/docs/research/noresus-map-performance"
+          OUT="$ROOT/native-acceptance-ci.json"
+          SCREENS="$ROOT/native-acceptance-ci-screens"
+          mkdir -p "$SCREENS"
+          log="$(mktemp)"
+          set +e
+          xvfb-run -a -s "-screen 0 1920x1080x24" \
+            "$HOME/godot" --path godot --audio-driver Dummy \
+            -s res://scripts/tools/map_candidate_native_acceptance_loaded.gd -- \
+            --snapshot=res://fixtures/snapshots/earth3_theatre.json \
+            --out="$OUT" --screens-dir="$SCREENS" \
+            --width=1920 --height=1080 2>&1 | tee "$log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' "$log"; then exit 1; fi
+          if ! grep -q 'map_candidate_native_acceptance: PASS' "$log"; then exit 1; fi
+          exit "$code"
+      - name: Validate fail-closed acceptance evidence
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('docs/research/noresus-map-performance')
+          data = json.loads((root / 'native-acceptance-ci.json').read_text(encoding='utf-8'))
+          assert data.get('ok') is True, data
+          assert data.get('issue') == 212, data
+          assert data.get('phase') == 'E3-owner-native-acceptance-harness', data
+          assert int(data.get('frames_per_sample', 0)) >= 24, data
+          assert int(data.get('stabilization_passes', 0)) >= 2, data
+          assert data.get('candidate_activation') == 'requested snapshot loaded before raster/composed activation', data
+          authority = data.get('authority', {})
+          assert authority.get('unchanged') is True, authority
+          ref = authority.get('reference', {})
+          assert int(ref.get('province_count', 0)) == 3514, ref
+          assert ref.get('ok') is True, ref
+          assert len(ref.get('picks', [])) == 5, ref
+          water = ref.get('water_nonselection_probes', [])
+          assert len(water) == 3 and all(row.get('match') is True for row in water), water
+          assert len(ref.get('operational_node_pixels', [])) > 0, ref
+          assert len(ref.get('counter_pixels', [])) > 0, ref
+          assert authority.get('polygon_backend_remains_live_in_candidate') is True, authority
+          for name in ['idle_full_theatre', 'continuous_pan', 'continuous_zoom']:
+              row = data.get('scenarios', {}).get(name, {})
+              assert row.get('ok') is True, (name, row)
+              drift = row.get('baseline_drift', {})
+              assert int(drift.get('draw_calls_p50_abs', 1)) == 0, (name, drift)
+              assert int(drift.get('primitives_p50_abs', 1)) == 0, (name, drift)
+              assert float(drift.get('frame_ms_p50_ratio', 1.0)) <= 0.15, (name, drift)
+              assert float(drift.get('frame_ms_p95_ratio', 1.0)) <= 0.15, (name, drift)
+          decision = data.get('decision', {})
+          assert decision.get('ci_harness_only') is True, decision
+          assert decision.get('owner_native_evidence_collected') is False, decision
+          assert decision.get('owner_visual_accepted') is False, decision
+          assert decision.get('owner_native_performance_accepted') is False, decision
+          assert decision.get('independent_review_accepted') is False, decision
+          assert decision.get('production_switch_authorized') is False, decision
+          gate = json.loads((root / 'production-switch-gate.json').read_text(encoding='utf-8'))
+          assert gate.get('status') == 'BLOCKED', gate
+          assert gate.get('production_switch_authorized') is False, gate
+          for value in gate.get('required_before_authorization', {}).values():
+              assert value is False, gate
+          for name in [
+              'polygon_full_theatre.png', 'candidate_full_theatre.png',
+              'polygon_detailed.png', 'candidate_detailed.png',
+          ]:
+              p = root / 'native-acceptance-ci-screens' / name
+              assert p.exists() and p.stat().st_size > 0, p
+          print('ISSUE212_ACCEPTANCE_HARNESS_VALIDATED')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: issue-212-acceptance-harness
+          path: |
+            docs/research/noresus-map-performance/native-acceptance-ci.json
+            docs/research/noresus-map-performance/native-acceptance-ci-screens/*.png
+          if-no-files-found: error
