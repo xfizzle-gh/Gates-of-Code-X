@@ -110,6 +110,79 @@ jobs:
           GODOT_BIN="$(find . -maxdepth 1 -type f -name 'Godot_v*_linux.x86_64' | head -n 1)"
           install -m 755 "$GODOT_BIN" "$HOME/godot"
           "$HOME/godot" --version
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Stamp package provenance
+        id: provenance
+        shell: pwsh
+        run: |
+          $stamp = & .\tools\stamp_package_provenance.ps1
+          "commit=$($stamp.Commit)" >> $env:GITHUB_OUTPUT
+      - name: Install Python package for production snapshot generation
+        run: python -m pip install -e ".[earth3]"
+      - name: Assert installed provenance
+        shell: pwsh
+        run: python -c 'import sys; from gates_of_codex.packaging import package_identity; assert package_identity().source_commit == sys.argv[1]' '${{ steps.provenance.outputs.commit }}'
+      - name: Generate real Earth3 legal-target snapshot through production player shell
+        run: |
+          set -euo pipefail
+          mkdir -p godot/generated
+          python - <<'PY'
+          import json
+          import os
+          import shutil
+          import sys
+          from pathlib import Path
+
+          sys.path.insert(0, "tests")
+          from test_p2_earth3_campaign_bootstrap import _resolved_catalog
+          from gates_of_codex.player_shell import build_play_parser, run_play
+
+          root = Path(os.environ["RUNNER_TEMP"]) / "issue212-real-order-campaign"
+          environ = dict(os.environ)
+          environ["GATES_OF_CODEX_HOME"] = str(root / "home")
+          args = build_play_parser().parse_args(
+              [
+                  "--new",
+                  "--campaign",
+                  str(root / "home" / "campaigns" / "earth3_v1"),
+                  "--no-launch",
+              ]
+          )
+          result = run_play(args, environ=environ, resolved_catalog=_resolved_catalog())
+          assert result.map_id == "earth3_europe_mediterranean", result.map_id
+          source = Path(result.snapshot_path)
+          snapshot = json.loads(source.read_text(encoding="utf-8"))
+          orders = snapshot.get("operational_orders", [])
+          assert isinstance(orders, list) and orders, "production player snapshot has no operational_orders"
+          complete = [
+              row for row in orders
+              if isinstance(row, dict)
+              and row.get("formation_id")
+              and row.get("origin_province_id")
+              and row.get("target_province_id")
+          ]
+          assert complete, "production player snapshot has no complete operational order"
+          target = Path("godot/generated/issue212_real_order_snapshot.json")
+          shutil.copyfile(source, target)
+          print(
+              "ISSUE212_GENERATED_REAL_ORDERS",
+              json.dumps(
+                  {
+                      "source": str(source),
+                      "target": str(target),
+                      "operational_order_count": len(orders),
+                      "complete_order_count": len(complete),
+                      "first_complete_order": {
+                          key: complete[0].get(key)
+                          for key in ("formation_id", "origin_province_id", "target_province_id")
+                      },
+                  },
+                  sort_keys=True,
+              ),
+          )
+          PY
       - name: Import Godot project
         working-directory: godot
         run: |
@@ -187,7 +260,8 @@ jobs:
 
           legal = json.loads((root / "raster-shadow-legal-target-audit.json").read_text(encoding="utf-8"))
           assert legal.get("ok") is True, legal
-          assert legal.get("order_source") == "committed backend-authored operational_orders", legal
+          assert legal.get("order_source") == "production player-shell snapshot operational_orders", legal
+          assert int(legal.get("operational_order_count", 0)) > 0, legal
           reference = legal.get("reference", {})
           assert reference.get("ok") is True, reference
           assert reference.get("selected_strategic_formation_id"), reference
@@ -278,6 +352,10 @@ jobs:
               "dynamic_scenarios": required,
           }, sort_keys=True))
           PY
+      - name: Cleanup package provenance
+        if: always()
+        shell: pwsh
+        run: Remove-Item -LiteralPath src\gates_of_codex\SOURCE_COMMIT -Force -ErrorAction SilentlyContinue
       - uses: actions/upload-artifact@v4
         if: always()
         with:
