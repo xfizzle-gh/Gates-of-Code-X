@@ -6,6 +6,7 @@ on:
       - "godot/scripts/tools/map_candidate_native_acceptance.gd"
       - "godot/scripts/tools/map_candidate_native_acceptance_loaded.gd"
       - "tools/run_issue212_native_acceptance.ps1"
+      - "tools/run_owner_readiness_preflight.ps1"
       - "docs/research/noresus-map-performance/production-switch-gate.json"
       - ".github/workflows/issue-212-acceptance-harness.yml"
   workflow_dispatch:
@@ -23,6 +24,15 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
+      - name: Parse owner-native PowerShell entrypoints
+        shell: pwsh
+        run: |
+          foreach ($script in @(
+            '.\tools\run_issue212_native_acceptance.ps1',
+            '.\tools\run_owner_readiness_preflight.ps1'
+          )) {
+            [scriptblock]::Create((Get-Content -LiteralPath $script -Raw)) | Out-Null
+          }
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
