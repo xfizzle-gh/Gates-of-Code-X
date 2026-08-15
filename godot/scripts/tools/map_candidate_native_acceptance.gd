@@ -213,8 +213,13 @@ func _measure_one(candidate_enabled: bool, scenario: String, reference: Dictiona
 		await _dispose(scene)
 		return {"ok": false, "error": "authority parity changed", "candidate": candidate_enabled, "parity": parity}
 	var metrics := await _measure_frames(scene, scenario)
-	var candidate_state := scene.call("presentation_candidate_debug_state") if candidate_enabled else {}
+	var candidate_state: Dictionary = {}
 	if candidate_enabled:
+		var candidate_state_value: Variant = scene.call("presentation_candidate_debug_state")
+		if not candidate_state_value is Dictionary:
+			await _dispose(scene)
+			return {"ok": false, "error": "candidate debug state is not a dictionary"}
+		candidate_state = candidate_state_value as Dictionary
 		candidate_state["composed"] = scene.call("composed_presentation_debug_state")
 	await _dispose(scene)
 	return {"ok": true, "metrics": metrics, "authority": parity, "candidate_state": candidate_state}
