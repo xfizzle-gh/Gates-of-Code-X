@@ -1,11 +1,13 @@
 class_name StrategicIconAtlasLayer
 extends Node2D
 
-## #212 Phase C debug-only strategic-symbol atlas prototype.
+## #212 Phase C strategic-symbol atlas.
 ##
 ## All glyphs below are original repository-owned procedural pixel patterns. No
 ## reference-mod artwork is embedded or traced. Numeric strength remains text and
-## is deliberately not baked into the atlas.
+## is deliberately not baked into the atlas. E2 adds optional precomputed screen
+## positions and per-entry strength visibility so the real candidate can preserve
+## edge clamping and LOD without creating unique textures.
 
 const CELL_SIZE := 32
 const GRID_COLUMNS := 6
@@ -97,20 +99,26 @@ func _draw() -> void:
 		if not entry_value is Dictionary:
 			continue
 		var entry := entry_value as Dictionary
-		var pixel_value: Variant = entry.get("pixel", [])
-		if not pixel_value is Array or (pixel_value as Array).size() < 2:
-			continue
-		var image_pixel := Vector2(float(pixel_value[0]), float(pixel_value[1]))
-		var center := image_pixel
-		if map_space != null and map_space.has_method("image_to_screen"):
-			center = map_space.call("image_to_screen", image_pixel)
+		var center := Vector2.INF
+		var screen_value: Variant = entry.get("screen_position", null)
+		if screen_value is Vector2:
+			center = screen_value as Vector2
+		if center == Vector2.INF:
+			var pixel_value: Variant = entry.get("pixel", [])
+			if not pixel_value is Array or (pixel_value as Array).size() < 2:
+				continue
+			var image_pixel := Vector2(float(pixel_value[0]), float(pixel_value[1]))
+			center = image_pixel
+			if map_space != null and map_space.has_method("image_to_screen"):
+				center = map_space.call("image_to_screen", image_pixel)
 		var key := String(entry.get("icon_key", "infantry"))
 		var source: Rect2 = _source_rect_by_key.get(key, _source_rect_by_key.get("infantry", Rect2()))
 		var color_value: Variant = entry.get("color", Color.WHITE)
 		var faction_color := color_value as Color if color_value is Color else Color.WHITE
 		var dest := Rect2(center - COUNTER_SIZE * 0.5 + Vector2(0, -2), COUNTER_SIZE)
 		draw_texture_rect_region(atlas_texture, dest, source, faction_color, false, true)
-		if show_strength_text:
+		var entry_strength := bool(entry.get("show_strength", show_strength_text))
+		if show_strength_text and entry_strength:
 			var strength := int(entry.get("strength", 0))
 			draw_string(
 				ThemeDB.fallback_font,
@@ -135,8 +143,6 @@ func _build_atlas_image() -> Image:
 		var origin := Vector2i(col * CELL_SIZE, row * CELL_SIZE)
 		var source := Rect2(origin, Vector2i(CELL_SIZE, CELL_SIZE))
 		_source_rect_by_key[key] = source
-		# A compact counter plate is part of every atlas cell. The faction color is
-		# applied as one draw-time modulate, so every instance reuses this texture.
 		image.fill_rect(Rect2i(origin + Vector2i(1, 5), Vector2i(30, 22)), Color(0.92, 0.92, 0.92, 1.0))
 		image.fill_rect(Rect2i(origin + Vector2i(2, 6), Vector2i(28, 20)), Color(0.72, 0.72, 0.72, 1.0))
 		var pattern_value: Variant = PATTERNS.get(key, PATTERNS["infantry"])
