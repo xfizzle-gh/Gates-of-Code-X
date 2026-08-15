@@ -671,7 +671,6 @@ jobs:
             docs/godot-presentation/screenshots/earth3/
 
   windows-executable:
-    needs: [test-ubuntu-311, test-ubuntu-313, test-windows-311, test-windows-313, godot-map]
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
