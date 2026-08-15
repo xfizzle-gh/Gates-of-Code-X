@@ -1,0 +1,127 @@
+name: Issue 212 Windows owner-preflight smoke
+
+on:
+  pull_request:
+    paths:
+      - "tools/run_owner_readiness_preflight.ps1"
+      - "tools/run_issue212_native_acceptance.ps1"
+      - ".github/workflows/issue-212-owner-preflight-windows.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: issue-212-owner-preflight-windows-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  packaged-owner-preflight-smoke:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Parse native preflight scripts
+        shell: pwsh
+        run: |
+          foreach ($script in @(
+            '.\tools\run_issue212_native_acceptance.ps1',
+            '.\tools\run_owner_readiness_preflight.ps1'
+          )) {
+            [scriptblock]::Create((Get-Content -LiteralPath $script -Raw)) | Out-Null
+          }
+      - name: Stamp package provenance
+        id: provenance
+        shell: pwsh
+        run: |
+          $stamp = & .\tools\stamp_package_provenance.ps1
+          "commit=$($stamp.Commit)" >> $env:GITHUB_OUTPUT
+      - name: Install package and PyInstaller
+        run: python -m pip install ".[earth3]" pyinstaller
+      - name: Assert installed provenance
+        shell: pwsh
+        run: python -c 'import sys; from gates_of_codex.packaging import package_identity; assert package_identity().source_commit == sys.argv[1]' '${{ steps.provenance.outputs.commit }}'
+      - name: Generate isolated production Earth3 campaign
+        shell: pwsh
+        run: |
+          @'
+          import os
+          import sys
+          from pathlib import Path
+
+          sys.path.insert(0, "tests")
+          from test_p2_earth3_campaign_bootstrap import _resolved_catalog
+          from gates_of_codex.player_shell import build_play_parser, run_play
+
+          root = Path(os.environ["RUNNER_TEMP"]) / "issue212-owner-preflight"
+          env = dict(os.environ)
+          env["GATES_OF_CODEX_HOME"] = str(root / "home")
+          args = build_play_parser().parse_args([
+              "--new",
+              "--campaign", str(root / "campaign"),
+              "--no-launch",
+          ])
+          result = run_play(args, environ=env, resolved_catalog=_resolved_catalog())
+          Path("issue212-preflight-campaign.txt").write_text(result.campaign_path, encoding="utf-8")
+          Path("issue212-preflight-snapshot.txt").write_text(result.snapshot_path, encoding="utf-8")
+          print(result.campaign_path)
+          print(result.snapshot_path)
+          '@ | python -
+      - name: Build exact packaged player and backend
+        shell: pwsh
+        run: |
+          python -m PyInstaller --noconfirm --clean --onefile --windowed --name GatesOfCodeX --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" run_gates_of_codex.py
+          python -m PyInstaller --noconfirm --clean --onefile --console --name GatesOfCodeXLive --add-data "src\gates_of_codex\SOURCE_COMMIT;gates_of_codex" run_gates_of_codex_live.py
+      - name: Install Godot 4.7 for packaged startup smoke
+        shell: pwsh
+        run: |
+          $zip = Join-Path $env:RUNNER_TEMP 'godot-4.7.zip'
+          curl.exe -fL -o $zip 'https://github.com/godotengine/godot/releases/download/4.7-stable/Godot_v4.7-stable_win64.exe.zip'
+          if ($LASTEXITCODE -ne 0) { throw 'Unable to download Godot 4.7' }
+          $root = Join-Path $env:RUNNER_TEMP 'godot-4.7'
+          Remove-Item -LiteralPath $root -Recurse -Force -ErrorAction SilentlyContinue
+          Expand-Archive -LiteralPath $zip -DestinationPath $root
+          $godot = Get-ChildItem -LiteralPath $root -Recurse -Filter 'Godot_v4.7-stable_win64.exe' | Select-Object -First 1
+          if ($null -eq $godot) { throw 'Godot 4.7 executable not found after extraction' }
+          $godot.FullName | Set-Content -LiteralPath 'issue212-preflight-godot.txt' -Encoding ascii
+          & $godot.FullName --version
+      - name: Run packaged owner-preflight contract smoke
+        shell: pwsh
+        run: |
+          $campaign = (Get-Content -LiteralPath 'issue212-preflight-campaign.txt' -Raw).Trim()
+          $snapshot = (Get-Content -LiteralPath 'issue212-preflight-snapshot.txt' -Raw).Trim()
+          $godot = (Get-Content -LiteralPath 'issue212-preflight-godot.txt' -Raw).Trim()
+          .\tools\run_owner_readiness_preflight.ps1 `
+            -GodotPath $godot `
+            -CampaignPath $campaign `
+            -SnapshotPath $snapshot `
+            -PlayerExecutable (Resolve-Path '.\dist\GatesOfCodeX.exe').Path `
+            -OutputDirectory (Join-Path $env:RUNNER_TEMP 'issue212-owner-preflight-evidence') `
+            -ColdStartupMaxSeconds 180 `
+            -WarmStartupMaxSeconds 60 `
+            -OrderMaxSeconds 60 `
+            -EndTurnTargetSeconds 60 `
+            -EndTurnHardMaxSeconds 120
+      - name: Print hosted timing evidence
+        if: always()
+        shell: pwsh
+        run: |
+          $evidence = Join-Path $env:RUNNER_TEMP 'issue212-owner-preflight-evidence\owner-readiness-performance.json'
+          if (Test-Path -LiteralPath $evidence -PathType Leaf) {
+            Get-Content -LiteralPath $evidence -Raw
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: issue-212-windows-owner-preflight
+          path: |
+            ${{ runner.temp }}/issue212-owner-preflight-evidence/owner-readiness-performance.json
+            ${{ runner.temp }}/issue212-owner-preflight-evidence/startup-*.jsonl
+          if-no-files-found: warn
+      - name: Cleanup package provenance
+        if: always()
+        shell: pwsh
+        run: Remove-Item -LiteralPath src\gates_of_codex\SOURCE_COMMIT -Force -ErrorAction SilentlyContinue
