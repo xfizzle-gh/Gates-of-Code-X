@@ -105,9 +105,7 @@ func _activate_presentation_candidate() -> void:
 		presentation_candidate_status = "cache_capture_failed"
 		return
 	_presentation_candidate_cache = cache
-	if _presentation_candidate != null:
-		_presentation_candidate.queue_free()
-		_presentation_candidate = null
+	_discard_presentation_candidate()
 	var candidate := StrategicRasterCandidateScript.new() as StrategicRasterCandidate
 	if candidate == null or not candidate.configure(live_root, _presentation_candidate_cache):
 		if candidate != null:
@@ -147,10 +145,7 @@ func _refresh_presentation_candidate() -> void:
 		presentation_candidate_status = "refresh_cache_failed"
 		return
 	_presentation_candidate_cache = cache
-	if _presentation_candidate != null:
-		_presentation_candidate.shutdown()
-		_presentation_candidate.queue_free()
-		_presentation_candidate = null
+	_discard_presentation_candidate()
 	var candidate := StrategicRasterCandidateScript.new() as StrategicRasterCandidate
 	if candidate == null or not candidate.configure(live_root, _presentation_candidate_cache):
 		if candidate != null:
@@ -164,6 +159,16 @@ func _refresh_presentation_candidate() -> void:
 	presentation_candidate_active = true
 	presentation_candidate_status = "active"
 	_presentation_candidate_building = false
+
+
+func _discard_presentation_candidate() -> void:
+	if _presentation_candidate == null:
+		return
+	_presentation_candidate.shutdown()
+	if _presentation_candidate.get_parent() == self:
+		remove_child(_presentation_candidate)
+	_presentation_candidate.queue_free()
+	_presentation_candidate = null
 
 
 func _capture_candidate_static_map(live_root: Node2D) -> Image:
