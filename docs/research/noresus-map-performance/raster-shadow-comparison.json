@@ -1,0 +1,154 @@
+{
+  "schema": "gates-of-codex.issue-212-raster-shadow-evidence",
+  "schema_version": 2,
+  "issue": 212,
+  "phase": "B-debug-shadow",
+  "measurement_head": "ee8e64577b7ffe0514c79613488fc84dd6d1f9ab",
+  "workflow_run_id": 31860104231,
+  "audited_artifact_id": 9240484024,
+  "audited_artifact_sha256": "48fa220b2e6619a3dbbd191f3ce68f9ddd61eca3df07fc8d797e7a5d4d93bfd3",
+  "full_cache_artifact_id": 9240283477,
+  "full_cache_artifact_sha256": "89d63c68b9ba28f3b1475b2df6aa2e835b26eb3e746c636c6d71a0abe82c97b9",
+  "environment": {
+    "godot": "4.7-stable (official)",
+    "os": "Linux / GitHub Ubuntu runner",
+    "renderer": "OpenGL Compatibility",
+    "device": "llvmpipe (LLVM 20.1.2, 256 bits)",
+    "viewport": {"width": 1920, "height": 1080},
+    "frames_per_matrix_sample": 24,
+    "frames_per_dynamic_sample": 24,
+    "process_stabilization_passes": 2
+  },
+  "authority": {
+    "province_count": 3514,
+    "polygon_backend_remained_live": true,
+    "cache_is_presentation_only": true,
+    "manifest_sha256": "614a926e79f11e3cfac8c867c7bacce107fc69344b17fabb6b4545cdeaa6a357",
+    "polygon_dataset_sha256": "4aadab4b5106bbfa4c2d37e8173c3d1675f35a448cbd7f32a8b871c464ce1b84",
+    "snapshot_fixture_sha256": "b405550730f2af7d8bd82ca82ee27924431d9ac0c1dd6b8a5bef979828585ef3",
+    "authority_hashes_unchanged": true,
+    "deterministic_picking_parity": true,
+    "water_non_selection_parity": true,
+    "performance_fixture_selected_province_id": "e3_2108",
+    "operational_anchor_parity": true,
+    "real_legal_target_parity": {
+      "source": "production player-shell snapshot operational_orders",
+      "generated_snapshot_sha256": "e2406657e97a0352e0c5dc222bc32cbd6547a4a26e6ae9bb1188beb476824e94",
+      "operational_order_count": 252,
+      "formation_id": "sf_deu_berlin",
+      "origin_province_id": "e3_0592",
+      "required_target_id": "e3_0391",
+      "legal_target_count": 63,
+      "legal_target_ids": ["e3_0391","e3_0395","e3_0399","e3_0402","e3_0405","e3_0412","e3_0430","e3_0442","e3_0449","e3_0455","e3_0456","e3_0493","e3_0498","e3_0504","e3_0505","e3_0513","e3_0514","e3_0518","e3_0519","e3_0523","e3_0567","e3_0581","e3_0593","e3_1208","e3_1209","e3_1747","e3_1749","e3_1816","e3_1818","e3_1819","e3_1836","e3_1837","e3_1849","e3_1851","e3_1876","e3_1936","e3_1937","e3_1938","e3_1943","e3_1944","e3_1947","e3_1951","e3_1961","e3_1962","e3_2042","e3_2062","e3_2171","e3_2175","e3_2298","e3_2330","e3_2331","e3_2634","e3_2793","e3_2794","e3_2795","e3_2796","e3_2800","e3_2808","e3_2809","e3_2810","e3_3379","e3_3380","e3_3480"],
+      "exact_identity_across_polygon_full_512_1024": true
+    },
+    "owner_refresh": {
+      "ok": true,
+      "province_id": "e3_0000",
+      "old_owner": "nato",
+      "new_owner": "rusa",
+      "polygon_owner_state_applied": true,
+      "owner_color_oracle": "mean production-rendered cache color at same-owner province anchors",
+      "same_owner_reference_count": 8,
+      "expected_owner_color": [0.5784,0.3951,0.3495,1.0],
+      "cached_owner_color": [0.5647,0.3843,0.3412,1.0],
+      "owner_color_max_channel_error": 0.0137,
+      "owner_color_tolerance": 0.02,
+      "reference_owner_color_max_spread": 0.0098,
+      "reference_owner_colors_coherent": true,
+      "exact_owner_color_match": true,
+      "cached_pixel_changed": true,
+      "cached_pixel_delta": 0.549,
+      "raw_palette_color_diagnostic": [0.7882,0.3569,0.3569,1.0],
+      "raw_palette_max_channel_error_diagnostic": 0.2235
+    }
+  },
+  "control": {
+    "design": "polygon_before -> cache_mode -> polygon_after",
+    "local_baseline": "arithmetic midpoint of surrounding polygon samples",
+    "max_baseline_drift_ratio": 0.15,
+    "all_matrix_brackets_passed": true,
+    "max_observed_matrix_baseline_drift_ratio": 0.0427,
+    "all_dynamic_brackets_passed": true,
+    "max_observed_dynamic_baseline_drift_ratio": 0.0277,
+    "all_surrounding_draw_call_counts_matched": true,
+    "all_surrounding_primitive_counts_matched": true,
+    "dynamic_alignment_tolerance_px": 0.25,
+    "max_observed_dynamic_alignment_error_px": 0.0
+  },
+  "cache": {
+    "scale": 2,
+    "width": 8612,
+    "height": 6898,
+    "raw_rgba8_bytes": 237622304,
+    "raw_rgba8_mib": 226.614,
+    "polygon_baseline_video_memory_mib": 66.013,
+    "current_shadow_video_memory_mib": 368.156,
+    "current_shadow_video_memory_increase_mib": 302.143,
+    "persistent": false,
+    "campaign_authority": false,
+    "important_limit": "The current tiled spike materializes every tile texture up front, so culling reduces submitted tiles but does not reduce resident cache memory. A production experiment must lazily materialize/stream only needed 1024px tiles."
+  },
+  "matrix": {
+    "idle_full_theatre": {
+      "full_cache": {"polygon_p50_ms":215.093,"cache_p50_ms":84.138,"improvement_ms":130.955,"improvement_pct":60.883,"cache_draw_calls_p50":200,"cache_primitives_p50":6082,"visible_tiles_p50":1,"baseline_drift_p50_pct":0.02,"baseline_drift_p95_pct":0.16},
+      "tile_1024": {"polygon_p50_ms":214.83,"cache_p50_ms":89.429,"improvement_ms":125.401,"improvement_pct":58.372,"cache_draw_calls_p50":262,"cache_primitives_p50":6206,"visible_tiles_p50":63,"baseline_drift_p50_pct":0.28,"baseline_drift_p95_pct":2.94},
+      "tile_512": {"polygon_p50_ms":216.351,"cache_p50_ms":96.181,"improvement_ms":120.17,"improvement_pct":55.544,"cache_draw_calls_p50":437,"cache_primitives_p50":6556,"visible_tiles_p50":238,"baseline_drift_p50_pct":1.1,"baseline_drift_p95_pct":1.43}
+    },
+    "continuous_pan": {
+      "full_cache": {"polygon_p50_ms":214.952,"cache_p50_ms":82.6,"improvement_ms":132.352,"improvement_pct":61.573,"cache_draw_calls_p50":200,"cache_primitives_p50":6082,"visible_tiles_p50":1,"baseline_drift_p50_pct":0.61,"baseline_drift_p95_pct":1.67},
+      "tile_1024": {"polygon_p50_ms":214.168,"cache_p50_ms":87.878,"improvement_ms":126.29,"improvement_pct":58.968,"cache_draw_calls_p50":262,"cache_primitives_p50":6206,"visible_tiles_p50":63,"baseline_drift_p50_pct":0.27,"baseline_drift_p95_pct":2.72},
+      "tile_512": {"polygon_p50_ms":214.571,"cache_p50_ms":94.293,"improvement_ms":120.278,"improvement_pct":56.055,"cache_draw_calls_p50":420,"cache_primitives_p50":6522,"visible_tiles_p50":221,"baseline_drift_p50_pct":0.13,"baseline_drift_p95_pct":4.27}
+    },
+    "continuous_zoom": {
+      "full_cache": {"polygon_p50_ms":251.54,"cache_p50_ms":87.757,"improvement_ms":163.783,"improvement_pct":65.112,"cache_draw_calls_p50":202,"cache_primitives_p50":6148,"visible_tiles_p50":1,"baseline_drift_p50_pct":0.22,"baseline_drift_p95_pct":1.09},
+      "tile_1024": {"polygon_p50_ms":253.799,"cache_p50_ms":89.254,"improvement_ms":164.546,"improvement_pct":64.833,"cache_draw_calls_p50":229,"cache_primitives_p50":6206,"visible_tiles_p50":28,"baseline_drift_p50_pct":0.09,"baseline_drift_p95_pct":0.03},
+      "tile_512": {"polygon_p50_ms":252.608,"cache_p50_ms":97.335,"improvement_ms":155.273,"improvement_pct":61.468,"cache_draw_calls_p50":285,"cache_primitives_p50":6314,"visible_tiles_p50":84,"baseline_drift_p50_pct":0.21,"baseline_drift_p95_pct":0.7}
+    }
+  },
+  "dynamic_scenarios": {
+    "hover_select": {
+      "surface": {"selected":"e3_2108","hovered":"e3_2781"},
+      "full_cache": {"improvement_ms":167.889,"improvement_pct":65.337,"alignment_probe_count":2,"alignment_max_error_px":0.0},
+      "tile_1024": {"improvement_ms":168.989,"improvement_pct":64.293,"alignment_probe_count":2,"alignment_max_error_px":0.0},
+      "tile_512": {"improvement_ms":158.755,"improvement_pct":61.103,"alignment_probe_count":2,"alignment_max_error_px":0.0}
+    },
+    "large_formation_counters": {
+      "surface": {"synthetic_counter_count":12},
+      "full_cache": {"improvement_ms":132.057,"improvement_pct":61.004,"alignment_probe_count":12,"alignment_max_error_px":0.0},
+      "tile_1024": {"improvement_ms":128.33,"improvement_pct":58.82,"alignment_probe_count":12,"alignment_max_error_px":0.0},
+      "tile_512": {"improvement_ms":120.552,"improvement_pct":55.478,"alignment_probe_count":12,"alignment_max_error_px":0.0}
+    },
+    "infrastructure_routes": {
+      "surface": {"route_count":1,"site_count":6},
+      "full_cache": {"improvement_ms":178.472,"improvement_pct":66.704,"alignment_probe_count":8,"alignment_max_error_px":0.0},
+      "tile_1024": {"improvement_ms":173.744,"improvement_pct":64.712,"alignment_probe_count":8,"alignment_max_error_px":0.0},
+      "tile_512": {"improvement_ms":169.607,"improvement_pct":62.891,"alignment_probe_count":8,"alignment_max_error_px":0.0}
+    },
+    "pending_battle_contact": {
+      "surface": {"battle_count":2,"contact_count":1,"has_pending_battle":true},
+      "full_cache": {"improvement_ms":135.698,"improvement_pct":61.785,"alignment_probe_count":4,"alignment_max_error_px":0.0},
+      "tile_1024": {"improvement_ms":129.064,"improvement_pct":58.851,"alignment_probe_count":4,"alignment_max_error_px":0.0},
+      "tile_512": {"improvement_ms":121.927,"improvement_pct":55.788,"alignment_probe_count":4,"alignment_max_error_px":0.0}
+    }
+  },
+  "visual_review": {
+    "matrix_same_camera_screenshots": ["polygon.png","full_cache.png","tile_512.png","tile_1024.png"],
+    "legal_target_screenshots": ["legal_targets__polygon.png","legal_targets__full_cache.png","legal_targets__tile_512.png","legal_targets__tile_1024.png"],
+    "dynamic_screenshot_count": 16,
+    "dynamic_scenarios": ["hover_select","large_formation_counters","infrastructure_routes","pending_battle_contact"],
+    "full_cache_vs_tile_1024": {"pixels_with_any_delta_pct":0.008198,"pixels_over_5_channel_delta_pct":0.000048,"max_channel_delta_255":9},
+    "full_cache_vs_tile_512": {"pixels_with_any_delta_pct":0.00815,"pixels_over_5_channel_delta_pct":0.000048,"max_channel_delta_255":9},
+    "tile_512_vs_tile_1024": {"pixels_with_any_delta_pct":0.005064,"pixels_over_5_channel_delta_pct":0.0,"max_channel_delta_255":4},
+    "dynamic_overlay_alignment": "PASS: all 78 cache-mode map-space probe points across 12 scenario/mode validations reported 0.0 px maximum error; cache and live dynamic coordinates stayed coincident under the tested pan/zoom transforms."
+  },
+  "decision": {
+    "phase_b_result": "PASS",
+    "recommended_next_experiment": "1024px map-space tiled static cache with lazy tile materialization/streaming and viewport culling",
+    "why_not_full_texture": "It is fastest in this CI spike, but the 8612x6898 2x RGBA8 cache is a single ~226.6 MiB raw image and the current process rises by about 302 MiB of video memory versus polygon baseline.",
+    "why_not_512": "At full-theatre view it requires 238 visible tiles and raises p50 draw calls to 437, while being slower than 1024 in idle, pan, and zoom samples.",
+    "why_1024": "It retains most of the measured static-raster speedup, uses materially fewer draw calls than 512, culls from 63 tiles at full-theatre view to p50 28 during zoom, and provides the partitioning needed for a later lazy-residency implementation.",
+    "production_switch_authorized": false,
+    "native_owner_acceptance_required": true
+  }
+}

@@ -1,0 +1,370 @@
+name: Issue 212 raster shadow
+
+on:
+  pull_request:
+    paths:
+      - "godot/scripts/tools/map_raster_shadow_benchmark.gd"
+      - "godot/scripts/tools/map_raster_shadow_profiler.gd"
+      - "godot/scripts/tools/map_raster_shadow_profiler_audited.gd"
+      - "godot/scripts/tools/map_raster_shadow_legal_target_audit.gd"
+      - "godot/scripts/tools/map_raster_shadow_phase_b_audit.gd"
+      - "godot/scripts/tools/map_raster_shadow_phase_b_audit_fixed.gd"
+      - ".github/workflows/issue-212-raster-shadow.yml"
+      - "docs/research/noresus-map-performance/raster-shadow-comparison.json"
+      - "docs/research/noresus-map-performance/rendering-comparison.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: issue-212-raster-shadow-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  full-theatre-cache:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system deps
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1 libxcursor1 libxinerama1 libxrandr2 libxi6 libx11-6
+      - name: Install Godot 4.7
+        run: |
+          set -euo pipefail
+          GODOT_VERSION=4.7-stable
+          curl -fsSL -o godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip
+          GODOT_BIN="$(find . -maxdepth 1 -type f -name 'Godot_v*_linux.x86_64' | head -n 1)"
+          install -m 755 "$GODOT_BIN" "$HOME/godot"
+          "$HOME/godot" --version
+      - name: Import Godot project
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --import --quit-after 1
+      - name: Measure full-theatre raster shadow
+        run: |
+          set -euo pipefail
+          mkdir -p docs/research/noresus-map-performance
+          OUT="$(pwd)/docs/research/noresus-map-performance/raster-shadow-ci.json"
+          log="$(mktemp)"
+          set +e
+          xvfb-run -a -s "-screen 0 1920x1080x24" \
+            "$HOME/godot" --path godot --audio-driver Dummy \
+            -s res://scripts/tools/map_raster_shadow_benchmark.gd -- \
+            --snapshot=res://fixtures/snapshots/earth3_operational.json \
+            --fixture=res://fixtures/presentation/e3_operational.json \
+            --manifest=res://assets/maps/earth3_europe_mediterranean/map_manifest.json \
+            --width=1920 --height=1080 --frames=24 --out="$OUT" 2>&1 | tee "$log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' "$log"; then exit 1; fi
+          if ! grep -q 'map_raster_shadow_benchmark: PASS' "$log"; then exit 1; fi
+          exit "$code"
+      - name: Validate full-theatre authority contract
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path("docs/research/noresus-map-performance/raster-shadow-ci.json").read_text(encoding="utf-8"))
+          assert data.get("ok") is True, data
+          assert data.get("issue") == 212 and data.get("phase") == "B", data
+          authority = data.get("authority", {})
+          assert authority.get("province_count") == 3514, authority
+          assert authority.get("polygon_authority_retained") is True, authority
+          assert authority.get("picking_parity") is True, authority
+          assert authority.get("water_policy_retained") is True, authority
+          cache = data.get("cache", {})
+          assert cache.get("persistent") is False and cache.get("campaign_authority") is False, cache
+          print("ISSUE212_FULL_CACHE", json.dumps(data.get("delta", {}), sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: issue-212-raster-shadow-full-cache
+          path: docs/research/noresus-map-performance/raster-shadow-ci.json
+          if-no-files-found: error
+
+  cache-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system deps
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1 libxcursor1 libxinerama1 libxrandr2 libxi6 libx11-6
+      - name: Install Godot 4.7
+        run: |
+          set -euo pipefail
+          GODOT_VERSION=4.7-stable
+          curl -fsSL -o godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip
+          GODOT_BIN="$(find . -maxdepth 1 -type f -name 'Godot_v*_linux.x86_64' | head -n 1)"
+          install -m 755 "$GODOT_BIN" "$HOME/godot"
+          "$HOME/godot" --version
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Stamp package provenance
+        id: provenance
+        shell: pwsh
+        run: |
+          $stamp = & .\tools\stamp_package_provenance.ps1
+          "commit=$($stamp.Commit)" >> $env:GITHUB_OUTPUT
+      - name: Install Python package for production snapshot generation
+        run: python -m pip install -e ".[earth3]"
+      - name: Assert installed provenance
+        shell: pwsh
+        run: python -c 'import sys; from gates_of_codex.packaging import package_identity; assert package_identity().source_commit == sys.argv[1]' '${{ steps.provenance.outputs.commit }}'
+      - name: Generate real Earth3 legal-target snapshot through production player shell
+        run: |
+          set -euo pipefail
+          mkdir -p godot/generated
+          python - <<'PY'
+          import json
+          import os
+          import shutil
+          import sys
+          from pathlib import Path
+
+          sys.path.insert(0, "tests")
+          from test_p2_earth3_campaign_bootstrap import _resolved_catalog
+          from gates_of_codex.player_shell import build_play_parser, run_play
+
+          root = Path(os.environ["RUNNER_TEMP"]) / "issue212-real-order-campaign"
+          environ = dict(os.environ)
+          environ["GATES_OF_CODEX_HOME"] = str(root / "home")
+          args = build_play_parser().parse_args(
+              [
+                  "--new",
+                  "--campaign",
+                  str(root / "home" / "campaigns" / "earth3_v1"),
+                  "--no-launch",
+              ]
+          )
+          result = run_play(args, environ=environ, resolved_catalog=_resolved_catalog())
+          assert result.map_id == "earth3_europe_mediterranean", result.map_id
+          source = Path(result.snapshot_path)
+          snapshot = json.loads(source.read_text(encoding="utf-8"))
+          orders = snapshot.get("operational_orders", [])
+          assert isinstance(orders, list) and orders, "production player snapshot has no operational_orders"
+          complete = [
+              row for row in orders
+              if isinstance(row, dict)
+              and row.get("formation_id")
+              and row.get("origin_province_id")
+              and row.get("target_province_id")
+          ]
+          assert complete, "production player snapshot has no complete operational order"
+          target = Path("godot/generated/issue212_real_order_snapshot.json")
+          shutil.copyfile(source, target)
+          print(
+              "ISSUE212_GENERATED_REAL_ORDERS",
+              json.dumps(
+                  {
+                      "source": str(source),
+                      "target": str(target),
+                      "operational_order_count": len(orders),
+                      "complete_order_count": len(complete),
+                      "first_complete_order": {
+                          key: complete[0].get(key)
+                          for key in ("formation_id", "origin_province_id", "target_province_id")
+                      },
+                  },
+                  sort_keys=True,
+              ),
+          )
+          PY
+      - name: Import Godot project
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --import --quit-after 1
+      - name: Prove non-empty real legal-target parity
+        run: |
+          set -euo pipefail
+          ROOT="$(pwd)/docs/research/noresus-map-performance"
+          OUT="$ROOT/raster-shadow-legal-target-audit.json"
+          SCREENS="$ROOT/raster-shadow-legal-screens"
+          mkdir -p "$SCREENS"
+          log="$(mktemp)"
+          set +e
+          xvfb-run -a -s "-screen 0 1920x1080x24" \
+            "$HOME/godot" --path godot --audio-driver Dummy \
+            -s res://scripts/tools/map_raster_shadow_legal_target_audit.gd -- \
+            --fixture=res://fixtures/presentation/e3_operational.json \
+            --manifest=res://assets/maps/earth3_europe_mediterranean/map_manifest.json \
+            --width=1920 --height=1080 --out="$OUT" --screens-dir="$SCREENS" 2>&1 | tee "$log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' "$log"; then exit 1; fi
+          if ! grep -q 'map_raster_shadow_legal_target_audit: PASS' "$log"; then exit 1; fi
+          exit "$code"
+      - name: Benchmark audited full cache vs 512/1024 tiles
+        run: |
+          set -euo pipefail
+          ROOT="$(pwd)/docs/research/noresus-map-performance"
+          OUT="$ROOT/raster-shadow-comparison.json"
+          SCREENS="$ROOT/raster-shadow-screens"
+          mkdir -p "$SCREENS"
+          log="$(mktemp)"
+          set +e
+          xvfb-run -a -s "-screen 0 1920x1080x24" \
+            "$HOME/godot" --path godot --audio-driver Dummy \
+            -s res://scripts/tools/map_raster_shadow_profiler_audited.gd -- \
+            --snapshot=res://fixtures/snapshots/earth3_operational.json \
+            --fixture=res://fixtures/presentation/e3_operational.json \
+            --manifest=res://assets/maps/earth3_europe_mediterranean/map_manifest.json \
+            --width=1920 --height=1080 --frames=24 --out="$OUT" --screens-dir="$SCREENS" 2>&1 | tee "$log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' "$log"; then exit 1; fi
+          if ! grep -q 'map_raster_shadow_profiler: PASS' "$log"; then exit 1; fi
+          exit "$code"
+      - name: Benchmark missing Phase B dynamic scenarios
+        run: |
+          set -euo pipefail
+          ROOT="$(pwd)/docs/research/noresus-map-performance"
+          OUT="$ROOT/raster-shadow-phase-b-audit.json"
+          SCREENS="$ROOT/raster-shadow-audit-screens"
+          mkdir -p "$SCREENS"
+          log="$(mktemp)"
+          set +e
+          xvfb-run -a -s "-screen 0 1920x1080x24" \
+            "$HOME/godot" --path godot --audio-driver Dummy \
+            -s res://scripts/tools/map_raster_shadow_phase_b_audit_fixed.gd -- \
+            --snapshot=res://fixtures/snapshots/earth3_operational.json \
+            --fixture=res://fixtures/presentation/e3_operational.json \
+            --manifest=res://assets/maps/earth3_europe_mediterranean/map_manifest.json \
+            --width=1920 --height=1080 --frames=24 --out="$OUT" --screens-dir="$SCREENS" 2>&1 | tee "$log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' "$log"; then exit 1; fi
+          if ! grep -q 'map_raster_shadow_phase_b_audit: PASS' "$log"; then exit 1; fi
+          exit "$code"
+      - name: Validate audited Phase B evidence
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("docs/research/noresus-map-performance")
+
+          legal = json.loads((root / "raster-shadow-legal-target-audit.json").read_text(encoding="utf-8"))
+          assert legal.get("ok") is True, legal
+          assert legal.get("order_source") == "production player-shell snapshot operational_orders", legal
+          assert int(legal.get("operational_order_count", 0)) > 0, legal
+          reference = legal.get("reference", {})
+          assert reference.get("ok") is True, reference
+          assert reference.get("selected_strategic_formation_id"), reference
+          assert reference.get("selected_province_id"), reference
+          legal_ids = reference.get("legal_target_ids", [])
+          assert len(legal_ids) > 0, reference
+          assert reference.get("required_target_id") in legal_ids, reference
+          for mode in ["polygon", "full_cache", "tile_512", "tile_1024"]:
+              row = legal.get("modes", {}).get(mode, {})
+              assert row.get("ok") is True, (mode, row)
+              assert row.get("exact_legal_target_identity") is True, (mode, row)
+              assert row.get("polygon_backend_live") is True, (mode, row)
+              assert row.get("state", {}).get("legal_target_ids") == legal_ids, (mode, row)
+          legal_screens = root / "raster-shadow-legal-screens"
+          for name in legal.get("screenshots", []):
+              p = legal_screens / name
+              assert p.exists() and p.stat().st_size > 0, p
+          assert len(legal.get("screenshots", [])) == 4, legal.get("screenshots")
+
+          matrix = json.loads((root / "raster-shadow-comparison.json").read_text(encoding="utf-8"))
+          assert matrix.get("ok") is True and matrix.get("issue") == 212, matrix
+          assert int(matrix.get("frames_per_sample", 0)) >= 24, matrix.get("frames_per_sample")
+          authority = matrix.get("authority", {})
+          assert authority.get("unchanged") is True, authority
+          assert authority.get("polygon_backend_remains_live") is True, authority
+          assert authority.get("cache_is_presentation_only") is True, authority
+          matrix_ref = matrix.get("reference_parity", {})
+          assert matrix_ref.get("ok") is True and matrix_ref.get("water_not_selectable") is True, matrix_ref
+          owner = matrix.get("owner_refresh_parity", {})
+          assert owner.get("ok") is True, owner
+          assert owner.get("exact_owner_color_match") is True, owner
+          assert float(owner.get("owner_color_max_channel_error", 1.0)) <= float(owner.get("owner_color_tolerance", 0.0)), owner
+          control = matrix.get("control", {})
+          max_drift = float(control.get("max_baseline_drift_ratio", 1.0))
+          assert 0.0 < max_drift <= 0.15, control
+          modes = matrix.get("modes", {})
+          base_scenarios = ["idle_full_theatre", "continuous_pan", "continuous_zoom"]
+          for mode in ["full_cache", "tile_512", "tile_1024"]:
+              for scenario in base_scenarios:
+                  bracket = modes.get(mode, {}).get("scenarios", {}).get(scenario, {})
+                  assert bracket.get("ok") is True, (mode, scenario, bracket)
+                  drift = bracket.get("baseline_drift", {})
+                  assert int(drift.get("draw_calls_p50_abs", 1)) == 0, (mode, scenario, drift)
+                  assert int(drift.get("primitives_p50_abs", 1)) == 0, (mode, scenario, drift)
+                  assert float(drift.get("frame_ms_p50_ratio", 1.0)) <= max_drift, (mode, scenario, drift)
+                  assert float(drift.get("frame_ms_p95_ratio", 1.0)) <= max_drift, (mode, scenario, drift)
+
+          audit = json.loads((root / "raster-shadow-phase-b-audit.json").read_text(encoding="utf-8"))
+          assert audit.get("ok") is True and int(audit.get("frames_per_sample", 0)) >= 24, audit
+          audit_authority = audit.get("authority", {})
+          assert audit_authority.get("unchanged") is True and audit_authority.get("polygon_backend_remains_live") is True, audit_authority
+          audit_control = audit.get("control", {})
+          audit_drift = float(audit_control.get("max_baseline_drift_ratio", 1.0))
+          align_tol = float(audit_control.get("alignment_tolerance_px", 0.0))
+          assert 0.0 < audit_drift <= 0.15 and align_tol > 0.0, audit_control
+          scenarios = audit.get("scenarios", {})
+          required = ["hover_select", "large_formation_counters", "infrastructure_routes", "pending_battle_contact"]
+          for scenario in required:
+              row = scenarios.get(scenario, {})
+              assert row.get("polygon", {}).get("ok") is True, (scenario, row)
+              for mode in ["full_cache", "tile_512", "tile_1024"]:
+                  mode_row = row.get("modes", {}).get(mode, {})
+                  bracket = mode_row.get("bracket", {})
+                  assert bracket.get("ok") is True, (scenario, mode, bracket)
+                  drift = bracket.get("baseline_drift", {})
+                  assert int(drift.get("draw_calls_p50_abs", 1)) == 0, (scenario, mode, drift)
+                  assert int(drift.get("primitives_p50_abs", 1)) == 0, (scenario, mode, drift)
+                  assert float(drift.get("frame_ms_p50_ratio", 1.0)) <= audit_drift, (scenario, mode, drift)
+                  assert float(drift.get("frame_ms_p95_ratio", 1.0)) <= audit_drift, (scenario, mode, drift)
+                  alignment = mode_row.get("alignment", {})
+                  assert alignment.get("ok") is True and int(alignment.get("probe_count", 0)) > 0, (scenario, mode, alignment)
+                  assert float(alignment.get("max_error_px", 999.0)) <= align_tol, (scenario, mode, alignment)
+          assert scenarios["large_formation_counters"]["polygon"]["surface"].get("synthetic_counter_count", 0) >= 12
+          assert scenarios["infrastructure_routes"]["polygon"]["surface"].get("route_count", 0) > 0
+          assert scenarios["infrastructure_routes"]["polygon"]["surface"].get("site_count", 0) > 0
+          assert scenarios["pending_battle_contact"]["polygon"]["surface"].get("battle_count", 0) > 0
+          assert scenarios["pending_battle_contact"]["polygon"]["surface"].get("contact_count", 0) > 0
+          assert scenarios["pending_battle_contact"]["polygon"]["surface"].get("has_pending_battle") is True
+          audit_screens = root / "raster-shadow-audit-screens"
+          assert len(audit.get("screenshots", [])) == 16, audit.get("screenshots")
+          for name in audit.get("screenshots", []):
+              p = audit_screens / name
+              assert p.exists() and p.stat().st_size > 0, p
+
+          print("ISSUE212_PHASE_B_AUDITED", json.dumps({
+              "legal_targets": legal_ids,
+              "matrix_modes": sorted(modes),
+              "dynamic_scenarios": required,
+          }, sort_keys=True))
+          PY
+      - name: Cleanup package provenance
+        if: always()
+        shell: pwsh
+        run: Remove-Item -LiteralPath src\gates_of_codex\SOURCE_COMMIT -Force -ErrorAction SilentlyContinue
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: issue-212-raster-shadow-audited
+          path: |
+            docs/research/noresus-map-performance/raster-shadow-legal-target-audit.json
+            docs/research/noresus-map-performance/raster-shadow-legal-screens/*.png
+            docs/research/noresus-map-performance/raster-shadow-comparison.json
+            docs/research/noresus-map-performance/raster-shadow-screens/*.png
+            docs/research/noresus-map-performance/raster-shadow-phase-b-audit.json
+            docs/research/noresus-map-performance/raster-shadow-audit-screens/*.png
+          if-no-files-found: error

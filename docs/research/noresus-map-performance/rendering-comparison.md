@@ -10,44 +10,19 @@ The historical ~3.7k draw-call figure was contaminated by developer `MapDebug` p
 | Debug ON | 3,764 | 3,764 | 265.424 | 279.382 |
 | Debug OFF restored | 205 | 205 | 160.581 | 164.458 |
 
-PR #238 provenance: measurement commit `f8f1ff072bc0b9a89c82f210e506d56b372918f8`, workflow run `31849403512`, artifact `9237017273`, Godot 4.7, Ubuntu 24.04/Xvfb/OpenGL Compatibility/Mesa llvmpipe, 1920x1080, 24 frames per mode, exact 3,514-province Earth3 authority.
+PR #238 provenance: measurement commit `f8f1ff072bc0b9a89c82f210e506d56b372918f8`, workflow run `31849403512`, artifact `9237017273`, Godot 4.7, Ubuntu/Xvfb/OpenGL Compatibility/Mesa llvmpipe, 1920x1080, 24 frames per mode, exact 3,514-province Earth3 authority.
 
-## Why the first PR #239 frame-time table was rejected
+## Phase A: controlled production-layer attribution
 
-The first #239 profiler used one process-first baseline and then measured all disabled layers sequentially. Every mode got a fresh scene, but renderer/resource/font/shader caches survived inside the same Godot process. That made the original frame-time deltas vulnerable to order/cache drift.
+The first PR #239 frame-time table was rejected because it compared every later probe against one process-first baseline. Renderer/resource/font/shader warmup survived across fresh scenes and contaminated the causal ranking.
 
-The warning sign was strong: disabling the ocean removed only 2 primitives yet appeared about 65.6 ms faster, while labels, counters, sites, routes and proof overlays all clustered around roughly 52-55 ms despite very different workloads.
-
-Independent review `4942009996` correctly required a local reversible control for every probe.
-
-## Corrected bracketed experiment
-
-PR #239 now uses this schedule for every presentation category:
+The corrected PR #239 experiment bracketed every presentation category:
 
 `baseline_before -> layer_disabled -> baseline_after`
 
-Each sample still instantiates a fresh `main.tscn`, but the three samples stay in the same Godot process. The layer delta is calculated against the arithmetic midpoint of its two surrounding local baselines.
+It burned process-first warmup before recorded brackets, used 24 measured frames, computed each delta against the midpoint of its surrounding baselines, and failed if p50/p95 drift exceeded 15% or if surrounding draw-call/primitive counts changed.
 
-The harness also burns one unreported process-warmup baseline before any recorded bracket. A bracket fails if either p50 or p95 wall-frame baseline drift exceeds 15%, or if surrounding baseline draw-call or primitive counts differ.
-
-Corrected measurement provenance:
-
-- head: `59f1db2f3f9c55b839ebd73d38192458b90612c9`;
-- workflow run: `31852606988`;
-- artifact: `9238086887`;
-- Godot 4.7 stable;
-- Ubuntu 24.04, Xvfb, OpenGL Compatibility, Mesa llvmpipe;
-- 1920x1080;
-- 24 frames per sample;
-- `MapDebug` disabled;
-- exact 3,514-province Earth3 authority;
-- deterministic province-picking parity preserved.
-
-The process-first warmup measured 274.483 ms p50 / 285.934 ms p95. Later local baselines were generally around 215-219 ms p50. That directly confirms the audit finding: process-first-use work materially contaminated the old single-baseline frame-time attribution.
-
-All corrected brackets passed. Maximum observed local baseline drift was only 2.66%, well below the declared 15% rejection threshold, with exact 205 draw calls and 456,565 primitives in every surrounding ordinary baseline.
-
-### Corrected controlled deltas
+Corrected Phase A measurement provenance: head `59f1db2f3f9c55b839ebd73d38192458b90612c9`, workflow `31852606988`, artifact `9238086887`. Maximum observed baseline drift was 2.66%, with exact 205 draw calls and 456,565 primitives in every surrounding ordinary baseline.
 
 | Disabled category | Draw-call delta | Primitives removed | Frame p50 delta | Frame p95 delta |
 |---|---:|---:|---:|---:|
@@ -62,43 +37,114 @@ All corrected brackets passed. Maximum observed local baseline drift was only 2.
 | Fixture/proof overlays | 78 | 2,956 | 5.136 ms | 8.735 ms |
 | Contact/battle probe | -7 | 310 | 18.859 ms | 19.768 ms |
 
-Positive frame deltas mean the disabled sample was faster than its local bracketed baseline. Small negative values should be treated as noise/no measurable improvement, not as evidence that rendering the layer is beneficial.
+The exact earlier ~123 ms land and ~90 ms border claims are retired. Phase A supports a static-presentation cache experiment while keeping Earth3 polygons/topology/stable IDs as the sole simulation, validation, and picking authority.
 
-The contact/battle probe remains semantically non-additive: suppressing it raises draw calls by 7 while reducing frame time. It should not be ranked as an independent accounting bucket.
+## Phase B: audited full-cache vs 512/1024 tiled shadow
 
-The UI-only residual floor, with all measured map presentation categories suppressed, measured 58 draw calls / 1,744 primitives and 41.740 ms p50 / 42.589 ms p95. Its surrounding local baseline was 215.632 ms p50 / 222.296 ms p95. It is a residual diagnostic, not a one-layer delta.
+PR #241 is a debug-only presentation spike. It does not switch the production renderer. The static cache is derived from an isolated duplicate of the live `Earth3PolygonRoot`; the authoritative `PolygonMap` remains loaded for stable IDs, picking, water policy, owner state, selection/legal-target identity, and operational coordinates. Sparse dynamic overlays remain live and are not baked into the cache.
 
-## What the corrected experiment supports
+### Why the first Phase B evidence was rejected
 
-The independent audit was correct that the first frame-time ranking overstated layer costs. The corrected controls materially reduce most sparse-overlay deltas from the old ~52-55 ms cluster to approximately zero through single-digit milliseconds.
+The first matrix used only 8 measured frames per sample and later failed its own 15% bracket contract with roughly 22.7% p95 baseline drift. Its legal-target parity was also vacuous because the presentation fixture had `legal_target_ids: []`, owner refresh only proved that a pixel became different, and the evidence covered only idle/pan/zoom plus one idle screenshot set.
 
-The two large static geometry categories nevertheless remain clearly separated from those sparse overlays:
+Those claims are retired.
 
-- land fill removes 286,495 primitives and improves the local bracket by about 70 ms p50 / 72 ms p95;
-- shared borders remove 163,988 primitives and improve the local bracket by about 38 ms p50 / 37 ms p95;
-- together they still account for roughly 450k of 456,565 ordinary baseline primitives.
+### Audited Phase B provenance and controls
 
-The exact old claims of ~123 ms for land and ~90 ms for borders are retired. The corrected controlled values above are the only frame-time attribution values PR #239 should cite.
+Accepted measurement evidence for the corrected experiment:
 
-The ocean result remains disproportionate to its two reported primitives, so it should be treated as a measured presentation-node effect requiring follow-up rather than interpreted as primitive rasterization cost.
+- measurement head: `ee8e64577b7ffe0514c79613488fc84dd6d1f9ab`;
+- focused workflow: `31860104231`;
+- audited artifact: `9240484024`, SHA-256 `48fa220b2e6619a3dbbd191f3ce68f9ddd61eca3df07fc8d797e7a5d4d93bfd3`;
+- full-cache authority artifact: `9240283477`, SHA-256 `89d63c68b9ba28f3b1475b2df6aa2e835b26eb3e746c636c6d71a0abe82c97b9`;
+- Godot 4.7 stable, Ubuntu/Xvfb/OpenGL Compatibility/Mesa llvmpipe;
+- 1920x1080;
+- 24 measured frames per matrix and dynamic sample;
+- two unreported stabilization passes before recorded cache brackets;
+- exact 3,514-province Earth3 authority.
 
-## Phase A decision
+Every performance sample remains locally bracketed as:
 
-Phase A now supports proceeding to #212 Phase B as a **debug-only presentation experiment**, not a production switch.
+`polygon_before -> cache_mode -> polygon_after`
 
-The next experiment should compare:
+The 15% p50/p95 rejection threshold was not relaxed. All brackets passed. The worst observed matrix drift was **4.27%** and the worst dynamic-scenario drift was **2.77%**. Surrounding polygon draw-call and primitive counts matched exactly.
 
-1. one full cached-theatre static presentation layer set;
-2. 512/1024 tiled cached presentation with viewport culling.
+### Authority and interaction parity
 
-The goal is to remove repeated static land/border presentation work while retaining the current Earth3 polygon/topology/stable-ID data as the sole simulation, validation and picking authority. The existing polygon path must remain available in parallel for parity checks.
+The corrected audit strengthens each authority claim:
 
-Required parity remains unchanged: same stable province IDs, owner colors, water non-selection, selection/legal-target identity, operational coordinates, and campaign/map authority bytes.
+- manifest, polygon-dataset, and performance-fixture hashes remained byte-identical before/after;
+- deterministic stable-ID picking and water non-selection remained unchanged;
+- five stable operational anchors remained unchanged;
+- a real Earth3 snapshot was generated through the production player-shell `--new --no-launch` path rather than by seeding fixture targets;
+- that production snapshot contained **252 complete operational orders**;
+- deterministic order `sf_deu_berlin`, origin `e3_0592`, required target `e3_0391`, rebuilt a real set of **63 legal targets**;
+- the exact same 63-target set, selected formation, and origin remained identical across polygon, full-cache, 512, and 1024 presentation while `PolygonMap` stayed live;
+- owner refresh no longer passes merely because a pixel changed. The refreshed `e3_0000` RUSA pixel is checked against the mean production-rendered cache color of eight unchanged RUSA province anchors. Error was **0.0137** against a **0.02** tolerance, with reference-color spread **0.0098**.
 
-Phase C icon-atlas work still matters for draw-call reduction, but the corrected Phase A evidence does not show sparse counters/labels/sites/routes dominating wall-frame cost on this fixture.
+The raw RUSA palette literal is intentionally not the oracle because production static rendering applies presentation treatment; the audit records its larger 0.2235 mismatch only as a diagnostic.
+
+### Audited base matrix
+
+Positive improvement means the cache mode was faster than its own local polygon bracket midpoint.
+
+| Scenario | Mode | Polygon p50 | Cache p50 | Improvement | Cache draws p50 | Cache primitives p50 | Visible tiles p50 |
+|---|---|---:|---:|---:|---:|---:|---:|
+| Idle full theatre | Full cache | 215.093 ms | **84.138 ms** | **130.955 ms / 60.9%** | 200 | 6,082 | 1 |
+| Idle full theatre | 1024 tiles | 214.830 ms | **89.429 ms** | **125.401 ms / 58.4%** | 262 | 6,206 | 63 |
+| Idle full theatre | 512 tiles | 216.351 ms | 96.181 ms | 120.170 ms / 55.5% | 437 | 6,556 | 238 |
+| Continuous pan | Full cache | 214.952 ms | **82.600 ms** | **132.352 ms / 61.6%** | 200 | 6,082 | 1 |
+| Continuous pan | 1024 tiles | 214.168 ms | **87.878 ms** | **126.290 ms / 59.0%** | 262 | 6,206 | 63 |
+| Continuous pan | 512 tiles | 214.571 ms | 94.293 ms | 120.278 ms / 56.1% | 420 | 6,522 | 221 |
+| Continuous zoom | Full cache | 251.540 ms | **87.757 ms** | **163.783 ms / 65.1%** | 202 | 6,148 | 1 |
+| Continuous zoom | 1024 tiles | 253.799 ms | **89.254 ms** | **164.546 ms / 64.8%** | 229 | 6,206 | 28 |
+| Continuous zoom | 512 tiles | 252.608 ms | 97.335 ms | 155.273 ms / 61.5% | 285 | 6,314 | 84 |
+
+All cache modes remove roughly 450k static primitives. Tiling raises draw calls because each visible tile is a separate submitted presentation item in this spike. This is why 512px tiles are not preferred despite their frame-time improvement.
+
+### Required dynamic scenarios
+
+The audit now measures and captures identical-camera evidence for all previously missing Phase B surfaces. Each row below is the 1024px result; full-cache and 512px results are retained in `raster-shadow-comparison.json` and the workflow artifact.
+
+| Scenario | Proved surface | 1024 polygon p50 | 1024 cache p50 | Improvement | Alignment probes |
+|---|---|---:|---:|---:|---:|
+| Hover/select | selected `e3_2108`, hovered `e3_2781` | 262.843 ms | 93.854 ms | 168.989 ms / 64.3% | 2 |
+| Large formation counters | 12 counters | 218.173 ms | 89.843 ms | 128.330 ms / 58.8% | 12 |
+| Infrastructure/routes | 6 sites, 1 route | 268.490 ms | 94.746 ms | 173.744 ms / 64.7% | 8 |
+| Pending battle/contact | 2 battles, 1 contact, pending battle present | 219.306 ms | 90.242 ms | 129.064 ms / 58.9% | 4 |
+
+Across full-cache, 512, and 1024 validation there are **78 cache-mode map-space probe points across 12 scenario/mode validations**. Every one reported **0.0 px maximum alignment error** against the live map transform while the tested pan/zoom motion ran.
+
+The artifact contains:
+
+- 4 same-camera base matrix screenshots: polygon/full/512/1024;
+- 4 real legal-target screenshots: polygon/full/512/1024;
+- 16 dynamic screenshots: four scenarios times polygon/full/512/1024.
+
+Direct base screenshot comparison remains effectively identical between cache representations: full-cache vs 1024 differs at about 0.008198% of pixels, with only 0.000048% over five channel levels and maximum channel delta 9/255. The 512/1024 pair differs at about 0.005064%, maximum channel delta 4/255.
+
+### Memory and residency finding
+
+The 2x cache is 8,612 x 6,898 RGBA8, about **226.6 MiB raw**. The polygon baseline records about **66.0 MiB** video memory while the current shadow process records about **368.2 MiB**, roughly **+302.1 MiB**.
+
+The current tiled spike materializes every tile texture up front. Viewport culling therefore reduces submitted tiles but does not reduce resident cache memory. At full-theatre view all 63 1024px tiles and 238 512px tiles are visible; during the zoom probe p50 visible tiles fall to 28 for 1024 and 84 for 512.
+
+This is a performance/architecture proof, not a production memory design.
+
+## Phase B decision
+
+**Phase B debug-shadow evidence passes.** Proceed to a 1024px map-space tiled static cache experiment with lazy tile materialization/streaming and viewport culling. Do not promote the current all-resident shadow directly into production.
+
+Rationale:
+
+- full-cache is fastest in CI but concentrates the entire 8,612 x 6,898 cache into one large presentation image and offers no residency partitioning;
+- 512px tiles create excessive wide-view submission pressure, reaching 437 p50 draw calls at full-theatre view;
+- 1024px tiles retain most of the measured raster speedup, use materially fewer draw calls than 512, and provide the partition boundary needed to load/retain only visible or near-visible tiles later.
+
+A production renderer switch remains unauthorized. The next experiment must preserve polygon authority, materially reduce the current ~302 MiB shadow-memory penalty, retain the measured frame-time gain, pass owner-native profiling, and receive independent visual/interaction review.
 
 ## Native-performance caveat
 
-All absolute frame times above are Mesa llvmpipe measurements and are not owner-native acceptance targets. The bracketed A/B deltas are valid CI experimental evidence. Any claim that Phase B materially improves production performance still requires identical-camera testing on the owner/native machine with debug disabled.
+All absolute frame times above are Mesa llvmpipe measurements and are not owner-native acceptance targets. The bracketed A/B deltas are CI experimental evidence. Any claim that the eventual implementation materially improves production performance still requires identical-camera testing on the owner/native machine with debug disabled.
 
-No Phase A measurement changes polygon geometry, topology, stable IDs, water policy, campaign state, backend command architecture, or production rendering behavior.
+No Phase A or Phase B measurement changes polygon geometry, topology, stable IDs, water policy, campaign state, backend command architecture, or production rendering behavior.
