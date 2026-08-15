@@ -1,0 +1,86 @@
+name: Issue 212 composed presentation
+
+on:
+  pull_request:
+    paths:
+      - "godot/main.tscn"
+      - "godot/scripts/main_composed_presentation.gd"
+      - "godot/scripts/main_composed_presentation_refresh_safe.gd"
+      - "godot/scripts/presentation/strategic_icon_atlas_layer.gd"
+      - "godot/scripts/tools/map_composed_presentation_test.gd"
+      - "godot/scripts/tools/map_composed_camera_motion_test.gd"
+      - ".github/workflows/issue-212-composed-presentation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: issue-212-composed-presentation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  composed-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system deps
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1 libxcursor1 libxinerama1 libxrandr2 libxi6 libx11-6
+      - name: Install Godot 4.7
+        run: |
+          set -euo pipefail
+          GODOT_VERSION=4.7-stable
+          curl -fsSL -o godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip
+          GODOT_BIN="$(find . -maxdepth 1 -type f -name 'Godot_v*_linux.x86_64' | head -n 1)"
+          install -m 755 "$GODOT_BIN" "$HOME/godot"
+          "$HOME/godot" --version
+      - name: Import Godot project
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --import --quit-after 1
+      - name: Prove composed candidate authority and LOD behavior
+        run: |
+          set -euo pipefail
+          ROOT="$(pwd)/docs/research/noresus-map-performance"
+          SCREENS="$ROOT/composed-candidate-screens"
+          mkdir -p "$SCREENS"
+          log="$(mktemp)"
+          set +e
+          xvfb-run -a -s "-screen 0 1600x1000x24" \
+            "$HOME/godot" --path godot --audio-driver Dummy \
+            -s res://scripts/tools/map_composed_presentation_test.gd -- \
+            --screens-dir="$SCREENS" 2>&1 | tee "$log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' "$log"; then exit 1; fi
+          if ! grep -q 'map_composed_presentation_test: PASS' "$log"; then exit 1; fi
+          for image in full_theatre.png detailed.png; do
+            test -s "$SCREENS/$image"
+          done
+          exit "$code"
+      - name: Prove atlas follows normal pan and zoom
+        run: |
+          set -euo pipefail
+          log="$(mktemp)"
+          set +e
+          xvfb-run -a -s "-screen 0 1600x1000x24" \
+            "$HOME/godot" --path godot --audio-driver Dummy \
+            -s res://scripts/tools/map_composed_camera_motion_test.gd 2>&1 | tee "$log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' "$log"; then exit 1; fi
+          if ! grep -q 'map_composed_camera_motion_test: PASS' "$log"; then exit 1; fi
+          exit "$code"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: issue-212-composed-presentation
+          path: docs/research/noresus-map-performance/composed-candidate-screens/*.png
+          if-no-files-found: error
