@@ -65,6 +65,7 @@ Remove-Item -LiteralPath $homeDir -Recurse -Force -ErrorAction SilentlyContinue
 $campaign = Join-Path $workDir 'campaign.json'
 $snapshot = Join-Path $workDir 'campaign_snapshot.json'
 $commands = Join-Path $workDir 'frontend_commands.json'
+$sessionPath = Join-Path $workDir '.goc-backend-session.json'
 Copy-Item -LiteralPath $CampaignPath -Destination $campaign -Force
 Copy-Item -LiteralPath $SnapshotPath -Destination $snapshot -Force
 '{"commands":[]}' | Set-Content -LiteralPath $commands -Encoding utf8NoBOM
@@ -168,15 +169,14 @@ function Invoke-StartupSample([string]$Name) {
     }
 }
 
-function Get-SessionDescriptor {
-    $path = Join-Path (Split-Path -Parent $campaign) '.goc-backend-session.json'
-    $deadline = [DateTime]::UtcNow.AddSeconds(20)
+function Get-SessionDescriptor([int]$TimeoutSeconds = 20) {
+    $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
     while ([DateTime]::UtcNow -lt $deadline) {
-        if (Test-Path -LiteralPath $path -PathType Leaf) {
+        if (Test-Path -LiteralPath $sessionPath -PathType Leaf) {
             try {
-                $session = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+                $session = Get-Content -LiteralPath $sessionPath -Raw | ConvertFrom-Json
                 if ([int]$session.pid -gt 0) {
-                    return [pscustomobject]@{ Path = $path; Data = $session }
+                    return [pscustomobject]@{ Path = $sessionPath; Data = $session }
                 }
             } catch {}
         }
@@ -201,6 +201,40 @@ function Assert-SessionAlive($Session) {
     $current = Get-Content -LiteralPath $Session.Path -Raw | ConvertFrom-Json
     if ([int]$current.pid -ne $pidValue) {
         throw "Persistent backend session PID changed during readiness preflight"
+    }
+}
+
+function Stop-Session($Session) {
+    if ($null -eq $Session) { return }
+    try {
+        Assert-SessionAlive $Session
+        Stop-Process -Id ([int]$Session.Data.pid) -Force -ErrorAction SilentlyContinue
+    } catch {}
+    Remove-Item -LiteralPath $sessionPath -Force -ErrorAction SilentlyContinue
+}
+
+function Start-PersistentSession([string]$ExpectedCommit) {
+    Remove-Item -LiteralPath $sessionPath -Force -ErrorAction SilentlyContinue
+    $args = @(
+        'session-backend',
+        (Quote-ProcessArgument $campaign),
+        '--snapshot', (Quote-ProcessArgument $snapshot),
+        '--expected-source-commit', $ExpectedCommit
+    )
+    $null = Start-Process -FilePath $liveExecutable -ArgumentList $args -WindowStyle Hidden -PassThru
+    $session = Get-SessionDescriptor
+    Assert-SessionAlive $session
+    return $session
+}
+
+function Stop-CurrentOwnedSession {
+    if (-not (Test-Path -LiteralPath $sessionPath -PathType Leaf)) { return }
+    try {
+        $data = Get-Content -LiteralPath $sessionPath -Raw | ConvertFrom-Json
+        $candidate = [pscustomobject]@{ Path = $sessionPath; Data = $data }
+        Stop-Session $candidate
+    } catch {
+        Remove-Item -LiteralPath $sessionPath -Force -ErrorAction SilentlyContinue
     }
 }
 
@@ -240,135 +274,157 @@ Write-Host "  Godot:    $GodotPath"
 Write-Host "  Campaign: $CampaignPath (copied; source will not be mutated)"
 Write-Host ""
 
-$cold = Invoke-StartupSample 'cold'
-if ($cold.seconds -gt $ColdStartupMaxSeconds) {
-    throw "Cold first-usable startup $($cold.seconds)s exceeds ${ColdStartupMaxSeconds}s owner-readiness limit"
-}
+$session = $null
+try {
+    $cold = Invoke-StartupSample 'cold'
+    $session = Get-SessionDescriptor
+    Assert-SessionAlive $session
+    if ($cold.seconds -gt $ColdStartupMaxSeconds) {
+        throw "Cold first-usable startup $($cold.seconds)s exceeds ${ColdStartupMaxSeconds}s owner-readiness limit"
+    }
 
-$warm = Invoke-StartupSample 'warm'
-if (-not $warm.reused) {
-    throw "Warm startup did not prove unchanged_continue_reuse reused=true (reason=$($warm.reuse_reason))"
-}
-if ($warm.seconds -gt $WarmStartupMaxSeconds) {
-    throw "Warm first-usable startup $($warm.seconds)s exceeds ${WarmStartupMaxSeconds}s owner-readiness limit"
-}
+    $warm = Invoke-StartupSample 'warm'
+    if (-not $warm.reused) {
+        throw "Warm startup did not prove unchanged_continue_reuse reused=true (reason=$($warm.reuse_reason))"
+    }
+    if ($warm.seconds -gt $WarmStartupMaxSeconds) {
+        throw "Warm first-usable startup $($warm.seconds)s exceeds ${WarmStartupMaxSeconds}s owner-readiness limit"
+    }
+    Assert-SessionAlive $session
 
-$session = Get-SessionDescriptor
-Assert-SessionAlive $session
-$snapshotData = Get-Content -LiteralPath $snapshot -Raw | ConvertFrom-Json
-$expectedCommit = [string]$snapshotData.control.backend_source_commit
-if ([string]::IsNullOrWhiteSpace($expectedCommit)) {
-    throw "Published packaged snapshot has no control.backend_source_commit"
-}
-$currentFaction = [string]$snapshotData.campaign.current_faction
-$formations = @{}
-foreach ($formation in @($snapshotData.strategic_formations)) {
-    $formations[[string]$formation.id] = $formation
-}
-$route = $null
-foreach ($candidate in @($snapshotData.operational_orders)) {
-    $formationId = [string]$candidate.formation_id
-    if (-not $formations.ContainsKey($formationId)) { continue }
-    $formation = $formations[$formationId]
-    if ([string]$formation.faction -ne $currentFaction) { continue }
-    $status = [string]$formation.move_order.status
-    if ($status -in @('draft', 'committed', 'active')) { continue }
-    if (@($candidate.path_node_ids).Count -lt 2) { continue }
-    if (@($candidate.path_edge_ids).Count -ne (@($candidate.path_node_ids).Count - 1)) { continue }
-    $route = $candidate
-    break
-}
-if ($null -eq $route) {
-    throw "No clean legal operational order is available for native order-latency preflight"
-}
+    $snapshotData = Get-Content -LiteralPath $snapshot -Raw | ConvertFrom-Json
+    $expectedCommit = [string]$snapshotData.control.backend_source_commit
+    if ([string]::IsNullOrWhiteSpace($expectedCommit)) {
+        throw "Published packaged snapshot has no control.backend_source_commit"
+    }
+    $currentFaction = [string]$snapshotData.campaign.current_faction
+    $formations = @{}
+    foreach ($formation in @($snapshotData.strategic_formations)) {
+        $formations[[string]$formation.id] = $formation
+    }
+    $route = $null
+    foreach ($candidate in @($snapshotData.operational_orders)) {
+        $formationId = [string]$candidate.formation_id
+        if (-not $formations.ContainsKey($formationId)) { continue }
+        $formation = $formations[$formationId]
+        if ([string]$formation.faction -ne $currentFaction) { continue }
+        $status = [string]$formation.move_order.status
+        if ($status -in @('draft', 'committed', 'active')) { continue }
+        if (@($candidate.path_node_ids).Count -lt 2) { continue }
+        if (@($candidate.path_edge_ids).Count -ne (@($candidate.path_node_ids).Count - 1)) { continue }
+        $route = $candidate
+        break
+    }
+    if ($null -eq $route) {
+        throw "No clean legal operational order is available for native order-latency preflight"
+    }
 
-$order = Invoke-PackagedCommand @{
-    op = 'issue_move_order'
-    command_id = 'owner-readiness-order'
-    formation = [string]$route.formation_id
-    path_node_ids = @($route.path_node_ids)
-    path_edge_ids = @($route.path_edge_ids)
-} $expectedCommit
-Assert-SessionAlive $session
-if (-not [bool]$order.report.timings.snapshot_fast_path) {
-    throw "Legal order did not use the bounded snapshot fast path"
-}
-if ($order.wall_seconds -gt $OrderMaxSeconds) {
-    throw "Legal order submission $($order.wall_seconds)s exceeds ${OrderMaxSeconds}s owner-readiness limit"
-}
-
-$cancel = Invoke-PackagedCommand @{
-    op = 'cancel_move_order'
-    command_id = 'owner-readiness-cancel'
-    formation = [string]$route.formation_id
-} $expectedCommit
-Assert-SessionAlive $session
-
-$endTurns = @()
-$warnings = @()
-for ($index = 1; $index -le 3; $index++) {
-    $sample = Invoke-PackagedCommand @{
-        op = 'end_player_round'
-        command_id = "owner-readiness-end-turn-$index"
+    $order = Invoke-PackagedCommand @{
+        op = 'issue_move_order'
+        command_id = 'owner-readiness-order'
+        formation = [string]$route.formation_id
+        path_node_ids = @($route.path_node_ids)
+        path_edge_ids = @($route.path_edge_ids)
     } $expectedCommit
     Assert-SessionAlive $session
-    if (-not [bool]$sample.report.timings.runtime_patch_fast_path) {
-        throw "End Turn $index did not use the bounded runtime-patch fast path"
+    if (-not [bool]$order.report.timings.snapshot_fast_path) {
+        throw "Legal order did not use the bounded snapshot fast path"
     }
-    if ($sample.wall_seconds -gt $EndTurnHardMaxSeconds) {
-        throw "End Turn $index took $($sample.wall_seconds)s, exceeding ${EndTurnHardMaxSeconds}s hard owner-readiness limit"
+    if ($order.wall_seconds -gt $OrderMaxSeconds) {
+        throw "Legal order submission $($order.wall_seconds)s exceeds ${OrderMaxSeconds}s owner-readiness limit"
     }
-    if ($sample.wall_seconds -gt $EndTurnTargetSeconds) {
-        $warnings += "End Turn $index took $($sample.wall_seconds)s, above ${EndTurnTargetSeconds}s target"
-    }
-    $endTurns += $sample
-}
 
-$result = [ordered]@{
-    ok = $true
-    schema = 'gates-of-codex.owner-readiness-performance'
-    schema_version = 1
-    source_commit = $expectedCommit
-    player_executable = $PlayerExecutable
-    backend_executable = $liveExecutable
-    godot_executable = $GodotPath
-    source_campaign = $CampaignPath
-    working_campaign = $campaign
-    persistent_backend_pid = [int]$session.Data.pid
-    thresholds_seconds = [ordered]@{
-        cold_startup_max = $ColdStartupMaxSeconds
-        warm_startup_max = $WarmStartupMaxSeconds
-        legal_order_max = $OrderMaxSeconds
-        end_turn_target = $EndTurnTargetSeconds
-        end_turn_hard_max = $EndTurnHardMaxSeconds
-    }
-    cold_startup = $cold
-    warm_startup = $warm
-    legal_order = [ordered]@{
-        formation_id = [string]$route.formation_id
-        target_province_id = [string]$route.target_province_id
-        wall_seconds = $order.wall_seconds
-        backend_total_ms = [double]$order.report.timings.total_ms
-    }
-    cancel_order_wall_seconds = $cancel.wall_seconds
-    end_turns = @($endTurns | ForEach-Object {
-        [ordered]@{
-            wall_seconds = $_.wall_seconds
-            backend_total_ms = [double]$_.report.timings.total_ms
-            turn_number = [int]$_.report.turn_number
-        }
-    })
-    warnings = $warnings
-}
-$jsonPath = Join-Path $outDir 'owner-readiness-performance.json'
-$result | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $jsonPath -Encoding utf8NoBOM
-
-Write-Host ""
-Write-Host ("PASS cold={0}s warm={1}s order={2}s end-turns={3}" -f $cold.seconds, $warm.seconds, $order.wall_seconds, ((@($endTurns | ForEach-Object { $_.wall_seconds })) -join ', '))
-foreach ($warning in $warnings) { Write-Warning $warning }
-Write-Host "Evidence: $jsonPath"
-
-try {
+    $cancel = Invoke-PackagedCommand @{
+        op = 'cancel_move_order'
+        command_id = 'owner-readiness-cancel'
+        formation = [string]$route.formation_id
+    } $expectedCommit
     Assert-SessionAlive $session
-    Stop-Process -Id ([int]$session.Data.pid) -Force -ErrorAction SilentlyContinue
-} catch {}
+
+    # Capture a clean post-cancel baseline. Each End Turn sample gets an already-
+    # established persistent daemon over these exact bytes, so a naturally
+    # occurring pending battle in one sample cannot invalidate the next timing.
+    $baselineCampaign = [System.IO.File]::ReadAllBytes($campaign)
+    $baselineSnapshot = [System.IO.File]::ReadAllBytes($snapshot)
+    $endTurns = @()
+    $endTurnSessionPids = @()
+    $warnings = @()
+    for ($index = 1; $index -le 3; $index++) {
+        if ($index -gt 1) {
+            Stop-Session $session
+            [System.IO.File]::WriteAllBytes($campaign, $baselineCampaign)
+            [System.IO.File]::WriteAllBytes($snapshot, $baselineSnapshot)
+            '{"commands":[]}' | Set-Content -LiteralPath $commands -Encoding utf8NoBOM
+            $session = Start-PersistentSession $expectedCommit
+        }
+        Assert-SessionAlive $session
+        $endTurnSessionPids += [int]$session.Data.pid
+        $sample = Invoke-PackagedCommand @{
+            op = 'end_player_round'
+            command_id = "owner-readiness-end-turn-$index"
+        } $expectedCommit
+        Assert-SessionAlive $session
+        if (-not [bool]$sample.report.timings.runtime_patch_fast_path) {
+            throw "End Turn $index did not use the bounded runtime-patch fast path"
+        }
+        if ($sample.wall_seconds -gt $EndTurnHardMaxSeconds) {
+            throw "End Turn $index took $($sample.wall_seconds)s, exceeding ${EndTurnHardMaxSeconds}s hard owner-readiness limit"
+        }
+        if ($sample.wall_seconds -gt $EndTurnTargetSeconds) {
+            $warnings += "End Turn $index took $($sample.wall_seconds)s, above ${EndTurnTargetSeconds}s target"
+        }
+        $endTurns += $sample
+    }
+
+    $result = [ordered]@{
+        ok = $true
+        schema = 'gates-of-codex.owner-readiness-performance'
+        schema_version = 1
+        source_commit = $expectedCommit
+        player_executable = $PlayerExecutable
+        backend_executable = $liveExecutable
+        godot_executable = $GodotPath
+        source_campaign = $CampaignPath
+        working_campaign = $campaign
+        persistent_backend_session_pids = $endTurnSessionPids
+        thresholds_seconds = [ordered]@{
+            cold_startup_max = $ColdStartupMaxSeconds
+            warm_startup_max = $WarmStartupMaxSeconds
+            legal_order_max = $OrderMaxSeconds
+            end_turn_target = $EndTurnTargetSeconds
+            end_turn_hard_max = $EndTurnHardMaxSeconds
+        }
+        cold_startup = $cold
+        warm_startup = $warm
+        legal_order = [ordered]@{
+            formation_id = [string]$route.formation_id
+            target_province_id = [string]$route.target_province_id
+            wall_seconds = $order.wall_seconds
+            backend_total_ms = [double]$order.report.timings.total_ms
+        }
+        cancel_order_wall_seconds = $cancel.wall_seconds
+        end_turns = @($endTurns | ForEach-Object {
+            [ordered]@{
+                wall_seconds = $_.wall_seconds
+                backend_total_ms = [double]$_.report.timings.total_ms
+                turn_number = [int]$_.report.turn_number
+                pending_battle = [bool]$_.report.pending_battle
+            }
+        })
+        warnings = $warnings
+    }
+    $jsonPath = Join-Path $outDir 'owner-readiness-performance.json'
+    $result | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $jsonPath -Encoding utf8NoBOM
+
+    Write-Host ""
+    Write-Host ("PASS cold={0}s warm={1}s order={2}s end-turns={3}" -f $cold.seconds, $warm.seconds, $order.wall_seconds, ((@($endTurns | ForEach-Object { $_.wall_seconds })) -join ', '))
+    foreach ($warning in $warnings) { Write-Warning $warning }
+    Write-Host "Evidence: $jsonPath"
+}
+finally {
+    if ($null -ne $session) {
+        Stop-Session $session
+    } else {
+        Stop-CurrentOwnedSession
+    }
+}
