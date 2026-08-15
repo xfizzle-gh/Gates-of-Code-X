@@ -158,6 +158,80 @@ def _timed_save_step(
             timings[name] = timings.get(name, 0.0) + (time.perf_counter() - started)
 
 
+def _profiled_campaign_validation(
+    state,
+    timings: dict[str, float] | None,
+) -> None:
+    """Run the exact validator while exposing its dominant nested authorities.
+
+    This is instrumentation only. The same CampaignState.validate() executes and
+    every imported authority validator remains in force. Wrappers are restored in
+    a finally block before the command returns.
+    """
+
+    from . import earth3_bootstrap as _earth3_bootstrap
+    from . import earth3_fixture_authority as _earth3_fixture_authority
+    from . import observation as _observation
+
+    original_bootstrap_validate = _earth3_bootstrap.validate_earth3_bootstrap_campaign_state
+    original_load_bootstrap = _earth3_bootstrap.load_earth3_bootstrap
+    original_operational_validate = _earth3_fixture_authority.validate_earth3_operational_authority
+    original_observation_validate = _observation.validate_s11_observer_authority
+    nested: dict[str, float] = {}
+
+    def timed_load_bootstrap(*, authority_root=None):
+        return _timed_save_step(
+            nested,
+            "validate_bootstrap_bundle",
+            lambda: original_load_bootstrap(authority_root=authority_root),
+        )
+
+    def timed_operational_validate(candidate_state):
+        return _timed_save_step(
+            nested,
+            "validate_operational_authority",
+            lambda: original_operational_validate(candidate_state),
+        )
+
+    def timed_bootstrap_validate(candidate_state):
+        return _timed_save_step(
+            nested,
+            "validate_earth3_bootstrap",
+            lambda: original_bootstrap_validate(candidate_state),
+        )
+
+    def timed_observation_validate(candidate_state):
+        return _timed_save_step(
+            nested,
+            "validate_s11_authority",
+            lambda: original_observation_validate(candidate_state),
+        )
+
+    _earth3_bootstrap.load_earth3_bootstrap = timed_load_bootstrap
+    _earth3_fixture_authority.validate_earth3_operational_authority = timed_operational_validate
+    _earth3_bootstrap.validate_earth3_bootstrap_campaign_state = timed_bootstrap_validate
+    _observation.validate_s11_observer_authority = timed_observation_validate
+    started = time.perf_counter()
+    try:
+        state.validate()
+    finally:
+        total = time.perf_counter() - started
+        _earth3_bootstrap.load_earth3_bootstrap = original_load_bootstrap
+        _earth3_fixture_authority.validate_earth3_operational_authority = original_operational_validate
+        _earth3_bootstrap.validate_earth3_bootstrap_campaign_state = original_bootstrap_validate
+        _observation.validate_s11_observer_authority = original_observation_validate
+        if timings is not None:
+            for name, seconds in nested.items():
+                timings[name] = timings.get(name, 0.0) + seconds
+            top_level_nested = (
+                nested.get("validate_earth3_bootstrap", 0.0)
+                + nested.get("validate_s11_authority", 0.0)
+            )
+            timings["validate_base"] = timings.get("validate_base", 0.0) + max(
+                0.0, total - top_level_nested
+            )
+
+
 def _ensure_runtime_operational_positions(state) -> Any:
     """Normalize positions only when the save path can actually repair them.
 
@@ -224,7 +298,11 @@ def _compact_save_campaign(
         "observer_refresh",
         lambda: refresh_all_observer_knowledge(state, observation_context),
     )
-    _timed_save_step(subphase_seconds, "validate", state.validate)
+    _timed_save_step(
+        subphase_seconds,
+        "validate",
+        lambda: _profiled_campaign_validation(state, subphase_seconds),
+    )
 
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
