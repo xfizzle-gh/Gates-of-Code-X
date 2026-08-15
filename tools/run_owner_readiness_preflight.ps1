@@ -25,6 +25,10 @@ $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $godotProject = Join-Path $repo 'godot'
 $GodotPath = (Resolve-Path -LiteralPath $GodotPath).Path
 $SnapshotPath = (Resolve-Path -LiteralPath $SnapshotPath).Path
+$commandProbe = Join-Path $godotProject 'scripts\tools\owner_readiness_command_probe.gd'
+if (-not (Test-Path -LiteralPath $commandProbe -PathType Leaf)) {
+    throw "Owner-readiness Godot command probe not found: $commandProbe"
+}
 
 if ([string]::IsNullOrWhiteSpace($CampaignPath)) {
     $CampaignPath = Join-Path (Split-Path -Parent $SnapshotPath) 'campaign.json'
@@ -245,26 +249,55 @@ function Write-Command([hashtable]$Command) {
 
 function Invoke-PackagedCommand([hashtable]$Command, [string]$ExpectedCommit) {
     Write-Command $Command
-    $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-    $lines = @(& $liveExecutable '-m' 'gates_of_codex' 'apply-frontend' $campaign '--snapshot' $snapshot '--commands' $commands '--expected-source-commit' $ExpectedCommit 2>&1)
-    $exitCode = $LASTEXITCODE
-    $stopwatch.Stop()
-    if ($exitCode -ne 0) {
-        throw "Packaged backend command $($Command.op) failed with exit code $exitCode`: $($lines -join [Environment]::NewLine)"
+    $probeResultPath = Join-Path $outDir ("command-probe-{0}-{1}.json" -f ([string]$Command.op), [guid]::NewGuid().ToString('N'))
+    $godotArgs = @(
+        '--headless',
+        '--path', $godotProject,
+        '--audio-driver', 'Dummy',
+        '-s', 'res://scripts/tools/owner_readiness_command_probe.gd',
+        '--',
+        "--campaign=$campaign",
+        "--snapshot=$snapshot",
+        "--commands=$commands",
+        "--backend=$liveExecutable",
+        "--expected-source-commit=$ExpectedCommit",
+        "--out=$probeResultPath"
+    )
+    $previousNativePreference = $PSNativeCommandUseErrorActionPreference
+    try {
+        $PSNativeCommandUseErrorActionPreference = $false
+        $probeOutput = @(& $GodotPath @godotArgs 2>&1)
+        $probeExitCode = $LASTEXITCODE
     }
-    $jsonLine = @($lines | Where-Object { ([string]$_).TrimStart().StartsWith('{') } | Select-Object -Last 1)
-    if ($jsonLine.Count -eq 0) {
-        throw "Packaged backend command $($Command.op) returned no JSON report: $($lines -join [Environment]::NewLine)"
+    finally {
+        $PSNativeCommandUseErrorActionPreference = $previousNativePreference
     }
-    $report = ([string]$jsonLine[0]) | ConvertFrom-Json
-    if (-not [bool]$report.ok) {
-        throw "Packaged backend command $($Command.op) returned ok=false: $([string]$jsonLine[0])"
+    if ($probeExitCode -ne 0) {
+        throw "Godot retained-backend command probe $($Command.op) failed with exit code $probeExitCode`: $($probeOutput -join [Environment]::NewLine)"
     }
+    if (-not (Test-Path -LiteralPath $probeResultPath -PathType Leaf)) {
+        throw "Godot retained-backend command probe produced no result for $($Command.op)"
+    }
+    $probe = Get-Content -LiteralPath $probeResultPath -Raw | ConvertFrom-Json
+    Remove-Item -LiteralPath $probeResultPath -Force -ErrorAction SilentlyContinue
+    if (-not [bool]$probe.ok) {
+        throw "Godot retained-backend command probe returned ok=false for $($Command.op): $($probe | ConvertTo-Json -Depth 20 -Compress)"
+    }
+    if (-not [bool]$probe.persistent_backend_used -or -not ([string]$probe.launch_path).StartsWith('persistent-backend://')) {
+        throw "Warm packaged command $($Command.op) did not use the retained backend directly: $([string]$probe.launch_path)"
+    }
+    $report = $probe.backend_report
+    if ($null -eq $report -or -not [bool]$report.ok) {
+        throw "Retained backend command $($Command.op) returned an invalid backend report"
+    }
+    $wallSeconds = [double]$probe.command_elapsed_ms / 1000.0
     $backendSeconds = [double]$report.timings.total_ms / 1000.0
     return [pscustomobject]@{
         op = [string]$Command.op
-        wall_seconds = [math]::Round($stopwatch.Elapsed.TotalSeconds, 3)
-        client_overhead_seconds = [math]::Round([math]::Max(0.0, $stopwatch.Elapsed.TotalSeconds - $backendSeconds), 3)
+        wall_seconds = [math]::Round($wallSeconds, 3)
+        client_overhead_seconds = [math]::Round([math]::Max(0.0, $wallSeconds - $backendSeconds), 3)
+        persistent_backend_used = [bool]$probe.persistent_backend_used
+        launch_path = [string]$probe.launch_path
         report = $report
     }
 }
@@ -274,6 +307,7 @@ Write-Host "  Player:   $PlayerExecutable"
 Write-Host "  Backend:  $liveExecutable"
 Write-Host "  Godot:    $GodotPath"
 Write-Host "  Campaign: $CampaignPath (copied; source will not be mutated)"
+Write-Host "  Command path: Godot FrontendCommandRunner -> authenticated retained backend"
 Write-Host ""
 
 $session = $null
@@ -281,7 +315,6 @@ try {
     # The first launch of a freshly built package may legitimately rewrite launch
     # settings, build the derived snapshot cache, and cold-import Godot. Record
     # that setup cost, but do not confuse it with the #221 comparable cold gate.
-    # Owner testing begins only after this automated prime has completed.
     $setup = Invoke-StartupSample 'setup'
     $session = Get-SessionDescriptor
     Assert-SessionAlive $session
@@ -358,9 +391,6 @@ try {
     } $expectedCommit
     Assert-SessionAlive $session
 
-    # Capture a clean post-cancel baseline. Each End Turn sample gets an already-
-    # established persistent daemon over these exact bytes, so a naturally
-    # occurring pending battle in one sample cannot invalidate the next timing.
     $baselineCampaign = [System.IO.File]::ReadAllBytes($campaign)
     $baselineSnapshot = [System.IO.File]::ReadAllBytes($snapshot)
     $endTurns = @()
@@ -396,13 +426,14 @@ try {
     $result = [ordered]@{
         ok = $true
         schema = 'gates-of-codex.owner-readiness-performance'
-        schema_version = 2
+        schema_version = 3
         source_commit = $expectedCommit
         player_executable = $PlayerExecutable
         backend_executable = $liveExecutable
         godot_executable = $GodotPath
         source_campaign = $CampaignPath
         working_campaign = $campaign
+        command_transport = 'godot-direct-retained-backend'
         persistent_backend_session_pids = $endTurnSessionPids
         thresholds_seconds = [ordered]@{
             cold_startup_max = $ColdStartupMaxSeconds
@@ -419,17 +450,23 @@ try {
             target_province_id = [string]$route.target_province_id
             wall_seconds = $order.wall_seconds
             client_overhead_seconds = $order.client_overhead_seconds
+            persistent_backend_used = $order.persistent_backend_used
+            launch_path = $order.launch_path
             backend_timings = $order.report.timings
         }
         cancel_order = [ordered]@{
             wall_seconds = $cancel.wall_seconds
             client_overhead_seconds = $cancel.client_overhead_seconds
+            persistent_backend_used = $cancel.persistent_backend_used
+            launch_path = $cancel.launch_path
             backend_timings = $cancel.report.timings
         }
         end_turns = @($endTurns | ForEach-Object {
             [ordered]@{
                 wall_seconds = $_.wall_seconds
                 client_overhead_seconds = $_.client_overhead_seconds
+                persistent_backend_used = $_.persistent_backend_used
+                launch_path = $_.launch_path
                 backend_timings = $_.report.timings
                 turn_number = [int]$_.report.turn_number
                 pending_battle = [bool]$_.report.pending_battle
@@ -438,7 +475,7 @@ try {
         warnings = $warnings
     }
     $jsonPath = Join-Path $outDir 'owner-readiness-performance.json'
-    $result | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $jsonPath -Encoding utf8NoBOM
+    $result | ConvertTo-Json -Depth 40 | Set-Content -LiteralPath $jsonPath -Encoding utf8NoBOM
 
     Write-Host ""
     Write-Host ("PASS setup={0}s cold={1}s warm={2}s order={3}s end-turns={4}" -f $setup.seconds, $cold.seconds, $warm.seconds, $order.wall_seconds, ((@($endTurns | ForEach-Object { $_.wall_seconds })) -join ', '))
