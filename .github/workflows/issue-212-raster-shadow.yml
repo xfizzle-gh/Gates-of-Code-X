@@ -4,7 +4,10 @@ on:
   pull_request:
     paths:
       - "godot/scripts/tools/map_raster_shadow_benchmark.gd"
+      - "godot/scripts/tools/map_raster_shadow_profiler.gd"
       - ".github/workflows/issue-212-raster-shadow.yml"
+      - "docs/research/noresus-map-performance/raster-shadow-comparison.json"
+      - "docs/research/noresus-map-performance/rendering-comparison.md"
   workflow_dispatch:
 
 permissions:
@@ -15,7 +18,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  raster-shadow:
+  full-theatre-cache:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -58,27 +61,25 @@ jobs:
           code=${PIPESTATUS[0]}
           set -e
           if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' "$log"; then
-            echo "issue-212 raster shadow: script error"
+            echo "issue-212 full cache: script error"
             exit 1
           fi
           if ! grep -q 'map_raster_shadow_benchmark: PASS' "$log"; then
-            echo "issue-212 raster shadow: missing PASS"
+            echo "issue-212 full cache: missing PASS"
             exit 1
           fi
           exit "$code"
-      - name: Validate authority and benchmark contract
+      - name: Validate full-theatre authority contract
         run: |
           set -euo pipefail
           python3 - <<'PY'
           import json
           from pathlib import Path
-
           path = Path("docs/research/noresus-map-performance/raster-shadow-ci.json")
           data = json.loads(path.read_text(encoding="utf-8"))
           assert data.get("ok") is True, data
           assert data.get("issue") == 212, data
           assert data.get("phase") == "B", data
-          assert data.get("checkpoint") == "full_theatre_cache", data
           authority = data.get("authority", {})
           assert authority.get("province_count") == 3514, authority
           assert authority.get("polygon_authority_retained") is True, authority
@@ -87,24 +88,116 @@ jobs:
           cache = data.get("cache", {})
           assert cache.get("persistent") is False, cache
           assert cache.get("campaign_authority") is False, cache
-          assert int(cache.get("width", 0)) == 1920, cache
-          assert int(cache.get("height", 0)) == 1080, cache
-          for section in ("baseline", "raster_shadow"):
-              metrics = data.get(section, {})
-              assert metrics.get("draw_calls", {}).get("p50", 0) > 0, (section, metrics)
-              assert metrics.get("frame_time_ms", {}).get("p95", 0) > 0, (section, metrics)
-          picks = data.get("picking", [])
-          assert len(picks) >= 5, picks
-          assert all(row.get("match") is True for row in picks), picks
-          print("ISSUE212_RASTER_SHADOW_CONTRACT", json.dumps({
-              "baseline_draw_calls": data["baseline"]["draw_calls"]["p50"],
-              "shadow_draw_calls": data["raster_shadow"]["draw_calls"]["p50"],
-              "baseline_frame_p95": data["baseline"]["frame_time_ms"]["p95"],
-              "shadow_frame_p95": data["raster_shadow"]["frame_time_ms"]["p95"],
-          }, sort_keys=True))
+          print("ISSUE212_FULL_CACHE", json.dumps(data.get("delta", {}), sort_keys=True))
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: issue-212-raster-shadow
+          name: issue-212-raster-shadow-full-cache
           path: docs/research/noresus-map-performance/raster-shadow-ci.json
+          if-no-files-found: error
+
+  cache-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system deps
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1 libxcursor1 libxinerama1 libxrandr2 libxi6 libx11-6
+      - name: Install Godot 4.7
+        run: |
+          set -euo pipefail
+          GODOT_VERSION=4.7-stable
+          curl -fsSL -o godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip
+          GODOT_BIN="$(find . -maxdepth 1 -type f -name 'Godot_v*_linux.x86_64' | head -n 1)"
+          install -m 755 "$GODOT_BIN" "$HOME/godot"
+          "$HOME/godot" --version
+      - name: Import Godot project
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --import --quit-after 1
+      - name: Benchmark full cache vs 512/1024 tiles
+        run: |
+          set -euo pipefail
+          OUT="$(pwd)/docs/research/noresus-map-performance/raster-shadow-comparison.json"
+          SCREENS="$(pwd)/docs/research/noresus-map-performance/raster-shadow-screens"
+          mkdir -p "$(dirname "$OUT")" "$SCREENS"
+          log="$(mktemp)"
+          set +e
+          xvfb-run -a -s "-screen 0 1920x1080x24" \
+            "$HOME/godot" --path godot --audio-driver Dummy \
+            -s res://scripts/tools/map_raster_shadow_profiler.gd -- \
+            --snapshot=res://fixtures/snapshots/earth3_operational.json \
+            --fixture=res://fixtures/presentation/e3_operational.json \
+            --manifest=res://assets/maps/earth3_europe_mediterranean/map_manifest.json \
+            --width=1920 --height=1080 --frames=16 \
+            --out="$OUT" --screens-dir="$SCREENS" 2>&1 | tee "$log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' "$log"; then
+            echo "issue-212 cache matrix: script error"
+            exit 1
+          fi
+          if ! grep -q 'map_raster_shadow_profiler: PASS' "$log"; then
+            echo "issue-212 cache matrix: missing PASS"
+            exit 1
+          fi
+          exit "$code"
+      - name: Validate cache matrix and parity
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path("docs/research/noresus-map-performance/raster-shadow-comparison.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          assert data.get("ok") is True, data
+          assert data.get("issue") == 212, data
+          assert data.get("phase") == "B-debug-shadow", data
+          assert data.get("map", {}).get("province_count") == 3514, data.get("map")
+          assert data.get("authority", {}).get("unchanged") is True, data.get("authority")
+          assert data.get("authority", {}).get("polygon_backend_remains_live") is True, data.get("authority")
+          assert data.get("owner_refresh_parity", {}).get("ok") is True, data.get("owner_refresh_parity")
+          assert data.get("parity_before", {}).get("ok") is True, data.get("parity_before")
+          assert data.get("parity_after", {}).get("ok") is True, data.get("parity_after")
+          control = data.get("control", {})
+          max_drift = float(control.get("max_baseline_drift_ratio", 1.0))
+          assert control.get("design") == "polygon_before -> cache_mode -> polygon_after", control
+          assert 0.0 < max_drift <= 0.15, control
+          modes = data.get("modes", {})
+          for mode in ["full_cache", "tile_512", "tile_1024"]:
+              assert mode in modes, mode
+              assert modes[mode].get("parity", {}).get("ok") is True, (mode, modes[mode].get("parity"))
+              for scenario in ["idle_full_theatre", "continuous_pan", "continuous_zoom"]:
+                  bracket = modes[mode].get("scenarios", {}).get(scenario)
+                  assert bracket and bracket.get("ok") is True, (mode, scenario, bracket)
+                  drift = bracket.get("baseline_drift", {})
+                  assert int(drift.get("draw_calls_p50_abs", 1)) == 0, (mode, scenario, drift)
+                  assert int(drift.get("primitives_p50_abs", 1)) == 0, (mode, scenario, drift)
+                  assert float(drift.get("frame_ms_p50_ratio", 1.0)) <= max_drift, (mode, scenario, drift)
+                  assert float(drift.get("frame_ms_p95_ratio", 1.0)) <= max_drift, (mode, scenario, drift)
+          screens = Path("docs/research/noresus-map-performance/raster-shadow-screens")
+          for name in ["polygon.png", "full_cache.png", "tile_512.png", "tile_1024.png"]:
+              p = screens / name
+              assert p.exists() and p.stat().st_size > 0, p
+          summary = {
+              mode: {
+                  scenario: modes[mode]["scenarios"][scenario]["delta"]
+                  for scenario in ["idle_full_theatre", "continuous_pan", "continuous_zoom"]
+              }
+              for mode in ["full_cache", "tile_512", "tile_1024"]
+          }
+          print("ISSUE212_CACHE_MATRIX", json.dumps(summary, sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: issue-212-raster-shadow-matrix
+          path: |
+            docs/research/noresus-map-performance/raster-shadow-comparison.json
+            docs/research/noresus-map-performance/raster-shadow-screens/*.png
           if-no-files-found: error
