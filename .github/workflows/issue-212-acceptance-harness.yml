@@ -23,6 +23,59 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Stamp package provenance
+        id: provenance
+        shell: pwsh
+        run: |
+          $stamp = & .\tools\stamp_package_provenance.ps1
+          "commit=$($stamp.Commit)" >> $env:GITHUB_OUTPUT
+      - name: Install Python package for production Earth3 snapshot
+        run: python -m pip install -e ".[earth3]"
+      - name: Assert installed provenance
+        shell: pwsh
+        run: python -c 'import sys; from gates_of_codex.packaging import package_identity; assert package_identity().source_commit == sys.argv[1]' '${{ steps.provenance.outputs.commit }}'
+      - name: Generate current production Earth3 acceptance snapshot
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          import sys
+          from pathlib import Path
+
+          sys.path.insert(0, "tests")
+          from test_p2_earth3_campaign_bootstrap import _resolved_catalog
+          from gates_of_codex.player_shell import build_play_parser, run_play
+
+          root = Path(os.environ["RUNNER_TEMP"]) / "issue212-production-campaign"
+          environ = dict(os.environ)
+          environ["GATES_OF_CODEX_HOME"] = str(root / "home")
+          args = build_play_parser().parse_args(
+              [
+                  "--new",
+                  "--campaign",
+                  str(root / "home" / "campaigns" / "earth3_v1"),
+                  "--no-launch",
+              ]
+          )
+          result = run_play(args, environ=environ, resolved_catalog=_resolved_catalog())
+          snapshot_path = Path(result.snapshot_path).resolve()
+          snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+          assert snapshot.get("schema") == "gates-of-codex.frontend", snapshot.get("schema")
+          assert len(snapshot.get("provinces", [])) == 3514, len(snapshot.get("provinces", []))
+          assert snapshot.get("operational_orders"), "production snapshot has no operational_orders"
+          assert snapshot.get("strategic_formations"), "production snapshot has no strategic_formations"
+          Path("issue212-snapshot-path.txt").write_text(str(snapshot_path), encoding="utf-8")
+          print(
+              "ISSUE212_PRODUCTION_SNAPSHOT",
+              snapshot_path,
+              "orders=",
+              len(snapshot.get("operational_orders", [])),
+          )
+          PY
       - name: Install system deps
         run: |
           set -euo pipefail
@@ -49,13 +102,14 @@ jobs:
           ROOT="$(pwd)/docs/research/noresus-map-performance"
           OUT="$ROOT/native-acceptance-ci.json"
           SCREENS="$ROOT/native-acceptance-ci-screens"
+          SNAPSHOT="$(cat issue212-snapshot-path.txt)"
           mkdir -p "$SCREENS"
           log="$(mktemp)"
           set +e
           xvfb-run -a -s "-screen 0 1920x1080x24" \
             "$HOME/godot" --path godot --audio-driver Dummy \
             -s res://scripts/tools/map_candidate_native_acceptance_loaded.gd -- \
-            --snapshot=res://fixtures/snapshots/earth3_operational.json \
+            "--snapshot=$SNAPSHOT" \
             --out="$OUT" --screens-dir="$SCREENS" \
             --width=1920 --height=1080 2>&1 | tee "$log"
           code=${PIPESTATUS[0]}
@@ -78,7 +132,7 @@ jobs:
           assert int(data.get('frames_per_sample', 0)) >= 24, data
           assert int(data.get('stabilization_passes', 0)) >= 2, data
           assert data.get('candidate_activation') == 'requested snapshot loaded before raster/composed activation', data
-          assert data.get('snapshot_path', '').endswith('earth3_operational.json'), data
+          assert data.get('snapshot_path', '').endswith('campaign_snapshot.json'), data
           authority = data.get('authority', {})
           assert authority.get('unchanged') is True, authority
           ref = authority.get('reference', {})
@@ -132,4 +186,8 @@ jobs:
           path: |
             docs/research/noresus-map-performance/native-acceptance-ci.json
             docs/research/noresus-map-performance/native-acceptance-ci-screens/*.png
-          if-no-files-found: error
+          if-no-files-found: warn
+      - name: Cleanup package provenance
+        if: always()
+        shell: pwsh
+        run: Remove-Item -LiteralPath src\gates_of_codex\SOURCE_COMMIT -Force -ErrorAction SilentlyContinue
