@@ -260,9 +260,11 @@ function Invoke-PackagedCommand([hashtable]$Command, [string]$ExpectedCommit) {
     if (-not [bool]$report.ok) {
         throw "Packaged backend command $($Command.op) returned ok=false: $([string]$jsonLine[0])"
     }
+    $backendSeconds = [double]$report.timings.total_ms / 1000.0
     return [pscustomobject]@{
         op = [string]$Command.op
         wall_seconds = [math]::Round($stopwatch.Elapsed.TotalSeconds, 3)
+        client_overhead_seconds = [math]::Round([math]::Max(0.0, $stopwatch.Elapsed.TotalSeconds - $backendSeconds), 3)
         report = $report
     }
 }
@@ -276,11 +278,26 @@ Write-Host ""
 
 $session = $null
 try {
+    # The first launch of a freshly built package may legitimately rewrite launch
+    # settings, build the derived snapshot cache, and cold-import Godot. Record
+    # that setup cost, but do not confuse it with the #221 comparable cold gate.
+    # Owner testing begins only after this automated prime has completed.
+    $setup = Invoke-StartupSample 'setup'
+    $session = Get-SessionDescriptor
+    Assert-SessionAlive $session
+    Stop-Session $session
+    $session = $null
+
+    # Comparable cold acceptance: daemon absent, authoritative files unchanged,
+    # snapshot/import caches already established by the setup pass.
     $cold = Invoke-StartupSample 'cold'
     $session = Get-SessionDescriptor
     Assert-SessionAlive $session
+    if ($cold.reused) {
+        throw "Cold startup unexpectedly reused an existing daemon; daemon-cold proof is invalid"
+    }
     if ($cold.seconds -gt $ColdStartupMaxSeconds) {
-        throw "Cold first-usable startup $($cold.seconds)s exceeds ${ColdStartupMaxSeconds}s owner-readiness limit"
+        throw "Daemon-cold first-usable startup $($cold.seconds)s exceeds ${ColdStartupMaxSeconds}s owner-readiness limit"
     }
 
     $warm = Invoke-StartupSample 'warm'
@@ -379,7 +396,7 @@ try {
     $result = [ordered]@{
         ok = $true
         schema = 'gates-of-codex.owner-readiness-performance'
-        schema_version = 1
+        schema_version = 2
         source_commit = $expectedCommit
         player_executable = $PlayerExecutable
         backend_executable = $liveExecutable
@@ -394,19 +411,26 @@ try {
             end_turn_target = $EndTurnTargetSeconds
             end_turn_hard_max = $EndTurnHardMaxSeconds
         }
+        setup_prime = $setup
         cold_startup = $cold
         warm_startup = $warm
         legal_order = [ordered]@{
             formation_id = [string]$route.formation_id
             target_province_id = [string]$route.target_province_id
             wall_seconds = $order.wall_seconds
-            backend_total_ms = [double]$order.report.timings.total_ms
+            client_overhead_seconds = $order.client_overhead_seconds
+            backend_timings = $order.report.timings
         }
-        cancel_order_wall_seconds = $cancel.wall_seconds
+        cancel_order = [ordered]@{
+            wall_seconds = $cancel.wall_seconds
+            client_overhead_seconds = $cancel.client_overhead_seconds
+            backend_timings = $cancel.report.timings
+        }
         end_turns = @($endTurns | ForEach-Object {
             [ordered]@{
                 wall_seconds = $_.wall_seconds
-                backend_total_ms = [double]$_.report.timings.total_ms
+                client_overhead_seconds = $_.client_overhead_seconds
+                backend_timings = $_.report.timings
                 turn_number = [int]$_.report.turn_number
                 pending_battle = [bool]$_.report.pending_battle
             }
@@ -414,10 +438,10 @@ try {
         warnings = $warnings
     }
     $jsonPath = Join-Path $outDir 'owner-readiness-performance.json'
-    $result | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $jsonPath -Encoding utf8NoBOM
+    $result | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $jsonPath -Encoding utf8NoBOM
 
     Write-Host ""
-    Write-Host ("PASS cold={0}s warm={1}s order={2}s end-turns={3}" -f $cold.seconds, $warm.seconds, $order.wall_seconds, ((@($endTurns | ForEach-Object { $_.wall_seconds })) -join ', '))
+    Write-Host ("PASS setup={0}s cold={1}s warm={2}s order={3}s end-turns={4}" -f $setup.seconds, $cold.seconds, $warm.seconds, $order.wall_seconds, ((@($endTurns | ForEach-Object { $_.wall_seconds })) -join ', '))
     foreach ($warning in $warnings) { Write-Warning $warning }
     Write-Host "Evidence: $jsonPath"
 }
