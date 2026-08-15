@@ -6,6 +6,7 @@ on:
       - "run_gates_of_codex.py"
       - "src/gates_of_codex/startup_backend_spawn_identity.py"
       - "tests/test_issue_212_packaged_backend_spawn_identity.py"
+      - "tools/profile_campaign_validation.py"
       - "tools/run_owner_readiness_preflight.ps1"
       - "tools/run_issue212_native_acceptance.ps1"
       - ".github/workflows/issue-212-owner-preflight-windows.yml"
@@ -86,6 +87,11 @@ jobs:
           print(result.campaign_path)
           print(result.snapshot_path)
           '@ | python -
+      - name: Profile CampaignState base validation
+        shell: pwsh
+        run: |
+          $campaign = (Get-Content -LiteralPath 'issue212-preflight-campaign.txt' -Raw).Trim()
+          python .\tools\profile_campaign_validation.py $campaign --limit 40
       - name: Build exact packaged player and backend
         shell: pwsh
         run: |
