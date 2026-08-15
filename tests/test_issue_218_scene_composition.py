@@ -11,6 +11,9 @@ ROOT = Path(__file__).resolve().parents[1]
 class Issue218SceneCompositionTests(unittest.TestCase):
     def test_production_scene_composes_order_startup_and_measured_layers(self) -> None:
         scene = (ROOT / "godot/main.tscn").read_text(encoding="utf-8")
+        presentation = (
+            ROOT / "godot/scripts/main_presentation_candidate.gd"
+        ).read_text(encoding="utf-8")
         order = (ROOT / "godot/scripts/main_order_controls.gd").read_text(
             encoding="utf-8"
         )
@@ -26,13 +29,19 @@ class Issue218SceneCompositionTests(unittest.TestCase):
             scene,
         )
         self.assertIsNotNone(active)
-        self.assertEqual("res://scripts/main_order_controls.gd", active.group(1))
+        self.assertEqual("res://scripts/main_presentation_candidate.gd", active.group(1))
         self.assertRegex(scene, r'(?m)^script = ExtResource\("1_main"\)$')
         self.assertIn('path="res://scripts/main_startup_measured.gd"', scene)
         self.assertIn('path="res://scripts/main_perf_measured.gd"', scene)
         self.assertIn("metadata/_startup_contract", scene)
         self.assertIn("metadata/_measured_perf_contract", scene)
 
+        # #212 inserts a default-off presentation subclass above #218. The
+        # existing order/startup/measured contract must remain the exact
+        # inheritance chain below it rather than being bypassed.
+        self.assertTrue(
+            presentation.startswith('extends "res://scripts/main_order_controls.gd"\n')
+        )
         self.assertTrue(
             order.startswith('extends "res://scripts/main_startup_measured.gd"\n')
         )
