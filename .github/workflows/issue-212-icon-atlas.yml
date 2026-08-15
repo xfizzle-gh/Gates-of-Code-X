@@ -5,6 +5,7 @@ on:
     paths:
       - "godot/scripts/presentation/strategic_icon_atlas_layer.gd"
       - "godot/scripts/tools/map_icon_atlas_profiler.gd"
+      - "godot/scripts/tools/map_icon_atlas_profiler_stable.gd"
       - ".github/workflows/issue-212-icon-atlas.yml"
       - "docs/research/noresus-map-performance/icon-atlas-comparison.json"
       - "docs/research/noresus-map-performance/icon-atlas-comparison.md"
@@ -54,7 +55,7 @@ jobs:
           set +e
           xvfb-run -a -s "-screen 0 1920x1080x24" \
             "$HOME/godot" --path godot --audio-driver Dummy \
-            -s res://scripts/tools/map_icon_atlas_profiler.gd -- \
+            -s res://scripts/tools/map_icon_atlas_profiler_stable.gd -- \
             --snapshot=res://fixtures/snapshots/earth3_operational.json \
             --fixture=res://fixtures/presentation/e3_operational.json \
             --manifest=res://assets/maps/earth3_europe_mediterranean/map_manifest.json \
