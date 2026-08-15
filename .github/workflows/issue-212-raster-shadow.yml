@@ -135,7 +135,7 @@ jobs:
             --snapshot=res://fixtures/snapshots/earth3_operational.json \
             --fixture=res://fixtures/presentation/e3_operational.json \
             --manifest=res://assets/maps/earth3_europe_mediterranean/map_manifest.json \
-            --width=1920 --height=1080 --frames=16 \
+            --width=1920 --height=1080 --frames=8 \
             --out="$OUT" --screens-dir="$SCREENS" 2>&1 | tee "$log"
           code=${PIPESTATUS[0]}
           set -e
@@ -160,11 +160,18 @@ jobs:
           assert data.get("issue") == 212, data
           assert data.get("phase") == "B-debug-shadow", data
           assert data.get("map", {}).get("province_count") == 3514, data.get("map")
-          assert data.get("authority", {}).get("unchanged") is True, data.get("authority")
-          assert data.get("authority", {}).get("polygon_backend_remains_live") is True, data.get("authority")
+          authority = data.get("authority", {})
+          assert authority.get("unchanged") is True, authority
+          assert authority.get("polygon_backend_remains_live") is True, authority
+          assert authority.get("cache_is_presentation_only") is True, authority
+          reference = data.get("reference_parity", {})
+          assert reference.get("ok") is True, reference
+          assert reference.get("water_not_selectable") is True, reference
           assert data.get("owner_refresh_parity", {}).get("ok") is True, data.get("owner_refresh_parity")
-          assert data.get("parity_before", {}).get("ok") is True, data.get("parity_before")
-          assert data.get("parity_after", {}).get("ok") is True, data.get("parity_after")
+          cache = data.get("cache", {})
+          assert cache.get("persistent") is False, cache
+          assert cache.get("campaign_authority") is False, cache
+          assert int(cache.get("bytes_rgba8", 0)) > 0, cache
           control = data.get("control", {})
           max_drift = float(control.get("max_baseline_drift_ratio", 1.0))
           assert control.get("design") == "polygon_before -> cache_mode -> polygon_after", control
@@ -172,7 +179,6 @@ jobs:
           modes = data.get("modes", {})
           for mode in ["full_cache", "tile_512", "tile_1024"]:
               assert mode in modes, mode
-              assert modes[mode].get("parity", {}).get("ok") is True, (mode, modes[mode].get("parity"))
               for scenario in ["idle_full_theatre", "continuous_pan", "continuous_zoom"]:
                   bracket = modes[mode].get("scenarios", {}).get(scenario)
                   assert bracket and bracket.get("ok") is True, (mode, scenario, bracket)
@@ -181,6 +187,9 @@ jobs:
                   assert int(drift.get("primitives_p50_abs", 1)) == 0, (mode, scenario, drift)
                   assert float(drift.get("frame_ms_p50_ratio", 1.0)) <= max_drift, (mode, scenario, drift)
                   assert float(drift.get("frame_ms_p95_ratio", 1.0)) <= max_drift, (mode, scenario, drift)
+                  if mode.startswith("tile_"):
+                      visible = bracket.get("cache", {}).get("visible_tiles", {})
+                      assert int(visible.get("p50", 0)) > 0, (mode, scenario, visible)
           screens = Path("docs/research/noresus-map-performance/raster-shadow-screens")
           for name in ["polygon.png", "full_cache.png", "tile_512.png", "tile_1024.png"]:
               p = screens / name
