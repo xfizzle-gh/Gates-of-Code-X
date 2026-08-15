@@ -242,7 +242,7 @@ func _check_mode(mode_name: String, tile_size: int, order: Dictionary, reference
 		RenderingServer.force_draw(false, 0.0)
 		await process_frame
 	var final_state := _configure_real_order(scene, order)
-	var exact := bool(final_state.get("ok", false)) \
+	var exact: bool = bool(final_state.get("ok", false)) \
 		and final_state.get("selected_strategic_formation_id", "") == reference.get("selected_strategic_formation_id", "") \
 		and final_state.get("selected_province_id", "") == reference.get("selected_province_id", "") \
 		and final_state.get("legal_target_ids", []) == reference.get("legal_target_ids", [])
@@ -251,7 +251,7 @@ func _check_mode(mode_name: String, tile_size: int, order: Dictionary, reference
 	var viewport := root as Viewport
 	var image := viewport.get_texture().get_image() if viewport != null else null
 	var name := "legal_targets__%s.png" % mode_name
-	var screenshot_ok := image != null and not image.is_empty() and image.save_png(_legal_screens_dir.path_join(name)) == OK
+	var screenshot_ok: bool = image != null and not image.is_empty() and image.save_png(_legal_screens_dir.path_join(name)) == OK
 	var result := {
 		"ok": exact and screenshot_ok and bool(scene.get("map_backend_is_polygon")),
 		"state": final_state,
