@@ -24,8 +24,11 @@ one-shot/source command that installs the same seam receives identical behavior.
 """
 
 import copy
+import functools
 import hashlib
+import time
 from collections import OrderedDict
+from contextvars import ContextVar
 from pathlib import Path
 from threading import RLock
 from typing import Any, Callable
@@ -41,6 +44,10 @@ _PROCESS_STATS = {
     "p2_semantic_loads": 0,
     "p2_semantic_hits": 0,
 }
+_AI_PROFILE_EVENTS: ContextVar[list[dict[str, Any]] | None] = ContextVar(
+    "goc_issue212_ai_profile_events",
+    default=None,
+)
 
 
 def _authority_key(authority_root: str | Path | None) -> str:
@@ -262,6 +269,54 @@ def _run_with_command_scoped_p2_auth(
     return result, stats
 
 
+def _profiled_phase(name: str, function: Callable[..., Any]) -> Callable[..., Any]:
+    @functools.wraps(function)
+    def profiled(*args, **kwargs):
+        events = _AI_PROFILE_EVENTS.get()
+        if events is None:
+            return function(*args, **kwargs)
+        faction = ""
+        if len(args) > 1:
+            faction = str(getattr(args[1], "value", args[1]))
+        started = time.perf_counter()
+        try:
+            return function(*args, **kwargs)
+        finally:
+            events.append(
+                {
+                    "phase": name,
+                    "faction": faction,
+                    "ms": round((time.perf_counter() - started) * 1000.0, 3),
+                }
+            )
+
+    profiled._goc_issue212_ai_profiled = True  # type: ignore[attr-defined]
+    return profiled
+
+
+def _install_ai_phase_profiler() -> None:
+    """Instrument existing AI subphases without changing planning semantics."""
+
+    from . import operational_ai, strategic_ai
+
+    targets = (
+        (strategic_ai, "run_ai_economy", "economy"),
+        (strategic_ai, "run_ai_construction", "construction"),
+        (operational_ai, "build_operational_planning_view", "planning_view"),
+        (operational_ai, "plan_operational_intents", "plan_intents"),
+        (
+            operational_ai,
+            "validate_and_commit_operational_intents",
+            "commit_intents",
+        ),
+    )
+    for module, attribute, label in targets:
+        current = getattr(module, attribute)
+        if bool(getattr(current, "_goc_issue212_ai_profiled", False)):
+            continue
+        setattr(module, attribute, _profiled_phase(label, current))
+
+
 def _turn_cycle_perf(report: dict[str, Any]) -> dict[str, Any] | None:
     """Extract existing End Turn subphase telemetry without changing command data."""
 
@@ -287,6 +342,7 @@ def install_command_scoped_p2_auth() -> None:
     from . import frontend_commands as commands
 
     _install_process_semantic_authority_cache()
+    _install_ai_phase_profiler()
 
     current = perf.measured_apply_frontend_commands
     if bool(getattr(current, "_goc_issue_207_p2_auth_cache", False)):
@@ -294,9 +350,14 @@ def install_command_scoped_p2_auth() -> None:
 
     def measured_with_p2_auth_cache(*args, **kwargs):
         process_before = _process_stats_snapshot()
-        report, stats = _run_with_command_scoped_p2_auth(
-            lambda: current(*args, **kwargs)
-        )
+        events: list[dict[str, Any]] = []
+        token = _AI_PROFILE_EVENTS.set(events)
+        try:
+            report, stats = _run_with_command_scoped_p2_auth(
+                lambda: current(*args, **kwargs)
+            )
+        finally:
+            _AI_PROFILE_EVENTS.reset(token)
         process_after = _process_stats_snapshot()
         if isinstance(report, dict):
             timings = report.get("timings")
@@ -308,6 +369,8 @@ def install_command_scoped_p2_auth() -> None:
                 turn_cycle = _turn_cycle_perf(report)
                 if turn_cycle is not None:
                     timings["turn_cycle"] = turn_cycle
+                if events:
+                    timings["ai_phase_events"] = events
         return report
 
     measured_with_p2_auth_cache._goc_issue_207_measured = True  # type: ignore[attr-defined]
