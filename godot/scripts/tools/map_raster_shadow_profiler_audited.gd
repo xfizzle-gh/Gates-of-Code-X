@@ -2,10 +2,10 @@ extends "res://scripts/tools/map_raster_shadow_profiler.gd"
 
 ## Independent-audit correction layer for #212 Phase B.
 ##
-## Keeps the original matrix implementation intact, but closes three proof gaps:
-## - burn process-first renderer/resource warmup before the first recorded bracket;
-## - require a real non-empty legal graph target set from authoritative orders;
-## - require refreshed raster pixels to match the expected authoritative owner color.
+## The performance fixture stays presentation-heavy and is not required to carry
+## backend graph orders. A separate legal-target audit exercises a committed
+## snapshot with real operational_orders. This layer hardens sampling and owner
+## color equality without manufacturing legality inside the performance fixture.
 
 const STABILIZATION_PASSES := 2
 const OWNER_COLOR_TOLERANCE := 0.012
@@ -34,7 +34,6 @@ func _prepare_nonempty_legal_targets(scene: Node) -> bool:
 	var current: Variant = scene.get("legal_targets")
 	if current is Dictionary and not (current as Dictionary).is_empty():
 		return true
-
 	var orders_value: Variant = scene.get("orders_by_formation")
 	if not orders_value is Dictionary:
 		return false
@@ -46,8 +45,7 @@ func _prepare_nonempty_legal_targets(scene: Node) -> bool:
 		var rows_value: Variant = orders.get(formation_id, [])
 		if not rows_value is Array or (rows_value as Array).is_empty():
 			continue
-		var rows := rows_value as Array
-		var first_value: Variant = rows[0]
+		var first_value: Variant = (rows_value as Array)[0]
 		if not first_value is Dictionary:
 			continue
 		var first := first_value as Dictionary
@@ -64,32 +62,6 @@ func _prepare_nonempty_legal_targets(scene: Node) -> bool:
 		if current is Dictionary and not (current as Dictionary).is_empty():
 			return true
 	return false
-
-
-func _authority_parity(scene: Node, active_map) -> Dictionary:
-	if not _prepare_nonempty_legal_targets(scene):
-		return {
-			"ok": false,
-			"error": "no authoritative non-empty legal-target state",
-			"legal_target_ids": [],
-		}
-	var parity := super._authority_parity(scene, active_map)
-	var legal_ids: Array = parity.get("legal_target_ids", [])
-	parity["selected_strategic_formation_id"] = String(
-		scene.get("selected_strategic_formation_id") if scene.get("selected_strategic_formation_id") != null else ""
-	)
-	parity["nonempty_legal_targets"] = not legal_ids.is_empty()
-	parity["ok"] = bool(parity.get("ok", false)) \
-		and bool(parity.get("nonempty_legal_targets", false)) \
-		and not String(parity.get("selected_strategic_formation_id", "")).is_empty()
-	return parity
-
-
-func _same_parity(reference: Dictionary, candidate: Dictionary) -> bool:
-	return super._same_parity(reference, candidate) \
-		and bool(reference.get("nonempty_legal_targets", false)) \
-		and bool(candidate.get("nonempty_legal_targets", false)) \
-		and candidate.get("selected_strategic_formation_id", "") == reference.get("selected_strategic_formation_id", "")
 
 
 func _owner_refresh_check() -> Dictionary:
