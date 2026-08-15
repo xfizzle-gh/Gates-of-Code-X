@@ -48,6 +48,18 @@ _AI_PROFILE_EVENTS: ContextVar[list[dict[str, Any]] | None] = ContextVar(
     "goc_issue212_ai_profile_events",
     default=None,
 )
+_ROUND_ADVANCE_EVENTS: ContextVar[list[dict[str, Any]] | None] = ContextVar(
+    "goc_issue212_round_advance_events",
+    default=None,
+)
+_ROUND_ADVANCE_ACTIVE: ContextVar[bool] = ContextVar(
+    "goc_issue212_round_advance_active",
+    default=False,
+)
+_AUTH_PROFILE_EVENTS: ContextVar[list[dict[str, Any]] | None] = ContextVar(
+    "goc_issue212_authority_profile_events",
+    default=None,
+)
 
 
 def _authority_key(authority_root: str | Path | None) -> str:
@@ -91,6 +103,22 @@ def _clear_process_semantic_caches_for_tests() -> None:
         _P2_SEMANTIC_CACHE.clear()
         for key in _PROCESS_STATS:
             _PROCESS_STATS[key] = 0
+
+
+def _profiled_authority_call(name: str, action: Callable[[], Any]) -> Any:
+    events = _AUTH_PROFILE_EVENTS.get()
+    if events is None:
+        return action()
+    started = time.perf_counter()
+    try:
+        return action()
+    finally:
+        events.append(
+            {
+                "phase": name,
+                "ms": round((time.perf_counter() - started) * 1000.0, 3),
+            }
+        )
 
 
 def _capture_p1_identity(authority_root: str | Path | None) -> tuple[Any, ...]:
@@ -209,7 +237,10 @@ def _install_process_semantic_authority_cache() -> None:
     original_p2 = current_p2
 
     def authenticated_cached_p1(authority_root=None):
-        key = _capture_p1_identity(authority_root)
+        key = _profiled_authority_call(
+            "p1_identity_capture",
+            lambda: _capture_p1_identity(authority_root),
+        )
         cached = _cache_get(_P1_SEMANTIC_CACHE, key)
         if cached is not None:
             _increment_stat("p1_semantic_hits")
@@ -221,7 +252,13 @@ def _install_process_semantic_authority_cache() -> None:
 
     def authenticated_cached_p2(*, authority_root=None):
         authenticated_p1 = p1.load_earth3_authority(authority_root)
-        key = _capture_p2_identity(authority_root, authenticated_p1=authenticated_p1)
+        key = _profiled_authority_call(
+            "p2_identity_capture",
+            lambda: _capture_p2_identity(
+                authority_root,
+                authenticated_p1=authenticated_p1,
+            ),
+        )
         cached = _cache_get(_P2_SEMANTIC_CACHE, key)
         if cached is not None:
             _increment_stat("p2_semantic_hits")
@@ -317,6 +354,76 @@ def _install_ai_phase_profiler() -> None:
         setattr(module, attribute, _profiled_phase(label, current))
 
 
+def _profiled_round_phase(name: str, function: Callable[..., Any]) -> Callable[..., Any]:
+    @functools.wraps(function)
+    def profiled(*args, **kwargs):
+        events = _ROUND_ADVANCE_EVENTS.get()
+        if events is None or not _ROUND_ADVANCE_ACTIVE.get():
+            return function(*args, **kwargs)
+        started = time.perf_counter()
+        try:
+            return function(*args, **kwargs)
+        finally:
+            events.append(
+                {
+                    "phase": name,
+                    "ms": round((time.perf_counter() - started) * 1000.0, 3),
+                }
+            )
+
+    profiled._goc_issue212_round_profiled = True  # type: ignore[attr-defined]
+    return profiled
+
+
+def _profiled_campaign_end_turn(function: Callable[..., Any]) -> Callable[..., Any]:
+    @functools.wraps(function)
+    def profiled(engine, *args, **kwargs):
+        events = _ROUND_ADVANCE_EVENTS.get()
+        if events is None:
+            return function(engine, *args, **kwargs)
+        before_turn = int(engine.state.turn_number)
+        started = time.perf_counter()
+        token = _ROUND_ADVANCE_ACTIVE.set(True)
+        try:
+            return function(engine, *args, **kwargs)
+        finally:
+            _ROUND_ADVANCE_ACTIVE.reset(token)
+            events.append(
+                {
+                    "phase": "end_turn_total",
+                    "round_rollover": int(engine.state.turn_number) != before_turn,
+                    "ms": round((time.perf_counter() - started) * 1000.0, 3),
+                }
+            )
+
+    profiled._goc_issue212_round_profiled = True  # type: ignore[attr-defined]
+    return profiled
+
+
+def _install_round_advance_profiler() -> None:
+    """Time exact CampaignEngine rollover authorities without changing them."""
+
+    from . import economy, operational_movement, operational_supply, strategic, supply
+    from .campaign import CampaignEngine
+
+    current_end_turn = CampaignEngine.end_turn
+    if not bool(getattr(current_end_turn, "_goc_issue212_round_profiled", False)):
+        CampaignEngine.end_turn = _profiled_campaign_end_turn(current_end_turn)
+
+    targets = (
+        (operational_movement, "resolve_strategic_turn_movement", "movement_resolution"),
+        (operational_supply, "refresh_operational_supply", "operational_supply_refresh"),
+        (economy, "settle_round_economy", "round_economy_settlement"),
+        (supply, "refresh_all_supply", "global_supply_refresh"),
+        (strategic, "evaluate_campaign_outcome", "campaign_outcome_evaluation"),
+    )
+    for module, attribute, label in targets:
+        current = getattr(module, attribute)
+        if bool(getattr(current, "_goc_issue212_round_profiled", False)):
+            continue
+        setattr(module, attribute, _profiled_round_phase(label, current))
+
+
 def _turn_cycle_perf(report: dict[str, Any]) -> dict[str, Any] | None:
     """Extract existing End Turn subphase telemetry without changing command data."""
 
@@ -343,6 +450,7 @@ def install_command_scoped_p2_auth() -> None:
 
     _install_process_semantic_authority_cache()
     _install_ai_phase_profiler()
+    _install_round_advance_profiler()
 
     current = perf.measured_apply_frontend_commands
     if bool(getattr(current, "_goc_issue_207_p2_auth_cache", False)):
@@ -351,12 +459,18 @@ def install_command_scoped_p2_auth() -> None:
     def measured_with_p2_auth_cache(*args, **kwargs):
         process_before = _process_stats_snapshot()
         events: list[dict[str, Any]] = []
+        round_events: list[dict[str, Any]] = []
+        authority_events: list[dict[str, Any]] = []
         token = _AI_PROFILE_EVENTS.set(events)
+        round_token = _ROUND_ADVANCE_EVENTS.set(round_events)
+        auth_token = _AUTH_PROFILE_EVENTS.set(authority_events)
         try:
             report, stats = _run_with_command_scoped_p2_auth(
                 lambda: current(*args, **kwargs)
             )
         finally:
+            _AUTH_PROFILE_EVENTS.reset(auth_token)
+            _ROUND_ADVANCE_EVENTS.reset(round_token)
             _AI_PROFILE_EVENTS.reset(token)
         process_after = _process_stats_snapshot()
         if isinstance(report, dict):
@@ -371,6 +485,10 @@ def install_command_scoped_p2_auth() -> None:
                     timings["turn_cycle"] = turn_cycle
                 if events:
                     timings["ai_phase_events"] = events
+                if round_events:
+                    timings["round_advance_events"] = round_events
+                if authority_events:
+                    timings["authority_phase_events"] = authority_events
         return report
 
     measured_with_p2_auth_cache._goc_issue_207_measured = True  # type: ignore[attr-defined]
