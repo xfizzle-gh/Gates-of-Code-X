@@ -5,8 +5,8 @@ extends SceneTree
 ## Proves default launch stays on visible polygon presentation, then explicitly
 ## opts into the hybrid candidate and verifies PolygonMap authority/picking stays
 ## live while presentation moves wide-1x -> lazy-2x -> safe snapshot refresh ->
-## polygon fallback. It also covers disabled -> reload -> re-enable so a hidden
-## cache can never be resurrected across snapshot generations.
+## polygon fallback. It also covers disabled -> reload -> re-enable plus reload
+## and disable while a raster capture is actually in flight.
 
 const SNAPSHOT := "res://fixtures/snapshots/earth3_theatre.json"
 const FIXTURE := "res://fixtures/presentation/e3_operational.json"
@@ -187,6 +187,83 @@ func _run() -> void:
 		_fail("re-enabled candidate changed authority pick identity")
 		return
 
+	# Race regression 1: invalidate a refresh while its capture is genuinely in
+	# flight. The old epoch must report cancellation and may never publish cache.
+	candidate_scene.call("_load_snapshot", SNAPSHOT)
+	if not await _wait_building(candidate_scene, "reload-race first build"):
+		return
+	var reload_building_state: Dictionary = candidate_scene.call("presentation_candidate_debug_state")
+	var reload_old_epoch := int(reload_building_state.get("build_epoch", -1))
+	var reload_cancelled_before := int(reload_building_state.get("cancelled_builds", 0))
+	candidate_scene.call("_load_snapshot", SNAPSHOT)
+	var reload_race_transition: Dictionary = candidate_scene.call("presentation_candidate_debug_state")
+	if int(reload_race_transition.get("build_epoch", -1)) <= reload_old_epoch:
+		_fail("reload during capture did not advance build epoch: %s" % JSON.stringify(reload_race_transition))
+		return
+	if bool(reload_race_transition.get("active", true)):
+		_fail("reload during capture left candidate active: %s" % JSON.stringify(reload_race_transition))
+		return
+	if not await _wait_cancelled_builds(candidate_scene, reload_cancelled_before, "reload-race cancellation"):
+		return
+	var reload_cancel_state: Dictionary = candidate_scene.call("presentation_candidate_debug_state")
+	if int(reload_cancel_state.get("cancelled_builds", 0)) <= reload_cancelled_before:
+		_fail("stale reload build was not cancelled: %s" % JSON.stringify(reload_cancel_state))
+		return
+	if bool(reload_cancel_state.get("active", false)) or bool(reload_cancel_state.get("cache_present", false)):
+		_fail("stale reload build published presentation/cache: %s" % JSON.stringify(reload_cancel_state))
+		return
+	if not await _wait_active(candidate_scene, "fresh build after reload-race cancellation"):
+		return
+	var reload_race_final: Dictionary = candidate_scene.call("presentation_candidate_debug_state")
+	if int(reload_race_final.get("build_epoch", -1)) <= reload_old_epoch \
+	or int(reload_race_final.get("cancelled_builds", 0)) <= reload_cancelled_before \
+	or not bool(reload_race_final.get("cache_present", false)):
+		_fail("reload race did not finish on fresh epoch/cache: %s" % JSON.stringify(reload_race_final))
+		return
+
+	# Race regression 2: disable while a refresh capture is in flight. The capture
+	# must cancel after its await and remain on polygons with no cache resurrection.
+	candidate_scene.call("_load_snapshot", SNAPSHOT)
+	if not await _wait_building(candidate_scene, "disable-race build"):
+		return
+	var disable_building_state: Dictionary = candidate_scene.call("presentation_candidate_debug_state")
+	var disable_old_epoch := int(disable_building_state.get("build_epoch", -1))
+	var disable_cancelled_before := int(disable_building_state.get("cancelled_builds", 0))
+	candidate_scene.call("set_presentation_candidate_enabled", false)
+	var disable_race_transition: Dictionary = candidate_scene.call("presentation_candidate_debug_state")
+	if int(disable_race_transition.get("build_epoch", -1)) <= disable_old_epoch \
+	or bool(disable_race_transition.get("enabled_intent", true)) \
+	or bool(disable_race_transition.get("active", true)):
+		_fail("disable during capture did not invalidate active epoch/intent: %s" % JSON.stringify(disable_race_transition))
+		return
+	if not await _wait_cancelled_builds(candidate_scene, disable_cancelled_before, "disable-race cancellation"):
+		return
+	for _i in range(3):
+		RenderingServer.force_draw(false, 0.0)
+		await process_frame
+	var disable_race_final: Dictionary = candidate_scene.call("presentation_candidate_debug_state")
+	if int(disable_race_final.get("cancelled_builds", 0)) <= disable_cancelled_before \
+	or bool(disable_race_final.get("building", true)) \
+	or bool(disable_race_final.get("active", true)) \
+	or bool(disable_race_final.get("enabled_intent", true)) \
+	or bool(disable_race_final.get("cache_present", true)):
+		_fail("disabled in-flight build resurrected candidate/cache: %s" % JSON.stringify(disable_race_final))
+		return
+	candidate_root = candidate_scene.get_node_or_null("Earth3PolygonRoot") as Node2D
+	if candidate_root == null or not candidate_root.visible:
+		_fail("disable-race final state did not keep polygons visible")
+		return
+	if candidate_scene.find_child("Issue212HybridRasterCandidate", true, false) != null:
+		_fail("disable-race final state mounted a candidate node")
+		return
+	candidate_scene.call("set_presentation_candidate_enabled", true)
+	if not await _wait_active(candidate_scene, "recovery after disable-race cancellation"):
+		return
+	var race_recovery_state: Dictionary = candidate_scene.call("presentation_candidate_debug_state")
+	if not bool(race_recovery_state.get("cache_present", false)):
+		_fail("candidate did not recover with a fresh cache after race tests")
+		return
+
 	var authority_after := _authority_hashes()
 	if authority_after != authority_before:
 		_fail("candidate test changed authority bytes")
@@ -200,6 +277,12 @@ func _run() -> void:
 		"fallback": fallback_state,
 		"disabled_reload": disabled_reload_state,
 		"reenabled": reenabled_state,
+		"reload_race_transition": reload_race_transition,
+		"reload_race_cancelled": reload_cancel_state,
+		"reload_race_final": reload_race_final,
+		"disable_race_transition": disable_race_transition,
+		"disable_race_final": disable_race_final,
+		"race_recovery": race_recovery_state,
 		"authority_pick": default_pick,
 	}))
 	print("map_presentation_candidate_test: PASS")
@@ -216,6 +299,28 @@ func _wait_active(scene: Node, label: String) -> bool:
 		RenderingServer.force_draw(false, 0.0)
 		await process_frame
 	_fail("candidate did not activate during %s: %s" % [label, JSON.stringify(scene.call("presentation_candidate_debug_state"))])
+	return false
+
+
+func _wait_building(scene: Node, label: String) -> bool:
+	for _i in range(WAIT_FRAMES):
+		var state: Dictionary = scene.call("presentation_candidate_debug_state")
+		if bool(state.get("building", false)):
+			return true
+		RenderingServer.force_draw(false, 0.0)
+		await process_frame
+	_fail("candidate never entered in-flight build during %s: %s" % [label, JSON.stringify(scene.call("presentation_candidate_debug_state"))])
+	return false
+
+
+func _wait_cancelled_builds(scene: Node, previous: int, label: String) -> bool:
+	for _i in range(WAIT_FRAMES):
+		var state: Dictionary = scene.call("presentation_candidate_debug_state")
+		if int(state.get("cancelled_builds", 0)) > previous:
+			return true
+		RenderingServer.force_draw(false, 0.0)
+		await process_frame
+	_fail("candidate did not cancel stale in-flight build during %s: %s" % [label, JSON.stringify(scene.call("presentation_candidate_debug_state"))])
 	return false
 
 
