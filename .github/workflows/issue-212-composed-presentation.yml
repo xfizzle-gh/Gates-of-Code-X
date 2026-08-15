@@ -8,6 +8,7 @@ on:
       - "godot/scripts/main_composed_presentation_refresh_safe.gd"
       - "godot/scripts/presentation/strategic_icon_atlas_layer.gd"
       - "godot/scripts/tools/map_composed_presentation_test.gd"
+      - "godot/scripts/tools/map_composed_camera_motion_test.gd"
       - ".github/workflows/issue-212-composed-presentation.yml"
   workflow_dispatch:
 
@@ -63,6 +64,19 @@ jobs:
           for image in full_theatre.png detailed.png; do
             test -s "$SCREENS/$image"
           done
+          exit "$code"
+      - name: Prove atlas follows normal pan and zoom
+        run: |
+          set -euo pipefail
+          log="$(mktemp)"
+          set +e
+          xvfb-run -a -s "-screen 0 1600x1000x24" \
+            "$HOME/godot" --path godot --audio-driver Dummy \
+            -s res://scripts/tools/map_composed_camera_motion_test.gd 2>&1 | tee "$log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' "$log"; then exit 1; fi
+          if ! grep -q 'map_composed_camera_motion_test: PASS' "$log"; then exit 1; fi
           exit "$code"
       - uses: actions/upload-artifact@v4
         if: always()
