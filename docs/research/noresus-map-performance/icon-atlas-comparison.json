@@ -1,0 +1,54 @@
+{
+  "schema": "gates-of-codex.issue-212-icon-atlas-evidence",
+  "schema_version": 2,
+  "issue": 212,
+  "phase": "C-debug-icon-atlas",
+  "measurement_head": "14f88478632e350502221c27f9751749f2aec5c6",
+  "workflow_run_id": 31864360077,
+  "artifact_id": 9241626072,
+  "artifact_sha256": "b4d6ac15ed249fd0291492269e2e4d02068404d945b66a38b7958eeaff90129e",
+  "frames_per_sample": 24,
+  "stabilization_passes_before_recorded_brackets": 2,
+  "max_baseline_drift_ratio": 0.15,
+  "max_observed_baseline_drift_ratio": 0.0234,
+  "atlas": {
+    "texture_count": 1,
+    "width": 192,
+    "height": 96,
+    "cell_size": 32,
+    "copied_reference_art": false,
+    "numeric_strength_baked": false,
+    "strength_text_separate": true,
+    "vocabulary_count": 18
+  },
+  "authority": {
+    "unchanged": true,
+    "polygon_backend_live": true
+  },
+  "idle_full_theatre": {
+    "64": {
+      "procedural": {"candidate_frame_p50_ms": 239.231, "incremental_frame_p50_ms": 3.875, "incremental_draw_calls": 192, "incremental_primitives": 976, "baseline_drift_max_ratio": 0.0041},
+      "atlas_text": {"candidate_frame_p50_ms": 237.160, "incremental_frame_p50_ms": 2.543, "incremental_draw_calls": 128, "incremental_primitives": 336, "baseline_drift_max_ratio": 0.0110}
+    },
+    "256": {
+      "procedural": {"candidate_frame_p50_ms": 253.344, "incremental_frame_p50_ms": 18.417, "incremental_draw_calls": 768, "incremental_primitives": 3924, "baseline_drift_max_ratio": 0.0070},
+      "atlas_text": {"candidate_frame_p50_ms": 242.254, "incremental_frame_p50_ms": 7.741, "incremental_draw_calls": 512, "incremental_primitives": 1364, "baseline_drift_max_ratio": 0.0026}
+    },
+    "512": {
+      "procedural": {"candidate_frame_p50_ms": 272.744, "incremental_frame_p50_ms": 38.765, "incremental_draw_calls": 1536, "incremental_primitives": 7848, "baseline_drift_max_ratio": 0.0117},
+      "atlas_text": {"candidate_frame_p50_ms": 250.946, "incremental_frame_p50_ms": 17.124, "incremental_draw_calls": 1024, "incremental_primitives": 2728, "baseline_drift_max_ratio": 0.0063}
+    }
+  },
+  "continuous_zoom_512": {
+    "procedural": {"candidate_frame_p50_ms": 308.448, "incremental_frame_p50_ms": 24.620, "incremental_draw_calls": 1536, "incremental_primitives": 7848, "baseline_drift_max_ratio": 0.0234},
+    "atlas_text": {"candidate_frame_p50_ms": 288.468, "incremental_frame_p50_ms": 4.147, "incremental_draw_calls": 1024, "incremental_primitives": 2728, "baseline_drift_max_ratio": 0.0076},
+    "atlas_symbols_only": {"candidate_frame_p50_ms": 287.513, "incremental_frame_p50_ms": 4.998, "incremental_draw_calls": 1, "incremental_primitives": 1024, "baseline_drift_max_ratio": 0.0116}
+  },
+  "decision": {
+    "result": "PASS_DEBUG_BATCHING_PROOF",
+    "symbol_batching_supported": true,
+    "strength_text_is_remaining_draw_pressure": true,
+    "production_mount_authorized": false,
+    "next_requirement": "Combine atlas-backed symbols with Phase D LOD so wide views reduce or aggregate per-counter numeric strength text."
+  }
+}

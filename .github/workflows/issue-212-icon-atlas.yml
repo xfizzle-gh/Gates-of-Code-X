@@ -1,0 +1,124 @@
+name: Issue 212 icon atlas
+
+on:
+  pull_request:
+    paths:
+      - "godot/scripts/presentation/strategic_icon_atlas_layer.gd"
+      - "godot/scripts/tools/map_icon_atlas_profiler.gd"
+      - "godot/scripts/tools/map_icon_atlas_profiler_stable.gd"
+      - ".github/workflows/issue-212-icon-atlas.yml"
+      - "docs/research/noresus-map-performance/icon-atlas-comparison.json"
+      - "docs/research/noresus-map-performance/icon-atlas-comparison.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: issue-212-icon-atlas-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  icon-atlas-benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system deps
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1 libxcursor1 libxinerama1 libxrandr2 libxi6 libx11-6
+      - name: Install Godot 4.7
+        run: |
+          set -euo pipefail
+          GODOT_VERSION=4.7-stable
+          curl -fsSL -o godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip
+          GODOT_BIN="$(find . -maxdepth 1 -type f -name 'Godot_v*_linux.x86_64' | head -n 1)"
+          install -m 755 "$GODOT_BIN" "$HOME/godot"
+          "$HOME/godot" --version
+      - name: Import Godot project
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --import --quit-after 1
+      - name: Benchmark procedural vs atlas counters
+        run: |
+          set -euo pipefail
+          ROOT="$(pwd)/docs/research/noresus-map-performance"
+          OUT="$ROOT/icon-atlas-ci.json"
+          SCREENS="$ROOT/icon-atlas-screens"
+          mkdir -p "$SCREENS"
+          log="$(mktemp)"
+          set +e
+          xvfb-run -a -s "-screen 0 1920x1080x24" \
+            "$HOME/godot" --path godot --audio-driver Dummy \
+            -s res://scripts/tools/map_icon_atlas_profiler_stable.gd -- \
+            --snapshot=res://fixtures/snapshots/earth3_operational.json \
+            --fixture=res://fixtures/presentation/e3_operational.json \
+            --manifest=res://assets/maps/earth3_europe_mediterranean/map_manifest.json \
+            --width=1920 --height=1080 --frames=24 --out="$OUT" --screens-dir="$SCREENS" 2>&1 | tee "$log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' "$log"; then exit 1; fi
+          if ! grep -q 'map_icon_atlas_profiler: PASS' "$log"; then exit 1; fi
+          exit "$code"
+      - name: Validate Phase C evidence
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("docs/research/noresus-map-performance")
+          data = json.loads((root / "icon-atlas-ci.json").read_text(encoding="utf-8"))
+          assert data.get("ok") is True and data.get("issue") == 212, data
+          assert data.get("phase") == "C-debug-icon-atlas", data
+          assert int(data.get("frames_per_sample", 0)) >= 24, data
+          atlas = data.get("atlas", {})
+          required = {
+              "infantry", "motorized", "mechanized", "armor", "airborne",
+              "artillery", "air_defense", "engineers", "recon",
+              "logistics_support", "hq_command", "supply", "objective",
+              "battle_contact", "stance_warning", "readiness_warning",
+              "supply_warning", "actor_flag_badge",
+          }
+          assert set(atlas.get("vocabulary", [])) == required, atlas
+          assert atlas.get("copied_reference_art") is False, atlas
+          assert atlas.get("texture_count") == 1, atlas
+          assert atlas.get("numeric_strength_baked") is False, atlas
+          assert atlas.get("strength_text_separate") is True, atlas
+          authority = data.get("authority", {})
+          assert authority.get("unchanged") is True and authority.get("polygon_backend_remains_live") is True, authority
+          results = data.get("results", {})
+          for count in ["64", "256", "512"]:
+              idle = results[count]["idle_full_theatre"]
+              for mode in ["procedural", "atlas_text"]:
+                  row = idle[mode]
+                  assert row.get("ok") is True, (count, mode, row)
+                  drift = row.get("baseline_drift", {})
+                  assert int(drift.get("draw_calls_p50_abs", 1)) == 0, (count, mode, drift)
+                  assert int(drift.get("primitives_p50_abs", 1)) == 0, (count, mode, drift)
+                  assert float(drift.get("frame_ms_p50_ratio", 1.0)) <= 0.15, (count, mode, drift)
+                  assert float(drift.get("frame_ms_p95_ratio", 1.0)) <= 0.15, (count, mode, drift)
+          for mode in ["procedural", "atlas_text", "atlas_symbols_only"]:
+              row = results["512"][f"continuous_zoom_{mode}"]
+              assert row.get("ok") is True, (mode, row)
+          for name in ["procedural_512.png", "atlas_text_512.png"]:
+              p = root / "icon-atlas-screens" / name
+              assert p.exists() and p.stat().st_size > 0, p
+          print("ISSUE212_ICON_ATLAS_VALIDATED", json.dumps({
+              "vocabulary_count": len(required),
+              "stress_counts": data.get("stress_counts", []),
+          }, sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: issue-212-icon-atlas
+          path: |
+            docs/research/noresus-map-performance/icon-atlas-ci.json
+            docs/research/noresus-map-performance/icon-atlas-screens/*.png
+          if-no-files-found: error
