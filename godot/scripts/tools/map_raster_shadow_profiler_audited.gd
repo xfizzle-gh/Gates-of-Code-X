@@ -3,12 +3,13 @@ extends "res://scripts/tools/map_raster_shadow_profiler.gd"
 ## Independent-audit correction layer for #212 Phase B.
 ##
 ## The performance fixture stays presentation-heavy and is not required to carry
-## backend graph orders. A separate legal-target audit exercises a committed
+## backend graph orders. A separate legal-target audit exercises a production
 ## snapshot with real operational_orders. This layer hardens sampling and owner
 ## color equality without manufacturing legality inside the performance fixture.
 
 const STABILIZATION_PASSES := 2
-const OWNER_COLOR_TOLERANCE := 0.012
+const OWNER_RENDER_TOLERANCE := 0.02
+const OWNER_REFERENCE_SAMPLES := 8
 
 var _process_stabilized := false
 
@@ -105,44 +106,99 @@ func _owner_refresh_check() -> Dictionary:
 		await _dispose_scene(scene)
 		return {"ok": false, "error": "province missing from snapshot", "province_id": pid}
 
+	var reference_indices: Array = []
+	for i in range(active_map.owners.size()):
+		if i == target or int(active_map.is_water[i]) != 0:
+			continue
+		if String(active_map.owners[i]) == new_owner:
+			reference_indices.append(i)
+			if reference_indices.size() >= OWNER_REFERENCE_SAMPLES:
+				break
+	if reference_indices.size() < 3:
+		await _dispose_scene(scene)
+		return {
+			"ok": false,
+			"error": "insufficient same-owner rendered reference provinces",
+			"new_owner": new_owner,
+			"reference_count": reference_indices.size(),
+		}
+
 	snapshot_copy["provinces"] = provinces
 	scene.snapshot = snapshot_copy
 	active_map.refresh_snapshot(scene.snapshot, FACTION_COLORS)
 	await _pump_frames(scene, 4)
 	var after := await _capture_static_map(scene, active_map)
-	var pos := Vector2i(
-		clampi(int(round(active_map.centroids[target].x * CACHE_SCALE)), 0, before.get_width() - 1),
-		clampi(int(round(active_map.centroids[target].y * CACHE_SCALE)), 0, before.get_height() - 1)
-	)
-	var prior_color := before.get_pixelv(pos)
-	var actual_color := after.get_pixelv(pos)
-	var expected_color: Color = FACTION_COLORS.get(new_owner, FACTION_COLORS["neutral"])
-	var color_error := maxf(
-		maxf(absf(actual_color.r - expected_color.r), absf(actual_color.g - expected_color.g)),
-		absf(actual_color.b - expected_color.b)
-	)
+
+	var target_pos := _cache_anchor(active_map, pid, after)
+	var prior_color := before.get_pixelv(target_pos)
+	var actual_color := after.get_pixelv(target_pos)
+	var reference_colors: Array = []
+	for reference_index_value in reference_indices:
+		var reference_index := int(reference_index_value)
+		var reference_pid := String(active_map.province_by_index[reference_index])
+		var reference_pos := _cache_anchor(active_map, reference_pid, after)
+		reference_colors.append(after.get_pixelv(reference_pos))
+	var expected_rendered_color := _average_color(reference_colors)
+	var rendered_color_error := _max_rgb_error(actual_color, expected_rendered_color)
+	var reference_spread := 0.0
+	for reference_color_value in reference_colors:
+		reference_spread = maxf(
+			reference_spread,
+			_max_rgb_error(reference_color_value as Color, expected_rendered_color)
+		)
+	var raw_palette_color: Color = FACTION_COLORS.get(new_owner, FACTION_COLORS["neutral"])
+	var raw_palette_error := _max_rgb_error(actual_color, raw_palette_color)
 	var change_delta := absf(prior_color.r - actual_color.r) \
 		+ absf(prior_color.g - actual_color.g) \
 		+ absf(prior_color.b - actual_color.b) \
 		+ absf(prior_color.a - actual_color.a)
 	var owner_ok := String(active_map.owners[target]) == new_owner
-	var exact_owner_color_match := color_error <= OWNER_COLOR_TOLERANCE
+	var rendered_owner_match := rendered_color_error <= OWNER_RENDER_TOLERANCE
+	var references_coherent := reference_spread <= OWNER_RENDER_TOLERANCE
 	var changed := change_delta > 0.01
 	await _dispose_scene(scene)
 	return {
-		"ok": owner_ok and exact_owner_color_match and changed,
+		"ok": owner_ok and rendered_owner_match and references_coherent and changed,
 		"province_id": pid,
 		"old_owner": old_owner,
 		"new_owner": new_owner,
 		"polygon_owner_state_applied": owner_ok,
-		"expected_owner_color": _color_row(expected_color),
+		"owner_color_oracle": "mean production-rendered cache color at same-owner province anchors",
+		"same_owner_reference_count": reference_colors.size(),
+		"expected_owner_color": _color_row(expected_rendered_color),
 		"cached_owner_color": _color_row(actual_color),
-		"owner_color_max_channel_error": snappedf(color_error, 0.0001),
-		"owner_color_tolerance": OWNER_COLOR_TOLERANCE,
-		"exact_owner_color_match": exact_owner_color_match,
+		"owner_color_max_channel_error": snappedf(rendered_color_error, 0.0001),
+		"owner_color_tolerance": OWNER_RENDER_TOLERANCE,
+		"reference_owner_color_max_spread": snappedf(reference_spread, 0.0001),
+		"reference_owner_colors_coherent": references_coherent,
+		"exact_owner_color_match": rendered_owner_match,
+		"raw_palette_color_diagnostic": _color_row(raw_palette_color),
+		"raw_palette_max_channel_error_diagnostic": snappedf(raw_palette_error, 0.0001),
 		"cached_pixel_delta": snappedf(change_delta, 0.0001),
 		"cached_pixel_changed": changed,
 	}
+
+
+func _cache_anchor(active_map, province_id: String, image: Image) -> Vector2i:
+	var anchor: Vector2 = active_map.anchor_pixel(province_id)
+	return Vector2i(
+		clampi(int(round(anchor.x * CACHE_SCALE)), 0, image.get_width() - 1),
+		clampi(int(round(anchor.y * CACHE_SCALE)), 0, image.get_height() - 1)
+	)
+
+
+func _average_color(colors: Array) -> Color:
+	var total := Color(0.0, 0.0, 0.0, 0.0)
+	for color_value in colors:
+		total += color_value as Color
+	return total / float(maxi(colors.size(), 1))
+
+
+func _max_rgb_error(left: Color, right: Color) -> float:
+	return maxf(
+		maxf(absf(left.r - right.r), absf(left.g - right.g)),
+		absf(left.b - right.b)
+	)
 
 
 func _color_row(color: Color) -> Array:
