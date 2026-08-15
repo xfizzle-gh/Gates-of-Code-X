@@ -18,7 +18,7 @@ if (-not (Test-Path -LiteralPath $GodotPath -PathType Leaf)) {
 }
 
 if ([string]::IsNullOrWhiteSpace($SnapshotPath)) {
-    $SnapshotPath = Join-Path $godotProject 'fixtures\snapshots\earth3_theatre.json'
+    $SnapshotPath = Join-Path $godotProject 'fixtures\snapshots\earth3_operational.json'
 }
 $SnapshotPath = (Resolve-Path -LiteralPath $SnapshotPath).Path
 
@@ -38,6 +38,7 @@ Write-Host "  Snapshot: $SnapshotPath"
 Write-Host "  Output:   $outDir"
 Write-Host ""
 Write-Host "This run gathers evidence only. It cannot authorize the production renderer switch."
+Write-Host "The snapshot must contain a real operational order with a non-empty legal-target set."
 
 & $GodotPath `
     --path $godotProject `
@@ -73,9 +74,33 @@ if ($provinceCount -ne 3514) {
 if (-not $data.authority.unchanged) {
     throw "Authority hashes changed during acceptance run"
 }
+$reference = $data.authority.reference
+if ([string]::IsNullOrWhiteSpace([string]$reference.selected_province_id)) {
+    throw "Acceptance authority proof has an empty selected_province_id"
+}
+if ([string]::IsNullOrWhiteSpace([string]$reference.selected_strategic_formation_id)) {
+    throw "Acceptance authority proof has an empty selected_strategic_formation_id"
+}
+$legalTargets = @($reference.legal_target_ids)
+$expectedTargets = @($reference.operational_order_target_ids)
+if ($legalTargets.Count -eq 0 -or $expectedTargets.Count -eq 0) {
+    throw "Acceptance authority proof has an empty legal/expected operational target set"
+}
+if (-not $reference.operational_order_selection_ok) {
+    throw "Acceptance authority proof did not drive a real operational order"
+}
+if (($legalTargets -join '|') -ne ($expectedTargets -join '|')) {
+    throw "Acceptance legal-target set does not exactly match the selected formation's operational orders"
+}
 if ($data.decision.production_switch_authorized) {
     throw "Profiler must never self-authorize the production switch"
 }
+
+Write-Host ""
+Write-Host "Operational parity proof"
+Write-Host "  Selected province:  $($reference.selected_province_id)"
+Write-Host "  Selected formation: $($reference.selected_strategic_formation_id)"
+Write-Host "  Legal targets:      $($legalTargets -join ', ')"
 
 Write-Host ""
 Write-Host "Scenario comparison (positive = candidate faster)"
