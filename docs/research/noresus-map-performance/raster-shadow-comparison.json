@@ -1,0 +1,94 @@
+{
+  "schema": "gates-of-codex.issue-212-raster-shadow-evidence",
+  "schema_version": 1,
+  "issue": 212,
+  "phase": "B-debug-shadow",
+  "measurement_head": "b4d4235706f50181a8e39bfa836baba149991d1b",
+  "workflow_run_id": 31857224351,
+  "matrix_artifact_id": 9239454644,
+  "matrix_artifact_sha256": "03157171c231ab45f441651114e308056cf76ecf22963016134d5ec39e83b8a9",
+  "full_cache_artifact_id": 9239419580,
+  "environment": {
+    "godot": "4.7-stable (official)",
+    "os": "Linux / GitHub Ubuntu runner",
+    "renderer": "OpenGL Compatibility",
+    "device": "llvmpipe (LLVM 20.1.2, 256 bits)",
+    "viewport": {"width": 1920, "height": 1080},
+    "frames_per_matrix_sample": 8
+  },
+  "authority": {
+    "province_count": 3514,
+    "polygon_backend_remained_live": true,
+    "cache_is_presentation_only": true,
+    "manifest_sha256": "614a926e79f11e3cfac8c867c7bacce107fc69344b17fabb6b4545cdeaa6a357",
+    "polygon_dataset_sha256": "4aadab4b5106bbfa4c2d37e8173c3d1675f35a448cbd7f32a8b871c464ce1b84",
+    "snapshot_fixture_sha256": "b405550730f2af7d8bd82ca82ee27924431d9ac0c1dd6b8a5bef979828585ef3",
+    "authority_hashes_unchanged": true,
+    "deterministic_picking_parity": true,
+    "water_non_selection_parity": true,
+    "selected_province_id": "e3_2108",
+    "legal_target_ids": [],
+    "operational_anchor_parity": true,
+    "owner_refresh": {
+      "ok": true,
+      "province_id": "e3_0000",
+      "old_owner": "nato",
+      "new_owner": "rusa",
+      "polygon_owner_state_applied": true,
+      "regenerated_cached_pixel_changed": true,
+      "cached_pixel_delta": 0.549
+    }
+  },
+  "control": {
+    "design": "polygon_before -> cache_mode -> polygon_after",
+    "local_baseline": "arithmetic midpoint of surrounding polygon samples",
+    "max_baseline_drift_ratio": 0.15,
+    "all_brackets_passed": true,
+    "all_surrounding_draw_call_counts_matched": true,
+    "all_surrounding_primitive_counts_matched": true
+  },
+  "cache": {
+    "scale": 2,
+    "width": 8612,
+    "height": 6898,
+    "raw_rgba8_bytes": 237622304,
+    "raw_rgba8_mib": 226.614,
+    "polygon_baseline_video_memory_mib": 66.013,
+    "current_shadow_video_memory_mib": 368.156,
+    "current_shadow_video_memory_increase_mib": 302.143,
+    "important_limit": "The current tiled spike materializes every tile texture up front, so culling reduces submitted tiles but does not reduce resident cache memory. A production experiment must lazily materialize/stream only needed 1024px tiles."
+  },
+  "matrix": {
+    "idle_full_theatre": {
+      "full_cache": {"polygon_p50_ms": 220.869, "cache_p50_ms": 85.974, "improvement_ms": 134.895, "improvement_pct": 61.075, "cache_draw_calls_p50": 200, "cache_primitives_p50": 6082, "visible_tiles_p50": 1},
+      "tile_1024": {"polygon_p50_ms": 216.265, "cache_p50_ms": 91.196, "improvement_ms": 125.069, "improvement_pct": 57.831, "cache_draw_calls_p50": 262, "cache_primitives_p50": 6206, "visible_tiles_p50": 63},
+      "tile_512": {"polygon_p50_ms": 218.086, "cache_p50_ms": 98.759, "improvement_ms": 119.327, "improvement_pct": 54.716, "cache_draw_calls_p50": 437, "cache_primitives_p50": 6556, "visible_tiles_p50": 238}
+    },
+    "continuous_pan": {
+      "full_cache": {"polygon_p50_ms": 220.633, "cache_p50_ms": 83.645, "improvement_ms": 136.988, "improvement_pct": 62.089, "cache_draw_calls_p50": 200, "cache_primitives_p50": 6082, "visible_tiles_p50": 1},
+      "tile_1024": {"polygon_p50_ms": 214.658, "cache_p50_ms": 88.825, "improvement_ms": 125.833, "improvement_pct": 58.620, "cache_draw_calls_p50": 262, "cache_primitives_p50": 6206, "visible_tiles_p50": 63},
+      "tile_512": {"polygon_p50_ms": 217.577, "cache_p50_ms": 95.380, "improvement_ms": 122.197, "improvement_pct": 56.163, "cache_draw_calls_p50": 420, "cache_primitives_p50": 6522, "visible_tiles_p50": 221}
+    },
+    "continuous_zoom": {
+      "full_cache": {"polygon_p50_ms": 259.821, "cache_p50_ms": 89.616, "improvement_ms": 170.205, "improvement_pct": 65.509, "cache_draw_calls_p50": 202, "cache_primitives_p50": 6148, "visible_tiles_p50": 1},
+      "tile_1024": {"polygon_p50_ms": 257.301, "cache_p50_ms": 90.170, "improvement_ms": 167.131, "improvement_pct": 64.955, "cache_draw_calls_p50": 229, "cache_primitives_p50": 6206, "visible_tiles_p50": 28},
+      "tile_512": {"polygon_p50_ms": 257.107, "cache_p50_ms": 95.304, "improvement_ms": 161.803, "improvement_pct": 62.932, "cache_draw_calls_p50": 285, "cache_primitives_p50": 6314, "visible_tiles_p50": 84}
+    }
+  },
+  "visual_review": {
+    "same_camera_screenshots": ["polygon.png", "full_cache.png", "tile_512.png", "tile_1024.png"],
+    "normal_inspection": "PASS: no visible tile seams, offset, stretching, duplicate static layer, or dynamic-overlay misalignment observed.",
+    "full_cache_vs_tile_1024": {"pixels_with_any_delta_pct": 0.008198, "pixels_over_5_channel_delta_pct": 0.000048, "max_channel_delta_255": 9},
+    "full_cache_vs_tile_512": {"pixels_with_any_delta_pct": 0.008150, "pixels_over_5_channel_delta_pct": 0.000048, "max_channel_delta_255": 9},
+    "tile_512_vs_tile_1024": {"pixels_with_any_delta_pct": 0.005064, "pixels_over_5_channel_delta_pct": 0.0, "max_channel_delta_255": 4}
+  },
+  "decision": {
+    "phase_b_result": "PASS",
+    "recommended_next_experiment": "1024px map-space tiled static cache with lazy tile materialization/streaming and viewport culling",
+    "why_not_full_texture": "It is fastest in this CI spike, but the 8612x6898 2x RGBA8 cache is a single ~226.6 MiB raw image and the current process rises by ~302 MiB of video memory versus polygon baseline.",
+    "why_not_512": "At full-theatre view it requires 238 visible tiles and raises p50 draw calls to 437, while being slower than 1024 in idle, pan, and zoom samples.",
+    "why_1024": "It retains most of the measured static-raster speedup, uses materially fewer draw calls than 512, culls from 63 tiles at full-theatre view to p50 28 during zoom, and provides the partitioning needed for a later lazy-residency implementation.",
+    "production_switch_authorized": false,
+    "native_owner_acceptance_required": true
+  }
+}
