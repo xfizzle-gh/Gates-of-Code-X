@@ -28,9 +28,40 @@ if (-not (Test-Path -LiteralPath $GodotPath -PathType Leaf)) {
 }
 
 if ([string]::IsNullOrWhiteSpace($SnapshotPath)) {
-    $SnapshotPath = Join-Path $godotProject 'campaign_snapshot.json'
+    if (-not [string]::IsNullOrWhiteSpace($env:GATES_OF_CODEX_HOME)) {
+        $playerHome = $env:GATES_OF_CODEX_HOME
+    } elseif (-not [string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
+        $playerHome = Join-Path $env:LOCALAPPDATA 'GatesOfCodeX'
+    } else {
+        $userProfile = [Environment]::GetFolderPath('UserProfile')
+        if ([string]::IsNullOrWhiteSpace($userProfile)) {
+            throw "Unable to resolve the Gates of CodeX player home. Pass -SnapshotPath explicitly."
+        }
+        $playerHome = Join-Path $userProfile 'AppData\Local\GatesOfCodeX'
+    }
+
+    $lastCampaignPath = Join-Path $playerHome 'last_campaign.json'
+    if (-not (Test-Path -LiteralPath $lastCampaignPath -PathType Leaf)) {
+        throw "No remembered production campaign found at $lastCampaignPath. Launch/create an Earth3 campaign first, or pass -SnapshotPath pointing to its current campaign_snapshot.json."
+    }
+    try {
+        $lastCampaign = Get-Content -LiteralPath $lastCampaignPath -Raw | ConvertFrom-Json
+    } catch {
+        throw "Unable to read remembered production campaign pointer at $lastCampaignPath. Pass -SnapshotPath explicitly."
+    }
+    if ([string]$lastCampaign.schema -ne 'gates-of-codex.player-last-campaign') {
+        throw "Remembered campaign pointer has an unexpected schema at $lastCampaignPath. Pass -SnapshotPath explicitly."
+    }
+    $rememberedCampaign = [string]$lastCampaign.campaign_path
+    if ([string]::IsNullOrWhiteSpace($rememberedCampaign)) {
+        throw "Remembered campaign pointer has no campaign_path at $lastCampaignPath. Pass -SnapshotPath explicitly."
+    }
+    if ([string]::IsNullOrWhiteSpace($CampaignPath)) {
+        $CampaignPath = $rememberedCampaign
+    }
+    $SnapshotPath = Join-Path (Split-Path -Parent $rememberedCampaign) 'campaign_snapshot.json'
     if (-not (Test-Path -LiteralPath $SnapshotPath -PathType Leaf)) {
-        throw "No current production campaign snapshot found at $SnapshotPath. Launch/create an Earth3 campaign first, or pass -SnapshotPath pointing to a current campaign_snapshot.json. The retired fixtures\snapshots\earth3_operational.json baseline has no runtime operational orders and is not valid for this acceptance gate."
+        throw "Remembered production campaign has no current snapshot at $SnapshotPath. Continue the campaign once to republish it, or pass -SnapshotPath explicitly."
     }
 }
 $SnapshotPath = (Resolve-Path -LiteralPath $SnapshotPath).Path
