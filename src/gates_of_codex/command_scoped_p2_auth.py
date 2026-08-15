@@ -102,9 +102,6 @@ def _capture_p1_identity(authority_root: str | Path | None) -> tuple[Any, ...]:
         "Earth3 production authority",
     )
 
-    # Keep the exact byte pins that gate the production geometry before a cache
-    # lookup. Metadata/production are keyed by their current raw SHA; any change
-    # therefore misses and executes the original semantic validator below.
     if manifest.raw_sha256 != p1.APPROVED_MANIFEST_SHA256:
         raise p1.Earth3AuthorityError(
             "Earth3 manifest SHA-256 mismatch: "
@@ -175,8 +172,6 @@ def _capture_p2_identity(
     if set(p2._APPROVED_RAW_FILE_SHA256) != set(p2._FIXED_FILES):
         raise p2.Earth3BootstrapError("P2 approved raw-file contract is incomplete")
 
-    # load_earth3_authority has already re-authenticated the P1 bytes for this
-    # lookup. Bind semantic P2 reuse to the validated P1 identity it returned.
     p1_identity = (
         str(authenticated_p1.root),
         authenticated_p1.manifest_sha256,
@@ -218,9 +213,6 @@ def _install_process_semantic_authority_cache() -> None:
         return value
 
     def authenticated_cached_p2(*, authority_root=None):
-        # P1 authentication is part of the P2 semantic contract. It is performed
-        # before a P2 cache lookup so a changed/tampered P1 file can never be
-        # masked by unchanged P2 bytes.
         authenticated_p1 = p1.load_earth3_authority(authority_root)
         key = _capture_p2_identity(authority_root, authenticated_p1=authenticated_p1)
         cached = _cache_get(_P2_SEMANTIC_CACHE, key)
@@ -256,9 +248,6 @@ def _run_with_command_scoped_p2_auth(
             stats["hits"] += 1
             return copy.deepcopy(cached)
 
-        # original_loader is the installed process cache. Its first call for this
-        # atomic command re-authenticates the fixed bytes; only later nested calls
-        # avoid duplicate capture.
         bundle = original_loader(authority_root=authority_root)
         stats["loads"] += 1
         cache[key] = copy.deepcopy(bundle)
@@ -271,6 +260,24 @@ def _run_with_command_scoped_p2_auth(
         earth3_bootstrap.load_earth3_bootstrap = original_loader
         cache.clear()
     return result, stats
+
+
+def _turn_cycle_perf(report: dict[str, Any]) -> dict[str, Any] | None:
+    """Extract existing End Turn subphase telemetry without changing command data."""
+
+    results = report.get("results")
+    if not isinstance(results, list):
+        return None
+    for result in results:
+        if not isinstance(result, dict) or str(result.get("op", "")) != "end_player_round":
+            continue
+        data = result.get("data")
+        if not isinstance(data, dict):
+            continue
+        perf = data.get("perf_turn_cycle")
+        if isinstance(perf, dict):
+            return copy.deepcopy(perf)
+    return None
 
 
 def install_command_scoped_p2_auth() -> None:
@@ -294,13 +301,13 @@ def install_command_scoped_p2_auth() -> None:
         if isinstance(report, dict):
             timings = report.get("timings")
             if isinstance(timings, dict):
-                # Diagnostic counters are intentionally explicit about semantic
-                # reuse. Raw fixed-file authentication still occurs before each
-                # process-cache hit and is not represented as a cache hit here.
                 timings["p2_auth_loads"] = int(stats["loads"])
                 timings["p2_auth_cache_hits"] = int(stats["hits"])
                 for name in _PROCESS_STATS:
                     timings[name] = int(process_after[name] - process_before[name])
+                turn_cycle = _turn_cycle_perf(report)
+                if turn_cycle is not None:
+                    timings["turn_cycle"] = turn_cycle
         return report
 
     measured_with_p2_auth_cache._goc_issue_207_measured = True  # type: ignore[attr-defined]
