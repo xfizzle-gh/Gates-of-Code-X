@@ -250,28 +250,41 @@ function Write-Command([hashtable]$Command) {
 function Invoke-PackagedCommand([hashtable]$Command, [string]$ExpectedCommit) {
     Write-Command $Command
     $probeResultPath = Join-Path $outDir ("command-probe-{0}-{1}.json" -f ([string]$Command.op), [guid]::NewGuid().ToString('N'))
+    $probeStdoutPath = Join-Path $outDir ("command-probe-{0}-{1}.stdout.txt" -f ([string]$Command.op), [guid]::NewGuid().ToString('N'))
+    $probeStderrPath = Join-Path $outDir ("command-probe-{0}-{1}.stderr.txt" -f ([string]$Command.op), [guid]::NewGuid().ToString('N'))
     $godotArgs = @(
         '--headless',
-        '--path', $godotProject,
+        '--path', (Quote-ProcessArgument $godotProject),
         '--audio-driver', 'Dummy',
         '-s', 'res://scripts/tools/owner_readiness_command_probe.gd',
         '--',
-        "--campaign=$campaign",
-        "--snapshot=$snapshot",
-        "--commands=$commands",
-        "--backend=$liveExecutable",
+        (Quote-ProcessArgument "--campaign=$campaign"),
+        (Quote-ProcessArgument "--snapshot=$snapshot"),
+        (Quote-ProcessArgument "--commands=$commands"),
+        (Quote-ProcessArgument "--backend=$liveExecutable"),
         "--expected-source-commit=$ExpectedCommit",
-        "--out=$probeResultPath"
+        (Quote-ProcessArgument "--out=$probeResultPath")
     )
-    $previousNativePreference = $PSNativeCommandUseErrorActionPreference
-    try {
-        $PSNativeCommandUseErrorActionPreference = $false
-        $probeOutput = @(& $GodotPath @godotArgs 2>&1)
-        $probeExitCode = $LASTEXITCODE
+    $probeProcess = Start-Process `
+        -FilePath $GodotPath `
+        -ArgumentList $godotArgs `
+        -RedirectStandardOutput $probeStdoutPath `
+        -RedirectStandardError $probeStderrPath `
+        -PassThru
+    if (-not $probeProcess.WaitForExit(620000)) {
+        try { $probeProcess.Kill() } catch {}
+        throw "Godot retained-backend command probe $($Command.op) did not exit within 620 seconds"
     }
-    finally {
-        $PSNativeCommandUseErrorActionPreference = $previousNativePreference
+    $probeProcess.WaitForExit()
+    $probeExitCode = [int]$probeProcess.ExitCode
+    $probeOutput = @()
+    if (Test-Path -LiteralPath $probeStdoutPath -PathType Leaf) {
+        $probeOutput += Get-Content -LiteralPath $probeStdoutPath -ErrorAction SilentlyContinue
     }
+    if (Test-Path -LiteralPath $probeStderrPath -PathType Leaf) {
+        $probeOutput += Get-Content -LiteralPath $probeStderrPath -ErrorAction SilentlyContinue
+    }
+    Remove-Item -LiteralPath $probeStdoutPath, $probeStderrPath -Force -ErrorAction SilentlyContinue
     if ($probeExitCode -ne 0) {
         throw "Godot retained-backend command probe $($Command.op) failed with exit code $probeExitCode`: $($probeOutput -join [Environment]::NewLine)"
     }
