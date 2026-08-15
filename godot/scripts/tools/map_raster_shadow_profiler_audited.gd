@@ -149,9 +149,13 @@ func _owner_refresh_check() -> Dictionary:
 		maxf(absf(actual_color.r - expected_color.r), absf(actual_color.g - expected_color.g)),
 		absf(actual_color.b - expected_color.b)
 	)
+	var change_delta := absf(prior_color.r - actual_color.r) \
+		+ absf(prior_color.g - actual_color.g) \
+		+ absf(prior_color.b - actual_color.b) \
+		+ absf(prior_color.a - actual_color.a)
 	var owner_ok := String(active_map.owners[target]) == new_owner
 	var exact_owner_color_match := color_error <= OWNER_COLOR_TOLERANCE
-	var changed := prior_color.distance_to(actual_color) > 0.01
+	var changed := change_delta > 0.01
 	await _dispose_scene(scene)
 	return {
 		"ok": owner_ok and exact_owner_color_match and changed,
@@ -164,6 +168,7 @@ func _owner_refresh_check() -> Dictionary:
 		"owner_color_max_channel_error": snappedf(color_error, 0.0001),
 		"owner_color_tolerance": OWNER_COLOR_TOLERANCE,
 		"exact_owner_color_match": exact_owner_color_match,
+		"cached_pixel_delta": snappedf(change_delta, 0.0001),
 		"cached_pixel_changed": changed,
 	}
 
