@@ -20,6 +20,8 @@ var _presentation_candidate_cache: Image = null
 var _presentation_candidate_refresh_pending := false
 var _presentation_candidate_building := false
 var _presentation_candidate_enabled_intent := false
+var _presentation_candidate_build_epoch := 0
+var _presentation_candidate_cancelled_builds := 0
 
 
 func _ready() -> void:
@@ -47,6 +49,10 @@ func _process(delta: float) -> void:
 
 
 func _load_snapshot(path: String) -> void:
+	# Invalidate every in-flight capture before authority changes. A capture owns the
+	# epoch it started in and may finish its frame awaits, but it can never publish
+	# into a later snapshot generation.
+	_presentation_candidate_build_epoch += 1
 	# Cache freshness is independent from visibility. A manually disabled candidate
 	# may still hold pixels from the previous snapshot, so invalidate every derived
 	# cache before loading new authority. Rebuild only when the user's current
@@ -69,14 +75,22 @@ func _load_snapshot(path: String) -> void:
 
 
 func set_presentation_candidate_enabled(enabled: bool) -> void:
+	var intent_changed := _presentation_candidate_enabled_intent != enabled
 	_presentation_candidate_enabled_intent = enabled
 	if not enabled:
+		# Disabling is also a cancellation boundary. Any capture already awaiting a
+		# frame may finish locally, but its epoch is no longer allowed to publish.
+		if intent_changed or _presentation_candidate_building:
+			_presentation_candidate_build_epoch += 1
+		_presentation_candidate_refresh_pending = false
 		if _presentation_candidate != null:
 			_presentation_candidate.set_candidate_enabled(false)
 		presentation_candidate_active = false
 		presentation_candidate_status = "manual_polygon"
 		return
 	presentation_candidate_requested = true
+	if intent_changed:
+		_presentation_candidate_build_epoch += 1
 	if _presentation_candidate != null:
 		_presentation_candidate.set_candidate_enabled(true)
 		presentation_candidate_active = true
@@ -94,6 +108,10 @@ func presentation_candidate_debug_state() -> Dictionary:
 		"authority_backend_polygon": map_backend_is_polygon,
 		"environment_gate": PRESENTATION_CANDIDATE_ENV,
 		"cache_present": _presentation_candidate_cache != null and not _presentation_candidate_cache.is_empty(),
+		"building": _presentation_candidate_building,
+		"refresh_pending": _presentation_candidate_refresh_pending,
+		"build_epoch": _presentation_candidate_build_epoch,
+		"cancelled_builds": _presentation_candidate_cancelled_builds,
 	}
 	if _presentation_candidate != null:
 		state["candidate"] = _presentation_candidate.debug_state()
@@ -114,9 +132,13 @@ func _activate_presentation_candidate() -> void:
 	if live_root == null:
 		presentation_candidate_status = "refused_missing_polygon_root"
 		return
+	var build_epoch := _presentation_candidate_build_epoch
 	_presentation_candidate_building = true
 	presentation_candidate_status = "building_cache"
 	var cache := await _capture_candidate_static_map(live_root)
+	if not _candidate_build_is_current(build_epoch):
+		_cancel_candidate_build(build_epoch)
+		return
 	if cache == null or cache.is_empty():
 		_presentation_candidate_building = false
 		presentation_candidate_status = "cache_capture_failed"
@@ -154,9 +176,13 @@ func _refresh_presentation_candidate() -> void:
 	if live_root == null:
 		presentation_candidate_status = "refresh_refused_missing_polygon_root"
 		return
+	var build_epoch := _presentation_candidate_build_epoch
 	_presentation_candidate_building = true
 	presentation_candidate_status = "refresh_building_cache"
 	var cache := await _capture_candidate_static_map(live_root)
+	if not _candidate_build_is_current(build_epoch):
+		_cancel_candidate_build(build_epoch)
+		return
 	if cache == null or cache.is_empty():
 		_presentation_candidate_building = false
 		presentation_candidate_status = "refresh_cache_failed"
@@ -176,6 +202,23 @@ func _refresh_presentation_candidate() -> void:
 	presentation_candidate_active = true
 	presentation_candidate_status = "active"
 	_presentation_candidate_building = false
+
+
+func _candidate_build_is_current(build_epoch: int) -> bool:
+	return build_epoch == _presentation_candidate_build_epoch \
+		and presentation_candidate_requested \
+		and _presentation_candidate_enabled_intent
+
+
+func _cancel_candidate_build(_build_epoch: int) -> void:
+	_presentation_candidate_cancelled_builds += 1
+	_presentation_candidate_building = false
+	if not _presentation_candidate_enabled_intent:
+		presentation_candidate_status = "manual_polygon"
+	elif _presentation_candidate_refresh_pending:
+		presentation_candidate_status = "refresh_pending"
+	else:
+		presentation_candidate_status = "cancelled_stale_build"
 
 
 func _discard_presentation_candidate() -> void:
