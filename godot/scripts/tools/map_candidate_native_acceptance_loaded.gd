@@ -7,14 +7,14 @@ extends "res://scripts/tools/map_candidate_native_acceptance.gd"
 ## one real indexed operational formation/order before every authority comparison,
 ## so selected-province/legal-target parity can never pass as empty == empty.
 
-const OPERATIONAL_ACCEPTANCE_SNAPSHOT := "res://fixtures/snapshots/earth3_operational.json"
+const OPERATIONAL_ACCEPTANCE_SNAPSHOT := "res://campaign_snapshot.json"
 
 
 func _initialize() -> void:
-	# Owner runs without an explicit -SnapshotPath must use the committed snapshot
-	# that actually contains operational orders. A caller-supplied --snapshot still
-	# overrides this in the base parser and must itself satisfy the same fail-closed
-	# non-empty order contract.
+	# Direct owner runs without an explicit --snapshot must use the current
+	# production-published campaign snapshot. CI passes its freshly generated
+	# Earth3 bootstrap snapshot explicitly. Either path must satisfy the same
+	# fail-closed non-empty operational formation/order contract.
 	_snapshot_path = OPERATIONAL_ACCEPTANCE_SNAPSHOT
 	super._initialize()
 
@@ -116,22 +116,79 @@ func _same_authority(reference: Dictionary, candidate: Dictionary) -> bool:
 		and candidate.get("operational_order_target_ids", []) == reference.get("operational_order_target_ids", [])
 
 
+func _strategic_formation(snapshot: Dictionary, formation_id: String) -> Dictionary:
+	var formations_value: Variant = snapshot.get("strategic_formations", [])
+	if not formations_value is Array:
+		return {}
+	for formation_value: Variant in formations_value as Array:
+		if not formation_value is Dictionary:
+			continue
+		var formation: Dictionary = formation_value as Dictionary
+		if String(formation.get("id", "")) == formation_id:
+			return formation
+	return {}
+
+
+func _order_route_is_authenticated(scene: Node, row: Dictionary) -> bool:
+	var graph = scene.get("operational_graph")
+	if graph == null or not bool(graph.is_ready):
+		return false
+	var nodes_value: Variant = graph.index.get("nodes", {})
+	var edges_value: Variant = graph.index.get("edges", {})
+	var path_nodes_value: Variant = row.get("path_node_ids", [])
+	var path_edges_value: Variant = row.get("path_edge_ids", [])
+	if not nodes_value is Dictionary or not edges_value is Dictionary:
+		return false
+	if not path_nodes_value is Array or not path_edges_value is Array:
+		return false
+	var path_nodes: Array = path_nodes_value as Array
+	var path_edges: Array = path_edges_value as Array
+	if path_nodes.size() < 2 or path_nodes.size() != path_edges.size() + 1:
+		return false
+	var nodes: Dictionary = nodes_value as Dictionary
+	var edges: Dictionary = edges_value as Dictionary
+	for index in range(path_edges.size()):
+		var left_id := String(path_nodes[index])
+		var right_id := String(path_nodes[index + 1])
+		var edge_id := String(path_edges[index])
+		if not nodes.has(left_id) or not nodes.has(right_id) or not edges.has(edge_id):
+			return false
+		var edge_value: Variant = edges.get(edge_id, null)
+		if not edge_value is Dictionary:
+			return false
+		var edge: Dictionary = edge_value as Dictionary
+		var a := String(edge.get("a", ""))
+		var b := String(edge.get("b", ""))
+		if not ((a == left_id and b == right_id) or (a == right_id and b == left_id)):
+			return false
+	return true
+
+
 func _drive_real_operational_order(scene: Node) -> Dictionary:
 	var by_province_value: Variant = scene.get("order_formations_by_province")
 	var by_formation_value: Variant = scene.get("orders_by_formation")
 	var snapshot_value: Variant = scene.get("snapshot")
+	var provinces_value: Variant = scene.get("provinces_by_id")
 	if not by_province_value is Dictionary or not by_formation_value is Dictionary or not snapshot_value is Dictionary:
 		return {"ok": false, "error": "operational-order indexes unavailable"}
+	if not provinces_value is Dictionary:
+		return {"ok": false, "error": "province index unavailable"}
 	var by_province := by_province_value as Dictionary
 	var by_formation := by_formation_value as Dictionary
 	if by_province.is_empty() or by_formation.is_empty():
 		return {"ok": false, "error": "snapshot contains no indexed operational orders"}
 	var snapshot := snapshot_value as Dictionary
-	var current_faction := String((snapshot.get("campaign", {}) as Dictionary).get("current_faction", ""))
+	var provinces := provinces_value as Dictionary
+	var campaign_value: Variant = snapshot.get("campaign", {})
+	if not campaign_value is Dictionary:
+		return {"ok": false, "error": "campaign metadata unavailable"}
+	var current_faction := String((campaign_value as Dictionary).get("current_faction", ""))
 	var origins: Array = by_province.keys()
 	origins.sort()
 	for origin_value in origins:
 		var origin := String(origin_value)
+		if origin.is_empty() or not provinces.has(origin):
+			continue
 		var holders_value: Variant = by_province.get(origin, [])
 		if not holders_value is Array:
 			continue
@@ -139,20 +196,39 @@ func _drive_real_operational_order(scene: Node) -> Dictionary:
 		holders.sort()
 		for formation_value in holders:
 			var formation_id := String(formation_value)
+			var formation: Dictionary = _strategic_formation(snapshot, formation_id)
+			if formation.is_empty() or String(formation.get("province_id", "")) != origin:
+				continue
+			var formation_faction := String(formation.get("faction", ""))
+			if not current_faction.is_empty() and formation_faction != current_faction:
+				continue
 			var rows_value: Variant = by_formation.get(formation_id, [])
 			if not rows_value is Array or (rows_value as Array).is_empty():
 				continue
-			var rows := rows_value as Array
-			var faction_match := current_faction.is_empty()
+			var rows: Array = rows_value as Array
+			var expected_ids: Array = []
+			var all_rows_authenticated := true
 			for row_value in rows:
 				if not row_value is Dictionary:
-					continue
-				var row_faction := String((row_value as Dictionary).get("faction", ""))
-				if row_faction.is_empty() or row_faction == current_faction:
-					faction_match = true
+					all_rows_authenticated = false
 					break
-			if not faction_match:
+				var row: Dictionary = row_value as Dictionary
+				if String(row.get("formation_id", "")) != formation_id or String(row.get("origin_province_id", "")) != origin:
+					all_rows_authenticated = false
+					break
+				var row_faction := String(row.get("faction", ""))
+				if not row_faction.is_empty() and row_faction != formation_faction:
+					all_rows_authenticated = false
+					break
+				var target := String(row.get("target_province_id", ""))
+				if target.is_empty() or not provinces.has(target) or not _order_route_is_authenticated(scene, row):
+					all_rows_authenticated = false
+					break
+				if not expected_ids.has(target):
+					expected_ids.append(target)
+			if not all_rows_authenticated or expected_ids.is_empty():
 				continue
+			expected_ids.sort()
 			scene.set("selected_province_id", origin)
 			scene.set("selected_strategic_formation_id", formation_id)
 			scene.call("_rebuild_legal_targets")
@@ -164,15 +240,7 @@ func _drive_real_operational_order(scene: Node) -> Dictionary:
 				continue
 			var legal_ids: Array = (legal_value as Dictionary).keys()
 			legal_ids.sort()
-			var expected_ids: Array = []
-			for row_value in rows:
-				if not row_value is Dictionary:
-					continue
-				var target := String((row_value as Dictionary).get("target_province_id", ""))
-				if not target.is_empty() and not expected_ids.has(target):
-					expected_ids.append(target)
-			expected_ids.sort()
-			if expected_ids.is_empty() or legal_ids != expected_ids:
+			if legal_ids != expected_ids:
 				continue
 			return {
 				"ok": true,
@@ -180,4 +248,4 @@ func _drive_real_operational_order(scene: Node) -> Dictionary:
 				"formation_id": formation_id,
 				"expected_legal_target_ids": expected_ids,
 			}
-	return {"ok": false, "error": "no real operational formation produced a non-empty exact legal-target set"}
+	return {"ok": false, "error": "no authenticated operational formation produced a non-empty exact legal-target set"}

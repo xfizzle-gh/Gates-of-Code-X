@@ -18,7 +18,10 @@ if (-not (Test-Path -LiteralPath $GodotPath -PathType Leaf)) {
 }
 
 if ([string]::IsNullOrWhiteSpace($SnapshotPath)) {
-    $SnapshotPath = Join-Path $godotProject 'fixtures\snapshots\earth3_operational.json'
+    $SnapshotPath = Join-Path $godotProject 'campaign_snapshot.json'
+    if (-not (Test-Path -LiteralPath $SnapshotPath -PathType Leaf)) {
+        throw "No current production campaign snapshot found at $SnapshotPath. Launch/create an Earth3 campaign first, or pass -SnapshotPath pointing to a current campaign_snapshot.json. The retired fixtures\snapshots\earth3_operational.json baseline has no runtime operational orders and is not valid for this acceptance gate."
+    }
 }
 $SnapshotPath = (Resolve-Path -LiteralPath $SnapshotPath).Path
 
@@ -38,7 +41,7 @@ Write-Host "  Snapshot: $SnapshotPath"
 Write-Host "  Output:   $outDir"
 Write-Host ""
 Write-Host "This run gathers evidence only. It cannot authorize the production renderer switch."
-Write-Host "The snapshot must contain a real operational order with a non-empty legal-target set."
+Write-Host "The snapshot must contain a real strategic formation and authenticated operational order with a non-empty legal-target set."
 
 & $GodotPath `
     --path $godotProject `
