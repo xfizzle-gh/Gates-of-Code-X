@@ -10,8 +10,6 @@ param(
 
     [string]$OutputDirectory = "issue212-native-acceptance",
 
-    [switch]$SkipPerformancePreflight,
-
     [double]$ColdStartupMaxSeconds = 15.0,
     [double]$WarmStartupMaxSeconds = 5.0,
     [double]$OrderMaxSeconds = 3.0,
@@ -40,9 +38,10 @@ $SnapshotPath = (Resolve-Path -LiteralPath $SnapshotPath).Path
 if ([string]::IsNullOrWhiteSpace($CampaignPath)) {
     $CampaignPath = Join-Path (Split-Path -Parent $SnapshotPath) 'campaign.json'
 }
-if (-not $SkipPerformancePreflight -and -not (Test-Path -LiteralPath $CampaignPath -PathType Leaf)) {
-    throw "Performance preflight requires the authoritative campaign beside the snapshot, or an explicit -CampaignPath: $CampaignPath"
+if (-not (Test-Path -LiteralPath $CampaignPath -PathType Leaf)) {
+    throw "Owner-native acceptance requires the authoritative campaign beside the snapshot, or an explicit -CampaignPath: $CampaignPath"
 }
+$CampaignPath = (Resolve-Path -LiteralPath $CampaignPath).Path
 
 if ([System.IO.Path]::IsPathRooted($OutputDirectory)) {
     $outDir = $OutputDirectory
@@ -54,34 +53,30 @@ $screensDir = Join-Path $outDir 'screens'
 [System.IO.Directory]::CreateDirectory($screensDir) | Out-Null
 $jsonPath = Join-Path $outDir 'issue212-native-acceptance.json'
 
-if (-not $SkipPerformancePreflight) {
-    $preflight = Join-Path $PSScriptRoot 'run_owner_readiness_preflight.ps1'
-    if (-not (Test-Path -LiteralPath $preflight -PathType Leaf)) {
-        throw "Owner-readiness performance preflight script missing: $preflight"
-    }
-    if ([string]::IsNullOrWhiteSpace($PlayerExecutable)) {
-        $PlayerExecutable = Join-Path $repo 'dist\GatesOfCodeX.exe'
-    }
-    Write-Host "Running mandatory owner-readiness performance preflight before visual acceptance..."
-    & $preflight `
-        -GodotPath $GodotPath `
-        -SnapshotPath $SnapshotPath `
-        -CampaignPath $CampaignPath `
-        -PlayerExecutable $PlayerExecutable `
-        -OutputDirectory (Join-Path $outDir 'performance-preflight') `
-        -ColdStartupMaxSeconds $ColdStartupMaxSeconds `
-        -WarmStartupMaxSeconds $WarmStartupMaxSeconds `
-        -OrderMaxSeconds $OrderMaxSeconds `
-        -EndTurnTargetSeconds $EndTurnTargetSeconds `
-        -EndTurnHardMaxSeconds $EndTurnHardMaxSeconds
-    if ($LASTEXITCODE -ne 0) {
-        throw "Owner-readiness performance preflight failed with exit code $LASTEXITCODE"
-    }
-    Write-Host "Performance preflight passed. Continuing to #212 visual/presentation acceptance."
-    Write-Host ""
-} else {
-    Write-Warning "Performance preflight explicitly skipped. This run must not be treated as owner performance acceptance."
+$preflight = Join-Path $PSScriptRoot 'run_owner_readiness_preflight.ps1'
+if (-not (Test-Path -LiteralPath $preflight -PathType Leaf)) {
+    throw "Owner-readiness performance preflight script missing: $preflight"
 }
+if ([string]::IsNullOrWhiteSpace($PlayerExecutable)) {
+    $PlayerExecutable = Join-Path $repo 'dist\GatesOfCodeX.exe'
+}
+Write-Host "Running mandatory owner-readiness performance preflight before visual acceptance..."
+& $preflight `
+    -GodotPath $GodotPath `
+    -SnapshotPath $SnapshotPath `
+    -CampaignPath $CampaignPath `
+    -PlayerExecutable $PlayerExecutable `
+    -OutputDirectory (Join-Path $outDir 'performance-preflight') `
+    -ColdStartupMaxSeconds $ColdStartupMaxSeconds `
+    -WarmStartupMaxSeconds $WarmStartupMaxSeconds `
+    -OrderMaxSeconds $OrderMaxSeconds `
+    -EndTurnTargetSeconds $EndTurnTargetSeconds `
+    -EndTurnHardMaxSeconds $EndTurnHardMaxSeconds
+if ($LASTEXITCODE -ne 0) {
+    throw "Owner-readiness performance preflight failed with exit code $LASTEXITCODE"
+}
+Write-Host "Performance preflight passed. Continuing to #212 visual/presentation acceptance."
+Write-Host ""
 
 Write-Host "Issue #212 native acceptance"
 Write-Host "  Godot:    $GodotPath"
