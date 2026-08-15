@@ -3,6 +3,9 @@ name: Issue 212 Windows owner-preflight smoke
 on:
   pull_request:
     paths:
+      - "run_gates_of_codex.py"
+      - "src/gates_of_codex/startup_backend_spawn_identity.py"
+      - "tests/test_issue_212_packaged_backend_spawn_identity.py"
       - "tools/run_owner_readiness_preflight.ps1"
       - "tools/run_issue212_native_acceptance.ps1"
       - ".github/workflows/issue-212-owner-preflight-windows.yml"
@@ -44,6 +47,8 @@ jobs:
       - name: Assert installed provenance
         shell: pwsh
         run: python -c 'import sys; from gates_of_codex.packaging import package_identity; assert package_identity().source_commit == sys.argv[1]' '${{ steps.provenance.outputs.commit }}'
+      - name: Run frozen-spawn identity regression
+        run: python -m unittest tests.test_issue_212_packaged_backend_spawn_identity -v
       - name: Generate isolated production Earth3 campaign
         shell: pwsh
         run: |
