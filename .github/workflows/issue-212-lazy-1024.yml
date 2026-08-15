@@ -1,0 +1,185 @@
+name: Issue 212 lazy 1024 residency
+
+on:
+  pull_request:
+    paths:
+      - "godot/scripts/tools/map_raster_lazy_1024_profiler.gd"
+      - ".github/workflows/issue-212-lazy-1024.yml"
+      - "docs/research/noresus-map-performance/raster-residency-comparison.json"
+      - "docs/research/noresus-map-performance/rendering-comparison.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: issue-212-lazy-1024-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lazy-1024-residency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system deps
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1 libxcursor1 libxinerama1 libxrandr2 libxi6 libx11-6
+      - name: Install Godot 4.7
+        run: |
+          set -euo pipefail
+          GODOT_VERSION=4.7-stable
+          curl -fsSL -o godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip
+          GODOT_BIN="$(find . -maxdepth 1 -type f -name 'Godot_v*_linux.x86_64' | head -n 1)"
+          install -m 755 "$GODOT_BIN" "$HOME/godot"
+          "$HOME/godot" --version
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Stamp package provenance
+        id: provenance
+        shell: pwsh
+        run: |
+          $stamp = & .\tools\stamp_package_provenance.ps1
+          "commit=$($stamp.Commit)" >> $env:GITHUB_OUTPUT
+      - name: Install Python package
+        run: python -m pip install -e ".[earth3]"
+      - name: Assert installed provenance
+        shell: pwsh
+        run: python -c 'import sys; from gates_of_codex.packaging import package_identity; assert package_identity().source_commit == sys.argv[1]' '${{ steps.provenance.outputs.commit }}'
+      - name: Generate real Earth3 legal-target snapshot through production player shell
+        run: |
+          set -euo pipefail
+          mkdir -p godot/generated
+          python - <<'PY'
+          import json
+          import os
+          import shutil
+          import sys
+          from pathlib import Path
+
+          sys.path.insert(0, "tests")
+          from test_p2_earth3_campaign_bootstrap import _resolved_catalog
+          from gates_of_codex.player_shell import build_play_parser, run_play
+
+          root = Path(os.environ["RUNNER_TEMP"]) / "issue212-lazy-real-order-campaign"
+          environ = dict(os.environ)
+          environ["GATES_OF_CODEX_HOME"] = str(root / "home")
+          args = build_play_parser().parse_args([
+              "--new",
+              "--campaign",
+              str(root / "home" / "campaigns" / "earth3_v1"),
+              "--no-launch",
+          ])
+          result = run_play(args, environ=environ, resolved_catalog=_resolved_catalog())
+          assert result.map_id == "earth3_europe_mediterranean", result.map_id
+          source = Path(result.snapshot_path)
+          snapshot = json.loads(source.read_text(encoding="utf-8"))
+          orders = snapshot.get("operational_orders", [])
+          complete = [
+              row for row in orders
+              if isinstance(row, dict)
+              and row.get("formation_id")
+              and row.get("origin_province_id")
+              and row.get("target_province_id")
+          ]
+          assert complete, "production player snapshot has no complete operational order"
+          target = Path("godot/generated/issue212_lazy_real_order_snapshot.json")
+          shutil.copyfile(source, target)
+          print("ISSUE212_LAZY_REAL_ORDERS", json.dumps({
+              "operational_order_count": len(orders),
+              "complete_order_count": len(complete),
+              "target": str(target),
+          }, sort_keys=True))
+          PY
+      - name: Import Godot project
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --import --quit-after 1
+      - name: Measure lazy 1024 residency
+        run: |
+          set -euo pipefail
+          ROOT="$(pwd)/docs/research/noresus-map-performance"
+          OUT="$ROOT/raster-residency-ci.json"
+          SCREENS="$ROOT/lazy-1024-screens"
+          mkdir -p "$SCREENS"
+          log="$(mktemp)"
+          set +e
+          xvfb-run -a -s "-screen 0 1920x1080x24" \
+            "$HOME/godot" --path godot --audio-driver Dummy \
+            -s res://scripts/tools/map_raster_lazy_1024_profiler.gd -- \
+            --snapshot=res://fixtures/snapshots/earth3_operational.json \
+            --legal-snapshot=res://generated/issue212_lazy_real_order_snapshot.json \
+            --fixture=res://fixtures/presentation/e3_operational.json \
+            --manifest=res://assets/maps/earth3_europe_mediterranean/map_manifest.json \
+            --width=1920 --height=1080 --frames=24 --out="$OUT" --screens-dir="$SCREENS" 2>&1 | tee "$log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' "$log"; then exit 1; fi
+          if ! grep -q 'map_raster_lazy_1024_profiler: PASS' "$log"; then exit 1; fi
+          exit "$code"
+      - name: Validate lazy residency evidence
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("docs/research/noresus-map-performance")
+          data = json.loads((root / "raster-residency-ci.json").read_text(encoding="utf-8"))
+          assert data.get("ok") is True, data
+          assert data.get("issue") == 212 and data.get("phase") == "B2-debug-shadow-lazy-residency", data
+          assert int(data.get("frames_per_sample", 0)) >= 24, data
+          cache = data.get("cache", {})
+          assert cache.get("tile_size_px") == 1024, cache
+          assert int(cache.get("total_tiles", 0)) > 0, cache
+          assert cache.get("persistent") is False and cache.get("campaign_authority") is False, cache
+          authority = data.get("authority", {})
+          assert authority.get("unchanged") is True, authority
+          assert authority.get("polygon_backend_remains_live") is True, authority
+          assert authority.get("lazy_cache_is_presentation_only") is True, authority
+          legal = data.get("real_legal_target_parity", {})
+          assert legal.get("ok") is True and legal.get("exact_identity") is True, legal
+          assert int(legal.get("legal_target_count", 0)) > 0, legal
+          scenarios = data.get("scenarios", {})
+          for scenario in ["idle_full_theatre", "continuous_pan", "continuous_zoom"]:
+              row = scenarios.get(scenario, {})
+              control = row.get("all_resident_1024", {})
+              lazy = row.get("lazy_1024", {})
+              assert control.get("ok") is True, (scenario, control)
+              assert lazy.get("ok") is True, (scenario, lazy)
+              drift = lazy.get("baseline_drift", {})
+              assert int(drift.get("draw_calls_p50_abs", 1)) == 0, (scenario, drift)
+              assert int(drift.get("primitives_p50_abs", 1)) == 0, (scenario, drift)
+              assert float(drift.get("frame_ms_p50_ratio", 1.0)) <= 0.15, (scenario, drift)
+              assert float(drift.get("frame_ms_p95_ratio", 1.0)) <= 0.15, (scenario, drift)
+              metrics = lazy.get("lazy", {})
+              resident = metrics.get("resident_tiles", {})
+              assert int(resident.get("p50", 0)) > 0, (scenario, metrics)
+          zoom = scenarios["continuous_zoom"]["lazy_1024"]["lazy"]
+          assert int(zoom["resident_tiles"]["p50"]) < int(cache["total_tiles"]), zoom
+          shot = root / "lazy-1024-screens" / "lazy_1024.png"
+          assert shot.exists() and shot.stat().st_size > 0, shot
+          print("ISSUE212_LAZY_1024_VALIDATED", json.dumps({
+              "total_tiles": cache["total_tiles"],
+              "zoom_resident_p50": zoom["resident_tiles"]["p50"],
+              "legal_target_count": legal["legal_target_count"],
+          }, sort_keys=True))
+          PY
+      - name: Cleanup package provenance
+        if: always()
+        shell: pwsh
+        run: Remove-Item -LiteralPath src\gates_of_codex\SOURCE_COMMIT -Force -ErrorAction SilentlyContinue
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: issue-212-lazy-1024-residency
+          path: |
+            docs/research/noresus-map-performance/raster-residency-ci.json
+            docs/research/noresus-map-performance/lazy-1024-screens/*.png
+          if-no-files-found: error
