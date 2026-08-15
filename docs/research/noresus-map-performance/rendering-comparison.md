@@ -22,7 +22,7 @@ Independent review `4942009996` correctly required a local reversible control fo
 
 ## Corrected bracketed experiment
 
-PR #239 now uses this schedule for every presentation category:
+PR #239 uses this schedule for every presentation category:
 
 `baseline_before -> layer_disabled -> baseline_after`
 
@@ -84,21 +84,94 @@ The ocean result remains disproportionate to its two reported primitives, so it 
 
 ## Phase A decision
 
-Phase A now supports proceeding to #212 Phase B as a **debug-only presentation experiment**, not a production switch.
+Phase A supports #212 Phase B as a **debug-only presentation experiment**, not a production switch.
 
-The next experiment should compare:
+The required experiment compares:
 
 1. one full cached-theatre static presentation layer set;
 2. 512/1024 tiled cached presentation with viewport culling.
 
-The goal is to remove repeated static land/border presentation work while retaining the current Earth3 polygon/topology/stable-ID data as the sole simulation, validation and picking authority. The existing polygon path must remain available in parallel for parity checks.
+The goal is to remove repeated static land/border presentation work while retaining the current Earth3 polygon/topology/stable-ID data as the sole simulation, validation and picking authority. The existing polygon path remains available in parallel for parity checks.
 
 Required parity remains unchanged: same stable province IDs, owner colors, water non-selection, selection/legal-target identity, operational coordinates, and campaign/map authority bytes.
 
 Phase C icon-atlas work still matters for draw-call reduction, but the corrected Phase A evidence does not show sparse counters/labels/sites/routes dominating wall-frame cost on this fixture.
 
+## Phase B: full-cache vs 512/1024 tiled shadow
+
+PR #241 runs the Phase B presentation spike without modifying a production renderer. The static cache is generated from an isolated duplicate of the live `Earth3PolygonRoot` at 2x map resolution. The authoritative `PolygonMap` remains loaded for picking, stable IDs, water policy, owner state, selection/legal-target identity, and operational anchors. Sparse/dynamic overlays remain live and are not baked into the cache.
+
+Measurement provenance:
+
+- measurement head: `b4d4235706f50181a8e39bfa836baba149991d1b`;
+- focused workflow run: `31857224351`;
+- bracketed matrix artifact: `9239454644`, SHA-256 `03157171c231ab45f441651114e308056cf76ecf22963016134d5ec39e83b8a9`;
+- separate full-theatre checkpoint artifact: `9239419580`;
+- Godot 4.7 stable, Ubuntu/Xvfb/OpenGL Compatibility/Mesa llvmpipe;
+- 1920x1080;
+- 8 measured frames per matrix sample;
+- exact 3,514-province Earth3 authority.
+
+The controlled matrix uses a fresh scene for every sample and brackets each cache-mode/scenario measurement as:
+
+`polygon_before -> cache_mode -> polygon_after`
+
+The local polygon baseline is the midpoint of the two surrounding polygon samples. Every bracket passed the 15% p50/p95 drift rejection gate, and surrounding baseline draw-call and primitive counts matched exactly.
+
+### Phase B matrix
+
+Positive improvement means the cache mode was faster than its local polygon baseline.
+
+| Scenario | Mode | Polygon p50 | Cache p50 | Improvement | Cache draws p50 | Cache primitives p50 | Visible tiles p50 |
+|---|---|---:|---:|---:|---:|---:|---:|
+| Idle full theatre | Full cache | 220.869 ms | **85.974 ms** | **134.895 ms / 61.1%** | 200 | 6,082 | 1 |
+| Idle full theatre | 1024 tiles | 216.265 ms | **91.196 ms** | **125.069 ms / 57.8%** | 262 | 6,206 | 63 |
+| Idle full theatre | 512 tiles | 218.086 ms | 98.759 ms | 119.327 ms / 54.7% | 437 | 6,556 | 238 |
+| Continuous pan | Full cache | 220.633 ms | **83.645 ms** | **136.988 ms / 62.1%** | 200 | 6,082 | 1 |
+| Continuous pan | 1024 tiles | 214.658 ms | **88.825 ms** | **125.833 ms / 58.6%** | 262 | 6,206 | 63 |
+| Continuous pan | 512 tiles | 217.577 ms | 95.380 ms | 122.197 ms / 56.2% | 420 | 6,522 | 221 |
+| Continuous zoom | Full cache | 259.821 ms | **89.616 ms** | **170.205 ms / 65.5%** | 202 | 6,148 | 1 |
+| Continuous zoom | 1024 tiles | 257.301 ms | **90.170 ms** | **167.131 ms / 65.0%** | 229 | 6,206 | 28 |
+| Continuous zoom | 512 tiles | 257.107 ms | 95.304 ms | 161.803 ms / 62.9% | 285 | 6,314 | 84 |
+
+The controlled result confirms the Phase A direction. Replacing repeated static polygon presentation reduces roughly 450k primitives in every cache mode and materially lowers llvmpipe wall-frame time in idle, pan, and zoom probes.
+
+### Authority and visual parity
+
+The matrix preserved all tested authority contracts:
+
+- manifest, polygon-dataset, and snapshot-fixture hashes were byte-identical before and after the run;
+- deterministic stable-ID picking matched for the five authority probes;
+- water probe `e3_3188` remained non-selectable;
+- selected province remained `e3_2108`;
+- legal-target identity remained unchanged;
+- sampled operational anchor coordinates were unchanged;
+- an owner refresh on `e3_0000` changed authoritative owner state from NATO to RUSA and changed the regenerated cache pixel at that province.
+
+The artifact contains same-camera screenshots for polygon, full-cache, 512, and 1024 modes. Visual inspection found no visible tile seams, offset, stretching, duplicated static presentation, or dynamic-overlay misalignment. Direct full-cache vs 1024 screenshot comparison differs at only about 0.0082% of pixels at all; the largest channel delta is 9/255. The 512/1024 pair differs at about 0.0051% of pixels, with maximum channel delta 4/255.
+
+### Memory and residency finding
+
+The 2x cache is 8,612 x 6,898 RGBA8, or about **226.6 MiB raw**. In this spike the polygon baseline records about 66.0 MiB video memory, while all three shadow modes record about 368.2 MiB: roughly **+302 MiB**.
+
+This matters because the current tiled spike creates every tile texture up front. Viewport culling reduces submitted tiles at zoom, but it does **not** reduce resident cache memory. At full-theatre view all 63 1024px tiles and all 238 512px tiles are visible. During the zoom probe, p50 visible tiles fall to 28 for 1024 and 84 for 512.
+
+Therefore the current cache representation is a performance proof, not a production memory design.
+
+## Phase B decision
+
+Proceed with **1024px map-space tiles** for the next production-oriented experiment, with lazy tile materialization/streaming and viewport culling. Do not promote the current all-resident spike into production.
+
+Rationale:
+
+- one full texture is fastest in CI, but it concentrates the entire 8,612 x 6,898 cache into one large ~226.6 MiB raw presentation image and offers no residency partitioning;
+- 512 tiles add excessive draw-call pressure at wide view: 437 p50 draws versus 262 for 1024 and 200 for the full cache, while also being slower in every measured scenario;
+- 1024 tiles retain most of the raster speedup, have materially lower draw-call overhead than 512, and supply the partition boundary required to load/retain only visible or near-visible tiles later.
+
+The next implementation must keep polygons authoritative and should prove that lazy 1024 residency materially reduces video memory without losing the frame-time gain. Only after that, plus owner-native profiling and independent visual/interaction review, should a production renderer switch be considered.
+
 ## Native-performance caveat
 
-All absolute frame times above are Mesa llvmpipe measurements and are not owner-native acceptance targets. The bracketed A/B deltas are valid CI experimental evidence. Any claim that Phase B materially improves production performance still requires identical-camera testing on the owner/native machine with debug disabled.
+All absolute frame times above are Mesa llvmpipe measurements and are not owner-native acceptance targets. The bracketed A/B deltas are valid CI experimental evidence. Any claim that a raster/tiled implementation materially improves production performance still requires identical-camera testing on the owner/native machine with debug disabled.
 
-No Phase A measurement changes polygon geometry, topology, stable IDs, water policy, campaign state, backend command architecture, or production rendering behavior.
+No Phase A or Phase B measurement changes polygon geometry, topology, stable IDs, water policy, campaign state, backend command architecture, or production rendering behavior.
