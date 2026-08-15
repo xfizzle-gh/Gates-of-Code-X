@@ -1,22 +1,46 @@
 from __future__ import annotations
 
-"""Command-scoped Earth3 P2 authority reuse for the #207 hot path.
+"""Authenticated Earth3 P1/P2 authority reuse for the #207/#212 hot path.
 
-A production Earth3 validation currently reaches ``load_earth3_bootstrap`` more
-than once while validating the same atomic command. Every top-level command must
-still authenticate the immutable P2 bundle fail-closed, but repeating the same
-fixed-file capture inside that command adds no new authority. This layer keeps
-one detached authenticated bundle per authority root for the duration of exactly
-one measured frontend command, then restores the loader and drops the cache.
+The immutable P1/P2 authority must remain fail-closed at every command boundary.
+The expensive part is not proving which bytes are present; it is reparsing those
+same approved bytes into the same semantic authority and walking the 3.5k-
+province geometry contract repeatedly.
 
-The cache is deliberately not process- or daemon-scoped. The next command reads
-and authenticates the fixed P2 files again, so external changes are observed at
-the same command boundary used by the existing command-scoped P3 graph cache.
+This module therefore has two deliberately separate cache layers:
+
+* process-scoped semantic caches are keyed by the exact raw identities captured
+  through the existing canonical/symlink/TOCTOU-safe authority readers. Every
+  lookup still re-reads and hashes the fixed files. A changed byte produces a new
+  key and forces the original full semantic loader, which retains all rejection
+  conditions. Cached values are detached before return and the caches are small.
+* command-scoped P2 reuse keeps the existing optimization: after the first exact
+  authentication in one atomic frontend command, nested validators receive
+  detached copies without re-reading the same fixed bundle again.
+
+The daemon's normal authenticated campaign load occurs after these wrappers are
+installed, so it warms the semantic caches without adding a new trust path. A
+one-shot/source command that installs the same seam receives identical behavior.
 """
 
 import copy
+import hashlib
+from collections import OrderedDict
 from pathlib import Path
+from threading import RLock
 from typing import Any, Callable
+
+
+_PROCESS_CACHE_MAX = 4
+_PROCESS_CACHE_LOCK = RLock()
+_P1_SEMANTIC_CACHE: OrderedDict[tuple[Any, ...], Any] = OrderedDict()
+_P2_SEMANTIC_CACHE: OrderedDict[tuple[Any, ...], Any] = OrderedDict()
+_PROCESS_STATS = {
+    "p1_semantic_loads": 0,
+    "p1_semantic_hits": 0,
+    "p2_semantic_loads": 0,
+    "p2_semantic_hits": 0,
+}
 
 
 def _authority_key(authority_root: str | Path | None) -> str:
@@ -25,10 +49,199 @@ def _authority_key(authority_root: str | Path | None) -> str:
     return str(Path(authority_root).expanduser().resolve(strict=False))
 
 
+def _cache_get(cache: OrderedDict[tuple[Any, ...], Any], key: tuple[Any, ...]) -> Any | None:
+    with _PROCESS_CACHE_LOCK:
+        value = cache.get(key)
+        if value is None:
+            return None
+        cache.move_to_end(key)
+        return copy.deepcopy(value)
+
+
+def _cache_put(cache: OrderedDict[tuple[Any, ...], Any], key: tuple[Any, ...], value: Any) -> None:
+    with _PROCESS_CACHE_LOCK:
+        cache[key] = copy.deepcopy(value)
+        cache.move_to_end(key)
+        while len(cache) > _PROCESS_CACHE_MAX:
+            cache.popitem(last=False)
+
+
+def _process_stats_snapshot() -> dict[str, int]:
+    with _PROCESS_CACHE_LOCK:
+        return {key: int(value) for key, value in _PROCESS_STATS.items()}
+
+
+def _increment_stat(name: str) -> None:
+    with _PROCESS_CACHE_LOCK:
+        _PROCESS_STATS[name] = int(_PROCESS_STATS.get(name, 0)) + 1
+
+
+def _clear_process_semantic_caches_for_tests() -> None:
+    """Test-only reset. Runtime callers should never clear authenticated reuse."""
+
+    with _PROCESS_CACHE_LOCK:
+        _P1_SEMANTIC_CACHE.clear()
+        _P2_SEMANTIC_CACHE.clear()
+        for key in _PROCESS_STATS:
+            _PROCESS_STATS[key] = 0
+
+
+def _capture_p1_identity(authority_root: str | Path | None) -> tuple[Any, ...]:
+    """Re-authenticate exact fixed P1 bytes without skipping path safety."""
+
+    from . import earth3_campaign as p1
+
+    requested_root = Path(authority_root) if authority_root is not None else p1._default_authority_root()
+    root = p1._canonical_authority_root(requested_root)
+    manifest = p1._read_fixed_authority_json(root, p1.EARTH3_MANIFEST_PATH, "Earth3 manifest")
+    dataset = p1._read_fixed_authority_json(root, p1.EARTH3_DATASET_PATH, "Earth3 production dataset")
+    metadata = p1._read_fixed_authority_json(root, p1.EARTH3_METADATA_PATH, "Earth3 dataset metadata")
+    production = p1._read_fixed_authority_json(
+        root,
+        p1.EARTH3_PRODUCTION_AUTHORITY_PATH,
+        "Earth3 production authority",
+    )
+
+    # Keep the exact byte pins that gate the production geometry before a cache
+    # lookup. Metadata/production are keyed by their current raw SHA; any change
+    # therefore misses and executes the original semantic validator below.
+    if manifest.raw_sha256 != p1.APPROVED_MANIFEST_SHA256:
+        raise p1.Earth3AuthorityError(
+            "Earth3 manifest SHA-256 mismatch: "
+            f"expected {p1.APPROVED_MANIFEST_SHA256}, got {manifest.raw_sha256}"
+        )
+    if dataset.raw_sha256 != p1.APPROVED_DATASET_RAW_SHA256:
+        raise p1.Earth3AuthorityError(
+            "Earth3 production dataset bytes/SHA-256 mismatch: "
+            f"expected raw digest {p1.APPROVED_DATASET_RAW_SHA256}, got {dataset.raw_sha256}"
+        )
+    if dataset.raw_bytes[-1:] != b"\n":
+        raise p1.Earth3AuthorityError(
+            "Earth3 production dataset bytes/SHA-256 mismatch: expected one terminal LF"
+        )
+    embedded = hashlib.sha256(dataset.raw_bytes[:-1]).hexdigest()
+    if embedded != p1.APPROVED_EMBEDDED_DATASET_SHA256:
+        raise p1.Earth3AuthorityError(
+            "Earth3 production dataset bytes/SHA-256 mismatch: "
+            f"expected embedded digest {p1.APPROVED_EMBEDDED_DATASET_SHA256}, got {embedded}"
+        )
+    if (
+        manifest.raw_sha256,
+        dataset.raw_sha256,
+        embedded,
+    ) not in p1._APPROVED_EXACT_BYTE_IDENTITIES:
+        raise p1.Earth3AuthorityError(
+            "Earth3 owner provenance is not an accepted exact-byte contract"
+        )
+    return (
+        str(root),
+        manifest.raw_sha256,
+        dataset.raw_sha256,
+        embedded,
+        metadata.raw_sha256,
+        production.raw_sha256,
+    )
+
+
+def _capture_p2_identity(
+    authority_root: str | Path | None,
+    *,
+    authenticated_p1: Any,
+) -> tuple[Any, ...]:
+    """Re-authenticate every fixed P2 file and bind it to current P1 authority."""
+
+    from . import earth3_bootstrap as p2
+
+    root = p2._canonical_data_root(p2._bootstrap_data_root())
+    try:
+        present = sorted(path.name for path in root.iterdir())
+    except OSError as exc:
+        raise p2.Earth3BootstrapError("Earth3 P2 data directory cannot be enumerated") from exc
+    if present != list(p2._FIXED_FILES):
+        raise p2.Earth3BootstrapError(
+            f"unexpected bootstrap file set: expected={list(p2._FIXED_FILES)} got={present}"
+        )
+    raw_hashes: list[tuple[str, str]] = []
+    for filename in p2._FIXED_FILES:
+        captured = p2._read_fixed_bootstrap_json(root, filename)
+        expected = p2._APPROVED_RAW_FILE_SHA256.get(filename)
+        if expected is None:
+            raise p2.Earth3BootstrapError("P2 approved raw-file contract is incomplete")
+        if captured.raw_sha256 != expected:
+            raise p2.Earth3BootstrapError(
+                f"{filename} raw SHA-256 mismatch: expected {expected}, got {captured.raw_sha256}"
+            )
+        raw_hashes.append((filename, captured.raw_sha256))
+    if set(p2._APPROVED_RAW_FILE_SHA256) != set(p2._FIXED_FILES):
+        raise p2.Earth3BootstrapError("P2 approved raw-file contract is incomplete")
+
+    # load_earth3_authority has already re-authenticated the P1 bytes for this
+    # lookup. Bind semantic P2 reuse to the validated P1 identity it returned.
+    p1_identity = (
+        str(authenticated_p1.root),
+        authenticated_p1.manifest_sha256,
+        authenticated_p1.dataset_sha256,
+        authenticated_p1.embedded_dataset_sha256,
+        authenticated_p1.geometry_sha256,
+        authenticated_p1.production_asset_version,
+        authenticated_p1.topology_edge_count,
+        authenticated_p1.included_ids_sha256,
+    )
+    return (str(root), _authority_key(authority_root), tuple(raw_hashes), p1_identity)
+
+
+def _install_process_semantic_authority_cache() -> None:
+    """Install exact-byte authenticated semantic caches once per process."""
+
+    from . import earth3_bootstrap as p2
+    from . import earth3_campaign as p1
+
+    current_p1 = p1.load_earth3_authority
+    current_p2 = p2.load_earth3_bootstrap
+    if bool(getattr(current_p1, "_goc_authenticated_semantic_cache", False)) and bool(
+        getattr(current_p2, "_goc_authenticated_semantic_cache", False)
+    ):
+        return
+
+    original_p1 = current_p1
+    original_p2 = current_p2
+
+    def authenticated_cached_p1(authority_root=None):
+        key = _capture_p1_identity(authority_root)
+        cached = _cache_get(_P1_SEMANTIC_CACHE, key)
+        if cached is not None:
+            _increment_stat("p1_semantic_hits")
+            return cached
+        value = original_p1(authority_root)
+        _increment_stat("p1_semantic_loads")
+        _cache_put(_P1_SEMANTIC_CACHE, key, value)
+        return value
+
+    def authenticated_cached_p2(*, authority_root=None):
+        # P1 authentication is part of the P2 semantic contract. It is performed
+        # before a P2 cache lookup so a changed/tampered P1 file can never be
+        # masked by unchanged P2 bytes.
+        authenticated_p1 = p1.load_earth3_authority(authority_root)
+        key = _capture_p2_identity(authority_root, authenticated_p1=authenticated_p1)
+        cached = _cache_get(_P2_SEMANTIC_CACHE, key)
+        if cached is not None:
+            _increment_stat("p2_semantic_hits")
+            return cached
+        value = original_p2(authority_root=authority_root)
+        _increment_stat("p2_semantic_loads")
+        _cache_put(_P2_SEMANTIC_CACHE, key, value)
+        return value
+
+    authenticated_cached_p1._goc_authenticated_semantic_cache = True  # type: ignore[attr-defined]
+    authenticated_cached_p2._goc_authenticated_semantic_cache = True  # type: ignore[attr-defined]
+    p1.load_earth3_authority = authenticated_cached_p1
+    p2.load_earth3_bootstrap = authenticated_cached_p2
+
+
 def _run_with_command_scoped_p2_auth(
     action: Callable[[], Any],
 ) -> tuple[Any, dict[str, int]]:
-    """Run ``action`` with one authenticated P2 bundle snapshot per root."""
+    """Run ``action`` with one exactly-authenticated P2 snapshot per root."""
 
     from . import earth3_bootstrap
 
@@ -43,11 +256,11 @@ def _run_with_command_scoped_p2_auth(
             stats["hits"] += 1
             return copy.deepcopy(cached)
 
+        # original_loader is the installed process cache. Its first call for this
+        # atomic command re-authenticates the fixed bytes; only later nested calls
+        # avoid duplicate capture.
         bundle = original_loader(authority_root=authority_root)
         stats["loads"] += 1
-        # Never let a caller mutate the reusable instance. The first caller keeps
-        # the original authenticated bundle; later callers receive detached copies
-        # of this pristine snapshot.
         cache[key] = copy.deepcopy(bundle)
         return bundle
 
@@ -61,30 +274,35 @@ def _run_with_command_scoped_p2_auth(
 
 
 def install_command_scoped_p2_auth() -> None:
-    """Wrap the measured frontend command seam once for source and frozen paths."""
+    """Install authority reuse and wrap the measured command seam exactly once."""
 
     from . import command_cycle_perf as perf
     from . import frontend_commands as commands
+
+    _install_process_semantic_authority_cache()
 
     current = perf.measured_apply_frontend_commands
     if bool(getattr(current, "_goc_issue_207_p2_auth_cache", False)):
         return
 
     def measured_with_p2_auth_cache(*args, **kwargs):
+        process_before = _process_stats_snapshot()
         report, stats = _run_with_command_scoped_p2_auth(
             lambda: current(*args, **kwargs)
         )
+        process_after = _process_stats_snapshot()
         if isinstance(report, dict):
             timings = report.get("timings")
             if isinstance(timings, dict):
-                # Diagnostic-only counters. Keep the stable public timing key
-                # contract unchanged, matching the P3 auth counters.
+                # Diagnostic counters are intentionally explicit about semantic
+                # reuse. Raw fixed-file authentication still occurs before each
+                # process-cache hit and is not represented as a cache hit here.
                 timings["p2_auth_loads"] = int(stats["loads"])
                 timings["p2_auth_cache_hits"] = int(stats["hits"])
+                for name in _PROCESS_STATS:
+                    timings[name] = int(process_after[name] - process_before[name])
         return report
 
-    # Preserve the measured marker so repeated _install_fast_paths() calls do not
-    # replace this wrapper with the underlying measured function.
     measured_with_p2_auth_cache._goc_issue_207_measured = True  # type: ignore[attr-defined]
     measured_with_p2_auth_cache._goc_issue_207_p2_auth_cache = True  # type: ignore[attr-defined]
     perf.measured_apply_frontend_commands = measured_with_p2_auth_cache
