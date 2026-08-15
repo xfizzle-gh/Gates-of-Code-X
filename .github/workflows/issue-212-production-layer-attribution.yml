@@ -1,0 +1,137 @@
+name: Issue 212 production layer attribution
+
+on:
+  pull_request:
+    paths:
+      - "godot/scripts/tools/map_production_layer_attribution_profiler.gd"
+      - "godot/scripts/tools/map_production_layer_attribution_bracketed_profiler.gd"
+      - ".github/workflows/issue-212-production-layer-attribution.yml"
+      - "docs/research/noresus-map-performance/production-layer-attribution.json"
+      - "docs/research/noresus-map-performance/rendering-comparison.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: issue-212-production-layer-attribution-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  production-layer-attribution:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system deps
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1 libxcursor1 libxinerama1 libxrandr2 libxi6 libx11-6
+      - name: Install Godot 4.7
+        run: |
+          set -euo pipefail
+          GODOT_VERSION=4.7-stable
+          curl -fsSL -o godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip
+          GODOT_BIN="$(find . -maxdepth 1 -type f -name 'Godot_v*_linux.x86_64' | head -n 1)"
+          install -m 755 "$GODOT_BIN" "$HOME/godot"
+          "$HOME/godot" --version
+      - name: Import Godot project
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --import --quit-after 1
+      - name: Measure production-visible layers with bracketed controls
+        run: |
+          set -euo pipefail
+          mkdir -p docs/research/noresus-map-performance
+          OUT="$(pwd)/docs/research/noresus-map-performance/production-layer-attribution.json"
+          log="$(mktemp)"
+          set +e
+          xvfb-run -a -s "-screen 0 1920x1080x24" \
+            "$HOME/godot" --path godot --audio-driver Dummy \
+            -s res://scripts/tools/map_production_layer_attribution_bracketed_profiler.gd -- \
+            --snapshot=res://fixtures/snapshots/earth3_operational.json \
+            --fixture=res://fixtures/presentation/e3_operational.json \
+            --manifest=res://assets/maps/earth3_europe_mediterranean/map_manifest.json \
+            --width=1920 --height=1080 --frames=24 \
+            --out="$OUT" 2>&1 | tee "$log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' "$log"; then
+            echo "issue-212 production attribution: script error"
+            exit 1
+          fi
+          if ! grep -q 'map_production_layer_attribution_profiler: PASS' "$log"; then
+            echo "issue-212 production attribution: missing PASS"
+            exit 1
+          fi
+          exit "$code"
+      - name: Validate bracketed attribution evidence
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("docs/research/noresus-map-performance/production-layer-attribution.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          assert data.get("ok") is True, data
+          assert data.get("issue") == 212, data
+          assert data.get("schema_version") == 2, data.get("schema_version")
+          assert data.get("map", {}).get("province_count") == 3514, data.get("map")
+          assert data.get("picking", {}).get("parity") is True, data.get("picking")
+          control = data.get("control", {})
+          assert control.get("design") == "baseline_before -> layer_disabled -> baseline_after", control
+          max_drift = float(control.get("max_baseline_drift_ratio", 1.0))
+          assert 0.0 < max_drift <= 0.15, control
+
+          required = [
+              "land_fill",
+              "ocean_mesh",
+              "shared_borders",
+              "secondary_outlines",
+              "labels",
+              "formation_counters",
+              "infrastructure_sites",
+              "routes",
+              "contact_battle",
+              "fixture_debug_overlays",
+              "ui_only_floor",
+          ]
+          brackets = data.get("brackets", {})
+          for key in required:
+              assert key in brackets, key
+              bracket = brackets[key]
+              for sample in ("baseline_before", "disabled", "baseline_after", "local_baseline"):
+                  metrics = bracket.get(sample, {})
+                  assert metrics.get("draw_calls", {}).get("p50", 0) > 0, (key, sample, metrics)
+                  assert metrics.get("frame_time_ms", {}).get("p95", 0) > 0, (key, sample, metrics)
+              drift = bracket.get("baseline_drift", {})
+              assert drift.get("draw_calls_p50_abs") == 0, (key, drift)
+              assert drift.get("primitives_p50_abs") == 0, (key, drift)
+              assert float(drift.get("frame_ms_p50_ratio", 1.0)) <= max_drift, (key, drift)
+              assert float(drift.get("frame_ms_p95_ratio", 1.0)) <= max_drift, (key, drift)
+
+          deltas = data.get("disabled_layer_deltas", {})
+          for key in required[:-1]:
+              assert key in deltas, key
+
+          summary = {
+              "max_baseline_drift_ratio": max_drift,
+              "deltas": {k: {
+                  "draw_calls_p50": v.get("draw_calls_p50"),
+                  "primitives_p50": v.get("primitives_p50"),
+                  "frame_ms_p50": v.get("frame_ms_p50"),
+                  "frame_ms_p95": v.get("frame_ms_p95"),
+              } for k, v in deltas.items()},
+          }
+          print("ISSUE212_BRACKETED_PRODUCTION_LAYERS", json.dumps(summary, sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: issue-212-production-layer-attribution
+          path: docs/research/noresus-map-performance/production-layer-attribution.json
+          if-no-files-found: error
