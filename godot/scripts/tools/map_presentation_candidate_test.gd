@@ -5,7 +5,8 @@ extends SceneTree
 ## Proves default launch stays on visible polygon presentation, then explicitly
 ## opts into the hybrid candidate and verifies PolygonMap authority/picking stays
 ## live while presentation moves wide-1x -> lazy-2x -> safe snapshot refresh ->
-## polygon fallback.
+## polygon fallback. It also covers disabled -> reload -> re-enable so a hidden
+## cache can never be resurrected across snapshot generations.
 
 const SNAPSHOT := "res://fixtures/snapshots/earth3_theatre.json"
 const FIXTURE := "res://fixtures/presentation/e3_operational.json"
@@ -104,8 +105,7 @@ func _run() -> void:
 		_fail("lazy zoom changed authority pick identity")
 		return
 
-	# Stale-cache fail-closed proof. A snapshot reload must synchronously restore
-	# polygons and deactivate the cache before the deferred rebuild can start.
+	# Active reload: stale presentation must disappear synchronously and rebuild.
 	candidate_scene.call("_load_snapshot", SNAPSHOT)
 	var refresh_transition: Dictionary = candidate_scene.call("presentation_candidate_debug_state")
 	candidate_root = candidate_scene.get_node_or_null("Earth3PolygonRoot") as Node2D
@@ -114,6 +114,9 @@ func _run() -> void:
 		return
 	if String(refresh_transition.get("status", "")) != "refresh_pending":
 		_fail("snapshot reload did not enter refresh_pending: %s" % JSON.stringify(refresh_transition))
+		return
+	if bool(refresh_transition.get("cache_present", true)):
+		_fail("snapshot reload retained stale cache bytes: %s" % JSON.stringify(refresh_transition))
 		return
 	if candidate_root == null or not candidate_root.visible:
 		_fail("snapshot reload did not immediately restore polygon presentation")
@@ -128,6 +131,9 @@ func _run() -> void:
 	if candidate_root == null or candidate_root.visible:
 		_fail("refreshed candidate did not re-shadow polygon presentation")
 		return
+	if not bool(refresh_state.get("cache_present", false)):
+		_fail("refreshed candidate did not own a fresh cache")
+		return
 	if candidate_scene.find_children("Issue212HybridRasterCandidate", "Node2D", true, false).size() != 1:
 		_fail("snapshot refresh duplicated candidate nodes")
 		return
@@ -138,8 +144,8 @@ func _run() -> void:
 	candidate_scene.call("set_presentation_candidate_enabled", false)
 	await process_frame
 	var fallback_state: Dictionary = candidate_scene.call("presentation_candidate_debug_state")
-	if bool(fallback_state.get("active", true)):
-		_fail("manual fallback did not disable candidate")
+	if bool(fallback_state.get("active", true)) or bool(fallback_state.get("enabled_intent", true)):
+		_fail("manual fallback did not disable candidate intent: %s" % JSON.stringify(fallback_state))
 		return
 	candidate_root = candidate_scene.get_node_or_null("Earth3PolygonRoot") as Node2D
 	if candidate_root == null or not candidate_root.visible:
@@ -147,6 +153,38 @@ func _run() -> void:
 		return
 	if _authority_pick(candidate_scene) != default_pick:
 		_fail("manual fallback changed authority pick identity")
+		return
+
+	# Regression: a cache hidden by manual fallback must still be invalidated by a
+	# later snapshot load. Re-enable must build a new candidate, never revive it.
+	candidate_scene.call("_load_snapshot", SNAPSHOT)
+	await process_frame
+	var disabled_reload_state: Dictionary = candidate_scene.call("presentation_candidate_debug_state")
+	if bool(disabled_reload_state.get("active", true)) \
+	or bool(disabled_reload_state.get("enabled_intent", true)) \
+	or bool(disabled_reload_state.get("cache_present", true)):
+		_fail("disabled snapshot reload retained stale candidate state: %s" % JSON.stringify(disabled_reload_state))
+		return
+	if candidate_scene.find_child("Issue212HybridRasterCandidate", true, false) != null:
+		_fail("disabled snapshot reload retained candidate node")
+		return
+	candidate_root = candidate_scene.get_node_or_null("Earth3PolygonRoot") as Node2D
+	if candidate_root == null or not candidate_root.visible:
+		_fail("disabled snapshot reload did not keep polygons visible")
+		return
+	candidate_scene.call("set_presentation_candidate_enabled", true)
+	if not await _wait_active(candidate_scene, "re-enable after disabled reload"):
+		return
+	var reenabled_state: Dictionary = candidate_scene.call("presentation_candidate_debug_state")
+	if not bool(reenabled_state.get("cache_present", false)) or not bool(reenabled_state.get("enabled_intent", false)):
+		_fail("re-enable did not build a fresh candidate: %s" % JSON.stringify(reenabled_state))
+		return
+	candidate_root = candidate_scene.get_node_or_null("Earth3PolygonRoot") as Node2D
+	if candidate_root == null or candidate_root.visible:
+		_fail("re-enabled candidate did not shadow polygon presentation")
+		return
+	if _authority_pick(candidate_scene) != default_pick:
+		_fail("re-enabled candidate changed authority pick identity")
 		return
 
 	var authority_after := _authority_hashes()
@@ -160,6 +198,8 @@ func _run() -> void:
 		"refresh_transition": refresh_transition,
 		"refresh": refresh_state,
 		"fallback": fallback_state,
+		"disabled_reload": disabled_reload_state,
+		"reenabled": reenabled_state,
 		"authority_pick": default_pick,
 	}))
 	print("map_presentation_candidate_test: PASS")

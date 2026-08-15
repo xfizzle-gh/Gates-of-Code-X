@@ -19,6 +19,7 @@ var _presentation_candidate: StrategicRasterCandidate = null
 var _presentation_candidate_cache: Image = null
 var _presentation_candidate_refresh_pending := false
 var _presentation_candidate_building := false
+var _presentation_candidate_enabled_intent := false
 
 
 func _ready() -> void:
@@ -26,6 +27,7 @@ func _ready() -> void:
 		OS.get_environment(PRESENTATION_CANDIDATE_ENV).strip_edges().to_lower()
 		== PRESENTATION_CANDIDATE_VALUE
 	)
+	_presentation_candidate_enabled_intent = presentation_candidate_requested
 	super._ready()
 	if presentation_candidate_requested:
 		presentation_candidate_status = "requested"
@@ -40,21 +42,34 @@ func _process(delta: float) -> void:
 		_presentation_candidate.sync(view_scale, map_viewport)
 	if _presentation_candidate_refresh_pending and not _presentation_candidate_building:
 		_presentation_candidate_refresh_pending = false
-		call_deferred("_refresh_presentation_candidate")
+		if _presentation_candidate_enabled_intent:
+			call_deferred("_refresh_presentation_candidate")
 
 
 func _load_snapshot(path: String) -> void:
-	super._load_snapshot(path)
-	if _presentation_candidate != null and presentation_candidate_active:
-		# Never display a cache rendered from stale ownership. Restore polygons
-		# immediately, rebuild from the refreshed authoritative snapshot, then swap.
+	# Cache freshness is independent from visibility. A manually disabled candidate
+	# may still hold pixels from the previous snapshot, so invalidate every derived
+	# cache before loading new authority. Rebuild only when the user's current
+	# presentation intent wants the candidate visible.
+	var had_candidate_cache := _presentation_candidate != null \
+		or (_presentation_candidate_cache != null and not _presentation_candidate_cache.is_empty())
+	_presentation_candidate_refresh_pending = false
+	if _presentation_candidate != null:
 		_presentation_candidate.set_candidate_enabled(false)
-		presentation_candidate_active = false
+	presentation_candidate_active = false
+	if had_candidate_cache:
+		_discard_presentation_candidate()
+		_presentation_candidate_cache = null
+	super._load_snapshot(path)
+	if presentation_candidate_requested and _presentation_candidate_enabled_intent:
 		presentation_candidate_status = "refresh_pending"
 		_presentation_candidate_refresh_pending = true
+	elif presentation_candidate_requested:
+		presentation_candidate_status = "manual_polygon"
 
 
 func set_presentation_candidate_enabled(enabled: bool) -> void:
+	_presentation_candidate_enabled_intent = enabled
 	if not enabled:
 		if _presentation_candidate != null:
 			_presentation_candidate.set_candidate_enabled(false)
@@ -73,10 +88,12 @@ func set_presentation_candidate_enabled(enabled: bool) -> void:
 func presentation_candidate_debug_state() -> Dictionary:
 	var state := {
 		"requested": presentation_candidate_requested,
+		"enabled_intent": _presentation_candidate_enabled_intent,
 		"active": presentation_candidate_active,
 		"status": presentation_candidate_status,
 		"authority_backend_polygon": map_backend_is_polygon,
 		"environment_gate": PRESENTATION_CANDIDATE_ENV,
+		"cache_present": _presentation_candidate_cache != null and not _presentation_candidate_cache.is_empty(),
 	}
 	if _presentation_candidate != null:
 		state["candidate"] = _presentation_candidate.debug_state()
@@ -88,7 +105,7 @@ func presentation_candidate_debug_state() -> Dictionary:
 func _activate_presentation_candidate() -> void:
 	if _presentation_candidate_building or presentation_candidate_active:
 		return
-	if not presentation_candidate_requested:
+	if not presentation_candidate_requested or not _presentation_candidate_enabled_intent:
 		return
 	if not map_backend_is_polygon or polygon_map == null or not polygon_map.is_ready:
 		presentation_candidate_status = "refused_non_polygon_authority"
@@ -128,7 +145,7 @@ func _activate_presentation_candidate() -> void:
 
 
 func _refresh_presentation_candidate() -> void:
-	if _presentation_candidate_building or not presentation_candidate_requested:
+	if _presentation_candidate_building or not presentation_candidate_requested or not _presentation_candidate_enabled_intent:
 		return
 	if not map_backend_is_polygon or polygon_map == null or not polygon_map.is_ready:
 		presentation_candidate_status = "refresh_refused_non_polygon_authority"
