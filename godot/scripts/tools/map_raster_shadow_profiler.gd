@@ -11,7 +11,7 @@ const CACHE_SCALE := 2
 const MATRIX_FRAMES := 16
 const MATRIX_WARMUP := 4
 const MAX_BASELINE_DRIFT_RATIO := 0.15
-const MODES := [
+const CACHE_MODES := [
 	{"name": "full_cache", "tile": 0},
 	{"name": "tile_512", "tile": 512},
 	{"name": "tile_1024", "tile": 1024},
@@ -98,7 +98,7 @@ func _run_matrix() -> void:
 		return
 
 	var mode_results: Dictionary = {}
-	for mode_def_value in MODES:
+	for mode_def_value in CACHE_MODES:
 		var mode_def: Dictionary = mode_def_value
 		var mode_name := String(mode_def.get("name", ""))
 		var tile_size := int(mode_def.get("tile", 0))
