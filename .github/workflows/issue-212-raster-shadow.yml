@@ -1,0 +1,110 @@
+name: Issue 212 raster shadow
+
+on:
+  pull_request:
+    paths:
+      - "godot/scripts/tools/map_raster_shadow_benchmark.gd"
+      - ".github/workflows/issue-212-raster-shadow.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: issue-212-raster-shadow-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  raster-shadow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system deps
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1 libxcursor1 libxinerama1 libxrandr2 libxi6 libx11-6
+      - name: Install Godot 4.7
+        run: |
+          set -euo pipefail
+          GODOT_VERSION=4.7-stable
+          curl -fsSL -o godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip
+          GODOT_BIN="$(find . -maxdepth 1 -type f -name 'Godot_v*_linux.x86_64' | head -n 1)"
+          install -m 755 "$GODOT_BIN" "$HOME/godot"
+          "$HOME/godot" --version
+      - name: Import Godot project
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --import --quit-after 1
+      - name: Measure full-theatre raster shadow
+        run: |
+          set -euo pipefail
+          mkdir -p docs/research/noresus-map-performance
+          OUT="$(pwd)/docs/research/noresus-map-performance/raster-shadow-ci.json"
+          log="$(mktemp)"
+          set +e
+          xvfb-run -a -s "-screen 0 1920x1080x24" \
+            "$HOME/godot" --path godot --audio-driver Dummy \
+            -s res://scripts/tools/map_raster_shadow_benchmark.gd -- \
+            --snapshot=res://fixtures/snapshots/earth3_operational.json \
+            --fixture=res://fixtures/presentation/e3_operational.json \
+            --manifest=res://assets/maps/earth3_europe_mediterranean/map_manifest.json \
+            --width=1920 --height=1080 --frames=24 \
+            --out="$OUT" 2>&1 | tee "$log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' "$log"; then
+            echo "issue-212 raster shadow: script error"
+            exit 1
+          fi
+          if ! grep -q 'map_raster_shadow_benchmark: PASS' "$log"; then
+            echo "issue-212 raster shadow: missing PASS"
+            exit 1
+          fi
+          exit "$code"
+      - name: Validate authority and benchmark contract
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("docs/research/noresus-map-performance/raster-shadow-ci.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          assert data.get("ok") is True, data
+          assert data.get("issue") == 212, data
+          assert data.get("phase") == "B", data
+          assert data.get("checkpoint") == "full_theatre_cache", data
+          authority = data.get("authority", {})
+          assert authority.get("province_count") == 3514, authority
+          assert authority.get("polygon_authority_retained") is True, authority
+          assert authority.get("picking_parity") is True, authority
+          assert authority.get("water_policy_retained") is True, authority
+          cache = data.get("cache", {})
+          assert cache.get("persistent") is False, cache
+          assert cache.get("campaign_authority") is False, cache
+          assert int(cache.get("width", 0)) == 1920, cache
+          assert int(cache.get("height", 0)) == 1080, cache
+          for section in ("baseline", "raster_shadow"):
+              metrics = data.get(section, {})
+              assert metrics.get("draw_calls", {}).get("p50", 0) > 0, (section, metrics)
+              assert metrics.get("frame_time_ms", {}).get("p95", 0) > 0, (section, metrics)
+          picks = data.get("picking", [])
+          assert len(picks) >= 5, picks
+          assert all(row.get("match") is True for row in picks), picks
+          print("ISSUE212_RASTER_SHADOW_CONTRACT", json.dumps({
+              "baseline_draw_calls": data["baseline"]["draw_calls"]["p50"],
+              "shadow_draw_calls": data["raster_shadow"]["draw_calls"]["p50"],
+              "baseline_frame_p95": data["baseline"]["frame_time_ms"]["p95"],
+              "shadow_frame_p95": data["raster_shadow"]["frame_time_ms"]["p95"],
+          }, sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: issue-212-raster-shadow
+          path: docs/research/noresus-map-performance/raster-shadow-ci.json
+          if-no-files-found: error
