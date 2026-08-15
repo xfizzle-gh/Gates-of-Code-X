@@ -4,7 +4,8 @@ extends SceneTree
 ##
 ## Proves default launch stays on visible polygon presentation, then explicitly
 ## opts into the hybrid candidate and verifies PolygonMap authority/picking stays
-## live while presentation moves wide-1x -> lazy-2x -> polygon fallback.
+## live while presentation moves wide-1x -> lazy-2x -> safe snapshot refresh ->
+## polygon fallback.
 
 const SNAPSHOT := "res://fixtures/snapshots/earth3_theatre.json"
 const FIXTURE := "res://fixtures/presentation/e3_operational.json"
@@ -53,16 +54,7 @@ func _run() -> void:
 	var candidate_scene := await _build_main_scene()
 	if candidate_scene == null:
 		return
-	var activated := false
-	for _i in range(WAIT_FRAMES):
-		var state: Dictionary = candidate_scene.call("presentation_candidate_debug_state")
-		if bool(state.get("active", false)):
-			activated = true
-			break
-		RenderingServer.force_draw(false, 0.0)
-		await process_frame
-	if not activated:
-		_fail("candidate did not activate: %s" % JSON.stringify(candidate_scene.call("presentation_candidate_debug_state")))
+	if not await _wait_active(candidate_scene, "initial activation"):
 		return
 	var wide_state: Dictionary = candidate_scene.call("presentation_candidate_debug_state")
 	var wide: Dictionary = wide_state.get("candidate", {})
@@ -112,6 +104,37 @@ func _run() -> void:
 		_fail("lazy zoom changed authority pick identity")
 		return
 
+	# Stale-cache fail-closed proof. A snapshot reload must synchronously restore
+	# polygons and deactivate the cache before the deferred rebuild can start.
+	candidate_scene.call("_load_snapshot", SNAPSHOT)
+	var refresh_transition: Dictionary = candidate_scene.call("presentation_candidate_debug_state")
+	candidate_root = candidate_scene.get_node_or_null("Earth3PolygonRoot") as Node2D
+	if bool(refresh_transition.get("active", true)):
+		_fail("snapshot reload left stale candidate active: %s" % JSON.stringify(refresh_transition))
+		return
+	if String(refresh_transition.get("status", "")) != "refresh_pending":
+		_fail("snapshot reload did not enter refresh_pending: %s" % JSON.stringify(refresh_transition))
+		return
+	if candidate_root == null or not candidate_root.visible:
+		_fail("snapshot reload did not immediately restore polygon presentation")
+		return
+	if _authority_pick(candidate_scene) != default_pick:
+		_fail("snapshot reload transition changed authority pick identity")
+		return
+	if not await _wait_active(candidate_scene, "snapshot refresh"):
+		return
+	var refresh_state: Dictionary = candidate_scene.call("presentation_candidate_debug_state")
+	candidate_root = candidate_scene.get_node_or_null("Earth3PolygonRoot") as Node2D
+	if candidate_root == null or candidate_root.visible:
+		_fail("refreshed candidate did not re-shadow polygon presentation")
+		return
+	if candidate_scene.find_children("Issue212HybridRasterCandidate", "Node2D", true, false).size() != 1:
+		_fail("snapshot refresh duplicated candidate nodes")
+		return
+	if _authority_pick(candidate_scene) != default_pick:
+		_fail("refreshed candidate changed authority pick identity")
+		return
+
 	candidate_scene.call("set_presentation_candidate_enabled", false)
 	await process_frame
 	var fallback_state: Dictionary = candidate_scene.call("presentation_candidate_debug_state")
@@ -134,6 +157,8 @@ func _run() -> void:
 		"default": default_state,
 		"wide": wide,
 		"lazy": lazy,
+		"refresh_transition": refresh_transition,
+		"refresh": refresh_state,
 		"fallback": fallback_state,
 		"authority_pick": default_pick,
 	}))
@@ -141,6 +166,17 @@ func _run() -> void:
 	await _dispose(candidate_scene)
 	OS.set_environment(ENV_KEY, "")
 	quit(0)
+
+
+func _wait_active(scene: Node, label: String) -> bool:
+	for _i in range(WAIT_FRAMES):
+		var state: Dictionary = scene.call("presentation_candidate_debug_state")
+		if bool(state.get("active", false)):
+			return true
+		RenderingServer.force_draw(false, 0.0)
+		await process_frame
+	_fail("candidate did not activate during %s: %s" % [label, JSON.stringify(scene.call("presentation_candidate_debug_state"))])
+	return false
 
 
 func _build_main_scene() -> Node:
