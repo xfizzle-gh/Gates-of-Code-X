@@ -55,7 +55,7 @@ jobs:
           xvfb-run -a -s "-screen 0 1920x1080x24" \
             "$HOME/godot" --path godot --audio-driver Dummy \
             -s res://scripts/tools/map_candidate_native_acceptance_loaded.gd -- \
-            --snapshot=res://fixtures/snapshots/earth3_theatre.json \
+            --snapshot=res://fixtures/snapshots/earth3_operational.json \
             --out="$OUT" --screens-dir="$SCREENS" \
             --width=1920 --height=1080 2>&1 | tee "$log"
           code=${PIPESTATUS[0]}
@@ -78,6 +78,7 @@ jobs:
           assert int(data.get('frames_per_sample', 0)) >= 24, data
           assert int(data.get('stabilization_passes', 0)) >= 2, data
           assert data.get('candidate_activation') == 'requested snapshot loaded before raster/composed activation', data
+          assert data.get('snapshot_path', '').endswith('earth3_operational.json'), data
           authority = data.get('authority', {})
           assert authority.get('unchanged') is True, authority
           ref = authority.get('reference', {})
@@ -88,6 +89,13 @@ jobs:
           assert len(water) == 3 and all(row.get('match') is True for row in water), water
           assert len(ref.get('operational_node_pixels', [])) > 0, ref
           assert len(ref.get('counter_pixels', [])) > 0, ref
+          selected = ref.get('selected_province_id', '')
+          formation = ref.get('selected_strategic_formation_id', '')
+          legal = ref.get('legal_target_ids', [])
+          expected = ref.get('operational_order_target_ids', [])
+          assert selected and formation, ref
+          assert ref.get('operational_order_selection_ok') is True, ref
+          assert legal and expected and legal == expected, ref
           assert authority.get('polygon_backend_remains_live_in_candidate') is True, authority
           for name in ['idle_full_theatre', 'continuous_pan', 'continuous_zoom']:
               row = data.get('scenarios', {}).get(name, {})
