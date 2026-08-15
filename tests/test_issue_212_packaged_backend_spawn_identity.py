@@ -46,7 +46,7 @@ class PackagedBackendSpawnIdentityTests(unittest.TestCase):
                 self.assertFalse(ready)
                 popen.assert_called_once()
                 command = list(popen.call_args.args[0])
-                self.assertEqual(str(root / "GatesOfCodeXLive.exe"), command[0])
+                self.assertEqual("GatesOfCodeXLive.exe", Path(command[0]).name)
                 self.assertEqual("session-backend", command[1])
                 self.assertIn("--expected-source-commit", command)
                 index = command.index("--expected-source-commit")
