@@ -40,7 +40,7 @@ jobs:
           $stamp = & .\tools\stamp_package_provenance.ps1
           "commit=$($stamp.Commit)" >> $env:GITHUB_OUTPUT
       - name: Install package and PyInstaller
-        run: python -m pip install ".[earth3]" pyinstaller
+        run: python -m pip install -e ".[earth3]" pyinstaller
       - name: Assert installed provenance
         shell: pwsh
         run: python -c 'import sys; from gates_of_codex.packaging import package_identity; assert package_identity().source_commit == sys.argv[1]' '${{ steps.provenance.outputs.commit }}'
