@@ -19,6 +19,65 @@ func _initialize() -> void:
 	super._initialize()
 
 
+func _build_scene(candidate_enabled: bool) -> Node:
+	# This entrypoint legitimately receives harness-only --out/--screens-dir/size
+	# flags. The legacy map CLI parser can interpret unknown user flags as its
+	# optional positional manifest argument during scene _ready(). Re-pin and open
+	# the exact Earth3 acceptance authority after ready and after snapshot loading,
+	# before any parity sample or candidate activation is allowed to proceed.
+	_clear_env()
+	var packed := load("res://main.tscn") as PackedScene
+	if packed == null:
+		_fail("failed to load main.tscn")
+		return null
+	var scene := packed.instantiate()
+	if scene == null:
+		_fail("failed to instantiate main.tscn")
+		return null
+	root.add_child(scene)
+	for _i in range(12):
+		RenderingServer.force_draw(false, 0.0)
+		await process_frame
+
+	scene.call("_load_snapshot", _snapshot_path)
+	scene.set("map_manifest_source_path", MANIFEST)
+	scene.call("_open_color_id_map")
+	for _i in range(3):
+		RenderingServer.force_draw(false, 0.0)
+		await process_frame
+	if not bool(scene.get("map_backend_is_polygon")):
+		_fail("scene did not load PolygonMap authority")
+		return null
+	var pmap = scene.get("polygon_map")
+	if pmap == null or not bool(pmap.is_ready) or int(pmap.province_count) != 3514:
+		_fail("scene PolygonMap authority not ready/3514")
+		return null
+	if scene.has_method("_fit_complete_theatre"):
+		scene.call("_fit_complete_theatre")
+
+	if candidate_enabled:
+		OS.set_environment(HYBRID_ENV, "hybrid")
+		OS.set_environment(COMPOSED_ENV, "1")
+		scene.set("composed_presentation_requested", true)
+		scene.set("composed_presentation_status", "waiting_for_hybrid_candidate")
+		scene.call("set_presentation_candidate_enabled", true)
+		for _i in range(WAIT_FRAMES):
+			var hybrid: Dictionary = scene.call("presentation_candidate_debug_state")
+			var composed: Dictionary = scene.call("composed_presentation_debug_state")
+			if bool(hybrid.get("active", false)) and bool(composed.get("active", false)):
+				return scene
+			RenderingServer.force_draw(false, 0.0)
+			await process_frame
+		_fail("candidate/composition failed to activate after requested snapshot load")
+		return null
+	var default_hybrid: Dictionary = scene.call("presentation_candidate_debug_state")
+	var default_composed: Dictionary = scene.call("composed_presentation_debug_state")
+	if bool(default_hybrid.get("active", false)) or bool(default_composed.get("active", false)):
+		_fail("polygon control unexpectedly activated candidate")
+		return null
+	return scene
+
+
 func _authority_state(scene: Node) -> Dictionary:
 	var operational := _drive_real_operational_order(scene)
 	if not bool(operational.get("ok", false)):
