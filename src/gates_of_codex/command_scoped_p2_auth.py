@@ -26,6 +26,8 @@ one-shot/source command that installs the same seam receives identical behavior.
 import copy
 import functools
 import hashlib
+import os
+import stat
 import time
 from collections import OrderedDict
 from contextvars import ContextVar
@@ -121,6 +123,128 @@ def _profiled_authority_call(name: str, action: Callable[[], Any]) -> Any:
         )
 
 
+def _read_fixed_p1_bytes(
+    p1: Any,
+    root: Path,
+    relative_path: Path,
+    label: str,
+) -> tuple[bytes, str]:
+    """Read/hash one fixed P1 file with the canonical fail-closed path checks.
+
+    Semantic-cache identity checks need the exact bytes and SHA, not another JSON
+    materialization of the already-validated object. This deliberately mirrors
+    ``earth3_campaign._read_fixed_authority_json`` through its raw read and
+    post-read TOCTOU revalidation, then stops before UTF-8/JSON decoding. A cache
+    miss still enters the original semantic loader and parses/validates the bytes.
+    """
+
+    canonical_root = p1._canonical_authority_root(root)
+    try:
+        root_stat = os.lstat(canonical_root)
+    except OSError as exc:
+        raise p1.Earth3AuthorityError(
+            f"Earth3 authority root changed while reading: {canonical_root}"
+        ) from exc
+    if p1._is_symlink_or_reparse_point(root_stat) or not stat.S_ISDIR(root_stat.st_mode):
+        raise p1.Earth3AuthorityError(
+            f"Earth3 authority root changed while reading: {canonical_root}"
+        )
+    if relative_path.is_absolute() or ".." in relative_path.parts:
+        raise p1.Earth3AuthorityError(
+            f"{label} path is not a fixed relative authority entry"
+        )
+    canonical_path = canonical_root / relative_path
+    try:
+        canonical_path.relative_to(canonical_root)
+    except ValueError as exc:
+        raise p1.Earth3AuthorityError(
+            f"{label} path is not contained by the authority root: {relative_path.as_posix()}"
+        ) from exc
+
+    parent = canonical_root
+    parent_stats: list[tuple[Path, os.stat_result]] = []
+    for component in relative_path.parts[:-1]:
+        parent = parent / component
+        try:
+            parent_stat = os.lstat(parent)
+        except OSError as exc:
+            raise p1.Earth3AuthorityError(
+                f"{label} missing: {relative_path.as_posix()}"
+            ) from exc
+        if p1._is_symlink_or_reparse_point(parent_stat):
+            raise p1.Earth3AuthorityError(
+                f"{label} is symlinked or not canonical: {relative_path.as_posix()}"
+            )
+        if not stat.S_ISDIR(parent_stat.st_mode):
+            raise p1.Earth3AuthorityError(f"{label} parent is not a directory: {parent}")
+        parent_stats.append((parent, parent_stat))
+
+    try:
+        path_stat = os.lstat(canonical_path)
+    except OSError as exc:
+        raise p1.Earth3AuthorityError(
+            f"{label} missing: {relative_path.as_posix()}"
+        ) from exc
+    if p1._is_symlink_or_reparse_point(path_stat):
+        raise p1.Earth3AuthorityError(
+            f"{label} is a symlink: {relative_path.as_posix()}"
+        )
+    if not stat.S_ISREG(path_stat.st_mode):
+        raise p1.Earth3AuthorityError(
+            f"{label} is not a regular file: {relative_path.as_posix()}"
+        )
+    try:
+        resolved_path = canonical_path.resolve(strict=True)
+        resolved_path.relative_to(canonical_root)
+        resolved_stat = os.lstat(resolved_path)
+    except (OSError, ValueError) as exc:
+        raise p1.Earth3AuthorityError(
+            f"{label} is not contained by the authority root: {relative_path.as_posix()}"
+        ) from exc
+    if (
+        p1._is_symlink_or_reparse_point(resolved_stat)
+        or not stat.S_ISREG(resolved_stat.st_mode)
+        or not p1._same_file_identity(path_stat, resolved_stat)
+    ):
+        raise p1.Earth3AuthorityError(
+            f"{label} is symlinked or not canonical: {relative_path.as_posix()}"
+        )
+
+    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(canonical_path, flags)
+        with os.fdopen(descriptor, "rb") as authority_file:
+            opened_stat = os.fstat(authority_file.fileno())
+            if not stat.S_ISREG(opened_stat.st_mode):
+                raise p1.Earth3AuthorityError(
+                    f"{label} is not a regular file: {relative_path.as_posix()}"
+                )
+            if (opened_stat.st_dev, opened_stat.st_ino) != (
+                path_stat.st_dev,
+                path_stat.st_ino,
+            ):
+                raise p1.Earth3AuthorityError(
+                    f"{label} changed while being opened: {relative_path.as_posix()}"
+                )
+            raw_bytes = authority_file.read()
+    except p1.Earth3AuthorityError:
+        raise
+    except OSError as exc:
+        raise p1.Earth3AuthorityError(
+            f"{label} cannot be read: {relative_path.as_posix()}"
+        ) from exc
+
+    p1._revalidate_captured_authority_path(
+        canonical_root,
+        relative_path,
+        canonical_path,
+        root_stat,
+        tuple(parent_stats),
+        path_stat,
+    )
+    return raw_bytes, hashlib.sha256(raw_bytes).hexdigest()
+
+
 def _capture_p1_identity(authority_root: str | Path | None) -> tuple[Any, ...]:
     """Re-authenticate exact fixed P1 bytes without skipping path safety."""
 
@@ -128,38 +252,54 @@ def _capture_p1_identity(authority_root: str | Path | None) -> tuple[Any, ...]:
 
     requested_root = Path(authority_root) if authority_root is not None else p1._default_authority_root()
     root = p1._canonical_authority_root(requested_root)
-    manifest = p1._read_fixed_authority_json(root, p1.EARTH3_MANIFEST_PATH, "Earth3 manifest")
-    dataset = p1._read_fixed_authority_json(root, p1.EARTH3_DATASET_PATH, "Earth3 production dataset")
-    metadata = p1._read_fixed_authority_json(root, p1.EARTH3_METADATA_PATH, "Earth3 dataset metadata")
-    production = p1._read_fixed_authority_json(
+    manifest_bytes, manifest_sha256 = _read_fixed_p1_bytes(
+        p1,
+        root,
+        p1.EARTH3_MANIFEST_PATH,
+        "Earth3 manifest",
+    )
+    dataset_bytes, dataset_sha256 = _read_fixed_p1_bytes(
+        p1,
+        root,
+        p1.EARTH3_DATASET_PATH,
+        "Earth3 production dataset",
+    )
+    _metadata_bytes, metadata_sha256 = _read_fixed_p1_bytes(
+        p1,
+        root,
+        p1.EARTH3_METADATA_PATH,
+        "Earth3 dataset metadata",
+    )
+    _production_bytes, production_sha256 = _read_fixed_p1_bytes(
+        p1,
         root,
         p1.EARTH3_PRODUCTION_AUTHORITY_PATH,
         "Earth3 production authority",
     )
 
-    if manifest.raw_sha256 != p1.APPROVED_MANIFEST_SHA256:
+    if manifest_sha256 != p1.APPROVED_MANIFEST_SHA256:
         raise p1.Earth3AuthorityError(
             "Earth3 manifest SHA-256 mismatch: "
-            f"expected {p1.APPROVED_MANIFEST_SHA256}, got {manifest.raw_sha256}"
+            f"expected {p1.APPROVED_MANIFEST_SHA256}, got {manifest_sha256}"
         )
-    if dataset.raw_sha256 != p1.APPROVED_DATASET_RAW_SHA256:
+    if dataset_sha256 != p1.APPROVED_DATASET_RAW_SHA256:
         raise p1.Earth3AuthorityError(
             "Earth3 production dataset bytes/SHA-256 mismatch: "
-            f"expected raw digest {p1.APPROVED_DATASET_RAW_SHA256}, got {dataset.raw_sha256}"
+            f"expected raw digest {p1.APPROVED_DATASET_RAW_SHA256}, got {dataset_sha256}"
         )
-    if dataset.raw_bytes[-1:] != b"\n":
+    if dataset_bytes[-1:] != b"\n":
         raise p1.Earth3AuthorityError(
             "Earth3 production dataset bytes/SHA-256 mismatch: expected one terminal LF"
         )
-    embedded = hashlib.sha256(dataset.raw_bytes[:-1]).hexdigest()
+    embedded = hashlib.sha256(dataset_bytes[:-1]).hexdigest()
     if embedded != p1.APPROVED_EMBEDDED_DATASET_SHA256:
         raise p1.Earth3AuthorityError(
             "Earth3 production dataset bytes/SHA-256 mismatch: "
             f"expected embedded digest {p1.APPROVED_EMBEDDED_DATASET_SHA256}, got {embedded}"
         )
     if (
-        manifest.raw_sha256,
-        dataset.raw_sha256,
+        manifest_sha256,
+        dataset_sha256,
         embedded,
     ) not in p1._APPROVED_EXACT_BYTE_IDENTITIES:
         raise p1.Earth3AuthorityError(
@@ -167,11 +307,11 @@ def _capture_p1_identity(authority_root: str | Path | None) -> tuple[Any, ...]:
         )
     return (
         str(root),
-        manifest.raw_sha256,
-        dataset.raw_sha256,
+        manifest_sha256,
+        dataset_sha256,
         embedded,
-        metadata.raw_sha256,
-        production.raw_sha256,
+        metadata_sha256,
+        production_sha256,
     )
 
 
