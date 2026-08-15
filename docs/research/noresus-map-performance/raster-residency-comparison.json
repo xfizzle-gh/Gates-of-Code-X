@@ -1,0 +1,50 @@
+{
+  "schema": "gates-of-codex.issue-212-lazy-1024-residency-evidence",
+  "schema_version": 1,
+  "issue": 212,
+  "phase": "B2-debug-shadow-lazy-residency",
+  "measurement_head": "9e2a8a73d2fdb97d33a7a587b0ee3d4adffbcd39",
+  "workflow_run_id": 31863348773,
+  "artifact_id": 9241311218,
+  "artifact_sha256": "98c7aab50e42283c006589559d6cf284cc43bee6aa8364b818ed5ff4359c79ed",
+  "frames_per_sample": 24,
+  "max_baseline_drift_ratio": 0.15,
+  "max_observed_baseline_drift_ratio": 0.0138,
+  "cache": {
+    "scale": 2,
+    "width": 8612,
+    "height": 6898,
+    "tile_size_px": 1024,
+    "total_tiles": 63,
+    "full_rgba8_mib": 226.614,
+    "prefetch_margin_px": 96.0,
+    "lazy_retain_frames": 2
+  },
+  "authority": {
+    "unchanged": true,
+    "polygon_backend_live": true,
+    "real_legal_target_count": 63,
+    "real_legal_target_exact_identity": true
+  },
+  "scenarios": {
+    "idle_full_theatre": {
+      "all_resident": {"frame_p50_ms": 90.234, "frame_p95_ms": 91.267, "resident_tiles_p50": 63, "video_memory_mib": 368.156},
+      "lazy": {"frame_p50_ms": 90.735, "frame_p95_ms": 92.283, "resident_tiles_p50": 63, "resident_rgba8_mib": 226.614, "video_memory_mib": 368.156}
+    },
+    "continuous_pan": {
+      "all_resident": {"frame_p50_ms": 88.872, "frame_p95_ms": 89.813, "resident_tiles_p50": 63, "video_memory_mib": 368.156},
+      "lazy": {"frame_p50_ms": 89.233, "frame_p95_ms": 90.654, "resident_tiles_p50": 63, "resident_rgba8_mib": 226.614, "video_memory_mib": 368.156}
+    },
+    "continuous_zoom": {
+      "all_resident": {"frame_p50_ms": 91.332, "frame_p95_ms": 95.005, "resident_tiles_p50": 63, "video_memory_mib": 368.157},
+      "lazy": {"frame_p50_ms": 93.697, "frame_p95_ms": 104.899, "resident_tiles_p50": 40, "resident_rgba8_mib": 148.203, "video_memory_mib": 263.616, "video_memory_saving_mib": 104.541, "frame_p50_cost_vs_all_resident_ms": 2.365, "frame_p50_improvement_vs_polygon_ms": 161.216}
+    }
+  },
+  "decision": {
+    "result": "PASS_WITH_WIDE_VIEW_LIMIT",
+    "wide_view_memory_reduction": false,
+    "zoom_memory_reduction": true,
+    "production_switch_authorized": false,
+    "next_requirement": "Use a cheaper wide-view representation or LOD strategy and retain lazy 1024 residency for closer views."
+  }
+}
