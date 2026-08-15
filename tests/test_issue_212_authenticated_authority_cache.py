@@ -77,13 +77,14 @@ class AuthenticatedAuthorityCacheTests(unittest.TestCase):
                     "_capture_p2_identity",
                     side_effect=lambda _root, authenticated_p1: (
                         current_p2_key[0],
+                        current_p1_key[0],
                         authenticated_p1.dataset_sha256,
                     ),
                 ),
             ):
                 command_scoped_p2_auth._install_process_semantic_authority_cache()
 
-                first = earth3_bootstrap.load_earth3_bootstrap()
+                earth3_bootstrap.load_earth3_bootstrap()
                 second = earth3_bootstrap.load_earth3_bootstrap()
                 self.assertEqual(["p1-bytes-a"], p1_calls)
                 self.assertEqual(["p2-bytes-a"], p2_calls)
