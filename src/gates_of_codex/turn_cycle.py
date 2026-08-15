@@ -13,6 +13,7 @@ import random
 import time
 from typing import Any
 
+from .actor_ai_economy import defer_actor_ai_assignment_full_validation
 from .campaign import CampaignEngine
 from .models import CampaignState
 from .strategic_ai import StrategicAI
@@ -48,6 +49,24 @@ def _prevalidated_campaign_engine(state: CampaignState) -> CampaignEngine:
     return engine
 
 
+def _will_roll_round(engine: CampaignEngine) -> bool:
+    """Mirror CampaignEngine.end_turn's active-seat rollover decision."""
+
+    active = [
+        faction
+        for faction in CampaignEngine.TURN_ORDER
+        if faction.value in engine.state.factions
+        and not engine.state.factions[faction.value].is_eliminated
+    ]
+    if not active:
+        return False
+    try:
+        index = active.index(engine.state.current_faction)
+    except ValueError:
+        return True
+    return index == len(active) - 1
+
+
 def end_player_round(
     state: CampaignState,
     *,
@@ -69,6 +88,11 @@ def end_player_round(
     time. Direct callers retain the validating constructor by default. Legacy
     adjacency AI retains one engine per AI to preserve its independent seeded
     battle RNG.
+
+    AI reinforcement assignment retains its focused actor-content validation but
+    coalesces its redundant whole-campaign validation across the atomic player
+    round. If any assignment used that path, one explicit CampaignState.validate
+    runs immediately before the final active faction triggers round rollover.
     """
 
     from .observation import (
@@ -95,6 +119,7 @@ def end_player_round(
     starting_turn = int(state.turn_number)
     ai_factions: list[str] = []
     observation_context = ObservationMutationContext()
+    deferred_assignment_count = 0
     perf = {
         "engine_init_ms": engine_init_ms,
         "engine_prevalidated": bool(prevalidated),
@@ -104,6 +129,8 @@ def end_player_round(
         "ai_end_turn_ms": {},
         "ai_actor_runtime_ms": {},
         "shared_operational_ai": False,
+        "deferred_actor_assignment_count": 0,
+        "pre_round_validation_ms": 0.0,
     }
 
     # On graph-native campaigns StrategicAI never uses CampaignEngine's legacy
@@ -156,7 +183,10 @@ def end_player_round(
 
         ai = shared_operational_ai or StrategicAI(state)
         started = time.perf_counter()
-        ai.take_turn(faction)
+        with defer_actor_ai_assignment_full_validation() as deferred:
+            ai.take_turn(faction)
+        deferred_assignment_count += int(deferred["assignments"])
+        perf["deferred_actor_assignment_count"] = deferred_assignment_count
         perf["ai_take_turn_ms"][faction.value] = _ms(
             time.perf_counter() - started
         )
@@ -167,6 +197,17 @@ def end_player_round(
         ai_factions.append(faction.value)
         if state.pending_battle is not None:
             break
+
+        # The deferred assignment path has already performed its focused
+        # actor-content validation. Before global rollover authorities consume
+        # the accumulated AI state, run the exact full campaign validator once.
+        if deferred_assignment_count and _will_roll_round(engine):
+            started = time.perf_counter()
+            state.validate()
+            perf["pre_round_validation_ms"] = _ms(
+                time.perf_counter() - started
+            )
+            deferred_assignment_count = 0
 
         started = time.perf_counter()
         engine.end_turn()
@@ -191,7 +232,8 @@ def end_player_round(
         engine.observation_context,
     )
     perf["ai_take_turn_total_ms"] = round(
-        sum(float(value) for value in perf["ai_take_turn_ms"].values()), 3
+        sum(float(value) for value in perf["ai_take_turn_ms"].values()),
+        3,
     )
     perf["advance_turn_total_ms"] = round(
         float(perf["selected_end_turn_ms"])
