@@ -4,7 +4,19 @@ param(
 
     [string]$SnapshotPath = "",
 
-    [string]$OutputDirectory = "issue212-native-acceptance"
+    [string]$CampaignPath = "",
+
+    [string]$PlayerExecutable = "",
+
+    [string]$OutputDirectory = "issue212-native-acceptance",
+
+    [switch]$SkipPerformancePreflight,
+
+    [double]$ColdStartupMaxSeconds = 15.0,
+    [double]$WarmStartupMaxSeconds = 5.0,
+    [double]$OrderMaxSeconds = 3.0,
+    [double]$EndTurnTargetSeconds = 5.0,
+    [double]$EndTurnHardMaxSeconds = 8.0
 )
 
 $ErrorActionPreference = 'Stop'
@@ -25,6 +37,13 @@ if ([string]::IsNullOrWhiteSpace($SnapshotPath)) {
 }
 $SnapshotPath = (Resolve-Path -LiteralPath $SnapshotPath).Path
 
+if ([string]::IsNullOrWhiteSpace($CampaignPath)) {
+    $CampaignPath = Join-Path (Split-Path -Parent $SnapshotPath) 'campaign.json'
+}
+if (-not $SkipPerformancePreflight -and -not (Test-Path -LiteralPath $CampaignPath -PathType Leaf)) {
+    throw "Performance preflight requires the authoritative campaign beside the snapshot, or an explicit -CampaignPath: $CampaignPath"
+}
+
 if ([System.IO.Path]::IsPathRooted($OutputDirectory)) {
     $outDir = $OutputDirectory
 } else {
@@ -35,8 +54,37 @@ $screensDir = Join-Path $outDir 'screens'
 [System.IO.Directory]::CreateDirectory($screensDir) | Out-Null
 $jsonPath = Join-Path $outDir 'issue212-native-acceptance.json'
 
+if (-not $SkipPerformancePreflight) {
+    $preflight = Join-Path $PSScriptRoot 'run_owner_readiness_preflight.ps1'
+    if (-not (Test-Path -LiteralPath $preflight -PathType Leaf)) {
+        throw "Owner-readiness performance preflight script missing: $preflight"
+    }
+    if ([string]::IsNullOrWhiteSpace($PlayerExecutable)) {
+        $PlayerExecutable = Join-Path $repo 'dist\GatesOfCodeX.exe'
+    }
+    Write-Host "Running mandatory owner-readiness performance preflight before visual acceptance..."
+    & $preflight `
+        -GodotPath $GodotPath `
+        -SnapshotPath $SnapshotPath `
+        -CampaignPath $CampaignPath `
+        -PlayerExecutable $PlayerExecutable `
+        -OutputDirectory (Join-Path $outDir 'performance-preflight') `
+        -ColdStartupMaxSeconds $ColdStartupMaxSeconds `
+        -WarmStartupMaxSeconds $WarmStartupMaxSeconds `
+        -OrderMaxSeconds $OrderMaxSeconds `
+        -EndTurnTargetSeconds $EndTurnTargetSeconds `
+        -EndTurnHardMaxSeconds $EndTurnHardMaxSeconds
+    if ($LASTEXITCODE -ne 0) {
+        throw "Owner-readiness performance preflight failed with exit code $LASTEXITCODE"
+    }
+    Write-Host "Performance preflight passed. Continuing to #212 visual/presentation acceptance."
+    Write-Host ""
+} else {
+    Write-Warning "Performance preflight explicitly skipped. This run must not be treated as owner performance acceptance."
+}
+
 Write-Host "Issue #212 native acceptance"
-Write-Host "  Godot:   $GodotPath"
+Write-Host "  Godot:    $GodotPath"
 Write-Host "  Snapshot: $SnapshotPath"
 Write-Host "  Output:   $outDir"
 Write-Host ""
@@ -126,5 +174,5 @@ Write-Host "Evidence written to: $jsonPath"
 Write-Host "Screenshots:"
 Get-ChildItem -LiteralPath $screensDir -Filter '*.png' | ForEach-Object { Write-Host "  $($_.FullName)" }
 Write-Host ""
-Write-Host "NEXT OWNER GATE: inspect polygon/candidate screenshots and native responsiveness."
+Write-Host "NEXT OWNER GATE: inspect polygon/candidate screenshots and the performance-preflight evidence."
 Write-Host "Do not change the default renderer until owner visual acceptance, owner native performance acceptance, and fresh independent review are all recorded."
