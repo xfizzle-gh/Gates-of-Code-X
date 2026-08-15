@@ -3,12 +3,13 @@ extends "res://scripts/tools/map_raster_shadow_profiler_audited.gd"
 ## #212 Phase B legal-target authority audit.
 ##
 ## The performance fixture intentionally does not invent graph orders. This tool
-## discovers a committed Earth3 snapshot that already contains backend-authored
-## operational_orders, selects one deterministic real order, and proves the exact
+## prefers a CI-generated Earth3 snapshot from the production player-shell path,
+## selects one deterministic real operational order, and proves the exact
 ## non-empty legal-target set is unchanged by polygon/full-cache/512/1024
 ## presentation while PolygonMap remains live.
 
 const SNAPSHOT_CANDIDATES := [
+	"res://generated/issue212_real_order_snapshot.json",
 	"res://fixtures/snapshots/earth3_operational.json",
 	"res://fixtures/snapshots/earth3_theatre.json",
 ]
@@ -47,7 +48,7 @@ func _run_legal_audit() -> void:
 
 	var discovered := _discover_real_order_snapshot()
 	if not bool(discovered.get("ok", false)):
-		_fail("no committed Earth3 snapshot with backend-authored operational_orders: %s" % JSON.stringify(discovered))
+		_fail("no Earth3 snapshot with real operational_orders: %s" % JSON.stringify(discovered))
 		return
 	_snapshot_path = String(discovered.get("snapshot_path", ""))
 	var order: Dictionary = discovered.get("order", {})
@@ -112,7 +113,8 @@ func _run_legal_audit() -> void:
 		"phase": "B-debug-shadow-legal-target-parity",
 		"snapshot_path": _snapshot_path,
 		"snapshot_sha256": FileAccess.get_sha256(_snapshot_path),
-		"order_source": "committed backend-authored operational_orders",
+		"order_source": "production player-shell snapshot operational_orders",
+		"operational_order_count": int(discovered.get("operational_order_count", 0)),
 		"order": {
 			"formation_id": order.get("formation_id", ""),
 			"origin_province_id": order.get("origin_province_id", ""),
@@ -133,6 +135,7 @@ func _run_legal_audit() -> void:
 		"snapshot": _snapshot_path,
 		"formation": order.get("formation_id", ""),
 		"legal_targets": reference.get("legal_target_ids", []),
+		"operational_order_count": discovered.get("operational_order_count", 0),
 	}))
 	print("map_raster_shadow_legal_target_audit: PASS out=%s" % _out_path)
 	quit(0)
