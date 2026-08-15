@@ -242,11 +242,15 @@ class CommandCycleTelemetryTests(unittest.TestCase):
             "refresh_operational_supply(state, consume_grace=False)",
             "ensure_s11_schema(state)",
             "refresh_all_observer_knowledge(state, observation_context)",
-            '"validate", state.validate',
+            "_profiled_campaign_validation(state, subphase_seconds)",
             "_runtime_state_json(state)",
             "temporary_path.replace(destination)",
         ):
             self.assertIn(required, compact)
+        profiler = source.split("def _profiled_campaign_validation(", 1)[1].split(
+            "def _ensure_runtime_operational_positions(", 1
+        )[0]
+        self.assertIn("state.validate()", profiler)
         self.assertNotIn("ensure_strategic_formations(state)", compact)
         self.assertNotIn("indent=2", compact)
 
