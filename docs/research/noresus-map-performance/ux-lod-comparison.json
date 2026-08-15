@@ -1,0 +1,109 @@
+{
+  "issue": 212,
+  "phase": "D-debug-ux-lod",
+  "measurement_head": "3cadb7fd8dfe637f04f9abdc612fe776a4848bd4",
+  "focused_workflow": {
+    "name": "Issue 212 UX LOD",
+    "run_id": 31865769536,
+    "conclusion": "success",
+    "artifact_id": 9241988723,
+    "artifact_name": "issue-212-ux-lod",
+    "artifact_sha256": "85fb313c8fdf5933925544da91ea097527d83284993240328f29345ab3f25fb9"
+  },
+  "measurement_contract": {
+    "frames_per_sample": 24,
+    "max_baseline_drift_ratio": 0.15,
+    "design": "all-current-layers -> event-applied LOD state -> all-current-layers",
+    "policy_apply_count_per_scene": 1,
+    "policy_has_process_loop": false,
+    "layer_control_has_process_loop": false
+  },
+  "authority": {
+    "unchanged": true,
+    "polygon_backend_remains_live": true,
+    "manifest_sha256": "614a926e79f11e3cfac8c867c7bacce107fc69344b17fabb6b4545cdeaa6a357",
+    "polygon_dataset_sha256": "4aadab4b5106bbfa4c2d37e8173c3d1675f35a448cbd7f32a8b871c464ce1b84",
+    "snapshot_fixture_sha256": "b405550730f2af7d8bd82ca82ee27924431d9ac0c1dd6b8a5bef979828585ef3"
+  },
+  "profiles": {
+    "full_theatre_auto": {
+      "lod": "full_theatre",
+      "view_scale": 1.0,
+      "frame_p50_ms": 194.849,
+      "frame_p95_ms": 202.701,
+      "draw_calls_p50": 80,
+      "primitives_p50": 452663,
+      "script_cpu_p50_ms": 202.497,
+      "video_mem_bytes_p50": 69129901,
+      "draw_calls_removed_vs_local_baseline": 125,
+      "primitives_removed_vs_local_baseline": 3902,
+      "frame_p50_improvement_ms": 3.205,
+      "frame_p95_improvement_ms": 4.777,
+      "baseline_drift_p50_ratio": 0.0007,
+      "baseline_drift_p95_ratio": 0.0103
+    },
+    "operational_auto": {
+      "lod": "operational",
+      "view_scale": 2.0,
+      "frame_p50_ms": 279.578,
+      "frame_p95_ms": 290.016,
+      "draw_calls_p50": 129,
+      "primitives_p50": 453675,
+      "script_cpu_p50_ms": 287.565,
+      "video_mem_bytes_p50": 69152845,
+      "draw_calls_removed_vs_local_baseline": 78,
+      "primitives_removed_vs_local_baseline": 2956,
+      "frame_p50_improvement_ms": 2.432,
+      "frame_p95_improvement_ms": 1.727,
+      "baseline_drift_p50_ratio": 0.0039,
+      "baseline_drift_p95_ratio": 0.0066
+    },
+    "detailed_auto": {
+      "lod": "detailed",
+      "view_scale": 3.0,
+      "frame_p50_ms": 267.938,
+      "frame_p95_ms": 270.505,
+      "draw_calls_p50": 159,
+      "primitives_p50": 454917,
+      "script_cpu_p50_ms": 269.88,
+      "video_mem_bytes_p50": 69177325,
+      "draw_calls_removed_vs_local_baseline": 48,
+      "primitives_removed_vs_local_baseline": 1714,
+      "frame_p50_improvement_ms": 2.567,
+      "frame_p95_improvement_ms": 1.43,
+      "baseline_drift_p50_ratio": 0.0068,
+      "baseline_drift_p95_ratio": 0.0055
+    },
+    "all_measurable_disabled": {
+      "lod": "detailed",
+      "view_scale": 3.0,
+      "frame_p50_ms": 267.149,
+      "frame_p95_ms": 270.266,
+      "draw_calls_p50": 57,
+      "primitives_p50": 452539,
+      "script_cpu_p50_ms": 268.879,
+      "video_mem_bytes_p50": 69127981,
+      "draw_calls_removed_vs_local_baseline": 150,
+      "primitives_removed_vs_local_baseline": 4092,
+      "frame_p50_improvement_ms": 2.464,
+      "frame_p95_improvement_ms": 4.206,
+      "baseline_drift_p50_ratio": 0.0043,
+      "baseline_drift_p95_ratio": 0.0016
+    }
+  },
+  "layer_contract": {
+    "measurable_current_surfaces": ["formation_symbols", "names", "infrastructure_sites", "operational_routes", "debug_overlays"],
+    "contract_only_not_independently_measurable": ["supply", "objectives", "fog_intelligence"]
+  },
+  "minimap": {
+    "ok": true,
+    "source": "downsampled derived static Earth3 presentation cache",
+    "texture_width": 250,
+    "texture_height": 200,
+    "front_contact_overlay_points": 7,
+    "selection_overlay": true,
+    "process_loop": false,
+    "second_live_earth3_scene": false
+  },
+  "decision": "PASS as a debug-only Phase D LOD/layer-control/minimap proof; no production renderer switch is authorized."
+}
