@@ -3,6 +3,7 @@
   "schema_version": 1,
   "issue": 212,
   "status": "BLOCKED",
+  "baseline_status": "ACCEPTED",
   "production_switch_authorized": false,
   "required_before_authorization": {
     "phase_c_independent_audit_accepted": false,
@@ -22,6 +23,31 @@
     "picking_parity_required": true,
     "water_policy_unchanged_required": true
   },
-  "decision_rule": "Do not make the hybrid/composed candidate the default renderer until every required gate is explicitly recorded true after exact-head validation. CI measurement artifacts alone cannot set owner acceptance or authorize the switch.",
-  "current_blocker": "Owner-native visual/performance acceptance and downstream independent review are not yet recorded."
+  "accepted_post_p8_baseline": {
+    "recorded_date": "2026-08-15",
+    "accepted_main_sha": "790402dd52106f139e3250eaa8620ac548dd233c",
+    "production_renderer": "PolygonMap",
+    "hybrid_candidate": {
+      "available": true,
+      "opt_in_environment": "GOCX_PRESENTATION_CANDIDATE=hybrid",
+      "production_default": false,
+      "authority_acceptance": "PASS",
+      "pan_time_tile_upload_regression": "FIXED",
+      "native_frame_time_disposition": "parity_or_slightly_worse_in_several_owner-native measurements; no materially better frame-time result established",
+      "video_memory_tradeoff": "additional candidate video-memory cost remains"
+    },
+    "owner_native_seconds": {
+      "strict_cold_startup": 9.395,
+      "warm_startup": 2.665,
+      "legal_order": 1.511,
+      "end_turn_samples": [1.698, 1.898, 1.960]
+    },
+    "regression_rule": {
+      "metric": "representative p95 frame time or command latency",
+      "maximum_unapproved_regression_ratio": 0.10,
+      "exception": "explicit owner approval with documented tradeoff"
+    }
+  },
+  "decision_rule": "Do not make the hybrid/composed candidate the default renderer until authority/parity is preserved and owner-native measurement demonstrates a material performance improvement. CI measurement artifacts alone cannot authorize the switch.",
+  "current_blocker": "The hybrid candidate remains an opt-in experiment. Authority and visual correctness are accepted and the prior pan-time tile-upload regression is fixed, but the final owner-native comparison did not establish a material frame-time improvement over PolygonMap and the candidate still carries additional video-memory cost."
 }
