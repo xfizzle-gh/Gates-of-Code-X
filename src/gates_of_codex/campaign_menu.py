@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
+from .local_discovery import default_campaign_path, detect_launch_paths
 from .scenario_selection import (
     ActorChoice,
     active_scenario_label,
@@ -38,7 +40,7 @@ class CampaignMenuModel:
         return tuple(choice for choice in self.actors(scenario_id) if choice.playable)
 
     def continue_summary(self, campaign_path: str | Path) -> ContinueSummary:
-        source = Path(campaign_path).expanduser().resolve(strict=False)
+        source = Path(str(campaign_path).strip()).expanduser().resolve(strict=False)
         state = load_campaign(source)
         profile = state.map_metadata.get("scenario_profile")
         if isinstance(profile, Mapping):
@@ -90,22 +92,22 @@ def _launch_new(
     )
     if choice is None:
         raise ValueError(f"actor_not_playable:{scenario_id}:{actor_id}")
-    paths = resolve_campaign_paths(campaign_path or None, scenario_id=scenario_id)
+    paths = resolve_campaign_paths(campaign_path.strip() or None, scenario_id=scenario_id)
     state = create_new_campaign(
         paths=paths,
         scenario_id=scenario_id,
         faction=campaign_faction_for_choice(choice),
-        stack_config=stack_config or None,
-        game_directory=game_directory or None,
-        profile_directory=profile_directory or None,
+        stack_config=stack_config.strip() or None,
+        game_directory=game_directory.strip() or None,
+        profile_directory=profile_directory.strip() or None,
         force=False,
     )
     apply_new_campaign_actor(state, scenario_id, actor_id)
     save_campaign(state, paths.campaign)
     snapshot = publish_snapshot(state, paths)
     write_last_campaign(paths.campaign)
-    executable = find_godot_executable(godot_executable or None)
-    project = godot_project_directory(godot_project or None)
+    executable = find_godot_executable(godot_executable.strip() or None)
+    project = godot_project_directory(godot_project.strip() or None)
     launch_strategic_application(
         snapshot=snapshot,
         godot_executable=executable,
@@ -130,7 +132,7 @@ def _launch_continue(
         write_last_campaign,
     )
 
-    source = Path(campaign_path).expanduser().resolve(strict=False)
+    source = Path(campaign_path.strip()).expanduser().resolve(strict=False)
     before = CampaignMenuModel().continue_summary(source)
     paths = resolve_campaign_paths(source)
     state = continue_campaign(paths=paths)
@@ -140,8 +142,8 @@ def _launch_continue(
         raise ValueError("continue_changed_persisted_scenario_identity")
     snapshot = publish_snapshot(state, paths)
     write_last_campaign(paths.campaign)
-    executable = find_godot_executable(godot_executable or None)
-    project = godot_project_directory(godot_project or None)
+    executable = find_godot_executable(godot_executable.strip() or None)
+    project = godot_project_directory(godot_project.strip() or None)
     launch_strategic_application(
         snapshot=snapshot,
         godot_executable=executable,
@@ -160,8 +162,8 @@ def main() -> int:
 
     root = tk.Tk()
     root.title("Gates of CodeX - Campaign")
-    root.geometry("720x620")
-    root.minsize(640, 560)
+    root.geometry("760x690")
+    root.minsize(680, 620)
 
     frame = ttk.Frame(root, padding=20)
     frame.pack(fill=tk.BOTH, expand=True)
@@ -186,18 +188,37 @@ def main() -> int:
     profile_var = tk.StringVar()
     godot_var = tk.StringVar()
     project_var = tk.StringVar()
-    status_var = tk.StringVar(value="Choose Core or Expanded, then choose a playable actor.")
+    continue_path_var = tk.StringVar()
+    status_var = tk.StringVar(value="Scanning local install...")
+    continue_status_var = tk.StringVar(
+        value="Continue restores the persisted scenario and playable nation without asking again."
+    )
 
-    def row(parent, label: str, variable: tk.StringVar, *, directory: bool = False) -> None:
+    def row(
+        parent,
+        label: str,
+        variable: tk.StringVar,
+        *,
+        directory: bool = False,
+        save_file: bool = False,
+    ) -> None:
         container = ttk.Frame(parent)
         container.pack(fill=tk.X, pady=4)
         ttk.Label(container, text=label, width=18).pack(side=tk.LEFT)
         ttk.Entry(container, textvariable=variable).pack(side=tk.LEFT, fill=tk.X, expand=True)
 
         def browse() -> None:
-            value = filedialog.askdirectory() if directory else filedialog.askopenfilename()
+            if directory:
+                value = filedialog.askdirectory()
+            elif save_file:
+                value = filedialog.asksaveasfilename(
+                    defaultextension=".json",
+                    filetypes=(("JSON", "*.json"), ("All files", "*.*")),
+                )
+            else:
+                value = filedialog.askopenfilename()
             if value:
-                variable.set(value)
+                variable.set(value.strip())
 
         ttk.Button(container, text="Browse", command=browse).pack(side=tk.LEFT, padx=(6, 0))
 
@@ -211,7 +232,7 @@ def main() -> int:
     scenario_box.pack(fill=tk.X, pady=(0, 8))
     ttk.Label(new_tab, text="Playable actor").pack(anchor=tk.W)
     actor_box = ttk.Combobox(new_tab, state="readonly", textvariable=actor_var)
-    actor_box.pack(fill=tk.X, pady=(0, 10))
+    actor_box.pack(fill=tk.X, pady=(0, 8))
 
     actor_by_label: dict[str, ActorChoice] = {}
 
@@ -224,18 +245,56 @@ def main() -> int:
         labels = list(actor_by_label)
         actor_box.configure(values=labels)
         actor_var.set(labels[0] if labels else "")
+        if scenario_id:
+            campaign_var.set(str(default_campaign_path(scenario_id)))
 
     scenario_box.bind("<<ComboboxSelected>>", refresh_actors)
     refresh_actors()
 
-    row(new_tab, "Campaign file", campaign_var)
+    def scan_local_install() -> None:
+        scenario_id = scenario_by_label.get(scenario_var.get(), "")
+        if not scenario_id:
+            status_var.set("Choose a scenario before scanning.")
+            return
+        try:
+            discovered = detect_launch_paths(scenario_id)
+        except Exception as exc:
+            status_var.set(f"Auto-detect failed: {exc}")
+            return
+
+        for key, value in discovered.environment:
+            os.environ[key] = value
+
+        campaign_var.set(discovered.campaign_file)
+        if discovered.stack_config:
+            stack_var.set(discovered.stack_config)
+        if discovered.game_directory:
+            game_var.set(discovered.game_directory)
+        if discovered.profile_directory:
+            profile_var.set(discovered.profile_directory)
+        if discovered.godot_executable:
+            godot_var.set(discovered.godot_executable)
+        if discovered.godot_project:
+            project_var.set(discovered.godot_project)
+        if discovered.continue_campaign_file:
+            continue_path_var.set(discovered.continue_campaign_file)
+
+        status_var.set(discovered.status_message())
+
+    ttk.Button(
+        new_tab,
+        text="Scan local install",
+        command=scan_local_install,
+    ).pack(anchor=tk.W, pady=(0, 8))
+
+    row(new_tab, "Campaign file", campaign_var, save_file=True)
     row(new_tab, "Stack config", stack_var)
     row(new_tab, "Game directory", game_var, directory=True)
     row(new_tab, "Profile directory", profile_var, directory=True)
     row(new_tab, "Godot executable", godot_var)
     row(new_tab, "Godot project", project_var, directory=True)
 
-    ttk.Label(new_tab, textvariable=status_var, wraplength=620).pack(anchor=tk.W, pady=(12, 8))
+    ttk.Label(new_tab, textvariable=status_var, wraplength=660).pack(anchor=tk.W, pady=(12, 8))
 
     def launch_new() -> None:
         scenario_id = scenario_by_label.get(scenario_var.get(), "")
@@ -247,12 +306,12 @@ def main() -> int:
             summary = _launch_new(
                 scenario_id=scenario_id,
                 actor_id=choice.actor_id,
-                campaign_path=campaign_var.get(),
-                stack_config=stack_var.get(),
-                game_directory=game_var.get(),
-                profile_directory=profile_var.get(),
-                godot_executable=godot_var.get(),
-                godot_project=project_var.get(),
+                campaign_path=campaign_var.get().strip(),
+                stack_config=stack_var.get().strip(),
+                game_directory=game_var.get().strip(),
+                profile_directory=profile_var.get().strip(),
+                godot_executable=godot_var.get().strip(),
+                godot_project=project_var.get().strip(),
             )
         except Exception as exc:
             messagebox.showerror("New Campaign", str(exc))
@@ -260,21 +319,18 @@ def main() -> int:
         status_var.set(
             f"Created {summary.scenario_label} as {summary.actor_id}; strategic screen launched."
         )
+        continue_path_var.set(summary.campaign_path)
 
     ttk.Button(new_tab, text="Start Campaign", command=launch_new).pack(anchor=tk.W)
 
-    continue_path_var = tk.StringVar()
-    continue_status_var = tk.StringVar(
-        value="Continue restores the persisted scenario and playable nation without asking again."
-    )
     row(continue_tab, "Campaign file", continue_path_var)
-    ttk.Label(continue_tab, textvariable=continue_status_var, wraplength=620).pack(
+    ttk.Label(continue_tab, textvariable=continue_status_var, wraplength=660).pack(
         anchor=tk.W, pady=(12, 8)
     )
 
     def inspect_continue() -> None:
         try:
-            summary = model.continue_summary(continue_path_var.get())
+            summary = model.continue_summary(continue_path_var.get().strip())
         except Exception as exc:
             messagebox.showerror("Continue", str(exc))
             return
@@ -286,9 +342,9 @@ def main() -> int:
     def launch_continue() -> None:
         try:
             summary = _launch_continue(
-                campaign_path=continue_path_var.get(),
-                godot_executable=godot_var.get(),
-                godot_project=project_var.get(),
+                campaign_path=continue_path_var.get().strip(),
+                godot_executable=godot_var.get().strip(),
+                godot_project=project_var.get().strip(),
             )
         except Exception as exc:
             messagebox.showerror("Continue", str(exc))
@@ -302,6 +358,7 @@ def main() -> int:
         anchor=tk.W, pady=(6, 0)
     )
 
+    root.after(0, scan_local_install)
     root.mainloop()
     return 0
 
