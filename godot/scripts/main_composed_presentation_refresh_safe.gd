@@ -34,6 +34,15 @@ func _unhandled_input(event: InputEvent) -> void:
 	super._unhandled_input(event)
 
 
+func _draw_battalion_counter(position: Vector2, battalion: Dictionary, _province_color: Color, selected: bool) -> void:
+	# Unit identity is independent of where the unit currently stands. Never tint
+	# a battalion from the province owner/controller color: a RUSA formation stays
+	# red in Ukraine or neutral territory, and the same rule applies to all sides.
+	var faction_id := String(battalion.get("faction", "neutral"))
+	var faction_color: Color = FACTION_COLORS.get(faction_id, FACTION_COLORS["neutral"])
+	super._draw_battalion_counter(position, battalion, faction_color, selected)
+
+
 func _process(delta: float) -> void:
 	super._process(delta)
 	if not composed_presentation_active or _composed_atlas == null:

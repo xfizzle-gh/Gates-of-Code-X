@@ -125,6 +125,14 @@ def test_persist_seam_stays_live_move_batch_or_auto_resolve() -> None:
     assert not _should_persist_runtime_snapshot([{"op": "end_player_round"}])
 
 
+def test_production_unit_counter_color_follows_unit_faction_not_province_owner() -> None:
+    script = PRODUCTION_SCRIPT.read_text(encoding="utf-8")
+
+    assert 'battalion.get("faction", "neutral")' in script
+    assert 'FACTION_COLORS.get(faction_id, FACTION_COLORS["neutral"])' in script
+    assert "super._draw_battalion_counter(position, battalion, faction_color, selected)" in script
+
+
 def test_post_p8_map_ui_regression_gate_remains_locked_for_slice_f() -> None:
     gate = json.loads(POST_P8_GATE.read_text(encoding="utf-8"))
     baseline = gate["accepted_post_p8_baseline"]
