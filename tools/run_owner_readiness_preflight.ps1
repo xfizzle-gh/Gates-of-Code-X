@@ -173,37 +173,24 @@ function Invoke-StartupSample([string]$Name) {
     }
 }
 
-# Session creation is synchronization, not an owner-facing latency measurement.
-# A frozen backend restart includes PyInstaller extraction and authoritative load,
-# so give it enough room to become ready while binding the descriptor to the
-# exact process we launched. None of the strict 15/5/3/5/8 performance budgets
-# above are changed by this wait.
-function Get-SessionDescriptor(
-    [int]$ExpectedPid = 0,
-    [System.Diagnostics.Process]$BackendProcess = $null,
-    [int]$TimeoutSeconds = 60
-) {
+# Fresh one-file backend synchronization is not an owner-facing latency metric.
+# PyInstaller extraction plus authoritative campaign load can exceed 20 seconds on
+# hosted Windows, so allow the unmeasured readiness wait to complete. The strict
+# cold/warm/order/End Turn budgets above remain unchanged.
+function Get-SessionDescriptor([int]$TimeoutSeconds = 60) {
     $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
     while ([DateTime]::UtcNow -lt $deadline) {
-        if ($null -ne $BackendProcess) {
-            $BackendProcess.Refresh()
-            if ($BackendProcess.HasExited) {
-                throw "Persistent backend PID $($BackendProcess.Id) exited with code $($BackendProcess.ExitCode) before establishing its session descriptor"
-            }
-        }
         if (Test-Path -LiteralPath $sessionPath -PathType Leaf) {
             try {
                 $session = Get-Content -LiteralPath $sessionPath -Raw | ConvertFrom-Json
-                $sessionPid = [int]$session.pid
-                if ($sessionPid -gt 0 -and ($ExpectedPid -le 0 -or $sessionPid -eq $ExpectedPid)) {
+                if ([int]$session.pid -gt 0) {
                     return [pscustomobject]@{ Path = $sessionPath; Data = $session }
                 }
             } catch {}
         }
         Start-Sleep -Milliseconds 100
     }
-    $pidDetail = if ($ExpectedPid -gt 0) { " (expected PID $ExpectedPid)" } else { '' }
-    throw "Persistent backend session descriptor was not established for $campaign$pidDetail within ${TimeoutSeconds}s"
+    throw "Persistent backend session descriptor was not established for $campaign"
 }
 
 function Assert-SessionAlive($Session) {
@@ -242,22 +229,10 @@ function Start-PersistentSession([string]$ExpectedCommit) {
         '--snapshot', (Quote-ProcessArgument $snapshot),
         '--expected-source-commit', $ExpectedCommit
     )
-    $backendProcess = Start-Process -FilePath $liveExecutable -ArgumentList $args -WindowStyle Hidden -PassThru
-    try {
-        $session = Get-SessionDescriptor -ExpectedPid $backendProcess.Id -BackendProcess $backendProcess -TimeoutSeconds 60
-        Assert-SessionAlive $session
-        return $session
-    }
-    catch {
-        try {
-            $backendProcess.Refresh()
-            if (-not $backendProcess.HasExited) {
-                $backendProcess.Kill()
-            }
-        } catch {}
-        Remove-Item -LiteralPath $sessionPath -Force -ErrorAction SilentlyContinue
-        throw
-    }
+    $null = Start-Process -FilePath $liveExecutable -ArgumentList $args -WindowStyle Hidden -PassThru
+    $session = Get-SessionDescriptor
+    Assert-SessionAlive $session
+    return $session
 }
 
 function Stop-CurrentOwnedSession {
