@@ -1,0 +1,27 @@
+{
+  "schema": "gates-of-codex.issue-212-production-switch-gate",
+  "schema_version": 1,
+  "issue": 212,
+  "status": "BLOCKED",
+  "production_switch_authorized": false,
+  "required_before_authorization": {
+    "phase_c_independent_audit_accepted": false,
+    "phase_d_independent_audit_accepted": false,
+    "e1_hybrid_candidate_independent_audit_accepted": false,
+    "e2_composed_candidate_independent_audit_accepted": false,
+    "owner_native_evidence_collected": false,
+    "owner_visual_accepted": false,
+    "owner_native_performance_accepted": false,
+    "final_independent_authority_review_accepted": false
+  },
+  "authority_contract": {
+    "map_id": "earth3_europe_mediterranean",
+    "province_count": 3514,
+    "polygon_map_remains_authority": true,
+    "stable_ids_unchanged_required": true,
+    "picking_parity_required": true,
+    "water_policy_unchanged_required": true
+  },
+  "decision_rule": "Do not make the hybrid/composed candidate the default renderer until every required gate is explicitly recorded true after exact-head validation. CI measurement artifacts alone cannot set owner acceptance or authorize the switch.",
+  "current_blocker": "Owner-native visual/performance acceptance and downstream independent review are not yet recorded."
+}

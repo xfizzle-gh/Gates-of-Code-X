@@ -31,6 +31,10 @@ func _run_all() -> void:
 	_test_stale_callback_ignored()
 	await _test_exit_during_command_safe()
 	await _test_candidate_fallback()
+	await _test_persistent_backend_transport_success()
+	await _test_stale_persistent_identity_falls_back()
+	await _test_dead_persistent_session_falls_back_before_dispatch()
+	await _test_post_dispatch_loss_never_replays()
 
 	print("command_runner_test: passed=%s failed=%s" % [_passed, _failed])
 	if _failed > 0:
@@ -266,6 +270,231 @@ func _test_candidate_fallback() -> void:
 			],
 			bool(_finished_events[0].get("success")),
 			true
+		)
+
+
+func _test_root(name: String) -> String:
+	var path := OS.get_user_data_dir().path_join("command_runner_%s" % name)
+	DirAccess.make_dir_recursive_absolute(path)
+	return path
+
+
+func _write_json(path: String, value: Variant) -> void:
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		_fail("write test json", path)
+		return
+	file.store_string(JSON.stringify(value))
+	file.close()
+
+
+func _start_test_server() -> TCPServer:
+	for port in range(39100, 39200):
+		var server := TCPServer.new()
+		if server.listen(port, "127.0.0.1") == OK:
+			return server
+	return null
+
+
+func _persistent_candidate(root_path: String, expected_commit: String) -> Dictionary:
+	var campaign := root_path.path_join("campaign.json")
+	var snapshot := root_path.path_join("campaign_snapshot.json")
+	var commands := root_path.path_join("frontend_commands.json")
+	_write_json(campaign, {"test": true})
+	_write_json(snapshot, {"test": true})
+	_write_json(commands, {"commands": [{"op": "issue_move_order"}]})
+	return {
+		"executable": _missing_executable_path(),
+		"args": [
+			"-m", "gates_of_codex", "apply-frontend", campaign,
+			"--snapshot", snapshot,
+			"--commands", commands,
+			"--expected-source-commit", expected_commit,
+		],
+		"persistent_ping_timeout_msec": 250,
+		"persistent_apply_timeout_msec": 1000,
+	}
+
+
+func _write_session(root_path: String, port: int, token: String, commit: String) -> void:
+	_write_json(root_path.path_join(".goc-backend-session.json"), {
+		"schema": "gates-of-codex.persistent-backend",
+		"schema_version": 2,
+		"source_commit": commit,
+		"campaign_path": root_path.path_join("campaign.json"),
+		"port": port,
+		"token": token,
+		"pid": OS.get_process_id(),
+	})
+
+
+func _read_peer_request(peer: StreamPeerTCP, timeout_sec := 1.0) -> Dictionary:
+	var left := timeout_sec
+	var bytes := PackedByteArray()
+	while left > 0.0:
+		peer.poll()
+		var available := peer.get_available_bytes()
+		if available > 0:
+			var chunk: Array = peer.get_partial_data(available)
+			if chunk.size() >= 2 and int(chunk[0]) == OK:
+				bytes.append_array(chunk[1] as PackedByteArray)
+				var text := bytes.get_string_from_utf8()
+				var newline := text.find("\n")
+				if newline >= 0:
+					var parsed: Variant = JSON.parse_string(text.substr(0, newline))
+					return parsed as Dictionary if parsed is Dictionary else {}
+		await create_timer(0.005).timeout
+		left -= 0.005
+	return {}
+
+
+func _serve_backend_until_idle(
+	server: TCPServer,
+	token: String,
+	commit: String,
+	lose_apply_response := false,
+	timeout_sec := 4.0
+) -> Array:
+	var actions: Array = []
+	var left := timeout_sec
+	while left > 0.0 and _runner.is_busy():
+		if server.is_connection_available():
+			var peer := server.take_connection()
+			if peer != null:
+				var request := await _read_peer_request(peer)
+				_assert_eq("persistent request token", String(request.get("token", "")), token)
+				_assert_eq("persistent request commit", String(request.get("source_commit", "")), commit)
+				var action := String(request.get("action", ""))
+				actions.append(action)
+				if action == "ping":
+					peer.put_data((JSON.stringify({"ok": true}) + "\n").to_utf8_buffer())
+				elif action == "apply":
+					if lose_apply_response:
+						peer.disconnect_from_host()
+					else:
+						var stdout := JSON.stringify({
+							"ok": true,
+							"results": [],
+							"timings": {"total_ms": 1.0},
+						})
+						peer.put_data((JSON.stringify({
+							"handled": true,
+							"exit_code": 0,
+							"stdout": stdout,
+						}) + "\n").to_utf8_buffer())
+		await create_timer(0.005).timeout
+		left -= 0.005
+	return actions
+
+
+func _test_persistent_backend_transport_success() -> void:
+	_finished_events.clear()
+	var server := _start_test_server()
+	_assert_true("persistent test server started", server != null)
+	if server == null:
+		return
+	var root_path := _test_root("persistent_success")
+	var commit := "0123456789abcdef0123456789abcdef01234567"
+	var token := "test-token-success"
+	var candidate := _persistent_candidate(root_path, commit)
+	_write_session(root_path, server.get_local_port(), token, commit)
+	var start: Dictionary = _runner.try_start_candidates(
+		[{"op": "issue_move_order"}], [candidate], root_path.path_join("campaign_snapshot.json")
+	)
+	_assert_true("persistent direct start", bool(start.get("ok", false)), str(start))
+	var actions := await _serve_backend_until_idle(server, token, commit)
+	await _wait_until_idle(2.0)
+	server.stop()
+	_assert_eq("persistent direct actions", actions, ["ping", "apply"])
+	_assert_eq("persistent direct one completion", _finished_events.size(), 1)
+	if not _finished_events.is_empty():
+		_assert_true("persistent direct success", bool(_finished_events[-1].get("success", false)))
+	_assert_true(
+		"persistent direct bypassed process",
+		String(_runner.last_launch_path()).begins_with("persistent-backend://"),
+		_runner.last_launch_path()
+	)
+
+
+func _test_stale_persistent_identity_falls_back() -> void:
+	_finished_events.clear()
+	var root_path := _test_root("stale_identity")
+	var expected := "0123456789abcdef0123456789abcdef01234567"
+	var stale := "fedcba9876543210fedcba9876543210fedcba98"
+	var candidate := _persistent_candidate(root_path, expected)
+	_write_session(root_path, 39199, "stale-token", stale)
+	var spec: Dictionary = FrontendCommandRunnerScript._persistent_apply_spec(candidate)
+	_assert_true("stale identity spec recognized", not spec.is_empty())
+	_assert_true(
+		"stale identity rejected before socket",
+		FrontendCommandRunnerScript._load_authenticated_session(spec).is_empty()
+	)
+	var ok: Dictionary = _fake_executable()
+	var start: Dictionary = _runner.try_start_candidates(
+		[{"op": "issue_move_order"}],
+		[candidate, {"executable": ok.exe, "args": Array(ok.args)}],
+		root_path.path_join("campaign_snapshot.json")
+	)
+	_assert_true("stale identity recovery starts", bool(start.get("ok", false)), str(start))
+	await _wait_until_idle(3.0)
+	_assert_eq("stale identity used approved fallback", _runner.last_launch_path(), ok.exe)
+
+
+func _test_dead_persistent_session_falls_back_before_dispatch() -> void:
+	_finished_events.clear()
+	var server := _start_test_server()
+	_assert_true("dead-session port allocated", server != null)
+	if server == null:
+		return
+	var dead_port := server.get_local_port()
+	server.stop()
+	var root_path := _test_root("dead_session")
+	var commit := "0123456789abcdef0123456789abcdef01234567"
+	var candidate := _persistent_candidate(root_path, commit)
+	_write_session(root_path, dead_port, "dead-token", commit)
+	var ok: Dictionary = _fake_executable()
+	var start: Dictionary = _runner.try_start_candidates(
+		[{"op": "issue_move_order"}],
+		[candidate, {"executable": ok.exe, "args": Array(ok.args)}],
+		root_path.path_join("campaign_snapshot.json")
+	)
+	_assert_true("dead session recovery starts", bool(start.get("ok", false)), str(start))
+	await _wait_until_idle(3.0)
+	_assert_eq("dead session used approved fallback", _runner.last_launch_path(), ok.exe)
+
+
+func _test_post_dispatch_loss_never_replays() -> void:
+	_finished_events.clear()
+	var server := _start_test_server()
+	_assert_true("ambiguous test server started", server != null)
+	if server == null:
+		return
+	var root_path := _test_root("ambiguous")
+	var commit := "0123456789abcdef0123456789abcdef01234567"
+	var token := "test-token-ambiguous"
+	var candidate := _persistent_candidate(root_path, commit)
+	_write_session(root_path, server.get_local_port(), token, commit)
+	var ok: Dictionary = _fake_executable()
+	var start: Dictionary = _runner.try_start_candidates(
+		[{"op": "issue_move_order"}],
+		[candidate, {"executable": ok.exe, "args": Array(ok.args)}],
+		root_path.path_join("campaign_snapshot.json")
+	)
+	_assert_true("ambiguous transport starts", bool(start.get("ok", false)), str(start))
+	var actions := await _serve_backend_until_idle(server, token, commit, true)
+	await _wait_until_idle(2.0)
+	server.stop()
+	_assert_eq("ambiguous transport dispatched once", actions, ["ping", "apply"])
+	_assert_true(
+		"ambiguous response did not replay process fallback",
+		String(_runner.last_launch_path()).begins_with("persistent-backend://"),
+		_runner.last_launch_path()
+	)
+	_assert_eq("ambiguous transport one completion", _finished_events.size(), 1)
+	if not _finished_events.is_empty():
+		_assert_true(
+			"ambiguous payload forces reload",
+			String(_finished_events[-1].get("output_text", "")).contains("ambiguous")
 		)
 
 

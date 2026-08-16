@@ -1,0 +1,208 @@
+name: Issue 212 acceptance harness
+
+on:
+  pull_request:
+    paths:
+      - "godot/scripts/tools/map_candidate_native_acceptance.gd"
+      - "godot/scripts/tools/map_candidate_native_acceptance_loaded.gd"
+      - "tools/run_issue212_native_acceptance.ps1"
+      - "tools/run_owner_readiness_preflight.ps1"
+      - "docs/research/noresus-map-performance/production-switch-gate.json"
+      - ".github/workflows/issue-212-acceptance-harness.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: issue-212-acceptance-harness-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  acceptance-harness-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Assert exact PR head checkout
+        if: github.event_name == 'pull_request'
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+      - name: Parse owner-native PowerShell entrypoints
+        shell: pwsh
+        run: |
+          foreach ($script in @(
+            '.\tools\run_issue212_native_acceptance.ps1',
+            '.\tools\run_owner_readiness_preflight.ps1'
+          )) {
+            [scriptblock]::Create((Get-Content -LiteralPath $script -Raw)) | Out-Null
+          }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Stamp package provenance
+        id: provenance
+        shell: pwsh
+        run: |
+          $stamp = & .\tools\stamp_package_provenance.ps1
+          "commit=$($stamp.Commit)" >> $env:GITHUB_OUTPUT
+      - name: Install Python package for production Earth3 snapshot
+        run: python -m pip install -e ".[earth3]"
+      - name: Assert installed provenance
+        shell: pwsh
+        run: python -c 'import sys; from gates_of_codex.packaging import package_identity; assert package_identity().source_commit == sys.argv[1]' '${{ steps.provenance.outputs.commit }}'
+      - name: Generate current production Earth3 acceptance snapshot
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          import sys
+          from pathlib import Path
+
+          sys.path.insert(0, "tests")
+          from test_p2_earth3_campaign_bootstrap import _resolved_catalog
+          from gates_of_codex.player_shell import build_play_parser, run_play
+
+          root = Path(os.environ["RUNNER_TEMP"]) / "issue212-production-campaign"
+          environ = dict(os.environ)
+          environ["GATES_OF_CODEX_HOME"] = str(root / "home")
+          args = build_play_parser().parse_args(
+              [
+                  "--new",
+                  "--campaign",
+                  str(root / "home" / "campaigns" / "earth3_v1"),
+                  "--no-launch",
+              ]
+          )
+          result = run_play(args, environ=environ, resolved_catalog=_resolved_catalog())
+          snapshot_path = Path(result.snapshot_path).resolve()
+          snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+          assert snapshot.get("schema") == "gates-of-codex.frontend", snapshot.get("schema")
+          assert len(snapshot.get("provinces", [])) == 3514, len(snapshot.get("provinces", []))
+          assert snapshot.get("operational_orders"), "production snapshot has no operational_orders"
+          assert snapshot.get("strategic_formations"), "production snapshot has no strategic_formations"
+          Path("issue212-snapshot-path.txt").write_text(str(snapshot_path), encoding="utf-8")
+          print(
+              "ISSUE212_PRODUCTION_SNAPSHOT",
+              snapshot_path,
+              "orders=",
+              len(snapshot.get("operational_orders", [])),
+          )
+          PY
+      - name: Install system deps
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1 libxcursor1 libxinerama1 libxrandr2 libxi6 libx11-6
+      - name: Install Godot 4.7
+        run: |
+          set -euo pipefail
+          GODOT_VERSION=4.7-stable
+          curl -fsSL -o godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip
+          GODOT_BIN="$(find . -maxdepth 1 -type f -name 'Godot_v*_linux.x86_64' | head -n 1)"
+          install -m 755 "$GODOT_BIN" "$HOME/godot"
+          "$HOME/godot" --version
+      - name: Import Godot project
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --import --quit-after 1
+      - name: Run bracketed acceptance harness smoke
+        run: |
+          set -euo pipefail
+          ROOT="$(pwd)/docs/research/noresus-map-performance"
+          OUT="$ROOT/native-acceptance-ci.json"
+          SCREENS="$ROOT/native-acceptance-ci-screens"
+          SNAPSHOT="$(cat issue212-snapshot-path.txt)"
+          mkdir -p "$SCREENS"
+          log="$(mktemp)"
+          set +e
+          xvfb-run -a -s "-screen 0 1920x1080x24" \
+            "$HOME/godot" --path godot --audio-driver Dummy \
+            -s res://scripts/tools/map_candidate_native_acceptance_loaded.gd -- \
+            "--snapshot=$SNAPSHOT" \
+            --out="$OUT" --screens-dir="$SCREENS" \
+            --width=1920 --height=1080 2>&1 | tee "$log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' "$log"; then exit 1; fi
+          if ! grep -q 'map_candidate_native_acceptance: PASS' "$log"; then exit 1; fi
+          exit "$code"
+      - name: Validate fail-closed acceptance evidence
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('docs/research/noresus-map-performance')
+          data = json.loads((root / 'native-acceptance-ci.json').read_text(encoding='utf-8'))
+          assert data.get('ok') is True, data
+          assert data.get('issue') == 212, data
+          assert data.get('phase') == 'E3-owner-native-acceptance-harness', data
+          assert int(data.get('frames_per_sample', 0)) >= 24, data
+          assert int(data.get('stabilization_passes', 0)) >= 2, data
+          assert data.get('candidate_activation') == 'requested snapshot loaded before raster/composed activation', data
+          assert data.get('snapshot_path', '').endswith('campaign_snapshot.json'), data
+          authority = data.get('authority', {})
+          assert authority.get('unchanged') is True, authority
+          ref = authority.get('reference', {})
+          assert int(ref.get('province_count', 0)) == 3514, ref
+          assert ref.get('ok') is True, ref
+          assert len(ref.get('picks', [])) == 5, ref
+          water = ref.get('water_nonselection_probes', [])
+          assert len(water) == 3 and all(row.get('match') is True for row in water), water
+          assert len(ref.get('operational_node_pixels', [])) > 0, ref
+          assert len(ref.get('counter_pixels', [])) > 0, ref
+          selected = ref.get('selected_province_id', '')
+          formation = ref.get('selected_strategic_formation_id', '')
+          legal = ref.get('legal_target_ids', [])
+          expected = ref.get('operational_order_target_ids', [])
+          assert selected and formation, ref
+          assert ref.get('operational_order_selection_ok') is True, ref
+          assert legal and expected and legal == expected, ref
+          assert authority.get('polygon_backend_remains_live_in_candidate') is True, authority
+          for name in ['idle_full_theatre', 'continuous_pan', 'continuous_zoom']:
+              row = data.get('scenarios', {}).get(name, {})
+              assert row.get('ok') is True, (name, row)
+              drift = row.get('baseline_drift', {})
+              assert int(drift.get('draw_calls_p50_abs', 1)) == 0, (name, drift)
+              assert int(drift.get('primitives_p50_abs', 1)) == 0, (name, drift)
+              assert float(drift.get('frame_ms_p50_ratio', 1.0)) <= 0.15, (name, drift)
+              assert float(drift.get('frame_ms_p95_ratio', 1.0)) <= 0.15, (name, drift)
+          decision = data.get('decision', {})
+          assert decision.get('ci_harness_only') is True, decision
+          assert decision.get('owner_native_evidence_collected') is False, decision
+          assert decision.get('owner_visual_accepted') is False, decision
+          assert decision.get('owner_native_performance_accepted') is False, decision
+          assert decision.get('independent_review_accepted') is False, decision
+          assert decision.get('production_switch_authorized') is False, decision
+          gate = json.loads((root / 'production-switch-gate.json').read_text(encoding='utf-8'))
+          assert gate.get('status') == 'BLOCKED', gate
+          assert gate.get('production_switch_authorized') is False, gate
+          for value in gate.get('required_before_authorization', {}).values():
+              assert value is False, gate
+          for name in [
+              'polygon_full_theatre.png', 'candidate_full_theatre.png',
+              'polygon_detailed.png', 'candidate_detailed.png',
+          ]:
+              p = root / 'native-acceptance-ci-screens' / name
+              assert p.exists() and p.stat().st_size > 0, p
+          print('ISSUE212_ACCEPTANCE_HARNESS_VALIDATED')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: issue-212-acceptance-harness
+          path: |
+            docs/research/noresus-map-performance/native-acceptance-ci.json
+            docs/research/noresus-map-performance/native-acceptance-ci-screens/*.png
+          if-no-files-found: warn
+      - name: Cleanup package provenance
+        if: always()
+        shell: pwsh
+        run: Remove-Item -LiteralPath src\gates_of_codex\SOURCE_COMMIT -Force -ErrorAction SilentlyContinue

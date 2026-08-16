@@ -54,10 +54,14 @@ os.environ.setdefault(STARTUP_LOG_ENV, str(_default_startup_log()))
 _install_windowed_output()
 
 from gates_of_codex.fast_entrypoint import player_main
+from gates_of_codex.startup_backend_spawn_identity import (
+    install_packaged_backend_spawn_identity,
+)
 from gates_of_codex.startup_cold_optimizations import install_packaged_full_startup_shortcuts
 from gates_of_codex.startup_rebaseline import install_startup_rebaseline_contracts
 
 
+install_packaged_backend_spawn_identity()
 install_packaged_full_startup_shortcuts()
 install_startup_rebaseline_contracts()
 

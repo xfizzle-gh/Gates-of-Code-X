@@ -39,9 +39,11 @@ class P3SavePositionFastPathTests(unittest.TestCase):
     def test_final_authoritative_state_validation_remains_in_save_pipeline(self) -> None:
         import inspect
 
-        source = inspect.getsource(command_cycle_perf._compact_save_campaign)
-        self.assertIn('"validate", state.validate', source)
-        self.assertIn('_ensure_runtime_operational_positions(state)', source)
+        save_source = inspect.getsource(command_cycle_perf._compact_save_campaign)
+        validation_source = inspect.getsource(command_cycle_perf._profiled_campaign_validation)
+        self.assertIn('_profiled_campaign_validation(state, subphase_seconds)', save_source)
+        self.assertIn('state.validate()', validation_source)
+        self.assertIn('_ensure_runtime_operational_positions(state)', save_source)
 
 
 if __name__ == "__main__":

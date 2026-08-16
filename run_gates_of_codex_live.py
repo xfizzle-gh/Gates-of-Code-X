@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 
 from gates_of_codex.frozen_runtime import configure_frozen_earth3_authority
+from gates_of_codex.issue212_economy_profile import install_issue212_economy_profiler
 from gates_of_codex.packaging import PackagingError, enforce_packaged_backend_identity
 from gates_of_codex.startup_rebaseline import install_startup_rebaseline_contracts
 
@@ -75,6 +76,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     arguments = list(invocation.arguments)
     install_startup_rebaseline_contracts()
+    install_issue212_economy_profiler()
 
     # The persistent #207 backend authenticates once when the session starts.
     # Fast command clients forward before repeating the expensive frozen P1/P3
