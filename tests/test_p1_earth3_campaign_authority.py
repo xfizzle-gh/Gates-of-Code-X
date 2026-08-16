@@ -125,6 +125,7 @@ class Earth3ScenarioRegistryTests(unittest.TestCase):
             (
                 "earth3_v1",
                 "ww3_2028_core",
+                "ww3_2028_expanded",
                 "legacy_goe_europe",
                 "legacy_goe_europe_mediterranean",
                 "earth3_native_acceptance",

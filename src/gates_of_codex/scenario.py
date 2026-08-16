@@ -49,12 +49,7 @@ def _build_earth3(**options) -> CampaignState:
     from .earth3_operational import migrate_earth3_p2_to_p3
     from .operational_capture import ensure_site_control_state
 
-    # Keep the direct Earth3 bootstrap builder frozen at P2. Production scenario
-    # construction adds P3 only through the separately authenticated atomic
-    # migration, so P2 content remains independently reproducible and testable.
     state = migrate_earth3_p2_to_p3(build_earth3_v1_campaign(**options))
-    # Initialize mutable P3 control rows only after migration/authentication. The
-    # authored graph retains actor provenance; controller rows use tactical sides.
     ensure_site_control_state(state)
     return state
 
@@ -63,6 +58,12 @@ def _build_ww3_2028_core(**options) -> CampaignState:
     from .scenario_2028_core import build_ww3_2028_core_campaign
 
     return build_ww3_2028_core_campaign(**options)
+
+
+def _build_ww3_2028_expanded(**options) -> CampaignState:
+    from .scenario_2028_expanded import build_ww3_2028_expanded_campaign
+
+    return build_ww3_2028_expanded_campaign(**options)
 
 
 def _build_legacy_goe_europe(**options) -> CampaignState:
@@ -79,6 +80,22 @@ def _build_legacy_goe_europe_mediterranean(**options) -> CampaignState:
     return build_europe_mediterranean_from_goe_campaign(**options)
 
 
+_COMMON_EARTH3_AUTHORITY = (
+    "config/earth3/production_authority.json",
+    "config/earth3/p3_operational_authority.json",
+    "godot/assets/maps/earth3_europe_mediterranean/map_manifest.json",
+    "godot/assets/maps/earth3_europe_mediterranean/polygon_dataset.json",
+    "godot/assets/maps/earth3_europe_mediterranean/dataset_meta.json",
+    "godot/assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json",
+    "src/gates_of_codex/data/earth3_v1/*.json",
+)
+_WW3_2028_AUTHORITY = (
+    *_COMMON_EARTH3_AUTHORITY,
+    "config/earth3/ww3_2028_authority.json",
+    "config/earth3/ww3_2028_province_authority.json",
+)
+
+
 SCENARIO_REGISTRY = MappingProxyType(
     {
         "earth3_v1": ScenarioDefinition(
@@ -86,15 +103,7 @@ SCENARIO_REGISTRY = MappingProxyType(
             map_id="earth3_europe_mediterranean",
             builder=_build_earth3,
             status="production",
-            required_asset_authority=(
-                "config/earth3/production_authority.json",
-                "config/earth3/p3_operational_authority.json",
-                "godot/assets/maps/earth3_europe_mediterranean/map_manifest.json",
-                "godot/assets/maps/earth3_europe_mediterranean/polygon_dataset.json",
-                "godot/assets/maps/earth3_europe_mediterranean/dataset_meta.json",
-                "godot/assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json",
-                "src/gates_of_codex/data/earth3_v1/*.json",
-            ),
+            required_asset_authority=_COMMON_EARTH3_AUTHORITY,
             display_name="Earth3 Europe–Mediterranean v1 Campaign Bootstrap",
         ),
         "ww3_2028_core": ScenarioDefinition(
@@ -102,21 +111,26 @@ SCENARIO_REGISTRY = MappingProxyType(
             map_id="earth3_europe_mediterranean",
             builder=_build_ww3_2028_core,
             status="development",
-            required_asset_authority=(
-                "config/earth3/production_authority.json",
-                "config/earth3/p3_operational_authority.json",
-                "config/earth3/ww3_2028_authority.json",
-                "config/earth3/ww3_2028_province_authority.json",
-                "godot/assets/maps/earth3_europe_mediterranean/map_manifest.json",
-                "godot/assets/maps/earth3_europe_mediterranean/polygon_dataset.json",
-                "godot/assets/maps/earth3_europe_mediterranean/dataset_meta.json",
-                "godot/assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json",
-                "src/gates_of_codex/data/earth3_v1/*.json",
-            ),
+            required_asset_authority=_WW3_2028_AUTHORITY,
             display_name="2028 WWIII — Core",
             scenario_version="1",
             shared_world_authority_id="earth3_ww3_2028_v1",
             actor_catalog_id="core_2028",
+            actor_catalog_compatibility_version="1",
+        ),
+        "ww3_2028_expanded": ScenarioDefinition(
+            scenario_id="ww3_2028_expanded",
+            map_id="earth3_europe_mediterranean",
+            builder=_build_ww3_2028_expanded,
+            status="development",
+            required_asset_authority=(
+                *_WW3_2028_AUTHORITY,
+                "src/gates_of_codex/data/faction_wiring_manifest.json",
+            ),
+            display_name="2028 WWIII — Expanded Nations",
+            scenario_version="1",
+            shared_world_authority_id="earth3_ww3_2028_v1",
+            actor_catalog_id="expanded_nations_2028",
             actor_catalog_compatibility_version="1",
         ),
         "legacy_goe_europe": ScenarioDefinition(
@@ -143,13 +157,7 @@ SCENARIO_REGISTRY = MappingProxyType(
             builder=_build_earth3,
             status="debug",
             required_asset_authority=(
-                "config/earth3/production_authority.json",
-                "config/earth3/p3_operational_authority.json",
-                "godot/assets/maps/earth3_europe_mediterranean/map_manifest.json",
-                "godot/assets/maps/earth3_europe_mediterranean/polygon_dataset.json",
-                "godot/assets/maps/earth3_europe_mediterranean/dataset_meta.json",
-                "godot/assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json",
-                "src/gates_of_codex/data/earth3_v1/*.json",
+                *_COMMON_EARTH3_AUTHORITY,
                 "src/gates_of_codex/data/earth3_native_acceptance/fixture_manifest.json",
             ),
             display_name="Earth3 Native Acceptance Fixture",
@@ -197,8 +205,6 @@ def load_scenario(
     expected_scenario_id: str | None = None,
 ) -> CampaignState:
     state = campaign_from_dict(json.loads(Path(path).read_text(encoding="utf-8-sig")))
-    # Parse any persisted profile even when the caller is not selecting a profile,
-    # so malformed profile metadata cannot silently travel through Continue/load.
     persisted_scenario_profile(state)
     if expected_scenario_id is not None:
         definition = get_scenario(expected_scenario_id)
