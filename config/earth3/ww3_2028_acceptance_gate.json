@@ -5,16 +5,16 @@
   "status": "BLOCKED",
   "required_before_production": {
     "province_authority_materialized": true,
-    "core_cross_mode_acceptance": false,
-    "expanded_cross_mode_acceptance": false,
-    "neutral_nation_persistence_acceptance": false,
+    "core_cross_mode_acceptance": true,
+    "expanded_cross_mode_acceptance": true,
+    "neutral_nation_persistence_acceptance": true,
     "core_native_smoke_accepted": false,
     "expanded_native_smoke_accepted": false,
     "owner_visual_accepted": false,
     "independent_review_accepted": false
   },
   "production_authorized": false,
-  "blocker": "The canonical 3,299-province authority is materialized. Production remains blocked pending exact-head Core/Expanded cross-mode acceptance on the materialized authority, neutral persistence acceptance, native Windows/Godot/GoH smoke, owner visual acceptance, and final independent review.",
+  "blocker": "Canonical province authority, exact-head Core/Expanded cross-mode acceptance, and neutral persistence acceptance are complete. Production remains blocked pending native Windows/Godot/GoH smoke for Core and Expanded, owner visual acceptance, and final independent review.",
   "rules": {
     "missing_authority_fails_closed": true,
     "ci_may_validate_blocked_state_without_claiming_native_acceptance": true,
