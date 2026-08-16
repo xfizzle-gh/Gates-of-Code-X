@@ -16,6 +16,10 @@ from typing import Any
 from .actor_ai_economy import defer_actor_ai_assignment_full_validation
 from .campaign import CampaignEngine
 from .models import CampaignState
+from .round_economy_validation import (
+    defer_actor_round_settlement_full_validation,
+    install_round_economy_validation_coalescing,
+)
 from .strategic_ai import StrategicAI
 from .strategic_actors import ensure_strategic_actor_runtime
 
@@ -93,6 +97,13 @@ def end_player_round(
     coalesces its redundant whole-campaign validation across the atomic player
     round. If any assignment used that path, one explicit CampaignState.validate
     runs immediately before the final active faction triggers round rollover.
+
+    The prevalidated atomic frontend path also coalesces actor round settlement's
+    second whole-campaign validation. Settlement still runs its focused actor-
+    content authority check immediately, while the command's authoritative save
+    runs the exact CampaignState.validate() after all rollover mutations and
+    before the canonical campaign is atomically replaced. Direct/public turn and
+    economy callers retain eager settlement validation.
     """
 
     from .observation import (
@@ -130,6 +141,7 @@ def end_player_round(
         "ai_actor_runtime_ms": {},
         "shared_operational_ai": False,
         "deferred_actor_assignment_count": 0,
+        "deferred_round_settlement_count": 0,
         "pre_round_validation_ms": 0.0,
     }
 
@@ -198,10 +210,12 @@ def end_player_round(
         if state.pending_battle is not None:
             break
 
+        will_roll_round = _will_roll_round(engine)
+
         # The deferred assignment path has already performed its focused
         # actor-content validation. Before global rollover authorities consume
         # the accumulated AI state, run the exact full campaign validator once.
-        if deferred_assignment_count and _will_roll_round(engine):
+        if deferred_assignment_count and will_roll_round:
             started = time.perf_counter()
             state.validate()
             perf["pre_round_validation_ms"] = _ms(
@@ -210,7 +224,14 @@ def end_player_round(
             deferred_assignment_count = 0
 
         started = time.perf_counter()
-        engine.end_turn()
+        if prevalidated and will_roll_round:
+            with defer_actor_round_settlement_full_validation() as settlement:
+                engine.end_turn()
+            perf["deferred_round_settlement_count"] += int(
+                settlement["settlements"]
+            )
+        else:
+            engine.end_turn()
         perf["ai_end_turn_ms"][faction.value] = _ms(
             time.perf_counter() - started
         )
@@ -270,6 +291,10 @@ def install_frontend_turn_cycle_op() -> None:
     """
 
     from . import frontend_commands as commands
+
+    # Install before command_scoped_p2_auth wraps economy settlement for timing,
+    # so deferred settlements remain visible in round_advance_events.
+    install_round_economy_validation_coalescing()
 
     current = commands._apply_one
     if bool(getattr(current, "_goc_issue_207_turn_cycle", False)):
