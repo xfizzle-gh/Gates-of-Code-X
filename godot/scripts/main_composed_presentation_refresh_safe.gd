@@ -17,6 +17,23 @@ var _composed_camera_signature := ""
 var _composed_atlas_camera_updates := 0
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	# Middle-mouse drag is dedicated map pan and must work over provinces as well
+	# as empty water. Left-click keeps its existing select/order behavior.
+	if event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if mouse_button.button_index == MOUSE_BUTTON_MIDDLE:
+			var map_width := get_viewport_rect().size.x - PANEL_WIDTH
+			if mouse_button.position.x >= map_width:
+				dragging = false
+				return
+			dragging = mouse_button.pressed
+			if dragging:
+				last_mouse_position = mouse_button.position
+			return
+	super._unhandled_input(event)
+
+
 func _process(delta: float) -> void:
 	super._process(delta)
 	if not composed_presentation_active or _composed_atlas == null:
