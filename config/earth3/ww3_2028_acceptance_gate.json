@@ -1,0 +1,25 @@
+{
+  "schema": "gates-of-codex.ww3-2028-acceptance-gate",
+  "version": 1,
+  "scenario_authority_id": "earth3_ww3_2028_v1",
+  "status": "BLOCKED",
+  "required_before_production": {
+    "province_authority_materialized": true,
+    "core_cross_mode_acceptance": false,
+    "expanded_cross_mode_acceptance": false,
+    "neutral_nation_persistence_acceptance": false,
+    "core_native_smoke_accepted": false,
+    "expanded_native_smoke_accepted": false,
+    "owner_visual_accepted": false,
+    "independent_review_accepted": false
+  },
+  "production_authorized": false,
+  "blocker": "The canonical 3,299-province authority is materialized. Production remains blocked pending exact-head Core/Expanded cross-mode acceptance on the materialized authority, neutral persistence acceptance, native Windows/Godot/GoH smoke, owner visual acceptance, and final independent review.",
+  "rules": {
+    "missing_authority_fails_closed": true,
+    "ci_may_validate_blocked_state_without_claiming_native_acceptance": true,
+    "native_acceptance_requires_materialized_province_authority": true,
+    "owner_acceptance_cannot_be_inferred_from_ci": true,
+    "independent_review_cannot_be_self_declared": true
+  }
+}

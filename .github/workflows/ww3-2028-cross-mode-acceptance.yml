@@ -1,0 +1,124 @@
+name: WW3 2028 cross-mode acceptance
+
+on:
+  pull_request:
+    paths:
+      - "config/earth3/ww3_2028_*.json"
+      - "godot/scripts/main_composed_presentation_refresh_safe.gd"
+      - "src/gates_of_codex/__init__.py"
+      - "src/gates_of_codex/campaign_menu.py"
+      - "src/gates_of_codex/expanded_nations_battle_pair.py"
+      - "src/gates_of_codex/scenario_2028_*.py"
+      - "src/gates_of_codex/scenario_profile.py"
+      - "src/gates_of_codex/scenario_selection.py"
+      - "src/gates_of_codex/neutral_nation_runtime*.py"
+      - "src/gates_of_codex/scenario.py"
+      - "tests/test_campaign_menu_2028.py"
+      - "tests/test_scenario_2028_*.py"
+      - "tests/test_scenario_profile_contract.py"
+      - "tests/test_neutral_nation_runtime_2028.py"
+      - "tests/test_scenario_selection_2028.py"
+      - "tests/test_ww3_2028_cross_mode_acceptance.py"
+      - ".github/workflows/ww3-2028-cross-mode-acceptance.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ww3-2028-cross-mode-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cross-mode-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Assert exact PR head checkout
+        if: github.event_name == 'pull_request'
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Stamp package provenance
+        id: provenance
+        shell: pwsh
+        run: |
+          $stamp = & .\tools\stamp_package_provenance.ps1
+          "commit=$($stamp.Commit)" >> $env:GITHUB_OUTPUT
+      - name: Install
+        run: python -m pip install -e ".[earth3]"
+      - name: Assert installed provenance
+        shell: pwsh
+        run: python -c 'import sys; from gates_of_codex.packaging import package_identity; assert package_identity().source_commit == sys.argv[1]' '${{ steps.provenance.outputs.commit }}'
+      - name: Compile 2028 implementation
+        run: |
+          python -m py_compile \
+            src/gates_of_codex/__init__.py \
+            src/gates_of_codex/campaign_menu.py \
+            src/gates_of_codex/expanded_nations_battle_pair.py \
+            src/gates_of_codex/scenario_2028_authority.py \
+            src/gates_of_codex/scenario_profile.py \
+            src/gates_of_codex/scenario_2028_core.py \
+            src/gates_of_codex/neutral_nation_runtime.py \
+            src/gates_of_codex/neutral_nation_runtime_hooks.py \
+            src/gates_of_codex/scenario_2028_expanded.py \
+            src/gates_of_codex/scenario_selection.py \
+            src/gates_of_codex/scenario_2028_runtime.py \
+            src/gates_of_codex/scenario_2028_acceptance.py
+      - name: Run focused A-G acceptance tests
+        run: |
+          pytest -q --junitxml=ww3-2028-pytest.xml \
+            tests/test_scenario_2028_authority.py \
+            tests/test_scenario_2028_materialized_authority.py \
+            tests/test_scenario_profile_contract.py \
+            tests/test_scenario_2028_core.py \
+            tests/test_neutral_nation_runtime_2028.py \
+            tests/test_scenario_2028_expanded.py \
+            tests/test_scenario_selection_2028.py \
+            tests/test_campaign_menu_2028.py \
+            tests/test_scenario_2028_strategic_presentation.py \
+            tests/test_ww3_2028_cross_mode_acceptance.py
+      - name: Upload focused test diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ww3-2028-focused-pytest
+          path: ww3-2028-pytest.xml
+          if-no-files-found: error
+      - name: Validate fail-closed production gate
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from gates_of_codex.scenario_2028_acceptance import (
+              cross_mode_contract_report,
+              load_acceptance_gate,
+              validate_acceptance_gate,
+          )
+
+          gate = validate_acceptance_gate(load_acceptance_gate())
+          report = cross_mode_contract_report()
+          assert report["shared_world_authority"] is True, report
+          assert report["distinct_actor_catalogs"] is True, report
+          authority = Path("config/earth3/ww3_2028_province_authority.json")
+          assert authority.is_file(), "materialized 2028 province authority is required"
+          assert gate.blocked is True, gate
+          assert gate.province_authority_materialized is True, gate
+          assert gate.checks["province_authority_materialized"] is True, gate
+          assert gate.production_authorized is False, gate
+          for name in (
+              "core_native_smoke_accepted",
+              "expanded_native_smoke_accepted",
+              "owner_visual_accepted",
+              "independent_review_accepted",
+          ):
+              assert gate.checks[name] is False, (name, gate)
+          print("WW3_2028_GATE_BLOCKED_PENDING_NATIVE_OWNER_REVIEW")
+          PY
+      - name: Cleanup package provenance
+        if: always()
+        shell: pwsh
+        run: Remove-Item -LiteralPath src\gates_of_codex\SOURCE_COMMIT -Force -ErrorAction SilentlyContinue

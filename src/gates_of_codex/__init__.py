@@ -54,12 +54,8 @@ def _validate_earth3_integrity_for_active_profile(state: CampaignState) -> None:
     ):
         raise Earth3BootstrapError("Earth3 2028 scenario_profile authority mismatch")
 
-    # Keep the complete Earth3 bootstrap provenance contract. The 2028 profile
-    # replaces only the old P2 controller/footprint semantics.
     validate_earth3_bootstrap_provenance(state)
 
-    # Validate immutable P1 map authority using its canonical Earth3 identity,
-    # without mutating the persisted 2028 scenario metadata.
     p1_metadata = dict(state.map_metadata)
     p1_metadata["scenario_id"] = "earth3_v1"
     p1_metadata["scenario_status"] = "production"
@@ -74,13 +70,6 @@ def _validate_earth3_integrity_for_active_profile(state: CampaignState) -> None:
 def _model_validation_view(state: CampaignState) -> CampaignState:
     if not _is_ww3_2028_earth3_state(state):
         return state
-
-    # CampaignState.validate() contains the legacy 11-province P2 footprint
-    # validator. 2028 deliberately replaces that footprint with the authenticated
-    # 3,299-province authority. The dedicated checks above already validated the
-    # underlying bootstrap provenance and immutable P1 map. Run the remaining
-    # generic model invariants against a shallow metadata view that cannot trigger
-    # the obsolete P2 footprint validator; the real state remains untouched.
     model_state = copy(state)
     metadata = dict(state.map_metadata)
     metadata.pop("earth3_bootstrap", None)
@@ -102,6 +91,10 @@ def _campaign_validate_with_p2_integrity(state: CampaignState) -> None:
 
 
 CampaignState.validate = _campaign_validate_with_p2_integrity
+
+from .scenario_2028_runtime import install_state_io_2028_loader_hook
+
+install_state_io_2028_loader_hook()
 
 __all__ = [
     "Alliance",
