@@ -117,19 +117,40 @@ Write-Host ""
 Write-Host "This run gathers evidence only. It cannot authorize the production renderer switch."
 Write-Host "The snapshot must contain a real strategic formation and authenticated operational order with a non-empty legal-target set."
 
-& $GodotPath `
-    --path $godotProject `
-    --audio-driver Dummy `
-    -s 'res://scripts/tools/map_candidate_native_acceptance_loaded.gd' `
-    -- `
-    "--snapshot=$SnapshotPath" `
-    "--out=$jsonPath" `
-    "--screens-dir=$screensDir" `
-    '--width=1920' `
+$godotArguments = @(
+    '--path'
+    $godotProject
+    '--audio-driver'
+    'Dummy'
+    '-s'
+    'res://scripts/tools/map_candidate_native_acceptance_loaded.gd'
+    '--'
+    "--snapshot=$SnapshotPath"
+    "--out=$jsonPath"
+    "--screens-dir=$screensDir"
+    '--width=1920'
     '--height=1080'
+)
+$startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+$startInfo.FileName = $GodotPath
+$startInfo.UseShellExecute = $false
+foreach ($argument in $godotArguments) {
+    [void]$startInfo.ArgumentList.Add([string]$argument)
+}
+$godotProcess = [System.Diagnostics.Process]::new()
+$godotProcess.StartInfo = $startInfo
+try {
+    if (-not $godotProcess.Start()) {
+        throw "Issue #212 native acceptance profiler failed to start Godot."
+    }
+    $godotProcess.WaitForExit()
+    $godotExit = $godotProcess.ExitCode
+} finally {
+    $godotProcess.Dispose()
+}
 
-if ($LASTEXITCODE -ne 0) {
-    throw "Issue #212 native acceptance profiler failed with exit code $LASTEXITCODE"
+if ($godotExit -ne 0) {
+    throw "Issue #212 native acceptance profiler failed with exit code $godotExit"
 }
 if (-not (Test-Path -LiteralPath $jsonPath -PathType Leaf)) {
     throw "Acceptance JSON was not produced: $jsonPath"
