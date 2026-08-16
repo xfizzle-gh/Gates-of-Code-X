@@ -14,7 +14,7 @@
     "independent_review_accepted": false
   },
   "production_authorized": false,
-  "blocker": "Canonical province authority, exact-head Core/Expanded cross-mode acceptance, and neutral persistence acceptance are complete. Production remains blocked pending native Windows/Godot/GoH smoke for Core and Expanded, owner visual acceptance, and final independent review.",
+  "blocker": "The canonical 3,299-province authority is materialized, and exact-head Core/Expanded cross-mode plus neutral persistence acceptance are complete. Production remains blocked pending native Windows/Godot/GoH smoke for Core and Expanded, owner visual acceptance, and final independent review.",
   "rules": {
     "missing_authority_fails_closed": true,
     "ci_may_validate_blocked_state_without_claiming_native_acceptance": true,
