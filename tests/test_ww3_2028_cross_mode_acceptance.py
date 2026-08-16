@@ -118,6 +118,23 @@ def _controller_snapshot(state: SimpleNamespace) -> dict[str, object]:
     }
 
 
+def _assert_real_2028_selectable_authority(state: object) -> None:
+    authority_ids = {str(row["province_id"]) for row in load_province_authority()}
+    assert len(authority_ids) == 3299
+    selectable_ids = {
+        province_id
+        for province_id, province in state.provinces.items()
+        if province.metadata.get("selectable") is True
+    }
+    assert selectable_ids == authority_ids
+    nonselectable_ids = set(state.provinces) - authority_ids
+    assert nonselectable_ids
+    assert all(
+        state.provinces[province_id].metadata.get("selectable") is False
+        for province_id in nonselectable_ids
+    )
+
+
 def test_core_and_expanded_share_world_authority_but_not_actor_catalog() -> None:
     report = cross_mode_contract_report()
     assert report["scenario_year"] == 2028
@@ -167,12 +184,12 @@ def test_new_campaign_save_continue_preserves_exact_profile_actor_and_real_autho
         force=True,
         resolved_catalog=_resolved_catalog(),
     )
-    assert len(state.provinces) == 3299
+    _assert_real_2028_selectable_authority(state)
     apply_new_campaign_actor(state, scenario_id, actor_id)
     save_campaign(state, paths.campaign)
 
     continued = player_shell.continue_campaign(paths=paths)
-    assert len(continued.provinces) == 3299
+    _assert_real_2028_selectable_authority(continued)
     assert continued.map_metadata["scenario_profile"]["scenario_id"] == scenario_id
     assert continued.map_metadata["scenario_id"] == scenario_id
     assert persisted_actor_id(continued) == actor_id
