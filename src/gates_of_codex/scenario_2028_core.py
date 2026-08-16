@@ -85,7 +85,10 @@ def build_ww3_2028_core_campaign(
     province_expected_count: int = EXPECTED_SELECTABLE_PROVINCES,
     **earth3_options: Any,
 ) -> CampaignState:
+    from .neutral_nation_runtime_hooks import install_neutral_nation_runtime_hooks
+
     state = _build_earth3_base(**earth3_options)
     rows = list(province_rows) if province_rows is not None else load_province_authority()
     apply_core_2028_control(state, rows, expected_count=province_expected_count)
+    install_neutral_nation_runtime_hooks()
     return state
