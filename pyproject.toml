@@ -22,6 +22,7 @@ gates-of-codex-factions = "gates_of_codex.faction_wiring:main"
 gates-of-codex-actors = "gates_of_codex.strategic_actor_cli:main"
 gates-of-codex-actor-economy = "gates_of_codex.actor_economy_cli:main"
 gates-of-codex-expanded = "gates_of_codex.expanded_nations_cli:main"
+gates-of-codex-menu = "gates_of_codex.campaign_menu:main"
 
 [project.entry-points.pyinstaller40]
 hook-dirs = "gates_of_codex.__pyinstaller:get_hook_dirs"

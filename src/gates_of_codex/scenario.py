@@ -194,6 +194,10 @@ def build_scenario(scenario_id: str = DEFAULT_SCENARIO_ID, **builder_options) ->
         definition.required_asset_authority
     )
     stamp_scenario_profile(state, definition.profile_identity())
+    if definition.scenario_id.startswith("ww3_2028_"):
+        from .scenario_selection import stamp_scenario_selection_projection
+
+        stamp_scenario_selection_projection(state)
     if definition.scenario_id == FIXTURE_SCENARIO_ID:
         apply_earth3_native_acceptance_fixture(state)
     return state
@@ -213,6 +217,10 @@ def load_scenario(
             definition.profile_identity(),
             allow_legacy_unprofiled=not expected_scenario_id.startswith("ww3_2028_"),
         )
+    if str(state.map_metadata.get("scenario_id") or "").startswith("ww3_2028_"):
+        from .scenario_selection import stamp_scenario_selection_projection
+
+        stamp_scenario_selection_projection(state)
     return state
 
 

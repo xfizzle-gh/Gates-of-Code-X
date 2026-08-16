@@ -7,6 +7,10 @@ extends "res://scripts/main_composed_presentation.gd"
 ## subclass keeps the larger compositor reviewable while making reload behavior
 ## fail closed, preserving the player's layer-toggle choices across remounts,
 ## and keeping atlas screen positions synchronized with live pan/zoom.
+##
+## #225 Slice F also owns the final production strategic-profile presentation.
+## It deliberately reads only persisted frontend metadata: the underlying map,
+## picking authority, tactical owner, and post-P8 renderer remain unchanged.
 
 var _preserved_composed_toggles: Dictionary = {}
 var _composed_camera_signature := ""
@@ -30,6 +34,77 @@ func _process(delta: float) -> void:
 	# with live warning rings/reservations. Recompute that center whenever the
 	# normal camera transform changes. No caller/test must manually rebuild it.
 	_rebuild_composed_atlas_entries()
+
+
+func _draw() -> void:
+	super._draw()
+	if load_error.is_empty() and not snapshot.is_empty():
+		_draw_ww3_2028_profile_context()
+
+
+func _draw_province(province: Dictionary) -> void:
+	super._draw_province(province)
+	if String(province.get("id", "")) != selected_province_id:
+		return
+	var metadata: Dictionary = province.get("metadata", {})
+	var sovereign := String(metadata.get("sovereign_owner", "")).strip_edges()
+	if sovereign.is_empty():
+		return
+	var controller := String(
+		metadata.get("military_controller", province.get("owner", "neutral"))
+	).strip_edges()
+	var profile := String(metadata.get("controller_profile", "")).strip_edges()
+	var position := _map_to_screen(province)
+	var strategic_line := "SOV %s  |  CTRL %s" % [
+		sovereign.to_upper(),
+		controller.to_upper(),
+	]
+	if not profile.is_empty():
+		strategic_line += "  |  %s" % profile.to_upper()
+	draw_string(
+		ThemeDB.fallback_font,
+		position + Vector2(12, 10),
+		strategic_line,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		11,
+		Color("9fd7ff")
+	)
+
+
+func _draw_ww3_2028_profile_context() -> void:
+	var campaign: Dictionary = snapshot.get("campaign", {})
+	var map_metadata: Dictionary = campaign.get("map_metadata", {})
+	var selector: Dictionary = map_metadata.get("scenario_selection", {})
+	var scenario_id := String(
+		selector.get("active_scenario_id", map_metadata.get("scenario_id", ""))
+	).strip_edges()
+	if not scenario_id.begins_with("ww3_2028_"):
+		return
+	var scenario_label := String(
+		selector.get(
+			"active_scenario_label",
+			map_metadata.get("scenario_display_name", scenario_id),
+		)
+	).strip_edges()
+	var actor_id := String(selector.get("active_actor_id", "")).strip_edges()
+	var controller_profile := String(
+		map_metadata.get("ww3_2028_controller_profile", "")
+	).strip_edges()
+	var line := "Scenario: %s" % scenario_label
+	if not actor_id.is_empty():
+		line += "  |  Nation: %s" % actor_id.to_upper()
+	if not controller_profile.is_empty():
+		line += "  |  Profile: %s" % controller_profile.to_upper()
+	draw_string(
+		ThemeDB.fallback_font,
+		Vector2(24, 58),
+		line,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		get_viewport_rect().size.x - PANEL_WIDTH - 48,
+		14,
+		Color("9fd7ff")
+	)
 
 
 func _load_snapshot(path: String) -> void:
