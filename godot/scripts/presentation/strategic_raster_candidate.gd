@@ -19,7 +19,7 @@ const LAZY_RETAIN_FRAMES := 2
 const PREFETCH_MARGIN_PX := 96.0
 const FULL_THEATRE_MAX_SCALE := 1.65
 const DETAIL_SETTLE_FRAMES := 3
-const MAX_TILE_CREATES_PER_FRAME := 3
+const MAX_TILE_CREATES_PER_FRAME := 2
 const MAX_TILE_EVICTIONS_PER_FRAME := 1
 const TRANSFORM_EPSILON_SQUARED := 0.0001
 const ROTATION_EPSILON := 0.0001
@@ -31,6 +31,7 @@ var _tiles: Array = []
 var _frame_index := 0
 var _enabled := false
 var _mode := "disabled"
+var _detail_ready := false
 var _created_total := 0
 var _evicted_total := 0
 var _peak_resident_tiles := 0
@@ -62,6 +63,7 @@ func set_candidate_enabled(enabled: bool) -> void:
 		_live_root.visible = not enabled
 	_have_transform_sample = false
 	_stable_transform_frames = 0
+	_detail_ready = false
 	if enabled:
 		# The wide texture is already resident. Showing it immediately prevents a
 		# blank frame while the first process tick classifies camera motion.
@@ -87,6 +89,7 @@ func sync(view_scale: float, viewport_size: Vector2) -> Dictionary:
 	var camera_moved := _sample_transform_motion()
 	if view_scale <= FULL_THEATRE_MAX_SCALE:
 		_mode = "wide_1x"
+		_detail_ready = false
 		if _wide_sprite != null:
 			_wide_sprite.visible = true
 		_set_tile_visibility(false)
@@ -96,23 +99,20 @@ func sync(view_scale: float, viewport_size: Vector2) -> Dictionary:
 		# exactly that, creating and evicting large ImageTextures while the camera
 		# moved. Native acceptance exposed the resulting long hitch and VRAM churn.
 		_mode = "moving_wide_1x"
+		_detail_ready = false
 		if _wide_sprite != null:
 			_wide_sprite.visible = true
 		_set_tile_visibility(false)
 		_evict_tiles_bounded(MAX_TILE_EVICTIONS_PER_FRAME)
 	else:
-		var detail_ready := _sync_lazy_tiles(viewport_size)
-		if detail_ready:
-			_mode = "lazy_2x_1024"
-			if _wide_sprite != null:
-				_wide_sprite.visible = false
-		else:
-			# Keep the complete low-resolution image visible while at most a small,
-			# bounded number of detail textures are uploaded each frame. This avoids
-			# moving the pan hitch to the first stationary frame.
-			_mode = "detail_warmup_1x"
-			if _wide_sprite != null:
-				_wide_sprite.visible = true
+		# Lazy close-view mode is progressive: already-hydrated detail tiles draw
+		# over the complete 1x fallback while the remaining visible tiles upload at
+		# a bounded rate. The fallback disappears only after every wanted tile is
+		# resident, so the player never sees a hole or incomplete map.
+		_mode = "lazy_2x_1024"
+		_detail_ready = _sync_lazy_tiles(viewport_size)
+		if _wide_sprite != null:
+			_wide_sprite.visible = not _detail_ready
 	return debug_state()
 
 
@@ -127,6 +127,7 @@ func debug_state() -> Dictionary:
 	return {
 		"enabled": _enabled,
 		"mode": _mode,
+		"detail_ready": _detail_ready,
 		"cache_scale": CACHE_SCALE,
 		"lazy_tile_size": LAZY_TILE_SIZE,
 		"total_tiles": _tiles.size(),
@@ -256,10 +257,10 @@ func _sync_lazy_tiles(viewport_size: Vector2) -> bool:
 			resident += 1
 			resident_bytes += int(entry.get("rgba8_bytes", 0))
 		_tiles[index] = entry
-	if all_wanted_ready:
-		_set_wanted_tile_visibility()
-	else:
-		_set_tile_visibility(false)
+	# Materialized wanted tiles can safely sharpen their part of the image even
+	# before the full wanted set is resident because the wide sprite remains below
+	# them until all_wanted_ready becomes true.
+	_set_wanted_tile_visibility()
 	_peak_resident_tiles = maxi(_peak_resident_tiles, resident)
 	_peak_resident_rgba8_bytes = maxi(_peak_resident_rgba8_bytes, resident_bytes)
 	return all_wanted_ready
