@@ -59,6 +59,12 @@ def _build_earth3(**options) -> CampaignState:
     return state
 
 
+def _build_ww3_2028_core(**options) -> CampaignState:
+    from .scenario_2028_core import build_ww3_2028_core_campaign
+
+    return build_ww3_2028_core_campaign(**options)
+
+
 def _build_legacy_goe_europe(**options) -> CampaignState:
     from .europe import build_goe_europe_campaign
 
@@ -90,6 +96,28 @@ SCENARIO_REGISTRY = MappingProxyType(
                 "src/gates_of_codex/data/earth3_v1/*.json",
             ),
             display_name="Earth3 Europe–Mediterranean v1 Campaign Bootstrap",
+        ),
+        "ww3_2028_core": ScenarioDefinition(
+            scenario_id="ww3_2028_core",
+            map_id="earth3_europe_mediterranean",
+            builder=_build_ww3_2028_core,
+            status="development",
+            required_asset_authority=(
+                "config/earth3/production_authority.json",
+                "config/earth3/p3_operational_authority.json",
+                "config/earth3/ww3_2028_authority.json",
+                "config/earth3/ww3_2028_province_authority.json",
+                "godot/assets/maps/earth3_europe_mediterranean/map_manifest.json",
+                "godot/assets/maps/earth3_europe_mediterranean/polygon_dataset.json",
+                "godot/assets/maps/earth3_europe_mediterranean/dataset_meta.json",
+                "godot/assets/maps/earth3_europe_mediterranean/p3_authority/p3_operational_graph.json",
+                "src/gates_of_codex/data/earth3_v1/*.json",
+            ),
+            display_name="2028 WWIII — Core",
+            scenario_version="1",
+            shared_world_authority_id="earth3_ww3_2028_v1",
+            actor_catalog_id="core_2028",
+            actor_catalog_compatibility_version="1",
         ),
         "legacy_goe_europe": ScenarioDefinition(
             scenario_id="legacy_goe_europe",

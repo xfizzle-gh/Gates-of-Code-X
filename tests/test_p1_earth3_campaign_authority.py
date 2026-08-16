@@ -124,6 +124,7 @@ class Earth3ScenarioRegistryTests(unittest.TestCase):
         self.assertEqual(
             (
                 "earth3_v1",
+                "ww3_2028_core",
                 "legacy_goe_europe",
                 "legacy_goe_europe_mediterranean",
                 "earth3_native_acceptance",
