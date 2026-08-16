@@ -1,0 +1,35 @@
+name: Materialize WW3 2028 authority
+
+on:
+  push:
+    branches:
+      - feat/225-earth3-2028-controller-audit
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Materialize and authenticate all 3,299 controller rows
+        run: python tools/materialize_ww3_2028_authority.py
+      - name: Commit materialized authority
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add config/earth3/ww3_2028_province_authority.json
+          if git diff --cached --quiet; then
+            echo "Authority already materialized identically."
+            exit 0
+          fi
+          git commit -m "data(#225): materialize 3299-province 2028 authority"
+          git push origin HEAD:feat/225-earth3-2028-controller-audit
