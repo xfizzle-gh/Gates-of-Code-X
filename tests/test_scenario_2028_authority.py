@@ -10,6 +10,7 @@ from gates_of_codex.scenario_2028_authority import (
     EXPECTED_SELECTABLE_PROVINCES,
     UKRAINE_FRONT_METHOD,
     Scenario2028AuthorityError,
+    _articulation_points,
     audit_controller_balance,
     load_authority_document,
     validate_authority_document,
@@ -176,6 +177,25 @@ def test_province_rows_authenticate_adjacency_graph_metrics_and_hostility() -> N
             expected_province_ids=set(canonical),
             canonical_rows=canonical,
         )
+
+
+def test_articulation_points_handle_graph_deeper_than_python_recursion_limit() -> None:
+    node_count = 1500
+    adjacency: dict[str, tuple[str, ...]] = {}
+    for index in range(node_count):
+        neighbors: list[str] = []
+        if index:
+            neighbors.append(f"n{index - 1:04d}")
+        if index + 1 < node_count:
+            neighbors.append(f"n{index + 1:04d}")
+        adjacency[f"n{index:04d}"] = tuple(neighbors)
+
+    points = _articulation_points(adjacency)
+    assert len(points) == node_count - 2
+    assert "n0000" not in points
+    assert f"n{node_count - 1:04d}" not in points
+    assert "n0001" in points
+    assert f"n{node_count - 2:04d}" in points
 
 
 def test_controller_balance_reports_prc_deficit_without_mutating_rows() -> None:
