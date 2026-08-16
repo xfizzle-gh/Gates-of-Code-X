@@ -10,8 +10,8 @@
     "phase_d_independent_audit_accepted": false,
     "e1_hybrid_candidate_independent_audit_accepted": false,
     "e2_composed_candidate_independent_audit_accepted": false,
-    "owner_native_evidence_collected": false,
-    "owner_visual_accepted": false,
+    "owner_native_evidence_collected": true,
+    "owner_visual_accepted": true,
     "owner_native_performance_accepted": false,
     "final_independent_authority_review_accepted": false
   },
@@ -32,8 +32,9 @@
       "opt_in_environment": "GOCX_PRESENTATION_CANDIDATE=hybrid",
       "production_default": false,
       "authority_acceptance": "PASS",
+      "visual_correctness": "ACCEPTED",
       "pan_time_tile_upload_regression": "FIXED",
-      "native_frame_time_disposition": "parity_or_slightly_worse_in_several_owner-native measurements; no materially better frame-time result established",
+      "native_frame_time_disposition": "parity_or_slightly_worse_in_several owner-native measurements; no materially better frame-time result established",
       "video_memory_tradeoff": "additional candidate video-memory cost remains"
     },
     "owner_native_seconds": {
