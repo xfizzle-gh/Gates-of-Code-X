@@ -184,8 +184,18 @@ jobs:
           gate = json.loads((root / 'production-switch-gate.json').read_text(encoding='utf-8'))
           assert gate.get('status') == 'BLOCKED', gate
           assert gate.get('production_switch_authorized') is False, gate
-          for value in gate.get('required_before_authorization', {}).values():
-              assert value is False, gate
+          required = gate.get('required_before_authorization', {})
+          assert required.get('owner_native_evidence_collected') is True, gate
+          assert required.get('owner_visual_accepted') is True, gate
+          assert required.get('owner_native_performance_accepted') is False, gate
+          for name in [
+              'phase_c_independent_audit_accepted',
+              'phase_d_independent_audit_accepted',
+              'e1_hybrid_candidate_independent_audit_accepted',
+              'e2_composed_candidate_independent_audit_accepted',
+              'final_independent_authority_review_accepted',
+          ]:
+              assert required.get(name) is False, (name, gate)
           for name in [
               'polygon_full_theatre.png', 'candidate_full_theatre.png',
               'polygon_detailed.png', 'candidate_detailed.png',
