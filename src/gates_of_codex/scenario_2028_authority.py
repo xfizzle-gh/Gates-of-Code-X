@@ -133,32 +133,47 @@ def _articulation_points(adjacency: Mapping[str, tuple[str, ...]]) -> frozenset[
     discovery: dict[str, int] = {}
     low: dict[str, int] = {}
     parent: dict[str, str | None] = {}
+    child_count: dict[str, int] = {}
     points: set[str] = set()
     clock = 0
 
-    def visit(node: str) -> None:
-        nonlocal clock
-        discovery[node] = clock
-        low[node] = clock
+    for start in sorted(adjacency):
+        if start in discovery:
+            continue
+        parent[start] = None
+        discovery[start] = clock
+        low[start] = clock
+        child_count[start] = 0
         clock += 1
-        children = 0
-        for neighbor in adjacency[node]:
+        stack = [(start, iter(adjacency[start]))]
+
+        while stack:
+            node, neighbors = stack[-1]
+            try:
+                neighbor = next(neighbors)
+            except StopIteration:
+                stack.pop()
+                ancestor = parent[node]
+                if ancestor is None:
+                    if child_count[node] > 1:
+                        points.add(node)
+                else:
+                    low[ancestor] = min(low[ancestor], low[node])
+                    if parent.get(ancestor) is not None and low[node] >= discovery[ancestor]:
+                        points.add(ancestor)
+                continue
+
             if neighbor not in discovery:
                 parent[neighbor] = node
-                children += 1
-                visit(neighbor)
-                low[node] = min(low[node], low[neighbor])
-                if parent.get(node) is None and children > 1:
-                    points.add(node)
-                if parent.get(node) is not None and low[neighbor] >= discovery[node]:
-                    points.add(node)
+                child_count[node] += 1
+                child_count[neighbor] = 0
+                discovery[neighbor] = clock
+                low[neighbor] = clock
+                clock += 1
+                stack.append((neighbor, iter(adjacency[neighbor])))
             elif neighbor != parent.get(node):
                 low[node] = min(low[node], discovery[neighbor])
 
-    for node in sorted(adjacency):
-        if node not in discovery:
-            parent[node] = None
-            visit(node)
     return frozenset(points)
 
 
