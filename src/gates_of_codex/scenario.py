@@ -9,6 +9,12 @@ from typing import Callable
 
 from .earth3_fixture_authority import FIXTURE_SCENARIO_ID, apply_earth3_native_acceptance_fixture
 from .models import CampaignState
+from .scenario_profile import (
+    ScenarioProfileIdentity,
+    persisted_scenario_profile,
+    require_compatible_scenario_profile,
+    stamp_scenario_profile,
+)
 from .state_io import campaign_from_dict
 
 
@@ -23,6 +29,19 @@ class ScenarioDefinition:
     status: str
     required_asset_authority: tuple[str, ...]
     display_name: str
+    scenario_version: str = "1"
+    shared_world_authority_id: str = ""
+    actor_catalog_id: str = ""
+    actor_catalog_compatibility_version: str = ""
+
+    def profile_identity(self) -> ScenarioProfileIdentity:
+        return ScenarioProfileIdentity(
+            scenario_id=self.scenario_id,
+            scenario_version=self.scenario_version,
+            shared_world_authority_id=self.shared_world_authority_id,
+            actor_catalog_id=self.actor_catalog_id,
+            actor_catalog_compatibility_version=self.actor_catalog_compatibility_version,
+        )
 
 
 def _build_earth3(**options) -> CampaignState:
@@ -138,13 +157,29 @@ def build_scenario(scenario_id: str = DEFAULT_SCENARIO_ID, **builder_options) ->
     state.map_metadata["scenario_required_asset_authority"] = list(
         definition.required_asset_authority
     )
+    stamp_scenario_profile(state, definition.profile_identity())
     if definition.scenario_id == FIXTURE_SCENARIO_ID:
         apply_earth3_native_acceptance_fixture(state)
     return state
 
 
-def load_scenario(path: str | Path) -> CampaignState:
-    return campaign_from_dict(json.loads(Path(path).read_text(encoding="utf-8-sig")))
+def load_scenario(
+    path: str | Path,
+    *,
+    expected_scenario_id: str | None = None,
+) -> CampaignState:
+    state = campaign_from_dict(json.loads(Path(path).read_text(encoding="utf-8-sig")))
+    # Parse any persisted profile even when the caller is not selecting a profile,
+    # so malformed profile metadata cannot silently travel through Continue/load.
+    persisted_scenario_profile(state)
+    if expected_scenario_id is not None:
+        definition = get_scenario(expected_scenario_id)
+        require_compatible_scenario_profile(
+            state,
+            definition.profile_identity(),
+            allow_legacy_unprofiled=not expected_scenario_id.startswith("ww3_2028_"),
+        )
+    return state
 
 
 def load_bundled_scenario(
