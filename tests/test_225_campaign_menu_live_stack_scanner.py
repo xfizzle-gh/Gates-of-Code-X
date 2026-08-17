@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
-from gates_of_codex import campaign_menu_runtime
+from gates_of_codex import campaign_menu_runtime, player_shell
 from gates_of_codex.local_discovery import LaunchPathDiscovery
 
 
@@ -81,6 +82,43 @@ def test_menu_scanner_refuses_stale_live_workshop_deployment(monkeypatch, tmp_pa
     result = campaign_menu_runtime.detect_launch_paths("ww3_2028_expanded", environ={})
 
     assert dict(result.environment)["GATES_CODEX_ROOT"] == str(source_checkout)
+
+
+def test_gui_prelaunch_persists_resolved_live_stack(monkeypatch, tmp_path: Path) -> None:
+    stack = [
+        str(tmp_path / "vanilla"),
+        str(tmp_path / "west81"),
+        str(tmp_path / "codex"),
+        str(tmp_path / "ai"),
+        str(tmp_path / "3696721120"),
+    ]
+    state = SimpleNamespace(
+        map_metadata={"stack_config": str(tmp_path / "mod-stack.windows.json")},
+        game_directory=str(tmp_path / "game"),
+        profile_directory=str(tmp_path / "profile"),
+        code_x_directory="stale-checkout",
+    )
+    calls = []
+
+    def validate_stack(stack_config, *, game_directory, profile_directory, required):
+        calls.append((stack_config, game_directory, profile_directory, required))
+        return list(stack)
+
+    monkeypatch.setattr(player_shell, "validate_stack", validate_stack)
+    monkeypatch.setattr(player_shell, "_codex_layer_from_stack", lambda _layers: stack[2])
+
+    campaign_menu_runtime._persist_resolved_stack_context(state)
+
+    assert state.map_metadata["resource_stack"] == stack
+    assert state.code_x_directory == stack[2]
+    assert calls == [
+        (
+            str(tmp_path / "mod-stack.windows.json"),
+            str(tmp_path / "game"),
+            str(tmp_path / "profile"),
+            True,
+        )
+    ]
 
 
 def test_menu_entrypoint_routes_through_live_stack_runtime() -> None:
