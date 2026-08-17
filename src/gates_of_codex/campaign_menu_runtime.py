@@ -138,10 +138,80 @@ def detect_launch_paths(
     return replace(discovered, environment=tuple(updated))
 
 
+def _persist_resolved_stack_context(state) -> None:
+    """Bind a GUI-created/continued campaign to the exact currently validated stack.
+
+    The Tk menu historically called ``create_new_campaign`` / ``continue_campaign``
+    directly, bypassing ``run_play``'s post-validation persistence of
+    ``resource_stack`` and the primary Code:X root. That left the Godot backend
+    using stale checkout paths even after the scanner had selected the exact live
+    Workshop Gates deployment. Persist this authority before snapshot publication
+    and before the persistent backend is started.
+    """
+
+    from . import player_shell
+
+    stack_config = _clean(state.map_metadata.get("stack_config"))
+    if not stack_config:
+        return
+    stack_layers = player_shell.validate_stack(
+        stack_config,
+        game_directory=_clean(getattr(state, "game_directory", "")) or None,
+        profile_directory=_clean(getattr(state, "profile_directory", "")) or None,
+        required=True,
+    )
+    if not stack_layers:
+        return
+    state.map_metadata["resource_stack"] = list(stack_layers)
+    codex_layer = player_shell._codex_layer_from_stack(list(stack_layers))
+    if codex_layer:
+        state.code_x_directory = codex_layer
+
+
+def install_menu_stack_context_contracts() -> None:
+    """Make direct Tk New/Continue calls preserve the same stack contract as play."""
+
+    from . import player_shell
+    from .state_io import save_campaign
+
+    current_new = player_shell.create_new_campaign
+    if not getattr(current_new, "_goc_menu_stack_context", False):
+        original_new = current_new
+
+        def create_new_campaign_with_stack_context(*args, **kwargs):
+            state = original_new(*args, **kwargs)
+            _persist_resolved_stack_context(state)
+            paths = kwargs.get("paths")
+            if paths is not None:
+                save_campaign(state, paths.campaign)
+            return state
+
+        create_new_campaign_with_stack_context._goc_menu_stack_context = True  # type: ignore[attr-defined]
+        player_shell.create_new_campaign = create_new_campaign_with_stack_context
+
+    current_continue = player_shell.continue_campaign
+    if not getattr(current_continue, "_goc_menu_stack_context", False):
+        original_continue = current_continue
+
+        def continue_campaign_with_stack_context(*args, **kwargs):
+            state = original_continue(*args, **kwargs)
+            _persist_resolved_stack_context(state)
+            paths = kwargs.get("paths")
+            if paths is not None:
+                save_campaign(state, paths.campaign)
+            return state
+
+        continue_campaign_with_stack_context._goc_menu_stack_context = True  # type: ignore[attr-defined]
+        player_shell.continue_campaign = continue_campaign_with_stack_context
+
+
 def main() -> int:
     # campaign_menu imported detect_launch_paths directly, so install the native
-    # runtime-aware scanner before constructing the Tk UI.
+    # runtime-aware scanner before constructing the Tk UI. The menu also calls
+    # New/Continue helpers directly, so restore the same exact-stack persistence
+    # that the canonical ``play`` path performs before Godot/backend launch.
     campaign_menu.detect_launch_paths = detect_launch_paths
+    install_menu_stack_context_contracts()
     return campaign_menu.main()
 
 
