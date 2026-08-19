@@ -33,9 +33,20 @@ def _file_io(path: Path) -> dict[str, Any]:
     }
 
 
-def _pick_order(snapshot: dict[str, Any]) -> dict[str, Any] | None:
+def _occupied_factions(snapshot: dict[str, Any]) -> dict[str, set[str]]:
+    occupied: dict[str, set[str]] = {}
+    for row in snapshot.get("battalions", []):
+        if not isinstance(row, dict):
+            continue
+        occupied.setdefault(str(row.get("province_id", "")), set()).add(str(row.get("faction", "")))
+    return occupied
+
+
+def _pick_order(snapshot: dict[str, Any], *, hostile_destination: bool = False) -> dict[str, Any] | None:
     current = str((snapshot.get("campaign") or {}).get("current_faction", ""))
     formations = {str(row.get("id", "")): row for row in snapshot.get("strategic_formations", [])}
+    occupied = _occupied_factions(snapshot)
+    candidates: list[dict[str, Any]] = []
     for row in snapshot.get("operational_orders", []):
         if not isinstance(row, dict):
             continue
@@ -49,15 +60,26 @@ def _pick_order(snapshot: dict[str, Any]) -> dict[str, Any] | None:
         edges = list(row.get("path_edge_ids") or [])
         if len(nodes) < 2 or len(edges) != len(nodes) - 1:
             continue
-        return {
+        target = str(row.get("target_province_id", ""))
+        occupants = occupied.get(target, set())
+        hostile = bool(occupants - {str(row.get("faction", current))})
+        if hostile_destination and not hostile:
+            continue
+        candidates.append({
             "formation": str(row.get("formation_id", "")),
             "path_node_ids": nodes,
             "path_edge_ids": edges,
-            "target_province_id": str(row.get("target_province_id", "")),
+            "target_province_id": target,
             "faction": str(row.get("faction", current)),
             "locked_stance": str(row.get("locked_stance", "operational")),
-        }
-    return None
+            "hop_count": int(row.get("hop_count") or len(edges)),
+            "hostile_destination": hostile,
+        })
+    if not candidates:
+        return None
+    if hostile_destination:
+        candidates.sort(key=lambda row: int(row.get("hop_count", 99)))
+    return candidates[0]
 
 
 def _install() -> None:
@@ -308,7 +330,34 @@ def capture(source_campaign: Path, work: Path, python: Path, godot: Path, repo: 
     prelude = _clone_prepared(base["campaign"].parent, work / "prelude")
     contact_ready = None
     prelude_ops: list[str] = []
-    for _i in range(12):
+    contact_order = _pick_order(json.loads(prelude["snapshot"].read_text(encoding="utf-8-sig")), hostile_destination=True)
+    if contact_order is not None:
+        _apply_inprocess(
+            prelude["campaign"],
+            prelude["snapshot"],
+            [
+                {
+                    "op": "issue_move_order",
+                    "formation": contact_order["formation"],
+                    "path_node_ids": contact_order["path_node_ids"],
+                    "path_edge_ids": contact_order["path_edge_ids"],
+                },
+                {
+                    "op": "commit_move_orders",
+                    "faction": contact_order["faction"],
+                    "locked_stance": contact_order["locked_stance"],
+                },
+            ],
+        )
+        prelude_ops.append("issue+commit_hostile_route")
+        hops = max(1, int(contact_order.get("hop_count", 1)))
+        _apply_inprocess(
+            prelude["campaign"],
+            prelude["snapshot"],
+            [{"op": "advance_operational_tick", "count": hops}],
+        )
+        prelude_ops.append(f"advance_operational_tick:{hops}")
+    for _i in range(8):
         if _has_pending(prelude["snapshot"]):
             contact_ready = prelude["campaign"].parent
             break
