@@ -296,6 +296,12 @@ jobs:
           set -euo pipefail
           "$HOME/godot" --headless --path . --audio-driver Dummy \
             -s res://scripts/tools/operational_presentation_scene_test.gd
+      - name: Overmap interaction contract GDScript test
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --audio-driver Dummy \
+            -s res://scripts/tools/map_overmap_camera_contract_test.gd
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"

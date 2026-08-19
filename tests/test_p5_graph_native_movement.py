@@ -522,7 +522,7 @@ class Earth3OpeningSequenceTests(unittest.TestCase):
     def test_the_handoff_control_source_condition_is_the_one_asserted(self) -> None:
         """Bind the Python assertion above to the actual GDScript condition.
 
-        If the scene stops drawing ``Launch Battle in GoH`` on
+        If the scene stops drawing ``FIGHT IN GATES OF HELL`` on
         ``writeback and has_battle``, the snapshot-level proof no longer means
         the button appears, and this fails rather than passing vacuously.
         """
@@ -530,7 +530,12 @@ class Earth3OpeningSequenceTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn(
-            '_draw_button("handoff", "Launch Battle in GoH (H)", x, y, '
+            '_draw_button("handoff", "FIGHT IN GATES OF HELL (H)", x, y, '
+            "writeback and has_battle",
+            source,
+        )
+        self.assertIn(
+            '_draw_button("auto_resolve", "AUTO-RESOLVE (A)", x, y, '
             "writeback and has_battle",
             source,
         )

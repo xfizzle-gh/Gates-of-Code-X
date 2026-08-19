@@ -625,8 +625,8 @@ func _handle_button(button_id: String) -> void:
 		status_message = "Operational resolution paused - resolve or hand off the pending battle."
 		queue_redraw()
 		return
-	if operational_presenter.is_active() and _command_mutates_state(button_id):
-		status_message = "Operational presentation active - Skip or wait for completion."
+	if operational_presenter.is_active() and _command_mutates_state(button_id) and button_id != "auto_resolve":
+		status_message = "Operational presentation active - Skip, Auto-Resolve, or wait."
 		queue_redraw()
 		return
 	if is_command_busy() and _command_mutates_state(button_id):
@@ -652,7 +652,7 @@ func _draw_button(id: String, label: String, x: float, y: float, enabled: bool, 
 	var allow := enabled
 	if is_pending_battle_modal_active() and id not in ["auto_resolve", "handoff", "import_battle", "verify_result", "replay_contact", "skip_presentation", "new_campaign", "continue_campaign"]:
 		allow = false
-	if operational_presenter != null and operational_presenter.is_active() and _command_mutates_state(id):
+	if operational_presenter != null and operational_presenter.is_active() and _command_mutates_state(id) and id != "auto_resolve":
 		allow = false
 	if is_command_busy() and _command_mutates_state(id):
 		allow = false
@@ -797,8 +797,8 @@ func _queue_and_apply(commands: Array) -> void:
 		status_message = "Operational resolution paused - pending battle is modal."
 		queue_redraw()
 		return
-	if operational_presenter.is_active() and requested_op not in ["handoff", "import_battle", "verify_result"]:
-		status_message = "Operational presentation active - Skip or wait for completion."
+	if operational_presenter.is_active() and requested_op not in ["handoff", "import_battle", "verify_result", "auto_resolve"]:
+		status_message = "Operational presentation active - Skip, Auto-Resolve, or wait."
 		queue_redraw()
 		return
 	var control: Dictionary = snapshot.get("control", {})

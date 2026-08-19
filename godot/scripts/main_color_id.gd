@@ -50,6 +50,11 @@ var _bg_layer: Node2D
 var _identity_layer: Node2D
 var _layers_dirty := true
 var _last_layer_rect := Rect2()
+var _last_layer_viewport := Vector2.ZERO
+var _was_camera_moving := false
+var overlay_rebuild_count := 0
+var overlay_provinces_scanned := 0
+var overlay_last_scan_all := false
 
 
 func _ready() -> void:
@@ -97,6 +102,11 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	var moving := has_method("camera_is_moving") and camera_is_moving()
+	if _was_camera_moving and not moving:
+		_invalidate_overlay_cache()
+		queue_redraw()
+	_was_camera_moving = moving
 	if operational_presenter != null:
 		var presentation_visible: bool = operational_presenter.is_active() \
 			or not operational_presenter.transient_outcome().is_empty()
@@ -279,9 +289,16 @@ func _sync_presentation_layers() -> void:
 	var viewport := get_viewport_rect().size
 	var map_width := viewport.x - PANEL_WIDTH
 	var texture_rect := map_space.texture_rect()
-	if not _layers_dirty and texture_rect == _last_layer_rect and not map_backend_is_polygon:
+	var viewport_key := Vector2(map_width, viewport.y)
+	# Polygon land/ocean/borders live on transformed MeshInstance2D nodes.
+	# Camera motion must not rebuild the full-panel clear layer every redraw.
+	if map_backend_is_polygon:
+		if not _layers_dirty and viewport_key == _last_layer_viewport:
+			return
+	elif not _layers_dirty and texture_rect == _last_layer_rect:
 		return
 	_last_layer_rect = texture_rect
+	_last_layer_viewport = viewport_key
 	_layers_dirty = false
 	# Linear-filtered visual background underlay (never authoritative).
 	var bg_items: Array = []
@@ -639,7 +656,8 @@ func _draw() -> void:
 		13,
 		Color(0.78, 0.82, 0.86, 0.95)
 	)
-	_draw_management_panel()
+	if not (has_method("camera_is_moving") and camera_is_moving()):
+		_draw_management_panel()
 	_draw_command_busy_overlay()
 
 
@@ -1122,12 +1140,10 @@ func _draw_color_id_overlays() -> void:
 	# Pass 1: facilities + counters (always). Pass 2: priority label declutter.
 	# Counters/labels are clamped inside the map viewport (header/footer safe).
 	var overlay_bounds := _overlay_clamp_rect()
-	var cache_key := "%s|%s|%s|%s|%s" % [
+	var cache_key := "%s|%s|%s" % [
 		selected_province_id,
 		str(legal_targets.keys()),
 		snappedf(view_scale, 0.001),
-		snappedf(view_offset.x, 0.5),
-		snappedf(view_offset.y, 0.5),
 	]
 	var rebuild := cache_key != _overlay_cache_key
 	var label_candidates: Array = []
@@ -1136,13 +1152,17 @@ func _draw_color_id_overlays() -> void:
 		_overlay_cache_key = cache_key
 		_cached_label_candidates.clear()
 		_cached_reserved_rects.clear()
+		overlay_rebuild_count += 1
 
 	# PR C: avoid scanning all ~3.5k snapshot provinces every frame when idle.
 	# Active set = occupied + selected/hovered/targets + infrastructure sites
 	# (+ all provinces only when rebuilding ambient labels at high zoom).
+	# Camera motion must not walk the full theatre: pan only transforms cached
+	# image-space labels.
 	_ensure_snapshot_overlay_indexes()
 	var active_ids: Dictionary = _build_overlay_active_ids()
-	var scan_all := rebuild and view_scale >= 2.4
+	var camera_moving := has_method("camera_is_moving") and camera_is_moving()
+	var scan_all := rebuild and view_scale >= 2.4 and not camera_moving
 	var province_iter: Array = []
 	if scan_all:
 		province_iter = snapshot.get("provinces", [])
@@ -1157,6 +1177,8 @@ func _draw_color_id_overlays() -> void:
 			else:
 				province_iter.append({"id": pid_s, "owner": "neutral", "infrastructure": {}})
 
+	overlay_provinces_scanned = province_iter.size()
+	overlay_last_scan_all = scan_all
 	for province: Dictionary in province_iter:
 		var province_id := String(province.get("id", ""))
 		if not _active_map().row_by_province.has(province_id):
@@ -1262,6 +1284,7 @@ func _draw_color_id_overlays() -> void:
 		label_candidates.append({
 			"priority": priority,
 			"label": label,
+			"image": _active_map().anchor_pixel(province_id),
 			"pos": text_pos,
 			"rect": text_rect,
 			"font_size": font_size,
@@ -1297,9 +1320,17 @@ func _draw_color_id_overlays() -> void:
 		reserved = _cached_reserved_rects.duplicate()
 
 	for candidate: Dictionary in _cached_label_candidates:
+		var image_pos: Vector2 = candidate.get("image", Vector2.ZERO)
+		var label_pos: Vector2 = candidate.get("pos", Vector2.ZERO)
+		if image_pos != Vector2.ZERO or candidate.has("image"):
+			label_pos = _clamp_point_in_rect(
+				_image_to_screen(image_pos) + Vector2(13, -9),
+				overlay_bounds,
+				OVERLAY_EDGE_PAD
+			)
 		draw_string(
 			ThemeDB.fallback_font,
-			candidate.get("pos", Vector2.ZERO),
+			label_pos,
 			String(candidate.get("label", "")),
 			HORIZONTAL_ALIGNMENT_LEFT,
 			-1,

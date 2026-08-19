@@ -36,6 +36,7 @@ var last_handoff_battle_id := ""
 var snapshot_source_path := ""
 var view_scale := 1.0
 var view_offset := Vector2.ZERO
+var _camera_motion_until_msec := 0
 var dragging := false
 var last_mouse_position := Vector2.ZERO
 var selected_province_id := ""
@@ -407,8 +408,8 @@ func _draw_management_panel() -> void:
 	y = _draw_button("refresh", "Refresh", x, y, writeback)
 	y = _draw_button("end_turn", "End turn (E)", x, y, writeback and not has_battle)
 	y = _draw_button("run_ai", "Run AI + advance", x, y, writeback and not has_battle)
-	y = _draw_button("auto_resolve", "Auto-resolve battle (A)", x, y, writeback and has_battle, Color("4a2f18"))
-	y = _draw_button("handoff", "Handoff to GoH (H)", x, y, writeback and has_battle, Color("5a2418"))
+	y = _draw_button("auto_resolve", "AUTO-RESOLVE (A)", x, y, writeback and has_battle, Color("4a2f18"))
+	y = _draw_button("handoff", "FIGHT IN GATES OF HELL (H)", x, y, writeback and has_battle, Color("5a2418"))
 	if not last_handoff_name.is_empty():
 		y = _panel_line("Load Conquest: %s" % last_handoff_name, x, y, Color("ffd27a"), 12)
 	if not writeback:
@@ -636,6 +637,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		var motion := event as InputEventMouseMotion
 		view_offset += motion.position - last_mouse_position
 		last_mouse_position = motion.position
+		mark_camera_moving()
 		queue_redraw()
 
 
@@ -880,4 +882,13 @@ func _zoom_at(mouse_position: Vector2, factor: float) -> void:
 	var map_center := Vector2((get_viewport_rect().size.x - PANEL_WIDTH) * 0.5, get_viewport_rect().size.y * 0.5)
 	var relative := mouse_position - map_center - view_offset
 	view_offset -= relative * (view_scale / old_scale - 1.0)
+	mark_camera_moving()
 	queue_redraw()
+
+
+func mark_camera_moving(hold_msec: int = 90) -> void:
+	_camera_motion_until_msec = Time.get_ticks_msec() + maxi(hold_msec, 1)
+
+
+func camera_is_moving() -> bool:
+	return Time.get_ticks_msec() < _camera_motion_until_msec
