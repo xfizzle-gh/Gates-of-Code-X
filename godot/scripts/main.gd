@@ -407,8 +407,8 @@ func _draw_management_panel() -> void:
 	y = _draw_button("refresh", "Refresh", x, y, writeback)
 	y = _draw_button("end_turn", "End turn (E)", x, y, writeback and not has_battle)
 	y = _draw_button("run_ai", "Run AI + advance", x, y, writeback and not has_battle)
-	y = _draw_button("auto_resolve", "Auto-resolve battle (A)", x, y, writeback and has_battle, Color("4a2f18"))
-	y = _draw_button("handoff", "Handoff to GoH (H)", x, y, writeback and has_battle, Color("5a2418"))
+	y = _draw_button("auto_resolve", "AUTO-RESOLVE (A)", x, y, writeback and has_battle, Color("24402c"))
+	y = _draw_button("handoff", "FIGHT IN GATES OF HELL (H)", x, y, writeback and has_battle, Color("5a2418"))
 	if not last_handoff_name.is_empty():
 		y = _panel_line("Load Conquest: %s" % last_handoff_name, x, y, Color("ffd27a"), 12)
 	if not writeback:
