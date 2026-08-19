@@ -30,6 +30,36 @@ class OvermapStallCaptureContractTests(unittest.TestCase):
         self.assertIn("campaign_snapshot.json", wrapper)
         self.assertIn("map_overmap_stall_capture.gd", wrapper)
 
+    def test_byte_attribution_is_read_only_and_ranks_top_keys(self) -> None:
+        script = (ROOT / "tools/attribute_snapshot_bytes.py").read_text(encoding="utf-8")
+        self.assertIn("overmap-snapshot-bytes", script)
+        self.assertIn("operational_orders", script)
+        self.assertIn("compact_bytes", script)
+        self.assertNotIn("write_text(snapshot", script)
+
+    def test_owner_ablation_covers_requested_layers_and_stays_read_only(self) -> None:
+        script = (ROOT / "godot/scripts/tools/map_overmap_owner_ablation.gd").read_text(
+            encoding="utf-8"
+        )
+        wrapper = (ROOT / "tools/run_overmap_owner_ablation.ps1").read_text(encoding="utf-8")
+        for probe in (
+            "land_fill",
+            "ocean_mesh",
+            "shared_borders",
+            "labels",
+            "formation_counters",
+            "infrastructure_sites",
+            "routes",
+            "legal_targets_focus",
+            "operational_orders",
+            "map_debug",
+        ):
+            self.assertIn(probe, script)
+        self.assertIn("Does not write the owner campaign", script)
+        self.assertIn("Owner campaign files are not written.", wrapper)
+        self.assertNotIn("save_campaign", script)
+        self.assertNotIn("auto_resolve", script)
+
 
 if __name__ == "__main__":
     unittest.main()
