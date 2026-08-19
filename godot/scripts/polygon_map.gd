@@ -447,7 +447,7 @@ func anchor_pixel(province_id: String) -> Vector2:
 	return get_anchor(province_id)
 
 
-func draw_overlays(canvas: CanvasItem, map_space) -> void:
+func draw_overlays(canvas: CanvasItem, map_space, presented_targets: Variant = null) -> void:
 	if not is_ready:
 		return
 	# Visual hierarchy weights: selection > legal targets > hover (land only).
@@ -460,7 +460,10 @@ func draw_overlays(canvas: CanvasItem, map_space) -> void:
 		var si := int(index_by_province[_selected_id])
 		if is_water[si] != 1:
 			_draw_province_outline(canvas, map_space, si, Color(0.95, 0.98, 1.0, 1.0), w_sel)
-	for tid in _legal_targets.keys():
+	var drawn_targets: Dictionary = _legal_targets
+	if presented_targets is Dictionary:
+		drawn_targets = presented_targets
+	for tid in drawn_targets.keys():
 		if index_by_province.has(String(tid)):
 			var li := int(index_by_province[String(tid)])
 			if is_water[li] == 1:

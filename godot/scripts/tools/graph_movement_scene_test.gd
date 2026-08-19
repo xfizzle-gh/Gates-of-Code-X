@@ -57,6 +57,8 @@ func _run_all() -> void:
 	_test_pending_battle_modal_precedes_map_mouse_split()
 	_test_accept_feedback_stays_bound_to_dispatched_formation()
 	_test_authoritative_route_rejects_tampered_edges()
+	_test_focus_set_ignores_unrelated_formation_orders()
+	_test_theatre_lod_keeps_legal_targets_and_order_payload()
 
 
 func _work_dir(name: String) -> String:
@@ -274,6 +276,70 @@ func _test_authoritative_route_rejects_tampered_edges() -> void:
 	var tampered := exact.duplicate(true)
 	tampered["path_edge_ids"] = ["edge-bc", "edge-ab"]
 	_check_eq(scene._authoritative_route_map_pixels(tampered).size(), 0, "tampered edge sequence fails closed")
+	_free(ctx)
+
+
+func _test_focus_set_ignores_unrelated_formation_orders() -> void:
+	var ctx := _scene("p8_focus_selected_only")
+	var scene = ctx["scene"]
+	var extra := {
+		"formation_id": "sf-other",
+		"origin_province_id": "prov-x",
+		"target_province_id": "prov-b",
+		"path_node_ids": ["node-x", "node-b"],
+		"path_edge_ids": ["edge-xb"],
+	}
+	(scene.snapshot.get("operational_orders", []) as Array).append(extra)
+	var indexed: Dictionary = scene.index_operational_orders(scene.snapshot)
+	scene.orders_by_formation = indexed.get("by_formation", {})
+	scene.selected_strategic_formation_id = "sf-a"
+	scene._rebuild_legal_targets()
+	scene._rebuild_focus_set()
+	_check(scene.focus_province_ids.has("prov-a"), "selected origin stays in focus")
+	_check(scene.focus_province_ids.has("prov-c"), "selected formation target stays in focus")
+	_check(not scene.focus_province_ids.has("prov-x"), "unrelated formation origin is not theatre-wide focus")
+	_free(ctx)
+
+
+func _test_theatre_lod_keeps_legal_targets_and_order_payload() -> void:
+	var ctx := _scene("p8_theatre_target_lod")
+	var scene = ctx["scene"]
+	var commands_path: String = ctx["commands_path"]
+	scene.view_scale = 1.15
+	var before_ids: Array = scene.legal_targets.keys()
+	before_ids.sort()
+	_check(scene.legal_targets.has("prov-c"), "theatre LOD keeps every legal destination")
+	_check(scene.legal_targets.size() >= 2, "selected formation still has multiple legal targets")
+	if scene.has_method("_build_overlay_active_ids"):
+		var active: Dictionary = scene.call("_build_overlay_active_ids")
+		_check(not active.has("prov-c"), "theatre overlay does not expand every legal destination")
+		_check(active.has("prov-a"), "selected origin remains overlay-active")
+	if scene.has_method("_highlight_targets_for_draw"):
+		var drawn: Dictionary = scene.call("_highlight_targets_for_draw")
+		_check(not drawn.has("prov-c"), "theatre highlight set omits unemphasized destinations")
+	scene.hovered_province_id = "prov-c"
+	if scene.has_method("_highlight_targets_for_draw"):
+		var hovered: Dictionary = scene.call("_highlight_targets_for_draw")
+		_check(hovered.has("prov-c"), "hovered legal destination receives full highlight")
+	scene.hovered_province_id = ""
+	scene.view_scale = 2.0
+	if scene.has_method("_highlight_targets_for_draw"):
+		var detailed: Dictionary = scene.call("_highlight_targets_for_draw")
+		_check(detailed.has("prov-c"), "closer zoom restores detailed legal-target presentation")
+	scene.view_scale = 1.15
+	var option: Dictionary = scene.legal_targets.get("prov-c", {})
+	_check_eq(option.get("path_node_ids", []), ["node-a", "node-b", "node-c"], "LOD does not rewrite path_node_ids")
+	_check_eq(option.get("path_edge_ids", []), ["edge-ab", "edge-bc"], "LOD does not rewrite path_edge_ids")
+	scene._order_from_map("prov-c")
+	var rows := _queued_commands(commands_path)
+	_check_eq(rows.size(), 2, "theatre click still queues draft + commit")
+	if rows.size() == 2:
+		var draft: Dictionary = rows[0]
+		_check_eq(draft.get("path_node_ids", []), ["node-a", "node-b", "node-c"], "clicked order keeps exact nodes")
+		_check_eq(draft.get("path_edge_ids", []), ["edge-ab", "edge-bc"], "clicked order keeps exact edges")
+	var after_ids: Array = scene.legal_targets.keys()
+	after_ids.sort()
+	_check_eq(after_ids, before_ids, "legal_targets IDs are unchanged after theatre click")
 	_free(ctx)
 
 

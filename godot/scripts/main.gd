@@ -205,12 +205,6 @@ func _rebuild_focus_set() -> void:
 		focus_province_ids[selected_province_id] = true
 	for target_id in legal_targets.keys():
 		focus_province_ids[String(target_id)] = true
-	for option: Dictionary in snapshot.get("operational_orders", []):
-		focus_province_ids[String(option.get("origin_province_id", ""))] = true
-		focus_province_ids[String(option.get("target_province_id", ""))] = true
-	for option: Dictionary in snapshot.get("front_options", []):
-		focus_province_ids[String(option.get("origin", ""))] = true
-		focus_province_ids[String(option.get("target", ""))] = true
 	var pending: Variant = snapshot.get("pending_battle")
 	if pending is Dictionary:
 		var battle := pending as Dictionary
