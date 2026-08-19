@@ -1,7 +1,12 @@
 param(
     [string]$GodotPath = "",
     [string]$SnapshotPath = "",
-    [string]$OutPath = ""
+    [string]$OutPath = "",
+    [string]$Label = "",
+    [int]$Frames = 240,
+    [int]$Warmup = 6,
+    [double]$Scale = 1.150,
+    [string]$Thresholds = ""
 )
 
 Set-StrictMode -Version Latest
@@ -41,7 +46,8 @@ if (-not $SnapshotPath -or -not (Test-Path -LiteralPath $SnapshotPath)) {
 }
 $SnapshotPath = (Resolve-Path -LiteralPath $SnapshotPath).Path
 if (-not $OutPath) {
-    $OutPath = Join-Path $env:LOCALAPPDATA "GatesOfCodeX\acceptance\overmap-target-lod-benchmark.json"
+    $stamp = [DateTime]::UtcNow.ToString("yyyyMMddTHHmmssZ")
+    $OutPath = Join-Path $env:LOCALAPPDATA "GatesOfCodeX\acceptance\overmap-target-lod-$stamp.json"
 }
 $parent = Split-Path -Parent $OutPath
 if (-not (Test-Path -LiteralPath $parent)) {
@@ -55,15 +61,25 @@ $godotArgs = @(
     "-s", "res://scripts/tools/map_target_lod_benchmark.gd",
     "--",
     "--snapshot=$SnapshotPath",
-    "--out=$OutPath"
+    "--out=$OutPath",
+    "--frames=$Frames",
+    "--warmup=$Warmup",
+    "--scale=$Scale"
 )
-Write-Host "Read-only target LOD benchmark. Owner campaign files are not written."
+if ($Label) {
+    $godotArgs += "--label=$Label"
+}
+if ($Thresholds) {
+    $godotArgs += "--thresholds=$Thresholds"
+}
+Write-Host "Read-only same-harness target LOD benchmark. Owner campaign files are not written."
+Write-Host "Root=$root Label=$Label Frames=$Frames Scale=$Scale Out=$OutPath"
 $global:LASTEXITCODE = 0
 & $godot @godotArgs
 $code = $global:LASTEXITCODE
 if ($null -eq $code) { $code = 0 }
 if ($code -ne 0) { throw "Target LOD benchmark failed with exit $code" }
-$deadline = (Get-Date).AddSeconds(15)
+$deadline = (Get-Date).AddSeconds(45)
 while (-not (Test-Path -LiteralPath $OutPath) -and (Get-Date) -lt $deadline) {
     Start-Sleep -Milliseconds 200
 }
@@ -71,4 +87,3 @@ if (-not (Test-Path -LiteralPath $OutPath)) {
     throw "Godot exited $code but did not write $OutPath"
 }
 Write-Host "Wrote $OutPath"
-Get-Content -LiteralPath $OutPath

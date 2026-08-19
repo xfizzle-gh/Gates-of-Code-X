@@ -21,7 +21,6 @@ const HOME_FIT_FILL := 1.06
 const HEADER_SAFE_TOP := 64.0
 const FOOTER_SAFE_BOTTOM := 28.0
 const OVERLAY_EDGE_PAD := 18.0
-const TARGET_DETAIL_SCALE := 1.6
 const THEATRE_TARGET_MARK := Color(0.35, 0.95, 0.5, 0.88)
 
 var color_id_map = ColorIdMapScript.new()
@@ -443,10 +442,6 @@ func _ensure_snapshot_overlay_indexes() -> void:
 			_infra_province_ids[pid] = true
 
 
-func _wants_detailed_legal_targets() -> bool:
-	return view_scale >= TARGET_DETAIL_SCALE
-
-
 func _emphasis_legal_target_ids() -> Dictionary:
 	var shown: Dictionary = {}
 	if legal_targets.has(hovered_province_id):
@@ -463,9 +458,16 @@ func _emphasis_legal_target_ids() -> Dictionary:
 	return shown
 
 
+func _legal_target_on_screen(pid: String) -> bool:
+	if pid.is_empty():
+		return false
+	var am = _active_map()
+	if am == null or not am.is_ready or not am.row_by_province.has(pid):
+		return false
+	return _overlay_clamp_rect().has_point(_image_to_screen(am.anchor_pixel(pid)))
+
+
 func _highlight_targets_for_draw() -> Dictionary:
-	if _wants_detailed_legal_targets():
-		return legal_targets
 	return _emphasis_legal_target_ids()
 
 
@@ -499,17 +501,26 @@ func get_emphasis_legal_target_ids_for_test() -> PackedStringArray:
 	return out
 
 
+func get_on_screen_legal_target_ids_for_test() -> PackedStringArray:
+	var out := PackedStringArray()
+	for tid: Variant in legal_targets.keys():
+		var pid := String(tid)
+		if _legal_target_on_screen(pid):
+			out.append(pid)
+	return out
+
+
 func _draw_theatre_legal_target_markers() -> void:
-	if _wants_detailed_legal_targets() or legal_targets.is_empty():
+	if legal_targets.is_empty():
 		return
 	var am = _active_map()
 	if am == null or not am.is_ready:
 		return
-	var emphasis := _emphasis_legal_target_ids()
+	var detailed := _highlight_targets_for_draw()
 	var segments := PackedVector2Array()
 	for tid: Variant in legal_targets.keys():
 		var pid := String(tid)
-		if pid.is_empty() or emphasis.has(pid):
+		if pid.is_empty() or detailed.has(pid):
 			continue
 		if not am.row_by_province.has(pid):
 			continue

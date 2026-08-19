@@ -325,7 +325,7 @@ func _test_theatre_lod_keeps_legal_targets_and_order_payload() -> void:
 	scene.view_scale = 2.0
 	if scene.has_method("_highlight_targets_for_draw"):
 		var detailed: Dictionary = scene.call("_highlight_targets_for_draw")
-		_check(detailed.has("prov-c"), "closer zoom restores detailed legal-target presentation")
+		_check(not detailed.has("prov-c"), "closer zoom does not globally restore every legal destination")
 	scene.view_scale = 1.15
 	var option: Dictionary = scene.legal_targets.get("prov-c", {})
 	_check_eq(option.get("path_node_ids", []), ["node-a", "node-b", "node-c"], "LOD does not rewrite path_node_ids")

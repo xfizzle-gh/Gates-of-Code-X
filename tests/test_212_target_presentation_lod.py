@@ -14,11 +14,14 @@ GRAPH_TEST = ROOT / "godot/scripts/tools/graph_movement_scene_test.gd"
 class TargetPresentationLodTests(unittest.TestCase):
     def test_theatre_lod_separates_legal_targets_from_draw_highlights(self) -> None:
         src = COLOR.read_text(encoding="utf-8")
-        self.assertIn("const TARGET_DETAIL_SCALE := 1.6", src)
         self.assertIn("func _highlight_targets_for_draw()", src)
         self.assertIn("func _draw_theatre_legal_target_markers()", src)
         self.assertIn("draw_multiline", src)
         self.assertIn("polygon_map.draw_overlays(self, map_space, _highlight_targets_for_draw())", src)
+        self.assertIn("func _legal_target_on_screen(", src)
+        highlight = src[src.find("func _highlight_targets_for_draw()") : src.find("func _build_overlay_active_ids()")]
+        self.assertIn("_emphasis_legal_target_ids", highlight)
+        self.assertNotIn("return legal_targets", highlight)
         self.assertNotIn(
             "for tid: Variant in legal_targets.keys():\n\t\tactive_ids[String(tid)] = true",
             src,
@@ -43,6 +46,7 @@ class TargetPresentationLodTests(unittest.TestCase):
         self.assertIn("_test_focus_set_ignores_unrelated_formation_orders", src)
         self.assertIn("_test_theatre_lod_keeps_legal_targets_and_order_payload", src)
         self.assertIn("LOD does not rewrite path_node_ids", src)
+        self.assertIn("closer zoom does not globally restore every legal destination", src)
 
 
 if __name__ == "__main__":
