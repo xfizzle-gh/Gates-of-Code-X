@@ -89,9 +89,14 @@ Write-Host "Campaign: $CampaignPath"
 Write-Host "Snapshot: $SnapshotPath"
 Write-Host "Out:      $OutPath"
 Write-Host "Read-only pan/zoom/select. Owner campaign files are not written."
+$global:LASTEXITCODE = 0
 & $godot @godotArgs
-if ($LASTEXITCODE -ne 0) {
-    throw "Stall capture failed with exit $LASTEXITCODE"
+$code = $global:LASTEXITCODE
+if ($null -eq $code) {
+    $code = 0
+}
+if ($code -ne 0) {
+    throw "Stall capture failed with exit $code"
 }
 Write-Host "Wrote $OutPath"
 Get-Content -LiteralPath $OutPath
