@@ -656,8 +656,7 @@ func _draw() -> void:
 		13,
 		Color(0.78, 0.82, 0.86, 0.95)
 	)
-	if not (has_method("camera_is_moving") and camera_is_moving()):
-		_draw_management_panel()
+	_draw_management_panel()
 	_draw_command_busy_overlay()
 
 

@@ -16,10 +16,16 @@ class OvermapInteractionContractTests(unittest.TestCase):
         self.assertIn('"image": _active_map().anchor_pixel(province_id)', source)
         self.assertIn("polygon land/ocean/borders live on transformed meshinstance2d", source.lower())
 
-    def test_camera_motion_skips_management_panel_redraw(self) -> None:
+    def test_camera_motion_keeps_management_panel_visible(self) -> None:
         source = (ROOT / "godot/scripts/main_color_id.gd").read_text(encoding="utf-8")
-        self.assertIn("if not (has_method(\"camera_is_moving\") and camera_is_moving()):", source)
         self.assertIn("_draw_management_panel()", source)
+        self.assertNotIn(
+            "if not (has_method(\"camera_is_moving\") and camera_is_moving()):",
+            source,
+        )
+        draw = source.split("func _draw() -> void:", 1)[1].split("func _draw_operational_presentation", 1)[0]
+        self.assertIn("_draw_management_panel()", draw)
+        self.assertNotIn("camera_is_moving()", draw)
         main = (ROOT / "godot/scripts/main.gd").read_text(encoding="utf-8")
         self.assertIn("func mark_camera_moving", main)
         self.assertIn("func camera_is_moving", main)

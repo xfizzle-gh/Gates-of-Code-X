@@ -28,6 +28,8 @@ func _run_all() -> void:
 		return
 	var scene = MainScript.new()
 	var runner = FakeRunnerScript.new()
+	root.add_child(scene)
+	scene.add_child(runner)
 	if not scene.has_method("_ensure_operational_presenter"):
 		failed += 1
 		push_error("  FAIL active scene has no S10 presenter integration")
