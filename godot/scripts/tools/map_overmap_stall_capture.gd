@@ -26,9 +26,9 @@ func _initialize() -> void:
 		if text.begins_with("--out="):
 			_out_path = text.substr(6).strip_edges()
 		elif text.begins_with("--snapshot="):
-			_snapshot_path = text.substr(11).strip_edges().replace("\\", "/")
+			_snapshot_path = text.substr(11).strip_edges()
 		elif text.begins_with("--campaign="):
-			_campaign_path = text.substr(11).strip_edges().replace("\\", "/")
+			_campaign_path = text.substr(11).strip_edges()
 		elif text.begins_with("--manifest="):
 			_manifest_path = text.substr(11).strip_edges()
 		elif text.begins_with("--label="):
@@ -81,9 +81,12 @@ func _capture_one(snapshot_path: String, campaign_path: String, label: String) -
 		_scene.queue_free()
 		_scene = null
 		await process_frame
+		await process_frame
 	_scene = packed.instantiate()
 	if _scene == null:
 		return {"label": label, "ok": false, "error": "failed to instantiate main.tscn", "io": io}
+	if not _scene.has_method("_load_snapshot"):
+		return {"label": label, "ok": false, "error": "main.tscn script did not attach", "io": io}
 	root.add_child(_scene)
 	if _scene.get("map_debug") != null:
 		_scene.map_debug.enabled = false
@@ -106,13 +109,13 @@ func _capture_one(snapshot_path: String, campaign_path: String, label: String) -
 	var hover := await _sample_input("hover", func() -> void:
 		var pid := _nth_province(3)
 		if _scene.get("hovered_province_id") != null:
-			_scene.hovered_province_id = pid
+			_scene.set("hovered_province_id", pid)
 	)
 	var province_select := await _sample_input("province_select", func() -> void:
 		var pid := _nth_province(8)
 		if pid.is_empty():
 			return
-		_scene.selected_province_id = pid
+		_scene.set("selected_province_id", pid)
 		if _scene.has_method("_rebuild_legal_targets"):
 			_scene.call("_rebuild_legal_targets")
 		if _scene.has_method("_rebuild_focus_set"):
@@ -123,32 +126,32 @@ func _capture_one(snapshot_path: String, campaign_path: String, label: String) -
 		if fid.is_empty():
 			return
 		if _scene.get("selected_strategic_formation_id") != null:
-			_scene.selected_strategic_formation_id = fid
+			_scene.set("selected_strategic_formation_id", fid)
 		if _scene.has_method("_rebuild_legal_targets"):
 			_scene.call("_rebuild_legal_targets")
 	)
 	var begin_pan := await _sample_input("begin_pan", func() -> void:
-		_scene.view_offset = Vector2(80, -40)
+		_scene.set("view_offset", Vector2(80, -40))
 	)
 	var pan := await _sample_frames("continuous_pan", func(i: int) -> void:
 		var t := float(i) / float(maxi(FRAMES - 1, 1))
-		_scene.view_offset = Vector2(sin(t * TAU * 2.0) * 180.0, cos(t * TAU * 1.5) * 120.0)
+		_scene.set("view_offset", Vector2(sin(t * TAU * 2.0) * 180.0, cos(t * TAU * 1.5) * 120.0))
 	)
 	var end_pan := await _sample_frames("end_pan", func(_i: int) -> void:
-		_scene.view_offset = Vector2(80, -40)
+		_scene.set("view_offset", Vector2(80, -40))
 	)
 	var zoom := await _sample_frames("continuous_zoom", func(i: int) -> void:
 		var t := float(i) / float(maxi(FRAMES - 1, 1))
-		_scene.view_scale = 0.7 + t * 2.0
+		_scene.set("view_scale", 0.7 + t * 2.0)
 	)
 	var lod := {}
 	for threshold in [0.95, 1.05, 1.15, 2.4]:
 		lod["cross_%s" % str(threshold)] = await _sample_input("lod_%s" % str(threshold), func() -> void:
-			_scene.view_scale = float(threshold) + 0.02
+			_scene.set("view_scale", float(threshold) + 0.02)
 		)
 	var panel := await _sample_input("toggle_management_ui", func() -> void:
 		if _scene.get("stack_panel_expanded") != null:
-			_scene.stack_panel_expanded = not bool(_scene.stack_panel_expanded)
+			_scene.set("stack_panel_expanded", not bool(_scene.stack_panel_expanded))
 	)
 	return {
 		"label": label,
