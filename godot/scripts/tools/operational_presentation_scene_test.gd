@@ -134,6 +134,22 @@ func _run_all() -> void:
 	if FileAccess.file_exists(commands_path):
 		DirAccess.remove_absolute(commands_path)
 	scene.status_message = ""
+	scene._handle_button("handoff")
+	_check(
+		FileAccess.file_exists(commands_path),
+		"HANDOFF remains clickable during contact presentation (status: %s)" % String(scene.status_message)
+	)
+	var handoff_queued: Variant = JSON.parse_string(FileAccess.open(commands_path, FileAccess.READ).get_as_text())
+	var handoff_ops: Array = (handoff_queued as Dictionary).get("commands", []) if handoff_queued is Dictionary else []
+	_check(
+		handoff_ops.size() >= 1 and String((handoff_ops[0] as Dictionary).get("op", "")) == "handoff",
+		"H queues handoff, not auto_resolve"
+	)
+	_check(actions.has("handoff"), "H remains enabled during contact presentation")
+	if FileAccess.file_exists(commands_path):
+		DirAccess.remove_absolute(commands_path)
+	runner.in_flight["active"] = false
+	scene.status_message = ""
 	scene._handle_button("auto_resolve")
 	_check(
 		FileAccess.file_exists(commands_path),

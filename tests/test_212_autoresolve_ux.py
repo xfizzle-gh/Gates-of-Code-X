@@ -24,9 +24,9 @@ class AutoResolveUxContractTests(unittest.TestCase):
             'requested_op not in ["handoff", "import_battle", "verify_result", "auto_resolve"]',
             writeback,
         )
-        self.assertIn('id != "auto_resolve"', writeback)
-        self.assertIn('button_id != "auto_resolve"', writeback)
         self.assertIn('button_id not in ["auto_resolve", "handoff"]', writeback)
+        self.assertIn('id not in ["auto_resolve", "handoff"]', writeback)
+        self.assertGreaterEqual(writeback.count('not in ["auto_resolve", "handoff"]'), 3)
         self.assertNotIn("mark_camera_moving", source)
         main = (ROOT / "godot/scripts/main.gd").read_text(encoding="utf-8")
         self.assertNotIn("func mark_camera_moving", main)

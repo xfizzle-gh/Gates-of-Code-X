@@ -731,8 +731,8 @@ func _handle_button(button_id: String) -> void:
 		status_message = "Operational resolution paused - resolve or hand off the pending battle."
 		queue_redraw()
 		return
-	if operational_presenter.is_active() and _command_mutates_state(button_id) and button_id != "auto_resolve":
-		status_message = "Operational presentation active - Skip, Auto-Resolve, or wait."
+	if operational_presenter.is_active() and _command_mutates_state(button_id) and button_id not in ["auto_resolve", "handoff"]:
+		status_message = "Operational presentation active - Skip, Auto-Resolve, Fight in GoH, or wait."
 		queue_redraw()
 		return
 	if is_command_busy() and _command_mutates_state(button_id):
@@ -758,7 +758,7 @@ func _draw_button(id: String, label: String, x: float, y: float, enabled: bool, 
 	var allow := enabled
 	if is_pending_battle_modal_active() and id not in ["auto_resolve", "handoff", "import_battle", "verify_result", "replay_contact", "skip_presentation", "new_campaign", "continue_campaign"]:
 		allow = false
-	if operational_presenter != null and operational_presenter.is_active() and _command_mutates_state(id) and id != "auto_resolve":
+	if operational_presenter != null and operational_presenter.is_active() and _command_mutates_state(id) and id not in ["auto_resolve", "handoff"]:
 		allow = false
 	if is_command_busy() and _command_mutates_state(id):
 		allow = false
