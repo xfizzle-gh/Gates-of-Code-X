@@ -130,6 +130,31 @@ func _run_all() -> void:
 	var actions: Array = Array(scene.enabled_action_button_ids())
 	_check(actions.has("replay_contact"), "modal enables session replay")
 	_check(actions.has("skip_presentation"), "active presentation exposes Skip")
+	_check(scene.operational_presenter.is_active(), "contact presentation is active")
+	if FileAccess.file_exists(commands_path):
+		DirAccess.remove_absolute(commands_path)
+	scene.status_message = ""
+	scene._handle_button("auto_resolve")
+	_check(
+		FileAccess.file_exists(commands_path),
+		"AUTO-RESOLVE remains clickable during contact presentation (status: %s)" % String(scene.status_message)
+	)
+	var queued: Variant = JSON.parse_string(FileAccess.open(commands_path, FileAccess.READ).get_as_text())
+	var queued_ops: Array = (queued as Dictionary).get("commands", []) if queued is Dictionary else []
+	_check(
+		queued_ops.size() >= 1 and String((queued_ops[0] as Dictionary).get("op", "")) == "auto_resolve",
+		"A queues auto_resolve, not handoff"
+	)
+	_check(actions.has("handoff"), "H remains offered during contact presentation")
+	var writeback_source := FileAccess.get_file_as_string("res://scripts/main_writeback.gd")
+	_check(writeback_source.find('"handoff", "import_battle", "verify_result", "auto_resolve"') >= 0, "sting allow-list keeps H and A distinct")
+	var main_source := FileAccess.get_file_as_string("res://scripts/main.gd")
+	_check(main_source.find('{"op": "handoff"') >= 0, "H still invokes handoff")
+	_check(main_source.find('{"op": "auto_resolve"}') >= 0, "A still invokes auto_resolve")
+	var stack_source := FileAccess.get_file_as_string("res://scripts/main_stack_panel.gd")
+	_check(stack_source.find("PENDING BATTLE") >= 0, "pending modal title is PENDING BATTLE")
+	_check(stack_source.find("AUTO-RESOLVE (A)") >= 0, "pending modal exposes AUTO-RESOLVE")
+	_check(stack_source.find("FIGHT IN GATES OF HELL (H)") >= 0, "pending modal exposes optional GoH fight")
 
 	# The production draw call must pass the representative battalion's exact
 	# strategic formation ID into the style resolver.

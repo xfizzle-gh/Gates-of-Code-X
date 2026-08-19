@@ -48,8 +48,7 @@ func _save_path_label(application: Dictionary, control: Dictionary) -> String:
 
 
 func _draw_management_panel() -> void:
-	if has_method("is_pending_battle_modal_active") and is_pending_battle_modal_active() \
-	and operational_presenter != null and not operational_presenter.is_active():
+	if has_method("is_pending_battle_modal_active") and is_pending_battle_modal_active():
 		_draw_pending_battle_modal()
 		return
 	# Full opaque side panel — no ghosted legacy province UI underneath.
@@ -247,8 +246,8 @@ func _draw_management_panel() -> void:
 		y = _draw_button("close_force_panel", "Close Force Management", x, y, writeback, Color("2a3d28"))
 	else:
 		y = _draw_button("manage_forces", "Manage Forces", x, y, writeback and not has_battle, Color("243140"))
-	y = _draw_button("auto_resolve", "Auto-resolve battle (A)", x, y, writeback and has_battle, Color("4a2f18"))
-	y = _draw_button("handoff", "Launch Battle in GoH (H)", x, y, writeback and has_battle, Color("5a2418"))
+	y = _draw_button("auto_resolve", "AUTO-RESOLVE (A)", x, y, writeback and has_battle, Color("24402c"))
+	y = _draw_button("handoff", "FIGHT IN GATES OF HELL (H)", x, y, writeback and has_battle, Color("5a2418"))
 	if not last_handoff_save_path.is_empty():
 		y = _draw_button("verify_result", "Verify Result", x, y, writeback, Color("243140"))
 		y = _draw_button(
@@ -397,7 +396,7 @@ func _draw_pending_battle_modal() -> void:
 	var left := rect.position.x + 30.0
 	var right := rect.position.x + rect.size.x * 0.5 + 14.0
 	var top := rect.position.y + 38.0
-	_draw_panel_text("OPERATIONAL RESOLUTION PAUSED", Vector2(left, top), 22, Color("ffd27a"))
+	_draw_panel_text("PENDING BATTLE", Vector2(left, top), 22, Color("ffd27a"))
 	_draw_panel_text(String(model.get("contact_label", "Pending Battle")), Vector2(left, top + 38.0), 19, Color.WHITE)
 	var location := String(model.get("location", ""))
 	if not location.is_empty():
@@ -417,15 +416,15 @@ func _draw_pending_battle_modal() -> void:
 		_draw_panel_text(line, Vector2(left, ambush_y), 15, Color("ffd27a"))
 		ambush_y += 22.0
 	_draw_panel_text(
-		"Campaign state is paused until this battle is resolved or handed off.",
+		"Auto-Resolve continues the campaign. Fighting in Gates of Hell is optional.",
 		Vector2(left, top + 273.0),
 		13,
 		Color(0.78, 0.82, 0.86, 1.0)
 	)
 	var writeback := bool(snapshot.get("control", {}).get("enabled", false))
 	var button_y := top + 304.0
-	button_y = _draw_button("auto_resolve", "Auto-resolve battle (A)", left, button_y, writeback, Color("4a2f18"))
-	button_y = _draw_button("handoff", "Launch Battle in GoH (H)", left, button_y, writeback, Color("5a2418"))
+	button_y = _draw_button("auto_resolve", "AUTO-RESOLVE (A)", left, button_y, writeback, Color("24402c"))
+	button_y = _draw_button("handoff", "FIGHT IN GATES OF HELL (H)", left, button_y, writeback, Color("5a2418"))
 	button_y = _draw_button(
 		"verify_result",
 		"Verify Result",
