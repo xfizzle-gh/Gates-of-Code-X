@@ -30,7 +30,9 @@ class GodotOverlayInfrastructureActiveSetTests(unittest.TestCase):
         self.assertIn("battalions_by_province", body)
         self.assertIn("selected_province_id", body)
         self.assertIn("hovered_province_id", body)
-        self.assertIn("legal_targets", body)
+        self.assertIn("_highlight_targets_for_draw", body)
+        self.assertIn("func _highlight_targets_for_draw()", src)
+        self.assertIn("legal_targets", src)
         # Icons still drawn for each kind (PR B parity, all zooms).
         self.assertIn('infrastructure.get("supply_hub", 0)', src)
         self.assertIn('infrastructure.get("command_post", 0)', src)

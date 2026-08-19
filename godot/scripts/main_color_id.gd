@@ -21,6 +21,7 @@ const HOME_FIT_FILL := 1.06
 const HEADER_SAFE_TOP := 64.0
 const FOOTER_SAFE_BOTTOM := 28.0
 const OVERLAY_EDGE_PAD := 18.0
+const THEATRE_TARGET_MARK := Color(0.35, 0.95, 0.5, 0.88)
 
 var color_id_map = ColorIdMapScript.new()
 var polygon_map = PolygonMapScript.new()
@@ -441,6 +442,26 @@ func _ensure_snapshot_overlay_indexes() -> void:
 			_infra_province_ids[pid] = true
 
 
+func _emphasis_legal_target_ids() -> Dictionary:
+	var shown: Dictionary = {}
+	if legal_targets.has(hovered_province_id):
+		shown[hovered_province_id] = legal_targets[hovered_province_id]
+	if legal_targets.has(selected_province_id):
+		shown[selected_province_id] = legal_targets[selected_province_id]
+	var pending: Variant = snapshot.get("pending_battle")
+	if pending is Dictionary:
+		var battle := pending as Dictionary
+		for key in ["origin_province_id", "target_province_id"]:
+			var pid := String(battle.get(key, ""))
+			if legal_targets.has(pid):
+				shown[pid] = legal_targets[pid]
+	return shown
+
+
+func _highlight_targets_for_draw() -> Dictionary:
+	return _emphasis_legal_target_ids()
+
+
 func _build_overlay_active_ids() -> Dictionary:
 	var active_ids: Dictionary = {}
 	for pid_occ: Variant in battalions_by_province.keys():
@@ -449,12 +470,66 @@ func _build_overlay_active_ids() -> Dictionary:
 		active_ids[selected_province_id] = true
 	if not hovered_province_id.is_empty():
 		active_ids[hovered_province_id] = true
-	for tid: Variant in legal_targets.keys():
+	for tid: Variant in _highlight_targets_for_draw().keys():
 		active_ids[String(tid)] = true
 	# Unoccupied infrastructure must remain visible at every zoom (PR B behavior).
 	for pid_infra: Variant in _infra_province_ids.keys():
 		active_ids[String(pid_infra)] = true
 	return active_ids
+
+
+func get_visible_target_marker_ids_for_test() -> PackedStringArray:
+	var out := PackedStringArray()
+	for tid: Variant in legal_targets.keys():
+		out.append(String(tid))
+	return out
+
+
+func get_emphasis_legal_target_ids_for_test() -> PackedStringArray:
+	var out := PackedStringArray()
+	for tid: Variant in _emphasis_legal_target_ids().keys():
+		out.append(String(tid))
+	return out
+
+
+func _fit_front_province_ids() -> Dictionary:
+	var ids: Dictionary = {}
+	for id: Variant in focus_province_ids.keys():
+		ids[String(id)] = true
+	var campaign: Dictionary = snapshot.get("campaign", {})
+	var current := String(campaign.get("current_faction", ""))
+	for battalion: Dictionary in snapshot.get("battalions", []):
+		if String(battalion.get("faction", "")) == current:
+			ids[String(battalion.get("province_id", ""))] = true
+	var pending: Variant = snapshot.get("pending_battle")
+	if pending is Dictionary:
+		var battle := pending as Dictionary
+		ids[String(battle.get("origin_province_id", ""))] = true
+		ids[String(battle.get("target_province_id", ""))] = true
+	return ids
+
+
+func _draw_theatre_legal_target_markers() -> void:
+	if legal_targets.is_empty():
+		return
+	var am = _active_map()
+	if am == null or not am.is_ready:
+		return
+	var detailed := _highlight_targets_for_draw()
+	var segments := PackedVector2Array()
+	for tid: Variant in legal_targets.keys():
+		var pid := String(tid)
+		if pid.is_empty() or detailed.has(pid):
+			continue
+		if not am.row_by_province.has(pid):
+			continue
+		var screen: Vector2 = _image_to_screen(am.anchor_pixel(pid))
+		segments.append(screen + Vector2(-3.5, 0.0))
+		segments.append(screen + Vector2(3.5, 0.0))
+		segments.append(screen + Vector2(0.0, -3.5))
+		segments.append(screen + Vector2(0.0, 3.5))
+	if segments.size() >= 2:
+		draw_multiline(segments, THEATRE_TARGET_MARK, 1.4, false)
 
 
 func get_overlay_infrastructure_province_ids() -> PackedStringArray:
@@ -557,7 +632,7 @@ func _draw() -> void:
 	var map_width := viewport.x - PANEL_WIDTH
 	# Texture layers are separate CanvasItems. This node draws dynamic overlays + UI only.
 	if map_backend_is_polygon and polygon_map != null:
-		polygon_map.draw_overlays(self, map_space)
+		polygon_map.draw_overlays(self, map_space, _highlight_targets_for_draw())
 	if show_coalition_fronts:
 		_draw_coalition_fronts()
 	if show_crossing_overlay:
@@ -565,6 +640,7 @@ func _draw() -> void:
 	_draw_color_id_pending_battle()
 	_draw_presentation_fixture_markers()
 	_draw_color_id_overlays()
+	_draw_theatre_legal_target_markers()
 	_draw_operational_presentation()
 	if map_debug.enabled:
 		map_debug.counter_bounds = _cached_reserved_rects.duplicate()
@@ -1555,25 +1631,7 @@ func _fit_to_focus(force: bool) -> void:
 	if fitted_once and not force:
 		return
 	_invalidate_overlay_cache()
-	var ids: Dictionary = {}
-	for id: Variant in focus_province_ids.keys():
-		ids[String(id)] = true
-	var campaign: Dictionary = snapshot.get("campaign", {})
-	var current := String(campaign.get("current_faction", ""))
-	for battalion: Dictionary in snapshot.get("battalions", []):
-		if String(battalion.get("faction", "")) == current:
-			ids[String(battalion.get("province_id", ""))] = true
-	for option: Dictionary in snapshot.get("operational_orders", []):
-		ids[String(option.get("origin_province_id", ""))] = true
-		ids[String(option.get("target_province_id", ""))] = true
-	for option: Dictionary in snapshot.get("front_options", []):
-		ids[String(option.get("origin", ""))] = true
-		ids[String(option.get("target", ""))] = true
-	var pending: Variant = snapshot.get("pending_battle")
-	if pending is Dictionary:
-		var battle := pending as Dictionary
-		ids[String(battle.get("origin_province_id", ""))] = true
-		ids[String(battle.get("target_province_id", ""))] = true
+	var ids := _fit_front_province_ids()
 
 	var min_x := INF
 	var min_y := INF
