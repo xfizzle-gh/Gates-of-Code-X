@@ -18,7 +18,7 @@ class TargetPresentationLodTests(unittest.TestCase):
         self.assertIn("func _draw_theatre_legal_target_markers()", src)
         self.assertIn("draw_multiline", src)
         self.assertIn("polygon_map.draw_overlays(self, map_space, _highlight_targets_for_draw())", src)
-        self.assertIn("func _legal_target_on_screen(", src)
+        self.assertNotIn("func _legal_target_on_screen(", src)
         highlight = src[src.find("func _highlight_targets_for_draw()") : src.find("func _build_overlay_active_ids()")]
         self.assertIn("_emphasis_legal_target_ids", highlight)
         self.assertNotIn("return legal_targets", highlight)
@@ -47,6 +47,18 @@ class TargetPresentationLodTests(unittest.TestCase):
         self.assertIn("_test_theatre_lod_keeps_legal_targets_and_order_payload", src)
         self.assertIn("LOD does not rewrite path_node_ids", src)
         self.assertIn("closer zoom does not globally restore every legal destination", src)
+        self.assertIn("_test_fit_front_ids_exclude_unrelated_orders", src)
+
+    def test_fit_front_helper_does_not_scan_all_orders(self) -> None:
+        src = COLOR.read_text(encoding="utf-8")
+        start = src.find("func _fit_front_province_ids()")
+        self.assertGreater(start, 0)
+        body = src[start : src.find("\nfunc ", start + 1)]
+        self.assertIn("focus_province_ids", body)
+        self.assertIn("battalions", body)
+        self.assertIn("pending_battle", body)
+        self.assertNotIn("operational_orders", body)
+        self.assertNotIn("front_options", body)
 
 
 if __name__ == "__main__":

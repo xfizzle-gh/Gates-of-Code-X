@@ -458,15 +458,6 @@ func _emphasis_legal_target_ids() -> Dictionary:
 	return shown
 
 
-func _legal_target_on_screen(pid: String) -> bool:
-	if pid.is_empty():
-		return false
-	var am = _active_map()
-	if am == null or not am.is_ready or not am.row_by_province.has(pid):
-		return false
-	return _overlay_clamp_rect().has_point(_image_to_screen(am.anchor_pixel(pid)))
-
-
 func _highlight_targets_for_draw() -> Dictionary:
 	return _emphasis_legal_target_ids()
 
@@ -501,13 +492,21 @@ func get_emphasis_legal_target_ids_for_test() -> PackedStringArray:
 	return out
 
 
-func get_on_screen_legal_target_ids_for_test() -> PackedStringArray:
-	var out := PackedStringArray()
-	for tid: Variant in legal_targets.keys():
-		var pid := String(tid)
-		if _legal_target_on_screen(pid):
-			out.append(pid)
-	return out
+func _fit_front_province_ids() -> Dictionary:
+	var ids: Dictionary = {}
+	for id: Variant in focus_province_ids.keys():
+		ids[String(id)] = true
+	var campaign: Dictionary = snapshot.get("campaign", {})
+	var current := String(campaign.get("current_faction", ""))
+	for battalion: Dictionary in snapshot.get("battalions", []):
+		if String(battalion.get("faction", "")) == current:
+			ids[String(battalion.get("province_id", ""))] = true
+	var pending: Variant = snapshot.get("pending_battle")
+	if pending is Dictionary:
+		var battle := pending as Dictionary
+		ids[String(battle.get("origin_province_id", ""))] = true
+		ids[String(battle.get("target_province_id", ""))] = true
+	return ids
 
 
 func _draw_theatre_legal_target_markers() -> void:
@@ -1632,19 +1631,7 @@ func _fit_to_focus(force: bool) -> void:
 	if fitted_once and not force:
 		return
 	_invalidate_overlay_cache()
-	var ids: Dictionary = {}
-	for id: Variant in focus_province_ids.keys():
-		ids[String(id)] = true
-	var campaign: Dictionary = snapshot.get("campaign", {})
-	var current := String(campaign.get("current_faction", ""))
-	for battalion: Dictionary in snapshot.get("battalions", []):
-		if String(battalion.get("faction", "")) == current:
-			ids[String(battalion.get("province_id", ""))] = true
-	var pending: Variant = snapshot.get("pending_battle")
-	if pending is Dictionary:
-		var battle := pending as Dictionary
-		ids[String(battle.get("origin_province_id", ""))] = true
-		ids[String(battle.get("target_province_id", ""))] = true
+	var ids := _fit_front_province_ids()
 
 	var min_x := INF
 	var min_y := INF

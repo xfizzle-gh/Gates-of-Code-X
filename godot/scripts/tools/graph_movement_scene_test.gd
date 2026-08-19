@@ -59,6 +59,7 @@ func _run_all() -> void:
 	_test_authoritative_route_rejects_tampered_edges()
 	_test_focus_set_ignores_unrelated_formation_orders()
 	_test_theatre_lod_keeps_legal_targets_and_order_payload()
+	_test_fit_front_ids_exclude_unrelated_orders()
 
 
 func _work_dir(name: String) -> String:
@@ -340,6 +341,44 @@ func _test_theatre_lod_keeps_legal_targets_and_order_payload() -> void:
 	var after_ids: Array = scene.legal_targets.keys()
 	after_ids.sort()
 	_check_eq(after_ids, before_ids, "legal_targets IDs are unchanged after theatre click")
+	_free(ctx)
+
+
+func _test_fit_front_ids_exclude_unrelated_orders() -> void:
+	var ctx := _scene("p8_fit_front_ids")
+	var scene = ctx["scene"]
+	(scene.snapshot.get("operational_orders", []) as Array).append({
+		"formation_id": "sf-other",
+		"origin_province_id": "prov-x",
+		"target_province_id": "prov-b",
+		"path_node_ids": ["node-x", "node-b"],
+		"path_edge_ids": ["edge-xb"],
+	})
+	(scene.snapshot.get("front_options", []) as Array).append({
+		"origin": "prov-x",
+		"target": "prov-c",
+	})
+	scene.snapshot["pending_battle"] = {
+		"origin_province_id": "prov-a",
+		"target_province_id": "prov-c",
+	}
+	(scene.snapshot.get("battalions", []) as Array).append({
+		"id": "bn-other-friendly",
+		"strategic_formation_id": "sf-other-friendly",
+		"province_id": "prov-b",
+		"faction": "nato",
+	})
+	var indexed: Dictionary = scene.index_operational_orders(scene.snapshot)
+	scene.orders_by_formation = indexed.get("by_formation", {})
+	scene.selected_strategic_formation_id = "sf-a"
+	scene._rebuild_legal_targets()
+	scene._rebuild_focus_set()
+	_check(scene.has_method("_fit_front_province_ids"), "Fit Front exposes its camera id set")
+	var ids: Dictionary = scene.call("_fit_front_province_ids")
+	_check(ids.has("prov-a"), "Fit Front keeps selected origin")
+	_check(ids.has("prov-c"), "Fit Front keeps selected-formation legal target")
+	_check(ids.has("prov-b"), "Fit Front keeps current-faction force location")
+	_check(not ids.has("prov-x"), "Fit Front ignores unrelated formation/front-option origin")
 	_free(ctx)
 
 
