@@ -58,6 +58,7 @@ func _run() -> void:
 		RenderingServer.force_draw(false, 0.0)
 		await process_frame
 		var draw_ms := (Time.get_ticks_usec() - t0) / 1000.0
+		var reload_ms := (Time.get_ticks_usec() - t_all) / 1000.0
 		var pending = scene.snapshot.get("pending_battle") if scene.get("snapshot") != null else null
 		var modal := false
 		if scene.has_method("is_pending_battle_modal_active"):
@@ -68,8 +69,9 @@ func _run() -> void:
 			"parse_ms": parse_ms,
 			"build_ms": build_ms,
 			"commit_ms": commit_ms,
-			"first_visible_ms": draw_ms,
-			"total_ms": (Time.get_ticks_usec() - t_all) / 1000.0,
+			"draw_ms": draw_ms,
+			"reload_to_visible_ms": reload_ms,
+			"total_ms": reload_ms,
 			"pending_battle": pending != null,
 			"modal_active": modal,
 			"bytes": text.length(),
