@@ -1,6 +1,7 @@
 param(
     [string]$SourceCampaign = "",
-    [string]$OutDir = ""
+    [string]$OutDir = "",
+    [string]$GodotPath = "C:\Users\paulf\tools\godot\Godot_v4.7-stable_win64.exe"
 )
 
 Set-StrictMode -Version Latest
@@ -22,13 +23,8 @@ if (-not $OutDir) {
     $OutDir = Join-Path $env:LOCALAPPDATA "GatesOfCodeX\acceptance\command-latency-$stamp"
 }
 New-Item -ItemType Directory -Path $OutDir -Force | Out-Null
-$copyDir = Join-Path $OutDir "copy"
+$copyDir = Join-Path $OutDir "work"
 $outJson = Join-Path $OutDir "command-latency.json"
-
-Write-Host "Source campaign: $SourceCampaign"
-Write-Host "Disposable copy: $copyDir"
-Write-Host "Owner files are not written. Only the copy is mutated."
-
 $python = "python"
 $siblingSnap = Join-Path (Split-Path -Parent $SourceCampaign) "campaign_snapshot.json"
 if (Test-Path -LiteralPath $siblingSnap) {
@@ -38,10 +34,12 @@ if (Test-Path -LiteralPath $siblingSnap) {
         $python = $fromSnap
     }
 }
+Write-Host "Source campaign: $SourceCampaign"
+Write-Host "Disposable work: $copyDir"
 Write-Host "Python: $python"
-& $python (Join-Path $root "tools\capture_command_latency.py") --source-campaign $SourceCampaign --copy-dir $copyDir --out $outJson
+Write-Host "Owner files are not written. Only the copy is mutated."
+& $python (Join-Path $root "tools\capture_command_latency.py") --source-campaign $SourceCampaign --copy-dir $copyDir --out $outJson --python $python --godot $GodotPath --repo $root
 if ($LASTEXITCODE -ne 0) {
     throw "Latency capture failed with exit $LASTEXITCODE"
 }
 Write-Host "Wrote $outJson"
-Get-Content -LiteralPath $outJson

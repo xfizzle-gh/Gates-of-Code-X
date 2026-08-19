@@ -8,22 +8,26 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class CommandLatencyCaptureContractTests(unittest.TestCase):
-    def test_capture_uses_a_copy_and_production_ops(self) -> None:
+    def test_capture_uses_production_command_shapes(self) -> None:
         script = (ROOT / "tools/capture_command_latency.py").read_text(encoding="utf-8")
         wrapper = (ROOT / "tools/run_command_latency_capture.ps1").read_text(encoding="utf-8")
         self.assertIn("Owner files are not written", wrapper)
-        self.assertIn("end_player_round", script)
+        self.assertIn("move_click_batch", script)
+        self.assertIn('"op": "end_turn"', script)
+        self.assertIn('"advance_turn": True', script)
         self.assertIn("auto_resolve", script)
-        self.assertIn("issue_move_order", script)
-        self.assertIn("commit_move_orders", script)
-        self.assertIn("install_frontend_turn_cycle_op", script)
-        self.assertIn("shutil.copy2", script)
-        self.assertIn(".goc-backend-session.json", script)
+        self.assertIn("subprocess", script)
+        self.assertIn("map_command_reload_latency.gd", script)
+        self.assertIn("_clone_prepared", script)
 
-    def test_wrapper_defaults_to_last_campaign_pointer(self) -> None:
-        wrapper = (ROOT / "tools/run_command_latency_capture.ps1").read_text(encoding="utf-8")
-        self.assertIn("last_campaign.json", wrapper)
-        self.assertIn("capture_command_latency.py", wrapper)
+    def test_godot_reload_script_is_read_only(self) -> None:
+        script = (ROOT / "godot/scripts/tools/map_command_reload_latency.gd").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("_try_build_snapshot_state", script)
+        self.assertIn("first_visible_ms", script)
+        self.assertNotIn("save_campaign", script)
+        self.assertNotIn("auto_resolve", script)
 
 
 if __name__ == "__main__":
