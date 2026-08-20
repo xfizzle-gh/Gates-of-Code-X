@@ -1,0 +1,737 @@
+#!/usr/bin/env python3
+"""Owner-size A/B for #266 Slice 4 campaign save.
+
+Compares compact-save timings and production warm-daemon command totals at two
+git SHAs on a disposable campaign copy. Does not invent numbers. Exits 2 if
+the campaign path is missing.
+
+Required owner-machine usage (never point this at the live owner campaign):
+
+    python tools/ab_issue_266_campaign_save.py \\
+        --campaign /path/to/disposable/ww3_2028_core/campaign.json \\
+        --base 5abed005ce6574813efc42e8a30a31ec13e32eca \\
+        --head HEAD
+
+Reports two tables:
+
+1. compact-save subphases: save_ms, save_validate_ms, save_validate_base_ms,
+   save_encode_ms, save_write_ms
+2. production warm-daemon apply totals via measured_apply_frontend_commands
+   after the persistent-backend ``_direct_cache_loader`` seam is installed
+   (first command load returns the already-validated in-memory campaign, so
+   warm ``load_ms`` is ~0): issue+commit live-move batch, end_player_round,
+   and auto_resolve only when the disposable campaign already has a prepared
+   contact
+
+This VM does not ship ww3_2028_core; leave the owner table empty until the
+owner runs the harness on a disposable copy.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import shutil
+import statistics
+import subprocess
+import sys
+import tempfile
+import time
+from pathlib import Path
+from typing import Any
+
+
+BASE_SHA = "5abed005ce6574813efc42e8a30a31ec13e32eca"
+METRIC_KEYS = (
+    "save_ms",
+    "save_validate_ms",
+    "save_validate_base_ms",
+    "save_encode_ms",
+    "save_write_ms",
+)
+PRODUCTION_COMMAND_PATHS = (
+    "issue_commit",
+    "end_player_round",
+    "auto_resolve",
+)
+COMMAND_METRIC_KEYS = (
+    "total_ms",
+    "load_ms",
+    *METRIC_KEYS,
+)
+# Warm-daemon first load returns the leased in-memory campaign. A real
+# load_campaign of owner-size state is hundreds to thousands of ms.
+WARM_LOAD_MS_LIMIT = 5.0
+CACHE_SEAM = "persistent_backend._direct_cache_loader"
+AUTO_RESOLVE_SKIP = "auto_resolve: skipped (no prepared contact)"
+ISSUE_COMMIT_SKIP = "issue_commit: skipped (no legal one-hop)"
+END_ROUND_SKIP = "end_player_round: skipped (pending battle)"
+
+
+def _repo_root() -> Path:
+    return Path(__file__).resolve().parents[1]
+
+
+def _ensure_src_path(src_root: Path | None) -> None:
+    """Put the measured src first. Do not prepend the current checkout by default."""
+
+    invoker_src = (_repo_root() / "src").resolve()
+    measured_src = (
+        Path(src_root).resolve() if src_root is not None else invoker_src
+    )
+    keep: list[str] = []
+    for entry in sys.path:
+        if entry == "":
+            keep.append(entry)
+            continue
+        try:
+            resolved = Path(entry).resolve()
+        except (OSError, RuntimeError):
+            keep.append(entry)
+            continue
+        if resolved == measured_src:
+            continue
+        if src_root is not None and resolved == invoker_src and invoker_src != measured_src:
+            continue
+        keep.append(entry)
+    sys.path[:] = [str(measured_src), *keep]
+
+
+def _purge_gates_of_codex_modules() -> None:
+    for name in list(sys.modules):
+        if name == "gates_of_codex" or name.startswith("gates_of_codex."):
+            del sys.modules[name]
+
+
+def _import_provenance(src_root: Path | None, sha: str) -> dict[str, Any]:
+    _ensure_src_path(src_root)
+    _purge_gates_of_codex_modules()
+    import gates_of_codex
+    from gates_of_codex import p2_integrity
+
+    module_path = Path(gates_of_codex.__file__).resolve()
+    return {
+        "sha": sha,
+        "imported_module": str(module_path),
+        "imported_src_root": str(module_path.parents[1]),
+        "has_p1_projection": hasattr(p2_integrity, "load_p1_integrity_projection"),
+    }
+
+
+def _install_runtime() -> None:
+    from gates_of_codex import command_cycle_perf, command_scoped_p2_auth
+    from gates_of_codex.turn_cycle import install_frontend_turn_cycle_op
+
+    command_cycle_perf.install_command_cycle_perf_path()
+    command_scoped_p2_auth.install_command_scoped_p2_auth()
+    install_frontend_turn_cycle_op()
+
+
+def _sample_compact_save(campaign_path: Path, repeats: int) -> dict[str, Any]:
+    from gates_of_codex.command_cycle_perf import _compact_save_campaign
+    from gates_of_codex.state_io import load_campaign
+
+    state = load_campaign(campaign_path)
+    with tempfile.TemporaryDirectory() as temporary:
+        destination = Path(temporary) / "campaign.json"
+        shutil.copy2(campaign_path, destination)
+        _compact_save_campaign(state, destination, subphase_seconds={})
+        samples: list[dict[str, float]] = []
+        for _ in range(repeats):
+            subphase: dict[str, float] = {}
+            started = time.perf_counter()
+            _compact_save_campaign(state, destination, subphase_seconds=subphase)
+            samples.append(
+                {
+                    "save_ms": (time.perf_counter() - started) * 1000.0,
+                    "save_validate_ms": float(subphase.get("validate", 0.0)) * 1000.0,
+                    "save_validate_base_ms": float(subphase.get("validate_base", 0.0))
+                    * 1000.0,
+                    "save_encode_ms": float(subphase.get("encode", 0.0)) * 1000.0,
+                    "save_write_ms": float(subphase.get("write", 0.0)) * 1000.0,
+                }
+            )
+    return {
+        "repeats": repeats,
+        "samples": samples,
+        "min": {key: min(row[key] for row in samples) for key in METRIC_KEYS},
+        "median": {
+            key: statistics.median(row[key] for row in samples) for key in METRIC_KEYS
+        },
+    }
+
+
+def _summarize_samples(
+    samples: list[dict[str, float]], keys: tuple[str, ...]
+) -> dict[str, Any]:
+    return {
+        "repeats": len(samples),
+        "samples": samples,
+        "min": {key: min(row[key] for row in samples) for key in keys},
+        "median": {key: statistics.median(row[key] for row in samples) for key in keys},
+    }
+
+
+def _skipped_command(reason: str) -> dict[str, Any]:
+    """Record a skip. Do not invent timings."""
+
+    return {"skipped": True, "reason": reason}
+
+
+def _find_legal_one_hop(state: Any) -> dict[str, Any] | None:
+    """Return one real legal one-hop from the campaign. Do not invent a route."""
+
+    from gates_of_codex.operational_order_options import list_operational_move_options
+
+    options = [
+        row
+        for row in list_operational_move_options(state)
+        if int(row.get("hop_count") or 0) == 1
+        and row.get("path_node_ids")
+        and row.get("path_edge_ids")
+        and row.get("formation_id")
+    ]
+    if not options:
+        return None
+    options.sort(
+        key=lambda row: (
+            str(row.get("formation_id")),
+            str(row.get("target_node_id") or ""),
+        )
+    )
+    return options[0]
+
+
+def _issue_commit_commands(option: dict[str, Any]) -> list[dict[str, Any]]:
+    from gates_of_codex.command_cycle_perf import _LIVE_MOVE_BATCH
+
+    commands = [
+        {
+            "op": "issue_move_order",
+            "formation": str(option["formation_id"]),
+            "path_node_ids": [str(item) for item in option["path_node_ids"]],
+            "path_edge_ids": [str(item) for item in option["path_edge_ids"]],
+        },
+        {
+            "op": "commit_move_orders",
+            "faction": option.get("faction"),
+            "locked_stance": str(option.get("locked_stance") or "operational"),
+        },
+    ]
+    ops = tuple(str(item.get("op", "")) for item in commands)
+    if ops != tuple(_LIVE_MOVE_BATCH):
+        raise SystemExit(
+            f"issue+commit batch is {list(ops)}, expected {list(_LIVE_MOVE_BATCH)}"
+        )
+    return commands
+
+
+def _end_player_round_commands() -> list[dict[str, Any]]:
+    return [{"op": "end_player_round"}]
+
+
+def _auto_resolve_commands() -> list[dict[str, Any]]:
+    return [{"op": "auto_resolve"}]
+
+
+def _persist_runtime_snapshot(commands: list[dict[str, Any]]) -> bool:
+    from gates_of_codex.command_cycle_perf import _should_persist_runtime_snapshot
+
+    return bool(_should_persist_runtime_snapshot(commands))
+
+
+def _timings_from_apply(report: dict[str, Any]) -> dict[str, float]:
+    timings = report.get("timings") or {}
+    return {
+        "total_ms": float(timings.get("total_ms") or 0.0),
+        "load_ms": float(timings.get("load_ms") or 0.0),
+        "save_ms": float(timings.get("save_ms") or 0.0),
+        "save_validate_ms": float(timings.get("save_validate_ms") or 0.0),
+        "save_validate_base_ms": float(timings.get("save_validate_base_ms") or 0.0),
+        "save_encode_ms": float(timings.get("save_encode_ms") or 0.0),
+        "save_write_ms": float(timings.get("save_write_ms") or 0.0),
+    }
+
+
+def _apply_production_commands(
+    campaign_path: Path,
+    commands: list[dict[str, Any]],
+    cached_state: Any,
+) -> dict[str, Any]:
+    """Apply on a sibling copy after installing the persistent-backend cache lease.
+
+    The source owner campaign is never the apply target. The sibling is only
+    isolation for persist/rollback. The first command load must return
+    ``cached_state`` through ``persistent_backend._direct_cache_loader``.
+    """
+
+    from gates_of_codex import frontend_commands as commands_module
+    from gates_of_codex.command_cycle_perf import measured_apply_frontend_commands
+    from gates_of_codex.persistent_backend import _direct_cache_loader
+
+    token = f".goc-266-ab-cmd-{os.getpid()}-{time.time_ns()}"
+    copy_path = campaign_path.parent / f"{token}.json"
+    snapshot_path = campaign_path.parent / f"{token}.snapshot.json"
+    shutil.copy2(campaign_path, copy_path)
+    try:
+        snapshot_path.write_text("{}", encoding="utf-8")
+        original_loader = commands_module.load_campaign
+        commands_module.load_campaign = _direct_cache_loader(
+            cached_state,
+            original_loader,
+        )
+        try:
+            return measured_apply_frontend_commands(
+                copy_path,
+                commands=commands,
+                snapshot_path=snapshot_path,
+            )
+        finally:
+            commands_module.load_campaign = original_loader
+    finally:
+        copy_path.unlink(missing_ok=True)
+        snapshot_path.unlink(missing_ok=True)
+
+
+def _require_warm_load(timings: dict[str, float], ops: list[str]) -> None:
+    load_ms = float(timings["load_ms"])
+    if load_ms > WARM_LOAD_MS_LIMIT:
+        raise SystemExit(
+            f"warm apply load_ms={load_ms:.3f} is not ~0 for {ops}; "
+            "measured command path must lease "
+            "persistent_backend._direct_cache_loader"
+        )
+
+
+def _measure_warm_apply(
+    campaign_path: Path,
+    commands: list[dict[str, Any]],
+    repeats: int,
+) -> dict[str, Any]:
+    """Warm-daemon protocol: unmeasured cache install + P1 warmup, then N repeats.
+
+    The cold first hit is not reported. Each sample reloads the unmutated source
+    into memory (unmeasured), then measured apply hits ``_direct_cache_loader``.
+    """
+
+    from gates_of_codex.state_io import load_campaign
+
+    persist = _persist_runtime_snapshot(commands)
+    ops = [str(item.get("op", "")) for item in commands]
+    if ops == ["end_player_round"] and persist:
+        raise SystemExit(
+            "persist gate changed: end_player_round must not persist a runtime snapshot"
+        )
+    warmup_state = load_campaign(campaign_path)
+    warmup = _apply_production_commands(
+        campaign_path, commands, cached_state=warmup_state
+    )
+    if not warmup.get("ok"):
+        raise SystemExit(f"warmup apply failed for {ops}: {warmup}")
+    samples: list[dict[str, float]] = []
+    for _ in range(repeats):
+        cached_state = load_campaign(campaign_path)
+        report = _apply_production_commands(
+            campaign_path, commands, cached_state=cached_state
+        )
+        if not report.get("ok"):
+            raise SystemExit(f"measured apply failed for {ops}: {report}")
+        timings = _timings_from_apply(report)
+        _require_warm_load(timings, ops)
+        samples.append(timings)
+    payload = _summarize_samples(samples, COMMAND_METRIC_KEYS)
+    payload.update(
+        {
+            "skipped": False,
+            "ops": ops,
+            "persist_runtime_snapshot": persist,
+            "cache_seam": CACHE_SEAM,
+        }
+    )
+    return payload
+
+
+def _sample_production_commands(
+    campaign_path: Path, repeats: int
+) -> dict[str, Any]:
+    """Warm production apply totals. Does not invent a contact or a move."""
+
+    from gates_of_codex.state_io import load_campaign
+
+    state = load_campaign(campaign_path)
+    commands: dict[str, Any] = {}
+
+    option = _find_legal_one_hop(state)
+    if option is None:
+        print(ISSUE_COMMIT_SKIP, file=sys.stderr)
+        commands["issue_commit"] = _skipped_command("no legal one-hop")
+    else:
+        issue_commit = _measure_warm_apply(
+            campaign_path, _issue_commit_commands(option), repeats
+        )
+        issue_commit["move"] = {
+            "formation_id": str(option["formation_id"]),
+            "path_node_ids": [str(item) for item in option["path_node_ids"]],
+            "path_edge_ids": [str(item) for item in option["path_edge_ids"]],
+            "hop_count": int(option.get("hop_count") or 1),
+        }
+        commands["issue_commit"] = issue_commit
+
+    if getattr(state, "pending_battle", None) is not None:
+        print(END_ROUND_SKIP, file=sys.stderr)
+        commands["end_player_round"] = _skipped_command("pending battle")
+    else:
+        commands["end_player_round"] = _measure_warm_apply(
+            campaign_path, _end_player_round_commands(), repeats
+        )
+
+    if getattr(state, "pending_battle", None) is None:
+        print(AUTO_RESOLVE_SKIP, file=sys.stderr)
+        commands["auto_resolve"] = _skipped_command("no prepared contact")
+    else:
+        commands["auto_resolve"] = _measure_warm_apply(
+            campaign_path, _auto_resolve_commands(), repeats
+        )
+    return commands
+
+
+def measure_current(
+    campaign_path: Path,
+    *,
+    label: str,
+    sha: str,
+    repeats: int,
+    src_root: Path | None = None,
+) -> dict[str, Any]:
+    provenance = _import_provenance(src_root, sha)
+    _install_runtime()
+    payload = _sample_compact_save(campaign_path, repeats)
+    payload.update(provenance)
+    payload.update(
+        {
+            "label": label,
+            "sha": sha,
+            "campaign": str(campaign_path),
+            "campaign_bytes": campaign_path.stat().st_size,
+            "commands": _sample_production_commands(campaign_path, repeats),
+        }
+    )
+    return payload
+
+
+def _resolve_sha(repo: Path, spec: str) -> str:
+    completed = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", spec],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return completed.stdout.strip()
+
+
+def _commit_exists(repo: Path, sha: str) -> bool:
+    present = subprocess.run(
+        ["git", "-C", str(repo), "cat-file", "-e", f"{sha}^{{commit}}"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    return present.returncode == 0
+
+
+def _ensure_commit(repo: Path, sha: str) -> None:
+    """Make ``sha`` present. Shallow CI checkouts often lack the A/B base."""
+
+    if _commit_exists(repo, sha):
+        return
+    fetched = subprocess.run(
+        ["git", "-C", str(repo), "fetch", "--depth=1", "origin", sha],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if fetched.returncode != 0 or not _commit_exists(repo, sha):
+        raise SystemExit(
+            f"cannot fetch commit {sha} for A/B worktree "
+            f"({fetched.returncode}):\n{fetched.stdout}\n{fetched.stderr}"
+        )
+
+
+def _git_common_dir(repo: Path) -> Path:
+    completed = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "--git-common-dir"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    common = Path(completed.stdout.strip())
+    if not common.is_absolute():
+        common = (repo / common).resolve()
+    return common
+
+
+def _windows_long_path(path: Path) -> Path:
+    """Expand 8.3 names. Git worktree add rejects C:\\Users\\RUNNER~1\\... on some hosts."""
+
+    resolved = path.resolve()
+    if os.name != "nt":
+        return resolved
+    try:
+        import ctypes
+
+        get_long_path_name = ctypes.windll.kernel32.GetLongPathNameW
+        buffer = ctypes.create_unicode_buffer(32768)
+        length = get_long_path_name(str(resolved), buffer, len(buffer))
+        if length:
+            return Path(buffer.value)
+    except (AttributeError, OSError, ValueError):
+        pass
+    return resolved
+
+
+def _run_harness_at_sha(
+    *,
+    repo: Path,
+    sha: str,
+    extra_args: list[str],
+) -> dict[str, Any]:
+    resolved = _resolve_sha(repo, sha)
+    _ensure_commit(repo, resolved)
+    # Same-volume path under .git. System temp on Windows CI is often an 8.3
+    # short name on another drive; git worktree add then exits 128.
+    scratch = _windows_long_path(
+        Path(
+            tempfile.mkdtemp(
+                prefix="goc-266-ab-",
+                dir=str(_git_common_dir(repo)),
+            )
+        )
+    )
+    worktree = scratch / "worktree"
+    added = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repo),
+            "worktree",
+            "add",
+            "--detach",
+            str(worktree),
+            resolved,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if added.returncode != 0:
+        shutil.rmtree(scratch, ignore_errors=True)
+        raise SystemExit(
+            f"git worktree add {resolved} -> {worktree} failed "
+            f"({added.returncode}):\n{added.stdout}\n{added.stderr}"
+        )
+    try:
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str((worktree / "src").resolve())
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(Path(__file__).resolve()),
+                "--src-root",
+                str((worktree / "src").resolve()),
+                "--sha",
+                resolved,
+                *extra_args,
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=env,
+        )
+    finally:
+        subprocess.run(
+            ["git", "-C", str(repo), "worktree", "remove", "--force", str(worktree)],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        shutil.rmtree(scratch, ignore_errors=True)
+    if completed.returncode != 0:
+        raise SystemExit(
+            f"harness at {resolved} failed ({completed.returncode}):\n"
+            f"{completed.stdout}\n{completed.stderr}"
+        )
+    return json.loads(completed.stdout)
+
+
+def _measure_at_sha(
+    *,
+    repo: Path,
+    sha: str,
+    label: str,
+    campaign_path: Path,
+    repeats: int,
+) -> dict[str, Any]:
+    return _run_harness_at_sha(
+        repo=repo,
+        sha=sha,
+        extra_args=[
+            "--measure",
+            "--campaign",
+            str(campaign_path),
+            "--label",
+            label,
+            "--repeats",
+            str(repeats),
+            "--json",
+        ],
+    )
+
+
+def _provenance_at_sha(*, repo: Path, sha: str) -> dict[str, Any]:
+    """Import gates_of_codex from a detached worktree. Does not invent timings."""
+
+    return _run_harness_at_sha(
+        repo=repo,
+        sha=sha,
+        extra_args=["--provenance-only", "--json"],
+    )
+
+
+def _print_table(rows: list[dict[str, Any]]) -> None:
+    headers = ["label", "sha", *METRIC_KEYS]
+    print("| " + " | ".join(headers) + " |")
+    print("|" + "|".join(["---"] * len(headers)) + "|")
+    for row in rows:
+        values = [row["label"], row["sha"][:12]]
+        mins = row["min"]
+        for key in METRIC_KEYS:
+            values.append(f"{mins[key]:.1f}")
+        print("| " + " | ".join(values) + " |")
+
+
+def _print_command_table(rows: list[dict[str, Any]]) -> None:
+    headers = [
+        "label",
+        "sha",
+        "path",
+        *COMMAND_METRIC_KEYS,
+        "persist_runtime_snapshot",
+    ]
+    print("| " + " | ".join(headers) + " |")
+    print("|" + "|".join(["---"] * len(headers)) + "|")
+    for row in rows:
+        commands = row.get("commands") or {}
+        for path in PRODUCTION_COMMAND_PATHS:
+            payload = commands.get(path) or {}
+            values = [row["label"], row["sha"][:12], path]
+            if payload.get("skipped"):
+                reason = str(payload.get("reason") or "skipped")
+                values.extend([f"skipped ({reason})"] + [""] * len(COMMAND_METRIC_KEYS))
+            else:
+                mins = payload.get("min") or {}
+                for key in COMMAND_METRIC_KEYS:
+                    values.append(f"{float(mins.get(key) or 0.0):.1f}")
+                persist = payload.get("persist_runtime_snapshot")
+                values.append("true" if persist else "false")
+            print("| " + " | ".join(values) + " |")
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--campaign",
+        type=Path,
+        default=os.environ.get("GOC_OWNER_CAMPAIGN"),
+        help="Disposable owner campaign.json. Also reads GOC_OWNER_CAMPAIGN.",
+    )
+    parser.add_argument("--base", default=BASE_SHA)
+    parser.add_argument("--head", default="HEAD")
+    parser.add_argument("--repeats", type=int, default=3)
+    parser.add_argument("--measure", action="store_true")
+    parser.add_argument(
+        "--provenance-only",
+        action="store_true",
+        help="Print imported module path/SHA marker without measuring a campaign.",
+    )
+    parser.add_argument(
+        "--src-root",
+        type=Path,
+        default=None,
+        help="Exact src directory to import. Required for detached SHA A/B.",
+    )
+    parser.add_argument("--label", default="current")
+    parser.add_argument("--sha", default="")
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args(argv)
+
+    if args.provenance_only:
+        sha = args.sha or _resolve_sha(_repo_root(), "HEAD")
+        report = _import_provenance(args.src_root, sha)
+        print(json.dumps(report, indent=2, sort_keys=True))
+        return 0
+
+    if args.campaign is None:
+        print(
+            "owner campaign missing: pass --campaign or GOC_OWNER_CAMPAIGN. "
+            "ww3_2028_core is not in this repository; this harness does not "
+            "invent owner timings.",
+            file=sys.stderr,
+        )
+        return 2
+    campaign_path = Path(args.campaign).expanduser().resolve()
+    if not campaign_path.is_file():
+        print(f"owner campaign missing: {campaign_path}", file=sys.stderr)
+        return 2
+
+    repo = _repo_root()
+    if args.measure:
+        sha = args.sha or _resolve_sha(repo, "HEAD")
+        report = measure_current(
+            campaign_path,
+            label=args.label,
+            sha=sha,
+            repeats=args.repeats,
+            src_root=args.src_root,
+        )
+        if args.json:
+            print(json.dumps(report, indent=2, sort_keys=True))
+        else:
+            _print_table([report])
+            print()
+            _print_command_table([report])
+        return 0
+
+    reports = [
+        _measure_at_sha(
+            repo=repo,
+            sha=args.base,
+            label="base",
+            campaign_path=campaign_path,
+            repeats=args.repeats,
+        ),
+        _measure_at_sha(
+            repo=repo,
+            sha=args.head,
+            label="head",
+            campaign_path=campaign_path,
+            repeats=args.repeats,
+        ),
+    ]
+    invoker_src = str((_repo_root() / "src").resolve())
+    imported = [str(row["imported_src_root"]) for row in reports]
+    if imported[0] == imported[1] or invoker_src in imported:
+        raise SystemExit(
+            "false A/B: both sides imported the same src or the invoker checkout "
+            f"({imported}; invoker={invoker_src})"
+        )
+    print(json.dumps({"reports": reports}, indent=2, sort_keys=True))
+    print()
+    _print_table(reports)
+    print()
+    _print_command_table(reports)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

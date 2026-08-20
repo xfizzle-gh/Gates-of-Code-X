@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+from collections import OrderedDict
 from collections.abc import Mapping
+from dataclasses import dataclass
+from threading import RLock
+from types import MappingProxyType
 from typing import Any
 
 from .models import CampaignState, Faction
@@ -83,6 +87,143 @@ def _persisted_scenario_identity(state: CampaignState) -> tuple[str, str]:
     return EARTH3_SCENARIO_ID, "production"
 
 
+_P1_PROJECTION_CACHE_MAX = 4
+_P1_PROJECTION_LOCK = RLock()
+_P1_PROJECTION_CACHE: OrderedDict[tuple[Any, ...], "_P1IntegrityProjection"] = OrderedDict()
+
+
+@dataclass(frozen=True, slots=True)
+class _P1ProvinceRow:
+    is_water: bool
+    neighbors: tuple[str, ...]
+    label: tuple[float, float]
+    centroid: tuple[float, float]
+    source_id: int
+    terrain_id: int
+    continent_id: int
+
+
+@dataclass(frozen=True, slots=True)
+class _P1IntegrityProjection:
+    """P1 fields required by campaign integrity, without the 19 MB dataset clone."""
+
+    manifest_sha256: str
+    dataset_sha256: str
+    embedded_dataset_sha256: str
+    geometry_sha256: str
+    production_asset_version: str
+    included_ids_sha256: str
+    production_schema_version: int
+    stable_id_policy: str
+    water_policy_v1: str
+    rows: Mapping[str, _P1ProvinceRow]
+
+
+def _clear_p1_integrity_projection_cache_for_tests() -> None:
+    """Test-only reset. Runtime callers must not drop authenticated projections."""
+
+    with _P1_PROJECTION_LOCK:
+        _P1_PROJECTION_CACHE.clear()
+
+
+def _clone_p1_row(row: _P1ProvinceRow) -> _P1ProvinceRow:
+    """Return a new row so object.__setattr__ on a caller copy cannot poison the cache."""
+
+    return _P1ProvinceRow(
+        is_water=bool(row.is_water),
+        neighbors=tuple(row.neighbors),
+        label=(float(row.label[0]), float(row.label[1])),
+        centroid=(float(row.centroid[0]), float(row.centroid[1])),
+        source_id=int(row.source_id),
+        terrain_id=int(row.terrain_id),
+        continent_id=int(row.continent_id),
+    )
+
+
+def _freeze_p1_rows(rows: Mapping[str, _P1ProvinceRow]) -> Mapping[str, _P1ProvinceRow]:
+    """Clone every row, then freeze, so callers never share cached row objects."""
+
+    return MappingProxyType(
+        {str(province_id): _clone_p1_row(row) for province_id, row in rows.items()}
+    )
+
+
+def _detach_p1_projection(projection: _P1IntegrityProjection) -> _P1IntegrityProjection:
+    """Return a new frozen projection whose rows are not the cached instances."""
+
+    return _P1IntegrityProjection(
+        manifest_sha256=projection.manifest_sha256,
+        dataset_sha256=projection.dataset_sha256,
+        embedded_dataset_sha256=projection.embedded_dataset_sha256,
+        geometry_sha256=projection.geometry_sha256,
+        production_asset_version=projection.production_asset_version,
+        included_ids_sha256=projection.included_ids_sha256,
+        production_schema_version=projection.production_schema_version,
+        stable_id_policy=projection.stable_id_policy,
+        water_policy_v1=projection.water_policy_v1,
+        rows=_freeze_p1_rows(projection.rows),
+    )
+
+
+def _p1_projection_from_authority(authority: Any) -> _P1IntegrityProjection:
+    production = authority.production
+    rows = {
+        str(raw["id"]): _P1ProvinceRow(
+            is_water=bool(raw["is_water"]),
+            neighbors=tuple(sorted(str(value) for value in raw["neighbors"])),
+            label=(float(raw["label"][0]), float(raw["label"][1])),
+            centroid=(float(raw["centroid"][0]), float(raw["centroid"][1])),
+            source_id=int(raw["source_id"]),
+            terrain_id=int(raw["terrain_id"]),
+            continent_id=int(raw["continent_id"]),
+        )
+        for raw in authority.provinces
+    }
+    return _P1IntegrityProjection(
+        manifest_sha256=str(authority.manifest_sha256),
+        dataset_sha256=str(authority.dataset_sha256),
+        embedded_dataset_sha256=str(authority.embedded_dataset_sha256),
+        geometry_sha256=str(authority.geometry_sha256),
+        production_asset_version=str(authority.production_asset_version),
+        included_ids_sha256=str(authority.included_ids_sha256),
+        production_schema_version=int(production["schema_version"]),
+        stable_id_policy=str(production["stable_id_policy"]),
+        water_policy_v1=str(production["water_policy"]["v1"]),
+        rows=_freeze_p1_rows(rows),
+    )
+
+
+def load_p1_integrity_projection(authority_root=None) -> _P1IntegrityProjection:
+    """Return authenticated P1 integrity rows after re-hashing the fixed files.
+
+    Every lookup still captures exact file bytes/hashes through the existing
+    canonical P1 reader. A changed byte produces a new key and forces a full
+    ``load_earth3_authority()`` rebuild. Cache hits reuse the slim province
+    projection instead of deepcopying the 19 MB parsed dataset on every save.
+
+    Returned projections are detached: the mapping is a new MappingProxyType and
+    every row is a new frozen dataclass. object.__setattr__ on a returned row
+    cannot poison later same-process validates.
+    """
+
+    from .command_scoped_p2_auth import _capture_p1_identity
+    from .earth3_campaign import load_earth3_authority
+
+    key = _capture_p1_identity(authority_root)
+    with _P1_PROJECTION_LOCK:
+        cached = _P1_PROJECTION_CACHE.get(key)
+        if cached is not None:
+            _P1_PROJECTION_CACHE.move_to_end(key)
+            return _detach_p1_projection(cached)
+    projection = _p1_projection_from_authority(load_earth3_authority(authority_root))
+    with _P1_PROJECTION_LOCK:
+        _P1_PROJECTION_CACHE[key] = projection
+        _P1_PROJECTION_CACHE.move_to_end(key)
+        while len(_P1_PROJECTION_CACHE) > _P1_PROJECTION_CACHE_MAX:
+            _P1_PROJECTION_CACHE.popitem(last=False)
+    return _detach_p1_projection(projection)
+
+
 def validate_earth3_p2_integrity(state: CampaignState) -> None:
     """Validate immutable P1 authority and strict P2 actor ownership without mutation."""
     if not is_earth3_p2_campaign(state):
@@ -106,13 +247,10 @@ def _validate_persisted_p1_authority(state: CampaignState) -> None:
         CAMPAIGN_DATASET_IDENTIFIER,
         CAMPAIGN_MANIFEST_IDENTIFIER,
         EARTH3_MAP_ID,
-        EARTH3_SCENARIO_ID,
         PRODUCTION_AUTHORITY_IDENTIFIER,
-        load_earth3_authority,
     )
 
-    authority = load_earth3_authority()
-    production = authority.production
+    authority = load_p1_integrity_projection()
     scenario_id, scenario_status = _persisted_scenario_identity(state)
     expected_metadata = {
         "scenario_id": scenario_id,
@@ -128,15 +266,15 @@ def _validate_persisted_p1_authority(state: CampaignState) -> None:
         "geometry_sha256": authority.geometry_sha256,
         "production_asset_version": authority.production_asset_version,
         "production_authority_identifier": PRODUCTION_AUTHORITY_IDENTIFIER,
-        "production_authority_schema_version": int(production["schema_version"]),
+        "production_authority_schema_version": authority.production_schema_version,
         "province_count": APPROVED_PROVINCE_COUNT,
         "land_count": APPROVED_LAND_COUNT,
         "water_count": APPROVED_WATER_COUNT,
         "selectable_province_count": APPROVED_SELECTABLE_COUNT,
         "topology_edge_count": APPROVED_TOPOLOGY_EDGE_COUNT,
         "included_ids_sha256": authority.included_ids_sha256,
-        "stable_id_policy": str(production["stable_id_policy"]),
-        "water_policy": str(production["water_policy"]["v1"]),
+        "stable_id_policy": authority.stable_id_policy,
+        "water_policy": authority.water_policy_v1,
         "adjacency_authority": [
             f"{CAMPAIGN_DATASET_IDENTIFIER}#edges",
             f"{CAMPAIGN_DATASET_IDENTIFIER}#provinces[].neighbors",
@@ -157,7 +295,7 @@ def _validate_persisted_p1_authority(state: CampaignState) -> None:
             )
     _reject_geometry_shaped_state(state.map_metadata, path="map_metadata")
 
-    authority_rows = {str(row["id"]): row for row in authority.provinces}
+    authority_rows = authority.rows
     if set(state.provinces) != set(authority_rows):
         raise Earth3BootstrapError("Earth3 P2 persisted province set mismatch")
 
@@ -167,14 +305,14 @@ def _validate_persisted_p1_authority(state: CampaignState) -> None:
     for province_id in sorted(authority_rows):
         row = authority_rows[province_id]
         province = state.provinces[province_id]
-        expected_water = bool(row["is_water"])
-        expected_neighbors = sorted(str(value) for value in row["neighbors"])
-        expected_label = [float(row["label"][0]), float(row["label"][1])]
-        expected_centroid = [float(row["centroid"][0]), float(row["centroid"][1])]
+        expected_water = row.is_water
+        expected_neighbors = list(row.neighbors)
+        expected_label = [row.label[0], row.label[1]]
+        expected_centroid = [row.centroid[0], row.centroid[1]]
         expected_scalars = {
-            "source_id": int(row["source_id"]),
-            "terrain_id": int(row["terrain_id"]),
-            "continent_id": int(row["continent_id"]),
+            "source_id": row.source_id,
+            "terrain_id": row.terrain_id,
+            "continent_id": row.continent_id,
             "is_water": expected_water,
             "selectable": not expected_water,
             "centroid": expected_centroid,
@@ -188,7 +326,7 @@ def _validate_persisted_p1_authority(state: CampaignState) -> None:
             raise Earth3BootstrapError(
                 f"Earth3 P2 persisted province map region mismatch: {province_id}"
             )
-        expected_terrain = "water" if expected_water else f"earth3_{int(row['terrain_id'])}"
+        expected_terrain = "water" if expected_water else f"earth3_{row.terrain_id}"
         if province.terrain != expected_terrain:
             raise Earth3BootstrapError(
                 f"Earth3 P2 persisted province terrain mismatch: {province_id}"
