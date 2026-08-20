@@ -100,6 +100,99 @@ class FasterCampaignSaveContractTests(unittest.TestCase):
         self.assertIn("owner campaign missing", completed.stderr)
         self.assertIn("does not invent owner timings", completed.stderr)
 
+    def test_owner_ab_harness_exposes_production_command_paths(self) -> None:
+        import importlib.util
+
+        from gates_of_codex.state_io import save_campaign
+        from tests.test_s10_frontend_presentation_contract import (
+            _create_prepared_contact,
+            _state,
+        )
+
+        harness = ROOT / "tools/ab_issue_266_campaign_save.py"
+        source = harness.read_text(encoding="utf-8")
+        self.assertIn("measured_apply_frontend_commands", source)
+        self.assertIn("PRODUCTION_COMMAND_PATHS", source)
+        self.assertIn("issue_commit", source)
+        self.assertIn("end_player_round", source)
+        self.assertIn("auto_resolve", source)
+        self.assertIn("_LIVE_MOVE_BATCH", source)
+        spec = importlib.util.spec_from_file_location(
+            "ab_issue_266_campaign_save", harness
+        )
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        self.assertEqual(
+            ("issue_commit", "end_player_round", "auto_resolve"),
+            module.PRODUCTION_COMMAND_PATHS,
+        )
+        self.assertEqual(
+            ("issue_move_order", "commit_move_orders"),
+            command_cycle_perf._LIVE_MOVE_BATCH,
+        )
+
+        install_frontend_turn_cycle_op()
+        applied: list[list[str]] = []
+        real_apply = command_cycle_perf.measured_apply_frontend_commands
+
+        def recording_apply(campaign_path, *, commands=None, **kwargs):
+            applied.append([str(item.get("op", "")) for item in (commands or [])])
+            return real_apply(campaign_path, commands=commands, **kwargs)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            campaign = root / "campaign.json"
+            save_campaign(_state(root), campaign)
+            with patch(
+                "gates_of_codex.command_cycle_perf.measured_apply_frontend_commands",
+                side_effect=recording_apply,
+            ):
+                payload = module._sample_production_commands(campaign, repeats=1)
+
+        self.assertFalse(payload["issue_commit"].get("skipped"))
+        self.assertEqual(
+            ["issue_move_order", "commit_move_orders"],
+            payload["issue_commit"]["ops"],
+        )
+        self.assertTrue(payload["issue_commit"]["persist_runtime_snapshot"])
+        self.assertEqual(1, payload["issue_commit"]["repeats"])
+        self.assertIn("total_ms", payload["issue_commit"]["min"])
+        self.assertEqual(["end_player_round"], payload["end_player_round"]["ops"])
+        self.assertFalse(payload["end_player_round"]["persist_runtime_snapshot"])
+        self.assertTrue(payload["auto_resolve"]["skipped"])
+        self.assertEqual("no prepared contact", payload["auto_resolve"]["reason"])
+        self.assertNotIn("min", payload["auto_resolve"])
+        self.assertIn(["issue_move_order", "commit_move_orders"], applied)
+        self.assertIn(["end_player_round"], applied)
+        self.assertNotIn(["auto_resolve"], applied)
+        # Warmup apply + one measured repeat for each executed path.
+        self.assertEqual(2, applied.count(["issue_move_order", "commit_move_orders"]))
+        self.assertEqual(2, applied.count(["end_player_round"]))
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = _state(root)
+            _create_prepared_contact(state)
+            campaign = root / "campaign.json"
+            save_campaign(state, campaign)
+            applied.clear()
+            with patch(
+                "gates_of_codex.command_cycle_perf.measured_apply_frontend_commands",
+                side_effect=recording_apply,
+            ):
+                contacted = module._sample_production_commands(campaign, repeats=1)
+        self.assertTrue(contacted["issue_commit"]["skipped"])
+        self.assertTrue(contacted["end_player_round"]["skipped"])
+        self.assertEqual("pending battle", contacted["end_player_round"]["reason"])
+        self.assertFalse(contacted["auto_resolve"].get("skipped"))
+        self.assertEqual(["auto_resolve"], contacted["auto_resolve"]["ops"])
+        self.assertTrue(contacted["auto_resolve"]["persist_runtime_snapshot"])
+        self.assertIn(["auto_resolve"], applied)
+        self.assertNotIn(["issue_move_order", "commit_move_orders"], applied)
+        self.assertNotIn(["end_player_round"], applied)
+
     def test_owner_ab_harness_provenance_uses_src_root_not_checkout(self) -> None:
         harness = ROOT / "tools/ab_issue_266_campaign_save.py"
         with tempfile.TemporaryDirectory() as temporary:
@@ -134,6 +227,16 @@ class FasterCampaignSaveContractTests(unittest.TestCase):
         self.assertTrue(
             payload["imported_module"].startswith(str(fake_src.resolve()))
         )
+        for key in (
+            "save_ms",
+            "save_validate_ms",
+            "total_ms",
+            "min",
+            "median",
+            "samples",
+            "commands",
+        ):
+            self.assertNotIn(key, payload)
 
     def test_owner_ab_harness_worktree_imports_exact_sha_src(self) -> None:
         import importlib.util

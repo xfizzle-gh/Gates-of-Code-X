@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Owner-size A/B for #266 Slice 4 campaign save.
 
-Compares compact-save timings at two git SHAs on a disposable campaign copy.
-Does not invent numbers. Exits 2 if the campaign path is missing.
+Compares compact-save timings and production warm-daemon command totals at two
+git SHAs on a disposable campaign copy. Does not invent numbers. Exits 2 if
+the campaign path is missing.
 
 Required owner-machine usage (never point this at the live owner campaign):
 
@@ -11,9 +12,17 @@ Required owner-machine usage (never point this at the live owner campaign):
         --base 5abed005ce6574813efc42e8a30a31ec13e32eca \\
         --head HEAD
 
-Reports save_ms, save_validate_ms, save_validate_base_ms, save_encode_ms,
-and save_write_ms. This VM does not ship ww3_2028_core; leave the table empty
-until the owner runs the harness on a disposable copy.
+Reports two tables:
+
+1. compact-save subphases: save_ms, save_validate_ms, save_validate_base_ms,
+   save_encode_ms, save_write_ms
+2. production apply totals via measured_apply_frontend_commands after the
+   process is already warm (P1 projection cached / first validate happened):
+   issue+commit live-move batch, end_player_round, and auto_resolve only when
+   the disposable campaign already has a prepared contact
+
+This VM does not ship ww3_2028_core; leave the owner table empty until the
+owner runs the harness on a disposable copy.
 """
 
 from __future__ import annotations
@@ -39,6 +48,18 @@ METRIC_KEYS = (
     "save_encode_ms",
     "save_write_ms",
 )
+PRODUCTION_COMMAND_PATHS = (
+    "issue_commit",
+    "end_player_round",
+    "auto_resolve",
+)
+COMMAND_METRIC_KEYS = (
+    "total_ms",
+    *METRIC_KEYS,
+)
+AUTO_RESOLVE_SKIP = "auto_resolve: skipped (no prepared contact)"
+ISSUE_COMMIT_SKIP = "issue_commit: skipped (no legal one-hop)"
+END_ROUND_SKIP = "end_player_round: skipped (pending battle)"
 
 
 def _repo_root() -> Path:
@@ -134,6 +155,197 @@ def _sample_compact_save(campaign_path: Path, repeats: int) -> dict[str, Any]:
     }
 
 
+def _summarize_samples(
+    samples: list[dict[str, float]], keys: tuple[str, ...]
+) -> dict[str, Any]:
+    return {
+        "repeats": len(samples),
+        "samples": samples,
+        "min": {key: min(row[key] for row in samples) for key in keys},
+        "median": {key: statistics.median(row[key] for row in samples) for key in keys},
+    }
+
+
+def _skipped_command(reason: str) -> dict[str, Any]:
+    """Record a skip. Do not invent timings."""
+
+    return {"skipped": True, "reason": reason}
+
+
+def _find_legal_one_hop(state: Any) -> dict[str, Any] | None:
+    """Return one real legal one-hop from the campaign. Do not invent a route."""
+
+    from gates_of_codex.operational_order_options import list_operational_move_options
+
+    options = [
+        row
+        for row in list_operational_move_options(state)
+        if int(row.get("hop_count") or 0) == 1
+        and row.get("path_node_ids")
+        and row.get("path_edge_ids")
+        and row.get("formation_id")
+    ]
+    if not options:
+        return None
+    options.sort(
+        key=lambda row: (
+            str(row.get("formation_id")),
+            str(row.get("target_node_id") or ""),
+        )
+    )
+    return options[0]
+
+
+def _issue_commit_commands(option: dict[str, Any]) -> list[dict[str, Any]]:
+    from gates_of_codex.command_cycle_perf import _LIVE_MOVE_BATCH
+
+    commands = [
+        {
+            "op": "issue_move_order",
+            "formation": str(option["formation_id"]),
+            "path_node_ids": [str(item) for item in option["path_node_ids"]],
+            "path_edge_ids": [str(item) for item in option["path_edge_ids"]],
+        },
+        {
+            "op": "commit_move_orders",
+            "faction": option.get("faction"),
+            "locked_stance": str(option.get("locked_stance") or "operational"),
+        },
+    ]
+    ops = tuple(str(item.get("op", "")) for item in commands)
+    if ops != tuple(_LIVE_MOVE_BATCH):
+        raise SystemExit(
+            f"issue+commit batch is {list(ops)}, expected {list(_LIVE_MOVE_BATCH)}"
+        )
+    return commands
+
+
+def _end_player_round_commands() -> list[dict[str, Any]]:
+    return [{"op": "end_player_round"}]
+
+
+def _auto_resolve_commands() -> list[dict[str, Any]]:
+    return [{"op": "auto_resolve"}]
+
+
+def _persist_runtime_snapshot(commands: list[dict[str, Any]]) -> bool:
+    from gates_of_codex.command_cycle_perf import _should_persist_runtime_snapshot
+
+    return bool(_should_persist_runtime_snapshot(commands))
+
+
+def _timings_from_apply(report: dict[str, Any]) -> dict[str, float]:
+    timings = report.get("timings") or {}
+    return {
+        "total_ms": float(timings.get("total_ms") or 0.0),
+        "save_ms": float(timings.get("save_ms") or 0.0),
+        "save_validate_ms": float(timings.get("save_validate_ms") or 0.0),
+        "save_validate_base_ms": float(timings.get("save_validate_base_ms") or 0.0),
+        "save_encode_ms": float(timings.get("save_encode_ms") or 0.0),
+        "save_write_ms": float(timings.get("save_write_ms") or 0.0),
+    }
+
+
+def _apply_production_commands(
+    campaign_path: Path, commands: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Apply on a sibling copy so the disposable source campaign is not mutated."""
+
+    from gates_of_codex.command_cycle_perf import measured_apply_frontend_commands
+
+    token = f".goc-266-ab-cmd-{os.getpid()}-{time.time_ns()}"
+    copy_path = campaign_path.parent / f"{token}.json"
+    snapshot_path = campaign_path.parent / f"{token}.snapshot.json"
+    shutil.copy2(campaign_path, copy_path)
+    try:
+        snapshot_path.write_text("{}", encoding="utf-8")
+        return measured_apply_frontend_commands(
+            copy_path,
+            commands=commands,
+            snapshot_path=snapshot_path,
+        )
+    finally:
+        copy_path.unlink(missing_ok=True)
+        snapshot_path.unlink(missing_ok=True)
+
+
+def _measure_warm_apply(
+    campaign_path: Path,
+    commands: list[dict[str, Any]],
+    repeats: int,
+) -> dict[str, Any]:
+    """One unmeasured warmup apply, then N measured repeats. Cold first hit is dropped."""
+
+    persist = _persist_runtime_snapshot(commands)
+    ops = [str(item.get("op", "")) for item in commands]
+    if ops == ["end_player_round"] and persist:
+        raise SystemExit(
+            "persist gate changed: end_player_round must not persist a runtime snapshot"
+        )
+    warmup = _apply_production_commands(campaign_path, commands)
+    if not warmup.get("ok"):
+        raise SystemExit(f"warmup apply failed for {ops}: {warmup}")
+    samples: list[dict[str, float]] = []
+    for _ in range(repeats):
+        report = _apply_production_commands(campaign_path, commands)
+        if not report.get("ok"):
+            raise SystemExit(f"measured apply failed for {ops}: {report}")
+        samples.append(_timings_from_apply(report))
+    payload = _summarize_samples(samples, COMMAND_METRIC_KEYS)
+    payload.update(
+        {
+            "skipped": False,
+            "ops": ops,
+            "persist_runtime_snapshot": persist,
+        }
+    )
+    return payload
+
+
+def _sample_production_commands(
+    campaign_path: Path, repeats: int
+) -> dict[str, Any]:
+    """Warm production apply totals. Does not invent a contact or a move."""
+
+    from gates_of_codex.state_io import load_campaign
+
+    state = load_campaign(campaign_path)
+    commands: dict[str, Any] = {}
+
+    option = _find_legal_one_hop(state)
+    if option is None:
+        print(ISSUE_COMMIT_SKIP, file=sys.stderr)
+        commands["issue_commit"] = _skipped_command("no legal one-hop")
+    else:
+        issue_commit = _measure_warm_apply(
+            campaign_path, _issue_commit_commands(option), repeats
+        )
+        issue_commit["move"] = {
+            "formation_id": str(option["formation_id"]),
+            "path_node_ids": [str(item) for item in option["path_node_ids"]],
+            "path_edge_ids": [str(item) for item in option["path_edge_ids"]],
+            "hop_count": int(option.get("hop_count") or 1),
+        }
+        commands["issue_commit"] = issue_commit
+
+    if getattr(state, "pending_battle", None) is not None:
+        print(END_ROUND_SKIP, file=sys.stderr)
+        commands["end_player_round"] = _skipped_command("pending battle")
+    else:
+        commands["end_player_round"] = _measure_warm_apply(
+            campaign_path, _end_player_round_commands(), repeats
+        )
+
+    if getattr(state, "pending_battle", None) is None:
+        print(AUTO_RESOLVE_SKIP, file=sys.stderr)
+        commands["auto_resolve"] = _skipped_command("no prepared contact")
+    else:
+        commands["auto_resolve"] = _measure_warm_apply(
+            campaign_path, _auto_resolve_commands(), repeats
+        )
+    return commands
+
+
 def measure_current(
     campaign_path: Path,
     *,
@@ -152,6 +364,7 @@ def measure_current(
             "sha": sha,
             "campaign": str(campaign_path),
             "campaign_bytes": campaign_path.stat().st_size,
+            "commands": _sample_production_commands(campaign_path, repeats),
         }
     )
     return payload
@@ -318,6 +531,33 @@ def _print_table(rows: list[dict[str, Any]]) -> None:
         print("| " + " | ".join(values) + " |")
 
 
+def _print_command_table(rows: list[dict[str, Any]]) -> None:
+    headers = [
+        "label",
+        "sha",
+        "path",
+        *COMMAND_METRIC_KEYS,
+        "persist_runtime_snapshot",
+    ]
+    print("| " + " | ".join(headers) + " |")
+    print("|" + "|".join(["---"] * len(headers)) + "|")
+    for row in rows:
+        commands = row.get("commands") or {}
+        for path in PRODUCTION_COMMAND_PATHS:
+            payload = commands.get(path) or {}
+            values = [row["label"], row["sha"][:12], path]
+            if payload.get("skipped"):
+                reason = str(payload.get("reason") or "skipped")
+                values.extend([f"skipped ({reason})"] + [""] * len(COMMAND_METRIC_KEYS))
+            else:
+                mins = payload.get("min") or {}
+                for key in COMMAND_METRIC_KEYS:
+                    values.append(f"{float(mins.get(key) or 0.0):.1f}")
+                persist = payload.get("persist_runtime_snapshot")
+                values.append("true" if persist else "false")
+            print("| " + " | ".join(values) + " |")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -379,6 +619,8 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(report, indent=2, sort_keys=True))
         else:
             _print_table([report])
+            print()
+            _print_command_table([report])
         return 0
 
     reports = [
@@ -407,6 +649,8 @@ def main(argv: list[str] | None = None) -> int:
     print(json.dumps({"reports": reports}, indent=2, sort_keys=True))
     print()
     _print_table(reports)
+    print()
+    _print_command_table(reports)
     return 0
 
 
