@@ -1,0 +1,300 @@
+{
+  "schema": "gates-of-codex.presentation-fixture",
+  "schema_version": 1,
+  "id": "earth3_stack_panel",
+  "description": "Godot-local Earth3 multi-battalion stack panel overlay. Supplies stack/battalion/formation presentations the slim frontend snapshot no longer carries. Presentation and selection only.",
+  "selected_province_id": "e3_2108",
+  "selected_battalion_id": "bat-nato-1",
+  "selected_strategic_formation_id": "sf-nato-vanguard",
+  "battalions": [
+    {
+      "id": "bat-nato-1",
+      "province_id": "e3_2108",
+      "faction": "nato",
+      "formation_id": "form-nato-1",
+      "strategic_formation_id": "sf-nato-vanguard",
+      "battalion_type": "armor",
+      "unit_count": 14,
+      "authorized_unit_count": 16,
+      "is_in_supply": true,
+      "encircled_turns": 0,
+      "condition": 88,
+      "supply": 76,
+      "movement_remaining": 1,
+      "combat_actions_remaining": 1
+    },
+    {
+      "id": "bat-nato-2",
+      "province_id": "e3_2108",
+      "faction": "nato",
+      "formation_id": "form-nato-1",
+      "strategic_formation_id": "sf-nato-vanguard",
+      "battalion_type": "mechanized",
+      "unit_count": 18,
+      "authorized_unit_count": 20,
+      "is_in_supply": true,
+      "encircled_turns": 0,
+      "condition": 92,
+      "supply": 81,
+      "movement_remaining": 1,
+      "combat_actions_remaining": 1
+    }
+  ],
+  "battalion_stacks": {
+    "e3_2108": ["bat-nato-1", "bat-nato-2"]
+  },
+  "front_options": [
+    {
+      "battalion_id": "bat-nato-1",
+      "formation_id": "form-nato-1",
+      "origin": "e3_2108",
+      "target": "e3_0823",
+      "target_province_id": "e3_0823",
+      "kind": "move",
+      "command": "advance",
+      "enemies": []
+    },
+    {
+      "battalion_id": "bat-nato-2",
+      "formation_id": "form-nato-1",
+      "origin": "e3_2108",
+      "target": "e3_0845",
+      "target_province_id": "e3_0845",
+      "kind": "move",
+      "command": "advance",
+      "enemies": []
+    }
+  ],
+  "stack_presentations": {
+    "e3_2108": {
+      "province_id": "e3_2108",
+      "battalion_ids": ["bat-nato-1", "bat-nato-2"],
+      "battalion_count": 2,
+      "formation_count": 1,
+      "formation_ids": ["form-nato-1"],
+      "strategic_formation_ids": ["sf-nato-vanguard"],
+      "unit_count": 32,
+      "authorized_unit_count": 36,
+      "replacement_deficit": 4,
+      "condition": 90,
+      "supply": 79,
+      "reinforcement_cost": 24,
+      "repair_cost": 40,
+      "can_act": true,
+      "actor_markers": ["NATO"],
+      "summary_label": "1 formation | 2 battalions | 32/36 tactical units"
+    }
+  },
+  "strategic_formation_presentations": {
+    "sf-nato-vanguard": {
+      "id": "sf-nato-vanguard",
+      "display_name": "NATO Vanguard Corps",
+      "tab_label": "NATO Vanguard Corps",
+      "echelon": "corps",
+      "commander_id": "",
+      "commander_label": "Unassigned Commander",
+      "faction": "nato",
+      "province_id": "e3_2108",
+      "actor_marker": "NATO",
+      "battalion_ids": ["bat-nato-1", "bat-nato-2"],
+      "battalion_count": 2,
+      "unit_count": 32,
+      "can_act": true,
+      "can_issue_move_order": false,
+      "operational_option_count": 0,
+      "template_formation_id": "form-nato-1"
+    }
+  },
+  "battalion_presentations": {
+    "bat-nato-1": {
+      "id": "bat-nato-1",
+      "display_name": "NATO Vanguard Corps",
+      "battalion_label": "NATO Armor Battalion",
+      "formation_id": "form-nato-1",
+      "formation_name": "NATO Vanguard Corps",
+      "actor_marker": "NATO",
+      "faction": "nato",
+      "province_id": "e3_2108",
+      "type": "armor",
+      "type_label": "Armor",
+      "unit_count": 14,
+      "authorized_unit_count": 16,
+      "replacement_deficit": 2,
+      "condition": 88,
+      "supply": 76,
+      "experience": 4,
+      "movement_remaining": 1,
+      "combat_actions_remaining": 1,
+      "encircled_turns": 0,
+      "is_player_controlled": true,
+      "can_act": true,
+      "legal_option_count": 1,
+      "legal_options": [
+        {
+          "battalion_id": "bat-nato-1",
+          "origin": "e3_2108",
+          "target": "e3_0823",
+          "target_province_id": "e3_0823",
+          "kind": "move"
+        }
+      ],
+      "reinforcement_cost": 16,
+      "repair_cost": 24,
+      "cards": [
+        {
+          "unit_name": "leopard_2a6_company",
+          "display_name": "Leopard 2A6 Company",
+          "short_name": "Leopard 2A6 Company",
+          "portrait_key": "leopard_2a6_company",
+          "portrait_fallback": "ARM",
+          "category": "armor",
+          "category_icon": "ARM",
+          "stage": "modern",
+          "quantity": 10,
+          "authorized_quantity": 12,
+          "replacement_deficit": 2,
+          "condition": 88,
+          "condition_source": "battalion_inherited",
+          "supply": 76,
+          "supply_source": "battalion_inherited",
+          "experience": 4,
+          "experience_source": "battalion_inherited",
+          "source": {
+            "label": "Code:X",
+            "marker": "C:X",
+            "role": "modern",
+            "priority": 1,
+            "path": ""
+          },
+          "replacement_cost": 16,
+          "repair_cost": 24,
+          "tooltip": "Leopard 2A6 Company\n10/12 fielded · 88% condition · 76% supply · XP 4\nSource: Code:X (modern)"
+        },
+        {
+          "unit_name": "west81_legacy_motorized_rifle_company_with_exceptionally_long_name",
+          "display_name": "West81 Legacy Motorized Rifle Company With Exceptionally Long Name",
+          "short_name": "West81 Legacy Motorized Rifl…",
+          "portrait_key": "missing_portrait_key",
+          "portrait_fallback": "INF",
+          "category": "infantry",
+          "category_icon": "INF",
+          "stage": "1980s",
+          "quantity": 4,
+          "authorized_quantity": 4,
+          "replacement_deficit": 0,
+          "condition": 88,
+          "condition_source": "battalion_inherited",
+          "supply": 76,
+          "supply_source": "battalion_inherited",
+          "experience": 4,
+          "experience_source": "battalion_inherited",
+          "source": {
+            "label": "West81",
+            "marker": "W81",
+            "role": "legacy_reserve",
+            "priority": 0,
+            "path": "set/multiplayer/units/legacy.set"
+          },
+          "replacement_cost": 0,
+          "repair_cost": 16,
+          "tooltip": "West81 Legacy Motorized Rifle Company With Exceptionally Long Name\n4/4 fielded · 88% condition · 76% supply · XP 4\nSource: West81 (legacy_reserve)"
+        }
+      ]
+    },
+    "bat-nato-2": {
+      "id": "bat-nato-2",
+      "display_name": "NATO Vanguard Corps",
+      "battalion_label": "NATO Mechanized Battalion",
+      "formation_id": "form-nato-1",
+      "formation_name": "NATO Vanguard Corps",
+      "actor_marker": "NATO",
+      "faction": "nato",
+      "province_id": "e3_2108",
+      "type": "mechanized",
+      "type_label": "Mechanized",
+      "unit_count": 18,
+      "authorized_unit_count": 20,
+      "replacement_deficit": 2,
+      "condition": 92,
+      "supply": 81,
+      "experience": 3,
+      "movement_remaining": 1,
+      "combat_actions_remaining": 1,
+      "encircled_turns": 0,
+      "is_player_controlled": true,
+      "can_act": true,
+      "legal_option_count": 1,
+      "legal_options": [
+        {
+          "battalion_id": "bat-nato-2",
+          "origin": "e3_2108",
+          "target": "e3_0845",
+          "target_province_id": "e3_0845",
+          "kind": "move"
+        }
+      ],
+      "reinforcement_cost": 8,
+      "repair_cost": 16,
+      "cards": [
+        {
+          "unit_name": "m2a3_bradley_company",
+          "display_name": "M2A3 Bradley Company",
+          "short_name": "M2A3 Bradley Company",
+          "portrait_key": "m2a3_bradley_company",
+          "portrait_fallback": "IFV",
+          "category": "ifv",
+          "category_icon": "IFV",
+          "stage": "modern",
+          "quantity": 12,
+          "authorized_quantity": 14,
+          "replacement_deficit": 2,
+          "condition": 92,
+          "condition_source": "battalion_inherited",
+          "supply": 81,
+          "supply_source": "battalion_inherited",
+          "experience": 3,
+          "experience_source": "battalion_inherited",
+          "source": {
+            "label": "Code:X",
+            "marker": "C:X",
+            "role": "modern",
+            "priority": 1,
+            "path": ""
+          },
+          "replacement_cost": 8,
+          "repair_cost": 16,
+          "tooltip": "M2A3 Bradley Company\n12/14 fielded · 92% condition · 81% supply · XP 3\nSource: Code:X (modern)"
+        },
+        {
+          "unit_name": "zero_strength_destroyed_support",
+          "display_name": "Destroyed Support Battery",
+          "short_name": "Destroyed Support Battery",
+          "portrait_key": "destroyed_support_battery",
+          "portrait_fallback": "SUP",
+          "category": "support",
+          "category_icon": "SUP",
+          "stage": "modern",
+          "quantity": 0,
+          "authorized_quantity": 2,
+          "replacement_deficit": 2,
+          "condition": 0,
+          "condition_source": "battalion_inherited",
+          "supply": 0,
+          "supply_source": "battalion_inherited",
+          "experience": 0,
+          "experience_source": "battalion_inherited",
+          "source": {
+            "label": "Unknown source",
+            "marker": "?",
+            "role": "unknown",
+            "priority": -1,
+            "path": ""
+          },
+          "replacement_cost": 0,
+          "repair_cost": 0,
+          "tooltip": "Destroyed Support Battery\n0/2 fielded · 0% condition · 0% supply · XP 0\nSource: Unknown source (unknown)"
+        }
+      ]
+    }
+  }
+}

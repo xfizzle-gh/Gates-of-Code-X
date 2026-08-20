@@ -19,6 +19,7 @@ They are **not** production simulation authority and must not be treated as Pyth
 | `full_theatre_smoke.json` | Full 342-province map smoke markers |
 | `many_counters.json` | Dense counter presentation |
 | `stack_and_selection.json` | Stack badge + selected/hovered provinces |
+| `earth3_stack_panel.json` | Earth3 multi-battalion stack panel overlay (presentations + legal-target identity). Load with `--fixture=res://fixtures/presentation/earth3_stack_panel.json` on a slim Earth3 snapshot, or `--snapshot=res://fixtures/snapshots/earth3_stack_panel.json`. |
 | `routes_and_battles.json` | Route lines, node battle, mock edge battle |
 | `control_sites.json` | Control-site + capture progress |
 | `rapid_hover.json` | Hover stress marker list |
@@ -35,3 +36,4 @@ They are **not** production simulation authority and must not be treated as Pyth
 | File | Covers |
 |---|---|
 | `../snapshots/em_theatre_profile.json` | Committed deterministic 342-province frontend snapshot for profiler/CI/screenshots (write-back disabled) |
+| `../snapshots/earth3_stack_panel.json` | Hand-built Earth3 frontend snapshot with a two-battalion stack and local presentations. Does not change the slim production snapshot writer. |

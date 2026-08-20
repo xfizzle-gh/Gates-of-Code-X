@@ -296,6 +296,25 @@ jobs:
           set -euo pipefail
           "$HOME/godot" --headless --path . --audio-driver Dummy \
             -s res://scripts/tools/operational_presentation_scene_test.gd
+      - name: Earth3 stack panel fixture GDScript test (#52)
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          log="$(mktemp)"
+          set +e
+          "$HOME/godot" --headless --path . --audio-driver Dummy \
+            -s res://scripts/tools/earth3_stack_panel_test.gd 2>&1 | tee "$log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' "$log"; then
+            echo "earth3_stack_panel_test: SCRIPT ERROR is a failure"
+            exit 1
+          fi
+          if ! grep -q 'earth3_stack_panel_test: PASS' "$log"; then
+            echo "earth3_stack_panel_test: missing PASS"
+            exit 1
+          fi
+          exit "$code"
       - name: Runtime-patch completion GDScript test
         working-directory: godot
         run: |

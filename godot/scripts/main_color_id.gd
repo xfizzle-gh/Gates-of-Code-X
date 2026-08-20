@@ -216,6 +216,9 @@ func _load_presentation_fixture(path: String) -> void:
 		var fixture_control: Dictionary = snapshot.get("control", {}).duplicate(true)
 		fixture_control["enabled"] = true
 		snapshot["control"] = fixture_control
+	# Local stack-panel presentations for slim Earth3 snapshots (#52 follow-up).
+	if has_method("apply_stack_panel_fixture"):
+		apply_stack_panel_fixture(presentation_fixture)
 	_ensure_operational_presenter()
 	var graph_index := _operational_graph_index()
 	if presentation_fixture.get("presentation_graph_index", null) is Dictionary:

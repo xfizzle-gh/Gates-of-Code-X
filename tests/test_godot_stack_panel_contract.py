@@ -13,7 +13,14 @@ class GodotStackPanelContractTests(unittest.TestCase):
 
         self.assertIn("res://scripts/main_stack_panel.gd", scene)
         self.assertIn("res://scripts/main_stack_panel.gd", main_scene)
+        self.assertIn(
+            "res://scripts/main_composed_presentation_refresh_safe.gd",
+            main_scene,
+        )
         self.assertIn('extends "res://scripts/main_map_contract.gd"', script)
+        self.assertIn("func apply_stack_panel_fixture", script)
+        self.assertIn("func select_acting_battalion", script)
+        self.assertIn("func acting_battalion_legal_target_ids", script)
         self.assertIn('snapshot.get("stack_presentations"', script)
         self.assertIn('snapshot.get("battalion_presentations"', script)
         self.assertIn("strategic_formation_presentations", script)

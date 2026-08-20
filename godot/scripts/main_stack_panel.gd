@@ -22,6 +22,254 @@ func _player_launch_model() -> Dictionary:
 	return player_launch_block()
 
 
+func apply_stack_panel_fixture(fixture: Dictionary) -> bool:
+	## Merge Godot-local stack/battalion presentations onto a slim Earth3 snapshot.
+	## Does not call Python and does not change frontend snapshot writers.
+	if fixture.is_empty():
+		return false
+	var applied := false
+	if fixture.get("battalions", []) is Array and not (fixture.get("battalions", []) as Array).is_empty():
+		_upsert_snapshot_rows("battalions", fixture.get("battalions", []), "id")
+		applied = true
+	if fixture.get("formations", []) is Array and not (fixture.get("formations", []) as Array).is_empty():
+		_upsert_snapshot_rows("formations", fixture.get("formations", []), "id")
+		applied = true
+	if fixture.get("front_options", []) is Array and not (fixture.get("front_options", []) as Array).is_empty():
+		_upsert_front_options(fixture.get("front_options", []))
+		applied = true
+	for field in [
+		"stack_presentations",
+		"battalion_presentations",
+		"strategic_formation_presentations",
+		"battalion_stacks",
+	]:
+		var incoming: Variant = fixture.get(field, null)
+		if incoming is Dictionary and not (incoming as Dictionary).is_empty():
+			_merge_snapshot_dictionary(field, incoming as Dictionary)
+			applied = true
+	if applied:
+		_reindex_stack_indexes()
+	var selected_province := String(fixture.get("selected_province_id", ""))
+	if not selected_province.is_empty() and provinces_by_id.has(selected_province):
+		selected_province_id = selected_province
+	var selected_force := String(fixture.get("selected_strategic_formation_id", ""))
+	if not selected_force.is_empty():
+		selected_strategic_formation_id = selected_force
+	var selected_battalion := String(fixture.get("selected_battalion_id", ""))
+	if not selected_battalion.is_empty():
+		selected_battalion_id = selected_battalion
+	if applied or not selected_province.is_empty() or not selected_battalion.is_empty():
+		_rebuild_legal_targets()
+		_rebuild_focus_set()
+	return applied
+
+
+func select_stack_formation(force_id: String) -> void:
+	if force_id.is_empty():
+		return
+	selected_strategic_formation_id = force_id
+	unit_scroll_offset = 0
+	var force_row: Dictionary = snapshot.get("strategic_formation_presentations", {}).get(force_id, {})
+	var members: Array = force_row.get("battalion_ids", [])
+	selected_battalion_id = ""
+	for battalion_id_variant in members:
+		var battalion_id := String(battalion_id_variant)
+		var row: Dictionary = snapshot.get("battalion_presentations", {}).get(battalion_id, {})
+		if bool(row.get("can_act", false)):
+			selected_battalion_id = battalion_id
+			break
+	if selected_battalion_id.is_empty() and members.size() > 0:
+		selected_battalion_id = String(members[0])
+	_rebuild_legal_targets()
+	status_message = "Selected formation %s (acting battalion %s)." % [
+		force_row.get("display_name", force_id),
+		_selected_presentation().get("battalion_label", selected_battalion_id),
+	]
+	queue_redraw()
+
+
+func select_acting_battalion(battalion_id: String) -> void:
+	if battalion_id.is_empty():
+		return
+	selected_battalion_id = battalion_id
+	unit_scroll_offset = 0
+	_rebuild_legal_targets()
+	status_message = "Selected acting battalion %s." % _selected_presentation().get(
+		"battalion_label", battalion_id
+	)
+	queue_redraw()
+
+
+func acting_battalion_legal_target_ids() -> PackedStringArray:
+	## Presentation identity of the selected battalion. Graph-native operational
+	## orders stay in legal_targets and are not replaced by these adjacency rows.
+	var ids := PackedStringArray()
+	var seen: Dictionary = {}
+	var presentation := _selected_presentation()
+	for option_variant in presentation.get("legal_options", []):
+		if not option_variant is Dictionary:
+			continue
+		var option := option_variant as Dictionary
+		var target_id := _front_option_target_id(option)
+		if target_id.is_empty() or seen.has(target_id):
+			continue
+		seen[target_id] = true
+		ids.append(target_id)
+	if ids.is_empty():
+		for option_variant in front_by_origin.get(selected_province_id, []):
+			if not option_variant is Dictionary:
+				continue
+			var option := option_variant as Dictionary
+			if String(option.get("battalion_id", "")) != selected_battalion_id:
+				continue
+			var target_id := _front_option_target_id(option)
+			if target_id.is_empty() or seen.has(target_id):
+				continue
+			seen[target_id] = true
+			ids.append(target_id)
+	ids.sort()
+	return ids
+
+
+func _front_option_target_id(option: Dictionary) -> String:
+	var target_id := String(option.get("target_province_id", ""))
+	if target_id.is_empty():
+		target_id = String(option.get("target", ""))
+	return target_id
+
+
+func _upsert_snapshot_rows(field: String, incoming: Array, key_field: String) -> void:
+	var by_id: Dictionary = {}
+	for row_variant in snapshot.get(field, []):
+		if not row_variant is Dictionary:
+			continue
+		var row := (row_variant as Dictionary).duplicate(true)
+		var row_id := String(row.get(key_field, ""))
+		if row_id.is_empty():
+			continue
+		by_id[row_id] = row
+	for row_variant in incoming:
+		if not row_variant is Dictionary:
+			continue
+		var row := (row_variant as Dictionary).duplicate(true)
+		var row_id := String(row.get(key_field, ""))
+		if row_id.is_empty():
+			continue
+		by_id[row_id] = row
+	var ordered: Array = []
+	var keys: Array = by_id.keys()
+	keys.sort()
+	for row_id_variant in keys:
+		ordered.append(by_id[String(row_id_variant)])
+	snapshot[field] = ordered
+
+
+func _upsert_front_options(incoming: Array) -> void:
+	var existing: Array = []
+	for row_variant in snapshot.get("front_options", []):
+		if row_variant is Dictionary:
+			existing.append((row_variant as Dictionary).duplicate(true))
+	for row_variant in incoming:
+		if not row_variant is Dictionary:
+			continue
+		var incoming_row := row_variant as Dictionary
+		var replaced := false
+		for index in range(existing.size()):
+			var current: Dictionary = existing[index]
+			if String(current.get("battalion_id", "")) != String(incoming_row.get("battalion_id", "")):
+				continue
+			if _front_option_target_id(current) != _front_option_target_id(incoming_row):
+				continue
+			existing[index] = incoming_row.duplicate(true)
+			replaced = true
+			break
+		if not replaced:
+			existing.append(incoming_row.duplicate(true))
+	snapshot["front_options"] = existing
+
+
+func _merge_snapshot_dictionary(field: String, incoming: Dictionary) -> void:
+	var current: Dictionary = {}
+	var existing: Variant = snapshot.get(field, {})
+	if existing is Dictionary:
+		current = (existing as Dictionary).duplicate(true)
+	for key_variant in incoming.keys():
+		var key := String(key_variant)
+		var value: Variant = incoming[key_variant]
+		if value is Dictionary:
+			current[key] = (value as Dictionary).duplicate(true)
+		elif value is Array:
+			current[key] = (value as Array).duplicate(true)
+		else:
+			current[key] = value
+	snapshot[field] = current
+
+
+func _reindex_stack_indexes() -> void:
+	var tmp_stacks: Dictionary = {}
+	var tmp_battalions_by_id: Dictionary = {}
+	var tmp_battalions_by_province: Dictionary = {}
+	var tmp_formations: Dictionary = {}
+	for battalion_variant in snapshot.get("battalions", []):
+		if not battalion_variant is Dictionary:
+			continue
+		var battalion := battalion_variant as Dictionary
+		var battalion_id := String(battalion.get("id", ""))
+		var province_id := String(battalion.get("province_id", ""))
+		if battalion_id.is_empty() or province_id.is_empty():
+			continue
+		tmp_battalions_by_id[battalion_id] = battalion
+		if not tmp_stacks.has(province_id):
+			tmp_stacks[province_id] = []
+		(tmp_stacks[province_id] as Array).append(battalion)
+	for province_id_variant in tmp_stacks.keys():
+		var province_id := String(province_id_variant)
+		var stack: Array = tmp_stacks[province_id]
+		stack.sort_custom(Callable(self, "_battalion_id_less_than"))
+		if not stack.is_empty():
+			tmp_battalions_by_province[province_id] = stack[0]
+	for formation_variant in snapshot.get("formations", []):
+		if not formation_variant is Dictionary:
+			continue
+		var formation := formation_variant as Dictionary
+		var formation_id := String(formation.get("id", ""))
+		if not formation_id.is_empty():
+			tmp_formations[formation_id] = formation
+	var tmp_all_front: Dictionary = {}
+	for option_variant in snapshot.get("front_options", []):
+		if not option_variant is Dictionary:
+			continue
+		var option := option_variant as Dictionary
+		var origin := String(option.get("origin", ""))
+		if origin.is_empty():
+			continue
+		if not tmp_all_front.has(origin):
+			tmp_all_front[origin] = []
+		(tmp_all_front[origin] as Array).append(option)
+	var tmp_front: Dictionary = {}
+	for origin_variant in tmp_all_front.keys():
+		var origin := String(origin_variant)
+		tmp_front[origin] = (tmp_all_front[origin] as Array).duplicate()
+	var declared_stacks: Dictionary = {}
+	for province_id_variant in tmp_stacks.keys():
+		var province_id := String(province_id_variant)
+		var ids: Array = []
+		for battalion_variant in tmp_stacks[province_id]:
+			ids.append(String((battalion_variant as Dictionary).get("id", "")))
+		declared_stacks[province_id] = ids
+	snapshot["battalion_stacks"] = declared_stacks
+	battalions_by_id = tmp_battalions_by_id
+	battalion_stacks_by_province = tmp_stacks
+	battalions_by_province = tmp_battalions_by_province
+	if not tmp_formations.is_empty():
+		formations_by_id = tmp_formations
+	all_front_by_origin = tmp_all_front
+	front_by_origin = tmp_front
+	var indexed := index_operational_orders(snapshot)
+	orders_by_formation = indexed.get("by_formation", {})
+	order_formations_by_province = indexed.get("by_province", {})
+
+
 func _scenario_label(application: Dictionary, campaign: Dictionary) -> String:
 	## Never invent a name: report exactly what the authoritative campaign says.
 	var display := String(application.get("scenario_display_name", "")).strip_edges()
@@ -898,37 +1146,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			for force_id: String in stack_tab_rects:
 				var rect: Rect2 = stack_tab_rects[force_id]
 				if rect.has_point(mouse.position):
-					selected_strategic_formation_id = force_id
-					unit_scroll_offset = 0
-					var force_row: Dictionary = snapshot.get("strategic_formation_presentations", {}).get(force_id, {})
-					var members: Array = force_row.get("battalion_ids", [])
-					selected_battalion_id = ""
-					for battalion_id_variant in members:
-						var battalion_id := String(battalion_id_variant)
-						var row: Dictionary = snapshot.get("battalion_presentations", {}).get(battalion_id, {})
-						if bool(row.get("can_act", false)):
-							selected_battalion_id = battalion_id
-							break
-					if selected_battalion_id.is_empty() and members.size() > 0:
-						selected_battalion_id = String(members[0])
-					_rebuild_legal_targets()
-					status_message = "Selected formation %s (acting battalion %s)." % [
-						force_row.get("display_name", force_id),
-						_selected_presentation().get("battalion_label", selected_battalion_id),
-					]
-					queue_redraw()
+					select_stack_formation(force_id)
 					get_viewport().set_input_as_handled()
 					return
 			for battalion_id: String in battalion_row_rects:
 				var bn_rect: Rect2 = battalion_row_rects[battalion_id]
 				if bn_rect.has_point(mouse.position):
-					selected_battalion_id = battalion_id
-					unit_scroll_offset = 0
-					_rebuild_legal_targets()
-					status_message = "Selected acting battalion %s." % _selected_presentation().get(
-						"battalion_label", battalion_id
-					)
-					queue_redraw()
+					select_acting_battalion(battalion_id)
 					get_viewport().set_input_as_handled()
 					return
 		elif mouse.button_index == MOUSE_BUTTON_WHEEL_UP and stack_panel_expanded:
