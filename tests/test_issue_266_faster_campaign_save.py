@@ -117,6 +117,8 @@ class FasterCampaignSaveContractTests(unittest.TestCase):
         self.assertIn("end_player_round", source)
         self.assertIn("auto_resolve", source)
         self.assertIn("_LIVE_MOVE_BATCH", source)
+        self.assertIn("_direct_cache_loader", source)
+        self.assertIn("persistent_backend", source)
         spec = importlib.util.spec_from_file_location(
             "ab_issue_266_campaign_save", harness
         )
@@ -127,6 +129,11 @@ class FasterCampaignSaveContractTests(unittest.TestCase):
         self.assertEqual(
             ("issue_commit", "end_player_round", "auto_resolve"),
             module.PRODUCTION_COMMAND_PATHS,
+        )
+        self.assertIn("load_ms", module.COMMAND_METRIC_KEYS)
+        self.assertEqual(
+            ("total_ms", "load_ms", *module.METRIC_KEYS),
+            module.COMMAND_METRIC_KEYS,
         )
         self.assertEqual(
             ("issue_move_order", "commit_move_orders"),
@@ -159,8 +166,19 @@ class FasterCampaignSaveContractTests(unittest.TestCase):
         self.assertTrue(payload["issue_commit"]["persist_runtime_snapshot"])
         self.assertEqual(1, payload["issue_commit"]["repeats"])
         self.assertIn("total_ms", payload["issue_commit"]["min"])
+        self.assertIn("load_ms", payload["issue_commit"]["min"])
+        self.assertLessEqual(
+            payload["issue_commit"]["min"]["load_ms"], module.WARM_LOAD_MS_LIMIT
+        )
+        self.assertEqual(
+            "persistent_backend._direct_cache_loader",
+            payload["issue_commit"]["cache_seam"],
+        )
         self.assertEqual(["end_player_round"], payload["end_player_round"]["ops"])
         self.assertFalse(payload["end_player_round"]["persist_runtime_snapshot"])
+        self.assertLessEqual(
+            payload["end_player_round"]["min"]["load_ms"], module.WARM_LOAD_MS_LIMIT
+        )
         self.assertTrue(payload["auto_resolve"]["skipped"])
         self.assertEqual("no prepared contact", payload["auto_resolve"]["reason"])
         self.assertNotIn("min", payload["auto_resolve"])
@@ -231,6 +249,7 @@ class FasterCampaignSaveContractTests(unittest.TestCase):
             "save_ms",
             "save_validate_ms",
             "total_ms",
+            "load_ms",
             "min",
             "median",
             "samples",
@@ -272,6 +291,72 @@ class FasterCampaignSaveContractTests(unittest.TestCase):
         self.assertNotEqual(base_report["imported_module"], head_report["imported_module"])
         self.assertIn("goc-266-ab-", base_report["imported_src_root"])
         self.assertIn("goc-266-ab-", head_report["imported_src_root"])
+
+    def test_owner_ab_harness_warm_apply_uses_direct_cache_loader(self) -> None:
+        """Measured command path leases persistent_backend._direct_cache_loader."""
+
+        import importlib.util
+
+        from gates_of_codex import frontend_commands as commands_module
+        from gates_of_codex.persistent_backend import _direct_cache_loader
+        from gates_of_codex.state_io import save_campaign
+        from tests.test_s10_frontend_presentation_contract import _state
+
+        harness = ROOT / "tools/ab_issue_266_campaign_save.py"
+        spec = importlib.util.spec_from_file_location(
+            "ab_issue_266_campaign_save_cache_seam", harness
+        )
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        self.assertEqual("persistent_backend._direct_cache_loader", module.CACHE_SEAM)
+        self.assertIn("_direct_cache_loader", harness.read_text(encoding="utf-8"))
+
+        install_frontend_turn_cycle_op()
+        leases: list[object] = []
+        real_factory = _direct_cache_loader
+
+        def recording_factory(cached_state, original_loader):
+            leases.append(cached_state)
+            return real_factory(cached_state, original_loader)
+
+        def boom_loader(path):
+            raise AssertionError(
+                f"warm measured apply must not cold-load {path}"
+            )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            campaign = Path(temporary) / "campaign.json"
+            save_campaign(_state(Path(temporary)), campaign)
+            source_bytes = campaign.read_bytes()
+            original = commands_module.load_campaign
+            try:
+                commands_module.load_campaign = boom_loader
+                with patch(
+                    "gates_of_codex.persistent_backend._direct_cache_loader",
+                    side_effect=recording_factory,
+                ):
+                    payload = module._measure_warm_apply(
+                        campaign,
+                        module._end_player_round_commands(),
+                        repeats=2,
+                    )
+            finally:
+                commands_module.load_campaign = original
+            self.assertEqual(source_bytes, campaign.read_bytes())
+
+        self.assertFalse(payload.get("skipped"))
+        self.assertEqual(["end_player_round"], payload["ops"])
+        self.assertEqual(module.CACHE_SEAM, payload["cache_seam"])
+        # One unmeasured warmup lease plus one lease per measured repeat.
+        self.assertEqual(3, len(leases))
+        self.assertEqual(2, payload["repeats"])
+        self.assertIn("load_ms", payload["min"])
+        self.assertLessEqual(payload["min"]["load_ms"], module.WARM_LOAD_MS_LIMIT)
+        for sample in payload["samples"]:
+            self.assertLessEqual(sample["load_ms"], module.WARM_LOAD_MS_LIMIT)
+            self.assertIn("total_ms", sample)
 
 
 class FasterCampaignSaveEarth3Tests(unittest.TestCase):

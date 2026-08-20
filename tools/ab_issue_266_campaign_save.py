@@ -16,10 +16,12 @@ Reports two tables:
 
 1. compact-save subphases: save_ms, save_validate_ms, save_validate_base_ms,
    save_encode_ms, save_write_ms
-2. production apply totals via measured_apply_frontend_commands after the
-   process is already warm (P1 projection cached / first validate happened):
-   issue+commit live-move batch, end_player_round, and auto_resolve only when
-   the disposable campaign already has a prepared contact
+2. production warm-daemon apply totals via measured_apply_frontend_commands
+   after the persistent-backend ``_direct_cache_loader`` seam is installed
+   (first command load returns the already-validated in-memory campaign, so
+   warm ``load_ms`` is ~0): issue+commit live-move batch, end_player_round,
+   and auto_resolve only when the disposable campaign already has a prepared
+   contact
 
 This VM does not ship ww3_2028_core; leave the owner table empty until the
 owner runs the harness on a disposable copy.
@@ -55,8 +57,13 @@ PRODUCTION_COMMAND_PATHS = (
 )
 COMMAND_METRIC_KEYS = (
     "total_ms",
+    "load_ms",
     *METRIC_KEYS,
 )
+# Warm-daemon first load returns the leased in-memory campaign. A real
+# load_campaign of owner-size state is hundreds to thousands of ms.
+WARM_LOAD_MS_LIMIT = 5.0
+CACHE_SEAM = "persistent_backend._direct_cache_loader"
 AUTO_RESOLVE_SKIP = "auto_resolve: skipped (no prepared contact)"
 ISSUE_COMMIT_SKIP = "issue_commit: skipped (no legal one-hop)"
 END_ROUND_SKIP = "end_player_round: skipped (pending battle)"
@@ -238,6 +245,7 @@ def _timings_from_apply(report: dict[str, Any]) -> dict[str, float]:
     timings = report.get("timings") or {}
     return {
         "total_ms": float(timings.get("total_ms") or 0.0),
+        "load_ms": float(timings.get("load_ms") or 0.0),
         "save_ms": float(timings.get("save_ms") or 0.0),
         "save_validate_ms": float(timings.get("save_validate_ms") or 0.0),
         "save_validate_base_ms": float(timings.get("save_validate_base_ms") or 0.0),
@@ -247,11 +255,20 @@ def _timings_from_apply(report: dict[str, Any]) -> dict[str, float]:
 
 
 def _apply_production_commands(
-    campaign_path: Path, commands: list[dict[str, Any]]
+    campaign_path: Path,
+    commands: list[dict[str, Any]],
+    cached_state: Any,
 ) -> dict[str, Any]:
-    """Apply on a sibling copy so the disposable source campaign is not mutated."""
+    """Apply on a sibling copy after installing the persistent-backend cache lease.
 
+    The source owner campaign is never the apply target. The sibling is only
+    isolation for persist/rollback. The first command load must return
+    ``cached_state`` through ``persistent_backend._direct_cache_loader``.
+    """
+
+    from gates_of_codex import frontend_commands as commands_module
     from gates_of_codex.command_cycle_perf import measured_apply_frontend_commands
+    from gates_of_codex.persistent_backend import _direct_cache_loader
 
     token = f".goc-266-ab-cmd-{os.getpid()}-{time.time_ns()}"
     copy_path = campaign_path.parent / f"{token}.json"
@@ -259,14 +276,32 @@ def _apply_production_commands(
     shutil.copy2(campaign_path, copy_path)
     try:
         snapshot_path.write_text("{}", encoding="utf-8")
-        return measured_apply_frontend_commands(
-            copy_path,
-            commands=commands,
-            snapshot_path=snapshot_path,
+        original_loader = commands_module.load_campaign
+        commands_module.load_campaign = _direct_cache_loader(
+            cached_state,
+            original_loader,
         )
+        try:
+            return measured_apply_frontend_commands(
+                copy_path,
+                commands=commands,
+                snapshot_path=snapshot_path,
+            )
+        finally:
+            commands_module.load_campaign = original_loader
     finally:
         copy_path.unlink(missing_ok=True)
         snapshot_path.unlink(missing_ok=True)
+
+
+def _require_warm_load(timings: dict[str, float], ops: list[str]) -> None:
+    load_ms = float(timings["load_ms"])
+    if load_ms > WARM_LOAD_MS_LIMIT:
+        raise SystemExit(
+            f"warm apply load_ms={load_ms:.3f} is not ~0 for {ops}; "
+            "measured command path must lease "
+            "persistent_backend._direct_cache_loader"
+        )
 
 
 def _measure_warm_apply(
@@ -274,7 +309,13 @@ def _measure_warm_apply(
     commands: list[dict[str, Any]],
     repeats: int,
 ) -> dict[str, Any]:
-    """One unmeasured warmup apply, then N measured repeats. Cold first hit is dropped."""
+    """Warm-daemon protocol: unmeasured cache install + P1 warmup, then N repeats.
+
+    The cold first hit is not reported. Each sample reloads the unmutated source
+    into memory (unmeasured), then measured apply hits ``_direct_cache_loader``.
+    """
+
+    from gates_of_codex.state_io import load_campaign
 
     persist = _persist_runtime_snapshot(commands)
     ops = [str(item.get("op", "")) for item in commands]
@@ -282,21 +323,30 @@ def _measure_warm_apply(
         raise SystemExit(
             "persist gate changed: end_player_round must not persist a runtime snapshot"
         )
-    warmup = _apply_production_commands(campaign_path, commands)
+    warmup_state = load_campaign(campaign_path)
+    warmup = _apply_production_commands(
+        campaign_path, commands, cached_state=warmup_state
+    )
     if not warmup.get("ok"):
         raise SystemExit(f"warmup apply failed for {ops}: {warmup}")
     samples: list[dict[str, float]] = []
     for _ in range(repeats):
-        report = _apply_production_commands(campaign_path, commands)
+        cached_state = load_campaign(campaign_path)
+        report = _apply_production_commands(
+            campaign_path, commands, cached_state=cached_state
+        )
         if not report.get("ok"):
             raise SystemExit(f"measured apply failed for {ops}: {report}")
-        samples.append(_timings_from_apply(report))
+        timings = _timings_from_apply(report)
+        _require_warm_load(timings, ops)
+        samples.append(timings)
     payload = _summarize_samples(samples, COMMAND_METRIC_KEYS)
     payload.update(
         {
             "skipped": False,
             "ops": ops,
             "persist_runtime_snapshot": persist,
+            "cache_seam": CACHE_SEAM,
         }
     )
     return payload
