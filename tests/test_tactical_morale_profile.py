@@ -1,4 +1,10 @@
-"""#273 Phase A: morale-profile mapping and tactical-carrier survival."""
+"""#273 Phase A: morale-profile mapping and AIO inventory-marker proof.
+
+The Phase A carrier is the Human ``{Inventory}`` item
+``aio_marker_morale_{low,regular,trained,elite}``. Diagnostic
+``{Tags "goc_morale_profile:*"}`` and SCN comments are observability only.
+They are not a second morale system and are not the AIO apply-trigger carrier.
+"""
 
 from __future__ import annotations
 
@@ -19,7 +25,7 @@ from gates_of_codex.models import (
 )
 from gates_of_codex.bridge.scn import BreedInventoryItem
 from gates_of_codex.tactical_morale_profile import (
-    ALLOWED_MORALE_PROFILES,
+    AIO_MORALE_MARKERS,
     DEFAULT_MORALE_PROFILE,
     UnknownMoraleProfileError,
     aio_morale_marker_for_profile,
@@ -29,8 +35,8 @@ from gates_of_codex.tactical_morale_profile import (
     normalize_morale_profile,
     parse_entity_aio_morale_markers,
     parse_human_aio_morale_markers,
-    parse_morale_profile_carriers,
     parse_morale_profile_logs,
+    parse_morale_profile_visibility_tags,
 )
 
 
@@ -175,7 +181,7 @@ class MoraleProfileCatalogSeamTests(unittest.TestCase):
                 CodeXCatalogScanner().scan(root)
 
 
-class MoraleProfileCarrierTests(unittest.TestCase):
+class AioMoraleInventoryCarrierTests(unittest.TestCase):
     def _stack(self, root: Path) -> Path:
         breed = root / "resource/set/breed/mp/nato"
         breed.mkdir(parents=True)
@@ -260,7 +266,9 @@ class MoraleProfileCarrierTests(unittest.TestCase):
             signature="fixture",
         )
 
-    def test_profile_survives_on_existing_human_entity_tag_carrier(self) -> None:
+    def test_profile_survives_on_human_inventory_aio_marker(self) -> None:
+        """Phase A carrier proof: Human Inventory emits exactly one AIO marker."""
+
         with tempfile.TemporaryDirectory() as raw:
             stack = self._stack(Path(raw))
             catalog = self._catalog()
@@ -272,46 +280,50 @@ class MoraleProfileCarrierTests(unittest.TestCase):
             )
             text = CampaignScnBuilder(catalog, resource_stack=[stack]).build(state, state.pending_battle)
 
-        carriers = parse_morale_profile_carriers(text)
-        self.assertTrue(carriers)
-        kinds = {kind for kind, _object_id, _profile in carriers}
-        self.assertEqual({"Human", "Entity"}, kinds)
-        profiles_by_kind: dict[str, set[str]] = {}
-        for kind, _object_id, profile in carriers:
-            profiles_by_kind.setdefault(kind, set()).add(profile)
-            self.assertIn(profile, ALLOWED_MORALE_PROFILES)
-            self.assertIn(f'{{Tags "{morale_profile_tag(profile)}"}}', text)
-        self.assertIn("militia", profiles_by_kind["Human"])
-        self.assertIn("regular", profiles_by_kind["Human"])
-        self.assertIn("sof", profiles_by_kind["Human"])
-        self.assertEqual({"sof"}, profiles_by_kind["Entity"])
-
-        humans = [row for row in carriers if row[0] == "Human"]
-        self.assertEqual(4, len(humans))
-        entities = [row for row in carriers if row[0] == "Entity"]
-        self.assertEqual(1, len(entities))
-
-        logs = parse_morale_profile_logs(text)
-        self.assertEqual(len(carriers), len(logs))
-        self.assertEqual(
-            {object_id for _kind, object_id, _profile in carriers},
-            {row["object_id"] for row in logs},
-        )
-        self.assertTrue(any(row["unit"] == "militia_rifle(nato)" and row["profile"] == "militia" for row in logs))
-        self.assertTrue(any(row["unit"] == "line_rifle(nato)" and row["profile"] == "regular" for row in logs))
-        self.assertTrue(any(row["carrier"] == "entity" and row["profile"] == "sof" for row in logs))
-
         human_markers = parse_human_aio_morale_markers(text)
         self.assertTrue(human_markers)
-        self.assertEqual({"aio_marker_morale_low", "aio_marker_morale_regular", "aio_marker_morale_elite"}, {
-            marker
-            for markers in human_markers.values()
-            for marker in markers
-        })
-        self.assertTrue(all(len(markers) == 1 for markers in human_markers.values()))
+        self.assertEqual(4, len(human_markers))
+        for markers in human_markers.values():
+            self.assertEqual(1, len(markers))
+            self.assertIn(markers[0], AIO_MORALE_MARKERS)
+        self.assertEqual(
+            {"aio_marker_morale_low", "aio_marker_morale_regular", "aio_marker_morale_elite"},
+            {marker for markers in human_markers.values() for marker in markers},
+        )
         entity_markers = parse_entity_aio_morale_markers(text)
         self.assertTrue(entity_markers)
         self.assertTrue(all(markers == () for markers in entity_markers.values()))
+
+    def test_goc_tags_and_scn_comments_are_observability_only(self) -> None:
+        """Diagnostic Tags/comments are logging only, not the morale carrier."""
+
+        with tempfile.TemporaryDirectory() as raw:
+            stack = self._stack(Path(raw))
+            catalog = self._catalog()
+            state = self._state(
+                [
+                    BattalionRosterEntry("militia_rifle(nato)", quantity=1, category="infantry"),
+                    BattalionRosterEntry("sof_rifle(nato)", quantity=1, category="recon"),
+                ]
+            )
+            text = CampaignScnBuilder(catalog, resource_stack=[stack]).build(state, state.pending_battle)
+
+        visibility = parse_morale_profile_visibility_tags(text)
+        self.assertTrue(visibility)
+        kinds = {kind for kind, _object_id, _profile in visibility}
+        self.assertEqual({"Human", "Entity"}, kinds)
+        self.assertIn(f'{{Tags "{morale_profile_tag("militia")}"}}', text)
+        self.assertIn(f'{{Tags "{morale_profile_tag("regular")}"}}', text)
+        self.assertIn(f'{{Tags "{morale_profile_tag("sof")}"}}', text)
+        logs = parse_morale_profile_logs(text)
+        self.assertEqual(len(visibility), len(logs))
+        self.assertTrue(
+            any(row["unit"] == "militia_rifle(nato)" and row["profile"] == "militia" for row in logs)
+        )
+        self.assertTrue(any(row["unit"] == "line_rifle(nato)" and row["profile"] == "regular" for row in logs))
+        # Log field "carrier" names the GEM object kind (human|entity), not a
+        # second morale system and not the AIO apply-trigger inventory item.
+        self.assertTrue(any(row["object_kind"] == "entity" and row["profile"] == "sof" for row in logs))
 
     def test_default_regular_is_present_after_materialization(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
@@ -320,18 +332,16 @@ class MoraleProfileCarrierTests(unittest.TestCase):
             state = self._state([BattalionRosterEntry("line_rifle(nato)", quantity=1, category="infantry")])
             text = CampaignScnBuilder(catalog, resource_stack=[stack]).build(state, state.pending_battle)
 
-        profiles = [profile for _kind, _object_id, profile in parse_morale_profile_carriers(text)]
-        self.assertEqual({"regular"}, set(profiles))
-        self.assertGreaterEqual(len(profiles), 2)
         human_markers = parse_human_aio_morale_markers(text)
         self.assertTrue(human_markers)
         self.assertEqual(
             {("aio_marker_morale_regular",)},
             set(human_markers.values()),
         )
+        self.assertTrue(all(len(markers) == 1 and markers[0] in AIO_MORALE_MARKERS for markers in human_markers.values()))
         self.assertIn('{item "aio_marker_morale_regular"', text)
 
-    def test_scoped_builder_uses_the_same_human_carrier(self) -> None:
+    def test_scoped_builder_writes_human_inventory_aio_markers(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             stack = self._stack(Path(raw))
             catalog = self._catalog()
@@ -340,15 +350,10 @@ class MoraleProfileCarrierTests(unittest.TestCase):
                 state, state.pending_battle
             )
 
-        human_profiles = [
-            profile for kind, _object_id, profile in parse_morale_profile_carriers(text) if kind == "Human"
-        ]
-        self.assertIn("militia", human_profiles)
-        self.assertIn("regular", human_profiles)
-        self.assertIn('{Tags "goc_morale_profile:militia"}', text)
         human_markers = parse_human_aio_morale_markers(text)
         self.assertIn(("aio_marker_morale_low",), human_markers.values())
         self.assertIn(("aio_marker_morale_regular",), human_markers.values())
+        self.assertTrue(all(len(markers) == 1 and markers[0] in AIO_MORALE_MARKERS for markers in human_markers.values()))
         self.assertIn('{item "aio_marker_morale_low"', text)
 
     def test_human_inventory_emits_mapped_aio_markers_for_regular_and_militia(self) -> None:

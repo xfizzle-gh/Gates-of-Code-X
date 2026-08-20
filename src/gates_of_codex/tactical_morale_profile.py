@@ -161,8 +161,16 @@ def morale_profile_tag(profile: str) -> str:
     return f"{MORALE_PROFILE_TAG_PREFIX}{normalize_morale_profile(profile)}"
 
 
-def morale_profile_carrier_line(profile: str, *, indent: str = "\t\t") -> str:
+def morale_profile_visibility_tag_line(profile: str, *, indent: str = "\t\t") -> str:
+    """Diagnostic ``{Tags}`` line. Observability only, not the AIO carrier."""
+
     return f'{indent}{{Tags "{morale_profile_tag(profile)}"}}'
+
+
+def morale_profile_carrier_line(profile: str, *, indent: str = "\t\t") -> str:
+    """Implementation alias for :func:`morale_profile_visibility_tag_line`."""
+
+    return morale_profile_visibility_tag_line(profile, indent=indent)
 
 
 def morale_profile_log_line(
@@ -194,8 +202,11 @@ def morale_profile_log_comment(
     )
 
 
-def parse_morale_profile_carriers(scn_text: str) -> list[tuple[str, str, str]]:
-    """Return ``(kind, object_id, profile)`` for extra GOCX ``{Tags}`` visibility."""
+def parse_morale_profile_visibility_tags(scn_text: str) -> list[tuple[str, str, str]]:
+    """Return ``(kind, object_id, profile)`` for diagnostic GOCX ``{Tags}`` lines.
+
+    Observability only. This is not the AIO apply-trigger carrier.
+    """
 
     found: list[tuple[str, str, str]] = []
     for match in _OBJECT_HEADER_RE.finditer(scn_text):
@@ -205,6 +216,12 @@ def parse_morale_profile_carriers(scn_text: str) -> list[tuple[str, str, str]]:
             continue
         found.append((match.group("kind"), match.group("object_id"), tag.group(1)))
     return found
+
+
+def parse_morale_profile_carriers(scn_text: str) -> list[tuple[str, str, str]]:
+    """Implementation alias for :func:`parse_morale_profile_visibility_tags`."""
+
+    return parse_morale_profile_visibility_tags(scn_text)
 
 
 def parse_inventory_aio_morale_markers(scn_text: str) -> list[tuple[str, tuple[str, ...]]]:
@@ -251,7 +268,9 @@ def parse_morale_profile_logs(scn_text: str) -> list[dict[str, str]]:
             "unit": match.group("unit"),
             "profile": match.group("profile"),
             "object_id": match.group("object_id"),
+            # Legacy key: GEM object kind (human|entity), not the AIO carrier.
             "carrier": match.group("carrier"),
+            "object_kind": match.group("carrier"),
         }
         for match in _LOG_COMMENT_RE.finditer(scn_text)
     ]

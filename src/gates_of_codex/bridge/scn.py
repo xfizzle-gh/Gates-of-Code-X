@@ -10,9 +10,9 @@ from ..models import BattalionRosterEntry, CampaignState, PendingBattle
 from ..modstack import normalize_stack, resource_root
 from ..tactical_morale_profile import (
     apply_aio_morale_marker,
-    morale_profile_carrier_line,
     morale_profile_from_unit_definition,
     morale_profile_log_comment,
+    morale_profile_visibility_tag_line,
 )
 
 
@@ -314,7 +314,7 @@ class CampaignScnBuilder:
         lines.append(f"\t\t{{MID {mid}}}")
         if fsm_state:
             lines.append(f'\t\t{{FsmState "{fsm_state}"}}')
-        lines.append(morale_profile_carrier_line(morale_profile))
+        lines.append(morale_profile_visibility_tag_line(morale_profile))
         lines.append("\t}")
         return "\n".join(lines)
 
