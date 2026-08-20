@@ -380,6 +380,34 @@ def _resolve_sha(repo: Path, spec: str) -> str:
     return completed.stdout.strip()
 
 
+def _commit_exists(repo: Path, sha: str) -> bool:
+    present = subprocess.run(
+        ["git", "-C", str(repo), "cat-file", "-e", f"{sha}^{{commit}}"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    return present.returncode == 0
+
+
+def _ensure_commit(repo: Path, sha: str) -> None:
+    """Make ``sha`` present. Shallow CI checkouts often lack the A/B base."""
+
+    if _commit_exists(repo, sha):
+        return
+    fetched = subprocess.run(
+        ["git", "-C", str(repo), "fetch", "--depth=1", "origin", sha],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if fetched.returncode != 0 or not _commit_exists(repo, sha):
+        raise SystemExit(
+            f"cannot fetch commit {sha} for A/B worktree "
+            f"({fetched.returncode}):\n{fetched.stdout}\n{fetched.stderr}"
+        )
+
+
 def _git_common_dir(repo: Path) -> Path:
     completed = subprocess.run(
         ["git", "-C", str(repo), "rev-parse", "--git-common-dir"],
@@ -419,6 +447,7 @@ def _run_harness_at_sha(
     extra_args: list[str],
 ) -> dict[str, Any]:
     resolved = _resolve_sha(repo, sha)
+    _ensure_commit(repo, resolved)
     # Same-volume path under .git. System temp on Windows CI is often an 8.3
     # short name on another drive; git worktree add then exits 128.
     scratch = _windows_long_path(

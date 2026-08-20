@@ -242,6 +242,9 @@ class FasterCampaignSaveContractTests(unittest.TestCase):
         import importlib.util
 
         harness = ROOT / "tools/ab_issue_266_campaign_save.py"
+        source = harness.read_text(encoding="utf-8")
+        self.assertIn("def _ensure_commit(", source)
+        self.assertIn('fetch", "--depth=1", "origin"', source)
         spec = importlib.util.spec_from_file_location("ab_issue_266_campaign_save", harness)
         self.assertIsNotNone(spec)
         self.assertIsNotNone(spec.loader)
