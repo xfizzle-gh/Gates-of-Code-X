@@ -211,11 +211,26 @@ class PersistentBackendTransportTests(unittest.TestCase):
             self.assertNotEqual(before[2], after[2])
 
     def test_daemon_scope_excludes_self_committing_operations(self) -> None:
-        self.assertIn("end_player_round", persistent_backend.SUPPORTED_OPS)
-        self.assertIn("issue_move_order", persistent_backend.SUPPORTED_OPS)
-        self.assertIn("cancel_move_order", persistent_backend.SUPPORTED_OPS)
-        self.assertIn("verify_result", persistent_backend.SUPPORTED_OPS)
-        for op in ("handoff", "import_battle", "restore_backup", "reset_test_campaign"):
+        self.assertEqual(
+            persistent_backend.SUPPORTED_OPS,
+            {
+                "end_player_round",
+                "issue_move_order",
+                "cancel_move_order",
+                "verify_result",
+                "commit_move_orders",
+                "refresh",
+                "auto_resolve",
+            },
+        )
+        for op in (
+            "handoff",
+            "import_battle",
+            "restore_backup",
+            "reset_test_campaign",
+            "end_turn",
+            "run_ai",
+        ):
             self.assertNotIn(op, persistent_backend.SUPPORTED_OPS)
 
     def test_direct_cache_loader_leases_once_then_uses_canonical_loader(self) -> None:
