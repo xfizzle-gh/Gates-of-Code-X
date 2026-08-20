@@ -10,9 +10,11 @@ from gates_of_codex import command_cycle_perf
 from gates_of_codex.command_cycle_perf import (
     _is_live_move_batch,
     _runtime_patch_only,
+    _should_persist_runtime_snapshot,
     _snapshot_patch_only,
     measured_apply_frontend_commands,
 )
+from gates_of_codex.turn_cycle import install_frontend_turn_cycle_op
 from gates_of_codex.frontend import build_frontend_snapshot
 from gates_of_codex.frontend_runtime_patch import apply_runtime_patch_to_snapshot
 from gates_of_codex.operational_schema import stable_edge_id, stable_node_id
@@ -104,6 +106,13 @@ class LiveBatchRoutingTests(unittest.TestCase):
     def test_commit_is_not_in_snapshot_patch_ops(self) -> None:
         self.assertNotIn("commit_move_orders", command_cycle_perf._SNAPSHOT_PATCH_OPS)
 
+    def test_persist_only_live_batch_and_auto_resolve(self) -> None:
+        self.assertTrue(_should_persist_runtime_snapshot(_move_batch()))
+        self.assertTrue(_should_persist_runtime_snapshot([{"op": "auto_resolve"}]))
+        self.assertFalse(_should_persist_runtime_snapshot([{"op": "end_player_round"}]))
+        self.assertFalse(_should_persist_runtime_snapshot([{"op": "refresh"}]))
+        self.assertFalse(_should_persist_runtime_snapshot([{"op": "issue_move_order"}]))
+
     def test_godot_selects_runtime_patch_before_issue_lightweight_path(self) -> None:
         source = (ROOT / "godot/scripts/main_perf_measured.gd").read_text(encoding="utf-8")
         dispatch = source.split("func _on_command_finished(", 1)[1]
@@ -192,6 +201,16 @@ class LiveBatchParityTests(unittest.TestCase):
             self.assertIsNone(restarted.get("pending_battle"))
             self._assert_dynamic_parity(patched, restarted)
             self.assertIn("winner", (report.get("results") or [{}])[0].get("data") or {})
+
+    def test_end_player_round_leaves_snapshot_file_untouched(self) -> None:
+        install_frontend_turn_cycle_op()
+        with tempfile.TemporaryDirectory() as temporary:
+            campaign, snapshot_path, _before = self._prepare(Path(temporary))
+            before_bytes = snapshot_path.read_bytes()
+            report = self._apply(campaign, snapshot_path, [{"op": "end_player_round"}])
+            self.assertTrue(report.get("ok"), report)
+            self.assertTrue(report["timings"]["runtime_patch_fast_path"])
+            self.assertEqual(before_bytes, snapshot_path.read_bytes())
 
     def _assert_dynamic_parity(self, patched: dict[str, Any], full: dict[str, Any]) -> None:
         for key in DYNAMIC_KEYS:

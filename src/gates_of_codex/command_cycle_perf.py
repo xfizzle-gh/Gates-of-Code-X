@@ -97,6 +97,10 @@ def _is_live_move_batch(commands: list[dict[str, Any]]) -> bool:
     return _command_ops(commands) == list(_LIVE_MOVE_BATCH)
 
 
+def _should_persist_runtime_snapshot(commands: list[dict[str, Any]]) -> bool:
+    return _is_live_move_batch(commands) or _command_ops(commands) == ["auto_resolve"]
+
+
 def _snapshot_patch_only(commands: list[dict[str, Any]]) -> bool:
     if not commands:
         return False
@@ -458,7 +462,8 @@ def measured_apply_frontend_commands(
                     snapshot_path=path,
                     environ=environ,
                 )
-                persist_runtime_patched_snapshot(path, runtime_patch)
+                if _should_persist_runtime_snapshot(requested):
+                    persist_runtime_patched_snapshot(path, runtime_patch)
                 return Path(path)
             finally:
                 phase_seconds["snapshot"] += time.perf_counter() - started
