@@ -120,7 +120,8 @@ class RuntimePatchGodotTests(unittest.TestCase):
         source = (ROOT / "godot/scripts/main_perf_measured.gd").read_text(
             encoding="utf-8"
         )
-        self.assertIn('RUNTIME_PATCH_OPS := ["end_player_round"]', source)
+        self.assertIn('RUNTIME_PATCH_OPS := ["end_player_round", "auto_resolve"]', source)
+        self.assertIn("func _is_live_move_batch", source)
         self.assertIn("func _build_runtime_patch_state", source)
         self.assertIn("func _consume_runtime_patch_result", source)
         self.assertIn("_commit_snapshot_state(built", source)

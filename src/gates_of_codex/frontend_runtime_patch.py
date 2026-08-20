@@ -13,6 +13,8 @@ contains no alternate gameplay authority.
 """
 
 import copy
+import json
+import tempfile
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Mapping
@@ -276,6 +278,79 @@ def _dynamic_formations(state: CampaignState) -> list[dict[str, Any]]:
                 else [],
             }
         )
+    return rows
+
+
+def apply_runtime_patch_to_snapshot(
+    base: dict[str, Any],
+    patch: dict[str, Any],
+) -> dict[str, Any]:
+    candidate = copy.deepcopy(base)
+    merge = patch.get("merge") or {}
+    if not isinstance(merge, dict):
+        raise ValueError("Runtime patch merge block is malformed.")
+    for key in ("application", "campaign"):
+        row = dict(candidate.get(key) or {}) if isinstance(candidate.get(key), dict) else {}
+        incoming = merge.get(key) or {}
+        if isinstance(incoming, dict):
+            row.update(copy.deepcopy(incoming))
+        candidate[key] = row
+    for key in ("provinces", "formations"):
+        candidate[key] = _merge_rows_by_id(candidate.get(key), merge.get(key))
+    replace = patch.get("replace") or {}
+    if not isinstance(replace, dict):
+        raise ValueError("Runtime patch replace block is malformed.")
+    for key, value in replace.items():
+        candidate[key] = copy.deepcopy(value)
+    return candidate
+
+
+def persist_runtime_patched_snapshot(path: str | Path, patch: dict[str, Any]) -> Path:
+    destination = Path(path)
+    if not destination.is_file():
+        return destination
+    payload = json.loads(destination.read_text(encoding="utf-8-sig"))
+    if not isinstance(payload, dict):
+        raise ValueError("Existing frontend snapshot is not an object.")
+    if str(payload.get("schema", "")) != "gates-of-codex.frontend":
+        return destination
+    updated = apply_runtime_patch_to_snapshot(payload, patch)
+    body = json.dumps(updated, indent=2, ensure_ascii=False) + "\n"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        encoding="utf-8",
+        prefix=f".{destination.name}.",
+        suffix=".tmp",
+        dir=destination.parent,
+        delete=False,
+    ) as temporary:
+        temporary.write(body)
+        temporary_path = Path(temporary.name)
+    temporary_path.replace(destination)
+    return destination
+
+
+def _merge_rows_by_id(base: Any, patch: Any) -> list[dict[str, Any]]:
+    rows = [copy.deepcopy(item) for item in base or [] if isinstance(item, dict)]
+    index = {
+        str(row.get("id", "")): idx
+        for idx, row in enumerate(rows)
+        if str(row.get("id", ""))
+    }
+    for item in patch or []:
+        if not isinstance(item, dict):
+            continue
+        identity = str(item.get("id", ""))
+        if not identity:
+            continue
+        if identity in index:
+            merged = dict(rows[index[identity]])
+            merged.update(copy.deepcopy(item))
+            rows[index[identity]] = merged
+        else:
+            index[identity] = len(rows)
+            rows.append(copy.deepcopy(item))
     return rows
 
 
