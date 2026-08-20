@@ -130,6 +130,51 @@ def _consumed_projection(snapshot: dict[str, Any]) -> dict[str, Any]:
     return projected
 
 
+def _removed_map_metadata_keys(snapshot: dict[str, Any]) -> set[str]:
+    metadata = (snapshot.get("campaign") or {}).get("map_metadata") or {}
+    if not isinstance(metadata, dict):
+        return set()
+    return set(metadata) - set(FRONTEND_CONSUMED_MAP_METADATA_KEYS)
+
+
+def _assert_contains_omitted_inventory(test: unittest.TestCase, snapshot: dict[str, Any]) -> None:
+    for key in FRONTEND_OMITTED_TOP_LEVEL:
+        test.assertIn(key, snapshot)
+    test.assertTrue(snapshot.get("provinces"))
+    for row in snapshot.get("provinces") or []:
+        for key in FRONTEND_OMITTED_PROVINCE_FIELDS:
+            test.assertIn(key, row)
+        options = [item for item in (row.get("construction_options") or []) if isinstance(item, dict)]
+        test.assertTrue(options)
+        for option in options:
+            for key in FRONTEND_OMITTED_CONSTRUCTION_OPTION_FIELDS:
+                test.assertIn(key, option)
+    test.assertTrue(snapshot.get("battalions"))
+    for row in snapshot.get("battalions") or []:
+        for key in FRONTEND_OMITTED_BATTALION_FIELDS:
+            test.assertIn(key, row)
+    test.assertTrue(_removed_map_metadata_keys(snapshot))
+
+
+def _assert_omitted_inventory_gone(test: unittest.TestCase, snapshot: dict[str, Any]) -> None:
+    for key in FRONTEND_OMITTED_TOP_LEVEL:
+        test.assertNotIn(key, snapshot)
+    for row in snapshot.get("provinces") or []:
+        for key in FRONTEND_OMITTED_PROVINCE_FIELDS:
+            test.assertNotIn(key, row)
+        for option in row.get("construction_options") or []:
+            if not isinstance(option, dict):
+                continue
+            for key in FRONTEND_OMITTED_CONSTRUCTION_OPTION_FIELDS:
+                test.assertNotIn(key, option)
+    for row in snapshot.get("battalions") or []:
+        for key in FRONTEND_OMITTED_BATTALION_FIELDS:
+            test.assertNotIn(key, row)
+    test.assertFalse(_removed_map_metadata_keys(snapshot))
+    metadata = (snapshot.get("campaign") or {}).get("map_metadata") or {}
+    test.assertTrue(set(metadata).issubset(FRONTEND_CONSUMED_MAP_METADATA_KEYS))
+
+
 _SNAPSHOT_GET = re.compile(
     r"""\bsnapshot\s*(?:\.get\(\s*|\s*\[)\s*["']([A-Za-z0-9_]+)["']"""
 )
@@ -354,6 +399,10 @@ class SlimParityTests(unittest.TestCase):
                     slim_unused_frontend_fields(payload)
 
     def test_persist_migrates_schema_16_file_and_rejects_others(self) -> None:
+        self.assertEqual(
+            FRONTEND_SCHEMA_VERSION,
+            require_slimmable_frontend_schema({}),
+        )
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             state = _state(root)
@@ -361,7 +410,9 @@ class SlimParityTests(unittest.TestCase):
             snapshot = root / "campaign_snapshot.json"
             fat = dict(complete)
             fat["schema_version"] = FRONTEND_PREVIOUS_SCHEMA_VERSION
+            _assert_contains_omitted_inventory(self, fat)
             snapshot.write_text(json.dumps(fat, indent=2) + "\n", encoding="utf-8")
+            pre_slim_fat = json.loads(snapshot.read_text(encoding="utf-8"))
             patch = {
                 "schema": RUNTIME_PATCH_SCHEMA,
                 "schema_version": RUNTIME_PATCH_SCHEMA_VERSION,
@@ -374,19 +425,27 @@ class SlimParityTests(unittest.TestCase):
                 "replace": {},
             }
             persist_runtime_patched_snapshot(snapshot, patch)
-            migrated = json.loads(snapshot.read_text(encoding="utf-8"))
-            self.assertEqual(FRONTEND_SCHEMA_VERSION, migrated["schema_version"])
-            for key in FRONTEND_OMITTED_TOP_LEVEL:
-                self.assertNotIn(key, migrated)
-            self.assertNotIn("metadata", migrated["provinces"][0])
-            unsupported = root / "old.json"
-            old = dict(complete)
-            old["schema_version"] = 15
-            unsupported.write_text(json.dumps(old, indent=2) + "\n", encoding="utf-8")
-            before = unsupported.read_bytes()
-            with self.assertRaises(ValueError):
-                persist_runtime_patched_snapshot(unsupported, patch)
-            self.assertEqual(before, unsupported.read_bytes())
+            persisted = json.loads(snapshot.read_text(encoding="utf-8"))
+            self.assertEqual(FRONTEND_SCHEMA_VERSION, persisted["schema_version"])
+            before = _consumed_projection(pre_slim_fat)
+            after = _consumed_projection(persisted)
+            before.pop("schema_version", None)
+            after.pop("schema_version", None)
+            self.assertEqual(before, after)
+            self.assertEqual(
+                _consumed_projection(persisted),
+                _consumed_projection(slim_unused_frontend_fields(dict(pre_slim_fat))),
+            )
+            _assert_omitted_inventory_gone(self, persisted)
+            for bad in (15, 18):
+                unsupported = root / f"old-{bad}.json"
+                old = dict(complete)
+                old["schema_version"] = bad
+                unsupported.write_text(json.dumps(old, indent=2) + "\n", encoding="utf-8")
+                before_bytes = unsupported.read_bytes()
+                with self.assertRaises(ValueError):
+                    persist_runtime_patched_snapshot(unsupported, patch)
+                self.assertEqual(before_bytes, unsupported.read_bytes())
 
     def test_used_fields_match_pre_slim_and_unused_stay_omitted(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
