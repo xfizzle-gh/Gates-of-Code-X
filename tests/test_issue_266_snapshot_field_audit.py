@@ -20,6 +20,7 @@ from gates_of_codex.frontend_runtime_patch import (
     RUNTIME_PATCH_SCHEMA_VERSION,
     apply_runtime_patch_to_snapshot,
     build_frontend_runtime_patch,
+    persist_runtime_patched_snapshot,
 )
 from gates_of_codex.frontend_snapshot_slim import (
     FRONTEND_CONSUMED_CAMPAIGN_FIELDS,
@@ -31,8 +32,10 @@ from gates_of_codex.frontend_snapshot_slim import (
     FRONTEND_OMITTED_CONSTRUCTION_OPTION_FIELDS,
     FRONTEND_OMITTED_PROVINCE_FIELDS,
     FRONTEND_OMITTED_TOP_LEVEL,
+    require_slimmable_frontend_schema,
     slim_construction_options,
     slim_unused_frontend_fields,
+    supported_frontend_schema_versions,
 )
 from gates_of_codex.state_io import save_campaign
 from tests.test_issue_266_runtime_patch_live_batch import _move_batch
@@ -283,12 +286,22 @@ class ConsumerInventoryTests(unittest.TestCase):
             src / "frontend_runtime_patch.py",
             src / "frontend_fastpath.py",
         }
-        tokens = (
-            '["research"]',
-            '["commanders"]',
-            'get("research"',
-            'get("commanders"',
+        omitted = (
+            FRONTEND_OMITTED_TOP_LEVEL
+            | FRONTEND_OMITTED_PROVINCE_FIELDS
+            | FRONTEND_OMITTED_CONSTRUCTION_OPTION_FIELDS
+            | FRONTEND_OMITTED_BATTALION_FIELDS
         )
+        with tempfile.TemporaryDirectory() as temporary:
+            complete = _complete_snapshot(_state(Path(temporary)))
+            slimmed = slim_unused_frontend_fields(dict(complete))
+            complete_meta = (complete.get("campaign") or {}).get("map_metadata") or {}
+            slim_meta = (slimmed.get("campaign") or {}).get("map_metadata") or {}
+            omitted = omitted | (set(complete_meta) - set(slim_meta))
+        tokens = []
+        for key in sorted(omitted):
+            tokens.append(f'get("{key}"')
+            tokens.append(f'["{key}"]')
         hits: list[str] = []
         for path in src.rglob("*.py"):
             if path in allow or "data" in path.parts:
@@ -323,6 +336,57 @@ class SlimParityTests(unittest.TestCase):
             before.pop("schema_version", None)
             after.pop("schema_version", None)
             self.assertEqual(before, after)
+
+    def test_unsupported_schema_versions_are_rejected(self) -> None:
+        self.assertEqual(
+            {FRONTEND_PREVIOUS_SCHEMA_VERSION, FRONTEND_SCHEMA_VERSION},
+            set(supported_frontend_schema_versions()),
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            complete = _complete_snapshot(_state(Path(temporary)))
+            for bad in (15, 18, True, "16", None):
+                payload = dict(complete)
+                payload["schema_version"] = bad
+                with self.assertRaises(ValueError) as raised:
+                    require_slimmable_frontend_schema(payload)
+                self.assertIn("unsupported frontend snapshot schema_version", str(raised.exception))
+                with self.assertRaises(ValueError):
+                    slim_unused_frontend_fields(payload)
+
+    def test_persist_migrates_schema_16_file_and_rejects_others(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = _state(root)
+            complete = _complete_snapshot(state)
+            snapshot = root / "campaign_snapshot.json"
+            fat = dict(complete)
+            fat["schema_version"] = FRONTEND_PREVIOUS_SCHEMA_VERSION
+            snapshot.write_text(json.dumps(fat, indent=2) + "\n", encoding="utf-8")
+            patch = {
+                "schema": RUNTIME_PATCH_SCHEMA,
+                "schema_version": RUNTIME_PATCH_SCHEMA_VERSION,
+                "merge": {
+                    "application": {},
+                    "campaign": {},
+                    "provinces": [],
+                    "formations": [],
+                },
+                "replace": {},
+            }
+            persist_runtime_patched_snapshot(snapshot, patch)
+            migrated = json.loads(snapshot.read_text(encoding="utf-8"))
+            self.assertEqual(FRONTEND_SCHEMA_VERSION, migrated["schema_version"])
+            for key in FRONTEND_OMITTED_TOP_LEVEL:
+                self.assertNotIn(key, migrated)
+            self.assertNotIn("metadata", migrated["provinces"][0])
+            unsupported = root / "old.json"
+            old = dict(complete)
+            old["schema_version"] = 15
+            unsupported.write_text(json.dumps(old, indent=2) + "\n", encoding="utf-8")
+            before = unsupported.read_bytes()
+            with self.assertRaises(ValueError):
+                persist_runtime_patched_snapshot(unsupported, patch)
+            self.assertEqual(before, unsupported.read_bytes())
 
     def test_used_fields_match_pre_slim_and_unused_stay_omitted(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

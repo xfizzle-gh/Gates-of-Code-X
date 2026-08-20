@@ -136,6 +136,29 @@ def slim_construction_options(options: Any) -> list[dict[str, Any]]:
     return rows
 
 
+def supported_frontend_schema_versions() -> frozenset[int]:
+    from .frontend import FRONTEND_PREVIOUS_SCHEMA_VERSION, FRONTEND_SCHEMA_VERSION
+
+    return frozenset({FRONTEND_PREVIOUS_SCHEMA_VERSION, FRONTEND_SCHEMA_VERSION})
+
+
+def require_slimmable_frontend_schema(snapshot: dict[str, Any]) -> int:
+    from .frontend import FRONTEND_SCHEMA_VERSION
+
+    has_schema = "schema" in snapshot
+    has_version = "schema_version" in snapshot
+    if not has_schema and not has_version:
+        return FRONTEND_SCHEMA_VERSION
+    if has_schema and str(snapshot.get("schema", "")) != "gates-of-codex.frontend":
+        raise ValueError(f"unsupported frontend snapshot schema: {snapshot.get('schema')!r}")
+    raw = snapshot.get("schema_version")
+    if isinstance(raw, bool) or not isinstance(raw, int):
+        raise ValueError(f"unsupported frontend snapshot schema_version: {raw!r}")
+    if raw not in supported_frontend_schema_versions():
+        raise ValueError(f"unsupported frontend snapshot schema_version: {raw}")
+    return raw
+
+
 def slim_unused_frontend_fields(snapshot: dict[str, Any]) -> dict[str, Any]:
     """Omit only fields the consumer search proved unused. Do not invent keys."""
 
@@ -143,6 +166,7 @@ def slim_unused_frontend_fields(snapshot: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("Frontend snapshot is not an object.")
     from .frontend import FRONTEND_SCHEMA_VERSION
 
+    require_slimmable_frontend_schema(snapshot)
     slimmed = {
         key: value
         for key, value in snapshot.items()

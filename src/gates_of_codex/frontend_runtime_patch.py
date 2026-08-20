@@ -311,8 +311,12 @@ def persist_runtime_patched_snapshot(path: str | Path, patch: dict[str, Any]) ->
         raise ValueError("Existing frontend snapshot is not an object.")
     if str(payload.get("schema", "")) != "gates-of-codex.frontend":
         return destination
-    from .frontend_snapshot_slim import slim_unused_frontend_fields
+    from .frontend_snapshot_slim import (
+        require_slimmable_frontend_schema,
+        slim_unused_frontend_fields,
+    )
 
+    require_slimmable_frontend_schema(payload)
     updated = slim_unused_frontend_fields(
         apply_runtime_patch_to_snapshot(payload, patch)
     )
