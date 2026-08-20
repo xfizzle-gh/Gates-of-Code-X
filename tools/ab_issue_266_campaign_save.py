@@ -48,12 +48,26 @@ def _repo_root() -> Path:
 def _ensure_src_path(src_root: Path | None) -> None:
     """Put the measured src first. Do not prepend the current checkout by default."""
 
-    candidate = str(
-        Path(src_root).resolve() if src_root is not None else (_repo_root() / "src").resolve()
+    invoker_src = (_repo_root() / "src").resolve()
+    measured_src = (
+        Path(src_root).resolve() if src_root is not None else invoker_src
     )
-    while candidate in sys.path:
-        sys.path.remove(candidate)
-    sys.path.insert(0, candidate)
+    keep: list[str] = []
+    for entry in sys.path:
+        if entry == "":
+            keep.append(entry)
+            continue
+        try:
+            resolved = Path(entry).resolve()
+        except (OSError, RuntimeError):
+            keep.append(entry)
+            continue
+        if resolved == measured_src:
+            continue
+        if src_root is not None and resolved == invoker_src and invoker_src != measured_src:
+            continue
+        keep.append(entry)
+    sys.path[:] = [str(measured_src), *keep]
 
 
 def _purge_gates_of_codex_modules() -> None:
@@ -335,6 +349,13 @@ def main(argv: list[str] | None = None) -> int:
             repeats=args.repeats,
         ),
     ]
+    invoker_src = str((_repo_root() / "src").resolve())
+    imported = [str(row["imported_src_root"]) for row in reports]
+    if imported[0] == imported[1] or invoker_src in imported:
+        raise SystemExit(
+            "false A/B: both sides imported the same src or the invoker checkout "
+            f"({imported}; invoker={invoker_src})"
+        )
     print(json.dumps({"reports": reports}, indent=2, sort_keys=True))
     print()
     _print_table(reports)

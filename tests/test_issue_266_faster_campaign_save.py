@@ -160,6 +160,9 @@ class FasterCampaignSaveContractTests(unittest.TestCase):
         self.assertTrue(head_report["has_p1_projection"])
         self.assertNotEqual(checkout_src, base_report["imported_src_root"])
         self.assertNotEqual(checkout_src, head_report["imported_src_root"])
+        self.assertNotEqual(
+            base_report["imported_src_root"], head_report["imported_src_root"]
+        )
         self.assertNotEqual(base_report["imported_module"], head_report["imported_module"])
         self.assertIn("goc-266-ab-", base_report["imported_src_root"])
         self.assertIn("goc-266-ab-", head_report["imported_src_root"])
@@ -285,6 +288,11 @@ class FasterCampaignSaveEarth3Tests(unittest.TestCase):
         self.assertIsNot(first.rows, cached.rows)
         victim_id = next(iter(cached.rows))
         self.assertIsNot(first.rows[victim_id], cached.rows[victim_id])
+        self.assertEqual(1, len(p2_integrity._P1_PROJECTION_CACHE))
+        internal_row = next(iter(p2_integrity._P1_PROJECTION_CACHE.values())).rows[
+            victim_id
+        ]
+        self.assertNotEqual(id(cached.rows[victim_id]), id(internal_row))
         poison = p2_integrity._P1ProvinceRow(
             is_water=True,
             neighbors=("e3_smuggle",),
@@ -306,8 +314,10 @@ class FasterCampaignSaveEarth3Tests(unittest.TestCase):
         self.assertNotEqual(("e3_smuggle",), canonical_neighbors)
         object.__setattr__(cached.rows[victim_id], "neighbors", ("e3_smuggle",))
         self.assertEqual(("e3_smuggle",), cached.rows[victim_id].neighbors)
+        self.assertEqual(canonical_neighbors, tuple(internal_row.neighbors))
         after_row_poison = p2_integrity.load_p1_integrity_projection()
         self.assertIsNot(cached.rows[victim_id], after_row_poison.rows[victim_id])
+        self.assertNotEqual(id(after_row_poison.rows[victim_id]), id(internal_row))
         self.assertEqual(canonical_neighbors, after_row_poison.rows[victim_id].neighbors)
         object.__setattr__(cached, "rows", MappingProxyType({}))
         self.assertEqual(0, len(cached.rows))
@@ -322,6 +332,10 @@ class FasterCampaignSaveEarth3Tests(unittest.TestCase):
             again: dict[str, float] = {}
             _compact_save_campaign(state, path, subphase_seconds=again)
             self.assertGreater(again["validate_base"], 0.0)
+            loaded = load_campaign(path)
+            self.assertEqual(
+                list(canonical_neighbors), loaded.provinces[victim_id].neighbors
+            )
         smuggled = self._fresh_state()
         smuggled.map_metadata["vertices"] = [[0, 0]]
         with self.assertRaisesRegex(Earth3BootstrapError, "contains geometry authority"):
