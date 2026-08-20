@@ -52,7 +52,8 @@ from . import frontend_commands as _commands
 
 
 _SNAPSHOT_PATCH_OPS = frozenset({"issue_move_order", "cancel_move_order"})
-_RUNTIME_PATCH_OPS = frozenset({"end_player_round"})
+_RUNTIME_PATCH_OPS = frozenset({"end_player_round", "auto_resolve"})
+_LIVE_MOVE_BATCH = ("issue_move_order", "commit_move_orders")
 
 _TIMING_KEYS = (
     "load_ms",
@@ -88,22 +89,26 @@ def _verify_only(commands: list[dict[str, Any]]) -> bool:
     )
 
 
+def _command_ops(commands: list[dict[str, Any]]) -> list[str]:
+    return [str(item.get("op", "")).strip().lower() for item in commands]
+
+
+def _is_live_move_batch(commands: list[dict[str, Any]]) -> bool:
+    return _command_ops(commands) == list(_LIVE_MOVE_BATCH)
+
+
 def _snapshot_patch_only(commands: list[dict[str, Any]]) -> bool:
     if not commands:
         return False
-    return all(
-        str(item.get("op", "")).strip().lower() in _SNAPSHOT_PATCH_OPS
-        for item in commands
-    )
+    return all(op in _SNAPSHOT_PATCH_OPS for op in _command_ops(commands))
 
 
 def _runtime_patch_only(commands: list[dict[str, Any]]) -> bool:
+    if _is_live_move_batch(commands):
+        return True
     if not commands:
         return False
-    return all(
-        str(item.get("op", "")).strip().lower() in _RUNTIME_PATCH_OPS
-        for item in commands
-    )
+    return all(op in _RUNTIME_PATCH_OPS for op in _command_ops(commands))
 
 
 def _size(path: str | Path | None) -> int:

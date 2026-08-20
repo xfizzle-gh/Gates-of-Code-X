@@ -14,7 +14,7 @@ extends "res://scripts/main_perf.gd"
 ##   payload. The patch is validated into a detached candidate before commit.
 
 const LIGHTWEIGHT_ORDER_OPS := ["issue_move_order", "cancel_move_order"]
-const RUNTIME_PATCH_OPS := ["end_player_round"]
+const RUNTIME_PATCH_OPS := ["end_player_round", "auto_resolve"]
 const RUNTIME_PATCH_SCHEMA := "gates-of-codex.frontend-runtime-patch"
 const RUNTIME_PATCH_SCHEMA_VERSION := 1
 
@@ -103,6 +103,17 @@ func _is_lightweight_order_op(op: String) -> bool:
 
 func _is_runtime_patch_op(op: String) -> bool:
 	return op in RUNTIME_PATCH_OPS
+
+
+func _is_live_move_batch(commands: Array) -> bool:
+	if commands.size() != 2:
+		return false
+	if not commands[0] is Dictionary or not commands[1] is Dictionary:
+		return false
+	return (
+		String((commands[0] as Dictionary).get("op", "")) == "issue_move_order"
+		and String((commands[1] as Dictionary).get("op", "")) == "commit_move_orders"
+	)
 
 
 func _apply_move_order_result_patch(
@@ -413,8 +424,8 @@ func _on_command_finished(
 	if not commands.is_empty() and commands[0] is Dictionary:
 		op = String((commands[0] as Dictionary).get("op", "command"))
 
-	if op == "verify_result" or _is_lightweight_order_op(op):
-		_consume_fast_command_result(
+	if _is_live_move_batch(commands) or _is_runtime_patch_op(op):
+		_consume_runtime_patch_result(
 			generation,
 			success,
 			exit_code,
@@ -423,8 +434,8 @@ func _on_command_finished(
 			op
 		)
 		return
-	if _is_runtime_patch_op(op):
-		_consume_runtime_patch_result(
+	if op == "verify_result" or _is_lightweight_order_op(op):
+		_consume_fast_command_result(
 			generation,
 			success,
 			exit_code,
