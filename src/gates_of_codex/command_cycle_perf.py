@@ -33,6 +33,10 @@ Fast paths are intentionally narrow:
   later requests during that same atomic command reuse a detached copy. The cache
   is discarded and the authority loader restored before the command returns, so
   the next command authenticates again.
+* Earth3 save validation still re-hashes the fixed P1 files and still compares
+  every persisted province against authenticated P1 topology. After the first
+  exact-byte capture in the process, it reuses a slim integrity projection
+  instead of deepcopying the 19 MB parsed dataset on every campaign write.
 
 Other mutating commands retain the existing load -> mutate -> save -> full
 snapshot publication path.
@@ -181,11 +185,13 @@ def _profiled_campaign_validation(
     from . import earth3_bootstrap as _earth3_bootstrap
     from . import earth3_fixture_authority as _earth3_fixture_authority
     from . import observation as _observation
+    from . import p2_integrity as _p2_integrity
 
     original_bootstrap_validate = _earth3_bootstrap.validate_earth3_bootstrap_campaign_state
     original_load_bootstrap = _earth3_bootstrap.load_earth3_bootstrap
     original_operational_validate = _earth3_fixture_authority.validate_earth3_operational_authority
     original_observation_validate = _observation.validate_s11_observer_authority
+    original_p1_projection = _p2_integrity.load_p1_integrity_projection
     nested: dict[str, float] = {}
 
     def timed_load_bootstrap(*, authority_root=None):
@@ -216,10 +222,18 @@ def _profiled_campaign_validation(
             lambda: original_observation_validate(candidate_state),
         )
 
+    def timed_p1_projection(authority_root=None):
+        return _timed_save_step(
+            nested,
+            "validate_p1_projection",
+            lambda: original_p1_projection(authority_root),
+        )
+
     _earth3_bootstrap.load_earth3_bootstrap = timed_load_bootstrap
     _earth3_fixture_authority.validate_earth3_operational_authority = timed_operational_validate
     _earth3_bootstrap.validate_earth3_bootstrap_campaign_state = timed_bootstrap_validate
     _observation.validate_s11_observer_authority = timed_observation_validate
+    _p2_integrity.load_p1_integrity_projection = timed_p1_projection
     started = time.perf_counter()
     try:
         state.validate()
@@ -229,6 +243,7 @@ def _profiled_campaign_validation(
         _earth3_fixture_authority.validate_earth3_operational_authority = original_operational_validate
         _earth3_bootstrap.validate_earth3_bootstrap_campaign_state = original_bootstrap_validate
         _observation.validate_s11_observer_authority = original_observation_validate
+        _p2_integrity.load_p1_integrity_projection = original_p1_projection
         if timings is not None:
             for name, seconds in nested.items():
                 timings[name] = timings.get(name, 0.0) + seconds
