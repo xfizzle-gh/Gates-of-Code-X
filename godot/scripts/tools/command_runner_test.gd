@@ -32,6 +32,7 @@ func _run_all() -> void:
 	await _test_exit_during_command_safe()
 	await _test_candidate_fallback()
 	await _test_persistent_backend_transport_success()
+	await _test_persistent_backend_launch_path_for_live_ops()
 	await _test_stale_persistent_identity_falls_back()
 	await _test_dead_persistent_session_falls_back_before_dispatch()
 	await _test_post_dispatch_loss_never_replays()
@@ -414,6 +415,43 @@ func _test_persistent_backend_transport_success() -> void:
 		String(_runner.last_launch_path()).begins_with("persistent-backend://"),
 		_runner.last_launch_path()
 	)
+
+
+func _test_persistent_backend_launch_path_for_live_ops() -> void:
+	var batches := [
+		[
+			{"op": "issue_move_order"},
+			{"op": "commit_move_orders"},
+		],
+		[{"op": "refresh"}],
+		[{"op": "end_player_round"}],
+		[{"op": "auto_resolve"}],
+	]
+	for batch_index in batches.size():
+		_finished_events.clear()
+		var server := _start_test_server()
+		_assert_true("live-op server %s" % batch_index, server != null)
+		if server == null:
+			return
+		var root_path := _test_root("live_ops_%s" % batch_index)
+		var commit := "0123456789abcdef0123456789abcdef01234567"
+		var token := "test-token-live-%s" % batch_index
+		var candidate := _persistent_candidate(root_path, commit)
+		_write_session(root_path, server.get_local_port(), token, commit)
+		var batch: Array = batches[batch_index]
+		var start: Dictionary = _runner.try_start_candidates(
+			batch, [candidate], root_path.path_join("campaign_snapshot.json")
+		)
+		_assert_true("live-op start %s" % batch[0]["op"], bool(start.get("ok", false)), str(start))
+		var actions := await _serve_backend_until_idle(server, token, commit)
+		await _wait_until_idle(2.0)
+		server.stop()
+		_assert_eq("live-op actions %s" % batch[0]["op"], actions, ["ping", "apply"])
+		_assert_true(
+			"live-op launch %s" % batch[0]["op"],
+			String(_runner.last_launch_path()).begins_with("persistent-backend://"),
+			_runner.last_launch_path()
+		)
 
 
 func _test_stale_persistent_identity_falls_back() -> void:

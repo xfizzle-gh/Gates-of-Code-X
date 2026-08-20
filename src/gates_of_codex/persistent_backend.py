@@ -28,7 +28,15 @@ SESSION_FILE_NAME = ".goc-backend-session.json"
 SESSION_SCHEMA = "gates-of-codex.persistent-backend"
 SESSION_SCHEMA_VERSION = 2
 SUPPORTED_OPS = frozenset(
-    {"end_player_round", "issue_move_order", "cancel_move_order", "verify_result"}
+    {
+        "end_player_round",
+        "issue_move_order",
+        "cancel_move_order",
+        "verify_result",
+        "commit_move_orders",
+        "refresh",
+        "auto_resolve",
+    }
 )
 IDLE_TIMEOUT_SECONDS = 900.0
 APPLY_RESPONSE_TIMEOUT_SECONDS = 600.0
