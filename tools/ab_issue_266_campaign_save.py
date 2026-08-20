@@ -167,6 +167,38 @@ def _resolve_sha(repo: Path, spec: str) -> str:
     return completed.stdout.strip()
 
 
+def _git_common_dir(repo: Path) -> Path:
+    completed = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "--git-common-dir"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    common = Path(completed.stdout.strip())
+    if not common.is_absolute():
+        common = (repo / common).resolve()
+    return common
+
+
+def _windows_long_path(path: Path) -> Path:
+    """Expand 8.3 names. Git worktree add rejects C:\\Users\\RUNNER~1\\... on some hosts."""
+
+    resolved = path.resolve()
+    if os.name != "nt":
+        return resolved
+    try:
+        import ctypes
+
+        get_long_path_name = ctypes.windll.kernel32.GetLongPathNameW
+        buffer = ctypes.create_unicode_buffer(32768)
+        length = get_long_path_name(str(resolved), buffer, len(buffer))
+        if length:
+            return Path(buffer.value)
+    except (AttributeError, OSError, ValueError):
+        pass
+    return resolved
+
+
 def _run_harness_at_sha(
     *,
     repo: Path,
@@ -174,48 +206,64 @@ def _run_harness_at_sha(
     extra_args: list[str],
 ) -> dict[str, Any]:
     resolved = _resolve_sha(repo, sha)
-    with tempfile.TemporaryDirectory(prefix="goc-266-ab-") as temporary:
-        worktree = Path(temporary) / "worktree"
-        subprocess.run(
+    # Same-volume path under .git. System temp on Windows CI is often an 8.3
+    # short name on another drive; git worktree add then exits 128.
+    scratch = _windows_long_path(
+        Path(
+            tempfile.mkdtemp(
+                prefix="goc-266-ab-",
+                dir=str(_git_common_dir(repo)),
+            )
+        )
+    )
+    worktree = scratch / "worktree"
+    added = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repo),
+            "worktree",
+            "add",
+            "--detach",
+            str(worktree),
+            resolved,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if added.returncode != 0:
+        shutil.rmtree(scratch, ignore_errors=True)
+        raise SystemExit(
+            f"git worktree add {resolved} -> {worktree} failed "
+            f"({added.returncode}):\n{added.stdout}\n{added.stderr}"
+        )
+    try:
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str((worktree / "src").resolve())
+        completed = subprocess.run(
             [
-                "git",
-                "-C",
-                str(repo),
-                "worktree",
-                "add",
-                "--detach",
-                str(worktree),
+                sys.executable,
+                str(Path(__file__).resolve()),
+                "--src-root",
+                str((worktree / "src").resolve()),
+                "--sha",
                 resolved,
+                *extra_args,
             ],
-            check=True,
+            check=False,
+            capture_output=True,
+            text=True,
+            env=env,
+        )
+    finally:
+        subprocess.run(
+            ["git", "-C", str(repo), "worktree", "remove", "--force", str(worktree)],
+            check=False,
             capture_output=True,
             text=True,
         )
-        try:
-            env = os.environ.copy()
-            env["PYTHONPATH"] = str((worktree / "src").resolve())
-            completed = subprocess.run(
-                [
-                    sys.executable,
-                    str(Path(__file__).resolve()),
-                    "--src-root",
-                    str((worktree / "src").resolve()),
-                    "--sha",
-                    resolved,
-                    *extra_args,
-                ],
-                check=False,
-                capture_output=True,
-                text=True,
-                env=env,
-            )
-        finally:
-            subprocess.run(
-                ["git", "-C", str(repo), "worktree", "remove", "--force", str(worktree)],
-                check=False,
-                capture_output=True,
-                text=True,
-            )
+        shutil.rmtree(scratch, ignore_errors=True)
     if completed.returncode != 0:
         raise SystemExit(
             f"harness at {resolved} failed ({completed.returncode}):\n"
