@@ -43,7 +43,7 @@ func _assert_true(name: String, cond: bool, detail := "") -> void:
 func _slimmed_snapshot() -> Dictionary:
 	return {
 		"schema": "gates-of-codex.frontend",
-		"schema_version": 16,
+		"schema_version": 17,
 		"application": {"name": "Gates of CodeX", "turn_number": 1},
 		"campaign": {
 			"name": "audit",

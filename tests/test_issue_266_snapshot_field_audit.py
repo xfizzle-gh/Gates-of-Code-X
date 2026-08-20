@@ -10,7 +10,11 @@ from unittest.mock import patch
 
 from gates_of_codex import command_cycle_perf
 from gates_of_codex.command_cycle_perf import measured_apply_frontend_commands
-from gates_of_codex.frontend import build_frontend_snapshot
+from gates_of_codex.frontend import (
+    FRONTEND_PREVIOUS_SCHEMA_VERSION,
+    FRONTEND_SCHEMA_VERSION,
+    build_frontend_snapshot,
+)
 from gates_of_codex.frontend_runtime_patch import (
     RUNTIME_PATCH_SCHEMA,
     RUNTIME_PATCH_SCHEMA_VERSION,
@@ -123,12 +127,84 @@ def _consumed_projection(snapshot: dict[str, Any]) -> dict[str, Any]:
     return projected
 
 
-def _godot_live_snapshot_gets() -> set[str]:
-    pattern = re.compile(r'snapshot\.get\(\s*"([A-Za-z0-9_]+)"')
+_SNAPSHOT_GET = re.compile(
+    r"""\bsnapshot\s*(?:\.get\(\s*|\s*\[)\s*["']([A-Za-z0-9_]+)["']"""
+)
+_EXTENDS = re.compile(r'^extends\s+"res://([^"]+)"', re.MULTILINE)
+_OMITTED_ACCESSORS = (
+    'snapshot.get("research"',
+    "snapshot.get('research'",
+    'snapshot["research"]',
+    'snapshot.get("commanders"',
+    "snapshot.get('commanders'",
+    'snapshot["commanders"]',
+    'province.get("metadata"',
+    'province.get("terrain"',
+    'province.get("map_region"',
+    'province.get("id_color"',
+    'province.get("name_source"',
+    'province.get("supply_source_for"',
+    'option.get("blocked_reasons"',
+    'option.get("level"',
+    'option.get("max_level"',
+    'battalion.get("roster"',
+    'battalion.get("authorized_roster"',
+)
+
+
+def _production_godot_scripts() -> list[Path]:
+    scripts: list[Path] = []
+    for path in GODOT_SCRIPTS.rglob("*.gd"):
+        if "tools" in path.parts:
+            continue
+        scripts.append(path)
+    return scripts
+
+
+def _follow_extends(start: Path) -> set[Path]:
+    seen: set[Path] = set()
+    stack = [start]
+    while stack:
+        path = stack.pop()
+        if path in seen or not path.is_file():
+            continue
+        seen.add(path)
+        text = path.read_text(encoding="utf-8")
+        match = _EXTENDS.search(text)
+        if match is None:
+            continue
+        nxt = ROOT / "godot" / match.group(1).replace("/", "\\")
+        if nxt.is_file():
+            stack.append(nxt)
+        else:
+            nxt = ROOT / "godot" / match.group(1)
+            if nxt.is_file():
+                stack.append(nxt)
+    return seen
+
+
+def _live_scene_scripts() -> set[Path]:
+    scene = ROOT / "godot" / "main.tscn"
+    text = scene.read_text(encoding="utf-8")
+    roots: list[Path] = []
+    for match in re.finditer(r'path="res://([^"]+\.gd)"', text):
+        roots.append(ROOT / "godot" / match.group(1))
+    found: set[Path] = set()
+    for root in roots:
+        found.update(_follow_extends(root))
+        found.add(root)
+    return {path for path in found if path.is_file()}
+
+
+def _godot_snapshot_keys(paths: list[Path] | set[Path]) -> set[str]:
     found: set[str] = set()
-    for path in LIVE_GODOT:
-        found.update(pattern.findall(path.read_text(encoding="utf-8")))
+    for path in paths:
+        found.update(_SNAPSHOT_GET.findall(path.read_text(encoding="utf-8")))
     return found
+
+
+def _godot_live_snapshot_gets() -> set[str]:
+    return _godot_snapshot_keys(_live_scene_scripts() | set(_production_godot_scripts()))
 
 
 class ConsumerInventoryTests(unittest.TestCase):
@@ -178,8 +254,76 @@ class ConsumerInventoryTests(unittest.TestCase):
             & FRONTEND_CONSUMED_CONSTRUCTION_OPTION_FIELDS
         )
 
+    def test_inventory_covers_live_scene_inheritance_and_all_production_scripts(self) -> None:
+        live_scene = _live_scene_scripts()
+        production = set(_production_godot_scripts())
+        self.assertIn(GODOT_SCRIPTS / "main_composed_presentation_refresh_safe.gd", live_scene)
+        self.assertIn(GODOT_SCRIPTS / "main.gd", live_scene)
+        self.assertIn(GODOT_SCRIPTS / "main_writeback.gd", live_scene)
+        self.assertTrue(production)
+        self.assertTrue(production >= live_scene)
+        keys = _godot_snapshot_keys(production)
+        unknown = keys - FRONTEND_CONSUMED_TOP_LEVEL - {"schema"}
+        self.assertEqual(set(), unknown, sorted(unknown))
+
+    def test_production_godot_has_no_omitted_field_accessors(self) -> None:
+        hits: list[str] = []
+        for path in _production_godot_scripts():
+            text = path.read_text(encoding="utf-8")
+            for token in _OMITTED_ACCESSORS:
+                if token in text:
+                    hits.append(f"{path.relative_to(ROOT)}:{token}")
+        self.assertEqual([], hits)
+
+    def test_production_python_does_not_read_omitted_frontend_snapshot_keys(self) -> None:
+        src = ROOT / "src" / "gates_of_codex"
+        allow = {
+            src / "frontend.py",
+            src / "frontend_snapshot_slim.py",
+            src / "frontend_runtime_patch.py",
+            src / "frontend_fastpath.py",
+        }
+        tokens = (
+            '["research"]',
+            '["commanders"]',
+            'get("research"',
+            'get("commanders"',
+        )
+        hits: list[str] = []
+        for path in src.rglob("*.py"):
+            if path in allow or "data" in path.parts:
+                continue
+            text = path.read_text(encoding="utf-8")
+            if "gates-of-codex.frontend" not in text and "campaign_snapshot" not in text:
+                continue
+            for token in tokens:
+                if token in text:
+                    hits.append(f"{path.relative_to(ROOT)}:{token}")
+        self.assertEqual([], hits)
+
 
 class SlimParityTests(unittest.TestCase):
+    def test_schema_bumps_and_old_snapshots_migrate(self) -> None:
+        self.assertEqual(17, FRONTEND_SCHEMA_VERSION)
+        self.assertEqual(16, FRONTEND_PREVIOUS_SCHEMA_VERSION)
+        with tempfile.TemporaryDirectory() as temporary:
+            state = _state(Path(temporary))
+            complete = _complete_snapshot(state)
+            complete["schema_version"] = FRONTEND_PREVIOUS_SCHEMA_VERSION
+            self.assertIn("commanders", complete)
+            self.assertIn("metadata", complete["provinces"][0])
+            migrated = slim_unused_frontend_fields(complete)
+            self.assertEqual(FRONTEND_SCHEMA_VERSION, migrated["schema_version"])
+            self.assertEqual("gates-of-codex.frontend", migrated["schema"])
+            for key in FRONTEND_OMITTED_TOP_LEVEL:
+                self.assertNotIn(key, migrated)
+            self.assertNotIn("metadata", migrated["provinces"][0])
+            before = _consumed_projection(complete)
+            after = _consumed_projection(migrated)
+            before.pop("schema_version", None)
+            after.pop("schema_version", None)
+            self.assertEqual(before, after)
+
     def test_used_fields_match_pre_slim_and_unused_stay_omitted(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             state = _state(Path(temporary))

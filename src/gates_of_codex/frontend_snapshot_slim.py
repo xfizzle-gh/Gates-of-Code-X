@@ -141,11 +141,14 @@ def slim_unused_frontend_fields(snapshot: dict[str, Any]) -> dict[str, Any]:
 
     if not isinstance(snapshot, dict):
         raise ValueError("Frontend snapshot is not an object.")
+    from .frontend import FRONTEND_SCHEMA_VERSION
+
     slimmed = {
         key: value
         for key, value in snapshot.items()
         if key not in FRONTEND_OMITTED_TOP_LEVEL
     }
+    slimmed["schema_version"] = FRONTEND_SCHEMA_VERSION
     campaign = slimmed.get("campaign")
     if isinstance(campaign, dict):
         metadata = campaign.get("map_metadata")

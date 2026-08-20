@@ -326,7 +326,7 @@ class Earth3GraphSnapshotContractTests(unittest.TestCase):
         cls.snapshot = build_frontend_snapshot(cls.state)
 
     def test_snapshot_exports_operational_orders_for_the_acting_faction(self) -> None:
-        self.assertEqual(16, FRONTEND_SCHEMA_VERSION)
+        self.assertEqual(17, FRONTEND_SCHEMA_VERSION)
         self.assertEqual(FRONTEND_SCHEMA_VERSION, self.snapshot["schema_version"])
         rows = self.snapshot["operational_orders"]
         self.assertTrue(rows)

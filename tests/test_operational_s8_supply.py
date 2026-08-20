@@ -11,7 +11,7 @@ from unittest import mock
 from gates_of_codex.force_migration import ensure_strategic_formations
 from gates_of_codex.cli import main as cli_main
 from gates_of_codex.campaign import CampaignEngine
-from gates_of_codex.frontend import build_frontend_snapshot
+from gates_of_codex.frontend import FRONTEND_SCHEMA_VERSION, build_frontend_snapshot
 from gates_of_codex.models import (
     Alliance,
     Battalion,
@@ -1489,7 +1489,7 @@ class OperationalS8SupplyTests(unittest.TestCase):
 
         exported_force = snapshot["strategic_formations"][0]
         exported_battalion = snapshot["battalions"][0]
-        self.assertEqual(16, snapshot["schema_version"])
+        self.assertEqual(FRONTEND_SCHEMA_VERSION, snapshot["schema_version"])
         self.assertFalse(exported_force["supplied"])
         self.assertTrue(exported_force["cut_off"])
         self.assertIsNone(exported_force["source_hub_id"])
