@@ -377,7 +377,10 @@ def measured_apply_frontend_commands(
     """Run the existing command engine and attach phase telemetry."""
 
     from . import earth3_operational as _earth3_operational
-    from .frontend_runtime_patch import build_frontend_runtime_patch
+    from .frontend_runtime_patch import (
+        build_frontend_runtime_patch,
+        persist_runtime_patched_snapshot,
+    )
 
     requested = _requested_commands(commands, commands_path)
     read_only_fast_path = _verify_only(requested)
@@ -455,6 +458,7 @@ def measured_apply_frontend_commands(
                     snapshot_path=path,
                     environ=environ,
                 )
+                persist_runtime_patched_snapshot(path, runtime_patch)
                 return Path(path)
             finally:
                 phase_seconds["snapshot"] += time.perf_counter() - started

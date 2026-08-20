@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 import json
 import tempfile
 import unittest
@@ -15,6 +14,7 @@ from gates_of_codex.command_cycle_perf import (
     measured_apply_frontend_commands,
 )
 from gates_of_codex.frontend import build_frontend_snapshot
+from gates_of_codex.frontend_runtime_patch import apply_runtime_patch_to_snapshot
 from gates_of_codex.operational_schema import stable_edge_id, stable_node_id
 from gates_of_codex.state_io import load_campaign, save_campaign
 from tests.test_s10_frontend_presentation_contract import (
@@ -61,42 +61,8 @@ def _move_batch(*, locked_stance: str = "operational") -> list[dict[str, Any]]:
     ]
 
 
-def _merge_rows(base: Any, patch: Any) -> list[dict[str, Any]]:
-    rows = [copy.deepcopy(item) for item in base or [] if isinstance(item, dict)]
-    index = {
-        str(row.get("id", "")): idx
-        for idx, row in enumerate(rows)
-        if str(row.get("id", ""))
-    }
-    for item in patch or []:
-        if not isinstance(item, dict):
-            continue
-        identity = str(item.get("id", ""))
-        if not identity:
-            continue
-        if identity in index:
-            merged = dict(rows[index[identity]])
-            merged.update(copy.deepcopy(item))
-            rows[index[identity]] = merged
-        else:
-            index[identity] = len(rows)
-            rows.append(copy.deepcopy(item))
-    return rows
-
-
 def apply_runtime_patch(base: dict[str, Any], patch: dict[str, Any]) -> dict[str, Any]:
-    candidate = copy.deepcopy(base)
-    merge = patch.get("merge") or {}
-    for key in ("application", "campaign"):
-        row = dict(candidate.get(key) or {})
-        row.update(copy.deepcopy(merge.get(key) or {}))
-        candidate[key] = row
-    candidate["provinces"] = _merge_rows(candidate.get("provinces"), merge.get("provinces"))
-    candidate["formations"] = _merge_rows(candidate.get("formations"), merge.get("formations"))
-    replace = patch.get("replace") or {}
-    for key, value in replace.items():
-        candidate[key] = copy.deepcopy(value)
-    return candidate
+    return apply_runtime_patch_to_snapshot(base, patch)
 
 
 def _normalize(value: Any) -> Any:
@@ -168,12 +134,15 @@ class LiveBatchParityTests(unittest.TestCase):
     def test_successful_issue_commit_matches_full_snapshot(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             campaign, snapshot_path, before = self._prepare(Path(temporary))
-            stale = snapshot_path.read_text(encoding="utf-8")
             report = self._apply(campaign, snapshot_path, _move_batch())
             self.assertTrue(report.get("ok"))
             self.assertTrue(report["timings"]["runtime_patch_fast_path"])
             self.assertFalse(report["timings"]["snapshot_fast_path"])
-            self.assertEqual(stale, snapshot_path.read_text(encoding="utf-8"))
+            persisted = json.loads(snapshot_path.read_text(encoding="utf-8"))
+            self.assertEqual(
+                "committed",
+                (_force(persisted, "sf-n").get("move_order") or {}).get("status"),
+            )
             patched = apply_runtime_patch(before, report["frontend_patch"])
             full = build_frontend_snapshot(load_campaign(campaign), campaign_path=campaign)
             order = _force(patched, "sf-n").get("move_order") or {}
@@ -210,14 +179,11 @@ class LiveBatchParityTests(unittest.TestCase):
                 Path(temporary), prepared_contact=True
             )
             self.assertIsNotNone(before.get("pending_battle"))
-            stale = json.loads(snapshot_path.read_text(encoding="utf-8"))
             report = self._apply(campaign, snapshot_path, [{"op": "auto_resolve"}])
             self.assertTrue(report.get("ok"))
             self.assertTrue(report["timings"]["runtime_patch_fast_path"])
-            self.assertEqual(
-                stale.get("pending_battle"),
-                json.loads(snapshot_path.read_text(encoding="utf-8")).get("pending_battle"),
-            )
+            persisted = json.loads(snapshot_path.read_text(encoding="utf-8"))
+            self.assertIsNone(persisted.get("pending_battle"))
             state = load_campaign(campaign)
             self.assertIsNone(state.pending_battle)
             patched = apply_runtime_patch(before, report["frontend_patch"])
