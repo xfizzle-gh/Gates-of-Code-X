@@ -3,9 +3,15 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
+import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
+from dataclasses import FrozenInstanceError
 from pathlib import Path
+from types import MappingProxyType
 from unittest.mock import patch
 
 from gates_of_codex import command_cycle_perf, command_scoped_p2_auth, p2_integrity
@@ -17,7 +23,12 @@ from gates_of_codex.earth3_bootstrap import Earth3BootstrapError
 from gates_of_codex.earth3_campaign import (
     APPROVED_DATASET_SHA256,
     APPROVED_PROVINCE_COUNT,
+    EARTH3_DATASET_PATH,
+    EARTH3_MANIFEST_PATH,
+    EARTH3_METADATA_PATH,
+    EARTH3_PRODUCTION_AUTHORITY_PATH,
     Earth3AuthorityError,
+    _default_authority_root,
 )
 from gates_of_codex.frontend_runtime_patch import (
     RUNTIME_PATCH_SCHEMA,
@@ -71,6 +82,22 @@ class FasterCampaignSaveContractTests(unittest.TestCase):
         self.assertIn("load_p1_integrity_projection", source)
         self.assertIn("_capture_p1_identity", source)
         self.assertIn("load_earth3_authority", source)
+        self.assertIn("MappingProxyType", source)
+        self.assertIn("_detach_p1_projection", source)
+
+    def test_owner_ab_harness_refuses_missing_campaign(self) -> None:
+        harness = ROOT / "tools/ab_issue_266_campaign_save.py"
+        self.assertTrue(harness.is_file())
+        completed = subprocess.run(
+            [sys.executable, str(harness)],
+            check=False,
+            capture_output=True,
+            text=True,
+            env={key: value for key, value in os.environ.items() if key != "GOC_OWNER_CAMPAIGN"},
+        )
+        self.assertEqual(2, completed.returncode)
+        self.assertIn("owner campaign missing", completed.stderr)
+        self.assertIn("does not invent owner timings", completed.stderr)
 
 
 class FasterCampaignSaveEarth3Tests(unittest.TestCase):
@@ -181,21 +208,117 @@ class FasterCampaignSaveEarth3Tests(unittest.TestCase):
             self.assertLess(save_ms, 750.0)
             self.assertLess(save_base_ms, 350.0)
 
-    def test_changed_p1_bytes_still_fail_closed(self) -> None:
+    def test_cached_projection_cannot_poison_later_validate(self) -> None:
         state = self._fresh_state()
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "campaign.json"
             _compact_save_campaign(state, path)
-        with patch(
-            "gates_of_codex.command_scoped_p2_auth._capture_p1_identity",
-            side_effect=Earth3AuthorityError(
-                "Earth3 production dataset bytes/SHA-256 mismatch"
-            ),
+        first = p2_integrity.load_p1_integrity_projection()
+        cached = p2_integrity.load_p1_integrity_projection()
+        self.assertIsInstance(cached.rows, MappingProxyType)
+        self.assertIsNot(first, cached)
+        self.assertIsNot(first.rows, cached.rows)
+        victim_id = next(iter(cached.rows))
+        poison = p2_integrity._P1ProvinceRow(
+            is_water=True,
+            neighbors=("e3_smuggle",),
+            label=(0.0, 0.0),
+            centroid=(0.0, 0.0),
+            source_id=0,
+            terrain_id=0,
+            continent_id=0,
+        )
+        with self.assertRaises(TypeError):
+            cached.rows[victim_id] = poison  # type: ignore[index]
+        with self.assertRaises(TypeError):
+            del cached.rows[victim_id]  # type: ignore[attr-defined]
+        with self.assertRaises(FrozenInstanceError):
+            cached.rows = {}  # type: ignore[misc]
+        with self.assertRaises(FrozenInstanceError):
+            cached.rows[victim_id].neighbors = ("e3_smuggle",)  # type: ignore[misc]
+        object.__setattr__(cached, "rows", MappingProxyType({}))
+        self.assertEqual(0, len(cached.rows))
+        later = p2_integrity.load_p1_integrity_projection()
+        self.assertEqual(APPROVED_PROVINCE_COUNT, len(later.rows))
+        self.assertIn(victim_id, later.rows)
+        self.assertNotEqual(("e3_smuggle",), later.rows[victim_id].neighbors)
+        state.validate()
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "campaign.json"
+            again: dict[str, float] = {}
+            _compact_save_campaign(state, path, subphase_seconds=again)
+            self.assertGreater(again["validate_base"], 0.0)
+        smuggled = self._fresh_state()
+        smuggled.map_metadata["vertices"] = [[0, 0]]
+        with self.assertRaisesRegex(Earth3BootstrapError, "contains geometry authority"):
+            smuggled.validate()
+        tampered = self._fresh_state()
+        victim = next(province for province in tampered.provinces.values() if province.neighbors)
+        victim.neighbors = list(victim.neighbors) + ["e3_missing"]
+        with self.assertRaisesRegex(
+            Earth3BootstrapError, "persisted province topology mismatch"
         ):
-            with self.assertRaisesRegex(
-                Earth3AuthorityError, "dataset bytes/SHA-256 mismatch"
-            ):
-                state.validate()
+            tampered.validate()
+
+    def test_changed_p1_file_bytes_invalidate_process_cache(self) -> None:
+        """Real same-process hash-key miss. Does not mock _capture_p1_identity."""
+
+        source_root = _default_authority_root()
+        fixed_files = (
+            EARTH3_MANIFEST_PATH,
+            EARTH3_DATASET_PATH,
+            EARTH3_METADATA_PATH,
+            EARTH3_PRODUCTION_AUTHORITY_PATH,
+        )
+        rebuilds: list[str] = []
+        original_from_authority = p2_integrity._p1_projection_from_authority
+
+        def counting_from_authority(authority):
+            rebuilds.append(str(authority.root))
+            return original_from_authority(authority)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            dest = Path(temporary) / "authority"
+            for relative in fixed_files:
+                target = dest / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source_root / relative, target)
+
+            first_key = command_scoped_p2_auth._capture_p1_identity(dest)
+            first = p2_integrity.load_p1_integrity_projection(dest)
+            self.assertEqual(APPROVED_PROVINCE_COUNT, len(first.rows))
+            self.assertEqual([first_key], list(p2_integrity._P1_PROJECTION_CACHE))
+
+            p2_integrity._p1_projection_from_authority = counting_from_authority
+            try:
+                warmed = p2_integrity.load_p1_integrity_projection(dest)
+                self.assertEqual([], rebuilds)
+                self.assertEqual(APPROVED_PROVINCE_COUNT, len(warmed.rows))
+
+                metadata = dest / EARTH3_METADATA_PATH
+                metadata.write_bytes(metadata.read_bytes() + b"\n")
+                changed_key = command_scoped_p2_auth._capture_p1_identity(dest)
+                self.assertNotEqual(first_key, changed_key)
+                self.assertEqual(first_key[0], changed_key[0])
+                rebuilt = p2_integrity.load_p1_integrity_projection(dest)
+                self.assertEqual(1, len(rebuilds))
+                self.assertEqual(APPROVED_PROVINCE_COUNT, len(rebuilt.rows))
+                self.assertIn(first_key, p2_integrity._P1_PROJECTION_CACHE)
+                self.assertIn(changed_key, p2_integrity._P1_PROJECTION_CACHE)
+
+                dataset = dest / EARTH3_DATASET_PATH
+                dataset.write_bytes(dataset.read_bytes() + b" ")
+                with self.assertRaisesRegex(
+                    Earth3AuthorityError, "dataset bytes/SHA-256 mismatch"
+                ):
+                    command_scoped_p2_auth._capture_p1_identity(dest)
+                with self.assertRaisesRegex(
+                    Earth3AuthorityError, "dataset bytes/SHA-256 mismatch"
+                ):
+                    p2_integrity.load_p1_integrity_projection(dest)
+                self.assertEqual(1, len(rebuilds))
+            finally:
+                p2_integrity._p1_projection_from_authority = original_from_authority
 
     def test_in_memory_topology_tamper_is_still_rejected(self) -> None:
         state = self._fresh_state()

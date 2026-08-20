@@ -4,6 +4,7 @@ from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass
 from threading import RLock
+from types import MappingProxyType
 from typing import Any
 
 from .models import CampaignState, Faction
@@ -115,7 +116,7 @@ class _P1IntegrityProjection:
     production_schema_version: int
     stable_id_policy: str
     water_policy_v1: str
-    rows: dict[str, _P1ProvinceRow]
+    rows: Mapping[str, _P1ProvinceRow]
 
 
 def _clear_p1_integrity_projection_cache_for_tests() -> None:
@@ -123,6 +124,29 @@ def _clear_p1_integrity_projection_cache_for_tests() -> None:
 
     with _P1_PROJECTION_LOCK:
         _P1_PROJECTION_CACHE.clear()
+
+
+def _freeze_p1_rows(rows: Mapping[str, _P1ProvinceRow]) -> Mapping[str, _P1ProvinceRow]:
+    """Detach then freeze so callers cannot mutate the process cache mapping."""
+
+    return MappingProxyType(dict(rows))
+
+
+def _detach_p1_projection(projection: _P1IntegrityProjection) -> _P1IntegrityProjection:
+    """Return a new frozen projection so cache hits never hand out the stored object."""
+
+    return _P1IntegrityProjection(
+        manifest_sha256=projection.manifest_sha256,
+        dataset_sha256=projection.dataset_sha256,
+        embedded_dataset_sha256=projection.embedded_dataset_sha256,
+        geometry_sha256=projection.geometry_sha256,
+        production_asset_version=projection.production_asset_version,
+        included_ids_sha256=projection.included_ids_sha256,
+        production_schema_version=projection.production_schema_version,
+        stable_id_policy=projection.stable_id_policy,
+        water_policy_v1=projection.water_policy_v1,
+        rows=_freeze_p1_rows(projection.rows),
+    )
 
 
 def _p1_projection_from_authority(authority: Any) -> _P1IntegrityProjection:
@@ -149,7 +173,7 @@ def _p1_projection_from_authority(authority: Any) -> _P1IntegrityProjection:
         production_schema_version=int(production["schema_version"]),
         stable_id_policy=str(production["stable_id_policy"]),
         water_policy_v1=str(production["water_policy"]["v1"]),
-        rows=rows,
+        rows=_freeze_p1_rows(rows),
     )
 
 
@@ -160,6 +184,9 @@ def load_p1_integrity_projection(authority_root=None) -> _P1IntegrityProjection:
     canonical P1 reader. A changed byte produces a new key and forces a full
     ``load_earth3_authority()`` rebuild. Cache hits reuse the slim province
     projection instead of deepcopying the 19 MB parsed dataset on every save.
+
+    Returned projections are detached and the rows mapping is frozen. Mutating a
+    cache-hit object cannot poison later same-process validates.
     """
 
     from .command_scoped_p2_auth import _capture_p1_identity
@@ -170,14 +197,14 @@ def load_p1_integrity_projection(authority_root=None) -> _P1IntegrityProjection:
         cached = _P1_PROJECTION_CACHE.get(key)
         if cached is not None:
             _P1_PROJECTION_CACHE.move_to_end(key)
-            return cached
+            return _detach_p1_projection(cached)
     projection = _p1_projection_from_authority(load_earth3_authority(authority_root))
     with _P1_PROJECTION_LOCK:
         _P1_PROJECTION_CACHE[key] = projection
         _P1_PROJECTION_CACHE.move_to_end(key)
         while len(_P1_PROJECTION_CACHE) > _P1_PROJECTION_CACHE_MAX:
             _P1_PROJECTION_CACHE.popitem(last=False)
-    return projection
+    return _detach_p1_projection(projection)
 
 
 def validate_earth3_p2_integrity(state: CampaignState) -> None:
