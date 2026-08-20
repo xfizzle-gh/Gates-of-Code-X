@@ -77,8 +77,8 @@ class S11FrontendTests(unittest.TestCase):
                 "two": Alliance("two", "Two", [Faction.NATO, Faction.RUSSIA]),
             }
             snapshot = build_frontend_snapshot(state)
-            self.assertEqual(16, FRONTEND_SCHEMA_VERSION)
-            self.assertEqual(16, snapshot["schema_version"])
+            self.assertEqual(17, FRONTEND_SCHEMA_VERSION)
+            self.assertEqual(17, snapshot["schema_version"])
             self.assertFalse(snapshot["fog_of_war"]["enabled"])
             self.assertEqual(2, len(snapshot["strategic_formations"]))
             self.assertEqual(2, len(snapshot["battalions"]))

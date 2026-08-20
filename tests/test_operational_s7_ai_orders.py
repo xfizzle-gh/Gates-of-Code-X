@@ -276,7 +276,7 @@ class OperationalS7AIOrdersTests(unittest.TestCase):
             self.assertEqual(MoveOrderStatus.COMMITTED.value, force.move_order.status)
             self.assertIn(stable_edge_id("corridor", stable_node_id("a"), stable_node_id("b")), force.move_order.path_edge_ids)
             self.assertEqual("operational_move", move.action)
-            self.assertEqual(16, FRONTEND_SCHEMA_VERSION)
+            self.assertEqual(17, FRONTEND_SCHEMA_VERSION)
 
     def test_disabled_candidate_corridor_not_used(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -843,7 +843,7 @@ class OperationalS7AIOrdersTests(unittest.TestCase):
             state = _state(Path(temporary))
             plan_and_issue_operational_orders(state, Faction.RUSSIA, seed=0)
             snap = build_frontend_snapshot(state)
-            self.assertEqual(16, snap["schema_version"])
+            self.assertEqual(FRONTEND_SCHEMA_VERSION, snap["schema_version"])
 
     def test_strategic_ai_run_end_to_end_ticks(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

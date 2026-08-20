@@ -197,12 +197,9 @@ def _runtime_construction_options(
         options.append(
             {
                 "building": building,
-                "level": level,
                 "next_level": min(level + 1, rules["max_level"]),
-                "max_level": rules["max_level"],
                 "cost": cost,
                 "available": not reasons,
-                "blocked_reasons": reasons,
             }
         )
     return options
@@ -314,7 +311,15 @@ def persist_runtime_patched_snapshot(path: str | Path, patch: dict[str, Any]) ->
         raise ValueError("Existing frontend snapshot is not an object.")
     if str(payload.get("schema", "")) != "gates-of-codex.frontend":
         return destination
-    updated = apply_runtime_patch_to_snapshot(payload, patch)
+    from .frontend_snapshot_slim import (
+        require_slimmable_frontend_schema,
+        slim_unused_frontend_fields,
+    )
+
+    require_slimmable_frontend_schema(payload)
+    updated = slim_unused_frontend_fields(
+        apply_runtime_patch_to_snapshot(payload, patch)
+    )
     body = json.dumps(updated, indent=2, ensure_ascii=False) + "\n"
     destination.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(
@@ -451,23 +456,6 @@ def build_frontend_runtime_patch(
                 key=lambda value: value.strategic_formation_id,
             )
         ],
-        "commanders": [
-            {
-                "id": commander.commander_id,
-                "display_name": commander.display_name,
-                "rank": commander.rank,
-                "portrait_key": commander.portrait_key,
-                "assigned_strategic_formation_id": commander.assigned_strategic_formation_id,
-                "assigned_battalion_id": commander.assigned_battalion_id,
-                "status": commander.status.value,
-                "experience": commander.experience,
-                "source": commander.source,
-                "provenance": commander.provenance,
-            }
-            for commander in sorted(
-                state.commanders.values(), key=lambda value: value.commander_id
-            )
-        ],
         "battalions": [
             {
                 "id": battalion.battalion_id,
@@ -495,10 +483,6 @@ def build_frontend_runtime_patch(
                 "movement_remaining": battalion.movement_remaining,
                 "combat_actions_remaining": battalion.combat_actions_remaining,
                 "is_player_controlled": battalion.is_player_controlled,
-                "roster": [asdict(entry) for entry in battalion.roster],
-                "authorized_roster": [
-                    asdict(entry) for entry in battalion.authorized_roster
-                ],
                 "presentation": battalion_presentations.get(
                     battalion.battalion_id, {}
                 ),
@@ -525,7 +509,11 @@ def build_frontend_runtime_patch(
         ),
     }
 
-    filtered = _apply_s11_frontend_filter(dynamic_snapshot, state)
+    from .frontend_snapshot_slim import slim_unused_frontend_fields
+
+    filtered = slim_unused_frontend_fields(
+        _apply_s11_frontend_filter(dynamic_snapshot, state)
+    )
 
     # Static map metadata must remain whatever the initial full snapshot already
     # authenticated. The S11 filter may synthesize sanitized metadata dictionaries
@@ -555,7 +543,6 @@ def build_frontend_runtime_patch(
             "strategic_formations": list(
                 filtered.get("strategic_formations", [])
             ),
-            "commanders": list(filtered.get("commanders", [])),
             "battalions": list(filtered.get("battalions", [])),
             "battalion_stacks": copy.deepcopy(
                 filtered.get("battalion_stacks", {})

@@ -36,7 +36,8 @@ from .supply import (
 )
 
 
-FRONTEND_SCHEMA_VERSION = 16
+FRONTEND_SCHEMA_VERSION = 17
+FRONTEND_PREVIOUS_SCHEMA_VERSION = 16
 FRONTEND_PYTHON_MODULE = "gates_of_codex"
 LEGACY_GOE_MAP_ID = "goe_europe_alpha_graph_v1"
 _LEGACY_GOE_COMPATIBILITY_ALIASES = ("goe_europe", "interim_goe_europe")
@@ -387,7 +388,9 @@ def build_frontend_snapshot(
             state.map_metadata.get("province_names") or province_name_coverage(state)
         ),
     }
-    return _apply_s11_frontend_filter(snapshot, state)
+    from .frontend_snapshot_slim import slim_unused_frontend_fields
+
+    return slim_unused_frontend_fields(_apply_s11_frontend_filter(snapshot, state))
 
 
 def _apply_s11_frontend_filter(snapshot: dict, state: CampaignState) -> dict:

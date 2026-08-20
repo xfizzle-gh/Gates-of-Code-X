@@ -5,7 +5,7 @@ import unittest
 
 from gates_of_codex.europe import build_goe_europe_campaign
 from gates_of_codex.force_migration import ensure_strategic_formations
-from gates_of_codex.frontend import build_frontend_snapshot
+from gates_of_codex.frontend import FRONTEND_SCHEMA_VERSION, build_frontend_snapshot
 from gates_of_codex.models import BattalionRosterEntry, Faction, UnitEconomy
 from gates_of_codex.presentation import build_stack_presentations
 
@@ -169,7 +169,7 @@ class StackPresentationTests(unittest.TestCase):
         first = snapshot["battalion_presentations"][self.first.battalion_id]
         second = snapshot["battalion_presentations"][self.second.battalion_id]
 
-        self.assertEqual(16, snapshot["schema_version"])
+        self.assertEqual(FRONTEND_SCHEMA_VERSION, snapshot["schema_version"])
         self.assertEqual(2, stack["battalion_count"])
         self.assertEqual(
             snapshot["battalion_stacks"][self.first.province_id],
