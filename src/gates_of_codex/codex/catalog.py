@@ -8,6 +8,7 @@ from typing import Iterable, Iterator, Sequence
 
 from ..goh_source import MacroCall, SourceEntry, scan_source_entries
 from ..modstack import MOD_INFO_NAME_RE, normalize_stack, resource_root, stack_signature
+from ..tactical_morale_profile import normalize_morale_profile
 
 
 @dataclass(slots=True)
@@ -24,6 +25,13 @@ class UnitDefinition:
     doctrine_cost: int = 0
     manpower_estimate: int = 0
     source_files: list[str] = field(default_factory=list)
+    morale_profile: str = ""
+
+    def __post_init__(self) -> None:
+        # Empty stays empty so catalog rows can omit the field; resolve-time
+        # mapping still defaults to regular. Non-empty values fail closed.
+        if self.morale_profile:
+            normalize_morale_profile(self.morale_profile)
 
     @property
     def materializable(self) -> bool:
@@ -322,6 +330,11 @@ class CodeXCatalogScanner:
             for action in self._actions(entry.calls):
                 if action not in unit.actions:
                     unit.actions.append(action)
+            profile = self._call_value(entry.calls, "morale_profile") or self._word_attr(
+                entry.raw, "morale_profile"
+            )
+            if profile:
+                unit.morale_profile = normalize_morale_profile(profile)
             unit.manpower_estimate = max(unit.manpower_estimate, sum(unit.members.values()))
             unit.category = self._category(unit)
 
@@ -354,6 +367,9 @@ class CodeXCatalogScanner:
                 unit.doctrine_cost = int(cost.group(1))
             if "Doctrine" in unit.type_tags:
                 unit.doctrine = path.stem
+            profile_match = re.search(r'morale_profile\s*=\s*"([^"]+)"', body)
+            if profile_match:
+                unit.morale_profile = normalize_morale_profile(profile_match.group(1))
             unit.category = self._category(unit)
 
     @staticmethod
@@ -446,6 +462,7 @@ class CodeXCatalogScanner:
             doctrine_cost=overlay.doctrine_cost or base.doctrine_cost,
             manpower_estimate=overlay.manpower_estimate or base.manpower_estimate,
             source_files=list(dict.fromkeys([*base.source_files, *overlay.source_files])),
+            morale_profile=overlay.morale_profile or base.morale_profile,
         )
 
     @classmethod

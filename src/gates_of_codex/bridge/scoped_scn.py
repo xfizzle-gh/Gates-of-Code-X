@@ -6,6 +6,7 @@ from typing import Iterable, Mapping
 from ..codex.catalog import CodeXCatalog
 from ..models import CampaignState, PendingBattle
 from ..modstack import mod_root, resource_root
+from ..tactical_morale_profile import morale_profile_from_unit_definition
 from .scn import CampaignScnBuilder, ObjectIdAllocator, parse_breed_inventory
 
 
@@ -91,10 +92,20 @@ class ParticipantScopedCampaignScnBuilder(CampaignScnBuilder):
                 pinned_root = self._pinned_root_for(battalion_id, entry.unit_name)
                 for _ in range(entry.quantity):
                     object_ids: list[str] = []
+                    morale_profile = morale_profile_from_unit_definition(definition)
                     for vehicle in definition.vehicles[:1]:
                         object_id, mid = ids.allocate()
                         object_ids.append(object_id)
-                        objects.append(self._entity(vehicle, object_id, player=player, mid=mid))
+                        objects.append(
+                            self._entity(
+                                vehicle,
+                                object_id,
+                                player=player,
+                                mid=mid,
+                                unit_name=entry.unit_name,
+                                morale_profile=morale_profile,
+                            )
+                        )
                         inventories.append(self._inventory(object_id, items=[]))
                     for breed, count in definition.members.items():
                         for _ in range(count):
@@ -109,6 +120,8 @@ class ParticipantScopedCampaignScnBuilder(CampaignScnBuilder):
                                     player=player,
                                     mid=mid,
                                     pinned_root=pinned_root,
+                                    unit_name=entry.unit_name,
+                                    morale_profile=morale_profile,
                                 )
                             )
                             inventories.append(
@@ -261,6 +274,8 @@ class ParticipantScopedCampaignScnBuilder(CampaignScnBuilder):
         player: int,
         mid: int,
         pinned_root: Path | None,
+        unit_name: str = "",
+        morale_profile: str = "",
     ) -> str:
         if pinned_root is None:
             return super()._human(
@@ -270,6 +285,8 @@ class ParticipantScopedCampaignScnBuilder(CampaignScnBuilder):
                 object_id,
                 player=player,
                 mid=mid,
+                unit_name=unit_name,
+                morale_profile=morale_profile,
             )
         path = self._resolve_breed_path_scoped(
             breed,
@@ -280,16 +297,16 @@ class ParticipantScopedCampaignScnBuilder(CampaignScnBuilder):
         breed_token = self._to_breed_token(
             path.relative_to(resource_root(pinned_root)).as_posix()
         )
-        return (
-            f'\t{{Human "{breed_token}" {object_id}\n'
-            f"\t\t{{Position 0 0}}\n"
-            f"\t\t{{xform zl 90}}\n"
-            f'\t\t{{TexMod "auto"}}\n'
-            f"\t\t{{SpawnedInFog}}\n"
-            f"\t\t{{Player {player}}}\n"
-            f"\t\t{{MID {mid}}}\n"
-            f'\t\t{{FsmState "stand_noaim"}}\n'
-            f"\t}}"
+        return self._tactical_object_block(
+            kind="Human",
+            token=breed_token,
+            object_id=object_id,
+            player=player,
+            mid=mid,
+            unit_name=unit_name,
+            morale_profile=morale_profile,
+            spawned_in_fog=True,
+            fsm_state="stand_noaim",
         )
 
     def _breed_inventory_scoped(

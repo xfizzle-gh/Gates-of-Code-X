@@ -8,6 +8,11 @@ from typing import Iterable
 from ..codex.catalog import CodeXCatalog
 from ..models import BattalionRosterEntry, CampaignState, PendingBattle
 from ..modstack import normalize_stack, resource_root
+from ..tactical_morale_profile import (
+    morale_profile_carrier_line,
+    morale_profile_from_unit_definition,
+    morale_profile_log_comment,
+)
 
 
 @dataclass(slots=True)
@@ -87,10 +92,20 @@ class CampaignScnBuilder:
                     raise KeyError(f"Code:X catalog has no definition for {entry.unit_name}")
                 for _ in range(entry.quantity):
                     object_ids: list[str] = []
+                    morale_profile = morale_profile_from_unit_definition(definition)
                     for vehicle in definition.vehicles[:1]:
                         object_id, mid = ids.allocate()
                         object_ids.append(object_id)
-                        objects.append(self._entity(vehicle, object_id, player=player, mid=mid))
+                        objects.append(
+                            self._entity(
+                                vehicle,
+                                object_id,
+                                player=player,
+                                mid=mid,
+                                unit_name=entry.unit_name,
+                                morale_profile=morale_profile,
+                            )
+                        )
                         inventories.append(self._inventory(object_id, items=[]))
                     for breed, count in definition.members.items():
                         for _ in range(count):
@@ -104,6 +119,8 @@ class CampaignScnBuilder:
                                     object_id,
                                     player=player,
                                     mid=mid,
+                                    unit_name=entry.unit_name,
+                                    morale_profile=morale_profile,
                                 )
                             )
                             inventories.append(
@@ -211,31 +228,89 @@ class CampaignScnBuilder:
             text = text[: -len(".set")]
         return text
 
-    def _human(self, breed: str, side: str, period: str, object_id: str, *, player: int, mid: int) -> str:
+    def _human(
+        self,
+        breed: str,
+        side: str,
+        period: str,
+        object_id: str,
+        *,
+        player: int,
+        mid: int,
+        unit_name: str = "",
+        morale_profile: str = "",
+    ) -> str:
         path = self._resolve_breed(breed, side, period)
-        return (
-            f'\t{{Human "{path}" {object_id}\n'
-            f"\t\t{{Position 0 0}}\n"
-            f"\t\t{{xform zl 90}}\n"
-            f'\t\t{{TexMod "auto"}}\n'
-            f"\t\t{{SpawnedInFog}}\n"
-            f"\t\t{{Player {player}}}\n"
-            f"\t\t{{MID {mid}}}\n"
-            f'\t\t{{FsmState "stand_noaim"}}\n'
-            f"\t}}"
+        return self._tactical_object_block(
+            kind="Human",
+            token=path,
+            object_id=object_id,
+            player=player,
+            mid=mid,
+            unit_name=unit_name,
+            morale_profile=morale_profile,
+            spawned_in_fog=True,
+            fsm_state="stand_noaim",
+        )
+
+    @classmethod
+    def _entity(
+        cls,
+        entity: str,
+        object_id: str,
+        *,
+        player: int,
+        mid: int,
+        unit_name: str = "",
+        morale_profile: str = "",
+    ) -> str:
+        return cls._tactical_object_block(
+            kind="Entity",
+            token=entity,
+            object_id=object_id,
+            player=player,
+            mid=mid,
+            unit_name=unit_name,
+            morale_profile=morale_profile,
+            spawned_in_fog=False,
+            fsm_state="",
         )
 
     @staticmethod
-    def _entity(entity: str, object_id: str, *, player: int, mid: int) -> str:
-        return (
-            f'\t{{Entity "{entity}" {object_id}\n'
-            f"\t\t{{Position 0 0}}\n"
-            f"\t\t{{xform zl 90}}\n"
-            f'\t\t{{TexMod "auto"}}\n'
-            f"\t\t{{Player {player}}}\n"
-            f"\t\t{{MID {mid}}}\n"
-            f"\t}}"
-        )
+    def _tactical_object_block(
+        *,
+        kind: str,
+        token: str,
+        object_id: str,
+        player: int,
+        mid: int,
+        unit_name: str,
+        morale_profile: str,
+        spawned_in_fog: bool,
+        fsm_state: str,
+    ) -> str:
+        carrier = "human" if kind == "Human" else "entity"
+        lines = [
+            morale_profile_log_comment(
+                unit_name=unit_name or token,
+                profile=morale_profile,
+                object_id=object_id,
+                carrier=carrier,
+            ),
+            f'\t{{{kind} "{token}" {object_id}',
+            "\t\t{Position 0 0}",
+            "\t\t{xform zl 90}",
+            '\t\t{TexMod "auto"}',
+        ]
+        if spawned_in_fog:
+            lines.append("\t\t{SpawnedInFog}")
+        lines.append(f"\t\t{{Player {player}}}")
+        lines.append(f"\t\t{{MID {mid}}}")
+        if fsm_state:
+            lines.append(f'\t\t{{FsmState "{fsm_state}"}}')
+        lines.append(morale_profile_carrier_line(morale_profile))
+        lines.append("\t}")
+        return "\n".join(lines)
 
     def _breed_inventory(self, breed: str, side: str, period: str) -> list[BreedInventoryItem]:
         cache_key = f"{side}/{period}/{breed}".lower()
