@@ -126,14 +126,30 @@ def _clear_p1_integrity_projection_cache_for_tests() -> None:
         _P1_PROJECTION_CACHE.clear()
 
 
-def _freeze_p1_rows(rows: Mapping[str, _P1ProvinceRow]) -> Mapping[str, _P1ProvinceRow]:
-    """Detach then freeze so callers cannot mutate the process cache mapping."""
+def _clone_p1_row(row: _P1ProvinceRow) -> _P1ProvinceRow:
+    """Return a new row so object.__setattr__ on a caller copy cannot poison the cache."""
 
-    return MappingProxyType(dict(rows))
+    return _P1ProvinceRow(
+        is_water=bool(row.is_water),
+        neighbors=tuple(row.neighbors),
+        label=(float(row.label[0]), float(row.label[1])),
+        centroid=(float(row.centroid[0]), float(row.centroid[1])),
+        source_id=int(row.source_id),
+        terrain_id=int(row.terrain_id),
+        continent_id=int(row.continent_id),
+    )
+
+
+def _freeze_p1_rows(rows: Mapping[str, _P1ProvinceRow]) -> Mapping[str, _P1ProvinceRow]:
+    """Clone every row, then freeze, so callers never share cached row objects."""
+
+    return MappingProxyType(
+        {str(province_id): _clone_p1_row(row) for province_id, row in rows.items()}
+    )
 
 
 def _detach_p1_projection(projection: _P1IntegrityProjection) -> _P1IntegrityProjection:
-    """Return a new frozen projection so cache hits never hand out the stored object."""
+    """Return a new frozen projection whose rows are not the cached instances."""
 
     return _P1IntegrityProjection(
         manifest_sha256=projection.manifest_sha256,
@@ -185,8 +201,9 @@ def load_p1_integrity_projection(authority_root=None) -> _P1IntegrityProjection:
     ``load_earth3_authority()`` rebuild. Cache hits reuse the slim province
     projection instead of deepcopying the 19 MB parsed dataset on every save.
 
-    Returned projections are detached and the rows mapping is frozen. Mutating a
-    cache-hit object cannot poison later same-process validates.
+    Returned projections are detached: the mapping is a new MappingProxyType and
+    every row is a new frozen dataclass. object.__setattr__ on a returned row
+    cannot poison later same-process validates.
     """
 
     from .command_scoped_p2_auth import _capture_p1_identity

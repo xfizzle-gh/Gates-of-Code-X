@@ -46,9 +46,35 @@ def _repo_root() -> Path:
 
 
 def _ensure_src_path(src_root: Path | None) -> None:
-    candidate = str((src_root or (_repo_root() / "src")).resolve())
-    if candidate not in sys.path:
-        sys.path.insert(0, candidate)
+    """Put the measured src first. Do not prepend the current checkout by default."""
+
+    candidate = str(
+        Path(src_root).resolve() if src_root is not None else (_repo_root() / "src").resolve()
+    )
+    while candidate in sys.path:
+        sys.path.remove(candidate)
+    sys.path.insert(0, candidate)
+
+
+def _purge_gates_of_codex_modules() -> None:
+    for name in list(sys.modules):
+        if name == "gates_of_codex" or name.startswith("gates_of_codex."):
+            del sys.modules[name]
+
+
+def _import_provenance(src_root: Path | None, sha: str) -> dict[str, Any]:
+    _ensure_src_path(src_root)
+    _purge_gates_of_codex_modules()
+    import gates_of_codex
+    from gates_of_codex import p2_integrity
+
+    module_path = Path(gates_of_codex.__file__).resolve()
+    return {
+        "sha": sha,
+        "imported_module": str(module_path),
+        "imported_src_root": str(module_path.parents[1]),
+        "has_p1_projection": hasattr(p2_integrity, "load_p1_integrity_projection"),
+    }
 
 
 def _install_runtime() -> None:
@@ -102,9 +128,10 @@ def measure_current(
     repeats: int,
     src_root: Path | None = None,
 ) -> dict[str, Any]:
-    _ensure_src_path(src_root)
+    provenance = _import_provenance(src_root, sha)
     _install_runtime()
     payload = _sample_compact_save(campaign_path, repeats)
+    payload.update(provenance)
     payload.update(
         {
             "label": label,
@@ -126,13 +153,11 @@ def _resolve_sha(repo: Path, spec: str) -> str:
     return completed.stdout.strip()
 
 
-def _measure_at_sha(
+def _run_harness_at_sha(
     *,
     repo: Path,
     sha: str,
-    label: str,
-    campaign_path: Path,
-    repeats: int,
+    extra_args: list[str],
 ) -> dict[str, Any]:
     resolved = _resolve_sha(repo, sha)
     with tempfile.TemporaryDirectory(prefix="goc-266-ab-") as temporary:
@@ -154,21 +179,16 @@ def _measure_at_sha(
         )
         try:
             env = os.environ.copy()
-            env["PYTHONPATH"] = str(worktree / "src")
+            env["PYTHONPATH"] = str((worktree / "src").resolve())
             completed = subprocess.run(
                 [
                     sys.executable,
                     str(Path(__file__).resolve()),
-                    "--measure",
-                    "--campaign",
-                    str(campaign_path),
-                    "--label",
-                    label,
+                    "--src-root",
+                    str((worktree / "src").resolve()),
                     "--sha",
                     resolved,
-                    "--repeats",
-                    str(repeats),
-                    "--json",
+                    *extra_args,
                 ],
                 check=False,
                 capture_output=True,
@@ -184,10 +204,44 @@ def _measure_at_sha(
             )
     if completed.returncode != 0:
         raise SystemExit(
-            f"measure at {resolved} failed ({completed.returncode}):\n"
+            f"harness at {resolved} failed ({completed.returncode}):\n"
             f"{completed.stdout}\n{completed.stderr}"
         )
     return json.loads(completed.stdout)
+
+
+def _measure_at_sha(
+    *,
+    repo: Path,
+    sha: str,
+    label: str,
+    campaign_path: Path,
+    repeats: int,
+) -> dict[str, Any]:
+    return _run_harness_at_sha(
+        repo=repo,
+        sha=sha,
+        extra_args=[
+            "--measure",
+            "--campaign",
+            str(campaign_path),
+            "--label",
+            label,
+            "--repeats",
+            str(repeats),
+            "--json",
+        ],
+    )
+
+
+def _provenance_at_sha(*, repo: Path, sha: str) -> dict[str, Any]:
+    """Import gates_of_codex from a detached worktree. Does not invent timings."""
+
+    return _run_harness_at_sha(
+        repo=repo,
+        sha=sha,
+        extra_args=["--provenance-only", "--json"],
+    )
 
 
 def _print_table(rows: list[dict[str, Any]]) -> None:
@@ -214,10 +268,27 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--head", default="HEAD")
     parser.add_argument("--repeats", type=int, default=3)
     parser.add_argument("--measure", action="store_true")
+    parser.add_argument(
+        "--provenance-only",
+        action="store_true",
+        help="Print imported module path/SHA marker without measuring a campaign.",
+    )
+    parser.add_argument(
+        "--src-root",
+        type=Path,
+        default=None,
+        help="Exact src directory to import. Required for detached SHA A/B.",
+    )
     parser.add_argument("--label", default="current")
     parser.add_argument("--sha", default="")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
+
+    if args.provenance_only:
+        sha = args.sha or _resolve_sha(_repo_root(), "HEAD")
+        report = _import_provenance(args.src_root, sha)
+        print(json.dumps(report, indent=2, sort_keys=True))
+        return 0
 
     if args.campaign is None:
         print(
@@ -240,6 +311,7 @@ def main(argv: list[str] | None = None) -> int:
             label=args.label,
             sha=sha,
             repeats=args.repeats,
+            src_root=args.src_root,
         )
         if args.json:
             print(json.dumps(report, indent=2, sort_keys=True))

@@ -84,6 +84,7 @@ class FasterCampaignSaveContractTests(unittest.TestCase):
         self.assertIn("load_earth3_authority", source)
         self.assertIn("MappingProxyType", source)
         self.assertIn("_detach_p1_projection", source)
+        self.assertIn("_clone_p1_row", source)
 
     def test_owner_ab_harness_refuses_missing_campaign(self) -> None:
         harness = ROOT / "tools/ab_issue_266_campaign_save.py"
@@ -98,6 +99,70 @@ class FasterCampaignSaveContractTests(unittest.TestCase):
         self.assertEqual(2, completed.returncode)
         self.assertIn("owner campaign missing", completed.stderr)
         self.assertIn("does not invent owner timings", completed.stderr)
+
+    def test_owner_ab_harness_provenance_uses_src_root_not_checkout(self) -> None:
+        harness = ROOT / "tools/ab_issue_266_campaign_save.py"
+        with tempfile.TemporaryDirectory() as temporary:
+            fake_src = Path(temporary) / "src"
+            package = fake_src / "gates_of_codex"
+            package.mkdir(parents=True)
+            (package / "__init__.py").write_text(
+                "PROVENANCE = 'fake-base'\n", encoding="utf-8"
+            )
+            (package / "p2_integrity.py").write_text("", encoding="utf-8")
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(harness),
+                    "--provenance-only",
+                    "--src-root",
+                    str(fake_src),
+                    "--sha",
+                    "deadbeef",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+        self.assertEqual(0, completed.returncode, completed.stderr)
+        payload = json.loads(completed.stdout)
+        self.assertEqual("deadbeef", payload["sha"])
+        self.assertFalse(payload["has_p1_projection"])
+        self.assertEqual(str(fake_src.resolve()), payload["imported_src_root"])
+        checkout_src = str((ROOT / "src").resolve())
+        self.assertNotEqual(checkout_src, payload["imported_src_root"])
+        self.assertTrue(
+            payload["imported_module"].startswith(str(fake_src.resolve()))
+        )
+
+    def test_owner_ab_harness_worktree_imports_exact_sha_src(self) -> None:
+        import importlib.util
+
+        harness = ROOT / "tools/ab_issue_266_campaign_save.py"
+        spec = importlib.util.spec_from_file_location("ab_issue_266_campaign_save", harness)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        base_sha = module.BASE_SHA
+        head_sha = subprocess.run(
+            ["git", "-C", str(ROOT), "rev-parse", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        base_report = module._provenance_at_sha(repo=ROOT, sha=base_sha)
+        head_report = module._provenance_at_sha(repo=ROOT, sha=head_sha)
+        checkout_src = str((ROOT / "src").resolve())
+        self.assertEqual(base_sha, base_report["sha"])
+        self.assertEqual(head_sha, head_report["sha"])
+        self.assertFalse(base_report["has_p1_projection"])
+        self.assertTrue(head_report["has_p1_projection"])
+        self.assertNotEqual(checkout_src, base_report["imported_src_root"])
+        self.assertNotEqual(checkout_src, head_report["imported_src_root"])
+        self.assertNotEqual(base_report["imported_module"], head_report["imported_module"])
+        self.assertIn("goc-266-ab-", base_report["imported_src_root"])
+        self.assertIn("goc-266-ab-", head_report["imported_src_root"])
 
 
 class FasterCampaignSaveEarth3Tests(unittest.TestCase):
@@ -219,6 +284,7 @@ class FasterCampaignSaveEarth3Tests(unittest.TestCase):
         self.assertIsNot(first, cached)
         self.assertIsNot(first.rows, cached.rows)
         victim_id = next(iter(cached.rows))
+        self.assertIsNot(first.rows[victim_id], cached.rows[victim_id])
         poison = p2_integrity._P1ProvinceRow(
             is_water=True,
             neighbors=("e3_smuggle",),
@@ -236,11 +302,19 @@ class FasterCampaignSaveEarth3Tests(unittest.TestCase):
             cached.rows = {}  # type: ignore[misc]
         with self.assertRaises(FrozenInstanceError):
             cached.rows[victim_id].neighbors = ("e3_smuggle",)  # type: ignore[misc]
+        canonical_neighbors = tuple(cached.rows[victim_id].neighbors)
+        self.assertNotEqual(("e3_smuggle",), canonical_neighbors)
+        object.__setattr__(cached.rows[victim_id], "neighbors", ("e3_smuggle",))
+        self.assertEqual(("e3_smuggle",), cached.rows[victim_id].neighbors)
+        after_row_poison = p2_integrity.load_p1_integrity_projection()
+        self.assertIsNot(cached.rows[victim_id], after_row_poison.rows[victim_id])
+        self.assertEqual(canonical_neighbors, after_row_poison.rows[victim_id].neighbors)
         object.__setattr__(cached, "rows", MappingProxyType({}))
         self.assertEqual(0, len(cached.rows))
         later = p2_integrity.load_p1_integrity_projection()
         self.assertEqual(APPROVED_PROVINCE_COUNT, len(later.rows))
         self.assertIn(victim_id, later.rows)
+        self.assertEqual(canonical_neighbors, later.rows[victim_id].neighbors)
         self.assertNotEqual(("e3_smuggle",), later.rows[victim_id].neighbors)
         state.validate()
         with tempfile.TemporaryDirectory() as temporary:
