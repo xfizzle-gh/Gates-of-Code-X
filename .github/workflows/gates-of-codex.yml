@@ -302,6 +302,12 @@ jobs:
           set -euo pipefail
           "$HOME/godot" --headless --path . --audio-driver Dummy \
             -s res://scripts/tools/runtime_patch_completion_test.gd
+      - name: Snapshot field-audit GDScript test
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --audio-driver Dummy \
+            -s res://scripts/tools/snapshot_field_audit_test.gd
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"

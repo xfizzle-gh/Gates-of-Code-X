@@ -249,7 +249,7 @@ class StrategicFormationSchemaTests(unittest.TestCase):
         snapshot = build_frontend_snapshot(state)
         self.assertEqual(FRONTEND_SCHEMA_VERSION, snapshot["schema_version"])
         self.assertEqual(1, len(snapshot["strategic_formations"]))
-        self.assertEqual([], snapshot["commanders"])
+        self.assertNotIn("commanders", snapshot)
         row = snapshot["strategic_formations"][0]
         self.assertEqual("Unassigned Commander", row["commander_display_name"])
         self.assertIsNone(row["commander_id"])

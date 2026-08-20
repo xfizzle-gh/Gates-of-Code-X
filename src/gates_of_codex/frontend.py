@@ -387,7 +387,9 @@ def build_frontend_snapshot(
             state.map_metadata.get("province_names") or province_name_coverage(state)
         ),
     }
-    return _apply_s11_frontend_filter(snapshot, state)
+    from .frontend_snapshot_slim import slim_unused_frontend_fields
+
+    return slim_unused_frontend_fields(_apply_s11_frontend_filter(snapshot, state))
 
 
 def _apply_s11_frontend_filter(snapshot: dict, state: CampaignState) -> dict:
