@@ -17,13 +17,18 @@ from gates_of_codex.models import (
     Faction,
     PendingBattle,
 )
+from gates_of_codex.bridge.scn import BreedInventoryItem
 from gates_of_codex.tactical_morale_profile import (
     ALLOWED_MORALE_PROFILES,
     DEFAULT_MORALE_PROFILE,
     UnknownMoraleProfileError,
+    aio_morale_marker_for_profile,
+    apply_aio_morale_marker,
     morale_profile_from_unit_definition,
     morale_profile_tag,
     normalize_morale_profile,
+    parse_entity_aio_morale_markers,
+    parse_human_aio_morale_markers,
     parse_morale_profile_carriers,
     parse_morale_profile_logs,
 )
@@ -89,6 +94,37 @@ class MoraleProfileMappingTests(unittest.TestCase):
         restored = CodeXCatalog.from_dict(catalog.to_dict())
         self.assertEqual("", restored.units["rifle(nato)"].morale_profile)
         self.assertEqual("regular", morale_profile_from_unit_definition(restored.units["rifle(nato)"]))
+
+
+class AioMoraleMarkerMappingTests(unittest.TestCase):
+    def test_five_profiles_collapse_onto_four_aio_markers(self) -> None:
+        self.assertEqual("aio_marker_morale_low", aio_morale_marker_for_profile("militia"))
+        self.assertEqual("aio_marker_morale_regular", aio_morale_marker_for_profile("regular"))
+        self.assertEqual("aio_marker_morale_regular", aio_morale_marker_for_profile(""))
+        self.assertEqual("aio_marker_morale_trained", aio_morale_marker_for_profile("contractor"))
+        self.assertEqual("aio_marker_morale_elite", aio_morale_marker_for_profile("sof"))
+        self.assertEqual("aio_marker_morale_elite", aio_morale_marker_for_profile("elite"))
+        self.assertEqual(
+            aio_morale_marker_for_profile("sof"),
+            aio_morale_marker_for_profile("elite"),
+        )
+
+    def test_unknown_profile_does_not_invent_an_aio_marker(self) -> None:
+        with self.assertRaises(UnknownMoraleProfileError):
+            aio_morale_marker_for_profile("guards")
+        with self.assertRaises(UnknownMoraleProfileError):
+            aio_morale_marker_for_profile("aio_marker_morale_sof")
+
+    def test_catalog_profile_replaces_breed_copied_aio_marker(self) -> None:
+        items = [
+            BreedInventoryItem(name="ak74m", filled=True),
+            BreedInventoryItem(name="aio_marker_morale_trained"),
+        ]
+        rewritten = apply_aio_morale_marker(items, "regular")
+        names = [item.name for item in rewritten]
+        self.assertEqual(["ak74m", "aio_marker_morale_regular"], names)
+        self.assertNotIn("aio_marker_morale_trained", names)
+        self.assertEqual("aio_marker_morale_trained", items[1].name)
 
 
 class MoraleProfileCatalogSeamTests(unittest.TestCase):
@@ -203,6 +239,23 @@ class MoraleProfileCarrierTests(unittest.TestCase):
                     vehicles=["humvee"],
                     morale_profile="sof",
                 ),
+                "contractor_rifle(nato)": UnitDefinition(
+                    name="contractor_rifle(nato)",
+                    side="nato",
+                    members={"rifleman": 1},
+                    morale_profile="contractor",
+                ),
+                "elite_rifle(nato)": UnitDefinition(
+                    name="elite_rifle(nato)",
+                    side="nato",
+                    members={"rifleman": 1},
+                    morale_profile="elite",
+                ),
+                "wagner_rifle": UnitDefinition(
+                    name="wagner_rifle",
+                    side="nato",
+                    members={"wagner_rifleman": 1},
+                ),
             },
             signature="fixture",
         )
@@ -248,6 +301,18 @@ class MoraleProfileCarrierTests(unittest.TestCase):
         self.assertTrue(any(row["unit"] == "line_rifle(nato)" and row["profile"] == "regular" for row in logs))
         self.assertTrue(any(row["carrier"] == "entity" and row["profile"] == "sof" for row in logs))
 
+        human_markers = parse_human_aio_morale_markers(text)
+        self.assertTrue(human_markers)
+        self.assertEqual({"aio_marker_morale_low", "aio_marker_morale_regular", "aio_marker_morale_elite"}, {
+            marker
+            for markers in human_markers.values()
+            for marker in markers
+        })
+        self.assertTrue(all(len(markers) == 1 for markers in human_markers.values()))
+        entity_markers = parse_entity_aio_morale_markers(text)
+        self.assertTrue(entity_markers)
+        self.assertTrue(all(markers == () for markers in entity_markers.values()))
+
     def test_default_regular_is_present_after_materialization(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             stack = self._stack(Path(raw))
@@ -258,6 +323,13 @@ class MoraleProfileCarrierTests(unittest.TestCase):
         profiles = [profile for _kind, _object_id, profile in parse_morale_profile_carriers(text)]
         self.assertEqual({"regular"}, set(profiles))
         self.assertGreaterEqual(len(profiles), 2)
+        human_markers = parse_human_aio_morale_markers(text)
+        self.assertTrue(human_markers)
+        self.assertEqual(
+            {("aio_marker_morale_regular",)},
+            set(human_markers.values()),
+        )
+        self.assertIn('{item "aio_marker_morale_regular"', text)
 
     def test_scoped_builder_uses_the_same_human_carrier(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
@@ -274,6 +346,102 @@ class MoraleProfileCarrierTests(unittest.TestCase):
         self.assertIn("militia", human_profiles)
         self.assertIn("regular", human_profiles)
         self.assertIn('{Tags "goc_morale_profile:militia"}', text)
+        human_markers = parse_human_aio_morale_markers(text)
+        self.assertIn(("aio_marker_morale_low",), human_markers.values())
+        self.assertIn(("aio_marker_morale_regular",), human_markers.values())
+        self.assertIn('{item "aio_marker_morale_low"', text)
+
+    def test_human_inventory_emits_mapped_aio_markers_for_regular_and_militia(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            stack = self._stack(Path(raw))
+            catalog = self._catalog()
+            state = self._state(
+                [
+                    BattalionRosterEntry("line_rifle(nato)", quantity=1, category="infantry"),
+                    BattalionRosterEntry("militia_rifle(nato)", quantity=1, category="infantry"),
+                ]
+            )
+            text = CampaignScnBuilder(catalog, resource_stack=[stack]).build(state, state.pending_battle)
+
+        human_markers = parse_human_aio_morale_markers(text)
+        self.assertTrue(human_markers)
+        emitted = {markers[0] for markers in human_markers.values() if markers}
+        self.assertIn("aio_marker_morale_regular", emitted)
+        self.assertIn("aio_marker_morale_low", emitted)
+        self.assertTrue(all(len(markers) == 1 for markers in human_markers.values()))
+        self.assertRegex(
+            text,
+            r'\{Inventory 0x[0-9a-fA-F]+[\s\S]*?\{item "aio_marker_morale_regular"',
+        )
+        self.assertRegex(
+            text,
+            r'\{Inventory 0x[0-9a-fA-F]+[\s\S]*?\{item "aio_marker_morale_low"',
+        )
+
+    def test_sof_and_elite_both_emit_aio_marker_morale_elite(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            stack = self._stack(Path(raw))
+            catalog = self._catalog()
+            state = self._state(
+                [
+                    BattalionRosterEntry("sof_rifle(nato)", quantity=1, category="recon"),
+                    BattalionRosterEntry("elite_rifle(nato)", quantity=1, category="infantry"),
+                ]
+            )
+            text = CampaignScnBuilder(catalog, resource_stack=[stack]).build(state, state.pending_battle)
+
+        human_markers = parse_human_aio_morale_markers(text)
+        self.assertTrue(human_markers)
+        self.assertEqual({"aio_marker_morale_elite", "aio_marker_morale_regular"}, {
+            marker
+            for markers in human_markers.values()
+            for marker in markers
+        })
+        self.assertIn('{item "aio_marker_morale_elite"', text)
+        self.assertNotIn("aio_marker_morale_sof", text)
+        entity_markers = parse_entity_aio_morale_markers(text)
+        self.assertTrue(entity_markers)
+        self.assertTrue(all(markers == () for markers in entity_markers.values()))
+
+    def test_contractor_emits_aio_marker_morale_trained(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            stack = self._stack(Path(raw))
+            catalog = self._catalog()
+            state = self._state(
+                [BattalionRosterEntry("contractor_rifle(nato)", quantity=1, category="infantry")]
+            )
+            text = CampaignScnBuilder(catalog, resource_stack=[stack]).build(state, state.pending_battle)
+
+        human_markers = parse_human_aio_morale_markers(text)
+        self.assertIn(("aio_marker_morale_trained",), set(human_markers.values()))
+        self.assertIn('{item "aio_marker_morale_trained"', text)
+        self.assertNotIn("aio_marker_morale_contractor", text)
+
+    def test_catalog_regular_overrides_breed_trained_marker_on_wagner_named_unit(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            stack = self._stack(root)
+            breed = root / "resource/set/breed/mp/nato"
+            breed.joinpath("wagner_rifleman.set").write_text(
+                "{breed\n"
+                "\t{inventory\n"
+                '\t\t{item "ak74m" filled}\n'
+                '\t\t{item "aio_marker_morale_trained"}\n'
+                "\t}\n"
+                "}\n",
+                encoding="utf-8",
+            )
+            catalog = self._catalog()
+            state = self._state([BattalionRosterEntry("wagner_rifle", quantity=1, category="infantry")])
+            text = CampaignScnBuilder(catalog, resource_stack=[stack]).build(state, state.pending_battle)
+
+        human_markers = parse_human_aio_morale_markers(text)
+        self.assertTrue(human_markers)
+        self.assertIn(("aio_marker_morale_regular",), set(human_markers.values()))
+        self.assertNotIn("aio_marker_morale_trained", text)
+        self.assertIn('{item "ak74m" filled', text)
+        self.assertIn('{item "aio_marker_morale_regular"', text)
+        self.assertEqual("regular", morale_profile_from_unit_definition(catalog.units["wagner_rifle"]))
 
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ from ..codex.catalog import CodeXCatalog
 from ..models import BattalionRosterEntry, CampaignState, PendingBattle
 from ..modstack import normalize_stack, resource_root
 from ..tactical_morale_profile import (
+    apply_aio_morale_marker,
     morale_profile_carrier_line,
     morale_profile_from_unit_definition,
     morale_profile_log_comment,
@@ -126,7 +127,12 @@ class CampaignScnBuilder:
                             inventories.append(
                                 self._inventory(
                                     object_id,
-                                    items=self._breed_inventory(breed, definition.side, definition.period),
+                                    items=apply_aio_morale_marker(
+                                        self._breed_inventory(
+                                            breed, definition.side, definition.period
+                                        ),
+                                        morale_profile,
+                                    ),
                                 )
                             )
                     if not object_ids:

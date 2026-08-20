@@ -6,7 +6,10 @@ from typing import Iterable, Mapping
 from ..codex.catalog import CodeXCatalog
 from ..models import CampaignState, PendingBattle
 from ..modstack import mod_root, resource_root
-from ..tactical_morale_profile import morale_profile_from_unit_definition
+from ..tactical_morale_profile import (
+    apply_aio_morale_marker,
+    morale_profile_from_unit_definition,
+)
 from .scn import CampaignScnBuilder, ObjectIdAllocator, parse_breed_inventory
 
 
@@ -127,11 +130,14 @@ class ParticipantScopedCampaignScnBuilder(CampaignScnBuilder):
                             inventories.append(
                                 self._inventory(
                                     object_id,
-                                    items=self._breed_inventory_scoped(
-                                        breed,
-                                        definition.side,
-                                        definition.period,
-                                        pinned_root=pinned_root,
+                                    items=apply_aio_morale_marker(
+                                        self._breed_inventory_scoped(
+                                            breed,
+                                            definition.side,
+                                            definition.period,
+                                            pinned_root=pinned_root,
+                                        ),
+                                        morale_profile,
                                     ),
                                 )
                             )
