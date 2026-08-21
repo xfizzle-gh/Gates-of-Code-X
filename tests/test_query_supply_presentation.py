@@ -457,8 +457,8 @@ class QuerySupplyOwnershipBoundaryTests(unittest.TestCase):
         grace_enemy = _add_enemy_force(
             state,
             province_id="p-source",
-            battalion_id="rusa-grace",
-            force_id="sf-rusa-grace",
+            battalion_id="rusa-ticker",
+            force_id="sf-rusa-ticker",
             shape="grace",
         )
         state.fog_of_war_enabled = True
@@ -490,11 +490,13 @@ class QuerySupplyOwnershipBoundaryTests(unittest.TestCase):
         leaked = str(raised.exception) + str(grace_raised.exception) + str(hidden_province)
         for token in (
             ENEMY_SECRET_HUB,
-            "grace",
+            "grace_ticks_remaining",
             "can_repair",
-            "encircled",
+            "encircled_turns",
             "cut_off",
             "supplied",
+            str(ENEMY_SECRET_SUPPLY),
+            str(ENEMY_SECRET_GRACE),
         ):
             self.assertNotIn(token, leaked)
 
