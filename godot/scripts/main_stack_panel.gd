@@ -1,7 +1,5 @@
 extends "res://scripts/main_map_contract.gd"
 
-const CampaignRulesPresenter := preload("res://scripts/presentation/campaign_rules_presenter.gd")
-
 const STACK_HEADER_H := 52.0
 const STACK_TAB_H := 44.0
 const UNIT_CARD_H := 64.0

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import tempfile
 import unittest
 from pathlib import Path
@@ -243,6 +244,25 @@ class CampaignRulesPlayTests(unittest.TestCase):
         self.assertEqual(1, patch["schema_version"])
         self.assertEqual("2028-W01", patch["merge"]["campaign"]["calendar"]["label"])
         self.assertIn("momentum", patch["merge"]["campaign"])
+
+    def test_campaign_presentation_does_not_mutate_retained_state(self) -> None:
+        state = CampaignState(
+            campaign_name="presentation-purity",
+            selected_faction=Faction.NATO,
+            current_faction=Faction.NATO,
+            factions={
+                "nato": FactionState(Faction.NATO, resources=1000),
+            },
+            provinces={
+                "p": Province("p", "P", Faction.NATO, []),
+            },
+        )
+        before = copy.deepcopy(state.to_dict())
+        presentation = campaign_presentation(state)
+        self.assertEqual("2028-W01", presentation["calendar"]["label"])
+        self.assertEqual("medium", presentation["length_preset"])
+        self.assertNotIn(CAMPAIGN_RULES_KEY, state.map_metadata)
+        self.assertEqual(before, state.to_dict())
 
     def test_persist_gate_unchanged_for_rules_commands(self) -> None:
         self.assertFalse(_should_persist_runtime_snapshot([{"op": "end_player_round"}]))

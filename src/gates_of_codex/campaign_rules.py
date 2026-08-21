@@ -867,8 +867,29 @@ def conclude_campaign(state: CampaignState) -> dict[str, Any]:
     return copy.deepcopy(locked)
 
 
+def _presentation_rules(state: CampaignState) -> dict[str, Any]:
+    """Read-only overlay. Runtime-patch projection must not mutate retained state."""
+    existing = campaign_rules(state)
+    if existing:
+        return existing
+    contract = load_campaign_rules_contract()
+    preset_id = str(contract["calendar"]["default_length_preset"])
+    preset = contract["presets"][preset_id]
+    return {
+        "length_preset": preset_id,
+        "turn_cap": int(preset["turn_cap"]),
+        "hold_weeks": int(contract["calendar"]["default_hold_weeks"]),
+        "calendar": calendar_from_turn(state.turn_number),
+        "continue_playing": False,
+        "concluded": False,
+        "momentum": {"score": 0, "by_faction": {}, "by_actor": {}},
+        "victory_model": VICTORY_MODEL_LEGACY,
+        "thresholds": copy.deepcopy(preset["thresholds"]),
+    }
+
+
 def campaign_presentation(state: CampaignState) -> dict[str, Any]:
-    rules = ensure_campaign_rules(state)
+    rules = _presentation_rules(state)
     calendar = rules.get("calendar") or calendar_from_turn(state.turn_number)
     momentum = rules.get("momentum") or {"score": 0, "by_faction": {}, "by_actor": {}}
     return {
