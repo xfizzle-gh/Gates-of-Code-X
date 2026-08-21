@@ -338,8 +338,7 @@ func _consume_fast_command_result(
 	if op == "verify_result":
 		_capture_verification(backend_payload)
 	elif op == "query_supply":
-		if has_method("_capture_supply_query"):
-			_capture_supply_query(backend_payload)
+		_capture_supply_query(backend_payload)
 	elif _is_lightweight_order_op(op):
 		if not _apply_move_order_result_patch(op, commands, backend_payload):
 			_fail_command(op, "backend succeeded but move-order presentation patch was incomplete")

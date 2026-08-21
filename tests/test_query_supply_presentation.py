@@ -228,8 +228,8 @@ class QuerySupplyPresentationTests(unittest.TestCase):
             root = Path(temporary)
             campaign = root / "campaign.json"
             snapshot = root / "campaign_snapshot.json"
-            campaign.write_text("{}\n", encoding="utf-8")
-            snapshot.write_text('{"existing":true}\n', encoding="utf-8")
+            campaign.write_text("{}\n", encoding="utf-8", newline="\n")
+            snapshot.write_text('{"existing":true}\n', encoding="utf-8", newline="\n")
 
             def fake_apply(campaign_path, *, commands, commands_path, snapshot_path):
                 frontend_commands.save_campaign(object(), campaign_path)
@@ -334,7 +334,6 @@ class GodotSupplyPresentationContractTests(unittest.TestCase):
             "_supply_presentation_from_query",
             "_supply_presentation_from_snapshot",
             "_maybe_request_supply_query",
-            "_capture_supply_query",
             'force.get("supplied"',
             'force.get("cut_off"',
             'force.get("source_hub_id"',
@@ -346,6 +345,7 @@ class GodotSupplyPresentationContractTests(unittest.TestCase):
         self.assertNotIn("func _process(", script)
         self.assertNotIn("for province", script.lower())
         self.assertIn("var supply_query_cache", writeback)
+        self.assertIn("func _capture_supply_query", writeback)
         self.assertIn('op == "query_supply"', writeback)
         self.assertIn("_try_build_snapshot_state", writeback)
         query_block = writeback.split('if op == "query_supply":', 1)[1].split(

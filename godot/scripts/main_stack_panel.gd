@@ -1046,23 +1046,22 @@ func _supply_source_suffix(row: Dictionary) -> String:
 
 
 func _stack_supply_summary(force_ids: Array) -> Dictionary:
-	var worst := {
+	var worst = {
 		"state": "connected",
 		"label": "Connected",
 		"color": _supply_state_color("connected"),
 	}
-	var rank := {
-		"connected": 0,
-		"initial_disconnected": 1,
-		"disconnected": 1,
-		"grace": 2,
-		"cut_off": 3,
-	}
 	var worst_rank := -1
 	for force_id_variant in force_ids:
-		var row := _formation_supply_presentation(String(force_id_variant))
+		var row = _formation_supply_presentation(String(force_id_variant))
 		var state := String(row.get("state", "disconnected"))
-		var value := int(rank.get(state, 1))
+		var value := 1
+		if state == "connected":
+			value = 0
+		elif state == "grace":
+			value = 2
+		elif state == "cut_off":
+			value = 3
 		if value > worst_rank:
 			worst_rank = value
 			worst = row
@@ -1079,97 +1078,77 @@ func _formation_supply_presentation(force_id: String) -> Dictionary:
 			"repair_label": "repair unknown",
 			"source_hub_id": "",
 		}
-	var cached: Variant = supply_query_cache.get(force_id, null)
-	if cached is Dictionary:
-		return _supply_presentation_from_query(cached as Dictionary)
+	if supply_query_cache.has(force_id):
+		var cached = supply_query_cache[force_id]
+		if cached is Dictionary:
+			return _supply_presentation_from_query(cached)
 	return _supply_presentation_from_snapshot(force_id)
 
 
 func _supply_presentation_from_query(row: Dictionary) -> Dictionary:
 	var state := String(row.get("supply_state", "disconnected"))
-	var readiness: Dictionary = row.get("readiness", {})
+	var readiness = row.get("readiness", {})
+	if not readiness is Dictionary:
+		readiness = {}
 	var can_repair := bool(readiness.get("can_repair", false))
+	var repair_label := "repair blocked"
+	if can_repair:
+		repair_label = "repair ready"
 	return {
 		"state": state,
 		"label": _supply_state_label(state),
 		"color": _supply_state_color(state),
 		"readiness": int(readiness.get("supply", 0)),
-		"repair_label": "repair ready" if can_repair else "repair blocked",
+		"repair_label": repair_label,
 		"source_hub_id": String(row.get("source_hub_id", "")),
 		"effect": String(row.get("effect", "")),
 	}
 
 
 func _supply_presentation_from_snapshot(force_id: String) -> Dictionary:
-	var force := {}
-	if has_method("_s10_formation_row"):
-		force = _s10_formation_row(force_id)
-	if force.is_empty():
-		for row_variant: Variant in snapshot.get("strategic_formations", []):
-			if row_variant is Dictionary and String((row_variant as Dictionary).get("id", "")) == force_id:
-				force = row_variant as Dictionary
-				break
+	var force = _s10_formation_row(force_id)
 	var supplied := bool(force.get("supplied", true))
 	var cut_off := bool(force.get("cut_off", false))
 	var source := String(force.get("source_hub_id", "")).strip_edges()
 	var state := "disconnected"
-	if cut_off or not supplied:
+	if cut_off:
 		state = "cut_off"
-	elif not source.is_empty():
+	elif supplied:
 		state = "connected"
-	var readiness := int(force.get("supply_summary", 0))
-	var can_repair := supplied and not cut_off
-	var presentations: Dictionary = snapshot.get("battalion_presentations", {})
-	var force_row: Dictionary = snapshot.get("strategic_formation_presentations", {}).get(force_id, {})
-	for battalion_id_variant in force_row.get("battalion_ids", []):
-		var battalion: Dictionary = battalions_by_id.get(String(battalion_id_variant), {})
-		if battalion.is_empty():
-			battalion = presentations.get(String(battalion_id_variant), {})
-		if readiness == 0 and battalion.has("supply"):
-			readiness = int(battalion.get("supply", 0))
-		if int(battalion.get("encircled_turns", 0)) > 0 or int(battalion.get("supply", 100)) < 50:
-			can_repair = false
-		if not bool(battalion.get("is_in_supply", true)):
-			can_repair = false
-	if readiness == 0:
-		readiness = int(force_row.get("supply_summary", 0))
+	var repair_label := "repair blocked"
+	if supplied and not cut_off:
+		repair_label = "repair ready"
 	return {
 		"state": state,
 		"label": _supply_state_label(state),
 		"color": _supply_state_color(state),
-		"readiness": readiness,
-		"repair_label": "repair ready" if can_repair else "repair blocked",
+		"readiness": int(force.get("supply_summary", 0)),
+		"repair_label": repair_label,
 		"source_hub_id": source,
-		"effect": "Cut-off drains readiness and blocks repair." if state == "cut_off" else "",
+		"effect": "",
 	}
 
 
 func _supply_state_label(state: String) -> String:
-	match state:
-		"connected":
-			return "Connected"
-		"grace":
-			return "Grace"
-		"cut_off":
-			return "Cut-off"
-		"initial_disconnected":
-			return "Disconnected"
-		"disconnected":
-			return "Disconnected"
-		_:
-			return "Unknown"
+	if state == "connected":
+		return "Connected"
+	if state == "grace":
+		return "Grace"
+	if state == "cut_off":
+		return "Cut-off"
+	if state == "initial_disconnected" or state == "disconnected":
+		return "Disconnected"
+	return "Unknown"
 
 
 func _supply_state_color(state: String) -> Color:
-	match state:
-		"connected":
-			return Color(0.45, 0.86, 0.62, 1.0)
-		"grace":
-			return Color(0.95, 0.84, 0.42, 1.0)
-		"cut_off":
-			return Color(0.98, 0.46, 0.38, 1.0)
-		_:
-			return Color(0.95, 0.78, 0.48, 1.0)
+	if state == "connected":
+		return Color(0.45, 0.86, 0.62, 1.0)
+	if state == "grace":
+		return Color(0.95, 0.84, 0.42, 1.0)
+	if state == "cut_off":
+		return Color(0.98, 0.46, 0.38, 1.0)
+	return Color(0.95, 0.78, 0.48, 1.0)
 
 
 func _maybe_request_supply_query() -> void:
@@ -1191,18 +1170,6 @@ func _maybe_request_supply_query() -> void:
 		"strategic_formation_id": selected_strategic_formation_id,
 		"province_id": selected_province_id,
 	}])
-
-
-func _capture_supply_query(payload: Dictionary) -> void:
-	var data := _result_data(payload, "query_supply")
-	for row_variant in data.get("formations", []):
-		if not row_variant is Dictionary:
-			continue
-		var row := row_variant as Dictionary
-		var force_id := String(row.get("strategic_formation_id", "")).strip_edges()
-		if force_id.is_empty():
-			continue
-		supply_query_cache[force_id] = row.duplicate(true)
 
 
 func _ensure_selection(force_ids: Array, battalion_ids: Array) -> void:

@@ -463,6 +463,18 @@ func handoff_status_label() -> String:
 	return "Awaiting Verify Result."
 
 
+func _capture_supply_query(payload: Dictionary) -> void:
+	var data := _result_data(payload, "query_supply")
+	for item in data.get("formations", []):
+		if not item is Dictionary:
+			continue
+		var row: Dictionary = item as Dictionary
+		var force_id := String(row.get("strategic_formation_id", "")).strip_edges()
+		if force_id.is_empty():
+			continue
+		supply_query_cache[force_id] = row.duplicate(true)
+
+
 func _capture_verification(payload: Dictionary) -> void:
 	var results: Array = payload.get("results", [])
 	for item in results:
@@ -1217,8 +1229,7 @@ func _on_command_finished(
 		return
 	# query_supply is read-only: consume the bounded payload and keep the live snapshot.
 	if op == "query_supply":
-		if has_method("_capture_supply_query"):
-			_capture_supply_query(backend_payload)
+		_capture_supply_query(backend_payload)
 		_parse_apply_output(output_text)
 		_clear_busy_ui()
 		queue_redraw()
