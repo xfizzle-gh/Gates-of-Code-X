@@ -640,8 +640,12 @@ def evaluate_p9_outcome(state: CampaignState) -> Any | None:
             # coalition is recorded separately; do not copy the opposing
             # owner report's victory grade / layer results onto the loser.
             grade = GRADE_DEFEAT
-            coalition_result = _layer_result(state, selected, "coalition_war_aim")
-            national_result = _layer_result(state, selected, "national_contribution")
+            coalition_result = _player_facing_layer_result(
+                state, selected, "coalition_war_aim", selected_result=selected_result
+            )
+            national_result = _player_facing_layer_result(
+                state, selected, "national_contribution", selected_result=selected_result
+            )
             reason = "opposing coalition completed its accepted victory contract"
             momentum = player_score
         return _lock_outcome(
@@ -684,8 +688,12 @@ def evaluate_p9_outcome(state: CampaignState) -> Any | None:
                 selected_faction_result=selected_result,
                 victory_hold_rounds=int(rules.get("hold_weeks") or 0),
                 grade=grade,
-                coalition_result=_layer_result(state, selected, "coalition_war_aim"),
-                national_result=_layer_result(state, selected, "national_contribution"),
+                coalition_result=_player_facing_layer_result(
+                    state, selected, "coalition_war_aim", selected_result=selected_result
+                ),
+                national_result=_player_facing_layer_result(
+                    state, selected, "national_contribution", selected_result=selected_result
+                ),
                 continue_playing=False,
                 concluded=False,
                 momentum=player_score,
@@ -821,6 +829,28 @@ def _layer_result(state: CampaignState, faction: Faction, layer: str) -> str:
     key = "required_national" if layer == "national_contribution" else "required_war_aims"
     required = _required_count(campaign_rules(state), key)
     return "victory" if completed >= required else "incomplete"
+
+
+def _player_facing_layer_result(
+    state: CampaignState,
+    faction: Faction,
+    layer: str,
+    *,
+    selected_result: str,
+) -> str:
+    """Selected-player coalition/national field used by the result UI.
+
+    ``_layer_result`` can return ``victory`` when ``required_war_aims`` is 0
+    (no aims completed) or when the selected player independently finished
+    their own layer. Those values must not be presented as the player's
+    result after an opposing contract: the UI treats these fields as the
+    selected player's outcome, not the opposing winner's.
+    """
+
+    result = _layer_result(state, faction, layer)
+    if selected_result == "defeat" and result == "victory":
+        return GRADE_DEFEAT
+    return result
 
 
 def _lock_outcome(state: CampaignState, outcome: Any) -> Any:

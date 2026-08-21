@@ -239,6 +239,88 @@ class CampaignRulesPlayTests(unittest.TestCase):
         self.assertEqual("incomplete", locked.get("coalition_result"))
         self.assertEqual("incomplete", locked.get("national_result"))
 
+    def test_opposing_contract_does_not_copy_vacuous_layer_victory(self) -> None:
+        """required_*=0 makes _layer_result return victory; player-facing fields must not."""
+
+        from gates_of_codex.campaign_rules import (
+            _layer_result,
+            _player_facing_layer_result,
+        )
+
+        state = _ukraine_player_state()
+        rules = state.map_metadata[CAMPAIGN_RULES_KEY]
+        rules["required_war_aims"] = 0
+        rules["required_national"] = 0
+        self.assertEqual("victory", _layer_result(state, Faction.UKRAINE, "coalition_war_aim"))
+        self.assertEqual("victory", _layer_result(state, Faction.UKRAINE, "national_contribution"))
+        self.assertEqual(
+            "defeat",
+            _player_facing_layer_result(
+                state, Faction.UKRAINE, "coalition_war_aim", selected_result="defeat"
+            ),
+        )
+        self.assertEqual(
+            "defeat",
+            _player_facing_layer_result(
+                state, Faction.UKRAINE, "national_contribution", selected_result="defeat"
+            ),
+        )
+        self.assertEqual(
+            "victory",
+            _player_facing_layer_result(
+                state, Faction.UKRAINE, "coalition_war_aim", selected_result="victory"
+            ),
+        )
+
+    def test_opposing_contract_does_not_report_own_completed_layers_as_victory(self) -> None:
+        """Eastern sorts first. Own completed layers stay selected-player defeat, not victory."""
+
+        from gates_of_codex.campaign_rules import _layer_result, update_momentum
+
+        state = _ukraine_player_state()
+        _grant_ukraine_national_hold(state)
+        for row in state.map_metadata["operational_objectives"]:
+            if row["id"] in {"aim-west", "aim-east", "nat-ukr", "nat-rus"}:
+                row["completed"] = True
+                row["progress"] = int(row.get("required") or 1)
+        _boost_momentum(state, "rusa", wins=8)
+        _boost_momentum(state, "ukr", wins=6)
+        update_momentum(state)
+        self.assertEqual("victory", _layer_result(state, Faction.UKRAINE, "coalition_war_aim"))
+        self.assertEqual("victory", _layer_result(state, Faction.UKRAINE, "national_contribution"))
+        outcome = evaluate_campaign_outcome(state)
+        self.assertEqual("complete", outcome.status)
+        self.assertEqual("defeat", outcome.selected_faction_result)
+        self.assertEqual(GRADE_DEFEAT, outcome.grade)
+        self.assertEqual("eastern-coalition", outcome.winner_coalition)
+        self.assertEqual("western-coalition", outcome.loser_coalition)
+        self.assertEqual("defeat", outcome.coalition_result)
+        self.assertEqual("defeat", outcome.national_result)
+        self.assertNotEqual("victory", outcome.coalition_result)
+        self.assertNotEqual("victory", outcome.national_result)
+        with self.assertRaisesRegex(ValueError, "only available after victory"):
+            continue_playing(state)
+        snapshot = {
+            "campaign": {
+                **campaign_presentation(state),
+                "outcome": asdict(outcome),
+            }
+        }
+        model = _campaign_rules_result_model(snapshot)
+        self.assertFalse(model["victory"])
+        self.assertFalse(model["show_continue"])
+        self.assertEqual("defeat", model["coalition_result"])
+        self.assertEqual("defeat", model["national_result"])
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "own-layer-defeat.json"
+            save_campaign(state, path)
+            loaded = load_campaign(path)
+        restored = evaluate_campaign_outcome(loaded)
+        self.assertEqual("defeat", restored.selected_faction_result)
+        self.assertEqual(GRADE_DEFEAT, restored.grade)
+        self.assertEqual("defeat", restored.coalition_result)
+        self.assertEqual("defeat", restored.national_result)
+
     def test_ukraine_coalition_national_split_survives_save_load(self) -> None:
         """ACTIVE / VICTORY / DEFEAT from the UKR split persist across save/load."""
 
