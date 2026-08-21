@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import copy
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -10,7 +12,10 @@ from gates_of_codex.command_cycle_perf import _should_persist_runtime_snapshot
 from gates_of_codex.economy import repair_formation
 from gates_of_codex.frontend import FRONTEND_SCHEMA_VERSION, build_frontend_snapshot
 from gates_of_codex.frontend_commands import apply_frontend_commands
-from gates_of_codex.frontend_runtime_patch import RUNTIME_PATCH_SCHEMA_VERSION
+from gates_of_codex.frontend_runtime_patch import (
+    RUNTIME_PATCH_SCHEMA_VERSION,
+    build_frontend_runtime_patch,
+)
 from gates_of_codex.models import (
     Alliance,
     Battalion,
@@ -30,6 +35,9 @@ from gates_of_codex.site_upgrade import (
     FORWARD_DEPOT_SLOT_CAP,
     SITE_UPGRADE_KEY,
     advance_site_upgrades,
+    apply_forward_depot_repair_cost,
+    forward_depot_supply_restore_bonus,
+    project_site_upgrade,
     province_has_completed_forward_depot,
     province_site_upgrades,
     run_ai_site_upgrade,
@@ -166,6 +174,71 @@ class SiteUpgradeTests(unittest.TestCase):
         self.assertNotIn(SITE_UPGRADE_KEY, state.provinces["a"].metadata)
         self.assertFalse(province_has_completed_forward_depot(state, "a"))
 
+    def test_frontend_snapshot_does_not_mutate_site_upgrade_authority(self) -> None:
+        state, before, before_bytes = self._stale_owner_depot_authority()
+        snapshot = build_frontend_snapshot(state)
+        self.assertEqual(FRONTEND_SCHEMA_VERSION, snapshot["schema_version"])
+        self._assert_site_upgrade_authority_unchanged(state.provinces["a"], before, before_bytes)
+        self.assertFalse(province_has_completed_forward_depot(state, "a"))
+
+    def test_runtime_patch_does_not_mutate_site_upgrade_authority(self) -> None:
+        state, before, before_bytes = self._stale_owner_depot_authority()
+        with tempfile.TemporaryDirectory() as directory:
+            graph_path = Path(directory) / "operational_graph.json"
+            graph_path.write_text(
+                json.dumps({"nodes": [{"node_id": "n-a", "province_id": "a"}]}),
+                encoding="utf-8",
+            )
+            state.map_metadata["operational_graph"] = str(graph_path)
+            patch = build_frontend_runtime_patch(state)
+        self.assertEqual(1, patch["schema_version"])
+        self._assert_site_upgrade_authority_unchanged(state.provinces["a"], before, before_bytes)
+        self.assertFalse(province_has_completed_forward_depot(state, "a"))
+
+    def test_site_upgrade_projection_does_not_mutate_authority(self) -> None:
+        state, before, before_bytes = self._stale_owner_depot_authority()
+        projected = project_site_upgrade(state, state.provinces["a"], Faction.RUSSIA)
+        self.assertEqual("none", projected["status"])
+        self.assertEqual(0, projected["slot_used"])
+        self._assert_site_upgrade_authority_unchanged(state.provinces["a"], before, before_bytes)
+
+    def test_repair_quote_does_not_mutate_site_upgrade_authority(self) -> None:
+        state, before, before_bytes = self._stale_owner_depot_authority()
+        quoted = apply_forward_depot_repair_cost(state, "a", 12)
+        self.assertEqual(12, quoted)
+        self._assert_site_upgrade_authority_unchanged(state.provinces["a"], before, before_bytes)
+
+    def test_supply_effect_read_does_not_mutate_site_upgrade_authority(self) -> None:
+        state, before, before_bytes = self._stale_owner_depot_authority()
+        bonus = forward_depot_supply_restore_bonus(state, "a")
+        self.assertEqual(0, bonus)
+        self._assert_site_upgrade_authority_unchanged(state.provinces["a"], before, before_bytes)
+
+    def test_matching_owner_read_paths_do_not_mutate_site_upgrade_authority(self) -> None:
+        state = self._state()
+        start_site_upgrade(state, "a")
+        advance_site_upgrades(state)
+        advance_site_upgrades(state)
+        before = copy.deepcopy(state.provinces["a"].metadata[SITE_UPGRADE_KEY])
+        before_bytes = json.dumps(before, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        build_frontend_snapshot(state)
+        self._assert_site_upgrade_authority_unchanged(state.provinces["a"], before, before_bytes)
+        with tempfile.TemporaryDirectory() as directory:
+            graph_path = Path(directory) / "operational_graph.json"
+            graph_path.write_text(
+                json.dumps({"nodes": [{"node_id": "n-a", "province_id": "a"}]}),
+                encoding="utf-8",
+            )
+            state.map_metadata["operational_graph"] = str(graph_path)
+            build_frontend_runtime_patch(state)
+        self._assert_site_upgrade_authority_unchanged(state.provinces["a"], before, before_bytes)
+        projected = project_site_upgrade(state, state.provinces["a"], Faction.NATO)
+        self.assertEqual("complete", projected["status"])
+        self.assertEqual(6, apply_forward_depot_repair_cost(state, "a", 12))
+        self.assertEqual(10, forward_depot_supply_restore_bonus(state, "a"))
+        self._assert_site_upgrade_authority_unchanged(state.provinces["a"], before, before_bytes)
+        self.assertTrue(province_has_completed_forward_depot(state, "a"))
+
     def test_save_load_preserves_building_and_complete_records(self) -> None:
         state = self._state(actor_id="usa", actor_resources=2000)
         start_site_upgrade(state, "a", actor_id="usa")
@@ -229,6 +302,31 @@ class SiteUpgradeTests(unittest.TestCase):
         parsed = build_parser().parse_args(["upgrade-site", "campaign.json", "a"])
         self.assertEqual("upgrade-site", parsed.command)
         self.assertEqual(FORWARD_DEPOT_ID, parsed.upgrade)
+
+    def _stale_owner_depot_authority(self) -> tuple[CampaignState, list[dict[str, object]], bytes]:
+        state = self._state()
+        start_site_upgrade(state, "a")
+        advance_site_upgrades(state)
+        advance_site_upgrades(state)
+        self.assertTrue(province_has_completed_forward_depot(state, "a"))
+        state.provinces["a"].owner = Faction.RUSSIA
+        before = copy.deepcopy(state.provinces["a"].metadata[SITE_UPGRADE_KEY])
+        before_bytes = json.dumps(before, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        return state, before, before_bytes
+
+    def _assert_site_upgrade_authority_unchanged(
+        self,
+        province: Province,
+        before: list[dict[str, object]],
+        before_bytes: bytes,
+    ) -> None:
+        after = copy.deepcopy(province.metadata.get(SITE_UPGRADE_KEY))
+        self.assertEqual(before, after)
+        self.assertEqual(
+            before_bytes,
+            json.dumps(after, sort_keys=True, separators=(",", ":")).encode("utf-8"),
+        )
+        self.assertIn(SITE_UPGRADE_KEY, province.metadata)
 
     @staticmethod
     def _state(*, actor_id: str | None = None, actor_resources: int = 2000) -> CampaignState:

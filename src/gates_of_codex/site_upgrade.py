@@ -78,12 +78,15 @@ def province_site_upgrades(province: Province) -> list[dict[str, Any]]:
 
 
 def province_has_completed_forward_depot(state: CampaignState, province_id: str) -> bool:
+    """Read-only effect query. Never mutates ``province.metadata.site_upgrades``."""
+
     province = state.provinces.get(province_id)
     if province is None:
         return False
-    _drop_upgrades_if_owner_changed(province)
     return any(
-        record["upgrade_id"] == FORWARD_DEPOT_ID and record["status"] == "complete"
+        record["upgrade_id"] == FORWARD_DEPOT_ID
+        and record["status"] == "complete"
+        and _upgrade_matches_province_owner(province, record)
         for record in province_site_upgrades(province)
     )
 
@@ -163,12 +166,15 @@ def project_site_upgrade(
     reachable: set[str] | None = None,
     reveal: bool = True,
 ) -> dict[str, Any]:
-    """Presentation projection. Never mutates campaign authority except owner-loss wipe."""
+    """Presentation projection. Never mutates campaign authority."""
 
     if not reveal:
         return _hidden_projection()
-    _drop_upgrades_if_owner_changed(province)
-    records = province_site_upgrades(province)
+    records = [
+        item
+        for item in province_site_upgrades(province)
+        if _upgrade_matches_province_owner(province, item)
+    ]
     record = next((item for item in records if item["upgrade_id"] == FORWARD_DEPOT_ID), None)
     reasons = site_upgrade_blocked_reasons(
         state,
@@ -209,7 +215,6 @@ def start_site_upgrade(
     from .earth3_bootstrap import require_earth3_p2_actionable
 
     require_earth3_p2_actionable(state, province_id, action="site_upgrade")
-    _drop_upgrades_if_owner_changed(province)
     acting_actor = _require_acting_owner(state, province, acting_faction, actor_id)
     if not _province_is_supply_eligible(state, province_id, acting_faction):
         raise ValueError(f"Province {province_id} is not supplied")
@@ -246,7 +251,6 @@ def advance_site_upgrades(state: CampaignState) -> list[dict[str, Any]]:
 
     completed: list[dict[str, Any]] = []
     for province in sorted(state.provinces.values(), key=lambda value: value.province_id):
-        _drop_upgrades_if_owner_changed(province)
         raw = province.metadata.get(SITE_UPGRADE_KEY)
         if raw is None:
             continue
@@ -254,6 +258,9 @@ def advance_site_upgrades(state: CampaignState) -> list[dict[str, Any]]:
         changed = False
         next_records: list[dict[str, Any]] = []
         for record in records:
+            if not _upgrade_matches_province_owner(province, record):
+                next_records.append(record)
+                continue
             if record["status"] != "building":
                 next_records.append(record)
                 continue
@@ -511,6 +518,15 @@ def _debit_treasury(
     return int(faction_state.resources)
 
 
+def _upgrade_matches_province_owner(province: Province, record: dict[str, Any]) -> bool:
+    """True when a stored record still belongs to the current province owner."""
+
+    return (
+        province.owner != Faction.NEUTRAL
+        and record["owner_faction"] == province.owner.value
+    )
+
+
 def _drop_upgrades_if_owner_changed(province: Province) -> None:
     raw = province.metadata.get(SITE_UPGRADE_KEY)
     if raw is None:
@@ -522,7 +538,7 @@ def _drop_upgrades_if_owner_changed(province: Province) -> None:
     if province.owner == Faction.NEUTRAL:
         province.metadata.pop(SITE_UPGRADE_KEY, None)
         return
-    if any(record["owner_faction"] != province.owner.value for record in records):
+    if any(not _upgrade_matches_province_owner(province, record) for record in records):
         province.metadata.pop(SITE_UPGRADE_KEY, None)
 
 
