@@ -903,6 +903,17 @@ class CampaignRules2028PackTests(unittest.TestCase):
         with self.assertRaisesRegex(CampaignRulesError, "does not match scenario"):
             ensure_campaign_rules(state, length_preset="short", victory_model=VICTORY_MODEL_P9)
 
+    def test_expanded_refuses_stamped_core_or_earth3_victory_pack(self) -> None:
+        state = _rules_state(p9=False)
+        state.map_metadata.pop(CAMPAIGN_RULES_KEY, None)
+        state.map_metadata["scenario_id"] = SCENARIO_ID_2028_EXPANDED
+        state.map_metadata[CAMPAIGN_RULES_KEY] = {"objective_pack_id": PACK_ID_2028_CORE}
+        with self.assertRaisesRegex(CampaignRulesError, "does not match scenario"):
+            ensure_campaign_rules(state, length_preset="short", victory_model=VICTORY_MODEL_P9)
+        state.map_metadata[CAMPAIGN_RULES_KEY] = {"objective_pack_id": PACK_ID_EARTH3}
+        with self.assertRaisesRegex(CampaignRulesError, "does not match scenario"):
+            ensure_campaign_rules(state, length_preset="short", victory_model=VICTORY_MODEL_P9)
+
     def test_expanded_unavailable_reason_does_not_claim_core_four_coverage(self) -> None:
         reason = load_campaign_rules_contract()["objective_pack_resolution"][
             "unavailable_scenario_ids"
