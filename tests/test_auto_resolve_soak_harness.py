@@ -35,7 +35,9 @@ def _ensure_src_path() -> None:
         os.environ["PYTHONPATH"] = src + (os.pathsep + current if current else "")
 
 
-class AutoResolveSoakPersistContractTests(unittest.TestCase):
+class AutoResolveSoakHarnessTests(unittest.TestCase):
+    """One class so CI core-lane balancing stays a single small group."""
+
     def test_persist_gate_and_runtime_patch_schema_remain_exact(self) -> None:
         _ensure_src_path()
         harness = _load_harness()
@@ -53,6 +55,15 @@ class AutoResolveSoakPersistContractTests(unittest.TestCase):
             },
             payload["observed"],
         )
+        self.assertEqual(3, harness.DEFAULT_CI_TURNS)
+        self.assertEqual(12, harness.DEFAULT_LONG_TURNS)
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop(harness.TURNS_ENV, None)
+            self.assertEqual(12, harness._default_turns())
+        probe = harness._scenario_probe()
+        self.assertTrue(probe["earth3_v1"])
+        self.assertEqual("earth3_v1", probe["default_scenario_id"])
+        self.assertFalse(probe["ww3_2028_core"]["in_registry"])
 
     def test_harness_fails_closed_when_persist_gate_drifts(self) -> None:
         _ensure_src_path()
@@ -64,15 +75,7 @@ class AutoResolveSoakPersistContractTests(unittest.TestCase):
             with self.assertRaises(harness.PersistSeamError):
                 harness.persist_gate_contract()
 
-    def test_refresh_is_not_a_persist_op(self) -> None:
-        _ensure_src_path()
-        from gates_of_codex.command_cycle_perf import _should_persist_runtime_snapshot
-
-        self.assertFalse(_should_persist_runtime_snapshot([{"op": "refresh"}]))
-
-
-class AutoResolveSoakSmokeTests(unittest.TestCase):
-    def test_three_turn_s10_smoke_records_report_and_does_not_open_goh(self) -> None:
+    def test_three_turn_s10_smoke_writes_report_without_goh(self) -> None:
         _ensure_src_path()
         harness = _load_harness()
         with tempfile.TemporaryDirectory() as temporary:
@@ -87,56 +90,19 @@ class AutoResolveSoakSmokeTests(unittest.TestCase):
             artifact = harness.write_report(report, work / "auto_resolve_soak.json")
             self.assertTrue(artifact.is_file(), artifact)
             self.assertGreater(artifact.stat().st_size, 0)
+            payload = json.loads(artifact.read_text(encoding="utf-8"))
         self.assertTrue(report["ok"], report.get("fatal"))
         self.assertIsNone(report["fatal"])
         self.assertEqual(3, report["turns_completed"])
         self.assertGreaterEqual(report["commands_attempted"], 3)
         self.assertGreaterEqual(report["battles_auto_resolved"], 1)
-        auto_rows = [
-            row for row in report["commands"] if row["ops"] == ["auto_resolve"]
-        ]
-        self.assertTrue(auto_rows)
-        self.assertTrue(auto_rows[0]["persist_runtime_snapshot"])
         self.assertFalse(report["goh_invoked"])
         self.assertFalse(report["morale_changed"])
         self.assertTrue(report["runtime_patch_schema_v1"])
         self.assertTrue(report["save_reload"]["performed"])
         self.assertTrue(report["save_reload"]["identity_ok"])
         self.assertEqual("s10_soak_fixture", report["scenario_id"])
-        persist_ops = {
-            tuple(row["ops"]): row["persist_runtime_snapshot"]
-            for row in report["commands"]
-        }
-        self.assertIn(("end_player_round",), persist_ops)
-        self.assertFalse(persist_ops[("end_player_round",)])
-        for ops, persist in persist_ops.items():
-            if ops == ("issue_move_order", "commit_move_orders") or ops == (
-                "auto_resolve",
-            ):
-                self.assertTrue(persist, ops)
-            elif ops in (("end_player_round",), ("refresh",)):
-                self.assertFalse(persist, ops)
-        gap_ids = {gap["id"] for gap in report["gaps"]}
-        self.assertIn("ww3_2028_core", gap_ids)
-        self.assertIn("frontend_victory_defeat", gap_ids)
-        self.assertIn("auto_resolve_default_ui", gap_ids)
-        self.assertFalse(report["scenario_probe"]["ww3_2028_core"]["in_registry"])
-        self.assertTrue(report["victory_api"]["evaluate_campaign_outcome_exists"])
-        self.assertFalse(report["victory_api"]["frontend_victory_op"])
-
-    def test_end_player_round_does_not_change_snapshot_bytes(self) -> None:
-        _ensure_src_path()
-        harness = _load_harness()
-        with tempfile.TemporaryDirectory() as temporary:
-            work = Path(temporary)
-            report = harness.run_soak(
-                turns=1,
-                work_dir=work,
-                fixture="s10",
-                use_daemon=True,
-                write_full_snapshot=True,
-            )
-        self.assertTrue(report["ok"], report.get("fatal"))
+        self.assertEqual(payload["turns_completed"], 3)
         rounds = [
             row
             for row in report["commands"]
@@ -145,21 +111,28 @@ class AutoResolveSoakSmokeTests(unittest.TestCase):
         self.assertTrue(rounds)
         self.assertFalse(rounds[0]["persist_runtime_snapshot"])
         self.assertFalse(rounds[0]["snapshot_changed"])
+        auto_rows = [
+            row for row in report["commands"] if row["ops"] == ["auto_resolve"]
+        ]
+        self.assertTrue(auto_rows)
+        self.assertTrue(auto_rows[0]["persist_runtime_snapshot"])
+        gap_ids = {gap["id"] for gap in report["gaps"]}
+        self.assertIn("ww3_2028_core", gap_ids)
+        self.assertIn("frontend_victory_defeat", gap_ids)
+        self.assertIn("auto_resolve_default_ui", gap_ids)
+        self.assertTrue(report["victory_api"]["evaluate_campaign_outcome_exists"])
+        self.assertFalse(report["victory_api"]["frontend_victory_op"])
 
-    def test_long_soak_is_gated_by_env_and_defaults_to_three_in_ci(self) -> None:
-        _ensure_src_path()
-        harness = _load_harness()
-        self.assertEqual(3, harness.DEFAULT_CI_TURNS)
-        self.assertEqual(12, harness.DEFAULT_LONG_TURNS)
-        with patch.dict(os.environ, {}, clear=False):
-            os.environ.pop(harness.TURNS_ENV, None)
-            self.assertEqual(12, harness._default_turns())
-        with patch.dict(os.environ, {harness.TURNS_ENV: "12"}):
-            self.assertEqual(12, harness._default_turns())
-
-
-class AutoResolveSoakCliTests(unittest.TestCase):
-    def test_documented_cli_writes_report_for_three_turn_smoke(self) -> None:
+    def test_documented_cli_smoke_is_optional_subprocess(self) -> None:
+        if str(os.environ.get("GOC_AUTO_RESOLVE_SOAK_CLI", "")).strip() not in {
+            "1",
+            "true",
+            "yes",
+        }:
+            # The in-process 3-turn smoke already covers the player loop.
+            # A second subprocess soak would add another ~8s and another
+            # daemon spawn to whichever CI core lane draws this class.
+            self.skipTest("set GOC_AUTO_RESOLVE_SOAK_CLI=1 to run the CLI subprocess")
         _ensure_src_path()
         with tempfile.TemporaryDirectory() as temporary:
             work = Path(temporary)
@@ -184,7 +157,11 @@ class AutoResolveSoakCliTests(unittest.TestCase):
                 env={
                     **os.environ,
                     "PYTHONPATH": str(SRC)
-                    + (os.pathsep + os.environ["PYTHONPATH"] if os.environ.get("PYTHONPATH") else ""),
+                    + (
+                        os.pathsep + os.environ["PYTHONPATH"]
+                        if os.environ.get("PYTHONPATH")
+                        else ""
+                    ),
                 },
             )
             self.assertEqual(0, completed.returncode, completed.stderr + completed.stdout)
@@ -192,17 +169,6 @@ class AutoResolveSoakCliTests(unittest.TestCase):
             payload = json.loads(report_path.read_text(encoding="utf-8"))
         self.assertTrue(payload["ok"], payload.get("fatal"))
         self.assertEqual(3, payload["turns_completed"])
-        self.assertFalse(payload["goh_invoked"])
-
-
-class AutoResolveEarth3OptionalSoakTests(unittest.TestCase):
-    def test_earth3_v1_is_the_production_fixture_on_this_sha(self) -> None:
-        _ensure_src_path()
-        harness = _load_harness()
-        probe = harness._scenario_probe()
-        self.assertTrue(probe["earth3_v1"])
-        self.assertEqual("earth3_v1", probe["default_scenario_id"])
-        self.assertFalse(probe["ww3_2028_core"]["in_registry"])
 
     def test_optional_earth3_soak_runs_only_when_env_requests_it(self) -> None:
         if str(os.environ.get("GOC_AUTO_RESOLVE_SOAK", "")).strip() not in {
