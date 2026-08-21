@@ -885,6 +885,23 @@ def _apply_one(state, op: str, raw: dict[str, Any]) -> CommandResult:
             raise ValueError("construct requires province and building")
         built = build_infrastructure(state, faction, province, building)
         return CommandResult(op=op, ok=True, detail=f"built {building}", data=asdict(built))
+    if op == "upgrade_site":
+        from .site_upgrade import FORWARD_DEPOT_ID, start_site_upgrade
+
+        province = str(raw.get("province") or raw.get("province_id") or "")
+        upgrade_id = str(raw.get("upgrade_id") or raw.get("upgrade") or FORWARD_DEPOT_ID)
+        actor_id = raw.get("actor_id") or raw.get("actor")
+        faction = Faction(str(raw.get("faction", state.selected_faction.value)))
+        if not province:
+            raise ValueError("upgrade_site requires province")
+        upgraded = start_site_upgrade(
+            state,
+            province,
+            upgrade_id=upgrade_id,
+            faction=faction,
+            actor_id=None if actor_id in (None, "") else str(actor_id),
+        )
+        return CommandResult(op=op, ok=True, detail=f"upgrading {upgrade_id}", data=asdict(upgraded))
     if op == "repair":
         from .frontend_actor_force import apply_repair_command
 

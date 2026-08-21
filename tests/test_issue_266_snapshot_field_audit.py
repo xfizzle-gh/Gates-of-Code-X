@@ -265,6 +265,7 @@ class ConsumerInventoryTests(unittest.TestCase):
     def test_live_godot_still_reads_required_keep_fields(self) -> None:
         main = (GODOT_SCRIPTS / "main.gd").read_text(encoding="utf-8")
         self.assertIn('province.get("construction_options", [])', main)
+        self.assertIn('province.get("site_upgrade", {})', main)
         self.assertIn('snapshot.get("province_names", {})', main)
         self.assertIn('campaign.get("map_metadata", {})', main)
         self.assertIn('meta.get("province_names", {})', main)

@@ -74,6 +74,19 @@ class StrategicAI:
                     details=construction,
                 )
             )
+        from .site_upgrade import run_ai_site_upgrade
+
+        upgrade = run_ai_site_upgrade(self.state, faction)
+        if upgrade:
+            actions.append(
+                StrategicAction(
+                    battalion_id="",
+                    action="upgrade_site",
+                    origin_province_id=str(upgrade.get("province_id", "")),
+                    target_province_id=str(upgrade.get("upgrade_id", "")),
+                    details=upgrade,
+                )
+            )
         from .earth3_bootstrap import earth3_p2_movement_unavailable
 
         if earth3_p2_movement_unavailable(self.state):

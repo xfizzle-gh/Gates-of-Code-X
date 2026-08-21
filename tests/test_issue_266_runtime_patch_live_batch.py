@@ -112,6 +112,7 @@ class LiveBatchRoutingTests(unittest.TestCase):
         self.assertFalse(_should_persist_runtime_snapshot([{"op": "end_player_round"}]))
         self.assertFalse(_should_persist_runtime_snapshot([{"op": "refresh"}]))
         self.assertFalse(_should_persist_runtime_snapshot([{"op": "issue_move_order"}]))
+        self.assertFalse(_should_persist_runtime_snapshot([{"op": "upgrade_site"}]))
 
     def test_godot_selects_runtime_patch_before_issue_lightweight_path(self) -> None:
         source = (ROOT / "godot/scripts/main_perf_measured.gd").read_text(encoding="utf-8")

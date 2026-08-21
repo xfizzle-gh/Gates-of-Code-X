@@ -57,6 +57,7 @@ class FasterCampaignSaveContractTests(unittest.TestCase):
         self.assertFalse(_should_persist_runtime_snapshot([{"op": "refresh"}]))
         self.assertFalse(_should_persist_runtime_snapshot([{"op": "query_supply"}]))
         self.assertFalse(_should_persist_runtime_snapshot([{"op": "issue_move_order"}]))
+        self.assertFalse(_should_persist_runtime_snapshot([{"op": "upgrade_site"}]))
 
     def test_runtime_patch_schema_remains_v1(self) -> None:
         self.assertEqual("gates-of-codex.frontend-runtime-patch", RUNTIME_PATCH_SCHEMA)

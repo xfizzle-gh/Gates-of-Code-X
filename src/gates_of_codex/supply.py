@@ -100,7 +100,12 @@ def refresh_supply_for_faction(state: CampaignState, faction: Faction) -> Supply
             else operational_supplied
         )
         if is_supplied:
-            battalion.supply = min(100, battalion.supply + SUPPLY_RESTORE)
+            from .site_upgrade import forward_depot_supply_restore_bonus
+
+            restore = SUPPLY_RESTORE + forward_depot_supply_restore_bonus(
+                state, battalion.province_id
+            )
+            battalion.supply = min(100, battalion.supply + restore)
             battalion.encircled_turns = 0
             supplied.append(battalion.battalion_id)
             continue

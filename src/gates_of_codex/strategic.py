@@ -127,10 +127,12 @@ def ensure_strategic_layer(state: CampaignState) -> None:
     state.map_metadata.setdefault("victory_hold_rounds", {})
     state.map_metadata.setdefault("campaign_outcome", asdict(CampaignOutcome(status="active")))
     from .campaign_rules import ensure_campaign_rules
+    from .site_upgrade import validate_province_site_upgrades
 
     ensure_campaign_rules(state)
     for province in state.provinces.values():
         infrastructure_levels(province)
+        validate_province_site_upgrades(province)
         sync_province_infrastructure_owner(province)
     state.schema_version = max(state.schema_version, 5)
     from .force_migration import ensure_strategic_formations
@@ -311,6 +313,9 @@ def sync_province_infrastructure_owner(province: Province) -> None:
     if levels["supply_hub"] > 0 and province.owner != Faction.NEUTRAL:
         sources.add(province.owner.value)
     province.metadata["supply_source_for"] = sorted(sources)
+    from .site_upgrade import sync_site_upgrades_on_owner_change
+
+    sync_site_upgrades_on_owner_change(province)
 
 
 def update_operational_objectives(state: CampaignState) -> list[dict[str, Any]]:

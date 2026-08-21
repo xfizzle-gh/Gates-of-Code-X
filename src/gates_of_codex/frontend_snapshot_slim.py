@@ -58,6 +58,7 @@ FRONTEND_CONSUMED_PROVINCE_FIELDS = frozenset(
         "fortification",
         "infrastructure",
         "construction_options",
+        "site_upgrade",
         "occupied_by",
         "occupied_by_battalions",
         "sovereign_owner",

@@ -438,6 +438,15 @@ func _draw_management_panel() -> void:
 				battalion.get("movement_remaining", 0),
 				battalion.get("combat_actions_remaining", 0),
 			], x, y)
+		var site_upgrade: Dictionary = province.get("site_upgrade", {})
+		if not site_upgrade.is_empty():
+			var upgrade_status := String(site_upgrade.get("status", "none"))
+			if upgrade_status == "complete":
+				y = _panel_line("Forward Depot complete — cheaper repair, faster supply.", x, y, Color("63d69f"), 12)
+			elif upgrade_status == "building":
+				y = _panel_line("Forward Depot building (%s weeks left)" % site_upgrade.get("turns_remaining", 0), x, y, Color("ffd27a"), 12)
+			if bool(site_upgrade.get("available", false)) and writeback:
+				y = _draw_button("upgrade_site", "Upgrade site: Forward Depot (%s)" % site_upgrade.get("cost", 0), x, y, true, Color("1f3d2c"))
 		var options: Array = province.get("construction_options", [])
 		var construct_count := 0
 		for option: Dictionary in options:
@@ -666,6 +675,15 @@ func _handle_button(button_id: String) -> void:
 		return
 	if button_id.begins_with("move:"):
 		_issue_move(button_id.trim_prefix("move:"))
+		return
+	if button_id == "upgrade_site":
+		var campaign_upgrade: Dictionary = snapshot.get("campaign", {})
+		_queue_and_apply([{
+			"op": "upgrade_site",
+			"province": selected_province_id,
+			"upgrade_id": "forward_depot",
+			"faction": String(campaign_upgrade.get("selected_faction", campaign_upgrade.get("current_faction", ""))),
+		}])
 		return
 	if button_id.begins_with("construct:"):
 		var building := button_id.trim_prefix("construct:")

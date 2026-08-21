@@ -217,6 +217,9 @@ class CampaignEngine:
             # (manual commit during turn N activates when turn N ends).
             resolve_strategic_turn_movement(self.state)
             self.state.turn_number += 1
+            from .site_upgrade import advance_site_upgrades
+
+            advance_site_upgrades(self.state)
             refresh_operational_supply(self.state, consume_grace=False)
             settle_round_economy(self.state)
             for battalion in self.state.battalions.values():

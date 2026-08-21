@@ -76,6 +76,7 @@ func _slimmed_snapshot() -> Dictionary:
 				"construction_options": [
 					{"building": "supply_hub", "next_level": 2, "cost": 10, "available": true}
 				],
+				"site_upgrade": {"upgrade_id": "forward_depot", "status": "none", "available": true, "cost": 400},
 				"occupied_by": "bn-n",
 				"occupied_by_battalions": ["bn-n"],
 			},
@@ -90,6 +91,7 @@ func _slimmed_snapshot() -> Dictionary:
 				"fortification": 0,
 				"infrastructure": {},
 				"construction_options": [],
+				"site_upgrade": {"upgrade_id": "forward_depot", "status": "none", "available": false, "cost": 400},
 				"occupied_by": "bn-r",
 				"occupied_by_battalions": ["bn-r"],
 			},
@@ -146,6 +148,8 @@ func _test_slimmed_snapshot_loads_consumed_fields() -> void:
 	_assert_true("terrain omitted", not province.has("terrain"))
 	var options: Array = province.get("construction_options", [])
 	_assert_true("construction_options kept", options.size() == 1)
+	var site_upgrade: Dictionary = province.get("site_upgrade", {})
+	_assert_true("site_upgrade kept", String(site_upgrade.get("upgrade_id", "")) == "forward_depot")
 	if not options.is_empty():
 		var option: Dictionary = options[0]
 		_assert_true("construction building kept", String(option.get("building", "")) == "supply_hub")

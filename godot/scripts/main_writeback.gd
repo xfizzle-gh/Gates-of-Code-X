@@ -357,6 +357,7 @@ func _command_mutates_state(button_id: String) -> bool:
 		"end_turn",
 		"run_ai",
 		"auto_resolve",
+		"upgrade_site",
 		"handoff",
 		"import_battle",
 		"new_campaign",

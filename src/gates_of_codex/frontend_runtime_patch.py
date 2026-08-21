@@ -258,6 +258,14 @@ def _dynamic_provinces(
                 p2_campaign=p2_campaign,
                 p2_footprint=p2_footprint,
             )
+            from .site_upgrade import project_site_upgrade
+
+            row["site_upgrade"] = project_site_upgrade(
+                state,
+                province,
+                selected,
+                reachable=reachable,
+            )
         rows.append(row)
     return rows
 

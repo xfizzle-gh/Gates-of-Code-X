@@ -23,6 +23,7 @@ from .frontend_actor_force import build_acting_actor_presentation
 from .map_layout import apply_marker_layout, is_human_readable_name, province_name_coverage
 from .models import CampaignState, Faction
 from .play_context import list_front_options
+from .site_upgrade import hidden_site_upgrade_projection, project_site_upgrade
 from .strategic import (
     construction_options,
     ensure_strategic_layer,
@@ -271,6 +272,12 @@ def build_frontend_snapshot(
                 "infrastructure": infrastructure_levels(province),
                 "construction_options": construction_options(
                     state, state.selected_faction, province.province_id
+                ),
+                "site_upgrade": project_site_upgrade(
+                    state,
+                    province,
+                    state.selected_faction,
+                    reachable=supply_reach.get(state.selected_faction.value),
                 ),
                 "occupied_by": occupied.get(province.province_id, [""])[0],
                 "occupied_by_battalions": list(occupied.get(province.province_id, [])),
@@ -609,6 +616,7 @@ def _apply_s11_frontend_filter(snapshot: dict, state: CampaignState) -> dict:
         if owner not in coalition:
             province["infrastructure"] = {}
             province["construction_options"] = []
+            province["site_upgrade"] = hidden_site_upgrade_projection()
             province.pop("resource_yield", None)
             province.pop("fortification", None)
             metadata = province.get("metadata", {})
@@ -1300,6 +1308,7 @@ def _control_block(
             "run_ai",
             "auto_resolve",
             "construct",
+            "upgrade_site",
             "repair",
             "research",
             "recruit",
