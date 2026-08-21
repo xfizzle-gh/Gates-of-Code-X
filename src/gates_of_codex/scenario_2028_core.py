@@ -138,16 +138,30 @@ def bind_core_2028_selected_actor(state: CampaignState, actor_id: str) -> None:
             target_actor_id=token,
         )
         content["actor_count"] = len(content_actors)
-        runtime["actors"] = {key: actors[key].to_dict() for key in sorted(actors)}
+        state.map_metadata[ACTOR_RUNTIME_KEY]["actors"] = {
+            key: actors[key].to_dict() for key in sorted(actors)
+        }
         validate_strategic_actor_runtime(state)
         validate_actor_content_runtime(state)
 
-    actors = ensure_strategic_actor_runtime(state)
-    actors[token].resources = CORE_2028_STARTING_TREASURY[token]
-    actors[token].playable = True
-    runtime["actors"] = {key: actors[key].to_dict() for key in sorted(actors)}
     set_selected_actor(state, token)
-    selected = str(state.map_metadata[ACTOR_RUNTIME_KEY].get("selected_actor_id") or "")
+    actors = ensure_strategic_actor_runtime(state)
+    chosen = actors[token]
+    chosen.resources = CORE_2028_STARTING_TREASURY[token]
+    chosen.playable = True
+    chosen.is_eliminated = False
+    nodes = content_actors.get(token, {}).get("research_nodes")
+    if isinstance(nodes, dict):
+        roots = {
+            key for key, node in nodes.items()
+            if isinstance(node, dict) and node.get("node_type") == "root"
+        }
+        chosen.researched_keys = sorted(set(chosen.researched_keys) | roots)
+    current = state.map_metadata[ACTOR_RUNTIME_KEY]
+    current["actors"] = {key: actors[key].to_dict() for key in sorted(actors)}
+    current["selected_actor_id"] = token
+    current["current_actor_id"] = token
+    selected = str(current.get("selected_actor_id") or "")
     if selected != token or selected == "usa":
         raise Scenario2028AuthorityError(
             f"core_2028_selected_actor_not_bound:{selected}:{token}"

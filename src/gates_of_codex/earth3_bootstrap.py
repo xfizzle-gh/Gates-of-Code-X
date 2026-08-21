@@ -1373,6 +1373,12 @@ def validate_earth3_bootstrap_provenance(
     *,
     overlay_actor_ids: frozenset[str] = frozenset(),
 ) -> None:
+    if not overlay_actor_ids:
+        scenario_id = str(state.map_metadata.get("scenario_id") or "")
+        if scenario_id == "ww3_2028_core":
+            from .scenario_2028_core import CORE_2028_OVERLAY_ACTOR_IDS
+
+            overlay_actor_ids = CORE_2028_OVERLAY_ACTOR_IDS
     raw_metadata = state.map_metadata.get(BOOTSTRAP_METADATA_KEY)
     if raw_metadata is None:
         actor_content = state.map_metadata.get("actor_content_runtime")
