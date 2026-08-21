@@ -13,8 +13,20 @@
       "Momentum collapse is a documented player-actor defeat path.",
       "Continue Playing has no hard end year in this slice.",
       "Presets change turn cap and war-aim/Momentum thresholds only.",
-      "Earth3 objectives.json stays frozen; this file overlays war-aim metadata and national objectives."
+      "Earth3 objectives.json stays frozen; this file overlays war-aim metadata and national objectives.",
+      "War-aim packs bind by scenario_id only. Omitted scenario_id uses this Earth3 pack. Unknown scenario_id refuses to start.",
+      "ww3_2028_core and ww3_2028_expanded share the four-power Core pack (nato, ukr, rusa, prc). No faction-name heuristics."
     ]
+  },
+  "objective_pack_resolution": {
+    "default_pack_id": "earth3_v1",
+    "default_when_scenario_id_omitted": "earth3_v1",
+    "unknown_scenario": "refuse",
+    "earth3_scenario_ids": ["earth3_v1", "earth3_native_acceptance"],
+    "packs": {
+      "ww3_2028_core": "ww3_2028_core.json",
+      "ww3_2028_expanded": "ww3_2028_core.json"
+    }
   },
   "calendar": {
     "start_year": 2028,

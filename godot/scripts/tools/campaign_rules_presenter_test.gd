@@ -21,6 +21,7 @@ func _initialize() -> void:
 func _run_all() -> void:
 	_test_calendar_and_momentum_labels()
 	_test_objective_uses_required_not_threshold()
+	_test_2028_aims_use_required_not_omitted_fields()
 	_test_result_shows_continue_and_conclude_on_victory()
 	_test_result_hides_continue_on_defeat()
 	_test_opposing_contract_is_not_player_victory()
@@ -86,6 +87,36 @@ func _test_objective_uses_required_not_threshold() -> void:
 		"completed": true,
 	})
 	_assert_eq("national line", done, "DONE  [National] Defend Kyiv")
+
+
+func _test_2028_aims_use_required_not_omitted_fields() -> void:
+	var war_aim := Presenter.objective_progress_line({
+		"id": "aim_2028_west_donbas",
+		"display_name": "Secure Donetsk and Luhansk",
+		"progress": 1,
+		"required": 2,
+		"layer": "coalition_war_aim",
+		"completed": false,
+	})
+	_assert_eq("2028 war aim line", war_aim, "1/2  [War aim] Secure Donetsk and Luhansk")
+	var national := Presenter.objective_progress_line({
+		"id": "nat_2028_nato_berlin",
+		"display_name": "Hold the Berlin command hub",
+		"progress": 1,
+		"required": 1,
+		"layer": "national_contribution",
+		"completed": true,
+	})
+	_assert_eq("2028 national line", national, "DONE  [National] Hold the Berlin command hub")
+	var prc := Presenter.objective_progress_line({
+		"id": "nat_2028_prc_vilnius",
+		"display_name": "Seize the Vilnius forward hub",
+		"progress": 0,
+		"required": 1,
+		"layer": "national_contribution",
+		"completed": false,
+	})
+	_assert_eq("2028 prc line", prc, "0/1  [National] Seize the Vilnius forward hub")
 
 
 func _test_result_shows_continue_and_conclude_on_victory() -> void:

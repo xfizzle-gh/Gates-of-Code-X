@@ -16,6 +16,8 @@ from gates_of_codex.campaign_rules import (
     GRADE_DEFEAT,
     GRADE_STALEMATE,
     GRADE_VICTORY,
+    PACK_ID_2028_CORE,
+    PACK_ID_EARTH3,
     VICTORY_GRADES,
     VICTORY_MODEL_P9,
     calendar_from_turn,
@@ -25,9 +27,14 @@ from gates_of_codex.campaign_rules import (
     conclude_campaign,
     continue_playing,
     ensure_campaign_rules,
+    known_objective_scenario_ids,
     load_campaign_rules_contract,
+    load_objective_pack,
     normalize_length_preset,
+    objective_pack_for_state,
+    player_actor_id,
     record_auto_resolve_result,
+    resolve_objective_pack_id,
 )
 from gates_of_codex.command_cycle_perf import _should_persist_runtime_snapshot
 from gates_of_codex.frontend import build_frontend_snapshot
@@ -35,6 +42,7 @@ from gates_of_codex.frontend_runtime_patch import (
     RUNTIME_PATCH_SCHEMA_VERSION,
     build_frontend_runtime_patch,
 )
+from gates_of_codex.frontend_snapshot_slim import slim_unused_frontend_fields
 from gates_of_codex.models import (
     Alliance,
     Battalion,
@@ -81,6 +89,27 @@ class CampaignRulesContractTests(unittest.TestCase):
     def test_unknown_preset_fails_closed(self) -> None:
         with self.assertRaisesRegex(ValueError, "Unknown campaign length preset"):
             normalize_length_preset("endless")
+
+    def test_objective_packs_bind_by_scenario_id_not_faction_names(self) -> None:
+        contract = load_campaign_rules_contract()
+        resolution = contract["objective_pack_resolution"]
+        self.assertEqual("refuse", resolution["unknown_scenario"])
+        self.assertEqual(PACK_ID_EARTH3, resolution["default_when_scenario_id_omitted"])
+        self.assertEqual(PACK_ID_EARTH3, resolve_objective_pack_id(""))
+        self.assertEqual(PACK_ID_EARTH3, resolve_objective_pack_id("earth3_v1"))
+        self.assertEqual(PACK_ID_EARTH3, resolve_objective_pack_id("earth3_native_acceptance"))
+        self.assertEqual(PACK_ID_2028_CORE, resolve_objective_pack_id("ww3_2028_core"))
+        self.assertEqual(PACK_ID_2028_CORE, resolve_objective_pack_id("ww3_2028_expanded"))
+        self.assertIn("ww3_2028_core", known_objective_scenario_ids())
+        with self.assertRaisesRegex(ValueError, "Unknown campaign scenario 'ww3_1991_fantasy'"):
+            resolve_objective_pack_id("ww3_1991_fantasy")
+        core = load_objective_pack(PACK_ID_2028_CORE)
+        self.assertEqual("nato", core["actor_faction"]["nato"])
+        self.assertEqual("rusa", core["player_actor_by_faction"]["rusa"])
+        self.assertEqual({"nato", "ukr", "rusa", "prc"}, {row["owner_id"] for row in core["national_objectives"]})
+        earth3 = load_objective_pack(PACK_ID_EARTH3)
+        self.assertEqual("usa", earth3["player_actor_by_faction"]["nato"])
+        self.assertEqual("rus", earth3["player_actor_by_faction"]["rusa"])
 
 
 class CampaignRulesPlayTests(unittest.TestCase):
@@ -697,6 +726,123 @@ class CampaignRulesPlayTests(unittest.TestCase):
         self.assertEqual("complete", second.status)
 
 
+class CampaignRules2028PackTests(unittest.TestCase):
+    def test_unknown_scenario_refuses_to_start(self) -> None:
+        state = _rules_state()
+        state.map_metadata["scenario_id"] = "ww3_1991_fantasy"
+        with self.assertRaisesRegex(ValueError, "Unknown campaign scenario 'ww3_1991_fantasy'"):
+            ensure_campaign_rules(state, length_preset="short", victory_model=VICTORY_MODEL_P9)
+
+    def test_scenario_profile_mismatch_refuses_to_start(self) -> None:
+        state = _rules_state()
+        state.map_metadata["scenario_id"] = "ww3_2028_core"
+        state.map_metadata["scenario_profile"] = {"scenario_id": "earth3_v1"}
+        with self.assertRaisesRegex(ValueError, "scenario_id mismatch"):
+            ensure_campaign_rules(state, length_preset="short", victory_model=VICTORY_MODEL_P9)
+
+    def test_four_power_factions_with_earth3_id_do_not_select_2028_pack(self) -> None:
+        state = _rules_state()
+        state.map_metadata["scenario_id"] = "earth3_v1"
+        ensure_campaign_rules(state, length_preset="short", victory_model=VICTORY_MODEL_P9)
+        self.assertEqual(PACK_ID_EARTH3, state.map_metadata[CAMPAIGN_RULES_KEY]["objective_pack_id"])
+        self.assertEqual("usa", player_actor_id(state))
+        self.assertEqual("usa", objective_pack_for_state(state)["player_actor_by_faction"]["nato"])
+        ids = {row["id"] for row in state.map_metadata["operational_objectives"]}
+        self.assertNotIn("aim_2028_west_donbas", ids)
+        self.assertNotIn("nat_2028_nato_berlin", ids)
+
+    def test_earth3_fixture_nationals_still_inject_on_earth3_scenario(self) -> None:
+        state = _earth3_location_state(scenario_id="earth3_v1")
+        ids = {row["id"] for row in state.map_metadata["operational_objectives"]}
+        self.assertIn("nat_usa_berlin", ids)
+        self.assertIn("nat_ukr_kyiv", ids)
+        self.assertIn("nat_rus_rostov", ids)
+        self.assertNotIn("nat_2028_nato_berlin", ids)
+        self.assertEqual("usa", _objective(state, "nat_usa_berlin")["owner_id"])
+
+    def test_core_settings_load_four_power_aims(self) -> None:
+        state = _earth3_location_state(scenario_id="ww3_2028_core")
+        self.assertEqual(PACK_ID_2028_CORE, state.map_metadata[CAMPAIGN_RULES_KEY]["objective_pack_id"])
+        self.assertEqual("nato", player_actor_id(state))
+        ids = {row["id"] for row in state.map_metadata["operational_objectives"]}
+        self.assertEqual(
+            {
+                "aim_2028_west_donbas",
+                "aim_2028_east_kyiv_vilnius",
+                "nat_2028_nato_berlin",
+                "nat_2028_ukr_kyiv",
+                "nat_2028_rusa_rostov",
+                "nat_2028_prc_vilnius",
+            },
+            ids,
+        )
+        self.assertEqual("nato", _objective(state, "nat_2028_nato_berlin")["owner_id"])
+        self.assertEqual("rusa", _objective(state, "nat_2028_rusa_rostov")["owner_id"])
+        self.assertEqual("prc", _objective(state, "nat_2028_prc_vilnius")["owner_id"])
+        self.assertNotIn("nat_usa_berlin", ids)
+        self.assertNotIn("nat_rus_rostov", ids)
+        for row in state.map_metadata["operational_objectives"]:
+            self.assertEqual(4, row["hold_weeks"])
+            self.assertIn(row["layer"], {"coalition_war_aim", "national_contribution"})
+
+    def test_expanded_settings_reuse_core_four_power_pack(self) -> None:
+        state = _earth3_location_state(scenario_id="ww3_2028_expanded")
+        self.assertEqual(PACK_ID_2028_CORE, state.map_metadata[CAMPAIGN_RULES_KEY]["objective_pack_id"])
+        self.assertEqual("nato", player_actor_id(state))
+        self.assertIn("nat_2028_prc_vilnius", {row["id"] for row in state.map_metadata["operational_objectives"]})
+
+    def test_core_campaign_can_win_and_lose_in_p9_engine(self) -> None:
+        winning = _earth3_location_state(scenario_id="ww3_2028_core")
+        for _ in range(4):
+            evaluate_campaign_outcome(winning, advance_hold=True)
+        self.assertTrue(_objective(winning, "aim_2028_west_donbas")["completed"])
+        self.assertTrue(_objective(winning, "nat_2028_nato_berlin")["completed"])
+        winning.map_metadata[CAMPAIGN_RULES_KEY]["events"]["major_auto_resolve_wins"] = {"nato": 6}
+        outcome = evaluate_campaign_outcome(winning)
+        self.assertEqual("complete", outcome.status)
+        self.assertIn(outcome.grade, {GRADE_VICTORY, "decisive_victory"})
+        self.assertEqual("victory", outcome.selected_faction_result)
+        self.assertEqual("victory", outcome.national_result)
+
+        losing = _earth3_location_state(scenario_id="ww3_2028_core")
+        losing.provinces["e3_0592"].owner = Faction.RUSSIA
+        for week in range(3):
+            self.assertEqual("active", evaluate_campaign_outcome(losing, advance_hold=True).status, week)
+        defeat = evaluate_campaign_outcome(losing, advance_hold=True)
+        self.assertEqual("complete", defeat.status)
+        self.assertEqual("defeat", defeat.selected_faction_result)
+        self.assertEqual(GRADE_DEFEAT, defeat.grade)
+        self.assertIn("capital or control hub", defeat.reason)
+
+    def test_snapshot_exposes_2028_aims_without_slim_metadata(self) -> None:
+        state = _earth3_location_state(scenario_id="ww3_2028_core")
+        evaluate_campaign_outcome(state)
+        snapshot = build_frontend_snapshot(state)
+        objectives = snapshot["objectives"]
+        self.assertTrue(objectives)
+        donbas = next(row for row in objectives if row["id"] == "aim_2028_west_donbas")
+        self.assertEqual("Secure Donetsk and Luhansk", donbas["display_name"])
+        self.assertEqual("coalition_war_aim", donbas["layer"])
+        self.assertEqual(2, donbas["required"])
+        self.assertNotIn("threshold", donbas)
+        kyiv = next(row for row in objectives if row["id"] == "nat_2028_ukr_kyiv")
+        self.assertEqual("Defend Kyiv", kyiv["display_name"])
+        self.assertEqual("national_contribution", kyiv["layer"])
+        slimmed = slim_unused_frontend_fields(copy.deepcopy(snapshot))
+        metadata = slimmed["campaign"]["map_metadata"]
+        self.assertNotIn("operational_objectives", metadata)
+        self.assertEqual("ww3_2028_core", slimmed["application"]["scenario_id"])
+        self.assertTrue(
+            any(row["id"] == "aim_2028_west_donbas" for row in slimmed["objectives"])
+        )
+        patch = build_frontend_runtime_patch(state)
+        self.assertEqual(1, RUNTIME_PATCH_SCHEMA_VERSION)
+        self.assertEqual(1, patch["schema_version"])
+        self.assertFalse(_should_persist_runtime_snapshot([{"op": "refresh"}]))
+        self.assertFalse(_should_persist_runtime_snapshot([{"op": "continue_playing"}]))
+        self.assertTrue(_should_persist_runtime_snapshot([{"op": "auto_resolve"}]))
+
+
 def _objective(state: CampaignState, identity: str) -> dict:
     return next(
         row
@@ -916,6 +1062,68 @@ def _rules_state(
                 "target_hold_weeks": {},
             },
         ]
+    state.validate()
+    return state
+
+
+def _earth3_location_state(*, scenario_id: str) -> CampaignState:
+    state = CampaignState(
+        campaign_name="2028 pack test",
+        selected_faction=Faction.NATO,
+        current_faction=Faction.NATO,
+        factions={
+            "nato": FactionState(Faction.NATO, resources=2000, researched_keys=["core-nato"]),
+            "ukr": FactionState(Faction.UKRAINE, resources=2000),
+            "rusa": FactionState(Faction.RUSSIA, resources=2000, researched_keys=["core-rusa"]),
+            "prc": FactionState(Faction.PRC, resources=2000),
+        },
+        alliances={
+            "western-coalition": Alliance("western-coalition", "Western", [Faction.NATO, Faction.UKRAINE]),
+            "eastern-coalition": Alliance("eastern-coalition", "Eastern", [Faction.RUSSIA, Faction.PRC]),
+        },
+        formations={
+            "nato-formation": Formation("nato-formation", "NATO Formation", Faction.NATO, "US", preferred_categories=["infantry"]),
+            "rusa-formation": Formation("rusa-formation", "Russian Formation", Faction.RUSSIA, "RU", preferred_categories=["infantry"]),
+        },
+        research_nodes={
+            "core-nato": ResearchNode("core-nato", Faction.NATO, "Core", 0),
+            "core-rusa": ResearchNode("core-rusa", Faction.RUSSIA, "Core", 0),
+        },
+        unit_economy={
+            "rifle(nato)": UnitEconomy("rifle(nato)", Faction.NATO, "infantry", 100, 3, 1, ["core-nato"]),
+            "rifle(rusa)": UnitEconomy("rifle(rusa)", Faction.RUSSIA, "infantry", 100, 3, 1, ["core-rusa"]),
+        },
+        provinces={
+            "e3_0592": Province("e3_0592", "Berlin", Faction.NATO, ["e3_0442"], metadata={"static_supply_source_for": ["nato"]}),
+            "e3_0442": Province("e3_0442", "Vilnius", Faction.NATO, ["e3_0592", "e3_1937"]),
+            "e3_1937": Province("e3_1937", "Kyiv", Faction.UKRAINE, ["e3_0442", "e3_2794"], metadata={"static_supply_source_for": ["ukr"]}),
+            "e3_2794": Province("e3_2794", "Luhansk", Faction.NATO, ["e3_1937", "e3_3380"]),
+            "e3_3380": Province("e3_3380", "Donetsk", Faction.NATO, ["e3_2794", "e3_2793"]),
+            "e3_2793": Province("e3_2793", "Rostov", Faction.RUSSIA, ["e3_3380"], metadata={"static_supply_source_for": ["rusa"]}),
+        },
+        battalions={
+            "nato-1": Battalion(
+                "nato-1",
+                Faction.NATO,
+                "e3_0592",
+                roster=[BattalionRosterEntry("rifle(nato)", 3, category="infantry")],
+                authorized_roster=[BattalionRosterEntry("rifle(nato)", 3, category="infantry")],
+                formation_id="nato-formation",
+            ),
+            "rusa-1": Battalion(
+                "rusa-1",
+                Faction.RUSSIA,
+                "e3_2793",
+                roster=[BattalionRosterEntry("rifle(rusa)", 3, category="infantry")],
+                authorized_roster=[BattalionRosterEntry("rifle(rusa)", 3, category="infantry")],
+                formation_id="rusa-formation",
+            ),
+        },
+    )
+    state.map_metadata["scenario_id"] = scenario_id
+    state.map_metadata["operational_objectives"] = []
+    ensure_strategic_layer(state)
+    ensure_campaign_rules(state, length_preset="short", victory_model=VICTORY_MODEL_P9)
     state.validate()
     return state
 

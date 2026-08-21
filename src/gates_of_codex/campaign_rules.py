@@ -5,6 +5,7 @@ from __future__ import annotations
 Python is the authority. Godot may only present the projected fields and issue
 ``continue_playing`` / ``conclude_campaign`` commands. Earth3 ``objectives.json``
 remains frozen; war-aim metadata is overlaid from ``data/campaign_rules/v1.json``.
+2028 Core/Expanded campaigns bind a sibling pack by ``scenario_id`` / actor ids.
 """
 
 import copy
@@ -22,6 +23,10 @@ from .supply import reachable_supply_provinces
 CAMPAIGN_RULES_KEY = "campaign_rules"
 CAMPAIGN_RULES_SCHEMA_VERSION = 1
 CONTRACT_PATH = Path(__file__).resolve().parent / "data" / "campaign_rules" / "v1.json"
+OBJECTIVE_PACK_DIR = CONTRACT_PATH.parent
+PACK_ID_EARTH3 = "earth3_v1"
+PACK_ID_2028_CORE = "ww3_2028_core"
+CORE_2028_ACTORS = ("nato", "ukr", "rusa", "prc")
 LENGTH_PRESETS = ("short", "medium", "long")
 VICTORY_MODEL_P9 = "p9_v1"
 VICTORY_MODEL_LEGACY = "legacy_compat"
@@ -55,7 +60,159 @@ def load_campaign_rules_contract() -> dict[str, Any]:
         expected_cap = {"short": 52, "medium": 104, "long": 156}[name]
         if int(row.get("turn_cap", 0)) != expected_cap:
             raise CampaignRulesError(f"{name} preset turn_cap must be {expected_cap}")
+    _validate_objective_pack_resolution(raw)
     return raw
+
+
+def _validate_objective_pack_resolution(raw: Mapping[str, Any]) -> None:
+    resolution = raw.get("objective_pack_resolution")
+    if not isinstance(resolution, dict):
+        raise CampaignRulesError("campaign_rules contract must define objective_pack_resolution")
+    if str(resolution.get("unknown_scenario") or "") != "refuse":
+        raise CampaignRulesError("unknown campaign scenario policy must be refuse")
+    if str(resolution.get("default_pack_id") or "") != PACK_ID_EARTH3:
+        raise CampaignRulesError("default objective pack must be earth3_v1")
+    if str(resolution.get("default_when_scenario_id_omitted") or "") != PACK_ID_EARTH3:
+        raise CampaignRulesError("omitted scenario_id must use the documented Earth3 pack")
+    earth3_ids = resolution.get("earth3_scenario_ids")
+    if not isinstance(earth3_ids, list) or "earth3_v1" not in earth3_ids:
+        raise CampaignRulesError("objective_pack_resolution.earth3_scenario_ids must include earth3_v1")
+    packs = resolution.get("packs")
+    if not isinstance(packs, dict) or "ww3_2028_core" not in packs or "ww3_2028_expanded" not in packs:
+        raise CampaignRulesError("objective_pack_resolution.packs must register ww3_2028_core and ww3_2028_expanded")
+    for scenario_id, relative in packs.items():
+        path = OBJECTIVE_PACK_DIR / str(relative)
+        if not path.is_file():
+            raise CampaignRulesError(
+                f"Objective pack file missing for scenario {scenario_id!r}: {path.name}"
+            )
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict) or int(payload.get("schema_version", 0)) != 1:
+            raise CampaignRulesError(f"objective pack {path.name} schema_version must be 1")
+        if str(payload.get("pack_id") or "") != path.stem:
+            raise CampaignRulesError(f"objective pack {path.name} pack_id mismatch")
+        _validate_2028_core_pack(payload)
+
+
+def known_objective_scenario_ids() -> tuple[str, ...]:
+    resolution = load_campaign_rules_contract()["objective_pack_resolution"]
+    return tuple(
+        sorted(
+            {
+                *resolution["earth3_scenario_ids"],
+                *resolution["packs"],
+            }
+        )
+    )
+
+
+def resolve_campaign_scenario_id(state: CampaignState) -> str:
+    """Return the authored scenario_id. No faction-name inference."""
+
+    metadata_id = str(state.map_metadata.get("scenario_id") or "").strip()
+    profile = state.map_metadata.get("scenario_profile")
+    profile_id = ""
+    if isinstance(profile, Mapping):
+        profile_id = str(profile.get("scenario_id") or "").strip()
+    if metadata_id and profile_id and metadata_id != profile_id:
+        raise CampaignRulesError(
+            "scenario_id mismatch between map_metadata "
+            f"{metadata_id!r} and scenario_profile {profile_id!r}"
+        )
+    return metadata_id or profile_id
+
+
+def resolve_objective_pack_id(scenario_id: str | None) -> str:
+    resolution = load_campaign_rules_contract()["objective_pack_resolution"]
+    text = str(scenario_id or "").strip()
+    if not text:
+        return str(resolution["default_when_scenario_id_omitted"])
+    if text in resolution["earth3_scenario_ids"]:
+        return str(resolution["default_pack_id"])
+    packs = resolution["packs"]
+    if text in packs:
+        return Path(str(packs[text])).stem
+    known = ", ".join(known_objective_scenario_ids())
+    raise CampaignRulesError(
+        f"Unknown campaign scenario {text!r}; no war-aim pack is registered. "
+        f"Expected one of: {known}. "
+        "Omitted scenario_id uses the documented Earth3 pack."
+    )
+
+
+@lru_cache(maxsize=8)
+def load_objective_pack(pack_id: str) -> dict[str, Any]:
+    identity = str(pack_id or "").strip()
+    if identity == PACK_ID_EARTH3:
+        return _earth3_pack_from_contract(load_campaign_rules_contract())
+    path = OBJECTIVE_PACK_DIR / f"{identity}.json"
+    if not path.is_file():
+        raise CampaignRulesError(f"Objective pack file missing for {identity!r}")
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict) or int(raw.get("schema_version", 0)) != 1:
+        raise CampaignRulesError(f"objective pack {identity!r} schema_version must be 1")
+    if str(raw.get("pack_id") or "") != identity:
+        raise CampaignRulesError(f"objective pack {identity!r} pack_id mismatch")
+    _validate_2028_core_pack(raw)
+    return raw
+
+
+def _earth3_pack_from_contract(contract: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "pack_id": PACK_ID_EARTH3,
+        "actor_faction": copy.deepcopy(contract.get("actor_faction", {})),
+        "player_actor_by_faction": copy.deepcopy(contract.get("player_actor_by_faction", {})),
+        "actor_hubs": copy.deepcopy(contract.get("actor_hubs", {})),
+        "coalition_aliases": copy.deepcopy(contract.get("coalition_aliases", {})),
+        "objective_overlay": copy.deepcopy(contract.get("objective_overlay", [])),
+        "war_aims": [],
+        "national_objectives": copy.deepcopy(contract.get("national_objectives", [])),
+    }
+
+
+def _validate_2028_core_pack(raw: Mapping[str, Any]) -> None:
+    actor_faction = raw.get("actor_faction")
+    player_actors = raw.get("player_actor_by_faction")
+    if not isinstance(actor_faction, dict) or not isinstance(player_actors, dict):
+        raise CampaignRulesError("2028 objective pack must define actor_faction and player_actor_by_faction")
+    for actor_id in CORE_2028_ACTORS:
+        if actor_faction.get(actor_id) != actor_id:
+            raise CampaignRulesError(
+                f"2028 pack must map actor {actor_id!r} to faction {actor_id!r}; no faction-name heuristics"
+            )
+        if player_actors.get(actor_id) != actor_id:
+            raise CampaignRulesError(
+                f"2028 pack must map faction {actor_id!r} to actor {actor_id!r}"
+            )
+    nationals = raw.get("national_objectives")
+    if not isinstance(nationals, list):
+        raise CampaignRulesError("2028 pack must define national_objectives")
+    owners = {
+        str(row.get("owner_id") or "")
+        for row in nationals
+        if isinstance(row, dict)
+    }
+    missing = [actor_id for actor_id in CORE_2028_ACTORS if actor_id not in owners]
+    if missing:
+        raise CampaignRulesError(
+            "2028 pack national_objectives must include nato, ukr, rusa, and prc; "
+            f"missing {', '.join(missing)}"
+        )
+    for row in list(raw.get("war_aims", [])) + nationals:
+        if not isinstance(row, dict):
+            continue
+        if int(row.get("hold_weeks") or 0) != DEFAULT_HOLD_WEEKS:
+            raise CampaignRulesError(
+                f"2028 pack objective {row.get('id')!r} hold_weeks must be {DEFAULT_HOLD_WEEKS}"
+            )
+
+
+def objective_pack_for_state(state: CampaignState) -> dict[str, Any]:
+    rules = campaign_rules(state)
+    stamped = str(rules.get("objective_pack_id") or "").strip()
+    if stamped:
+        return load_objective_pack(stamped)
+    return load_objective_pack(resolve_objective_pack_id(resolve_campaign_scenario_id(state)))
 
 
 def length_preset_ids() -> tuple[str, ...]:
@@ -133,9 +290,20 @@ def ensure_campaign_rules(
     if model not in {VICTORY_MODEL_P9, VICTORY_MODEL_LEGACY}:
         raise CampaignRulesError(f"Unknown victory model {model!r}")
 
+    scenario_id = resolve_campaign_scenario_id(state)
+    pack_id = resolve_objective_pack_id(scenario_id)
+    stamped_pack = str(existing.get("objective_pack_id") or "").strip()
+    if stamped_pack and stamped_pack != pack_id:
+        raise CampaignRulesError(
+            f"Persisted objective pack {stamped_pack!r} does not match scenario "
+            f"{scenario_id or '<omitted>'!r} pack {pack_id!r}"
+        )
+    pack = load_objective_pack(pack_id)
+
     rules = existing if existing else {}
     rules["schema_version"] = CAMPAIGN_RULES_SCHEMA_VERSION
     rules["victory_model"] = model
+    rules["objective_pack_id"] = pack_id
     rules["start_year"] = int(rules.get("start_year") or calendar_spec["start_year"])
     rules["turns_per_year"] = int(rules.get("turns_per_year") or calendar_spec["turns_per_year"])
     rules["hold_weeks"] = int(rules.get("hold_weeks") or calendar_spec["default_hold_weeks"])
@@ -156,7 +324,7 @@ def ensure_campaign_rules(
     rules.setdefault("actor_hub_loss", {})
     rules.setdefault("opening_owners", {})
     rules.setdefault("opening_formations", {})
-    rules.setdefault("actor_hubs", copy.deepcopy(contract.get("actor_hubs", {})))
+    rules.setdefault("actor_hubs", copy.deepcopy(pack.get("actor_hubs", {})))
     rules["calendar"] = calendar_from_turn(
         state.turn_number,
         start_year=int(rules["start_year"]),
@@ -170,17 +338,20 @@ def ensure_campaign_rules(
     if not rules["opening_formations"]:
         rules["opening_formations"] = _living_formation_counts(state)
     state.map_metadata[CAMPAIGN_RULES_KEY] = rules
-    _apply_objective_contract(state, contract)
+    _apply_objective_contract(state, pack)
     return rules
 
 
-def _apply_objective_contract(state: CampaignState, contract: Mapping[str, Any]) -> None:
+def _apply_objective_contract(state: CampaignState, pack: Mapping[str, Any]) -> None:
     objectives = state.map_metadata.get("operational_objectives")
     if not isinstance(objectives, list):
-        return
+        if str(campaign_rules(state).get("victory_model")) != VICTORY_MODEL_P9:
+            return
+        objectives = []
+        state.map_metadata["operational_objectives"] = objectives
     overlay = {
         str(row["id"]): row
-        for row in contract.get("objective_overlay", [])
+        for row in pack.get("objective_overlay", [])
         if isinstance(row, dict) and row.get("id")
     }
     for objective in objectives:
@@ -201,7 +372,8 @@ def _apply_objective_contract(state: CampaignState, contract: Mapping[str, Any])
     }
     if str(campaign_rules(state).get("victory_model")) != VICTORY_MODEL_P9:
         return
-    for row in contract.get("national_objectives", []):
+    authored_rows = list(pack.get("war_aims", [])) + list(pack.get("national_objectives", []))
+    for row in authored_rows:
         if not isinstance(row, dict):
             continue
         identity = str(row.get("id", ""))
@@ -224,11 +396,11 @@ def _apply_objective_contract(state: CampaignState, contract: Mapping[str, Any])
 
 
 def resolve_objective_factions(state: CampaignState, objective: Mapping[str, Any]) -> set[Faction] | None:
-    contract = load_campaign_rules_contract()
+    pack = objective_pack_for_state(state)
     owner_type = str(objective.get("owner_type") or "alliance")
     if owner_type == "actor":
         actor_id = str(objective.get("owner_id") or "")
-        faction_id = contract["actor_faction"].get(actor_id)
+        faction_id = pack.get("actor_faction", {}).get(actor_id)
         if faction_id and faction_id in state.factions:
             return {Faction(faction_id)}
         return None
@@ -236,7 +408,7 @@ def resolve_objective_factions(state: CampaignState, objective: Mapping[str, Any
     alliance = state.alliances.get(alliance_id)
     if alliance is not None:
         return set(alliance.factions)
-    aliases = contract.get("coalition_aliases", {}).get(alliance_id, [])
+    aliases = pack.get("coalition_aliases", {}).get(alliance_id, [])
     factions = {
         Faction(item)
         for item in aliases
@@ -267,9 +439,10 @@ def _hub_connected_provinces(state: CampaignState, faction: Faction) -> set[str]
 
     friendly = allied_factions(state, faction)
     sources: set[str] = set()
-    contract = load_campaign_rules_contract()
+    pack = objective_pack_for_state(state)
     actor_id = player_actor_id_for_faction(state, faction)
-    for hub in contract.get("actor_hubs", {}).get(actor_id, []):
+    hubs_table = campaign_rules(state).get("actor_hubs") or pack.get("actor_hubs", {})
+    for hub in hubs_table.get(actor_id, []):
         if hub in state.provinces:
             sources.add(str(hub))
     for capital in state.map_metadata.get("earth3_p2_capitals", []):
@@ -305,8 +478,8 @@ def _hub_connected_provinces(state: CampaignState, faction: Faction) -> set[str]
 
 
 def player_actor_id_for_faction(state: CampaignState, faction: Faction) -> str:
-    contract = load_campaign_rules_contract()
-    mapped = str(contract["player_actor_by_faction"].get(faction.value, "") or "")
+    pack = objective_pack_for_state(state)
+    mapped = str(pack.get("player_actor_by_faction", {}).get(faction.value, "") or "")
     if mapped:
         return mapped
     runtime = state.map_metadata.get("actor_content_runtime")
@@ -388,10 +561,10 @@ def advance_actor_hub_loss(state: CampaignState) -> None:
     rules = campaign_rules(state)
     hold_weeks = int(rules.get("hold_weeks") or DEFAULT_HOLD_WEEKS)
     loss = rules.setdefault("actor_hub_loss", {})
-    contract = load_campaign_rules_contract()
-    hubs_table = rules.get("actor_hubs") or contract.get("actor_hubs", {})
+    pack = objective_pack_for_state(state)
+    hubs_table = rules.get("actor_hubs") or pack.get("actor_hubs", {})
     for actor_id, hubs in hubs_table.items():
-        faction_id = contract["actor_faction"].get(actor_id)
+        faction_id = pack.get("actor_faction", {}).get(actor_id)
         if not faction_id or faction_id not in state.factions:
             continue
         faction = Faction(faction_id)
@@ -488,9 +661,9 @@ def _momentum_for_faction(
                 war_aims += 1
     held_sites = 0
     lost_capitals = 0
-    contract = load_campaign_rules_contract()
+    pack = objective_pack_for_state(state)
     actor_id = player_actor_id_for_faction(state, faction)
-    hubs_table = campaign_rules(state).get("actor_hubs") or contract.get("actor_hubs", {})
+    hubs_table = campaign_rules(state).get("actor_hubs") or pack.get("actor_hubs", {})
     for hub in hubs_table.get(actor_id, []):
         province = state.provinces.get(str(hub))
         if province is None:
