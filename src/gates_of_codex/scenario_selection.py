@@ -128,9 +128,11 @@ def apply_new_campaign_actor(
 ) -> ActorChoice:
     choice = require_playable_actor(scenario_id, actor_id)
     if scenario_id == "ww3_2028_core":
+        from .scenario_2028_core import bind_core_2028_selected_actor
         from .starter import set_player_faction
 
         set_player_faction(state, Faction(choice.actor_id))
+        bind_core_2028_selected_actor(state, choice.actor_id)
     elif scenario_id == "ww3_2028_expanded":
         from .strategic_actors import set_selected_actor
 

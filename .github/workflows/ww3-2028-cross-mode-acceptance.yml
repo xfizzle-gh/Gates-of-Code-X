@@ -18,6 +18,8 @@ on:
       - "tests/test_scenario_profile_contract.py"
       - "tests/test_neutral_nation_runtime_2028.py"
       - "tests/test_scenario_selection_2028.py"
+      - "tests/test_production_new_campaign_2028.py"
+      - "tests/test_production_2028_treasury_actor_identity.py"
       - "tests/test_ww3_2028_cross_mode_acceptance.py"
       - ".github/workflows/ww3-2028-cross-mode-acceptance.yml"
   workflow_dispatch:
@@ -81,6 +83,8 @@ jobs:
             tests/test_scenario_selection_2028.py \
             tests/test_campaign_menu_2028.py \
             tests/test_scenario_2028_strategic_presentation.py \
+            tests/test_production_new_campaign_2028.py \
+            tests/test_production_2028_treasury_actor_identity.py \
             tests/test_ww3_2028_cross_mode_acceptance.py
       - name: Upload focused test diagnostics
         if: always()
@@ -109,14 +113,22 @@ jobs:
           assert gate.province_authority_materialized is True, gate
           assert gate.checks["province_authority_materialized"] is True, gate
           assert gate.production_authorized is False, gate
+          assert gate.p11_goh_authorized is False, gate
           for name in (
-              "core_native_smoke_accepted",
-              "expanded_native_smoke_accepted",
               "owner_visual_accepted",
               "independent_review_accepted",
           ):
               assert gate.checks[name] is False, (name, gate)
-          print("WW3_2028_GATE_BLOCKED_PENDING_NATIVE_OWNER_REVIEW")
+          for name in (
+              "core_goh_launch_accepted",
+              "expanded_goh_launch_accepted",
+              "goh_verify_import_round_trip_accepted",
+          ):
+              assert name not in gate.checks, (name, gate)
+              assert gate.p11_goh_checks[name] is False, (name, gate)
+          assert "do not block p10" in gate.blocker.lower(), gate.blocker
+          print("WW3_2028_P10_OVERMAP_BLOCKED_PENDING_OWNER_REVIEW")
+          print("WW3_2028_P11_GOH_DEFERRED_AFTER_P10_AUTORESOLVE")
           PY
       - name: Cleanup package provenance
         if: always()

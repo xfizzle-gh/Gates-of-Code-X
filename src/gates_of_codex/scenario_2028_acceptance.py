@@ -25,13 +25,34 @@ class Scenario2028AcceptanceError(ValueError):
     """The #225 cross-mode/native acceptance contract is inconsistent."""
 
 
+P10_OVERMAP_CHECKS = frozenset(
+    {
+        "province_authority_materialized",
+        "core_cross_mode_acceptance",
+        "expanded_cross_mode_acceptance",
+        "neutral_nation_persistence_acceptance",
+        "owner_visual_accepted",
+        "independent_review_accepted",
+    }
+)
+P11_GOH_CHECKS = frozenset(
+    {
+        "core_goh_launch_accepted",
+        "expanded_goh_launch_accepted",
+        "goh_verify_import_round_trip_accepted",
+    }
+)
+
+
 @dataclass(frozen=True, slots=True)
 class AcceptanceGateStatus:
     status: str
     province_authority_materialized: bool
     production_authorized: bool
+    p11_goh_authorized: bool
     blocker: str
     checks: dict[str, bool]
+    p11_goh_checks: dict[str, bool]
 
     @property
     def blocked(self) -> bool:
@@ -69,24 +90,26 @@ def validate_acceptance_gate(
     required = payload.get("required_before_production")
     if not isinstance(required, Mapping):
         raise Scenario2028AcceptanceError("acceptance_gate_required_checks_missing")
-    expected_checks = {
-        "province_authority_materialized",
-        "core_cross_mode_acceptance",
-        "expanded_cross_mode_acceptance",
-        "neutral_nation_persistence_acceptance",
-        "core_native_smoke_accepted",
-        "expanded_native_smoke_accepted",
-        "owner_visual_accepted",
-        "independent_review_accepted",
-    }
-    if set(required) != expected_checks:
+    if set(required) != P10_OVERMAP_CHECKS:
         raise Scenario2028AcceptanceError("acceptance_gate_check_set_mismatch")
     checks: dict[str, bool] = {}
-    for name in sorted(expected_checks):
+    for name in sorted(P10_OVERMAP_CHECKS):
         value = required.get(name)
         if not isinstance(value, bool):
             raise Scenario2028AcceptanceError(f"acceptance_gate_check_not_bool:{name}")
         checks[name] = value
+
+    p11_required = payload.get("required_before_p11_goh")
+    if not isinstance(p11_required, Mapping):
+        raise Scenario2028AcceptanceError("acceptance_gate_p11_goh_checks_missing")
+    if set(p11_required) != P11_GOH_CHECKS:
+        raise Scenario2028AcceptanceError("acceptance_gate_p11_goh_check_set_mismatch")
+    p11_goh_checks: dict[str, bool] = {}
+    for name in sorted(P11_GOH_CHECKS):
+        value = p11_required.get(name)
+        if not isinstance(value, bool):
+            raise Scenario2028AcceptanceError(f"acceptance_gate_p11_goh_check_not_bool:{name}")
+        p11_goh_checks[name] = value
 
     rules = payload.get("rules")
     if not isinstance(rules, Mapping):
@@ -97,6 +120,7 @@ def validate_acceptance_gate(
         "native_acceptance_requires_materialized_province_authority",
         "owner_acceptance_cannot_be_inferred_from_ci",
         "independent_review_cannot_be_self_declared",
+        "goh_launch_verify_import_are_p11_after_p10_autoresolve",
     ):
         if rules.get(name) is not True:
             raise Scenario2028AcceptanceError(f"acceptance_gate_rule_required:{name}")
@@ -126,6 +150,16 @@ def validate_acceptance_gate(
     if production_authorized != all_required:
         raise Scenario2028AcceptanceError("acceptance_gate_authorization_not_derived_from_checks")
 
+    p11_goh_authorized = payload.get("p11_goh_authorized")
+    if not isinstance(p11_goh_authorized, bool):
+        raise Scenario2028AcceptanceError("acceptance_gate_p11_goh_authorized_not_bool")
+    if p11_goh_authorized != all(p11_goh_checks.values()):
+        raise Scenario2028AcceptanceError(
+            "acceptance_gate_p11_goh_authorization_not_derived_from_checks"
+        )
+    if p11_goh_authorized and not production_authorized:
+        raise Scenario2028AcceptanceError("acceptance_gate_p11_goh_before_p10_overmap")
+
     expected_status = "READY" if production_authorized else "BLOCKED"
     if payload.get("status") != expected_status:
         raise Scenario2028AcceptanceError("acceptance_gate_status_mismatch")
@@ -137,8 +171,6 @@ def validate_acceptance_gate(
             "core_cross_mode_acceptance",
             "expanded_cross_mode_acceptance",
             "neutral_nation_persistence_acceptance",
-            "core_native_smoke_accepted",
-            "expanded_native_smoke_accepted",
             "owner_visual_accepted",
             "independent_review_accepted",
         ):
@@ -146,13 +178,20 @@ def validate_acceptance_gate(
                 raise Scenario2028AcceptanceError(
                     f"acceptance_gate_claim_before_authority:{name}"
                 )
+        for name, value in p11_goh_checks.items():
+            if value:
+                raise Scenario2028AcceptanceError(
+                    f"acceptance_gate_p11_claim_before_authority:{name}"
+                )
 
     return AcceptanceGateStatus(
         status=expected_status,
         province_authority_materialized=materialized,
         production_authorized=production_authorized,
+        p11_goh_authorized=p11_goh_authorized,
         blocker=blocker,
         checks=checks,
+        p11_goh_checks=p11_goh_checks,
     )
 
 
@@ -162,8 +201,9 @@ def cross_mode_contract_report() -> dict[str, Any]:
     This report proves Core and Expanded share the same world authority while
     retaining distinct actor catalogs. It deliberately does not mark any gate
     acceptance bit true. Passing CI is evidence about the implementation, not a
-    substitute for the missing province authority, native smoke, owner visual
-    acceptance, or independent review.
+    substitute for owner visual acceptance or independent review. GoH launch,
+    Verify/Import, and tactical round-trip are P11 after the P10 Auto-Resolve
+    exit and are not a P10 production requirement.
     """
 
     authority = load_authority_document()
@@ -193,6 +233,7 @@ def cross_mode_contract_report() -> dict[str, Any]:
             "status": gate.status,
             "province_authority_materialized": gate.province_authority_materialized,
             "production_authorized": gate.production_authorized,
+            "p11_goh_authorized": gate.p11_goh_authorized,
             "blocker": gate.blocker,
         },
     }

@@ -43,18 +43,31 @@ def _validate_earth3_integrity_for_active_profile(state: CampaignState) -> None:
         return
 
     from .earth3_bootstrap import Earth3BootstrapError, validate_earth3_bootstrap_provenance
+    from .scenario import get_scenario
 
     scenario_id = str(state.map_metadata.get("scenario_id") or "")
     profile = state.map_metadata.get("scenario_profile")
+    try:
+        expected_status = get_scenario(scenario_id).status
+    except ValueError:
+        expected_status = "development"
     if (
         not isinstance(profile, Mapping)
         or profile.get("scenario_id") != scenario_id
         or profile.get("shared_world_authority_id") != _WW3_2028_WORLD_AUTHORITY_ID
-        or state.map_metadata.get("scenario_status") != "development"
+        or state.map_metadata.get("scenario_status") != expected_status
     ):
         raise Earth3BootstrapError("Earth3 2028 scenario_profile authority mismatch")
 
-    validate_earth3_bootstrap_provenance(state)
+    overlay_actor_ids = frozenset()
+    if scenario_id == "ww3_2028_core":
+        from .scenario_2028_core import CORE_2028_OVERLAY_ACTOR_IDS
+
+        overlay_actor_ids = CORE_2028_OVERLAY_ACTOR_IDS
+    validate_earth3_bootstrap_provenance(
+        state,
+        overlay_actor_ids=overlay_actor_ids,
+    )
 
     p1_metadata = dict(state.map_metadata)
     p1_metadata["scenario_id"] = "earth3_v1"

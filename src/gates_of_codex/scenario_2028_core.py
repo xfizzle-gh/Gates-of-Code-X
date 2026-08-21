@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from collections.abc import Iterable, Mapping
 from typing import Any
 
@@ -19,6 +20,138 @@ CORE_2028_SCENARIO_ID = "ww3_2028_core"
 CORE_2028_WORLD_AUTHORITY_ID = "earth3_ww3_2028_v1"
 CORE_2028_ACTOR_CATALOG_ID = "core_2028"
 CORE_2028_ACTOR_CATALOG_VERSION = "1"
+CORE_2028_POWER_IDS = ("nato", "ukr", "rusa", "prc")
+CORE_2028_STARTING_TREASURY = {
+    "nato": 600,
+    "ukr": 600,
+    "rusa": 750,
+    "prc": 600,
+}
+CORE_2028_OVERLAY_SOURCES = {
+    "nato": "usa",
+    "rusa": "rus",
+}
+CORE_2028_OVERLAY_ACTOR_IDS = frozenset(CORE_2028_OVERLAY_SOURCES)
+CORE_2028_POWER_DISPLAY = {
+    "nato": "NATO",
+    "ukr": "Ukraine",
+    "rusa": "Russia",
+    "prc": "PRC",
+}
+
+
+def _rewrite_core_overlay_content(
+    source_content: Mapping[str, Any],
+    *,
+    source_actor_id: str,
+    target_actor_id: str,
+) -> dict[str, Any]:
+    rewritten = copy.deepcopy(dict(source_content))
+    rewritten["actor_id"] = target_actor_id
+    rewritten["display_name"] = CORE_2028_POWER_DISPLAY[target_actor_id]
+    rewritten["tactical_side"] = target_actor_id
+    rewritten["roster_class"] = "compatibility"
+    prefix = f"actor:{source_actor_id}:"
+    replacement = f"actor:{target_actor_id}:"
+    units = rewritten.get("units")
+    if isinstance(units, dict):
+        for unit in units.values():
+            if isinstance(unit, dict):
+                unit["actor_id"] = target_actor_id
+                unit["tactical_side"] = target_actor_id
+                unit["research_options"] = [
+                    str(item).replace(prefix, replacement, 1)
+                    for item in unit.get("research_options", [])
+                ]
+    nodes = rewritten.get("research_nodes")
+    if isinstance(nodes, dict):
+        remapped: dict[str, Any] = {}
+        for key, node in nodes.items():
+            new_key = key.replace(prefix, replacement, 1) if key.startswith(prefix) else key
+            if isinstance(node, dict):
+                node = dict(node)
+                node["key"] = str(node.get("key") or key).replace(prefix, replacement, 1)
+                node["actor_id"] = target_actor_id
+                node["prerequisites"] = [
+                    str(item).replace(prefix, replacement, 1)
+                    for item in node.get("prerequisites", [])
+                ]
+            remapped[new_key] = node
+        rewritten["research_nodes"] = remapped
+    return rewritten
+
+
+def bind_core_2028_selected_actor(state: CampaignState, actor_id: str) -> None:
+    """Bind Core New Campaign selection to that power's treasury.
+
+    Earth3 bootstrap installs ``selected_actor_id=usa``. Core must not leak
+    that seat: NATO/UKR/RUSA/PRC each own a distinct Core treasury that
+    ``#149`` actor_economy APIs spend.
+    """
+
+    token = str(actor_id or "").strip()
+    if token not in CORE_2028_POWER_IDS:
+        raise Scenario2028AuthorityError(f"core_2028_actor_not_a_campaign_power:{token}")
+
+    from .actor_economy import ACTOR_CONTENT_KEY, validate_actor_content_runtime
+    from .strategic_actors import (
+        ACTOR_RUNTIME_KEY,
+        EngineTacticalSide,
+        StrategicActorState,
+        ensure_strategic_actor_runtime,
+        set_selected_actor,
+        validate_strategic_actor_runtime,
+    )
+
+    actors = ensure_strategic_actor_runtime(state)
+    runtime = state.map_metadata.get(ACTOR_RUNTIME_KEY)
+    content = state.map_metadata.get(ACTOR_CONTENT_KEY)
+    if not isinstance(runtime, dict) or not isinstance(content, dict):
+        raise Scenario2028AuthorityError("core_2028_actor_runtime_missing")
+    content_actors = content.get("actors")
+    if not isinstance(content_actors, dict):
+        raise Scenario2028AuthorityError("core_2028_actor_content_missing")
+
+    if token not in actors:
+        source_id = CORE_2028_OVERLAY_SOURCES[token]
+        source_actor = actors.get(source_id)
+        source_content = content_actors.get(source_id)
+        if source_actor is None or not isinstance(source_content, dict):
+            raise Scenario2028AuthorityError(
+                f"core_2028_overlay_source_missing:{token}:{source_id}"
+            )
+        actors[token] = StrategicActorState(
+            actor_id=token,
+            display_name=CORE_2028_POWER_DISPLAY[token],
+            short_name=CORE_2028_POWER_DISPLAY[token],
+            actor_type="compatibility",
+            coalition_id=source_actor.coalition_id,
+            tactical_side=EngineTacticalSide(token),
+            playable=True,
+            roster_class="compatibility",
+            resources=CORE_2028_STARTING_TREASURY[token],
+            researched_keys=[],
+        )
+        content_actors[token] = _rewrite_core_overlay_content(
+            source_content,
+            source_actor_id=source_id,
+            target_actor_id=token,
+        )
+        content["actor_count"] = len(content_actors)
+        runtime["actors"] = {key: actors[key].to_dict() for key in sorted(actors)}
+        validate_strategic_actor_runtime(state)
+        validate_actor_content_runtime(state)
+
+    actors = ensure_strategic_actor_runtime(state)
+    actors[token].resources = CORE_2028_STARTING_TREASURY[token]
+    actors[token].playable = True
+    runtime["actors"] = {key: actors[key].to_dict() for key in sorted(actors)}
+    set_selected_actor(state, token)
+    selected = str(state.map_metadata[ACTOR_RUNTIME_KEY].get("selected_actor_id") or "")
+    if selected != token or selected == "usa":
+        raise Scenario2028AuthorityError(
+            f"core_2028_selected_actor_not_bound:{selected}:{token}"
+        )
 
 
 def _build_earth3_base(**options: Any) -> CampaignState:

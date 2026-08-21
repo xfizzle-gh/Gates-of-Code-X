@@ -93,7 +93,7 @@ def test_core_projection_rejects_unknown_earth3_ids() -> None:
 
 def test_core_scenario_registry_persists_locked_profile_identity() -> None:
     definition = get_scenario("ww3_2028_core")
-    assert definition.status == "development"
+    assert definition.status == "production"
     assert definition.shared_world_authority_id == "earth3_ww3_2028_v1"
     assert definition.actor_catalog_id == "core_2028"
     assert definition.actor_catalog_compatibility_version == "1"

@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 
 from gates_of_codex.models import Faction
-from gates_of_codex.scenario import DEFAULT_SCENARIO_ID
+from gates_of_codex.scenario import DEFAULT_SCENARIO_ID, get_scenario
 from gates_of_codex.scenario_selection import (
     PRODUCTION_NEW_CAMPAIGN_SCENARIO_ID,
     ScenarioSelectionError,
@@ -36,6 +36,9 @@ def _state(scenario_id: str, *, actor_id: str = "nato") -> SimpleNamespace:
 
 def test_production_new_campaign_default_is_locked_2028_core() -> None:
     assert DEFAULT_SCENARIO_ID == PRODUCTION_NEW_CAMPAIGN_SCENARIO_ID == "ww3_2028_core"
+    assert get_scenario(DEFAULT_SCENARIO_ID).status == "production"
+    assert get_scenario("ww3_2028_core").status == "production"
+    assert get_scenario("ww3_2028_expanded").status == "development"
     assert resolve_new_campaign_scenario_id("") == "ww3_2028_core"
     assert resolve_new_campaign_scenario_id("unknown_profile") == "ww3_2028_core"
     assert resolve_new_campaign_scenario_id("ww3_2028_core") == "ww3_2028_core"

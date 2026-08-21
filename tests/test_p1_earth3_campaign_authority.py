@@ -121,6 +121,8 @@ def _all_strings(value) -> list[str]:
 class Earth3ScenarioRegistryTests(unittest.TestCase):
     def test_registry_has_exact_required_scenarios_and_default(self) -> None:
         self.assertEqual("ww3_2028_core", DEFAULT_SCENARIO_ID)
+        self.assertEqual("production", get_scenario(DEFAULT_SCENARIO_ID).status)
+        self.assertEqual("production", get_scenario("ww3_2028_core").status)
         self.assertEqual(EARTH3_SCENARIO_ID, get_scenario(EARTH3_SCENARIO_ID).scenario_id)
         self.assertEqual(
             (

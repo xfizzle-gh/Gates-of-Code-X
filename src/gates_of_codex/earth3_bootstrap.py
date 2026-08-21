@@ -1344,7 +1344,35 @@ def earth3_p2_actor_resources(
     return actor, actor_id
 
 
-def validate_earth3_bootstrap_provenance(state: CampaignState) -> None:
+def _actor_content_without_overlay(
+    actor_content: Mapping[str, Any],
+    overlay_actor_ids: frozenset[str],
+) -> dict[str, Any]:
+    """Return actor content minus Core overlay actors for frozen-catalog hashing.
+
+    Core 2028 may add ``nato`` / ``rusa`` treasury actors after Earth3 bootstrap
+    so New Campaign selection does not leak ``selected_actor_id=usa``. Those
+    overlay rows are excluded from the immutable catalog digest; the frozen
+    Earth3 substrate hash stays exact.
+    """
+
+    if not overlay_actor_ids:
+        return dict(actor_content)
+    projected = copy.deepcopy(dict(actor_content))
+    actors = projected.get("actors")
+    if not isinstance(actors, dict):
+        return projected
+    for actor_id in overlay_actor_ids:
+        actors.pop(actor_id, None)
+    projected["actor_count"] = len(actors)
+    return projected
+
+
+def validate_earth3_bootstrap_provenance(
+    state: CampaignState,
+    *,
+    overlay_actor_ids: frozenset[str] = frozenset(),
+) -> None:
     raw_metadata = state.map_metadata.get(BOOTSTRAP_METADATA_KEY)
     if raw_metadata is None:
         actor_content = state.map_metadata.get("actor_content_runtime")
@@ -1438,7 +1466,8 @@ def validate_earth3_bootstrap_provenance(state: CampaignState) -> None:
         validate_actor_content_runtime(state)
     except ValueError as exc:
         raise Earth3BootstrapError("Earth3 P2 installed actor content is invalid") from exc
-    _validate_immutable_actor_content_provenance(actor_content, metadata["catalog_identity"])
+    hashed_content = _actor_content_without_overlay(actor_content, overlay_actor_ids)
+    _validate_immutable_actor_content_provenance(hashed_content, metadata["catalog_identity"])
     if metadata["movement_authority"] != MOVEMENT_AUTHORITY:
         raise Earth3BootstrapError("Earth3 P2 movement authority mismatch")
     if metadata["route_ids"] or metadata["operational_node_ids"]:

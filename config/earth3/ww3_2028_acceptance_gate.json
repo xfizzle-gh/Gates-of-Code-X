@@ -8,18 +8,23 @@
     "core_cross_mode_acceptance": true,
     "expanded_cross_mode_acceptance": true,
     "neutral_nation_persistence_acceptance": true,
-    "core_native_smoke_accepted": false,
-    "expanded_native_smoke_accepted": false,
     "owner_visual_accepted": false,
     "independent_review_accepted": false
   },
+  "required_before_p11_goh": {
+    "core_goh_launch_accepted": false,
+    "expanded_goh_launch_accepted": false,
+    "goh_verify_import_round_trip_accepted": false
+  },
   "production_authorized": false,
-  "blocker": "The canonical 3,299-province authority is materialized, and exact-head Core/Expanded cross-mode plus neutral persistence acceptance are complete. Production remains blocked pending native Windows/Godot/GoH smoke for Core and Expanded, owner visual acceptance, and final independent review.",
+  "p11_goh_authorized": false,
+  "blocker": "The canonical 3,299-province authority is materialized, and exact-head Core/Expanded cross-mode plus neutral persistence acceptance are complete. P10 overmap production remains blocked on owner visual confirmation and independent review only. Actual GoH launch, Verify/Import, and tactical round-trip are authored P11 gates after the #217 P10 Auto-Resolve exit and do not block P10.",
   "rules": {
     "missing_authority_fails_closed": true,
     "ci_may_validate_blocked_state_without_claiming_native_acceptance": true,
     "native_acceptance_requires_materialized_province_authority": true,
     "owner_acceptance_cannot_be_inferred_from_ci": true,
-    "independent_review_cannot_be_self_declared": true
+    "independent_review_cannot_be_self_declared": true,
+    "goh_launch_verify_import_are_p11_after_p10_autoresolve": true
   }
 }

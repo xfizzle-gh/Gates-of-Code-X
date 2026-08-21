@@ -373,23 +373,32 @@ def test_acceptance_gate_matches_materialized_repository_without_self_approval()
     assert status.province_authority_materialized is True
     assert status.checks["province_authority_materialized"] is True
     assert status.production_authorized is False
+    assert status.p11_goh_authorized is False
     for check in (
-        "core_native_smoke_accepted",
-        "expanded_native_smoke_accepted",
         "owner_visual_accepted",
         "independent_review_accepted",
     ):
         assert status.checks[check] is False
+    for check in (
+        "core_goh_launch_accepted",
+        "expanded_goh_launch_accepted",
+        "goh_verify_import_round_trip_accepted",
+    ):
+        assert check not in status.checks
+        assert status.p11_goh_checks[check] is False
     assert "materialized" in status.blocker.lower()
+    assert "p11" in status.blocker.lower()
+    assert "do not block p10" in status.blocker.lower()
 
 
 def test_materialization_does_not_self_declare_native_owner_or_review_acceptance() -> None:
     status = validate_acceptance_gate(load_acceptance_gate())
     assert status.checks["province_authority_materialized"] is True
-    assert status.checks["core_native_smoke_accepted"] is False
-    assert status.checks["expanded_native_smoke_accepted"] is False
     assert status.checks["owner_visual_accepted"] is False
     assert status.checks["independent_review_accepted"] is False
+    assert status.p11_goh_checks["core_goh_launch_accepted"] is False
+    assert status.p11_goh_checks["expanded_goh_launch_accepted"] is False
+    assert status.p11_goh_checks["goh_verify_import_round_trip_accepted"] is False
 
 
 def test_gate_cannot_authorize_production_with_any_required_check_false() -> None:
@@ -398,4 +407,25 @@ def test_gate_cannot_authorize_production_with_any_required_check_false() -> Non
     mutated["production_authorized"] = True
     mutated["status"] = "READY"
     with pytest.raises(Scenario2028AcceptanceError, match="acceptance_gate_authorization_not_derived_from_checks"):
+        validate_acceptance_gate(mutated)
+
+
+def test_gate_cannot_put_goh_launch_back_into_p10_production_required_set() -> None:
+    gate = load_acceptance_gate()
+    mutated = copy.deepcopy(gate)
+    mutated["required_before_production"]["core_goh_launch_accepted"] = False
+    with pytest.raises(Scenario2028AcceptanceError, match="acceptance_gate_check_set_mismatch"):
+        validate_acceptance_gate(mutated)
+
+
+def test_gate_cannot_authorize_p11_goh_before_p10_overmap() -> None:
+    gate = load_acceptance_gate()
+    mutated = copy.deepcopy(gate)
+    mutated["required_before_p11_goh"] = {
+        "core_goh_launch_accepted": True,
+        "expanded_goh_launch_accepted": True,
+        "goh_verify_import_round_trip_accepted": True,
+    }
+    mutated["p11_goh_authorized"] = True
+    with pytest.raises(Scenario2028AcceptanceError, match="acceptance_gate_p11_goh_before_p10_overmap"):
         validate_acceptance_gate(mutated)

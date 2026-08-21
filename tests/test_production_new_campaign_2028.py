@@ -139,6 +139,9 @@ def test_production_new_campaign_and_continue_yield_2028_core(tmp_path: Path) ->
         resolved_catalog=_resolved_catalog(),
     )
     assert created.map_metadata["scenario_id"] == "ww3_2028_core"
+    assert created.map_metadata["scenario_status"] == "production"
+    assert get_scenario(created.map_metadata["scenario_id"]).status == "production"
+    assert get_scenario(DEFAULT_SCENARIO_ID).status == "production"
     assert created.map_metadata["scenario_profile"]["scenario_id"] == "ww3_2028_core"
     assert created.map_metadata["scenario_profile"]["actor_catalog_id"] == "core_2028"
     assert persisted_actor_id(created) == "nato"
@@ -162,6 +165,8 @@ def test_explicit_expanded_and_earth3_v1_fixture_remain_available(tmp_path: Path
         resolved_catalog=_resolved_catalog(),
     )
     assert expanded.map_metadata["scenario_id"] == "ww3_2028_expanded"
+    assert expanded.map_metadata["scenario_status"] == "development"
+    assert get_scenario("ww3_2028_expanded").status == "development"
     assert expanded.map_metadata["scenario_profile"]["actor_catalog_id"] == (
         "expanded_nations_2028"
     )
