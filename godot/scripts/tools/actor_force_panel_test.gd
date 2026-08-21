@@ -82,7 +82,12 @@ func _test_command_contract() -> void:
 
 
 func _test_stack_panel_preload() -> void:
-	_assert_true("stack panel instantiable", MainStackPanelScript.can_instantiate())
+	var stack_script: GDScript = MainStackPanelScript
+	_assert_true("stack panel script loaded", stack_script != null)
+	_assert_true(
+		"stack panel instantiable",
+		stack_script != null and stack_script.can_instantiate()
+	)
 
 
 func _assert_true(label: String, value: bool, detail := "") -> void:
