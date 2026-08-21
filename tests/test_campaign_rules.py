@@ -939,6 +939,21 @@ class CampaignRules2028PackTests(unittest.TestCase):
         with self.assertRaisesRegex(CampaignRulesError, r"must map actor 'nato'|nato, ukr, rusa, and prc"):
             _validate_2028_core_pack(future)
 
+    def test_end_player_round_can_lock_time_limit_without_already_complete(self) -> None:
+        """UKR is not last in TURN_ORDER. Crossing the cap must not abort the round."""
+
+        from gates_of_codex.turn_cycle import end_player_round
+
+        state = _earth3_location_state(scenario_id="ww3_2028_core", selected=Faction.UKRAINE)
+        state.turn_number = int(state.map_metadata[CAMPAIGN_RULES_KEY]["turn_cap"])
+        state.current_faction = Faction.UKRAINE
+        report = end_player_round(state)
+        self.assertFalse(report["pending_battle"])
+        outcome = state.map_metadata.get("campaign_outcome") or {}
+        self.assertEqual("complete", outcome.get("status"))
+        self.assertTrue(campaign_play_blocked(state))
+        self.assertGreater(int(state.turn_number), int(state.map_metadata[CAMPAIGN_RULES_KEY]["turn_cap"]))
+
     def test_core_campaign_can_win_and_lose_in_p9_engine(self) -> None:
         winning = _earth3_location_state(scenario_id="ww3_2028_core")
         for _ in range(4):
