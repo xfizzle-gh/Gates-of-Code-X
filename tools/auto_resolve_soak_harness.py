@@ -687,12 +687,17 @@ def _owned_formation_id(state: Any, actor_id: str) -> str:
     return owned[0]
 
 
+def _reload_campaign(session: SoakSession) -> Any:
+    from gates_of_codex.state_io import load_campaign
+
+    return load_campaign(session.campaign)
+
+
 def _eligible_forward_depot_province(state: Any, actor_id: str) -> tuple[str, list[str]]:
     """Return a public-eligibility Forward Depot province and its block reasons."""
 
     from gates_of_codex.site_upgrade import site_upgrade_blocked_reasons
 
-    affordable = ""
     pending_funds = ""
     pending_reasons: list[str] = []
     for province_id in sorted(state.provinces):
@@ -708,6 +713,55 @@ def _eligible_forward_depot_province(state: Any, actor_id: str) -> tuple[str, li
             pending_funds = str(province_id)
             pending_reasons = list(reasons)
     return pending_funds, pending_reasons
+
+
+def _try_upgrade_site(
+    session: SoakSession,
+    state: Any,
+    *,
+    actor_id: str,
+    succeeded: dict[str, bool],
+    attempted: list[dict[str, Any]],
+) -> Any:
+    """Issue public upgrade_site when the live campaign can afford a Forward Depot."""
+
+    if succeeded.get("upgrade_site"):
+        return state
+    state = _reload_campaign(session)
+    province_id, reasons = _eligible_forward_depot_province(state, actor_id)
+    if province_id and "insufficient_resources" not in reasons:
+        upgrade = session.apply(
+            [
+                {
+                    "op": "upgrade_site",
+                    "province": province_id,
+                    "actor": actor_id,
+                    "upgrade_id": "forward_depot",
+                }
+            ]
+        )
+        ok = bool(upgrade.get("ok"))
+        attempted.append(
+            {
+                "op": "upgrade_site",
+                "ok": ok,
+                "province": province_id,
+            }
+        )
+        succeeded["upgrade_site"] = ok
+        if ok:
+            return _reload_campaign(session)
+        return state
+    if province_id:
+        attempted.append(
+            {
+                "op": "upgrade_site",
+                "ok": False,
+                "province": province_id,
+                "waiting_for_treasury": True,
+            }
+        )
+    return state
 
 
 def _enemy_formation_id(state: Any) -> str:
@@ -789,6 +843,17 @@ def _exercise_player_loop(
     )
     attempted.append({"op": "actor_force_panel", "ok": bool(panel), "actor": actor_id})
 
+    # Forward Depot costs 400. Do this before research/recruit so the opening
+    # treasury can actually pay. Eligibility is re-read from the live save.
+    if actor_id:
+        state = _try_upgrade_site(
+            session,
+            state,
+            actor_id=actor_id,
+            succeeded=succeeded,
+            attempted=attempted,
+        )
+
     if actor_id and not succeeded.get("research"):
         research_rows = panel.get("available_research") or []
         research_key = ""
@@ -808,9 +873,7 @@ def _exercise_player_loop(
             attempted.append({"op": "research", "key": research_key, "ok": ok})
             succeeded["research"] = ok
             if ok:
-                from gates_of_codex.state_io import load_campaign
-
-                state = load_campaign(session.campaign)
+                state = _reload_campaign(session)
                 panel = _read_force_panel(
                     session,
                     state,
@@ -857,6 +920,7 @@ def _exercise_player_loop(
                 assign_ok = bool(assign.get("ok"))
                 attempted.append({"op": "assign", "unit": unit, "ok": assign_ok})
                 succeeded["assign"] = assign_ok
+            state = _reload_campaign(session)
 
     if formation_id and not succeeded.get("repair"):
         repair = session.apply(
@@ -913,37 +977,14 @@ def _exercise_player_loop(
         )
         succeeded["repair_foreign_omitted_actor_reject"] = True
 
-    if not succeeded.get("upgrade_site"):
-        province_id, reasons = _eligible_forward_depot_province(state, actor_id)
-        if province_id and "insufficient_resources" not in reasons:
-            upgrade = session.apply(
-                [
-                    {
-                        "op": "upgrade_site",
-                        "province": province_id,
-                        "actor": actor_id,
-                        "upgrade_id": "forward_depot",
-                    }
-                ]
-            )
-            ok = bool(upgrade.get("ok"))
-            attempted.append(
-                {
-                    "op": "upgrade_site",
-                    "ok": ok,
-                    "province": province_id,
-                }
-            )
-            succeeded["upgrade_site"] = ok
-        elif province_id:
-            attempted.append(
-                {
-                    "op": "upgrade_site",
-                    "ok": False,
-                    "province": province_id,
-                    "waiting_for_treasury": True,
-                }
-            )
+    if actor_id:
+        state = _try_upgrade_site(
+            session,
+            state,
+            actor_id=actor_id,
+            succeeded=succeeded,
+            attempted=attempted,
+        )
     return {
         "attempted": attempted,
         "actor_id": actor_id,
