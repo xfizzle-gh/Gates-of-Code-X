@@ -1094,7 +1094,7 @@ class DeterminismAndPathTests(unittest.TestCase):
 
             self.assertEqual(home, player_home(environ))
             self.assertEqual(
-                home / "campaigns" / "earth3_v1" / "campaign.json", resolved.campaign
+                home / "campaigns" / "ww3_2028_core" / "campaign.json", resolved.campaign
             )
 
     def test_aliased_player_home_resolves_to_one_pointer_location(self) -> None:
