@@ -512,6 +512,7 @@ def create_new_campaign(
             "it, or --force-new to replace it."
         )
     # Reject an illegal seat before paying for scenario construction.
+    # ww3_2028_expanded stays creatable; only its victory pack is unavailable.
     _check_faction(definition.scenario_id, faction)
     builder_options: dict[str, Any] = {}
     if earth3_requires_stack(definition.scenario_id):

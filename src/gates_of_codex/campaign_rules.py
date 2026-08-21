@@ -6,7 +6,9 @@ Python is the authority. Godot may only present the projected fields and issue
 ``continue_playing`` / ``conclude_campaign`` commands. Earth3 ``objectives.json``
 remains frozen; war-aim metadata is overlaid from ``data/campaign_rules/v1.json``.
 2028 Core campaigns bind a sibling pack by ``scenario_id``. ``ww3_2028_expanded``
-is fail-closed until a real Expanded actor pack is authored.
+New Campaign remains creatable; Expanded victory stays fail-closed until a real
+Expanded actor pack is authored. Auto-Resolve and strategic play stay available
+without evaluating Expanded terminal victory.
 """
 
 import copy
@@ -150,6 +152,15 @@ def resolve_campaign_scenario_id(state: CampaignState) -> str:
     return metadata_id or profile_id
 
 
+def _unavailable_victory_reason(scenario_id: str | None) -> str | None:
+    resolution = load_campaign_rules_contract()["objective_pack_resolution"]
+    text = str(scenario_id or "").strip()
+    unavailable = resolution.get("unavailable_scenario_ids") or {}
+    if text not in unavailable:
+        return None
+    return str(unavailable[text] or "").strip() or UNAVAILABLE_EXPANDED_REASON
+
+
 def resolve_objective_pack_id(scenario_id: str | None) -> str:
     resolution = load_campaign_rules_contract()["objective_pack_resolution"]
     text = str(scenario_id or "").strip()
@@ -157,11 +168,10 @@ def resolve_objective_pack_id(scenario_id: str | None) -> str:
         return str(resolution["default_when_scenario_id_omitted"])
     if text in resolution["earth3_scenario_ids"]:
         return str(resolution["default_pack_id"])
-    unavailable = resolution.get("unavailable_scenario_ids") or {}
-    if text in unavailable:
-        reason = str(unavailable[text] or "").strip() or UNAVAILABLE_EXPANDED_REASON
+    unavailable_reason = _unavailable_victory_reason(text)
+    if unavailable_reason is not None:
         raise CampaignRulesError(
-            f"Campaign scenario {text!r} is registered but unavailable. {reason}"
+            f"Campaign scenario {text!r} is registered but unavailable. {unavailable_reason}"
         )
     packs = resolution["packs"]
     if text in packs:
@@ -172,6 +182,12 @@ def resolve_objective_pack_id(scenario_id: str | None) -> str:
         f"Expected one of: {known}. "
         "Omitted scenario_id uses the documented Earth3 pack."
     )
+
+
+def require_available_victory_pack(state: CampaignState) -> str:
+    """Return the scenario's victory pack, or fail-closed if none is authored."""
+
+    return resolve_objective_pack_id(resolve_campaign_scenario_id(state))
 
 
 @lru_cache(maxsize=8)
@@ -288,7 +304,10 @@ def objective_pack_for_state(state: CampaignState) -> dict[str, Any]:
     stamped = str(rules.get("objective_pack_id") or "").strip()
     if stamped:
         return load_objective_pack(stamped)
-    return load_objective_pack(resolve_objective_pack_id(resolve_campaign_scenario_id(state)))
+    scenario_id = resolve_campaign_scenario_id(state)
+    if _unavailable_victory_reason(scenario_id) is not None:
+        return {}
+    return load_objective_pack(resolve_objective_pack_id(scenario_id))
 
 
 def length_preset_ids() -> tuple[str, ...]:
@@ -367,19 +386,32 @@ def ensure_campaign_rules(
         raise CampaignRulesError(f"Unknown victory model {model!r}")
 
     scenario_id = resolve_campaign_scenario_id(state)
-    pack_id = resolve_objective_pack_id(scenario_id)
+    unavailable_reason = _unavailable_victory_reason(scenario_id)
     stamped_pack = str(existing.get("objective_pack_id") or "").strip()
-    if stamped_pack and stamped_pack != pack_id:
-        raise CampaignRulesError(
-            f"Persisted objective pack {stamped_pack!r} does not match scenario "
-            f"{scenario_id or '<omitted>'!r} pack {pack_id!r}"
-        )
-    pack = load_objective_pack(pack_id)
+    if unavailable_reason is not None:
+        if stamped_pack:
+            raise CampaignRulesError(
+                f"Persisted objective pack {stamped_pack!r} does not match scenario "
+                f"{scenario_id or '<omitted>'!r}. {unavailable_reason}"
+            )
+        pack_id = ""
+        pack: Mapping[str, Any] = {}
+    else:
+        pack_id = resolve_objective_pack_id(scenario_id)
+        if stamped_pack and stamped_pack != pack_id:
+            raise CampaignRulesError(
+                f"Persisted objective pack {stamped_pack!r} does not match scenario "
+                f"{scenario_id or '<omitted>'!r} pack {pack_id!r}"
+            )
+        pack = load_objective_pack(pack_id)
 
     rules = existing if existing else {}
     rules["schema_version"] = CAMPAIGN_RULES_SCHEMA_VERSION
     rules["victory_model"] = model
-    rules["objective_pack_id"] = pack_id
+    if pack_id:
+        rules["objective_pack_id"] = pack_id
+    else:
+        rules.pop("objective_pack_id", None)
     rules["start_year"] = int(rules.get("start_year") or calendar_spec["start_year"])
     rules["turns_per_year"] = int(rules.get("turns_per_year") or calendar_spec["turns_per_year"])
     rules["hold_weeks"] = int(rules.get("hold_weeks") or calendar_spec["default_hold_weeks"])
@@ -414,7 +446,8 @@ def ensure_campaign_rules(
     if not rules["opening_formations"]:
         rules["opening_formations"] = _living_formation_counts(state)
     state.map_metadata[CAMPAIGN_RULES_KEY] = rules
-    _apply_objective_contract(state, pack)
+    if pack:
+        _apply_objective_contract(state, pack)
     return rules
 
 
@@ -814,6 +847,10 @@ def evaluate_p9_outcome(state: CampaignState) -> Any | None:
     """Return a terminal P9 outcome, or None so legacy victory may still run."""
 
     from .strategic import CampaignOutcome, coalition_for_faction
+
+    if _unavailable_victory_reason(resolve_campaign_scenario_id(state)) is not None:
+        ensure_campaign_rules(state)
+        return None
 
     rules = ensure_campaign_rules(state)
     refresh_campaign_calendar(state)

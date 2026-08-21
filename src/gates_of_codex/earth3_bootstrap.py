@@ -1079,6 +1079,7 @@ def build_earth3_v1_campaign(
     resource_stack: Iterable[str | Path] | None = None,
     stack_config: str | Path | None = None,
     authority_root: str | Path | None = None,
+    finalize_campaign_rules: bool = True,
 ) -> CampaignState:
     bundle = load_earth3_bootstrap(authority_root=authority_root)
     catalog, _ = _resolved_catalog(
@@ -1289,9 +1290,10 @@ def build_earth3_v1_campaign(
         }
     )
     validate_earth3_bootstrap_campaign_state(state)
-    from .campaign_rules import VICTORY_MODEL_P9, ensure_campaign_rules
+    if finalize_campaign_rules:
+        from .campaign_rules import VICTORY_MODEL_P9, ensure_campaign_rules
 
-    ensure_campaign_rules(state, victory_model=VICTORY_MODEL_P9)
+        ensure_campaign_rules(state, victory_model=VICTORY_MODEL_P9)
     state.validate()
     return state
 

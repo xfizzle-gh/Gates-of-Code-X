@@ -173,8 +173,17 @@ def _build_earth3_base(**options: Any) -> CampaignState:
     from .earth3_operational import migrate_earth3_p2_to_p3
     from .operational_capture import ensure_site_control_state
 
-    state = migrate_earth3_p2_to_p3(build_earth3_v1_campaign(**options))
+    # Earth3 is the map/force substrate only. Do not persist the Earth3 victory
+    # pack onto a 2028 campaign: New Campaign later stamps ww3_2028_core and
+    # ensure_campaign_rules fail-closes if objective_pack_id is still earth3_v1.
+    earth3_options = dict(options)
+    earth3_options["finalize_campaign_rules"] = False
+    state = migrate_earth3_p2_to_p3(build_earth3_v1_campaign(**earth3_options))
     ensure_site_control_state(state)
+    rules = state.map_metadata.get("campaign_rules")
+    if isinstance(rules, dict) and str(rules.get("objective_pack_id") or "") == "earth3_v1":
+        # Construction leftover — not a persisted 2028 identity.
+        state.map_metadata.pop("campaign_rules", None)
     return state
 
 

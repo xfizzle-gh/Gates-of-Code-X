@@ -171,6 +171,9 @@ def test_explicit_expanded_and_earth3_v1_fixture_remain_available(tmp_path: Path
         "expanded_nations_2028"
     )
     assert expanded.map_metadata["ww3_2028_controller_profile"] == "expanded"
+    expanded_rules = expanded.map_metadata.get("campaign_rules") or {}
+    assert "objective_pack_id" not in expanded_rules
+    assert expanded_rules.get("objective_pack_id") not in {"ww3_2028_core", "earth3_v1"}
 
     fixture_paths = resolve_campaign_paths(tmp_path / "earth3.json")
     fixture = create_new_campaign(
@@ -181,6 +184,74 @@ def test_explicit_expanded_and_earth3_v1_fixture_remain_available(tmp_path: Path
     )
     assert fixture.map_metadata["scenario_id"] == "earth3_v1"
     assert fixture.map_metadata.get("ww3_2028_controller_profile") in {None, ""}
+
+
+def test_expanded_auto_resolve_stays_playable_without_victory_pack(tmp_path: Path) -> None:
+    """Unmocked Expanded New Campaign → pending battle → Auto-Resolve → playable."""
+
+    from gates_of_codex.campaign import CampaignEngine
+    from gates_of_codex.campaign_rules import (
+        CAMPAIGN_RULES_KEY,
+        CampaignRulesError,
+        campaign_play_blocked,
+        require_available_victory_pack,
+        resolve_objective_pack_id,
+    )
+    from gates_of_codex.models import BattleParticipant, Faction, PendingBattle
+    from gates_of_codex.strategic import evaluate_campaign_outcome
+
+    paths = resolve_campaign_paths(tmp_path / "expanded-ar.json")
+    state = create_new_campaign(
+        paths=paths,
+        scenario_id="ww3_2028_expanded",
+        faction="nato",
+        force=True,
+        resolved_catalog=_resolved_catalog(),
+    )
+    rules = state.map_metadata.get(CAMPAIGN_RULES_KEY) or {}
+    assert "objective_pack_id" not in rules
+    assert rules.get("objective_pack_id") not in {"ww3_2028_core", "earth3_v1"}
+
+    attacker = next(
+        battalion
+        for battalion in state.battalions.values()
+        if battalion.faction == Faction.NATO and battalion.unit_count > 0
+    )
+    defender = next(
+        battalion
+        for battalion in state.battalions.values()
+        if battalion.faction == Faction.RUSSIA and battalion.unit_count > 0
+    )
+    state.pending_battle = PendingBattle(
+        battle_id="expanded-production-ar",
+        origin_province_id=attacker.province_id,
+        target_province_id=defender.province_id,
+        attacker_faction=Faction.NATO,
+        defender_faction=Faction.RUSSIA,
+        attacking_participants=[
+            BattleParticipant(attacker.battalion_id, Faction.NATO, "committed", is_primary=True)
+        ],
+        defending_participants=[
+            BattleParticipant(defender.battalion_id, Faction.RUSSIA, "committed", is_primary=True)
+        ],
+        player_faction=Faction.NATO,
+        player_is_attacker=True,
+    )
+    winner = CampaignEngine(state).auto_resolve_pending_battle()
+    assert winner in {Faction.NATO, Faction.RUSSIA}
+    assert state.pending_battle is None
+    outcome = evaluate_campaign_outcome(state)
+    assert outcome.status == "active"
+    assert outcome.selected_faction_result == "active"
+    assert outcome.grade == ""
+    assert not campaign_play_blocked(state)
+    assert "objective_pack_id" not in (state.map_metadata.get(CAMPAIGN_RULES_KEY) or {})
+    with pytest.raises(CampaignRulesError, match="unavailable"):
+        require_available_victory_pack(state)
+    with pytest.raises(CampaignRulesError, match="Core-four pack"):
+        resolve_objective_pack_id("ww3_2028_expanded")
+    CampaignEngine(state).end_turn()
+    assert not campaign_play_blocked(state)
 
 
 def test_persist_seam_untouched_by_production_default() -> None:

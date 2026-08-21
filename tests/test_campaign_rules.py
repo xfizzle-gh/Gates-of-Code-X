@@ -39,6 +39,7 @@ from gates_of_codex.campaign_rules import (
     objective_pack_for_state,
     player_actor_id,
     record_auto_resolve_result,
+    require_available_victory_pack,
     resolve_objective_pack_id,
 )
 from gates_of_codex.command_cycle_perf import _should_persist_runtime_snapshot
@@ -52,6 +53,7 @@ from gates_of_codex.models import (
     Alliance,
     Battalion,
     BattalionRosterEntry,
+    BattleParticipant,
     CampaignState,
     Faction,
     FactionState,
@@ -812,18 +814,24 @@ class CampaignRules2028PackTests(unittest.TestCase):
             self.assertEqual(4, row["hold_weeks"])
             self.assertIn(row["layer"], {"coalition_war_aim", "national_contribution"})
 
-    def test_expanded_refuses_to_start_and_refuses_victory_evaluation(self) -> None:
+    def test_expanded_creates_without_victory_pack_and_skips_terminal_evaluation(self) -> None:
         state = _rules_state(p9=False)
         state.map_metadata.pop(CAMPAIGN_RULES_KEY, None)
         state.map_metadata["scenario_id"] = SCENARIO_ID_2028_EXPANDED
-        with self.assertRaisesRegex(CampaignRulesError, "registered but unavailable"):
-            ensure_campaign_rules(state, length_preset="short", victory_model=VICTORY_MODEL_P9)
-        self.assertNotIn(CAMPAIGN_RULES_KEY, state.map_metadata)
+        rules = ensure_campaign_rules(state, length_preset="short", victory_model=VICTORY_MODEL_P9)
+        self.assertNotIn("objective_pack_id", rules)
+        self.assertNotEqual(PACK_ID_2028_CORE, rules.get("objective_pack_id"))
+        self.assertNotEqual(PACK_ID_EARTH3, rules.get("objective_pack_id"))
+        self.assertEqual("short", rules["length_preset"])
+        outcome = evaluate_campaign_outcome(state)
+        self.assertEqual("active", outcome.status)
+        self.assertEqual("active", outcome.selected_faction_result)
+        self.assertEqual("", outcome.grade)
+        self.assertNotIn("objective_pack_id", state.map_metadata.get(CAMPAIGN_RULES_KEY) or {})
         with self.assertRaisesRegex(CampaignRulesError, "Core-four pack"):
-            evaluate_campaign_outcome(state)
-        self.assertNotIn(CAMPAIGN_RULES_KEY, state.map_metadata)
+            require_available_victory_pack(state)
         pending = PendingBattle(
-            battle_id="expanded-refuse",
+            battle_id="expanded-playable",
             origin_province_id="a",
             target_province_id="x",
             attacker_faction=Faction.NATO,
@@ -833,8 +841,64 @@ class CampaignRules2028PackTests(unittest.TestCase):
             player_faction=Faction.NATO,
             player_is_attacker=True,
         )
+        record_auto_resolve_result(state, Faction.NATO, pending)
+        self.assertEqual(
+            1,
+            state.map_metadata[CAMPAIGN_RULES_KEY]["events"]["major_auto_resolve_wins"]["nato"],
+        )
+        self.assertNotIn("objective_pack_id", state.map_metadata.get(CAMPAIGN_RULES_KEY) or {})
+
+    def test_expanded_auto_resolve_clears_battle_without_terminal_victory(self) -> None:
+        """Unmocked: Expanded pending battle Auto-Resolves and stays playable."""
+
+        state = _earth3_location_state(scenario_id=SCENARIO_ID_2028_EXPANDED)
+        self.assertNotIn(
+            "objective_pack_id",
+            state.map_metadata.get(CAMPAIGN_RULES_KEY) or {},
+        )
+        state.pending_battle = PendingBattle(
+            battle_id="expanded-ar",
+            origin_province_id="e3_0592",
+            target_province_id="e3_2793",
+            attacker_faction=Faction.NATO,
+            defender_faction=Faction.RUSSIA,
+            attacking_participants=[
+                BattleParticipant("nato-1", Faction.NATO, "committed", is_primary=True)
+            ],
+            defending_participants=[
+                BattleParticipant("rusa-1", Faction.RUSSIA, "committed", is_primary=True)
+            ],
+            player_faction=Faction.NATO,
+            player_is_attacker=True,
+        )
+        winner = CampaignEngine(state).auto_resolve_pending_battle()
+        self.assertIn(winner, {Faction.NATO, Faction.RUSSIA})
+        self.assertIsNone(state.pending_battle)
+        outcome = evaluate_campaign_outcome(state)
+        self.assertEqual("active", outcome.status)
+        self.assertEqual("active", outcome.selected_faction_result)
+        self.assertEqual("", outcome.grade)
+        self.assertFalse(campaign_play_blocked(state))
+        self.assertNotIn(
+            "objective_pack_id",
+            state.map_metadata.get(CAMPAIGN_RULES_KEY) or {},
+        )
         with self.assertRaisesRegex(CampaignRulesError, "unavailable"):
-            record_auto_resolve_result(state, Faction.NATO, pending)
+            require_available_victory_pack(state)
+        next_faction = CampaignEngine(state).end_turn()
+        self.assertIn(next_faction, set(CampaignEngine.TURN_ORDER))
+        self.assertFalse(campaign_play_blocked(state))
+
+    def test_expanded_refuses_stamped_core_or_earth3_victory_pack(self) -> None:
+        state = _rules_state(p9=False)
+        state.map_metadata.pop(CAMPAIGN_RULES_KEY, None)
+        state.map_metadata["scenario_id"] = SCENARIO_ID_2028_EXPANDED
+        state.map_metadata[CAMPAIGN_RULES_KEY] = {"objective_pack_id": PACK_ID_2028_CORE}
+        with self.assertRaisesRegex(CampaignRulesError, "does not match scenario"):
+            ensure_campaign_rules(state, length_preset="short", victory_model=VICTORY_MODEL_P9)
+        state.map_metadata[CAMPAIGN_RULES_KEY] = {"objective_pack_id": PACK_ID_EARTH3}
+        with self.assertRaisesRegex(CampaignRulesError, "does not match scenario"):
+            ensure_campaign_rules(state, length_preset="short", victory_model=VICTORY_MODEL_P9)
 
     def test_expanded_unavailable_reason_does_not_claim_core_four_coverage(self) -> None:
         reason = load_campaign_rules_contract()["objective_pack_resolution"][

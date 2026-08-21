@@ -15,7 +15,7 @@
       "Presets change turn cap and war-aim/Momentum thresholds only.",
       "Earth3 objectives.json stays frozen; this file overlays war-aim metadata and national objectives.",
       "War-aim packs bind by scenario_id only. Omitted scenario_id and registered Earth3/legacy IDs use this Earth3 pack. Unknown scenario_id refuses to start.",
-      "ww3_2028_core is Core-four only (nato, ukr, rusa, prc). ww3_2028_expanded is fail-closed until a real Expanded actor pack is authored. No faction-name heuristics."
+      "ww3_2028_core is Core-four only (nato, ukr, rusa, prc). ww3_2028_expanded New Campaign remains creatable; Expanded victory is fail-closed until a real Expanded actor pack is authored. Auto-Resolve and strategic play stay available without evaluating Expanded terminal victory. No faction-name heuristics."
     ]
   },
   "objective_pack_resolution": {
