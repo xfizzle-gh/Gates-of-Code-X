@@ -185,8 +185,8 @@ class EndTurnEconomyReportTests(unittest.TestCase):
             return_value=[],
         ):
             payload = end_player_round(self.state)
-        patch = build_frontend_runtime_patch(self.state)
-        acting = patch["replace"]["acting_actor"]
+        runtime_patch = build_frontend_runtime_patch(self.state)
+        acting = runtime_patch["replace"]["acting_actor"]
         self.assertEqual("fra", acting["actor_id"])
         self.assertEqual(payload["economy_report"]["treasury"], acting["resources"])
         self.assertEqual(payload["economy_report"]["income"], acting["income_last_round"])

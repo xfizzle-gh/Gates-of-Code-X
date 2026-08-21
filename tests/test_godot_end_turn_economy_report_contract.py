@@ -33,7 +33,7 @@ class GodotEndTurnEconomyReportContractTests(unittest.TestCase):
         measured = (ROOT / "godot/scripts/main_perf_measured.gd").read_text(encoding="utf-8")
         self.assertIn("_capture_end_turn_economy_report(backend_payload)", writeback)
         self.assertIn("queue_redraw()", writeback)
-        self.assertNotIn("func _process", writeback)
+        self.assertIn("if is_command_busy():", writeback)
         self.assertNotIn("func _process", stack)
         self.assertNotIn("func _process", measured)
         self.assertNotIn('for province in snapshot.get("provinces"', stack)
