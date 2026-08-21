@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+
+_TESTS = Path(__file__).resolve().parent
+if str(_TESTS) not in sys.path:
+    sys.path.insert(0, str(_TESTS))
 
 from gates_of_codex.actor_economy import ACTOR_CONTENT_KEY, install_actor_content
 from gates_of_codex.command_cycle_perf import (
