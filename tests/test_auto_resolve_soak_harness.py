@@ -306,3 +306,41 @@ class AutoResolveSoakHarnessTests(unittest.TestCase):
                 }
             )
         )
+        self.assertTrue(
+            harness._terminal_result_ok(
+                {
+                    "status": "complete",
+                    "grade": "defeat",
+                    "selected_faction_result": "defeat",
+                }
+            )
+        )
+        self.assertFalse(
+            harness._terminal_result_ok(
+                {
+                    "status": "complete",
+                    "grade": "victory",
+                    "selected_faction_result": "defeat",
+                    "coalition_result": "victory",
+                    "national_result": "victory",
+                }
+            )
+        )
+        self.assertFalse(
+            harness._terminal_result_ok(
+                {
+                    "status": "complete",
+                    "grade": "decisive_victory",
+                    "selected_faction_result": "defeat",
+                }
+            )
+        )
+        self.assertFalse(
+            harness._terminal_result_ok(
+                {
+                    "status": "complete",
+                    "grade": "defeat",
+                    "selected_faction_result": "victory",
+                }
+            )
+        )

@@ -1036,11 +1036,27 @@ def _campaign_outcome_payload(state: Any) -> dict[str, Any]:
 
 
 def _terminal_result_ok(fields: dict[str, Any]) -> bool:
-    return (
-        str(fields.get("status") or "") == "complete"
-        and str(fields.get("selected_faction_result") or "") in TERMINAL_FACTION_RESULTS
-        and str(fields.get("grade") or "") in TERMINAL_GRADES
-    )
+    """Accept only a consistent player-facing terminal tuple.
+
+    An opposing-coalition contract that leaves
+    ``selected_faction_result=defeat`` cannot pass P10 with a victory grade.
+    """
+
+    status = str(fields.get("status") or "")
+    faction_result = str(fields.get("selected_faction_result") or "")
+    grade = str(fields.get("grade") or "")
+    if status != "complete":
+        return False
+    if faction_result not in TERMINAL_FACTION_RESULTS:
+        return False
+    if grade not in TERMINAL_GRADES:
+        return False
+    victory_grade = grade in {"victory", "decisive_victory"}
+    if faction_result == "defeat" and victory_grade:
+        return False
+    if faction_result == "victory" and not victory_grade:
+        return False
+    return True
 
 
 def _required_capability_status(
