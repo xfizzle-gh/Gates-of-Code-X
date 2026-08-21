@@ -70,6 +70,24 @@ def _declares_earth3_authority(state: CampaignState) -> bool:
     )
 
 
+def _province_2028_presentation(metadata: Mapping) -> dict[str, str]:
+    """Lift 2028 controller identity out of omitted province metadata.
+
+    Slice 3 slim drops the raw ``metadata`` blob. The New Campaign / Continue
+    strategic overlay still needs sovereignty, military control, and profile
+    labels, so those three strings are published as consumed top-level fields.
+    """
+
+    if not isinstance(metadata, Mapping):
+        return {}
+    presentation: dict[str, str] = {}
+    for key in ("sovereign_owner", "military_controller", "controller_profile"):
+        value = str(metadata.get(key, "")).strip()
+        if value:
+            presentation[key] = value
+    return presentation
+
+
 def _faction_supply_payload(report) -> dict:
     operational = report.authority == "operational_graph"
     return {
@@ -259,6 +277,7 @@ def build_frontend_snapshot(
                     | set(province.metadata.get("static_supply_source_for", []))
                 ),
                 "metadata": province.metadata,
+                **_province_2028_presentation(province.metadata),
             }
             for province in sorted(state.provinces.values(), key=lambda value: value.province_id)
         ],

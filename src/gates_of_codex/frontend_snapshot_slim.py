@@ -59,6 +59,9 @@ FRONTEND_CONSUMED_PROVINCE_FIELDS = frozenset(
         "construction_options",
         "occupied_by",
         "occupied_by_battalions",
+        "sovereign_owner",
+        "military_controller",
+        "controller_profile",
     }
 )
 
@@ -93,6 +96,10 @@ FRONTEND_CONSUMED_MAP_METADATA_KEYS = frozenset(
         "strategic_map_id",
         "marker_layout",
         "modern_control_profile",
+        "scenario_id",
+        "scenario_display_name",
+        "scenario_selection",
+        "ww3_2028_controller_profile",
     }
 )
 

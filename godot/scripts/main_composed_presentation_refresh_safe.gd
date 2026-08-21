@@ -46,14 +46,15 @@ func _draw_province(province: Dictionary) -> void:
 	super._draw_province(province)
 	if String(province.get("id", "")) != selected_province_id:
 		return
-	var metadata: Dictionary = province.get("metadata", {})
-	var sovereign := String(metadata.get("sovereign_owner", "")).strip_edges()
+	# Slice 3 omits the raw province metadata blob. Read the lifted 2028
+	# controller identity from consumed top-level snapshot fields only.
+	var sovereign := String(province.get("sovereign_owner", "")).strip_edges()
 	if sovereign.is_empty():
 		return
 	var controller := String(
-		metadata.get("military_controller", province.get("owner", "neutral"))
+		province.get("military_controller", province.get("owner", "neutral"))
 	).strip_edges()
-	var profile := String(metadata.get("controller_profile", "")).strip_edges()
+	var profile := String(province.get("controller_profile", "")).strip_edges()
 	var position := _map_to_screen(province)
 	var strategic_line := "SOV %s  |  CTRL %s" % [
 		sovereign.to_upper(),
