@@ -63,10 +63,10 @@ class AutoResolveSoakHarnessTests(unittest.TestCase):
             payload["observed"],
         )
         self.assertEqual(3, harness.DEFAULT_CI_TURNS)
-        self.assertEqual(6, harness.DEFAULT_LONG_TURNS)
+        self.assertEqual(10, harness.DEFAULT_LONG_TURNS)
         with patch.dict(os.environ, {}, clear=False):
             os.environ.pop(harness.TURNS_ENV, None)
-            self.assertEqual(6, harness._default_turns())
+            self.assertEqual(10, harness._default_turns())
         probe = harness._scenario_probe()
         self.assertTrue(probe["earth3_v1"])
         self.assertEqual("ww3_2028_core", probe["default_scenario_id"])

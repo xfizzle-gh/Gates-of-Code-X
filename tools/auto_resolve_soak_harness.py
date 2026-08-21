@@ -54,7 +54,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 DEFAULT_CI_TURNS = 3
-DEFAULT_LONG_TURNS = 6
+DEFAULT_LONG_TURNS = 10
 TURNS_ENV = "GOC_AUTO_RESOLVE_SOAK_TURNS"
 WW3_2028_SCENARIO = "ww3_2028_core"
 PRODUCTION_SCENARIO = "ww3_2028_core"
@@ -576,13 +576,30 @@ def _select_move(state: Any) -> dict[str, Any] | None:
     if not options:
         return None
     opposing = _opposing_factions(state)
+    enemy_provinces = {
+        str(force.province_id or "")
+        for force in state.strategic_formations.values()
+        if force.faction.value in opposing
+    }
     hostile = []
     for row in options:
         province = state.provinces.get(str(row.get("target_province_id") or ""))
-        owner = getattr(getattr(province, "controller", None), "value", "") if province else ""
+        owner = ""
+        if province is not None:
+            owner = getattr(getattr(province, "owner", None), "value", "") or ""
+            if not owner:
+                owner = getattr(getattr(province, "controller", None), "value", "") or ""
         if owner in opposing:
             hostile.append(row)
-    row = (hostile or options)[0]
+    pool = hostile or list(options)
+
+    def _score(item: dict[str, Any]) -> tuple[int, int, str, str]:
+        dest = str(item.get("target_province_id") or "")
+        path_len = len(item.get("path_node_ids") or [])
+        occupier = 0 if dest in enemy_provinces else 1
+        return (occupier, path_len, str(item.get("formation_id") or ""), dest)
+
+    row = min(pool, key=_score)
     return {
         "op": "issue_move_order",
         "formation": row["formation_id"],
@@ -823,6 +840,23 @@ def _exercise_player_loop(session: SoakSession, state: Any, gaps: list[dict[str,
     return {"attempted": attempted, "actor_id": actor_id, "formation_id": formation_id}
 
 
+def _campaign_outcome_payload(state: Any) -> dict[str, Any]:
+    rules = state.map_metadata.get("campaign_rules") or {}
+    locked = rules.get("locked_result") if isinstance(rules, dict) else {}
+    outcome = state.map_metadata.get("campaign_outcome") or {}
+    if isinstance(locked, dict) and locked:
+        return dict(locked)
+    return dict(outcome) if isinstance(outcome, dict) else {}
+
+
+def _campaign_complete(state: Any) -> bool:
+    payload = _campaign_outcome_payload(state)
+    if str(payload.get("status") or "") == "complete":
+        return True
+    rules = state.map_metadata.get("campaign_rules") or {}
+    return bool(rules.get("result_locked") or rules.get("concluded"))
+
+
 def _static_gaps(scenario_probe: dict[str, Any], victory: dict[str, Any]) -> list[dict[str, Any]]:
     gaps: list[dict[str, Any]] = []
     ww3 = scenario_probe.get("ww3_2028_core") or {}
@@ -924,6 +958,9 @@ def run_soak(
             state = load_campaign(work_dir / "campaign.json")
             scenario_id = str(state.map_metadata.get("scenario_id") or "loaded")
             scenario_status = str(state.map_metadata.get("scenario_status") or "loaded")
+            if scenario_id == WW3_2028_SCENARIO:
+                p10_exit = True
+                created = "loaded"
         else:
             catalog = _load_resolved_catalog(resolved_catalog_path)
             state = None
@@ -1030,14 +1067,13 @@ def run_soak(
             session.use_daemon = False
 
         economy_done = False
-        mid_turn = max(1, turns // 2)
+        mid_turn = 1 if p10_exit else max(1, turns // 2)
         guard = 0
         max_steps = max(16, turns * 12)
         while turns_completed < turns and guard < max_steps:
             guard += 1
             state = load_campaign(session.campaign)
-            rules = state.map_metadata.get("campaign_rules") or {}
-            if str((rules.get("result") or {}).get("status") or "") == "complete":
+            if _campaign_complete(state):
                 break
             if state.pending_battle is not None:
                 payload = session.apply([{"op": "auto_resolve"}])
@@ -1051,6 +1087,9 @@ def run_soak(
                     economy = _exercise_player_loop(session, state, gaps)
                     economy_done = True
                     continue
+                if p10_exit and economy_done and turns_completed == 1:
+                    extra = _exercise_player_loop(session, state, gaps)
+                    economy.setdefault("follow_up", extra.get("attempted") or [])
                 move = _select_move(state)
                 if move is not None:
                     issue = {
@@ -1072,8 +1111,19 @@ def run_soak(
                     state = load_campaign(session.campaign)
                     if state.pending_battle is not None:
                         continue
-                session.apply([{"op": "end_player_round"}])
+                payload = session.apply([{"op": "end_player_round"}])
                 turns_completed += 1
+                if not payload.get("ok"):
+                    detail = str(payload.get("detail") or "")
+                    if "already complete" not in detail.lower():
+                        gaps.append(
+                            {
+                                "id": "end_player_round_failed",
+                                "severity": "skip",
+                                "detail": detail,
+                            }
+                        )
+                    break
                 if turns_completed == mid_turn:
                     session.stop_daemon()
                     from gates_of_codex.player_shell import (
@@ -1124,9 +1174,9 @@ def run_soak(
                 if not prepared_contact_used:
                     natural_battles += 1
             state = load_campaign(session.campaign)
-        outcome = (state.map_metadata.get("campaign_rules") or {}).get("result") or {}
+        outcome = _campaign_outcome_payload(state)
         if str(outcome.get("status") or "") == "complete":
-            if str(outcome.get("selected_faction_result") or "") == "victory":
+            if str(outcome.get("grade") or "") in {"victory", "decisive_victory"}:
                 session.apply([{"op": "continue_playing"}])
         treasury_final = treasury_snapshot(state)
         victory = _victory_probe(state)
