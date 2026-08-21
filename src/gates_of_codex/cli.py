@@ -21,7 +21,7 @@ from .frontend import write_frontend_snapshot
 from .frontend_commands import apply_frontend_commands, default_commands_path
 from .launcher import launch_game
 from .models import Faction
-from .scenario import DEFAULT_SCENARIO_ID, build_scenario, get_scenario
+from .scenario import DEFAULT_SCENARIO_ID, EARTH3_V1_SCENARIO_ID, build_scenario, get_scenario
 from .service import GatesOfCodeXService
 from .starter import populate_starter_rosters, set_player_faction
 from .state_io import load_campaign, save_campaign
@@ -116,6 +116,12 @@ def build_parser() -> argparse.ArgumentParser:
     construct.add_argument("province")
     construct.add_argument("building", choices=sorted(BUILDING_RULES))
     construct.add_argument("--faction", choices=FACTION_CHOICES)
+    upgrade_site = sub.add_parser("upgrade-site", help="Start a Forward Depot on an owned province")
+    upgrade_site.add_argument("campaign")
+    upgrade_site.add_argument("province")
+    upgrade_site.add_argument("--upgrade", default="forward_depot")
+    upgrade_site.add_argument("--faction", choices=FACTION_CHOICES)
+    upgrade_site.add_argument("--actor")
     objectives = sub.add_parser("objectives")
     objectives.add_argument("campaign")
     campaign_status = sub.add_parser("campaign-status")
@@ -200,7 +206,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         state = build_scenario(args.scenario, **builder_options)
         if (
-            definition.scenario_id == DEFAULT_SCENARIO_ID
+            definition.scenario_id == EARTH3_V1_SCENARIO_ID
             and args.faction != Faction.NATO.value
         ):
             raise ValueError(
@@ -384,6 +390,21 @@ def main(argv: list[str] | None = None) -> int:
         state = load_campaign(args.campaign)
         faction = Faction(args.faction) if args.faction else state.current_faction
         result = build_infrastructure(state, faction, args.province, args.building)
+        save_campaign(state, args.campaign)
+        print(json.dumps(asdict(result), indent=2))
+        return 0
+    if args.command == "upgrade-site":
+        from .site_upgrade import start_site_upgrade
+
+        state = load_campaign(args.campaign)
+        faction = Faction(args.faction) if args.faction else state.current_faction
+        result = start_site_upgrade(
+            state,
+            args.province,
+            upgrade_id=str(args.upgrade),
+            faction=faction,
+            actor_id=None if not args.actor else str(args.actor),
+        )
         save_campaign(state, args.campaign)
         print(json.dumps(asdict(result), indent=2))
         return 0

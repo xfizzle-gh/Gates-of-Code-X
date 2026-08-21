@@ -7,6 +7,7 @@ extends "res://scripts/main_perf.gd"
 ## presentation work:
 ##
 ## * verify_result is read-only and consumes the backend verdict directly.
+## * query_supply is read-only and caches bounded supply/readiness for the panel.
 ## * issue/cancel move-order commands still persist authoritatively in Python,
 ##   but update only the returned move_order field in the live Godot snapshot.
 ## * end_player_round still persists authoritatively in Python, but consumes a
@@ -336,6 +337,8 @@ func _consume_fast_command_result(
 
 	if op == "verify_result":
 		_capture_verification(backend_payload)
+	elif op == "query_supply":
+		_capture_supply_query(backend_payload)
 	elif _is_lightweight_order_op(op):
 		if not _apply_move_order_result_patch(op, commands, backend_payload):
 			_fail_command(op, "backend succeeded but move-order presentation patch was incomplete")
@@ -392,6 +395,7 @@ func _consume_runtime_patch_result(
 
 	_parse_apply_output(output_text)
 	_capture_verification(backend_payload)
+	_capture_end_turn_economy_report(backend_payload)
 	_commit_snapshot_state(built, previous_selected, previous_battalion, true)
 	_ensure_operational_presenter()
 	operational_presenter.begin_transition(
@@ -403,7 +407,14 @@ func _consume_runtime_patch_result(
 	view_scale = previous_scale
 	view_offset = previous_offset
 	if status_message.is_empty():
-		status_message = "Applied %s." % op
+		if op == "end_player_round" and economy_report_open:
+			status_message = "Round economy: income %s, maintenance %s, treasury %s." % [
+				int(economy_report.get("income", 0)),
+				int(economy_report.get("maintenance", 0)),
+				int(economy_report.get("treasury", 0)),
+			]
+		else:
+			status_message = "Applied %s." % op
 	if snapshot.get("pending_battle") != null:
 		status_message += " Pending battle ready - Auto-resolve or Handoff."
 	_fit_to_focus(false)
@@ -434,7 +445,7 @@ func _on_command_finished(
 			op
 		)
 		return
-	if op == "verify_result" or _is_lightweight_order_op(op):
+	if op == "verify_result" or op == "query_supply" or _is_lightweight_order_op(op):
 		_consume_fast_command_result(
 			generation,
 			success,

@@ -58,6 +58,8 @@ class PlayerRoundEngineReuseTests(unittest.TestCase):
             selected_faction=Faction.NATO,
             current_faction=Faction.NATO,
             turn_number=12,
+            # CampaignState always carries this presentation slot.
+            map_metadata={},
             factions={
                 faction.value: SimpleNamespace(is_eliminated=False)
                 for faction in (
@@ -132,6 +134,10 @@ class PlayerRoundEngineReuseTests(unittest.TestCase):
         self.assertTrue(perf["shared_operational_ai"])
         self.assertFalse(perf["engine_prevalidated"])
         self.assertIn("engine_init_ms", perf)
+        report = result["economy_report"]
+        self.assertFalse(report["settled"])
+        self.assertNotIn("income", report)
+        self.assertNotIn("treasury", report)
 
 
 if __name__ == "__main__":

@@ -234,9 +234,13 @@ func _draw() -> void:
 		_draw_province(province)
 
 	var campaign: Dictionary = snapshot.get("campaign", {})
-	var title := "%s  |  Turn %s  |  %s" % [
+	var calendar: Dictionary = campaign.get("calendar", {}) if campaign.get("calendar", {}) is Dictionary else {}
+	var calendar_label := String(calendar.get("label", "")).strip_edges()
+	if calendar_label.is_empty():
+		calendar_label = "Turn %s" % campaign.get("turn_number", 1)
+	var title := "%s  |  %s  |  %s" % [
 		campaign.get("name", "Gates of CodeX"),
-		campaign.get("turn_number", 1),
+		calendar_label,
 		String(campaign.get("current_faction", "")).to_upper(),
 	]
 	draw_string(ThemeDB.fallback_font, Vector2(24, 34), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
@@ -401,8 +405,8 @@ func _draw_management_panel() -> void:
 	y = _draw_button("refresh", "Refresh", x, y, writeback)
 	y = _draw_button("end_turn", "End turn (E)", x, y, writeback and not has_battle)
 	y = _draw_button("run_ai", "Run AI + advance", x, y, writeback and not has_battle)
-	y = _draw_button("auto_resolve", "Auto-resolve battle (A)", x, y, writeback and has_battle, Color("4a2f18"))
-	y = _draw_button("handoff", "Handoff to GoH (H)", x, y, writeback and has_battle, Color("5a2418"))
+	y = _draw_button("auto_resolve", "AUTO-RESOLVE (A)", x, y, writeback and has_battle, Color("24402c"))
+	y = _draw_button("handoff", "FIGHT IN GATES OF HELL (H)", x, y, writeback and has_battle, Color("5a2418"))
 	if not last_handoff_name.is_empty():
 		y = _panel_line("Load Conquest: %s" % last_handoff_name, x, y, Color("ffd27a"), 12)
 	if not writeback:
@@ -434,6 +438,15 @@ func _draw_management_panel() -> void:
 				battalion.get("movement_remaining", 0),
 				battalion.get("combat_actions_remaining", 0),
 			], x, y)
+		var site_upgrade: Dictionary = province.get("site_upgrade", {})
+		if not site_upgrade.is_empty():
+			var upgrade_status := String(site_upgrade.get("status", "none"))
+			if upgrade_status == "complete":
+				y = _panel_line("Forward Depot complete — cheaper repair, faster supply.", x, y, Color("63d69f"), 12)
+			elif upgrade_status == "building":
+				y = _panel_line("Forward Depot building (%s weeks left)" % site_upgrade.get("turns_remaining", 0), x, y, Color("ffd27a"), 12)
+			if bool(site_upgrade.get("available", false)) and writeback:
+				y = _draw_button("upgrade_site", "Upgrade site: Forward Depot (%s)" % site_upgrade.get("cost", 0), x, y, true, Color("1f3d2c"))
 		var options: Array = province.get("construction_options", [])
 		var construct_count := 0
 		for option: Dictionary in options:
@@ -480,7 +493,7 @@ func _draw_management_panel() -> void:
 		if objective.get("coalition", "") != _selected_coalition(selected_faction):
 			continue
 		var completed: bool = objective.get("completed", false)
-		var prefix := "DONE" if completed else "%s/%s" % [objective.get("progress", 0), objective.get("required", 0)]
+		var prefix := "DONE" if completed else "%s/%s" % [objective.get("progress", 0), objective.get("required", objective.get("threshold", 0))]
 		y = _panel_line("%s  %s" % [prefix, objective.get("display_name", "Objective")], x, y, Color("8ee2ad") if completed else Color("d4dbe2"), 12)
 		shown_obj += 1
 		if shown_obj >= 4:
@@ -662,6 +675,15 @@ func _handle_button(button_id: String) -> void:
 		return
 	if button_id.begins_with("move:"):
 		_issue_move(button_id.trim_prefix("move:"))
+		return
+	if button_id == "upgrade_site":
+		var campaign_upgrade: Dictionary = snapshot.get("campaign", {})
+		_queue_and_apply([{
+			"op": "upgrade_site",
+			"province": selected_province_id,
+			"upgrade_id": "forward_depot",
+			"faction": String(campaign_upgrade.get("selected_faction", campaign_upgrade.get("current_faction", ""))),
+		}])
 		return
 	if button_id.begins_with("construct:"):
 		var building := button_id.trim_prefix("construct:")

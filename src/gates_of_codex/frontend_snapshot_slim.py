@@ -38,6 +38,7 @@ FRONTEND_CONSUMED_TOP_LEVEL = frozenset(
         "province_names",
         "fog_of_war",
         "last_known_contacts",
+        "acting_actor",
     }
 )
 
@@ -57,8 +58,12 @@ FRONTEND_CONSUMED_PROVINCE_FIELDS = frozenset(
         "fortification",
         "infrastructure",
         "construction_options",
+        "site_upgrade",
         "occupied_by",
         "occupied_by_battalions",
+        "sovereign_owner",
+        "military_controller",
+        "controller_profile",
     }
 )
 
@@ -93,6 +98,10 @@ FRONTEND_CONSUMED_MAP_METADATA_KEYS = frozenset(
         "strategic_map_id",
         "marker_layout",
         "modern_control_profile",
+        "scenario_id",
+        "scenario_display_name",
+        "scenario_selection",
+        "ww3_2028_controller_profile",
     }
 )
 
@@ -113,6 +122,15 @@ FRONTEND_CONSUMED_CAMPAIGN_FIELDS = frozenset(
         "outcome",
         "operational_clock",
         "site_control",
+        "calendar",
+        "length_preset",
+        "turn_cap",
+        "hold_weeks",
+        "continue_playing",
+        "concluded",
+        "momentum",
+        "victory_model",
+        "thresholds",
     }
 )
 

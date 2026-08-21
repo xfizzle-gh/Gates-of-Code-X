@@ -48,8 +48,7 @@ func _save_path_label(application: Dictionary, control: Dictionary) -> String:
 
 
 func _draw_management_panel() -> void:
-	if has_method("is_pending_battle_modal_active") and is_pending_battle_modal_active() \
-	and operational_presenter != null and not operational_presenter.is_active():
+	if has_method("is_pending_battle_modal_active") and is_pending_battle_modal_active():
 		_draw_pending_battle_modal()
 		return
 	# Full opaque side panel — no ghosted legacy province UI underneath.
@@ -92,13 +91,23 @@ func _draw_management_panel() -> void:
 		12
 	)
 	y = _panel_line(
-		"Turn %s   Save: %s" % [
-			str(campaign.get("turn_number", 0)),
+		"%s   Save: %s" % [
+			CampaignRulesPresenter.turn_line(campaign),
 			_save_path_label(application, control),
 		],
 		x,
 		y,
 		Color(0.66, 0.78, 0.88, 1.0),
+		12
+	)
+	y = _panel_line(
+		"%s   Preset %s" % [
+			CampaignRulesPresenter.momentum_label(campaign),
+			String(campaign.get("length_preset", "medium")).capitalize(),
+		],
+		x,
+		y,
+		Color(0.86, 0.78, 0.52, 1.0),
 		12
 	)
 	y = _panel_line(
@@ -109,16 +118,37 @@ func _draw_management_panel() -> void:
 		x,
 		y
 	)
-	var faction: Dictionary = factions_by_id.get(String(campaign.get("selected_faction", "")), {})
-	y = _panel_line(
-		"Resources %s   Inc/Maint %s/%s" % [
-			_fmt_int(faction.get("resources", 0)),
-			_fmt_int(faction.get("income_last_round", 0)),
-			_fmt_int(faction.get("maintenance_last_round", 0)),
-		],
-		x,
-		y
-	)
+	var actor: Dictionary = acting_actor_block() if has_method("acting_actor_block") else {}
+	if not actor.is_empty():
+		y = _panel_line(
+			"Actor %s   Treasury %s" % [
+				String(actor.get("short_name", actor.get("display_name", actor.get("actor_id", "")))),
+				_fmt_int(actor.get("resources", 0)),
+			],
+			x,
+			y,
+			Color(0.95, 0.84, 0.42, 1.0)
+		)
+		y = _panel_line(
+			"Inc/Maint %s/%s   Research %s" % [
+				_fmt_int(actor.get("income_last_round", 0)),
+				_fmt_int(actor.get("maintenance_last_round", 0)),
+				_fmt_int(actor.get("researched_count", 0)),
+			],
+			x,
+			y
+		)
+	else:
+		var faction: Dictionary = factions_by_id.get(String(campaign.get("selected_faction", "")), {})
+		y = _panel_line(
+			"Resources %s   Inc/Maint %s/%s" % [
+				_fmt_int(faction.get("resources", 0)),
+				_fmt_int(faction.get("income_last_round", 0)),
+				_fmt_int(faction.get("maintenance_last_round", 0)),
+			],
+			x,
+			y
+		)
 	y += 8.0
 	y = _panel_heading("CAMPAIGN", x, y)
 	var play: Dictionary = _player_launch_model()
@@ -132,6 +162,35 @@ func _draw_management_panel() -> void:
 		play_enabled and not (play.get("new_args", []) as Array).is_empty(),
 		Color("5a2418") if confirm_new else Color("243140")
 	)
+	if confirm_new:
+		y = _panel_line("Length and Fog apply to the next New Campaign only.", x, y, Color(0.78, 0.82, 0.86, 1.0), 11)
+		for preset in ["short", "medium", "long"]:
+			var selected_preset := _selected_length_preset(campaign)
+			y = _draw_button(
+				"length_preset:%s" % preset,
+				"%s%s" % [preset.capitalize(), "  [selected]" if selected_preset == preset else ""],
+				x,
+				y,
+				play_enabled,
+				Color("2a4a28") if selected_preset == preset else Color("243140")
+			)
+		var selected_fog := _selected_fog_of_war(campaign)
+		y = _draw_button(
+			"fog_of_war:on",
+			"Fog of War On%s" % ("  [selected]" if selected_fog == "on" else ""),
+			x,
+			y,
+			play_enabled,
+			Color("2a4a28") if selected_fog == "on" else Color("243140")
+		)
+		y = _draw_button(
+			"fog_of_war:off",
+			"Fog of War Off%s" % ("  [selected]" if selected_fog == "off" else ""),
+			x,
+			y,
+			play_enabled,
+			Color("2a4a28") if selected_fog == "off" else Color("243140")
+		)
 	y = _draw_button(
 		"continue_campaign",
 		"Continue Campaign",
@@ -163,10 +222,32 @@ func _draw_management_panel() -> void:
 	y = _panel_heading("ACTIONS", x, y)
 	y = _draw_button("fit", "Fit front (F)", x, y, true, Color("243140"))
 	y = _draw_button("refresh", "Refresh", x, y, writeback)
-	y = _draw_button("end_turn", "End turn (E)", x, y, writeback and not has_battle)
+	var result := CampaignRulesPresenter.result_model(snapshot)
+	if bool(result.get("banner", false)):
+		y = _panel_heading(String(result.get("title", "CAMPAIGN RESULT")), x, y)
+		y = _panel_line(String(result.get("grade_label", "")), x, y, Color(0.95, 0.84, 0.42, 1.0), 13)
+		if not String(result.get("reason", "")).is_empty():
+			y = _panel_line(String(result.get("reason", "")), x, y, Color(0.86, 0.88, 0.9, 1.0), 11)
+		y = _panel_line(String(result.get("momentum", "")), x, y, Color(0.86, 0.78, 0.52, 1.0), 12)
+		if bool(result.get("show_continue", false)):
+			y = _draw_button("continue_playing", "Continue Playing", x, y, writeback, Color("24402c"))
+		if bool(result.get("show_conclude", false)):
+			y = _draw_button("conclude_campaign", "Conclude Campaign", x, y, writeback, Color("5a2418"))
+		if bool(result.get("concluded", false)):
+			y = _panel_line("Campaign concluded.", x, y, Color(0.78, 0.82, 0.86, 1.0), 11)
+		elif bool(result.get("continue_playing", false)):
+			y = _panel_line("Victory recorded — continuing.", x, y, Color("8ee2ad"), 11)
+	var end_turn_enabled := writeback and not has_battle
+	if bool(result.get("visible", false)) and not bool(result.get("continue_playing", false)):
+		end_turn_enabled = false
+	y = _draw_button("end_turn", "End turn (E)", x, y, end_turn_enabled)
 	y = _draw_button("run_ai", "Run AI + advance", x, y, writeback and not has_battle)
-	y = _draw_button("auto_resolve", "Auto-resolve battle (A)", x, y, writeback and has_battle, Color("4a2f18"))
-	y = _draw_button("handoff", "Launch Battle in GoH (H)", x, y, writeback and has_battle, Color("5a2418"))
+	if force_management_open:
+		y = _draw_button("close_force_panel", "Close Force Management", x, y, writeback, Color("2a3d28"))
+	else:
+		y = _draw_button("manage_forces", "Manage Forces", x, y, writeback and not has_battle, Color("243140"))
+	y = _draw_button("auto_resolve", "AUTO-RESOLVE (A)", x, y, writeback and has_battle, Color("24402c"))
+	y = _draw_button("handoff", "FIGHT IN GATES OF HELL (H)", x, y, writeback and has_battle, Color("5a2418"))
 	if not last_handoff_save_path.is_empty():
 		y = _draw_button("verify_result", "Verify Result", x, y, writeback, Color("243140"))
 		y = _draw_button(
@@ -200,6 +281,67 @@ func _draw_management_panel() -> void:
 	var stack_bottom := _stack_section_bottom(y, viewport.y - y - 12.0)
 	if stack_bottom + 80.0 < viewport.y:
 		_draw_targets_and_objectives(x, stack_bottom + 12.0)
+	_draw_end_turn_economy_report()
+
+
+func _draw_end_turn_economy_report() -> void:
+	## Compact event-driven overlay. Drawn only from the last End Turn payload.
+	if not economy_report_open:
+		return
+	if economy_report.is_empty() or not bool(economy_report.get("settled", false)):
+		return
+	var viewport := get_viewport_rect().size
+	var extra := 0.0 if String(economy_report.get("other_actors_summary", "")).is_empty() else 20.0
+	var card := Rect2(24.0, 24.0, 360.0, 178.0 + extra)
+	if card.position.x + card.size.x > viewport.x - PANEL_WIDTH - 16.0:
+		card.size.x = maxf(240.0, viewport.x - PANEL_WIDTH - 40.0)
+	draw_rect(card, Color(0.04, 0.07, 0.10, 0.94))
+	draw_rect(card, Color(0.95, 0.84, 0.42, 0.85), false, 1.5)
+	var x := card.position.x + 14.0
+	var y := card.position.y + 22.0
+	_draw_panel_text("ROUND ECONOMY", Vector2(x, y), 11, Color(0.55, 0.72, 0.86, 1.0))
+	y += 20.0
+	_draw_panel_text(
+		String(economy_report.get("display_name", economy_report.get("actor_id", "Actor"))),
+		Vector2(x, y),
+		13,
+		Color(0.95, 0.84, 0.42, 1.0)
+	)
+	y += 20.0
+	_draw_panel_text(
+		"Income %s   Maintenance %s" % [
+			_fmt_int(economy_report.get("income", 0)),
+			_fmt_int(economy_report.get("maintenance", 0)),
+		],
+		Vector2(x, y),
+		13,
+		Color(0.90, 0.94, 0.98, 1.0)
+	)
+	y += 18.0
+	var net := int(economy_report.get("net", 0))
+	_draw_panel_text(
+		"Net %s   Treasury %s" % [_fmt_signed(net), _fmt_int(economy_report.get("treasury", 0))],
+		Vector2(x, y),
+		13,
+		Color(0.63, 0.90, 0.72, 1.0) if net >= 0 else Color(0.95, 0.62, 0.48, 1.0)
+	)
+	y += 20.0
+	var summary := String(economy_report.get("other_actors_summary", "")).strip_edges()
+	if not summary.is_empty():
+		_draw_panel_text(summary, Vector2(x, y), 12, Color(0.70, 0.76, 0.82, 1.0))
+		y += 20.0
+	var dismiss := Rect2(card.position.x + 12.0, card.position.y + card.size.y - 36.0, card.size.x - 24.0, 24.0)
+	draw_rect(dismiss, Color(0.10, 0.16, 0.20, 1.0))
+	draw_rect(dismiss, Color(0.30, 0.92, 0.76, 0.8), false, 1.0)
+	_draw_panel_text("Dismiss report", dismiss.position + Vector2(8, 16), 11, Color.WHITE)
+	button_rects["dismiss_economy_report"] = dismiss
+
+
+func _fmt_signed(value: Variant) -> String:
+	var amount := int(value)
+	if amount > 0:
+		return "+%s" % _fmt_int(amount)
+	return _fmt_int(amount)
 
 
 func pending_battle_modal_model() -> Dictionary:
@@ -254,7 +396,7 @@ func _draw_pending_battle_modal() -> void:
 	var left := rect.position.x + 30.0
 	var right := rect.position.x + rect.size.x * 0.5 + 14.0
 	var top := rect.position.y + 38.0
-	_draw_panel_text("OPERATIONAL RESOLUTION PAUSED", Vector2(left, top), 22, Color("ffd27a"))
+	_draw_panel_text("PENDING BATTLE", Vector2(left, top), 22, Color("ffd27a"))
 	_draw_panel_text(String(model.get("contact_label", "Pending Battle")), Vector2(left, top + 38.0), 19, Color.WHITE)
 	var location := String(model.get("location", ""))
 	if not location.is_empty():
@@ -274,15 +416,15 @@ func _draw_pending_battle_modal() -> void:
 		_draw_panel_text(line, Vector2(left, ambush_y), 15, Color("ffd27a"))
 		ambush_y += 22.0
 	_draw_panel_text(
-		"Campaign state is paused until this battle is resolved or handed off.",
+		"Auto-Resolve continues the campaign. Fighting in Gates of Hell is optional.",
 		Vector2(left, top + 273.0),
 		13,
 		Color(0.78, 0.82, 0.86, 1.0)
 	)
 	var writeback := bool(snapshot.get("control", {}).get("enabled", false))
 	var button_y := top + 304.0
-	button_y = _draw_button("auto_resolve", "Auto-resolve battle (A)", left, button_y, writeback, Color("4a2f18"))
-	button_y = _draw_button("handoff", "Launch Battle in GoH (H)", left, button_y, writeback, Color("5a2418"))
+	button_y = _draw_button("auto_resolve", "AUTO-RESOLVE (A)", left, button_y, writeback, Color("24402c"))
+	button_y = _draw_button("handoff", "FIGHT IN GATES OF HELL (H)", left, button_y, writeback, Color("5a2418"))
 	button_y = _draw_button(
 		"verify_result",
 		"Verify Result",
@@ -411,9 +553,19 @@ func _draw_stack_section(panel_x: float, top: float, available_h: float) -> void
 		11,
 		Color(0.65, 0.77, 0.88, 1.0)
 	)
+	var stack_supply := _stack_supply_summary(force_ids)
+	_draw_panel_text(
+		"Supply %s   Readiness %s%%" % [
+			String(stack_supply.get("label", "Unknown")),
+			_fmt_int(stack.get("supply", 0)),
+		],
+		body.position + Vector2(12, 36),
+		11,
+		stack_supply.get("color", Color(0.65, 0.77, 0.88, 1.0))
+	)
 
 	# Top-level tabs = StrategicFormations (not battalions).
-	var tab_y := body.position.y + 36.0
+	var tab_y := body.position.y + 52.0
 	var tab_w := (body.size.x - 8.0) / maxf(float(force_ids.size()), 1.0)
 	for index in range(force_ids.size()):
 		var force_id := String(force_ids[index])
@@ -430,7 +582,7 @@ func _draw_stack_section(panel_x: float, top: float, available_h: float) -> void
 
 	# Battalion list inside selected strategic formation.
 	var member_ids: Array = force_row.get("battalion_ids", [])
-	var bn_y := header_y + 70.0
+	var bn_y := header_y + 102.0
 	_draw_panel_text("BATTALIONS IN FORMATION", Vector2(body.position.x + 12, bn_y), 10, Color(0.55, 0.72, 0.86, 1.0))
 	bn_y += 8.0
 	for battalion_id_variant in member_ids:
@@ -450,6 +602,10 @@ func _draw_stack_section(panel_x: float, top: float, available_h: float) -> void
 			Color.WHITE if selected_bn else Color(0.85, 0.88, 0.92, 1.0)
 		)
 		bn_y += 30.0
+
+	if force_management_open:
+		_draw_force_management(body.position.x, bn_y + 8.0, body.size.x, body.position.y + body.size.y)
+		return
 
 	var presentation := _selected_presentation()
 	if presentation.is_empty():
@@ -514,6 +670,212 @@ func _draw_stack_section(panel_x: float, top: float, available_h: float) -> void
 		)
 
 
+func _draw_force_management(left: float, top: float, width: float, bottom: float) -> void:
+	var panel: Dictionary = force_panel
+	var writeback := bool(snapshot.get("control", {}).get("enabled", false))
+	var y := top
+	_draw_panel_text("FORCE MANAGEMENT", Vector2(left + 12, y + 4), 10, Color(0.55, 0.72, 0.86, 1.0))
+	y += 18.0
+	if panel.is_empty():
+		_draw_panel_text(
+			"Querying actor treasury and authorized options...",
+			Vector2(left + 12, y + 8),
+			12,
+			Color(0.78, 0.84, 0.90, 1.0)
+		)
+		return
+	_draw_panel_text(
+		"%s treasury %s" % [
+			String(panel.get("display_name", panel.get("actor_id", "Actor"))),
+			_fmt_int(panel.get("resources", 0)),
+		],
+		Vector2(left + 12, y),
+		12,
+		Color(0.95, 0.84, 0.42, 1.0)
+	)
+	y += 16.0
+	var blocked: Array = panel.get("blocked_reasons", [])
+	if not blocked.is_empty():
+		_draw_panel_text(
+			String(blocked[0]),
+			Vector2(left + 12, y),
+			11,
+			Color(0.95, 0.62, 0.48, 1.0)
+		)
+		y += 16.0
+	var tabs := ["research", "recruit", "assign", "repair"]
+	var tab_w := (width - 16.0) / float(tabs.size())
+	var tab_y := y
+	for index in range(tabs.size()):
+		var tab := String(tabs[index])
+		var selected := tab == force_panel_tab
+		var rect := Rect2(left + 8.0 + tab_w * index, tab_y, tab_w - 4.0, 26.0)
+		draw_rect(rect, Color(0.07, 0.22, 0.18, 1.0) if selected else Color(0.08, 0.11, 0.14, 1.0))
+		draw_rect(rect, Color(0.30, 0.92, 0.76, 0.9) if selected else Color(0.27, 0.33, 0.41, 0.75), false, 1.0)
+		_draw_panel_text(tab.capitalize(), rect.position + Vector2(6, 17), 11, Color.WHITE)
+		button_rects["force_tab:%s" % tab] = rect
+	y = tab_y + 36.0
+	if force_panel_tab == "research":
+		y = _draw_force_research_rows(left, y, width, bottom, writeback, panel)
+	elif force_panel_tab == "recruit":
+		y = _draw_force_recruit_rows(left, y, width, bottom, writeback, panel)
+	elif force_panel_tab == "assign":
+		y = _draw_force_assign_rows(left, y, width, bottom, writeback, panel)
+	else:
+		_draw_force_repair_block(left, y, writeback, panel)
+
+
+func _draw_force_research_rows(
+	left: float,
+	y: float,
+	_width: float,
+	bottom: float,
+	writeback: bool,
+	panel: Dictionary
+) -> float:
+	var rows: Array = panel.get("available_research", [])
+	if rows.is_empty():
+		return _panel_line("No research available for this actor.", left + 8.0, y, Color(0.70, 0.76, 0.82, 1.0), 11)
+	var visible := _force_visible_count(y, bottom, rows.size())
+	var end_index := mini(force_panel_scroll + visible, rows.size())
+	for index in range(force_panel_scroll, end_index):
+		var row: Dictionary = rows[index]
+		var key := String(row.get("key", ""))
+		var cost := int(row.get("cost", 0))
+		var can_buy := writeback and int(panel.get("resources", 0)) >= cost and not key.is_empty()
+		y = _draw_button(
+			"research:%s" % key,
+			"Research %s  (%s)" % [String(row.get("display_name", key)), _fmt_int(cost)],
+			left + 8.0,
+			y,
+			can_buy,
+			Color("2a3d28") if can_buy else Color("243140")
+		)
+		if y + 8.0 >= bottom:
+			break
+	if end_index < rows.size():
+		y = _panel_line("+%s more — scroll" % (rows.size() - end_index), left + 8.0, y, Color(0.68, 0.73, 0.79, 1.0), 10)
+	return y
+
+
+func _draw_force_recruit_rows(
+	left: float,
+	y: float,
+	_width: float,
+	bottom: float,
+	writeback: bool,
+	panel: Dictionary
+) -> float:
+	if not bool(panel.get("can_manage_formation", false)):
+		return _panel_line("Select one of this actor's formations to recruit.", left + 8.0, y, Color(0.95, 0.62, 0.48, 1.0), 11)
+	var rows: Array = []
+	for offer_variant in panel.get("recruitment_offers", []):
+		if offer_variant is Dictionary and bool((offer_variant as Dictionary).get("unlocked", false)):
+			rows.append(offer_variant)
+	if rows.is_empty():
+		return _panel_line("No unlocked units on this actor's roster.", left + 8.0, y, Color(0.70, 0.76, 0.82, 1.0), 11)
+	var visible := _force_visible_count(y, bottom, rows.size())
+	var end_index := mini(force_panel_scroll + visible, rows.size())
+	for index in range(force_panel_scroll, end_index):
+		var row: Dictionary = rows[index]
+		var unit_name := String(row.get("unit_name", ""))
+		var cost := int(row.get("purchase_cost", 0))
+		var can_buy := writeback and int(panel.get("resources", 0)) >= cost and not unit_name.is_empty()
+		y = _draw_button(
+			"recruit:%s" % unit_name,
+			"Buy %s  (%s)" % [unit_name, _fmt_int(cost)],
+			left + 8.0,
+			y,
+			can_buy,
+			Color("2a3d28") if can_buy else Color("243140")
+		)
+		if y + 8.0 >= bottom:
+			break
+	if end_index < rows.size():
+		y = _panel_line("+%s more — scroll" % (rows.size() - end_index), left + 8.0, y, Color(0.68, 0.73, 0.79, 1.0), 10)
+	return y
+
+
+func _draw_force_assign_rows(
+	left: float,
+	y: float,
+	_width: float,
+	bottom: float,
+	writeback: bool,
+	panel: Dictionary
+) -> float:
+	if not bool(panel.get("can_manage_formation", false)):
+		return _panel_line("Select one of this actor's formations to assign.", left + 8.0, y, Color(0.95, 0.62, 0.48, 1.0), 11)
+	var rows: Array = panel.get("reinforcement_pool", [])
+	if rows.is_empty():
+		return _panel_line("No purchased reinforcements waiting to assign.", left + 8.0, y, Color(0.70, 0.76, 0.82, 1.0), 11)
+	var visible := _force_visible_count(y, bottom, rows.size())
+	var end_index := mini(force_panel_scroll + visible, rows.size())
+	for index in range(force_panel_scroll, end_index):
+		var row: Dictionary = rows[index]
+		var unit_name := String(row.get("unit_name", ""))
+		var qty := int(row.get("quantity", 0))
+		var can_assign := writeback and qty > 0 and not selected_battalion_id.is_empty() and not unit_name.is_empty()
+		y = _draw_button(
+			"assign:%s" % unit_name,
+			"Assign %s  x%s" % [unit_name, _fmt_int(qty)],
+			left + 8.0,
+			y,
+			can_assign,
+			Color("2a3d28") if can_assign else Color("243140")
+		)
+		if y + 8.0 >= bottom:
+			break
+	if end_index < rows.size():
+		y = _panel_line("+%s more — scroll" % (rows.size() - end_index), left + 8.0, y, Color(0.68, 0.73, 0.79, 1.0), 10)
+	return y
+
+
+func _draw_force_repair_block(left: float, y: float, writeback: bool, panel: Dictionary) -> void:
+	var repair: Dictionary = panel.get("repair", {})
+	y = _panel_line(
+		"Condition %s%%   Supply %s   Ready %s pt" % [
+			_fmt_int(repair.get("condition", 0)),
+			_fmt_int(repair.get("supply", 0)),
+			_fmt_int(repair.get("points_needed", 0)),
+		],
+		left + 8.0,
+		y,
+		Color(0.78, 0.86, 0.92, 1.0),
+		11
+	)
+	y = _panel_line(
+		"Repair %s/pt   Afford %s   Cost %s" % [
+			_fmt_int(repair.get("cost_per_point", 0)),
+			_fmt_int(repair.get("affordable_points", 0)),
+			_fmt_int(repair.get("total_cost", 0)),
+		],
+		left + 8.0,
+		y,
+		Color(0.78, 0.86, 0.92, 1.0),
+		11
+	)
+	var reasons: Array = repair.get("blocked_reasons", [])
+	if not reasons.is_empty():
+		y = _panel_line(String(reasons[0]), left + 8.0, y, Color(0.95, 0.62, 0.48, 1.0), 11)
+	_draw_button(
+		"repair_formation",
+		"Repair / replenish",
+		left + 8.0,
+		y,
+		writeback and bool(repair.get("can_repair", false)),
+		Color("2a3d28")
+	)
+
+
+func _force_visible_count(y: float, bottom: float, total: int) -> int:
+	var room := maxf(bottom - y, 36.0)
+	var visible := maxi(int(floor(room / 36.0)), 1)
+	if force_panel_scroll > maxi(total - visible, 0):
+		force_panel_scroll = maxi(total - visible, 0)
+	return visible
+
+
 func _draw_targets_and_objectives(x: float, y: float) -> float:
 	## Graph-native movement surface (#206). Targets are the backend's validated
 	## strategic-formation orders; province polygon adjacency is not consulted.
@@ -571,14 +933,10 @@ func _draw_targets_and_objectives(x: float, y: float) -> float:
 	y = _panel_heading("OBJECTIVES", x, y)
 	for objective: Dictionary in snapshot.get("objectives", []):
 		y = _panel_line(
-			"%s/%s  %s" % [
-				_fmt_int(objective.get("progress", 0)),
-				_fmt_int(objective.get("threshold", 0)),
-				String(objective.get("display_name", objective.get("id", ""))),
-			],
+			CampaignRulesPresenter.objective_progress_line(objective),
 			x,
 			y,
-			Color(0.78, 0.82, 0.86, 1.0),
+			Color("8ee2ad") if bool(objective.get("completed", false)) else Color(0.78, 0.82, 0.86, 1.0),
 			12
 		)
 	return y
@@ -622,6 +980,12 @@ func _draw_formation_tab(rect: Rect2, force_id: String) -> void:
 	_draw_panel_text(name.left(20), rect.position + Vector2(7, 30), 11, Color.WHITE)
 	if can_act:
 		draw_circle(rect.position + Vector2(rect.size.x - 8, 9), 3.5, Color(0.30, 1.0, 0.56, 1.0))
+	var tab_supply := _formation_supply_presentation(force_id)
+	draw_circle(
+		rect.position + Vector2(rect.size.x - 8, rect.size.y - 9),
+		3.5,
+		tab_supply.get("color", Color(0.55, 0.62, 0.70, 1.0))
+	)
 
 
 func _draw_formation_header(left: float, y: float, force_row: Dictionary) -> void:
@@ -652,6 +1016,173 @@ func _draw_formation_header(left: float, y: float, force_row: Dictionary) -> voi
 		11,
 		Color(0.83, 0.86, 0.90, 1.0)
 	)
+	var supply_row := _formation_supply_presentation(String(force_row.get("id", selected_strategic_formation_id)))
+	_draw_panel_text(
+		"Supply: %s%s" % [
+			String(supply_row.get("label", "Unknown")),
+			_supply_source_suffix(supply_row),
+		],
+		Vector2(left + 12, y + 74),
+		11,
+		supply_row.get("color", Color(0.83, 0.86, 0.90, 1.0))
+	)
+	_draw_panel_text(
+		"Readiness: %s%%  ·  %s" % [
+			_fmt_int(supply_row.get("readiness", 0)),
+			String(supply_row.get("repair_label", "repair unknown")),
+		],
+		Vector2(left + 12, y + 90),
+		11,
+		Color(0.83, 0.86, 0.90, 1.0)
+	)
+
+
+func _supply_source_suffix(row: Dictionary) -> String:
+	var hub := String(row.get("source_hub_id", "")).strip_edges()
+	if hub.is_empty():
+		return ""
+	return " · %s" % hub
+
+
+func _stack_supply_summary(force_ids: Array) -> Dictionary:
+	var worst = {
+		"state": "connected",
+		"label": "Connected",
+		"color": _supply_state_color("connected"),
+	}
+	var worst_rank := -1
+	for force_id_variant in force_ids:
+		var row = _formation_supply_presentation(String(force_id_variant))
+		var state := String(row.get("state", "disconnected"))
+		var value := 1
+		if state == "connected":
+			value = 0
+		elif state == "grace":
+			value = 2
+		elif state == "cut_off":
+			value = 3
+		if value > worst_rank:
+			worst_rank = value
+			worst = row
+	return worst
+
+
+func _formation_supply_presentation(force_id: String) -> Dictionary:
+	if force_id.is_empty():
+		return {
+			"state": "unknown",
+			"label": "Unknown",
+			"color": Color(0.70, 0.76, 0.82, 1.0),
+			"readiness": 0,
+			"repair_label": "repair unknown",
+			"source_hub_id": "",
+		}
+	if supply_query_cache.has(force_id):
+		var cached = supply_query_cache[force_id]
+		if cached is Dictionary:
+			return _supply_presentation_from_query(cached)
+	return _supply_presentation_from_snapshot(force_id)
+
+
+func _supply_presentation_from_query(row: Dictionary) -> Dictionary:
+	var state := String(row.get("supply_state", "disconnected"))
+	var readiness = row.get("readiness", {})
+	if not readiness is Dictionary:
+		readiness = {}
+	var can_repair := bool(readiness.get("can_repair", false))
+	var repair_label := "repair blocked"
+	if can_repair:
+		repair_label = "repair ready"
+	return {
+		"state": state,
+		"label": _supply_state_label(state),
+		"color": _supply_state_color(state),
+		"readiness": int(readiness.get("supply", 0)),
+		"repair_label": repair_label,
+		"source_hub_id": String(row.get("source_hub_id", "")),
+		"effect": String(row.get("effect", "")),
+	}
+
+
+func _supply_presentation_from_snapshot(force_id: String) -> Dictionary:
+	var force = _s10_formation_row(force_id)
+	var supplied := bool(force.get("supplied", true))
+	var cut_off := bool(force.get("cut_off", false))
+	var source := String(force.get("source_hub_id", "")).strip_edges()
+	var state := "disconnected"
+	if cut_off:
+		state = "cut_off"
+	elif supplied:
+		state = "connected"
+	var repair_label := "repair blocked"
+	if supplied and not cut_off:
+		repair_label = "repair ready"
+	return {
+		"state": state,
+		"label": _supply_state_label(state),
+		"color": _supply_state_color(state),
+		"readiness": int(force.get("supply_summary", 0)),
+		"repair_label": repair_label,
+		"source_hub_id": source,
+		"effect": "",
+	}
+
+
+func _supply_state_label(state: String) -> String:
+	if state == "connected":
+		return "Connected"
+	if state == "grace":
+		return "Grace"
+	if state == "cut_off":
+		return "Cut-off"
+	if state == "initial_disconnected" or state == "disconnected":
+		return "Disconnected"
+	return "Unknown"
+
+
+func _supply_state_color(state: String) -> Color:
+	if state == "connected":
+		return Color(0.45, 0.86, 0.62, 1.0)
+	if state == "grace":
+		return Color(0.95, 0.84, 0.42, 1.0)
+	if state == "cut_off":
+		return Color(0.98, 0.46, 0.38, 1.0)
+	return Color(0.95, 0.78, 0.48, 1.0)
+
+
+func _maybe_request_supply_query() -> void:
+	## Event-driven: only the selected owned formation, never a province scan.
+	if selected_strategic_formation_id.is_empty():
+		return
+	if supply_query_cache.has(selected_strategic_formation_id):
+		return
+	if is_command_busy():
+		return
+	if not _selected_formation_is_player_owned():
+		return
+	var control: Dictionary = snapshot.get("control", {})
+	if not bool(control.get("enabled", false)):
+		return
+	var supported: Array = control.get("supported_ops", [])
+	if not supported.has("query_supply"):
+		return
+	_queue_and_apply([{
+		"op": "query_supply",
+		"strategic_formation_id": selected_strategic_formation_id,
+		"province_id": selected_province_id,
+	}])
+
+
+func _selected_formation_is_player_owned() -> bool:
+	## Exact query_supply is ownership fail-closed. S11 already filters the
+	## snapshot; this does not invent a second visibility model.
+	var campaign: Dictionary = snapshot.get("campaign", {})
+	var acting := String(campaign.get("selected_faction", "")).strip_edges()
+	if acting.is_empty():
+		return false
+	var force := _s10_formation_row(selected_strategic_formation_id)
+	var faction := String(force.get("faction", "")).strip_edges()
+	return not faction.is_empty() and faction == acting
 
 
 func _ensure_selection(force_ids: Array, battalion_ids: Array) -> void:
@@ -867,6 +1398,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
+		if (event as InputEventKey).keycode == KEY_ESCAPE and economy_report_open:
+			_handle_button("dismiss_economy_report")
+			get_viewport().set_input_as_handled()
+			return
 		if (event as InputEventKey).keycode == KEY_SPACE and operational_presenter != null and operational_presenter.is_active():
 			_handle_button("skip_presentation")
 			get_viewport().set_input_as_handled()
@@ -912,10 +1447,14 @@ func _unhandled_input(event: InputEvent) -> void:
 					if selected_battalion_id.is_empty() and members.size() > 0:
 						selected_battalion_id = String(members[0])
 					_rebuild_legal_targets()
+					_maybe_request_supply_query()
 					status_message = "Selected formation %s (acting battalion %s)." % [
 						force_row.get("display_name", force_id),
 						_selected_presentation().get("battalion_label", selected_battalion_id),
 					]
+					if force_management_open:
+						force_panel_scroll = 0
+						request_force_panel()
 					queue_redraw()
 					get_viewport().set_input_as_handled()
 					return
@@ -928,18 +1467,27 @@ func _unhandled_input(event: InputEvent) -> void:
 					status_message = "Selected acting battalion %s." % _selected_presentation().get(
 						"battalion_label", battalion_id
 					)
+					if force_management_open:
+						force_panel_scroll = 0
+						request_force_panel()
 					queue_redraw()
 					get_viewport().set_input_as_handled()
 					return
 		elif mouse.button_index == MOUSE_BUTTON_WHEEL_UP and stack_panel_expanded:
 			if Rect2(get_viewport_rect().size.x - PANEL_WIDTH, 0, PANEL_WIDTH, get_viewport_rect().size.y).has_point(mouse.position):
-				unit_scroll_offset = maxi(unit_scroll_offset - 1, 0)
+				if force_management_open:
+					force_panel_scroll = maxi(force_panel_scroll - 1, 0)
+				else:
+					unit_scroll_offset = maxi(unit_scroll_offset - 1, 0)
 				queue_redraw()
 				get_viewport().set_input_as_handled()
 				return
 		elif mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN and stack_panel_expanded:
 			if Rect2(get_viewport_rect().size.x - PANEL_WIDTH, 0, PANEL_WIDTH, get_viewport_rect().size.y).has_point(mouse.position):
-				unit_scroll_offset += 1
+				if force_management_open:
+					force_panel_scroll += 1
+				else:
+					unit_scroll_offset += 1
 				queue_redraw()
 				get_viewport().set_input_as_handled()
 				return

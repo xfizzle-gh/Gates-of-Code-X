@@ -218,9 +218,11 @@ class PersistentBackendTransportTests(unittest.TestCase):
                 "issue_move_order",
                 "cancel_move_order",
                 "verify_result",
+                "query_supply",
                 "commit_move_orders",
                 "refresh",
                 "auto_resolve",
+                "repair",
             },
         )
         for op in (
@@ -230,7 +232,11 @@ class PersistentBackendTransportTests(unittest.TestCase):
             "reset_test_campaign",
             "end_turn",
             "run_ai",
+            "recruit",
+            "research",
+            "assign",
         ):
+            # Composed-stack policy: these #276 frontend ops stay full-refresh.
             self.assertNotIn(op, persistent_backend.SUPPORTED_OPS)
 
     def test_direct_cache_loader_leases_once_then_uses_canonical_loader(self) -> None:
@@ -257,6 +263,13 @@ class PersistentBackendTransportTests(unittest.TestCase):
             persistent_backend._cache_can_survive_report(
                 ok,
                 ["verify_result"],
+                persisted=False,
+            )
+        )
+        self.assertTrue(
+            persistent_backend._cache_can_survive_report(
+                ok,
+                ["query_supply"],
                 persisted=False,
             )
         )

@@ -380,6 +380,9 @@ def repair_formation(state: CampaignState, formation_id: str, points: int | None
             for entry in battalion.roster
         ),
     )
+    from .site_upgrade import apply_forward_depot_repair_cost
+
+    cost_per_point = apply_forward_depot_repair_cost(state, battalion.province_id, cost_per_point)
     missing = 100 - battalion.condition
     requested = missing if points is None else min(missing, max(0, points))
     if requested == 0:

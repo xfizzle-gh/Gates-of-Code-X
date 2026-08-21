@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "pack_id": "ww3_2028_core",
+  "scenario_ids": ["ww3_2028_core"],
+  "authority": {
+    "issue": 75,
+    "scenario_identity_issues": [225, 281],
+    "notes": [
+      "Four-power 2028 Core war aims for actors nato, ukr, rusa, prc. This pack is Core-only.",
+      "ww3_2028_expanded is not covered here. Expanded remains fail-closed until a real Expanded actor pack is authored.",
+      "Do not collapse Poland, France, Germany, Serbia, DPRK, or other Expanded identities onto nato/ukr/rusa/prc.",
+      "Targets use frozen Earth3 location IDs so this pack composes with the #225/#281 scenario stack later.",
+      "Hold is 4 supply-connected weeks. Momentum thresholds stay on the shared #75 preset table.",
+      "PRC has no authored Belarus command province on this stack; national contribution is expeditionary (Vilnius)."
+    ]
+  },
+  "actor_faction": {
+    "nato": "nato",
+    "ukr": "ukr",
+    "rusa": "rusa",
+    "prc": "prc"
+  },
+  "player_actor_by_faction": {
+    "nato": "nato",
+    "ukr": "ukr",
+    "rusa": "rusa",
+    "prc": "prc"
+  },
+  "actor_hubs": {
+    "nato": ["e3_0592"],
+    "ukr": ["e3_1937"],
+    "rusa": ["e3_2793"],
+    "prc": []
+  },
+  "coalition_aliases": {
+    "russian_command": ["rusa", "prc"],
+    "eastern-coalition": ["rusa", "prc"],
+    "eastern_coalition": ["rusa", "prc"],
+    "western-coalition": ["nato", "ukr"],
+    "western_coalition": ["nato", "ukr"]
+  },
+  "objective_overlay": [],
+  "war_aims": [
+    {
+      "id": "aim_2028_west_donbas",
+      "display_name": "Secure Donetsk and Luhansk",
+      "layer": "coalition_war_aim",
+      "owner_type": "alliance",
+      "owner_id": "western_coalition",
+      "coalition": "western_coalition",
+      "kind": "control",
+      "targets": ["e3_2794", "e3_3380"],
+      "required": 2,
+      "primary": true,
+      "hold_weeks": 4,
+      "supply_connected": true,
+      "reward_each": 0
+    },
+    {
+      "id": "aim_2028_east_kyiv_vilnius",
+      "display_name": "Kyiv–Vilnius operation",
+      "layer": "coalition_war_aim",
+      "owner_type": "alliance",
+      "owner_id": "eastern-coalition",
+      "coalition": "eastern-coalition",
+      "kind": "control",
+      "targets": ["e3_0442", "e3_1937"],
+      "required": 2,
+      "primary": true,
+      "hold_weeks": 4,
+      "supply_connected": true,
+      "reward_each": 0
+    }
+  ],
+  "national_objectives": [
+    {
+      "id": "nat_2028_nato_berlin",
+      "display_name": "Hold the Berlin command hub",
+      "layer": "national_contribution",
+      "owner_type": "actor",
+      "owner_id": "nato",
+      "coalition": "western_coalition",
+      "kind": "control",
+      "targets": ["e3_0592"],
+      "required": 1,
+      "primary": false,
+      "hold_weeks": 4,
+      "supply_connected": true,
+      "reward_each": 0
+    },
+    {
+      "id": "nat_2028_ukr_kyiv",
+      "display_name": "Defend Kyiv",
+      "layer": "national_contribution",
+      "owner_type": "actor",
+      "owner_id": "ukr",
+      "coalition": "western_coalition",
+      "kind": "control",
+      "targets": ["e3_1937"],
+      "required": 1,
+      "primary": false,
+      "hold_weeks": 4,
+      "supply_connected": true,
+      "reward_each": 0
+    },
+    {
+      "id": "nat_2028_rusa_rostov",
+      "display_name": "Hold the Rostov command hub",
+      "layer": "national_contribution",
+      "owner_type": "actor",
+      "owner_id": "rusa",
+      "coalition": "eastern-coalition",
+      "kind": "control",
+      "targets": ["e3_2793"],
+      "required": 1,
+      "primary": false,
+      "hold_weeks": 4,
+      "supply_connected": true,
+      "reward_each": 0
+    },
+    {
+      "id": "nat_2028_prc_vilnius",
+      "display_name": "Seize the Vilnius forward hub",
+      "layer": "national_contribution",
+      "owner_type": "actor",
+      "owner_id": "prc",
+      "coalition": "eastern-coalition",
+      "kind": "control",
+      "targets": ["e3_0442"],
+      "required": 1,
+      "primary": false,
+      "hold_weeks": 4,
+      "supply_connected": true,
+      "reward_each": 0
+    }
+  ]
+}

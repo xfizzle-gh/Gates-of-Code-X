@@ -143,14 +143,15 @@ func _verify_player_identity(snapshot: Dictionary) -> void:
 		commit_pattern.search(commit) != null,
 		commit
 	)
+	var scenario_id := String(application.get("scenario_id", ""))
 	_assert_true(
-		"scenario_is_earth3_v1",
-		String(application.get("scenario_id", "")) == "earth3_v1",
-		String(application.get("scenario_id", ""))
+		"scenario_is_2028_core_or_earth3_fixture",
+		scenario_id == "ww3_2028_core" or scenario_id == "earth3_v1",
+		scenario_id
 	)
 	_assert_true(
-		"scenario_status_is_production",
-		String(application.get("scenario_status", "")) == "production",
+		"scenario_status_present",
+		not String(application.get("scenario_status", "")).strip_edges().is_empty(),
 		String(application.get("scenario_status", ""))
 	)
 	_assert_true(
@@ -217,6 +218,8 @@ func _verify_player_actions(snapshot: Dictionary) -> void:
 		"end_turn",
 		"run_ai",
 		"auto_resolve",
+		"continue_playing",
+		"conclude_campaign",
 	]:
 		if not supported.has(required):
 			missing.append(required)

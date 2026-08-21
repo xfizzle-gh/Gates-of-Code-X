@@ -7,9 +7,10 @@ Authority rules enforced here:
 
 * The Python campaign file is the only authoritative campaign state. The Godot
   snapshot is always regenerated from it and is never read back as authority.
-* Production New Campaign builds ``earth3_v1`` on ``earth3_europe_mediterranean``.
-  There is no fallback to a GoE-derived map; legacy scenarios require explicit
-  ``--scenario`` selection.
+* Production New Campaign builds ``ww3_2028_core`` on ``earth3_europe_mediterranean``.
+  There is no fallback to a GoE-derived map. Expanded 2028, the ``earth3_v1``
+  development fixture, and legacy scenarios require explicit ``--scenario``
+  selection.
 * Missing or invalid stack, game, or profile inputs fail closed with an
   actionable message instead of being replaced by a discovered substitute.
 """
@@ -29,7 +30,7 @@ from typing import Any, Mapping, Sequence
 
 from .earth3_fixture_authority import earth3_requires_stack
 from .models import CampaignState, Faction
-from .scenario import DEFAULT_SCENARIO_ID, build_scenario, get_scenario
+from .scenario import DEFAULT_SCENARIO_ID, EARTH3_V1_SCENARIO_ID, build_scenario, get_scenario
 from .starter import set_player_faction
 from .state_io import load_campaign, save_campaign
 
@@ -39,6 +40,7 @@ FACTION_CHOICES = ("nato", "ukr", "rusa", "prc")
 #: Difficulty identifiers accepted by the player shell. P4 records the choice on
 #: the campaign; balance consumption of the value is deliberately out of scope.
 DIFFICULTY_CHOICES = ("easy", "normal", "hard")
+LENGTH_PRESET_CHOICES = ("short", "medium", "long")
 
 CAMPAIGN_FILE_NAME = "campaign.json"
 SNAPSHOT_FILE_NAME = "campaign_snapshot.json"
@@ -102,6 +104,7 @@ class PlayResult:
     godot_project: str = ""
     stack_layers: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    length_preset: str = "medium"
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -395,6 +398,12 @@ def launch_strategic_application(
 # ---------------------------------------------------------------------------
 
 
+def _length_preset_of(state: CampaignState) -> str:
+    from .campaign_rules import campaign_rules
+
+    return str(campaign_rules(state).get("length_preset") or "medium")
+
+
 def persist_launch_settings(
     state: CampaignState,
     *,
@@ -450,6 +459,7 @@ def launch_settings(state: CampaignState) -> dict[str, Any]:
             "faction": state.selected_faction.value,
             "difficulty": state.difficulty,
             "fog_of_war": "on" if state.fog_of_war_enabled else "off",
+            "length_preset": str(_length_preset_of(state)),
         }
     )
     return merged
@@ -461,7 +471,7 @@ def launch_settings(state: CampaignState) -> dict[str, Any]:
 
 
 def _check_faction(scenario_id: str, faction: str) -> None:
-    if scenario_id == DEFAULT_SCENARIO_ID and faction != Faction.NATO.value:
+    if scenario_id == EARTH3_V1_SCENARIO_ID and faction != Faction.NATO.value:
         raise PlayerShellError(
             "Earth3 P2 human seat is fixed to the usa actor on the NATO tactical side"
         )
@@ -479,6 +489,7 @@ def create_new_campaign(
     faction: str = Faction.NATO.value,
     difficulty: str = "normal",
     fog_of_war: str = "off",
+    length_preset: str = "medium",
     stack_config: str | None = None,
     game_directory: str | None = None,
     profile_directory: str | None = None,
@@ -501,6 +512,7 @@ def create_new_campaign(
             "it, or --force-new to replace it."
         )
     # Reject an illegal seat before paying for scenario construction.
+    # ww3_2028_expanded stays creatable; only its victory pack is unavailable.
     _check_faction(definition.scenario_id, faction)
     builder_options: dict[str, Any] = {}
     if earth3_requires_stack(definition.scenario_id):
@@ -515,8 +527,15 @@ def create_new_campaign(
             f"expected {definition.map_id!r}"
         )
     _apply_faction(state, definition.scenario_id, faction)
+    if definition.scenario_id == "ww3_2028_core":
+        from .scenario_selection import apply_new_campaign_actor
+
+        apply_new_campaign_actor(state, definition.scenario_id, faction)
     state.difficulty = difficulty
     state.fog_of_war_enabled = fog_of_war == "on"
+    from .campaign_rules import VICTORY_MODEL_P9, ensure_campaign_rules
+
+    ensure_campaign_rules(state, length_preset=length_preset, victory_model=VICTORY_MODEL_P9)
     persist_launch_settings(
         state,
         paths=paths,
@@ -615,6 +634,7 @@ def build_play_parser() -> argparse.ArgumentParser:
     parser.add_argument("--faction", choices=FACTION_CHOICES)
     parser.add_argument("--difficulty", choices=DIFFICULTY_CHOICES)
     parser.add_argument("--fog-of-war", choices=["on", "off"])
+    parser.add_argument("--length-preset", choices=LENGTH_PRESET_CHOICES)
     parser.add_argument("--stack-config", help="Validated active mod-stack config")
     parser.add_argument("--game", help="Gates of Hell install directory")
     parser.add_argument("--profile", help="Gates of Hell profile directory")
@@ -622,7 +642,7 @@ def build_play_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--scenario",
         default=DEFAULT_SCENARIO_ID,
-        help="Scenario id; legacy scenarios require explicit selection",
+        help="Scenario id; defaults to 2028 Core. Expanded, earth3_v1, and legacy require explicit selection",
     )
     parser.add_argument("--godot", help="Godot 4 executable used for the strategic app")
     parser.add_argument("--godot-project", help="Godot project directory")
@@ -745,6 +765,7 @@ def run_play(
             faction=str(args.faction or Faction.NATO.value),
             difficulty=str(args.difficulty or "normal"),
             fog_of_war=str(args.fog_of_war or "off"),
+            length_preset=str(getattr(args, "length_preset", None) or "medium"),
             force=bool(args.force_new),
             resolved_catalog=resolved_catalog,
             **common,
@@ -784,6 +805,7 @@ def run_play(
         difficulty=state.difficulty,
         fog_of_war="on" if state.fog_of_war_enabled else "off",
         turn_number=state.turn_number,
+        length_preset=_length_preset_of(state),
         godot_executable=godot_executable,
         godot_project=godot_project,
         stack_layers=list(stack_layers),

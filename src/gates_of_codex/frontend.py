@@ -19,9 +19,11 @@ from .earth3_campaign import (
     load_earth3_authority,
 )
 from .economy import available_research, formation_recruitment_offers
+from .frontend_actor_force import build_acting_actor_presentation
 from .map_layout import apply_marker_layout, is_human_readable_name, province_name_coverage
 from .models import CampaignState, Faction
 from .play_context import list_front_options
+from .site_upgrade import hidden_site_upgrade_projection, project_site_upgrade
 from .strategic import (
     construction_options,
     ensure_strategic_layer,
@@ -68,6 +70,24 @@ def _declares_earth3_authority(state: CampaignState) -> bool:
             == PRODUCTION_AUTHORITY_IDENTIFIER,
         )
     )
+
+
+def _province_2028_presentation(metadata: Mapping) -> dict[str, str]:
+    """Lift 2028 controller identity out of omitted province metadata.
+
+    Slice 3 slim drops the raw ``metadata`` blob. The New Campaign / Continue
+    strategic overlay still needs sovereignty, military control, and profile
+    labels, so those three strings are published as consumed top-level fields.
+    """
+
+    if not isinstance(metadata, Mapping):
+        return {}
+    presentation: dict[str, str] = {}
+    for key in ("sovereign_owner", "military_controller", "controller_profile"):
+        value = str(metadata.get(key, "")).strip()
+        if value:
+            presentation[key] = value
+    return presentation
 
 
 def _faction_supply_payload(report) -> dict:
@@ -199,6 +219,7 @@ def build_frontend_snapshot(
             "outcome": asdict(outcome),
             "operational_clock": operational_clock,
             "site_control": site_control,
+            **_campaign_rules_presentation(state),
         },
         "strategic_map": _strategic_map_block(state, snapshot_path),
         "bounds": {
@@ -252,6 +273,12 @@ def build_frontend_snapshot(
                 "construction_options": construction_options(
                     state, state.selected_faction, province.province_id
                 ),
+                "site_upgrade": project_site_upgrade(
+                    state,
+                    province,
+                    state.selected_faction,
+                    reachable=supply_reach.get(state.selected_faction.value),
+                ),
                 "occupied_by": occupied.get(province.province_id, [""])[0],
                 "occupied_by_battalions": list(occupied.get(province.province_id, [])),
                 "supply_source_for": sorted(
@@ -259,6 +286,7 @@ def build_frontend_snapshot(
                     | set(province.metadata.get("static_supply_source_for", []))
                 ),
                 "metadata": province.metadata,
+                **_province_2028_presentation(province.metadata),
             }
             for province in sorted(state.provinces.values(), key=lambda value: value.province_id)
         ],
@@ -388,6 +416,9 @@ def build_frontend_snapshot(
             state.map_metadata.get("province_names") or province_name_coverage(state)
         ),
     }
+    acting_actor = build_acting_actor_presentation(state)
+    if acting_actor is not None:
+        snapshot["acting_actor"] = acting_actor
     from .frontend_snapshot_slim import slim_unused_frontend_fields
 
     return slim_unused_frontend_fields(_apply_s11_frontend_filter(snapshot, state))
@@ -585,6 +616,7 @@ def _apply_s11_frontend_filter(snapshot: dict, state: CampaignState) -> dict:
         if owner not in coalition:
             province["infrastructure"] = {}
             province["construction_options"] = []
+            province["site_upgrade"] = hidden_site_upgrade_projection()
             province.pop("resource_yield", None)
             province.pop("fortification", None)
             metadata = province.get("metadata", {})
@@ -1131,6 +1163,12 @@ def _application_version() -> str:
     return application_version()
 
 
+def _campaign_rules_presentation(state: CampaignState) -> dict:
+    from .campaign_rules import campaign_presentation
+
+    return campaign_presentation(state)
+
+
 def _application_block(state: CampaignState, campaign_path: str | Path | None) -> dict:
     """Player-facing application identity shown by the Godot strategic shell."""
     campaign = Path(campaign_path).resolve() if campaign_path else None
@@ -1199,22 +1237,32 @@ def _maintenance_block(
 def _player_launch_block(state: CampaignState, campaign_path: str | Path | None) -> dict:
     """Arguments the Godot shell replays to run New/Continue Campaign.
 
-    The launcher owns campaign creation and continuation; the snapshot only
-    carries the already-persisted launch settings so the frontend never invents
-    a scenario, stack, or path of its own.
+    The launcher owns campaign creation and continuation. New Campaign uses the
+    #259 production resolver (2028 Core unless the current campaign is an
+    explicit Expanded pick or named debug/legacy fixture). Continue always
+    replays the persisted scenario identity.
     """
     campaign = Path(campaign_path).resolve() if campaign_path else None
     if campaign is None:
         return {"enabled": False, "new_args": [], "continue_args": []}
+    from .scenario_selection import resolve_new_campaign_scenario_id
+
     metadata = state.map_metadata
     scenario_id = str(metadata.get("scenario_id", "")).strip()
+    new_scenario_id = resolve_new_campaign_scenario_id(scenario_id)
     shared: list[str] = ["--campaign", str(campaign), "--no-launch"]
+    continue_shared = [*shared]
     if scenario_id:
-        shared.extend(["--scenario", scenario_id])
-    new_args = ["play", "--new", "--force-new", *shared]
+        continue_shared.extend(["--scenario", scenario_id])
+    new_shared = [*shared, "--scenario", new_scenario_id]
+    new_args = ["play", "--new", "--force-new", *new_shared]
     new_args.extend(["--faction", state.selected_faction.value])
     new_args.extend(["--difficulty", state.difficulty])
     new_args.extend(["--fog-of-war", "on" if state.fog_of_war_enabled else "off"])
+    length_preset = str(
+        (state.map_metadata.get("campaign_rules") or {}).get("length_preset") or "medium"
+    )
+    new_args.extend(["--length-preset", length_preset])
     for flag, value in (
         ("--stack-config", metadata.get("stack_config")),
         ("--game", state.game_directory),
@@ -1227,7 +1275,7 @@ def _player_launch_block(state: CampaignState, campaign_path: str | Path | None)
     return {
         "enabled": True,
         "new_args": new_args,
-        "continue_args": ["play", "--continue", *shared],
+        "continue_args": ["play", "--continue", *continue_shared],
     }
 
 
@@ -1260,12 +1308,20 @@ def _control_block(
             "run_ai",
             "auto_resolve",
             "construct",
+            "upgrade_site",
             "repair",
+            "research",
+            "recruit",
+            "assign",
+            "actor_force_panel",
             "handoff",
             "verify_result",
+            "query_supply",
             "import_battle",
             "restore_backup",
             "reset_test_campaign",
             "refresh",
+            "continue_playing",
+            "conclude_campaign",
         ],
     }

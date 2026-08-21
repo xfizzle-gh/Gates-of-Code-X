@@ -102,6 +102,12 @@ class CampaignOutcome:
     reason: str = ""
     selected_faction_result: str = "active"
     victory_hold_rounds: int = 0
+    grade: str = ""
+    coalition_result: str = ""
+    national_result: str = ""
+    continue_playing: bool = False
+    concluded: bool = False
+    momentum: int = 0
 
 
 def ensure_strategic_layer(state: CampaignState) -> None:
@@ -120,8 +126,13 @@ def ensure_strategic_layer(state: CampaignState) -> None:
     state.map_metadata.setdefault("coalition_capitals", DEFAULT_CAPITALS)
     state.map_metadata.setdefault("victory_hold_rounds", {})
     state.map_metadata.setdefault("campaign_outcome", asdict(CampaignOutcome(status="active")))
+    from .campaign_rules import ensure_campaign_rules
+    from .site_upgrade import validate_province_site_upgrades
+
+    ensure_campaign_rules(state)
     for province in state.provinces.values():
         infrastructure_levels(province)
+        validate_province_site_upgrades(province)
         sync_province_infrastructure_owner(province)
     state.schema_version = max(state.schema_version, 5)
     from .force_migration import ensure_strategic_formations
@@ -302,22 +313,22 @@ def sync_province_infrastructure_owner(province: Province) -> None:
     if levels["supply_hub"] > 0 and province.owner != Faction.NEUTRAL:
         sources.add(province.owner.value)
     province.metadata["supply_source_for"] = sorted(sources)
+    from .site_upgrade import sync_site_upgrades_on_owner_change
+
+    sync_site_upgrades_on_owner_change(province)
 
 
 def update_operational_objectives(state: CampaignState) -> list[dict[str, Any]]:
     ensure_strategic_layer(state)
     objectives = state.map_metadata["operational_objectives"]
+    from .campaign_rules import control_objective_progress, resolve_objective_factions
+
     for objective in objectives:
-        coalition = state.alliances.get(objective["coalition"])
-        if coalition is None:
+        coalition_factions = resolve_objective_factions(state, objective)
+        if coalition_factions is None:
             continue
-        coalition_factions = set(coalition.factions)
         if objective["kind"] == "control":
-            progress = sum(
-                1
-                for province_id in objective.get("targets", [])
-                if province_id in state.provinces and state.provinces[province_id].owner in coalition_factions
-            )
+            progress = control_objective_progress(state, objective, coalition_factions)
         else:
             building = objective.get("building", "")
             progress = sum(
@@ -331,7 +342,7 @@ def update_operational_objectives(state: CampaignState) -> list[dict[str, Any]]:
             objective["completed_turn"] = state.turn_number
         if objective.get("completed") and not objective.get("rewarded"):
             reward = int(objective.get("reward_each", 0))
-            for faction in coalition.factions:
+            for faction in coalition_factions:
                 faction_state = state.factions.get(faction.value)
                 if faction_state is not None and not faction_state.is_eliminated:
                     faction_state.resources += reward
@@ -341,8 +352,37 @@ def update_operational_objectives(state: CampaignState) -> list[dict[str, Any]]:
 
 def evaluate_campaign_outcome(state: CampaignState, *, advance_hold: bool = False) -> CampaignOutcome:
     ensure_strategic_layer(state)
+    from .campaign_rules import (
+        advance_actor_hub_loss,
+        advance_objective_holds,
+        evaluate_p9_outcome,
+        refresh_campaign_calendar,
+    )
+
+    if advance_hold:
+        advance_objective_holds(state)
+        advance_actor_hub_loss(state)
     update_operational_objectives(state)
     _update_eliminations(state)
+    refresh_campaign_calendar(state)
+    p9_outcome = evaluate_p9_outcome(state)
+    if p9_outcome is not None:
+        state.map_metadata["campaign_outcome"] = asdict(p9_outcome)
+        return p9_outcome
+    from .campaign_rules import VICTORY_MODEL_P9, campaign_rules, update_momentum
+
+    rules = campaign_rules(state)
+    momentum = update_momentum(state)
+    if str(rules.get("victory_model")) == VICTORY_MODEL_P9:
+        outcome = CampaignOutcome(
+            status="active",
+            selected_faction_result="active",
+            continue_playing=bool(rules.get("continue_playing")),
+            concluded=bool(rules.get("concluded")),
+            momentum=int(momentum.get("score", 0)),
+        )
+        state.map_metadata["campaign_outcome"] = asdict(outcome)
+        return outcome
     alliance_ids = sorted(state.alliances)
     winner = ""
     loser = ""
@@ -401,6 +441,9 @@ def evaluate_campaign_outcome(state: CampaignState, *, advance_hold: bool = Fals
         reason=reason,
         selected_faction_result=selected_result,
         victory_hold_rounds=hold_rounds,
+        continue_playing=bool(rules.get("continue_playing")),
+        concluded=bool(rules.get("concluded")),
+        momentum=int(momentum.get("score", 0)),
     )
     state.map_metadata["campaign_outcome"] = asdict(outcome)
     return outcome

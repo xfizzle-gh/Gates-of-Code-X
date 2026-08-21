@@ -92,6 +92,12 @@ def _application_patch(state: CampaignState) -> dict[str, Any]:
     }
 
 
+def _campaign_rules_patch(state: CampaignState) -> dict[str, Any]:
+    from .campaign_rules import campaign_presentation
+
+    return campaign_presentation(state)
+
+
 def _campaign_patch(state: CampaignState) -> dict[str, Any]:
     from .operational_movement import get_operational_clock
 
@@ -105,6 +111,7 @@ def _campaign_patch(state: CampaignState) -> dict[str, Any]:
         ),
         "operational_clock": get_operational_clock(state),
         "site_control": _site_control_rows(state),
+        **_campaign_rules_patch(state),
     }
 
 
@@ -250,6 +257,14 @@ def _dynamic_provinces(
                 reachable=reachable,
                 p2_campaign=p2_campaign,
                 p2_footprint=p2_footprint,
+            )
+            from .site_upgrade import project_site_upgrade
+
+            row["site_upgrade"] = project_site_upgrade(
+                state,
+                province,
+                selected,
+                reachable=reachable,
             )
         rows.append(row)
     return rows
@@ -528,7 +543,7 @@ def build_frontend_runtime_patch(
         row.pop("metadata", None)
         province_patch.append(row)
 
-    return {
+    payload = {
         "schema": RUNTIME_PATCH_SCHEMA,
         "schema_version": RUNTIME_PATCH_SCHEMA_VERSION,
         "merge": {
@@ -566,3 +581,9 @@ def build_frontend_runtime_patch(
             ),
         },
     }
+    from .frontend_actor_force import build_acting_actor_presentation
+
+    acting_actor = build_acting_actor_presentation(state)
+    if acting_actor is not None:
+        payload["replace"]["acting_actor"] = acting_actor
+    return payload

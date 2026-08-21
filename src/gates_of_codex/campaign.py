@@ -126,6 +126,9 @@ class CampaignEngine:
             else pending.defender_faction
         )
         self.apply_battle_result(winner)
+        from .campaign_rules import record_auto_resolve_result
+
+        record_auto_resolve_result(self.state, winner, pending)
         return winner
 
     def apply_external_battle_result(self, winner: Faction, survivors: dict[str, list]):
@@ -191,8 +194,9 @@ class CampaignEngine:
     def end_turn(self) -> Faction:
         if self.state.pending_battle is not None:
             raise RuntimeError("Cannot end turn with a pending battle")
-        outcome = self.state.map_metadata.get("campaign_outcome", {})
-        if outcome.get("status") == "complete":
+        from .campaign_rules import campaign_play_blocked
+
+        if campaign_play_blocked(self.state):
             raise RuntimeError("Campaign is already complete")
         active = [f for f in self.TURN_ORDER if f.value in self.state.factions and not self.state.factions[f.value].is_eliminated]
         if not active:
@@ -213,6 +217,9 @@ class CampaignEngine:
             # (manual commit during turn N activates when turn N ends).
             resolve_strategic_turn_movement(self.state)
             self.state.turn_number += 1
+            from .site_upgrade import advance_site_upgrades
+
+            advance_site_upgrades(self.state)
             refresh_operational_supply(self.state, consume_grace=False)
             settle_round_economy(self.state)
             for battalion in self.state.battalions.values():

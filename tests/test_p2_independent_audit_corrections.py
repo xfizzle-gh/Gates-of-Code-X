@@ -115,7 +115,7 @@ class P2ActorRepairTests(unittest.TestCase):
         result = _apply_one(
             state,
             "repair",
-            {"formation_id": "sf_deu_berlin", "points": 1},
+            {"actor": "deu", "formation_id": "sf_deu_berlin", "points": 1},
         )
         actor_after = state.map_metadata["strategic_actor_runtime"]["actors"]
 
@@ -136,7 +136,7 @@ class P2ActorRepairTests(unittest.TestCase):
             _apply_one(
                 state,
                 "repair",
-                {"formation_id": "sf_pol_vilnius", "points": 1},
+                {"actor": "pol", "formation_id": "sf_pol_vilnius", "points": 1},
             )
         self.assertEqual(90, battalion.condition)
         self.assertEqual(0, actors["pol"]["resources"])

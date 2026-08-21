@@ -120,10 +120,15 @@ def _all_strings(value) -> list[str]:
 
 class Earth3ScenarioRegistryTests(unittest.TestCase):
     def test_registry_has_exact_required_scenarios_and_default(self) -> None:
-        self.assertEqual(EARTH3_SCENARIO_ID, DEFAULT_SCENARIO_ID)
+        self.assertEqual("ww3_2028_core", DEFAULT_SCENARIO_ID)
+        self.assertEqual("production", get_scenario(DEFAULT_SCENARIO_ID).status)
+        self.assertEqual("production", get_scenario("ww3_2028_core").status)
+        self.assertEqual(EARTH3_SCENARIO_ID, get_scenario(EARTH3_SCENARIO_ID).scenario_id)
         self.assertEqual(
             (
                 "earth3_v1",
+                "ww3_2028_core",
+                "ww3_2028_expanded",
                 "legacy_goe_europe",
                 "legacy_goe_europe_mediterranean",
                 "earth3_native_acceptance",
@@ -163,11 +168,13 @@ class Earth3ScenarioRegistryTests(unittest.TestCase):
                 return_value=build_earth3_campaign(),
             ),
         ):
-            state = build_scenario()
+            state = build_scenario(EARTH3_SCENARIO_ID)
         legacy_goe.assert_not_called()
         legacy_em.assert_not_called()
         self.assertEqual(EARTH3_SCENARIO_ID, state.map_metadata["scenario_id"])
         self.assertEqual(EARTH3_MAP_ID, state.map_id)
+        self.assertEqual("ww3_2028_core", DEFAULT_SCENARIO_ID)
+        self.assertNotEqual(DEFAULT_SCENARIO_ID, EARTH3_SCENARIO_ID)
 
     def test_explicit_legacy_scenarios_remain_available_and_are_never_default(self) -> None:
         goe = build_scenario("legacy_goe_europe")
@@ -723,7 +730,8 @@ class Earth3DefaultCreationAndFrontendTests(unittest.TestCase):
     def test_new_parser_defaults_to_earth3_and_accepts_positional_output(self) -> None:
         output = self.root / "campaign.json"
         args = build_parser().parse_args(["new", str(output)])
-        self.assertEqual(EARTH3_SCENARIO_ID, args.scenario)
+        self.assertEqual(DEFAULT_SCENARIO_ID, args.scenario)
+        self.assertEqual("ww3_2028_core", args.scenario)
         self.assertEqual(str(output), args.campaign)
 
     def test_default_new_creates_earth3_without_reading_stale_snapshot(self) -> None:

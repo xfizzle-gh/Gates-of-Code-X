@@ -23,6 +23,11 @@ class GodotStackPanelContractTests(unittest.TestCase):
         self.assertIn("BATTALIONS IN FORMATION", script)
         self.assertIn("TACTICAL UNITS IN SELECTED BATTALION", script)
         self.assertIn("stack_panel_expanded", script)
+        self.assertIn("_formation_supply_presentation", script)
+        self.assertIn("Supply:", script)
+        self.assertIn("Readiness:", script)
+        self.assertIn("_maybe_request_supply_query", script)
+        self.assertNotIn("func _process(", script)
         self.assertNotIn("super._draw_management_panel()", script)
 
     def test_tabs_are_strategic_formations_not_raw_ids(self) -> None:

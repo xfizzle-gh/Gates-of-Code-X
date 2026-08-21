@@ -7,10 +7,40 @@ extends "res://scripts/main_composed_presentation.gd"
 ## subclass keeps the larger compositor reviewable while making reload behavior
 ## fail closed, preserving the player's layer-toggle choices across remounts,
 ## and keeping atlas screen positions synchronized with live pan/zoom.
+##
+## #225 Slice F also owns the final production strategic-profile presentation.
+## It deliberately reads only persisted frontend metadata: the underlying map,
+## picking authority, tactical owner, and post-P8 renderer remain unchanged.
 
 var _preserved_composed_toggles: Dictionary = {}
 var _composed_camera_signature := ""
 var _composed_atlas_camera_updates := 0
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	# Middle-mouse drag is dedicated map pan and must work over provinces as well
+	# as empty water. Left-click keeps its existing select/order behavior.
+	if event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if mouse_button.button_index == MOUSE_BUTTON_MIDDLE:
+			var map_width := get_viewport_rect().size.x - PANEL_WIDTH
+			if mouse_button.position.x >= map_width:
+				dragging = false
+				return
+			dragging = mouse_button.pressed
+			if dragging:
+				last_mouse_position = mouse_button.position
+			return
+	super._unhandled_input(event)
+
+
+func _draw_battalion_counter(position: Vector2, battalion: Dictionary, _province_color: Color, selected: bool) -> void:
+	# Unit identity is independent of where the unit currently stands. Never tint
+	# a battalion from the province owner/controller color: a RUSA formation stays
+	# red in Ukraine or neutral territory, and the same rule applies to all sides.
+	var faction_id := String(battalion.get("faction", "neutral"))
+	var faction_color: Color = FACTION_COLORS.get(faction_id, FACTION_COLORS["neutral"])
+	super._draw_battalion_counter(position, battalion, faction_color, selected)
 
 
 func _process(delta: float) -> void:
@@ -30,6 +60,78 @@ func _process(delta: float) -> void:
 	# with live warning rings/reservations. Recompute that center whenever the
 	# normal camera transform changes. No caller/test must manually rebuild it.
 	_rebuild_composed_atlas_entries()
+
+
+func _draw() -> void:
+	super._draw()
+	if load_error.is_empty() and not snapshot.is_empty():
+		_draw_ww3_2028_profile_context()
+
+
+func _draw_province(province: Dictionary) -> void:
+	super._draw_province(province)
+	if String(province.get("id", "")) != selected_province_id:
+		return
+	# Slice 3 omits the raw province metadata blob. Read the lifted 2028
+	# controller identity from consumed top-level snapshot fields only.
+	var sovereign := String(province.get("sovereign_owner", "")).strip_edges()
+	if sovereign.is_empty():
+		return
+	var controller := String(
+		province.get("military_controller", province.get("owner", "neutral"))
+	).strip_edges()
+	var profile := String(province.get("controller_profile", "")).strip_edges()
+	var position := _map_to_screen(province)
+	var strategic_line := "SOV %s  |  CTRL %s" % [
+		sovereign.to_upper(),
+		controller.to_upper(),
+	]
+	if not profile.is_empty():
+		strategic_line += "  |  %s" % profile.to_upper()
+	draw_string(
+		ThemeDB.fallback_font,
+		position + Vector2(12, 10),
+		strategic_line,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		11,
+		Color("9fd7ff")
+	)
+
+
+func _draw_ww3_2028_profile_context() -> void:
+	var campaign: Dictionary = snapshot.get("campaign", {})
+	var map_metadata: Dictionary = campaign.get("map_metadata", {})
+	var selector: Dictionary = map_metadata.get("scenario_selection", {})
+	var scenario_id := String(
+		selector.get("active_scenario_id", map_metadata.get("scenario_id", ""))
+	).strip_edges()
+	if not scenario_id.begins_with("ww3_2028_"):
+		return
+	var scenario_label := String(
+		selector.get(
+			"active_scenario_label",
+			map_metadata.get("scenario_display_name", scenario_id),
+		)
+	).strip_edges()
+	var actor_id := String(selector.get("active_actor_id", "")).strip_edges()
+	var controller_profile := String(
+		map_metadata.get("ww3_2028_controller_profile", "")
+	).strip_edges()
+	var line := "Scenario: %s" % scenario_label
+	if not actor_id.is_empty():
+		line += "  |  Nation: %s" % actor_id.to_upper()
+	if not controller_profile.is_empty():
+		line += "  |  Profile: %s" % controller_profile.to_upper()
+	draw_string(
+		ThemeDB.fallback_font,
+		Vector2(24, 58),
+		line,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		get_viewport_rect().size.x - PANEL_WIDTH - 48,
+		14,
+		Color("9fd7ff")
+	)
 
 
 func _load_snapshot(path: String) -> void:

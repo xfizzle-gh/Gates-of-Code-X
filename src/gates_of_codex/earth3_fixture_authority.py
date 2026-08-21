@@ -32,6 +32,14 @@ FIXTURE_SCHEMA_VERSION = 2
 FIXTURE_MANIFEST_RESOURCE = "earth3_native_acceptance/fixture_manifest.json"
 DEFAULT_SCENARIO_ID = "earth3_v1"
 FIXTURE_PURPOSE = "debug/native acceptance"
+EARTH3_STACK_SCENARIO_IDS = frozenset(
+    {
+        DEFAULT_SCENARIO_ID,
+        FIXTURE_SCENARIO_ID,
+        "ww3_2028_core",
+        "ww3_2028_expanded",
+    }
+)
 
 _MANIFEST_FIELDS = (
     "schema",
@@ -73,7 +81,7 @@ class Earth3FixtureAuthorityError(RuntimeError):
 
 
 def earth3_requires_stack(scenario_id: str) -> bool:
-    return scenario_id in {DEFAULT_SCENARIO_ID, FIXTURE_SCENARIO_ID}
+    return scenario_id in EARTH3_STACK_SCENARIO_IDS
 
 
 def _require_exact_manifest(payload: Any) -> dict[str, Any]:

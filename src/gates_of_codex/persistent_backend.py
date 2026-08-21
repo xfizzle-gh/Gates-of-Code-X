@@ -33,9 +33,16 @@ SUPPORTED_OPS = frozenset(
         "issue_move_order",
         "cancel_move_order",
         "verify_result",
+        "query_supply",
         "commit_move_orders",
         "refresh",
         "auto_resolve",
+        # #149 force-loop frontend op. Full-refresh only; not a persist/runtime-patch
+        # op. Composed-stack policy after #276: research/recruit/assign exist as
+        # frontend commands and stay off this allowlist (one-shot full-refresh is
+        # sufficient; no measured player-facing warm-path need). Persist/runtime-patch
+        # allowlists stay unchanged.
+        "repair",
     }
 )
 IDLE_TIMEOUT_SECONDS = 900.0
@@ -470,7 +477,9 @@ def _cache_can_survive_report(
 
     if not bool(report.get("ok", False)):
         return False
-    read_only = bool(ops) and all(op == "verify_result" for op in ops)
+    from .frontend_commands import READ_ONLY_OPS
+
+    read_only = bool(ops) and all(op in READ_ONLY_OPS for op in ops)
     return read_only or persisted
 
 

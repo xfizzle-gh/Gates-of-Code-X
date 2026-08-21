@@ -293,7 +293,9 @@ class GodotMeasuredCommandTests(unittest.TestCase):
             "func _consume_runtime_patch_result(", 1
         )[0]
         self.assertIn('op == "verify_result"', fast_block)
+        self.assertIn('op == "query_supply"', fast_block)
         self.assertIn("_capture_verification(backend_payload)", fast_block)
+        self.assertIn("_capture_supply_query", fast_block)
         self.assertIn("_apply_move_order_result_patch", fast_block)
         self.assertIn("_append_backend_timing", fast_block)
         self.assertNotIn("_try_build_snapshot_state", fast_block)

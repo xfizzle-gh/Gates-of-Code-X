@@ -451,6 +451,9 @@ def repair_actor_formation(
             for entry in target.roster
         ),
     )
+    from .site_upgrade import apply_forward_depot_repair_cost
+
+    cost_per_point = apply_forward_depot_repair_cost(state, target.province_id, cost_per_point)
     missing = 100 - target.condition
     requested = missing if points is None else min(missing, max(0, points))
     if requested == 0:

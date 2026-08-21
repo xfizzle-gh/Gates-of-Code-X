@@ -15,6 +15,10 @@ from typing import Any
 
 from .actor_ai_economy import defer_actor_ai_assignment_full_validation
 from .campaign import CampaignEngine
+from .end_turn_economy_report import (
+    ai_economy_actions_present,
+    build_end_turn_economy_report,
+)
 from .models import CampaignState
 from .round_economy_validation import (
     defer_actor_round_settlement_full_validation,
@@ -106,6 +110,7 @@ def end_player_round(
     economy callers retain eager settlement validation.
     """
 
+    from .campaign_rules import campaign_play_blocked
     from .observation import (
         ObservationMutationContext,
         merge_observation_mutation_contexts,
@@ -129,6 +134,7 @@ def end_player_round(
     engine_init_ms = _ms(time.perf_counter() - engine_started)
     starting_turn = int(state.turn_number)
     ai_factions: list[str] = []
+    other_actors_acted = False
     observation_context = ObservationMutationContext()
     deferred_assignment_count = 0
     perf = {
@@ -173,6 +179,7 @@ def end_player_round(
         state.pending_battle is None
         and state.current_faction != selected
         and steps < guard
+        and not campaign_play_blocked(state)
     ):
         faction = state.current_faction
         faction_state = state.factions.get(faction.value)
@@ -196,7 +203,9 @@ def end_player_round(
         ai = shared_operational_ai or StrategicAI(state)
         started = time.perf_counter()
         with defer_actor_ai_assignment_full_validation() as deferred:
-            ai.take_turn(faction)
+            actions = ai.take_turn(faction)
+        if ai_economy_actions_present(actions):
+            other_actors_acted = True
         deferred_assignment_count += int(deferred["assignments"])
         perf["deferred_actor_assignment_count"] = deferred_assignment_count
         perf["ai_take_turn_ms"][faction.value] = _ms(
@@ -244,9 +253,10 @@ def end_player_round(
         steps += 1
 
     if state.pending_battle is None and state.current_faction != selected:
-        raise RuntimeError(
-            "Player round did not return to selected faction within canonical turn order"
-        )
+        if not campaign_play_blocked(state):
+            raise RuntimeError(
+                "Player round did not return to selected faction within canonical turn order"
+            )
 
     observation_context = merge_observation_mutation_contexts(
         observation_context,
@@ -274,6 +284,11 @@ def end_player_round(
         "starting_turn": starting_turn,
         "turn_number": int(state.turn_number),
         "pending_battle": state.pending_battle is not None,
+        "economy_report": build_end_turn_economy_report(
+            state,
+            starting_turn=starting_turn,
+            other_actors_acted=other_actors_acted,
+        ),
         "perf_turn_cycle": perf,
         # ``apply_frontend_commands`` consumes and removes this private key
         # before publishing the command result, exactly like the existing

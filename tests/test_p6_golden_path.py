@@ -316,7 +316,7 @@ class P6GoldenPathTests(unittest.TestCase):
             workflow,
         )
         self.assertIn(
-            'str(root / "home" / "campaigns" / "earth3_v1")',
+            'str(root / "home" / "campaigns" / "ww3_2028_core")',
             workflow,
         )
         self.assertIn(
@@ -355,6 +355,8 @@ class P6GoldenPathTests(unittest.TestCase):
                     "--new",
                     "--campaign",
                     str(campaign_root),
+                    "--scenario",
+                    "earth3_v1",
                     "--stack-config",
                     str(fixture.stack_config),
                     "--game",

@@ -206,7 +206,7 @@ def _repin_bundle(root: Path):
 
 class Earth3P2ScenarioSelectionTests(unittest.TestCase):
     def test_earth3_remains_default_and_applies_p2_bootstrap(self) -> None:
-        state = build_scenario(resolved_catalog=_resolved_catalog())
+        state = build_scenario("earth3_v1", resolved_catalog=_resolved_catalog())
         self.assertEqual("earth3_v1", state.map_metadata["scenario_id"])
         self.assertEqual("earth3_v1_campaign_bootstrap", state.map_metadata[BOOTSTRAP_METADATA_KEY]["bootstrap_id"])
 
@@ -515,7 +515,7 @@ class Earth3P2CliConstructionTests(unittest.TestCase):
             )
         self.assertEqual(0, result)
         build.assert_called_once_with(
-            "earth3_v1", stack_config="config/validated-stack.json"
+            "ww3_2028_core", stack_config="config/validated-stack.json"
         )
         save.assert_called_once()
 
@@ -534,7 +534,18 @@ class Earth3P2CliConstructionTests(unittest.TestCase):
         with patch("gates_of_codex.cli.build_scenario", return_value=_campaign()), patch(
             "gates_of_codex.cli.save_campaign"
         ) as save, self.assertRaisesRegex(ValueError, "fixed to the usa actor"):
-            cli_main(["new", "campaign.json", "--stack-config", "stack.json", "--faction", "ukr"])
+            cli_main(
+                [
+                    "new",
+                    "campaign.json",
+                    "--scenario",
+                    "earth3_v1",
+                    "--stack-config",
+                    "stack.json",
+                    "--faction",
+                    "ukr",
+                ]
+            )
         save.assert_not_called()
 
 

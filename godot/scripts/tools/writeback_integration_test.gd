@@ -53,6 +53,7 @@ func _run_all() -> void:
 	await _test_stale_completion_ignored()
 	await _test_free_during_slow_command_safe()
 	await _test_launch_fallback_second_succeeds()
+	await _test_auto_resolve_completion_exits_pending_battle()
 
 	print("writeback_integration_test: passed=%s failed=%s" % [_passed, _failed])
 	if _failed > 0:
@@ -576,3 +577,54 @@ func _test_launch_fallback_second_succeeds() -> void:
 		_assert_eq("fallback success", bool(finished[0].get("success")), true)
 		_assert_eq("fallback exit 0", int(finished[0].get("exit_code")), 0)
 	_assert_true("not busy after fallback", not runner.is_busy())
+
+
+func _test_auto_resolve_completion_exits_pending_battle() -> void:
+	await _setup_client()
+	var pending_path := _dir.path_join("pending_battle.json")
+	var resolved_path := _dir.path_join("resolved_battle.json")
+	var pending := _base_snapshot_dict(pending_path)
+	pending["pending_battle"] = {
+		"id": "battle-1",
+		"started": false,
+		"origin_province_id": "Warszawa",
+		"target_province_id": "Radom",
+	}
+	pending["control"]["snapshot_path"] = resolved_path
+	pending["control"]["commands_path"] = _commands_path
+	var resolved := _base_snapshot_dict(resolved_path)
+	resolved.erase("pending_battle")
+	resolved["pending_battle"] = null
+	resolved["campaign"]["turn"] = 2
+	resolved["control"]["snapshot_path"] = resolved_path
+	_write_json(pending_path, pending)
+	_write_json(resolved_path, resolved)
+	_client._load_snapshot(pending_path)
+	_client.last_handoff_save_path = ""
+	_client.last_handoff_battle_id = ""
+	_client.last_verified_save_path = ""
+	_assert_true("modal active before auto_resolve", _client.is_pending_battle_modal_active())
+	_assert_true("pending battle present before", _client.snapshot.get("pending_battle") is Dictionary)
+	var payload := {
+		"ok": true,
+		"results": [{
+			"op": "auto_resolve",
+			"ok": true,
+			"data": {"winner": "nato", "casualties": {}, "retreat": {}},
+		}],
+	}
+	_fake.scripted_results = [
+		{"exit_code": 0, "output_text": JSON.stringify(payload), "delay_sec": 0.15},
+	]
+	var commits: int = int(_client.snapshot_commit_count)
+	_client._queue_and_apply([{"op": "auto_resolve"}])
+	await _wait_until(func() -> bool: return not _client.is_command_busy())
+	_assert_eq("auto_resolve committed replacement", int(_client.snapshot_commit_count), commits + 1)
+	_assert_true("pending_battle is null", _client.snapshot.get("pending_battle") == null)
+	_assert_true("modal inactive after auto_resolve", not _client.is_pending_battle_modal_active())
+	var ids: Array = Array(_client.enabled_action_button_ids())
+	_assert_true("end_turn available after resolve", ids.has("end_turn"))
+	_assert_true("auto_resolve no longer active action", not ids.has("auto_resolve"))
+	_assert_true("no stale handoff save", String(_client.last_handoff_save_path).is_empty())
+	_assert_true("no stale verify save", String(_client.last_verified_save_path).is_empty())
+	_assert_true("presenter still valid", _client.operational_presenter != null)

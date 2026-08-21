@@ -386,6 +386,31 @@ class S10FrontendPresentationContractTests(unittest.TestCase):
         )
         self.assertNotIn(b"operational_presentation", saved_bytes)
 
+    def test_auto_resolve_clears_pending_battle_and_rewrites_snapshot(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            state = _state(root)
+            _create_prepared_contact(state)
+            campaign_path = root / "campaign.json"
+            snapshot_path = root / "snapshot.json"
+            save_campaign(state, campaign_path)
+            self.assertIsNotNone(load_campaign(campaign_path).pending_battle)
+
+            result = apply_frontend_commands(
+                campaign_path,
+                commands=[{"op": "auto_resolve"}],
+                snapshot_path=snapshot_path,
+            )
+
+            loaded = load_campaign(campaign_path)
+            snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+            self.assertTrue(result["ok"], result)
+            self.assertIsNone(loaded.pending_battle)
+            self.assertIsNone(snapshot.get("pending_battle"))
+            self.assertEqual("auto_resolve", result["results"][0]["op"])
+            self.assertIn(result["results"][0]["data"]["winner"], {"nato", "rusa"})
+            loaded.validate()
+
     def test_auto_resolve_exports_exact_authoritative_retreat_result(self) -> None:
         def defender_wins(engine) -> Faction:
             engine.apply_battle_result(Faction.RUSSIA)
