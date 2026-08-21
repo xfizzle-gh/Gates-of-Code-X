@@ -23,7 +23,8 @@ SELF_COMMITTING_OPS = frozenset(
 #: Read-only actions. They mutate nothing, so they are never recorded in the
 #: exactly-once ledger: a player must be able to re-verify a result after
 #: replaying a battle and get a fresh verdict rather than a "duplicate" reply.
-READ_ONLY_OPS = frozenset({"verify_result"})
+#: ``actor_force_panel`` is the bounded #149 recruit/research/repair query.
+READ_ONLY_OPS = frozenset({"verify_result", "actor_force_panel"})
 
 #: Campaign-metadata key holding the exactly-once command ledger.
 COMMAND_LEDGER_KEY = "frontend_command_ledger"
@@ -850,27 +851,55 @@ def _apply_one(state, op: str, raw: dict[str, Any]) -> CommandResult:
         built = build_infrastructure(state, faction, province, building)
         return CommandResult(op=op, ok=True, detail=f"built {building}", data=asdict(built))
     if op == "repair":
-        formation = str(raw.get("formation") or raw.get("formation_id") or "")
-        points = raw.get("points")
-        requested_points = None if points is None else int(points)
-        actor_content = state.map_metadata.get("actor_content_runtime")
-        if isinstance(actor_content, dict):
-            from .actor_economy import repair_actor_formation
+        from .frontend_actor_force import apply_repair_command
 
-            battalion_id = raw.get("battalion") or raw.get("battalion_id")
-            repaired = repair_actor_formation(
-                state,
-                formation,
-                requested_points,
-                battalion_id=(
-                    None if battalion_id in (None, "") else str(battalion_id)
-                ),
-            )
-        else:
-            from .economy import repair_formation
+        repaired = apply_repair_command(state, raw)
+        return CommandResult(
+            op=op,
+            ok=True,
+            detail=f"repaired {repaired.get('strategic_formation_id') or repaired.get('formation_id') or ''}",
+            data=repaired,
+        )
+    if op == "research":
+        from .frontend_actor_force import apply_research_command
 
-            repaired = repair_formation(state, formation, requested_points)
-        return CommandResult(op=op, ok=True, detail=f"repaired {formation}", data=asdict(repaired))
+        purchased = apply_research_command(state, raw)
+        return CommandResult(
+            op=op,
+            ok=True,
+            detail=f"researched {purchased.get('key', '')}",
+            data=purchased,
+        )
+    if op == "recruit":
+        from .frontend_actor_force import apply_recruit_command
+
+        purchased = apply_recruit_command(state, raw)
+        return CommandResult(
+            op=op,
+            ok=True,
+            detail=f"recruited {purchased.get('quantity', 0)} {purchased.get('unit_name', '')}",
+            data=purchased,
+        )
+    if op == "assign":
+        from .frontend_actor_force import apply_assign_command
+
+        transferred = apply_assign_command(state, raw)
+        return CommandResult(
+            op=op,
+            ok=True,
+            detail=f"assigned {transferred.get('quantity', 0)} {transferred.get('unit_name', '')}",
+            data=transferred,
+        )
+    if op == "actor_force_panel":
+        from .frontend_actor_force import build_actor_force_panel
+
+        panel = build_actor_force_panel(state, raw)
+        return CommandResult(
+            op=op,
+            ok=True,
+            detail=f"force panel {panel.get('actor_id', '')}",
+            data=panel,
+        )
     if op == "continue_playing":
         from .campaign_rules import continue_playing
 

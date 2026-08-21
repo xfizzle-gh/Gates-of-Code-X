@@ -38,6 +38,7 @@ FRONTEND_CONSUMED_TOP_LEVEL = frozenset(
         "province_names",
         "fog_of_war",
         "last_known_contacts",
+        "acting_actor",
     }
 )
 

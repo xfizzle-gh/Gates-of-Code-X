@@ -28,6 +28,12 @@ var last_verification_ok := false
 var last_verification_detail := ""
 var _command_sequence := 0
 var _session_token := ""
+## #149 player force-management presentation. Query results live here; Python
+## remains the authority for treasury, offers, and mutations.
+var force_management_open := false
+var force_panel: Dictionary = {}
+var force_panel_tab := "recruit"
+var force_panel_scroll := 0
 
 
 func _ready() -> void:
@@ -332,10 +338,14 @@ func _command_mutates_state(button_id: String) -> bool:
 	if button_id == "verify_result":
 		# Read-only verification: never mutates campaign or snapshot.
 		return false
+	if button_id in ["manage_forces", "close_force_panel"] or button_id.begins_with("force_tab:"):
+		return false
 	if button_id.begins_with("move:") or button_id.begins_with("construct:"):
 		return true
 	if button_id.begins_with("length_preset:") or button_id.begins_with("fog_of_war:"):
 		return false
+	if button_id.begins_with("research:") or button_id.begins_with("recruit:") or button_id.begins_with("assign:"):
+		return true
 	return button_id in [
 		"refresh",
 		"end_turn",
@@ -350,6 +360,7 @@ func _command_mutates_state(button_id: String) -> bool:
 		"restore_backup",
 		"reset_test_campaign",
 		"cancel_move_order",
+		"repair_formation",
 	]
 
 
@@ -667,6 +678,33 @@ func _handle_button(button_id: String) -> void:
 			"save_path": last_verified_save_path,
 		}])
 		return
+	if button_id == "manage_forces":
+		force_management_open = true
+		force_panel_scroll = 0
+		request_force_panel()
+		return
+	if button_id == "close_force_panel":
+		force_management_open = false
+		status_message = "Force management closed."
+		queue_redraw()
+		return
+	if button_id.begins_with("force_tab:"):
+		force_panel_tab = button_id.trim_prefix("force_tab:")
+		force_panel_scroll = 0
+		queue_redraw()
+		return
+	if button_id.begins_with("research:"):
+		_queue_and_apply([_research_command(button_id.trim_prefix("research:"))])
+		return
+	if button_id.begins_with("recruit:"):
+		_queue_and_apply([_recruit_command(button_id.trim_prefix("recruit:"))])
+		return
+	if button_id.begins_with("assign:"):
+		_queue_and_apply([_assign_command(button_id.trim_prefix("assign:"))])
+		return
+	if button_id == "repair_formation":
+		_queue_and_apply([_repair_command()])
+		return
 	if is_pending_battle_modal_active() and button_id not in ["auto_resolve", "handoff", "import_battle", "verify_result"]:
 		status_message = "Operational resolution paused - resolve or hand off the pending battle."
 		queue_redraw()
@@ -745,6 +783,7 @@ func enabled_action_button_ids() -> PackedStringArray:
 			["refresh", writeback],
 			["end_turn", writeback and not (bool(result.get("visible", false)) and not bool(result.get("continue_playing", false)))],
 			["run_ai", writeback and not (bool(result.get("visible", false)) and not bool(result.get("continue_playing", false)))],
+			["manage_forces", writeback],
 			["restore_backup", can_restore_latest_backup()],
 			["reset_test_campaign", can_reset_test_campaign()],
 			["skip_presentation", operational_presenter.is_active()],
@@ -849,11 +888,11 @@ func _queue_and_apply(commands: Array) -> void:
 	_ensure_operational_presenter()
 	_cancel_maintenance_confirmations()
 	var requested_op := FrontendCommandRunnerScript.primary_op(commands)
-	if is_pending_battle_modal_active() and requested_op not in ["auto_resolve", "handoff", "import_battle", "verify_result"]:
+	if is_pending_battle_modal_active() and requested_op not in ["auto_resolve", "handoff", "import_battle", "verify_result", "actor_force_panel"]:
 		status_message = "Operational resolution paused - pending battle is modal."
 		queue_redraw()
 		return
-	if operational_presenter.is_active() and requested_op not in ["handoff", "import_battle", "verify_result"]:
+	if operational_presenter.is_active() and requested_op not in ["handoff", "import_battle", "verify_result", "actor_force_panel"]:
 		status_message = "Operational presentation active - Skip or wait for completion."
 		queue_redraw()
 		return
@@ -978,6 +1017,80 @@ func _result_data(payload: Dictionary, op: String) -> Dictionary:
 	return {}
 
 
+func acting_actor_block() -> Dictionary:
+	var row: Variant = snapshot.get("acting_actor", {})
+	return (row as Dictionary).duplicate(true) if row is Dictionary else {}
+
+
+func request_force_panel() -> void:
+	var actor := acting_actor_block()
+	var command := {
+		"op": "actor_force_panel",
+		"formation": selected_strategic_formation_id,
+		"battalion": selected_battalion_id,
+	}
+	var actor_id := String(actor.get("actor_id", "")).strip_edges()
+	if not actor_id.is_empty():
+		command["actor"] = actor_id
+	else:
+		var campaign: Dictionary = snapshot.get("campaign", {})
+		command["faction"] = String(campaign.get("selected_faction", campaign.get("current_faction", "")))
+	_queue_and_apply([command])
+
+
+func _research_command(key: String) -> Dictionary:
+	var actor := acting_actor_block()
+	var command := {
+		"op": "research",
+		"key": key,
+		"actor": String(actor.get("actor_id", "")),
+	}
+	var campaign: Dictionary = snapshot.get("campaign", {})
+	command["faction"] = String(campaign.get("selected_faction", campaign.get("current_faction", "")))
+	return command
+
+
+func _recruit_command(unit_name: String) -> Dictionary:
+	var actor := acting_actor_block()
+	return {
+		"op": "recruit",
+		"actor": String(actor.get("actor_id", "")),
+		"formation": selected_strategic_formation_id,
+		"unit": unit_name,
+		"quantity": 1,
+	}
+
+
+func _assign_command(unit_name: String) -> Dictionary:
+	var actor := acting_actor_block()
+	return {
+		"op": "assign",
+		"actor": String(actor.get("actor_id", "")),
+		"formation": selected_strategic_formation_id,
+		"battalion": selected_battalion_id,
+		"unit": unit_name,
+		"quantity": 1,
+	}
+
+
+func _repair_command() -> Dictionary:
+	var actor := acting_actor_block()
+	return {
+		"op": "repair",
+		"actor": String(actor.get("actor_id", "")),
+		"formation": selected_strategic_formation_id,
+		"battalion": selected_battalion_id,
+	}
+
+
+func _capture_force_panel(payload: Dictionary) -> void:
+	var data := _result_data(payload, "actor_force_panel")
+	if data.is_empty():
+		return
+	force_panel = data
+	force_management_open = true
+
+
 func _clear_campaign_runtime() -> void:
 	provinces_by_id.clear()
 	battalions_by_province.clear()
@@ -995,6 +1108,10 @@ func _clear_campaign_runtime() -> void:
 	selected_province_id = ""
 	selected_battalion_id = ""
 	selected_strategic_formation_id = ""
+	force_management_open = false
+	force_panel = {}
+	force_panel_tab = "recruit"
+	force_panel_scroll = 0
 	last_handoff_save_path = ""
 	last_handoff_battle_id = ""
 	last_verified_save_path = ""
@@ -1088,6 +1205,7 @@ func _on_command_finished(
 	# Apply output side-effects only after candidate is valid.
 	_parse_apply_output(output_text)
 	_capture_verification(backend_payload)
+	_capture_force_panel(backend_payload)
 	if op == "restore_backup":
 		last_handoff_save_path = ""
 		last_handoff_battle_id = ""
@@ -1115,8 +1233,13 @@ func _on_command_finished(
 	view_scale = previous_scale
 	view_offset = previous_offset
 	if status_message.is_empty():
-		status_message = "Applied %s." % op
+		if op == "actor_force_panel":
+			status_message = "Force management ready for %s." % String(force_panel.get("display_name", force_panel.get("actor_id", "actor")))
+		else:
+			status_message = "Applied %s." % op
 	if snapshot.get("pending_battle") != null and op != "handoff":
 		status_message += " Pending battle ready - Auto-resolve or Handoff."
 	_fit_to_focus(false)
 	queue_redraw()
+	if force_management_open and op in ["research", "recruit", "assign", "repair", "end_turn", "run_ai"]:
+		request_force_panel()

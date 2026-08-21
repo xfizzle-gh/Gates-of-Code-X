@@ -119,16 +119,37 @@ func _draw_management_panel() -> void:
 		x,
 		y
 	)
-	var faction: Dictionary = factions_by_id.get(String(campaign.get("selected_faction", "")), {})
-	y = _panel_line(
-		"Resources %s   Inc/Maint %s/%s" % [
-			_fmt_int(faction.get("resources", 0)),
-			_fmt_int(faction.get("income_last_round", 0)),
-			_fmt_int(faction.get("maintenance_last_round", 0)),
-		],
-		x,
-		y
-	)
+	var actor: Dictionary = acting_actor_block() if has_method("acting_actor_block") else {}
+	if not actor.is_empty():
+		y = _panel_line(
+			"Actor %s   Treasury %s" % [
+				String(actor.get("short_name", actor.get("display_name", actor.get("actor_id", "")))),
+				_fmt_int(actor.get("resources", 0)),
+			],
+			x,
+			y,
+			Color(0.95, 0.84, 0.42, 1.0)
+		)
+		y = _panel_line(
+			"Inc/Maint %s/%s   Research %s" % [
+				_fmt_int(actor.get("income_last_round", 0)),
+				_fmt_int(actor.get("maintenance_last_round", 0)),
+				_fmt_int(actor.get("researched_count", 0)),
+			],
+			x,
+			y
+		)
+	else:
+		var faction: Dictionary = factions_by_id.get(String(campaign.get("selected_faction", "")), {})
+		y = _panel_line(
+			"Resources %s   Inc/Maint %s/%s" % [
+				_fmt_int(faction.get("resources", 0)),
+				_fmt_int(faction.get("income_last_round", 0)),
+				_fmt_int(faction.get("maintenance_last_round", 0)),
+			],
+			x,
+			y
+		)
 	y += 8.0
 	y = _panel_heading("CAMPAIGN", x, y)
 	var play: Dictionary = _player_launch_model()
@@ -222,6 +243,10 @@ func _draw_management_panel() -> void:
 		end_turn_enabled = false
 	y = _draw_button("end_turn", "End turn (E)", x, y, end_turn_enabled)
 	y = _draw_button("run_ai", "Run AI + advance", x, y, writeback and not has_battle)
+	if force_management_open:
+		y = _draw_button("close_force_panel", "Close Force Management", x, y, writeback, Color("2a3d28"))
+	else:
+		y = _draw_button("manage_forces", "Manage Forces", x, y, writeback and not has_battle, Color("243140"))
 	y = _draw_button("auto_resolve", "Auto-resolve battle (A)", x, y, writeback and has_battle, Color("4a2f18"))
 	y = _draw_button("handoff", "Launch Battle in GoH (H)", x, y, writeback and has_battle, Color("5a2418"))
 	if not last_handoff_save_path.is_empty():
@@ -508,6 +533,10 @@ func _draw_stack_section(panel_x: float, top: float, available_h: float) -> void
 		)
 		bn_y += 30.0
 
+	if force_management_open:
+		_draw_force_management(body.position.x, bn_y + 8.0, body.size.x, body.position.y + body.size.y)
+		return
+
 	var presentation := _selected_presentation()
 	if presentation.is_empty():
 		return
@@ -569,6 +598,212 @@ func _draw_stack_section(panel_x: float, top: float, available_h: float) -> void
 			10,
 			Color(0.68, 0.73, 0.79, 1.0)
 		)
+
+
+func _draw_force_management(left: float, top: float, width: float, bottom: float) -> void:
+	var panel: Dictionary = force_panel
+	var writeback := bool(snapshot.get("control", {}).get("enabled", false))
+	var y := top
+	_draw_panel_text("FORCE MANAGEMENT", Vector2(left + 12, y + 4), 10, Color(0.55, 0.72, 0.86, 1.0))
+	y += 18.0
+	if panel.is_empty():
+		_draw_panel_text(
+			"Querying actor treasury and authorized options...",
+			Vector2(left + 12, y + 8),
+			12,
+			Color(0.78, 0.84, 0.90, 1.0)
+		)
+		return
+	_draw_panel_text(
+		"%s treasury %s" % [
+			String(panel.get("display_name", panel.get("actor_id", "Actor"))),
+			_fmt_int(panel.get("resources", 0)),
+		],
+		Vector2(left + 12, y),
+		12,
+		Color(0.95, 0.84, 0.42, 1.0)
+	)
+	y += 16.0
+	var blocked: Array = panel.get("blocked_reasons", [])
+	if not blocked.is_empty():
+		_draw_panel_text(
+			String(blocked[0]),
+			Vector2(left + 12, y),
+			11,
+			Color(0.95, 0.62, 0.48, 1.0)
+		)
+		y += 16.0
+	var tabs := ["research", "recruit", "assign", "repair"]
+	var tab_w := (width - 16.0) / float(tabs.size())
+	var tab_y := y
+	for index in range(tabs.size()):
+		var tab := String(tabs[index])
+		var selected := tab == force_panel_tab
+		var rect := Rect2(left + 8.0 + tab_w * index, tab_y, tab_w - 4.0, 26.0)
+		draw_rect(rect, Color(0.07, 0.22, 0.18, 1.0) if selected else Color(0.08, 0.11, 0.14, 1.0))
+		draw_rect(rect, Color(0.30, 0.92, 0.76, 0.9) if selected else Color(0.27, 0.33, 0.41, 0.75), false, 1.0)
+		_draw_panel_text(tab.capitalize(), rect.position + Vector2(6, 17), 11, Color.WHITE)
+		button_rects["force_tab:%s" % tab] = rect
+	y = tab_y + 36.0
+	if force_panel_tab == "research":
+		y = _draw_force_research_rows(left, y, width, bottom, writeback, panel)
+	elif force_panel_tab == "recruit":
+		y = _draw_force_recruit_rows(left, y, width, bottom, writeback, panel)
+	elif force_panel_tab == "assign":
+		y = _draw_force_assign_rows(left, y, width, bottom, writeback, panel)
+	else:
+		_draw_force_repair_block(left, y, writeback, panel)
+
+
+func _draw_force_research_rows(
+	left: float,
+	y: float,
+	_width: float,
+	bottom: float,
+	writeback: bool,
+	panel: Dictionary
+) -> float:
+	var rows: Array = panel.get("available_research", [])
+	if rows.is_empty():
+		return _panel_line("No research available for this actor.", left + 8.0, y, Color(0.70, 0.76, 0.82, 1.0), 11)
+	var visible := _force_visible_count(y, bottom, rows.size())
+	var end_index := mini(force_panel_scroll + visible, rows.size())
+	for index in range(force_panel_scroll, end_index):
+		var row: Dictionary = rows[index]
+		var key := String(row.get("key", ""))
+		var cost := int(row.get("cost", 0))
+		var can_buy := writeback and int(panel.get("resources", 0)) >= cost and not key.is_empty()
+		y = _draw_button(
+			"research:%s" % key,
+			"Research %s  (%s)" % [String(row.get("display_name", key)), _fmt_int(cost)],
+			left + 8.0,
+			y,
+			can_buy,
+			Color("2a3d28") if can_buy else Color("243140")
+		)
+		if y + 8.0 >= bottom:
+			break
+	if end_index < rows.size():
+		y = _panel_line("+%s more — scroll" % (rows.size() - end_index), left + 8.0, y, Color(0.68, 0.73, 0.79, 1.0), 10)
+	return y
+
+
+func _draw_force_recruit_rows(
+	left: float,
+	y: float,
+	_width: float,
+	bottom: float,
+	writeback: bool,
+	panel: Dictionary
+) -> float:
+	if not bool(panel.get("can_manage_formation", false)):
+		return _panel_line("Select one of this actor's formations to recruit.", left + 8.0, y, Color(0.95, 0.62, 0.48, 1.0), 11)
+	var rows: Array = []
+	for offer_variant in panel.get("recruitment_offers", []):
+		if offer_variant is Dictionary and bool((offer_variant as Dictionary).get("unlocked", false)):
+			rows.append(offer_variant)
+	if rows.is_empty():
+		return _panel_line("No unlocked units on this actor's roster.", left + 8.0, y, Color(0.70, 0.76, 0.82, 1.0), 11)
+	var visible := _force_visible_count(y, bottom, rows.size())
+	var end_index := mini(force_panel_scroll + visible, rows.size())
+	for index in range(force_panel_scroll, end_index):
+		var row: Dictionary = rows[index]
+		var unit_name := String(row.get("unit_name", ""))
+		var cost := int(row.get("purchase_cost", 0))
+		var can_buy := writeback and int(panel.get("resources", 0)) >= cost and not unit_name.is_empty()
+		y = _draw_button(
+			"recruit:%s" % unit_name,
+			"Buy %s  (%s)" % [unit_name, _fmt_int(cost)],
+			left + 8.0,
+			y,
+			can_buy,
+			Color("2a3d28") if can_buy else Color("243140")
+		)
+		if y + 8.0 >= bottom:
+			break
+	if end_index < rows.size():
+		y = _panel_line("+%s more — scroll" % (rows.size() - end_index), left + 8.0, y, Color(0.68, 0.73, 0.79, 1.0), 10)
+	return y
+
+
+func _draw_force_assign_rows(
+	left: float,
+	y: float,
+	_width: float,
+	bottom: float,
+	writeback: bool,
+	panel: Dictionary
+) -> float:
+	if not bool(panel.get("can_manage_formation", false)):
+		return _panel_line("Select one of this actor's formations to assign.", left + 8.0, y, Color(0.95, 0.62, 0.48, 1.0), 11)
+	var rows: Array = panel.get("reinforcement_pool", [])
+	if rows.is_empty():
+		return _panel_line("No purchased reinforcements waiting to assign.", left + 8.0, y, Color(0.70, 0.76, 0.82, 1.0), 11)
+	var visible := _force_visible_count(y, bottom, rows.size())
+	var end_index := mini(force_panel_scroll + visible, rows.size())
+	for index in range(force_panel_scroll, end_index):
+		var row: Dictionary = rows[index]
+		var unit_name := String(row.get("unit_name", ""))
+		var qty := int(row.get("quantity", 0))
+		var can_assign := writeback and qty > 0 and not selected_battalion_id.is_empty() and not unit_name.is_empty()
+		y = _draw_button(
+			"assign:%s" % unit_name,
+			"Assign %s  x%s" % [unit_name, _fmt_int(qty)],
+			left + 8.0,
+			y,
+			can_assign,
+			Color("2a3d28") if can_assign else Color("243140")
+		)
+		if y + 8.0 >= bottom:
+			break
+	if end_index < rows.size():
+		y = _panel_line("+%s more — scroll" % (rows.size() - end_index), left + 8.0, y, Color(0.68, 0.73, 0.79, 1.0), 10)
+	return y
+
+
+func _draw_force_repair_block(left: float, y: float, writeback: bool, panel: Dictionary) -> void:
+	var repair: Dictionary = panel.get("repair", {})
+	y = _panel_line(
+		"Condition %s%%   Supply %s   Ready %s pt" % [
+			_fmt_int(repair.get("condition", 0)),
+			_fmt_int(repair.get("supply", 0)),
+			_fmt_int(repair.get("points_needed", 0)),
+		],
+		left + 8.0,
+		y,
+		Color(0.78, 0.86, 0.92, 1.0),
+		11
+	)
+	y = _panel_line(
+		"Repair %s/pt   Afford %s   Cost %s" % [
+			_fmt_int(repair.get("cost_per_point", 0)),
+			_fmt_int(repair.get("affordable_points", 0)),
+			_fmt_int(repair.get("total_cost", 0)),
+		],
+		left + 8.0,
+		y,
+		Color(0.78, 0.86, 0.92, 1.0),
+		11
+	)
+	var reasons: Array = repair.get("blocked_reasons", [])
+	if not reasons.is_empty():
+		y = _panel_line(String(reasons[0]), left + 8.0, y, Color(0.95, 0.62, 0.48, 1.0), 11)
+	_draw_button(
+		"repair_formation",
+		"Repair / replenish",
+		left + 8.0,
+		y,
+		writeback and bool(repair.get("can_repair", false)),
+		Color("2a3d28")
+	)
+
+
+func _force_visible_count(y: float, bottom: float, total: int) -> int:
+	var room := maxf(bottom - y, 36.0)
+	var visible := maxi(int(floor(room / 36.0)), 1)
+	if force_panel_scroll > maxi(total - visible, 0):
+		force_panel_scroll = maxi(total - visible, 0)
+	return visible
 
 
 func _draw_targets_and_objectives(x: float, y: float) -> float:
@@ -969,6 +1204,9 @@ func _unhandled_input(event: InputEvent) -> void:
 						force_row.get("display_name", force_id),
 						_selected_presentation().get("battalion_label", selected_battalion_id),
 					]
+					if force_management_open:
+						force_panel_scroll = 0
+						request_force_panel()
 					queue_redraw()
 					get_viewport().set_input_as_handled()
 					return
@@ -981,18 +1219,27 @@ func _unhandled_input(event: InputEvent) -> void:
 					status_message = "Selected acting battalion %s." % _selected_presentation().get(
 						"battalion_label", battalion_id
 					)
+					if force_management_open:
+						force_panel_scroll = 0
+						request_force_panel()
 					queue_redraw()
 					get_viewport().set_input_as_handled()
 					return
 		elif mouse.button_index == MOUSE_BUTTON_WHEEL_UP and stack_panel_expanded:
 			if Rect2(get_viewport_rect().size.x - PANEL_WIDTH, 0, PANEL_WIDTH, get_viewport_rect().size.y).has_point(mouse.position):
-				unit_scroll_offset = maxi(unit_scroll_offset - 1, 0)
+				if force_management_open:
+					force_panel_scroll = maxi(force_panel_scroll - 1, 0)
+				else:
+					unit_scroll_offset = maxi(unit_scroll_offset - 1, 0)
 				queue_redraw()
 				get_viewport().set_input_as_handled()
 				return
 		elif mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN and stack_panel_expanded:
 			if Rect2(get_viewport_rect().size.x - PANEL_WIDTH, 0, PANEL_WIDTH, get_viewport_rect().size.y).has_point(mouse.position):
-				unit_scroll_offset += 1
+				if force_management_open:
+					force_panel_scroll += 1
+				else:
+					unit_scroll_offset += 1
 				queue_redraw()
 				get_viewport().set_input_as_handled()
 				return

@@ -19,6 +19,7 @@ from .earth3_campaign import (
     load_earth3_authority,
 )
 from .economy import available_research, formation_recruitment_offers
+from .frontend_actor_force import build_acting_actor_presentation
 from .map_layout import apply_marker_layout, is_human_readable_name, province_name_coverage
 from .models import CampaignState, Faction
 from .play_context import list_front_options
@@ -408,6 +409,9 @@ def build_frontend_snapshot(
             state.map_metadata.get("province_names") or province_name_coverage(state)
         ),
     }
+    acting_actor = build_acting_actor_presentation(state)
+    if acting_actor is not None:
+        snapshot["acting_actor"] = acting_actor
     from .frontend_snapshot_slim import slim_unused_frontend_fields
 
     return slim_unused_frontend_fields(_apply_s11_frontend_filter(snapshot, state))
@@ -1297,6 +1301,10 @@ def _control_block(
             "auto_resolve",
             "construct",
             "repair",
+            "research",
+            "recruit",
+            "assign",
+            "actor_force_panel",
             "handoff",
             "verify_result",
             "import_battle",
