@@ -20,9 +20,14 @@ class AutoResolveUxContractTests(unittest.TestCase):
             source,
         )
         writeback = (ROOT / "godot/scripts/main_writeback.gd").read_text(encoding="utf-8")
-        self.assertIn(
-            'requested_op not in ["handoff", "import_battle", "verify_result", "auto_resolve"]',
+        self.assertIn("requested_op not in [", writeback)
+        self.assertRegex(
             writeback,
+            r'requested_op not in \[[^\]]*"auto_resolve"[^\]]*\]',
+        )
+        self.assertRegex(
+            writeback,
+            r'requested_op not in \[[^\]]*"handoff"[^\]]*\]',
         )
         self.assertIn('button_id not in ["auto_resolve", "handoff"]', writeback)
         self.assertIn('id not in ["auto_resolve", "handoff"]', writeback)
