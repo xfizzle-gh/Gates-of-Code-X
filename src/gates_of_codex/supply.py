@@ -327,3 +327,184 @@ def _apply_encirclement_attrition(battalion: Battalion) -> None:
     largest = max(battalion.roster, key=lambda value: (value.quantity, value.unit_name))
     largest.quantity = max(0, largest.quantity - 1)
     battalion.roster = [value for value in battalion.roster if value.quantity > 0]
+
+
+CONNECTED_SUPPLY_STATE = "connected"
+INITIAL_DISCONNECTED_SUPPLY_STATE = "initial_disconnected"
+GRACE_SUPPLY_STATE = "grace"
+CUT_OFF_SUPPLY_STATE = "cut_off"
+OPERATIONAL_SUPPLY_STATES = frozenset(
+    {
+        CONNECTED_SUPPLY_STATE,
+        INITIAL_DISCONNECTED_SUPPLY_STATE,
+        GRACE_SUPPLY_STATE,
+        CUT_OFF_SUPPLY_STATE,
+    }
+)
+
+#: Existing rollover / repair rules. Presentation quotes these; it does not invent a new table.
+SUPPLY_RESTORE_EFFECT = (
+    f"Supplied formations restore {SUPPLY_RESTORE} readiness at rollover; "
+    "repair requires battalion supply of at least 50 and no encirclement."
+)
+CUT_OFF_SUPPLY_EFFECT = (
+    f"Cut-off drains {SUPPLY_DRAIN} readiness, increments encirclement, "
+    "and blocks repair."
+)
+GRACE_SUPPLY_EFFECT = (
+    "One-tick grace: still supplied this tick. The next disconnected "
+    "consuming tick becomes cut-off."
+)
+INITIAL_DISCONNECTED_SUPPLY_EFFECT = (
+    "No route yet; still supplied. The next disconnected consuming tick "
+    "enters one-tick grace."
+)
+PROVINCE_SUPPLIED_EFFECT = (
+    f"Province-reach supplied formations restore {SUPPLY_RESTORE} readiness "
+    "at rollover; repair requires battalion supply of at least 50 and no encirclement."
+)
+PROVINCE_ISOLATED_EFFECT = (
+    f"Isolated formations drain {SUPPLY_DRAIN} readiness, increment encirclement, "
+    "and block repair."
+)
+P2_SUPPLY_UNAVAILABLE_EFFECT = "Operational supply is unavailable until P3."
+
+
+def formation_supply_state(force) -> str:
+    """Return the exact S8 serialized shape for one strategic formation."""
+
+    if force.cut_off and not force.supplied and force.source_hub_id is None:
+        if force.grace_ticks_remaining == 0:
+            return CUT_OFF_SUPPLY_STATE
+    if (
+        force.supplied
+        and not force.cut_off
+        and force.source_hub_id is None
+        and force.grace_ticks_remaining == 1
+    ):
+        return GRACE_SUPPLY_STATE
+    if (
+        force.supplied
+        and not force.cut_off
+        and force.source_hub_id is not None
+        and force.grace_ticks_remaining == 0
+    ):
+        return CONNECTED_SUPPLY_STATE
+    if (
+        force.supplied
+        and not force.cut_off
+        and force.source_hub_id is None
+        and force.grace_ticks_remaining == 0
+    ):
+        return INITIAL_DISCONNECTED_SUPPLY_STATE
+    raise ValueError("invalid_operational_supply_state")
+
+
+def query_supply_status(
+    state: CampaignState,
+    *,
+    strategic_formation_id: str | None = None,
+    province_id: str | None = None,
+) -> dict:
+    """Return bounded, read-only S8 supply/readiness for one formation or province."""
+
+    formation_id = str(strategic_formation_id or "").strip()
+    province = str(province_id or "").strip()
+    if not formation_id and not province:
+        raise ValueError("query_supply requires strategic_formation_id or province_id")
+    if province and province not in state.provinces:
+        raise ValueError(f"unknown_province {province}")
+    if formation_id:
+        force = state.strategic_formations.get(formation_id)
+        if force is None:
+            raise ValueError(f"unknown_strategic_formation {formation_id}")
+        if province and force.province_id != province:
+            raise ValueError(
+                f"formation_not_in_province {formation_id} {province}"
+            )
+        forces = [force]
+        province = force.province_id
+    else:
+        forces = [
+            force
+            for force in sorted(
+                state.strategic_formations.values(),
+                key=lambda value: value.strategic_formation_id,
+            )
+            if force.province_id == province
+        ]
+
+    authority = "none_until_p3"
+    if not earth3_p2_supply_disabled(state):
+        authority = (
+            "operational_graph"
+            if load_operational_graph_for_state(state) is not None
+            else "province"
+        )
+    return {
+        "authority": authority,
+        "province_id": province,
+        "formations": [
+            _query_supply_formation_row(state, force, authority=authority)
+            for force in forces
+        ],
+    }
+
+
+def _query_supply_formation_row(
+    state: CampaignState, force, *, authority: str
+) -> dict:
+    members = [
+        state.battalions[battalion_id]
+        for battalion_id in force.battalion_ids
+        if battalion_id in state.battalions
+    ]
+    encircled_turns = max((item.encircled_turns for item in members), default=0)
+    can_repair = bool(members) and all(
+        item.supply >= 50 and item.encircled_turns == 0 for item in members
+    )
+    if authority == "none_until_p3":
+        supply_state = formation_supply_state(force)
+        effect = P2_SUPPLY_UNAVAILABLE_EFFECT
+        supplied = force.supplied
+        cut_off = force.cut_off
+        source_hub_id = force.source_hub_id
+        grace_ticks_remaining = force.grace_ticks_remaining
+    elif authority == "province":
+        reachable = reachable_supply_provinces(state, force.faction)
+        in_supply = force.province_id in reachable
+        supply_state = (
+            CONNECTED_SUPPLY_STATE if in_supply else CUT_OFF_SUPPLY_STATE
+        )
+        effect = PROVINCE_SUPPLIED_EFFECT if in_supply else PROVINCE_ISOLATED_EFFECT
+        supplied = in_supply
+        cut_off = not in_supply
+        source_hub_id = None
+        grace_ticks_remaining = 0
+    else:
+        supply_state = formation_supply_state(force)
+        effect = {
+            CONNECTED_SUPPLY_STATE: SUPPLY_RESTORE_EFFECT,
+            GRACE_SUPPLY_STATE: GRACE_SUPPLY_EFFECT,
+            INITIAL_DISCONNECTED_SUPPLY_STATE: INITIAL_DISCONNECTED_SUPPLY_EFFECT,
+            CUT_OFF_SUPPLY_STATE: CUT_OFF_SUPPLY_EFFECT,
+        }[supply_state]
+        supplied = force.supplied
+        cut_off = force.cut_off
+        source_hub_id = force.source_hub_id
+        grace_ticks_remaining = force.grace_ticks_remaining
+    return {
+        "strategic_formation_id": force.strategic_formation_id,
+        "province_id": force.province_id,
+        "supply_state": supply_state,
+        "supplied": supplied,
+        "cut_off": cut_off,
+        "source_hub_id": source_hub_id,
+        "grace_ticks_remaining": grace_ticks_remaining,
+        "readiness": {
+            "supply": int(force.supply_summary),
+            "can_repair": can_repair,
+            "encircled_turns": int(encircled_turns),
+        },
+        "effect": effect,
+    }

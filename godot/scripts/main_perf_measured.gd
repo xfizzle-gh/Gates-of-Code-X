@@ -7,6 +7,7 @@ extends "res://scripts/main_perf.gd"
 ## presentation work:
 ##
 ## * verify_result is read-only and consumes the backend verdict directly.
+## * query_supply is read-only and caches bounded supply/readiness for the panel.
 ## * issue/cancel move-order commands still persist authoritatively in Python,
 ##   but update only the returned move_order field in the live Godot snapshot.
 ## * end_player_round still persists authoritatively in Python, but consumes a
@@ -336,6 +337,9 @@ func _consume_fast_command_result(
 
 	if op == "verify_result":
 		_capture_verification(backend_payload)
+	elif op == "query_supply":
+		if has_method("_capture_supply_query"):
+			_capture_supply_query(backend_payload)
 	elif _is_lightweight_order_op(op):
 		if not _apply_move_order_result_patch(op, commands, backend_payload):
 			_fail_command(op, "backend succeeded but move-order presentation patch was incomplete")
@@ -442,7 +446,7 @@ func _on_command_finished(
 			op
 		)
 		return
-	if op == "verify_result" or _is_lightweight_order_op(op):
+	if op == "verify_result" or op == "query_supply" or _is_lightweight_order_op(op):
 		_consume_fast_command_result(
 			generation,
 			success,

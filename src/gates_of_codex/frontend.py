@@ -1307,6 +1307,7 @@ def _control_block(
             "actor_force_panel",
             "handoff",
             "verify_result",
+            "query_supply",
             "import_battle",
             "restore_backup",
             "reset_test_campaign",

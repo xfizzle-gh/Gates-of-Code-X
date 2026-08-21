@@ -554,9 +554,19 @@ func _draw_stack_section(panel_x: float, top: float, available_h: float) -> void
 		11,
 		Color(0.65, 0.77, 0.88, 1.0)
 	)
+	var stack_supply := _stack_supply_summary(force_ids)
+	_draw_panel_text(
+		"Supply %s   Readiness %s%%" % [
+			String(stack_supply.get("label", "Unknown")),
+			_fmt_int(stack.get("supply", 0)),
+		],
+		body.position + Vector2(12, 36),
+		11,
+		stack_supply.get("color", Color(0.65, 0.77, 0.88, 1.0))
+	)
 
 	# Top-level tabs = StrategicFormations (not battalions).
-	var tab_y := body.position.y + 36.0
+	var tab_y := body.position.y + 52.0
 	var tab_w := (body.size.x - 8.0) / maxf(float(force_ids.size()), 1.0)
 	for index in range(force_ids.size()):
 		var force_id := String(force_ids[index])
@@ -573,7 +583,7 @@ func _draw_stack_section(panel_x: float, top: float, available_h: float) -> void
 
 	# Battalion list inside selected strategic formation.
 	var member_ids: Array = force_row.get("battalion_ids", [])
-	var bn_y := header_y + 70.0
+	var bn_y := header_y + 102.0
 	_draw_panel_text("BATTALIONS IN FORMATION", Vector2(body.position.x + 12, bn_y), 10, Color(0.55, 0.72, 0.86, 1.0))
 	bn_y += 8.0
 	for battalion_id_variant in member_ids:
@@ -971,6 +981,12 @@ func _draw_formation_tab(rect: Rect2, force_id: String) -> void:
 	_draw_panel_text(name.left(20), rect.position + Vector2(7, 30), 11, Color.WHITE)
 	if can_act:
 		draw_circle(rect.position + Vector2(rect.size.x - 8, 9), 3.5, Color(0.30, 1.0, 0.56, 1.0))
+	var tab_supply := _formation_supply_presentation(force_id)
+	draw_circle(
+		rect.position + Vector2(rect.size.x - 8, rect.size.y - 9),
+		3.5,
+		tab_supply.get("color", Color(0.55, 0.62, 0.70, 1.0))
+	)
 
 
 func _draw_formation_header(left: float, y: float, force_row: Dictionary) -> void:
@@ -1001,6 +1017,192 @@ func _draw_formation_header(left: float, y: float, force_row: Dictionary) -> voi
 		11,
 		Color(0.83, 0.86, 0.90, 1.0)
 	)
+	var supply_row := _formation_supply_presentation(String(force_row.get("id", selected_strategic_formation_id)))
+	_draw_panel_text(
+		"Supply: %s%s" % [
+			String(supply_row.get("label", "Unknown")),
+			_supply_source_suffix(supply_row),
+		],
+		Vector2(left + 12, y + 74),
+		11,
+		supply_row.get("color", Color(0.83, 0.86, 0.90, 1.0))
+	)
+	_draw_panel_text(
+		"Readiness: %s%%  ·  %s" % [
+			_fmt_int(supply_row.get("readiness", 0)),
+			String(supply_row.get("repair_label", "repair unknown")),
+		],
+		Vector2(left + 12, y + 90),
+		11,
+		Color(0.83, 0.86, 0.90, 1.0)
+	)
+
+
+func _supply_source_suffix(row: Dictionary) -> String:
+	var hub := String(row.get("source_hub_id", "")).strip_edges()
+	if hub.is_empty():
+		return ""
+	return " · %s" % hub
+
+
+func _stack_supply_summary(force_ids: Array) -> Dictionary:
+	var worst := {
+		"state": "connected",
+		"label": "Connected",
+		"color": _supply_state_color("connected"),
+	}
+	var rank := {
+		"connected": 0,
+		"initial_disconnected": 1,
+		"disconnected": 1,
+		"grace": 2,
+		"cut_off": 3,
+	}
+	var worst_rank := -1
+	for force_id_variant in force_ids:
+		var row := _formation_supply_presentation(String(force_id_variant))
+		var state := String(row.get("state", "disconnected"))
+		var value := int(rank.get(state, 1))
+		if value > worst_rank:
+			worst_rank = value
+			worst = row
+	return worst
+
+
+func _formation_supply_presentation(force_id: String) -> Dictionary:
+	if force_id.is_empty():
+		return {
+			"state": "unknown",
+			"label": "Unknown",
+			"color": Color(0.70, 0.76, 0.82, 1.0),
+			"readiness": 0,
+			"repair_label": "repair unknown",
+			"source_hub_id": "",
+		}
+	var cached: Variant = supply_query_cache.get(force_id, null)
+	if cached is Dictionary:
+		return _supply_presentation_from_query(cached as Dictionary)
+	return _supply_presentation_from_snapshot(force_id)
+
+
+func _supply_presentation_from_query(row: Dictionary) -> Dictionary:
+	var state := String(row.get("supply_state", "disconnected"))
+	var readiness: Dictionary = row.get("readiness", {})
+	var can_repair := bool(readiness.get("can_repair", false))
+	return {
+		"state": state,
+		"label": _supply_state_label(state),
+		"color": _supply_state_color(state),
+		"readiness": int(readiness.get("supply", 0)),
+		"repair_label": "repair ready" if can_repair else "repair blocked",
+		"source_hub_id": String(row.get("source_hub_id", "")),
+		"effect": String(row.get("effect", "")),
+	}
+
+
+func _supply_presentation_from_snapshot(force_id: String) -> Dictionary:
+	var force := {}
+	if has_method("_s10_formation_row"):
+		force = _s10_formation_row(force_id)
+	if force.is_empty():
+		for row_variant: Variant in snapshot.get("strategic_formations", []):
+			if row_variant is Dictionary and String((row_variant as Dictionary).get("id", "")) == force_id:
+				force = row_variant as Dictionary
+				break
+	var supplied := bool(force.get("supplied", true))
+	var cut_off := bool(force.get("cut_off", false))
+	var source := String(force.get("source_hub_id", "")).strip_edges()
+	var state := "disconnected"
+	if cut_off or not supplied:
+		state = "cut_off"
+	elif not source.is_empty():
+		state = "connected"
+	var readiness := int(force.get("supply_summary", 0))
+	var can_repair := supplied and not cut_off
+	var presentations: Dictionary = snapshot.get("battalion_presentations", {})
+	var force_row: Dictionary = snapshot.get("strategic_formation_presentations", {}).get(force_id, {})
+	for battalion_id_variant in force_row.get("battalion_ids", []):
+		var battalion: Dictionary = battalions_by_id.get(String(battalion_id_variant), {})
+		if battalion.is_empty():
+			battalion = presentations.get(String(battalion_id_variant), {})
+		if readiness == 0 and battalion.has("supply"):
+			readiness = int(battalion.get("supply", 0))
+		if int(battalion.get("encircled_turns", 0)) > 0 or int(battalion.get("supply", 100)) < 50:
+			can_repair = false
+		if not bool(battalion.get("is_in_supply", true)):
+			can_repair = false
+	if readiness == 0:
+		readiness = int(force_row.get("supply_summary", 0))
+	return {
+		"state": state,
+		"label": _supply_state_label(state),
+		"color": _supply_state_color(state),
+		"readiness": readiness,
+		"repair_label": "repair ready" if can_repair else "repair blocked",
+		"source_hub_id": source,
+		"effect": "Cut-off drains readiness and blocks repair." if state == "cut_off" else "",
+	}
+
+
+func _supply_state_label(state: String) -> String:
+	match state:
+		"connected":
+			return "Connected"
+		"grace":
+			return "Grace"
+		"cut_off":
+			return "Cut-off"
+		"initial_disconnected":
+			return "Disconnected"
+		"disconnected":
+			return "Disconnected"
+		_:
+			return "Unknown"
+
+
+func _supply_state_color(state: String) -> Color:
+	match state:
+		"connected":
+			return Color(0.45, 0.86, 0.62, 1.0)
+		"grace":
+			return Color(0.95, 0.84, 0.42, 1.0)
+		"cut_off":
+			return Color(0.98, 0.46, 0.38, 1.0)
+		_:
+			return Color(0.95, 0.78, 0.48, 1.0)
+
+
+func _maybe_request_supply_query() -> void:
+	## Event-driven: only the selected stack, never from _process or a province scan.
+	if selected_strategic_formation_id.is_empty():
+		return
+	if supply_query_cache.has(selected_strategic_formation_id):
+		return
+	if is_command_busy():
+		return
+	var control: Dictionary = snapshot.get("control", {})
+	if not bool(control.get("enabled", false)):
+		return
+	var supported: Array = control.get("supported_ops", [])
+	if not supported.has("query_supply"):
+		return
+	_queue_and_apply([{
+		"op": "query_supply",
+		"strategic_formation_id": selected_strategic_formation_id,
+		"province_id": selected_province_id,
+	}])
+
+
+func _capture_supply_query(payload: Dictionary) -> void:
+	var data := _result_data(payload, "query_supply")
+	for row_variant in data.get("formations", []):
+		if not row_variant is Dictionary:
+			continue
+		var row := row_variant as Dictionary
+		var force_id := String(row.get("strategic_formation_id", "")).strip_edges()
+		if force_id.is_empty():
+			continue
+		supply_query_cache[force_id] = row.duplicate(true)
 
 
 func _ensure_selection(force_ids: Array, battalion_ids: Array) -> void:
@@ -1265,6 +1467,7 @@ func _unhandled_input(event: InputEvent) -> void:
 					if selected_battalion_id.is_empty() and members.size() > 0:
 						selected_battalion_id = String(members[0])
 					_rebuild_legal_targets()
+					_maybe_request_supply_query()
 					status_message = "Selected formation %s (acting battalion %s)." % [
 						force_row.get("display_name", force_id),
 						_selected_presentation().get("battalion_label", selected_battalion_id),

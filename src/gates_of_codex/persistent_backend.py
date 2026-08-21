@@ -33,6 +33,7 @@ SUPPORTED_OPS = frozenset(
         "issue_move_order",
         "cancel_move_order",
         "verify_result",
+        "query_supply",
         "commit_move_orders",
         "refresh",
         "auto_resolve",
@@ -476,7 +477,9 @@ def _cache_can_survive_report(
 
     if not bool(report.get("ok", False)):
         return False
-    read_only = bool(ops) and all(op == "verify_result" for op in ops)
+    from .frontend_commands import READ_ONLY_OPS
+
+    read_only = bool(ops) and all(op in READ_ONLY_OPS for op in ops)
     return read_only or persisted
 
 

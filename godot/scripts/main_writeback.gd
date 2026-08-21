@@ -37,6 +37,8 @@ var force_panel_scroll := 0
 ## Event-driven End Turn earn/spend overlay. Filled from end_player_round data.
 var economy_report: Dictionary = {}
 var economy_report_open := false
+## Bounded query_supply rows keyed by strategic_formation_id. Presentation only.
+var supply_query_cache: Dictionary = {}
 
 
 func _ready() -> void:
@@ -201,6 +203,7 @@ func _commit_snapshot_state(
 	count_as_command_commit: bool
 ) -> void:
 	## Atomically replace live presentation state from a validated candidate.
+	supply_query_cache.clear()
 	snapshot = built.get("snapshot", {})
 	provinces_by_id = built.get("provinces_by_id", {})
 	battalions_by_province = built.get("battalions_by_province", {})
@@ -1211,6 +1214,14 @@ func _on_command_finished(
 	# try to reload the deleted snapshot or retain stale campaign presentation.
 	if op == "reset_test_campaign":
 		_enter_new_campaign_state(backend_payload)
+		return
+	# query_supply is read-only: consume the bounded payload and keep the live snapshot.
+	if op == "query_supply":
+		if has_method("_capture_supply_query"):
+			_capture_supply_query(backend_payload)
+		_parse_apply_output(output_text)
+		_clear_busy_ui()
+		queue_redraw()
 		return
 
 	# 3) Transactional snapshot replacement — never clear live state first.

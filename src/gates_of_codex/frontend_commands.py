@@ -24,7 +24,8 @@ SELF_COMMITTING_OPS = frozenset(
 #: exactly-once ledger: a player must be able to re-verify a result after
 #: replaying a battle and get a fresh verdict rather than a "duplicate" reply.
 #: ``actor_force_panel`` is the bounded #149 recruit/research/repair query.
-READ_ONLY_OPS = frozenset({"verify_result", "actor_force_panel"})
+#: ``query_supply`` is the bounded #140 owned-formation supply/readiness query.
+READ_ONLY_OPS = frozenset({"verify_result", "actor_force_panel", "query_supply"})
 
 #: Campaign-metadata key holding the exactly-once command ledger.
 COMMAND_LEDGER_KEY = "frontend_command_ledger"
@@ -273,6 +274,16 @@ def apply_frontend_commands(
             "commands_applied": len(results),
             "results": [asdict(item) for item in results],
         }
+
+    query_only = bool(results) and all(item.op == "query_supply" for item in results)
+    if query_only:
+        return _apply_report(
+            state,
+            campaign,
+            ok=True,
+            snapshot=str(Path(snapshot_path).resolve()) if snapshot_path else "",
+            results=results,
+        )
 
     _store_command_ledger(state, ledger)
     save_campaign(
@@ -712,6 +723,28 @@ def _apply_reset_test_campaign(campaign: Path, state, raw: dict[str, Any]) -> Co
 def _apply_one(state, op: str, raw: dict[str, Any]) -> CommandResult:
     if op in {"", "refresh", "noop"}:
         return CommandResult(op=op or "refresh", ok=True, detail="snapshot refresh only")
+    if op == "query_supply":
+        from .supply import query_supply_status
+
+        formation_id = str(
+            raw.get("formation")
+            or raw.get("formation_id")
+            or raw.get("strategic_formation_id")
+            or ""
+        ).strip()
+        province = str(raw.get("province") or raw.get("province_id") or "").strip()
+        payload = query_supply_status(
+            state,
+            strategic_formation_id=formation_id or None,
+            province_id=province or None,
+        )
+        target = formation_id or province
+        return CommandResult(
+            op=op,
+            ok=True,
+            detail=f"supply {target}",
+            data=payload,
+        )
     if op == "move":
         battalion = str(raw.get("battalion") or raw.get("battalion_id") or "")
         province = str(raw.get("province") or raw.get("target") or raw.get("province_id") or "")

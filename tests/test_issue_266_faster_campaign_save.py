@@ -55,6 +55,7 @@ class FasterCampaignSaveContractTests(unittest.TestCase):
         self.assertTrue(_should_persist_runtime_snapshot([{"op": "auto_resolve"}]))
         self.assertFalse(_should_persist_runtime_snapshot([{"op": "end_player_round"}]))
         self.assertFalse(_should_persist_runtime_snapshot([{"op": "refresh"}]))
+        self.assertFalse(_should_persist_runtime_snapshot([{"op": "query_supply"}]))
         self.assertFalse(_should_persist_runtime_snapshot([{"op": "issue_move_order"}]))
 
     def test_runtime_patch_schema_remains_v1(self) -> None:

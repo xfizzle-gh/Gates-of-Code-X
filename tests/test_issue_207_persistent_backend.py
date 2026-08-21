@@ -218,6 +218,7 @@ class PersistentBackendTransportTests(unittest.TestCase):
                 "issue_move_order",
                 "cancel_move_order",
                 "verify_result",
+                "query_supply",
                 "commit_move_orders",
                 "refresh",
                 "auto_resolve",
@@ -262,6 +263,13 @@ class PersistentBackendTransportTests(unittest.TestCase):
             persistent_backend._cache_can_survive_report(
                 ok,
                 ["verify_result"],
+                persisted=False,
+            )
+        )
+        self.assertTrue(
+            persistent_backend._cache_can_survive_report(
+                ok,
+                ["query_supply"],
                 persisted=False,
             )
         )
