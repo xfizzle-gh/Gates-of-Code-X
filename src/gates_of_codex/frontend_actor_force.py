@@ -176,9 +176,8 @@ def apply_repair_command(state: CampaignState, raw: dict[str, Any]) -> dict[str,
     if actor_content_installed(state):
         from .actor_economy import repair_actor_formation
 
-        actor_id = str(raw.get("actor") or raw.get("actor_id") or "").strip()
-        if actor_id:
-            require_formation_owned_by_actor(state, formation, actor_id)
+        actor_id = requested_actor_id(state, raw)
+        require_formation_owned_by_actor(state, formation, actor_id)
         return _jsonable(
             asdict(
                 repair_actor_formation(

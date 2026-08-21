@@ -21,6 +21,7 @@ from gates_of_codex.frontend import build_frontend_snapshot
 from gates_of_codex.frontend_actor_force import (
     apply_assign_command,
     apply_recruit_command,
+    apply_repair_command,
     apply_research_command,
     build_acting_actor_presentation,
     build_actor_force_panel,
@@ -193,6 +194,145 @@ class FrontendActorForceCommandTests(unittest.TestCase):
                 self.state,
                 {"actor": "fra", "key": "actor:deu:unit:fixture_deu"},
             )
+
+    def _prepare_repairable(self, force) -> None:
+        battalion = self.state.battalions[force.battalion_ids[0]]
+        battalion.condition = 90
+        battalion.supply = 80
+        battalion.encircled_turns = 0
+
+    def _foreign_nato_force(self):
+        german = next(
+            value
+            for value in self.state.strategic_formations.values()
+            if value.faction == Faction.NATO
+            and value.strategic_formation_id != self.force.strategic_formation_id
+        )
+        assign_strategic_formation_actor(self.state, german.strategic_formation_id, "deu")
+        return german
+
+    def _actor_resources(self) -> dict[str, int]:
+        actors = self.state.map_metadata["strategic_actor_runtime"]["actors"]
+        return {key: int(actors[key]["resources"]) for key in ("fra", "deu")}
+
+    def test_omitted_actor_repairs_selected_actors_own_formation(self) -> None:
+        self._prepare_repairable(self.force)
+        before = self._actor_resources()
+        battalion = self.state.battalions[self.force.battalion_ids[0]]
+        repaired = apply_repair_command(
+            self.state,
+            {
+                "formation": self.force.strategic_formation_id,
+                "battalion": self.force.battalion_ids[0],
+                "points": 1,
+            },
+        )
+        after = self._actor_resources()
+        self.assertEqual("fra", repaired["actor_id"])
+        self.assertEqual(1, repaired["points_repaired"])
+        self.assertEqual(91, battalion.condition)
+        self.assertEqual(before["fra"] - repaired["cost"], after["fra"])
+        self.assertEqual(before["deu"], after["deu"])
+
+    def test_omitted_actor_rejects_foreign_formation(self) -> None:
+        german = self._foreign_nato_force()
+        self._prepare_repairable(german)
+        before = self._actor_resources()
+        battalion = self.state.battalions[german.battalion_ids[0]]
+        with self.assertRaisesRegex(ValueError, "owned by deu"):
+            apply_repair_command(
+                self.state,
+                {
+                    "formation": german.strategic_formation_id,
+                    "battalion": german.battalion_ids[0],
+                    "points": 1,
+                },
+            )
+        after = self._actor_resources()
+        self.assertEqual(90, battalion.condition)
+        self.assertEqual(before, after)
+
+    def test_explicit_wrong_actor_rejects_repair(self) -> None:
+        self._prepare_repairable(self.force)
+        before = self._actor_resources()
+        battalion = self.state.battalions[self.force.battalion_ids[0]]
+        with self.assertRaisesRegex(ValueError, "owned by fra"):
+            apply_repair_command(
+                self.state,
+                {
+                    "actor": "deu",
+                    "formation": self.force.strategic_formation_id,
+                    "battalion": self.force.battalion_ids[0],
+                    "points": 1,
+                },
+            )
+        after = self._actor_resources()
+        self.assertEqual(90, battalion.condition)
+        self.assertEqual(before, after)
+
+    def test_selected_actor_valid_repair_succeeds(self) -> None:
+        self._prepare_repairable(self.force)
+        before = self._actor_resources()
+        battalion = self.state.battalions[self.force.battalion_ids[0]]
+        repaired = apply_repair_command(
+            self.state,
+            {
+                "actor": "fra",
+                "formation": self.force.strategic_formation_id,
+                "battalion": self.force.battalion_ids[0],
+                "points": 1,
+            },
+        )
+        after = self._actor_resources()
+        self.assertTrue(repaired["points_repaired"] > 0)
+        self.assertEqual("fra", repaired["actor_id"])
+        self.assertEqual(91, battalion.condition)
+        self.assertEqual(before["fra"] - repaired["cost"], after["fra"])
+        self.assertEqual(before["deu"], after["deu"])
+
+    def test_repair_does_not_spend_foreign_actor_treasury(self) -> None:
+        german = self._foreign_nato_force()
+        self._prepare_repairable(self.force)
+        self._prepare_repairable(german)
+        before = self._actor_resources()
+        fra_bn = self.state.battalions[self.force.battalion_ids[0]]
+        deu_bn = self.state.battalions[german.battalion_ids[0]]
+        with self.assertRaisesRegex(ValueError, "owned by deu"):
+            apply_repair_command(
+                self.state,
+                {
+                    "formation": german.strategic_formation_id,
+                    "battalion": german.battalion_ids[0],
+                    "points": 1,
+                },
+            )
+        with self.assertRaisesRegex(ValueError, "owned by deu"):
+            apply_repair_command(
+                self.state,
+                {
+                    "actor": "fra",
+                    "formation": german.strategic_formation_id,
+                    "battalion": german.battalion_ids[0],
+                    "points": 1,
+                },
+            )
+        rejected = self._actor_resources()
+        self.assertEqual(90, deu_bn.condition)
+        self.assertEqual(before, rejected)
+        repaired = apply_repair_command(
+            self.state,
+            {
+                "formation": self.force.strategic_formation_id,
+                "battalion": self.force.battalion_ids[0],
+                "points": 1,
+            },
+        )
+        after = self._actor_resources()
+        self.assertEqual(91, fra_bn.condition)
+        self.assertEqual(90, deu_bn.condition)
+        self.assertEqual(before["fra"] - repaired["cost"], after["fra"])
+        self.assertEqual(before["deu"], after["deu"])
+        self.assertNotEqual(before["fra"], after["fra"])
 
     def test_apply_frontend_commands_round_trip_and_json(self) -> None:
         apply_research_command(
