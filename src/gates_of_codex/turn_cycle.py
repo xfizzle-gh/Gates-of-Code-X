@@ -106,6 +106,7 @@ def end_player_round(
     economy callers retain eager settlement validation.
     """
 
+    from .campaign_rules import campaign_play_blocked
     from .observation import (
         ObservationMutationContext,
         merge_observation_mutation_contexts,
@@ -173,6 +174,7 @@ def end_player_round(
         state.pending_battle is None
         and state.current_faction != selected
         and steps < guard
+        and not campaign_play_blocked(state)
     ):
         faction = state.current_faction
         faction_state = state.factions.get(faction.value)
@@ -244,9 +246,10 @@ def end_player_round(
         steps += 1
 
     if state.pending_battle is None and state.current_faction != selected:
-        raise RuntimeError(
-            "Player round did not return to selected faction within canonical turn order"
-        )
+        if not campaign_play_blocked(state):
+            raise RuntimeError(
+                "Player round did not return to selected faction within canonical turn order"
+            )
 
     observation_context = merge_observation_mutation_contexts(
         observation_context,

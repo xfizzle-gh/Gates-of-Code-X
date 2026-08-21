@@ -300,6 +300,24 @@ class CampaignRulesPlayTests(unittest.TestCase):
         self.assertEqual("time-limit grading at the campaign turn cap", outcome.reason)
         self.assertEqual(GRADE_STALEMATE, outcome.grade)
 
+    def test_end_player_round_can_lock_time_limit_without_already_complete(self) -> None:
+        """UKR is not last in TURN_ORDER. Crossing the cap must not abort the round."""
+
+        from gates_of_codex.turn_cycle import end_player_round
+
+        state = _ukraine_player_state()
+        state.turn_number = int(state.map_metadata[CAMPAIGN_RULES_KEY]["turn_cap"])
+        state.current_faction = Faction.UKRAINE
+        report = end_player_round(state)
+        self.assertFalse(report["pending_battle"])
+        outcome = state.map_metadata.get("campaign_outcome") or {}
+        self.assertEqual("complete", outcome.get("status"))
+        self.assertTrue(campaign_play_blocked(state))
+        self.assertGreater(
+            int(state.turn_number),
+            int(state.map_metadata[CAMPAIGN_RULES_KEY]["turn_cap"]),
+        )
+
     def test_continue_playing_after_victory_and_conclude(self) -> None:
         state = _rules_state()
         for _ in range(4):
