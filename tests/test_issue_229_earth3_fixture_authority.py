@@ -25,7 +25,7 @@ from gates_of_codex.earth3_operational import (
 )
 from gates_of_codex.frontend import build_frontend_snapshot
 from gates_of_codex.models import Faction
-from gates_of_codex.scenario import DEFAULT_SCENARIO_ID, build_scenario, get_scenario
+from gates_of_codex.scenario import EARTH3_V1_SCENARIO_ID, build_scenario, get_scenario
 from gates_of_codex.state_io import campaign_from_dict, save_campaign
 
 import sys
@@ -55,7 +55,7 @@ def _sha256(path: Path) -> str:
 
 
 def _production():
-    return build_scenario(DEFAULT_SCENARIO_ID, resolved_catalog=_resolved_catalog())
+    return build_scenario(EARTH3_V1_SCENARIO_ID, resolved_catalog=_resolved_catalog())
 
 
 def _fixture():
@@ -93,7 +93,7 @@ class DispatchContractTests(_CachedStates):
         provinces = validate_earth3_operational_authority(state)
         self.assertTrue(provinces)
         self.assertNotIn(FIXTURE_AUTHORITY_KEY, state.map_metadata)
-        self.assertEqual(DEFAULT_SCENARIO_ID, state.map_metadata["scenario_id"])
+        self.assertEqual(EARTH3_V1_SCENARIO_ID, state.map_metadata["scenario_id"])
 
     def test_earth3_v1_with_valid_looking_marker_fails(self) -> None:
         state = self._production_copy()
@@ -158,13 +158,17 @@ class DispatchContractTests(_CachedStates):
 
 
 class FixturePrimitiveTests(_CachedStates):
-    def test_default_new_campaign_identity_remains_earth3_v1(self) -> None:
-        self.assertEqual("earth3_v1", DEFAULT_SCENARIO_ID)
-        production = get_scenario(DEFAULT_SCENARIO_ID)
+    def test_earth3_v1_remains_an_explicit_development_fixture(self) -> None:
+        from gates_of_codex.scenario import DEFAULT_SCENARIO_ID
+
+        self.assertEqual("earth3_v1", EARTH3_V1_SCENARIO_ID)
+        self.assertEqual("ww3_2028_core", DEFAULT_SCENARIO_ID)
+        production = get_scenario(EARTH3_V1_SCENARIO_ID)
         fixture = get_scenario(FIXTURE_SCENARIO_ID)
         self.assertEqual("production", production.status)
         self.assertEqual("debug", fixture.status)
         self.assertNotEqual(production.scenario_id, fixture.scenario_id)
+        self.assertNotEqual(DEFAULT_SCENARIO_ID, EARTH3_V1_SCENARIO_ID)
 
     def test_fixture_contains_required_identities(self) -> None:
         for expected in SELECTED.values():

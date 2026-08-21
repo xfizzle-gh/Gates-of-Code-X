@@ -9,6 +9,15 @@ from .scenario import get_scenario
 
 
 NEW_CAMPAIGN_SCENARIO_IDS = ("ww3_2028_core", "ww3_2028_expanded")
+PRODUCTION_NEW_CAMPAIGN_SCENARIO_ID = NEW_CAMPAIGN_SCENARIO_IDS[0]
+EXPLICIT_FIXTURE_SCENARIO_IDS = frozenset(
+    {
+        "earth3_v1",
+        "earth3_native_acceptance",
+        "legacy_goe_europe",
+        "legacy_goe_europe_mediterranean",
+    }
+)
 CORE_2028_ACTORS = (
     ("nato", "NATO"),
     ("ukr", "Ukraine"),
@@ -42,6 +51,19 @@ class ActorChoice:
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+
+def resolve_new_campaign_scenario_id(current_scenario_id: str = "") -> str:
+    """Return the scenario a production New Campaign should create.
+
+    The locked 2028 Core profile is the omitted/unknown default. An explicit
+    Expanded pick or a named debug/legacy fixture is reused rather than silently
+    rewritten. Continue must use persisted identity, not this resolver.
+    """
+    token = str(current_scenario_id or "").strip()
+    if token in NEW_CAMPAIGN_SCENARIO_IDS or token in EXPLICIT_FIXTURE_SCENARIO_IDS:
+        return token
+    return PRODUCTION_NEW_CAMPAIGN_SCENARIO_ID
 
 
 def new_campaign_scenarios() -> tuple[ScenarioChoice, ...]:

@@ -120,7 +120,8 @@ def _all_strings(value) -> list[str]:
 
 class Earth3ScenarioRegistryTests(unittest.TestCase):
     def test_registry_has_exact_required_scenarios_and_default(self) -> None:
-        self.assertEqual(EARTH3_SCENARIO_ID, DEFAULT_SCENARIO_ID)
+        self.assertEqual("ww3_2028_core", DEFAULT_SCENARIO_ID)
+        self.assertEqual(EARTH3_SCENARIO_ID, get_scenario(EARTH3_SCENARIO_ID).scenario_id)
         self.assertEqual(
             (
                 "earth3_v1",
@@ -165,11 +166,13 @@ class Earth3ScenarioRegistryTests(unittest.TestCase):
                 return_value=build_earth3_campaign(),
             ),
         ):
-            state = build_scenario()
+            state = build_scenario(EARTH3_SCENARIO_ID)
         legacy_goe.assert_not_called()
         legacy_em.assert_not_called()
         self.assertEqual(EARTH3_SCENARIO_ID, state.map_metadata["scenario_id"])
         self.assertEqual(EARTH3_MAP_ID, state.map_id)
+        self.assertEqual("ww3_2028_core", DEFAULT_SCENARIO_ID)
+        self.assertNotEqual(DEFAULT_SCENARIO_ID, EARTH3_SCENARIO_ID)
 
     def test_explicit_legacy_scenarios_remain_available_and_are_never_default(self) -> None:
         goe = build_scenario("legacy_goe_europe")

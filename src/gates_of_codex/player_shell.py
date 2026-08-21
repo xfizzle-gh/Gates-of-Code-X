@@ -7,9 +7,10 @@ Authority rules enforced here:
 
 * The Python campaign file is the only authoritative campaign state. The Godot
   snapshot is always regenerated from it and is never read back as authority.
-* Production New Campaign builds ``earth3_v1`` on ``earth3_europe_mediterranean``.
-  There is no fallback to a GoE-derived map; legacy scenarios require explicit
-  ``--scenario`` selection.
+* Production New Campaign builds ``ww3_2028_core`` on ``earth3_europe_mediterranean``.
+  There is no fallback to a GoE-derived map. Expanded 2028, the ``earth3_v1``
+  development fixture, and legacy scenarios require explicit ``--scenario``
+  selection.
 * Missing or invalid stack, game, or profile inputs fail closed with an
   actionable message instead of being replaced by a discovered substitute.
 """
@@ -29,7 +30,7 @@ from typing import Any, Mapping, Sequence
 
 from .earth3_fixture_authority import earth3_requires_stack
 from .models import CampaignState, Faction
-from .scenario import DEFAULT_SCENARIO_ID, build_scenario, get_scenario
+from .scenario import DEFAULT_SCENARIO_ID, EARTH3_V1_SCENARIO_ID, build_scenario, get_scenario
 from .starter import set_player_faction
 from .state_io import load_campaign, save_campaign
 
@@ -461,7 +462,7 @@ def launch_settings(state: CampaignState) -> dict[str, Any]:
 
 
 def _check_faction(scenario_id: str, faction: str) -> None:
-    if scenario_id == DEFAULT_SCENARIO_ID and faction != Faction.NATO.value:
+    if scenario_id == EARTH3_V1_SCENARIO_ID and faction != Faction.NATO.value:
         raise PlayerShellError(
             "Earth3 P2 human seat is fixed to the usa actor on the NATO tactical side"
         )
@@ -515,6 +516,10 @@ def create_new_campaign(
             f"expected {definition.map_id!r}"
         )
     _apply_faction(state, definition.scenario_id, faction)
+    if definition.scenario_id == "ww3_2028_core":
+        from .scenario_selection import apply_new_campaign_actor
+
+        apply_new_campaign_actor(state, definition.scenario_id, faction)
     state.difficulty = difficulty
     state.fog_of_war_enabled = fog_of_war == "on"
     persist_launch_settings(
@@ -622,7 +627,7 @@ def build_play_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--scenario",
         default=DEFAULT_SCENARIO_ID,
-        help="Scenario id; legacy scenarios require explicit selection",
+        help="Scenario id; defaults to 2028 Core. Expanded, earth3_v1, and legacy require explicit selection",
     )
     parser.add_argument("--godot", help="Godot 4 executable used for the strategic app")
     parser.add_argument("--godot-project", help="Godot project directory")

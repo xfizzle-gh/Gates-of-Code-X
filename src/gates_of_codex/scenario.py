@@ -18,7 +18,8 @@ from .scenario_profile import (
 from .state_io import campaign_from_dict
 
 
-DEFAULT_SCENARIO_ID = "earth3_v1"
+DEFAULT_SCENARIO_ID = "ww3_2028_core"
+EARTH3_V1_SCENARIO_ID = "earth3_v1"
 
 
 @dataclass(frozen=True, slots=True)

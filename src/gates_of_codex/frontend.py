@@ -1218,19 +1218,25 @@ def _maintenance_block(
 def _player_launch_block(state: CampaignState, campaign_path: str | Path | None) -> dict:
     """Arguments the Godot shell replays to run New/Continue Campaign.
 
-    The launcher owns campaign creation and continuation; the snapshot only
-    carries the already-persisted launch settings so the frontend never invents
-    a scenario, stack, or path of its own.
+    The launcher owns campaign creation and continuation. New Campaign uses the
+    #259 production resolver (2028 Core unless the current campaign is an
+    explicit Expanded pick or named debug/legacy fixture). Continue always
+    replays the persisted scenario identity.
     """
     campaign = Path(campaign_path).resolve() if campaign_path else None
     if campaign is None:
         return {"enabled": False, "new_args": [], "continue_args": []}
+    from .scenario_selection import resolve_new_campaign_scenario_id
+
     metadata = state.map_metadata
     scenario_id = str(metadata.get("scenario_id", "")).strip()
+    new_scenario_id = resolve_new_campaign_scenario_id(scenario_id)
     shared: list[str] = ["--campaign", str(campaign), "--no-launch"]
+    continue_shared = [*shared]
     if scenario_id:
-        shared.extend(["--scenario", scenario_id])
-    new_args = ["play", "--new", "--force-new", *shared]
+        continue_shared.extend(["--scenario", scenario_id])
+    new_shared = [*shared, "--scenario", new_scenario_id]
+    new_args = ["play", "--new", "--force-new", *new_shared]
     new_args.extend(["--faction", state.selected_faction.value])
     new_args.extend(["--difficulty", state.difficulty])
     new_args.extend(["--fog-of-war", "on" if state.fog_of_war_enabled else "off"])
@@ -1246,7 +1252,7 @@ def _player_launch_block(state: CampaignState, campaign_path: str | Path | None)
     return {
         "enabled": True,
         "new_args": new_args,
-        "continue_args": ["play", "--continue", *shared],
+        "continue_args": ["play", "--continue", *continue_shared],
     }
 
 

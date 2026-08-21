@@ -5,13 +5,16 @@ from types import SimpleNamespace
 import pytest
 
 from gates_of_codex.models import Faction
+from gates_of_codex.scenario import DEFAULT_SCENARIO_ID
 from gates_of_codex.scenario_selection import (
+    PRODUCTION_NEW_CAMPAIGN_SCENARIO_ID,
     ScenarioSelectionError,
     active_scenario_label,
     new_campaign_scenarios,
     persisted_actor_id,
     persisted_scenario_id,
     require_playable_actor,
+    resolve_new_campaign_scenario_id,
     scenario_actor_choices,
     scenario_selection_projection,
     stamp_scenario_selection_projection,
@@ -28,6 +31,18 @@ def _state(scenario_id: str, *, actor_id: str = "nato") -> SimpleNamespace:
             "selected_scenario_actor_id": actor_id,
         },
         selected_faction=Faction.NATO,
+    )
+
+
+def test_production_new_campaign_default_is_locked_2028_core() -> None:
+    assert DEFAULT_SCENARIO_ID == PRODUCTION_NEW_CAMPAIGN_SCENARIO_ID == "ww3_2028_core"
+    assert resolve_new_campaign_scenario_id("") == "ww3_2028_core"
+    assert resolve_new_campaign_scenario_id("unknown_profile") == "ww3_2028_core"
+    assert resolve_new_campaign_scenario_id("ww3_2028_core") == "ww3_2028_core"
+    assert resolve_new_campaign_scenario_id("ww3_2028_expanded") == "ww3_2028_expanded"
+    assert resolve_new_campaign_scenario_id("earth3_v1") == "earth3_v1"
+    assert resolve_new_campaign_scenario_id("earth3_native_acceptance") == (
+        "earth3_native_acceptance"
     )
 
 

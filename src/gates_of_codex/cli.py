@@ -21,7 +21,7 @@ from .frontend import write_frontend_snapshot
 from .frontend_commands import apply_frontend_commands, default_commands_path
 from .launcher import launch_game
 from .models import Faction
-from .scenario import DEFAULT_SCENARIO_ID, build_scenario, get_scenario
+from .scenario import DEFAULT_SCENARIO_ID, EARTH3_V1_SCENARIO_ID, build_scenario, get_scenario
 from .service import GatesOfCodeXService
 from .starter import populate_starter_rosters, set_player_faction
 from .state_io import load_campaign, save_campaign
@@ -200,7 +200,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         state = build_scenario(args.scenario, **builder_options)
         if (
-            definition.scenario_id == DEFAULT_SCENARIO_ID
+            definition.scenario_id == EARTH3_V1_SCENARIO_ID
             and args.faction != Faction.NATO.value
         ):
             raise ValueError(

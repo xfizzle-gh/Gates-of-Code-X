@@ -13,8 +13,9 @@ gates-of-codex play --continue
 
 1. Validates the intended active mod stack.
 2. Resolves (and creates) a predictable campaign directory.
-3. For `--new`, builds the authoritative `earth3_v1` campaign on
-   `earth3_europe_mediterranean`.
+3. For `--new`, builds the locked 2028 Core campaign (`ww3_2028_core`) on
+   `earth3_europe_mediterranean` unless `--scenario` names Expanded, the
+   `earth3_v1` development fixture, or a legacy scenario.
 4. Persists the single authoritative Python campaign save.
 5. Generates the Godot frontend snapshot from that campaign.
 6. Clears any stale command queue left by an interrupted session.
@@ -27,14 +28,14 @@ gates-of-codex play --continue
 | --- | --- |
 | `--new` / `--continue` | Required, mutually exclusive |
 | `--campaign <path>` | Campaign directory or campaign `.json` file |
-| `--faction <id>` | `nato`, `ukr`, `rusa`, `prc` (Earth3 is fixed to `nato`) |
+| `--faction <id>` | `nato`, `ukr`, `rusa`, `prc` (2028 Core actors; `earth3_v1` is fixed to `nato`) |
 | `--difficulty <id>` | `easy`, `normal`, `hard` — recorded on the campaign |
 | `--fog-of-war on\|off` | Defaults to `off` for initial playable campaigns |
 | `--stack-config <path>` | Validated active mod-stack config |
 | `--game <path>` | Gates of Hell install directory |
 | `--profile <path>` | Gates of Hell profile directory |
 | `--tactical-map <id>` | Preferred tactical map |
-| `--scenario <id>` | Defaults to `earth3_v1`; legacy scenarios and the debug `earth3_native_acceptance` fixture must be named |
+| `--scenario <id>` | Defaults to `ww3_2028_core`; Expanded, `earth3_v1`, legacy scenarios, and the debug `earth3_native_acceptance` fixture must be named |
 | `--godot <path>` | Godot 4 executable (or `GATES_OF_CODEX_GODOT`) |
 | `--godot-project <path>` | Godot project directory |
 | `--force-new` | Replace an existing campaign at the resolved path |
@@ -45,8 +46,8 @@ gates-of-codex play --continue
 
 Without `--campaign`, the campaign lives in a predictable per-user location:
 
-- Windows: `%LOCALAPPDATA%\GatesOfCodeX\campaigns\earth3_v1`
-- Other platforms: `$XDG_DATA_HOME/gates-of-codex/campaigns/earth3_v1`
+- Windows: `%LOCALAPPDATA%\GatesOfCodeX\campaigns\ww3_2028_core`
+- Other platforms: `$XDG_DATA_HOME/gates-of-codex/campaigns/ww3_2028_core`
 - Override both with `GATES_OF_CODEX_HOME`
 
 The directory holds exactly three files:

@@ -106,7 +106,12 @@ class Earth3ProductionLaunchTests(unittest.TestCase):
         # the validated stack config instead.
         cls.created = run_play(
             _play_args(
-                "--new", "--campaign", str(cls.root / "campaign"), "--no-launch"
+                "--new",
+                "--campaign",
+                str(cls.root / "campaign"),
+                "--no-launch",
+                "--scenario",
+                "earth3_v1",
             ),
             environ=environ,
             resolved_catalog=_resolved_catalog(),
@@ -174,8 +179,9 @@ class Earth3ProductionLaunchTests(unittest.TestCase):
         )
 
     def test_production_flow_contains_no_goe_fallback(self) -> None:
-        # Production selection is Earth3 without any explicit scenario request.
-        self.assertEqual("earth3_v1", _play_args("--new").scenario)
+        # Production selection is 2028 Core; this class explicitly requests the
+        # earth3_v1 development fixture so Earth3 P2/P3 launch authority stays isolated.
+        self.assertEqual("ww3_2028_core", _play_args("--new").scenario)
         self.assertEqual(EARTH3_MAP_ID, self.created_campaign.map_id)
         strategic_map = self.created_snapshot["strategic_map"]
         for legacy in (
@@ -780,7 +786,12 @@ class FailClosedTests(unittest.TestCase):
             root = Path(temporary)
             paths = resolve_campaign_paths(root / "campaign")
             with self.assertRaises(PlayerShellError) as raised:
-                create_new_campaign(paths=paths, faction="rusa", resolved_catalog={})
+                create_new_campaign(
+                    paths=paths,
+                    scenario_id="earth3_v1",
+                    faction="rusa",
+                    resolved_catalog={},
+                )
             self.assertFalse(paths.campaign.exists())
         self.assertIn("NATO", str(raised.exception))
 
@@ -910,8 +921,8 @@ class LegacyCompatibilityTests(unittest.TestCase):
         self.assertEqual("legacy", snapshot["application"]["scenario_status"])
 
     def test_legacy_selection_does_not_change_the_production_default(self) -> None:
-        self.assertEqual("earth3_v1", _play_args("--new").scenario)
-        self.assertEqual("earth3_v1", _play_args("--continue").scenario)
+        self.assertEqual("ww3_2028_core", _play_args("--new").scenario)
+        self.assertEqual("ww3_2028_core", _play_args("--continue").scenario)
 
     def test_fog_of_war_on_is_supported_end_to_end(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

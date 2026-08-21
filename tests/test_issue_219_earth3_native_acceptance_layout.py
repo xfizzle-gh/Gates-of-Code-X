@@ -36,7 +36,7 @@ from gates_of_codex.operational_movement import (
 from gates_of_codex.operational_order_options import list_operational_move_options
 from gates_of_codex.operational_retreat import require_operational_retreat_graph
 from gates_of_codex.operational_schema import stable_node_id
-from gates_of_codex.scenario import DEFAULT_SCENARIO_ID, build_scenario, get_scenario
+from gates_of_codex.scenario import EARTH3_V1_SCENARIO_ID, build_scenario, get_scenario
 from gates_of_codex.service import GatesOfCodeXService
 from gates_of_codex.state_io import campaign_from_dict, save_campaign
 
@@ -81,7 +81,7 @@ def _sha256(path: Path) -> str:
 
 
 def _production():
-    return build_scenario(DEFAULT_SCENARIO_ID, resolved_catalog=_resolved_catalog())
+    return build_scenario(EARTH3_V1_SCENARIO_ID, resolved_catalog=_resolved_catalog())
 
 
 def _fixture():
@@ -190,8 +190,12 @@ class FrozenAuthorityTests(_CachedStates):
             self.assertTrue(path.is_file(), path)
         self.assertEqual(P3_STARTING_FORMATION_IDS, set(self.production.strategic_formations))
         self.assertNotIn(PRC_FORMATION_ID, P3_STARTING_FORMATION_IDS)
-        self.assertEqual("earth3_v1", DEFAULT_SCENARIO_ID)
-        self.assertEqual("production", get_scenario(DEFAULT_SCENARIO_ID).status)
+        from gates_of_codex.scenario import DEFAULT_SCENARIO_ID
+
+        self.assertEqual("earth3_v1", EARTH3_V1_SCENARIO_ID)
+        self.assertEqual("production", get_scenario(EARTH3_V1_SCENARIO_ID).status)
+        self.assertEqual("ww3_2028_core", DEFAULT_SCENARIO_ID)
+        self.assertNotEqual(DEFAULT_SCENARIO_ID, EARTH3_V1_SCENARIO_ID)
         self.assertEqual("debug", get_scenario(FIXTURE_SCENARIO_ID).status)
         self.assertEqual(self.production.to_dict(), _production().to_dict())
         self.assertNotIn(FIXTURE_AUTHORITY_KEY, self.production.map_metadata)

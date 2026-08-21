@@ -8,6 +8,7 @@ from gates_of_codex import campaign_menu
 from gates_of_codex.earth3_fixture_authority import earth3_requires_stack
 from gates_of_codex.local_discovery import detect_launch_paths
 from gates_of_codex.models import Faction
+from gates_of_codex.scenario import DEFAULT_SCENARIO_ID
 
 
 def test_menu_exposes_exact_core_and_expanded_new_campaign_profiles() -> None:
@@ -16,6 +17,7 @@ def test_menu_exposes_exact_core_and_expanded_new_campaign_profiles() -> None:
         "ww3_2028_core",
         "ww3_2028_expanded",
     )
+    assert model.scenarios()[0][0] == DEFAULT_SCENARIO_ID == "ww3_2028_core"
 
 
 def test_2028_player_scenarios_inherit_earth3_stack_authority_requirement() -> None:
