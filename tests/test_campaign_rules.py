@@ -92,6 +92,35 @@ class CampaignRulesContractTests(unittest.TestCase):
         self.assertGreaterEqual(int(acceptance["opening_actor_treasury"]), 670)
         self.assertEqual("p10_acceptance", normalize_length_preset("p10_acceptance"))
 
+    def test_p10_acceptance_applies_opening_actor_treasury_once(self) -> None:
+        from gates_of_codex.strategic_actors import (
+            ACTOR_RUNTIME_KEY,
+            ensure_strategic_actor_runtime,
+            selected_actor,
+        )
+
+        state = _ukraine_player_state()
+        actors = ensure_strategic_actor_runtime(state)
+        actor = selected_actor(state)
+        actor.resources = 600
+        state.map_metadata[ACTOR_RUNTIME_KEY]["actors"] = {
+            key: value.to_dict() for key, value in actors.items()
+        }
+        ensure_campaign_rules(state, length_preset="p10_acceptance", victory_model=VICTORY_MODEL_P9)
+        self.assertGreaterEqual(selected_actor(state).resources, 700)
+        self.assertTrue(
+            state.map_metadata[CAMPAIGN_RULES_KEY]["acceptance_opening_treasury_applied"]
+        )
+        selected = selected_actor(state)
+        selected.resources = 10
+        actors = ensure_strategic_actor_runtime(state)
+        actors[selected.actor_id].resources = 10
+        state.map_metadata[ACTOR_RUNTIME_KEY]["actors"] = {
+            key: value.to_dict() for key, value in actors.items()
+        }
+        ensure_campaign_rules(state)
+        self.assertEqual(10, selected_actor(state).resources)
+
     def test_calendar_derives_week_and_year_from_turn_number(self) -> None:
         self.assertEqual("2028-W01", calendar_from_turn(1)["label"])
         self.assertEqual({"start_year": 2028, "turns_per_year": 52, "year": 2028, "week": 52, "label": "2028-W52"}, calendar_from_turn(52))

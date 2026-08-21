@@ -486,13 +486,14 @@ def _apply_acceptance_opening_treasury(
     if floor <= 0:
         rules["acceptance_opening_treasury_applied"] = True
         return
-    from .strategic_actors import ACTOR_RUNTIME_KEY, ensure_strategic_actor_runtime, selected_actor
+    from .strategic_actors import ACTOR_RUNTIME_KEY, ensure_strategic_actor_runtime
 
     existing = state.map_metadata.get(ACTOR_RUNTIME_KEY)
     if not isinstance(existing, dict) or not existing.get("actors"):
         return
     actors = ensure_strategic_actor_runtime(state)
-    actor = selected_actor(state)
+    selected_id = str(state.map_metadata[ACTOR_RUNTIME_KEY].get("selected_actor_id") or "")
+    actor = actors.get(selected_id) or next(iter(actors.values()))
     if int(actor.resources) < floor:
         actor.resources = floor
     runtime = state.map_metadata.get(ACTOR_RUNTIME_KEY)
