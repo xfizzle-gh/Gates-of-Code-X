@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "authority": {
+    "issue": 75,
+    "roadmap_issue": 217,
+    "phase": "P9",
+    "notes": [
+      "Locked #75 table: Short 52, Medium 104, Long 156 weekly turns; start year 2028; 52 turns per year.",
+      "Hold default is 4 weekly turns because #75 left the number open.",
+      "Victory is not raw province count. Campaign victory requires coalition war aims plus national contribution plus Momentum.",
+      "National and coalition results are both awarded; campaign victory needs both.",
+      "Actor-defeat if that actor's capital/control hub is lost and not recovered within 4 weeks. Campaign defeat if the player actor is defeated.",
+      "Momentum collapse is a documented player-actor defeat path.",
+      "Continue Playing has no hard end year in this slice.",
+      "Presets change turn cap and war-aim/Momentum thresholds only.",
+      "Earth3 objectives.json stays frozen; this file overlays war-aim metadata and national objectives."
+    ]
+  },
+  "calendar": {
+    "start_year": 2028,
+    "turns_per_year": 52,
+    "default_length_preset": "medium",
+    "default_hold_weeks": 4
+  },
+  "presets": {
+    "short": {
+      "display_name": "Short",
+      "turn_cap": 52,
+      "calendar_span": "1 year",
+      "required_war_aims": 1,
+      "required_national": 1,
+      "require_all_primary_war_aims": false,
+      "thresholds": {
+        "decisive_victory": 70,
+        "victory": 45,
+        "negotiated_advantage": 20,
+        "stalemate": -10,
+        "defeat": -25,
+        "decisive_defeat": -40,
+        "momentum_collapse": -30
+      }
+    },
+    "medium": {
+      "display_name": "Medium",
+      "turn_cap": 104,
+      "calendar_span": "2 years",
+      "required_war_aims": 1,
+      "required_national": 1,
+      "require_all_primary_war_aims": false,
+      "thresholds": {
+        "decisive_victory": 80,
+        "victory": 50,
+        "negotiated_advantage": 25,
+        "stalemate": -10,
+        "defeat": -25,
+        "decisive_defeat": -40,
+        "momentum_collapse": -30
+      }
+    },
+    "long": {
+      "display_name": "Long",
+      "turn_cap": 156,
+      "calendar_span": "3 years",
+      "required_war_aims": 1,
+      "required_national": 1,
+      "require_all_primary_war_aims": true,
+      "thresholds": {
+        "decisive_victory": 90,
+        "victory": 55,
+        "negotiated_advantage": 30,
+        "stalemate": -10,
+        "defeat": -25,
+        "decisive_defeat": -40,
+        "momentum_collapse": -30
+      }
+    }
+  },
+  "momentum_sources": {
+    "war_aim_completed": 20,
+    "held_strategic_site": 4,
+    "supply_connected_gain": 1,
+    "major_auto_resolve_victory": 8,
+    "formation_loss": -6,
+    "lost_capital": -25
+  },
+  "grades": [
+    "decisive_victory",
+    "victory",
+    "negotiated_advantage",
+    "stalemate",
+    "defeat",
+    "decisive_defeat"
+  ],
+  "victory_grades": ["decisive_victory", "victory"],
+  "actor_faction": {
+    "usa": "nato",
+    "deu": "nato",
+    "pol": "nato",
+    "ukr": "ukr",
+    "rus": "rusa",
+    "prc": "prc"
+  },
+  "player_actor_by_faction": {
+    "nato": "usa",
+    "ukr": "ukr",
+    "rusa": "rus",
+    "prc": "prc"
+  },
+  "actor_hubs": {
+    "usa": ["e3_0592"],
+    "deu": ["e3_0592"],
+    "ukr": ["e3_1937"],
+    "rus": ["e3_2793"],
+    "pol": ["e3_0442"]
+  },
+  "coalition_aliases": {
+    "russian_command": ["rusa"],
+    "eastern-coalition": ["rusa", "prc"],
+    "western-coalition": ["nato", "ukr"],
+    "western_coalition": ["nato", "ukr"]
+  },
+  "objective_overlay": [
+    {
+      "id": "obj_western_donbas",
+      "layer": "coalition_war_aim",
+      "hold_weeks": 4,
+      "supply_connected": true
+    },
+    {
+      "id": "obj_russian_kyiv_vilnius",
+      "layer": "coalition_war_aim",
+      "hold_weeks": 4,
+      "supply_connected": true
+    }
+  ],
+  "national_objectives": [
+    {
+      "id": "nat_usa_berlin_hub",
+      "display_name": "Hold the Berlin command hub",
+      "layer": "national_contribution",
+      "owner_type": "actor",
+      "owner_id": "usa",
+      "coalition": "western_coalition",
+      "kind": "control",
+      "targets": ["e3_0592"],
+      "required": 1,
+      "primary": false,
+      "hold_weeks": 4,
+      "supply_connected": true,
+      "reward_each": 0
+    },
+    {
+      "id": "nat_ukr_kyiv",
+      "display_name": "Defend Kyiv",
+      "layer": "national_contribution",
+      "owner_type": "actor",
+      "owner_id": "ukr",
+      "coalition": "western_coalition",
+      "kind": "control",
+      "targets": ["e3_1937"],
+      "required": 1,
+      "primary": false,
+      "hold_weeks": 4,
+      "supply_connected": true,
+      "reward_each": 0
+    },
+    {
+      "id": "nat_rus_rostov",
+      "display_name": "Hold the Rostov command hub",
+      "layer": "national_contribution",
+      "owner_type": "actor",
+      "owner_id": "rus",
+      "coalition": "russian_command",
+      "kind": "control",
+      "targets": ["e3_2793"],
+      "required": 1,
+      "primary": false,
+      "hold_weeks": 4,
+      "supply_connected": true,
+      "reward_each": 0
+    }
+  ]
+}

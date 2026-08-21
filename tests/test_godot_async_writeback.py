@@ -120,6 +120,7 @@ class GodotAsyncWritebackTests(unittest.TestCase):
         self.assertIn("writeback_integration_test.gd", workflow)
         self.assertIn("runtime_patch_completion_test.gd", workflow)
         self.assertIn("snapshot_field_audit_test.gd", workflow)
+        self.assertIn("campaign_rules_presenter_test.gd", workflow)
 
     def test_workflow_runs_both_s10_godot_suites_as_distinct_headless_steps(self) -> None:
         workflow = (ROOT / ".github/workflows/gates-of-codex.yml").read_text(encoding="utf-8")

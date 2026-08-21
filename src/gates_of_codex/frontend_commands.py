@@ -871,6 +871,16 @@ def _apply_one(state, op: str, raw: dict[str, Any]) -> CommandResult:
 
             repaired = repair_formation(state, formation, requested_points)
         return CommandResult(op=op, ok=True, detail=f"repaired {formation}", data=asdict(repaired))
+    if op == "continue_playing":
+        from .campaign_rules import continue_playing
+
+        payload = continue_playing(state)
+        return CommandResult(op=op, ok=True, detail="continue playing", data=payload)
+    if op == "conclude_campaign":
+        from .campaign_rules import conclude_campaign
+
+        payload = conclude_campaign(state)
+        return CommandResult(op=op, ok=True, detail="campaign concluded", data=payload)
     if op == "handoff":
         raise ValueError("handoff is handled at the campaign-path layer")
     raise ValueError(f"Unsupported frontend command: {op}")

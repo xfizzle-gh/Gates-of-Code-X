@@ -3,6 +3,7 @@ extends "res://scripts/main.gd"
 # Correctness layer for the write-back checkpoint. The full stack UI remains in #52.
 const FrontendCommandRunnerScript = preload("res://scripts/presentation/command_runner.gd")
 const OperationalResolutionPresenterScript = preload("res://scripts/presentation/operational_resolution_presenter.gd")
+const CampaignRulesPresenter := preload("res://scripts/presentation/campaign_rules_presenter.gd")
 
 var battalion_stacks_by_province: Dictionary = {}
 var battalions_by_id: Dictionary = {}
@@ -17,6 +18,8 @@ var snapshot_commit_count := 0
 ## Player-shell state. New Campaign replaces authoritative state, so it always
 ## requires a second confirming press.
 var new_campaign_confirm_pending := false
+var new_campaign_length_preset := ""
+var new_campaign_fog := ""
 var restore_confirm_pending := false
 var reset_confirm_pending := false
 ## P5: Import Result stays unavailable until Verify Result accepts this save.
@@ -331,6 +334,8 @@ func _command_mutates_state(button_id: String) -> bool:
 		return false
 	if button_id.begins_with("move:") or button_id.begins_with("construct:"):
 		return true
+	if button_id.begins_with("length_preset:") or button_id.begins_with("fog_of_war:"):
+		return false
 	return button_id in [
 		"refresh",
 		"end_turn",
@@ -340,6 +345,8 @@ func _command_mutates_state(button_id: String) -> bool:
 		"import_battle",
 		"new_campaign",
 		"continue_campaign",
+		"continue_playing",
+		"conclude_campaign",
 		"restore_backup",
 		"reset_test_campaign",
 		"cancel_move_order",
@@ -475,6 +482,22 @@ func player_launch_block() -> Dictionary:
 	return {}
 
 
+func _selected_length_preset(campaign: Dictionary) -> String:
+	if not new_campaign_length_preset.is_empty():
+		return new_campaign_length_preset
+	var preset := String(campaign.get("length_preset", "")).strip_edges()
+	return preset if not preset.is_empty() else "medium"
+
+
+func _selected_fog_of_war(campaign: Dictionary) -> String:
+	if not new_campaign_fog.is_empty():
+		return new_campaign_fog
+	var application: Dictionary = snapshot.get("application", {})
+	if bool(application.get("fog_of_war_enabled", false)):
+		return "on"
+	return "off"
+
+
 func can_start_new_campaign() -> bool:
 	var play := player_launch_block()
 	return bool(play.get("enabled", false)) \
@@ -508,6 +531,13 @@ func _run_player_launch(op: String, args_key: String) -> void:
 	var launch_args: Array = []
 	for value in raw_args:
 		launch_args.append(String(value))
+	if op == "new_campaign":
+		var campaign: Dictionary = snapshot.get("campaign", {})
+		launch_args = CampaignRulesPresenter.rewrite_launch_args(
+			launch_args,
+			_selected_length_preset(campaign),
+			_selected_fog_of_war(campaign)
+		)
 	var control: Dictionary = snapshot.get("control", {})
 	var snapshot_path := String(control.get("snapshot_path", ""))
 	var candidates := _backend_launch_candidates(control, launch_args)
@@ -533,6 +563,22 @@ func _handle_button(button_id: String) -> void:
 	_ensure_operational_presenter()
 	if button_id not in ["restore_backup", "reset_test_campaign"]:
 		_cancel_maintenance_confirmations()
+	if button_id.begins_with("length_preset:"):
+		new_campaign_length_preset = button_id.substr("length_preset:".length())
+		status_message = "New Campaign length: %s" % new_campaign_length_preset.capitalize()
+		queue_redraw()
+		return
+	if button_id.begins_with("fog_of_war:"):
+		new_campaign_fog = button_id.substr("fog_of_war:".length())
+		status_message = "New Campaign fog of war: %s" % new_campaign_fog
+		queue_redraw()
+		return
+	if button_id == "continue_playing":
+		_queue_and_apply([{"op": "continue_playing"}])
+		return
+	if button_id == "conclude_campaign":
+		_queue_and_apply([{"op": "conclude_campaign"}])
+		return
 	if button_id != "new_campaign":
 		new_campaign_confirm_pending = false
 	if button_id == "restore_backup":
@@ -674,6 +720,16 @@ func enabled_action_button_ids() -> PackedStringArray:
 		["new_campaign", play_enabled and not (play.get("new_args", []) as Array).is_empty()],
 		["continue_campaign", play_enabled and not (play.get("continue_args", []) as Array).is_empty()],
 	]
+	if new_campaign_confirm_pending:
+		for preset in ["short", "medium", "long"]:
+			candidates.append(["length_preset:%s" % preset, play_enabled])
+		candidates.append(["fog_of_war:on", play_enabled])
+		candidates.append(["fog_of_war:off", play_enabled])
+	var result := CampaignRulesPresenter.result_model(snapshot)
+	if bool(result.get("show_continue", false)):
+		candidates.append(["continue_playing", writeback])
+	if bool(result.get("show_conclude", false)):
+		candidates.append(["conclude_campaign", writeback])
 	if has_battle:
 		candidates.append_array([
 			["auto_resolve", writeback],
@@ -687,8 +743,8 @@ func enabled_action_button_ids() -> PackedStringArray:
 		candidates.append_array([
 			["fit", true],
 			["refresh", writeback],
-			["end_turn", writeback],
-			["run_ai", writeback],
+			["end_turn", writeback and not (bool(result.get("visible", false)) and not bool(result.get("continue_playing", false)))],
+			["run_ai", writeback and not (bool(result.get("visible", false)) and not bool(result.get("continue_playing", false)))],
 			["restore_backup", can_restore_latest_backup()],
 			["reset_test_campaign", can_reset_test_campaign()],
 			["skip_presentation", operational_presenter.is_active()],

@@ -1289,6 +1289,9 @@ def build_earth3_v1_campaign(
         }
     )
     validate_earth3_bootstrap_campaign_state(state)
+    from .campaign_rules import VICTORY_MODEL_P9, ensure_campaign_rules
+
+    ensure_campaign_rules(state, victory_model=VICTORY_MODEL_P9)
     state.validate()
     return state
 

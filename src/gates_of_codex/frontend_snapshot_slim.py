@@ -120,6 +120,15 @@ FRONTEND_CONSUMED_CAMPAIGN_FIELDS = frozenset(
         "outcome",
         "operational_clock",
         "site_control",
+        "calendar",
+        "length_preset",
+        "turn_cap",
+        "hold_weeks",
+        "continue_playing",
+        "concluded",
+        "momentum",
+        "victory_model",
+        "thresholds",
     }
 )
 

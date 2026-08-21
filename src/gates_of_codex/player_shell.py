@@ -40,6 +40,7 @@ FACTION_CHOICES = ("nato", "ukr", "rusa", "prc")
 #: Difficulty identifiers accepted by the player shell. P4 records the choice on
 #: the campaign; balance consumption of the value is deliberately out of scope.
 DIFFICULTY_CHOICES = ("easy", "normal", "hard")
+LENGTH_PRESET_CHOICES = ("short", "medium", "long")
 
 CAMPAIGN_FILE_NAME = "campaign.json"
 SNAPSHOT_FILE_NAME = "campaign_snapshot.json"
@@ -103,6 +104,7 @@ class PlayResult:
     godot_project: str = ""
     stack_layers: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    length_preset: str = "medium"
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -396,6 +398,12 @@ def launch_strategic_application(
 # ---------------------------------------------------------------------------
 
 
+def _length_preset_of(state: CampaignState) -> str:
+    from .campaign_rules import campaign_rules
+
+    return str(campaign_rules(state).get("length_preset") or "medium")
+
+
 def persist_launch_settings(
     state: CampaignState,
     *,
@@ -451,6 +459,7 @@ def launch_settings(state: CampaignState) -> dict[str, Any]:
             "faction": state.selected_faction.value,
             "difficulty": state.difficulty,
             "fog_of_war": "on" if state.fog_of_war_enabled else "off",
+            "length_preset": str(_length_preset_of(state)),
         }
     )
     return merged
@@ -480,6 +489,7 @@ def create_new_campaign(
     faction: str = Faction.NATO.value,
     difficulty: str = "normal",
     fog_of_war: str = "off",
+    length_preset: str = "medium",
     stack_config: str | None = None,
     game_directory: str | None = None,
     profile_directory: str | None = None,
@@ -522,6 +532,9 @@ def create_new_campaign(
         apply_new_campaign_actor(state, definition.scenario_id, faction)
     state.difficulty = difficulty
     state.fog_of_war_enabled = fog_of_war == "on"
+    from .campaign_rules import VICTORY_MODEL_P9, ensure_campaign_rules
+
+    ensure_campaign_rules(state, length_preset=length_preset, victory_model=VICTORY_MODEL_P9)
     persist_launch_settings(
         state,
         paths=paths,
@@ -620,6 +633,7 @@ def build_play_parser() -> argparse.ArgumentParser:
     parser.add_argument("--faction", choices=FACTION_CHOICES)
     parser.add_argument("--difficulty", choices=DIFFICULTY_CHOICES)
     parser.add_argument("--fog-of-war", choices=["on", "off"])
+    parser.add_argument("--length-preset", choices=LENGTH_PRESET_CHOICES)
     parser.add_argument("--stack-config", help="Validated active mod-stack config")
     parser.add_argument("--game", help="Gates of Hell install directory")
     parser.add_argument("--profile", help="Gates of Hell profile directory")
@@ -750,6 +764,7 @@ def run_play(
             faction=str(args.faction or Faction.NATO.value),
             difficulty=str(args.difficulty or "normal"),
             fog_of_war=str(args.fog_of_war or "off"),
+            length_preset=str(getattr(args, "length_preset", None) or "medium"),
             force=bool(args.force_new),
             resolved_catalog=resolved_catalog,
             **common,
@@ -789,6 +804,7 @@ def run_play(
         difficulty=state.difficulty,
         fog_of_war="on" if state.fog_of_war_enabled else "off",
         turn_number=state.turn_number,
+        length_preset=_length_preset_of(state),
         godot_executable=godot_executable,
         godot_project=godot_project,
         stack_layers=list(stack_layers),

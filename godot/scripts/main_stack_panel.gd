@@ -1,5 +1,7 @@
 extends "res://scripts/main_map_contract.gd"
 
+const CampaignRulesPresenter := preload("res://scripts/presentation/campaign_rules_presenter.gd")
+
 const STACK_HEADER_H := 52.0
 const STACK_TAB_H := 44.0
 const UNIT_CARD_H := 64.0
@@ -92,13 +94,23 @@ func _draw_management_panel() -> void:
 		12
 	)
 	y = _panel_line(
-		"Turn %s   Save: %s" % [
-			str(campaign.get("turn_number", 0)),
+		"%s   Save: %s" % [
+			CampaignRulesPresenter.turn_line(campaign),
 			_save_path_label(application, control),
 		],
 		x,
 		y,
 		Color(0.66, 0.78, 0.88, 1.0),
+		12
+	)
+	y = _panel_line(
+		"%s   Preset %s" % [
+			CampaignRulesPresenter.momentum_label(campaign),
+			String(campaign.get("length_preset", "medium")).capitalize(),
+		],
+		x,
+		y,
+		Color(0.86, 0.78, 0.52, 1.0),
 		12
 	)
 	y = _panel_line(
@@ -132,6 +144,35 @@ func _draw_management_panel() -> void:
 		play_enabled and not (play.get("new_args", []) as Array).is_empty(),
 		Color("5a2418") if confirm_new else Color("243140")
 	)
+	if confirm_new:
+		y = _panel_line("Length and Fog apply to the next New Campaign only.", x, y, Color(0.78, 0.82, 0.86, 1.0), 11)
+		for preset in ["short", "medium", "long"]:
+			var selected_preset := _selected_length_preset(campaign)
+			y = _draw_button(
+				"length_preset:%s" % preset,
+				"%s%s" % [preset.capitalize(), "  [selected]" if selected_preset == preset else ""],
+				x,
+				y,
+				play_enabled,
+				Color("2a4a28") if selected_preset == preset else Color("243140")
+			)
+		var selected_fog := _selected_fog_of_war(campaign)
+		y = _draw_button(
+			"fog_of_war:on",
+			"Fog of War On%s" % ("  [selected]" if selected_fog == "on" else ""),
+			x,
+			y,
+			play_enabled,
+			Color("2a4a28") if selected_fog == "on" else Color("243140")
+		)
+		y = _draw_button(
+			"fog_of_war:off",
+			"Fog of War Off%s" % ("  [selected]" if selected_fog == "off" else ""),
+			x,
+			y,
+			play_enabled,
+			Color("2a4a28") if selected_fog == "off" else Color("243140")
+		)
 	y = _draw_button(
 		"continue_campaign",
 		"Continue Campaign",
@@ -163,7 +204,25 @@ func _draw_management_panel() -> void:
 	y = _panel_heading("ACTIONS", x, y)
 	y = _draw_button("fit", "Fit front (F)", x, y, true, Color("243140"))
 	y = _draw_button("refresh", "Refresh", x, y, writeback)
-	y = _draw_button("end_turn", "End turn (E)", x, y, writeback and not has_battle)
+	var result := CampaignRulesPresenter.result_model(snapshot)
+	if bool(result.get("banner", false)):
+		y = _panel_heading(String(result.get("title", "CAMPAIGN RESULT")), x, y)
+		y = _panel_line(String(result.get("grade_label", "")), x, y, Color(0.95, 0.84, 0.42, 1.0), 13)
+		if not String(result.get("reason", "")).is_empty():
+			y = _panel_line(String(result.get("reason", "")), x, y, Color(0.86, 0.88, 0.9, 1.0), 11)
+		y = _panel_line(String(result.get("momentum", "")), x, y, Color(0.86, 0.78, 0.52, 1.0), 12)
+		if bool(result.get("show_continue", false)):
+			y = _draw_button("continue_playing", "Continue Playing", x, y, writeback, Color("24402c"))
+		if bool(result.get("show_conclude", false)):
+			y = _draw_button("conclude_campaign", "Conclude Campaign", x, y, writeback, Color("5a2418"))
+		if bool(result.get("concluded", false)):
+			y = _panel_line("Campaign concluded.", x, y, Color(0.78, 0.82, 0.86, 1.0), 11)
+		elif bool(result.get("continue_playing", false)):
+			y = _panel_line("Victory recorded — continuing.", x, y, Color("8ee2ad"), 11)
+	var end_turn_enabled := writeback and not has_battle
+	if bool(result.get("visible", false)) and not bool(result.get("continue_playing", false)):
+		end_turn_enabled = false
+	y = _draw_button("end_turn", "End turn (E)", x, y, end_turn_enabled)
 	y = _draw_button("run_ai", "Run AI + advance", x, y, writeback and not has_battle)
 	y = _draw_button("auto_resolve", "Auto-resolve battle (A)", x, y, writeback and has_battle, Color("4a2f18"))
 	y = _draw_button("handoff", "Launch Battle in GoH (H)", x, y, writeback and has_battle, Color("5a2418"))
@@ -571,14 +630,10 @@ func _draw_targets_and_objectives(x: float, y: float) -> float:
 	y = _panel_heading("OBJECTIVES", x, y)
 	for objective: Dictionary in snapshot.get("objectives", []):
 		y = _panel_line(
-			"%s/%s  %s" % [
-				_fmt_int(objective.get("progress", 0)),
-				_fmt_int(objective.get("threshold", 0)),
-				String(objective.get("display_name", objective.get("id", ""))),
-			],
+			CampaignRulesPresenter.objective_progress_line(objective),
 			x,
 			y,
-			Color(0.78, 0.82, 0.86, 1.0),
+			Color("8ee2ad") if bool(objective.get("completed", false)) else Color(0.78, 0.82, 0.86, 1.0),
 			12
 		)
 	return y

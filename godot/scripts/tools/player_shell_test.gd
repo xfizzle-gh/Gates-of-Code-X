@@ -218,6 +218,8 @@ func _verify_player_actions(snapshot: Dictionary) -> void:
 		"end_turn",
 		"run_ai",
 		"auto_resolve",
+		"continue_playing",
+		"conclude_campaign",
 	]:
 		if not supported.has(required):
 			missing.append(required)

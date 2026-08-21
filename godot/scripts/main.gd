@@ -234,9 +234,13 @@ func _draw() -> void:
 		_draw_province(province)
 
 	var campaign: Dictionary = snapshot.get("campaign", {})
-	var title := "%s  |  Turn %s  |  %s" % [
+	var calendar: Dictionary = campaign.get("calendar", {}) if campaign.get("calendar", {}) is Dictionary else {}
+	var calendar_label := String(calendar.get("label", "")).strip_edges()
+	if calendar_label.is_empty():
+		calendar_label = "Turn %s" % campaign.get("turn_number", 1)
+	var title := "%s  |  %s  |  %s" % [
 		campaign.get("name", "Gates of CodeX"),
-		campaign.get("turn_number", 1),
+		calendar_label,
 		String(campaign.get("current_faction", "")).to_upper(),
 	]
 	draw_string(ThemeDB.fallback_font, Vector2(24, 34), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
@@ -480,7 +484,7 @@ func _draw_management_panel() -> void:
 		if objective.get("coalition", "") != _selected_coalition(selected_faction):
 			continue
 		var completed: bool = objective.get("completed", false)
-		var prefix := "DONE" if completed else "%s/%s" % [objective.get("progress", 0), objective.get("required", 0)]
+		var prefix := "DONE" if completed else "%s/%s" % [objective.get("progress", 0), objective.get("required", objective.get("threshold", 0))]
 		y = _panel_line("%s  %s" % [prefix, objective.get("display_name", "Objective")], x, y, Color("8ee2ad") if completed else Color("d4dbe2"), 12)
 		shown_obj += 1
 		if shown_obj >= 4:

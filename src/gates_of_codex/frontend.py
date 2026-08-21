@@ -217,6 +217,7 @@ def build_frontend_snapshot(
             "outcome": asdict(outcome),
             "operational_clock": operational_clock,
             "site_control": site_control,
+            **_campaign_rules_presentation(state),
         },
         "strategic_map": _strategic_map_block(state, snapshot_path),
         "bounds": {
@@ -1150,6 +1151,12 @@ def _application_version() -> str:
     return application_version()
 
 
+def _campaign_rules_presentation(state: CampaignState) -> dict:
+    from .campaign_rules import campaign_presentation
+
+    return campaign_presentation(state)
+
+
 def _application_block(state: CampaignState, campaign_path: str | Path | None) -> dict:
     """Player-facing application identity shown by the Godot strategic shell."""
     campaign = Path(campaign_path).resolve() if campaign_path else None
@@ -1240,6 +1247,10 @@ def _player_launch_block(state: CampaignState, campaign_path: str | Path | None)
     new_args.extend(["--faction", state.selected_faction.value])
     new_args.extend(["--difficulty", state.difficulty])
     new_args.extend(["--fog-of-war", "on" if state.fog_of_war_enabled else "off"])
+    length_preset = str(
+        (state.map_metadata.get("campaign_rules") or {}).get("length_preset") or "medium"
+    )
+    new_args.extend(["--length-preset", length_preset])
     for flag, value in (
         ("--stack-config", metadata.get("stack_config")),
         ("--game", state.game_directory),
@@ -1292,5 +1303,7 @@ def _control_block(
             "restore_backup",
             "reset_test_campaign",
             "refresh",
+            "continue_playing",
+            "conclude_campaign",
         ],
     }

@@ -92,6 +92,12 @@ def _application_patch(state: CampaignState) -> dict[str, Any]:
     }
 
 
+def _campaign_rules_patch(state: CampaignState) -> dict[str, Any]:
+    from .campaign_rules import campaign_presentation
+
+    return campaign_presentation(state)
+
+
 def _campaign_patch(state: CampaignState) -> dict[str, Any]:
     from .operational_movement import get_operational_clock
 
@@ -105,6 +111,7 @@ def _campaign_patch(state: CampaignState) -> dict[str, Any]:
         ),
         "operational_clock": get_operational_clock(state),
         "site_control": _site_control_rows(state),
+        **_campaign_rules_patch(state),
     }
 
 
