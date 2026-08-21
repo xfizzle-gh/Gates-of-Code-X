@@ -84,6 +84,9 @@ class CampaignRulesContractTests(unittest.TestCase):
         self.assertEqual(104, contract["presets"]["medium"]["turn_cap"])
         self.assertEqual(156, contract["presets"]["long"]["turn_cap"])
         self.assertEqual(LENGTH_PRESET_CHOICES, ("short", "medium", "long"))
+        acceptance = contract["presets"]["p10_acceptance"]
+        self.assertGreaterEqual(int(acceptance["turn_cap"]), 1)
+        self.assertEqual("p10_acceptance", normalize_length_preset("p10_acceptance"))
 
     def test_calendar_derives_week_and_year_from_turn_number(self) -> None:
         self.assertEqual("2028-W01", calendar_from_turn(1)["label"])

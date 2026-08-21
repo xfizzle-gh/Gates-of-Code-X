@@ -38,6 +38,8 @@ UNAVAILABLE_EXPANDED_REASON = (
     "Expanded strategic actors such as Poland, France, Germany, Serbia, or DPRK."
 )
 LENGTH_PRESETS = ("short", "medium", "long")
+#: P10 Auto-Resolve acceptance length. Does not change the locked #75 table.
+ACCEPTANCE_LENGTH_PRESETS = ("p10_acceptance",)
 VICTORY_MODEL_P9 = "p9_v1"
 VICTORY_MODEL_LEGACY = "legacy_compat"
 DEFAULT_HOLD_WEEKS = 4
@@ -63,13 +65,28 @@ def load_campaign_rules_contract() -> dict[str, Any]:
     if not isinstance(raw, dict) or int(raw.get("schema_version", 0)) != 1:
         raise CampaignRulesError("campaign_rules contract schema_version must be 1")
     presets = raw.get("presets")
-    if not isinstance(presets, dict) or set(presets) != set(LENGTH_PRESETS):
-        raise CampaignRulesError("campaign_rules contract must define short, medium, and long presets")
+    if not isinstance(presets, dict):
+        raise CampaignRulesError("campaign_rules contract must define presets")
+    missing = set(LENGTH_PRESETS) - set(presets)
+    extra = set(presets) - set(LENGTH_PRESETS) - set(ACCEPTANCE_LENGTH_PRESETS)
+    if missing or extra:
+        raise CampaignRulesError(
+            "campaign_rules contract must define short, medium, and long presets; "
+            "optional acceptance presets are limited to p10_acceptance"
+        )
     for name in LENGTH_PRESETS:
         row = presets[name]
         expected_cap = {"short": 52, "medium": 104, "long": 156}[name]
         if int(row.get("turn_cap", 0)) != expected_cap:
             raise CampaignRulesError(f"{name} preset turn_cap must be {expected_cap}")
+    for name in ACCEPTANCE_LENGTH_PRESETS:
+        if name not in presets:
+            continue
+        row = presets[name]
+        if int(row.get("turn_cap", 0)) < 1:
+            raise CampaignRulesError(f"{name} preset turn_cap must be a positive week count")
+        if not isinstance(row.get("thresholds"), dict):
+            raise CampaignRulesError(f"{name} preset must define the same threshold keys as #75")
     _validate_objective_pack_resolution(raw)
     return raw
 
@@ -311,16 +328,17 @@ def objective_pack_for_state(state: CampaignState) -> dict[str, Any]:
 
 
 def length_preset_ids() -> tuple[str, ...]:
-    return LENGTH_PRESETS
+    return LENGTH_PRESETS + ACCEPTANCE_LENGTH_PRESETS
 
 
 def normalize_length_preset(value: str | None) -> str:
     contract = load_campaign_rules_contract()
     default = str(contract["calendar"]["default_length_preset"])
     text = str(value or default).strip().lower()
-    if text not in LENGTH_PRESETS:
+    allowed = length_preset_ids()
+    if text not in allowed:
         raise CampaignRulesError(
-            f"Unknown campaign length preset {value!r}; expected {', '.join(LENGTH_PRESETS)}"
+            f"Unknown campaign length preset {value!r}; expected {', '.join(allowed)}"
         )
     return text
 

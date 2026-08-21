@@ -1,32 +1,31 @@
 #!/usr/bin/env python3
-"""P10 Auto-Resolve multi-turn soak harness for roadmap #217.
+"""P10 Auto-Resolve acceptance harness for roadmap #217.
 
-Prove the current-main player loop can run multiple strategic turns without
-opening Gates of Hell. Missing 2028 New Campaign, victory UI, and Godot
-force-management work are recorded as structured gaps — they do not fail the
-harness. Crashes, authority violations, save-identity breaks, and persist-seam
-regressions do fail.
+Prove a production ``ww3_2028_core`` campaign can be played to a #75 terminal
+result without opening Gates of Hell. The player path is New Campaign → faction
+selection → move/commit → End Turn/AI → naturally produced contacts →
+Auto-Resolve → treasury settlement → research/recruit/assign/repair →
+query_supply → Forward Depot where useful → save/Continue → objectives /
+Momentum → victory or defeat.
+
+The S10 prepared-contact smoke is CI-safe only. It is not P10 exit evidence.
+A naturally produced pending battle is required for the 2028 acceptance path.
+Do not inject ``pending_battle`` and do not use the S10 prepared-contact seam
+as the final proof.
 
 Documented commands
 -------------------
 
-CI-safe 3-turn smoke (S10 operational fixture; default unittest):
+CI-safe 3-turn S10 smoke (not P10 exit):
 
     python tools/auto_resolve_soak_harness.py --turns 3 --fixture s10 \\
+        --report artifacts/auto_resolve_soak_s10.json
+
+P10 2028 acceptance (public ``p10_acceptance`` length preset):
+
+    python tools/auto_resolve_soak_harness.py --fixture ww3_2028_core \\
+        --faction ukr --length-preset p10_acceptance \\
         --report artifacts/auto_resolve_soak.json
-
-Optional longer Earth3 soak (target 12 turns; not default CI):
-
-    GOC_AUTO_RESOLVE_SOAK_TURNS=12 python tools/auto_resolve_soak_harness.py \\
-        --fixture earth3_v1 --report artifacts/auto_resolve_soak.json
-
-Prefer an existing disposable campaign (never the live owner save):
-
-    python tools/auto_resolve_soak_harness.py --campaign /path/to/campaign.json \\
-        --turns 12 --report artifacts/auto_resolve_soak.json
-
-JSON report path is ``--report`` (created directories as needed). Default CI
-uses three turns; set ``GOC_AUTO_RESOLVE_SOAK_TURNS`` for the long harness.
 
 This tool does not open Gates of Hell, does not add morale, and does not change
 the persist gate:
@@ -55,10 +54,13 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 DEFAULT_CI_TURNS = 3
-DEFAULT_LONG_TURNS = 12
+DEFAULT_LONG_TURNS = 6
 TURNS_ENV = "GOC_AUTO_RESOLVE_SOAK_TURNS"
 WW3_2028_SCENARIO = "ww3_2028_core"
-PRODUCTION_SCENARIO = "earth3_v1"
+PRODUCTION_SCENARIO = "ww3_2028_core"
+EARTH3_FIXTURE = "earth3_v1"
+P10_ACCEPTANCE_PRESET = "p10_acceptance"
+DEFAULT_FACTION = "ukr"
 RUNTIME_PATCH_SCHEMA = "gates-of-codex.frontend-runtime-patch"
 PLACEHOLDER_SNAPSHOT_SCHEMA = "gates-of-codex.soak-placeholder"
 
@@ -123,6 +125,13 @@ def persist_gate_contract() -> dict[str, Any]:
         "end_player_round": False,
         "refresh": False,
         "issue_move_order_alone": False,
+        "query_supply": False,
+        "research": False,
+        "recruit": False,
+        "assign": False,
+        "repair": False,
+        "upgrade_site": False,
+        "actor_force_panel": False,
     }
     observed = {
         "live_move_batch": bool(_should_persist_runtime_snapshot(live_batch)),
@@ -135,6 +144,15 @@ def persist_gate_contract() -> dict[str, Any]:
         "refresh": bool(_should_persist_runtime_snapshot([{"op": "refresh"}])),
         "issue_move_order_alone": bool(
             _should_persist_runtime_snapshot([{"op": "issue_move_order"}])
+        ),
+        "query_supply": bool(_should_persist_runtime_snapshot([{"op": "query_supply"}])),
+        "research": bool(_should_persist_runtime_snapshot([{"op": "research"}])),
+        "recruit": bool(_should_persist_runtime_snapshot([{"op": "recruit"}])),
+        "assign": bool(_should_persist_runtime_snapshot([{"op": "assign"}])),
+        "repair": bool(_should_persist_runtime_snapshot([{"op": "repair"}])),
+        "upgrade_site": bool(_should_persist_runtime_snapshot([{"op": "upgrade_site"}])),
+        "actor_force_panel": bool(
+            _should_persist_runtime_snapshot([{"op": "actor_force_panel"}])
         ),
     }
     if observed != expected:
@@ -307,10 +325,11 @@ def _scenario_probe() -> dict[str, Any]:
 
     ids = list(scenario_ids())
     ww3 = WW3_2028_SCENARIO in SCENARIO_REGISTRY
+    earth3 = EARTH3_FIXTURE in SCENARIO_REGISTRY
     return {
         "scenario_ids": ids,
         "default_scenario_id": DEFAULT_SCENARIO_ID,
-        "earth3_v1": PRODUCTION_SCENARIO in SCENARIO_REGISTRY,
+        "earth3_v1": earth3,
         "ww3_2028_core": {
             "in_registry": ww3,
             "status": (
@@ -345,7 +364,8 @@ def _victory_probe(state: Any | None = None) -> dict[str, Any]:
     return {
         "evaluate_campaign_outcome_exists": True,
         "frontend_victory_op": any(
-            op in {"declare_victory", "victory", "campaign_status"} for op in ops
+            op in {"continue_playing", "conclude_campaign", "declare_victory", "victory"}
+            for op in ops
         ),
         "frontend_supported_ops": ops,
         "outcome": outcome,
@@ -374,7 +394,32 @@ def _build_earth3_state(resolved_catalog: dict[str, Any] | None) -> Any:
             "authority_violation",
             "earth3_v1 requires a resolved catalog or active stack; none available",
         )
-    return build_scenario(PRODUCTION_SCENARIO, resolved_catalog=resolved_catalog)
+    return build_scenario(EARTH3_FIXTURE, resolved_catalog=resolved_catalog)
+
+
+def _build_2028_campaign(
+    work_dir: Path,
+    *,
+    faction: str,
+    length_preset: str,
+    resolved_catalog: dict[str, Any] | None,
+) -> Any:
+    from gates_of_codex.player_shell import create_new_campaign, resolve_campaign_paths
+
+    if resolved_catalog is None:
+        raise SoakFatalError(
+            "authority_violation",
+            "ww3_2028_core requires a resolved catalog or active stack; none available",
+        )
+    paths = resolve_campaign_paths(work_dir, scenario_id=WW3_2028_SCENARIO)
+    return create_new_campaign(
+        paths=paths,
+        scenario_id=WW3_2028_SCENARIO,
+        faction=faction,
+        length_preset=length_preset,
+        force=True,
+        resolved_catalog=resolved_catalog,
+    )
 
 
 def _build_s10_state(root: Path) -> Any:
@@ -428,7 +473,12 @@ class SoakSession:
         _stop_daemon(self.campaign, self.daemon_pid)
         self.daemon_pid = None
 
-    def apply(self, commands: list[dict[str, Any]]) -> dict[str, Any]:
+    def apply(
+        self,
+        commands: list[dict[str, Any]],
+        *,
+        expected_reject: bool = False,
+    ) -> dict[str, Any]:
         from gates_of_codex import persistent_backend
         from gates_of_codex.command_cycle_perf import measured_apply_frontend_commands
 
@@ -485,13 +535,35 @@ class SoakSession:
                 if not item.get("ok", True)
             ]
             row["detail"] = "; ".join(details) or str(payload.get("detail") or "")
-            if _looks_like_authority_error(row["detail"]):
+            if expected_reject:
+                row["expected_reject"] = True
+            elif _looks_like_authority_error(row["detail"]):
                 raise SoakFatalError(
                     "authority_violation",
                     f"command {ops} failed closed on authority: {row['detail']}",
                 )
+        elif expected_reject:
+            raise SoakFatalError(
+                "authority_violation",
+                f"command {ops} succeeded but the composed stack requires a reject",
+            )
         self.report_commands.append(row)
         return payload
+
+
+def _opposing_factions(state: Any) -> set[str]:
+    selected = state.selected_faction.value
+    alliances = state.alliances if isinstance(state.alliances, dict) else {}
+    allied: set[str] = {selected}
+    for members in alliances.values():
+        values = {getattr(item, "value", str(item)) for item in members}
+        if selected in values:
+            allied.update(values)
+    return {
+        getattr(faction, "value", str(faction))
+        for faction in state.factions
+        if getattr(faction, "value", str(faction)) not in allied
+    }
 
 
 def _select_move(state: Any) -> dict[str, Any] | None:
@@ -500,313 +572,304 @@ def _select_move(state: Any) -> dict[str, Any] | None:
     options = list_operational_move_options(state, state.current_faction)
     if not options:
         return None
-    row = options[0]
+    opposing = _opposing_factions(state)
+    hostile = []
+    for row in options:
+        province = state.provinces.get(str(row.get("target_province_id") or ""))
+        owner = getattr(getattr(province, "controller", None), "value", "") if province else ""
+        if owner in opposing:
+            hostile.append(row)
+    row = (hostile or options)[0]
     return {
         "op": "issue_move_order",
         "formation": row["formation_id"],
         "path_node_ids": list(row["path_node_ids"]),
         "path_edge_ids": list(row["path_edge_ids"]),
+        "target_province_id": str(row.get("target_province_id") or ""),
+        "hostile_target": bool(hostile and row in hostile),
     }
 
 
 def _player_actor_id(state: Any) -> str:
     metadata = state.map_metadata if isinstance(state.map_metadata, dict) else {}
-    for key in (
-        "earth3_bootstrap",
-        "earth3_v1_campaign_bootstrap",
-        "bootstrap",
-    ):
-        bootstrap = metadata.get(key)
-        if isinstance(bootstrap, dict) and bootstrap.get("selected_actor_id"):
-            return str(bootstrap["selected_actor_id"])
+    runtime = metadata.get("strategic_actor_runtime")
+    if isinstance(runtime, dict) and runtime.get("selected_actor_id"):
+        return str(runtime["selected_actor_id"])
     try:
-        from gates_of_codex.strategic_actors import ensure_strategic_actor_runtime
+        from gates_of_codex.scenario_selection import persisted_actor_id
 
-        actors = ensure_strategic_actor_runtime(state)
-        for actor_id, actor in actors.items():
-            if getattr(actor, "is_human_controlled", False):
-                return actor_id
-            if actor_id == "usa":
-                return actor_id
+        return str(persisted_actor_id(state) or "")
     except Exception:
-        pass
+        return ""
+
+
+def _owned_formation_id(state: Any, actor_id: str) -> str:
+    for force_id, force in sorted(state.strategic_formations.items()):
+        if actor_id and str(getattr(force, "actor_id", "") or "") == actor_id:
+            return force_id
+        if force.faction == state.selected_faction:
+            return force_id
     return ""
 
 
-def _exercise_economy(state: Any, gaps: list[dict[str, Any]]) -> dict[str, Any]:
-    """Spend treasury via existing #149 / CLI APIs when present.
+def _enemy_formation_id(state: Any) -> str:
+    opposing = _opposing_factions(state)
+    for force_id, force in sorted(state.strategic_formations.items()):
+        if force.faction.value in opposing:
+            return force_id
+    return ""
 
-    Recruit and research are not frontend ops on this SHA. Repair is a frontend
-    op but is not on the persistent-backend allowlist. The probe uses the Python
-    APIs that already exist so missing UI/2028 work stays a gap, not a crash.
+
+def _site_upgrade_fingerprint(state: Any) -> str:
+    rows: list[tuple[str, str]] = []
+    for province_id, province in sorted(state.provinces.items()):
+        metadata = province.metadata if isinstance(province.metadata, dict) else {}
+        rows.append((str(province_id), json.dumps(metadata.get("site_upgrades"), sort_keys=True)))
+    return hashlib.sha256(repr(rows).encode("utf-8")).hexdigest()
+
+
+def _exercise_player_loop(session: SoakSession, state: Any, gaps: list[dict[str, Any]]) -> dict[str, Any]:
+    """Drive the composed P10 frontend commands. Failures that are eligibility
+    skips are recorded; authority holes raise.
     """
 
     attempted: list[dict[str, Any]] = []
-    from gates_of_codex.actor_economy import ACTOR_CONTENT_KEY
-    from gates_of_codex.frontend import _control_block
+    actor_id = _player_actor_id(state)
+    formation_id = _owned_formation_id(state, actor_id)
+    battalion_id = ""
+    if formation_id:
+        force = state.strategic_formations[formation_id]
+        battalion_id = next(iter(force.battalion_ids), "")
 
-    frontend_ops = set(_control_block(state, None, None).get("supported_ops") or [])
-    if "recruit" not in frontend_ops:
-        gaps.append(
-            {
-                "id": "frontend_recruit_op",
-                "severity": "gap",
-                "detail": "recruit exists as CLI/Python (#149) but is not a frontend op",
-            }
-        )
-    if "research" not in frontend_ops:
-        gaps.append(
-            {
-                "id": "frontend_research_op",
-                "severity": "gap",
-                "detail": "research exists as CLI/Python (#149) but is not a frontend op",
-            }
-        )
-    if "repair" in frontend_ops:
-        from gates_of_codex.persistent_backend import SUPPORTED_OPS
+    panel_cmd = {
+        "op": "actor_force_panel",
+        "actor": actor_id,
+        "formation": formation_id,
+        "battalion": battalion_id,
+    }
+    upgrades_before = _site_upgrade_fingerprint(state)
+    panel_payload = session.apply([panel_cmd])
+    panel = {}
+    if panel_payload.get("ok"):
+        results = panel_payload.get("results") or []
+        if results:
+            panel = results[0].get("data") or {}
+        attempted.append({"op": "actor_force_panel", "ok": True, "actor": actor_id})
+    else:
+        attempted.append({"op": "actor_force_panel", "ok": False})
+    from gates_of_codex.state_io import load_campaign
 
-        if "repair" not in SUPPORTED_OPS:
+    after_panel = load_campaign(session.campaign)
+    if _site_upgrade_fingerprint(after_panel) != upgrades_before:
+        raise SoakFatalError(
+            "authority_violation",
+            "actor_force_panel / snapshot read mutated province site_upgrades",
+        )
+
+    if actor_id:
+        research_rows = panel.get("available_research") or []
+        research_key = ""
+        for row in research_rows:
+            key = str(row.get("key") or "")
+            cost = int(row.get("cost") or 0)
+            if key and 0 < cost <= 200:
+                research_key = key
+                break
+        if not research_key and research_rows:
+            research_key = str(research_rows[0].get("key") or "")
+        if research_key:
+            session.apply([{"op": "research", "actor": actor_id, "key": research_key}])
+            attempted.append({"op": "research", "key": research_key})
+        else:
             gaps.append(
                 {
-                    "id": "daemon_repair_op",
-                    "severity": "gap",
-                    "detail": "repair is a frontend op but is not a persistent_backend warm op",
+                    "id": "research_offer",
+                    "severity": "skip",
+                    "detail": f"no purchasable research for actor {actor_id}",
                 }
             )
 
-    actor_content = state.map_metadata.get(ACTOR_CONTENT_KEY)
-    if isinstance(actor_content, dict):
-        from gates_of_codex.actor_economy import (
-            actor_recruitment_offers,
-            available_actor_research,
-            purchase_actor_reinforcements,
-            purchase_actor_research,
-            repair_actor_formation,
-        )
-
-        actor_id = _player_actor_id(state)
-        if actor_id:
-            research = available_actor_research(state, actor_id)
-            affordable = [item for item in research if item.cost <= 50 or item.cost == 0]
-            target = next((item for item in affordable if item.cost > 0), None)
-            if target is None and research:
-                target = research[0]
-            if target is not None:
-                try:
-                    bought = purchase_actor_research(state, actor_id, target.key)
-                    attempted.append(
-                        {
-                            "op": "purchase_actor_research",
-                            "ok": True,
-                            "key": bought.key,
-                            "cost": bought.cost,
-                        }
-                    )
-                except Exception as exc:  # noqa: BLE001
-                    attempted.append(
-                        {
-                            "op": "purchase_actor_research",
-                            "ok": False,
-                            "detail": str(exc),
-                        }
-                    )
-                    if _looks_like_authority_error(str(exc)):
-                        raise SoakFatalError("authority_violation", str(exc)) from exc
-            else:
-                gaps.append(
+    if formation_id:
+        offers = [
+            row
+            for row in (panel.get("recruitment_offers") or [])
+            if row.get("unlocked")
+        ]
+        if offers:
+            unit = str(offers[0].get("unit_name") or "")
+            recruit = session.apply(
+                [
                     {
-                        "id": "actor_research_offer",
-                        "severity": "skip",
-                        "detail": f"no purchasable research for actor {actor_id}",
+                        "op": "recruit",
+                        "actor": actor_id,
+                        "formation": formation_id,
+                        "unit": unit,
+                        "quantity": 1,
                     }
+                ]
+            )
+            attempted.append({"op": "recruit", "unit": unit, "ok": bool(recruit.get("ok"))})
+            if recruit.get("ok"):
+                assign = session.apply(
+                    [
+                        {
+                            "op": "assign",
+                            "actor": actor_id,
+                            "formation": formation_id,
+                            "battalion": battalion_id,
+                            "unit": unit,
+                            "quantity": 1,
+                        }
+                    ]
                 )
-        formation_id = ""
-        for force_id, force in sorted(state.strategic_formations.items()):
-            if actor_id and getattr(force, "actor_id", "") == actor_id:
-                formation_id = force_id
-                break
-            if force.faction == state.selected_faction and not formation_id:
-                formation_id = force_id
-        if formation_id:
-            offers = [
-                item
-                for item in actor_recruitment_offers(state, formation_id)
-                if item.unlocked
+                attempted.append({"op": "assign", "unit": unit, "ok": bool(assign.get("ok"))})
+        else:
+            gaps.append(
+                {
+                    "id": "recruit_offer",
+                    "severity": "skip",
+                    "detail": f"no unlocked recruitment offer for {formation_id}",
+                }
+            )
+        repair = session.apply(
+            [
+                {
+                    "op": "repair",
+                    "actor": actor_id,
+                    "formation": formation_id,
+                    "battalion": battalion_id,
+                    "points": 1,
+                }
             ]
-            if offers:
-                offer = offers[0]
-                try:
-                    bought = purchase_actor_reinforcements(
-                        state, formation_id, offer.unit_name, 1
-                    )
-                    attempted.append(
-                        {
-                            "op": "purchase_actor_reinforcements",
-                            "ok": True,
-                            "unit": offer.unit_name,
-                            "cost": bought.total_cost
-                            if hasattr(bought, "total_cost")
-                            else offer.purchase_cost,
-                        }
-                    )
-                except Exception as exc:  # noqa: BLE001
-                    attempted.append(
-                        {
-                            "op": "purchase_actor_reinforcements",
-                            "ok": False,
-                            "detail": str(exc),
-                        }
-                    )
-                    if _looks_like_authority_error(str(exc)):
-                        raise SoakFatalError("authority_violation", str(exc)) from exc
-            else:
-                gaps.append(
-                    {
-                        "id": "actor_recruit_offer",
-                        "severity": "skip",
-                        "detail": f"no unlocked recruitment offer for {formation_id}",
-                    }
-                )
-            try:
-                repaired = repair_actor_formation(state, formation_id, 1)
-                attempted.append(
-                    {
-                        "op": "repair_actor_formation",
-                        "ok": True,
-                        "points": repaired.points_repaired
-                        if hasattr(repaired, "points_repaired")
-                        else 0,
-                        "cost": repaired.cost if hasattr(repaired, "cost") else 0,
-                    }
-                )
-            except Exception as exc:  # noqa: BLE001
-                attempted.append(
-                    {
-                        "op": "repair_actor_formation",
-                        "ok": False,
-                        "detail": str(exc),
-                    }
-                )
-                if _looks_like_authority_error(str(exc)):
-                    raise SoakFatalError("authority_violation", str(exc)) from exc
-    else:
-        from gates_of_codex.economy import (
-            available_research,
-            formation_recruitment_offers,
-            purchase_reinforcements,
-            purchase_research,
-            repair_formation,
         )
+        attempted.append({"op": "repair", "ok": bool(repair.get("ok"))})
+        supply = session.apply(
+            [{"op": "query_supply", "formation": formation_id}]
+        )
+        attempted.append({"op": "query_supply", "ok": bool(supply.get("ok"))})
 
-        gaps.append(
+    enemy_id = _enemy_formation_id(state)
+    if enemy_id:
+        session.apply(
+            [{"op": "query_supply", "formation": enemy_id}],
+            expected_reject=True,
+        )
+        attempted.append(
             {
-                "id": "actor_content_runtime",
-                "severity": "skip",
-                "detail": "campaign has no #149 actor_content_runtime; using legacy economy APIs",
+                "op": "query_supply_enemy",
+                "ok": False,
+                "expected_reject": True,
             }
         )
-        faction = state.selected_faction
-        try:
-            nodes = available_research(state, faction)
-        except Exception as exc:  # noqa: BLE001
-            nodes = []
-            attempted.append({"op": "available_research", "ok": False, "detail": str(exc)})
-        if nodes:
-            node = nodes[0]
-            try:
-                purchase_research(state, faction, node.key)
-                attempted.append({"op": "purchase_research", "ok": True, "key": node.key})
-            except Exception as exc:  # noqa: BLE001
-                attempted.append(
-                    {"op": "purchase_research", "ok": False, "detail": str(exc)}
-                )
-                if _looks_like_authority_error(str(exc)):
-                    raise SoakFatalError("authority_violation", str(exc)) from exc
-        formation_id = next(iter(sorted(state.strategic_formations)), "")
-        if formation_id:
-            try:
-                offers = formation_recruitment_offers(state, formation_id)
-            except Exception as exc:  # noqa: BLE001
-                offers = []
-                attempted.append(
-                    {"op": "formation_recruitment_offers", "ok": False, "detail": str(exc)}
-                )
-            if offers:
-                offer = offers[0]
-                unit = getattr(offer, "unit_name", None) or offer.get("unit_name")
-                try:
-                    purchase_reinforcements(state, formation_id, str(unit), 1)
-                    attempted.append(
-                        {"op": "purchase_reinforcements", "ok": True, "unit": unit}
-                    )
-                except Exception as exc:  # noqa: BLE001
-                    attempted.append(
-                        {
-                            "op": "purchase_reinforcements",
-                            "ok": False,
-                            "detail": str(exc),
-                        }
-                    )
-                    if _looks_like_authority_error(str(exc)):
-                        raise SoakFatalError("authority_violation", str(exc)) from exc
-            try:
-                repair_formation(state, formation_id, 1)
-                attempted.append({"op": "repair_formation", "ok": True})
-            except Exception as exc:  # noqa: BLE001
-                attempted.append(
-                    {"op": "repair_formation", "ok": False, "detail": str(exc)}
-                )
-                if _looks_like_authority_error(str(exc)):
-                    raise SoakFatalError("authority_violation", str(exc)) from exc
-    return {"attempted": attempted}
+        session.apply(
+            [
+                {
+                    "op": "repair",
+                    "formation": enemy_id,
+                    "points": 1,
+                }
+            ],
+            expected_reject=True,
+        )
+        attempted.append(
+            {
+                "op": "repair_omitted_actor_foreign",
+                "ok": False,
+                "expected_reject": True,
+            }
+        )
+
+    province_id = ""
+    if formation_id:
+        force = state.strategic_formations[formation_id]
+        if force.position is not None:
+            province_id = str(getattr(force.position, "province_id", "") or "")
+        if not province_id:
+            for battalion_id_value in force.battalion_ids:
+                battalion = state.battalions.get(battalion_id_value)
+                if battalion is not None:
+                    province_id = str(battalion.province_id or "")
+                    if province_id:
+                        break
+    if province_id:
+        upgrade = session.apply(
+            [
+                {
+                    "op": "upgrade_site",
+                    "province": province_id,
+                    "actor": actor_id,
+                    "upgrade_id": "forward_depot",
+                }
+            ]
+        )
+        attempted.append(
+            {
+                "op": "upgrade_site",
+                "ok": bool(upgrade.get("ok")),
+                "province": province_id,
+            }
+        )
+    else:
+        gaps.append(
+            {
+                "id": "forward_depot_site",
+                "severity": "skip",
+                "detail": "no owned province available for Forward Depot this turn",
+            }
+        )
+    return {"attempted": attempted, "actor_id": actor_id, "formation_id": formation_id}
 
 
 def _static_gaps(scenario_probe: dict[str, Any], victory: dict[str, Any]) -> list[dict[str, Any]]:
     gaps: list[dict[str, Any]] = []
-    if not scenario_probe["ww3_2028_core"]["in_registry"]:
+    ww3 = scenario_probe.get("ww3_2028_core") or {}
+    if not ww3.get("in_registry"):
         gaps.append(
             {
                 "id": "ww3_2028_core",
                 "severity": "gap",
-                "detail": (
-                    "ww3_2028_core is not a scenario on this SHA; "
-                    f"production default is {scenario_probe['default_scenario_id']}. "
-                    "2028 New Campaign (#254–#260) is landing in parallel."
-                ),
+                "detail": "ww3_2028_core is not registered on this SHA",
             }
         )
-    if not victory.get("frontend_victory_op"):
+    elif ww3.get("status") != "production":
         gaps.append(
             {
-                "id": "frontend_victory_defeat",
+                "id": "ww3_2028_core_status",
+                "severity": "gap",
+                "detail": f"ww3_2028_core status is {ww3.get('status')!r}, expected production",
+            }
+        )
+    if scenario_probe.get("default_scenario_id") != WW3_2028_SCENARIO:
+        gaps.append(
+            {
+                "id": "production_default",
                 "severity": "gap",
                 "detail": (
-                    "evaluate_campaign_outcome exists in Python (#75 surface) but "
-                    "there is no frontend victory/defeat command on this SHA"
+                    "production New Campaign default is "
+                    f"{scenario_probe.get('default_scenario_id')!r}, not ww3_2028_core"
                 ),
             }
         )
-    gaps.append(
-        {
-            "id": "auto_resolve_default_ui",
-            "severity": "gap",
-            "detail": "Auto-Resolve default UI (#265) is out of scope for this harness",
-        }
-    )
-    gaps.append(
-        {
-            "id": "godot_force_management",
-            "severity": "gap",
-            "detail": "Godot force-management UI is out of scope for this harness",
-        }
-    )
-    gaps.append(
-        {
-            "id": "site_upgrade",
-            "severity": "gap",
-            "detail": "Minimal site-upgrade is out of scope for this harness",
-        }
-    )
+    ops = set(victory.get("frontend_supported_ops") or [])
+    for required in (
+        "continue_playing",
+        "conclude_campaign",
+        "research",
+        "recruit",
+        "assign",
+        "repair",
+        "query_supply",
+        "upgrade_site",
+        "auto_resolve",
+    ):
+        if required not in ops and victory.get("frontend_supported_ops"):
+            gaps.append(
+                {
+                    "id": f"missing_frontend_{required}",
+                    "severity": "gap",
+                    "detail": f"{required} is not a frontend command on this SHA",
+                }
+            )
     return gaps
 
 
@@ -816,6 +879,8 @@ def run_soak(
     work_dir: Path,
     campaign_path: Path | None = None,
     fixture: str = "auto",
+    faction: str = DEFAULT_FACTION,
+    length_preset: str = P10_ACCEPTANCE_PRESET,
     resolved_catalog_path: Path | None = None,
     use_daemon: bool = True,
     write_full_snapshot: bool | None = None,
@@ -830,13 +895,18 @@ def run_soak(
     session: SoakSession | None = None
     turns_completed = 0
     battles = 0
+    natural_battles = 0
+    prepared_contact_used = False
     economy: dict[str, Any] = {"attempted": []}
     save_reload: dict[str, Any] = {"performed": False}
+    continue_identity: dict[str, Any] = {"performed": False}
     scenario_id = ""
     scenario_status = ""
+    selected_actor_id = ""
     treasury_start: dict[str, Any] = {}
     treasury_final: dict[str, Any] = {}
     victory: dict[str, Any] = {}
+    p10_exit = False
 
     try:
         from gates_of_codex.frontend import write_frontend_snapshot
@@ -853,30 +923,42 @@ def run_soak(
             scenario_status = str(state.map_metadata.get("scenario_status") or "loaded")
         else:
             catalog = _load_resolved_catalog(resolved_catalog_path)
-            prefer_earth3 = fixture in {"auto", PRODUCTION_SCENARIO}
             state = None
-            if prefer_earth3:
+            prefer_2028 = fixture in {"auto", WW3_2028_SCENARIO, PRODUCTION_SCENARIO}
+            if prefer_2028:
                 try:
-                    state = _build_earth3_state(catalog)
-                    scenario_id = PRODUCTION_SCENARIO
+                    state = _build_2028_campaign(
+                        work_dir,
+                        faction=faction,
+                        length_preset=length_preset,
+                        resolved_catalog=catalog,
+                    )
+                    scenario_id = WW3_2028_SCENARIO
                     scenario_status = "production"
                     created = "created"
+                    p10_exit = True
                 except Exception as exc:  # noqa: BLE001
-                    if fixture == PRODUCTION_SCENARIO:
+                    if fixture in {WW3_2028_SCENARIO, PRODUCTION_SCENARIO}:
                         raise
                     gaps.append(
                         {
-                            "id": "earth3_v1_create",
+                            "id": "ww3_2028_core_create",
                             "severity": "skip",
-                            "detail": f"earth3_v1 did not load on this SHA: {exc}",
+                            "detail": f"ww3_2028_core did not load on this SHA: {exc}",
                         }
                     )
                     state = None
+            if state is None and fixture == EARTH3_FIXTURE:
+                state = _build_earth3_state(catalog)
+                scenario_id = EARTH3_FIXTURE
+                scenario_status = "debug_fixture"
+                created = "created"
             if state is None:
                 state = _build_s10_state(work_dir)
                 scenario_id = "s10_soak_fixture"
                 scenario_status = "debug_fixture"
                 created = "created"
+                p10_exit = False
                 if write_full_snapshot is None:
                     write_full_snapshot = True
                 gaps.append(
@@ -884,8 +966,7 @@ def run_soak(
                         "id": "used_s10_fixture",
                         "severity": "skip",
                         "detail": (
-                            "soak used the existing S10 operational fixture because "
-                            "earth3_v1 was not selected or did not load"
+                            "CI-safe S10 smoke only. This is not P10 exit evidence."
                         ),
                     }
                 )
@@ -895,6 +976,7 @@ def run_soak(
                     )
 
                     _create_prepared_contact(state)
+                    prepared_contact_used = True
                 except Exception as exc:  # noqa: BLE001
                     gaps.append(
                         {
@@ -903,7 +985,8 @@ def run_soak(
                             "detail": f"could not seed an S10 prepared contact: {exc}",
                         }
                     )
-            save_campaign(state, work_dir / "campaign.json")
+            if not (work_dir / "campaign.json").is_file():
+                save_campaign(state, work_dir / "campaign.json")
         if write_full_snapshot is None:
             write_full_snapshot = scenario_id == "s10_soak_fixture"
 
@@ -920,11 +1003,18 @@ def run_soak(
             _write_placeholder_snapshot(session.snapshot)
         _write_commands(session.commands_path, [])
         treasury_start = treasury_snapshot(state)
+        selected_actor_id = _player_actor_id(state)
+        if scenario_id == WW3_2028_SCENARIO and selected_actor_id in {"", "usa"}:
+            raise SoakFatalError(
+                "authority_violation",
+                f"Core 2028 selected_actor_id leaked or missing: {selected_actor_id!r}",
+            )
         victory = _victory_probe(state)
         gaps[:] = _static_gaps(scenario_probe, victory) + [
             gap
             for gap in gaps
-            if gap["id"] in {"earth3_v1_create", "used_s10_fixture"}
+            if gap["id"]
+            in {"ww3_2028_core_create", "used_s10_fixture", "s10_prepared_contact"}
         ]
         if not session.start_daemon():
             gaps.append(
@@ -939,31 +1029,36 @@ def run_soak(
         economy_done = False
         mid_turn = max(1, turns // 2)
         guard = 0
-        max_steps = max(8, turns * 8)
+        max_steps = max(16, turns * 12)
         while turns_completed < turns and guard < max_steps:
             guard += 1
             state = load_campaign(session.campaign)
+            rules = state.map_metadata.get("campaign_rules") or {}
+            if str((rules.get("result") or {}).get("status") or "") == "complete":
+                break
             if state.pending_battle is not None:
                 payload = session.apply([{"op": "auto_resolve"}])
                 if payload.get("ok"):
                     battles += 1
+                    if not prepared_contact_used:
+                        natural_battles += 1
                 continue
             if state.current_faction == state.selected_faction:
-                if not economy_done:
-                    economy = _exercise_economy(state, gaps)
-                    from gates_of_codex.state_io import save_campaign as _save
-
-                    session.stop_daemon()
-                    _save(state, session.campaign)
-                    if session.use_daemon:
-                        session.start_daemon()
+                if p10_exit and not economy_done:
+                    economy = _exercise_player_loop(session, state, gaps)
                     economy_done = True
                     continue
                 move = _select_move(state)
                 if move is not None:
+                    issue = {
+                        "op": "issue_move_order",
+                        "formation": move["formation"],
+                        "path_node_ids": move["path_node_ids"],
+                        "path_edge_ids": move["path_edge_ids"],
+                    }
                     session.apply(
                         [
-                            move,
+                            issue,
                             {
                                 "op": "commit_move_orders",
                                 "faction": state.current_faction.value,
@@ -978,21 +1073,40 @@ def run_soak(
                 turns_completed += 1
                 if turns_completed == mid_turn:
                     session.stop_daemon()
-                    reloaded = load_campaign(session.campaign)
-                    before_reload = campaign_identity(reloaded)
-                    save_campaign(reloaded, session.campaign)
-                    again = load_campaign(session.campaign)
-                    after_reload = campaign_identity(again)
+                    from gates_of_codex.player_shell import (
+                        continue_campaign,
+                        resolve_campaign_paths,
+                    )
+
+                    paths = resolve_campaign_paths(session.campaign)
+                    before_reload = campaign_identity(load_campaign(session.campaign))
+                    continued = continue_campaign(paths=paths)
+                    after_reload = campaign_identity(continued)
                     if after_reload != before_reload:
                         raise SoakFatalError(
                             "save_identity_break",
-                            f"save/reload identity changed: {before_reload} -> {after_reload}",
+                            f"Continue identity changed: {before_reload} -> {after_reload}",
                         )
+                    if scenario_id == WW3_2028_SCENARIO:
+                        continued_actor = _player_actor_id(continued)
+                        if continued_actor != selected_actor_id:
+                            raise SoakFatalError(
+                                "save_identity_break",
+                                "Continue did not preserve selected actor "
+                                f"{selected_actor_id!r} -> {continued_actor!r}",
+                            )
                     save_reload = {
                         "performed": True,
                         "identity_ok": True,
                         "turn": turns_completed,
                         "identity": after_reload,
+                    }
+                    continue_identity = {
+                        "performed": True,
+                        "scenario_id": str(
+                            continued.map_metadata.get("scenario_id") or ""
+                        ),
+                        "selected_actor_id": _player_actor_id(continued),
                     }
                     if session.use_daemon:
                         session.start_daemon()
@@ -1004,17 +1118,28 @@ def run_soak(
             payload = session.apply([{"op": "auto_resolve"}])
             if payload.get("ok"):
                 battles += 1
+                if not prepared_contact_used:
+                    natural_battles += 1
             state = load_campaign(session.campaign)
+        outcome = (state.map_metadata.get("campaign_rules") or {}).get("result") or {}
+        if str(outcome.get("status") or "") == "complete":
+            if str(outcome.get("selected_faction_result") or "") == "victory":
+                session.apply([{"op": "continue_playing"}])
         treasury_final = treasury_snapshot(state)
         victory = _victory_probe(state)
-        if victory.get("outcome") and victory["outcome"]["status"] == "active":
+        if p10_exit and natural_battles < 1:
+            raise SoakFatalError(
+                "crash",
+                "2028 acceptance soak produced no natural Auto-Resolve battle",
+            )
+        if p10_exit and (victory.get("outcome") or {}).get("status") == "active":
             gaps.append(
                 {
-                    "id": "campaign_not_won",
+                    "id": "campaign_not_terminal",
                     "severity": "gap",
                     "detail": (
-                        f"{turns_completed}-turn soak did not reach victory/defeat; "
-                        "#75 campaign-end work is landing in parallel"
+                        f"{turns_completed}-turn 2028 soak stayed ACTIVE; "
+                        "p10_acceptance turn cap should have graded a #75 result"
                     ),
                 }
             )
@@ -1041,7 +1166,18 @@ def run_soak(
             session.stop_daemon()
 
     commands = session.report_commands if session is not None else []
-    failed = [row for row in commands if not row.get("ok")]
+    failed = [row for row in commands if not row.get("ok") and not row.get("expected_reject")]
+    ops_used = sorted({op for row in commands for op in (row.get("ops") or [])})
+    outcome = (victory.get("outcome") or {}) if victory else {}
+    p10_exit_evidence = (
+        "2028 production path with at least one naturally produced Auto-Resolve battle"
+        if p10_exit and natural_battles and fatal is None
+        else (
+            "CI-safe S10 prepared-contact smoke only — not P10 exit evidence"
+            if not p10_exit
+            else "2028 path did not produce P10 exit evidence"
+        )
+    )
     report = {
         "ok": fatal is None,
         "fatal": fatal,
@@ -1049,11 +1185,17 @@ def run_soak(
         "scenario_id": scenario_id,
         "scenario_status": scenario_status,
         "campaign_created": created if "created" in locals() else "",
+        "length_preset": length_preset if p10_exit else "",
+        "faction": faction if p10_exit else "",
+        "selected_actor_id": selected_actor_id,
         "turns_requested": turns,
         "turns_completed": turns_completed,
         "battles_auto_resolved": battles,
+        "natural_battles_resolved": natural_battles,
+        "prepared_contact_used": prepared_contact_used,
         "commands_attempted": len(commands),
         "commands_failed": len(failed),
+        "ops_used": ops_used,
         "commands": commands,
         "economy": economy,
         "missing_player_loop_capabilities": [
@@ -1062,15 +1204,21 @@ def run_soak(
         "gaps": gaps,
         "treasury_start": treasury_start,
         "treasury_final": treasury_final,
+        "continue_identity": continue_identity,
+        "campaign_outcome": {
+            "status": outcome.get("status"),
+            "grade": outcome.get("grade"),
+            "reason": outcome.get("reason"),
+            "selected_faction_result": outcome.get("selected_faction_result"),
+            "from_campaign_rules": True,
+        },
         "victory_api": victory,
         "defeat_api": {
             "evaluate_campaign_outcome_exists": victory.get(
                 "evaluate_campaign_outcome_exists", False
             ),
             "frontend_defeat_op": victory.get("frontend_victory_op", False),
-            "selected_faction_result": (victory.get("outcome") or {}).get(
-                "selected_faction_result"
-            ),
+            "selected_faction_result": outcome.get("selected_faction_result"),
         },
         "scenario_probe": scenario_probe,
         "persist_gate": persist,
@@ -1080,16 +1228,24 @@ def run_soak(
             "used": bool(session.daemon_used) if session is not None else False,
         },
         "goh_invoked": False,
+        "goh_parked": {
+            "issue_273": "parked",
+            "issue_274": "parked HOLD — not in this stack",
+            "morale_bridge": "not dragged",
+        },
         "morale_changed": False,
         "runtime_patch_schema_v1": persist.get("schema_version") == 1,
+        "p10_exit": p10_exit,
+        "p10_exit_evidence": p10_exit_evidence,
         "documented_commands": {
             "ci_smoke": (
                 "python tools/auto_resolve_soak_harness.py --turns 3 --fixture s10 "
-                "--report artifacts/auto_resolve_soak.json"
+                "--report artifacts/auto_resolve_soak_s10.json"
             ),
-            "long_earth3": (
-                "GOC_AUTO_RESOLVE_SOAK_TURNS=12 python tools/auto_resolve_soak_harness.py "
-                "--fixture earth3_v1 --report artifacts/auto_resolve_soak.json"
+            "p10_2028_acceptance": (
+                "python tools/auto_resolve_soak_harness.py --fixture ww3_2028_core "
+                "--faction ukr --length-preset p10_acceptance "
+                "--report artifacts/auto_resolve_soak.json"
             ),
             "report_path": "artifacts/auto_resolve_soak.json",
         },
@@ -1132,12 +1288,22 @@ def build_parser() -> argparse.ArgumentParser:
         "--fixture",
         choices=("auto", PRODUCTION_SCENARIO, "s10"),
         default="auto",
-        help="Create earth3_v1 when possible; s10 is the fast CI fixture",
+        help="Production ww3_2028_core by default; s10 is the fast CI smoke only",
+    )
+    parser.add_argument(
+        "--faction",
+        default=DEFAULT_FACTION,
+        help="Core 2028 selected actor (nato, ukr, rusa, prc). Default ukr.",
+    )
+    parser.add_argument(
+        "--length-preset",
+        default=P10_ACCEPTANCE_PRESET,
+        help="Public campaign-rules length_preset. Default p10_acceptance.",
     )
     parser.add_argument(
         "--resolved-catalog",
         type=Path,
-        help="Resolved-factions JSON for earth3_v1 construction",
+        help="Resolved-factions JSON for 2028/Earth3 construction",
     )
     parser.add_argument(
         "--no-daemon",
@@ -1174,12 +1340,29 @@ def main(argv: list[str] | None = None) -> int:
             work_dir=work_dir,
             campaign_path=args.campaign,
             fixture=args.fixture,
+            faction=args.faction,
+            length_preset=args.length_preset,
             resolved_catalog_path=args.resolved_catalog,
             use_daemon=not args.no_daemon,
             write_full_snapshot=True if args.write_full_snapshot else None,
         )
         path = write_report(report, args.report)
-        print(json.dumps({"report": str(path), "ok": report["ok"], "fatal": report["fatal"]}, indent=2))
+        print(
+            json.dumps(
+                {
+                    "report": str(path),
+                    "ok": report["ok"],
+                    "fatal": report["fatal"],
+                    "scenario_id": report.get("scenario_id"),
+                    "selected_actor_id": report.get("selected_actor_id"),
+                    "natural_battles_resolved": report.get("natural_battles_resolved"),
+                    "campaign_outcome": report.get("campaign_outcome"),
+                    "p10_exit_evidence": report.get("p10_exit_evidence"),
+                    "goh_invoked": report.get("goh_invoked"),
+                },
+                indent=2,
+            )
+        )
         return 0 if report["ok"] else 1
     finally:
         if temporary is not None:

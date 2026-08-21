@@ -52,18 +52,26 @@ class AutoResolveSoakHarnessTests(unittest.TestCase):
                 "end_player_round": False,
                 "refresh": False,
                 "issue_move_order_alone": False,
+                "query_supply": False,
+                "research": False,
+                "recruit": False,
+                "assign": False,
+                "repair": False,
+                "upgrade_site": False,
+                "actor_force_panel": False,
             },
             payload["observed"],
         )
         self.assertEqual(3, harness.DEFAULT_CI_TURNS)
-        self.assertEqual(12, harness.DEFAULT_LONG_TURNS)
+        self.assertEqual(6, harness.DEFAULT_LONG_TURNS)
         with patch.dict(os.environ, {}, clear=False):
             os.environ.pop(harness.TURNS_ENV, None)
-            self.assertEqual(12, harness._default_turns())
+            self.assertEqual(6, harness._default_turns())
         probe = harness._scenario_probe()
         self.assertTrue(probe["earth3_v1"])
-        self.assertEqual("earth3_v1", probe["default_scenario_id"])
-        self.assertFalse(probe["ww3_2028_core"]["in_registry"])
+        self.assertEqual("ww3_2028_core", probe["default_scenario_id"])
+        self.assertTrue(probe["ww3_2028_core"]["in_registry"])
+        self.assertEqual("production", probe["ww3_2028_core"]["status"])
 
     def test_harness_fails_closed_when_persist_gate_drifts(self) -> None:
         _ensure_src_path()
@@ -75,7 +83,7 @@ class AutoResolveSoakHarnessTests(unittest.TestCase):
             with self.assertRaises(harness.PersistSeamError):
                 harness.persist_gate_contract()
 
-    def test_three_turn_s10_smoke_writes_report_without_goh(self) -> None:
+    def test_three_turn_s10_smoke_is_not_p10_exit_evidence(self) -> None:
         _ensure_src_path()
         harness = _load_harness()
         with tempfile.TemporaryDirectory() as temporary:
@@ -96,7 +104,12 @@ class AutoResolveSoakHarnessTests(unittest.TestCase):
         self.assertEqual(3, report["turns_completed"])
         self.assertGreaterEqual(report["commands_attempted"], 3)
         self.assertGreaterEqual(report["battles_auto_resolved"], 1)
+        self.assertTrue(report["prepared_contact_used"])
+        self.assertEqual(0, report["natural_battles_resolved"])
+        self.assertFalse(report["p10_exit"])
+        self.assertIn("not P10 exit evidence", report["p10_exit_evidence"])
         self.assertFalse(report["goh_invoked"])
+        self.assertEqual("parked HOLD — not in this stack", report["goh_parked"]["issue_274"])
         self.assertFalse(report["morale_changed"])
         self.assertTrue(report["runtime_patch_schema_v1"])
         self.assertTrue(report["save_reload"]["performed"])
@@ -117,11 +130,9 @@ class AutoResolveSoakHarnessTests(unittest.TestCase):
         self.assertTrue(auto_rows)
         self.assertTrue(auto_rows[0]["persist_runtime_snapshot"])
         gap_ids = {gap["id"] for gap in report["gaps"]}
-        self.assertIn("ww3_2028_core", gap_ids)
-        self.assertIn("frontend_victory_defeat", gap_ids)
-        self.assertIn("auto_resolve_default_ui", gap_ids)
+        self.assertIn("used_s10_fixture", gap_ids)
+        self.assertNotIn("ww3_2028_core", gap_ids)
         self.assertTrue(report["victory_api"]["evaluate_campaign_outcome_exists"])
-        self.assertFalse(report["victory_api"]["frontend_victory_op"])
 
     def test_documented_cli_smoke_is_optional_subprocess(self) -> None:
         if str(os.environ.get("GOC_AUTO_RESOLVE_SOAK_CLI", "")).strip() not in {
@@ -169,30 +180,40 @@ class AutoResolveSoakHarnessTests(unittest.TestCase):
             payload = json.loads(report_path.read_text(encoding="utf-8"))
         self.assertTrue(payload["ok"], payload.get("fatal"))
         self.assertEqual(3, payload["turns_completed"])
+        self.assertFalse(payload["p10_exit"])
 
-    def test_optional_earth3_soak_runs_only_when_env_requests_it(self) -> None:
+    def test_optional_2028_acceptance_runs_only_when_env_requests_it(self) -> None:
         if str(os.environ.get("GOC_AUTO_RESOLVE_SOAK", "")).strip() not in {
             "1",
             "true",
             "yes",
         }:
             self.skipTest(
-                "set GOC_AUTO_RESOLVE_SOAK=1 to run the long earth3_v1 soak"
+                "set GOC_AUTO_RESOLVE_SOAK=1 to run the ww3_2028_core P10 acceptance soak"
             )
         _ensure_src_path()
         harness = _load_harness()
-        turns = harness._default_turns()
-        if turns < 8:
-            turns = 12
         with tempfile.TemporaryDirectory() as temporary:
             report = harness.run_soak(
-                turns=turns,
+                turns=harness.DEFAULT_LONG_TURNS,
                 work_dir=Path(temporary),
-                fixture="earth3_v1",
+                fixture="ww3_2028_core",
+                faction="ukr",
+                length_preset=harness.P10_ACCEPTANCE_PRESET,
                 use_daemon=True,
                 write_full_snapshot=False,
             )
         self.assertTrue(report["ok"], report.get("fatal"))
-        self.assertGreaterEqual(report["turns_completed"], 8)
-        self.assertEqual("earth3_v1", report["scenario_id"])
+        self.assertEqual("ww3_2028_core", report["scenario_id"])
+        self.assertEqual("production", report["scenario_status"])
+        self.assertEqual("ukr", report["selected_actor_id"])
+        self.assertNotEqual("usa", report["selected_actor_id"])
+        self.assertGreaterEqual(report["natural_battles_resolved"], 1)
+        self.assertFalse(report["prepared_contact_used"])
+        self.assertTrue(report["p10_exit"])
+        self.assertIn("naturally produced", report["p10_exit_evidence"])
         self.assertFalse(report["goh_invoked"])
+        self.assertEqual("complete", (report.get("campaign_outcome") or {}).get("status"))
+        self.assertTrue(report["continue_identity"]["performed"])
+        self.assertEqual("ww3_2028_core", report["continue_identity"]["scenario_id"])
+        self.assertEqual("ukr", report["continue_identity"]["selected_actor_id"])

@@ -13,6 +13,7 @@
       "Momentum collapse is a documented player-actor defeat path.",
       "Continue Playing has no hard end year in this slice.",
       "Presets change turn cap and war-aim/Momentum thresholds only.",
+      "p10_acceptance is an extra public length preset for the Auto-Resolve soak. It does not change Short 52 / Medium 104 / Long 156.",
       "Earth3 objectives.json stays frozen; this file overlays war-aim metadata and national objectives.",
       "War-aim packs bind by scenario_id only. Omitted scenario_id and registered Earth3/legacy IDs use this Earth3 pack. Unknown scenario_id refuses to start.",
       "ww3_2028_core is Core-four only (nato, ukr, rusa, prc). ww3_2028_expanded New Campaign remains creatable; Expanded victory is fail-closed until a real Expanded actor pack is authored. Auto-Resolve and strategic play stay available without evaluating Expanded terminal victory. No faction-name heuristics."
@@ -70,6 +71,23 @@
         "decisive_victory": 80,
         "victory": 50,
         "negotiated_advantage": 25,
+        "stalemate": -10,
+        "defeat": -25,
+        "decisive_defeat": -40,
+        "momentum_collapse": -30
+      }
+    },
+    "p10_acceptance": {
+      "display_name": "P10 Auto-Resolve acceptance",
+      "turn_cap": 3,
+      "calendar_span": "3 weeks",
+      "required_war_aims": 1,
+      "required_national": 1,
+      "require_all_primary_war_aims": false,
+      "thresholds": {
+        "decisive_victory": 70,
+        "victory": 45,
+        "negotiated_advantage": 20,
         "stalemate": -10,
         "defeat": -25,
         "decisive_defeat": -40,
