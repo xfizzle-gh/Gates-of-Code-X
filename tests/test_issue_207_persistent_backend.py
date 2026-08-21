@@ -221,6 +221,7 @@ class PersistentBackendTransportTests(unittest.TestCase):
                 "commit_move_orders",
                 "refresh",
                 "auto_resolve",
+                "repair",
             },
         )
         for op in (
@@ -230,6 +231,9 @@ class PersistentBackendTransportTests(unittest.TestCase):
             "reset_test_campaign",
             "end_turn",
             "run_ai",
+            "recruit",
+            "research",
+            "assign",
         ):
             self.assertNotIn(op, persistent_backend.SUPPORTED_OPS)
 

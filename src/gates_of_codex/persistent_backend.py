@@ -36,6 +36,9 @@ SUPPORTED_OPS = frozenset(
         "commit_move_orders",
         "refresh",
         "auto_resolve",
+        # #149 force-loop frontend op. Full-refresh only; not a persist/runtime-patch
+        # op. Recruit/research/assign stay closed until they exist as frontend ops.
+        "repair",
     }
 )
 IDLE_TIMEOUT_SECONDS = 900.0
