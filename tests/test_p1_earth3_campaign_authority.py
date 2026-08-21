@@ -728,7 +728,8 @@ class Earth3DefaultCreationAndFrontendTests(unittest.TestCase):
     def test_new_parser_defaults_to_earth3_and_accepts_positional_output(self) -> None:
         output = self.root / "campaign.json"
         args = build_parser().parse_args(["new", str(output)])
-        self.assertEqual(EARTH3_SCENARIO_ID, args.scenario)
+        self.assertEqual(DEFAULT_SCENARIO_ID, args.scenario)
+        self.assertEqual("ww3_2028_core", args.scenario)
         self.assertEqual(str(output), args.campaign)
 
     def test_default_new_creates_earth3_without_reading_stale_snapshot(self) -> None:

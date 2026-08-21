@@ -344,7 +344,7 @@ jobs:
               [
                   "--new",
                   "--campaign",
-                  str(root / "home" / "campaigns" / "earth3_v1"),
+                  str(root / "home" / "campaigns" / "ww3_2028_core"),
                   "--no-launch",
               ]
           )
