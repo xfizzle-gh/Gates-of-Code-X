@@ -73,6 +73,44 @@ class AutoResolveSoakHarnessTests(unittest.TestCase):
         self.assertTrue(probe["ww3_2028_core"]["in_registry"])
         self.assertEqual("production", probe["ww3_2028_core"]["status"])
 
+    def test_player_loop_prefers_cheapest_unlock_and_affordable_recruit(self) -> None:
+        _ensure_src_path()
+        harness = _load_harness()
+        panel = {
+            "resources": 200,
+            "available_research": [
+                {"key": "actor:ukr:unit:fixture_ukr_artillery", "cost": 100},
+                {"key": "actor:ukr:unit:fixture_ukr_infantry", "cost": 100},
+            ],
+            "recruitment_offers": [
+                {
+                    "unit_name": "fixture_ukr_artillery",
+                    "purchase_cost": 345,
+                    "unlocked": False,
+                    "missing_research": ["actor:ukr:unit:fixture_ukr_artillery"],
+                    "research_options": ["actor:ukr:unit:fixture_ukr_artillery"],
+                },
+                {
+                    "unit_name": "fixture_ukr_infantry",
+                    "purchase_cost": 170,
+                    "unlocked": False,
+                    "missing_research": ["actor:ukr:unit:fixture_ukr_infantry"],
+                    "research_options": ["actor:ukr:unit:fixture_ukr_infantry"],
+                },
+            ],
+        }
+        research = harness._cheapest_unlock_research(panel)
+        self.assertEqual("actor:ukr:unit:fixture_ukr_infantry", research["key"])
+        unlocked = {
+            **panel,
+            "recruitment_offers": [
+                {**panel["recruitment_offers"][0], "unlocked": True},
+                {**panel["recruitment_offers"][1], "unlocked": True},
+            ],
+        }
+        offer = harness._cheapest_affordable_offer(unlocked, available=200)
+        self.assertEqual("fixture_ukr_infantry", offer["unit_name"])
+
     def test_harness_fails_closed_when_persist_gate_drifts(self) -> None:
         _ensure_src_path()
         harness = _load_harness()

@@ -87,6 +87,9 @@ def load_campaign_rules_contract() -> dict[str, Any]:
             raise CampaignRulesError(f"{name} preset turn_cap must be a positive week count")
         if not isinstance(row.get("thresholds"), dict):
             raise CampaignRulesError(f"{name} preset must define the same threshold keys as #75")
+        opening = row.get("opening_actor_treasury")
+        if opening is not None and int(opening) < 1:
+            raise CampaignRulesError(f"{name} preset opening_actor_treasury must be a positive treasury floor")
     _validate_objective_pack_resolution(raw)
     return raw
 
@@ -463,10 +466,39 @@ def ensure_campaign_rules(
         }
     if not rules["opening_formations"]:
         rules["opening_formations"] = _living_formation_counts(state)
+    _apply_acceptance_opening_treasury(state, rules, preset)
     state.map_metadata[CAMPAIGN_RULES_KEY] = rules
     if pack:
         _apply_objective_contract(state, pack)
     return rules
+
+
+def _apply_acceptance_opening_treasury(
+    state: CampaignState,
+    rules: dict[str, Any],
+    preset: Mapping[str, Any],
+) -> None:
+    """Once-only public p10_acceptance floor. Does not change Short/Medium/Long."""
+
+    if rules.get("acceptance_opening_treasury_applied"):
+        return
+    floor = int(preset.get("opening_actor_treasury") or 0)
+    if floor <= 0:
+        rules["acceptance_opening_treasury_applied"] = True
+        return
+    from .strategic_actors import ACTOR_RUNTIME_KEY, ensure_strategic_actor_runtime, selected_actor
+
+    existing = state.map_metadata.get(ACTOR_RUNTIME_KEY)
+    if not isinstance(existing, dict) or not existing.get("actors"):
+        return
+    actors = ensure_strategic_actor_runtime(state)
+    actor = selected_actor(state)
+    if int(actor.resources) < floor:
+        actor.resources = floor
+    runtime = state.map_metadata.get(ACTOR_RUNTIME_KEY)
+    if isinstance(runtime, dict):
+        runtime["actors"] = {key: actors[key].to_dict() for key in sorted(actors)}
+    rules["acceptance_opening_treasury_applied"] = True
 
 
 def _apply_objective_contract(state: CampaignState, pack: Mapping[str, Any]) -> None:

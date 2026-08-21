@@ -715,6 +715,48 @@ def _eligible_forward_depot_province(state: Any, actor_id: str) -> tuple[str, li
     return pending_funds, pending_reasons
 
 
+def _cheapest_unlock_research(panel: dict[str, Any]) -> dict[str, Any] | None:
+    """Prefer the research node that unlocks the cheapest currently locked offer."""
+
+    research_rows = [row for row in (panel.get("available_research") or []) if row.get("key")]
+    research_by_key = {str(row.get("key") or ""): row for row in research_rows}
+    locked = [
+        row
+        for row in (panel.get("recruitment_offers") or [])
+        if not row.get("unlocked")
+    ]
+    locked.sort(key=lambda row: int(row.get("purchase_cost") or 10**9))
+    for offer in locked:
+        for key in list(offer.get("research_options") or []) + list(offer.get("missing_research") or []):
+            node = research_by_key.get(str(key))
+            if node:
+                return node
+    if not research_rows:
+        return None
+    return min(research_rows, key=lambda row: int(row.get("cost") or 0))
+
+
+def _cheapest_affordable_offer(
+    panel: dict[str, Any],
+    *,
+    available: int,
+) -> dict[str, Any] | None:
+    unlocked = [
+        row
+        for row in (panel.get("recruitment_offers") or [])
+        if row.get("unlocked") and str(row.get("unit_name") or "")
+    ]
+    if not unlocked:
+        return None
+    affordable = [
+        row
+        for row in unlocked
+        if 0 < int(row.get("purchase_cost") or 0) <= available
+    ]
+    pool = affordable or unlocked
+    return min(pool, key=lambda row: int(row.get("purchase_cost") or 0))
+
+
 def _try_upgrade_site(
     session: SoakSession,
     state: Any,
@@ -855,16 +897,8 @@ def _exercise_player_loop(
         )
 
     if actor_id and not succeeded.get("research"):
-        research_rows = panel.get("available_research") or []
-        research_key = ""
-        for row in research_rows:
-            key = str(row.get("key") or "")
-            cost = int(row.get("cost") or 0)
-            if key and 0 < cost <= 200:
-                research_key = key
-                break
-        if not research_key and research_rows:
-            research_key = str(research_rows[0].get("key") or "")
+        research_row = _cheapest_unlock_research(panel)
+        research_key = str((research_row or {}).get("key") or "")
         if research_key:
             research = session.apply(
                 [{"op": "research", "actor": actor_id, "key": research_key}]
@@ -883,13 +917,12 @@ def _exercise_player_loop(
                 )
 
     if formation_id and not succeeded.get("recruit"):
-        offers = [
-            row
-            for row in (panel.get("recruitment_offers") or [])
-            if row.get("unlocked")
-        ]
-        if offers:
-            unit = str(offers[0].get("unit_name") or "")
+        offer = _cheapest_affordable_offer(
+            panel,
+            available=int(panel.get("resources") or 0),
+        )
+        if offer:
+            unit = str(offer.get("unit_name") or "")
             recruit = session.apply(
                 [
                     {

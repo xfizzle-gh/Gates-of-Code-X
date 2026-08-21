@@ -89,6 +89,7 @@ class CampaignRulesContractTests(unittest.TestCase):
         self.assertEqual(0, int(acceptance["required_war_aims"]))
         self.assertEqual(1, int(acceptance["required_national"]))
         self.assertEqual(1, int(acceptance["thresholds"]["victory"]))
+        self.assertGreaterEqual(int(acceptance["opening_actor_treasury"]), 670)
         self.assertEqual("p10_acceptance", normalize_length_preset("p10_acceptance"))
 
     def test_calendar_derives_week_and_year_from_turn_number(self) -> None:
