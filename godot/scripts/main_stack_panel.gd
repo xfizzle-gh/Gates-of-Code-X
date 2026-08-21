@@ -282,6 +282,67 @@ func _draw_management_panel() -> void:
 	var stack_bottom := _stack_section_bottom(y, viewport.y - y - 12.0)
 	if stack_bottom + 80.0 < viewport.y:
 		_draw_targets_and_objectives(x, stack_bottom + 12.0)
+	_draw_end_turn_economy_report()
+
+
+func _draw_end_turn_economy_report() -> void:
+	## Compact event-driven overlay. Drawn only from the last End Turn payload.
+	if not economy_report_open:
+		return
+	if economy_report.is_empty() or not bool(economy_report.get("settled", false)):
+		return
+	var viewport := get_viewport_rect().size
+	var extra := 0.0 if String(economy_report.get("other_actors_summary", "")).is_empty() else 20.0
+	var card := Rect2(24.0, 24.0, 360.0, 178.0 + extra)
+	if card.position.x + card.size.x > viewport.x - PANEL_WIDTH - 16.0:
+		card.size.x = maxf(240.0, viewport.x - PANEL_WIDTH - 40.0)
+	draw_rect(card, Color(0.04, 0.07, 0.10, 0.94))
+	draw_rect(card, Color(0.95, 0.84, 0.42, 0.85), false, 1.5)
+	var x := card.position.x + 14.0
+	var y := card.position.y + 22.0
+	_draw_panel_text("ROUND ECONOMY", Vector2(x, y), 11, Color(0.55, 0.72, 0.86, 1.0))
+	y += 20.0
+	_draw_panel_text(
+		String(economy_report.get("display_name", economy_report.get("actor_id", "Actor"))),
+		Vector2(x, y),
+		13,
+		Color(0.95, 0.84, 0.42, 1.0)
+	)
+	y += 20.0
+	_draw_panel_text(
+		"Income %s   Maintenance %s" % [
+			_fmt_int(economy_report.get("income", 0)),
+			_fmt_int(economy_report.get("maintenance", 0)),
+		],
+		Vector2(x, y),
+		13,
+		Color(0.90, 0.94, 0.98, 1.0)
+	)
+	y += 18.0
+	var net := int(economy_report.get("net", 0))
+	_draw_panel_text(
+		"Net %s   Treasury %s" % [_fmt_signed(net), _fmt_int(economy_report.get("treasury", 0))],
+		Vector2(x, y),
+		13,
+		Color(0.63, 0.90, 0.72, 1.0) if net >= 0 else Color(0.95, 0.62, 0.48, 1.0)
+	)
+	y += 20.0
+	var summary := String(economy_report.get("other_actors_summary", "")).strip_edges()
+	if not summary.is_empty():
+		_draw_panel_text(summary, Vector2(x, y), 12, Color(0.70, 0.76, 0.82, 1.0))
+		y += 20.0
+	var dismiss := Rect2(card.position.x + 12.0, card.position.y + card.size.y - 36.0, card.size.x - 24.0, 24.0)
+	draw_rect(dismiss, Color(0.10, 0.16, 0.20, 1.0))
+	draw_rect(dismiss, Color(0.30, 0.92, 0.76, 0.8), false, 1.0)
+	_draw_panel_text("Dismiss report", dismiss.position + Vector2(8, 16), 11, Color.WHITE)
+	button_rects["dismiss_economy_report"] = dismiss
+
+
+func _fmt_signed(value: Variant) -> String:
+	var amount := int(value)
+	if amount > 0:
+		return "+%s" % _fmt_int(amount)
+	return _fmt_int(amount)
 
 
 func pending_battle_modal_model() -> Dictionary:
@@ -1155,6 +1216,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
+		if (event as InputEventKey).keycode == KEY_ESCAPE and economy_report_open:
+			_handle_button("dismiss_economy_report")
+			get_viewport().set_input_as_handled()
+			return
 		if (event as InputEventKey).keycode == KEY_SPACE and operational_presenter != null and operational_presenter.is_active():
 			_handle_button("skip_presentation")
 			get_viewport().set_input_as_handled()

@@ -34,6 +34,9 @@ var force_management_open := false
 var force_panel: Dictionary = {}
 var force_panel_tab := "recruit"
 var force_panel_scroll := 0
+## Event-driven End Turn earn/spend overlay. Filled from end_player_round data.
+var economy_report: Dictionary = {}
+var economy_report_open := false
 
 
 func _ready() -> void:
@@ -338,7 +341,7 @@ func _command_mutates_state(button_id: String) -> bool:
 	if button_id == "verify_result":
 		# Read-only verification: never mutates campaign or snapshot.
 		return false
-	if button_id in ["manage_forces", "close_force_panel"] or button_id.begins_with("force_tab:"):
+	if button_id in ["manage_forces", "close_force_panel", "dismiss_economy_report"] or button_id.begins_with("force_tab:"):
 		return false
 	if button_id.begins_with("move:") or button_id.begins_with("construct:"):
 		return true
@@ -687,6 +690,9 @@ func _handle_button(button_id: String) -> void:
 		force_management_open = false
 		status_message = "Force management closed."
 		queue_redraw()
+		return
+	if button_id == "dismiss_economy_report":
+		dismiss_end_turn_economy_report()
 		return
 	if button_id.begins_with("force_tab:"):
 		force_panel_tab = button_id.trim_prefix("force_tab:")
@@ -1091,6 +1097,24 @@ func _capture_force_panel(payload: Dictionary) -> void:
 	force_management_open = true
 
 
+func _capture_end_turn_economy_report(payload: Dictionary) -> void:
+	var data := _result_data(payload, "end_player_round")
+	var report: Variant = data.get("economy_report", {})
+	if not report is Dictionary:
+		return
+	var row := (report as Dictionary).duplicate(true)
+	if not bool(row.get("settled", false)):
+		return
+	economy_report = row
+	economy_report_open = true
+
+
+func dismiss_end_turn_economy_report() -> void:
+	economy_report_open = false
+	status_message = "Economy report dismissed."
+	queue_redraw()
+
+
 func _clear_campaign_runtime() -> void:
 	provinces_by_id.clear()
 	battalions_by_province.clear()
@@ -1112,6 +1136,8 @@ func _clear_campaign_runtime() -> void:
 	force_panel = {}
 	force_panel_tab = "recruit"
 	force_panel_scroll = 0
+	economy_report = {}
+	economy_report_open = false
 	last_handoff_save_path = ""
 	last_handoff_battle_id = ""
 	last_verified_save_path = ""
@@ -1206,6 +1232,7 @@ func _on_command_finished(
 	_parse_apply_output(output_text)
 	_capture_verification(backend_payload)
 	_capture_force_panel(backend_payload)
+	_capture_end_turn_economy_report(backend_payload)
 	if op == "restore_backup":
 		last_handoff_save_path = ""
 		last_handoff_battle_id = ""
@@ -1235,11 +1262,17 @@ func _on_command_finished(
 	if status_message.is_empty():
 		if op == "actor_force_panel":
 			status_message = "Force management ready for %s." % String(force_panel.get("display_name", force_panel.get("actor_id", "actor")))
+		elif op == "end_player_round" and economy_report_open:
+			status_message = "Round economy: income %s, maintenance %s, treasury %s." % [
+				int(economy_report.get("income", 0)),
+				int(economy_report.get("maintenance", 0)),
+				int(economy_report.get("treasury", 0)),
+			]
 		else:
 			status_message = "Applied %s." % op
 	if snapshot.get("pending_battle") != null and op != "handoff":
 		status_message += " Pending battle ready - Auto-resolve or Handoff."
 	_fit_to_focus(false)
 	queue_redraw()
-	if force_management_open and op in ["research", "recruit", "assign", "repair", "end_turn", "run_ai"]:
+	if force_management_open and op in ["research", "recruit", "assign", "repair", "end_turn", "end_player_round", "run_ai"]:
 		request_force_panel()

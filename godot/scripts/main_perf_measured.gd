@@ -392,6 +392,7 @@ func _consume_runtime_patch_result(
 
 	_parse_apply_output(output_text)
 	_capture_verification(backend_payload)
+	_capture_end_turn_economy_report(backend_payload)
 	_commit_snapshot_state(built, previous_selected, previous_battalion, true)
 	_ensure_operational_presenter()
 	operational_presenter.begin_transition(
@@ -403,7 +404,14 @@ func _consume_runtime_patch_result(
 	view_scale = previous_scale
 	view_offset = previous_offset
 	if status_message.is_empty():
-		status_message = "Applied %s." % op
+		if op == "end_player_round" and economy_report_open:
+			status_message = "Round economy: income %s, maintenance %s, treasury %s." % [
+				int(economy_report.get("income", 0)),
+				int(economy_report.get("maintenance", 0)),
+				int(economy_report.get("treasury", 0)),
+			]
+		else:
+			status_message = "Applied %s." % op
 	if snapshot.get("pending_battle") != null:
 		status_message += " Pending battle ready - Auto-resolve or Handoff."
 	_fit_to_focus(false)

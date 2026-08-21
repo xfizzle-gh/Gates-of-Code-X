@@ -535,7 +535,7 @@ def build_frontend_runtime_patch(
         row.pop("metadata", None)
         province_patch.append(row)
 
-    return {
+    payload = {
         "schema": RUNTIME_PATCH_SCHEMA,
         "schema_version": RUNTIME_PATCH_SCHEMA_VERSION,
         "merge": {
@@ -573,3 +573,9 @@ def build_frontend_runtime_patch(
             ),
         },
     }
+    from .frontend_actor_force import build_acting_actor_presentation
+
+    acting_actor = build_acting_actor_presentation(state)
+    if acting_actor is not None:
+        payload["replace"]["acting_actor"] = acting_actor
+    return payload
