@@ -36,6 +36,11 @@ class GodotActorForcePanelContractTests(unittest.TestCase):
         self.assertIn('if is_command_busy():', writeback)
         self.assertIn("queue_redraw()", writeback)
 
+    def test_godot_map_runs_headless_force_panel_script(self) -> None:
+        workflow = (ROOT / ".github/workflows/gates-of-codex.yml").read_text(encoding="utf-8")
+        self.assertIn("actor_force_panel_test.gd", workflow)
+        self.assertIn("Godot actor force-management panel test (#149)", workflow)
+
 
 if __name__ == "__main__":
     unittest.main()

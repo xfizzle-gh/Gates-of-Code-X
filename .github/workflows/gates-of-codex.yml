@@ -314,6 +314,12 @@ jobs:
           set -euo pipefail
           "$HOME/godot" --headless --path . --audio-driver Dummy \
             -s res://scripts/tools/campaign_rules_presenter_test.gd
+      - name: Godot actor force-management panel test (#149)
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          "$HOME/godot" --headless --path . --audio-driver Dummy \
+            -s res://scripts/tools/actor_force_panel_test.gd
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
