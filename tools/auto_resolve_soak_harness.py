@@ -555,7 +555,10 @@ def _opposing_factions(state: Any) -> set[str]:
     selected = state.selected_faction.value
     alliances = state.alliances if isinstance(state.alliances, dict) else {}
     allied: set[str] = {selected}
-    for members in alliances.values():
+    for row in alliances.values():
+        members = getattr(row, "factions", None)
+        if members is None:
+            members = row
         values = {getattr(item, "value", str(item)) for item in members}
         if selected in values:
             allied.update(values)
