@@ -279,7 +279,7 @@ class Issue149PersistentBackendRepairDaemonTests(unittest.TestCase):
         )
         self._start_daemon()
         report = self._apply(
-            [{"op": "repair", "formation": "sf-n", "points": 15}]
+            [{"op": "repair", "formation": "toe-nato", "points": 15}]
         )
         self.assertTrue(report.get("ok"), report)
         self.assertEqual(
