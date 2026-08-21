@@ -58,6 +58,7 @@ class PlayerRoundEngineReuseTests(unittest.TestCase):
             selected_faction=Faction.NATO,
             current_faction=Faction.NATO,
             turn_number=12,
+            map_metadata={},
             factions={
                 faction.value: SimpleNamespace(is_eliminated=False)
                 for faction in (
