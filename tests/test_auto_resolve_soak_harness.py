@@ -213,7 +213,58 @@ class AutoResolveSoakHarnessTests(unittest.TestCase):
         self.assertTrue(report["p10_exit"])
         self.assertIn("naturally produced", report["p10_exit_evidence"])
         self.assertFalse(report["goh_invoked"])
-        self.assertEqual("complete", (report.get("campaign_outcome") or {}).get("status"))
+        outcome = report.get("campaign_outcome") or {}
+        self.assertEqual("complete", outcome.get("status"))
+        self.assertIn(outcome.get("grade"), {"victory", "decisive_victory", "defeat", "decisive_defeat"})
+        self.assertIn(outcome.get("selected_faction_result"), {"victory", "defeat"})
+        for field in harness.VICTORY_EVIDENCE_FIELDS:
+            self.assertIn(field, outcome)
+            self.assertIsNotNone(outcome.get(field), field)
+        self.assertTrue(outcome.get("matches_authoritative_state"))
+        required = report.get("required_capabilities") or {}
+        self.assertEqual(set(harness.REQUIRED_P10_CAPABILITIES), set(required))
+        self.assertTrue(all(required.values()), required)
+        self.assertFalse(report.get("missing_player_loop_capabilities"), report.get("gaps"))
         self.assertTrue(report["continue_identity"]["performed"])
         self.assertEqual("ww3_2028_core", report["continue_identity"]["scenario_id"])
         self.assertEqual("ukr", report["continue_identity"]["selected_actor_id"])
+
+    def test_victory_probe_preserves_authoritative_terminal_fields(self) -> None:
+        _ensure_src_path()
+        harness = _load_harness()
+        fields = harness._outcome_fields(
+            {
+                "status": "complete",
+                "grade": "victory",
+                "selected_faction_result": "victory",
+                "coalition_result": "incomplete",
+                "national_result": "victory",
+                "momentum": 8,
+                "reason": "campaign victory: required war aims and national contribution before the turn cap",
+            }
+        )
+        self.assertEqual(
+            list(harness.VICTORY_EVIDENCE_FIELDS),
+            list(fields),
+        )
+        self.assertEqual("victory", fields["grade"])
+        self.assertEqual("victory", fields["national_result"])
+        self.assertEqual(8, fields["momentum"])
+        self.assertFalse(
+            harness._terminal_result_ok(
+                {
+                    "status": "complete",
+                    "grade": "negotiated_advantage",
+                    "selected_faction_result": "active",
+                }
+            )
+        )
+        self.assertTrue(
+            harness._terminal_result_ok(
+                {
+                    "status": "complete",
+                    "grade": "victory",
+                    "selected_faction_result": "victory",
+                }
+            )
+        )

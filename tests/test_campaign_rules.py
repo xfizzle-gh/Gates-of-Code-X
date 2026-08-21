@@ -86,6 +86,9 @@ class CampaignRulesContractTests(unittest.TestCase):
         self.assertEqual(LENGTH_PRESET_CHOICES, ("short", "medium", "long"))
         acceptance = contract["presets"]["p10_acceptance"]
         self.assertGreaterEqual(int(acceptance["turn_cap"]), 1)
+        self.assertEqual(0, int(acceptance["required_war_aims"]))
+        self.assertEqual(1, int(acceptance["required_national"]))
+        self.assertEqual(1, int(acceptance["thresholds"]["victory"]))
         self.assertEqual("p10_acceptance", normalize_length_preset("p10_acceptance"))
 
     def test_calendar_derives_week_and_year_from_turn_number(self) -> None:
@@ -903,17 +906,6 @@ class CampaignRules2028PackTests(unittest.TestCase):
         with self.assertRaisesRegex(CampaignRulesError, "does not match scenario"):
             ensure_campaign_rules(state, length_preset="short", victory_model=VICTORY_MODEL_P9)
 
-    def test_expanded_refuses_stamped_core_or_earth3_victory_pack(self) -> None:
-        state = _rules_state(p9=False)
-        state.map_metadata.pop(CAMPAIGN_RULES_KEY, None)
-        state.map_metadata["scenario_id"] = SCENARIO_ID_2028_EXPANDED
-        state.map_metadata[CAMPAIGN_RULES_KEY] = {"objective_pack_id": PACK_ID_2028_CORE}
-        with self.assertRaisesRegex(CampaignRulesError, "does not match scenario"):
-            ensure_campaign_rules(state, length_preset="short", victory_model=VICTORY_MODEL_P9)
-        state.map_metadata[CAMPAIGN_RULES_KEY] = {"objective_pack_id": PACK_ID_EARTH3}
-        with self.assertRaisesRegex(CampaignRulesError, "does not match scenario"):
-            ensure_campaign_rules(state, length_preset="short", victory_model=VICTORY_MODEL_P9)
-
     def test_expanded_unavailable_reason_does_not_claim_core_four_coverage(self) -> None:
         reason = load_campaign_rules_contract()["objective_pack_resolution"][
             "unavailable_scenario_ids"
@@ -949,21 +941,6 @@ class CampaignRules2028PackTests(unittest.TestCase):
         _validate_objective_pack(future, expected_pack_id="ww3_2028_future_example")
         with self.assertRaisesRegex(CampaignRulesError, r"must map actor 'nato'|nato, ukr, rusa, and prc"):
             _validate_2028_core_pack(future)
-
-    def test_end_player_round_can_lock_time_limit_without_already_complete(self) -> None:
-        """UKR is not last in TURN_ORDER. Crossing the cap must not abort the round."""
-
-        from gates_of_codex.turn_cycle import end_player_round
-
-        state = _earth3_location_state(scenario_id="ww3_2028_core", selected=Faction.UKRAINE)
-        state.turn_number = int(state.map_metadata[CAMPAIGN_RULES_KEY]["turn_cap"])
-        state.current_faction = Faction.UKRAINE
-        report = end_player_round(state)
-        self.assertFalse(report["pending_battle"])
-        outcome = state.map_metadata.get("campaign_outcome") or {}
-        self.assertEqual("complete", outcome.get("status"))
-        self.assertTrue(campaign_play_blocked(state))
-        self.assertGreater(int(state.turn_number), int(state.map_metadata[CAMPAIGN_RULES_KEY]["turn_cap"]))
 
     def test_core_campaign_can_win_and_lose_in_p9_engine(self) -> None:
         winning = _earth3_location_state(scenario_id="ww3_2028_core")

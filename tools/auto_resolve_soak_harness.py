@@ -63,6 +63,35 @@ P10_ACCEPTANCE_PRESET = "p10_acceptance"
 DEFAULT_FACTION = "ukr"
 RUNTIME_PATCH_SCHEMA = "gates-of-codex.frontend-runtime-patch"
 PLACEHOLDER_SNAPSHOT_SCHEMA = "gates-of-codex.soak-placeholder"
+VICTORY_EVIDENCE_FIELDS = (
+    "status",
+    "grade",
+    "selected_faction_result",
+    "coalition_result",
+    "national_result",
+    "momentum",
+    "reason",
+)
+TERMINAL_FACTION_RESULTS = frozenset({"victory", "defeat"})
+TERMINAL_GRADES = frozenset(
+    {"victory", "decisive_victory", "defeat", "decisive_defeat"}
+)
+REQUIRED_P10_CAPABILITIES = (
+    "research",
+    "recruit",
+    "assign",
+    "repair",
+    "query_supply",
+    "query_supply_foreign_reject",
+    "repair_foreign_omitted_actor_reject",
+    "upgrade_site",
+    "issue_move_order_commit",
+    "end_player_round",
+    "natural_contact",
+    "auto_resolve",
+    "save_continue",
+    "terminal_result",
+)
 
 AUTHORITY_MARKERS = (
     "authority",
@@ -339,6 +368,18 @@ def _scenario_probe() -> dict[str, Any]:
     }
 
 
+def _outcome_fields(raw: Any) -> dict[str, Any]:
+    """Preserve the authoritative #75 terminal fields for JSON evidence."""
+
+    payload = {field: None for field in VICTORY_EVIDENCE_FIELDS}
+    if raw is None:
+        return payload
+    getter = raw.get if isinstance(raw, dict) else lambda key, default=None: getattr(raw, key, default)
+    for field in VICTORY_EVIDENCE_FIELDS:
+        payload[field] = getter(field)
+    return payload
+
+
 def _victory_probe(state: Any | None = None) -> dict[str, Any]:
     from gates_of_codex.frontend import _control_block
     from gates_of_codex.strategic import evaluate_campaign_outcome
@@ -353,14 +394,10 @@ def _victory_probe(state: Any | None = None) -> dict[str, Any]:
             ops = [f"<probe_failed:{exc}>"]
     outcome = None
     if state is not None:
-        outcome = evaluate_campaign_outcome(state)
-        outcome = {
-            "status": outcome.status,
-            "winner_coalition": outcome.winner_coalition,
-            "loser_coalition": outcome.loser_coalition,
-            "reason": outcome.reason,
-            "selected_faction_result": outcome.selected_faction_result,
-        }
+        evaluated = evaluate_campaign_outcome(state)
+        outcome = _outcome_fields(evaluated)
+        outcome["winner_coalition"] = evaluated.winner_coalition
+        outcome["loser_coalition"] = evaluated.loser_coalition
     return {
         "evaluate_campaign_outcome_exists": True,
         "frontend_victory_op": any(
@@ -624,12 +661,53 @@ def _player_actor_id(state: Any) -> str:
 
 
 def _owned_formation_id(state: Any, actor_id: str) -> str:
+    owned: list[str] = []
     for force_id, force in sorted(state.strategic_formations.items()):
         if actor_id and str(getattr(force, "actor_id", "") or "") == actor_id:
+            owned.append(force_id)
+        elif force.faction == state.selected_faction:
+            owned.append(force_id)
+    if not owned:
+        return ""
+    from gates_of_codex.site_upgrade import site_upgrade_blocked_reasons
+
+    for force_id in owned:
+        force = state.strategic_formations[force_id]
+        province_id = str(getattr(getattr(force, "position", None), "province_id", "") or "")
+        if not province_id:
+            continue
+        reasons = site_upgrade_blocked_reasons(
+            state,
+            province_id,
+            faction=state.selected_faction,
+            actor_id=actor_id or None,
+        )
+        if "province_not_owned" not in reasons and "province_not_owned_by_actor" not in reasons:
             return force_id
-        if force.faction == state.selected_faction:
-            return force_id
-    return ""
+    return owned[0]
+
+
+def _eligible_forward_depot_province(state: Any, actor_id: str) -> tuple[str, list[str]]:
+    """Return a public-eligibility Forward Depot province and its block reasons."""
+
+    from gates_of_codex.site_upgrade import site_upgrade_blocked_reasons
+
+    affordable = ""
+    pending_funds = ""
+    pending_reasons: list[str] = []
+    for province_id in sorted(state.provinces):
+        reasons = site_upgrade_blocked_reasons(
+            state,
+            str(province_id),
+            faction=state.selected_faction,
+            actor_id=actor_id or None,
+        )
+        if not reasons:
+            return str(province_id), []
+        if reasons == ["insufficient_resources"] and not pending_funds:
+            pending_funds = str(province_id)
+            pending_reasons = list(reasons)
+    return pending_funds, pending_reasons
 
 
 def _enemy_formation_id(state: Any) -> str:
@@ -648,35 +726,25 @@ def _site_upgrade_fingerprint(state: Any) -> str:
     return hashlib.sha256(repr(rows).encode("utf-8")).hexdigest()
 
 
-def _exercise_player_loop(session: SoakSession, state: Any, gaps: list[dict[str, Any]]) -> dict[str, Any]:
-    """Drive the composed P10 frontend commands. Failures that are eligibility
-    skips are recorded; authority holes raise.
-    """
-
-    attempted: list[dict[str, Any]] = []
-    actor_id = _player_actor_id(state)
-    formation_id = _owned_formation_id(state, actor_id)
-    battalion_id = ""
-    if formation_id:
-        force = state.strategic_formations[formation_id]
-        battalion_id = next(iter(force.battalion_ids), "")
-
-    panel_cmd = {
-        "op": "actor_force_panel",
-        "actor": actor_id,
-        "formation": formation_id,
-        "battalion": battalion_id,
-    }
+def _read_force_panel(
+    session: SoakSession,
+    state: Any,
+    *,
+    actor_id: str,
+    formation_id: str,
+    battalion_id: str,
+) -> dict[str, Any]:
     upgrades_before = _site_upgrade_fingerprint(state)
-    panel_payload = session.apply([panel_cmd])
-    panel = {}
-    if panel_payload.get("ok"):
-        results = panel_payload.get("results") or []
-        if results:
-            panel = results[0].get("data") or {}
-        attempted.append({"op": "actor_force_panel", "ok": True, "actor": actor_id})
-    else:
-        attempted.append({"op": "actor_force_panel", "ok": False})
+    payload = session.apply(
+        [
+            {
+                "op": "actor_force_panel",
+                "actor": actor_id,
+                "formation": formation_id,
+                "battalion": battalion_id,
+            }
+        ]
+    )
     from gates_of_codex.state_io import load_campaign
 
     after_panel = load_campaign(session.campaign)
@@ -685,8 +753,43 @@ def _exercise_player_loop(session: SoakSession, state: Any, gaps: list[dict[str,
             "authority_violation",
             "actor_force_panel / snapshot read mutated province site_upgrades",
         )
+    if not payload.get("ok"):
+        return {}
+    results = payload.get("results") or []
+    if not results:
+        return {}
+    data = results[0].get("data") or {}
+    return data if isinstance(data, dict) else {}
 
-    if actor_id:
+
+def _exercise_player_loop(
+    session: SoakSession,
+    state: Any,
+    gaps: list[dict[str, Any]],
+    *,
+    already: dict[str, bool] | None = None,
+) -> dict[str, Any]:
+    """Drive the composed P10 frontend commands using public campaign mechanics."""
+
+    succeeded = dict(already or {})
+    attempted: list[dict[str, Any]] = []
+    actor_id = _player_actor_id(state)
+    formation_id = _owned_formation_id(state, actor_id)
+    battalion_id = ""
+    if formation_id:
+        force = state.strategic_formations[formation_id]
+        battalion_id = next(iter(force.battalion_ids), "")
+
+    panel = _read_force_panel(
+        session,
+        state,
+        actor_id=actor_id,
+        formation_id=formation_id,
+        battalion_id=battalion_id,
+    )
+    attempted.append({"op": "actor_force_panel", "ok": bool(panel), "actor": actor_id})
+
+    if actor_id and not succeeded.get("research"):
         research_rows = panel.get("available_research") or []
         research_key = ""
         for row in research_rows:
@@ -698,18 +801,25 @@ def _exercise_player_loop(session: SoakSession, state: Any, gaps: list[dict[str,
         if not research_key and research_rows:
             research_key = str(research_rows[0].get("key") or "")
         if research_key:
-            session.apply([{"op": "research", "actor": actor_id, "key": research_key}])
-            attempted.append({"op": "research", "key": research_key})
-        else:
-            gaps.append(
-                {
-                    "id": "research_offer",
-                    "severity": "skip",
-                    "detail": f"no purchasable research for actor {actor_id}",
-                }
+            research = session.apply(
+                [{"op": "research", "actor": actor_id, "key": research_key}]
             )
+            ok = bool(research.get("ok"))
+            attempted.append({"op": "research", "key": research_key, "ok": ok})
+            succeeded["research"] = ok
+            if ok:
+                from gates_of_codex.state_io import load_campaign
 
-    if formation_id:
+                state = load_campaign(session.campaign)
+                panel = _read_force_panel(
+                    session,
+                    state,
+                    actor_id=actor_id,
+                    formation_id=formation_id,
+                    battalion_id=battalion_id,
+                )
+
+    if formation_id and not succeeded.get("recruit"):
         offers = [
             row
             for row in (panel.get("recruitment_offers") or [])
@@ -728,8 +838,10 @@ def _exercise_player_loop(session: SoakSession, state: Any, gaps: list[dict[str,
                     }
                 ]
             )
-            attempted.append({"op": "recruit", "unit": unit, "ok": bool(recruit.get("ok"))})
-            if recruit.get("ok"):
+            ok = bool(recruit.get("ok"))
+            attempted.append({"op": "recruit", "unit": unit, "ok": ok})
+            succeeded["recruit"] = ok
+            if ok and not succeeded.get("assign"):
                 assign = session.apply(
                     [
                         {
@@ -742,15 +854,11 @@ def _exercise_player_loop(session: SoakSession, state: Any, gaps: list[dict[str,
                         }
                     ]
                 )
-                attempted.append({"op": "assign", "unit": unit, "ok": bool(assign.get("ok"))})
-        else:
-            gaps.append(
-                {
-                    "id": "recruit_offer",
-                    "severity": "skip",
-                    "detail": f"no unlocked recruitment offer for {formation_id}",
-                }
-            )
+                assign_ok = bool(assign.get("ok"))
+                attempted.append({"op": "assign", "unit": unit, "ok": assign_ok})
+                succeeded["assign"] = assign_ok
+
+    if formation_id and not succeeded.get("repair"):
         repair = session.apply(
             [
                 {
@@ -762,14 +870,17 @@ def _exercise_player_loop(session: SoakSession, state: Any, gaps: list[dict[str,
                 }
             ]
         )
-        attempted.append({"op": "repair", "ok": bool(repair.get("ok"))})
-        supply = session.apply(
-            [{"op": "query_supply", "formation": formation_id}]
-        )
-        attempted.append({"op": "query_supply", "ok": bool(supply.get("ok"))})
+        ok = bool(repair.get("ok"))
+        attempted.append({"op": "repair", "ok": ok})
+        succeeded["repair"] = ok
+    if formation_id and not succeeded.get("query_supply"):
+        supply = session.apply([{"op": "query_supply", "formation": formation_id}])
+        ok = bool(supply.get("ok"))
+        attempted.append({"op": "query_supply", "ok": ok})
+        succeeded["query_supply"] = ok
 
     enemy_id = _enemy_formation_id(state)
-    if enemy_id:
+    if enemy_id and not succeeded.get("query_supply_foreign_reject"):
         session.apply(
             [{"op": "query_supply", "formation": enemy_id}],
             expected_reject=True,
@@ -781,6 +892,8 @@ def _exercise_player_loop(session: SoakSession, state: Any, gaps: list[dict[str,
                 "expected_reject": True,
             }
         )
+        succeeded["query_supply_foreign_reject"] = True
+    if enemy_id and not succeeded.get("repair_foreign_omitted_actor_reject"):
         session.apply(
             [
                 {
@@ -798,46 +911,45 @@ def _exercise_player_loop(session: SoakSession, state: Any, gaps: list[dict[str,
                 "expected_reject": True,
             }
         )
+        succeeded["repair_foreign_omitted_actor_reject"] = True
 
-    province_id = ""
-    if formation_id:
-        force = state.strategic_formations[formation_id]
-        if force.position is not None:
-            province_id = str(getattr(force.position, "province_id", "") or "")
-        if not province_id:
-            for battalion_id_value in force.battalion_ids:
-                battalion = state.battalions.get(battalion_id_value)
-                if battalion is not None:
-                    province_id = str(battalion.province_id or "")
-                    if province_id:
-                        break
-    if province_id:
-        upgrade = session.apply(
-            [
+    if not succeeded.get("upgrade_site"):
+        province_id, reasons = _eligible_forward_depot_province(state, actor_id)
+        if province_id and "insufficient_resources" not in reasons:
+            upgrade = session.apply(
+                [
+                    {
+                        "op": "upgrade_site",
+                        "province": province_id,
+                        "actor": actor_id,
+                        "upgrade_id": "forward_depot",
+                    }
+                ]
+            )
+            ok = bool(upgrade.get("ok"))
+            attempted.append(
                 {
                     "op": "upgrade_site",
+                    "ok": ok,
                     "province": province_id,
-                    "actor": actor_id,
-                    "upgrade_id": "forward_depot",
                 }
-            ]
-        )
-        attempted.append(
-            {
-                "op": "upgrade_site",
-                "ok": bool(upgrade.get("ok")),
-                "province": province_id,
-            }
-        )
-    else:
-        gaps.append(
-            {
-                "id": "forward_depot_site",
-                "severity": "skip",
-                "detail": "no owned province available for Forward Depot this turn",
-            }
-        )
-    return {"attempted": attempted, "actor_id": actor_id, "formation_id": formation_id}
+            )
+            succeeded["upgrade_site"] = ok
+        elif province_id:
+            attempted.append(
+                {
+                    "op": "upgrade_site",
+                    "ok": False,
+                    "province": province_id,
+                    "waiting_for_treasury": True,
+                }
+            )
+    return {
+        "attempted": attempted,
+        "actor_id": actor_id,
+        "formation_id": formation_id,
+        "succeeded": succeeded,
+    }
 
 
 def _campaign_outcome_payload(state: Any) -> dict[str, Any]:
@@ -845,8 +957,41 @@ def _campaign_outcome_payload(state: Any) -> dict[str, Any]:
     locked = rules.get("locked_result") if isinstance(rules, dict) else {}
     outcome = state.map_metadata.get("campaign_outcome") or {}
     if isinstance(locked, dict) and locked:
-        return dict(locked)
-    return dict(outcome) if isinstance(outcome, dict) else {}
+        return _outcome_fields(locked)
+    return _outcome_fields(outcome if isinstance(outcome, dict) else {})
+
+
+def _terminal_result_ok(fields: dict[str, Any]) -> bool:
+    return (
+        str(fields.get("status") or "") == "complete"
+        and str(fields.get("selected_faction_result") or "") in TERMINAL_FACTION_RESULTS
+        and str(fields.get("grade") or "") in TERMINAL_GRADES
+    )
+
+
+def _required_capability_status(
+    *,
+    p10_exit: bool,
+    succeeded: dict[str, bool],
+    natural_battles: int,
+    battles: int,
+    save_reload: dict[str, Any],
+    continue_identity: dict[str, Any],
+    outcome: dict[str, Any],
+    ops_used: list[str],
+) -> dict[str, bool]:
+    status = {key: bool(succeeded.get(key)) for key in REQUIRED_P10_CAPABILITIES}
+    status["issue_move_order_commit"] = "issue_move_order" in ops_used and "commit_move_orders" in ops_used
+    status["end_player_round"] = "end_player_round" in ops_used
+    status["natural_contact"] = natural_battles >= 1
+    status["auto_resolve"] = battles >= 1
+    status["save_continue"] = bool(save_reload.get("performed")) and bool(
+        continue_identity.get("performed")
+    )
+    status["terminal_result"] = _terminal_result_ok(outcome)
+    if not p10_exit:
+        return status
+    return status
 
 
 def _campaign_complete(state: Any) -> bool:
@@ -943,7 +1088,9 @@ def run_soak(
     treasury_start: dict[str, Any] = {}
     treasury_final: dict[str, Any] = {}
     victory: dict[str, Any] = {}
+    authoritative: dict[str, Any] = _outcome_fields(None)
     p10_exit = False
+    capability_state: dict[str, bool] = {}
 
     try:
         from gates_of_codex.frontend import write_frontend_snapshot
@@ -1083,13 +1230,21 @@ def run_soak(
                         natural_battles += 1
                 continue
             if state.current_faction == state.selected_faction:
-                if p10_exit and not economy_done:
-                    economy = _exercise_player_loop(session, state, gaps)
-                    economy_done = True
-                    continue
-                if p10_exit and economy_done and turns_completed == 1:
-                    extra = _exercise_player_loop(session, state, gaps)
-                    economy.setdefault("follow_up", extra.get("attempted") or [])
+                if p10_exit:
+                    extra = _exercise_player_loop(
+                        session,
+                        state,
+                        gaps,
+                        already=capability_state,
+                    )
+                    capability_state = extra.get("succeeded") or capability_state
+                    if not economy_done:
+                        economy = extra
+                        economy_done = True
+                    else:
+                        economy.setdefault("follow_up", [])
+                        economy["follow_up"].extend(extra.get("attempted") or [])
+                        economy["succeeded"] = capability_state
                 move = _select_move(state)
                 if move is not None:
                     issue = {
@@ -1119,7 +1274,7 @@ def run_soak(
                         gaps.append(
                             {
                                 "id": "end_player_round_failed",
-                                "severity": "skip",
+                                "severity": "gap",
                                 "detail": detail,
                             }
                         )
@@ -1180,19 +1335,27 @@ def run_soak(
                 session.apply([{"op": "continue_playing"}])
         treasury_final = treasury_snapshot(state)
         victory = _victory_probe(state)
+        authoritative = _campaign_outcome_payload(state)
+        probe_outcome = _outcome_fields((victory.get("outcome") or {}) if victory else {})
+        if p10_exit and probe_outcome != authoritative:
+            raise SoakFatalError(
+                "authority_violation",
+                "victory probe fields do not match authoritative campaign state: "
+                f"probe={probe_outcome} state={authoritative}",
+            )
         if p10_exit and natural_battles < 1:
             raise SoakFatalError(
                 "crash",
                 "2028 acceptance soak produced no natural Auto-Resolve battle",
             )
-        if p10_exit and (victory.get("outcome") or {}).get("status") == "active":
+        if p10_exit and not _terminal_result_ok(authoritative):
             gaps.append(
                 {
                     "id": "campaign_not_terminal",
                     "severity": "gap",
                     "detail": (
-                        f"{turns_completed}-turn 2028 soak stayed ACTIVE; "
-                        "p10_acceptance turn cap should have graded a #75 result"
+                        f"{turns_completed}-turn 2028 soak did not reach an accepted "
+                        f"victory or defeat; observed {authoritative}"
                     ),
                 }
             )
@@ -1200,7 +1363,7 @@ def run_soak(
             gaps.append(
                 {
                     "id": "no_battles_auto_resolved",
-                    "severity": "skip",
+                    "severity": "gap" if p10_exit else "skip",
                     "detail": (
                         "soak completed with no pending battles; "
                         "Auto-Resolve was ready but not exercised this run"
@@ -1221,10 +1384,33 @@ def run_soak(
     commands = session.report_commands if session is not None else []
     failed = [row for row in commands if not row.get("ok") and not row.get("expected_reject")]
     ops_used = sorted({op for row in commands for op in (row.get("ops") or [])})
-    outcome = (victory.get("outcome") or {}) if victory else {}
+    outcome = _outcome_fields((victory.get("outcome") or {}) if victory else {})
+    if any(authoritative.get(field) is not None for field in VICTORY_EVIDENCE_FIELDS):
+        outcome = dict(authoritative)
+    required = _required_capability_status(
+        p10_exit=p10_exit,
+        succeeded=capability_state,
+        natural_battles=natural_battles,
+        battles=battles,
+        save_reload=save_reload,
+        continue_identity=continue_identity,
+        outcome=outcome,
+        ops_used=ops_used,
+    )
+    missing_required = [key for key, ok in required.items() if not ok]
+    if p10_exit:
+        for key in missing_required:
+            if not any(gap.get("id") == f"required_{key}" for gap in gaps):
+                gaps.append(
+                    {
+                        "id": f"required_{key}",
+                        "severity": "gap",
+                        "detail": f"required P10 capability {key} did not succeed",
+                    }
+                )
     p10_exit_evidence = (
         "2028 production path with at least one naturally produced Auto-Resolve battle"
-        if p10_exit and natural_battles and fatal is None
+        if p10_exit and natural_battles and fatal is None and not missing_required
         else (
             "CI-safe S10 prepared-contact smoke only — not P10 exit evidence"
             if not p10_exit
@@ -1232,7 +1418,7 @@ def run_soak(
         )
     )
     report = {
-        "ok": fatal is None,
+        "ok": fatal is None and (not p10_exit or not missing_required),
         "fatal": fatal,
         "base_sha": "b5320ce04bc006fc1cc936c582d126f0a560ba3e",
         "scenario_id": scenario_id,
@@ -1251,6 +1437,7 @@ def run_soak(
         "ops_used": ops_used,
         "commands": commands,
         "economy": economy,
+        "required_capabilities": required,
         "missing_player_loop_capabilities": [
             gap for gap in gaps if gap.get("severity") == "gap"
         ],
@@ -1259,11 +1446,9 @@ def run_soak(
         "treasury_final": treasury_final,
         "continue_identity": continue_identity,
         "campaign_outcome": {
-            "status": outcome.get("status"),
-            "grade": outcome.get("grade"),
-            "reason": outcome.get("reason"),
-            "selected_faction_result": outcome.get("selected_faction_result"),
+            **outcome,
             "from_campaign_rules": True,
+            "matches_authoritative_state": outcome == _outcome_fields(authoritative),
         },
         "victory_api": victory,
         "defeat_api": {
