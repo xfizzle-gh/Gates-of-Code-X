@@ -400,13 +400,33 @@ def formation_supply_state(force) -> str:
     raise ValueError("invalid_operational_supply_state")
 
 
+QUERY_SUPPLY_NOT_OWNED = "query_supply_not_owned"
+
+
+def _acting_player_faction(state: CampaignState) -> Faction:
+    """Player-issued exact supply queries bind to the selected player faction."""
+
+    return state.selected_faction
+
+
+def _player_owns_formation(state: CampaignState, force) -> bool:
+    return force.faction == _acting_player_faction(state)
+
+
 def query_supply_status(
     state: CampaignState,
     *,
     strategic_formation_id: str | None = None,
     province_id: str | None = None,
 ) -> dict:
-    """Return bounded, read-only S8 supply/readiness for one formation or province."""
+    """Return bounded, read-only S8 supply/readiness for one owned formation.
+
+    Player-issued queries are ownership fail-closed: exact supply, hub, grace,
+    repair eligibility, encirclement, and readiness are returned only for a
+    formation owned by ``state.selected_faction``. Province targets never
+    enumerate enemy rows. The same ownership gate applies with Fog On or Off;
+    this command does not invent a second S11 visibility model.
+    """
 
     formation_id = str(strategic_formation_id or "").strip()
     province = str(province_id or "").strip()
@@ -414,10 +434,13 @@ def query_supply_status(
         raise ValueError("query_supply requires strategic_formation_id or province_id")
     if province and province not in state.provinces:
         raise ValueError(f"unknown_province {province}")
+    acting = _acting_player_faction(state)
     if formation_id:
         force = state.strategic_formations.get(formation_id)
         if force is None:
             raise ValueError(f"unknown_strategic_formation {formation_id}")
+        if not _player_owns_formation(state, force):
+            raise ValueError(f"{QUERY_SUPPLY_NOT_OWNED} {formation_id}")
         if province and force.province_id != province:
             raise ValueError(
                 f"formation_not_in_province {formation_id} {province}"
@@ -431,7 +454,7 @@ def query_supply_status(
                 state.strategic_formations.values(),
                 key=lambda value: value.strategic_formation_id,
             )
-            if force.province_id == province
+            if force.province_id == province and force.faction == acting
         ]
 
     authority = "none_until_p3"

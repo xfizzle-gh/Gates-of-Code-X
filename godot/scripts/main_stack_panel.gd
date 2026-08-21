@@ -1152,12 +1152,14 @@ func _supply_state_color(state: String) -> Color:
 
 
 func _maybe_request_supply_query() -> void:
-	## Event-driven: only the selected stack, never from _process or a province scan.
+	## Event-driven: only the selected owned formation, never a province scan.
 	if selected_strategic_formation_id.is_empty():
 		return
 	if supply_query_cache.has(selected_strategic_formation_id):
 		return
 	if is_command_busy():
+		return
+	if not _selected_formation_is_player_owned():
 		return
 	var control: Dictionary = snapshot.get("control", {})
 	if not bool(control.get("enabled", false)):
@@ -1170,6 +1172,18 @@ func _maybe_request_supply_query() -> void:
 		"strategic_formation_id": selected_strategic_formation_id,
 		"province_id": selected_province_id,
 	}])
+
+
+func _selected_formation_is_player_owned() -> bool:
+	## Exact query_supply is ownership fail-closed. S11 already filters the
+	## snapshot; this does not invent a second visibility model.
+	var campaign: Dictionary = snapshot.get("campaign", {})
+	var acting := String(campaign.get("selected_faction", "")).strip_edges()
+	if acting.is_empty():
+		return false
+	var force := _s10_formation_row(selected_strategic_formation_id)
+	var faction := String(force.get("faction", "")).strip_edges()
+	return not faction.is_empty() and faction == acting
 
 
 func _ensure_selection(force_ids: Array, battalion_ids: Array) -> void:

@@ -12,6 +12,15 @@ from gates_of_codex.frontend_commands import READ_ONLY_OPS, apply_frontend_comma
 from gates_of_codex.frontend_runtime_patch import RUNTIME_PATCH_SCHEMA_VERSION
 from gates_of_codex.frontend_snapshot_slim import FRONTEND_OMITTED_BATTALION_FIELDS
 from gates_of_codex.state_io import campaign_from_dict, save_campaign
+from gates_of_codex.force_migration import strategic_formation_id_for_battalion
+from gates_of_codex.models import (
+    Battalion,
+    BattalionRosterEntry,
+    Faction,
+    FactionState,
+    ForceEchelon,
+    StrategicFormation,
+)
 from gates_of_codex.supply import (
     CONNECTED_SUPPLY_STATE,
     CUT_OFF_SUPPLY_EFFECT,
@@ -19,6 +28,7 @@ from gates_of_codex.supply import (
     GRACE_SUPPLY_STATE,
     INITIAL_DISCONNECTED_SUPPLY_STATE,
     OPERATIONAL_SUPPLY_STATES,
+    QUERY_SUPPLY_NOT_OWNED,
     formation_supply_state,
     query_supply_status,
 )
@@ -26,6 +36,70 @@ from tests.test_operational_s8_supply import _lifecycle_state, _only_force, _sta
 
 
 ROOT = Path(__file__).resolve().parents[1]
+ENEMY_SECRET_HUB = "secret-enemy-hub"
+ENEMY_SECRET_SUPPLY = 17
+ENEMY_SECRET_GRACE = 1
+ENEMY_SECRET_ENCIRCLED = 4
+
+
+def _mark_secret_enemy_supply(force, battalion, *, shape: str = "connected") -> None:
+    battalion.supply = ENEMY_SECRET_SUPPLY
+    battalion.encircled_turns = ENEMY_SECRET_ENCIRCLED
+    force.supply_summary = ENEMY_SECRET_SUPPLY
+    if shape == "grace":
+        force.supplied = True
+        force.cut_off = False
+        force.source_hub_id = None
+        force.route_cost = None
+        force.grace_ticks_remaining = ENEMY_SECRET_GRACE
+        return
+    force.supplied = True
+    force.cut_off = False
+    force.source_hub_id = ENEMY_SECRET_HUB
+    force.route_cost = 9
+    force.grace_ticks_remaining = 0
+
+
+def _add_enemy_force(
+    state,
+    *,
+    province_id: str,
+    battalion_id: str = "rusa-hidden",
+    force_id: str | None = None,
+    shape: str = "connected",
+):
+    state.factions.setdefault("rusa", FactionState(Faction.RUSSIA))
+    resolved_force_id = force_id or strategic_formation_id_for_battalion(battalion_id)
+    battalion = Battalion(
+        battalion_id=battalion_id,
+        faction=Faction.RUSSIA,
+        province_id=province_id,
+        strategic_formation_id=resolved_force_id,
+        roster=[BattalionRosterEntry("rifle", quantity=3)],
+        supply=ENEMY_SECRET_SUPPLY,
+        encircled_turns=ENEMY_SECRET_ENCIRCLED,
+    )
+    state.battalions[battalion_id] = battalion
+    enemy = StrategicFormation(
+        strategic_formation_id=resolved_force_id,
+        display_name="Hidden Enemy",
+        faction=Faction.RUSSIA,
+        province_id=province_id,
+        echelon=ForceEchelon.BATTALION,
+        battalion_ids=[battalion_id],
+        supply_summary=ENEMY_SECRET_SUPPLY,
+        is_player_controlled=False,
+    )
+    _mark_secret_enemy_supply(enemy, battalion, shape=shape)
+    state.strategic_formations[resolved_force_id] = enemy
+    return enemy
+
+
+def _assert_no_secret_supply_leak(payload) -> None:
+    rendered = str(payload)
+    for token in (ENEMY_SECRET_HUB, "can_repair", "encircled_turns"):
+        if token in rendered:
+            raise AssertionError(f"exact enemy supply leaked via {token!r}: {rendered}")
 
 
 def _graph_patches(graph: dict):
@@ -318,6 +392,177 @@ class QuerySupplyPresentationTests(unittest.TestCase):
         self.assertIn("query_supply", snapshot["control"]["supported_ops"])
 
 
+class QuerySupplyOwnershipBoundaryTests(unittest.TestCase):
+    """P10 player query: exact supply only for the acting player's formation."""
+
+    def test_own_selected_formation_query_succeeds(self) -> None:
+        state, graph = _lifecycle_state(connected=False)
+        force = _only_force(state)
+        self.assertEqual(Faction.NATO, state.selected_faction)
+        self.assertEqual(Faction.NATO, force.faction)
+        self.assertFalse(state.fog_of_war_enabled)
+        with _graph_patches(graph):
+            payload = query_supply_status(
+                state, strategic_formation_id=force.strategic_formation_id
+            )
+        self.assertEqual(1, len(payload["formations"]))
+        row = payload["formations"][0]
+        self.assertEqual(force.strategic_formation_id, row["strategic_formation_id"])
+        self.assertEqual(formation_supply_state(force), row["supply_state"])
+        self.assertEqual(force.source_hub_id, row["source_hub_id"])
+        self.assertEqual(force.grace_ticks_remaining, row["grace_ticks_remaining"])
+        self.assertIn("can_repair", row["readiness"])
+        self.assertIn("encircled_turns", row["readiness"])
+
+    def test_enemy_formation_exact_query_rejects(self) -> None:
+        state, graph = _lifecycle_state(connected=False)
+        enemy = _add_enemy_force(state, province_id="p-source")
+        with _graph_patches(graph):
+            with self.assertRaisesRegex(ValueError, QUERY_SUPPLY_NOT_OWNED) as raised:
+                query_supply_status(
+                    state, strategic_formation_id=enemy.strategic_formation_id
+                )
+        _assert_no_secret_supply_leak(raised.exception)
+
+    def test_enemy_province_cannot_enumerate_exact_supply_rows(self) -> None:
+        state, graph = _lifecycle_state(connected=False)
+        force = _only_force(state)
+        hidden = _add_enemy_force(state, province_id="p-source")
+        colocated = _add_enemy_force(
+            state,
+            province_id=force.province_id,
+            battalion_id="rusa-colocated",
+            force_id="sf-rusa-colocated",
+        )
+        with _graph_patches(graph):
+            enemy_province = query_supply_status(state, province_id="p-source")
+            mixed_province = query_supply_status(
+                state, province_id=force.province_id
+            )
+        self.assertEqual([], enemy_province["formations"])
+        _assert_no_secret_supply_leak(enemy_province)
+        self.assertEqual(
+            [force.strategic_formation_id],
+            [row["strategic_formation_id"] for row in mixed_province["formations"]],
+        )
+        rendered = str(mixed_province)
+        self.assertNotIn(hidden.strategic_formation_id, rendered)
+        self.assertNotIn(colocated.strategic_formation_id, rendered)
+        self.assertNotIn(ENEMY_SECRET_HUB, rendered)
+
+    def test_fog_on_hides_exact_enemy_supply_fields(self) -> None:
+        state, graph = _lifecycle_state(connected=False)
+        force = _only_force(state)
+        enemy = _add_enemy_force(state, province_id="p-source")
+        grace_enemy = _add_enemy_force(
+            state,
+            province_id="p-source",
+            battalion_id="rusa-grace",
+            force_id="sf-rusa-grace",
+            shape="grace",
+        )
+        state.fog_of_war_enabled = True
+        state.factions["nato"].is_human_controlled = True
+        self.assertTrue(state.fog_of_war_enabled)
+        self.assertEqual(ENEMY_SECRET_GRACE, grace_enemy.grace_ticks_remaining)
+        with _graph_patches(graph):
+            own = query_supply_status(
+                state, strategic_formation_id=force.strategic_formation_id
+            )
+            with self.assertRaisesRegex(ValueError, QUERY_SUPPLY_NOT_OWNED) as raised:
+                query_supply_status(
+                    state, strategic_formation_id=enemy.strategic_formation_id
+                )
+            with self.assertRaisesRegex(ValueError, QUERY_SUPPLY_NOT_OWNED) as grace_raised:
+                query_supply_status(
+                    state, strategic_formation_id=grace_enemy.strategic_formation_id
+                )
+            hidden_province = query_supply_status(state, province_id="p-source")
+        self.assertEqual(1, len(own["formations"]))
+        self.assertEqual(
+            force.strategic_formation_id,
+            own["formations"][0]["strategic_formation_id"],
+        )
+        _assert_no_secret_supply_leak(raised.exception)
+        _assert_no_secret_supply_leak(grace_raised.exception)
+        self.assertEqual([], hidden_province["formations"])
+        _assert_no_secret_supply_leak(hidden_province)
+        leaked = str(raised.exception) + str(grace_raised.exception) + str(hidden_province)
+        for token in (
+            ENEMY_SECRET_HUB,
+            "grace",
+            "can_repair",
+            "encircled",
+            "cut_off",
+            "supplied",
+        ):
+            self.assertNotIn(token, leaked)
+
+    def test_fog_off_ownership_gate_is_explicit(self) -> None:
+        state, graph = _lifecycle_state(connected=False)
+        force = _only_force(state)
+        enemy = _add_enemy_force(state, province_id="p-source")
+        self.assertFalse(state.fog_of_war_enabled)
+        with _graph_patches(graph):
+            own = query_supply_status(
+                state, strategic_formation_id=force.strategic_formation_id
+            )
+            with self.assertRaisesRegex(ValueError, QUERY_SUPPLY_NOT_OWNED):
+                query_supply_status(
+                    state, strategic_formation_id=enemy.strategic_formation_id
+                )
+            empty = query_supply_status(state, province_id="p-source")
+        self.assertEqual(1, len(own["formations"]))
+        self.assertEqual([], empty["formations"])
+        _assert_no_secret_supply_leak(empty)
+
+    def test_query_remains_read_only_and_does_not_persist(self) -> None:
+        self.assertIn("query_supply", READ_ONLY_OPS)
+        self.assertFalse(_should_persist_runtime_snapshot([{"op": "query_supply"}]))
+        self.assertFalse(_should_persist_runtime_snapshot([{"op": "refresh"}]))
+        self.assertEqual(1, RUNTIME_PATCH_SCHEMA_VERSION)
+
+        state, graph = _lifecycle_state(connected=False)
+        force = _only_force(state)
+        enemy = _add_enemy_force(state, province_id="p-source")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            campaign = root / "campaign.json"
+            snapshot = root / "campaign_snapshot.json"
+            save_campaign(state, campaign)
+            frontend.write_frontend_snapshot(state, snapshot, campaign_path=campaign)
+            before_campaign = campaign.read_bytes()
+            before_snapshot = snapshot.read_bytes()
+            with _graph_patches(graph):
+                own = apply_frontend_commands(
+                    campaign,
+                    commands=[
+                        {
+                            "op": "query_supply",
+                            "strategic_formation_id": force.strategic_formation_id,
+                        }
+                    ],
+                    snapshot_path=snapshot,
+                )
+                denied = apply_frontend_commands(
+                    campaign,
+                    commands=[
+                        {
+                            "op": "query_supply",
+                            "strategic_formation_id": enemy.strategic_formation_id,
+                        }
+                    ],
+                    snapshot_path=snapshot,
+                )
+            self.assertTrue(own["ok"])
+            self.assertTrue(own["results"][0]["ok"])
+            self.assertFalse(denied["ok"])
+            self.assertIn(QUERY_SUPPLY_NOT_OWNED, denied["results"][0]["detail"])
+            _assert_no_secret_supply_leak(denied)
+            self.assertEqual(before_campaign, campaign.read_bytes())
+            self.assertEqual(before_snapshot, snapshot.read_bytes())
+
+
 class GodotSupplyPresentationContractTests(unittest.TestCase):
     def test_stack_panel_reads_existing_supply_fields_and_query_cache(self) -> None:
         script = (
@@ -334,6 +579,8 @@ class GodotSupplyPresentationContractTests(unittest.TestCase):
             "_supply_presentation_from_query",
             "_supply_presentation_from_snapshot",
             "_maybe_request_supply_query",
+            "_selected_formation_is_player_owned",
+            'campaign.get("selected_faction"',
             'force.get("supplied"',
             'force.get("cut_off"',
             'force.get("source_hub_id"',

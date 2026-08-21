@@ -733,6 +733,8 @@ def _apply_one(state, op: str, raw: dict[str, Any]) -> CommandResult:
             or ""
         ).strip()
         province = str(raw.get("province") or raw.get("province_id") or "").strip()
+        # IDs are forwarded as requested; query_supply_status fail-closes on
+        # ownership. The player frontend cannot spoof observer/faction here.
         payload = query_supply_status(
             state,
             strategic_formation_id=formation_id or None,
