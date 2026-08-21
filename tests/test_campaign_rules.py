@@ -11,6 +11,7 @@ from gates_of_codex.campaign_rules import (
     DEFAULT_HOLD_WEEKS,
     DEFAULT_START_YEAR,
     GRADE_DECISIVE_DEFEAT,
+    GRADE_DECISIVE_VICTORY,
     GRADE_DEFEAT,
     GRADE_STALEMATE,
     GRADE_VICTORY,
@@ -316,6 +317,64 @@ class CampaignRulesPlayTests(unittest.TestCase):
         self.assertGreater(
             int(state.turn_number),
             int(state.map_metadata[CAMPAIGN_RULES_KEY]["turn_cap"]),
+        )
+
+    def test_zero_required_war_aims_can_lock_victory_without_coalition_aim(self) -> None:
+        """Explicit required_war_aims=0 must not be treated as 1 by ``or 1``."""
+
+        from gates_of_codex.campaign_rules import (
+            _layer_result,
+            _owner_victory_report,
+            _required_count,
+            update_momentum,
+        )
+
+        self.assertEqual(0, _required_count({"required_war_aims": 0}, "required_war_aims"))
+        self.assertEqual(1, _required_count({}, "required_war_aims"))
+        self.assertEqual(1, _required_count({"required_war_aims": None}, "required_war_aims"))
+
+        state = _ukraine_player_state()
+        state.provinces["x"].owner = Faction.RUSSIA
+        _grant_ukraine_national_hold(state)
+        _hold_weeks(state, 4)
+        _boost_momentum(state, "ukr", wins=6)
+        update_momentum(state)
+        rules = state.map_metadata[CAMPAIGN_RULES_KEY]
+        rules["required_war_aims"] = 0
+        rules["thresholds"]["victory"] = 1
+        self.assertFalse(_objective(state, "aim-west")["completed"])
+        self.assertTrue(_objective(state, "nat-ukr")["completed"])
+        report = _owner_victory_report(
+            state,
+            "western-coalition",
+            {Faction.NATO, Faction.UKRAINE},
+            Faction.UKRAINE,
+        )
+        self.assertIsNotNone(report)
+        self.assertIn(report["grade"], {GRADE_VICTORY, GRADE_DECISIVE_VICTORY})
+        self.assertEqual("victory", report["national_result"])
+        self.assertEqual("victory", _layer_result(state, Faction.UKRAINE, "coalition_war_aim"))
+        self.assertEqual("victory", _layer_result(state, Faction.UKRAINE, "national_contribution"))
+
+    def test_time_limit_honors_zero_required_war_aims(self) -> None:
+        from gates_of_codex.campaign_rules import _layer_result, _time_limit_grade, update_momentum
+
+        state = _ukraine_player_state()
+        state.provinces["x"].owner = Faction.RUSSIA
+        _grant_ukraine_national_hold(state)
+        _hold_weeks(state, 4)
+        _boost_momentum(state, "ukr", wins=6)
+        update_momentum(state)
+        rules = state.map_metadata[CAMPAIGN_RULES_KEY]
+        rules["required_war_aims"] = 0
+        rules["thresholds"]["victory"] = 1
+        state.turn_number = int(rules["turn_cap"]) + 1
+        self.assertFalse(_objective(state, "aim-west")["completed"])
+        self.assertEqual("victory", _layer_result(state, Faction.UKRAINE, "coalition_war_aim"))
+        self.assertEqual("victory", _layer_result(state, Faction.UKRAINE, "national_contribution"))
+        self.assertEqual(
+            GRADE_VICTORY,
+            _time_limit_grade(state, Faction.UKRAINE, rules["thresholds"]),
         )
 
     def test_continue_playing_after_victory_and_conclude(self) -> None:

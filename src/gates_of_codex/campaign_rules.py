@@ -692,6 +692,14 @@ def _victory_contenders(state: CampaignState) -> list[tuple[str, set[Faction], F
     return rows
 
 
+def _required_count(rules: Mapping[str, Any], key: str, *, default: int = 1) -> int:
+    """Read a required-count field. An explicit 0 must stay 0; ``or 1`` would raise it."""
+
+    if key not in rules or rules[key] is None:
+        return default
+    return int(rules[key])
+
+
 def _owner_victory_report(
     state: CampaignState,
     owner_key: str,
@@ -719,8 +727,8 @@ def _owner_victory_report(
     completed_aims = [row for row in war_aims if row.get("completed")]
     completed_national = [row for row in national if row.get("completed")]
     primary_aims = [row for row in war_aims if row.get("primary")]
-    required_aims = int(rules.get("required_war_aims") or 1)
-    required_national = int(rules.get("required_national") or 1)
+    required_aims = _required_count(rules, "required_war_aims")
+    required_national = _required_count(rules, "required_national")
     aims_ok = len(completed_aims) >= required_aims
     if bool(rules.get("require_all_primary_war_aims")) and primary_aims:
         aims_ok = aims_ok and all(row.get("completed") for row in primary_aims)
@@ -789,7 +797,8 @@ def _layer_result(state: CampaignState, faction: Faction, layer: str) -> str:
     if not rows:
         return "none"
     completed = sum(1 for row in rows if row.get("completed"))
-    required = int(campaign_rules(state).get("required_national" if layer == "national_contribution" else "required_war_aims") or 1)
+    key = "required_national" if layer == "national_contribution" else "required_war_aims"
+    required = _required_count(campaign_rules(state), key)
     return "victory" if completed >= required else "incomplete"
 
 
