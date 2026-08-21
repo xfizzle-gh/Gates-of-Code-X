@@ -18,8 +18,13 @@ from gates_of_codex.campaign_rules import (
     GRADE_VICTORY,
     PACK_ID_2028_CORE,
     PACK_ID_EARTH3,
+    SCENARIO_ID_2028_EXPANDED,
+    UNAVAILABLE_EXPANDED_REASON,
     VICTORY_GRADES,
     VICTORY_MODEL_P9,
+    CampaignRulesError,
+    _validate_2028_core_pack,
+    _validate_objective_pack,
     calendar_from_turn,
     campaign_play_blocked,
     campaign_presentation,
@@ -101,11 +106,17 @@ class CampaignRulesContractTests(unittest.TestCase):
         self.assertEqual(PACK_ID_EARTH3, resolve_objective_pack_id("legacy_goe_europe"))
         self.assertEqual(PACK_ID_EARTH3, resolve_objective_pack_id("legacy_goe_europe_mediterranean"))
         self.assertEqual(PACK_ID_2028_CORE, resolve_objective_pack_id("ww3_2028_core"))
-        self.assertEqual(PACK_ID_2028_CORE, resolve_objective_pack_id("ww3_2028_expanded"))
         self.assertIn("ww3_2028_core", known_objective_scenario_ids())
+        self.assertIn(SCENARIO_ID_2028_EXPANDED, known_objective_scenario_ids())
+        self.assertNotIn(SCENARIO_ID_2028_EXPANDED, resolution["packs"])
+        self.assertIn(SCENARIO_ID_2028_EXPANDED, resolution["unavailable_scenario_ids"])
+        with self.assertRaisesRegex(ValueError, "registered but unavailable"):
+            resolve_objective_pack_id("ww3_2028_expanded")
         with self.assertRaisesRegex(ValueError, "Unknown campaign scenario 'ww3_1991_fantasy'"):
             resolve_objective_pack_id("ww3_1991_fantasy")
         core = load_objective_pack(PACK_ID_2028_CORE)
+        self.assertEqual(["ww3_2028_core"], core["scenario_ids"])
+        self.assertNotIn(SCENARIO_ID_2028_EXPANDED, core["scenario_ids"])
         self.assertEqual("nato", core["actor_faction"]["nato"])
         self.assertEqual("rusa", core["player_actor_by_faction"]["rusa"])
         self.assertEqual({"nato", "ukr", "rusa", "prc"}, {row["owner_id"] for row in core["national_objectives"]})
@@ -801,11 +812,65 @@ class CampaignRules2028PackTests(unittest.TestCase):
             self.assertEqual(4, row["hold_weeks"])
             self.assertIn(row["layer"], {"coalition_war_aim", "national_contribution"})
 
-    def test_expanded_settings_reuse_core_four_power_pack(self) -> None:
-        state = _earth3_location_state(scenario_id="ww3_2028_expanded")
-        self.assertEqual(PACK_ID_2028_CORE, state.map_metadata[CAMPAIGN_RULES_KEY]["objective_pack_id"])
-        self.assertEqual("nato", player_actor_id(state))
-        self.assertIn("nat_2028_prc_vilnius", {row["id"] for row in state.map_metadata["operational_objectives"]})
+    def test_expanded_refuses_to_start_and_refuses_victory_evaluation(self) -> None:
+        state = _rules_state(p9=False)
+        state.map_metadata.pop(CAMPAIGN_RULES_KEY, None)
+        state.map_metadata["scenario_id"] = SCENARIO_ID_2028_EXPANDED
+        with self.assertRaisesRegex(CampaignRulesError, "registered but unavailable"):
+            ensure_campaign_rules(state, length_preset="short", victory_model=VICTORY_MODEL_P9)
+        self.assertNotIn(CAMPAIGN_RULES_KEY, state.map_metadata)
+        with self.assertRaisesRegex(CampaignRulesError, "Core-four pack"):
+            evaluate_campaign_outcome(state)
+        self.assertNotIn(CAMPAIGN_RULES_KEY, state.map_metadata)
+        pending = PendingBattle(
+            battle_id="expanded-refuse",
+            origin_province_id="a",
+            target_province_id="x",
+            attacker_faction=Faction.NATO,
+            defender_faction=Faction.RUSSIA,
+            attacking_participants=[],
+            defending_participants=[],
+            player_faction=Faction.NATO,
+            player_is_attacker=True,
+        )
+        with self.assertRaisesRegex(CampaignRulesError, "unavailable"):
+            record_auto_resolve_result(state, Faction.NATO, pending)
+
+    def test_expanded_unavailable_reason_does_not_claim_core_four_coverage(self) -> None:
+        reason = load_campaign_rules_contract()["objective_pack_resolution"][
+            "unavailable_scenario_ids"
+        ][SCENARIO_ID_2028_EXPANDED]
+        self.assertIn("Poland", reason)
+        self.assertIn("DPRK", reason)
+        self.assertEqual(UNAVAILABLE_EXPANDED_REASON, reason)
+        with self.assertRaisesRegex(CampaignRulesError, r"Poland|France|Germany|Serbia|DPRK"):
+            resolve_objective_pack_id(SCENARIO_ID_2028_EXPANDED)
+
+    def test_core_four_validation_is_not_imposed_on_non_core_packs(self) -> None:
+        future = {
+            "schema_version": 1,
+            "pack_id": "ww3_2028_future_example",
+            "scenario_ids": ["ww3_2028_future_example"],
+            "actor_faction": {"pol": "nato", "fra": "nato", "deu": "nato", "srb": "rusa", "dprk": "rusa"},
+            "player_actor_by_faction": {"nato": "pol", "rusa": "srb"},
+            "war_aims": [
+                {
+                    "id": "aim_future_example",
+                    "owner_id": "western_coalition",
+                    "hold_weeks": 4,
+                }
+            ],
+            "national_objectives": [
+                {
+                    "id": "nat_pol_warsaw",
+                    "owner_id": "pol",
+                    "hold_weeks": 4,
+                }
+            ],
+        }
+        _validate_objective_pack(future, expected_pack_id="ww3_2028_future_example")
+        with self.assertRaisesRegex(CampaignRulesError, "nato, ukr, rusa, and prc"):
+            _validate_2028_core_pack(future)
 
     def test_core_campaign_can_win_and_lose_in_p9_engine(self) -> None:
         winning = _earth3_location_state(scenario_id="ww3_2028_core")
@@ -829,6 +894,52 @@ class CampaignRules2028PackTests(unittest.TestCase):
         self.assertEqual("defeat", defeat.selected_faction_result)
         self.assertEqual(GRADE_DEFEAT, defeat.grade)
         self.assertIn("capital or control hub", defeat.reason)
+
+    def test_core_allied_national_success_does_not_end_ukraine_campaign(self) -> None:
+        """Human UKR on Core-four: Western aims + NATO national, UKR national incomplete => ACTIVE."""
+
+        state = _earth3_location_state(scenario_id="ww3_2028_core", selected=Faction.UKRAINE)
+        state.provinces["e3_1937"].owner = Faction.NATO
+        _hold_weeks(state, 4)
+        _boost_momentum(state, "nato", wins=6)
+        self.assertTrue(_objective(state, "aim_2028_west_donbas")["completed"])
+        self.assertTrue(_objective(state, "nat_2028_nato_berlin")["completed"])
+        self.assertFalse(_objective(state, "nat_2028_ukr_kyiv")["completed"])
+        outcome = evaluate_campaign_outcome(state)
+        self.assertEqual("active", outcome.status)
+        self.assertEqual("active", outcome.selected_faction_result)
+        self.assertFalse(campaign_play_blocked(state))
+        self.assertNotEqual("defeat", outcome.selected_faction_result)
+
+    def test_core_ukraine_victory_requires_own_national_contribution(self) -> None:
+        """Human UKR on Core-four: Western aims + UKR national + threshold => VICTORY."""
+
+        state = _earth3_location_state(scenario_id="ww3_2028_core", selected=Faction.UKRAINE)
+        _hold_weeks(state, 4)
+        _boost_momentum(state, "ukr", wins=6)
+        self.assertTrue(_objective(state, "aim_2028_west_donbas")["completed"])
+        self.assertTrue(_objective(state, "nat_2028_ukr_kyiv")["completed"])
+        outcome = evaluate_campaign_outcome(state)
+        self.assertEqual("complete", outcome.status)
+        self.assertEqual("victory", outcome.selected_faction_result)
+        self.assertIn(outcome.grade, {GRADE_VICTORY, "decisive_victory"})
+        self.assertEqual("victory", outcome.national_result)
+        self.assertEqual("victory", outcome.coalition_result)
+
+    def test_core_opposing_coalition_contract_defeats_ukraine_player(self) -> None:
+        """Eastern Core-four contract => human UKR DEFEAT."""
+
+        state = _earth3_location_state(scenario_id="ww3_2028_core", selected=Faction.UKRAINE)
+        for province_id in ("e3_0442", "e3_1937", "e3_2794", "e3_3380"):
+            state.provinces[province_id].owner = Faction.RUSSIA
+        _hold_weeks(state, 4)
+        _boost_momentum(state, "rusa", wins=8)
+        self.assertTrue(_objective(state, "aim_2028_east_kyiv_vilnius")["completed"])
+        self.assertTrue(_objective(state, "nat_2028_rusa_rostov")["completed"])
+        outcome = evaluate_campaign_outcome(state)
+        self.assertEqual("complete", outcome.status)
+        self.assertEqual("defeat", outcome.selected_faction_result)
+        self.assertEqual("eastern-coalition", outcome.winner_coalition)
 
     def test_snapshot_exposes_2028_aims_without_slim_metadata(self) -> None:
         state = _earth3_location_state(scenario_id="ww3_2028_core")
@@ -1082,11 +1193,11 @@ def _rules_state(
     return state
 
 
-def _earth3_location_state(*, scenario_id: str) -> CampaignState:
+def _earth3_location_state(*, scenario_id: str, selected: Faction = Faction.NATO) -> CampaignState:
     state = CampaignState(
         campaign_name="2028 pack test",
-        selected_faction=Faction.NATO,
-        current_faction=Faction.NATO,
+        selected_faction=selected,
+        current_faction=selected,
         factions={
             "nato": FactionState(Faction.NATO, resources=2000, researched_keys=["core-nato"]),
             "ukr": FactionState(Faction.UKRAINE, resources=2000),

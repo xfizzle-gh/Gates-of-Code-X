@@ -1,13 +1,14 @@
 {
   "schema_version": 1,
   "pack_id": "ww3_2028_core",
-  "scenario_ids": ["ww3_2028_core", "ww3_2028_expanded"],
+  "scenario_ids": ["ww3_2028_core"],
   "authority": {
     "issue": 75,
     "scenario_identity_issues": [225, 281],
     "notes": [
-      "Four-power 2028 Core war aims for actors nato, ukr, rusa, prc.",
-      "ww3_2028_expanded reuses this same four-power contract; extra Expanded actors are not invented here.",
+      "Four-power 2028 Core war aims for actors nato, ukr, rusa, prc. This pack is Core-only.",
+      "ww3_2028_expanded is not covered here. Expanded remains fail-closed until a real Expanded actor pack is authored.",
+      "Do not collapse Poland, France, Germany, Serbia, DPRK, or other Expanded identities onto nato/ukr/rusa/prc.",
       "Targets use frozen Earth3 location IDs so this pack composes with the #225/#281 scenario stack later.",
       "Hold is 4 supply-connected weeks. Momentum thresholds stay on the shared #75 preset table.",
       "PRC has no authored Belarus command province on this stack; national contribution is expeditionary (Vilnius)."

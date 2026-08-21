@@ -5,7 +5,8 @@ from __future__ import annotations
 Python is the authority. Godot may only present the projected fields and issue
 ``continue_playing`` / ``conclude_campaign`` commands. Earth3 ``objectives.json``
 remains frozen; war-aim metadata is overlaid from ``data/campaign_rules/v1.json``.
-2028 Core/Expanded campaigns bind a sibling pack by ``scenario_id`` / actor ids.
+2028 Core campaigns bind a sibling pack by ``scenario_id``. ``ww3_2028_expanded``
+is fail-closed until a real Expanded actor pack is authored.
 """
 
 import copy
@@ -26,7 +27,14 @@ CONTRACT_PATH = Path(__file__).resolve().parent / "data" / "campaign_rules" / "v
 OBJECTIVE_PACK_DIR = CONTRACT_PATH.parent
 PACK_ID_EARTH3 = "earth3_v1"
 PACK_ID_2028_CORE = "ww3_2028_core"
+SCENARIO_ID_2028_CORE = "ww3_2028_core"
+SCENARIO_ID_2028_EXPANDED = "ww3_2028_expanded"
 CORE_2028_ACTORS = ("nato", "ukr", "rusa", "prc")
+UNAVAILABLE_EXPANDED_REASON = (
+    "ww3_2028_expanded victory is unavailable until a real Expanded actor pack "
+    "is authored. The Core-four pack (nato, ukr, rusa, prc) does not cover "
+    "Expanded strategic actors such as Poland, France, Germany, Serbia, or DPRK."
+)
 LENGTH_PRESETS = ("short", "medium", "long")
 VICTORY_MODEL_P9 = "p9_v1"
 VICTORY_MODEL_LEGACY = "legacy_compat"
@@ -78,8 +86,27 @@ def _validate_objective_pack_resolution(raw: Mapping[str, Any]) -> None:
     if not isinstance(earth3_ids, list) or "earth3_v1" not in earth3_ids:
         raise CampaignRulesError("objective_pack_resolution.earth3_scenario_ids must include earth3_v1")
     packs = resolution.get("packs")
-    if not isinstance(packs, dict) or "ww3_2028_core" not in packs or "ww3_2028_expanded" not in packs:
-        raise CampaignRulesError("objective_pack_resolution.packs must register ww3_2028_core and ww3_2028_expanded")
+    if not isinstance(packs, dict) or SCENARIO_ID_2028_CORE not in packs:
+        raise CampaignRulesError("objective_pack_resolution.packs must register ww3_2028_core")
+    if SCENARIO_ID_2028_EXPANDED in packs:
+        raise CampaignRulesError(
+            "ww3_2028_expanded must not bind a Core-four pack; register it as "
+            "unavailable until a real Expanded actor pack is authored"
+        )
+    unavailable = resolution.get("unavailable_scenario_ids")
+    if not isinstance(unavailable, dict) or SCENARIO_ID_2028_EXPANDED not in unavailable:
+        raise CampaignRulesError(
+            "objective_pack_resolution.unavailable_scenario_ids must register "
+            "ww3_2028_expanded as fail-closed"
+        )
+    if not str(unavailable[SCENARIO_ID_2028_EXPANDED] or "").strip():
+        raise CampaignRulesError("ww3_2028_expanded unavailable reason must be non-empty")
+    overlap = set(packs) & set(unavailable)
+    if overlap:
+        raise CampaignRulesError(
+            "scenario IDs cannot be both packed and unavailable: "
+            + ", ".join(sorted(overlap))
+        )
     for scenario_id, relative in packs.items():
         path = OBJECTIVE_PACK_DIR / str(relative)
         if not path.is_file():
@@ -87,11 +114,11 @@ def _validate_objective_pack_resolution(raw: Mapping[str, Any]) -> None:
                 f"Objective pack file missing for scenario {scenario_id!r}: {path.name}"
             )
         payload = json.loads(path.read_text(encoding="utf-8"))
-        if not isinstance(payload, dict) or int(payload.get("schema_version", 0)) != 1:
-            raise CampaignRulesError(f"objective pack {path.name} schema_version must be 1")
-        if str(payload.get("pack_id") or "") != path.stem:
-            raise CampaignRulesError(f"objective pack {path.name} pack_id mismatch")
-        _validate_2028_core_pack(payload)
+        if not isinstance(payload, dict):
+            raise CampaignRulesError(f"objective pack {path.name} must be a JSON object")
+        _validate_objective_pack(payload, expected_pack_id=path.stem)
+        if path.stem == PACK_ID_2028_CORE:
+            _validate_2028_core_pack(payload)
 
 
 def known_objective_scenario_ids() -> tuple[str, ...]:
@@ -101,6 +128,7 @@ def known_objective_scenario_ids() -> tuple[str, ...]:
             {
                 *resolution["earth3_scenario_ids"],
                 *resolution["packs"],
+                *resolution.get("unavailable_scenario_ids", {}),
             }
         )
     )
@@ -129,6 +157,12 @@ def resolve_objective_pack_id(scenario_id: str | None) -> str:
         return str(resolution["default_when_scenario_id_omitted"])
     if text in resolution["earth3_scenario_ids"]:
         return str(resolution["default_pack_id"])
+    unavailable = resolution.get("unavailable_scenario_ids") or {}
+    if text in unavailable:
+        reason = str(unavailable[text] or "").strip() or UNAVAILABLE_EXPANDED_REASON
+        raise CampaignRulesError(
+            f"Campaign scenario {text!r} is registered but unavailable. {reason}"
+        )
     packs = resolution["packs"]
     if text in packs:
         return Path(str(packs[text])).stem
@@ -149,11 +183,11 @@ def load_objective_pack(pack_id: str) -> dict[str, Any]:
     if not path.is_file():
         raise CampaignRulesError(f"Objective pack file missing for {identity!r}")
     raw = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(raw, dict) or int(raw.get("schema_version", 0)) != 1:
-        raise CampaignRulesError(f"objective pack {identity!r} schema_version must be 1")
-    if str(raw.get("pack_id") or "") != identity:
-        raise CampaignRulesError(f"objective pack {identity!r} pack_id mismatch")
-    _validate_2028_core_pack(raw)
+    if not isinstance(raw, dict):
+        raise CampaignRulesError(f"objective pack {identity!r} must be a JSON object")
+    _validate_objective_pack(raw, expected_pack_id=identity)
+    if identity == PACK_ID_2028_CORE:
+        _validate_2028_core_pack(raw)
     return raw
 
 
@@ -170,23 +204,72 @@ def _earth3_pack_from_contract(contract: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def _validate_2028_core_pack(raw: Mapping[str, Any]) -> None:
+def _validate_objective_pack(
+    raw: Mapping[str, Any],
+    *,
+    expected_pack_id: str | None = None,
+) -> None:
+    """Generic sibling-pack schema. Does not impose Core-four actor identities."""
+
+    if int(raw.get("schema_version", 0)) != 1:
+        raise CampaignRulesError(
+            f"objective pack {raw.get('pack_id')!r} schema_version must be 1"
+        )
+    pack_id = str(raw.get("pack_id") or "").strip()
+    if not pack_id:
+        raise CampaignRulesError("objective pack pack_id must be non-empty")
+    if expected_pack_id is not None and pack_id != expected_pack_id:
+        raise CampaignRulesError(f"objective pack {expected_pack_id!r} pack_id mismatch")
     actor_faction = raw.get("actor_faction")
     player_actors = raw.get("player_actor_by_faction")
     if not isinstance(actor_faction, dict) or not isinstance(player_actors, dict):
-        raise CampaignRulesError("2028 objective pack must define actor_faction and player_actor_by_faction")
+        raise CampaignRulesError(
+            f"objective pack {pack_id!r} must define actor_faction and player_actor_by_faction"
+        )
+    nationals = raw.get("national_objectives")
+    war_aims = raw.get("war_aims")
+    if not isinstance(nationals, list) or not isinstance(war_aims, list):
+        raise CampaignRulesError(
+            f"objective pack {pack_id!r} must define war_aims and national_objectives lists"
+        )
+    for row in war_aims + nationals:
+        if not isinstance(row, dict):
+            continue
+        if int(row.get("hold_weeks") or 0) != DEFAULT_HOLD_WEEKS:
+            raise CampaignRulesError(
+                f"objective pack {pack_id!r} objective {row.get('id')!r} "
+                f"hold_weeks must be {DEFAULT_HOLD_WEEKS}"
+            )
+
+
+def _validate_2028_core_pack(raw: Mapping[str, Any]) -> None:
+    """Core-four identities. Call only for the ww3_2028_core pack."""
+
+    if str(raw.get("pack_id") or "") == PACK_ID_2028_CORE:
+        scenario_ids = raw.get("scenario_ids")
+        if not isinstance(scenario_ids, list) or SCENARIO_ID_2028_CORE not in scenario_ids:
+            raise CampaignRulesError("ww3_2028_core pack must include scenario_id ww3_2028_core")
+        if SCENARIO_ID_2028_EXPANDED in scenario_ids:
+            raise CampaignRulesError(
+                "ww3_2028_core pack must not claim ww3_2028_expanded; Expanded is fail-closed"
+            )
+    actor_faction = raw.get("actor_faction")
+    player_actors = raw.get("player_actor_by_faction")
+    if not isinstance(actor_faction, dict) or not isinstance(player_actors, dict):
+        raise CampaignRulesError("ww3_2028_core pack must define actor_faction and player_actor_by_faction")
     for actor_id in CORE_2028_ACTORS:
         if actor_faction.get(actor_id) != actor_id:
             raise CampaignRulesError(
-                f"2028 pack must map actor {actor_id!r} to faction {actor_id!r}; no faction-name heuristics"
+                f"ww3_2028_core pack must map actor {actor_id!r} to faction {actor_id!r}; "
+                "no faction-name heuristics"
             )
         if player_actors.get(actor_id) != actor_id:
             raise CampaignRulesError(
-                f"2028 pack must map faction {actor_id!r} to actor {actor_id!r}"
+                f"ww3_2028_core pack must map faction {actor_id!r} to actor {actor_id!r}"
             )
     nationals = raw.get("national_objectives")
     if not isinstance(nationals, list):
-        raise CampaignRulesError("2028 pack must define national_objectives")
+        raise CampaignRulesError("ww3_2028_core pack must define national_objectives")
     owners = {
         str(row.get("owner_id") or "")
         for row in nationals
@@ -195,16 +278,9 @@ def _validate_2028_core_pack(raw: Mapping[str, Any]) -> None:
     missing = [actor_id for actor_id in CORE_2028_ACTORS if actor_id not in owners]
     if missing:
         raise CampaignRulesError(
-            "2028 pack national_objectives must include nato, ukr, rusa, and prc; "
+            "ww3_2028_core national_objectives must include nato, ukr, rusa, and prc; "
             f"missing {', '.join(missing)}"
         )
-    for row in list(raw.get("war_aims", [])) + nationals:
-        if not isinstance(row, dict):
-            continue
-        if int(row.get("hold_weeks") or 0) != DEFAULT_HOLD_WEEKS:
-            raise CampaignRulesError(
-                f"2028 pack objective {row.get('id')!r} hold_weeks must be {DEFAULT_HOLD_WEEKS}"
-            )
 
 
 def objective_pack_for_state(state: CampaignState) -> dict[str, Any]:
