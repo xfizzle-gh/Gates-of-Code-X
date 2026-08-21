@@ -92,7 +92,10 @@ def calendar_from_turn(
 
 
 def campaign_rules(state: CampaignState) -> dict[str, Any]:
-    raw = state.map_metadata.get(CAMPAIGN_RULES_KEY)
+    metadata = getattr(state, "map_metadata", None)
+    if not isinstance(metadata, dict):
+        return {}
+    raw = metadata.get(CAMPAIGN_RULES_KEY)
     return raw if isinstance(raw, dict) else {}
 
 
@@ -102,7 +105,10 @@ def campaign_play_blocked(state: CampaignState) -> bool:
         return True
     if bool(rules.get("continue_playing")):
         return False
-    outcome = state.map_metadata.get("campaign_outcome", {})
+    metadata = getattr(state, "map_metadata", None)
+    if not isinstance(metadata, dict):
+        return False
+    outcome = metadata.get("campaign_outcome", {})
     return isinstance(outcome, dict) and outcome.get("status") == "complete"
 
 

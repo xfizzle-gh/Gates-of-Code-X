@@ -19,6 +19,7 @@ from gates_of_codex.campaign_rules import (
     calendar_from_turn,
     campaign_play_blocked,
     campaign_presentation,
+    campaign_rules,
     conclude_campaign,
     continue_playing,
     ensure_campaign_rules,
@@ -300,6 +301,15 @@ class CampaignRulesPlayTests(unittest.TestCase):
         self.assertEqual("complete", outcome.status)
         self.assertEqual("time-limit grading at the campaign turn cap", outcome.reason)
         self.assertEqual(GRADE_STALEMATE, outcome.grade)
+
+    def test_campaign_play_blocked_without_map_metadata_is_not_blocked(self) -> None:
+        """End Turn stubs and legacy states without map_metadata must not crash."""
+
+        from types import SimpleNamespace
+
+        stub = SimpleNamespace()
+        self.assertFalse(campaign_play_blocked(stub))  # type: ignore[arg-type]
+        self.assertEqual({}, campaign_rules(stub))  # type: ignore[arg-type]
 
     def test_end_player_round_can_lock_time_limit_without_already_complete(self) -> None:
         """UKR is not last in TURN_ORDER. Crossing the cap must not abort the round."""
