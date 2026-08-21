@@ -869,7 +869,7 @@ class CampaignRules2028PackTests(unittest.TestCase):
             ],
         }
         _validate_objective_pack(future, expected_pack_id="ww3_2028_future_example")
-        with self.assertRaisesRegex(CampaignRulesError, "nato, ukr, rusa, and prc"):
+        with self.assertRaisesRegex(CampaignRulesError, r"must map actor 'nato'|nato, ukr, rusa, and prc"):
             _validate_2028_core_pack(future)
 
     def test_core_campaign_can_win_and_lose_in_p9_engine(self) -> None:
@@ -930,6 +930,10 @@ class CampaignRules2028PackTests(unittest.TestCase):
         """Eastern Core-four contract => human UKR DEFEAT."""
 
         state = _earth3_location_state(scenario_id="ww3_2028_core", selected=Faction.UKRAINE)
+        # Keep UKR off the hub-loss path so this asserts the opposing-contract result.
+        hubs = dict(state.map_metadata[CAMPAIGN_RULES_KEY].get("actor_hubs") or {})
+        hubs["ukr"] = []
+        state.map_metadata[CAMPAIGN_RULES_KEY]["actor_hubs"] = hubs
         for province_id in ("e3_0442", "e3_1937", "e3_2794", "e3_3380"):
             state.provinces[province_id].owner = Faction.RUSSIA
         _hold_weeks(state, 4)
