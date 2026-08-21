@@ -98,6 +98,8 @@ class CampaignRulesContractTests(unittest.TestCase):
         self.assertEqual(PACK_ID_EARTH3, resolve_objective_pack_id(""))
         self.assertEqual(PACK_ID_EARTH3, resolve_objective_pack_id("earth3_v1"))
         self.assertEqual(PACK_ID_EARTH3, resolve_objective_pack_id("earth3_native_acceptance"))
+        self.assertEqual(PACK_ID_EARTH3, resolve_objective_pack_id("legacy_goe_europe"))
+        self.assertEqual(PACK_ID_EARTH3, resolve_objective_pack_id("legacy_goe_europe_mediterranean"))
         self.assertEqual(PACK_ID_2028_CORE, resolve_objective_pack_id("ww3_2028_core"))
         self.assertEqual(PACK_ID_2028_CORE, resolve_objective_pack_id("ww3_2028_expanded"))
         self.assertIn("ww3_2028_core", known_objective_scenario_ids())
@@ -754,11 +756,11 @@ class CampaignRules2028PackTests(unittest.TestCase):
     def test_earth3_fixture_nationals_still_inject_on_earth3_scenario(self) -> None:
         state = _earth3_location_state(scenario_id="earth3_v1")
         ids = {row["id"] for row in state.map_metadata["operational_objectives"]}
-        self.assertIn("nat_usa_berlin", ids)
+        self.assertIn("nat_usa_berlin_hub", ids)
         self.assertIn("nat_ukr_kyiv", ids)
         self.assertIn("nat_rus_rostov", ids)
         self.assertNotIn("nat_2028_nato_berlin", ids)
-        self.assertEqual("usa", _objective(state, "nat_usa_berlin")["owner_id"])
+        self.assertEqual("usa", _objective(state, "nat_usa_berlin_hub")["owner_id"])
 
     def test_core_settings_load_four_power_aims(self) -> None:
         state = _earth3_location_state(scenario_id="ww3_2028_core")
