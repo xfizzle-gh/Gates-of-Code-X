@@ -1039,12 +1039,15 @@ def _terminal_result_ok(fields: dict[str, Any]) -> bool:
     """Accept only a consistent player-facing terminal tuple.
 
     An opposing-coalition contract that leaves
-    ``selected_faction_result=defeat`` cannot pass P10 with a victory grade.
+    ``selected_faction_result=defeat`` cannot pass P10 with a victory grade
+    or with player-facing ``coalition_result`` / ``national_result`` victory.
     """
 
     status = str(fields.get("status") or "")
     faction_result = str(fields.get("selected_faction_result") or "")
     grade = str(fields.get("grade") or "")
+    coalition = str(fields.get("coalition_result") or "")
+    national = str(fields.get("national_result") or "")
     if status != "complete":
         return False
     if faction_result not in TERMINAL_FACTION_RESULTS:
@@ -1055,6 +1058,8 @@ def _terminal_result_ok(fields: dict[str, Any]) -> bool:
     if faction_result == "defeat" and victory_grade:
         return False
     if faction_result == "victory" and not victory_grade:
+        return False
+    if faction_result == "defeat" and (coalition == "victory" or national == "victory"):
         return False
     return True
 
