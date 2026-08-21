@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import tempfile
 import unittest
+from dataclasses import asdict
 from pathlib import Path
 
 from gates_of_codex.campaign import CampaignEngine
@@ -15,6 +16,7 @@ from gates_of_codex.campaign_rules import (
     GRADE_DEFEAT,
     GRADE_STALEMATE,
     GRADE_VICTORY,
+    VICTORY_GRADES,
     VICTORY_MODEL_P9,
     calendar_from_turn,
     campaign_play_blocked,
@@ -185,10 +187,57 @@ class CampaignRulesPlayTests(unittest.TestCase):
         self.assertTrue(_objective(state, "aim-east")["completed"])
         self.assertTrue(_objective(state, "nat-rus")["completed"])
         outcome = evaluate_campaign_outcome(state)
+        self._assert_opposing_contract_player_facing_defeat(outcome, state)
+        with self.assertRaisesRegex(ValueError, "only available after victory"):
+            continue_playing(state)
+        snapshot = {
+            "campaign": {
+                **campaign_presentation(state),
+                "outcome": asdict(outcome),
+            }
+        }
+        model = _campaign_rules_result_model(snapshot)
+        self.assertTrue(model["visible"])
+        self.assertFalse(model["victory"])
+        self.assertFalse(model["show_continue"])
+        self.assertEqual("Defeat", model["grade_label"])
+        self.assertNotIn(model["grade"], VICTORY_GRADES)
+        presenter = (
+            Path(__file__).resolve().parents[1]
+            / "godot"
+            / "scripts"
+            / "presentation"
+            / "campaign_rules_presenter.gd"
+        ).read_text(encoding="utf-8")
+        self.assertIn("static func result_model(snapshot: Dictionary)", presenter)
+        self.assertIn('faction_result != "defeat"', presenter)
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "opposing-defeat.json"
+            save_campaign(state, path)
+            loaded = load_campaign(path)
+        restored = evaluate_campaign_outcome(loaded)
+        self._assert_opposing_contract_player_facing_defeat(restored, loaded)
+        with self.assertRaisesRegex(ValueError, "only available after victory"):
+            continue_playing(loaded)
+
+    def _assert_opposing_contract_player_facing_defeat(self, outcome, state) -> None:
         self.assertEqual("complete", outcome.status)
         self.assertEqual("defeat", outcome.selected_faction_result)
+        self.assertEqual(GRADE_DEFEAT, outcome.grade)
+        self.assertNotIn(outcome.grade, VICTORY_GRADES)
         self.assertEqual("eastern-coalition", outcome.winner_coalition)
+        self.assertEqual("western-coalition", outcome.loser_coalition)
+        self.assertEqual("incomplete", outcome.coalition_result)
+        self.assertEqual("incomplete", outcome.national_result)
+        self.assertNotEqual("victory", outcome.coalition_result)
+        self.assertNotEqual("victory", outcome.national_result)
+        self.assertIn("opposing coalition", outcome.reason)
         self.assertFalse(state.map_metadata[CAMPAIGN_RULES_KEY].get("continue_playing"))
+        locked = state.map_metadata[CAMPAIGN_RULES_KEY].get("locked_result") or {}
+        self.assertEqual("defeat", locked.get("selected_faction_result"))
+        self.assertEqual(GRADE_DEFEAT, locked.get("grade"))
+        self.assertEqual("incomplete", locked.get("coalition_result"))
+        self.assertEqual("incomplete", locked.get("national_result"))
 
     def test_ukraine_coalition_national_split_survives_save_load(self) -> None:
         """ACTIVE / VICTORY / DEFEAT from the UKR split persist across save/load."""
@@ -233,9 +282,7 @@ class CampaignRulesPlayTests(unittest.TestCase):
             save_campaign(defeat, path)
             loaded_defeat = load_campaign(path)
         restored_defeat = evaluate_campaign_outcome(loaded_defeat)
-        self.assertEqual("complete", restored_defeat.status)
-        self.assertEqual("defeat", restored_defeat.selected_faction_result)
-        self.assertEqual("eastern-coalition", restored_defeat.winner_coalition)
+        self._assert_opposing_contract_player_facing_defeat(restored_defeat, loaded_defeat)
 
     def test_ai_uses_same_allied_national_and_opposing_contract_rules(self) -> None:
         """AI evaluation uses the same coalition/national split as a human seat."""
@@ -261,9 +308,7 @@ class CampaignRulesPlayTests(unittest.TestCase):
         _hold_weeks(opposing, 4)
         _boost_momentum(opposing, "rusa", wins=8)
         ai_defeat = evaluate_campaign_outcome(opposing)
-        self.assertEqual("complete", ai_defeat.status)
-        self.assertEqual("defeat", ai_defeat.selected_faction_result)
-        self.assertEqual("eastern-coalition", ai_defeat.winner_coalition)
+        self._assert_opposing_contract_player_facing_defeat(ai_defeat, opposing)
 
     def test_capital_loss_defeats_player_after_four_weeks(self) -> None:
         state = _rules_state(hub_province="a")
@@ -418,6 +463,35 @@ class CampaignRulesPlayTests(unittest.TestCase):
         conclude_campaign(state)
         self.assertTrue(state.map_metadata[CAMPAIGN_RULES_KEY]["concluded"])
 
+    def test_continue_playing_rejects_contradictory_defeat_tuple(self) -> None:
+        """selected_faction_result=defeat must block Continue even if grade leaked victory."""
+
+        state = _ukraine_player_state()
+        evaluate_campaign_outcome(state)
+        leaked = {
+            "status": "complete",
+            "winner_coalition": "eastern-coalition",
+            "loser_coalition": "western-coalition",
+            "reason": "campaign victory: required war aims and national contribution before the turn cap",
+            "selected_faction_result": "defeat",
+            "grade": GRADE_VICTORY,
+            "coalition_result": "victory",
+            "national_result": "victory",
+            "continue_playing": False,
+            "concluded": False,
+            "momentum": 60,
+        }
+        state.map_metadata["campaign_outcome"] = dict(leaked)
+        state.map_metadata[CAMPAIGN_RULES_KEY]["result_locked"] = True
+        state.map_metadata[CAMPAIGN_RULES_KEY]["locked_result"] = dict(leaked)
+        with self.assertRaisesRegex(ValueError, "only available after victory"):
+            continue_playing(state)
+        model = _campaign_rules_result_model(
+            {"campaign": {**campaign_presentation(state), "outcome": leaked}}
+        )
+        self.assertFalse(model["victory"])
+        self.assertFalse(model["show_continue"])
+
     def test_save_restore_persists_calendar_objectives_momentum_and_continue(self) -> None:
         state = _rules_state()
         for _ in range(4):
@@ -563,6 +637,40 @@ def _boost_momentum(state: CampaignState, faction_id: str, *, wins: int) -> None
 def _grant_ukraine_national_hold(state: CampaignState) -> None:
     state.provinces["b"].owner = Faction.UKRAINE
     state.provinces["b"].metadata["static_supply_source_for"] = ["ukr"]
+
+
+def _campaign_rules_result_model(snapshot: dict) -> dict:
+    """Apply CampaignRulesPresenter.result_model victory/continue rules."""
+
+    campaign = snapshot.get("campaign") or {}
+    row = campaign.get("outcome") or {}
+    if not isinstance(row, dict):
+        return {"visible": False}
+    status = str(row.get("status") or "active")
+    continue_playing_flag = bool(campaign.get("continue_playing", row.get("continue_playing", False)))
+    concluded = bool(campaign.get("concluded", row.get("concluded", False)))
+    grade = str(row.get("grade") or "").strip()
+    if status != "complete" and not grade:
+        return {"visible": False, "continue_playing": continue_playing_flag, "concluded": concluded}
+    faction_result = str(row.get("selected_faction_result") or "")
+    victory = (grade in VICTORY_GRADES or faction_result == "victory") and faction_result != "defeat"
+    labels = {
+        "decisive_victory": "Decisive Victory",
+        "victory": "Victory",
+        "negotiated_advantage": "Negotiated Advantage",
+        "stalemate": "Stalemate",
+        "defeat": "Defeat",
+        "decisive_defeat": "Decisive Defeat",
+    }
+    return {
+        "visible": (not continue_playing_flag) or concluded,
+        "grade": grade,
+        "grade_label": labels.get(grade, grade or "Complete"),
+        "show_continue": victory and not continue_playing_flag and not concluded,
+        "victory": victory,
+        "coalition_result": str(row.get("coalition_result") or ""),
+        "national_result": str(row.get("national_result") or ""),
+    }
 
 
 def _ukraine_player_state() -> CampaignState:

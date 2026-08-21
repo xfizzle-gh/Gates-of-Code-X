@@ -23,6 +23,8 @@ func _run_all() -> void:
 	_test_objective_uses_required_not_threshold()
 	_test_result_shows_continue_and_conclude_on_victory()
 	_test_result_hides_continue_on_defeat()
+	_test_opposing_contract_is_not_player_victory()
+	_test_contradictory_winner_grade_does_not_show_continue()
 	_test_rewrite_launch_args_sets_preset_and_fog()
 
 
@@ -120,6 +122,50 @@ func _test_result_hides_continue_on_defeat() -> void:
 	_assert_true("defeat visible", bool(model.get("visible", false)))
 	_assert_true("no continue after defeat", not bool(model.get("show_continue", true)))
 	_assert_true("conclude still available", bool(model.get("show_conclude", false)))
+
+
+func _test_opposing_contract_is_not_player_victory() -> void:
+	var model := Presenter.result_model({
+		"campaign": {
+			"continue_playing": false,
+			"concluded": false,
+			"momentum": {"score": 2},
+			"outcome": {
+				"status": "complete",
+				"grade": "defeat",
+				"selected_faction_result": "defeat",
+				"winner_coalition": "eastern-coalition",
+				"loser_coalition": "western-coalition",
+				"coalition_result": "incomplete",
+				"national_result": "incomplete",
+				"reason": "opposing coalition completed its accepted victory contract",
+			},
+		}
+	})
+	_assert_true("opposing contract visible", bool(model.get("visible", false)))
+	_assert_true("opposing contract hides continue", not bool(model.get("show_continue", true)))
+	_assert_eq("opposing contract grade label", String(model.get("grade_label", "")), "Defeat")
+	_assert_eq("opposing contract grade", String(model.get("grade", "")), "defeat")
+	_assert_eq("opposing contract coalition", String(model.get("coalition_result", "")), "incomplete")
+	_assert_eq("opposing contract national", String(model.get("national_result", "")), "incomplete")
+
+
+func _test_contradictory_winner_grade_does_not_show_continue() -> void:
+	var model := Presenter.result_model({
+		"campaign": {
+			"continue_playing": false,
+			"concluded": false,
+			"outcome": {
+				"status": "complete",
+				"grade": "victory",
+				"selected_faction_result": "defeat",
+				"coalition_result": "victory",
+				"national_result": "victory",
+			},
+		}
+	})
+	_assert_true("leaked winner grade stays visible", bool(model.get("visible", false)))
+	_assert_true("leaked winner grade hides continue", not bool(model.get("show_continue", true)))
 
 
 func _test_rewrite_launch_args_sets_preset_and_fog() -> void:

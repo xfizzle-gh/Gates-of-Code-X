@@ -629,21 +629,36 @@ def evaluate_p9_outcome(state: CampaignState) -> Any | None:
             continue
         winner_is_player = selected == lead_faction
         selected_result = "victory" if winner_is_player else "defeat"
+        if winner_is_player:
+            grade = str(report["grade"])
+            coalition_result = str(report["coalition_result"])
+            national_result = str(report["national_result"])
+            reason = str(report["reason"])
+            momentum = int(report["momentum"])
+        else:
+            # Player-facing fields stay selected-player semantics. Winner
+            # coalition is recorded separately; do not copy the opposing
+            # owner report's victory grade / layer results onto the loser.
+            grade = GRADE_DEFEAT
+            coalition_result = _layer_result(state, selected, "coalition_war_aim")
+            national_result = _layer_result(state, selected, "national_contribution")
+            reason = "opposing coalition completed its accepted victory contract"
+            momentum = player_score
         return _lock_outcome(
             state,
             CampaignOutcome(
                 status="complete",
                 winner_coalition=str(report["coalition"]),
                 loser_coalition="" if winner_is_player else selected_alliance,
-                reason=str(report["reason"]),
+                reason=reason,
                 selected_faction_result=selected_result,
                 victory_hold_rounds=int(rules.get("hold_weeks") or 0),
-                grade=str(report["grade"]),
-                coalition_result=str(report["coalition_result"]),
-                national_result=str(report["national_result"]),
+                grade=grade,
+                coalition_result=coalition_result,
+                national_result=national_result,
                 continue_playing=False,
                 concluded=False,
-                momentum=int(report["momentum"]),
+                momentum=momentum,
             ),
         )
 
@@ -849,10 +864,14 @@ def continue_playing(state: CampaignState) -> dict[str, Any]:
     ensure_campaign_rules(state)
     rules = campaign_rules(state)
     outcome = state.map_metadata.get("campaign_outcome", {})
-    grade = str((outcome or {}).get("grade") or rules.get("locked_result", {}).get("grade") or "")
+    locked = rules.get("locked_result") if isinstance(rules.get("locked_result"), dict) else {}
+    grade = str((outcome or {}).get("grade") or locked.get("grade") or "")
+    selected_result = str(
+        (outcome or {}).get("selected_faction_result") or locked.get("selected_faction_result") or ""
+    )
     if str((outcome or {}).get("status") or "") != "complete" and not rules.get("result_locked"):
         raise CampaignRulesError("Continue Playing is only available after a campaign result")
-    if grade not in VICTORY_GRADES:
+    if grade not in VICTORY_GRADES or selected_result == "defeat":
         raise CampaignRulesError("Continue Playing is only available after victory")
     if rules.get("concluded"):
         raise CampaignRulesError("Campaign is already concluded")

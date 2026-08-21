@@ -75,7 +75,10 @@ static func result_model(snapshot: Dictionary) -> Dictionary:
 	var complete := status == "complete" or not grade.is_empty()
 	if not complete:
 		return {"visible": false, "continue_playing": continue_playing, "concluded": concluded}
-	var victory := grade in VICTORY_GRADES or String(row.get("selected_faction_result", "")) == "victory"
+	var faction_result := String(row.get("selected_faction_result", ""))
+	# Python is authority. A defeated selected player must never be classified
+	# as Victory or offered Continue Playing, even if a winner-side grade leaked.
+	var victory := (grade in VICTORY_GRADES or faction_result == "victory") and faction_result != "defeat"
 	return {
 		"visible": not continue_playing or concluded,
 		"banner": concluded or not continue_playing,
