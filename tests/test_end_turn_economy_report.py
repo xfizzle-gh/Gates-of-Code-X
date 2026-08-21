@@ -4,6 +4,7 @@ import inspect
 import sys
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 _TESTS = Path(__file__).resolve().parent
@@ -22,6 +23,7 @@ from gates_of_codex.end_turn_economy_report import (
     ECONOMY_REPORT_SCHEMA_VERSION,
     OTHER_ACTORS_SUMMARY,
     SETTLE_ACTOR_SOURCE,
+    SETTLE_LEGACY_SOURCE,
     ai_economy_actions_present,
     build_end_turn_economy_report,
 )
@@ -85,6 +87,63 @@ class EndTurnEconomyReportTests(unittest.TestCase):
         self.assertNotIn("deu", encoded)
         self.assertNotIn("rus", encoded)
         self.assertNotIn("fixture_deu", encoded)
+
+    def test_report_builder_noops_without_campaign_presentation_metadata(self) -> None:
+        missing = SimpleNamespace(
+            turn_number=2,
+            selected_faction=Faction.NATO,
+            factions={},
+        )
+        missing_report = build_end_turn_economy_report(
+            missing,  # type: ignore[arg-type]
+            starting_turn=1,
+            other_actors_acted=False,
+        )
+        self.assertFalse(missing_report["settled"])
+        self.assertEqual("", missing_report["source"])
+        self.assertEqual(Faction.NATO.value, missing_report["actor_id"])
+        self.assertNotIn("income", missing_report)
+        self.assertNotIn("treasury", missing_report)
+
+        empty = SimpleNamespace(
+            turn_number=2,
+            selected_faction=Faction.NATO,
+            map_metadata={},
+            factions={
+                Faction.NATO.value: SimpleNamespace(is_eliminated=False),
+            },
+        )
+        empty_report = build_end_turn_economy_report(
+            empty,  # type: ignore[arg-type]
+            starting_turn=1,
+            other_actors_acted=True,
+        )
+        self.assertFalse(empty_report["settled"])
+        self.assertEqual("", empty_report["source"])
+        self.assertNotIn("income", empty_report)
+        self.assertNotIn("treasury", empty_report)
+        self.assertTrue(empty_report["other_actors_acted"])
+        self.assertEqual(OTHER_ACTORS_SUMMARY, empty_report["other_actors_summary"])
+
+    def test_legacy_report_reads_real_faction_state_when_actor_content_absent(self) -> None:
+        state = load_bundled_scenario("legacy_goe_europe")
+        self.assertNotIsInstance(state.map_metadata.get("actor_content_runtime"), dict)
+        faction = state.factions[state.selected_faction.value]
+        faction.income_last_round = 40
+        faction.maintenance_last_round = 10
+        faction.resources = 900
+        state.turn_number = 2
+        report = build_end_turn_economy_report(
+            state,
+            starting_turn=1,
+            other_actors_acted=False,
+        )
+        self.assertTrue(report["settled"])
+        self.assertEqual(SETTLE_LEGACY_SOURCE, report["source"])
+        self.assertEqual(40, report["income"])
+        self.assertEqual(10, report["maintenance"])
+        self.assertEqual(900, report["treasury"])
+        self.assertEqual(30, report["net"])
 
     def test_report_builder_does_not_invent_stale_numbers_without_rollover(self) -> None:
         settle_actor_round_economy(self.state)

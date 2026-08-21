@@ -45,6 +45,37 @@ def ai_economy_actions_present(actions: list[StrategicAction] | None) -> bool:
     return any(str(action.action) in _AI_ECONOMY_ACTIONS for action in actions)
 
 
+def _presentation_metadata(state: CampaignState) -> dict[str, Any] | None:
+    """Return CampaignState presentation metadata, or None when absent.
+
+    A real ``CampaignState`` always carries ``map_metadata`` (empty dict by
+    default). Missing or non-dict metadata is not a campaign presentation
+    surface; callers must fail-closed instead of inventing numbers.
+    """
+
+    metadata = getattr(state, "map_metadata", None)
+    return metadata if isinstance(metadata, dict) else None
+
+
+def _selected_faction_id(state: CampaignState) -> str:
+    selected = getattr(state, "selected_faction", None)
+    value = getattr(selected, "value", selected)
+    return str(value or "").strip()
+
+
+def _legacy_faction_economy(faction_state: Any) -> tuple[int, int, int] | None:
+    """Income, maintenance, treasury from a real FactionState only."""
+
+    if faction_state is None:
+        return None
+    income = getattr(faction_state, "income_last_round", None)
+    maintenance = getattr(faction_state, "maintenance_last_round", None)
+    treasury = getattr(faction_state, "resources", None)
+    if income is None or maintenance is None or treasury is None:
+        return None
+    return int(income), int(maintenance), int(treasury)
+
+
 def build_end_turn_economy_report(
     state: CampaignState,
     *,
@@ -54,11 +85,20 @@ def build_end_turn_economy_report(
     """Compact acting-actor report after ``end_player_round``.
 
     Numbers are published only when this cycle rolled the round
-    (``turn_number`` advanced). Stale previous-round rows are not reused.
+    (``turn_number`` advanced) and real settlement/presentation fields exist.
+    Stale previous-round rows are not reused. Missing CampaignState
+    presentation metadata is an unsettled no-op, not a crash.
     """
 
     settled = int(state.turn_number) > int(starting_turn)
     acted = bool(other_actors_acted)
+    if _presentation_metadata(state) is None:
+        selected = _selected_faction_id(state)
+        return _unsettled_payload(
+            actor_id=selected,
+            display_name=selected,
+            other_actors_acted=acted,
+        )
     actor = build_acting_actor_presentation(state) or {}
     if actor_content_installed(state):
         return _actor_report(
@@ -110,9 +150,12 @@ def _legacy_report(
     settled: bool,
     other_actors_acted: bool,
 ) -> dict[str, Any]:
-    selected = state.selected_faction.value
+    selected = _selected_faction_id(state)
     last = _faction_last_round_row(state, selected) if settled else {}
-    faction_state = state.factions.get(selected)
+    factions = getattr(state, "factions", None) or {}
+    faction_economy = _legacy_faction_economy(
+        factions.get(selected) if isinstance(factions, dict) else None
+    )
     if settled and last:
         return _settled_payload(
             source=SETTLE_LEGACY_SOURCE,
@@ -125,16 +168,17 @@ def _legacy_report(
             treasury=int(last.get("resources_remaining") or 0),
             other_actors_acted=other_actors_acted,
         )
-    if settled and faction_state is not None:
+    if settled and faction_economy is not None:
+        income, maintenance, treasury = faction_economy
         return _settled_payload(
             source=SETTLE_LEGACY_SOURCE,
             actor_id=str(actor.get("actor_id") or selected),
             display_name=str(actor.get("display_name") or selected),
-            income=int(faction_state.income_last_round),
-            maintenance_due=int(faction_state.maintenance_last_round),
-            maintenance_paid=int(faction_state.maintenance_last_round),
+            income=income,
+            maintenance_due=maintenance,
+            maintenance_paid=maintenance,
             shortfall=0,
-            treasury=int(faction_state.resources),
+            treasury=treasury,
             other_actors_acted=other_actors_acted,
         )
     return _unsettled_payload(
@@ -145,7 +189,8 @@ def _legacy_report(
 
 
 def _actor_last_round_row(state: CampaignState, actor_id: str) -> dict[str, Any]:
-    content = state.map_metadata.get("actor_content_runtime")
+    metadata = _presentation_metadata(state) or {}
+    content = metadata.get("actor_content_runtime")
     if not isinstance(content, dict):
         return {}
     for report in content.get("last_round_economy") or []:
@@ -155,7 +200,8 @@ def _actor_last_round_row(state: CampaignState, actor_id: str) -> dict[str, Any]
 
 
 def _faction_last_round_row(state: CampaignState, faction_id: str) -> dict[str, Any]:
-    for report in state.map_metadata.get("last_round_economy") or []:
+    metadata = _presentation_metadata(state) or {}
+    for report in metadata.get("last_round_economy") or []:
         if isinstance(report, dict) and str(report.get("faction") or "") == faction_id:
             return report
     return {}
