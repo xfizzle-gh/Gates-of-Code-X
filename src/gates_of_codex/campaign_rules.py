@@ -612,6 +612,12 @@ def evaluate_p9_outcome(state: CampaignState) -> Any | None:
 
     contenders = _victory_contenders(state)
     for owner_key, owner_factions, lead_faction in contenders:
+        # Coalition war aims are coalition-wide. An allied actor's national
+        # contribution must not end the selected player's campaign or become a
+        # defeat. Player victory uses the selected actor only; defeat from this
+        # path requires an opposing coalition's accepted victory contract.
+        if selected in owner_factions and lead_faction != selected:
+            continue
         report = _owner_victory_report(state, owner_key, owner_factions, lead_faction)
         if report is None:
             continue

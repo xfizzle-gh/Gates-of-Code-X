@@ -138,6 +138,131 @@ class CampaignRulesPlayTests(unittest.TestCase):
         self.assertEqual("defeat", outcome.selected_faction_result)
         self.assertEqual("eastern-coalition", outcome.winner_coalition)
 
+    def test_allied_national_success_does_not_end_ukraine_campaign(self) -> None:
+        """Human UKR: Western aims + NATO national complete, UKR national incomplete => ACTIVE."""
+
+        state = _ukraine_player_state()
+        _hold_weeks(state, 4)
+        _boost_momentum(state, "nato", wins=6)
+        self.assertTrue(_objective(state, "aim-west")["completed"])
+        self.assertTrue(_objective(state, "nat-usa")["completed"])
+        self.assertFalse(_objective(state, "nat-ukr")["completed"])
+        outcome = evaluate_campaign_outcome(state)
+        self.assertEqual("active", outcome.status)
+        self.assertEqual("active", outcome.selected_faction_result)
+        self.assertFalse(campaign_play_blocked(state))
+        self.assertNotEqual("defeat", outcome.selected_faction_result)
+        self.assertNotIn(outcome.grade, {GRADE_VICTORY, "decisive_victory", GRADE_DEFEAT})
+
+    def test_ukraine_victory_requires_own_national_contribution(self) -> None:
+        """Human UKR: Western aims + UKR national + threshold => VICTORY."""
+
+        state = _ukraine_player_state()
+        _grant_ukraine_national_hold(state)
+        _hold_weeks(state, 4)
+        _boost_momentum(state, "ukr", wins=6)
+        self.assertTrue(_objective(state, "aim-west")["completed"])
+        self.assertTrue(_objective(state, "nat-ukr")["completed"])
+        outcome = evaluate_campaign_outcome(state)
+        self.assertEqual("complete", outcome.status)
+        self.assertEqual("victory", outcome.selected_faction_result)
+        self.assertIn(outcome.grade, {GRADE_VICTORY, "decisive_victory"})
+        self.assertEqual("western-coalition", outcome.winner_coalition)
+        self.assertEqual("victory", outcome.national_result)
+        self.assertEqual("victory", outcome.coalition_result)
+        self.assertGreaterEqual(outcome.momentum, 45)
+
+    def test_opposing_coalition_contract_defeats_ukraine_player(self) -> None:
+        """Eastern coalition accepted victory contract => human UKR DEFEAT."""
+
+        state = _ukraine_player_state()
+        for province_id in ("a", "b", "x", "y"):
+            state.provinces[province_id].owner = Faction.RUSSIA
+        _hold_weeks(state, 4)
+        _boost_momentum(state, "rusa", wins=8)
+        self.assertTrue(_objective(state, "aim-east")["completed"])
+        self.assertTrue(_objective(state, "nat-rus")["completed"])
+        outcome = evaluate_campaign_outcome(state)
+        self.assertEqual("complete", outcome.status)
+        self.assertEqual("defeat", outcome.selected_faction_result)
+        self.assertEqual("eastern-coalition", outcome.winner_coalition)
+        self.assertFalse(state.map_metadata[CAMPAIGN_RULES_KEY].get("continue_playing"))
+
+    def test_ukraine_coalition_national_split_survives_save_load(self) -> None:
+        """ACTIVE / VICTORY / DEFEAT from the UKR split persist across save/load."""
+
+        active = _ukraine_player_state()
+        _hold_weeks(active, 4)
+        _boost_momentum(active, "nato", wins=6)
+        self.assertEqual("active", evaluate_campaign_outcome(active).status)
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "active.json"
+            save_campaign(active, path)
+            loaded_active = load_campaign(path)
+        restored_active = evaluate_campaign_outcome(loaded_active)
+        self.assertEqual("active", restored_active.status)
+        self.assertEqual("active", restored_active.selected_faction_result)
+        self.assertTrue(_objective(loaded_active, "nat-usa")["completed"])
+        self.assertFalse(_objective(loaded_active, "nat-ukr")["completed"])
+        self.assertFalse(campaign_play_blocked(loaded_active))
+
+        victory = _ukraine_player_state()
+        _grant_ukraine_national_hold(victory)
+        _hold_weeks(victory, 4)
+        _boost_momentum(victory, "ukr", wins=6)
+        self.assertEqual("victory", evaluate_campaign_outcome(victory).selected_faction_result)
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "victory.json"
+            save_campaign(victory, path)
+            loaded_victory = load_campaign(path)
+        restored_victory = evaluate_campaign_outcome(loaded_victory)
+        self.assertEqual("complete", restored_victory.status)
+        self.assertEqual("victory", restored_victory.selected_faction_result)
+        self.assertIn(restored_victory.grade, {GRADE_VICTORY, "decisive_victory"})
+
+        defeat = _ukraine_player_state()
+        for province_id in ("a", "b", "x", "y"):
+            defeat.provinces[province_id].owner = Faction.RUSSIA
+        _hold_weeks(defeat, 4)
+        _boost_momentum(defeat, "rusa", wins=8)
+        self.assertEqual("defeat", evaluate_campaign_outcome(defeat).selected_faction_result)
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "defeat.json"
+            save_campaign(defeat, path)
+            loaded_defeat = load_campaign(path)
+        restored_defeat = evaluate_campaign_outcome(loaded_defeat)
+        self.assertEqual("complete", restored_defeat.status)
+        self.assertEqual("defeat", restored_defeat.selected_faction_result)
+        self.assertEqual("eastern-coalition", restored_defeat.winner_coalition)
+
+    def test_ai_uses_same_allied_national_and_opposing_contract_rules(self) -> None:
+        """AI evaluation uses the same coalition/national split as a human seat."""
+
+        nato_seat = _rules_state()
+        _grant_ukraine_national_hold(nato_seat)
+        nato_seat.provinces["a"].owner = Faction.UKRAINE
+        _hold_weeks(nato_seat, 4)
+        _boost_momentum(nato_seat, "ukr", wins=6)
+        self.assertTrue(_objective(nato_seat, "aim-west")["completed"])
+        self.assertTrue(_objective(nato_seat, "nat-ukr")["completed"])
+        self.assertFalse(_objective(nato_seat, "nat-usa")["completed"])
+        allied_ai = evaluate_campaign_outcome(nato_seat)
+        self.assertEqual("active", allied_ai.status)
+        self.assertEqual("active", allied_ai.selected_faction_result)
+        self.assertFalse(campaign_play_blocked(nato_seat))
+
+        opposing = _ukraine_player_state()
+        opposing.factions["ukr"].is_human_controlled = False
+        opposing.factions["nato"].is_human_controlled = False
+        for province_id in ("a", "b", "x", "y"):
+            opposing.provinces[province_id].owner = Faction.RUSSIA
+        _hold_weeks(opposing, 4)
+        _boost_momentum(opposing, "rusa", wins=8)
+        ai_defeat = evaluate_campaign_outcome(opposing)
+        self.assertEqual("complete", ai_defeat.status)
+        self.assertEqual("defeat", ai_defeat.selected_faction_result)
+        self.assertEqual("eastern-coalition", ai_defeat.winner_coalition)
+
     def test_capital_loss_defeats_player_after_four_weeks(self) -> None:
         state = _rules_state(hub_province="a")
         state.provinces["a"].owner = Faction.RUSSIA
@@ -337,11 +462,36 @@ def _objective(state: CampaignState, identity: str) -> dict:
     )
 
 
-def _rules_state(*, hub_province: str | None = None, p9: bool = True) -> CampaignState:
+def _hold_weeks(state: CampaignState, weeks: int) -> None:
+    for _ in range(weeks):
+        evaluate_campaign_outcome(state, advance_hold=True)
+
+
+def _boost_momentum(state: CampaignState, faction_id: str, *, wins: int) -> None:
+    events = state.map_metadata[CAMPAIGN_RULES_KEY].setdefault("events", {})
+    wins_by_faction = events.setdefault("major_auto_resolve_wins", {})
+    wins_by_faction[faction_id] = wins
+
+
+def _grant_ukraine_national_hold(state: CampaignState) -> None:
+    state.provinces["b"].owner = Faction.UKRAINE
+    state.provinces["b"].metadata["static_supply_source_for"] = ["ukr"]
+
+
+def _ukraine_player_state() -> CampaignState:
+    return _rules_state(selected=Faction.UKRAINE)
+
+
+def _rules_state(
+    *,
+    hub_province: str | None = None,
+    p9: bool = True,
+    selected: Faction = Faction.NATO,
+) -> CampaignState:
     state = CampaignState(
         campaign_name="Rules test",
-        selected_faction=Faction.NATO,
-        current_faction=Faction.NATO,
+        selected_faction=selected,
+        current_faction=selected,
         factions={
             "nato": FactionState(Faction.NATO, resources=2000, researched_keys=["core-nato"]),
             "ukr": FactionState(Faction.UKRAINE, resources=2000),
@@ -423,6 +573,25 @@ def _rules_state(*, hub_province: str | None = None, p9: bool = True) -> Campaig
                 "display_name": "Hold A",
                 "kind": "control",
                 "targets": ["a"],
+                "required": 1,
+                "reward_each": 0,
+                "primary": False,
+                "hold_weeks": 4,
+                "progress": 0,
+                "completed": False,
+                "completed_turn": 0,
+                "rewarded": False,
+                "target_hold_weeks": {},
+            },
+            {
+                "id": "nat-ukr",
+                "layer": "national_contribution",
+                "owner_type": "actor",
+                "owner_id": "ukr",
+                "coalition": "western-coalition",
+                "display_name": "Hold B",
+                "kind": "control",
+                "targets": ["b"],
                 "required": 1,
                 "reward_each": 0,
                 "primary": False,
