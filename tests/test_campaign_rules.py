@@ -629,6 +629,20 @@ class CampaignRulesPlayTests(unittest.TestCase):
         self.assertTrue(presentation["continue_playing"])
         self.assertIn("label", presentation["calendar"])
 
+    def test_presentation_does_not_initialize_campaign_rules(self) -> None:
+        state = CampaignState(
+            campaign_name="presentation-purity",
+            selected_faction=Faction.NATO,
+            current_faction=Faction.NATO,
+            factions={"nato": FactionState(Faction.NATO, resources=0)},
+            provinces={"p": Province("p", "P", Faction.NATO, [])},
+        )
+        before = copy.deepcopy(state.to_dict())
+        presentation = campaign_presentation(state)
+        self.assertEqual("2028-W01", presentation["calendar"]["label"])
+        self.assertEqual(before, state.to_dict())
+        self.assertNotIn(CAMPAIGN_RULES_KEY, state.map_metadata)
+
     def test_snapshot_and_runtime_patch_expose_calendar_without_schema_bump(self) -> None:
         state = _rules_state()
         evaluate_campaign_outcome(state)

@@ -1132,6 +1132,8 @@ def _presentation_rules(state: CampaignState) -> dict[str, Any]:
 
 
 def campaign_presentation(state: CampaignState) -> dict[str, Any]:
+    """Project calendar/Momentum fields without initializing campaign authority."""
+
     rules = _presentation_rules(state)
     calendar = rules.get("calendar") or calendar_from_turn(state.turn_number)
     momentum = rules.get("momentum") or {"score": 0, "by_faction": {}, "by_actor": {}}
