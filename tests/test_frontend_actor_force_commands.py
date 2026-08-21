@@ -378,8 +378,12 @@ class FrontendActorForceCommandTests(unittest.TestCase):
         for op in ("research", "recruit", "assign", "repair", "actor_force_panel"):
             self.assertNotIn(op, _SNAPSHOT_PATCH_OPS)
             self.assertNotIn(op, _RUNTIME_PATCH_OPS)
-            self.assertNotIn(op, SUPPORTED_OPS)
             self.assertFalse(_should_persist_runtime_snapshot([{"op": op}]))
+        # Composed-stack daemon policy (#279): only repair is warm-allowlisted.
+        # Research/recruit/assign and the read-only panel stay one-shot full-refresh.
+        self.assertIn("repair", SUPPORTED_OPS)
+        for op in ("research", "recruit", "assign", "actor_force_panel"):
+            self.assertNotIn(op, SUPPORTED_OPS)
 
 
 if __name__ == "__main__":

@@ -235,6 +235,7 @@ class PersistentBackendTransportTests(unittest.TestCase):
             "research",
             "assign",
         ):
+            # Composed-stack policy: these #276 frontend ops stay full-refresh.
             self.assertNotIn(op, persistent_backend.SUPPORTED_OPS)
 
     def test_direct_cache_loader_leases_once_then_uses_canonical_loader(self) -> None:

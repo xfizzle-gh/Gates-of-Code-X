@@ -37,7 +37,10 @@ SUPPORTED_OPS = frozenset(
         "refresh",
         "auto_resolve",
         # #149 force-loop frontend op. Full-refresh only; not a persist/runtime-patch
-        # op. Recruit/research/assign stay closed until they exist as frontend ops.
+        # op. Composed-stack policy after #276: research/recruit/assign exist as
+        # frontend commands and stay off this allowlist (one-shot full-refresh is
+        # sufficient; no measured player-facing warm-path need). Persist/runtime-patch
+        # allowlists stay unchanged.
         "repair",
     }
 )

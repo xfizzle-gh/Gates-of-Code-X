@@ -33,10 +33,12 @@ from tests.test_s10_frontend_presentation_contract import _state
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
-# #149 force-loop economy ops. Recruit/research/assign are CLI/Python-only on
-# main b5320ce; draft #276 adds their frontend commands. Do not allowlist them
-# here until they exist as frontend ops on the stacked base.
+# #149 force-loop economy ops. After #276 they are all frontend commands.
+# Composed-stack daemon policy: only repair is warm-allowlisted. The other three
+# stay one-shot full-refresh. Persist/runtime-patch allowlists stay unchanged.
 ISSUE_149_FORCE_LOOP_OPS = frozenset({"repair", "recruit", "research", "assign"})
+DAEMON_ALLOWLISTED_FORCE_OPS = frozenset({"repair"})
+FULL_REFRESH_FORCE_OPS = ISSUE_149_FORCE_LOOP_OPS - DAEMON_ALLOWLISTED_FORCE_OPS
 
 
 def _ensure_worktree_import_path() -> None:
@@ -144,20 +146,20 @@ def _pid_alive(pid: int) -> bool:
 
 
 class Issue149FrontendForceLoopDiscoveryTests(unittest.TestCase):
-    def test_only_repair_is_a_frontend_force_loop_op_on_this_base(self) -> None:
+    def test_all_four_force_ops_are_frontend_commands_after_276(self) -> None:
         handlers = _frontend_command_handlers()
         control_ops = _frontend_control_supported_ops()
         frontend_force_ops = ISSUE_149_FORCE_LOOP_OPS & handlers & control_ops
-        self.assertEqual({"repair"}, frontend_force_ops)
-        for op in ("recruit", "research", "assign"):
-            self.assertNotIn(op, handlers)
-            self.assertNotIn(op, control_ops)
+        self.assertEqual(ISSUE_149_FORCE_LOOP_OPS, frontend_force_ops)
+        for op in ISSUE_149_FORCE_LOOP_OPS:
+            self.assertIn(op, handlers)
+            self.assertIn(op, control_ops)
 
 
 class Issue149PersistentBackendRepairAllowlistTests(unittest.TestCase):
-    def test_daemon_accepts_repair_and_leaves_non_frontend_force_ops_closed(self) -> None:
-        self.assertIn("repair", persistent_backend.SUPPORTED_OPS)
-        for op in ("recruit", "research", "assign"):
+    def test_daemon_allowlists_only_repair_full_refresh_for_other_force_ops(self) -> None:
+        self.assertEqual(DAEMON_ALLOWLISTED_FORCE_OPS & persistent_backend.SUPPORTED_OPS, {"repair"})
+        for op in FULL_REFRESH_FORCE_OPS:
             self.assertNotIn(op, persistent_backend.SUPPORTED_OPS)
         for op in (
             "handoff",
@@ -175,8 +177,12 @@ class Issue149PersistentBackendRepairAllowlistTests(unittest.TestCase):
         self.assertFalse(_should_persist_runtime_snapshot(repair))
         self.assertFalse(_runtime_patch_only(repair))
         self.assertFalse(_snapshot_patch_only(repair))
-        self.assertNotIn("repair", _RUNTIME_PATCH_OPS)
-        self.assertNotIn("repair", _SNAPSHOT_PATCH_OPS)
+        for op in ISSUE_149_FORCE_LOOP_OPS:
+            self.assertFalse(_should_persist_runtime_snapshot([{"op": op}]))
+            self.assertFalse(_runtime_patch_only([{"op": op}]))
+            self.assertFalse(_snapshot_patch_only([{"op": op}]))
+            self.assertNotIn(op, _RUNTIME_PATCH_OPS)
+            self.assertNotIn(op, _SNAPSHOT_PATCH_OPS)
         self.assertNotIn("refresh", _RUNTIME_PATCH_OPS)
         self.assertNotIn("refresh", _SNAPSHOT_PATCH_OPS)
         self.assertEqual(("issue_move_order", "commit_move_orders"), _LIVE_MOVE_BATCH)
