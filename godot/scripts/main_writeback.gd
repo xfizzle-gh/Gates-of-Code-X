@@ -1066,6 +1066,7 @@ func _research_command(key: String) -> Dictionary:
 		"op": "research",
 		"key": key,
 		"actor": String(actor.get("actor_id", "")),
+		"formation": selected_strategic_formation_id,
 	}
 	var campaign: Dictionary = snapshot.get("campaign", {})
 	command["faction"] = String(campaign.get("selected_faction", campaign.get("current_faction", "")))

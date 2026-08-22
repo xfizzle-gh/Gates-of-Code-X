@@ -84,6 +84,7 @@ class FrontendActorForceCommandTests(unittest.TestCase):
         self.assertNotIn("fixture_deu", names)
         self.assertTrue(panel["can_manage_formation"])
         self.assertEqual("fra", panel["actor_id"])
+        self.assertEqual("fra", panel["command_actor_id"])
         self.assertTrue(all(offer["actor_id"] == "fra" for offer in panel["recruitment_offers"]))
 
     def test_force_panel_does_not_leak_foreign_formation_roster(self) -> None:
@@ -171,7 +172,7 @@ class FrontendActorForceCommandTests(unittest.TestCase):
             and value.strategic_formation_id != self.force.strategic_formation_id
         )
         assign_strategic_formation_actor(self.state, german.strategic_formation_id, "deu")
-        with self.assertRaisesRegex(ValueError, "owned by deu"):
+        with self.assertRaisesRegex(ValueError, "command authority"):
             apply_recruit_command(
                 self.state,
                 {
@@ -239,7 +240,7 @@ class FrontendActorForceCommandTests(unittest.TestCase):
         self._prepare_repairable(german)
         before = self._actor_resources()
         battalion = self.state.battalions[german.battalion_ids[0]]
-        with self.assertRaisesRegex(ValueError, "owned by deu"):
+        with self.assertRaisesRegex(ValueError, "command authority"):
             apply_repair_command(
                 self.state,
                 {
@@ -252,23 +253,24 @@ class FrontendActorForceCommandTests(unittest.TestCase):
         self.assertEqual(90, battalion.condition)
         self.assertEqual(before, after)
 
-    def test_explicit_wrong_actor_rejects_repair(self) -> None:
+    def test_explicit_wrong_actor_does_not_rebind_economy(self) -> None:
         self._prepare_repairable(self.force)
         before = self._actor_resources()
         battalion = self.state.battalions[self.force.battalion_ids[0]]
-        with self.assertRaisesRegex(ValueError, "owned by fra"):
-            apply_repair_command(
-                self.state,
-                {
-                    "actor": "deu",
-                    "formation": self.force.strategic_formation_id,
-                    "battalion": self.force.battalion_ids[0],
-                    "points": 1,
-                },
-            )
+        repaired = apply_repair_command(
+            self.state,
+            {
+                "actor": "deu",
+                "formation": self.force.strategic_formation_id,
+                "battalion": self.force.battalion_ids[0],
+                "points": 1,
+            },
+        )
         after = self._actor_resources()
-        self.assertEqual(90, battalion.condition)
-        self.assertEqual(before, after)
+        self.assertEqual("fra", repaired["actor_id"])
+        self.assertEqual(91, battalion.condition)
+        self.assertEqual(before["fra"] - repaired["cost"], after["fra"])
+        self.assertEqual(before["deu"], after["deu"])
 
     def test_selected_actor_valid_repair_succeeds(self) -> None:
         self._prepare_repairable(self.force)
@@ -297,7 +299,7 @@ class FrontendActorForceCommandTests(unittest.TestCase):
         before = self._actor_resources()
         fra_bn = self.state.battalions[self.force.battalion_ids[0]]
         deu_bn = self.state.battalions[german.battalion_ids[0]]
-        with self.assertRaisesRegex(ValueError, "owned by deu"):
+        with self.assertRaisesRegex(ValueError, "command authority"):
             apply_repair_command(
                 self.state,
                 {
@@ -306,7 +308,7 @@ class FrontendActorForceCommandTests(unittest.TestCase):
                     "points": 1,
                 },
             )
-        with self.assertRaisesRegex(ValueError, "owned by deu"):
+        with self.assertRaisesRegex(ValueError, "command authority"):
             apply_repair_command(
                 self.state,
                 {

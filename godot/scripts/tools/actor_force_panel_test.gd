@@ -47,6 +47,7 @@ func _test_command_contract() -> void:
 	var research: Dictionary = client._research_command("actor:fra:unit:fixture_fra")
 	_assert_eq("research op", String(research.get("op", "")), "research")
 	_assert_eq("research actor", String(research.get("actor", "")), "fra")
+	_assert_eq("research formation", String(research.get("formation", "")), "sf-fra")
 	_assert_eq("research key", String(research.get("key", "")), "actor:fra:unit:fixture_fra")
 	var recruit: Dictionary = client._recruit_command("fixture_fra")
 	_assert_eq("recruit op", String(recruit.get("op", "")), "recruit")
@@ -67,6 +68,7 @@ func _test_command_contract() -> void:
 			"ok": true,
 			"data": {
 				"actor_id": "fra",
+				"command_actor_id": "fra",
 				"can_manage_formation": true,
 				"recruitment_offers": [{"unit_name": "fixture_fra", "unlocked": true, "actor_id": "fra"}],
 			},
