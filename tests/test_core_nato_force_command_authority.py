@@ -235,6 +235,66 @@ def test_core_nato_german_force_panel_and_economy(core_nato) -> None:
     assert _resources(state, "pol") == before["pol"]
 
 
+def test_core_same_faction_foreign_coalition_is_rejected(core_nato) -> None:
+    state = core_nato
+    polish = _force_for_actor(state, "pol")
+    _set_resources(state, "pol", 50_000)
+    _set_resources(state, "nato", 50_000)
+    _runtime(state)["actors"]["pol"]["coalition_id"] = "nonaligned"
+    assert _runtime(state)["actors"]["nato"]["coalition_id"] != "nonaligned"
+    before = {key: _resources(state, key) for key in ("pol", "nato")}
+    panel = build_actor_force_panel(
+        state,
+        {
+            "actor": "nato",
+            "formation": polish.strategic_formation_id,
+            "battalion": polish.battalion_ids[0],
+        },
+    )
+    assert panel["can_manage_formation"] is False
+    assert panel["recruitment_offers"] == []
+    assert panel["reinforcement_pool"] == []
+    assert panel["available_research"] == []
+    assert panel["repair"]["can_repair"] is False
+    assert panel["repair"]["points_needed"] == 0
+    assert panel["actor_id"] == "nato"
+    with pytest.raises(ValueError, match="command authority"):
+        apply_recruit_command(
+            state,
+            {
+                "actor": "nato",
+                "formation": polish.strategic_formation_id,
+                "unit": "fixture_pol",
+                "quantity": 1,
+            },
+        )
+    with pytest.raises(ValueError, match="command authority"):
+        apply_assign_command(
+            state,
+            {
+                "actor": "nato",
+                "formation": polish.strategic_formation_id,
+                "battalion": polish.battalion_ids[0],
+                "unit": "fixture_pol",
+                "quantity": 1,
+            },
+        )
+    _prepare_repairable(state, polish)
+    with pytest.raises(ValueError, match="command authority"):
+        apply_repair_command(
+            state,
+            {
+                "actor": "nato",
+                "formation": polish.strategic_formation_id,
+                "battalion": polish.battalion_ids[0],
+                "points": 1,
+            },
+        )
+    assert state.battalions[polish.battalion_ids[0]].condition == 90
+    assert _resources(state, "pol") == before["pol"]
+    assert _resources(state, "nato") == before["nato"]
+
+
 def test_core_nato_rejects_russian_formation_and_spoils(core_nato) -> None:
     state = core_nato
     russian = _force_for_actor(state, "rus")

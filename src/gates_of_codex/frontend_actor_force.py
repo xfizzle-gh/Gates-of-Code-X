@@ -84,6 +84,10 @@ def player_may_command_formation(state: CampaignState, formation_id: str) -> boo
     economy = actors.get(economy_id)
     if command is None or economy is None:
         return False
+    command_coalition = str(command.coalition_id or "").strip()
+    economy_coalition = str(economy.coalition_id or "").strip()
+    if not command_coalition or command_coalition != economy_coalition:
+        return False
     return (
         command.tactical_side.campaign_faction() == force.faction
         and economy.tactical_side.campaign_faction() == force.faction
