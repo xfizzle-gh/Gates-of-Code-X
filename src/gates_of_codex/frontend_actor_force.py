@@ -27,15 +27,17 @@ def actor_content_installed(state: CampaignState) -> bool:
 
 
 def requested_actor_id(state: CampaignState, raw: dict[str, Any]) -> str:
-    """Resolve the acting actor without faction-name heuristics.
+    """Return the selected player. Command payloads cannot spoof this identity.
 
-    Explicit ``actor`` / ``actor_id`` wins. Otherwise the installed selected
-    actor is used. Missing identity is fail-closed.
+    Explicit ``actor`` / ``actor_id`` is presentation-only. Economy identity
+    always comes from the formation's ``actor_id``.
     """
 
-    explicit = str(raw.get("actor") or raw.get("actor_id") or "").strip()
-    if explicit:
-        return explicit
+    del raw
+    return selected_command_actor_id(state)
+
+
+def selected_command_actor_id(state: CampaignState) -> str:
     runtime = state.map_metadata.get("strategic_actor_runtime")
     if isinstance(runtime, dict):
         selected = str(runtime.get("selected_actor_id") or "").strip()
@@ -44,19 +46,76 @@ def requested_actor_id(state: CampaignState, raw: dict[str, Any]) -> str:
     raise ValueError("Actor identity is required for force-management commands")
 
 
+def is_core_2028_campaign(state: CampaignState) -> bool:
+    profile = state.map_metadata.get("scenario_profile")
+    if isinstance(profile, dict):
+        scenario_id = str(profile.get("scenario_id") or "").strip()
+        if scenario_id:
+            return scenario_id == "ww3_2028_core"
+    return str(state.map_metadata.get("scenario_id") or "").strip() == "ww3_2028_core"
+
+
+def formation_economy_actor_id(state: CampaignState, formation_id: str) -> str:
+    force = state.strategic_formations.get(formation_id)
+    if force is None:
+        raise KeyError(f"Unknown strategic formation: {formation_id}")
+    owner = str(force.actor_id or "").strip()
+    if not owner:
+        raise ValueError(f"Formation {formation_id} has no economy actor")
+    return owner
+
+
+def player_may_command_formation(state: CampaignState, formation_id: str) -> bool:
+    force = state.strategic_formations.get(formation_id)
+    if force is None:
+        return False
+    economy_id = str(force.actor_id or "").strip()
+    if not economy_id:
+        return False
+    command_id = selected_command_actor_id(state)
+    if command_id == economy_id:
+        return True
+    if not is_core_2028_campaign(state):
+        return False
+    from .strategic_actors import ensure_strategic_actor_runtime
+
+    actors = ensure_strategic_actor_runtime(state)
+    command = actors.get(command_id)
+    economy = actors.get(economy_id)
+    if command is None or economy is None:
+        return False
+    command_coalition = str(command.coalition_id or "").strip()
+    economy_coalition = str(economy.coalition_id or "").strip()
+    if not command_coalition or command_coalition != economy_coalition:
+        return False
+    return (
+        command.tactical_side.campaign_faction() == force.faction
+        and economy.tactical_side.campaign_faction() == force.faction
+    )
+
+
+def require_player_may_command_formation(state: CampaignState, formation_id: str) -> None:
+    if not formation_id:
+        raise ValueError("formation required")
+    if state.strategic_formations.get(formation_id) is None:
+        raise KeyError(f"Unknown strategic formation: {formation_id}")
+    if player_may_command_formation(state, formation_id):
+        return
+    command_id = selected_command_actor_id(state)
+    economy_id = str(state.strategic_formations[formation_id].actor_id or "nobody")
+    raise ValueError(
+        f"Formation {formation_id} is not under {command_id} command authority "
+        f"(economy actor {economy_id})"
+    )
+
+
 def require_formation_owned_by_actor(
     state: CampaignState,
     formation_id: str,
     actor_id: str,
 ) -> None:
-    force = state.strategic_formations.get(formation_id)
-    if force is None:
-        raise KeyError(f"Unknown strategic formation: {formation_id}")
-    owner = str(force.actor_id or "").strip()
-    if owner != actor_id:
-        raise ValueError(
-            f"Formation {formation_id} is owned by {owner or 'nobody'}, not {actor_id}"
-        )
+    del actor_id
+    require_player_may_command_formation(state, formation_id)
 
 
 def build_acting_actor_presentation(state: CampaignState) -> dict[str, Any] | None:
@@ -113,7 +172,12 @@ def apply_research_command(state: CampaignState, raw: dict[str, Any]) -> dict[st
     if actor_content_installed(state):
         from .actor_economy import purchase_actor_research
 
-        actor_id = requested_actor_id(state, raw)
+        formation = _formation_id(raw)
+        if formation:
+            require_player_may_command_formation(state, formation)
+            actor_id = formation_economy_actor_id(state, formation)
+        else:
+            actor_id = selected_command_actor_id(state)
         if not key.startswith(f"actor:{actor_id}:"):
             raise ValueError(f"Research key is not scoped to actor {actor_id}: {key}")
         return _jsonable(asdict(purchase_actor_research(state, actor_id, key)))
@@ -132,8 +196,7 @@ def apply_recruit_command(state: CampaignState, raw: dict[str, Any]) -> dict[str
     if actor_content_installed(state):
         from .actor_economy import purchase_actor_reinforcements
 
-        actor_id = requested_actor_id(state, raw)
-        require_formation_owned_by_actor(state, formation, actor_id)
+        require_player_may_command_formation(state, formation)
         return _jsonable(asdict(purchase_actor_reinforcements(state, formation, unit_name, quantity)))
     from .economy import purchase_reinforcements
 
@@ -150,8 +213,7 @@ def apply_assign_command(state: CampaignState, raw: dict[str, Any]) -> dict[str,
     if actor_content_installed(state):
         from .actor_economy import assign_actor_reinforcements
 
-        actor_id = requested_actor_id(state, raw)
-        require_formation_owned_by_actor(state, formation, actor_id)
+        require_player_may_command_formation(state, formation)
         return _jsonable(
             asdict(
                 assign_actor_reinforcements(
@@ -176,8 +238,7 @@ def apply_repair_command(state: CampaignState, raw: dict[str, Any]) -> dict[str,
     if actor_content_installed(state):
         from .actor_economy import repair_actor_formation
 
-        actor_id = requested_actor_id(state, raw)
-        require_formation_owned_by_actor(state, formation, actor_id)
+        require_player_may_command_formation(state, formation)
         return _jsonable(
             asdict(
                 repair_actor_formation(
@@ -206,17 +267,17 @@ def _actor_content_panel(state: CampaignState, raw: dict[str, Any]) -> dict[str,
     from .actor_economy import actor_recruitment_offers, available_actor_research
     from .strategic_actors import ensure_strategic_actor_runtime
 
-    actor_id = requested_actor_id(state, raw)
+    command_id = selected_command_actor_id(state)
     actors = ensure_strategic_actor_runtime(state)
-    actor = actors.get(actor_id)
-    if actor is None:
-        raise KeyError(f"Unknown strategic actor: {actor_id}")
+    command = actors.get(command_id)
+    if command is None:
+        raise KeyError(f"Unknown strategic actor: {command_id}")
     formation_id = _formation_id(raw)
     battalion_id = raw.get("battalion") or raw.get("battalion_id")
     battalion_id = "" if battalion_id in (None, "") else str(battalion_id)
     force = state.strategic_formations.get(formation_id) if formation_id else None
     formation_actor_id = str(force.actor_id or "") if force is not None else ""
-    can_manage = bool(force is not None and formation_actor_id == actor_id)
+    can_manage = bool(formation_id and player_may_command_formation(state, formation_id))
     blocked: list[str] = []
     if not formation_id:
         blocked.append("Select a strategic formation.")
@@ -224,8 +285,14 @@ def _actor_content_panel(state: CampaignState, raw: dict[str, Any]) -> dict[str,
         blocked.append(f"Unknown strategic formation: {formation_id}")
     elif not can_manage:
         blocked.append(
-            f"Formation is owned by {formation_actor_id or 'nobody'}, not {actor_id}"
+            f"Formation is not under {command_id} command authority "
+            f"(economy actor {formation_actor_id or 'nobody'})"
         )
+
+    present_id = formation_actor_id if can_manage else command_id
+    present = actors.get(present_id)
+    if present is None:
+        raise KeyError(f"Unknown strategic actor: {present_id}")
 
     offers: list[dict[str, Any]] = []
     pool: list[dict[str, Any]] = []
@@ -247,34 +314,38 @@ def _actor_content_panel(state: CampaignState, raw: dict[str, Any]) -> dict[str,
         pool = [
             dict(entry)
             for entry in runtime.get("reinforcement_pool") or []
-            if entry.get("actor_id") == actor_id
+            if entry.get("actor_id") == present_id
             and entry.get("strategic_formation_id") == formation_id
         ]
         repair = _actor_repair_quote(
             state,
             formation_id,
             battalion_id=battalion_id or None,
-            actor_id=actor_id,
+            actor_id=present_id,
         )
 
     last_round: dict[str, Any] = {}
     for report in state.map_metadata["actor_content_runtime"].get("last_round_economy") or []:
-        if isinstance(report, dict) and str(report.get("actor_id") or "") == actor_id:
+        if isinstance(report, dict) and str(report.get("actor_id") or "") == present_id:
             last_round = report
             break
 
     return {
-        "actor_id": actor_id,
-        "display_name": actor.display_name,
-        "short_name": actor.short_name,
-        "tactical_side": actor.tactical_side.value,
-        "resources": actor.resources,
+        "actor_id": present_id,
+        "display_name": present.display_name,
+        "short_name": present.short_name,
+        "tactical_side": present.tactical_side.value,
+        "resources": present.resources,
         "income_last_round": int(last_round.get("income") or 0),
         "maintenance_last_round": int(last_round.get("maintenance_due") or 0),
-        "researched_keys": list(actor.researched_keys),
+        "researched_keys": list(present.researched_keys),
         "available_research": [
-            asdict(item) for item in available_actor_research(state, actor_id)
-        ],
+            asdict(item) for item in available_actor_research(state, present_id)
+        ]
+        if can_manage
+        else [],
+        "command_actor_id": command_id,
+        "command_display_name": command.display_name,
         "formation_id": formation_id,
         "formation_actor_id": formation_actor_id,
         "battalion_id": battalion_id,
@@ -417,6 +488,8 @@ def _legacy_faction_panel(state: CampaignState, raw: dict[str, Any]) -> dict[str
         ]
         if state.research_nodes
         else [],
+        "command_actor_id": faction.value,
+        "command_display_name": faction.value.upper(),
         "formation_id": formation_id,
         "formation_actor_id": force.actor_id if force is not None else "",
         "battalion_id": battalion_id,

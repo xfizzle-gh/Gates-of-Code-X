@@ -684,6 +684,16 @@ func _draw_force_management(left: float, top: float, width: float, bottom: float
 			Color(0.78, 0.84, 0.90, 1.0)
 		)
 		return
+	var command_id := String(panel.get("command_actor_id", ""))
+	var economy_id := String(panel.get("actor_id", ""))
+	if not command_id.is_empty() and command_id != economy_id:
+		_draw_panel_text(
+			"Command %s" % String(panel.get("command_display_name", command_id)),
+			Vector2(left + 12, y),
+			11,
+			Color(0.70, 0.76, 0.82, 1.0)
+		)
+		y += 14.0
 	_draw_panel_text(
 		"%s treasury %s" % [
 			String(panel.get("display_name", panel.get("actor_id", "Actor"))),

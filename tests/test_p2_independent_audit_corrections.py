@@ -9,6 +9,7 @@ from gates_of_codex.earth3_bootstrap import Earth3BootstrapError
 from gates_of_codex.frontend_commands import _apply_one
 from gates_of_codex.models import Faction
 from gates_of_codex.state_io import campaign_from_dict
+from gates_of_codex.strategic_actors import set_selected_actor
 from gates_of_codex.strategic_ai import StrategicAI
 from gates_of_codex.supply import refresh_all_supply, supply_status_for_faction
 
@@ -96,6 +97,7 @@ class P2StrictActorAuthorityTests(unittest.TestCase):
 class P2ActorRepairTests(unittest.TestCase):
     def test_frontend_repair_charges_only_owning_actor_at_installed_cost(self) -> None:
         state = _campaign()
+        set_selected_actor(state, "deu")
         battalion = state.battalions["bn_sf_deu_berlin"]
         battalion.condition = 90
         runtime = state.map_metadata["actor_content_runtime"]
@@ -127,6 +129,7 @@ class P2ActorRepairTests(unittest.TestCase):
 
     def test_frontend_repair_rejects_insufficient_owning_actor_funds_without_mutation(self) -> None:
         state = _campaign()
+        set_selected_actor(state, "pol")
         battalion = state.battalions["bn_sf_pol_vilnius"]
         battalion.condition = 90
         actors = state.map_metadata["strategic_actor_runtime"]["actors"]
