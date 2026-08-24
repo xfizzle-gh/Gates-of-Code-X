@@ -1537,6 +1537,17 @@ func _unhandled_input(event: InputEvent) -> void:
 			_fit_to_focus(true)
 			get_viewport().set_input_as_handled()
 			return
+		if key.keycode == KEY_M:
+			if not force_management_open:
+				_handle_button("manage_forces")
+			get_viewport().set_input_as_handled()
+			return
+		if key.keycode == KEY_1 and force_management_open:
+			var spend_id := _first_force_spend_button_id()
+			if not spend_id.is_empty():
+				_handle_button(spend_id)
+			get_viewport().set_input_as_handled()
+			return
 	if event is InputEventMouseMotion and _active_map() != null and _active_map().is_ready:
 		var motion := event as InputEventMouseMotion
 		var map_width := get_viewport_rect().size.x - PANEL_WIDTH

@@ -1044,6 +1044,49 @@ func acting_actor_block() -> Dictionary:
 	return (row as Dictionary).duplicate(true) if row is Dictionary else {}
 
 
+func _first_force_spend_button_id() -> String:
+	var recruit_id := ""
+	for row in force_panel.get("recruitment_offers", []):
+		if row is Dictionary and bool((row as Dictionary).get("unlocked", false)):
+			var unit_name := String((row as Dictionary).get("unit_name", "")).strip_edges()
+			if not unit_name.is_empty():
+				recruit_id = "recruit:%s" % unit_name
+				break
+	var research_id := ""
+	for row in force_panel.get("available_research", []):
+		if row is Dictionary:
+			var key := String((row as Dictionary).get("key", "")).strip_edges()
+			if not key.is_empty():
+				research_id = "research:%s" % key
+				break
+	var assign_id := ""
+	for row in force_panel.get("reinforcement_pool", []):
+		if row is Dictionary and int((row as Dictionary).get("quantity", 0)) > 0:
+			var unit_name := String((row as Dictionary).get("unit_name", "")).strip_edges()
+			if not unit_name.is_empty():
+				assign_id = "assign:%s" % unit_name
+				break
+	var repair_id := ""
+	var repair: Variant = force_panel.get("repair", {})
+	if repair is Dictionary and bool((repair as Dictionary).get("can_repair", false)):
+		repair_id = "repair_formation"
+	if force_panel_tab == "recruit" and not recruit_id.is_empty():
+		return recruit_id
+	if force_panel_tab == "research" and not research_id.is_empty():
+		return research_id
+	if force_panel_tab == "assign" and not assign_id.is_empty():
+		return assign_id
+	if force_panel_tab == "repair" and not repair_id.is_empty():
+		return repair_id
+	if not recruit_id.is_empty():
+		return recruit_id
+	if not research_id.is_empty():
+		return research_id
+	if not assign_id.is_empty():
+		return assign_id
+	return repair_id
+
+
 func request_force_panel() -> void:
 	var actor := acting_actor_block()
 	var command := {
