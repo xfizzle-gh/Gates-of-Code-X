@@ -11,7 +11,19 @@ from gates_of_codex.actor_economy import (
 )
 from gates_of_codex.player_shell import continue_campaign, create_new_campaign, resolve_campaign_paths
 from gates_of_codex.scenario import DEFAULT_SCENARIO_ID, get_scenario
-from gates_of_codex.scenario_2028_core import CORE_2028_POWER_IDS, CORE_2028_STARTING_TREASURY
+from gates_of_codex.scenario_2028_core import CORE_2028_POWER_IDS
+
+# Earth3 national wallets plus the selected Core overlay, folded once.
+# NATO: 600 overlay + usa 600 + deu 450 + pol 450 = 2100
+# RUSA: 750 overlay + rus 750 = 1500
+# UKR/PRC: selected start only. If this starting stack is later judged
+# unsuitable, that is an explicit balance issue — not a reason to hide money.
+CORE_2028_FOLDED_STARTING_TREASURY = {
+    "nato": 2100,
+    "ukr": 600,
+    "rusa": 1500,
+    "prc": 600,
+}
 from gates_of_codex.scenario_selection import apply_new_campaign_actor, persisted_actor_id
 from gates_of_codex.state_io import save_campaign
 from gates_of_codex.strategic_actors import ACTOR_RUNTIME_KEY, selected_actor
@@ -55,7 +67,7 @@ def test_core_2028_selected_power_owns_and_spends_its_treasury(tmp_path: Path, a
     assert runtime["selected_actor_id"] != "usa"
     assert persisted_actor_id(state) == actor_id
     assert selected_actor(state).actor_id == actor_id
-    assert selected_actor(state).resources == CORE_2028_STARTING_TREASURY[actor_id]
+    assert selected_actor(state).resources == CORE_2028_FOLDED_STARTING_TREASURY[actor_id]
     usa_before = (
         int(runtime["actors"]["usa"]["resources"]) if "usa" in runtime["actors"] else None
     )
@@ -65,7 +77,7 @@ def test_core_2028_selected_power_owns_and_spends_its_treasury(tmp_path: Path, a
         for power in CORE_2028_POWER_IDS
         if power in runtime["actors"]
     }
-    assert before[actor_id] == CORE_2028_STARTING_TREASURY[actor_id]
+    assert before[actor_id] == CORE_2028_FOLDED_STARTING_TREASURY[actor_id]
 
     purchase = _spend_selected_research(state)
     assert purchase.actor_id == actor_id

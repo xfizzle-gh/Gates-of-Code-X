@@ -131,9 +131,9 @@ def test_core_nato_polish_force_panel_and_economy(core_nato) -> None:
     )
     assert panel["can_manage_formation"] is True
     assert panel["command_actor_id"] == "nato"
-    assert panel["actor_id"] == "pol"
+    assert panel["actor_id"] == "nato"
     assert panel["formation_actor_id"] == "pol"
-    assert panel["resources"] == before["pol"]
+    assert panel["resources"] == before["nato"]
     assert panel["blocked_reasons"] == []
     assert panel["recruitment_offers"]
     assert {row["actor_id"] for row in panel["recruitment_offers"]} == {"pol"}
@@ -179,8 +179,8 @@ def test_core_nato_polish_force_panel_and_economy(core_nato) -> None:
     assert repaired["actor_id"] == "pol"
     assert repaired["points_repaired"] == 1
     assert state.battalions[polish.battalion_ids[0]].condition == 91
-    assert _resources(state, "pol") < before["pol"]
-    assert _resources(state, "nato") == before["nato"]
+    assert _resources(state, "nato") < before["nato"]
+    assert _resources(state, "pol") == before["pol"]
     assert _resources(state, "deu") == before["deu"]
     assert _resources(state, "usa") == before["usa"]
 
@@ -197,7 +197,8 @@ def test_core_nato_german_force_panel_and_economy(core_nato) -> None:
         {"actor": "nato", "formation": german.strategic_formation_id},
     )
     assert panel["can_manage_formation"] is True
-    assert panel["actor_id"] == "deu"
+    assert panel["actor_id"] == "nato"
+    assert panel["formation_actor_id"] == "deu"
     assert panel["command_actor_id"] == "nato"
     offer = _unlocked_offer(state, german.strategic_formation_id, panel)
     apply_recruit_command(
@@ -230,8 +231,8 @@ def test_core_nato_german_force_panel_and_economy(core_nato) -> None:
         },
     )
     assert repaired["actor_id"] == "deu"
-    assert _resources(state, "deu") < before["deu"]
-    assert _resources(state, "nato") == before["nato"]
+    assert _resources(state, "nato") < before["nato"]
+    assert _resources(state, "deu") == before["deu"]
     assert _resources(state, "pol") == before["pol"]
 
 
@@ -361,7 +362,9 @@ def test_core_other_powers_manage_representative_formations(tmp_path: Path, play
         None,
     )
     assert force is not None, player
-    economy_actor = force.actor_id
+    from gates_of_codex.core_player_economy import core_economy_actor_id
+
+    economy_actor = core_economy_actor_id(state, force.actor_id)
     _set_resources(state, economy_actor, 50_000)
     panel = build_actor_force_panel(
         state,
@@ -370,6 +373,7 @@ def test_core_other_powers_manage_representative_formations(tmp_path: Path, play
     assert panel["can_manage_formation"] is True
     assert panel["command_actor_id"] == player
     assert panel["actor_id"] == economy_actor
+    before = _resources(state, economy_actor)
     _prepare_repairable(state, force)
     repaired = apply_repair_command(
         state,
@@ -380,7 +384,8 @@ def test_core_other_powers_manage_representative_formations(tmp_path: Path, play
             "points": 1,
         },
     )
-    assert repaired["actor_id"] == economy_actor
+    assert repaired["actor_id"] == force.actor_id
+    assert _resources(state, economy_actor) < before
 
 
 def test_core_prc_has_no_starter_force_and_cannot_manage_foreign(tmp_path: Path) -> None:
@@ -464,9 +469,73 @@ def test_expanded_poland_isolation(expanded_pol) -> None:
     assert _resources(state, "deu") == before["deu"]
 
 
+def test_core_nato_research_and_recruit_spend_nato_not_national_wallets(core_nato) -> None:
+    state = core_nato
+    polish = _force_for_actor(state, "pol")
+    german = _force_for_actor(state, "deu")
+    _set_resources(state, "nato", 50_000)
+    _set_resources(state, "pol", 0)
+    _set_resources(state, "deu", 0)
+    _set_resources(state, "usa", 0)
+    before = {key: _resources(state, key) for key in ("nato", "pol", "deu", "usa")}
+    panel = build_actor_force_panel(
+        state,
+        {"actor": "pol", "formation": polish.strategic_formation_id},
+    )
+    assert panel["actor_id"] == "nato"
+    assert panel["resources"] == before["nato"]
+    research = [row for row in panel["available_research"] if int(row.get("cost") or 0) > 0]
+    assert research
+    chosen = min(research, key=lambda row: (int(row["cost"]), row["key"]))
+    assert chosen["key"].startswith("actor:pol:")
+    purchased = apply_research_command(
+        state,
+        {"actor": "usa", "formation": polish.strategic_formation_id, "key": chosen["key"]},
+    )
+    assert purchased["actor_id"] == "nato"
+    assert chosen["key"] in _runtime(state)["actors"]["nato"]["researched_keys"]
+    assert _resources(state, "nato") == before["nato"] - int(purchased["cost"])
+    assert _resources(state, "pol") == 0
+    assert _resources(state, "usa") == 0
+
+    panel = build_actor_force_panel(
+        state,
+        {"actor": "nato", "formation": polish.strategic_formation_id},
+    )
+    offer = _unlocked_offer(state, polish.strategic_formation_id, panel)
+    apply_recruit_command(
+        state,
+        {
+            "actor": "pol",
+            "formation": polish.strategic_formation_id,
+            "unit": offer["unit_name"],
+            "quantity": 1,
+        },
+    )
+    german_panel = build_actor_force_panel(
+        state,
+        {"actor": "nato", "formation": german.strategic_formation_id},
+    )
+    german_offer = _unlocked_offer(state, german.strategic_formation_id, german_panel)
+    apply_recruit_command(
+        state,
+        {
+            "actor": "deu",
+            "formation": german.strategic_formation_id,
+            "unit": german_offer["unit_name"],
+            "quantity": 1,
+        },
+    )
+    assert _resources(state, "nato") < before["nato"] - int(purchased["cost"])
+    assert _resources(state, "pol") == 0
+    assert _resources(state, "deu") == 0
+    assert _resources(state, "usa") == 0
+
+
 def test_save_continue_preserves_core_authority(core_nato_path: Path, tmp_path: Path) -> None:
     state = load_campaign(core_nato_path)
     polish = _force_for_actor(state, "pol")
+    _set_resources(state, "nato", 50_000)
     _set_resources(state, "pol", 50_000)
     panel = build_actor_force_panel(
         state,
@@ -492,5 +561,6 @@ def test_save_continue_preserves_core_authority(core_nato_path: Path, tmp_path: 
         {"actor": "nato", "formation": polish.strategic_formation_id},
     )
     assert resumed["can_manage_formation"] is True
-    assert resumed["actor_id"] == "pol"
+    assert resumed["actor_id"] == "nato"
+    assert resumed["formation_actor_id"] == "pol"
     assert any(entry["actor_id"] == "pol" for entry in resumed["reinforcement_pool"])

@@ -686,7 +686,16 @@ func _draw_force_management(left: float, top: float, width: float, bottom: float
 		return
 	var command_id := String(panel.get("command_actor_id", ""))
 	var economy_id := String(panel.get("actor_id", ""))
-	if not command_id.is_empty() and command_id != economy_id:
+	var formation_actor := String(panel.get("formation_actor_id", ""))
+	if not formation_actor.is_empty() and formation_actor != economy_id:
+		_draw_panel_text(
+			"Formation %s" % String(panel.get("formation_display_name", formation_actor)),
+			Vector2(left + 12, y),
+			11,
+			Color(0.70, 0.76, 0.82, 1.0)
+		)
+		y += 14.0
+	elif not command_id.is_empty() and command_id != economy_id:
 		_draw_panel_text(
 			"Command %s" % String(panel.get("command_display_name", command_id)),
 			Vector2(left + 12, y),
