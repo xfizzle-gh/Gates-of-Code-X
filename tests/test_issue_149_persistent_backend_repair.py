@@ -34,11 +34,11 @@ from tests.test_s10_frontend_presentation_contract import _state
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 # #149 force-loop economy ops. After #276 they are all frontend commands.
-# Composed-stack daemon policy: only repair is warm-allowlisted. The other three
-# stay one-shot full-refresh. Persist/runtime-patch allowlists stay unchanged.
+# Warm force/spend path (#290 PR B): the daemon keep-alive allowlist and the
+# runtime-patch publication set include the whole force loop plus the panel.
 ISSUE_149_FORCE_LOOP_OPS = frozenset({"repair", "recruit", "research", "assign"})
-DAEMON_ALLOWLISTED_FORCE_OPS = frozenset({"repair"})
-FULL_REFRESH_FORCE_OPS = ISSUE_149_FORCE_LOOP_OPS - DAEMON_ALLOWLISTED_FORCE_OPS
+DAEMON_ALLOWLISTED_FORCE_OPS = frozenset({"repair", "recruit", "research", "assign"})
+WARM_RUNTIME_PATCH_FORCE_OPS = frozenset({"repair", "recruit", "research", "assign"})
 
 
 def _ensure_worktree_import_path() -> None:
@@ -157,10 +157,10 @@ class Issue149FrontendForceLoopDiscoveryTests(unittest.TestCase):
 
 
 class Issue149PersistentBackendRepairAllowlistTests(unittest.TestCase):
-    def test_daemon_allowlists_only_repair_full_refresh_for_other_force_ops(self) -> None:
-        self.assertEqual(DAEMON_ALLOWLISTED_FORCE_OPS & persistent_backend.SUPPORTED_OPS, {"repair"})
-        for op in FULL_REFRESH_FORCE_OPS:
-            self.assertNotIn(op, persistent_backend.SUPPORTED_OPS)
+    def test_daemon_allowlists_force_loop_and_keeps_self_committing_ops_cold(self) -> None:
+        self.assertTrue(ISSUE_149_FORCE_LOOP_OPS <= persistent_backend.SUPPORTED_OPS)
+        self.assertIn("actor_force_panel", persistent_backend.SUPPORTED_OPS)
+        self.assertIn("upgrade_site", persistent_backend.SUPPORTED_OPS)
         for op in (
             "handoff",
             "import_battle",
@@ -172,17 +172,23 @@ class Issue149PersistentBackendRepairAllowlistTests(unittest.TestCase):
         ):
             self.assertNotIn(op, persistent_backend.SUPPORTED_OPS)
 
-    def test_repair_stays_full_refresh_and_does_not_persist_a_runtime_snapshot(self) -> None:
+    def test_force_ops_use_runtime_patch_without_persisting_a_runtime_snapshot(self) -> None:
         repair = [{"op": "repair"}]
         self.assertFalse(_should_persist_runtime_snapshot(repair))
-        self.assertFalse(_runtime_patch_only(repair))
+        self.assertTrue(_runtime_patch_only(repair))
         self.assertFalse(_snapshot_patch_only(repair))
-        for op in ISSUE_149_FORCE_LOOP_OPS:
+        for op in WARM_RUNTIME_PATCH_FORCE_OPS:
             self.assertFalse(_should_persist_runtime_snapshot([{"op": op}]))
-            self.assertFalse(_runtime_patch_only([{"op": op}]))
+            self.assertTrue(_runtime_patch_only([{"op": op}]))
             self.assertFalse(_snapshot_patch_only([{"op": op}]))
-            self.assertNotIn(op, _RUNTIME_PATCH_OPS)
+            self.assertIn(op, _RUNTIME_PATCH_OPS)
             self.assertNotIn(op, _SNAPSHOT_PATCH_OPS)
+        self.assertNotIn("actor_force_panel", _RUNTIME_PATCH_OPS)
+        self.assertNotIn("actor_force_panel", _SNAPSHOT_PATCH_OPS)
+        self.assertFalse(_should_persist_runtime_snapshot([{"op": "actor_force_panel"}]))
+        self.assertFalse(_runtime_patch_only([{"op": "actor_force_panel"}]))
+        self.assertIn("upgrade_site", _RUNTIME_PATCH_OPS)
+        self.assertFalse(_should_persist_runtime_snapshot([{"op": "upgrade_site"}]))
         self.assertNotIn("refresh", _RUNTIME_PATCH_OPS)
         self.assertNotIn("refresh", _SNAPSHOT_PATCH_OPS)
         self.assertEqual(("issue_move_order", "commit_move_orders"), _LIVE_MOVE_BATCH)
@@ -196,7 +202,18 @@ class Issue149PersistentBackendRepairAllowlistTests(unittest.TestCase):
         self.assertFalse(_should_persist_runtime_snapshot([{"op": "refresh"}]))
         self.assertEqual("gates-of-codex.frontend-runtime-patch", RUNTIME_PATCH_SCHEMA)
         self.assertEqual(1, RUNTIME_PATCH_SCHEMA_VERSION)
-        self.assertEqual({"end_player_round", "auto_resolve"}, _command_cycle_named_set("_RUNTIME_PATCH_OPS"))
+        self.assertEqual(
+            {
+                "end_player_round",
+                "auto_resolve",
+                "research",
+                "recruit",
+                "assign",
+                "repair",
+                "upgrade_site",
+            },
+            _command_cycle_named_set("_RUNTIME_PATCH_OPS"),
+        )
         self.assertEqual(
             {"issue_move_order", "cancel_move_order"},
             _command_cycle_named_set("_SNAPSHOT_PATCH_OPS"),
@@ -274,7 +291,7 @@ class Issue149PersistentBackendRepairDaemonTests(unittest.TestCase):
             )
         )
 
-    def test_repair_is_handled_on_warm_daemon_as_full_refresh_without_runtime_persist(
+    def test_repair_is_handled_on_warm_daemon_with_runtime_patch_without_snapshot_rewrite(
         self,
     ) -> None:
         self._write_damaged_s10()
@@ -294,17 +311,26 @@ class Issue149PersistentBackendRepairDaemonTests(unittest.TestCase):
         )
         self.assertTrue(all(bool(row.get("ok")) for row in report.get("results") or []))
         timings = report.get("timings") or {}
-        self.assertFalse(timings.get("runtime_patch_fast_path"))
+        self.assertTrue(timings.get("runtime_patch_fast_path"))
         self.assertFalse(timings.get("snapshot_fast_path"))
-        self.assertNotIn("frontend_patch", report)
+        self.assertFalse(timings.get("read_only_fast_path"))
+        self.assertEqual(
+            RUNTIME_PATCH_SCHEMA,
+            (report.get("frontend_patch") or {}).get("schema"),
+        )
 
         after_snapshot = json.loads(self.snapshot.read_text(encoding="utf-8"))
         self.assertEqual("gates-of-codex.frontend", after_snapshot["schema"])
-        self.assertNotEqual(before_snapshot, self.snapshot.read_bytes())
-        self.assertNotEqual(RUNTIME_PATCH_SCHEMA, after_snapshot["schema"])
+        self.assertEqual(before_snapshot, self.snapshot.read_bytes())
 
         state = load_campaign(self.campaign)
         self.assertEqual(80, state.battalions["bn-n"].condition)
         repair_row = (report.get("results") or [])[0]
         self.assertEqual(15, repair_row["data"]["points_repaired"])
         self.assertEqual(80, repair_row["data"]["condition"])
+
+        again = self._apply(
+            [{"op": "repair", "formation": "toe-nato", "points": 1}]
+        )
+        self.assertTrue(again.get("ok"), again)
+        self.assertTrue((again.get("timings") or {}).get("runtime_patch_fast_path"))

@@ -37,12 +37,15 @@ SUPPORTED_OPS = frozenset(
         "commit_move_orders",
         "refresh",
         "auto_resolve",
-        # #149 force-loop frontend op. Full-refresh only; not a persist/runtime-patch
-        # op. Composed-stack policy after #276: research/recruit/assign exist as
-        # frontend commands and stay off this allowlist (one-shot full-refresh is
-        # sufficient; no measured player-facing warm-path need). Persist/runtime-patch
-        # allowlists stay unchanged.
+        # Warm force/spend path (#290 PR B): keep the backend lease and return a
+        # bounded runtime patch (or a read-only command result for the panel)
+        # instead of invalidating and publishing a full snapshot.
+        "actor_force_panel",
+        "research",
+        "recruit",
+        "assign",
         "repair",
+        "upgrade_site",
     }
 )
 IDLE_TIMEOUT_SECONDS = 900.0

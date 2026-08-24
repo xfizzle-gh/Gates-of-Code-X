@@ -18,6 +18,10 @@ Fast paths are intentionally narrow:
   a bounded runtime patch instead of rebuilding/re-writing the static Earth3
   frontend snapshot. Godot validates the patch into a candidate copy before
   atomically replacing its live dynamic state.
+* Force/spend verbs (``research``, ``recruit``, ``assign``, ``repair``,
+  ``upgrade_site``) use that same runtime-patch publication. ``actor_force_panel``
+  is read-only: it skips save and snapshot and returns the panel in the command
+  result.
 * runtime campaign saves preserve the exact normalization/validation/atomic
   publication contract of ``state_io.save_campaign`` but use deterministic
   compact JSON. Pretty whitespace is not authority, and removing it reduces both
@@ -56,7 +60,17 @@ from . import frontend_commands as _commands
 
 
 _SNAPSHOT_PATCH_OPS = frozenset({"issue_move_order", "cancel_move_order"})
-_RUNTIME_PATCH_OPS = frozenset({"end_player_round", "auto_resolve"})
+_RUNTIME_PATCH_OPS = frozenset(
+    {
+        "end_player_round",
+        "auto_resolve",
+        "research",
+        "recruit",
+        "assign",
+        "repair",
+        "upgrade_site",
+    }
+)
 _LIVE_MOVE_BATCH = ("issue_move_order", "commit_move_orders")
 
 _TIMING_KEYS = (

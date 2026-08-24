@@ -275,7 +275,7 @@ def apply_frontend_commands(
             "results": [asdict(item) for item in results],
         }
 
-    query_only = bool(results) and all(item.op == "query_supply" for item in results)
+    query_only = bool(results) and all(item.op in READ_ONLY_OPS for item in results)
     if query_only:
         return _apply_report(
             state,
