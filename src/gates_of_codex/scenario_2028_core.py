@@ -110,8 +110,15 @@ def bind_core_2028_selected_actor(state: CampaignState, actor_id: str) -> None:
         raise Scenario2028AuthorityError("core_2028_actor_content_missing")
 
     if token in CORE_2028_OVERLAY_SOURCES:
-        _ensure_core_overlay_actor(state, token, actors, content, content_actors)
-    _ensure_core_2028_power_overlays(state)
+        _ensure_core_overlay_actor(
+            state,
+            token,
+            actors,
+            content,
+            content_actors,
+            resources=CORE_2028_STARTING_TREASURY[token],
+        )
+    ensure_core_2028_power_overlays(state)
     actors = ensure_strategic_actor_runtime(state)
 
     set_selected_actor(state, token)
@@ -147,6 +154,8 @@ def _ensure_core_overlay_actor(
     actors: dict,
     content: dict[str, Any],
     content_actors: dict[str, Any],
+    *,
+    resources: int = 0,
 ) -> None:
     if token in actors:
         return
@@ -174,7 +183,7 @@ def _ensure_core_overlay_actor(
         tactical_side=EngineTacticalSide(token),
         playable=True,
         roster_class="compatibility",
-        resources=CORE_2028_STARTING_TREASURY[token],
+        resources=int(resources),
         researched_keys=[],
     )
     content_actors[token] = _rewrite_core_overlay_content(
@@ -190,9 +199,16 @@ def _ensure_core_overlay_actor(
     validate_actor_content_runtime(state)
 
 
-def _ensure_core_2028_power_overlays(state: CampaignState) -> None:
+def ensure_core_2028_power_overlays(state: CampaignState) -> None:
+    """Create missing NATO/RUSA compatibility overlays at zero treasury.
+
+    New-campaign bind sets the selected overlay's starting treasury before the
+    one-time Core fold. Continue migration must create any missing overlay
+    before it unions research or stamps ``core_player_economy_v1``.
+    """
+
     from .actor_economy import ACTOR_CONTENT_KEY
-    from .strategic_actors import ACTOR_RUNTIME_KEY, ensure_strategic_actor_runtime
+    from .strategic_actors import ensure_strategic_actor_runtime
 
     actors = ensure_strategic_actor_runtime(state)
     content = state.map_metadata.get(ACTOR_CONTENT_KEY)
