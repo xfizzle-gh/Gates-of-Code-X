@@ -890,6 +890,8 @@ def _apply_one(state, op: str, raw: dict[str, Any]) -> CommandResult:
 
         province = str(raw.get("province") or raw.get("province_id") or "")
         upgrade_id = str(raw.get("upgrade_id") or raw.get("upgrade") or FORWARD_DEPOT_ID)
+        from .core_player_economy import is_core_2028_campaign
+
         actor_id = raw.get("actor_id") or raw.get("actor")
         faction = Faction(str(raw.get("faction", state.selected_faction.value)))
         if not province:
@@ -899,7 +901,9 @@ def _apply_one(state, op: str, raw: dict[str, Any]) -> CommandResult:
             province,
             upgrade_id=upgrade_id,
             faction=faction,
-            actor_id=None if actor_id in (None, "") else str(actor_id),
+            actor_id=None
+            if is_core_2028_campaign(state) or actor_id in (None, "")
+            else str(actor_id),
         )
         return CommandResult(op=op, ok=True, detail=f"upgrading {upgrade_id}", data=asdict(upgraded))
     if op == "repair":

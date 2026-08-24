@@ -93,14 +93,11 @@ def bind_core_2028_selected_actor(state: CampaignState, actor_id: str) -> None:
     if token not in CORE_2028_POWER_IDS:
         raise Scenario2028AuthorityError(f"core_2028_actor_not_a_campaign_power:{token}")
 
-    from .actor_economy import ACTOR_CONTENT_KEY, validate_actor_content_runtime
+    from .actor_economy import ACTOR_CONTENT_KEY
     from .strategic_actors import (
         ACTOR_RUNTIME_KEY,
-        EngineTacticalSide,
-        StrategicActorState,
         ensure_strategic_actor_runtime,
         set_selected_actor,
-        validate_strategic_actor_runtime,
     )
 
     actors = ensure_strategic_actor_runtime(state)
@@ -112,37 +109,10 @@ def bind_core_2028_selected_actor(state: CampaignState, actor_id: str) -> None:
     if not isinstance(content_actors, dict):
         raise Scenario2028AuthorityError("core_2028_actor_content_missing")
 
-    if token not in actors:
-        source_id = CORE_2028_OVERLAY_SOURCES[token]
-        source_actor = actors.get(source_id)
-        source_content = content_actors.get(source_id)
-        if source_actor is None or not isinstance(source_content, dict):
-            raise Scenario2028AuthorityError(
-                f"core_2028_overlay_source_missing:{token}:{source_id}"
-            )
-        actors[token] = StrategicActorState(
-            actor_id=token,
-            display_name=CORE_2028_POWER_DISPLAY[token],
-            short_name=CORE_2028_POWER_DISPLAY[token],
-            actor_type="compatibility",
-            coalition_id=source_actor.coalition_id,
-            tactical_side=EngineTacticalSide(token),
-            playable=True,
-            roster_class="compatibility",
-            resources=CORE_2028_STARTING_TREASURY[token],
-            researched_keys=[],
-        )
-        content_actors[token] = _rewrite_core_overlay_content(
-            source_content,
-            source_actor_id=source_id,
-            target_actor_id=token,
-        )
-        content["actor_count"] = len(content_actors)
-        state.map_metadata[ACTOR_RUNTIME_KEY]["actors"] = {
-            key: actors[key].to_dict() for key in sorted(actors)
-        }
-        validate_strategic_actor_runtime(state)
-        validate_actor_content_runtime(state)
+    if token in CORE_2028_OVERLAY_SOURCES:
+        _ensure_core_overlay_actor(state, token, actors, content, content_actors)
+    _ensure_core_2028_power_overlays(state)
+    actors = ensure_strategic_actor_runtime(state)
 
     set_selected_actor(state, token)
     actors = ensure_strategic_actor_runtime(state)
@@ -166,6 +136,73 @@ def bind_core_2028_selected_actor(state: CampaignState, actor_id: str) -> None:
         raise Scenario2028AuthorityError(
             f"core_2028_selected_actor_not_bound:{selected}:{token}"
         )
+    from .core_player_economy import migrate_core_player_economy_v1
+
+    migrate_core_player_economy_v1(state)
+
+
+def _ensure_core_overlay_actor(
+    state: CampaignState,
+    token: str,
+    actors: dict,
+    content: dict[str, Any],
+    content_actors: dict[str, Any],
+) -> None:
+    if token in actors:
+        return
+    source_id = CORE_2028_OVERLAY_SOURCES[token]
+    source_actor = actors.get(source_id)
+    source_content = content_actors.get(source_id)
+    if source_actor is None or not isinstance(source_content, dict):
+        raise Scenario2028AuthorityError(
+            f"core_2028_overlay_source_missing:{token}:{source_id}"
+        )
+    from .actor_economy import validate_actor_content_runtime
+    from .strategic_actors import (
+        ACTOR_RUNTIME_KEY,
+        EngineTacticalSide,
+        StrategicActorState,
+        validate_strategic_actor_runtime,
+    )
+
+    actors[token] = StrategicActorState(
+        actor_id=token,
+        display_name=CORE_2028_POWER_DISPLAY[token],
+        short_name=CORE_2028_POWER_DISPLAY[token],
+        actor_type="compatibility",
+        coalition_id=source_actor.coalition_id,
+        tactical_side=EngineTacticalSide(token),
+        playable=True,
+        roster_class="compatibility",
+        resources=CORE_2028_STARTING_TREASURY[token],
+        researched_keys=[],
+    )
+    content_actors[token] = _rewrite_core_overlay_content(
+        source_content,
+        source_actor_id=source_id,
+        target_actor_id=token,
+    )
+    content["actor_count"] = len(content_actors)
+    state.map_metadata[ACTOR_RUNTIME_KEY]["actors"] = {
+        key: actors[key].to_dict() for key in sorted(actors)
+    }
+    validate_strategic_actor_runtime(state)
+    validate_actor_content_runtime(state)
+
+
+def _ensure_core_2028_power_overlays(state: CampaignState) -> None:
+    from .actor_economy import ACTOR_CONTENT_KEY
+    from .strategic_actors import ACTOR_RUNTIME_KEY, ensure_strategic_actor_runtime
+
+    actors = ensure_strategic_actor_runtime(state)
+    content = state.map_metadata.get(ACTOR_CONTENT_KEY)
+    if not isinstance(content, dict):
+        return
+    content_actors = content.get("actors")
+    if not isinstance(content_actors, dict):
+        return
+    for token in CORE_2028_OVERLAY_ACTOR_IDS:
+        _ensure_core_overlay_actor(state, token, actors, content, content_actors)
 
 
 def _build_earth3_base(**options: Any) -> CampaignState:

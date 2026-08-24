@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from .core_player_economy import core_economy_actor_id
 from .models import BattalionRosterEntry, CampaignState, Faction
 from .strategic_actors import (
     ACTOR_RUNTIME_KEY,
@@ -223,15 +224,22 @@ def actor_content_snapshot(state: CampaignState) -> dict[str, Any]:
     return json.loads(json.dumps(runtime, sort_keys=True))
 
 
-def available_actor_research(state: CampaignState, actor_id: str) -> list[ActorResearchOption]:
+def available_actor_research(
+    state: CampaignState,
+    actor_id: str,
+    *,
+    economy_actor_id: str | None = None,
+) -> list[ActorResearchOption]:
     runtime = _runtime(state)
     actors = ensure_strategic_actor_runtime(state)
-    actor = _require_actor(actors, actor_id)
-    nodes = runtime["actors"][actor_id]["research_nodes"]
-    researched = set(actor.researched_keys)
+    content_id = str(actor_id or "").strip()
+    _require_actor(actors, content_id)
+    spender = _require_actor(actors, economy_actor_id or content_id)
+    nodes = runtime["actors"][content_id]["research_nodes"]
+    researched = set(spender.researched_keys)
     values = [
         ActorResearchOption(
-            actor_id=actor_id,
+            actor_id=content_id,
             key=node["key"],
             display_name=node["display_name"],
             cost=node["cost"],
@@ -246,25 +254,33 @@ def available_actor_research(state: CampaignState, actor_id: str) -> list[ActorR
     return sorted(values, key=lambda item: (item.cost, item.key))
 
 
-def purchase_actor_research(state: CampaignState, actor_id: str, key: str) -> ActorResearchPurchase:
+def purchase_actor_research(
+    state: CampaignState,
+    actor_id: str,
+    key: str,
+    *,
+    content_actor_id: str | None = None,
+) -> ActorResearchPurchase:
     runtime = _runtime(state)
     actors = ensure_strategic_actor_runtime(state)
-    actor = _require_actor(actors, actor_id)
-    nodes = runtime["actors"][actor_id]["research_nodes"]
+    economy = _require_actor(actors, actor_id)
+    content_id = str(content_actor_id or actor_id).strip()
+    _require_actor(actors, content_id)
+    nodes = runtime["actors"][content_id]["research_nodes"]
     node = nodes.get(key)
     if node is None:
-        raise KeyError(f"Unknown research key for {actor_id}: {key}")
-    if key in actor.researched_keys:
+        raise KeyError(f"Unknown research key for {content_id}: {key}")
+    if key in economy.researched_keys:
         raise ValueError(f"Research already completed: {key}")
-    missing = sorted(set(node["prerequisites"]) - set(actor.researched_keys))
+    missing = sorted(set(node["prerequisites"]) - set(economy.researched_keys))
     if missing:
         raise ValueError(f"Research prerequisites not met for {key}: {', '.join(missing)}")
-    if actor.resources < node["cost"]:
+    if economy.resources < node["cost"]:
         raise ValueError(f"Insufficient resources for {key}: need {node['cost']}")
-    actor.resources -= node["cost"]
-    actor.researched_keys = sorted(set(actor.researched_keys) | {key})
+    economy.resources -= node["cost"]
+    economy.researched_keys = sorted(set(economy.researched_keys) | {key})
     _commit_actor_states(state, actors)
-    return ActorResearchPurchase(actor_id, key, node["cost"], actor.resources)
+    return ActorResearchPurchase(economy.actor_id, key, node["cost"], economy.resources)
 
 
 def actor_recruitment_offers(
@@ -273,9 +289,10 @@ def actor_recruitment_offers(
 ) -> list[ActorRecruitmentOffer]:
     runtime = _runtime(state)
     actors = ensure_strategic_actor_runtime(state)
-    force, actor = _force_actor(state, strategic_formation_id, actors)
-    actor_content = runtime["actors"][actor.actor_id]
-    researched = set(actor.researched_keys)
+    force, content = _force_actor(state, strategic_formation_id, actors)
+    economy = _require_actor(actors, core_economy_actor_id(state, content.actor_id))
+    actor_content = runtime["actors"][content.actor_id]
+    researched = set(economy.researched_keys)
     template = state.formations.get(force.template_formation_id)
     preferred_categories = set(template.preferred_categories if template else [])
     discount = 0.0
@@ -292,7 +309,7 @@ def actor_recruitment_offers(
         discounted = max(1, int(math.ceil(unit["purchase_cost"] * (1.0 - discount) / 5.0) * 5))
         offers.append(
             ActorRecruitmentOffer(
-                actor_id=actor.actor_id,
+                actor_id=content.actor_id,
                 strategic_formation_id=strategic_formation_id,
                 unit_name=unit["unit_name"],
                 category=unit["category"],
@@ -325,25 +342,26 @@ def purchase_actor_reinforcements(
         raise ValueError("Reinforcement quantity must be positive")
     runtime = _runtime(state)
     actors = ensure_strategic_actor_runtime(state)
-    _force, actor = _force_actor(state, strategic_formation_id, actors)
+    _force, content = _force_actor(state, strategic_formation_id, actors)
+    economy = _require_actor(actors, core_economy_actor_id(state, content.actor_id))
     offer = next(
         (item for item in actor_recruitment_offers(state, strategic_formation_id) if item.unit_name == unit_name),
         None,
     )
     if offer is None:
-        raise ValueError(f"Unit {unit_name} is outside actor {actor.actor_id}'s roster")
+        raise ValueError(f"Unit {unit_name} is outside actor {content.actor_id}'s roster")
     if not offer.unlocked:
         raise ValueError(f"Unit {unit_name} requires one of: {', '.join(offer.missing_research)}")
     total_cost = offer.purchase_cost * quantity
-    if actor.resources < total_cost:
+    if economy.resources < total_cost:
         raise ValueError(f"Insufficient resources: need {total_cost}")
-    actor.resources -= total_cost
+    economy.resources -= total_cost
     pool = runtime["reinforcement_pool"]
     entry = next(
         (
             value
             for value in pool
-            if value["actor_id"] == actor.actor_id
+            if value["actor_id"] == content.actor_id
             and value["strategic_formation_id"] == strategic_formation_id
             and value["unit_name"] == unit_name
         ),
@@ -351,7 +369,7 @@ def purchase_actor_reinforcements(
     )
     if entry is None:
         entry = {
-            "actor_id": actor.actor_id,
+            "actor_id": content.actor_id,
             "strategic_formation_id": strategic_formation_id,
             "unit_name": unit_name,
             "quantity": 0,
@@ -364,14 +382,14 @@ def purchase_actor_reinforcements(
     _commit_actor_states(state, actors)
     validate_actor_content_runtime(state)
     return ActorReinforcementPurchase(
-        actor_id=actor.actor_id,
+        actor_id=content.actor_id,
         strategic_formation_id=strategic_formation_id,
         unit_name=unit_name,
         quantity=quantity,
         unit_cost=offer.purchase_cost,
         total_cost=total_cost,
         pool_quantity=entry["quantity"],
-        resources_remaining=actor.resources,
+        resources_remaining=economy.resources,
     )
 
 
@@ -437,13 +455,14 @@ def repair_actor_formation(
 ) -> ActorRepairResult:
     runtime = _runtime(state)
     actors = ensure_strategic_actor_runtime(state)
-    force, actor = _force_actor(state, strategic_formation_id, actors)
+    force, content = _force_actor(state, strategic_formation_id, actors)
+    economy = _require_actor(actors, core_economy_actor_id(state, content.actor_id))
     target = _force_battalion(state, force.battalion_ids, battalion_id)
     if target.condition >= 100:
-        return ActorRepairResult(actor.actor_id, strategic_formation_id, target.battalion_id, 0, 0, 100, actor.resources)
+        return ActorRepairResult(content.actor_id, strategic_formation_id, target.battalion_id, 0, 0, 100, economy.resources)
     if target.supply < 50 or target.encircled_turns > 0:
         raise ValueError(f"Formation {strategic_formation_id} must be supplied to repair")
-    units = runtime["actors"][actor.actor_id]["units"]
+    units = runtime["actors"][content.actor_id]["units"]
     cost_per_point = max(
         1,
         sum(
@@ -457,26 +476,26 @@ def repair_actor_formation(
     missing = 100 - target.condition
     requested = missing if points is None else min(missing, max(0, points))
     if requested == 0:
-        return ActorRepairResult(actor.actor_id, strategic_formation_id, target.battalion_id, 0, 0, target.condition, actor.resources)
-    affordable = actor.resources // cost_per_point
+        return ActorRepairResult(content.actor_id, strategic_formation_id, target.battalion_id, 0, 0, target.condition, economy.resources)
+    affordable = economy.resources // cost_per_point
     repaired = min(requested, affordable)
     if points is not None and repaired < requested:
         raise ValueError(f"Insufficient resources to repair {requested} points")
     if repaired <= 0:
         raise ValueError("Insufficient resources to repair formation")
     cost = repaired * cost_per_point
-    actor.resources -= cost
+    economy.resources -= cost
     target.condition += repaired
     _commit_actor_states(state, actors)
     state.validate()
     return ActorRepairResult(
-        actor.actor_id,
+        content.actor_id,
         strategic_formation_id,
         target.battalion_id,
         repaired,
         cost,
         target.condition,
-        actor.resources,
+        economy.resources,
     )
 
 
@@ -485,25 +504,31 @@ def settle_actor_round_economy(state: CampaignState) -> list[ActorRoundEconomyRe
     actors = ensure_strategic_actor_runtime(state)
     income_by_actor = {actor_id: 0 for actor_id in actors}
     for province in state.provinces.values():
-        actor_id = province.metadata.get("owner_actor_id")
-        if actor_id in income_by_actor:
-            income_by_actor[str(actor_id)] += province.resource_yield
+        owner_id = province.metadata.get("owner_actor_id")
+        if owner_id in income_by_actor:
+            economy_id = core_economy_actor_id(state, str(owner_id))
+            income_by_actor[economy_id] += province.resource_yield
 
     battalions_by_actor: dict[str, list[Any]] = {actor_id: [] for actor_id in actors}
+    content_by_battalion: dict[str, str] = {}
     for battalion in state.battalions.values():
-        actor_id = _actor_for_battalion(state, battalion.battalion_id, actors)
-        battalions_by_actor[actor_id].append(battalion)
+        content_id = _actor_for_battalion(state, battalion.battalion_id, actors)
+        economy_id = core_economy_actor_id(state, content_id)
+        battalions_by_actor[economy_id].append(battalion)
+        content_by_battalion[battalion.battalion_id] = content_id
 
     reports: list[ActorRoundEconomyReport] = []
     for actor_id in sorted(actors):
         actor = actors[actor_id]
-        units = runtime["actors"][actor_id]["units"]
         income = income_by_actor[actor_id]
-        maintenance = sum(
-            units.get(entry.unit_name, {"maintenance_cost": 2})["maintenance_cost"] * entry.quantity
-            for battalion in battalions_by_actor[actor_id]
-            for entry in battalion.roster
-        )
+        maintenance = 0
+        for battalion in battalions_by_actor[actor_id]:
+            content_id = content_by_battalion[battalion.battalion_id]
+            units = runtime["actors"][content_id]["units"]
+            maintenance += sum(
+                units.get(entry.unit_name, {"maintenance_cost": 2})["maintenance_cost"] * entry.quantity
+                for entry in battalion.roster
+            )
         actor.resources += income
         paid = min(actor.resources, maintenance)
         actor.resources -= paid

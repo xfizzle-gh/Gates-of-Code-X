@@ -135,7 +135,7 @@ def site_upgrade_blocked_reasons(
         owner_actor = str(province.metadata.get("owner_actor_id") or "")
         if not requested:
             reasons.append("acting_actor_required")
-        elif owner_actor != requested:
+        elif not _core_or_exact_owner_match(state, requested, owner_actor):
             reasons.append("province_not_owned_by_actor")
     supplied = _province_is_supply_eligible(state, province_id, faction, reachable=reachable)
     if not supplied:
@@ -306,12 +306,29 @@ def run_ai_site_upgrade(state: CampaignState, faction: Faction) -> dict[str, Any
         return None
     reachable = reachable_supply_provinces(state, faction)
     if _actor_runtime_installed(state):
+        from .core_player_economy import CORE_2028_POWER_IDS, is_core_2028_campaign
+
         actors = ensure_strategic_actor_runtime(state)
-        actor_ids = sorted(
-            actor.actor_id
-            for actor in actors.values()
-            if actor.tactical_side.campaign_faction() == faction and not actor.is_eliminated
-        )
+        if is_core_2028_campaign(state):
+            actor_ids = sorted(
+                actor_id
+                for actor_id in CORE_2028_POWER_IDS
+                if actor_id in actors
+                and actors[actor_id].tactical_side.campaign_faction() == faction
+                and not actors[actor_id].is_eliminated
+            )
+            if not actor_ids:
+                actor_ids = sorted(
+                    actor.actor_id
+                    for actor in actors.values()
+                    if actor.tactical_side.campaign_faction() == faction and not actor.is_eliminated
+                )
+        else:
+            actor_ids = sorted(
+                actor.actor_id
+                for actor in actors.values()
+                if actor.tactical_side.campaign_faction() == faction and not actor.is_eliminated
+            )
         for actor_id in actor_ids:
             actor = actors[actor_id]
             if actor.resources < FORWARD_DEPOT_COST or FORWARD_DEPOT_COST > actor.resources // 2:
@@ -319,7 +336,11 @@ def run_ai_site_upgrade(state: CampaignState, faction: Faction) -> dict[str, Any
             candidates = [
                 province
                 for province in owned
-                if str(province.metadata.get("owner_actor_id") or "") == actor_id
+                if _core_or_exact_owner_match(
+                    state,
+                    actor_id,
+                    str(province.metadata.get("owner_actor_id") or ""),
+                )
             ]
             chosen = _choose_ai_province(state, faction, candidates, reachable)
             if chosen is None:
@@ -442,14 +463,31 @@ def _actor_runtime_installed(state: CampaignState) -> bool:
     return isinstance(state.map_metadata.get(ACTOR_RUNTIME_KEY), dict)
 
 
+def _core_or_exact_owner_match(state: CampaignState, requested: str, owner_actor: str) -> bool:
+    if owner_actor == requested:
+        return True
+    from .core_player_economy import core_economy_actor_id, is_core_2028_campaign
+
+    if not is_core_2028_campaign(state):
+        return False
+    return bool(owner_actor) and core_economy_actor_id(state, owner_actor) == requested
+
+
 def _requested_actor_id(state: CampaignState, actor_id: str | None) -> str:
     requested = str(actor_id or "").strip()
+    runtime = state.map_metadata.get(ACTOR_RUNTIME_KEY)
+    selected = ""
+    if isinstance(runtime, dict):
+        selected = str(runtime.get("selected_actor_id") or "").strip()
+    from .core_player_economy import core_economy_actor_id, is_core_2028_campaign
+
+    if is_core_2028_campaign(state):
+        if requested:
+            return core_economy_actor_id(state, requested)
+        return selected
     if requested:
         return requested
-    runtime = state.map_metadata.get(ACTOR_RUNTIME_KEY)
-    if isinstance(runtime, dict):
-        return str(runtime.get("selected_actor_id") or "").strip()
-    return ""
+    return selected
 
 
 def _require_acting_owner(
@@ -474,7 +512,7 @@ def _require_acting_owner(
     if actor.tactical_side.campaign_faction() != faction:
         raise ValueError(f"Actor {requested} does not act as {faction.value}")
     owner_actor = str(province.metadata.get("owner_actor_id") or "")
-    if owner_actor != requested:
+    if not _core_or_exact_owner_match(state, requested, owner_actor):
         raise ValueError(f"Actor {requested} does not own {province.province_id}")
     return requested
 
