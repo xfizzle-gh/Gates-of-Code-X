@@ -277,8 +277,9 @@ def try_forward_apply_frontend(argv: Sequence[str]) -> tuple[int, str] | None:
     if parsed is None:
         return None
     campaign, snapshot, commands = parsed
-    session, inspect_reason = _inspect_session(campaign)
+    session = _read_session(campaign)
     if session is None:
+        _ignored, inspect_reason = _inspect_session(campaign)
         peeked = _peek_session_file(campaign)
         record_lease_diagnostics(
             lease_path="one_shot_fallback",
