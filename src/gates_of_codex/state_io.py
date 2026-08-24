@@ -389,6 +389,9 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
     ensure_s11_schema(
         state, migrated_from_pre_s11=incoming_schema < 11
     )
+    from .core_player_economy import migrate_core_player_economy_v1
+
+    migrate_core_player_economy_v1(state)
     state.validate()
     from .neutral_garrison import validate_neutral_garrison_runtime
 

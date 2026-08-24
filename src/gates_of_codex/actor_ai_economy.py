@@ -20,6 +20,8 @@ from .actor_economy import (
     repair_actor_formation,
     validate_actor_content_runtime,
 )
+from .core_player_economy import CORE_2028_POWER_IDS, is_core_2028_campaign
+from .frontend_actor_force import actor_may_command_formation
 from .models import CampaignState, Faction
 from .strategic_actors import ensure_strategic_actor_runtime
 
@@ -122,33 +124,97 @@ def run_actor_ai_economy(state: CampaignState, faction: Faction) -> list[dict]:
 
     actors = ensure_strategic_actor_runtime(state)
     actions: list[dict] = []
-    actor_ids = sorted(
-        actor.actor_id
-        for actor in actors.values()
-        if actor.tactical_side.campaign_faction() == faction
-        and not actor.is_human_controlled
-        and not actor.is_eliminated
-    )
+    if is_core_2028_campaign(state):
+        actor_ids = sorted(
+            actor_id
+            for actor_id in CORE_2028_POWER_IDS
+            if actor_id in actors
+            and actors[actor_id].tactical_side.campaign_faction() == faction
+            and not actors[actor_id].is_human_controlled
+            and not actors[actor_id].is_eliminated
+        )
+        if not actor_ids:
+            actor_ids = sorted(
+                actor.actor_id
+                for actor in actors.values()
+                if actor.tactical_side.campaign_faction() == faction
+                and not actor.is_human_controlled
+                and not actor.is_eliminated
+            )
+    else:
+        actor_ids = sorted(
+            actor.actor_id
+            for actor in actors.values()
+            if actor.tactical_side.campaign_faction() == faction
+            and not actor.is_human_controlled
+            and not actor.is_eliminated
+        )
     for actor_id in actor_ids:
         actor = actors[actor_id]
-        research = available_actor_research(state, actor_id)
+        research: list = []
+        if is_core_2028_campaign(state) and actor_id in CORE_2028_POWER_IDS:
+            seen_keys: set[str] = set()
+            catalogs = [actor_id]
+            catalogs.extend(
+                sorted(
+                    {
+                        str(force.actor_id or "")
+                        for force in state.strategic_formations.values()
+                        if force.faction == faction
+                        and actor_may_command_formation(state, actor_id, force.strategic_formation_id)
+                    }
+                )
+            )
+            for content_id in catalogs:
+                if not content_id or content_id not in actors:
+                    continue
+                for option in available_actor_research(
+                    state,
+                    content_id,
+                    economy_actor_id=actor_id,
+                ):
+                    if option.key in seen_keys:
+                        continue
+                    seen_keys.add(option.key)
+                    research.append(option)
+        else:
+            research = available_actor_research(state, actor_id)
         if research:
             candidate = min(research, key=lambda item: (item.cost, item.key))
             if candidate.cost <= max(0, actor.resources // 2):
-                result = purchase_actor_research(state, actor_id, candidate.key)
+                result = purchase_actor_research(
+                    state,
+                    actor_id,
+                    candidate.key,
+                    content_actor_id=candidate.actor_id,
+                )
                 actions.append({"action": "actor_research", **asdict(result)})
 
-        formations = sorted(
-            (
-                force
-                for force in state.strategic_formations.values()
-                if force.actor_id == actor_id and force.faction == faction
-            ),
-            key=lambda force: (
-                force.condition_summary,
-                force.strategic_formation_id,
-            ),
-        )
+        if is_core_2028_campaign(state) and actor_id in CORE_2028_POWER_IDS:
+            formations = sorted(
+                (
+                    force
+                    for force in state.strategic_formations.values()
+                    if force.faction == faction
+                    and actor_may_command_formation(state, actor_id, force.strategic_formation_id)
+                ),
+                key=lambda force: (
+                    force.condition_summary,
+                    force.strategic_formation_id,
+                ),
+            )
+        else:
+            formations = sorted(
+                (
+                    force
+                    for force in state.strategic_formations.values()
+                    if force.actor_id == actor_id and force.faction == faction
+                ),
+                key=lambda force: (
+                    force.condition_summary,
+                    force.strategic_formation_id,
+                ),
+            )
         if not formations:
             continue
 
