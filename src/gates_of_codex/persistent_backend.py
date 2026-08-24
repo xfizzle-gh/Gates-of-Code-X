@@ -18,6 +18,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from contextvars import ContextVar
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -50,6 +51,56 @@ SUPPORTED_OPS = frozenset(
 )
 IDLE_TIMEOUT_SECONDS = 900.0
 APPLY_RESPONSE_TIMEOUT_SECONDS = 600.0
+_LEASE_DEFAULTS: dict[str, Any] = {
+    "lease_path": "one_shot_fallback",
+    "lease_hit": False,
+    "session_pid": 0,
+    "source_commit": "",
+    "source_commit_match": False,
+    "cached_state_present": False,
+    "campaign_fingerprint_match": False,
+    "reload_reason": "not_leased",
+}
+_LEASE_DIAGNOSTICS: ContextVar[dict[str, Any] | None] = ContextVar(
+    "goc_lease_diagnostics",
+    default=None,
+)
+
+
+def reset_lease_diagnostics() -> None:
+    _LEASE_DIAGNOSTICS.set(None)
+
+
+def record_lease_diagnostics(**updates: Any) -> dict[str, Any]:
+    current = dict(_LEASE_DEFAULTS)
+    existing = _LEASE_DIAGNOSTICS.get()
+    if existing:
+        current.update(existing)
+    current.update(updates)
+    if not str(current.get("source_commit") or "").strip():
+        current["source_commit"] = str(_runtime_source_commit() or "")
+    _LEASE_DIAGNOSTICS.set(current)
+    return dict(current)
+
+
+def lease_diagnostics_for_timings() -> dict[str, Any]:
+    current = dict(_LEASE_DEFAULTS)
+    existing = _LEASE_DIAGNOSTICS.get()
+    if existing:
+        current.update(existing)
+    if not str(current.get("source_commit") or "").strip():
+        current["source_commit"] = str(_runtime_source_commit() or "")
+    current["lease_hit"] = bool(current.get("lease_hit"))
+    current["session_pid"] = int(current.get("session_pid") or 0)
+    current["source_commit_match"] = bool(current.get("source_commit_match"))
+    current["cached_state_present"] = bool(current.get("cached_state_present"))
+    current["campaign_fingerprint_match"] = bool(
+        current.get("campaign_fingerprint_match")
+    )
+    current["lease_path"] = str(current.get("lease_path") or "one_shot_fallback")
+    current["reload_reason"] = str(current.get("reload_reason") or "not_leased")
+    current["source_commit"] = str(current.get("source_commit") or "")
+    return current
 
 
 def _session_path(campaign: Path) -> Path:
@@ -94,28 +145,42 @@ def _atomic_json(path: Path, payload: dict[str, Any]) -> None:
     temporary_path.replace(path)
 
 
-def _read_session(campaign: Path) -> dict[str, Any] | None:
-    source_commit = _runtime_source_commit()
-    if source_commit is None:
-        return None
+def _peek_session_file(campaign: Path) -> dict[str, Any]:
     source = _session_path(campaign)
     if not source.is_file():
-        return None
+        return {}
     try:
         payload = json.loads(source.read_text(encoding="utf-8-sig"))
     except (OSError, ValueError):
-        return None
-    if not isinstance(payload, dict):
-        return None
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _inspect_session(campaign: Path) -> tuple[dict[str, Any] | None, str]:
+    source_commit = _runtime_source_commit()
+    if source_commit is None:
+        return None, "source_commit_unresolved"
+    source = _session_path(campaign)
+    if not source.is_file():
+        return None, "no_session"
+    payload = _peek_session_file(campaign)
+    if not payload:
+        return None, "session_unreadable"
     if payload.get("schema") != SESSION_SCHEMA:
-        return None
+        return None, "session_schema_mismatch"
     if int(payload.get("schema_version", 0) or 0) != SESSION_SCHEMA_VERSION:
-        return None
-    if str(payload.get("source_commit", "")).strip().lower() != source_commit:
-        return None
+        return None, "session_schema_mismatch"
+    session_commit = str(payload.get("source_commit", "")).strip().lower()
+    if session_commit != source_commit:
+        return None, "source_commit_mismatch"
     if str(payload.get("campaign_path", "")) != str(campaign.resolve(strict=False)):
-        return None
-    return payload
+        return None, "campaign_path_mismatch"
+    return payload, "ok"
+
+
+def _read_session(campaign: Path) -> dict[str, Any] | None:
+    session, _reason = _inspect_session(campaign)
+    return session
 
 
 def _request(
@@ -212,14 +277,33 @@ def try_forward_apply_frontend(argv: Sequence[str]) -> tuple[int, str] | None:
     if parsed is None:
         return None
     campaign, snapshot, commands = parsed
-    session = _read_session(campaign)
+    session, inspect_reason = _inspect_session(campaign)
     if session is None:
+        peeked = _peek_session_file(campaign)
+        record_lease_diagnostics(
+            lease_path="one_shot_fallback",
+            lease_hit=False,
+            session_pid=int(peeked.get("pid") or 0),
+            source_commit_match=False,
+            cached_state_present=False,
+            campaign_fingerprint_match=False,
+            reload_reason=inspect_reason,
+        )
         if _session_path(campaign).is_file():
             _drop_session_descriptor(campaign)
         return None
 
     ping = _request(session, {"action": "ping"}, timeout=0.4)
     if not ping or ping.get("ok") is not True:
+        record_lease_diagnostics(
+            lease_path="one_shot_fallback",
+            lease_hit=False,
+            session_pid=int(session.get("pid") or 0),
+            source_commit_match=True,
+            cached_state_present=False,
+            campaign_fingerprint_match=False,
+            reload_reason="ping_failed",
+        )
         _drop_session_descriptor(campaign)
         return None
 
@@ -237,6 +321,15 @@ def try_forward_apply_frontend(argv: Sequence[str]) -> tuple[int, str] | None:
         _drop_session_descriptor(campaign)
         return 0, _ambiguous_daemon_payload()
     if not bool(response.get("handled", False)):
+        record_lease_diagnostics(
+            lease_path="one_shot_fallback",
+            lease_hit=False,
+            session_pid=int(session.get("pid") or 0),
+            source_commit_match=True,
+            cached_state_present=False,
+            campaign_fingerprint_match=False,
+            reload_reason=str(response.get("reason") or "daemon_declined"),
+        )
         _request(session, {"action": "invalidate"}, timeout=1.0)
         return None
     return int(response.get("exit_code", 1)), str(response.get("stdout", ""))
@@ -607,9 +700,25 @@ def run_session_backend(argv: Sequence[str]) -> int:
                             response = {"handled": False, "reason": "unsupported_op"}
                         else:
                             current_fingerprint = _fingerprint(campaign)
-                            if cached_state is None or cached_fingerprint != current_fingerprint:
+                            had_cached_state = cached_state is not None
+                            reload_reason = "cache_hit"
+                            if cached_state is None:
+                                reload_reason = "cache_empty"
+                            elif cached_fingerprint != current_fingerprint:
+                                reload_reason = "fingerprint_mismatch"
+                            if reload_reason != "cache_hit":
                                 cached_state = load_campaign(campaign)
                                 cached_fingerprint = current_fingerprint
+                            record_lease_diagnostics(
+                                lease_path="persistent_forward",
+                                lease_hit=reload_reason == "cache_hit",
+                                session_pid=os.getpid(),
+                                source_commit=source_commit,
+                                source_commit_match=True,
+                                cached_state_present=had_cached_state,
+                                campaign_fingerprint_match=reload_reason == "cache_hit",
+                                reload_reason=reload_reason,
+                            )
 
                             persisted = False
                             original_loader = commands_module.load_campaign

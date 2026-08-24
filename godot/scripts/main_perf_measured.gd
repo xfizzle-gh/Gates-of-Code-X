@@ -39,12 +39,24 @@ func _timing_suffix(payload: Dictionary) -> String:
 	var row := timings as Dictionary
 	if not row.has("total_ms"):
 		return ""
-	return "[backend %.2fs: load %.2f, mutate %.2f, save %.2f, snapshot %.2f]" % [
+	var lease := ""
+	if row.has("lease_path"):
+		lease = " [lease %s hit=%s pid=%s reload=%s commit_match=%s cached=%s fingerprint=%s]" % [
+			String(row.get("lease_path", "")),
+			str(bool(row.get("lease_hit", false))).to_lower(),
+			str(int(row.get("session_pid", 0))),
+			String(row.get("reload_reason", "")),
+			str(bool(row.get("source_commit_match", false))).to_lower(),
+			str(bool(row.get("cached_state_present", false))).to_lower(),
+			str(bool(row.get("campaign_fingerprint_match", false))).to_lower(),
+		]
+	return "[backend %.2fs: load %.2f, mutate %.2f, save %.2f, snapshot %.2f]%s" % [
 		float(row.get("total_ms", 0.0)) / 1000.0,
 		float(row.get("load_ms", 0.0)) / 1000.0,
 		float(row.get("mutate_ms", 0.0)) / 1000.0,
 		float(row.get("save_ms", 0.0)) / 1000.0,
 		float(row.get("snapshot_ms", 0.0)) / 1000.0,
+		lease,
 	]
 
 

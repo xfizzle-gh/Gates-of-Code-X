@@ -84,6 +84,14 @@ _TIMING_KEYS = (
     "read_only_fast_path",
     "snapshot_fast_path",
     "compact_save_path",
+    "lease_path",
+    "lease_hit",
+    "session_pid",
+    "source_commit",
+    "source_commit_match",
+    "cached_state_present",
+    "campaign_fingerprint_match",
+    "reload_reason",
 )
 
 
@@ -145,6 +153,12 @@ def _size(path: str | Path | None) -> int:
 
 def _milliseconds(seconds: float) -> float:
     return round(max(0.0, seconds) * 1000.0, 3)
+
+
+def _lease_timing_fields() -> dict[str, Any]:
+    from .persistent_backend import lease_diagnostics_for_timings
+
+    return lease_diagnostics_for_timings()
 
 
 def _runtime_json_default(value: Any) -> Any:
@@ -558,6 +572,7 @@ def measured_apply_frontend_commands(
             f"save_{name}_ms": _milliseconds(seconds)
             for name, seconds in sorted(save_subphase_seconds.items())
         },
+        **_lease_timing_fields(),
     }
     return result
 
