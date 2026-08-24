@@ -212,7 +212,7 @@ def test_schema_1_stamp_does_not_skip_required_fold_or_research(tmp_path: Path) 
     stamp = _assert_complete_stamp(loaded.map_metadata[CORE_PLAYER_ECONOMY_KEY])
     assert extra in _runtime(loaded)["actors"]["nato"]["researched_keys"]
     assert extra in _runtime(loaded)["actors"]["pol"]["researched_keys"]
-    assert extra in stamp["folds"]["nato"]["research_keys_unioned_from"]
+    assert "pol" in stamp["folds"]["nato"]["research_keys_unioned_from"]
     assert _resources(loaded, "nato") == 2100
     assert _resources(loaded, "pol") == 0
     save_campaign(loaded, path)
