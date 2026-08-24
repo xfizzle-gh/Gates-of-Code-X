@@ -105,8 +105,10 @@ class WarmForceSpendMeasuredPublicationTests(unittest.TestCase):
                 root = Path(temporary)
                 campaign = root / "campaign.json"
                 snapshot = root / "campaign_snapshot.json"
-                campaign.write_text("{}\n", encoding="utf-8")
-                snapshot.write_text('{"static":"unchanged"}\n', encoding="utf-8")
+                campaign.write_text("{}\n", encoding="utf-8", newline="\n")
+                snapshot.write_text(
+                    '{"static":"unchanged"}\n', encoding="utf-8", newline="\n"
+                )
                 calls = {"save": 0, "full_snapshot": 0, "runtime_patch": 0}
 
                 def fake_save(
@@ -176,8 +178,10 @@ class WarmForceSpendMeasuredPublicationTests(unittest.TestCase):
             root = Path(temporary)
             campaign = root / "campaign.json"
             snapshot = root / "campaign_snapshot.json"
-            campaign.write_text("{}\n", encoding="utf-8")
-            snapshot.write_text('{"existing":true}\n', encoding="utf-8")
+            campaign.write_text("{}\n", encoding="utf-8", newline="\n")
+            snapshot.write_text(
+                '{"existing":true}\n', encoding="utf-8", newline="\n"
+            )
 
             with (
                 patch.object(
