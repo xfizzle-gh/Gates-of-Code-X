@@ -34,6 +34,11 @@ class GodotMoveListScrollContractTests(unittest.TestCase):
             "Order locked until it resolves — no new order this turn.",
             source,
         )
+        panel_at = source.find("func _draw_management_panel()")
+        clear_at = source.find("button_rects.clear()", panel_at)
+        visible_at = source.find("_visible_move_options", panel_at)
+        self.assertGreater(clear_at, panel_at)
+        self.assertGreater(visible_at, clear_at)
 
     def test_short_list_shows_every_destination(self) -> None:
         options = ["a", "b", "c"]

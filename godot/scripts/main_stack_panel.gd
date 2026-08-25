@@ -57,6 +57,7 @@ func _draw_management_panel() -> void:
 	if has_method("is_pending_battle_modal_active") and is_pending_battle_modal_active():
 		_draw_pending_battle_modal()
 		return
+	button_rects.clear()
 	# Full opaque side panel — no ghosted legacy province UI underneath.
 	var viewport := get_viewport_rect().size
 	var panel_x := viewport.x - PANEL_WIDTH
