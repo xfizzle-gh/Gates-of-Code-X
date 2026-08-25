@@ -375,17 +375,16 @@ class FrontendActorForceCommandTests(unittest.TestCase):
             self.assertEqual("fra", panel["actor_id"])
             self.assertEqual({"fixture_fra"}, {row["unit_name"] for row in panel["recruitment_offers"]})
 
-    def test_persist_seam_does_not_absorb_force_ops(self) -> None:
+    def test_persist_seam_keeps_force_ops_off_snapshot_persist(self) -> None:
         self.assertIn("actor_force_panel", READ_ONLY_OPS)
-        for op in ("research", "recruit", "assign", "repair", "actor_force_panel"):
+        for op in ("research", "recruit", "assign", "repair", "upgrade_site"):
+            self.assertIn(op, _RUNTIME_PATCH_OPS)
             self.assertNotIn(op, _SNAPSHOT_PATCH_OPS)
-            self.assertNotIn(op, _RUNTIME_PATCH_OPS)
             self.assertFalse(_should_persist_runtime_snapshot([{"op": op}]))
-        # Composed-stack daemon policy (#279): only repair is warm-allowlisted.
-        # Research/recruit/assign and the read-only panel stay one-shot full-refresh.
-        self.assertIn("repair", SUPPORTED_OPS)
-        for op in ("research", "recruit", "assign", "actor_force_panel"):
-            self.assertNotIn(op, SUPPORTED_OPS)
+        self.assertNotIn("actor_force_panel", _RUNTIME_PATCH_OPS)
+        self.assertNotIn("actor_force_panel", _SNAPSHOT_PATCH_OPS)
+        for op in ("research", "recruit", "assign", "repair", "actor_force_panel", "upgrade_site"):
+            self.assertIn(op, SUPPORTED_OPS)
 
 
 if __name__ == "__main__":

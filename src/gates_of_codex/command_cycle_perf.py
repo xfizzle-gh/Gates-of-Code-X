@@ -18,6 +18,10 @@ Fast paths are intentionally narrow:
   a bounded runtime patch instead of rebuilding/re-writing the static Earth3
   frontend snapshot. Godot validates the patch into a candidate copy before
   atomically replacing its live dynamic state.
+* Force/spend verbs (``research``, ``recruit``, ``assign``, ``repair``,
+  ``upgrade_site``) use that same runtime-patch publication. ``actor_force_panel``
+  is read-only: it skips save and snapshot and returns the panel in the command
+  result.
 * runtime campaign saves preserve the exact normalization/validation/atomic
   publication contract of ``state_io.save_campaign`` but use deterministic
   compact JSON. Pretty whitespace is not authority, and removing it reduces both
@@ -56,7 +60,17 @@ from . import frontend_commands as _commands
 
 
 _SNAPSHOT_PATCH_OPS = frozenset({"issue_move_order", "cancel_move_order"})
-_RUNTIME_PATCH_OPS = frozenset({"end_player_round", "auto_resolve"})
+_RUNTIME_PATCH_OPS = frozenset(
+    {
+        "end_player_round",
+        "auto_resolve",
+        "research",
+        "recruit",
+        "assign",
+        "repair",
+        "upgrade_site",
+    }
+)
 _LIVE_MOVE_BATCH = ("issue_move_order", "commit_move_orders")
 
 _TIMING_KEYS = (
@@ -70,6 +84,14 @@ _TIMING_KEYS = (
     "read_only_fast_path",
     "snapshot_fast_path",
     "compact_save_path",
+    "lease_path",
+    "lease_hit",
+    "session_pid",
+    "source_commit",
+    "source_commit_match",
+    "cached_state_present",
+    "campaign_fingerprint_match",
+    "reload_reason",
 )
 
 
@@ -131,6 +153,12 @@ def _size(path: str | Path | None) -> int:
 
 def _milliseconds(seconds: float) -> float:
     return round(max(0.0, seconds) * 1000.0, 3)
+
+
+def _lease_timing_fields() -> dict[str, Any]:
+    from .persistent_backend import lease_diagnostics_for_timings
+
+    return lease_diagnostics_for_timings()
 
 
 def _runtime_json_default(value: Any) -> Any:
@@ -544,6 +572,7 @@ def measured_apply_frontend_commands(
             f"save_{name}_ms": _milliseconds(seconds)
             for name, seconds in sorted(save_subphase_seconds.items())
         },
+        **_lease_timing_fields(),
     }
     return result
 

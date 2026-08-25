@@ -260,7 +260,17 @@ class EndTurnEconomyReportTests(unittest.TestCase):
         )
         self.assertEqual(
             _RUNTIME_PATCH_OPS,
-            frozenset({"end_player_round", "auto_resolve"}),
+            frozenset(
+                {
+                    "end_player_round",
+                    "auto_resolve",
+                    "research",
+                    "recruit",
+                    "assign",
+                    "repair",
+                    "upgrade_site",
+                }
+            ),
         )
         self.assertFalse(_should_persist_runtime_snapshot([{"op": "end_player_round"}]))
         self.assertTrue(_should_persist_runtime_snapshot([{"op": "auto_resolve"}]))

@@ -3,19 +3,31 @@ extends "res://scripts/main_perf.gd"
 ## P8/#207 native timing layer.
 ##
 ## Most mutating commands continue through the existing transactional
-## full-snapshot replacement path. Three narrow fast paths avoid known redundant
+## full-snapshot replacement path. Narrow fast paths avoid known redundant
 ## presentation work:
 ##
 ## * verify_result is read-only and consumes the backend verdict directly.
 ## * query_supply is read-only and caches bounded supply/readiness for the panel.
+## * actor_force_panel is read-only and consumes the panel payload from the
+##   command result without rewriting the Earth3 snapshot.
 ## * issue/cancel move-order commands still persist authoritatively in Python,
 ##   but update only the returned move_order field in the live Godot snapshot.
-## * end_player_round still persists authoritatively in Python, but consumes a
-##   bounded runtime patch instead of reparsing/replacing the static Earth3 map
-##   payload. The patch is validated into a detached candidate before commit.
+## * end_player_round, auto_resolve, and the force/spend verbs (research,
+##   recruit, assign, repair, upgrade_site) still persist authoritatively in
+##   Python, but consume a bounded runtime patch instead of reparsing/replacing
+##   the static Earth3 map payload. The patch is validated into a detached
+##   candidate before commit.
 
 const LIGHTWEIGHT_ORDER_OPS := ["issue_move_order", "cancel_move_order"]
-const RUNTIME_PATCH_OPS := ["end_player_round", "auto_resolve"]
+const RUNTIME_PATCH_OPS := [
+	"end_player_round",
+	"auto_resolve",
+	"research",
+	"recruit",
+	"assign",
+	"repair",
+	"upgrade_site",
+]
 const RUNTIME_PATCH_SCHEMA := "gates-of-codex.frontend-runtime-patch"
 const RUNTIME_PATCH_SCHEMA_VERSION := 1
 
@@ -27,12 +39,24 @@ func _timing_suffix(payload: Dictionary) -> String:
 	var row := timings as Dictionary
 	if not row.has("total_ms"):
 		return ""
-	return "[backend %.2fs: load %.2f, mutate %.2f, save %.2f, snapshot %.2f]" % [
+	var lease := ""
+	if row.has("lease_path"):
+		lease = " [lease %s hit=%s pid=%s reload=%s commit_match=%s cached=%s fingerprint=%s]" % [
+			String(row.get("lease_path", "")),
+			str(bool(row.get("lease_hit", false))).to_lower(),
+			str(int(row.get("session_pid", 0))),
+			String(row.get("reload_reason", "")),
+			str(bool(row.get("source_commit_match", false))).to_lower(),
+			str(bool(row.get("cached_state_present", false))).to_lower(),
+			str(bool(row.get("campaign_fingerprint_match", false))).to_lower(),
+		]
+	return "[backend %.2fs: load %.2f, mutate %.2f, save %.2f, snapshot %.2f]%s" % [
 		float(row.get("total_ms", 0.0)) / 1000.0,
 		float(row.get("load_ms", 0.0)) / 1000.0,
 		float(row.get("mutate_ms", 0.0)) / 1000.0,
 		float(row.get("save_ms", 0.0)) / 1000.0,
 		float(row.get("snapshot_ms", 0.0)) / 1000.0,
+		lease,
 	]
 
 
@@ -339,6 +363,10 @@ func _consume_fast_command_result(
 		_capture_verification(backend_payload)
 	elif op == "query_supply":
 		_capture_supply_query(backend_payload)
+	elif op == "actor_force_panel":
+		_capture_force_panel(backend_payload)
+		if status_message.is_empty():
+			status_message = "Force management ready for %s." % String(force_panel.get("display_name", force_panel.get("actor_id", "actor")))
 	elif _is_lightweight_order_op(op):
 		if not _apply_move_order_result_patch(op, commands, backend_payload):
 			_fail_command(op, "backend succeeded but move-order presentation patch was incomplete")
@@ -395,6 +423,7 @@ func _consume_runtime_patch_result(
 
 	_parse_apply_output(output_text)
 	_capture_verification(backend_payload)
+	_capture_force_panel(backend_payload)
 	_capture_end_turn_economy_report(backend_payload)
 	_commit_snapshot_state(built, previous_selected, previous_battalion, true)
 	_ensure_operational_presenter()
@@ -421,6 +450,8 @@ func _consume_runtime_patch_result(
 	_clear_busy_ui()
 	_append_backend_timing(backend_payload)
 	queue_redraw()
+	if force_management_open and op in ["research", "recruit", "assign", "repair", "upgrade_site", "end_player_round"]:
+		request_force_panel()
 
 
 func _on_command_finished(
@@ -445,7 +476,7 @@ func _on_command_finished(
 			op
 		)
 		return
-	if op == "verify_result" or op == "query_supply" or _is_lightweight_order_op(op):
+	if op == "verify_result" or op == "query_supply" or op == "actor_force_panel" or _is_lightweight_order_op(op):
 		_consume_fast_command_result(
 			generation,
 			success,

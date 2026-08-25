@@ -522,7 +522,9 @@ func _draw_stack_section(panel_x: float, top: float, available_h: float) -> void
 		return
 
 	var body_top := top + COLLAPSED_BAR_H + 8.0
-	var body_h := minf(available_h - COLLAPSED_BAR_H - 8.0, 400.0)
+	var body_h := available_h - COLLAPSED_BAR_H - 8.0
+	if not force_management_open:
+		body_h = minf(body_h, 400.0)
 	var body := Rect2(left + 10.0, body_top, width - 20.0, body_h)
 	draw_rect(body, Color(0.045, 0.06, 0.08, 1.0))
 	draw_rect(body, Color(0.24, 0.30, 0.38, 0.75), false, 1.0)

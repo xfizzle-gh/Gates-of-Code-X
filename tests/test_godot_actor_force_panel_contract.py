@@ -27,6 +27,10 @@ class GodotActorForcePanelContractTests(unittest.TestCase):
         self.assertIn('"op": "repair"', writeback)
         self.assertIn("request_force_panel", stack)
         self.assertIn("force_management_open", writeback)
+        color = (ROOT / "godot/scripts/main_color_id.gd").read_text(encoding="utf-8")
+        self.assertIn("KEY_M", color)
+        self.assertNotIn("KEY_1", color)
+        self.assertNotIn("_first_force_spend_button_id", writeback)
         self.assertNotIn("authorized_roster", stack)
         self.assertNotIn('battalion.get("roster"', stack)
 
