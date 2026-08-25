@@ -90,6 +90,29 @@ func _test_stack_panel_preload() -> void:
 		"stack panel instantiable",
 		stack_script != null and stack_script.can_instantiate()
 	)
+	var src := FileAccess.get_file_as_string("res://scripts/main_stack_panel.gd")
+	var draw_at := src.find("func _draw_stack_section(")
+	var header_at := src.find("_draw_formation_header(", draw_at)
+	var fm_at := src.find("_draw_force_management(", header_at)
+	var bn_at := src.find("BATTALIONS IN FORMATION", header_at)
+	_assert_true("formation header before FM", header_at > draw_at)
+	_assert_true("FM starts before battalion list when open", fm_at > header_at and fm_at < bn_at)
+	_assert_true("battalion list still present for closed FM", bn_at > 0)
+	_assert_true("repair stays in force management", src.find("Repair condition") > 0)
+	var skip := src.substr(header_at, fm_at - header_at + 180)
+	_assert_true("FM-open skip does not clear formation id", skip.find("selected_strategic_formation_id = \"\"") < 0)
+	_assert_true("FM-open skip does not clear battalion id", skip.find("selected_battalion_id = \"\"") < 0)
+	var client: Node = stack_script.new()
+	root.add_child(client)
+	client.selected_strategic_formation_id = "sf_deu_berlin"
+	client.selected_battalion_id = "bn_sf_deu_berlin"
+	client.force_management_open = true
+	_assert_eq("formation id preserved", client.selected_strategic_formation_id, "sf_deu_berlin")
+	_assert_eq("battalion id preserved", client.selected_battalion_id, "bn_sf_deu_berlin")
+	client.force_management_open = false
+	_assert_eq("formation id unchanged after close", client.selected_strategic_formation_id, "sf_deu_berlin")
+	_assert_eq("battalion id unchanged after close", client.selected_battalion_id, "bn_sf_deu_berlin")
+	client.queue_free()
 
 
 func _assert_true(label: String, value: bool, detail := "") -> void:

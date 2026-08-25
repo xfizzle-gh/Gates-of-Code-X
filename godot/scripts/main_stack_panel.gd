@@ -5,6 +5,7 @@ const STACK_TAB_H := 44.0
 const UNIT_CARD_H := 64.0
 const PORTRAIT_SIZE := 44.0
 const COLLAPSED_BAR_H := 36.0
+const MOVE_LIST_PAGE := 4
 
 var stack_tab_rects: Dictionary = {}  # strategic_formation_id -> Rect2
 var battalion_row_rects: Dictionary = {}  # battalion_id -> Rect2
@@ -13,9 +14,14 @@ var portrait_cache: Dictionary = {}
 var hovered_unit_tooltip := ""
 var stack_panel_expanded := true
 var unit_scroll_offset := 0
+var move_list_scroll := 0
+var _move_list_formation_id := ""
 var _collapse_button_rect := Rect2()
 var _scroll_up_rect := Rect2()
 var _scroll_down_rect := Rect2()
+var _move_scroll_up_rect := Rect2()
+var _move_scroll_down_rect := Rect2()
+var _move_list_rect := Rect2()
 
 
 func _player_launch_model() -> Dictionary:
@@ -51,6 +57,7 @@ func _draw_management_panel() -> void:
 	if has_method("is_pending_battle_modal_active") and is_pending_battle_modal_active():
 		_draw_pending_battle_modal()
 		return
+	button_rects.clear()
 	# Full opaque side panel — no ghosted legacy province UI underneath.
 	var viewport := get_viewport_rect().size
 	var panel_x := viewport.x - PANEL_WIDTH
@@ -275,6 +282,9 @@ func _draw_management_panel() -> void:
 		y = _panel_line("Write-back off — re-export frontend.", x, y, Color("ff8e72"), 12)
 	y += 10.0
 
+	_move_scroll_up_rect = Rect2()
+	_move_scroll_down_rect = Rect2()
+	_move_list_rect = Rect2()
 	_draw_stack_section(panel_x, y, viewport.y - y - 12.0)
 
 	# Targets / objectives under the stack section when collapsed enough room.
@@ -582,6 +592,15 @@ func _draw_stack_section(panel_x: float, top: float, available_h: float) -> void
 	var header_y := tab_y + STACK_TAB_H + 12.0
 	_draw_formation_header(body.position.x, header_y, force_row)
 
+	if force_management_open:
+		_draw_force_management(
+			body.position.x,
+			header_y + 102.0,
+			body.size.x,
+			body.position.y + body.size.y
+		)
+		return
+
 	# Battalion list inside selected strategic formation.
 	var member_ids: Array = force_row.get("battalion_ids", [])
 	var bn_y := header_y + 102.0
@@ -604,10 +623,6 @@ func _draw_stack_section(panel_x: float, top: float, available_h: float) -> void
 			Color.WHITE if selected_bn else Color(0.85, 0.88, 0.92, 1.0)
 		)
 		bn_y += 30.0
-
-	if force_management_open:
-		_draw_force_management(body.position.x, bn_y + 8.0, body.size.x, body.position.y + body.size.y)
-		return
 
 	var presentation := _selected_presentation()
 	if presentation.is_empty():
@@ -881,7 +896,7 @@ func _draw_force_repair_block(left: float, y: float, writeback: bool, panel: Dic
 		y = _panel_line(String(reasons[0]), left + 8.0, y, Color(0.95, 0.62, 0.48, 1.0), 11)
 	_draw_button(
 		"repair_formation",
-		"Repair / replenish",
+		"Repair condition",
 		left + 8.0,
 		y,
 		writeback and bool(repair.get("can_repair", false)),
@@ -930,14 +945,29 @@ func _draw_targets_and_objectives(x: float, y: float) -> float:
 				x, y, Color(0.7, 0.75, 0.8), 12
 			)
 	else:
-		var shown := 0
-		for option: Dictionary in options:
-			if shown >= 4:
-				y = _panel_line(
-					"+%s more reachable — click the map to order." % (options.size() - shown),
-					x, y, Color(0.65, 0.7, 0.75), 11
-				)
-				break
+		var visible: Array = _visible_move_options(options)
+		var list_top := y - 20.0
+		if options.size() > MOVE_LIST_PAGE:
+			_move_scroll_up_rect = Rect2(x + PANEL_WIDTH - 92.0, y - 20.0, 22.0, 18.0)
+			_move_scroll_down_rect = Rect2(x + PANEL_WIDTH - 66.0, y - 20.0, 22.0, 18.0)
+			_draw_scroll_button(_move_scroll_up_rect, "^", move_list_scroll > 0)
+			_draw_scroll_button(
+				_move_scroll_down_rect,
+				"v",
+				move_list_scroll + visible.size() < options.size()
+			)
+			y = _panel_line(
+				"%s-%s of %s legal destinations" % [
+					move_list_scroll + 1,
+					move_list_scroll + visible.size(),
+					options.size(),
+				],
+				x,
+				y,
+				Color(0.65, 0.7, 0.75),
+				11
+			)
+		for option: Dictionary in visible:
 			var tid := String(option.get("target_province_id", ""))
 			y = _draw_button(
 				"move:%s" % tid,
@@ -947,7 +977,7 @@ func _draw_targets_and_objectives(x: float, y: float) -> float:
 				writeback,
 				Color("2a3d28")
 			)
-			shown += 1
+		_move_list_rect = Rect2(x, list_top, PANEL_WIDTH - 36.0, maxf(y - list_top, 30.0))
 	if order_status == "draft":
 		y = _draw_button("cancel_move_order", "Cancel movement order", x, y, writeback, Color("3d2a28"))
 	y += 6.0
@@ -961,6 +991,18 @@ func _draw_targets_and_objectives(x: float, y: float) -> float:
 			12
 		)
 	return y
+
+
+func _sync_move_list_scroll(formation_id: String, total: int) -> void:
+	if formation_id != _move_list_formation_id:
+		_move_list_formation_id = formation_id
+		move_list_scroll = 0
+	move_list_scroll = clampi(move_list_scroll, 0, maxi(total - MOVE_LIST_PAGE, 0))
+
+
+func _visible_move_options(options: Array) -> Array:
+	_sync_move_list_scroll(selected_strategic_formation_id, options.size())
+	return options.slice(move_list_scroll, mini(move_list_scroll + MOVE_LIST_PAGE, options.size()))
 
 
 func _order_destination_province(order: Dictionary) -> String:
@@ -1451,6 +1493,16 @@ func _unhandled_input(event: InputEvent) -> void:
 				queue_redraw()
 				get_viewport().set_input_as_handled()
 				return
+			if _move_scroll_up_rect.has_point(mouse.position):
+				move_list_scroll = maxi(move_list_scroll - 1, 0)
+				queue_redraw()
+				get_viewport().set_input_as_handled()
+				return
+			if _move_scroll_down_rect.has_point(mouse.position):
+				move_list_scroll += 1
+				queue_redraw()
+				get_viewport().set_input_as_handled()
+				return
 			for force_id: String in stack_tab_rects:
 				var rect: Rect2 = stack_tab_rects[force_id]
 				if rect.has_point(mouse.position):
@@ -1494,8 +1546,13 @@ func _unhandled_input(event: InputEvent) -> void:
 					queue_redraw()
 					get_viewport().set_input_as_handled()
 					return
-		elif mouse.button_index == MOUSE_BUTTON_WHEEL_UP and stack_panel_expanded:
-			if Rect2(get_viewport_rect().size.x - PANEL_WIDTH, 0, PANEL_WIDTH, get_viewport_rect().size.y).has_point(mouse.position):
+		elif mouse.button_index == MOUSE_BUTTON_WHEEL_UP:
+			if _move_list_rect.has_point(mouse.position):
+				move_list_scroll = maxi(move_list_scroll - 1, 0)
+				queue_redraw()
+				get_viewport().set_input_as_handled()
+				return
+			if stack_panel_expanded and Rect2(get_viewport_rect().size.x - PANEL_WIDTH, 0, PANEL_WIDTH, get_viewport_rect().size.y).has_point(mouse.position):
 				if force_management_open:
 					force_panel_scroll = maxi(force_panel_scroll - 1, 0)
 				else:
@@ -1503,8 +1560,13 @@ func _unhandled_input(event: InputEvent) -> void:
 				queue_redraw()
 				get_viewport().set_input_as_handled()
 				return
-		elif mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN and stack_panel_expanded:
-			if Rect2(get_viewport_rect().size.x - PANEL_WIDTH, 0, PANEL_WIDTH, get_viewport_rect().size.y).has_point(mouse.position):
+		elif mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			if _move_list_rect.has_point(mouse.position):
+				move_list_scroll += 1
+				queue_redraw()
+				get_viewport().set_input_as_handled()
+				return
+			if stack_panel_expanded and Rect2(get_viewport_rect().size.x - PANEL_WIDTH, 0, PANEL_WIDTH, get_viewport_rect().size.y).has_point(mouse.position):
 				if force_management_open:
 					force_panel_scroll += 1
 				else:

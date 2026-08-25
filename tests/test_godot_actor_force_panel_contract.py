@@ -16,7 +16,7 @@ class GodotActorForcePanelContractTests(unittest.TestCase):
         self.assertIn("Manage Forces", stack)
         self.assertIn("_draw_force_management", stack)
         self.assertIn("FORCE MANAGEMENT", stack)
-        self.assertIn("Repair / replenish", stack)
+        self.assertIn("Repair condition", stack)
         self.assertIn("Command %s", stack)
         self.assertIn("command_actor_id", stack)
         self.assertIn('"formation": selected_strategic_formation_id', writeback)
@@ -47,6 +47,23 @@ class GodotActorForcePanelContractTests(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/gates-of-codex.yml").read_text(encoding="utf-8")
         self.assertIn("actor_force_panel_test.gd", workflow)
         self.assertIn("Godot actor force-management panel test (#149)", workflow)
+
+    def test_force_management_skips_battalion_list_while_open(self) -> None:
+        stack = (ROOT / "godot/scripts/main_stack_panel.gd").read_text(encoding="utf-8")
+        draw_at = stack.find("func _draw_stack_section(")
+        header_at = stack.find("_draw_formation_header(", draw_at)
+        fm_at = stack.find("_draw_force_management(", header_at)
+        bn_at = stack.find("BATTALIONS IN FORMATION", header_at)
+        self.assertGreater(header_at, draw_at)
+        self.assertGreater(fm_at, header_at)
+        self.assertGreater(bn_at, fm_at)
+        skip = stack[header_at:fm_at]
+        self.assertIn("force_management_open", skip)
+        self.assertNotIn('selected_strategic_formation_id = ""', skip)
+        self.assertNotIn('selected_battalion_id = ""', skip)
+        self.assertIn("BATTALIONS IN FORMATION", stack)
+        self.assertIn("TACTICAL UNITS IN SELECTED BATTALION", stack)
+        self.assertIn("Repair condition", stack)
 
 
 if __name__ == "__main__":
