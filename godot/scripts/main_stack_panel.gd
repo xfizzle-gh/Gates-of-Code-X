@@ -592,6 +592,15 @@ func _draw_stack_section(panel_x: float, top: float, available_h: float) -> void
 	var header_y := tab_y + STACK_TAB_H + 12.0
 	_draw_formation_header(body.position.x, header_y, force_row)
 
+	if force_management_open:
+		_draw_force_management(
+			body.position.x,
+			header_y + 102.0,
+			body.size.x,
+			body.position.y + body.size.y
+		)
+		return
+
 	# Battalion list inside selected strategic formation.
 	var member_ids: Array = force_row.get("battalion_ids", [])
 	var bn_y := header_y + 102.0
@@ -614,10 +623,6 @@ func _draw_stack_section(panel_x: float, top: float, available_h: float) -> void
 			Color.WHITE if selected_bn else Color(0.85, 0.88, 0.92, 1.0)
 		)
 		bn_y += 30.0
-
-	if force_management_open:
-		_draw_force_management(body.position.x, bn_y + 8.0, body.size.x, body.position.y + body.size.y)
-		return
 
 	var presentation := _selected_presentation()
 	if presentation.is_empty():
