@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import inspect
 import tempfile
 import unittest
 from pathlib import Path
@@ -80,15 +79,23 @@ class ActorEconomyTest(unittest.TestCase):
         self.assertEqual(transfer.expansion, 2)
         battalion = self.state.battalions[force.battalion_ids[0]]
         self.assertEqual(next(item.quantity for item in battalion.roster if item.unit_name == "fixture_fra"), 2)
+        self.state.validate()
 
-    def test_assign_and_repair_do_not_double_validate_before_authoritative_save(self) -> None:
-        assign_src = inspect.getsource(assign_actor_reinforcements)
-        repair_src = inspect.getsource(repair_actor_formation)
-        self.assertNotIn("state.validate()", assign_src)
-        self.assertNotIn("state.validate()", repair_src)
-        self.assertIn("validate_actor_content_runtime(state)", assign_src)
-        save_src = inspect.getsource(save_campaign)
-        self.assertIn(".validate()", save_src)
+    def test_repair_mutation_passes_manual_full_validate(self) -> None:
+        force = _single_battalion_force(self.state, Faction.NATO)
+        assign_strategic_formation_actor(self.state, force.strategic_formation_id, "fra")
+        battalion = self.state.battalions[force.battalion_ids[0]]
+        battalion.condition = 70
+        battalion.supply = 100
+        battalion.encircled_turns = 0
+        repaired = repair_actor_formation(
+            self.state,
+            force.strategic_formation_id,
+            battalion_id=battalion.battalion_id,
+        )
+        self.assertGreater(repaired.points_repaired, 0)
+        self.assertGreater(battalion.condition, 70)
+        self.state.validate()
 
     def test_round_income_is_actor_owned_not_tactical_side_shared(self) -> None:
         province = next(value for value in self.state.provinces.values() if value.owner == Faction.NATO)
