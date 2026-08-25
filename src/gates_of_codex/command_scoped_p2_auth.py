@@ -14,6 +14,8 @@ This module therefore has two deliberately separate cache layers:
   lookup still re-reads and hashes the fixed files. A changed byte produces a new
   key and forces the original full semantic loader, which retains all rejection
   conditions. Cached values are detached before return and the caches are small.
+  P2 lookup binds P1 by those re-hashed file identities only; it does not
+  deepcopy the 19 MB parsed P1 dataset just to name the P2 cache key.
 * command-scoped P2 reuse keeps the existing optimization: after the first exact
   authentication in one atomic frontend command, nested validators receive
   detached copies without re-reading the same fixed bundle again.
@@ -315,10 +317,26 @@ def _capture_p1_identity(authority_root: str | Path | None) -> tuple[Any, ...]:
     )
 
 
+def _p1_identity_from_authority(authenticated_p1: Any) -> tuple[Any, ...]:
+    """Bind P2 reuse to parsed P1 identity fields when a live authority is in hand."""
+
+    return (
+        str(authenticated_p1.root),
+        authenticated_p1.manifest_sha256,
+        authenticated_p1.dataset_sha256,
+        authenticated_p1.embedded_dataset_sha256,
+        authenticated_p1.geometry_sha256,
+        authenticated_p1.production_asset_version,
+        authenticated_p1.topology_edge_count,
+        authenticated_p1.included_ids_sha256,
+    )
+
+
 def _capture_p2_identity(
     authority_root: str | Path | None,
     *,
-    authenticated_p1: Any,
+    authenticated_p1: Any | None = None,
+    p1_identity: tuple[Any, ...] | None = None,
 ) -> tuple[Any, ...]:
     """Re-authenticate every fixed P2 file and bind it to current P1 authority."""
 
@@ -347,17 +365,11 @@ def _capture_p2_identity(
     if set(p2._APPROVED_RAW_FILE_SHA256) != set(p2._FIXED_FILES):
         raise p2.Earth3BootstrapError("P2 approved raw-file contract is incomplete")
 
-    p1_identity = (
-        str(authenticated_p1.root),
-        authenticated_p1.manifest_sha256,
-        authenticated_p1.dataset_sha256,
-        authenticated_p1.embedded_dataset_sha256,
-        authenticated_p1.geometry_sha256,
-        authenticated_p1.production_asset_version,
-        authenticated_p1.topology_edge_count,
-        authenticated_p1.included_ids_sha256,
-    )
-    return (str(root), _authority_key(authority_root), tuple(raw_hashes), p1_identity)
+    if p1_identity is None:
+        if authenticated_p1 is None:
+            raise TypeError("P2 identity requires authenticated P1 hashes")
+        p1_identity = _p1_identity_from_authority(authenticated_p1)
+    return (str(root), _authority_key(authority_root), tuple(raw_hashes), tuple(p1_identity))
 
 
 def _install_process_semantic_authority_cache() -> None:
@@ -391,12 +403,15 @@ def _install_process_semantic_authority_cache() -> None:
         return value
 
     def authenticated_cached_p2(*, authority_root=None):
-        authenticated_p1 = p1.load_earth3_authority(authority_root)
+        p1_identity = _profiled_authority_call(
+            "p1_identity_capture",
+            lambda: _capture_p1_identity(authority_root),
+        )
         key = _profiled_authority_call(
             "p2_identity_capture",
             lambda: _capture_p2_identity(
                 authority_root,
-                authenticated_p1=authenticated_p1,
+                p1_identity=p1_identity,
             ),
         )
         cached = _cache_get(_P2_SEMANTIC_CACHE, key)

@@ -75,10 +75,10 @@ class AuthenticatedAuthorityCacheTests(unittest.TestCase):
                 patch.object(
                     command_scoped_p2_auth,
                     "_capture_p2_identity",
-                    side_effect=lambda _root, authenticated_p1: (
+                    side_effect=lambda _root, authenticated_p1=None, p1_identity=None: (
                         current_p2_key[0],
                         current_p1_key[0],
-                        authenticated_p1.dataset_sha256,
+                        p1_identity,
                     ),
                 ),
             ):
@@ -86,24 +86,27 @@ class AuthenticatedAuthorityCacheTests(unittest.TestCase):
 
                 earth3_bootstrap.load_earth3_bootstrap()
                 second = earth3_bootstrap.load_earth3_bootstrap()
-                self.assertEqual(["p1-bytes-a"], p1_calls)
+                self.assertEqual([], p1_calls)
                 self.assertEqual(["p2-bytes-a"], p2_calls)
                 second.documents["x"]["value"] = 99
                 third = earth3_bootstrap.load_earth3_bootstrap()
                 self.assertEqual(1, third.documents["x"]["value"])
+                self.assertEqual([], p1_calls)
 
                 # A P2 byte change cannot hit the prior semantic bundle.
                 current_p2_key[0] = "p2-bytes-b"
                 changed_p2 = earth3_bootstrap.load_earth3_bootstrap()
                 self.assertEqual(1, changed_p2.documents["x"]["value"])
                 self.assertEqual(["p2-bytes-a", "p2-bytes-b"], p2_calls)
+                self.assertEqual([], p1_calls)
 
                 # A P1 byte change also invalidates P2 reuse, even if P2 bytes
-                # themselves did not change.
+                # themselves did not change. The P2 loader must not materialize
+                # the 19 MB P1 dataset just to name that key.
                 current_p1_key[0] = "p1-bytes-b"
                 current_p2_key[0] = "p2-bytes-a"
                 earth3_bootstrap.load_earth3_bootstrap()
-                self.assertEqual(["p1-bytes-a", "p1-bytes-b"], p1_calls)
+                self.assertEqual([], p1_calls)
                 self.assertEqual(3, len(p2_calls))
         finally:
             earth3_campaign.load_earth3_authority = original_p1
