@@ -98,7 +98,7 @@ func _test_stack_panel_preload() -> void:
 	_assert_true("formation header before FM", header_at > draw_at)
 	_assert_true("FM starts before battalion list when open", fm_at > header_at and fm_at < bn_at)
 	_assert_true("battalion list still present for closed FM", bn_at > 0)
-	_assert_true("repair stays in force management", src.find("Repair / replenish") > 0)
+	_assert_true("repair stays in force management", src.find("Repair condition") > 0)
 	var skip := src.substr(header_at, fm_at - header_at + 180)
 	_assert_true("FM-open skip does not clear formation id", skip.find("selected_strategic_formation_id = \"\"") < 0)
 	_assert_true("FM-open skip does not clear battalion id", skip.find("selected_battalion_id = \"\"") < 0)

@@ -16,7 +16,7 @@ class GodotActorForcePanelContractTests(unittest.TestCase):
         self.assertIn("Manage Forces", stack)
         self.assertIn("_draw_force_management", stack)
         self.assertIn("FORCE MANAGEMENT", stack)
-        self.assertIn("Repair / replenish", stack)
+        self.assertIn("Repair condition", stack)
         self.assertIn("Command %s", stack)
         self.assertIn("command_actor_id", stack)
         self.assertIn('"formation": selected_strategic_formation_id', writeback)
@@ -63,7 +63,7 @@ class GodotActorForcePanelContractTests(unittest.TestCase):
         self.assertNotIn('selected_battalion_id = ""', skip)
         self.assertIn("BATTALIONS IN FORMATION", stack)
         self.assertIn("TACTICAL UNITS IN SELECTED BATTALION", stack)
-        self.assertIn("Repair / replenish", stack)
+        self.assertIn("Repair condition", stack)
 
 
 if __name__ == "__main__":

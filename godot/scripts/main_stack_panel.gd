@@ -896,7 +896,7 @@ func _draw_force_repair_block(left: float, y: float, writeback: bool, panel: Dic
 		y = _panel_line(String(reasons[0]), left + 8.0, y, Color(0.95, 0.62, 0.48, 1.0), 11)
 	_draw_button(
 		"repair_formation",
-		"Repair / replenish",
+		"Repair condition",
 		left + 8.0,
 		y,
 		writeback and bool(repair.get("can_repair", false)),
