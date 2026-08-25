@@ -13,6 +13,7 @@ from gates_of_codex.actor_economy import (
     install_actor_content,
     purchase_actor_reinforcements,
     purchase_actor_research,
+    repair_actor_formation,
     settle_actor_round_economy,
     validate_actor_content_runtime,
 )
@@ -78,6 +79,23 @@ class ActorEconomyTest(unittest.TestCase):
         self.assertEqual(transfer.expansion, 2)
         battalion = self.state.battalions[force.battalion_ids[0]]
         self.assertEqual(next(item.quantity for item in battalion.roster if item.unit_name == "fixture_fra"), 2)
+        self.state.validate()
+
+    def test_repair_mutation_passes_manual_full_validate(self) -> None:
+        force = _single_battalion_force(self.state, Faction.NATO)
+        assign_strategic_formation_actor(self.state, force.strategic_formation_id, "fra")
+        battalion = self.state.battalions[force.battalion_ids[0]]
+        battalion.condition = 70
+        battalion.supply = 100
+        battalion.encircled_turns = 0
+        repaired = repair_actor_formation(
+            self.state,
+            force.strategic_formation_id,
+            battalion_id=battalion.battalion_id,
+        )
+        self.assertGreater(repaired.points_repaired, 0)
+        self.assertGreater(battalion.condition, 70)
+        self.state.validate()
 
     def test_round_income_is_actor_owned_not_tactical_side_shared(self) -> None:
         province = next(value for value in self.state.provinces.values() if value.owner == Faction.NATO)
