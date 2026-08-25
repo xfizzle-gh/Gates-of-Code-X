@@ -6,6 +6,8 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from gates_of_codex import command_scoped_p2_auth
+from gates_of_codex.earth3_bootstrap import Earth3BootstrapError
+from gates_of_codex.earth3_campaign import Earth3AuthorityError
 
 
 class AuthenticatedAuthorityCacheTests(unittest.TestCase):
@@ -75,39 +77,107 @@ class AuthenticatedAuthorityCacheTests(unittest.TestCase):
                 patch.object(
                     command_scoped_p2_auth,
                     "_capture_p2_identity",
-                    side_effect=lambda _root, authenticated_p1: (
+                    side_effect=lambda _root, authenticated_p1=None, p1_identity=None: (
                         current_p2_key[0],
                         current_p1_key[0],
-                        authenticated_p1.dataset_sha256,
+                        p1_identity,
                     ),
                 ),
             ):
                 command_scoped_p2_auth._install_process_semantic_authority_cache()
 
-                earth3_bootstrap.load_earth3_bootstrap()
+                first = earth3_bootstrap.load_earth3_bootstrap()
                 second = earth3_bootstrap.load_earth3_bootstrap()
-                self.assertEqual(["p1-bytes-a"], p1_calls)
+                self.assertEqual([], p1_calls)
                 self.assertEqual(["p2-bytes-a"], p2_calls)
+                self.assertEqual(1, first.documents["x"]["value"])
                 second.documents["x"]["value"] = 99
                 third = earth3_bootstrap.load_earth3_bootstrap()
                 self.assertEqual(1, third.documents["x"]["value"])
+                self.assertEqual([], p1_calls)
 
-                # A P2 byte change cannot hit the prior semantic bundle.
                 current_p2_key[0] = "p2-bytes-b"
                 changed_p2 = earth3_bootstrap.load_earth3_bootstrap()
                 self.assertEqual(1, changed_p2.documents["x"]["value"])
                 self.assertEqual(["p2-bytes-a", "p2-bytes-b"], p2_calls)
+                self.assertEqual([], p1_calls)
 
-                # A P1 byte change also invalidates P2 reuse, even if P2 bytes
-                # themselves did not change.
                 current_p1_key[0] = "p1-bytes-b"
                 current_p2_key[0] = "p2-bytes-a"
                 earth3_bootstrap.load_earth3_bootstrap()
-                self.assertEqual(["p1-bytes-a", "p1-bytes-b"], p1_calls)
+                self.assertEqual([], p1_calls)
                 self.assertEqual(3, len(p2_calls))
         finally:
             earth3_campaign.load_earth3_authority = original_p1
             earth3_bootstrap.load_earth3_bootstrap = original_p2
+
+    def test_p1_identity_rejection_does_not_run_p2_loader_or_reuse_cache(self) -> None:
+        from gates_of_codex import earth3_bootstrap, earth3_campaign
+
+        original_p1 = earth3_campaign.load_earth3_authority
+        original_p2 = earth3_bootstrap.load_earth3_bootstrap
+        p2_calls: list[str] = []
+
+        def fake_p2(*, authority_root=None):
+            p2_calls.append("loaded")
+            return SimpleNamespace(documents={"x": {"value": 1}})
+
+        earth3_campaign.load_earth3_authority = lambda _root=None: SimpleNamespace()
+        earth3_bootstrap.load_earth3_bootstrap = fake_p2
+        try:
+            with (
+                patch.object(
+                    command_scoped_p2_auth,
+                    "_capture_p1_identity",
+                    side_effect=Earth3AuthorityError("Earth3 manifest SHA-256 mismatch"),
+                ),
+                patch.object(
+                    command_scoped_p2_auth,
+                    "_capture_p2_identity",
+                    side_effect=AssertionError("P2 capture must not run after P1 rejection"),
+                ),
+            ):
+                command_scoped_p2_auth._install_process_semantic_authority_cache()
+                with self.assertRaises(Earth3AuthorityError):
+                    earth3_bootstrap.load_earth3_bootstrap()
+        finally:
+            earth3_campaign.load_earth3_authority = original_p1
+            earth3_bootstrap.load_earth3_bootstrap = original_p2
+        self.assertEqual([], p2_calls)
+
+    def test_p2_identity_rejection_does_not_run_p2_loader_or_reuse_cache(self) -> None:
+        from gates_of_codex import earth3_bootstrap, earth3_campaign
+
+        original_p1 = earth3_campaign.load_earth3_authority
+        original_p2 = earth3_bootstrap.load_earth3_bootstrap
+        p2_calls: list[str] = []
+
+        def fake_p2(*, authority_root=None):
+            p2_calls.append("loaded")
+            return SimpleNamespace(documents={"x": {"value": 1}})
+
+        earth3_campaign.load_earth3_authority = lambda _root=None: SimpleNamespace()
+        earth3_bootstrap.load_earth3_bootstrap = fake_p2
+        try:
+            with (
+                patch.object(
+                    command_scoped_p2_auth,
+                    "_capture_p1_identity",
+                    return_value=("p1-bytes-a",),
+                ),
+                patch.object(
+                    command_scoped_p2_auth,
+                    "_capture_p2_identity",
+                    side_effect=Earth3BootstrapError("alliances.json raw SHA-256 mismatch"),
+                ),
+            ):
+                command_scoped_p2_auth._install_process_semantic_authority_cache()
+                with self.assertRaises(Earth3BootstrapError):
+                    earth3_bootstrap.load_earth3_bootstrap()
+        finally:
+            earth3_campaign.load_earth3_authority = original_p1
+            earth3_bootstrap.load_earth3_bootstrap = original_p2
+        self.assertEqual([], p2_calls)
 
     def test_capture_is_performed_before_semantic_cache_lookup(self) -> None:
         """The cache never turns authentication itself into a process-wide trust."""
