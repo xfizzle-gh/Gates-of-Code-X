@@ -433,7 +433,6 @@ def assign_actor_reinforcements(
     if remaining == 0:
         pool.remove(entry)
     validate_actor_content_runtime(state)
-    state.validate()
     return ActorReinforcementTransfer(
         actor_id=actor.actor_id,
         strategic_formation_id=strategic_formation_id,
@@ -487,7 +486,6 @@ def repair_actor_formation(
     economy.resources -= cost
     target.condition += repaired
     _commit_actor_states(state, actors)
-    state.validate()
     return ActorRepairResult(
         content.actor_id,
         strategic_formation_id,

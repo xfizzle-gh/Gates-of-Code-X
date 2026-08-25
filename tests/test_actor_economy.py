@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import tempfile
 import unittest
 from pathlib import Path
@@ -13,6 +14,7 @@ from gates_of_codex.actor_economy import (
     install_actor_content,
     purchase_actor_reinforcements,
     purchase_actor_research,
+    repair_actor_formation,
     settle_actor_round_economy,
     validate_actor_content_runtime,
 )
@@ -78,6 +80,15 @@ class ActorEconomyTest(unittest.TestCase):
         self.assertEqual(transfer.expansion, 2)
         battalion = self.state.battalions[force.battalion_ids[0]]
         self.assertEqual(next(item.quantity for item in battalion.roster if item.unit_name == "fixture_fra"), 2)
+
+    def test_assign_and_repair_do_not_double_validate_before_authoritative_save(self) -> None:
+        assign_src = inspect.getsource(assign_actor_reinforcements)
+        repair_src = inspect.getsource(repair_actor_formation)
+        self.assertNotIn("state.validate()", assign_src)
+        self.assertNotIn("state.validate()", repair_src)
+        self.assertIn("validate_actor_content_runtime(state)", assign_src)
+        save_src = inspect.getsource(save_campaign)
+        self.assertIn(".validate()", save_src)
 
     def test_round_income_is_actor_owned_not_tactical_side_shared(self) -> None:
         province = next(value for value in self.state.provinces.values() if value.owner == Faction.NATO)
