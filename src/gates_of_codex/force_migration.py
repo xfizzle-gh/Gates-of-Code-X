@@ -123,15 +123,17 @@ def refresh_strategic_formation_summaries(state: CampaignState) -> None:
         state.strategic_formations.values(),
         key=lambda value: value.strategic_formation_id,
     ):
-        members = [
-            state.battalions[item]
-            for item in force.battalion_ids
-            if item in state.battalions
-        ]
+        force.battalion_ids = [item for item in force.battalion_ids if item in state.battalions]
+        members = [state.battalions[item] for item in force.battalion_ids]
         if not members:
-            force.condition_summary = 0
-            force.supply_summary = 0
-            force.experience_summary = 0
+            state.strategic_formations.pop(force.strategic_formation_id, None)
+            if force.commander_id and force.commander_id in state.commanders:
+                commander = state.commanders[force.commander_id]
+                if commander.assigned_strategic_formation_id == force.strategic_formation_id:
+                    commander.assigned_strategic_formation_id = None
+                    from .models import CommanderStatus
+
+                    commander.status = CommanderStatus.UNASSIGNED
             continue
         force.condition_summary = _average(item.condition for item in members)
         force.supply_summary = _average(item.supply for item in members)

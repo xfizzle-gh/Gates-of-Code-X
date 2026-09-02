@@ -461,6 +461,9 @@ def _control_block(campaign_path: str | Path | None, snapshot_path: str | Path |
             "construct",
             "repair",
             "handoff",
+            "continue",
+            "overmap",
+            "next_turn",
             "refresh",
         ],
     }

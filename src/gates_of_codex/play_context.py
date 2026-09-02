@@ -175,6 +175,20 @@ def select_tactical_map(
     return choices[0]
 
 
+DEFAULT_CODEX_MAP = "multi/dcg_[cwa71]_fulda"
+
+
+def tactical_map_for_province(state: CampaignState, province_id: str, explicit: str | None = None) -> str:
+    if explicit:
+        return explicit
+    province = state.provinces[province_id]
+    mapped = str(province.metadata.get("tactical_map") or "").strip()
+    if mapped:
+        return mapped
+    preferred = str(state.map_metadata.get("preferred_map") or "").strip()
+    return preferred or DEFAULT_CODEX_MAP
+
+
 def list_front_options(state: CampaignState, faction: Faction | None = None) -> list[dict]:
     """List legal moves/attacks for the current (or specified) faction."""
 
@@ -185,7 +199,9 @@ def list_front_options(state: CampaignState, faction: Faction | None = None) -> 
     for battalion in sorted(state.battalions.values(), key=lambda value: value.battalion_id):
         if battalion.faction != active:
             continue
-        if battalion.movement_remaining <= 0 and battalion.combat_actions_remaining <= 0:
+        if battalion.movement_remaining <= 0:
+            continue
+        if battalion.condition <= 20:
             continue
         origin = state.provinces[battalion.province_id]
         for neighbor_id in origin.neighbors:
@@ -201,6 +217,8 @@ def list_front_options(state: CampaignState, faction: Faction | None = None) -> 
             if occupant is not None and are_allied(state, battalion.faction, occupant.faction):
                 continue
             if occupant is not None and not are_allied(state, battalion.faction, occupant.faction):
+                if battalion.combat_actions_remaining <= 0:
+                    continue
                 kind = "battle"
                 enemies = [occupant.battalion_id]
             elif occupant is None and (

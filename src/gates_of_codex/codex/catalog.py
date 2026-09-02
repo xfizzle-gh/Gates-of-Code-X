@@ -287,6 +287,26 @@ class CodeXCatalogScanner:
                 index = cursor
                 continue
 
+            # Code:X conquest macros often wrap across lines:
+            # ("squad_with7types_conquest" side(rusa) period(2022s)
+            # min_stage(1) max_stage(99) name(rus90_inf_rifle)
+            #  c1(rus90_squadlead:1) ... )
+            if stripped.startswith('("') or stripped.startswith("('"):
+                raw_lines = [line]
+                depth = cls._paren_balance(line)
+                cursor = index + 1
+                while depth > 0 and cursor < len(lines):
+                    raw_lines.append(lines[cursor])
+                    depth += cls._paren_balance(lines[cursor])
+                    cursor += 1
+                raw = "\n".join(raw_lines)
+                name = cls._word_attr(raw, "name")
+                if name:
+                    kind_match = re.match(r'^\s*\(\s*"([^"]+)"', raw)
+                    yield _SourceEntry(name, raw, kind_match.group(1) if kind_match else "")
+                index = cursor
+                continue
+
             if "name(" in line and "(" in line:
                 raw_lines = [line]
                 depth = cls._paren_balance(line)

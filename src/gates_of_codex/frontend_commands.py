@@ -80,6 +80,12 @@ def apply_frontend_commands(
             if op == "handoff":
                 result = _apply_handoff(campaign, state, raw)
                 state = load_campaign(campaign)
+            elif op == "continue":
+                result = _apply_continue(campaign, raw)
+                state = load_campaign(campaign)
+            elif op in {"overmap", "next_turn"}:
+                result = _apply_overmap(campaign, raw)
+                state = load_campaign(campaign)
             else:
                 result = _apply_one(state, op, raw)
         except Exception as exc:  # noqa: BLE001 - surface operator errors in result list
@@ -146,6 +152,49 @@ def _apply_handoff(campaign: Path, state, raw: dict[str, Any]) -> CommandResult:
             "import_command": result.import_command or "",
             "battle_id": state.pending_battle.battle_id if state.pending_battle else "",
         },
+    )
+
+
+def _apply_overmap(campaign: Path, raw: dict[str, Any]) -> CommandResult:
+    from .campaign_loop import finish_player_overmap_turn, overmap_turn
+
+    if bool(raw.get("autoplay", False)):
+        payload = overmap_turn(campaign, seed=int(raw.get("seed", 0) or 0))
+        op = "overmap"
+    else:
+        payload = finish_player_overmap_turn(
+            campaign,
+            seed=int(raw.get("seed", 0) or 0),
+            auto_resolve=bool(raw.get("auto_resolve", True)),
+        )
+        op = "next_turn"
+    return CommandResult(
+        op=op,
+        ok=True,
+        detail=str(payload.get("status") or "ok"),
+        data=payload,
+    )
+
+
+def _apply_continue(campaign: Path, raw: dict[str, Any]) -> CommandResult:
+    from .campaign_loop import continue_campaign
+
+    payload = continue_campaign(
+        campaign,
+        save_path=raw.get("save"),
+        code_x_directory=raw.get("codex"),
+        map_name=raw.get("map"),
+        simulate=bool(raw.get("simulate", False)),
+        turns=int(raw.get("turns", 1) or 1),
+        seed=int(raw.get("seed", 0) or 0),
+        export=not bool(raw.get("no_export", False)),
+        snapshot_path=raw.get("snapshot"),
+    )
+    return CommandResult(
+        op="continue",
+        ok=True,
+        detail=str(payload.get("status") or "ok"),
+        data=payload,
     )
 
 

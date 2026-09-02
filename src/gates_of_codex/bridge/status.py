@@ -28,10 +28,10 @@ class BattleStatusOptions:
     seed: int = 3024224791
     # Duration is also a small preset index in real Conquest saves.
     duration: int = 3
-    fog_of_war: str = "fog_realistic"
+    fog_of_war: str = "fog_off"
     manual_control_mode: int = 3
-    selected_map_point: str = "point_0_0"
-    region: str = "ostfront"
+    selected_map_point: str = "point_1_1"
+    region: str = "europe"
     mods: list[str] = field(default_factory=list)
     preserve_template_map_point: bool = True
     preserve_template_campaign_options: bool = True
@@ -54,7 +54,12 @@ class StatusBuilder:
     opened, so a malformed root record crashes the entire Conquest dialog.
     """
 
-    SAVEINFO_VERSION = 7
+    SAVEINFO_VERSION = 9
+    DEFAULT_MODS = (
+        "mod_2897299509:0",
+        "mod_3261086933:0",
+        "mod_3636883799:0",
+    )
     _SCALAR_KEYS = (
         "version",
         "gameVersion",
@@ -137,18 +142,19 @@ class StatusBuilder:
         own_alliance = "allies" if player in {"nato", "ukr"} else "axis"
         enemy_alliance = "axis" if own_alliance == "allies" else "allies"
         map_spec = self._format_map_spec(options.map_name)
+        mods = [value.strip() for value in options.mods if value.strip()] or list(self.DEFAULT_MODS)
+        selected = options.selected_map_point or "point_1_1"
         lines = [
             "{saveinfo",
             f"\t{{version {self.SAVEINFO_VERSION}}}",
             f'\t{{gameVersion "{options.game_version}"}}',
             f"\t{{timestamp {timestamp}}}",
+            "\t{mods",
         ]
-        if options.mods:
-            lines.append("\t{mods")
-            lines.extend(f'\t\t"{value}"' for value in options.mods)
-            lines.append("\t}")
+        lines.extend(f'\t\t"{value}"' for value in mods)
         lines.extend(
             [
+                "\t}",
                 f"\t{{mp {options.mp}}}",
                 f"\t{{sp {options.sp}}}",
                 f"\t{{ap {options.ap}}}",
@@ -164,11 +170,13 @@ class StatusBuilder:
                 f"\t{{resources {self._clamp_resources(options.resources)}}}",
                 f"\t{{fogofwar {options.fog_of_war}}}",
                 f"\t{{manualControlMode {options.manual_control_mode}}}",
-                f"\t{{selectedMapPoint {options.selected_map_point}}}",
+                f"\t{{selectedMapPoint {selected}}}",
             ]
         )
         if pending.player_is_attacker:
             lines.append("\t{attacking}")
+        else:
+            lines.append("\t{attacking 0}")
         lines.extend(
             [
                 f"\t{{region {options.region}}}",
@@ -178,19 +186,43 @@ class StatusBuilder:
             ]
         )
         lines.extend(f'\t\t{{"{value}"}}' for value in options.research)
+        # Three-point graph: fight on point_1_1, with HQ neighbors. A single
+        # isolated map point crashed Conquest map load in live Code:X tests.
         lines.extend(
             [
                 "\t}",
                 "\t{mapPoints",
                 "\t\t{",
-                f"\t\t\t{{name {options.selected_map_point}}}",
+                "\t\t\t{name hq_a}",
                 "\t\t\t{landscape wood}",
                 "\t\t\t{gamemode campaign_capture_the_flag}",
                 "\t\t\t{ownerTeam a}",
-                "\t\t\t{adjacentMaps}",
+                '\t\t\t{adjacentMaps {"point_1_1"}}',
                 '\t\t\t{risk ""}',
                 "\t\t\t{reward none}",
+                '\t\t\t{map "multi/dcg_[cwa71]_woodland:campaign_capture_the_flag:4x4"}',
+                "\t\t\t{texmod camo}",
+                "\t\t}",
+                "\t\t{",
+                f"\t\t\t{{name {selected}}}",
+                "\t\t\t{landscape europe}",
+                "\t\t\t{gamemode campaign_capture_the_flag}",
+                "\t\t\t{ownerTeam b}",
+                '\t\t\t{adjacentMaps {"hq_a" "hq_b"}}',
+                "\t\t\t{risk high}",
+                "\t\t\t{reward none}",
                 f'\t\t\t{{map "{map_spec}"}}',
+                "\t\t\t{texmod camo}",
+                "\t\t}",
+                "\t\t{",
+                "\t\t\t{name hq_b}",
+                "\t\t\t{landscape wood}",
+                "\t\t\t{gamemode campaign_capture_the_flag}",
+                "\t\t\t{ownerTeam b}",
+                '\t\t\t{adjacentMaps {"point_1_1"}}',
+                '\t\t\t{risk ""}',
+                "\t\t\t{reward none}",
+                '\t\t\t{map "multi/dcg_[cwa71]_fields:campaign_capture_the_flag:4x4"}',
                 "\t\t\t{texmod camo}",
                 "\t\t}",
                 "\t}",

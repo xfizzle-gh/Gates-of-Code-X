@@ -115,7 +115,7 @@ def campaign_from_dict(data: dict[str, Any]) -> CampaignState:
             owner=Faction(value.get("owner", "neutral")),
             neighbors=list(value.get("neighbors", [])),
             terrain=value.get("terrain", "temperate"),
-            map_region=value.get("map_region", "ostfront"),
+            map_region=value.get("map_region", "europe"),
             x=float(value.get("x", 0)),
             y=float(value.get("y", 0)),
             resource_yield=int(value.get("resource_yield", 10)),

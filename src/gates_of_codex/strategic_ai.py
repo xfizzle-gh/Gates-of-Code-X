@@ -75,8 +75,13 @@ class StrategicAI:
                 winner = self.engine.auto_resolve_pending_battle()
                 actions.append(StrategicAction(battalion_id, "attack", origin, target, winner))
             else:
-                action = "capture" if target_owner_before == Faction.NEUTRAL else "move"
-                actions.append(StrategicAction(battalion_id, action, origin, target))
+                captured = target_owner_before == Faction.NEUTRAL or (
+                    target_owner_before != battalion.faction
+                    and not is_friendly_owner(self.state, battalion.faction, target_owner_before)
+                )
+                actions.append(
+                    StrategicAction(battalion_id, "capture" if captured else "move", origin, target)
+                )
         return actions
 
     def _choose_adjacent_target(self, battalion: Battalion) -> str | None:
@@ -108,16 +113,29 @@ class StrategicAI:
                 occupant = self._battalion_in(neighbor_id)
                 province = self.state.provinces[neighbor_id]
                 step = neighbor_id if first_step is None else first_step
-                if occupant is not None:
-                    if are_allied(self.state, battalion.faction, occupant.faction):
-                        continue
-                    return step
-                if province.owner == Faction.NEUTRAL or not is_friendly_owner(
-                    self.state, battalion.faction, province.owner
-                ):
-                    return step
+                allied_block = occupant is not None and are_allied(
+                    self.state, battalion.faction, occupant.faction
+                )
+                hostile = occupant is not None and not allied_block
+                capturable = occupant is None and (
+                    province.owner == Faction.NEUTRAL
+                    or not is_friendly_owner(self.state, battalion.faction, province.owner)
+                )
+                if hostile or capturable:
+                    if self._is_legal_step(battalion, step):
+                        return step
+                    continue
                 queue.append((neighbor_id, step))
         return None
+
+    def _is_legal_step(self, battalion: Battalion, target_id: str) -> bool:
+        origin = self.state.provinces.get(battalion.province_id)
+        if origin is None or target_id not in origin.neighbors:
+            return False
+        occupant = self._battalion_in(target_id)
+        if occupant is not None and are_allied(self.state, battalion.faction, occupant.faction):
+            return False
+        return True
 
     def _battalion_in(self, province_id: str) -> Battalion | None:
         return next(

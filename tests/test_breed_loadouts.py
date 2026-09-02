@@ -97,8 +97,11 @@ class BreedLoadoutTests(unittest.TestCase):
             text = CampaignScnBuilder(catalog, codex).build(state, state.pending_battle)
             self.assertIn('{item "m4a1_v3b" filled {cell 0 0}{user "hand_right"}}', text)
             self.assertIn('{item "m16a2" "ammo" 180 {cell 2 0}}', text)
-            self.assertIn('{item "ak74m" filled {cell 0 0}{user "hand_right"}}', text)
-            self.assertNotIn("{clear}", text)
+            self.assertNotIn("ak74m", text)
+            self.assertNotIn("/rusa/", text)
+            self.assertIn("{clear}", text)
+            self.assertIn("{NameId", text)
+            self.assertRegex(text, r"\{Human [^}]+ 0xc000")
 
 
 if __name__ == "__main__":

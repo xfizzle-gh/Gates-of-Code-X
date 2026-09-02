@@ -21,7 +21,7 @@ from .modstack import resolve_stack, stack_to_strings
 from .scenario import load_bundled_scenario
 from .service import GatesOfCodeXService
 from .stack_acceptance import validate_mod_stack
-from .starter import populate_starter_rosters, set_player_faction
+from .starter import populate_acceptance_combat_rosters, populate_starter_rosters, set_player_faction
 from .state_io import save_campaign
 from .strategic import evaluate_campaign_outcome
 from .strategic_map import import_strategic_map, load_province_table
@@ -329,6 +329,7 @@ def _run_new(arguments: list[str]) -> int:
         state.map_metadata["stack_config"] = str(Path(args.stack_config).expanduser().resolve())
     set_player_faction(state, Faction(args.faction))
     populate_starter_rosters(state, catalog)
+    populate_acceptance_combat_rosters(state, catalog)
     initialize_economy(state, catalog)
     evaluate_campaign_outcome(state)
     save_campaign(state, args.output)
@@ -341,15 +342,24 @@ def _run_export(arguments: list[str]) -> int:
     parser.add_argument("campaign")
     _add_stack_arguments(parser)
     parser.add_argument("--save", required=True)
-    parser.add_argument("--map", required=True)
+    parser.add_argument("--map", default="")
     args = parser.parse_args(arguments)
     stack = resolve_stack(args.stack, config=args.stack_config, fallback=args.codex)
+    from .play_context import tactical_map_for_province
+    from .state_io import load_campaign
+
+    state = load_campaign(args.campaign)
+    map_name = args.map
+    if not map_name and state.pending_battle is not None:
+        map_name = tactical_map_for_province(state, state.pending_battle.target_province_id)
     manifest = GatesOfCodeXService().export_battle(
         args.campaign,
         code_x_directory=args.codex,
         resource_stack=stack,
         save_path=args.save,
-        map_name=args.map,
+        map_name=map_name,
+        allow_overwrite=True,
+        campaign_name="GatesOfCodeX",
     )
     print(json.dumps(asdict(manifest), indent=2))
     return 0

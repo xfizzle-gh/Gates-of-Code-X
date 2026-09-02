@@ -94,6 +94,7 @@ def validate_known_order(values: Iterable[str | Path]) -> tuple[bool, str]:
             positions.setdefault("3636883799", index)
         if (
             "3700832981" in text
+            or "3696721120" in text
             or "gates-of-code-x" in text
             or "gates of code:x" in text
             or "gates of codex" in text

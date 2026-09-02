@@ -166,7 +166,7 @@ func _draw() -> void:
 		String(campaign.get("current_faction", "")).to_upper(),
 	]
 	draw_string(ThemeDB.fallback_font, Vector2(24, 34), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
-	var hint := "F fit front  |  click unit then green/orange neighbor  |  wheel zoom  |  drag pan"
+	var hint := "click unit then neighbor  |  E next turn  |  A auto-resolve  |  H Fight in GoH  |  F fit"
 	if not status_message.is_empty():
 		hint = status_message
 	draw_string(
@@ -323,10 +323,10 @@ func _draw_management_panel() -> void:
 	var has_battle := snapshot.get("pending_battle") != null
 	y = _draw_button("fit", "Fit front (F)", x, y, true, Color("243140"))
 	y = _draw_button("refresh", "Refresh", x, y, writeback)
-	y = _draw_button("end_turn", "End turn (E)", x, y, writeback and not has_battle)
+	y = _draw_button("end_turn", "Next turn (E)", x, y, writeback)
 	y = _draw_button("run_ai", "Run AI + advance", x, y, writeback and not has_battle)
 	y = _draw_button("auto_resolve", "Auto-resolve battle (A)", x, y, writeback and has_battle, Color("4a2f18"))
-	y = _draw_button("handoff", "Handoff to GoH (H)", x, y, writeback and has_battle, Color("5a2418"))
+	y = _draw_button("handoff", "Fight in GoH (H)", x, y, writeback and has_battle, Color("5a2418"))
 	if not last_handoff_name.is_empty():
 		y = _panel_line("Load Conquest: %s" % last_handoff_name, x, y, Color("ffd27a"), 12)
 	if not writeback:
@@ -557,7 +557,7 @@ func _handle_button(button_id: String) -> void:
 		_queue_and_apply([{"op": "refresh"}])
 		return
 	if button_id == "end_turn":
-		_queue_and_apply([{"op": "end_turn"}])
+		_queue_and_apply([{"op": "overmap"}])
 		return
 	if button_id == "run_ai":
 		var campaign: Dictionary = snapshot.get("campaign", {})
@@ -571,7 +571,7 @@ func _handle_button(button_id: String) -> void:
 		_queue_and_apply([{"op": "auto_resolve"}])
 		return
 	if button_id == "handoff":
-		_queue_and_apply([{"op": "handoff", "work_root": "live", "backup_root": "backups"}])
+		_queue_and_apply([{"op": "continue", "snapshot": snapshot_source_path}])
 		return
 	if button_id.begins_with("move:"):
 		_issue_move(button_id.trim_prefix("move:"))
@@ -635,6 +635,11 @@ func _queue_and_apply(commands: Array) -> void:
 		var python_args := ["-m", "gates_of_codex"]
 		python_args.append_array(args)
 		exit_code = OS.execute("python", python_args, output, true, false)
+		if exit_code == -1:
+			output.clear()
+			var py_args := ["-3", "-m", "gates_of_codex"]
+			py_args.append_array(args)
+			exit_code = OS.execute("py", py_args, output, true, false)
 	var joined := "\n".join(output)
 	if exit_code != 0:
 		status_message = "Apply failed: %s" % joined.substr(0, 200)
@@ -650,8 +655,8 @@ func _queue_and_apply(commands: Array) -> void:
 	var op := String((commands[0] as Dictionary).get("op", "command"))
 	if status_message.is_empty():
 		status_message = "Applied %s." % op
-	if snapshot.get("pending_battle") != null and op != "handoff":
-		status_message += " Pending battle ready — Auto-resolve or Handoff."
+	if snapshot.get("pending_battle") != null and op != "handoff" and op != "continue":
+		status_message += " Auto-resolve (A) or Fight in GoH (H)."
 	_fit_to_focus(false)
 	queue_redraw()
 
@@ -665,10 +670,10 @@ func _parse_apply_output(text: String) -> void:
 		return
 	var payload := parsed as Dictionary
 	for result: Dictionary in payload.get("results", []):
-		if String(result.get("op", "")) == "handoff" and bool(result.get("ok", false)):
+		if String(result.get("op", "")) in ["handoff", "continue"] and bool(result.get("ok", false)):
 			var data: Dictionary = result.get("data", {})
-			last_handoff_name = String(data.get("visible_campaign_name", ""))
-			status_message = "Handoff ready. Load Conquest: %s" % last_handoff_name
+			last_handoff_name = String(data.get("visible_name", data.get("visible_campaign_name", "GatesOfCodeX")))
+			status_message = "Load Conquest: %s" % last_handoff_name
 			return
 	if not bool(payload.get("ok", true)):
 		var first: Dictionary = (payload.get("results", [{}]) as Array)[0] if not (payload.get("results", []) as Array).is_empty() else {}

@@ -72,6 +72,36 @@ class GoHMacroCatalogTests(unittest.TestCase):
         self.assertEqual({"scout": 3}, catalog.units["brace_squad(nato)"].members)
         self.assertEqual(2, len(catalog.by_faction("nato")))
 
+    def test_multiline_squad_withNtypes_merges_members(self) -> None:
+        (self.lua_root.parent / "rusa").mkdir(parents=True, exist_ok=True)
+        (self.lua_root.parent / "rusa" / "conquest.rusa.lua").write_text(
+            '{ unit = "rus90_inf_rifle(rusa)", type = {"Infantry","Squad"} },\n',
+            encoding="utf-8",
+        )
+        (self.source_root / "units_rusa.set").write_text(
+            """
+("squad_with7types_conquest" side(rusa) period(2022s)
+min_stage(1) max_stage(99) name(rus90_inf_rifle)
+ c1(rus90_squadlead:1) c2(rus90_seniorrifleman:1) c3(rus90_rifleman:1) c4(rus90_mg:1) c5(rus90_antitank:1) c6(rus90_marksman:1) c7(rus90_medic:1))
+            """,
+            encoding="utf-8",
+        )
+        catalog = CodeXCatalogScanner().scan(self.root)
+        unit = catalog.units["rus90_inf_rifle(rusa)"]
+        self.assertTrue(unit.materializable)
+        self.assertEqual(
+            {
+                "rus90_squadlead": 1,
+                "rus90_seniorrifleman": 1,
+                "rus90_rifleman": 1,
+                "rus90_mg": 1,
+                "rus90_antitank": 1,
+                "rus90_marksman": 1,
+                "rus90_medic": 1,
+            },
+            unit.members,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

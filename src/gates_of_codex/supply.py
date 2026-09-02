@@ -95,6 +95,10 @@ def refresh_supply_for_faction(state: CampaignState, faction: Faction) -> Supply
 
     for battalion_id in destroyed:
         state.battalions.pop(battalion_id, None)
+    if destroyed:
+        from .force_migration import refresh_strategic_formation_summaries
+
+        refresh_strategic_formation_summaries(state)
 
     report = SupplyReport(
         faction=faction,

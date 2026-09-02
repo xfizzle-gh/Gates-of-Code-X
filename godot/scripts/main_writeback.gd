@@ -204,6 +204,11 @@ func _queue_and_apply(commands: Array) -> void:
 			var fallback_args := ["-m", "gates_of_codex"]
 			fallback_args.append_array(apply_args)
 			exit_code = OS.execute("python", fallback_args, output, true, false)
+			if exit_code == -1:
+				output.clear()
+				var py_args := ["-3", "-m", "gates_of_codex"]
+				py_args.append_array(apply_args)
+				exit_code = OS.execute("py", py_args, output, true, false)
 
 	var joined := "\n".join(output)
 	if exit_code != 0:
@@ -224,7 +229,7 @@ func _queue_and_apply(commands: Array) -> void:
 	var op := String((commands[0] as Dictionary).get("op", "command"))
 	if status_message.is_empty():
 		status_message = "Applied %s." % op
-	if snapshot.get("pending_battle") != null and op != "handoff":
-		status_message += " Pending battle ready — Auto-resolve or Handoff."
+	if snapshot.get("pending_battle") != null and op != "handoff" and op != "continue":
+		status_message += " Auto-resolve (A) or Fight in GoH (H)."
 	_fit_to_focus(false)
 	queue_redraw()

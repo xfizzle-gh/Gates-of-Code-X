@@ -5,6 +5,25 @@ from .models import BattalionRosterEntry, CampaignState, Faction
 
 
 PREFERRED_CATEGORIES = ("infantry", "tank", "ifv", "vehicle", "artillery", "recon", "air_defense")
+PREFERRED_SQUADS = {
+    "nato": (
+        "squad_inf2_rifle(nato)",
+        "squad_usmc_rifle(nato)",
+        "squad_usmc_eng(nato)",
+    ),
+    "rusa": (
+        "rus90_inf_rifle(rusa)",
+        "rus90_inf_assault(rusa)",
+        "rus90_inf_mg(rusa)",
+    ),
+    "ukr": (
+        "47th_inf_rifle(ukr)",
+        "ter_22_1(ukr)",
+    ),
+    "prc": (
+        "squad_pla112_rifle(prc)",
+    ),
+}
 _ACCEPTANCE_SKIP_TOKENS = (
     "_ai",
     "crew",
@@ -35,22 +54,8 @@ def populate_starter_rosters(state: CampaignState, catalog: CodeXCatalog) -> Non
         units = catalog.by_faction(battalion.faction.value)
         if not units:
             raise ValueError(f"Code:X catalog contains no units for {battalion.faction.value}")
-        formation = state.formations.get(battalion.formation_id)
-        priorities = list(formation.preferred_categories) if formation else list(PREFERRED_CATEGORIES)
-        for category in PREFERRED_CATEGORIES:
-            if category not in priorities:
-                priorities.append(category)
-        infantry = _pick(units, "infantry") or units[0]
-        support = None
-        for category in priorities:
-            if category == "infantry":
-                continue
-            support = _pick(units, category)
-            if support is not None:
-                break
-        roster = [BattalionRosterEntry(infantry.name, quantity=3, category=infantry.category)]
-        if support and support.name != infantry.name:
-            roster.append(BattalionRosterEntry(support.name, quantity=1, category=support.category))
+        infantry = _preferred_squad(catalog, battalion.faction.value) or _pick(units, "infantry") or units[0]
+        roster = [BattalionRosterEntry(infantry.name, quantity=1, category=infantry.category)]
         _apply_roster(battalion, roster)
 
 
@@ -60,7 +65,8 @@ def populate_acceptance_combat_rosters(state: CampaignState, catalog: CodeXCatal
     for battalion in state.battalions.values():
         if battalion.faction not in {Faction.NATO, Faction.RUSSIA}:
             continue
-        picks = _acceptance_combat_units(catalog, battalion.faction.value)
+        preferred = _preferred_squad(catalog, battalion.faction.value)
+        picks = [preferred] if preferred is not None else _acceptance_combat_units(catalog, battalion.faction.value)
         if not picks:
             # Fixture catalogs may only expose simple rifle units.
             fallback = [
@@ -72,10 +78,8 @@ def populate_acceptance_combat_rosters(state: CampaignState, catalog: CodeXCatal
         if not picks:
             raise ValueError(f"No fightable acceptance units found for {battalion.faction.value}")
         roster = [
-            BattalionRosterEntry(picks[0].name, quantity=2, category=picks[0].category),
+            BattalionRosterEntry(picks[0].name, quantity=1, category=picks[0].category),
         ]
-        for unit in picks[1:4]:
-            roster.append(BattalionRosterEntry(unit.name, quantity=1, category=unit.category))
         _apply_roster(battalion, roster)
 
 
@@ -101,6 +105,14 @@ def _apply_roster(battalion, roster: list[BattalionRosterEntry]) -> None:
         for entry in roster
     ]
     battalion.condition = 100
+
+
+def _preferred_squad(catalog: CodeXCatalog, faction: str) -> UnitDefinition | None:
+    for name in PREFERRED_SQUADS.get(faction, ()):
+        unit = catalog.units.get(name)
+        if unit is not None and unit.materializable and unit.members:
+            return unit
+    return None
 
 
 def _acceptance_combat_units(catalog: CodeXCatalog, faction: str) -> list[UnitDefinition]:

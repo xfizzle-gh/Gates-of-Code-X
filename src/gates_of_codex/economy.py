@@ -161,10 +161,27 @@ def build_research_nodes(catalog: CodeXCatalog) -> dict[str, ResearchNode]:
     return nodes
 
 
+_JUNK_UNIT = re.compile(r"blank|vehicleman|\bcrew\b|_ai\b|doctrine", re.I)
+
+
+def is_campaign_unit(unit: UnitDefinition) -> bool:
+    """Units Conquest can actually spawn for a player army."""
+
+    if not (unit.members or unit.vehicles):
+        return False
+    if _JUNK_UNIT.search(unit.name):
+        return False
+    if unit.category in {"infantry", "unknown", "recon"} and not unit.members:
+        return False
+    return True
+
+
 def build_unit_economy(catalog: CodeXCatalog) -> dict[str, UnitEconomy]:
     values: dict[str, UnitEconomy] = {}
     for unit in catalog.units.values():
         if unit.side not in {"nato", "ukr", "rusa", "prc"}:
+            continue
+        if not is_campaign_unit(unit):
             continue
         faction = Faction(unit.side)
         category = unit.category if unit.category in CATEGORY_PURCHASE_BASE else "unknown"
@@ -247,7 +264,9 @@ def formation_recruitment_offers(state: CampaignState, formation_id: str) -> lis
     candidates = [
         economy
         for economy in state.unit_economy.values()
-        if economy.faction == formation.faction and economy.category in allowed_categories
+        if economy.faction == formation.faction
+        and economy.category in allowed_categories
+        and not _JUNK_UNIT.search(economy.unit_name)
     ]
     if not candidates:
         candidates = [economy for economy in state.unit_economy.values() if economy.faction == formation.faction]
@@ -452,8 +471,9 @@ def run_ai_economy(state: CampaignState, faction: Faction) -> list[dict]:
                 actions.append({"action": "repair", **asdict(result)})
         except ValueError:
             pass
-    if battalions:
-        target = min(battalions, key=lambda battalion: (battalion.unit_count, battalion.battalion_id))
+    recruitable = [battalion for battalion in battalions if battalion.formation_id]
+    if recruitable:
+        target = min(recruitable, key=lambda battalion: (battalion.unit_count, battalion.battalion_id))
         offers = [offer for offer in formation_recruitment_offers(state, target.formation_id) if offer.unlocked]
         offers.sort(key=lambda offer: (not offer.preferred, offer.purchase_cost, offer.unit_name))
         if offers and offers[0].purchase_cost <= faction_state.resources:

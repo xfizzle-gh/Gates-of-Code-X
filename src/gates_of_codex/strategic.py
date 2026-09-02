@@ -303,6 +303,14 @@ def evaluate_campaign_outcome(state: CampaignState, *, advance_hold: bool = Fals
             winner, loser, reason = alliance_id, opposing_id, "opposing coalition eliminated"
             break
 
+    living = [
+        faction_id
+        for faction_id, faction_state in state.factions.items()
+        if not faction_state.is_eliminated
+    ]
+    if not winner and len(living) <= 1:
+        winner, loser, reason = (living[0] if living else ""), "", "last faction standing"
+
     if not winner and len(alliance_ids) >= 2:
         holds = state.map_metadata.setdefault("victory_hold_rounds", {})
         capitals = state.map_metadata.get("coalition_capitals", DEFAULT_CAPITALS)

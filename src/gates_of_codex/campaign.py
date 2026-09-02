@@ -39,20 +39,36 @@ class CampaignEngine:
         if target_province_id not in origin.neighbors:
             raise ValueError(f"Province {target_province_id} is not adjacent")
 
-        defender = self._battalion_in(target_province_id)
-        if defender is not None and are_allied(self.state, battalion.faction, defender.faction):
-            raise ValueError(f"Allied province {target_province_id} already contains battalion {defender.battalion_id}")
+        present = [
+            other
+            for other in self.state.battalions.values()
+            if other.province_id == target_province_id
+        ]
+        allied = [
+            other
+            for other in present
+            if are_allied(self.state, battalion.faction, other.faction)
+        ]
+        hostiles = [
+            other
+            for other in present
+            if not are_allied(self.state, battalion.faction, other.faction)
+        ]
+        if allied:
+            raise ValueError(
+                f"Allied province {target_province_id} already contains battalion {allied[0].battalion_id}"
+            )
 
-        friendly_or_neutral = target.owner == Faction.NEUTRAL or is_friendly_owner(
-            self.state, battalion.faction, target.owner
-        )
-        if defender is None and friendly_or_neutral:
+        if not hostiles:
             battalion.province_id = target_province_id
             battalion.movement_remaining -= 1
             self._sync_strategic_formation_location(battalion)
-            # Operational maneuver: ownership only via control-site capture (S5), not entry.
-            if target.owner == Faction.NEUTRAL and not bool(
-                self.state.map_metadata.get("operational_maneuver_enabled")
+            # Empty land is a 4X occupation, not a GoH fight. Operational maneuver
+            # still withholds ownership until control-site capture (S5).
+            operational = bool(self.state.map_metadata.get("operational_maneuver_enabled"))
+            if not operational and (
+                target.owner == Faction.NEUTRAL
+                or not is_friendly_owner(self.state, battalion.faction, target.owner)
             ):
                 target.owner = battalion.faction
                 from .strategic import evaluate_campaign_outcome, sync_province_infrastructure_owner
@@ -63,7 +79,7 @@ class CampaignEngine:
 
         if battalion.combat_actions_remaining <= 0:
             raise ValueError(f"Battalion {battalion_id} has no combat actions remaining")
-        pending = self._build_pending_battle(battalion, defender, target_province_id)
+        pending = self._build_pending_battle(battalion, hostiles, target_province_id)
         self.state.pending_battle = pending
         return MoveResult(moved=False, pending_battle=pending)
 
@@ -85,6 +101,7 @@ class CampaignEngine:
         return winner
 
     def apply_external_battle_result(self, winner: Faction, survivors: dict[str, list]) -> None:
+        pending = self._require_pending_battle()
         for battalion_id, roster in survivors.items():
             battalion = self.state.battalions.get(battalion_id)
             if battalion is not None:
@@ -92,6 +109,25 @@ class CampaignEngine:
                 battalion.roster = roster
                 casualty_ratio = max(0.0, 1.0 - battalion.unit_count / previous)
                 battalion.condition = max(10, battalion.condition - max(5, int(casualty_ratio * 35)))
+        # Enemy objects are not in campaign.scn. Conquest spawned them, so
+        # apply abstract losses to enemy battalions missing from the save.
+        enemy_ids = [
+            item.battalion_id
+            for item in (*pending.attacking_participants, *pending.defending_participants)
+            if item.faction != pending.player_faction
+        ]
+        for battalion_id in enemy_ids:
+            if battalion_id in survivors:
+                continue
+            battalion = self.state.battalions.get(battalion_id)
+            if battalion is None:
+                continue
+            if winner == pending.player_faction:
+                self._apply_percentage_losses(battalion, 0.65)
+                battalion.condition = max(10, battalion.condition - 28)
+            else:
+                self._apply_percentage_losses(battalion, 0.20)
+                battalion.condition = max(10, battalion.condition - 10)
         self._finalize_positions(winner)
 
     def apply_battle_result(self, winner: Faction) -> None:
@@ -142,6 +178,9 @@ class CampaignEngine:
             for battalion in self.state.battalions.values():
                 battalion.movement_remaining = 1
                 battalion.combat_actions_remaining = 1
+            from .forces import ensure_faction_forces
+
+            ensure_faction_forces(self.state)
             refresh_all_supply(self.state)
             evaluate_campaign_outcome(self.state, advance_hold=True)
         self.state.current_faction = next_faction
@@ -273,6 +312,24 @@ class CampaignEngine:
             store = self.state.map_metadata.get("operational_edge_retreat_nodes")
             if isinstance(store, dict):
                 store.clear()
+
+        if winner == pending.attacker_faction:
+            leftovers = [
+                battalion
+                for battalion in list(self.state.battalions.values())
+                if battalion.province_id == target.province_id
+                and battalion.faction != pending.attacker_faction
+            ]
+            for leftover in leftovers:
+                force_id = leftover.strategic_formation_id
+                if force_id and force_id in self.state.strategic_formations:
+                    self._resolve_formation_after_battle(
+                        force_id,
+                        lost=True,
+                        exclude_province=target.province_id,
+                    )
+                elif leftover.battalion_id in self.state.battalions:
+                    self._remove_battalion(leftover.battalion_id)
 
         pending.completed = True
         self.state.pending_battle = None
@@ -541,6 +598,7 @@ class CampaignEngine:
                 force.faction,
                 self.state.provinces[preferred_retreat].owner,
             )
+            and not self._other_faction_battalion_in(preferred_retreat, force.faction)
         ):
             destination = preferred_retreat
         if destination is None:
@@ -555,7 +613,7 @@ class CampaignEngine:
                 and is_friendly_owner(
                     self.state, force.faction, self.state.provinces[province_id].owner
                 )
-                and not self._hostile_battalion_in(province_id, force.faction)
+                and not self._other_faction_battalion_in(province_id, force.faction)
             ]
             if preferred_retreat and preferred_retreat in candidates:
                 destination = preferred_retreat
@@ -591,6 +649,12 @@ class CampaignEngine:
                 continue
             return True
         return False
+
+    def _other_faction_battalion_in(self, province_id: str, faction: Faction) -> bool:
+        return any(
+            battalion.province_id == province_id and battalion.faction != faction
+            for battalion in self.state.battalions.values()
+        )
 
     def _retreat_or_remove(self, battalion: Battalion, *, excluding: str) -> None:
         """Legacy single-battalion retreat (kept for non-formation callers)."""
@@ -658,17 +722,13 @@ class CampaignEngine:
                 member.province_id = force.province_id
 
     def _remove_battalion(self, battalion_id: str) -> None:
-        battalion = self.state.battalions.pop(battalion_id, None)
-        if battalion is None:
-            return
-        force_id = battalion.strategic_formation_id
-        if not force_id:
-            return
-        force = self.state.strategic_formations.get(force_id)
-        if force is None:
-            return
-        force.battalion_ids = [item for item in force.battalion_ids if item != battalion_id]
-        if not force.battalion_ids:
+        self.state.battalions.pop(battalion_id, None)
+        for force_id, force in list(self.state.strategic_formations.items()):
+            if battalion_id not in force.battalion_ids:
+                continue
+            force.battalion_ids = [item for item in force.battalion_ids if item != battalion_id]
+            if force.battalion_ids:
+                continue
             self.state.strategic_formations.pop(force_id, None)
             if force.commander_id and force.commander_id in self.state.commanders:
                 commander = self.state.commanders[force.commander_id]
@@ -676,8 +736,19 @@ class CampaignEngine:
                     commander.assigned_strategic_formation_id = None
                     commander.status = CommanderStatus.UNASSIGNED
 
-    def _build_pending_battle(self, attacker: Battalion, defender: Battalion | None, target_id: str) -> PendingBattle:
-        defender_faction = defender.faction if defender else self.state.provinces[target_id].owner
+    def _build_pending_battle(
+        self,
+        attacker: Battalion,
+        defenders: Battalion | list[Battalion] | None,
+        target_id: str,
+    ) -> PendingBattle:
+        if defenders is None:
+            defender_list: list[Battalion] = []
+        elif isinstance(defenders, list):
+            defender_list = defenders
+        else:
+            defender_list = [defenders]
+        defender_faction = defender_list[0].faction if defender_list else self.state.provinces[target_id].owner
         return PendingBattle(
             battle_id=f"goc-{self.state.turn_number}-{uuid.uuid4().hex[:10]}",
             origin_province_id=attacker.province_id,
@@ -685,7 +756,10 @@ class CampaignEngine:
             attacker_faction=attacker.faction,
             defender_faction=defender_faction,
             attacking_participants=[BattleParticipant(attacker.battalion_id, attacker.faction, "stage_1", True)],
-            defending_participants=[BattleParticipant(defender.battalion_id, defender.faction, "stage_2", True)] if defender else [],
+            defending_participants=[
+                BattleParticipant(defender.battalion_id, defender.faction, "stage_2", True)
+                for defender in defender_list
+            ],
             player_faction=self.state.selected_faction,
             player_is_attacker=attacker.faction == self.state.selected_faction,
         )

@@ -323,7 +323,7 @@ class Province:
     owner: Faction = Faction.NEUTRAL
     neighbors: list[str] = field(default_factory=list)
     terrain: str = "temperate"
-    map_region: str = "ostfront"
+    map_region: str = "europe"
     x: float = 0.0
     y: float = 0.0
     resource_yield: int = 10

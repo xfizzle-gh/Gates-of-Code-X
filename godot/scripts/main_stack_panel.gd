@@ -56,10 +56,10 @@ func _draw_management_panel() -> void:
 	y = _panel_heading("ACTIONS", x, y)
 	y = _draw_button("fit", "Fit front (F)", x, y, true, Color("243140"))
 	y = _draw_button("refresh", "Refresh", x, y, writeback)
-	y = _draw_button("end_turn", "End turn (E)", x, y, writeback and not has_battle)
+	y = _draw_button("end_turn", "Next turn (E)", x, y, writeback)
 	y = _draw_button("run_ai", "Run AI + advance", x, y, writeback and not has_battle)
 	y = _draw_button("auto_resolve", "Auto-resolve battle (A)", x, y, writeback and has_battle, Color("4a2f18"))
-	y = _draw_button("handoff", "Handoff to GoH (H)", x, y, writeback and has_battle, Color("5a2418"))
+	y = _draw_button("handoff", "Fight in GoH (H)", x, y, writeback and has_battle, Color("5a2418"))
 	if not writeback:
 		y = _panel_line("Write-back off — re-export frontend.", x, y, Color("ff8e72"), 12)
 	y += 10.0

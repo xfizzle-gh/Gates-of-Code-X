@@ -117,14 +117,71 @@ def build_parser() -> argparse.ArgumentParser:
     front.add_argument("campaign")
     front.add_argument("--faction", choices=FACTION_CHOICES)
     front.add_argument("--kind", choices=["battle", "capture", "neutral", "move"])
+    attack = sub.add_parser(
+        "attack",
+        help="Open the first legal front battle and export gatesofcodex.sav",
+    )
+    attack.add_argument("campaign")
+    attack.add_argument("--battalion")
+    attack.add_argument("--target")
+    attack.add_argument("--kind", choices=["battle", "capture", "neutral", "move"], default="battle")
+    attack.add_argument("--codex")
+    attack.add_argument("--save")
+    attack.add_argument("--map")
+    attack.add_argument("--no-export", action="store_true")
+    advance = sub.add_parser("advance", help="Run AI factions until the human player's turn")
+    advance.add_argument("campaign")
+    advance.add_argument("--seed", type=int, default=0)
+    cont = sub.add_parser(
+        "continue",
+        help="Import a finished fight if present, run AI, export the next GatesOfCodeX battle",
+    )
+    cont.add_argument("campaign")
+    cont.add_argument("--codex")
+    cont.add_argument("--save")
+    cont.add_argument("--map")
+    cont.add_argument("--simulate", action="store_true", help="Auto-resolve the player battle and keep going")
+    cont.add_argument("--turns", type=int, default=1)
+    cont.add_argument("--seed", type=int, default=0)
+    cont.add_argument("--snapshot", help="Write a Godot frontend snapshot after the loop")
+    cont.add_argument("--no-export", action="store_true")
+    watch = sub.add_parser(
+        "watch",
+        help="Wait for GoH to finish the current fight, then continue the campaign",
+    )
+    watch.add_argument("campaign")
+    watch.add_argument("--codex")
+    watch.add_argument("--save")
+    watch.add_argument("--interval", type=float, default=20.0)
+    watch.add_argument("--snapshot", default="godot/campaign_snapshot.json")
+    overmap = sub.add_parser("overmap", help="Play 4X on the Europe overmap; battles auto-resolve")
+    overmap.add_argument("campaign", nargs="?", default="live/europe.json")
+    overmap.add_argument("--turns", type=int, default=1)
+    overmap.add_argument("--seed", type=int, default=0)
+    overmap.add_argument("--snapshot", default="godot/campaign_snapshot.json")
+    next_turn = sub.add_parser(
+        "next-turn",
+        help="End the player's overmap turn and run AI until NATO is current",
+    )
+    next_turn.add_argument("campaign", nargs="?", default="live/europe.json")
+    next_turn.add_argument("--seed", type=int, default=0)
+    next_turn.add_argument("--snapshot", default="godot/campaign_snapshot.json")
+    play = sub.add_parser("play", help="Export the current fight, launch GoH, optionally watch")
+    play.add_argument("campaign", nargs="?", default="live/europe.json")
+    play.add_argument("--codex")
+    play.add_argument("--save")
+    play.add_argument("--no-launch", action="store_true")
+    play.add_argument("--watch", action="store_true")
+    play.add_argument("--interval", type=float, default=15.0)
+    play.add_argument("--snapshot", default="godot/campaign_snapshot.json")
     export = sub.add_parser("export-battle")
     export.add_argument("campaign")
     export.add_argument("--codex", required=True)
     export.add_argument("--save", required=True)
-    export.add_argument("--map", required=True)
+    export.add_argument("--map", default="")
     import_battle = sub.add_parser("import-battle")
     import_battle.add_argument("campaign")
-    import_battle.add_argument("--save", required=True)
+    import_battle.add_argument("--save")
     frontend = sub.add_parser("export-frontend")
     frontend.add_argument("campaign")
     frontend.add_argument("--output", default="godot/campaign_snapshot.json")
@@ -365,14 +422,115 @@ def main(argv: list[str] | None = None) -> int:
             "options": options,
         }, indent=2))
         return 0
+    if args.command == "attack":
+        from .front_attack import attack_front
+
+        payload = attack_front(
+            args.campaign,
+            battalion_id=args.battalion,
+            target=args.target,
+            kind=args.kind,
+            code_x_directory=args.codex,
+            save_path=args.save,
+            map_name=args.map,
+            export=not args.no_export,
+        )
+        print(json.dumps(payload, indent=2, default=str))
+        return 0
+    if args.command == "advance":
+        from .front_attack import advance_to_player
+
+        print(json.dumps(advance_to_player(args.campaign, seed=args.seed), indent=2, default=str))
+        return 0
+    if args.command == "continue":
+        from .campaign_loop import continue_campaign
+
+        payload = continue_campaign(
+            args.campaign,
+            save_path=args.save,
+            code_x_directory=args.codex,
+            map_name=args.map,
+            simulate=args.simulate,
+            turns=args.turns,
+            seed=args.seed,
+            export=not args.no_export,
+            snapshot_path=args.snapshot,
+        )
+        print(json.dumps(payload, indent=2, default=str))
+        return 0
+    if args.command == "watch":
+        from .campaign_loop import watch_campaign
+
+        payload = watch_campaign(
+            args.campaign,
+            save_path=args.save,
+            code_x_directory=args.codex,
+            interval_seconds=args.interval,
+            snapshot_path=args.snapshot,
+        )
+        print(json.dumps(payload, indent=2, default=str))
+        return 0
+    if args.command == "overmap":
+        from .campaign_loop import overmap_campaign
+
+        payload = overmap_campaign(
+            args.campaign,
+            turns=args.turns,
+            seed=args.seed,
+            snapshot_path=args.snapshot,
+        )
+        print(json.dumps(payload, indent=2, default=str))
+        return 0
+    if args.command == "next-turn":
+        from .campaign_loop import finish_player_overmap_turn
+        from .frontend import write_frontend_snapshot
+
+        payload = finish_player_overmap_turn(args.campaign, seed=args.seed)
+        if args.snapshot:
+            state = load_campaign(args.campaign)
+            payload["snapshot"] = str(
+                write_frontend_snapshot(state, args.snapshot, campaign_path=args.campaign).resolve()
+            )
+        print(json.dumps(payload, indent=2, default=str))
+        return 0
+    if args.command == "play":
+        from .campaign_loop import play_campaign
+
+        payload = play_campaign(
+            args.campaign,
+            code_x_directory=args.codex,
+            save_path=args.save,
+            launch=not args.no_launch,
+            watch=args.watch,
+            interval_seconds=args.interval,
+            snapshot_path=args.snapshot,
+        )
+        print(json.dumps(payload, indent=2, default=str))
+        return 0
     if args.command == "export-battle":
+        from .play_context import tactical_map_for_province
+        from .state_io import load_campaign as _load
+
+        state = _load(args.campaign)
+        map_name = args.map
+        if not map_name and state.pending_battle is not None:
+            map_name = tactical_map_for_province(state, state.pending_battle.target_province_id)
         manifest = GatesOfCodeXService().export_battle(
-            args.campaign, code_x_directory=args.codex, save_path=args.save, map_name=args.map
+            args.campaign,
+            code_x_directory=args.codex,
+            save_path=args.save,
+            map_name=map_name,
+            allow_overwrite=True,
+            campaign_name="GatesOfCodeX",
         )
         print(json.dumps(asdict(manifest), indent=2))
         return 0
     if args.command == "import-battle":
-        result = GatesOfCodeXService().import_battle(args.campaign, save_path=args.save)
+        from .front_attack import resolve_attack_save_path
+        from .state_io import load_campaign as _load_for_import
+
+        hint = args.save or resolve_attack_save_path(_load_for_import(args.campaign))
+        result = GatesOfCodeXService().import_battle(args.campaign, save_path=hint)
         print(json.dumps({"winner": result.winner.value, "survivors": result.survivor_counts}, indent=2))
         return 0
     if args.command == "export-frontend":

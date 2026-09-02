@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from dataclasses import asdict, dataclass, field, fields
+from dataclasses import asdict, dataclass, field, fields, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Iterable
@@ -100,6 +100,10 @@ class GatesOfCodeXService:
         state = load_campaign(campaign_file)
         if state.pending_battle is None:
             raise RuntimeError("Campaign has no pending battle")
+        if not map_name:
+            from .play_context import tactical_map_for_province
+
+            map_name = tactical_map_for_province(state, state.pending_battle.target_province_id)
         saved_stack = state.map_metadata.get("resource_stack", [])
         stack = resolve_stack(resource_stack or saved_stack, fallback=code_x_directory or state.code_x_directory)
         if not stack:
@@ -145,6 +149,10 @@ class GatesOfCodeXService:
         scn_text = CampaignScnBuilder(catalog, resource_stack=stack).build(state, state.pending_battle)
         destination = self.archive.write(destination, status=status_text, campaign_scn=scn_text)
         self.archive.validate(destination)
+        goh_path = destination.with_name(goh_conquest_save_filename(visible_name))
+        if goh_path.resolve() != destination.resolve():
+            goh_path.write_bytes(destination.read_bytes())
+            self.archive.validate(goh_path)
 
         state.pending_battle.exported_save_path = str(destination)
         state.pending_battle.started = True
@@ -168,19 +176,19 @@ class GatesOfCodeXService:
             visible_campaign_name=visible_name,
         )
         self.write_manifest(manifest, manifest_destination)
+        if goh_path.resolve() != destination.resolve():
+            self.write_manifest(replace(manifest, save_path=str(goh_path.resolve())), self.manifest_path(goh_path))
         return manifest
 
     def import_battle(self, campaign_path: str | Path, *, save_path: str | Path) -> BattleImportResult:
         campaign_file = Path(campaign_path).resolve()
-        save_file = Path(save_path).resolve()
-        manifest_file = self.manifest_path(save_file)
-        if not manifest_file.is_file():
-            raise FileNotFoundError(f"Missing export manifest: {manifest_file}")
+        save_file = Path(save_path).expanduser().resolve()
+        manifest_file = self._find_manifest(save_file, campaign_file)
+        if manifest_file is None:
+            raise FileNotFoundError(f"Missing export manifest next to {save_file}")
         manifest = self.load_manifest(manifest_file)
         if Path(manifest.campaign_path).resolve() != campaign_file:
             raise ValueError("Battle manifest belongs to a different campaign")
-        if Path(manifest.save_path).resolve() != save_file:
-            raise ValueError("Battle manifest belongs to a different tactical save")
         state = load_campaign(campaign_file)
         if state.pending_battle is None or state.pending_battle.battle_id != manifest.battle_id:
             raise ValueError("Battle manifest does not match the pending campaign battle")
@@ -192,10 +200,39 @@ class GatesOfCodeXService:
             signature = self.scanner.scan_stack(stack).signature
             if signature != manifest.catalog_signature:
                 raise ValueError("Installed Code:X mod stack changed after the battle export")
+        completed = resolve_completed_save(
+            save_file,
+            previous_status=manifest.baseline,
+            visible_campaign_name=manifest.visible_campaign_name or "GatesOfCodeX",
+            battle_id=manifest.battle_id,
+        )
         engine = CampaignEngine(state)
-        result = BattleResultImporter().import_save(engine, save_file, previous_status=manifest.baseline)
+        result = BattleResultImporter().import_save(engine, completed, previous_status=manifest.baseline)
         save_campaign(state, campaign_file)
         return result
+
+    def _find_manifest(self, save_file: Path, campaign_file: Path) -> Path | None:
+        folder = save_file if save_file.is_dir() else save_file.parent
+        candidates: list[Path] = []
+        if save_file.is_file():
+            direct = self.manifest_path(save_file)
+            if direct.is_file():
+                candidates.append(direct)
+        if folder.is_dir():
+            candidates.extend(sorted(folder.glob("*.goc.json"), key=lambda path: path.stat().st_mtime, reverse=True))
+        seen: set[Path] = set()
+        for candidate in candidates:
+            resolved = candidate.resolve()
+            if resolved in seen:
+                continue
+            seen.add(resolved)
+            try:
+                manifest = self.load_manifest(resolved)
+            except (OSError, TypeError, ValueError):
+                continue
+            if Path(manifest.campaign_path).resolve() == campaign_file:
+                return resolved
+        return None
 
 
 def unique_acceptance_campaign_name(
@@ -219,6 +256,69 @@ def unique_acceptance_campaign_name(
         if candidate not in blocked:
             return candidate
     raise ValueError(f"Could not allocate a unique Conquest visible name for battle {battle_id!r}")
+
+
+def resolve_completed_save(
+    hint: Path,
+    *,
+    previous_status: StatusResult,
+    visible_campaign_name: str = "GatesOfCodeX",
+    battle_id: str = "",
+) -> Path:
+    """Find the post-battle .sav GoH actually rewrote.
+
+    GoH lowercases status {name} and may append ``_battle_<id>``. Importing the
+    original install path therefore fails with playedGames 0.
+    """
+
+    archive = CampaignSaveArchive()
+    parser = StatusBuilder()
+    folder = hint.parent if hint.suffix else hint
+    live_name = goh_conquest_save_filename(visible_campaign_name)
+    patterns = [
+        hint.name if hint.suffix else "",
+        live_name,
+    ]
+    if battle_id:
+        patterns.append(f"{visible_campaign_name.lower()}_battle_{battle_id}*.sav")
+        patterns.append(f"gatesofcodex_battle_{battle_id}*.sav")
+    else:
+        patterns.append(f"{visible_campaign_name.lower()}_battle_*.sav")
+        patterns.append("gatesofcodex_battle_*.sav")
+    candidates: list[Path] = []
+    if hint.is_file():
+        candidates.append(hint)
+    if folder.is_dir():
+        for pattern in patterns:
+            if not pattern:
+                continue
+            if "*" in pattern:
+                candidates.extend(folder.glob(pattern))
+            else:
+                path = folder / pattern
+                if path.is_file():
+                    candidates.append(path)
+    seen: set[Path] = set()
+    newest_hit: Path | None = None
+    newest_mtime = -1.0
+    for path in candidates:
+        resolved = path.resolve()
+        if resolved in seen or resolved.suffix.lower() != ".sav":
+            continue
+        if "_battle_" in resolved.name.lower() and battle_id:
+            if battle_id.lower() not in resolved.name.lower():
+                continue
+        seen.add(resolved)
+        try:
+            current = parser.parse_result(archive.read(resolved).status)
+        except (OSError, ValueError):
+            continue
+        if current.played_games > previous_status.played_games:
+            mtime = resolved.stat().st_mtime
+            if mtime > newest_mtime:
+                newest_hit = resolved
+                newest_mtime = mtime
+    return newest_hit or hint
 
 
 def goh_conquest_save_filename(visible_campaign_name: str) -> str:

@@ -13,6 +13,19 @@ from .models import CampaignState, Faction, FactionState, Province
 
 _GRAPH_CHUNKS = tuple(f"data/goe_graph_{index:02d}.b85" for index in range(6))
 
+CODEX_MAPS = (
+    "multi/dcg_[cwa71]_fulda",
+    "multi/dcg_[cwa71]_woodland",
+    "multi/dcg_[cwa71]_fields",
+    "multi/dcg_[cwa71]_grassland",
+    "multi/dcg_[cwa71]_factory",
+    "multi/dcg_[cwa71]_industrial",
+    "multi/dcg_[cwa71]_border",
+    "multi/dcg_[cwa71]_airbase",
+    "multi/dcg_[cwa71]_monastery",
+    "multi/dcg_[cwa71]_train_station",
+)
+
 
 def load_goe_europe_graph() -> dict:
     package = files("gates_of_codex")
@@ -29,8 +42,8 @@ def build_goe_europe_campaign() -> CampaignState:
             display_name=value["display_name"],
             owner=Faction.NEUTRAL,
             neighbors=list(value.get("neighbors", [])),
-            terrain="unknown",
-            map_region="goe_europe",
+            terrain="temperate",
+            map_region="europe",
             x=float(value.get("x", 0)),
             y=float(value.get("y", 0)),
             resource_yield=10,
@@ -61,5 +74,14 @@ def build_goe_europe_campaign() -> CampaignState:
     seed_formation_battalions(state)
     apply_modern_control_profile(state)
     apply_marker_layout(state)
+    apply_codex_tactical_maps(state)
     state.validate()
     return state
+
+
+def apply_codex_tactical_maps(state: CampaignState) -> None:
+    """Rotate proven Code:X CWA71 maps across the Europe graph."""
+
+    for index, province in enumerate(state.provinces.values()):
+        province.map_region = "europe"
+        province.metadata["tactical_map"] = CODEX_MAPS[index % len(CODEX_MAPS)]

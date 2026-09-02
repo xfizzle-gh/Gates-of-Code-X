@@ -102,6 +102,9 @@ class GatesOfCodeXTests(unittest.TestCase):
         self.assertTrue(text.startswith("{saveinfo"))
         result = StatusBuilder().parse_result(text)
         self.assertEqual(result, StatusResult(4, 2))
+        self.assertIn("{region europe}", text)
+        self.assertIn("{selectedMapPoint point_1_1}", text)
+        self.assertIn("{version 9}", text)
 
     def test_status_template_is_patched_without_losing_saveinfo_metadata(self) -> None:
         state = load_bundled_scenario()
