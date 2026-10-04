@@ -39,7 +39,9 @@ local function log(line)
 		end
 		local f = io.open(dir .. "gow_probe.txt", "a")
 		if f then
-			f:write(tostring(line) .. "\n")
+			local t = (os and os.time and os.time()) or 0
+			GowBridge.t0 = GowBridge.t0 or t
+			f:write(string.format("[%4ds] ", t - GowBridge.t0) .. tostring(line) .. "\n")
 			f:close()
 		end
 	end)
@@ -172,26 +174,45 @@ wrap_global("OnGameStartUtility", function(original, suffix)
 	return original(suffix)
 end)
 
--- Chooses the next unit to buy. Prefer the battalion's own unit types when any is buyable now.
+-- Chooses the next unit to buy. The battalion's unit types are preferred class by class: in a class
+-- (infantry squad, tank, ...) where at least one battalion unit is buyable now, only battalion units
+-- are offered; in every other class the AI keeps its normal choices. Without the per-class rule the AI
+-- would field nothing but infantry whenever the battalion's vehicles were not yet buyable
+-- (seen in game 2026-10-04: 19 purchases, all infantry).
+local function class_of(unit)
+	if type(unit.base) == "table" then
+		return table.concat(unit.base, "/")
+	end
+	return "?"
+end
+
 wrap_global("GetUnitToSpawn", function(original, units)
 	if not GowBridge.active or not GowBridge.hasPreference or type(units) ~= "table" then
 		return original(units)
 	end
-	local preferred = {}
+	local offered = units
 	pcall(function()
+		local hasPreferred = {}
 		for _, unit in pairs(units) do
 			if type(unit) == "table" and GowBridge.preferred[unit.unit] and BotApi.Commands:IsUnitAvailable(unit.unit) then
-				preferred[#preferred + 1] = unit
+				hasPreferred[class_of(unit)] = true
 			end
 		end
-	end)
-	if #preferred > 0 then
-		local pick = original(preferred)
-		if pick then
-			return pick
+		local filtered = {}
+		for _, unit in pairs(units) do
+			if type(unit) == "table" and (GowBridge.preferred[unit.unit] or not hasPreferred[class_of(unit)]) then
+				filtered[#filtered + 1] = unit
+			end
 		end
+		if #filtered > 0 then
+			offered = filtered
+		end
+	end)
+	local pick = original(offered)
+	if pick == nil and offered ~= units then
+		return original(units)
 	end
-	return original(units)
+	return pick
 end)
 
 -- Performs every purchase.
