@@ -53,6 +53,31 @@ Asset recovery (2026-10-04, AssetRipper 2.0.0 headless, official GitHub release,
 - Editor available: 6000.6.4f1 (licensed), not the build's 6000.4.0f1 (revision `8cf496087c8f`).
   First open is being attempted with 6000.6.4f1; log in `build/unity-open.log`.
 
+Rebuild attempts (2026-10-04):
+- 6000.6.4f1: scripts compile after two source repairs, but the player build fails. The package DLLs
+  AssetRipper placed in `Assets/Plugins` were compiled for 6000.4 engine internals (URP GPU-driven
+  rendering, TextCore, UIElements) and ILLink cannot resolve them. Not usable until the DLLs are replaced
+  by real packages.
+- 6000.4.0f1 (revision `8cf496087c8f`, exact match): **player build succeeds**, 0 errors,
+  output `build/campaign-win64/WarfighterCampaign.exe`.
+- Source repairs, both in decompiled Netcode ILPP output in `CampaignNetworkSessionManager.cs` and
+  recorded in `tools/recover_campaign.ps1`: `__getTypeName` override modifier (CS0507) and a derived-type
+  qualifier on 38 `__rpc_exec_stage` accesses (CS1540).
+- Smoke run (25 s, windowed): the start menu scene loads and renders its background and buttons.
+  Screenshot `build/player-smoke.png`, log `build/player-smoke.log`. Two defects:
+  1. All text renders as solid blocks. The six TMP SDF atlases failed to export.
+  2. `NullReferenceException` in `UniversalRenderPipeline..ctor` every frame (1,048 in 25 s). The URP
+     pipeline is not created; likely the global settings/runtime resources reference lost with the
+     `globalgamemanagers` read error.
+- Reproduce: `tools/recover_campaign.ps1 -Force`, then
+  `tools/build_campaign.ps1 -Unity '<…>\6000.4.0f1\Editor\Unity.exe'`.
+
+Gate status: build is repeatable; "functioning campaign map, new/load/save, unit catalog UI" is NOT yet
+verified. Nothing past the start menu has been exercised.
+
+Next action: regenerate TMP font atlases from the recovered source fonts, repair the URP global settings
+reference, then drive new campaign → map → save → load and record results in the parity matrix.
+
 Previously blocked (kept for history):
 - No Unity editor is installed (plan expects 6000.4.0f1) and AssetRipper is not installed. Scenes,
   ScriptableObjects (province database, adjacency, world/supply rules, status template, map catalog, unit
