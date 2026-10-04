@@ -212,6 +212,13 @@ NOT verified: no generated save has been loaded in the game. Open risks until th
 - whether WF accepts units outside the player's `unlockedResearch` list;
 - native saves give emplacements and off-map strikes no Inventory block; ours always write one.
 
+In-game load (2026-10-04): the owner loaded `WarfighterCampaign_export_test.sav` from Conquest with
+WarFighter enabled and reported "no errors, looks good". This is an owner report, not something I
+observed, and no detail was given on which units appeared. The file in the profile is byte-identical
+afterwards (2,297 bytes, `playedGames 0`), so no battle was played and the game has not yet written a
+result back. Loading is therefore confirmed; the empty-stage, item-cell and unlocked-research risks
+above are not ruled out until a battle is deployed and finished.
+
 Known noise: incremental player builds log 60 × "PPtr cast failed … PluginImporter to MonoScript" and
 report `errors: 60` while succeeding. Clean builds report 0. The built app runs with 0 exceptions.
 
