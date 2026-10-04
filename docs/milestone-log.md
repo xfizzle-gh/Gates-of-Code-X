@@ -113,8 +113,64 @@ diplomacy, ledger, multiplayer. Battle export is deliberately untested because i
 Gate status: MET for repeatable build, campaign map, new/save/load. Unit catalog UI is only partly seen
 (research portraits render); the battalion roster screen is still unverified.
 
-Next action: find why Create Battalion is disabled, verify the roster/catalog screen, then start M2
-(WF content resolver and ten-faction catalog) and replace the WWII faction data with `data/theaters.json`.
+## M2 — WF adapter: IN PROGRESS (factions, research, portraits done; export templates not started)
+
+2026-10-04. Verified in the running app for US Army and GRM (`build/drive/22-…`, `24-…`), 0 exceptions:
+the faction dropdown lists the ten WF factions, the turn banner shows the WF name and flag, and the
+research screen shows that faction's WF tree with WF unit names and portraits.
+
+Generators (all read WF read-only and write only into `campaign/`):
+- `tools/build_wf_content.py` — per faction `GohUnitCatalog_<tag>` and `GohResearchTree_<tag>` under
+  `Assets/Resources/WfContent`, portraits under `Assets/Resources/GohPortraits`.
+  - Research: `set/dynamic_campaign/unit_research_<tag>.set`, ids/costs/prerequisites/grid kept as-is.
+  - Units: `wf_roster_conquest.inc` (the expanded conquest roster), entries carrying the faction tag.
+    Section from `{button}` (inf1, inf2, empl, vehicles, tanks).
+  - Names: `desc/squad|entity/<id>` in WF localization. Portraits: `interface/scene/portrait_squad`.
+  - Manpower cost is DERIVED: `cost + squad_cost_factor × Σ(member breed cost × count)`. WF has no single
+    campaign price field, so this formula is ours and needs balancing.
+- `tools/build_wf_scenario.py` + `data/scenario_europe.json` — faction slots, sides, turn order, diplomacy
+  (same side Allied, opposite sides at War from week 1), flags, WWII scripted events removed.
+- `tools/patch_campaign_code.py` + `tools/unity/runtime/WfFactions.cs` — catalogs and research trees are
+  looked up by WF army tag; the dropdown and turn banner come from the scenario table; WWII DLC gates on
+  the faction dropdown are disabled.
+
+Coverage (from `build/wf-content-report.json`):
+
+| tag | catalog units | tree unit nodes | units outside tree | hidden | placeholder portraits |
+| --- | --- | --- | --- | --- | --- |
+| usa | 149 | 138 | 11 | 1 | 10 |
+| usmc | 106 | 95 | 11 | 10 | 1 |
+| uaf | 108 | 97 | 11 | 1 | 10 |
+| ger | 100 | 89 | 11 | 1 | 10 |
+| fra | 65 | 0 | 65 | 12 | 53 |
+| idf | 53 | 0 | 53 | 10 | 43 |
+| grm | 130 | 116 | 14 | 1 | 10 |
+| reb | 103 | 87 | 16 | 2 | 40 |
+| rus | 162 | 142 | 20 | 1 | 10 |
+| pla | 117 | 101 | 16 | 1 | 1 |
+
+- Every research unit node resolved to a roster unit (0 unresolved across all ten).
+- fra and idf have no unit research in WF (tech nodes only), so all their units are available from the
+  start (`ForceResearchedOverride`), as in WF. WF also ships no portraits for them: they get generated
+  "no WF portrait" cards with the unit name, not borrowed art.
+- "hidden" = roster squads with no name, no portrait and no research entry (squad16–25 style internals).
+- A few breeds referenced by units are missing from the roster's cost table (e.g. `mp/usa/tx_pilot_heli_01`,
+  `mp/reb/tg_main`); they count as 0 in the derived cost.
+
+Known gaps / provisional:
+- Faction slots: the app stores factions as fixed integers, so each WF faction sits in an old WWII slot
+  and starts with that slot's 1939 provinces (US Army holds the British Isles, GRM holds Italy, PLA has
+  3 provinces in Hungary, …). This is a mechanical placeholder, NOT a scenario. Real starting territory
+  has to be authored in `data/scenario_europe.json`.
+- Internal enum names are still WWII (`FactionType.Germany` is the Bundeswehr slot, `.UK` is US Army).
+- `GohFullUnitTemplateCache` (what battle export needs to write units into `campaign.scn`) still holds
+  only WWII units. WF battalions cannot be exported to a battle yet. This is the next M2 item.
+- Tactical map catalog and status template still point at WWII regions and `mod_3717998771`.
+- Start menu art and title still say Gates of Europa.
+- Create Battalion / Manage Battalion still unverified.
+
+Next action: WF full unit templates (entity/human/inventory blocks) for export, map catalog from WF
+`map_points.set`, then the first battle round trip (M3) against a scratch profile.
 
 Previously blocked (kept for history):
 - No Unity editor is installed (plan expects 6000.4.0f1) and AssetRipper is not installed. Scenes,

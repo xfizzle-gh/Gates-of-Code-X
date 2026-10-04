@@ -27,7 +27,7 @@ $p = Get-Process WarfighterCampaign -ErrorAction SilentlyContinue | Select-Objec
 if (-not $p) {
     $p = Start-Process (Join-Path $root 'build\campaign-win64\WarfighterCampaign.exe') -PassThru -ArgumentList `
         '-logFile', (Join-Path $root 'build\player-drive.log'), '-screen-fullscreen', '0', '-screen-width', '1280', '-screen-height', '720'
-    Start-Sleep -Seconds 10
+    Start-Sleep -Seconds 18
     $p.Refresh()
 }
 $h = $p.MainWindowHandle

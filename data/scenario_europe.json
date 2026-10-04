@@ -1,0 +1,26 @@
+{
+  "id": "europe_ww3",
+  "status": "PROVISIONAL - slot mapping and starting territory are placeholders until the owner defines the scenario",
+  "theater": "ww3",
+  "note": [
+    "The recovered application stores factions as integer slots (FactionType) in saves, the province database and rule assets, so slots cannot be renumbered. Each WF faction is assigned to an existing slot.",
+    "A slot's starting provinces are whatever that slot owned in the recovered 1939 Europe map. That is NOT a designed modern scenario; 'startingProvinces' below is where real ownership should be set.",
+    "choiceOrder is the order of the faction dropdown and of the FactionChoice integer stored in saves."
+  ],
+  "sides": { "blufor": 2, "opfor": 1 },
+  "factions": [
+    { "tag": "usa",  "name": "US Army",    "side": "blufor", "slot": 3,  "slotWas": "UK",          "flag": "flag_nato" },
+    { "tag": "usmc", "name": "USMC",       "side": "blufor", "slot": 6,  "slotWas": "Netherlands", "flag": "flag_result_usmc" },
+    { "tag": "uaf",  "name": "UAF",        "side": "blufor", "slot": 4,  "slotWas": "Poland",      "flag": "flag_uaf" },
+    { "tag": "ger",  "name": "Bundeswehr", "side": "blufor", "slot": 0,  "slotWas": "Germany",     "flag": "flag_nato" },
+    { "tag": "fra",  "name": "France",     "side": "blufor", "slot": 10, "slotWas": "France",      "flag": "flag_fra" },
+    { "tag": "idf",  "name": "IDF",        "side": "blufor", "slot": 7,  "slotWas": "Belgium",     "flag": "flag_idf" },
+    { "tag": "grm",  "name": "GRM",        "side": "opfor",  "slot": 8,  "slotWas": "Italy",       "flag": "flag_grm" },
+    { "tag": "reb",  "name": "EER",        "side": "opfor",  "slot": 5,  "slotWas": "Finland",     "flag": "flag_reb" },
+    { "tag": "rus",  "name": "AFRF",       "side": "opfor",  "slot": 1,  "slotWas": "SovietUnion", "flag": "flag_opfor" },
+    { "tag": "pla",  "name": "PLA",        "side": "opfor",  "slot": 11, "slotWas": "Hungary",     "flag": "flag_pla" }
+  ],
+  "unusedSlotsToNeutral": [12],
+  "startingResources": { "Manpower": 4000, "Ammunition": 3000, "Research": 1, "Support": 3 },
+  "diplomacy": "Same side: Allied. Opposite sides: War from week 1. No scripted events."
+}
