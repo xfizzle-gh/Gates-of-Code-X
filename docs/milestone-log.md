@@ -147,7 +147,7 @@ Coverage (from `build/wf-content-report.json`):
 | grm | 130 | 116 | 14 | 1 | 10 |
 | reb | 103 | 87 | 16 | 2 | 40 |
 | rus | 162 | 142 | 20 | 1 | 10 |
-| pla | 117 | 101 | 16 | 1 | 1 |
+| pla | 117 | 101 | 16 | 10 | 1 |
 
 - Every research unit node resolved to a roster unit (0 unresolved across all ten).
 - fra and idf have no unit research in WF (tech nodes only), so all their units are available from the
