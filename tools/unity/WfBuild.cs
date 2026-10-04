@@ -8,7 +8,8 @@ public static class WfBuild
 {
 	public static void BuildWindows()
 	{
-		string[] scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
+		WfRepair.RepairFontAtlases();
+		string[] scenes =EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
 		if (scenes.Length == 0)
 		{
 			scenes = new[] { "Assets/Scenes/StartMenu.unity", "Assets/Scenes/SampleScene.unity" };
