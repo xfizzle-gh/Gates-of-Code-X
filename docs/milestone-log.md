@@ -36,7 +36,24 @@ Done:
 - Battle export → result → survivor import traced: `docs/battle-round-trip.md`.
 - Feature-parity matrix from source: `docs/feature-parity.md`.
 
-Blocked:
+Asset recovery (2026-10-04, AssetRipper 2.0.0 headless, official GitHub release, zip SHA256 `9A7EF0E7…1BAF7`):
+- Export to `recovered/unity/ExportedProject` succeeded (170 MB). Import log: one read-size error on
+  `globalgamemanagers` asset type 129 (PlayerSettings) and six TMP SDF font atlases not converted to bitmap.
+- Recovered: both scenes (`StartMenu`, `SampleScene`), 210 scripts, `Status_Template.txt`,
+  province database JSON (517 provinces, 506 with neighbours, 515 with marker positions, 3 map regions),
+  `GohFullUnitTemplateCache` (4.8 MB), unit catalogs and research trees for ger/rus/fin/eng,
+  `GohConquestMapCatalog`, `CampaignWorldRules`, supply/building/battalion rules, scripted events,
+  status and save export settings.
+- Notable values: status template is save `version 9` with two fixed map points `hq_a`/`hq_b`;
+  `GameVersion` 1.063.0, `Region` ostfront, MP/SP/AP/RP all 0; `GohSaveExportSettings.TargetProfileDirectory`
+  is the original author's own profile path; `CampaignSetup.StartingBattalions` is empty.
+- AssetRipper emits package code as DLLs under `Assets/Plugins` and a `Packages/manifest.json` with only
+  built-in modules. URP, Netcode, Transport, TMP and Input System therefore are not real packages yet.
+- Working copy for editing: `campaign/` (copied from the export).
+- Editor available: 6000.6.4f1 (licensed), not the build's 6000.4.0f1 (revision `8cf496087c8f`).
+  First open is being attempted with 6000.6.4f1; log in `build/unity-open.log`.
+
+Previously blocked (kept for history):
 - No Unity editor is installed (plan expects 6000.4.0f1) and AssetRipper is not installed. Scenes,
   ScriptableObjects (province database, adjacency, world/supply rules, status template, map catalog, unit
   catalogs) and UI prefabs are still inside `resources.assets`, `sharedassets*.assets`, `level0/1`.

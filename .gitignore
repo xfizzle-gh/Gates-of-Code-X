@@ -2,6 +2,9 @@
 /upstream/
 /recovered/
 /build/
+# Recovered GOE project copy: third-party code and art with unresolved redistribution status.
+# Stays out of git (and off GitHub) until that is settled.
+/campaign/
 /evidence/archive-index/
 /evidence/target-manifest.json
 
