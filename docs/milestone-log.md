@@ -308,6 +308,30 @@ Observed, not fixed:
 The four that did not attack are a consequence of the placeholder territory (e.g. US Army in the
 British Isles), not an export failure. Their exports are covered by the headless sweep only.
 
+### 2032 scenario and the GoW mod (2026-10-04)
+
+Confirmed by the WF team: UAF = United Arab Force (a coalition of BLUFOR Arab forces, with Turkish
+equipment); EER = Eastern Europe Rebels (generic Donbas and Balkan style irregulars, to be reworked);
+GRM = Global Revolutionary Movement (WF localization). The GOE author's permission, with full credit,
+is recorded in `evidence/provenance.json` as stated by the owner.
+
+Scenario `data/scenario_2032.json` ("2032 Continental War"), authored by `tools/author_scenario_2032.py`
+from a geopolitical brief and then adjusted for playability at the owner's direction. Preview:
+`docs/scenario-2032-draft.png` (`tools/render_scenario_map.py`). It is the default scenario now.
+Invented for playability: 7 recruiting (Manpower) provinces and 9 boosted home-base yields; Ukraine split
+between US Army and France because no faction represents it; Turkey neutral.
+
+Ten-faction in-app run on this scenario (stand-in win, 0 exceptions in all ten): every faction created a
+battalion, attacked an adjacent enemy, exported a save and captured the province.
+
+GoW in-game mod: this repository folder is the mod (`mod_3696721120`, load order vanilla → WarFighter →
+GoW). `tools/build_gow_mod.py` generates `resource/script/multiplayer/modes/conquest.lua` from the
+installed WF file plus one `require` line; `conquest/gow_bridge.lua` is hand-written. Current stage is
+a probe: it logs what the bot's Lua environment allows and, if a battle context exists, restricts the
+enemy faction's purchase list to the listed units. NOT yet run in the game. `GoW_probe_test.sav` is in
+the real profile (new file) and a context limiting AFRF to `squad1(rus)` and `t-72b3` is in the app's
+Bridge folder. The app does not yet add GoW to a save's mod list or write contexts itself.
+
 Known noise: incremental player builds log 60 × "PPtr cast failed … PluginImporter to MonoScript" and
 report `errors: 60` while succeeding. Clean builds report 0. The built app runs with 0 exceptions.
 
