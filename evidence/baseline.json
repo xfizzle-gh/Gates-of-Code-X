@@ -1,0 +1,32 @@
+{
+ "capturedUtc": "2026-10-04T13:13:18Z",
+ "game": {
+  "buildMatchesPlan": true,
+  "paks": [
+   "resource/_dlc7.pak",
+   "resource/dlc1.pak",
+   "resource/dlc2.pak",
+   "resource/dlc3.pak",
+   "resource/dlc4.pak",
+   "resource/dlc5.pak",
+   "resource/gamelogic.pak",
+   "resource/music.pak",
+   "resource/properties.pak",
+   "resource/shader.pak",
+   "resource/video.pak"
+  ],
+  "steamBuildId": "25492057"
+ },
+ "goe": {
+  "fileCount": 10,
+  "modInfo": "{mod\n\t{name \"GatesOfEuropa\"}\n\t{tags \"Total Conversion\"}\n\t{desc \"Gates of Europa Dynamic Conquest Expansion\"}\n\t{minGameVersion \"1.063.0\"}\n\t{maxGameVersion \"1.067.0\"}\n}",
+  "totalBytes": 135224771,
+  "zipMatchesPlan": true,
+  "zipSha256": "926BEA2E190B513CD386DAFA8BC0291C54F78E080F27AD906A9C6DF660F7316B"
+ },
+ "wf": {
+  "fileCount": 18224,
+  "modInfo": "{mod\n\t{name \"WarFighter GoH\"}\n\t{desc \"WarFighter 2.10.05\"}\n\t{minGameVersion \"any\"}\n\t{maxGameVersion \"any\"}\n}",
+  "totalBytes": 50195940296
+ }
+}

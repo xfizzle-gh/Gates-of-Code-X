@@ -1,0 +1,16 @@
+# Extracted third-party payloads and generated output never go in commits.
+/upstream/
+/recovered/
+/build/
+/evidence/archive-index/
+/evidence/target-manifest.json
+
+# Generated saves and runtime exchange files
+*.sav
+/data/generated/
+
+# Tooling
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/

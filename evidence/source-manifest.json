@@ -1,0 +1,67 @@
+{
+ "fileCount": 10,
+ "files": [
+  {
+   "mtime": "2026-10-04T12:51:33Z",
+   "path": "1.pat",
+   "sha256": "32481858A4A82C1B2A2438F2AC85A93CF100A425238F3125A3D90EFD3BD0AC76",
+   "size": 287
+  },
+  {
+   "mtime": "2026-10-04T12:51:33Z",
+   "path": "GatesOfEuropa-win-Portable.zip",
+   "sha256": "926BEA2E190B513CD386DAFA8BC0291C54F78E080F27AD906A9C6DF660F7316B",
+   "size": 134461285
+  },
+  {
+   "mtime": "2026-10-04T12:51:33Z",
+   "path": "GatesOfEuropa.jpg",
+   "sha256": "ABC450202A69133833E9CC562D1256B51CBA75399C764F232667E9C11448EBCD",
+   "size": 727714
+  },
+  {
+   "mtime": "2026-10-04T12:51:35Z",
+   "path": "localizations/default/interface/text/main.pot",
+   "sha256": "BB9DF45747D899345BCE799D61C26DA251AFFA4B4C58E8AD918F0E1675EBEC7E",
+   "size": 397
+  },
+  {
+   "mtime": "2026-10-04T12:51:35Z",
+   "path": "localizations/ru/interface/text/main.po",
+   "sha256": "F96A9751C928C1B779B96AD60998014F960156068F56BFD5347D54767B9332BD",
+   "size": 490
+  },
+  {
+   "mtime": "2026-10-04T12:51:35Z",
+   "path": "Mod Desc.txt",
+   "sha256": "882EEA163548599D36E394B4FEA697955853D00DD70A138928647A031FD8DDEA",
+   "size": 2307
+  },
+  {
+   "mtime": "2026-10-04T12:51:35Z",
+   "path": "mod.info",
+   "sha256": "374BACECE96A06B101BBE233BB6B52361903CECBF058AC8A44F0D39571BFC58A",
+   "size": 172
+  },
+  {
+   "mtime": "2026-10-04T12:51:35Z",
+   "path": "resource/script/multiplayer/modes/conquest.lua",
+   "sha256": "1BE9AAD0A683AA6C53CEF6A733C7CCC3673BE859F41F386BFA6C936ECF5468D4",
+   "size": 15210
+  },
+  {
+   "mtime": "2026-10-04T12:51:35Z",
+   "path": "resource/script/multiplayer/modes/utility.lua",
+   "sha256": "43796409A819B7A44E0DF9521BDA474AD0083AACC81ADA1E6A9D56387D645BCF",
+   "size": 13727
+  },
+  {
+   "mtime": "2026-10-04T12:51:35Z",
+   "path": "resource/set/dynamic_campaign/resources_standard.set",
+   "sha256": "31F1CCA6A7DF3A6CFD21347815750F625A2814CD1FD5268AAB4459DBC417B269",
+   "size": 3182
+  }
+ ],
+ "root": "E:\\Steam\\steamapps\\workshop\\content\\400750\\3717998771",
+ "totalBytes": 135224771
+}

@@ -1,0 +1,104 @@
+[
+ {
+  "archive": "E:\\Steam\\steamapps\\workshop\\content\\400750\\3717998771\\GatesOfEuropa-win-Portable.zip",
+  "entryCount": 201,
+  "size": 134461285,
+  "source": "goe"
+ },
+ {
+  "archive": "E:\\Steam\\steamapps\\workshop\\content\\400750\\3809475216\\localizations\\default.pak",
+  "entryCount": 101,
+  "size": 272833,
+  "source": "wf"
+ },
+ {
+  "archive": "E:\\Steam\\steamapps\\workshop\\content\\400750\\3809475216\\resource\\entity.pak",
+  "entryCount": 138490,
+  "size": 12741540819,
+  "source": "wf"
+ },
+ {
+  "archive": "E:\\Steam\\steamapps\\workshop\\content\\400750\\3809475216\\resource\\map.pak",
+  "entryCount": 1302,
+  "size": 739694549,
+  "source": "wf"
+ },
+ {
+  "archive": "E:\\Steam\\steamapps\\workshop\\content\\400750\\3809475216\\resource\\sound.pak",
+  "entryCount": 21534,
+  "size": 4317399653,
+  "source": "wf"
+ },
+ {
+  "archive": "E:\\Steam\\steamapps\\workshop\\content\\400750\\3809475216\\resource\\texture.pak",
+  "entryCount": 22021,
+  "size": 31012784870,
+  "source": "wf"
+ },
+ {
+  "archive": "E:\\Steam\\steamapps\\common\\Call to Arms - Gates of Hell\\resource\\_dlc7.pak",
+  "entryCount": 482,
+  "size": 4584627477,
+  "source": "game"
+ },
+ {
+  "archive": "E:\\Steam\\steamapps\\common\\Call to Arms - Gates of Hell\\resource\\dlc1.pak",
+  "entryCount": 482,
+  "size": 3985664652,
+  "source": "game"
+ },
+ {
+  "archive": "E:\\Steam\\steamapps\\common\\Call to Arms - Gates of Hell\\resource\\dlc2.pak",
+  "entryCount": 109,
+  "size": 1222753489,
+  "source": "game"
+ },
+ {
+  "archive": "E:\\Steam\\steamapps\\common\\Call to Arms - Gates of Hell\\resource\\dlc3.pak",
+  "entryCount": 504,
+  "size": 4669450128,
+  "source": "game"
+ },
+ {
+  "archive": "E:\\Steam\\steamapps\\common\\Call to Arms - Gates of Hell\\resource\\dlc4.pak",
+  "entryCount": 492,
+  "size": 2225677934,
+  "source": "game"
+ },
+ {
+  "archive": "E:\\Steam\\steamapps\\common\\Call to Arms - Gates of Hell\\resource\\dlc5.pak",
+  "entryCount": 42,
+  "size": 141367026,
+  "source": "game"
+ },
+ {
+  "archive": "E:\\Steam\\steamapps\\common\\Call to Arms - Gates of Hell\\resource\\gamelogic.pak",
+  "entryCount": 8969,
+  "size": 13371505,
+  "source": "game"
+ },
+ {
+  "archive": "E:\\Steam\\steamapps\\common\\Call to Arms - Gates of Hell\\resource\\music.pak",
+  "entryCount": 113,
+  "size": 2019279881,
+  "source": "game"
+ },
+ {
+  "archive": "E:\\Steam\\steamapps\\common\\Call to Arms - Gates of Hell\\resource\\properties.pak",
+  "entryCount": 1792,
+  "size": 73950406,
+  "source": "game"
+ },
+ {
+  "archive": "E:\\Steam\\steamapps\\common\\Call to Arms - Gates of Hell\\resource\\shader.pak",
+  "entryCount": 5795,
+  "size": 51732141,
+  "source": "game"
+ },
+ {
+  "archive": "E:\\Steam\\steamapps\\common\\Call to Arms - Gates of Hell\\resource\\video.pak",
+  "entryCount": 53,
+  "size": 2518766984,
+  "source": "game"
+ }
+]

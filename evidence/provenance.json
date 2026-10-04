@@ -1,0 +1,33 @@
+{
+  "note": "Third-party material inspected or extracted for this project. Extracted payloads live under upstream/ and recovered/, which are git-ignored and must not be redistributed until status is resolved.",
+  "items": [
+    {
+      "name": "Gates of Europa (GOE) portable Unity build",
+      "origin": "Steam Workshop item 3717998771",
+      "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3717998771",
+      "localArtifacts": ["upstream/goe-portable/", "recovered/csharp/"],
+      "sourceProjectAvailable": false,
+      "licenseFound": false,
+      "distributionStatus": "UNRESOLVED - no source project or reuse licence found; decompiled code is reference only"
+    },
+    {
+      "name": "WarFighter GoH (WF)",
+      "origin": "Steam Workshop item 3809475216",
+      "localArtifacts": ["evidence/archive-index/wf__*.json (entry names and sizes only)"],
+      "licenseFound": false,
+      "distributionStatus": "Referenced as an installed dependency; no WF payload is copied into this repository"
+    },
+    {
+      "name": "Call to Arms - Gates of Hell base game archives",
+      "origin": "Steam app 400750, build 25492057",
+      "localArtifacts": ["evidence/archive-index/game__*.json (entry names and sizes only)"],
+      "distributionStatus": "Commercial; never redistributed"
+    },
+    {
+      "name": "ILSpy command line (ilspycmd 9.1.0.7988)",
+      "origin": "NuGet, icsharpcode/ILSpy",
+      "license": "MIT",
+      "localArtifacts": ["build/tools/"]
+    }
+  ]
+}

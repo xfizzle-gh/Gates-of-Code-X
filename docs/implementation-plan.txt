@@ -1,0 +1,403 @@
+Warfighter campaign implementation plan
+Prepared 4 October 2026 for the implementing agent
+
+Objective
+
+Adapt the full Gates of Europa campaign and gameplay system to the installed WarFighter GoH mod. Deliver a maintainable campaign companion application, a small Warfighter integration layer, reproducible build tooling, and tested strategic-to-tactical-to-strategic gameplay. The user explicitly selected full campaign/gameplay adaptation, not just asset transfer.
+
+This is an implementation handoff based on inspection of the actual installations. No source mod, Warfighter installation, game installation, or player save was modified during planning. Only selected archive entries were extracted into the planning workspace for inspection. Neither application was launched, and no recovered project has been compiled. Code symbols establish investigation targets, not proof that every advertised feature works.
+
+1. Locations and baseline
+
+Source mod, referred to below as GOE:
+E:\Steam\steamapps\workshop\content\400750\3717998771
+
+Target mod, referred to below as WF:
+E:\Steam\steamapps\workshop\content\400750\3809475216
+
+Installed game, referred to below as GAME:
+E:\Steam\steamapps\common\Call to Arms - Gates of Hell
+
+Planning evidence:
+%USERPROFILE%\Documents\Codex\2026-10-04\pl\work\goe-inspection
+
+Proposed implementation workspace, separate from Steam-managed content:
+%USERPROFILE%\Documents\Codex\WarfighterCampaign
+
+Paths stated relative to GOE, WF, GAME, or the implementation workspace below are file locators under these exact roots. Revalidate them at implementation start because Steam updates and other development work can change the files.
+
+Observed baseline:
+
+- GOE mod.info names GatesOfEuropa, with minimum game version 1.063.0 and maximum 1.067.0. These declarations are not proof of compatibility with the current installation.
+- GOE has 10 files, totaling 135,224,771 bytes. Its main payload is GatesOfEuropa-win-Portable.zip, 134,461,285 bytes.
+- GOE ZIP SHA256: 926BEA2E190B513CD386DAFA8BC0291C54F78E080F27AD906A9C6DF660F7316B.
+- The ZIP contains a Windows Unity Mono application, not an editable Unity project. Relevant paths include current/GatesofEuropa_Data/Managed/Assembly-CSharp.dll, Unity serialized assets, level0, level1, and StreamingAssets/Runtime.
+- Assembly-CSharp.dll is 468,992 bytes; SHA256 B5A9AF8632ACE51CE89D92EE2D19E5384497F658EEA16BDEA984DF73782109F1.
+- A version string in globalgamemanagers is 6000.4.0f1. Treat this as the initial Unity editor version to verify during recovery.
+- current/sq.version identifies package version 0.2.0 and GatesOfEuropaLauncher.exe as the main executable. The Workshop author separately announced patch 0.4.9 on 2 October. These are different version signals; do not assume that package metadata identifies gameplay version or silently update the inspected baseline.
+- WF mod.info names WarFighter GoH and describes WarFighter 2.10.05. There are 18,224 files totaling 50,195,940,296 bytes. Most bytes are packed assets, not campaign code.
+- WF resource/texture.pak is about 31 GB; entity.pak about 12.7 GB; sound.pak about 4.3 GB; map.pak about 740 MB. Index these archives and extract individual entries only when needed.
+- The installed Steam manifest reports game build 25492057. Verify the executable version as well before choosing the integration API baseline.
+
+2. Findings that determine the design
+
+2.1 There are two products to adapt
+
+The strategic map, campaign state, economy, battalions, and save generation belong to the Unity application. GOE's in-game payload is primarily:
+
+- resource/script/multiplayer/modes/conquest.lua
+- resource/script/multiplayer/modes/utility.lua
+- resource/set/dynamic_campaign/resources_standard.set
+- localizations/default/interface/text/main.pot
+- localizations/ru/interface/text/main.po
+
+The small 1.pat is a ZIP containing a .patch marker and an empty set directory. It is not the missing campaign source project.
+
+Copying these files into WF will not provide the strategic campaign.
+
+2.2 WF already has a newer, modular conquest implementation
+
+WF resource/script/multiplayer/modes/conquest.lua requires modules for runtime context, purchases, pressure, scene memory, counterattacks, waves, orders, attacker failure, and battle results. It sets wf_ai_ready, preserves garrison behavior, handles defense preparation, and subscribes to WinnerDecided.
+
+Only some modules are loose WF overrides. The required base modules were found inside GAME resource/gamelogic.pak under script/multiplayer/modes/conquest/. Their absence from the loose WF directory is not a missing-file bug.
+
+WF runtime_context.lua uses BotApi.Conquest.Attacking, FirstEnemyId, DefenderBotId, FirstPlayerId, and PlayerSpawnPoint. GOE uses older BotApi.Instance.Campaign... properties and derives roles from teamSize. Preserve the current WF role and authority logic.
+
+The effective base battle_result.lua handles args.winner in ConquestBattleResult.OnWinnerDecided. This is the preferred integration point, subject to live validation of event data and timing.
+
+2.3 The existing GOE battle result bridge needs correction
+
+GOE conquest.lua searches for a context file under Documents/My Games/gates of hell/GatesOfEuropa, a OneDrive equivalent, and a legacy working-directory fallback. It reads GOE_BRIDGE_ENABLED, GOE_BATTLE_ID, GOE_BRIDGE_RESULT_PATH, GOE_BRIDGE_CONTEXT_PATH, and GOE_BRIDGE_CONTEXT_EXPIRES_UTC.
+
+On GameEnd it writes a key=value result with version=1, finished=1, battleId, playerWon, and debugging fields. Its victory rule is alliedFlags == 0 and opponentFlags > 0, from the bot's perspective. This is unsuitable as an authoritative general result for retreats, quits, multiple bot instances, and all WF win conditions.
+
+The shipped StreamingAssets/Runtime/last_battle_result.txt has no battleId/version and is an old-format sample. Do not use it as the current protocol contract.
+
+2.4 WF roster data differs from the vanilla data expected by GOE
+
+Observed WF include chain:
+resource/set/multiplayer/units/campaign_capture_the_flag.set
+  -> roster_conquest.set
+  -> wf_roster_conquest.inc
+
+Additional source definitions include squads.set, vehicles.set, vehicles_<faction>.set, cp_<faction>.set, and common.set. AI purchase lists are resource/script/multiplayer/units/<faction>/conquest.<faction>.lua.
+
+GOE assembly strings refer to importing set/breed/mp and set/multiplayer/units/conquest from vanilla gamelogic.pak, and vanilla resource/entity/-vehicle.pak. Its importer must resolve WF's effective files and WF resource/entity.pak as well. A faction-name substitution alone is insufficient.
+
+2.5 Ten factions and 29 converted WF campaign maps are available
+
+Observed faction tags from WF army definitions and research files:
+usa, usmc, uaf, ger, fra, idf, grm, reb, rus, pla.
+
+Read display names, icons, army registry IDs, and unit membership from the installed data. Do not infer modern faction identity from GOE's WWII enums. The strings ger, rus, and usa can collide across eras while identifying entirely different content.
+
+WF resource/set/dynamic_campaign/values.set declares permitted matchups in Warfighter and Ostfront regions. It also contains a Nowhere region with eng/fin pairs; do not expose those as supported WF factions.
+
+WF resource/set/dynamic_campaign/map_points.set lists 29 maps in its Warfighter region. All 29 were checked for both campaign_capture_the_flag.mi and campaign_capture_the_flag.info entries in WF resource/map.pak. That establishes file presence, not in-game correctness. Examples include multi/dcg_8v8_delta, multi/dcg_8x8_al_kihar, and multi/dcg_8v8_ukraine_map.
+
+The fra and idf research files currently contain reinforcement and defense technologies only. They have purchase lists, so sparse research data must not be interpreted as absence of playable units.
+
+3. Target architecture and preservation requirements
+
+Use a separate WF campaign application plus a small local integration mod/overlay during development. Keep WF's models, weapons, textures, sounds, factions, tactical AI, and mission scripts authoritative. Reference the installed WF dependency instead of duplicating its approximately 50 GB payload.
+
+Suggested workspace structure:
+
+WarfighterCampaign/
+  evidence/             manifests, hashes, archive indexes, findings
+  upstream/             immutable extracted GOE snapshot, excluded from routine commits
+  recovered/            decompiled reference and recovered Unity project
+  campaign/             maintainable campaign application source
+  integration-mod/      mod.info and only required resource overrides
+  adapters/             WF content resolver, catalog and save adapters
+  data/                 factions, scenario, rules, generated catalogs
+  tests/fixtures/       sanitized saves, results, roster/parser cases
+  tools/                extraction, indexing, catalog, validation and packaging scripts
+  build/                generated local builds
+  docs/                 contracts, build instructions, decisions and parity matrix
+
+Names above are proposed deliverables, not files currently present.
+
+Separate these responsibilities explicitly:
+
+- Campaign domain: provinces, adjacency, ownership, movement, turns, resources, supply, research, recruitment, diplomacy, and AI.
+- WF content adapter: effective archive/loose-file lookup, definition parsing, catalog construction, faction/map registry and research mapping.
+- Battle adapter: generated save and scenario objects, participant assignments, reinforcements, winner/result collection and survivor import.
+- Persistence: versioned campaign saves, pending-battle transaction, recovery journal and backups.
+- UI/network: campaign screens and host-authoritative co-op using the same validated domain commands.
+
+Do not replace WF conquest.lua with GOE's file, replace global utility.lua, copy GOE resources_standard.set wholesale, edit base-game archives, or modify both Workshop installations as a development strategy. Preserve ongoing WF modifications by checking hashes before every deployment.
+
+4. Stage A — Capture the baseline and reproducible extraction
+
+Tasks:
+
+1. Inspect applicable AGENTS.md files and any existing WF development repository. Use an existing source repository if one exists; these Workshop folders are installation snapshots.
+2. Create the implementation workspace and a source-control repository if needed. Exclude extracted commercial/mod asset payloads and generated saves from normal commits.
+3. Produce source-manifest.json and target-manifest.json with relative paths, sizes, timestamps, and hashes of code/config files. Hash large archives once if needed for release identity; use per-entry metadata and selected hashes for iterative checks.
+4. Record game executable/build version and effective enabled mods. Resolve the chosen profile without dumping unrelated player/account data into logs.
+5. Preserve the ZIP unchanged. Extract it into upstream/goe-portable using an archive library or installed 7-Zip. Validate that every archive path resolves inside the extraction destination. Do not run Update.exe or the updater launcher during baseline capture.
+6. Save archive indexes for GOE and WF and the effective base modules. Copy the small code/config files needed for diffing; avoid a second complete WF asset copy.
+7. Record available source/license information for reused code and art in provenance.json. No source project or reuse license was found in the top-level inspection; carry that unresolved item into packaging rather than treating extracted files as newly authored code.
+
+Initial extraction command, after $workspace is set to the approved implementation directory:
+
+$goeZip = 'E:\Steam\steamapps\workshop\content\400750\3717998771\GatesOfEuropa-win-Portable.zip'
+$extractDir = Join-Path $workspace 'upstream\goe-portable'
+# Validate ZIP entry paths before extraction, then:
+Expand-Archive -LiteralPath $goeZip -DestinationPath $extractDir
+
+Acceptance: repeatable extraction; source hashes match this plan or differences are documented; original installations and saves remain intact.
+
+5. Stage B — Recover and understand the application
+
+First look for an available original Unity project. If only this build is available, use ILSpy for managed-code inspection and AssetRipper for serialized assets and project recovery. Use official project distributions and record tool versions. AssetRipper's documentation currently lists support through Unity 6000.4.X, but recovery quality still needs testing.
+
+Suggested ILSpy command once the tool is available:
+
+ilspycmd -p -o <workspace>\recovered\csharp <extracted>\current\GatesofEuropa_Data\Managed\Assembly-CSharp.dll
+
+Supply the extracted Managed directory as the assembly reference location using the installed tool's documented options. Do not add every Unity runtime DLL to a Unity Assets directory: that creates duplicate engine types.
+
+Recover scenes, MonoBehaviour/ScriptableObject data, materials, textures, map ID textures, province definitions, UI prefabs, campaign setup and rule assets. Reconcile recovered scripts with serialized type/field names and references. A compilable decompiled C# project is not by itself a restored Unity application.
+
+Open a recovered copy in the matching Unity editor version after confirming 6000.4.0f1. Resolve render pipeline, input, TextMeshPro, Burst, Netcode and Transport dependencies from actual recovered references, rather than guessing package versions. Repair serialized references and scenes; log each repair.
+
+Prioritize these observed symbols during decompilation:
+
+- CampaignState, CampaignStateBuilder, CampaignStateExporter, CampaignResources
+- ProvinceDatabase, ProvinceDefinition, ProvinceMapController and its partial-file methods
+- CampaignSetupAsset, CampaignWorldRulesAsset, CampaignSupplyRulesAsset
+- CampaignAiRunner, CampaignAiCombatRunner, CampaignAiSettings
+- CampaignAllianceUtility, CampaignDiplomacyUtility, CampaignEncirclementUtility
+- CampaignResupplyUtility, ProvinceBuildingRulesAsset, CampaignScriptedEventRunner
+- GohGameDataLocator, GohPakDataSource, GohModDependencyUtility
+- GohUnitCatalogImporter, GohUnitCatalogImportSettings, GohFullUnitTemplateImporter
+- GohFullUnitTemplateCache, GohResearchCatalogSync, GohResearchTreeAsset
+- CampaignScnExporter, GohBattleSaveExporter, GohStatusExportSettings
+- GohCampaignObjectBuilder, GohObjectIdAllocator, GohTemplateValidationUtility
+- GohCampaignScnSquadImporter, GoeBattleBridgeContextWriter, GohBattleResultReader
+- PendingBattleRecord, BattleManifest, BattleResult
+- CampaignNetworkSessionManager, CampaignMultiplayerUtility, CampaignPlayerSlot
+
+Trace a complete call graph: new campaign -> select/attack province -> pending battle -> export -> launch -> result read -> survivor import -> strategic commit -> save/reload. Document actual method names, inputs, generated files, and mutations.
+
+The shipped campaign_state.json contains 517 province records and 3 battalions, but sampled provinces have empty adjacency/terrain and zero coordinates. Treat it as a runtime/sample snapshot. Recover the authoritative map setup and adjacency assets; do not build the production campaign from that JSON alone.
+
+Build a feature-parity matrix covering each user-facing source feature and its code/data entry points. Label each feature as observed working, discovered but unverified, incomplete upstream, or absent.
+
+Recovery gate: require a repeatable local build with functioning campaign map, new/load/save, and unit catalog UI before broad modification. If recovery cannot meet this gate, document the precise missing references/source and choose either original-source acquisition or a separately estimated reimplementation of the campaign shell/domain. Do not spend the project on increasingly fragile edits to the shipped DLL or claim source recovery is guaranteed.
+
+6. Stage C — Implement WF content resolution and catalogs
+
+Build one content resolver shared by catalogs, templates, maps and research. It must reproduce the tested effective game load order across base-game archives, relevant DLC, WF archives, WF loose files and the integration overlay. Record the winning source path and hash for every resolved object. Test precedence using actual duplicate paths rather than assuming an archive/loose-file ordering.
+
+Index ZIP/ZIP64 .pak entries on demand. Normalize slash/case handling for lookups while retaining original names. Stream entity entries rather than extracting the 12.7 GB archive. Invalidate caches when contributing files or mod/game versions change.
+
+Implement or adapt a real parser for the game's definition syntax: nested braces, quoted strings, comments, include directives, template/macro invocations, parameters and inheritance. Regex may discover candidate paths but must not be the only parser for complete squad/vehicle definitions. Detect include cycles and unresolved references with a source trace.
+
+Catalog requirements:
+
+- Resolve the observed campaign_capture_the_flag.set -> roster_conquest.set -> wf_roster_conquest.inc chain.
+- Preserve exact purchase IDs including faction suffixes and parentheses. Resolve squad members, human breeds, vehicle entity names, crews, passengers, equipment and inventory.
+- Read costs, command points, research gates and unit categories from effective WF definitions. Preserve meaningful zero/negative values until their semantics are understood; WF has command elements with negative CP, so blanket clamping changes gameplay.
+- Resolve entity inheritance and vehicle templates from WF entity.pak and any dependencies.
+- Use AI Lua purchase lists as AI availability/role information, not as a substitute for all player roster definitions.
+- Record portrait/localization sources and generate a clear placeholder for missing presentation assets, without treating that as a missing combat unit.
+- Produce catalog-validation.json listing unresolved units, duplicate IDs, unsupported object forms, missing research links and per-faction coverage.
+
+Create a data-driven faction registry with campaignFactionId, gohArmyTag, armyRegistryId, missionNationId, localizationKey, icon, roster source, research source and scenario role. Keep these identifiers separate. For example fra's observed army registry ID is 5 while WF's mission nation mapping uses 6.
+
+Use all ten WF factions in the data model. Start live integration tests with usa versus rus, then cover all factions. For fra/idf, explicitly handle the existing sparse research trees instead of inventing unit unlock dependencies.
+
+Acceptance: all advertised playable units resolve or appear in a blocking exception report; no silent vanilla WWII fallback; repeated catalog builds are deterministic for the same inputs; source provenance can explain every resolved unit.
+
+7. Stage D — Build the first complete battle round trip
+
+Use a small, deterministic scenario with adjacent provinces, usa and rus, a known WF infantry squad, a crewed vehicle, and a valid WF map. Select actual IDs from the generated catalog. This is a milestone, not a reduction of full scope.
+
+Battle export must establish:
+
+- Unique campaign, battle, battalion and unit identities; attacker/defender roles independent of team letters and faction enums.
+- Correct profile campaign directory selected explicitly from discovered profiles, including redirected Documents/OneDrive/LocalAppData paths where supported.
+- Valid status and campaign.scn entries in the generated .sav, with the actual archive/schema learned from working saves and recovered exporters.
+- Correct map/mode, mod dependencies, faction tags, player/bot slots, reinforcement stages, object IDs, crews, passengers, weapons and inventories.
+- Correct ownership of both forces. Verify whether WF's ongoing AI purchases would add units beyond the campaign enemy roster. Choose and document a roster-limited reinforcement budget or an explicit strategic reinforcement source; do not accidentally duplicate the opposing army through the native purchase loop.
+- Tested relationship between GOE's stage capacity assumptions and WF command points. The source resources_standard.set contains unusually large stage/budget settings. Port only settings demonstrated necessary for serialization/deployment, isolated to the integration mode, with WF scaling tests.
+
+Capture a golden generated save and post-battle save for an attack and defense. Compare with a native WF campaign save to identify required fields. Validate object reference closure and unique IDs before launch.
+
+Acceptance: a generated save loads, displays the chosen modern armies, deploys the expected units on a WF map, completes, and returns an authenticated-by-local-context result plus survivor data to the same pending campaign battle.
+
+8. Stage E — Add the WF bridge without regressing tactical AI
+
+Create a dedicated module, proposed path:
+integration-mod/resource/script/multiplayer/modes/conquest/wf_campaign_bridge.lua
+
+Use a minimal merge of WF conquest.lua to load and call this module. Preserve all existing requires, event handlers, wf_ai_ready transitions, garrison registration, defender relief assignments, preparation notification, purchase logic and cleanup.
+
+Wrap the existing WinnerDecided handler at the subscription point, preserving its call and arguments. Capture the winner before relying on post-battle cleanup. Use a single designated writer based on the effective BotApi.Conquest authority rules; prove this in multi-bot and co-op tests. Do not let multiple Lua instances overwrite the same result.
+
+Treat a valid winner equal to the designated human team as victory and the opposing team as defeat. Unknown event data, aborts and disconnects remain unresolved/aborted. Do not turn every GameEnd into a completed defeat. Use flag counts only as diagnostics. Derive attacker success from playerWon plus the saved playerIsAttacker field, with explicit tests of all four combinations.
+
+Replace GOE-specific runtime paths and the observed hard-coded mod_3717998771:0 dependency string through a dependency adapter. Discover the actual identifier for the local integration mod. Do not blindly substitute a new numeric ID into every string or overwrite options.set as a whole. Preserve unrelated enabled-mod settings and verify effective ordering in game.
+
+Proposed versioned protocol fields:
+
+Context: protocolVersion, campaignId, battleId, attemptId, nonce, createdUtc, expiresUtc, playerIsAttacker, expectedPlayerTeam, expectedEnemyTeam, designatedWriterId, expectedSavePath, expectedMapId, contentVersion, resultPath.
+
+Result: protocolVersion, campaignId, battleId, attemptId, nonce, completionStatus, winnerTeam, playerWon, completionReason, completedUtc, writerId, resultSequence, diagnostics, savedRosterArtifactReference.
+
+These are proposed additions; the current GOE bridge does not implement them. Team/writer values that become known only after mission initialization must be bound and verified then, not guessed when exporting the save.
+
+Prefer a limited data format rather than executing arbitrary context content. If a generated Lua context remains necessary, emit only escaped constant assignments and accept files only from the application's own context directory. Validate paths remain under the configured exchange/save roots.
+
+Write results to a temporary file, close it, then atomically rename where supported by the engine runtime. The reader must reject incomplete files and mismatched IDs even if atomic rename is unavailable. Keep a result until the companion has acknowledged and committed it; consuming a context must not destroy the only recovery evidence.
+
+Acceptance: official wins/losses produce one matching result; duplicate callbacks are harmless; normal WF sessions without context behave exactly as before; canceled, stale and foreign contexts cannot change a campaign.
+
+9. Stage F — Persist casualties, captures and campaign transactions
+
+Persist a pending transaction before exporting/launching. Suggested states:
+Prepared -> Exported -> Running -> ResultObserved -> RosterValidated -> Committed.
+Also support Cancelled and RecoveryRequired.
+
+Persist campaign revision, pre-battle roster, export fingerprint, participants, selected map, scenario rules, and artifact paths. Make every transition restartable. A winner event may occur before the game has written its final save: do not import immediately on event receipt without establishing save completion.
+
+Use GohCampaignScnSquadImporter and its stage/participant import paths as reference. Import from the confirmed post-battle save for this battle. Verify metadata and content stability; timestamps alone are weak evidence. The GOE assembly explicitly warns about a loose campaign.scn fallback possibly being pre-battle data. Never silently use that fallback to restore the original roster after casualties.
+
+Preserve surviving soldiers, equipment, crew/passenger relationships, vehicles, veterancy, ammo/fuel and damage to the extent the actual save format supports them. Maintain stable instance IDs across battles; a purchase ID identifies a unit type, not one instance. Record captured equipment ownership and avoid duplication. Distinguish units never deployed, destroyed, retreated, evacuated, despawned by mission scripts, and genuinely missing from a valid final save.
+
+WF retreat scripts remove surviving bot units. Determine where their remaining strategic strength can be captured before removal. If the engine cannot provide an exact AI roster, define an explicit tested casualty model with visible limitations; do not equate all despawns with deaths or claim exact persistence without evidence.
+
+Commit ownership, movement expenditure, casualties, resources and research rewards together using an idempotent campaign revision. Reopening the same result must not grant another province, refund, reinforcement or reward. On uncertainty retain the pending battle and show a recoverable error.
+
+Acceptance: restart at each transition; no duplicate rewards or lost committed state; accurate infantry and crewed-vehicle casualty round trips; ambiguous post-battle saves remain unresolved rather than silently guessed.
+
+10. Stage G — Adapt the full strategic game
+
+Preserve and verify the recovered campaign mechanics while replacing WWII-specific data with WF configuration. Complete a parity matrix with tests for the following systems:
+
+1. Province map: recovered geometry/ID texture, picking, adjacency, terrain, ownership colors, borders, garrisons and occupancy.
+2. New/load/save campaign: faction selection, campaign names, difficulty, scenario selection, game/profile validation and content-version checks.
+3. Movement and attacks: adjacency, movement allowance, occupied destinations, reinforcements, multiple battalions, contested provinces and turn transitions.
+4. Territory and defeat: capture, defense, retreat destinations, encirclement, eliminated battalions/factions, campaign victory and defeat conditions.
+5. Economy: province yields, recruitment, upkeep, supply, ammunition/fuel/resupply, buildings, specialization and fortifications where present in recovered behavior.
+6. Unit management: recruitment, merging/splitting/disbanding where supported, unit details, deployable stages and persistent battalion rosters.
+7. Research: WF tech IDs, prerequisites, costs, unlocks and stage/defense progression. Handle sparse faction trees explicitly.
+8. Strategic AI: recruitment, movement, targeting, defense, reinforcement, supply and diplomacy; avoid moving or resolving a pending player battle during an AI turn.
+9. Alliances, diplomacy and scripted events: recover actual rules and replace scenario-specific WWII assumptions with data-driven WF rules.
+10. Autoresolve: port the algorithm as a baseline, then calibrate modern roles including infantry, armor, anti-tank, artillery, air defense, aviation and drones if present in the catalog. Test losses and reinforcements; do not silently omit unsupported categories.
+
+Use separate ledgers for strategic resources and tactical MP/AP/RP/SP/CP, with explicit conversion policy where needed. Avoid granting native battle rewards and campaign rewards twice. Ensure resupply and recruitment remain affordable without creating infinite resource loops.
+
+Scenario default for implementation: retain the recovered Europe map for the first complete campaign, but create a fictional modern WF scenario with explicit faction ownership, capitals, alliances and reinforcement sources. Do not silently relabel WWII country ownership as contemporary history. All ten rosters can exist without every faction owning European territory; expeditionary starts and scenario selection are configuration choices. Mark this default as provisional and configurable in the scenario data.
+
+Validate disconnected provinces, islands, sea crossings and factions without a starting province. A full global map is separate geography production, not a prerequisite for adapting the full campaign system.
+
+Acceptance: every parity row is implemented/tested or clearly identified as an unresolved upstream/recovery gap; repeated seeded campaigns progress without stalled turns, impossible recruitment, invalid attacks, or corrupt saves. An unimplemented major row means full adaptation is not complete.
+
+11. Stage H — Map selection and complete faction coverage
+
+Build a map registry from effective map_points.set plus actual archive entries. Store map ID, game mode, terrain/biome, spawn capacity, size, source mod/DLC and dependencies. Do not infer DLC ownership solely from cached map files or offer inaccessible DLC maps.
+
+Start with the 29 converted WF campaign maps, then validate optional base/DLC campaign maps with WF units. Validate spawn points, flags, deployment areas, pathfinding, mission triggers and faction-specific mission variables in game. Presence of .mi/.info alone is insufficient.
+
+Use values.set matchups as the initial allowed set. Diplomacy must not generate unsupported tactical pairings. Add a new pairing only after validating both armies, mission variables, spawns and UI. Keep player-as-attacker and player-as-defender coverage distinct.
+
+Run catalog/static validation for all ten factions and every enabled map. Live-test every advertised faction in both roles, cover each distinct map family/mission template, and load all 29 converted WF maps at least once. Include mixed rosters, heavy vehicles, crews, transports and specialized assets.
+
+Acceptance: the campaign only selects supported, accessible maps and pairings; no silent fallback to a WWII faction or unrelated map; map and faction readiness is visible in a generated coverage report.
+
+12. Stage I — Restore and validate co-op
+
+Full source feature scope includes co-op; it is not an optional final polish item. Implement after the solo battle round trip is reliable, then complete it before claiming full parity.
+
+The assembly includes CampaignNetworkSessionManager and related authority checks. A string mentions a maximum of three human players; verify that against recovered implementation/UI before documenting it as a supported limit.
+
+Use host-authoritative strategic state. Validate command ownership, turns, diplomacy, research, province buildings, reinforcement selection and battle submission. Clients must share campaign schema, content hashes and adapter protocol versions. Keep local filesystem paths out of shared campaign identity.
+
+Define who owns each tactical export, who launches/hosts the tactical game, and who may submit its result. All participating clients must have the correct WF and integration versions. Only one accepted result may commit the strategic transaction. Recover interrupted connections and reconnect to a consistent pending battle or campaign snapshot.
+
+Acceptance: two-client end-to-end campaign/battle/reconnect test, plus the maximum-player case supported by recovered upstream behavior; rejected out-of-turn/wrong-faction/duplicate result commands do not alter state.
+
+13. Stage J — Packaging, deployment and rollback
+
+Build a standalone WF campaign application with a distinct product name and save namespace. Do not keep GOE's updater channel or enable an upstream updater that can replace WF changes. Preserve required attribution and maintain a concrete list of reused code/assets and their distribution status. Resolve that status before publishing a redistributed build; do not bundle the entire original game or WF asset archives.
+
+Package the minimal integration layer as a local add-on requiring WF, with tested load order and game-version bounds. Give it a distinct identity; do not reuse GOE's Workshop ID. If the eventual desired release is an integrated WF update, merge only the reviewed source changes after the add-on passes validation.
+
+Provide a deployment script with dry-run, allowed target roots, file-level backup manifest, precondition hashes and rollback. If deployment touches options.set, parse and preserve unrelated values; restore only this application's changes. If files changed since staging, stop for reconciliation instead of overwriting another agent's work.
+
+Do not patch inside base-game .pak archives. Avoid copying the entire WF directory. Any unavoidable direct Workshop deployment must be a documented, reproducible patch with backups because Steam may replace it.
+
+Installation acceptance: on a second clean local build/profile, a user can point to GAME and WF, generate the catalogs, start a campaign, complete a battle and reload it using the documented steps. Removal restores the prior tactical behavior and preserves campaign saves for later reinstall.
+
+14. Required test matrix
+
+Automated tests should focus on state corruption and compatibility risks:
+
+- Definition parser: nested includes/macros, quoted IDs, comments, faction suffixes, duplicate overrides, missing references, include cycles and CP semantics.
+- Catalog/content: deterministic output, correct archive precedence, cache invalidation, missing dependencies and all ten faction registries.
+- Export: unique object IDs, complete object graphs, member/crew/passenger references, stages and deterministic fixtures for each supported unit form.
+- Bridge: attack win/loss, defense win/loss, missing winner, malformed result, wrong campaign/battle/attempt, expired context, duplicate callback, multiple writers, partial write and delayed save.
+- Persistence: crash at every transaction boundary, replayed result, two pending battles, wrong final save, migration and backup restoration.
+- Campaign: resource conservation, research prerequisites, legal movement, encirclement, eliminated factions, deterministic AI and autoresolve, invalid map/matchup exclusion.
+- Co-op: host-only state commit, faction permissions, content mismatch, reconnect and repeated battle submission.
+
+Manual in-game acceptance must cover:
+
+- WF alone as baseline and with the integration enabled but no campaign context.
+- Attack and defense on a converted WF map and an enabled base/DLC map.
+- Native flag victory, retreat/attacker failure, defeat, quit before completion, and game crash.
+- Infantry losses, crewed vehicle survival/destruction, transported infantry, reinforcements, undeployed units and captured equipment.
+- Single-player and co-op, including designated result-writer behavior.
+- Every advertised faction in both roles and map coverage as specified above.
+- Save/load across a companion restart and across a completed battle.
+
+Retain logs, relevant generated saves, manifest versions and expected/actual outcomes. A mock Lua test does not establish that the engine emits the assumed event payload or writes the final save in the assumed order.
+
+15. Ordered milestones and completion criteria
+
+M0 — Frozen baseline and extraction: manifests, archive indexes, source/target identity, provenance notes.
+M1 — Recovered build: reproducible startup/new/save/load with mapped source features; recovery limitations resolved or a concrete replacement architecture agreed.
+M2 — WF adapter: ten-faction catalog, dependency resolver, research/map registry and validation reports.
+M3 — Solo complete round trip: generated modern battle, official winner, survivor import, atomic campaign commit and reload.
+M4 — Full strategic system: completed feature matrix, modern economy/research/AI/autoresolve and campaign scenario.
+M5 — Coverage and co-op: all advertised factions/maps validated; co-op and reconnect complete.
+M6 — Reproducible release candidate: clean build/install, documentation, provenance, rollback and regression results.
+
+Dependency order: M0 -> M1 -> M2 -> M3 -> M4 -> M5 -> M6. Archive indexing and content analysis can proceed during recovery, but do not start broad gameplay rebalancing before the save/result pipeline works. Do not call M3 the finished task: the request is for the full system.
+
+The largest uncertainties are project recovery, WF template/import fidelity, enemy-roster reconciliation with native AI purchases, and survivor data after retreat. Size the project after M1 and M3 using measured results rather than promising a short asset-copy conversion.
+
+16. Agent execution instructions
+
+Read this plan and inspect the current files before making changes. Implement in the staged workspace with small reviewable commits. Preserve WF's existing conquest behavior and use a dedicated bridge module. Keep a living feature-parity matrix and milestone log recording files changed, validation performed, remaining risks and the next action.
+
+Begin with M0 and M1. Inspect the recovered exporters/importers early and prove M3 before broad polish. Continue through the full scope; if a critical capability requires unavailable source or an unverified engine API, report the exact evidence and remaining dependency rather than substituting guessed behavior. Do not publish, message the source author, or overwrite live installations merely because this planning document describes future packaging.
+
+Required final handoff from the implementing agent:
+
+- Buildable source or a precisely documented recovery blocker.
+- Campaign application and minimal WF integration package.
+- Extraction/content-index/catalog/build/deploy/rollback scripts.
+- Faction, map, unit and research registries with provenance and coverage reports.
+- Versioned battle protocol, save schema, fixtures and migration policy.
+- Full feature-parity matrix, automated test results and in-game acceptance evidence.
+- User installation instructions, known limitations and supported game/mod versions.
+
+17. Evidence and tool references
+
+Primary evidence is the local file inspection described above. Supporting inspection files are in the planning evidence directory: archive-index.json, assembly-ascii.txt, assembly-unicode.txt, extracted package metadata, sample state/result, and selected base conquest modules. String extraction is a discovery aid; validate behavior in decompiled methods and runtime tests.
+
+Source Workshop page, feature description and author update note:
+https://steamcommunity.com/sharedfiles/filedetails/?id=3717998771
+
+Official ILSpy command-line documentation:
+https://github.com/icsharpcode/ILSpy/tree/master/ICSharpCode.ILSpyCmd
+
+Official AssetRipper project and Unity version support statement:
+https://github.com/AssetRipper/AssetRipper
+
+The WF public Workshop page could not be retrieved during planning. WF findings in this document come from the installed target files, not inferred web descriptions.

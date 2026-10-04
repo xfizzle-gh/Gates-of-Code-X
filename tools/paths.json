@@ -1,0 +1,11 @@
+{
+  "GOE": "E:\\Steam\\steamapps\\workshop\\content\\400750\\3717998771",
+  "WF": "E:\\Steam\\steamapps\\workshop\\content\\400750\\3809475216",
+  "GAME": "E:\\Steam\\steamapps\\common\\Call to Arms - Gates of Hell",
+  "STEAM_MANIFEST": "E:\\Steam\\steamapps\\appmanifest_400750.acf",
+  "expected": {
+    "goe_zip_sha256": "926BEA2E190B513CD386DAFA8BC0291C54F78E080F27AD906A9C6DF660F7316B",
+    "goe_assembly_sha256": "B5A9AF8632ACE51CE89D92EE2D19E5384497F658EEA16BDEA984DF73782109F1",
+    "game_buildid": "25492057"
+  }
+}
