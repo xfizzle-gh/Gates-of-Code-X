@@ -44,12 +44,22 @@ def set_field(block: str, name: str, value: str) -> str:
 
 
 def write_flag(tag: str) -> str:
-    src = next((p for p in (FLAGS_SRC / f"tooltip_flag_{tag}.tga", FLAGS_SRC / f"tooltip_flag_{tag}.png") if p.exists()), None)
+    # WF has a full-brightness flag for some factions and only a dimmed tooltip version for others.
+    candidates = [FLAGS_SRC / f"flag_{tag}.tga", FLAGS_SRC / f"flag_{tag}.png",
+                  FLAGS_SRC / f"tooltip_flag_{tag}.tga", FLAGS_SRC / f"tooltip_flag_{tag}.png"]
+    src = next((p for p in candidates if p.exists()), None)
     if src is None:
         return "{fileID: 0}"
     FLAGS_OUT.mkdir(parents=True, exist_ok=True)
     dst = FLAGS_OUT / f"flag_{tag}.png"
-    Image.open(src).convert("RGBA").save(dst)
+    im = Image.open(src).convert("RGBA")
+    if src.name.startswith("tooltip_"):
+        r, g, b, a = im.split()
+        peak = max(max(c.getextrema()[1] for c in (r, g, b)), 1)
+        gain = 255.0 / peak
+        r, g, b = (c.point(lambda v: min(255, int(v * gain))) for c in (r, g, b))
+        im = Image.merge("RGBA", (r, g, b, a))
+    im.save(dst)
     guid = guid_for("flag/" + tag)
     dst.with_name(dst.name + ".meta").write_text(
         f"fileFormatVersion: 2\nguid: {guid}\nTextureImporter:\n  mipmaps:\n    enableMipMap: 0\n"

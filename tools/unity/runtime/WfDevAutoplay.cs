@@ -160,6 +160,10 @@ public class WfDevAutoplay : MonoBehaviour
 					continue;
 				}
 				string tag = Call<string>("GetFactionUnitTag", me);
+				if (units.Length == 1 && units[0].Trim() == "auto")
+				{
+					units = PickUnits(tag);
+				}
 				BattalionData battalion = new BattalionData
 				{
 					BattalionId = Call<string>("GenerateNewBattalionId", tag),
@@ -177,12 +181,34 @@ public class WfDevAutoplay : MonoBehaviour
 				Call<object>("ApplyBattalionManagementResultInternal", result, me);
 				created = FindBattalion(state, battalion.BattalionId);
 				targetProvinceId = enemy.ProvinceId;
+				Log("setup units: " + string.Join(", ", units));
 				Log("setup: battalion " + battalion.BattalionId + " (" + tag + ") in " + own.ProvinceId + " [" + own.DisplayName + "], created=" + (created != null)
 					+ "; target " + enemy.BattalionId + " (" + enemy.Faction + ", tag " + enemy.GohFactionTag + ") in " + enemy.ProvinceId);
 				return;
 			}
 		}
 		Log("setup: no own empty province is adjacent to an attackable enemy battalion");
+	}
+
+	// "setup auto": the faction's first visible infantry squad, support squad and armoured unit.
+	private static string[] PickUnits(string tag)
+	{
+		List<string> picked = new List<string>();
+		GohUnitCatalog catalog = WfFactions.Catalog(tag);
+		GohUnitSection[] wanted = { GohUnitSection.Inf1, GohUnitSection.Inf2, GohUnitSection.Tanks };
+		for (int w = 0; catalog != null && w < wanted.Length; w++)
+		{
+			for (int i = 0; i < catalog.Entries.Count; i++)
+			{
+				GohUnitCatalogEntry entry = catalog.Entries[i];
+				if (entry != null && !entry.HideFromBattalionManagement && entry.Section == wanted[w])
+				{
+					picked.Add(entry.RawName);
+					break;
+				}
+			}
+		}
+		return picked.ToArray();
 	}
 
 	private void Attack()

@@ -280,6 +280,34 @@ Observed, not fixed:
 - The Bundeswehr turn banner shows no flag (name is correct).
 - Incremental builds now report `errors: 72` (same benign PPtr cast messages).
 
+### Cleanup and ten-faction in-app run (2026-10-04)
+
+- Start menu: GOE artwork/title replaced by WF's own menu image, darkened, with a drawn title
+  (`tools/build_wf_branding.py`); version label is "dev build".
+- Flags: `build_wf_content.py` was deleting the scenario generator's flag folder on every run; it now
+  removes only its own files. Flags prefer WF's full-brightness `flag_<tag>` and brighten the dim
+  `tooltip_flag_<tag>` versions (used for usa, ger, rus).
+- `options.set` is written only by the app's "Launch Gates of Hell" button, never by export. It now
+  keeps a one-time `options.set.wfcampaign.bak` before its first change. User-facing text names WarFighter.
+- Autoplay `setup auto` picks the faction's own first infantry squad, support squad and armoured unit.
+  A run that put German units in an AFRF battalion was correctly refused by the exporter
+  ("No full GoH template data … export aborted") instead of writing a bad save.
+
+`tests/autoplay/attack_round_trip.txt` for each faction, stand-in win, 0 exceptions in all ten runs:
+
+| Faction | Units | Attack | After resolve |
+| --- | --- | --- | --- |
+| uaf | squad1, command_team_t2, acv-15_aapc | exported, vs PLA | province captured |
+| ger | squad1, command_team_t2, gtk_boxer_gmw | exported, vs GRM | province captured |
+| fra | squad1, command_team_t2, amx10rc | exported, vs GRM | province captured |
+| grm | squad1, command_team_t2, bmp1_grm | exported, vs US Army | province captured |
+| rus | squad1, command_team_t2, 2s25m | exported, vs UAF | province captured |
+| pla | squad1, command_team_t2, aft10 | exported, vs Bundeswehr | province captured |
+| usa, usmc, idf, reb | — | not reached | no own province borders an enemy battalion after one turn |
+
+The four that did not attack are a consequence of the placeholder territory (e.g. US Army in the
+British Isles), not an export failure. Their exports are covered by the headless sweep only.
+
 Known noise: incremental player builds log 60 × "PPtr cast failed … PluginImporter to MonoScript" and
 report `errors: 60` while succeeding. Clean builds report 0. The built app runs with 0 exceptions.
 

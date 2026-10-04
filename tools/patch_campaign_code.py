@@ -148,7 +148,15 @@ def patch_battle_export() -> None:
     # The battle save must require WarFighter, not the Gates of Europa workshop item.
     path = SRC / "GohModDependencyUtility.cs"
     t = path.read_text(encoding="utf-8")
-    path.write_text(t.replace("mod_3717998771:0", settings["modDependency"]), encoding="utf-8")
+    t = t.replace("mod_3717998771:0", settings["modDependency"]).replace("Gates of Europa mod", "WarFighter mod")
+    # "Launch Gates of Hell" inserts the mod into the player's options.set. Keep a one-time copy of
+    # the file as it was before this application first changed it.
+    backup = 'if (!File.Exists(path + ".wfcampaign.bak")) { File.Copy(path, path + ".wfcampaign.bak"); }'
+    if backup not in t:
+        t, n = re.subn(r"(\n(\s*))(File\.WriteAllText\(path, )", lambda m: m.group(1) + backup + "\n" + m.group(2) + m.group(3), t, count=1)
+        if n != 1:
+            raise SystemExit("options.set write site not found")
+    path.write_text(t, encoding="utf-8")
 
     # Keep the bridge exchange files out of Documents and out of the GOE namespace.
     path = SRC / "Paths.cs"
@@ -160,6 +168,7 @@ def patch_battle_export() -> None:
     path = SRC / "ProvinceMapController.cs"
     t = path.read_text(encoding="utf-8")
     t = t.replace('"GatesOfEuropa_" + ', '"WarfighterCampaign_" + ')
+    t = t.replace("failed to enable the Gates of Europa mod in options.set", "failed to enable the WarFighter mod in options.set")
     # GOE waits for its own Lua bridge file before reading the result from the save. WF has no such
     # Lua; the save's playedGames/wonGames counters are the result, so read them directly.
     marker = "/* wf: resolve from save counters */"

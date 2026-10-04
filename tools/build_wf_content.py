@@ -390,9 +390,10 @@ def copy_portrait(uid, suffix, report, tag, display):
 
 
 def main():
-    if OUT.exists():
-        shutil.rmtree(OUT)
-    OUT.mkdir(parents=True)
+    # Only this script's own files: the scenario generator keeps faction flags in the same folder.
+    OUT.mkdir(parents=True, exist_ok=True)
+    for old in list(OUT.glob("GohUnitCatalog_*")) + list(OUT.glob("GohResearchTree_*")):
+        old.unlink()
     PORTRAITS_OUT.mkdir(parents=True, exist_ok=True)
     (OUT.with_name("WfContent.meta")).write_text(
         f"fileFormatVersion: 2\nguid: {guid_for('WfContent')}\nfolderAsset: yes\nDefaultImporter:\n  externalObjects: {{}}\n",
