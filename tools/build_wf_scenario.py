@@ -104,6 +104,11 @@ def main() -> None:
         # garrisons, so in the first AI turn one faction took a dozen provinces across Russia and Ukraine
         # (seen in the owner's first real session). Cap it so fronts move a few provinces at a time.
         b = set_field(b, "MaxUnoccupiedProvinceCapturesPerTurn", str(sc.get("maxUndefendedCapturesPerTurn", 3)))
+        # AI battalions raised per turn scale with the faction's size instead of GOE's flat 10.
+        owned = sum(1 for tag in (sc.get("provinces") or {}).values() if tag == f["tag"])
+        per = sc.get("aiBattalionsPerTurnPerProvinces")
+        if per and owned:
+            b = set_field(b, "EmptyBattalionsPerTurn", str(max(1, round(owned / per))))
         b = set_field(b, "Flag", write_flag(f["tag"]))
         out_blocks.append(b)
     missing = set(by_slot) - seen
@@ -149,6 +154,12 @@ def main() -> None:
             p["ResourceYield"].update(yields)
         counts[p["Owner"]] = counts.get(p["Owner"], 0) + 1
     db_path.write_text(json.dumps(db, indent=4), encoding="utf-8")
+
+    oob = PROJECT / "Assets" / "Resources" / "WfContent" / "order_of_battle.json"
+    oob.parent.mkdir(parents=True, exist_ok=True)
+    oob.write_text(json.dumps({"battalions": sc.get("startingBattalions", [])}, indent=1), encoding="utf-8")
+    oob.with_name(oob.name + ".meta").write_text(
+        f"fileFormatVersion: 2\nguid: {guid_for('order_of_battle')}\nTextScriptImporter:\n  externalObjects: {{}}\n", encoding="utf-8", newline="\n")
 
     CODE_OUT.mkdir(parents=True, exist_ok=True)
     rows = ",\n".join(f'\t\tnew WfFaction("{f["tag"]}", "{f["name"]}", (FactionType){f["slot"]})' for f in factions)

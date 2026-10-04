@@ -429,6 +429,45 @@ Real result read-back with GoW enabled (`WfExportTest.Import` on the Cherkasy sa
 won; 3 squads parsed and kept; the command team came back with 4 members of 5, i.e. a real casualty
 was imported. This is the first casualty case seen; destroyed vehicles are still untested.
 
+### Campaign rules pass: starting armies, hubs, supply (2026-10-04)
+
+Trigger: the owner's first real session (as USMC) could not raise a battalion, and the log showed one AI
+faction taking a dozen undefended provinces in its first turn and several enclaves surrendering.
+
+What the code turned out to do (checked before changing anything):
+- capturing an empty province already costs the battalion its combat action for the turn, for the player
+  and the AI; `MaxUnoccupiedProvinceCapturesPerTurn` is an extra AI-only cap;
+- a battalion is supplied only if it connects to a province OF ITS OWN FACTION with the Ammunition
+  specialization; otherwise it is a pocket that can surrender. The 2032 scenario had left most enclaves
+  without one;
+- AI battalions are not free (they cost manpower) but 10 were allowed per faction per turn.
+
+Changes (owner approved "all of it" from a design review):
+- Starting order of battle: `WfOrderOfBattle` places 57 battalions at campaign creation from the
+  scenario's `startingBattalions` (fronts first, at least one per separate territory; about a quarter
+  of a faction's province count). AI battalions are abstract; a human faction's get 8 real units each.
+- Supply: every separate territory of every faction has an Ammunition province (20 added).
+- Recruiting: the Manpower rule is back on, read as a deployment hub. Every territory of 2+ provinces
+  has a hub, large ones one per 12 provinces; one-province outposts are supply-only. A battalion can be
+  raised on a hub or in a same-owner province next to it (`WfRules.IsRecruitProvince`), for player and AI.
+- A battalion raised this turn has no combat action until the next turn (player and AI).
+- AI battalions per turn = provinces / 10, minimum 1 (was a flat 10). The 3-capture stopgap is removed
+  (back to 100, i.e. effectively the per-battalion rule only).
+
+Defect introduced and fixed in this pass: my "no combat action for a new battalion" patch also matched
+the per-turn reset, so nobody could attack or capture. Found with a new `probe` autoplay command; the
+patch now targets only the new-battalion branch.
+
+Measured with `tests/autoplay/opening_turns.txt` (0 exceptions):
+- as USMC: 57 starting battalions; 4 provinces where the player can recruit; in the first round up to
+  the AI's first attack on the player: 11 undefended captures spread over 5 factions, 12 AI-vs-AI
+  battles (6 won by the attacker), 0 pockets surrendered, 24 AI battalions raised;
+- as AFRF: 20 recruiting provinces; the US Army attacked the player on its first turn.
+An AI attack on the human leaves a pending battle that stops the round until the player fights it.
+
+Not verified: more than one round; a human raising a battalion at a hub through the real screen;
+whether 57 starting battalions and the hub counts feel right; AI behaviour with hubs deep in the rear.
+
 Known noise: incremental player builds log 60 × "PPtr cast failed … PluginImporter to MonoScript" and
 report `errors: 60` while succeeding. Clean builds report 0. The built app runs with 0 exceptions.
 

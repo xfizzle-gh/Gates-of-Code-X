@@ -160,6 +160,67 @@ def main() -> None:
         supply_added.append(f"{tag}:{label(by_id_all[pick])}({len(component)})")
     print("supply sources added (faction:province(size of that territory)): " + ", ".join(supply_added))
 
+    # ---- deployment hubs and the starting order of battle -------------------------------------------
+    side_of = {f["tag"]: f["side"] for f in json.load(open(ROOT / "data" / "scenario_europe.json", encoding="utf-8"))["factions"]}
+
+    def spec_of(i):
+        return overrides.get(i, by_id_all[i]["Specialization"])
+
+    def components_of(tag):
+        todo, out = {i for i, o in owner.items() if o == tag}, []
+        while todo:
+            start = min(todo)
+            comp, stack = [], [start]
+            todo.discard(start)
+            while stack:
+                cur = stack.pop()
+                comp.append(cur)
+                for n in by_id_all[cur]["NeighborProvinceIds"]:
+                    if n in todo:
+                        todo.discard(n)
+                        stack.append(n)
+            out.append(sorted(comp))
+        return out
+
+    def enemy_neighbours(i):
+        return sum(1 for n in by_id_all[i]["NeighborProvinceIds"] if n in owner and side_of[owner[n]] != side_of[owner[i]])
+
+    # Hubs: a Manpower province is where a faction's forces enter that theater. Every territory of two
+    # or more provinces gets at least one, large ones one per HUB_PER_PROVINCES. One-province outposts
+    # (Crete, Cyprus, East Anglia, ...) are supply bases only and cannot raise battalions.
+    HUB_PER_PROVINCES = 12
+    hubs_added, battalions = [], []
+    for tag in sorted(set(owner.values())):
+        comps = components_of(tag)
+        total = sum(len(c) for c in comps)
+        # covering forces: about a quarter of the faction's provinces, at least 2, spread over fronts
+        budget = max(2, round(total / 4))
+        for comp in comps:
+            if len(comp) >= 2:
+                want = max(1, round(len(comp) / HUB_PER_PROVINCES))
+                have = [i for i in comp if spec_of(i) == "Manpower"]
+                rear = sorted((i for i in comp if spec_of(i) in ("None", "")),
+                              key=lambda i: (enemy_neighbours(i), -by_id_all[i]["ResourceYield"]["Manpower"], i))
+                while len(have) < want and rear:
+                    pick = rear.pop(0)
+                    overrides[pick] = "Manpower"
+                    have.append(pick)
+                    hubs_added.append(f"{tag}:{label(by_id_all[pick])}")
+            front = sorted((i for i in comp if enemy_neighbours(i) > 0), key=lambda i: (-enemy_neighbours(i), i))
+            share = max(1, round(budget * len(comp) / total))
+            chosen = front[:share]
+            if not chosen:
+                # no enemy contact here: one garrison, on the supply base rather than on the hub
+                supply_base = [i for i in comp if spec_of(i) == "Ammunition"] or comp
+                chosen = [supply_base[0]]
+            strength = 2 if total <= 6 else 1      # High for tiny factions, Normal otherwise
+            battalions += [{"tag": tag, "province": i, "strength": strength} for i in chosen]
+    print("deployment hubs added: " + ", ".join(hubs_added))
+    per_tag = {}
+    for b in battalions:
+        per_tag[b["tag"]] = per_tag.get(b["tag"], 0) + 1
+    print("starting battalions: " + ", ".join(f"{k}={v}" for k, v in sorted(per_tag.items())) + f" (total {len(battalions)})")
+
     scenario = {
         "id": "continental_war_2032",
         "status": "DRAFT for owner review. Province ownership is a first pass from a geopolitical brief; see docs/scenario-2032.md.",
@@ -169,6 +230,10 @@ def main() -> None:
         "factions": base["factions"],
         "startingResources": base["startingResources"],
         "diplomacy": base["diplomacy"],
+        "requireManpowerProvinceForRecruiting": True,
+        "maxUndefendedCapturesPerTurn": 100,
+        "aiBattalionsPerTurnPerProvinces": 10,
+        "startingBattalions": battalions,
         "specializationOverrides": overrides,
         "yieldOverrides": yields,
         "provinces": dict(sorted(owner.items())),

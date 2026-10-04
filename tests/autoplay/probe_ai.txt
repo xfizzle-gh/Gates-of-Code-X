@@ -1,0 +1,8 @@
+# Diagnostic: what AI battalions can see and do at the start and after one round.
+wait 3
+probe usa
+probe rus
+endturn
+wait 25
+probe usa
+probe rus

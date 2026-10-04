@@ -83,6 +83,9 @@ public class WfDevAutoplay : MonoBehaviour
 			case "createpanel":
 				Try(OpenCreatePanel);
 				break;
+			case "probe":
+				Try(() => Probe(arg));
+				break;
 			case "resolve":
 				Try(() => map.ResolvePendingBattleFromBridgeFile());
 				break;
@@ -183,6 +186,12 @@ public class WfDevAutoplay : MonoBehaviour
 				BattalionManagementResult result = new BattalionManagementResult { Battalion = battalion, RecruitedPool = factionState.RecruitedPool };
 				Call<object>("ApplyBattalionManagementResultInternal", result, me);
 				created = FindBattalion(state, battalion.BattalionId);
+				if (created != null)
+				{
+					// Test shortcut: the game makes a new battalion wait a turn before it can attack.
+					created.RemainingCombatActions = Mathf.Max(1, created.RemainingCombatActions);
+					created.RemainingMovement = Mathf.Max(1, created.RemainingMovement);
+				}
 				targetProvinceId = enemy.ProvinceId;
 				Log("setup units: " + string.Join(", ", units));
 				Log("setup: battalion " + battalion.BattalionId + " (" + tag + ") in " + own.ProvinceId + " [" + own.DisplayName + "], created=" + (created != null)
@@ -236,6 +245,41 @@ public class WfDevAutoplay : MonoBehaviour
 		Call<object>("SelectProvince", first);
 		map.OpenCreateBattalionInSelectedProvince();
 		Log("createpanel: opened for " + first + " [" + provinces[first].DisplayName + "]");
+	}
+
+	// Diagnostic: for a faction's starting battalions, show their remaining actions and what is next to them.
+	private void Probe(string tag)
+	{
+		CampaignState state = Field<CampaignState>("campaignState");
+		Dictionary<string, ProvinceDefinition> provinces = Field<Dictionary<string, ProvinceDefinition>>("runtimeProvincesById");
+		int shown = 0;
+		for (int i = 0; i < state.Battalions.Count && shown < 6; i++)
+		{
+			BattalionData b = state.Battalions[i];
+			if (b == null || b.GohFactionTag != tag || !provinces.TryGetValue(b.ProvinceId, out ProvinceDefinition here))
+			{
+				continue;
+			}
+			shown++;
+			StringBuilder sb = new StringBuilder();
+			sb.Append("probe " + b.BattalionId + " in " + here.DisplayName + " move=" + b.RemainingMovement + " friendly=" + b.FriendlyTerritoryMovementRemaining
+				+ " combat=" + b.RemainingCombatActions + " units=" + b.AbstractUnitCount + "/" + b.AbstractMaxUnitCount + " encircled=" + b.IsEncircled + " | ");
+			for (int n = 0; n < here.NeighborProvinceIds.Count; n++)
+			{
+				if (!provinces.TryGetValue(here.NeighborProvinceIds[n], out ProvinceDefinition next))
+				{
+					continue;
+				}
+				BattalionData occupant = Call<BattalionData>("GetBattalionInProvince", next.ProvinceId);
+				bool hostile = Call<bool>("CanFactionAttackOrConquer", b.Faction, next.Owner);
+				sb.Append(next.DisplayName + ":" + WfFactions.NameOf(next.Owner) + (hostile ? "(hostile)" : "") + (occupant != null ? "[" + occupant.BattalionId + "]" : "[empty]") + "  ");
+			}
+			Log(sb.ToString());
+		}
+		if (shown == 0)
+		{
+			Log("probe: no battalions for tag " + tag);
+		}
 	}
 
 	private void Attack()

@@ -86,6 +86,296 @@
   "Support": 3
  },
  "diplomacy": "Same side: Allied. Opposite sides: War from week 1. No scripted events.",
+ "requireManpowerProvinceForRecruiting": true,
+ "maxUndefendedCapturesPerTurn": 100,
+ "aiBattalionsPerTurnPerProvinces": 10,
+ "startingBattalions": [
+  {
+   "tag": "fra",
+   "province": "Alsace Lorraine",
+   "strength": 1
+  },
+  {
+   "tag": "fra",
+   "province": "Moldova",
+   "strength": 1
+  },
+  {
+   "tag": "fra",
+   "province": "Bucovina",
+   "strength": 1
+  },
+  {
+   "tag": "fra",
+   "province": "Corsica",
+   "strength": 1
+  },
+  {
+   "tag": "fra",
+   "province": "Dnipropetrovsk",
+   "strength": 1
+  },
+  {
+   "tag": "fra",
+   "province": "Vinnytsia",
+   "strength": 1
+  },
+  {
+   "tag": "ger",
+   "province": "Hessen",
+   "strength": 1
+  },
+  {
+   "tag": "ger",
+   "province": "Latgale",
+   "strength": 1
+  },
+  {
+   "tag": "ger",
+   "province": "Wilno",
+   "strength": 1
+  },
+  {
+   "tag": "ger",
+   "province": "Kaunas",
+   "strength": 1
+  },
+  {
+   "tag": "grm",
+   "province": "province_0084",
+   "strength": 1
+  },
+  {
+   "tag": "grm",
+   "province": "Libyan Desert",
+   "strength": 1
+  },
+  {
+   "tag": "grm",
+   "province": "Cyrenaica",
+   "strength": 1
+  },
+  {
+   "tag": "grm",
+   "province": "Yemen",
+   "strength": 1
+  },
+  {
+   "tag": "idf",
+   "province": "Syria",
+   "strength": 2
+  },
+  {
+   "tag": "idf",
+   "province": "Lebanon",
+   "strength": 2
+  },
+  {
+   "tag": "pla",
+   "province": "Al Hajara",
+   "strength": 2
+  },
+  {
+   "tag": "reb",
+   "province": "Northern Bessarabia",
+   "strength": 1
+  },
+  {
+   "tag": "reb",
+   "province": "Bosnia",
+   "strength": 1
+  },
+  {
+   "tag": "reb",
+   "province": "Kherson",
+   "strength": 1
+  },
+  {
+   "tag": "reb",
+   "province": "Montenegro",
+   "strength": 1
+  },
+  {
+   "tag": "reb",
+   "province": "Vojvodina",
+   "strength": 1
+  },
+  {
+   "tag": "reb",
+   "province": "Voroshilovgrad",
+   "strength": 1
+  },
+  {
+   "tag": "rus",
+   "province": "Mozyr",
+   "strength": 1
+  },
+  {
+   "tag": "rus",
+   "province": "Polesie",
+   "strength": 1
+  },
+  {
+   "tag": "rus",
+   "province": "Suwalki",
+   "strength": 1
+  },
+  {
+   "tag": "rus",
+   "province": "Wilejka",
+   "strength": 1
+  },
+  {
+   "tag": "rus",
+   "province": "Bryansk",
+   "strength": 1
+  },
+  {
+   "tag": "rus",
+   "province": "Koningsberg",
+   "strength": 1
+  },
+  {
+   "tag": "rus",
+   "province": "Nowogrodek",
+   "strength": 1
+  },
+  {
+   "tag": "rus",
+   "province": "Pskov",
+   "strength": 1
+  },
+  {
+   "tag": "rus",
+   "province": "Belgorod",
+   "strength": 1
+  },
+  {
+   "tag": "rus",
+   "province": "Gomel",
+   "strength": 1
+  },
+  {
+   "tag": "rus",
+   "province": "Kursk",
+   "strength": 1
+  },
+  {
+   "tag": "rus",
+   "province": "Luga",
+   "strength": 1
+  },
+  {
+   "tag": "rus",
+   "province": "Nevel",
+   "strength": 1
+  },
+  {
+   "tag": "rus",
+   "province": "Petsamo",
+   "strength": 1
+  },
+  {
+   "tag": "rus",
+   "province": "Vitebsk",
+   "strength": 1
+  },
+  {
+   "tag": "uaf",
+   "province": "Jordan",
+   "strength": 1
+  },
+  {
+   "tag": "uaf",
+   "province": "Matrouh",
+   "strength": 1
+  },
+  {
+   "tag": "uaf",
+   "province": "province_0082",
+   "strength": 1
+  },
+  {
+   "tag": "uaf",
+   "province": "Western Desert",
+   "strength": 1
+  },
+  {
+   "tag": "uaf",
+   "province": "province_0044",
+   "strength": 1
+  },
+  {
+   "tag": "uaf",
+   "province": "province_0057",
+   "strength": 1
+  },
+  {
+   "tag": "usa",
+   "province": "Bialystok",
+   "strength": 1
+  },
+  {
+   "tag": "usa",
+   "province": "Chernigov",
+   "strength": 1
+  },
+  {
+   "tag": "usa",
+   "province": "Kharkov",
+   "strength": 1
+  },
+  {
+   "tag": "usa",
+   "province": "Sumy",
+   "strength": 1
+  },
+  {
+   "tag": "usa",
+   "province": "Cherkasy",
+   "strength": 1
+  },
+  {
+   "tag": "usa",
+   "province": "Ermland Masuren",
+   "strength": 1
+  },
+  {
+   "tag": "usa",
+   "province": "Kyiv",
+   "strength": 1
+  },
+  {
+   "tag": "usa",
+   "province": "East Anglia",
+   "strength": 1
+  },
+  {
+   "tag": "usmc",
+   "province": "Crete",
+   "strength": 1
+  },
+  {
+   "tag": "usmc",
+   "province": "Cyprus",
+   "strength": 1
+  },
+  {
+   "tag": "usmc",
+   "province": "Tartu",
+   "strength": 1
+  },
+  {
+   "tag": "usmc",
+   "province": "province_0512",
+   "strength": 1
+  },
+  {
+   "tag": "usmc",
+   "province": "province_0507",
+   "strength": 1
+  }
+ ],
  "specializationOverrides": {
   "Stalino": "Manpower",
   "Serbia": "Manpower",
@@ -112,7 +402,12 @@
   "Voroshilovgrad": "Ammunition",
   "Yemen": "Ammunition",
   "province_0509": "Ammunition",
-  "province_0507": "Ammunition"
+  "province_0507": "Ammunition",
+  "Kurzeme": "Manpower",
+  "Balta Tiraspol": "Manpower",
+  "Kosovo": "Manpower",
+  "Parnu": "Manpower",
+  "province_0505": "Manpower"
  },
  "yieldOverrides": {
   "Palestine": {

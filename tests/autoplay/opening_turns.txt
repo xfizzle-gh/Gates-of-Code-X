@@ -1,0 +1,13 @@
+# First turns of a new campaign: starting armies, recruiting provinces, then two full rounds of AI turns.
+wait 3
+dump start
+createpanel
+wait 2
+shot 01-start
+endturn
+wait 25
+dump after-turn-1
+endturn
+wait 25
+dump after-turn-2
+shot 02-after-two-turns

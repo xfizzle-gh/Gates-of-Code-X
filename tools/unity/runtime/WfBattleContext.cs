@@ -134,8 +134,14 @@ public static class WfBattleContext
 		{
 			return roster;
 		}
-		int count = Mathf.Max(1, battalion.AbstractUnitCount);
-		System.Random random = new System.Random(StableHash(battalion.BattalionId + ":" + count));
+		return DrawUnits(armyTag, battalion.BattalionId, Mathf.Max(1, battalion.AbstractUnitCount));
+	}
+
+	// A stable, seeded draw of `count` units from what WarFighter's AI can buy for the faction.
+	public static Dictionary<string, int> DrawUnits(string armyTag, string seed, int count)
+	{
+		Dictionary<string, int> roster = new Dictionary<string, int>();
+		System.Random random = new System.Random(StableHash(seed + ":" + count));
 		for (int i = 0; i < count; i++)
 		{
 			string unit = PickUnit(armyTag, random);

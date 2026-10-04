@@ -313,6 +313,38 @@ def patch_display_names() -> None:
         path.write_text(t, encoding="utf-8")
 
 
+def patch_campaign_rules() -> None:
+    manpower_only = "value.ParsedSpecialization != ProvinceSpecialization.Manpower"
+
+    path = SRC / "ProvinceMapController.cs"
+    t = path.read_text(encoding="utf-8")
+    # Recruit on a deployment hub or next to one.
+    t = t.replace("RequireManpowerProvinceForBattalionSpawn && " + manpower_only,
+                  "RequireManpowerProvinceForBattalionSpawn && !WfRules.IsRecruitProvince(value, runtimeProvincesById)")
+    # A battalion raised this turn cannot attack or capture until the next one.
+    # Only the "new battalion" branch: the same statement also appears in the per-turn reset, and
+    # replacing it there left every battalion on the map unable to attack or capture.
+    new_branch = re.search(r"BattalionData (\w+) = CloneBattalion\(result\.Battalion\);", t)
+    var = new_branch.group(1)
+    stmt = f"{var}.RemainingCombatActions = GetCombatActionAllowanceForBattalion({var});"
+    at = t.find(stmt, new_branch.end())
+    if 0 <= at - new_branch.end() < 600:
+        t = t[:at] + f"{var}.RemainingCombatActions = 0;" + t[at + len(stmt):]
+    # Starting order of battle for a new campaign.
+    if "WfOrderOfBattle.Apply" not in t:
+        t, n = re.subn(r"(\n(\s*)ApplyNewCampaignSettings\((\w+), campaignState\);)",
+                       lambda m: m.group(1) + "\n" + m.group(2) + "WfOrderOfBattle.Apply(campaignState, battalionTypeRulesAsset, IsFactionHumanControlled);", t, count=1)
+        if n != 1:
+            raise SystemExit("new-campaign hook site not found")
+    path.write_text(t, encoding="utf-8")
+
+    path = SRC / "CampaignAiRunner.cs"
+    t = path.read_text(encoding="utf-8")
+    t = t.replace("if (" + manpower_only + ")", "if (!WfRules.IsRecruitProvince(value, campaignState))")
+    t = t.replace("RemainingCombatActions = GetCombatActionAllowanceForBattalionType(chosenType)", "RemainingCombatActions = 0")
+    path.write_text(t, encoding="utf-8")
+
+
 def main() -> None:
     WF_DIR.mkdir(parents=True, exist_ok=True)
     for f in (ROOT / "tools" / "unity" / "runtime").glob("*.cs"):
@@ -327,6 +359,7 @@ def main() -> None:
     patch_battle_export()
     patch_inventory_conversion()
     patch_display_names()
+    patch_campaign_rules()
     print("campaign code patched for WarFighter factions")
 
 

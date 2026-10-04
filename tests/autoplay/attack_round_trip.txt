@@ -1,10 +1,8 @@
-# In-app battle round trip. Start the app with -wfAutoplay <this file>, then start or load a campaign.
-# Between "attack" and "resolve" something must rewrite the exported save's status counters:
+# In-app battle round trip on the first turn of a new campaign (starting armies provide the enemy).
+# Between attack and resolve something must rewrite the exported save status counters:
 # either the game (a real battle) or tools/simulate_battle_result.py (a stand-in).
 wait 3
-endturn
-wait 20
-dump after-ai-turn
+dump start
 setup auto
 wait 2
 shot 01-after-setup
