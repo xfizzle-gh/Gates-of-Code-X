@@ -373,6 +373,31 @@ Known limits: a defending AI only sends its remainder when WarFighter's countera
 appear; enemy losses are not read back into the campaign; the drawn composition is not stored in the
 campaign save.
 
+### GoW bridge, third in-game test and redesign (2026-10-04)
+
+`GoW_roster_test` played by the owner with the hard-roster bridge. Bridge log:
+- opening budget 20 → 4 (battalion of 10, 40% share); exactly 4 units bought;
+- WarFighter started a counterattack phase (budget 6) after a flag was taken, and bought NOTHING: the
+  roster units left were not buyable at that point, so the phase could never complete.
+Owner's report: far too few enemies, and no reinforcements seen. The save was not rewritten by the game
+(still `playedGames 0`), so that battle was not finished to a result.
+
+Conclusions: campaign battalion headcounts (5–26) are far below what a WarFighter battle expects, so a
+literal roster starves the fight; and a hard type restriction can stall a phase.
+
+Redesign, now in `gow_bridge.lua` and `WfBattleContext.cs`:
+- battle size is WarFighter's own budget × `GOW_STRENGTH`, which the app sets from battalion strength
+  (0.75 for an almost empty battalion to 1.5 at full strength);
+- `GOW_ENEMY_TYPES` is a preference: used when any of those units is buyable now, otherwise the AI's
+  full list is used, so a phase cannot stall;
+- a defending AI places `GOW_OPENING_SHARE` (50%) of its scaled opening; the rest is a reserve released
+  as a counterattack-type phase every `GOW_REINFORCE_INTERVAL` (150 s) in bursts of `GOW_REINFORCE_BURST`
+  (6), independent of flags. WarFighter's own flag-loss counterattacks are scaled by strength as well.
+- per-unit headcount limits are gone.
+Offline Lua test updated and passing; in-app autoplay writes the new context (EER, strength 1.33,
+17 unit types), 0 exceptions. NOT yet played in the game: `GoW_roster_test2.sav` is in the real profile
+with its matching context.
+
 Known noise: incremental player builds log 60 × "PPtr cast failed … PluginImporter to MonoScript" and
 report `errors: 60` while succeeding. Clean builds report 0. The built app runs with 0 exceptions.
 

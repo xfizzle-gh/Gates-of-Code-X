@@ -1,19 +1,23 @@
 -- GoW campaign bridge.
 -- Loaded by GoW's conquest.lua, which is WarFighter's conquest.lua plus one require line.
 --
--- The campaign application writes a small Lua file before each battle describing the enemy battalion
--- (which units, how many). This module makes WarFighter's conquest AI field that battalion:
---   * its purchase list is trimmed to the battalion's unit types;
---   * no unit type can be bought more often than the battalion has of it;
---   * the defender's opening garrison is capped to a share of the battalion, so the rest can only
---     arrive later through WarFighter's own reinforcement phases (counterattacks, attacker waves),
---     which enter from the bot's spawn side of the map.
+-- The campaign application writes a small Lua file before each battle describing the enemy battalion.
+-- This module shapes WarFighter's conquest AI around it:
+--   * battle size stays WarFighter's own, multiplied by the battalion's strength;
+--   * the battalion's unit types are preferred whenever any of them can be bought right now, and the
+--     AI's full list is used otherwise, so a purchase phase can never stall with nothing to buy;
+--   * a defending AI places only a share of its opening garrison at the start. The rest is held in
+--     reserve and released in timed bursts, which spawn at the bot's side of the map and march in.
+--     WarFighter's own flag-loss counterattacks still happen on top of that.
 -- With no context file, or a context for another faction, nothing is changed and WarFighter behaves
 -- exactly as it does without GoW. Everything GoW adds runs inside pcall.
 --
--- Verified in game on 2026-10-04: the bot's Lua can read and write files under the user profile;
--- the engine keeps one handler per event, so this module wraps globally-named functions instead of
--- subscribing; trimming the list before OnGameStartUtility builds the queue does restrict purchases.
+-- Verified in game on 2026-10-04:
+--   * the bot's Lua can read and write files under the user profile;
+--   * the engine keeps one handler per event, so this module wraps globally-named functions;
+--   * trimming to a hard per-unit roster starved the battle (4 units instead of 20) and stalled the
+--     reinforcement phase when the remaining roster units were not buyable. Hence strength scaling
+--     and the soft preference above.
 
 GowBridge = GowBridge or {}
 
@@ -73,10 +77,13 @@ local function safe(value)
 end
 
 -- Loads the context the campaign application wrote for this battle, if any. Expected globals:
---   GOW_BATTLE_ID      string
---   GOW_ENEMY_ARMY     WF army tag of the AI side, e.g. "rus"
---   GOW_ENEMY_ROSTER   { ["unit id"] = count, ... }   the enemy battalion
---   GOW_OPENING_SHARE  0..1, share of the battalion a defending AI may place as its opening garrison
+--   GOW_BATTLE_ID           string
+--   GOW_ENEMY_ARMY          WF army tag of the AI side, e.g. "rus"
+--   GOW_STRENGTH            multiplier on WarFighter's own purchase budgets (1.0 = a normal battle)
+--   GOW_ENEMY_TYPES         optional array of unit ids the battalion is made of (a preference)
+--   GOW_OPENING_SHARE       0..1, share of a defending AI's opening placed at the start
+--   GOW_REINFORCE_INTERVAL  seconds between timed reinforcement bursts
+--   GOW_REINFORCE_BURST     budget of one burst
 local function load_context()
 	local dir = bridge_dir()
 	if not dir then
@@ -91,16 +98,13 @@ local function load_context()
 	end
 	f:close()
 	local ok, err = pcall(dofile, path)
-	log("context dofile ok=" .. tostring(ok) .. " err=" .. safe(err) .. " battle=" .. safe(GOW_BATTLE_ID) .. " army=" .. safe(GOW_ENEMY_ARMY))
-	return ok and type(GOW_ENEMY_ROSTER) == "table" and type(GOW_ENEMY_ARMY) == "string"
+	log("context dofile ok=" .. tostring(ok) .. " err=" .. safe(err) .. " battle=" .. safe(GOW_BATTLE_ID) .. " army=" .. safe(GOW_ENEMY_ARMY)
+		.. " strength=" .. safe(GOW_STRENGTH))
+	return ok and type(GOW_ENEMY_ARMY) == "string"
 end
 
-local function remaining_total()
-	local total = 0
-	for _, n in pairs(GowBridge.remaining or {}) do
-		total = total + n
-	end
-	return total
+local function now()
+	return (os and os.time and os.time()) or 0
 end
 
 local function write_state()
@@ -112,50 +116,33 @@ local function write_state()
 		end
 		f:write("battleId=" .. safe(GOW_BATTLE_ID) .. "\n")
 		f:write("purchased=" .. safe(GowBridge.purchased or 0) .. "\n")
-		for unit, n in pairs(GowBridge.remaining or {}) do
-			f:write("remaining " .. unit .. "=" .. n .. "\n")
+		f:write("reserve=" .. safe(GowBridge.reserve or 0) .. "\n")
+		for unit, n in pairs(GowBridge.bought or {}) do
+			f:write("bought " .. unit .. "=" .. n .. "\n")
 		end
 		f:close()
 	end)
 end
 
--- Restricts the faction's purchase list to the battalion's unit types and arms the per-unit budget.
-local function apply_roster(key)
-	local list = Purchases and Purchases[key]
-	if type(list) ~= "table" then
-		log("no purchase list for " .. key)
-		return
-	end
-	local before = count_units(key)
-	local known = {}
-	for _, group in pairs(list) do
-		if type(group) == "table" and type(group.Units) == "table" then
-			local kept = {}
-			for _, entry in ipairs(group.Units) do
-				if type(entry) == "table" and GOW_ENEMY_ROSTER[entry.unit] then
-					kept[#kept + 1] = entry
-					known[entry.unit] = true
-				end
-			end
-			group.Units = kept
+local function activate()
+	GowBridge.strength = math.max(0.25, math.min(2.0, tonumber(GOW_STRENGTH) or 1.0))
+	GowBridge.share = math.max(0.1, math.min(1.0, tonumber(GOW_OPENING_SHARE) or 0.5))
+	GowBridge.interval = math.max(30, tonumber(GOW_REINFORCE_INTERVAL) or 180)
+	GowBridge.burst = math.max(1, tonumber(GOW_REINFORCE_BURST) or 5)
+	GowBridge.preferred = {}
+	local count = 0
+	if type(GOW_ENEMY_TYPES) == "table" then
+		for _, unit in ipairs(GOW_ENEMY_TYPES) do
+			GowBridge.preferred[unit] = true
+			count = count + 1
 		end
 	end
-	GowBridge.remaining = {}
-	local total = 0
-	for unit, n in pairs(GOW_ENEMY_ROSTER) do
-		if known[unit] then
-			GowBridge.remaining[unit] = n
-			total = total + n
-		else
-			log("roster unit not in the AI purchase list, ignored: " .. safe(unit) .. " x" .. safe(n))
-		end
-	end
-	GowBridge.total = total
-	local share = tonumber(GOW_OPENING_SHARE) or 0.4
-	GowBridge.openingQuota = math.max(1, math.floor(total * share + 0.5))
-	GowBridge.active = total > 0
-	log(key .. " unit types " .. before .. " -> " .. count_units(key) .. "; battalion size " .. total .. "; opening quota " .. GowBridge.openingQuota)
-	write_state()
+	GowBridge.hasPreference = count > 0
+	GowBridge.reserve = 0
+	GowBridge.bought = {}
+	GowBridge.active = true
+	log("active: strength " .. GowBridge.strength .. ", opening share " .. GowBridge.share .. ", preferred types " .. count
+		.. ", reinforcements every " .. GowBridge.interval .. "s, burst " .. GowBridge.burst)
 end
 
 local function wrap_global(name, wrapper)
@@ -170,42 +157,41 @@ local function wrap_global(name, wrapper)
 	log("wrapped " .. name)
 end
 
--- Loads the faction's purchase list and builds the AI's buying queue from it.
+-- Battle start: the game loads the faction's purchase list and builds the AI's buying queue.
 wrap_global("OnGameStartUtility", function(original, suffix)
 	pcall(function()
 		local army = BotApi.Instance.army
 		log("--- battle start: bot playerId=" .. safe(BotApi.Instance.playerId) .. " army=" .. safe(army)
 			.. " attacking=" .. safe(BotApi.Conquest and BotApi.Conquest.Attacking))
-		-- Load the list now so it can be trimmed before the game builds its queue; the game's own
-		-- require of the same module afterwards is then a no-op.
-		local module = [[/script/multiplayer/units/]] .. army .. "/" .. suffix .. "." .. army
-		if module_exists(module) then
-			require(module)
-		end
 		if GowBridge.hasContext and GOW_ENEMY_ARMY == army then
-			apply_roster(suffix .. "." .. army)
+			activate()
 		elseif GowBridge.hasContext then
-			log("context is for army " .. safe(GOW_ENEMY_ARMY) .. ", this bot is " .. safe(army) .. "; list left alone")
+			log("context is for army " .. safe(GOW_ENEMY_ARMY) .. ", this bot is " .. safe(army) .. "; AI left alone")
 		end
 	end)
 	return original(suffix)
 end)
 
--- Chooses the next unit to buy. Only unit types the battalion still has are offered.
+-- Chooses the next unit to buy. Prefer the battalion's own unit types when any is buyable now.
 wrap_global("GetUnitToSpawn", function(original, units)
-	if not GowBridge.active or type(units) ~= "table" then
+	if not GowBridge.active or not GowBridge.hasPreference or type(units) ~= "table" then
 		return original(units)
 	end
-	local allowed = {}
-	for _, unit in pairs(units) do
-		if type(unit) == "table" and (GowBridge.remaining[unit.unit] or 0) > 0 then
-			allowed[#allowed + 1] = unit
+	local preferred = {}
+	pcall(function()
+		for _, unit in pairs(units) do
+			if type(unit) == "table" and GowBridge.preferred[unit.unit] and BotApi.Commands:IsUnitAvailable(unit.unit) then
+				preferred[#preferred + 1] = unit
+			end
+		end
+	end)
+	if #preferred > 0 then
+		local pick = original(preferred)
+		if pick then
+			return pick
 		end
 	end
-	if #allowed == 0 then
-		return nil
-	end
-	return original(allowed)
+	return original(units)
 end)
 
 -- Performs every purchase.
@@ -214,11 +200,11 @@ wrap_global("GameModeSpawnUnit", function(original, unit, maxSquadSize)
 	pcall(function()
 		if result then
 			GowBridge.purchased = (GowBridge.purchased or 0) + 1
-			if GowBridge.active and GowBridge.remaining[unit] then
-				GowBridge.remaining[unit] = math.max(0, GowBridge.remaining[unit] - 1)
+			if GowBridge.active then
+				GowBridge.bought[unit] = (GowBridge.bought[unit] or 0) + 1
 			end
 			log("purchase " .. GowBridge.purchased .. ": " .. safe(unit) .. " phase=" .. safe(ConquestState and ConquestState.purchasePhase)
-				.. " left=" .. remaining_total())
+				.. (GowBridge.active and GowBridge.preferred[unit] and " (battalion type)" or ""))
 			write_state()
 		end
 	end)
@@ -229,25 +215,67 @@ end)
 if type(ConquestWaves) == "table" and type(ConquestWaves.StartPurchasePhase) == "function" then
 	local original_phase = ConquestWaves.StartPurchasePhase
 	ConquestWaves.StartPurchasePhase = function(phase, target)
-		local capped = target
+		local sized = target
 		pcall(function()
-			if GowBridge.active and type(target) == "number" then
-				local limit = remaining_total()
-				if phase == "defender_opening" then
-					limit = math.min(limit, GowBridge.openingQuota)
-				end
-				capped = math.min(target, limit)
-				log("phase " .. safe(phase) .. " target " .. target .. " -> " .. capped .. " (battalion left " .. remaining_total() .. ")")
+			if not GowBridge.active or type(target) ~= "number" or GowBridge.releasing then
+				return
 			end
+			sized = math.max(1, math.floor(target * GowBridge.strength + 0.5))
+			if phase == "defender_opening" then
+				local opening = math.max(1, math.floor(sized * GowBridge.share + 0.5))
+				GowBridge.reserve = GowBridge.reserve + (sized - opening)
+				sized = opening
+			end
+			log("phase " .. safe(phase) .. " budget " .. target .. " -> " .. sized .. " (reserve " .. GowBridge.reserve .. ")")
+			write_state()
 		end)
-		return original_phase(phase, capped)
+		return original_phase(phase, sized)
 	end
 	log("wrapped ConquestWaves.StartPurchasePhase")
 else
-	log("ConquestWaves.StartPurchasePhase not found; phase sizes not capped")
+	log("ConquestWaves.StartPurchasePhase not found; phase sizes not changed")
 end
 
+-- Runs every quant. Releases the defender's reserve in timed bursts once the opening is complete and
+-- no other purchase phase is running. A burst is an ordinary counterattack-type phase, so WarFighter
+-- finishes it and gives the new squads their normal orders.
+wrap_global("TrySpawnUnit", function(original)
+	pcall(function()
+		if not GowBridge.active or (GowBridge.reserve or 0) <= 0 or type(ConquestState) ~= "table" then
+			return
+		end
+		if not ConquestState.botDefender or not ConquestState.defenderOpeningFinished
+			or ConquestState.defenderOpeningGarrisonReadyPending or ConquestState.purchasePhase then
+			return
+		end
+		if ConquestBattleResult and ConquestBattleResult.IsWinnerDecided and ConquestBattleResult.IsWinnerDecided() then
+			return
+		end
+		local t = now()
+		if not GowBridge.nextRelease then
+			GowBridge.nextRelease = t + GowBridge.interval
+			log("opening complete; first reinforcement burst in " .. GowBridge.interval .. "s")
+			return
+		end
+		if t < GowBridge.nextRelease then
+			return
+		end
+		local budget = math.min(GowBridge.reserve, GowBridge.burst)
+		GowBridge.reserve = GowBridge.reserve - budget
+		GowBridge.nextRelease = t + GowBridge.interval
+		log("reinforcement burst: budget " .. budget .. " (reserve left " .. GowBridge.reserve .. ")")
+		GowBridge.releasing = true
+		local ok, err = pcall(ConquestWaves.StartPurchasePhase, "defender_counterattack", budget)
+		GowBridge.releasing = false
+		if not ok then
+			log("burst failed to start: " .. safe(err))
+		end
+		write_state()
+	end)
+	return original()
+end)
+
 pcall(function()
-	log("=== gow_bridge loaded os.time=" .. safe(os and os.time and os.time()))
+	log("=== gow_bridge loaded os.time=" .. safe(now()))
 	GowBridge.hasContext = load_context()
 end)

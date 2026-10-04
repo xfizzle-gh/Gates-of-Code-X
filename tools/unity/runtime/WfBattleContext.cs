@@ -9,9 +9,21 @@ using UnityEngine;
 // the strategic enemy battalion instead of buying freely from its whole faction list.
 public static class WfBattleContext
 {
-	// Share of the battalion a defending AI may place as its opening garrison; the rest can only arrive
-	// through WarFighter's reinforcement phases.
-	public const float OpeningShare = 0.4f;
+	// Share of a defending AI's opening garrison placed at the start. The rest is held in reserve and
+	// arrives in timed bursts from the AI's side of the map.
+	public const float OpeningShare = 0.5f;
+
+	// Seconds between reserve bursts, and the purchase budget of one burst.
+	public const int ReinforceIntervalSeconds = 150;
+	public const int ReinforceBurst = 6;
+
+	// WarFighter sizes the battle itself; the battalion's strength scales that. A battalion at full
+	// strength fights at 1.5x WarFighter's normal budget, an almost empty one at 0.75x.
+	public const float MinStrength = 0.75f;
+	public const float MaxStrength = 1.5f;
+
+	// A full-strength battalion in the recovered rules holds this many units.
+	private const int FullBattalionUnits = 26;
 
 	// Section weights for giving an abstract AI battalion a concrete composition:
 	// Inf1, Inf2, Emplacements, Vehicles, Tanks (GohUnitSection 1..5).
@@ -28,15 +40,20 @@ public static class WfBattleContext
 				return;
 			}
 			Dictionary<string, int> roster = BuildRoster(context.EnemyBattalion, context.EnemyArmyCode);
+			float strength = GetStrength(context.EnemyBattalion);
+			System.Globalization.CultureInfo inv = System.Globalization.CultureInfo.InvariantCulture;
 			StringBuilder sb = new StringBuilder();
 			sb.AppendLine("-- Written by the GoW campaign application for one battle. Do not edit.");
 			sb.AppendLine("GOW_BATTLE_ID = " + Quote(context.BattleName));
 			sb.AppendLine("GOW_ENEMY_ARMY = " + Quote(context.EnemyArmyCode));
-			sb.AppendLine("GOW_OPENING_SHARE = " + OpeningShare.ToString(System.Globalization.CultureInfo.InvariantCulture));
-			sb.AppendLine("GOW_ENEMY_ROSTER = {");
+			sb.AppendLine("GOW_STRENGTH = " + strength.ToString("0.00", inv));
+			sb.AppendLine("GOW_OPENING_SHARE = " + OpeningShare.ToString(inv));
+			sb.AppendLine("GOW_REINFORCE_INTERVAL = " + ReinforceIntervalSeconds);
+			sb.AppendLine("GOW_REINFORCE_BURST = " + ReinforceBurst);
+			sb.AppendLine("GOW_ENEMY_TYPES = {");
 			foreach (KeyValuePair<string, int> unit in roster)
 			{
-				sb.AppendLine("\t[" + Quote(unit.Key) + "] = " + unit.Value + ",");
+				sb.AppendLine("\t" + Quote(unit.Key) + ",");
 			}
 			sb.AppendLine("}");
 			Directory.CreateDirectory(Path.GetDirectoryName(ContextPath));
@@ -52,6 +69,25 @@ public static class WfBattleContext
 		{
 			Debug.LogError("GoW battle context could not be written; the AI will buy from its full list.\n" + ex);
 		}
+	}
+
+	public static float GetStrength(BattalionData battalion)
+	{
+		float ratio;
+		if (battalion.AbstractMaxUnitCount > 0)
+		{
+			ratio = (float)battalion.AbstractUnitCount / battalion.AbstractMaxUnitCount;
+		}
+		else
+		{
+			int units = 0;
+			for (int i = 0; battalion.Roster != null && i < battalion.Roster.Count; i++)
+			{
+				units += battalion.Roster[i] != null ? Mathf.Max(0, battalion.Roster[i].Quantity) : 0;
+			}
+			ratio = (float)units / FullBattalionUnits;
+		}
+		return Mathf.Lerp(MinStrength, MaxStrength, Mathf.Clamp01(ratio));
 	}
 
 	// A battalion with a real roster is used as it is. AI battalions are abstract (a unit count and a
