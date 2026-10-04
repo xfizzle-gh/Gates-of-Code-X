@@ -3,7 +3,9 @@
   "note": "Faction tags are WF army tags. A tactical battle may only be generated between one blufor and one opfor tag of the same theater. Every pairing here is also present in WF values.set (Warfighter region).",
   "confirmedByOwner": [
     "EER is tag 'reb'.",
-    "'AFR' in the Asia line of the source means AFRF (tag 'rus')."
+    "'AFR' in the Asia line of the source means AFRF (tag 'rus').",
+    "WF modder Reichkaizer, 2026-10-04: UAF = United Arab Force; EER = Eastern Europe Rebels.",
+    "GRM = Global Revolutionary Movement (from WF's own localization text)."
   ],
   "names": {
     "usa": "US Army", "usmc": "USMC", "uaf": "UAF", "ger": "Bundeswehr", "fra": "France", "idf": "IDF",
