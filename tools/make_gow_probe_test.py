@@ -10,12 +10,14 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "build" / "export-test" / "WarfighterCampaign_export_test.sav"
-OUT = ROOT / "build" / "gow-probe" / "GoW_probe_test.sav"
+NAME = sys.argv[1] if len(sys.argv) > 1 else "GoW_probe_test"
+OUT = ROOT / "build" / "gow-probe" / (NAME + ".sav")
 BRIDGE = Path(os.environ["USERPROFILE"]) / "AppData" / "LocalLow" / "WarfighterCampaign" / "WarfighterCampaign" / "Bridge"
 GOW_MOD = f"mod_{ROOT.name}:0"
 ENEMY_UNITS = ["squad1(rus)", "t-72b3"]
@@ -27,7 +29,7 @@ def main() -> None:
     status = entries["status"].decode("utf-8")
     if GOW_MOD not in status:
         status = re.sub(r'("mod_3809475216:0")', r'\1\n\t\t"' + GOW_MOD + '"', status, count=1)
-    status = re.sub(r'\{name "[^"]*"\}', '{name "GoW_probe_test"}', status, count=1)
+    status = re.sub(r'\{name "[^"]*"\}', '{name "' + NAME + '"}', status, count=1)
     entries["status"] = status.encode("utf-8")
     OUT.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(OUT, "w", zipfile.ZIP_DEFLATED) as z:

@@ -86,8 +86,7 @@ local function load_context()
 end
 
 -- Restricts the enemy faction's purchase list to the units named in the context.
-local function apply_roster(label)
-	local key = "conquest." .. GOW_ENEMY_ARMY
+local function apply_roster(label, key)
 	local list = Purchases and Purchases[key]
 	if type(list) ~= "table" then
 		log(label .. ": no purchase list for " .. key)
@@ -112,51 +111,59 @@ local function apply_roster(label)
 	log(label .. ": " .. key .. " units " .. before .. " -> " .. count_units(key))
 end
 
-function GowBridge.OnGameStart()
-	pcall(function()
-		log("--- GameStart")
-		describe_purchases("GameStart")
-		if BotApi and BotApi.Instance then
-			log("bot playerId=" .. safe(BotApi.Instance.playerId) .. " army=" .. safe(BotApi.Instance.army) .. " team=" .. safe(BotApi.Instance.team))
-		end
-		if BotApi and BotApi.Conquest then
-			log("conquest Attacking=" .. safe(BotApi.Conquest.Attacking) .. " FirstEnemyId=" .. safe(BotApi.Conquest.FirstEnemyId)
-				.. " DefenderBotId=" .. safe(BotApi.Conquest.DefenderBotId) .. " FirstPlayerId=" .. safe(BotApi.Conquest.FirstPlayerId))
-		end
-		if GowBridge.hasContext then
-			apply_roster("GameStart")
-		end
-	end)
+-- The engine keeps one handler per event, and WarFighter's conquest.lua registers them before this
+-- module loads, so subscribing here does nothing (verified in game 2026-10-04). Instead the two global
+-- functions the game calls by name are wrapped:
+--   OnGameStartUtility  loads the faction's purchase list and builds the AI's buying queue from it
+--   GameModeSpawnUnit   performs every purchase
+
+local original_start = OnGameStartUtility
+if type(original_start) == "function" then
+	OnGameStartUtility = function(suffix)
+		pcall(function()
+			local army = BotApi.Instance.army
+			log("--- OnGameStartUtility suffix=" .. safe(suffix) .. " bot playerId=" .. safe(BotApi.Instance.playerId) .. " army=" .. safe(army))
+			if BotApi.Conquest then
+				log("conquest Attacking=" .. safe(BotApi.Conquest.Attacking) .. " FirstEnemyId=" .. safe(BotApi.Conquest.FirstEnemyId)
+					.. " DefenderBotId=" .. safe(BotApi.Conquest.DefenderBotId) .. " FirstPlayerId=" .. safe(BotApi.Conquest.FirstPlayerId))
+			end
+			-- Load the list now so it can be trimmed before the game builds its queue; the game's own
+			-- require of the same module afterwards is then a no-op.
+			local module = [[/script/multiplayer/units/]] .. army .. "/" .. suffix .. "." .. army
+			if module_exists(module) then
+				require(module)
+			end
+			describe_purchases("after require")
+			if GowBridge.hasContext and GOW_ENEMY_ARMY == army then
+				apply_roster("start", suffix .. "." .. army)
+			elseif GowBridge.hasContext then
+				log("context is for army " .. safe(GOW_ENEMY_ARMY) .. ", this bot is " .. safe(army) .. "; list left alone")
+			end
+		end)
+		return original_start(suffix)
+	end
+	log("wrapped OnGameStartUtility")
+else
+	log("OnGameStartUtility is " .. type(original_start) .. "; not wrapped")
 end
 
-function GowBridge.OnGameSpawn(args)
-	pcall(function()
-		GowBridge.spawns = (GowBridge.spawns or 0) + 1
-		if GowBridge.spawns > 60 then
-			return
-		end
-		local parts = {}
-		if type(args) == "table" then
-			for k, v in pairs(args) do
-				parts[#parts + 1] = safe(k) .. "=" .. safe(v)
+local original_spawn = GameModeSpawnUnit
+if type(original_spawn) == "function" then
+	GameModeSpawnUnit = function(unit, maxSquadSize)
+		pcall(function()
+			GowBridge.purchases = (GowBridge.purchases or 0) + 1
+			if GowBridge.purchases <= 200 then
+				log("purchase " .. GowBridge.purchases .. ": " .. safe(unit))
 			end
-		else
-			parts[1] = type(args)
-		end
-		log("spawn " .. GowBridge.spawns .. ": " .. table.concat(parts, " "))
-	end)
+		end)
+		return original_spawn(unit, maxSquadSize)
+	end
+	log("wrapped GameModeSpawnUnit")
+else
+	log("GameModeSpawnUnit is " .. type(original_spawn) .. "; not wrapped")
 end
 
 pcall(function()
 	log("=== gow_bridge loaded os.time=" .. safe(os and os.time and os.time()) .. " io=" .. type(io) .. " dofile=" .. type(dofile))
-	describe_purchases("load")
 	GowBridge.hasContext = load_context()
-	if GowBridge.hasContext then
-		apply_roster("load")
-	end
-	if BotApi and BotApi.Events then
-		BotApi.Events:Subscribe(BotApi.Events.GameStart, GowBridge.OnGameStart)
-		BotApi.Events:Subscribe(BotApi.Events.GameSpawn, GowBridge.OnGameSpawn)
-		log("subscribed to GameStart and GameSpawn")
-	end
 end)
