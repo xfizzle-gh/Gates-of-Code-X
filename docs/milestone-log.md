@@ -87,11 +87,34 @@ Both defects fixed (2026-10-04), verified by `tools/smoke_campaign.ps1`: start m
   If a post effect looks wrong later, this keyword list is the first place to check.
 - First clean build compiles shaders for roughly 15 minutes; later builds use the cache.
 
-Gate status: build is repeatable; "functioning campaign map, new/load/save, unit catalog UI" is NOT yet
-verified. Nothing past the start menu has been exercised.
+Input repair (2026-10-04): recovered PlayerSettings had `activeInputHandler: 0`; the game uses only the
+new Input System, so no click reached the UI. `tools/recover_campaign.ps1` now sets it to 1, sets
+`runInBackground`, and renames product/company to `WarfighterCampaign` so saves live in
+`%USERPROFILE%\AppData\LocalLow\WarfighterCampaign\WarfighterCampaign`, apart from any GOE install.
 
-Next action: regenerate TMP font atlases from the recovered source fonts, repair the URP global settings
-reference, then drive new campaign → map → save → load and record results in the parity matrix.
+Driven acceptance run (2026-10-04, `tools/drive_campaign.ps1`, screenshots in `build/drive/`, 0 exceptions
+in every run). The profile directory given to the app was a scratch folder (`build/scratch-profile`);
+the real GoH profile was never written.
+
+| Step | Result |
+| --- | --- |
+| Start menu → Single Player | New Campaign dialog: faction, difficulty, reinforcements, DLC maps, game/profile directory, name |
+| Start Campaign (Germany, Normal) | Map scene loads: provinces, ownership colours, borders, battalion markers, resource bar, Week 1 |
+| Click province | Info panel fills: name, owner, neighbours, yield, fortification |
+| Research | Tree opens with stage/defense nodes and unit portraits |
+| End Turn | Week 2; AI factions spawn battalions and pay upkeep; resources accrue (log confirms each faction's turn) |
+| Save / Exit | `CampaignSaves/New Campaign.json` written, `TurnNumber` 2, 28 battalions. Map "Exit" saves and quits the app |
+| Relaunch → Load Campaign → select → Load | Week 2 state restored |
+| Create Battalion / Manage Battalion | NOT verified: both buttons appear disabled on the province tried and did nothing. Cause not investigated (may be a game rule) |
+
+Not exercised: battalion creation and roster UI, movement, attack, battle export, autoresolve, buildings,
+diplomacy, ledger, multiplayer. Battle export is deliberately untested because it edits `options.set`.
+
+Gate status: MET for repeatable build, campaign map, new/save/load. Unit catalog UI is only partly seen
+(research portraits render); the battalion roster screen is still unverified.
+
+Next action: find why Create Battalion is disabled, verify the roster/catalog screen, then start M2
+(WF content resolver and ten-faction catalog) and replace the WWII faction data with `data/theaters.json`.
 
 Previously blocked (kept for history):
 - No Unity editor is installed (plan expects 6000.4.0f1) and AssetRipper is not installed. Scenes,
