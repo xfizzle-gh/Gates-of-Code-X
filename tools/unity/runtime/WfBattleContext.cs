@@ -29,6 +29,26 @@ public static class WfBattleContext
 	// Inf1, Inf2, Emplacements, Vehicles, Tanks (GohUnitSection 1..5).
 	private static readonly int[] SectionWeights = { 0, 55, 15, 5, 15, 10 };
 
+	// The in-game bridge ignores the file after this long, in case a battle is abandoned.
+	public const long ContextLifetimeSeconds = 12 * 60 * 60;
+
+	// Called when the pending battle is resolved or cancelled, so the next ordinary Conquest game the
+	// player starts is not shaped by this battle's enemy.
+	public static void Clear()
+	{
+		try
+		{
+			if (File.Exists(ContextPath))
+			{
+				File.Delete(ContextPath);
+			}
+		}
+		catch (Exception ex)
+		{
+			Debug.LogWarning("GoW battle context could not be removed: " + ex.Message);
+		}
+	}
+
 	public static string ContextPath => Path.Combine(Paths.GatesOfEuropaDocumentsDirectory, "gow_battle_context.lua");
 
 	public static void Write(GohStatusExportContext context)
@@ -46,6 +66,7 @@ public static class WfBattleContext
 			sb.AppendLine("-- Written by the GoW campaign application for one battle. Do not edit.");
 			sb.AppendLine("GOW_BATTLE_ID = " + Quote(context.BattleName));
 			sb.AppendLine("GOW_ENEMY_ARMY = " + Quote(context.EnemyArmyCode));
+			sb.AppendLine("GOW_CONTEXT_EXPIRES = " + (DateTimeOffset.UtcNow.ToUnixTimeSeconds() + ContextLifetimeSeconds));
 			sb.AppendLine("GOW_STRENGTH = " + strength.ToString("0.00", inv));
 			sb.AppendLine("GOW_OPENING_SHARE = " + OpeningShare.ToString(inv));
 			sb.AppendLine("GOW_REINFORCE_INTERVAL = " + ReinforceIntervalSeconds);

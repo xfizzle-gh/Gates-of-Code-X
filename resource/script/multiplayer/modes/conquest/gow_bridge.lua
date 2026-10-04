@@ -81,6 +81,7 @@ end
 -- Loads the context the campaign application wrote for this battle, if any. Expected globals:
 --   GOW_BATTLE_ID           string
 --   GOW_ENEMY_ARMY          WF army tag of the AI side, e.g. "rus"
+--   GOW_CONTEXT_EXPIRES     os.time() after which this file is ignored
 --   GOW_STRENGTH            multiplier on WarFighter's own purchase budgets (1.0 = a normal battle)
 --   GOW_ENEMY_TYPES         optional array of unit ids the battalion is made of (a preference)
 --   GOW_OPENING_SHARE       0..1, share of a defending AI's opening placed at the start
@@ -102,7 +103,16 @@ local function load_context()
 	local ok, err = pcall(dofile, path)
 	log("context dofile ok=" .. tostring(ok) .. " err=" .. safe(err) .. " battle=" .. safe(GOW_BATTLE_ID) .. " army=" .. safe(GOW_ENEMY_ARMY)
 		.. " strength=" .. safe(GOW_STRENGTH))
-	return ok and type(GOW_ENEMY_ARMY) == "string"
+	if not ok or type(GOW_ENEMY_ARMY) ~= "string" then
+		return false
+	end
+	-- A context left over from an earlier campaign battle must not shape an unrelated Conquest game.
+	local expires = tonumber(GOW_CONTEXT_EXPIRES)
+	if expires and os and os.time and os.time() > expires then
+		log("context expired; ignored")
+		return false
+	end
+	return true
 end
 
 local function now()

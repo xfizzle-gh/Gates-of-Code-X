@@ -227,6 +227,10 @@ def patch_battle_export() -> None:
             f"\n{indent}}}")
         pos = body_start + read.start()
         t = t[:pos] + insert + t[pos:]
+    if "WfBattleContext.Clear();" not in t:
+        t, n = re.subn(r"(private void ClearPendingBattle\(\)\s*\{)", lambda m: m.group(1) + "\n\t\tWfBattleContext.Clear();", t, count=1)
+        if n != 1:
+            raise SystemExit("ClearPendingBattle not found")
     path.write_text(t, encoding="utf-8")
 
 
