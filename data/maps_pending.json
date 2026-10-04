@@ -1,0 +1,23 @@
+{
+  "source": "Project owner, 2026-10-04: maps from MC that will be imported into WarFighter.",
+  "rule": "A pending map is added to the tactical map catalog automatically once its campaign_capture_the_flag .mi and .info exist in the installed WF mod. Until then it is listed in the report as pending and never offered.",
+  "maps": [
+    { "id": "dcg_emd_france" },
+    { "id": "dcg_thundering_fields" },
+    { "id": "dcg_lorraine_fields" },
+    { "id": "dcg_fulda_gap" },
+    { "id": "dcg_emd_versailles", "note": "may be reworked to fit WF lore" },
+    { "id": "dcg_emd_syria_v2" },
+    { "id": "dcg_emd_soviet_city" },
+    { "id": "dcg_emd_somalia" },
+    { "id": "dcg_emd_siberia" },
+    { "id": "dcg_emd_redtide" },
+    { "id": "dcg_emd_northair" },
+    { "id": "dcg_emd_newyork_v2" },
+    { "id": "dcg_emd_highwayfohell" },
+    { "id": "dcg_emd_desert" },
+    { "id": "dcg_emd_autobauhn" },
+    { "id": "dcg_dezful_airbase" },
+    { "id": "dcg_chkl_kurskw" }
+  ]
+}

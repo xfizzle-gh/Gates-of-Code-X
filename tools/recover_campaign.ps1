@@ -43,7 +43,7 @@ if ($LASTEXITCODE -ne 0) { throw "repair_shaders.py failed" }
 # Repair 4 (dynamic TMP font atlases) runs inside Unity; see tools/unity/WfRepair.cs.
 
 # WarFighter adaptation: unit catalogs, research trees, portraits; scenario; code hooks.
-foreach ($step in 'build_wf_content.py', 'build_wf_scenario.py', 'patch_campaign_code.py') {
+foreach ($step in 'build_wf_content.py', 'build_wf_scenario.py', 'build_wf_maps.py', 'patch_campaign_code.py') {
     python (Join-Path $PSScriptRoot $step)
     if ($LASTEXITCODE -ne 0) { throw "$step failed" }
 }

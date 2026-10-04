@@ -7,6 +7,7 @@ Run after tools/build_wf_scenario.py (which writes WfFactions.generated.cs).
 """
 from __future__ import annotations
 
+import json
 import re
 import shutil
 from pathlib import Path
@@ -135,6 +136,114 @@ return null;
     path.write_text(t, encoding="utf-8")
 
 
+def patch_battle_export() -> None:
+    settings = json.loads((ROOT / "data" / "export_settings.json").read_text(encoding="utf-8"))
+
+    # Tactical maps: one WF pool; the status region must be WF's conquest region.
+    path = SRC / "GohConquestMapEntry.cs"
+    t = path.read_text(encoding="utf-8")
+    t = replace_method(t, r"public string GetStatusRegionString\(\)\s*", f'return "{settings["region"]}";')
+    path.write_text(t, encoding="utf-8")
+
+    # The battle save must require WarFighter, not the Gates of Europa workshop item.
+    path = SRC / "GohModDependencyUtility.cs"
+    t = path.read_text(encoding="utf-8")
+    path.write_text(t.replace("mod_3717998771:0", settings["modDependency"]), encoding="utf-8")
+
+    # Keep the bridge exchange files out of Documents and out of the GOE namespace.
+    path = SRC / "Paths.cs"
+    t = path.read_text(encoding="utf-8")
+    t = re.sub(r"(public static string GatesOfEuropaDocumentsDirectory\s*=>\s*)[^;]+;",
+               r'\1Path.Combine(Application.persistentDataPath, "Bridge");', t)
+    path.write_text(t, encoding="utf-8")
+
+    path = SRC / "ProvinceMapController.cs"
+    t = path.read_text(encoding="utf-8")
+    t = t.replace('"GatesOfEuropa_" + ', '"WarfighterCampaign_" + ')
+    # GOE waits for its own Lua bridge file before reading the result from the save. WF has no such
+    # Lua; the save's playedGames/wonGames counters are the result, so read them directly.
+    marker = "/* wf: resolve from save counters */"
+    if marker not in t:
+        m = re.search(r"public void ResolvePendingBattleFromBridgeFile\(\)", t)
+        body_start = m.end()
+        pending = re.search(r"PendingBattleRecord (\w+) = LoadPendingBattle\(\);", t[body_start:]).group(1)
+        read = re.search(r"\n(\s*)GohBridgeResultReader\.BridgeResult \w+ = GohBridgeResultReader\.Read\(", t[body_start:])
+        indent = read.group(1)
+        insert = (
+            f"\n{indent}{marker}"
+            f"\n{indent}if ({pending}.HasExportedResultCounters && !File.Exists(Paths.BridgeResultPath))"
+            f"\n{indent}{{"
+            f"\n{indent}\tif (!TryResolvePendingBattleFromSavStatus({pending}, out var wfReason))"
+            f"\n{indent}\t{{"
+            f'\n{indent}\t\tShowValidationMessage("Battle is not finished yet. " + wfReason);'
+            f"\n{indent}\t}}"
+            f"\n{indent}\treturn;"
+            f"\n{indent}}}")
+        pos = body_start + read.start()
+        t = t[:pos] + insert + t[pos:]
+    path.write_text(t, encoding="utf-8")
+
+
+def patch_inventory_conversion() -> None:
+    # The recovered converter knows WWII item names only ("mp40 ammo", "rifle clip ammo"). WF names put
+    # "ammo" first or use five tags, so 1200 rounds became 1200 separate items. Emit what a native WF
+    # save contains instead: every tag quoted separately, stacks as one line with a count, and weapons
+    # as `filling <ammo tags> <rounds>`.
+    path = SRC / "GohCampaignObjectBuilder.cs"
+    t = path.read_text(encoding="utf-8")
+    t = replace_method(t, r"private static string QuoteCompoundItemName\(string itemName\)\s*", """
+if (string.IsNullOrWhiteSpace(itemName))
+{
+	return "\\"\\"";
+}
+string[] array = itemName.Split(new char[1] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+return "\\"" + string.Join("\\" \\"", array) + "\\"";
+""")
+    t = replace_method(t, r"private static bool IsAmmoItem\(string itemName\)\s*", """
+string[] array = itemName.Split(new char[1] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+for (int i = 0; i < array.Length; i++)
+{
+	if (string.Equals(array[i], "ammo", StringComparison.OrdinalIgnoreCase))
+	{
+		return true;
+	}
+}
+return itemName.EndsWith("_ammo", StringComparison.OrdinalIgnoreCase);
+""")
+    t = replace_method(t, r"private static void AppendConvertedInventoryItems\(List<string> lines, string itemName, string tail, ref int cell\)\s*", """
+string text = QuoteCompoundItemName(itemName);
+string cellText = " {cell " + cell % 8 + " " + cell / 8 + "}";
+Match filling = Regex.Match(tail, "filling\\\\s+\\"([^\\"]+)\\"\\\\s*(\\\\d+)?", RegexOptions.IgnoreCase);
+if (filling.Success)
+{
+	string rounds = filling.Groups[2].Success ? (" " + filling.Groups[2].Value) : "";
+	lines.Add("\\t\\t\\t{item " + text + " filling " + QuoteCompoundItemName(filling.Groups[1].Value) + rounds + cellText + "}");
+	cell++;
+	return;
+}
+if (tail.IndexOf("filled", StringComparison.OrdinalIgnoreCase) >= 0)
+{
+	lines.Add("\\t\\t\\t{item " + text + " filled" + cellText + "}");
+	cell++;
+	return;
+}
+List<float> numbers = ExtractNumbers(tail);
+// "{item x 0.5 90}" is a chance-based extra in breed files; keep the recovered behaviour (one item).
+bool fractional = numbers.Count > 0 && Mathf.Abs(numbers[0] - Mathf.Round(numbers[0])) > 0.001f;
+int count = (numbers.Count > 0 && !fractional) ? Mathf.RoundToInt(numbers[0]) : 1;
+if (count > 1)
+{
+	lines.Add("\\t\\t\\t{item " + text + " " + count + cellText + "}");
+}
+else
+{
+	lines.Add("\\t\\t\\t{item " + text + cellText + "}");
+}
+cell++;
+""")
+    path.write_text(t, encoding="utf-8")
+
+
 def main() -> None:
     WF_DIR.mkdir(parents=True, exist_ok=True)
     for f in (ROOT / "tools" / "unity" / "runtime").glob("*.cs"):
@@ -146,6 +255,8 @@ def main() -> None:
     patch_map_controller()
     patch_start_menu()
     patch_turn_panel()
+    patch_battle_export()
+    patch_inventory_conversion()
     print("campaign code patched for WarFighter factions")
 
 

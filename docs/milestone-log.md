@@ -169,8 +169,54 @@ Known gaps / provisional:
 - Start menu art and title still say Gates of Europa.
 - Create Battalion / Manage Battalion still unverified.
 
-Next action: WF full unit templates (entity/human/inventory blocks) for export, map catalog from WF
-`map_points.set`, then the first battle round trip (M3) against a scratch profile.
+### Battle export and tactical maps (2026-10-04)
+
+Reference: a native WF conquest save from the real profile (`conquest 472.sav`), copied read-only to
+`build/ref-save`. The real profile is `%LOCALAPPDATA%\digitalmindsoft\gates of hell\profiles\<id>`, not
+under Documents as the GOE code assumes.
+
+Maps (`tools/build_wf_maps.py`, `data/maps_pending.json`, `data/export_settings.json`):
+- Catalog rebuilt from WF `map_points.set` (Warfighter region): 29 maps, every one verified to have its
+  `.mi` and `.info` in WF `map.pak`. Landscape/texmod read from each `.info` (desert 11, winter 6, wood 12).
+- 17 maps from MC are registered as pending. None are in the installed WF yet. Each joins the catalog
+  automatically on the next generator run once its `.mi` and `.info` exist in WF; until then it is never
+  offered.
+- Status settings: gameVersion 1.067.0, region `warfighter`, mod dependency `mod_3809475216:0`,
+  save name prefix `WarfighterCampaign`. The original author's hard-coded profile path is cleared.
+- Map choice is still a uniform random pick from the pool. No per-theater or per-province map binding.
+
+Export templates (`tools/build_wf_content.py`):
+- `GohFullUnitTemplateCache` regenerated for WF: 1,093 units, 0 without a template. Soldier loadout,
+  armour, perks and veterancy come from `set/breed/mp/<tag>/*.set`; vehicle inventory from the unit's
+  `.def` in WF `entity.pak`; crew/passenger split from the roster `content` string.
+- 7 vehicles have no literal inventory block in their `.def` (it comes from an include or macro) and are
+  exported with an empty box.
+
+Code (`tools/patch_campaign_code.py`):
+- Inventory conversion rewritten to the native WF save form. Before: WF ammo names were not recognised
+  and 1,200 rounds became 1,200 single items (test save 260 KB). After: tags quoted separately, stacks as
+  one counted line, weapons as `filling <ammo tags> <rounds>` (same test save 19 KB).
+- Battle result is read from the save's `playedGames`/`wonGames` counters without waiting for GOE's Lua
+  bridge file, which WF does not have.
+- Bridge exchange directory moved from Documents into the app's own data folder.
+
+Tests (`tools/unity/WfExportTest.cs`, `tools/validate_scn.py`), run headless in Unity batch mode:
+- `WfExportTest.Run`: US Army force of 2 squads + 2 vehicles → `build/export-test/…sav`. Structure checks
+  pass (18 objects, 18 inventories, 4 squad rows, status names the WF mod and region).
+- `WfExportTest.Sweep`: every player-visible unit of all ten factions built individually through the
+  app's own `GohCampaignObjectBuilder`: 1,044 ok, 0 failed, 36 with an empty-inventory warning.
+
+NOT verified: no generated save has been loaded in the game. Open risks until that happens:
+- squad rows carry an empty stage (`""`) on the single-battalion path where a native save has `stage_1`;
+- item `{cell x y}` positions are sequential, not packed by item size as the game writes them;
+- whether WF accepts units outside the player's `unlockedResearch` list;
+- native saves give emplacements and off-map strikes no Inventory block; ours always write one.
+
+Known noise: incremental player builds log 60 × "PPtr cast failed … PluginImporter to MonoScript" and
+report `errors: 60` while succeeding. Clean builds report 0. The built app runs with 0 exceptions.
+
+Next action: load `build/export-test/WarfighterCampaign_export_test.sav` in the game (needs a copy into
+the real profile's `campaign` folder), fix what the game rejects, then drive a full attack from the app.
 
 Previously blocked (kept for history):
 - No Unity editor is installed (plan expects 6000.4.0f1) and AssetRipper is not installed. Scenes,

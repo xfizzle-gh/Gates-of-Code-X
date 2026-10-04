@@ -132,6 +132,179 @@ def parse_research(tag):
     return nodes
 
 
+# ---------------------------------------------------------------- full templates (battle export)
+
+def yaml_dq(s: str) -> str:
+    out = s.replace("\\", "\\\\").replace('"', '\\"').replace("\r", "\\r").replace("\n", "\\n").replace("\t", "\\t")
+    return '"' + out + '"'
+
+
+def extract_block(text: str, opener: str) -> str:
+    """Return the brace-balanced block starting at `opener` (e.g. '{inventory'), or ''."""
+    m = re.search(re.escape(opener) + r"(?=[\s}])", text, re.I)
+    if not m:
+        return ""
+    depth, i = 0, m.start()
+    while i < len(text):
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+            if depth == 0:
+                return text[m.start():i + 1]
+        i += 1
+    return ""
+
+
+class Templates:
+    def __init__(self):
+        self.breed_cache = {}
+        self.pak = zipfile.ZipFile(WF / "resource" / "entity.pak")
+        self.defs = {}
+        for n in self.pak.namelist():
+            if n.lower().endswith(".def"):
+                self.defs.setdefault(Path(n).stem.lower(), n)
+
+    def human(self, breed: str, count: int, tag: str, warnings: list) -> str | None:
+        if breed not in self.breed_cache:
+            p = WF / "resource" / "set" / "breed" / (breed + ".set")
+            self.breed_cache[breed] = p.read_text(encoding="utf-8", errors="replace") if p.exists() else None
+        text = self.breed_cache[breed]
+        if text is None:
+            warnings.append(f"breed file missing: set/breed/{breed}.set")
+            return None
+
+        def field(name):
+            m = re.search(r"\{" + name + r'\s+"?([^"}\s]+)"?\s*\}', text)
+            return m.group(1) if m else ""
+
+        inv = extract_block(text, "{inventory")
+        if not inv:
+            warnings.append(f"no inventory block in breed {breed}")
+        return (
+            f"- Alias: {yaml_str(breed.rsplit('/', 1)[-1])}\n"
+            f"  Count: {count}\n"
+            f"  FactionTag: {tag}\n"
+            "  Period:\n"
+            f"  BreedPath: {yaml_str('set/breed/' + breed + '.set')}\n"
+            f"  RawBreedText: {yaml_dq(text)}\n"
+            f"  Skin: {yaml_str(field('skin'))}\n"
+            f"  Portrait: {yaml_str(field('portrait'))}\n"
+            f"  Icon: {yaml_str(field('icon'))}\n"
+            f"  Nationality: {yaml_str(field('nationality'))}\n"
+            "  Voice:\n"
+            f"  RawInventoryBlock: {yaml_dq(inv)}\n"
+            f"  RawArmorsBlock: {yaml_dq(extract_block(text, '{armors'))}\n"
+            f"  RawPerksBlock: {yaml_dq(extract_block(text, '{perks'))}\n"
+            f"  RawVeterancyBlock: {yaml_dq(extract_block(text, '{veterancy'))}\n")
+
+    def entity_inventory(self, name: str, warnings: list):
+        entry = self.defs.get(name.lower())
+        if not entry:
+            warnings.append(f"entity definition not found in entity.pak: {name}.def")
+            return None, ""
+        text = self.pak.read(entry).decode("utf-8", errors="replace")
+        m = re.search(r'\{extender\s+"inventory"', text, re.I)
+        inv = extract_block(text[m.start():], "{extender") if m else ""
+        if not inv:
+            # Inventory comes from an include/macro or the entity has none. Export needs a non-empty block.
+            warnings.append(f"{name}: no literal inventory block in its .def; exported with an empty box")
+            inv = '{extender "inventory"\n\t\t{box\n\t\t}\n\t}'
+        return inv, entry
+
+    def build(self, uid: str, f: dict, tag: str):
+        """Return (yaml text of the Template mapping body, unit kind, error, warnings)."""
+        warnings: list[str] = []
+        content = f["content"]
+        m = re.match(r"^\s*(\S+)\s*\(\s*(.*?)\s*\)\s*(.*)$", content)
+        entity = None
+        if m:
+            entity = uid if m.group(1) == "*" else m.group(1)
+            inside = re.findall(r"(mp/[^\s:()]+):(\d+)", m.group(2))
+            after = re.findall(r"(mp/[^\s:()]+):(\d+)", m.group(3))
+            if m.group(1) == "*":
+                crew, humans = inside, after
+            else:
+                # Mechanized squad: vehicle crew breeds are the tx_* ones, the rest ride as passengers.
+                crew = [b for b in inside if b[0].rsplit("/", 1)[-1].startswith("tx_")]
+                humans = [b for b in inside if b not in crew] + after
+        else:
+            crew, humans = [], re.findall(r"(mp/[^\s:()]+):(\d+)", content)
+
+        def humans_yaml(members, indent):
+            out, keys, failed = [], [], False
+            for breed, n in members:
+                y = self.human(breed, int(n), tag, warnings)
+                if y is None:
+                    failed = True
+                    continue
+                out.append("".join(indent + ln + "\n" for ln in y.rstrip("\n").split("\n")))
+                keys.append((breed.rsplit("/", 1)[-1], int(n)))
+            return "".join(out), keys, failed
+
+        h_yaml, h_keys, h_fail = humans_yaml(humans, "      ")
+        error = ""
+        member_keys = []
+        ent_yaml = "      Entities: []\n"
+        kind = "SingleHuman" if sum(n for _, n in h_keys) == 1 else "InfantrySquad"
+        if entity:
+            inv, entry = self.entity_inventory(entity, warnings)
+            c_yaml, c_keys, c_fail = humans_yaml(crew, "        ")
+            h_fail = h_fail or c_fail
+            if inv is None:
+                error = f"entity definition not found: {entity}"
+                inv = ""
+            ekind = {"tanks": "Tank", "empl": "Gun"}.get(f["button"], "Vehicle")
+            kind = "Gun" if ekind == "Gun" else "Vehicle"
+            ent_yaml = (
+                "      Entities:\n"
+                f"      - EntityName: {yaml_str(entity)}\n"
+                f"        EntityKind: {ekind}\n"
+                f"        RawEntityDefinition: {yaml_dq(content)}\n"
+                f"        RawInventoryBlock: {yaml_dq(inv)}\n"
+                f"        RawExtendersBlock: {yaml_str(entry)}\n"
+                + ("        Crew:\n" + c_yaml if c_yaml else "        Crew: []\n")
+                + "        Warnings: []\n")
+            member_keys.append("entity:" + entity)
+            member_keys += ["crew:" + a for a, _ in c_keys]
+        for alias, n in h_keys:
+            member_keys += ["human:" + alias] * n
+        if h_fail and not error:
+            error = "one or more breed files are missing"
+        if not member_keys and not error:
+            error = "unit has no members"
+        body = (
+            f"      CatalogRawName: {yaml_str(uid)}\n"
+            f"      CampaignExportName: {yaml_str(uid)}\n"
+            f"      FactionTag: {tag}\n"
+            "      Period:\n"
+            f"      UnitKind: {kind}\n"
+            f"      RawConquestDefinition: {yaml_dq(content)}\n"
+            "      SourceConquestFile: set/multiplayer/units/wf_roster_conquest.inc\n"
+            + ("      Humans:\n" + h_yaml if h_yaml else "      Humans: []\n")
+            + ent_yaml
+            + "      CampaignSquads:\n"
+            f"      - CampaignSquadName: {yaml_str(uid)}\n"
+            f"        EntityFirst: {1 if entity else 0}\n"
+            + ("        TemplateMemberKeys:\n" + "".join(f"        - {yaml_str(k)}\n" for k in member_keys)
+               if member_keys else "        TemplateMemberKeys: []\n")
+            + "      Warnings: []\n")
+        return body, error, warnings
+
+
+def write_template_cache(cache_entries):
+    path = PROJECT / "Assets" / "Resources" / "GohFullUnitTemplateCache.asset"
+    head = path.read_text(encoding="utf-8").split("  SourceGameDirectory:", 1)[0]
+    path.write_text(
+        head
+        + f"  SourceGameDirectory: {yaml_str(str(WF))}\n"
+        "  BuiltAtUtc: generated by tools/build_wf_content.py\n"
+        "  BuilderVersion: wf-1\n"
+        "  GameLogicPakSignature:\n"
+        "  VehiclePakSignature:\n"
+        "  Entries:\n" + "".join(cache_entries), encoding="utf-8", newline="\n")
+
+
 # ---------------------------------------------------------------- output
 
 HEADER = """%YAML 1.1
@@ -227,9 +400,12 @@ def main():
 
     breeds, units = parse_roster()
     names = parse_names()
+    templates = Templates()
+    cache_entries = []
     summary = {}
     for tag in TAGS:
-        report = {"missingPortraits": [], "missingNames": [], "researchNodesWithoutUnit": [], "missingBreeds": [], "hidden": []}
+        report = {"missingPortraits": [], "missingNames": [], "researchNodesWithoutUnit": [], "missingBreeds": [], "hidden": [],
+                  "templateErrors": [], "templateWarnings": []}
         nodes = parse_research(tag)
         node_ids = {n["id"].lower() for n in nodes if not n["tech"]}
         missing_breeds = set()
@@ -265,6 +441,18 @@ def main():
             else:
                 portrait = copy_portrait(uid, "02", report, tag, display)
                 locked = copy_portrait(uid, "03", report, tag, display)
+            t_body, t_error, t_warn = templates.build(uid, f, tag)
+            if t_error:
+                report["templateErrors"].append(f"{uid}: {t_error}")
+            report["templateWarnings"] += [f"{uid}: {w}" for w in t_warn]
+            cache_entries.append(
+                f"  - CatalogAssetName: GohUnitCatalog_{tag}\n"
+                f"    RawName: {yaml_str(uid)}\n"
+                f"    FactionTag: {tag}\n"
+                f"    HasFullTemplateData: {0 if t_error else 1}\n"
+                f"    BuildError: {yaml_str(t_error) if t_error else ''}\n"
+                + ("    Warnings:\n" + "".join(f"    - {yaml_str(w)}\n" for w in t_warn) if t_warn else "    Warnings: []\n")
+                + "    Template:\n" + t_body)
             entries.append(
                 f"  - RawName: {yaml_str(uid)}\n"
                 f"    DisplayName: {yaml_str(display)}\n"
@@ -315,6 +503,10 @@ def main():
                         "entriesOutsideTree": sum(1 for u in mine if u.lower() not in node_ids),
                         **{k: len(v) for k, v in report.items()}, "detail": report}
 
+    write_template_cache(cache_entries)
+    print(f"export templates: {len(cache_entries)} units, "
+          f"{sum(s['templateErrors'] for s in summary.values())} not exportable, "
+          f"{sum(s['templateWarnings'] for s in summary.values())} warnings")
     out = ROOT / "build" / "wf-content-report.json"
     out.parent.mkdir(exist_ok=True)
     out.write_text(json.dumps(summary, indent=1) + "\n", encoding="utf-8")

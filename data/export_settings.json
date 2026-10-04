@@ -1,0 +1,10 @@
+{
+  "note": "Values written into the battle save 'status' entry. Taken from a native WarFighter conquest save on this machine (conquest 472.sav, 2026-10-02).",
+  "gameVersion": "1.067.0",
+  "region": "warfighter",
+  "modDependency": "mod_3809475216:0",
+  "saveNamePrefix": "WarfighterCampaign_Battle",
+  "saveFileName": "WarfighterCampaign.sav",
+  "gameMode": "campaign_capture_the_flag",
+  "mapSize": "4x4"
+}
