@@ -68,7 +68,7 @@ def write_flag(tag: str) -> str:
 
 
 def main() -> None:
-    scenario_path = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "data" / "scenario_europe.json"
+    scenario_path = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "data" / "scenario_2032.json"
     sc = json.loads(scenario_path.read_text(encoding="utf-8"))
     factions = sc["factions"]
     by_slot = {f["slot"]: f for f in factions}
@@ -119,13 +119,26 @@ def main() -> None:
     EVENTS.write_text(ev.split("  Events:", 1)[0] + "  Events: []\n", encoding="utf-8", newline="\n")
 
     db_path = next((PROJECT / "Assets" / "TextAsset").glob("province_database_*.json"))
-    db = json.loads(db_path.read_text(encoding="utf-8"))
+    # Always start from the recovered original so re-running with another scenario is clean.
+    original = ROOT / "recovered" / "unity" / "ExportedProject" / "Assets" / "TextAsset" / db_path.name
+    db = json.loads((original if original.exists() else db_path).read_text(encoding="utf-8"))
     used = set(by_slot) | {NEUTRAL}
+    slot_of_tag = {f["tag"]: f["slot"] for f in factions}
+    owners = sc.get("provinces")
     counts, neutralised = {}, 0
     for p in db["Provinces"]:
-        if p["Owner"] not in used:
+        if owners is not None:
+            # Explicit scenario: every province is the listed faction's, or neutral.
+            p["Owner"] = slot_of_tag[owners[p["ProvinceId"]]] if p["ProvinceId"] in owners else NEUTRAL
+        elif p["Owner"] not in used:
             p["Owner"] = NEUTRAL
             neutralised += 1
+        spec = sc.get("specializationOverrides", {}).get(p["ProvinceId"])
+        if spec:
+            p["Specialization"] = spec
+        yields = sc.get("yieldOverrides", {}).get(p["ProvinceId"])
+        if yields:
+            p["ResourceYield"].update(yields)
         counts[p["Owner"]] = counts.get(p["Owner"], 0) + 1
     db_path.write_text(json.dumps(db, indent=4), encoding="utf-8")
 
@@ -139,7 +152,7 @@ def main() -> None:
 
     print(f"scenario {sc['id']}: {len(factions)} factions")
     for f in factions:
-        print(f"  {f['tag']:5} {f['name']:11} slot {f['slot']:2} ({f['slotWas']:12}) {f['side']:6} provinces: {counts.get(f['slot'], 0)}")
+        print(f"  {f['tag']:5} {f['name']:18} slot {f['slot']:2} ({f['slotWas']:12}) {f['side']:6} provinces: {counts.get(f['slot'], 0)}")
     print(f"  neutral provinces: {counts.get(NEUTRAL, 0)} ({neutralised} taken from unused slots)")
 
 

@@ -28,16 +28,20 @@ GER_FORWARD = ["Kaunas", "Siauliai", "Zemaitija", "Wilno", "Kurzeme", "Latgale",
 POLAND_2032 = ["Bialystok", "Danzig", "Gdynia", "Katowice", "Kielce", "Krakow", "Lodz", "Lublin", "Plock", "Poznan",
                "Warszawa", "Hinterpommern", "Niederschlesien", "Oberschlesien", "Ermland Masuren", "Ostmark"]
 USA_REAR = ["East Anglia"]
+USA_UKRAINE = ["Kyiv", "Zhytomyr", "Chernigov", "Sumy", "Kharkov", "Poltava", "Cherkasy", "Lwow", "Wolyn",
+               "Stanislawow", "Proskuriv", "Podkarpatska Rus"]
 
 FRANCE_COLONIAL_1939 = ["Aleppo", "Algerian Desert", "Algiers", "Casablanca", "Constantine", "Deir az Zur", "Gabes",
                         "Lebanon", "Marrakech", "Syria", "Tunis"]
 # France leads NATO's Romania formation.
 ROMANIA_2032 = ["Banat", "Bucovina", "Crisana", "Dobrudja", "Moldova", "North Transylvania", "Oltenia", "South Transylvania"]
+FRA_UKRAINE = ["Odessa", "Mykolaiv", "Vinnytsia", "Dnipropetrovsk"]
 
 # USMC: prepositioned in northern Norway, Estonia's littoral, and the eastern Mediterranean bases.
 USMC = ["Harju", "Parnu", "Saaremaa", "Tartu", "Virumaa", "Crete", "Cyprus", "#509", "#508", "#511", "#512", "#507", "#505"]
 
-IDF = ["Palestine"]
+# IDF: Israel plus the buffer it holds in Lebanon and southern Syria.
+IDF = ["Palestine", "Lebanon", "Syria"]
 
 # United Arab Force: Egypt, Jordan and the Arabian peninsula / Gulf states.
 UAF = ["Cairo", "Alexandria", "Suez", "Sinai", "Matrouh", "Western Desert", "Eastern Desert", "Aswan", "Jordan",
@@ -47,21 +51,27 @@ UAF = ["Cairo", "Alexandria", "Suez", "Sinai", "Matrouh", "Western Desert", "Eas
 # Former Soviet republics that are independent and not in this war.
 USSR_NOW_NEUTRAL = ["Georgia", "Armenia", "Azerbaijan", "Abkhazia", "Ashkhabad", "Tashauz", "Khiva", "Karakalpakstan",
                     "Ust Urt", "Guryev", "Uralsk"]
-# Ukraine has no faction (UAF is the United Arab Force). Free Ukraine is neutral ground between the blocs.
-UKRAINE_FREE = ["Kyiv", "Kharkov", "Poltava", "Sumy", "Chernigov", "Cherkasy", "Zhytomyr", "Vinnytsia", "Proskuriv",
-                "Odessa", "Mykolaiv", "Dnipropetrovsk", "Lwow", "Stanislawow", "Wolyn", "Podkarpatska Rus"]
-# Eastern Europe Rebels: the Russian-held parts of Ukraine and Transnistria.
-EER = ["Stalino", "Voroshilovgrad", "Zaporozhe", "Kherson", "Crimea", "Balta Tiraspol"]
+# Ukraine has no faction of its own (UAF is the United Arab Force); it is split between the US Army and France above.
+UKRAINE_FREE = USA_UKRAINE + FRA_UKRAINE
+# Eastern Europe Rebels: "generic Donbas and Balkan style irregular force" (WF team). Russian-held Ukraine,
+# Transnistria and the Moldovan republic, and a Balkan bloc.
+EER = ["Stalino", "Voroshilovgrad", "Zaporozhe", "Kherson", "Crimea", "Balta Tiraspol", "Bessarabia", "Northern Bessarabia",
+       "Serbia", "Vojvodina", "Kosovo", "Bosnia", "Montenegro"]
 # AFRF beyond Russia proper: Kaliningrad, Belarus (incl. its 1939-Polish west), ceded Finnish land, the Suwalki corridor.
 RUS_EXTRA = ["Koningsberg", "Nowogrodek", "Wilejka", "Polesie", "Karjala", "Petsamo", "Suwalki"]
 
-# Global Revolutionary Movement: Syria, Lebanon, Iraq, Yemen.
-GRM = ["Syria", "Aleppo", "Deir az Zur", "Lebanon", "Al Hajara", "Yemen", "#108", "#84", "#88", "#100"]
-# PLA: a small expeditionary lodgement on Iran's southern coast.
-PLA = ["#75", "#76", "#74"]
+# Global Revolutionary Movement: northern/eastern Syria, Iraq, Yemen and Libya.
+GRM = ["Aleppo", "Deir az Zur", "Yemen", "#108", "#84", "#100",
+       "Tripoli", "Tripolitania", "Sirte", "Fezzan", "El Agheila", "Benghasi", "Derna", "Cyrenaica", "Libyan Desert"]
+# PLA: expeditionary lodgement on Iran's southern coast, pushed into southern Iraq toward Kuwait.
+PLA = ["#75", "#76", "#74", "#96", "#88", "Al Hajara"]
 
 # Factions with no Manpower-specialization province in their territory cannot raise battalions at all.
-SPECIALIZATION_OVERRIDES = {"Stalino": "Manpower", "Crete": "Manpower", "Palestine": "Manpower", "#75": "Manpower"}
+SPECIALIZATION_OVERRIDES = {"Stalino": "Manpower", "Serbia": "Manpower", "Crete": "Manpower", "Palestine": "Manpower", "#75": "Manpower", "#63": "Manpower", "Tripoli": "Manpower"}
+# Home-base yields for factions whose map footprint understates what they can field (reinforcement from off-map
+# or national mobilisation). Values are (Manpower, Ammunition) per turn for that province.
+YIELD_OVERRIDES = {"Palestine": (160, 160), "#75": (150, 170), "Crete": (120, 150), "#509": (60, 80), "Stalino": (120, 100),
+                   "Serbia": (80, 60), "East Anglia": (150, 200), "Aleppo": (120, 120), "#63": (80, 120)}
 
 
 def main() -> None:
@@ -94,8 +104,8 @@ def main() -> None:
     give("rus", RUS_EXTRA)
     give("reb", EER)
     give("ger", GERMANY_2032 + GER_FORWARD)
-    give("usa", POLAND_2032 + USA_REAR)
-    give("fra", ROMANIA_2032)
+    give("usa", POLAND_2032 + USA_REAR + USA_UKRAINE)
+    give("fra", ROMANIA_2032 + FRA_UKRAINE)
     give("usmc", USMC)
     give("idf", IDF)
     give("uaf", UAF)
@@ -115,6 +125,11 @@ def main() -> None:
     for n, spec in SPECIALIZATION_OVERRIDES.items():
         for p in by_label[n]:
             overrides[p["ProvinceId"]] = spec
+    yields = {}
+    for n, (mp_y, ammo_y) in YIELD_OVERRIDES.items():
+        for p in by_label[n]:
+            yields[p["ProvinceId"]] = {"Manpower": mp_y, "Ammunition": ammo_y}
+            p["ResourceYield"]["Manpower"], p["ResourceYield"]["Ammunition"] = mp_y, ammo_y
     scenario = {
         "id": "continental_war_2032",
         "status": "DRAFT for owner review. Province ownership is a first pass from a geopolitical brief; see docs/scenario-2032.md.",
@@ -125,6 +140,7 @@ def main() -> None:
         "startingResources": base["startingResources"],
         "diplomacy": base["diplomacy"],
         "specializationOverrides": overrides,
+        "yieldOverrides": yields,
         "provinces": dict(sorted(owner.items())),
     }
     out = ROOT / "data" / "scenario_2032.json"
