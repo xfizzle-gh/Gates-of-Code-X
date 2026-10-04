@@ -138,6 +138,70 @@ public static class WfExportTest
 		}
 	}
 
+	// Runs the application's own result reader and survivor importer on a save the game wrote after a
+	// battle, then re-exports the imported battalion to prove preserved state survives a second trip.
+	//   Unity -batchmode -projectPath campaign -executeMethod WfExportTest.Import -wfSav <path> -wfTag usa -wfUnits "a;b"
+	public static void Import()
+	{
+		try
+		{
+			string tag = Arg("-wfTag", "usa");
+			string sav = Arg("-wfSav", Path.GetFullPath(Path.Combine(Application.dataPath, "../../build/post-battle/post_battle.sav")));
+			string[] units = Arg("-wfUnits", "squad1(usa);command_team_t2(usa);stryker_m2hb;humvee_m240").Split(';');
+			string outDir = Path.GetDirectoryName(sav);
+			StringBuilder report = new StringBuilder();
+
+			GohBattleResultReader.ParsedStatusResult status = GohBattleResultReader.ReadStatusFromSav(sav);
+			report.AppendLine("status valid=" + status.IsValid + " playedGames=" + status.PlayedGames + " wonGames=" + status.WonGames);
+			// Export wrote playedGames 0 / wonGames 0; same rule as TryResolvePendingBattleFromSavStatus.
+			bool finished = status.PlayedGames > 0;
+			bool playerWon = status.WonGames > 0;
+			report.AppendLine("finished=" + finished + " playerWon=" + playerWon);
+
+			GohUnitCatalog catalog = WfFactions.Catalog(tag);
+			GohFullUnitTemplateCacheAttacher.Attach(Resources.Load<GohFullUnitTemplateCache>("GohFullUnitTemplateCache"), new List<GohUnitCatalog> { catalog });
+			BattalionData battalion = new BattalionData { BattalionId = "wf_test_battalion", GohFactionTag = tag, IsPlayerControlled = true };
+			for (int i = 0; i < units.Length; i++)
+			{
+				battalion.Roster.Add(new BattalionRosterEntry { UnitName = units[i].Trim(), Quantity = 1 });
+			}
+			CampaignFactionState factionState = new CampaignFactionState { IsHumanControlled = true };
+			BattalionTypeRulesAsset typeRules = AssetDatabase.LoadAssetAtPath<BattalionTypeRulesAsset>("Assets/MonoBehaviour/BattalionTypeRules.asset");
+
+			if (!GohCampaignScnSquadImporter.TryReadCampaignScnFromSav(sav, out string scnText, out string readError))
+			{
+				throw new Exception("could not read campaign.scn from save: " + readError);
+			}
+			GohCampaignScnSquadImporter.ImportResult result = GohCampaignScnSquadImporter.ApplyToBattalion(battalion, factionState, scnText, sav, typeRules, catalog);
+			report.AppendLine("import success=" + result.Success + " parsedSquads=" + result.ParsedSquads + " kept=" + result.KeptInBattalion
+				+ " captured=" + result.CapturedMovedToPool + " overflow=" + result.OverflowMovedToPool + " unknownCategory=" + result.UnknownCategoryCount);
+			report.AppendLine("message: " + result.Message);
+			for (int i = 0; i < battalion.Roster.Count; i++)
+			{
+				BattalionRosterEntry e = battalion.Roster[i];
+				int objects = 0;
+				for (int s = 0; e.SquadStates != null && s < e.SquadStates.Count; s++)
+				{
+					objects += e.SquadStates[s].Objects != null ? e.SquadStates[s].Objects.Count : 0;
+				}
+				report.AppendLine("roster: " + e.UnitName + " x" + e.Quantity + " stage='" + e.Stage + "' squadStates=" + (e.SquadStates != null ? e.SquadStates.Count : 0) + " objects=" + objects);
+			}
+			report.AppendLine("pool entries: " + factionState.RecruitedPool.Count);
+
+			string again = CampaignScnExporter.BuildCampaignScn(battalion, new List<GohUnitCatalog> { catalog });
+			File.WriteAllText(Path.Combine(outDir, "reexport_campaign.scn"), again, new UTF8Encoding(false));
+			report.AppendLine("re-export chars=" + again.Length);
+			File.WriteAllText(Path.Combine(outDir, "import-report.txt"), report.ToString(), new UTF8Encoding(false));
+			Debug.Log("WfExportTest import:\n" + report);
+			EditorApplication.Exit(result.Success ? 0 : 1);
+		}
+		catch (Exception ex)
+		{
+			Debug.LogError("WfExportTest import FAILED: " + ex);
+			EditorApplication.Exit(1);
+		}
+	}
+
 	private static string Arg(string name, string fallback)
 	{
 		string[] args = Environment.GetCommandLineArgs();

@@ -219,6 +219,31 @@ afterwards (2,297 bytes, `playedGames 0`), so no battle was played and the game 
 result back. Loading is therefore confirmed; the empty-stage, item-cell and unlocked-research risks
 above are not ruled out until a battle is deployed and finished.
 
+### M3 — first battle round trip at component level (2026-10-04)
+
+The owner then played the test battle to its end. The game rewrote the save in place
+(2,297 → 279,215 bytes; entries `campaign.scn`, `hq_b`, `status`). Copy kept at
+`build/post-battle/post_battle.sav`.
+
+- Status after battle: `playedGames 1`, `wonGames 0`, `{attacking 0}`, mp 100, ap 250, rp 2.
+- All 18 exported objects are present afterwards (16 soldiers, 2 vehicles, 18 inventories, 4 squad rows).
+  The game itself set every row's stage to `stage_1` and repacked every inventory into its own cell
+  layout, so the empty-stage and sequential-cell risks are closed. Units outside `unlockedResearch`
+  were accepted.
+- `WfExportTest.Import` ran the application's own classes on that save:
+  `GohBattleResultReader` → valid, finished, player did not win;
+  `GohCampaignScnSquadImporter.ApplyToBattalion` → parsed 4 squads, kept 4, 0 to pool, 0 unknown category;
+  each roster entry now carries the game-written squad state (4, 5, 3 and 6 objects).
+- Re-export of the imported battalion (the "preserved state" path) passes `tools/validate_scn.py`.
+
+Still open for M3:
+- The result was a non-win with no casualties, so casualty handling (dead soldiers, destroyed vehicles,
+  captured equipment) is untested. How the battle ended (defeat or retreat) is not recorded.
+- The game granted its own mp/ap/rp in `status`; the app must not also reward the battle (plan stage G).
+- This was the exporter/importer driven by a test harness. The same trip from the app's UI (create
+  battalion → attack → pending battle → resolve → strategic commit → save/reload) is not done.
+- No second trip has been loaded in the game from a re-exported, preserved-state save.
+
 Known noise: incremental player builds log 60 × "PPtr cast failed … PluginImporter to MonoScript" and
 report `errors: 60` while succeeding. Clean builds report 0. The built app runs with 0 exceptions.
 
