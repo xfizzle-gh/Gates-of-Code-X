@@ -244,6 +244,42 @@ Still open for M3:
   battalion → attack → pending battle → resolve → strategic commit → save/reload) is not done.
 - No second trip has been loaded in the game from a re-exported, preserved-state save.
 
+### M3 — in-app round trip (2026-10-04)
+
+Owner decision: casualty import is to be ASSUMED working; no casualty battle will be played for now.
+It remains untested.
+
+Create Battalion was never broken: the game only allows it in provinces whose specialization is
+Manpower (`RequireManpowerProvinceForBattalionSpawn`), and the province tried earlier was not one.
+
+New: `tools/unity/runtime/WfDevAutoplay.cs` (inert unless started with `-wfAutoplay <script>`),
+`tools/run_autoplay.ps1`, `tests/autoplay/attack_round_trip.txt`, `tools/simulate_battle_result.py`.
+The hook calls the map controller's own methods, needs no mouse or keyboard, and always uses the scratch
+profile. Battalion creation through it is free and skips the spawn-province rule; that is a test
+shortcut, not game behaviour.
+
+Run as Bundeswehr, both outcomes, 0 exceptions each:
+
+| Step | Result |
+| --- | --- |
+| New campaign, end turn | AI factions take their turns; 42 battalions on the map |
+| Create battalion (2 squads + Leopard 2A4) in Tyrol | created, next to a GRM battalion in Veneto |
+| Attack | pending battle created; save exported to the scratch profile: `army ger`, `enemyArmy grm`, WF mod, region `warfighter`, map `dcg_dimitoya_brawl`; passes `validate_scn.py` |
+| Resolve after a stand-in WIN | Veneto changes owner to the Bundeswehr slot, battalion moves in, defender removed, roster carries imported squad states |
+| Resolve after a stand-in LOSS | Veneto stays with the defender, battalion retreats to an adjacent own province |
+
+The "result" in these two runs is `simulate_battle_result.py` bumping the save's counters, not the game.
+The game-written case is the earlier US Army test (loaded, played, read back) through the harness.
+
+Also fixed: province owner, pending-battle owner, auto-resolve winner and co-op messages printed the
+WWII enum name of the slot ("Owner: Germany"); they now use the WF faction name.
+
+Observed, not fixed:
+- The scratch `options.set` was not modified by an export, although the code path that adds the mod
+  dependency exists. Not investigated; the real profile already has WF enabled.
+- The Bundeswehr turn banner shows no flag (name is correct).
+- Incremental builds now report `errors: 72` (same benign PPtr cast messages).
+
 Known noise: incremental player builds log 60 × "PPtr cast failed … PluginImporter to MonoScript" and
 report `errors: 60` while succeeding. Clean builds report 0. The built app runs with 0 exceptions.
 

@@ -244,6 +244,25 @@ cell++;
     path.write_text(t, encoding="utf-8")
 
 
+def patch_display_names() -> None:
+    # Player-facing text that printed the WWII enum identifier of a faction slot.
+    edits = {
+        "ProvinceInfoPanel.cs": [('"Owner: " + runtimeProvince.Owner;', '"Owner: " + WfFactions.NameOf(runtimeProvince.Owner);')],
+        "PendingBattleResolutionPanel.cs": [("pending.BattleOwnerFaction.ToString()", "WfFactions.NameOf(pending.BattleOwnerFaction)")],
+        "ProvinceMapController.cs": [
+            ('"Winner: " + winnerFaction.ToString()', '"Winner: " + WfFactions.NameOf(winnerFaction)'),
+            ("requestedFaction.ToString()", "WfFactions.NameOf(requestedFaction)"),
+            ("hostCoopFaction.ToString()", "WfFactions.NameOf(hostCoopFaction)"),
+        ],
+    }
+    for name, pairs in edits.items():
+        path = SRC / name
+        t = path.read_text(encoding="utf-8")
+        for old, new in pairs:
+            t = t.replace(old, new)
+        path.write_text(t, encoding="utf-8")
+
+
 def main() -> None:
     WF_DIR.mkdir(parents=True, exist_ok=True)
     for f in (ROOT / "tools" / "unity" / "runtime").glob("*.cs"):
@@ -257,6 +276,7 @@ def main() -> None:
     patch_turn_panel()
     patch_battle_export()
     patch_inventory_conversion()
+    patch_display_names()
     print("campaign code patched for WarFighter factions")
 
 

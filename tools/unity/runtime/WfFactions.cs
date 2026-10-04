@@ -41,6 +41,17 @@ public static partial class WfFactions
 		return null;
 	}
 
+	// Player-facing name for a slot. The enum identifiers are still the WWII ones.
+	public static string NameOf(FactionType slot)
+	{
+		WfFaction faction = ForSlot(slot);
+		if (faction != null)
+		{
+			return faction.Name;
+		}
+		return (slot == FactionType.Neutral) ? "Neutral" : "Unassigned";
+	}
+
 	public static Sprite Flag(string tag)
 	{
 		return Resources.Load<Sprite>("WfContent/Flags/flag_" + tag);

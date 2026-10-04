@@ -1,0 +1,19 @@
+# In-app battle round trip. Start the app with -wfAutoplay <this file>, then start or load a campaign.
+# Between "attack" and "resolve" something must rewrite the exported save's status counters:
+# either the game (a real battle) or tools/simulate_battle_result.py (a stand-in).
+wait 3
+endturn
+wait 20
+dump after-ai-turn
+setup squad1(ger);squad2(ger);leopard_2a4
+wait 2
+shot 01-after-setup
+attack
+wait 3
+dump after-attack
+shot 02-after-attack
+wait 30
+resolve
+wait 3
+dump after-resolve
+shot 03-after-resolve
