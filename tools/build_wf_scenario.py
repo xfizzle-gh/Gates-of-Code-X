@@ -75,6 +75,10 @@ def main() -> None:
     side_id = sc["sides"]
 
     text = RULES.read_text(encoding="utf-8")
+    # GOE only lets a battalion be raised in a Manpower-specialization province. With ten factions and
+    # few such provinces that left players unable to find anywhere to recruit, so scenarios can turn it off.
+    require_manpower = 1 if sc.get("requireManpowerProvinceForRecruiting", False) else 0
+    text = set_field(text, "RequireManpowerProvinceForBattalionSpawn", str(require_manpower))
     head, rest = text.split("  Factions:\n", 1)
     fac_text, tail = rest.split("  TurnOrder:", 1)
     blocks = re.split(r"(?m)^(?=  - Faction: )", fac_text)
@@ -96,6 +100,10 @@ def main() -> None:
             b = set_field(b, k, "")
         for k, v in sc["startingResources"].items():
             b = set_field(b, k, str(v))
+        # GOE lets a faction walk into up to 100 undefended enemy provinces per turn. Nobody starts with
+        # garrisons, so in the first AI turn one faction took a dozen provinces across Russia and Ukraine
+        # (seen in the owner's first real session). Cap it so fronts move a few provinces at a time.
+        b = set_field(b, "MaxUnoccupiedProvinceCapturesPerTurn", str(sc.get("maxUndefendedCapturesPerTurn", 3)))
         b = set_field(b, "Flag", write_flag(f["tag"]))
         out_blocks.append(b)
     missing = set(by_slot) - seen

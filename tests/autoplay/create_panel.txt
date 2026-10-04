@@ -1,0 +1,5 @@
+# Opens the real Create Battalion screen for the chosen faction and screenshots it.
+wait 3
+createpanel
+wait 3
+shot create-panel

@@ -80,6 +80,9 @@ public class WfDevAutoplay : MonoBehaviour
 			case "attack":
 				Try(Attack);
 				break;
+			case "createpanel":
+				Try(OpenCreatePanel);
+				break;
 			case "resolve":
 				Try(() => map.ResolvePendingBattleFromBridgeFile());
 				break;
@@ -209,6 +212,30 @@ public class WfDevAutoplay : MonoBehaviour
 			}
 		}
 		return picked.ToArray();
+	}
+
+	// Selects the first own province where the game allows a battalion and opens the real creation screen.
+	private void OpenCreatePanel()
+	{
+		Dictionary<string, ProvinceDefinition> provinces = Field<Dictionary<string, ProvinceDefinition>>("runtimeProvincesById");
+		int allowed = 0;
+		string first = null;
+		foreach (ProvinceDefinition province in provinces.Values)
+		{
+			if (Call<bool>("CanCreateBattalionInProvince", province.ProvinceId))
+			{
+				allowed++;
+				first = first ?? province.ProvinceId;
+			}
+		}
+		Log("createpanel: provinces where a battalion can be created now: " + allowed);
+		if (first == null)
+		{
+			return;
+		}
+		Call<object>("SelectProvince", first);
+		map.OpenCreateBattalionInSelectedProvince();
+		Log("createpanel: opened for " + first + " [" + provinces[first].DisplayName + "]");
 	}
 
 	private void Attack()
