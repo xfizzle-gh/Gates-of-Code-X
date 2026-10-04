@@ -3,6 +3,8 @@
   "gameVersion": "1.067.0",
   "region": "warfighter",
   "modDependency": "mod_3809475216:0",
+  "companionMod": "mod_3696721120:0",
+  "companionModNote": "GoW itself (this repository folder is the mod). Must come after WarFighter in the mod list.",
   "saveNamePrefix": "WarfighterCampaign_Battle",
   "saveFileName": "WarfighterCampaign.sav",
   "gameMode": "campaign_capture_the_flag",

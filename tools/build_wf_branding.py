@@ -42,6 +42,8 @@ def main() -> None:
     d.text((cx, 330), "WARFIGHTER", font=title, fill=(214, 208, 190), anchor="mm")
     d.line([(cx - 420, 452), (cx + 420, 452)], fill=(150, 120, 70), width=3)
     d.text((cx, 492), "C A M P A I G N   •   S T R A T E G Y   •   C O N Q U E S T", font=sub, fill=(200, 170, 110), anchor="mm")
+    d.text((cx, SIZE[1] - 26), "Gates of Warfighter  -  based on Gates of Europa, used with its author's permission",
+           font=font("arial.ttf", 18), fill=(170, 170, 170), anchor="mm")
     bg.save(TARGET)
 
     t = SCENE.read_text(encoding="utf-8")

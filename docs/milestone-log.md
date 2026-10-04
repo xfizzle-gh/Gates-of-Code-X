@@ -332,6 +332,47 @@ enemy faction's purchase list to the listed units. NOT yet run in the game. `GoW
 the real profile (new file) and a context limiting AFRF to `squad1(rus)` and `t-72b3` is in the app's
 Bridge folder. The app does not yet add GoW to a save's mod list or write contexts itself.
 
+### GoW bridge: enemy battalion in battle (2026-10-04)
+
+In-game results (two battles played by the owner with GoW enabled after WarFighter):
+1. Probe 1: bridge loaded; `io.open`/`dofile` on a path under the user profile work; it read the
+   context and wrote its log. `Purchases` was empty at module load, and handlers subscribed to
+   GameStart/GameSpawn never fired (the engine keeps WarFighter's earlier subscriptions).
+2. Probe 2, after switching to wrapping `OnGameStartUtility` and `GameModeSpawnUnit`: AFRF's list was
+   trimmed 117 → 2 unit types before the game built its queue, and all 20 AI purchases were
+   `squad1(rus)`. No `t-72b3` was bought although allowed (cause not established). All 20 arrived as
+   the defender's opening garrison.
+
+Owner direction: the ENEMY's units should arrive as reinforcements from the map edge, not all at the
+opening.
+
+Final bridge (`resource/script/multiplayer/modes/conquest/gow_bridge.lua`):
+- context `GOW_ENEMY_ROSTER = { unit = count }`, `GOW_OPENING_SHARE`;
+- purchase list trimmed to the battalion's unit types; per-unit budget enforced in `GetUnitToSpawn` and
+  decremented on each successful `GameModeSpawnUnit`;
+- `ConquestWaves.StartPurchasePhase` capped: opening garrison ≤ share × battalion size (40%), every
+  later phase ≤ what the battalion has left. The remainder therefore only arrives through WarFighter's
+  own counterattack bursts / attacker waves, which spawn at the bot's spawn-side map points;
+- writes `gow_battle_state.txt` (purchased count, remaining per unit) after every purchase.
+`tests/lua/test_gow_bridge.py` runs it in a real Lua runtime (lupa) against WF's actual AFRF list:
+roster 5 squads + 2 tanks → opening 3, later burst 4, never an eighth unit; other army untouched.
+
+App side:
+- `WfBattleContext` writes the context on every export. AI battalions are abstract (a unit count), so
+  they get a concrete composition drawn from units WarFighter's AI can buy for that faction
+  (`WfAiUnits.generated.cs`, built from `conquest.<tag>.lua` ∩ catalog), weighted Inf1 55 / Inf2 15 /
+  Empl 5 / Vehicles 15 / Tanks 10, seeded by battalion id so it is stable.
+- Battle saves and the Launch button's `options.set` edit now list GoW after WarFighter.
+- Autoplay run (US Army vs EER): context with a 10-unit battalion written, status lists both mods,
+  save passes `validate_scn.py`, 0 exceptions.
+
+NOT yet verified in the game: the final bridge (counts, phase caps, timing). `GoW_roster_test.sav`
+(US Army attacking a 10-unit EER battalion) is in the real profile with its matching context.
+Known limits: a defending AI only sends its remainder when WarFighter's counterattack logic triggers
+(a flag held by the player for ~50 s, 75% chance, at most 3 bursts), so part of a battalion may never
+appear; enemy losses are not read back into the campaign; the drawn composition is not stored in the
+campaign save.
+
 Known noise: incremental player builds log 60 × "PPtr cast failed … PluginImporter to MonoScript" and
 report `errors: 60` while succeeding. Clean builds report 0. The built app runs with 0 exceptions.
 

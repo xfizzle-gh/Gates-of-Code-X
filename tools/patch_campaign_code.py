@@ -156,6 +156,43 @@ def patch_battle_export() -> None:
         t, n = re.subn(r"(\n(\s*))(File\.WriteAllText\(path, )", lambda m: m.group(1) + backup + "\n" + m.group(2) + m.group(3), t, count=1)
         if n != 1:
             raise SystemExit("options.set write site not found")
+    # GoW's in-game half is a second mod that must be listed after WarFighter. The recovered code
+    # ensures exactly one mod; keep that for WarFighter and add GoW directly below its line.
+    if "EnsureWfModInText" not in t:
+        companion = settings["companionMod"]
+        wf_mod = settings["modDependency"]
+        t = t.replace("private static string EnsureRequiredModInText(string text, bool preferTopOfFile)",
+                      "private static string EnsureWfModInText(string text, bool preferTopOfFile)", 1)
+        addition = f'''	private static string EnsureRequiredModInText(string text, bool preferTopOfFile)
+	{{
+		text = EnsureWfModInText(text, preferTopOfFile);
+		if (text.Contains("{companion}"))
+		{{
+			return text;
+		}}
+		int index = text.IndexOf("\\"{wf_mod}\\"", StringComparison.Ordinal);
+		if (index < 0)
+		{{
+			return text;
+		}}
+		int lineStart = text.LastIndexOf('\\n', index) + 1;
+		string indent = text.Substring(lineStart, index - lineStart);
+		int insertAt = index + "\\"{wf_mod}\\"".Length;
+		return text.Insert(insertAt, GetNewLine(text) + indent + "\\"{companion}\\"");
+	}}
+
+'''
+        t = t.replace("\tprivate static string EnsureWfModInText(", addition + "\tprivate static string EnsureWfModInText(", 1)
+    path.write_text(t, encoding="utf-8")
+
+    # Every export also writes the enemy battalion for GoW's in-game Lua.
+    path = SRC / "StatusExporter.cs"
+    t = path.read_text(encoding="utf-8")
+    if "WfBattleContext.Write" not in t:
+        t, n = re.subn(r"(\n(\s*))(File\.WriteAllText\(Paths\.StatusPath, )",
+                       lambda m: m.group(1) + "WfBattleContext.Write(context);" + "\n" + m.group(2) + m.group(3), t, count=1)
+        if n != 1:
+            raise SystemExit("status write site not found")
     path.write_text(t, encoding="utf-8")
 
     # Keep the bridge exchange files out of Documents and out of the GOE namespace.
