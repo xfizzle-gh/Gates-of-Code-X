@@ -83,6 +83,15 @@ public class WfDevAutoplay : MonoBehaviour
 			case "createpanel":
 				Try(OpenCreatePanel);
 				break;
+			case "waitturn":
+				yield return WaitForPlayerTurn();
+				break;
+			case "rounds":
+				yield return Rounds(int.Parse(arg));
+				break;
+			case "recruit":
+				Try(Recruit);
+				break;
 			case "probe":
 				Try(() => Probe(arg));
 				break;
@@ -125,6 +134,13 @@ public class WfDevAutoplay : MonoBehaviour
 		((TMPro.TMP_Dropdown)type.GetField("factionDropdown", flags).GetValue(menu)).value = int.Parse(choice);
 		((TMPro.TMP_InputField)type.GetField("gameDirectoryInput", flags).GetValue(menu)).text = Arg("-wfGameDir") ?? "";
 		((TMPro.TMP_InputField)type.GetField("profileDirectoryInput", flags).GetValue(menu)).text = Arg("-wfProfileDir") ?? "";
+		// "Reinforcements" (larger battles) makes the game stop and ask which neighbouring battalions join
+		// each battle. Tests run without it unless asked; that path is not covered by them.
+		FieldInfo larger = type.GetField("largerBattlesToggle", flags);
+		if (larger != null && larger.GetValue(menu) is UnityEngine.UI.Toggle largerToggle)
+		{
+			largerToggle.isOn = Arg("-wfLargerBattles") == "1";
+		}
 		FieldInfo nameField = type.GetField("campaignNameInput", flags);
 		if (nameField != null && nameField.GetValue(menu) is TMPro.TMP_InputField nameInput)
 		{
@@ -199,7 +215,28 @@ public class WfDevAutoplay : MonoBehaviour
 				return;
 			}
 		}
-		Log("setup: no own empty province is adjacent to an attackable enemy battalion");
+		// Small factions start with every front province already held: attack with a starting battalion.
+		for (int i = 0; i < state.Battalions.Count; i++)
+		{
+			BattalionData own = state.Battalions[i];
+			if (own == null || own.Faction != me || own.Roster == null || own.Roster.Count == 0 || !provinces.TryGetValue(own.ProvinceId, out ProvinceDefinition here))
+			{
+				continue;
+			}
+			for (int n = 0; n < here.NeighborProvinceIds.Count; n++)
+			{
+				BattalionData enemy = Call<BattalionData>("GetBattalionInProvince", here.NeighborProvinceIds[n]);
+				if (enemy != null && Call<bool>("CanFactionAttackOrConquer", me, enemy.Faction))
+				{
+					created = own;
+					targetProvinceId = enemy.ProvinceId;
+					Log("setup: using starting battalion " + own.BattalionId + " (" + own.GohFactionTag + ", " + own.Roster.Count + " roster entries) in " + here.ProvinceId + " [" + here.DisplayName + "]"
+						+ "; target " + enemy.BattalionId + " (" + enemy.Faction + ", tag " + enemy.GohFactionTag + ") in " + enemy.ProvinceId);
+					return;
+				}
+			}
+		}
+		Log("setup: no own battalion or empty province is adjacent to an attackable enemy battalion");
 	}
 
 	// "setup auto": the faction's first visible infantry squad, support squad and armoured unit.
@@ -247,6 +284,146 @@ public class WfDevAutoplay : MonoBehaviour
 		Log("createpanel: opened for " + first + " [" + provinces[first].DisplayName + "]");
 	}
 
+	// Plays N full rounds: ends the player's turn, lets every AI faction move, and auto-resolves any battle
+	// the AI starts against the player (the same Auto Resolve the pending-battle panel offers).
+	private IEnumerator Rounds(int count)
+	{
+		for (int round = 1; round <= count; round++)
+		{
+			CampaignState state = Field<CampaignState>("campaignState");
+			int turnBefore = state.TurnNumber;
+			Try(() => map.EndTurn());
+			float deadline = Time.realtimeSinceStartup + 240f;
+			int autoResolved = 0;
+			while (Time.realtimeSinceStartup < deadline)
+			{
+				yield return new WaitForSeconds(1f);
+				if (Call<PendingBattleRecord>("LoadPendingBattle") != null)
+				{
+					Try(() => map.AutoResolvePendingBattle());
+					autoResolved++;
+					yield return new WaitForSeconds(1f);
+					continue;
+				}
+				if (state.TurnNumber > turnBefore && Call<bool>("IsLocalPlayersTurn") && !Field<bool>("isAdvancingTurn"))
+				{
+					break;
+				}
+			}
+			LogRound(round, autoResolved, state.TurnNumber > turnBefore);
+		}
+	}
+
+	// At campaign start the factions ahead of the player in the turn order move first.
+	private IEnumerator WaitForPlayerTurn()
+	{
+		float deadline = Time.realtimeSinceStartup + 240f;
+		while (Time.realtimeSinceStartup < deadline)
+		{
+			if (Call<PendingBattleRecord>("LoadPendingBattle") != null)
+			{
+				Try(() => map.AutoResolvePendingBattle());
+			}
+			else if (Call<bool>("IsLocalPlayersTurn") && !Field<bool>("isAdvancingTurn"))
+			{
+				Log("waitturn: it is the player's turn (week " + Field<CampaignState>("campaignState").TurnNumber + ")");
+				yield break;
+			}
+			yield return new WaitForSeconds(1f);
+		}
+		Log("waitturn: TIMED OUT waiting for the player's turn");
+	}
+
+	private void LogRound(int round, int autoResolved, bool completed)
+	{
+		CampaignState state = Field<CampaignState>("campaignState");
+		Dictionary<string, ProvinceDefinition> provinces = Field<Dictionary<string, ProvinceDefinition>>("runtimeProvincesById");
+		StringBuilder sb = new StringBuilder("round " + round + (completed ? "" : " (DID NOT COMPLETE)") + ": week " + state.TurnNumber
+			+ ", battles on the player auto-resolved " + autoResolved + " |");
+		for (int f = 0; f < WfFactions.All.Length; f++)
+		{
+			WfFaction faction = WfFactions.All[f];
+			int owned = 0;
+			foreach (ProvinceDefinition province in provinces.Values)
+			{
+				if (province.Owner == faction.Slot)
+				{
+					owned++;
+				}
+			}
+			int battalions = 0;
+			for (int b = 0; b < state.Battalions.Count; b++)
+			{
+				if (state.Battalions[b] != null && state.Battalions[b].Faction == faction.Slot)
+				{
+					battalions++;
+				}
+			}
+			sb.Append(" " + faction.Tag + " " + owned + "p/" + battalions + "b");
+		}
+		Log(sb.ToString());
+	}
+
+	// Raises a battalion through the real Create Battalion screen: opens it on a province the game allows,
+	// recruits the three cheapest available units with the screen's own Recruit handler, and presses Save.
+	private void Recruit()
+	{
+		CampaignState state = Field<CampaignState>("campaignState");
+		Dictionary<string, ProvinceDefinition> provinces = Field<Dictionary<string, ProvinceDefinition>>("runtimeProvincesById");
+		FactionType me = Call<FactionType>("GetLocalPlayerFaction");
+		string target = null;
+		int allowed = 0;
+		foreach (ProvinceDefinition province in provinces.Values)
+		{
+			if (Call<bool>("CanCreateBattalionInProvince", province.ProvinceId))
+			{
+				allowed++;
+				target = target ?? province.ProvinceId;
+			}
+		}
+		Log("recruit: provinces where a battalion can be created now: " + allowed);
+		if (target == null)
+		{
+			return;
+		}
+		CampaignFactionState factionState = Call<CampaignFactionState>("GetFactionState", me);
+		int manpowerBefore = factionState.Resources.Manpower;
+		int battalionsBefore = state.Battalions.Count;
+		Call<object>("SelectProvince", target);
+		map.OpenCreateBattalionInSelectedProvince();
+		BattalionManagementPanel panel = Field<BattalionManagementPanel>("battalionManagementPanel");
+		GohUnitCatalog catalog = Field<GohUnitCatalog>("activeUnitCatalog");
+		List<GohUnitCatalogEntry> available = new List<GohUnitCatalogEntry>();
+		for (int i = 0; i < catalog.Entries.Count; i++)
+		{
+			GohUnitCatalogEntry entry = catalog.Entries[i];
+			if (entry != null && entry.IsResearched && !entry.HideFromBattalionManagement && entry.ManpowerCost > 0)
+			{
+				available.Add(entry);
+			}
+		}
+		available.Sort((a, b) => a.ManpowerCost.CompareTo(b.ManpowerCost));
+		Log("recruit: " + available.Count + " researched units on offer in " + provinces[target].DisplayName + "; manpower " + manpowerBefore);
+		MethodInfo recruitUnit = typeof(BattalionManagementPanel).GetMethod("RecruitUnit", Any);
+		for (int i = 0; i < available.Count && i < 3; i++)
+		{
+			recruitUnit.Invoke(panel, new object[] { available[i] });
+			Log("recruit: picked " + available[i].RawName + " (" + available[i].ManpowerCost + " MP)");
+		}
+		// Recruiting puts a unit in the middle column (the pool). The player then clicks it there to move it
+		// into the battalion on the right; saving with an empty battalion is refused.
+		MethodInfo toBattalion = typeof(BattalionManagementPanel).GetMethod("MoveFromPoolToBattalion", Any);
+		for (int i = 0; i < available.Count && i < 3; i++)
+		{
+			toBattalion.Invoke(panel, new object[] { available[i].RawName });
+		}
+		typeof(BattalionManagementPanel).GetMethod("HandleSavePressed", Any).Invoke(panel, null);
+		BattalionData raised = Call<BattalionData>("GetBattalionInProvince", target);
+		Log("recruit: after Save: battalions " + battalionsBefore + " -> " + state.Battalions.Count + ", manpower " + manpowerBefore + " -> "
+			+ Call<CampaignFactionState>("GetFactionState", me).Resources.Manpower
+			+ (raised != null ? ", new battalion " + raised.BattalionId + " with " + raised.Roster.Count + " roster entries, combat actions " + raised.RemainingCombatActions : ", NO battalion in the province"));
+	}
+
 	// Diagnostic: for a faction's starting battalions, show their remaining actions and what is next to them.
 	private void Probe(string tag)
 	{
@@ -289,8 +466,11 @@ public class WfDevAutoplay : MonoBehaviour
 			Log("attack: no battalion from setup");
 			return;
 		}
-		MethodInfo start = typeof(ProvinceMapController).GetMethod("StartAttack", Any, null, new[] { typeof(BattalionData), typeof(string) }, null);
-		start.Invoke(map, new object[] { created, targetProvinceId });
+		// With armies on the map the game offers nearby allied battalions as reinforcements ("Larger
+		// Battles") and warns about supply. Both are prompts for a human; the test attacks alone.
+		MethodInfo start = typeof(ProvinceMapController).GetMethod("StartAttack", Any, null,
+			new[] { typeof(BattalionData), typeof(string), typeof(List<string>), typeof(List<string>), typeof(bool), typeof(bool) }, null);
+		start.Invoke(map, new object[] { created, targetProvinceId, null, null, true, true });
 		PendingBattleRecord pending = Call<PendingBattleRecord>("LoadPendingBattle");
 		Log(pending == null
 			? "attack: no pending battle was created"

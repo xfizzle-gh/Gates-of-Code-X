@@ -468,6 +468,33 @@ An AI attack on the human leaves a pending battle that stops the round until the
 Not verified: more than one round; a human raising a battalion at a hub through the real screen;
 whether 57 starting battalions and the hub counts feel right; AI behaviour with hubs deep in the rear.
 
+### Verification of the rules pass (2026-10-04)
+
+Done through the autoplay hook (no mouse; scratch profile; "Reinforcements"/larger battles OFF). New
+commands: `waitturn`, `rounds N` (auto-resolves battles the AI starts against the player), `recruit`
+(real Create Battalion screen: `RecruitUnit` → `MoveFromPoolToBattalion` → `HandleSavePressed`), `probe`.
+
+- Three full rounds as USMC and as Bundeswehr: 0 exceptions; about 40 undefended captures and 37 AI-vs-AI
+  battles per run across all factions; AFRF 81 → 88/89 provinces; one pocket surrendered in two runs.
+  A player who only ends turns loses ground (USMC 13 → 8 provinces).
+- Recruiting through the real screen passes for USMC, France, IDF, PLA and AFRF: battalion created,
+  manpower deducted (31–146), no combat action until the next turn. Recruiting provinces at start:
+  IDF 1, USMC 4, PLA 5, Bundeswehr 16, France 20, AFRF 20.
+  The screen is three steps (buy → move from the pool into the battalion → Save); saving with an empty
+  battalion is refused.
+- Attack round trip, stand-in win: US Army, USMC, UAF, Bundeswehr, France, GRM, EER, AFRF and PLA export
+  and capture; PLA does it with a starting battalion (8 real units). IDF had no enemy battalion adjacent
+  on its first turn, so it was not exercised.
+
+Not covered, by design of the tests:
+- "Reinforcements" (larger battles). With armies everywhere the game now asks, before most battles and
+  also when the AI attacks the player, which neighbouring battalions join. The hook cannot answer it.
+  Including an AI ally (no real unit list) in an exported battle is untested with WarFighter content.
+- The supply warning prompt on attack (skipped by the hook).
+
+Test-harness defects fixed along the way: stand-in results were applied to the wrong save when the AI
+had attacked the player earlier in the round; scripts ran before the round reached the player's turn.
+
 Known noise: incremental player builds log 60 × "PPtr cast failed … PluginImporter to MonoScript" and
 report `errors: 60` while succeeding. Clean builds report 0. The built app runs with 0 exceptions.
 

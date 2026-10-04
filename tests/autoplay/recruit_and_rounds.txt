@@ -1,0 +1,7 @@
+# Raise a battalion through the real Create Battalion screen, then play three full rounds.
+waitturn
+recruit
+wait 2
+shot 01-after-recruit
+rounds 3
+shot 02-after-three-rounds

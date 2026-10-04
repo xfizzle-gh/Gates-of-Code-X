@@ -1,7 +1,7 @@
 # In-app battle round trip on the first turn of a new campaign (starting armies provide the enemy).
 # Between attack and resolve something must rewrite the exported save status counters:
 # either the game (a real battle) or tools/simulate_battle_result.py (a stand-in).
-wait 3
+waitturn
 dump start
 setup auto
 wait 2

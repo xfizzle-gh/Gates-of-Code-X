@@ -1,0 +1,5 @@
+# Raise a battalion through the real Create Battalion screen.
+waitturn
+recruit
+wait 2
+shot recruit

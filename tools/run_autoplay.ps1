@@ -29,7 +29,10 @@ $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
 while (-not $p.HasExited -and (Get-Date) -lt $deadline) {
     Start-Sleep -Seconds 2
     if ($SimulateResult -and -not $simulated -and (Test-Path $log) -and (Select-String -Path $log -Pattern '^attack: pending' -Quiet)) {
-        $sav = Get-ChildItem (Join-Path $profile 'campaign') -Filter *.sav | Select-Object -First 1
+        # The attack's own save, named in the hook's log line. Battles the AI started against the player
+        # earlier in the round leave other saves in the same folder.
+        $line = (Select-String -Path $log -Pattern '^attack: pending .* sav=(.+?\.sav) ' | Select-Object -First 1)
+        $sav = if ($line) { Get-Item -LiteralPath $line.Matches[0].Groups[1].Value -ErrorAction SilentlyContinue }
         if ($sav) {
             Copy-Item $sav.FullName (Join-Path $out 'exported.sav')
             python (Join-Path $PSScriptRoot 'simulate_battle_result.py') $sav.FullName $SimulateResult
