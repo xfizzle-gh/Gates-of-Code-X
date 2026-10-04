@@ -8,7 +8,7 @@
       "localArtifacts": ["upstream/goe-portable/", "recovered/csharp/"],
       "sourceProjectAvailable": false,
       "licenseFound": false,
-      "distributionStatus": "UNRESOLVED - no source project or reuse licence found; decompiled code is reference only"
+      "distributionStatus": "Project owner states (2026-10-04) that the GOE author has given permission, with full credit to be given. Not seen in writing by the implementer; keep a copy of that permission with the release and credit the GOE author in the app and its documentation."
     },
     {
       "name": "WarFighter GoH (WF)",
