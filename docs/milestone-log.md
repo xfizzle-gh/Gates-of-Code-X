@@ -398,6 +398,37 @@ Offline Lua test updated and passing; in-app autoplay writes the new context (EE
 17 unit types), 0 exceptions. NOT yet played in the game: `GoW_roster_test2.sav` is in the real profile
 with its matching context.
 
+### GoW bridge, fourth and fifth in-game tests (2026-10-04)
+
+Correction to earlier entries: the game writes a battle's result to `<internal save name>.sav`
+(lower-cased), not to the file that was loaded. My renamed test copies therefore looked "not rewritten".
+The real results were in `warfightercampaign_battle_2_usa_29_cherkasy.sav` (played 1, won 1) and
+`…_dnipropetrovsk.sav` (played 1, won 0). In the app's own flow the file name equals the internal name,
+so this does not affect it; test copies must keep the internal name as the file name.
+
+Test 4 (`GoW_roster_test2`, EER, strength 1.33): opening 14 units, WarFighter's flag counterattack bought
+5 of 5 (the stall is fixed), first timed burst released at the end. All 19 purchases were infantry:
+the preference offered only buyable battalion units. Fixed: preference now applies per unit class.
+
+Test 5 (`GoW_roster_test3`, AFRF, strength 1.27, fog off, timestamps), battle left at about 6.5 min:
+
+| Time | Event |
+| --- | --- |
+| 0–16 s | opening: 13 units (budget 20 → 13, reserve 12) |
+| 37 s | opening complete |
+| 187 s | first timed burst released (budget 6) |
+| 317–385 s | 12 units bought: that burst, then a native flag counterattack (5 → 6) |
+| 385 s | second timed burst released (budget 6); battle left before it bought |
+
+25 purchases, 21 of them battalion types, including 4 vehicles (`ural_zu23_rus`).
+Defect: the first burst waited 130 s before its first purchase because the bot was on its between-phase
+idle cooldown. Fixed: a burst now restarts the spawn cooldown, as WarFighter does for its own phases.
+That fix has not been run in the game.
+
+Real result read-back with GoW enabled (`WfExportTest.Import` on the Cherkasy save): finished, player
+won; 3 squads parsed and kept; the command team came back with 4 members of 5, i.e. a real casualty
+was imported. This is the first casualty case seen; destroyed vehicles are still untested.
+
 Known noise: incremental player builds log 60 × "PPtr cast failed … PluginImporter to MonoScript" and
 report `errors: 60` while succeeding. Clean builds report 0. The built app runs with 0 exceptions.
 

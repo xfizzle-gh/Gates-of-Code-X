@@ -290,6 +290,14 @@ wrap_global("TrySpawnUnit", function(original)
 		GowBridge.releasing = false
 		if not ok then
 			log("burst failed to start: " .. safe(err))
+		elseif not spawningUnit then
+			-- Between phases the bot sits on a long idle cooldown. Restart it now that a phase is active,
+			-- as WarFighter does for its own phases; otherwise the burst waits it out
+			-- (seen in game 2026-10-04: released at 187s, first purchase at 317s).
+			pcall(function()
+				KillSpawnCooldownTimer()
+				SetSpawnCooldownTimer()
+			end)
 		end
 		write_state()
 	end)
