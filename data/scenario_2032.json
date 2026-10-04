@@ -89,11 +89,30 @@
  "specializationOverrides": {
   "Stalino": "Manpower",
   "Serbia": "Manpower",
-  "Crete": "Manpower",
+  "Crete": "Ammunition",
   "Palestine": "Manpower",
   "province_0075": "Manpower",
   "province_0063": "Manpower",
-  "Tripoli": "Manpower"
+  "Tripoli": "Manpower",
+  "province_0096": "Ammunition",
+  "province_0108": "Ammunition",
+  "province_0082": "Ammunition",
+  "South Transylvania": "Ammunition",
+  "Tripolitania": "Ammunition",
+  "Bosnia": "Ammunition",
+  "Corsica": "Ammunition",
+  "Zaporozhe": "Ammunition",
+  "Cyprus": "Ammunition",
+  "East Anglia": "Ammunition",
+  "Virumaa": "Ammunition",
+  "Zemgale2": "Ammunition",
+  "Montenegro": "Ammunition",
+  "Vinnytsia": "Ammunition",
+  "Vojvodina": "Ammunition",
+  "Voroshilovgrad": "Ammunition",
+  "Yemen": "Ammunition",
+  "province_0509": "Ammunition",
+  "province_0507": "Ammunition"
  },
  "yieldOverrides": {
   "Palestine": {

@@ -130,6 +130,36 @@ def main() -> None:
         for p in by_label[n]:
             yields[p["ProvinceId"]] = {"Manpower": mp_y, "Ammunition": ammo_y}
             p["ResourceYield"]["Manpower"], p["ResourceYield"]["Ammunition"] = mp_y, ammo_y
+    # Supply. In the recovered rules a battalion is "supplied" only if its province connects, through its
+    # own bloc's territory, to a province of its faction with the Ammunition specialization. Anything else
+    # is an encircled pocket that loses movement and can surrender. Scattered factions therefore need a
+    # supply source in every separate piece of territory, or their enclaves surrender on their own
+    # (seen in the owner's first session: US Army, EER, GRM and PLA pockets all surrendered).
+    by_id_all = {p["ProvinceId"]: p for p in db}
+    supply_added = []
+    seen = set()
+    for pid, tag in sorted(owner.items()):
+        if pid in seen:
+            continue
+        component, stack = [], [pid]
+        seen.add(pid)
+        while stack:
+            cur = stack.pop()
+            component.append(cur)
+            for n in by_id_all[cur]["NeighborProvinceIds"]:
+                if n not in seen and owner.get(n) == tag:
+                    seen.add(n)
+                    stack.append(n)
+        def spec(i):
+            return overrides.get(i, by_id_all[i]["Specialization"])
+        if any(spec(i) == "Ammunition" for i in component):
+            continue
+        free = [i for i in component if spec(i) in ("None", "")] or [i for i in component if spec(i) != "Manpower"] or component
+        pick = max(free, key=lambda i: (by_id_all[i]["ResourceYield"]["Ammunition"], i))
+        overrides[pick] = "Ammunition"
+        supply_added.append(f"{tag}:{label(by_id_all[pick])}({len(component)})")
+    print("supply sources added (faction:province(size of that territory)): " + ", ".join(supply_added))
+
     scenario = {
         "id": "continental_war_2032",
         "status": "DRAFT for owner review. Province ownership is a first pass from a geopolitical brief; see docs/scenario-2032.md.",
