@@ -72,6 +72,21 @@ Rebuild attempts (2026-10-04):
 - Reproduce: `tools/recover_campaign.ps1 -Force`, then
   `tools/build_campaign.ps1 -Unity '<…>\6000.4.0f1\Editor\Unity.exe'`.
 
+Both defects fixed (2026-10-04), verified by `tools/smoke_campaign.ps1`: start menu text is legible
+("v 0.2.0", Single Player, Multiplayer, Load Campaign, Exit) and the player log has 0 exceptions.
+- Cause 1: AssetRipper writes property-only stub shaders. `tools/repair_shaders.py` swaps 46 of 52 stubs
+  for the real sources shipped inside the 6000.4.0f1 editor (URP, SRP Core, TMP), via script-free embedded
+  packages so `Packages/…` includes resolve. Left as stubs: 3 terrain-detail shaders (unused; 276,480
+  variants unstripped) and 3 TMP HDRP/URP-Lit shader-graph variants (no source, unused).
+- Cause 2: `GraphicsSettings.m_RenderPipelineGlobalSettingsMap` was empty; the same script restores the
+  URP entry.
+- Cause 3: six dynamic TMP font assets had dangling atlas references; `tools/unity/WfRepair.cs` gives each
+  a fresh atlas that TMP fills from the recovered `.ttf`.
+- Side effect handled: URP's editor-side variant stripping is absent, so `tools/unity/WfShaderStripper.cs`
+  strips XR passes and unused post-processing variants (UberPost 46,080 → 9, FinalPost 2,560 → 2).
+  If a post effect looks wrong later, this keyword list is the first place to check.
+- First clean build compiles shaders for roughly 15 minutes; later builds use the cache.
+
 Gate status: build is repeatable; "functioning campaign map, new/load/save, unit catalog UI" is NOT yet
 verified. Nothing past the start menu has been exercised.
 

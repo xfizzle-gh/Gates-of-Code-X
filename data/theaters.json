@@ -1,9 +1,9 @@
 {
   "source": "WarFighter main developer (Clorinde), message of 2026-09-30, relayed by the project owner on 2026-10-04",
   "note": "Faction tags are WF army tags. A tactical battle may only be generated between one blufor and one opfor tag of the same theater. Every pairing here is also present in WF values.set (Warfighter region).",
-  "assumptions": [
-    "EER is mapped to tag 'reb'. Unconfirmed.",
-    "'AFR' in the Asia line is read as AFRF (tag 'rus'). Unconfirmed; possibly a typo in the source."
+  "confirmedByOwner": [
+    "EER is tag 'reb'.",
+    "'AFR' in the Asia line of the source means AFRF (tag 'rus')."
   ],
   "names": {
     "usa": "US Army", "usmc": "USMC", "uaf": "UAF", "ger": "Bundeswehr", "fra": "France", "idf": "IDF",
