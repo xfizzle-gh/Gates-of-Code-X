@@ -1,0 +1,7 @@
+{mod
+	{name "Gates of Warfighter"}
+	{tags "singleplayer"}
+	{desc "GoW: strategic campaign layer for WarFighter GoH. Requires WarFighter GoH, loaded before this mod. Based on Gates of Europa, with its author's permission."}
+	{minGameVersion "any"}
+	{maxGameVersion "any"}
+}
