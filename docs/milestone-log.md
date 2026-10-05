@@ -10,6 +10,13 @@
   request, not `Documents\Codex\WarfighterCampaign`. Steam does not manage this ID's content today, but
   nothing here should be assumed safe from a Workshop re-download.
 
+Update, later the same day, at the owner's instruction ("remove all of Gates of CodeX entirely"):
+the leftover folders (`godot`, `src`, `backups`, `live`, `.venv`, `.pytest_cache`, old `build/lib` and
+`build/bdist.win-amd64`) are deleted, and so are all 59 old local branches (including
+`archive/pre-warfighter-local-wip`), the stash and the local copies of the GitHub branches. Only
+`warfighter-campaign` remains locally. Nothing on GitHub was changed. One ref created by another tool
+(`refs/codex/turn-diffs/…`) was left alone.
+
 ## M0 — frozen baseline and extraction: DONE
 
 | Check | Result |
